@@ -23,3 +23,8 @@
 - Персональные данные пациентов (имя, телефон, медданные) не писать в консоль, URL и localStorage.
   В скриншотах, тестах и роликах — только вымышленные пациенты: в проде настоящие.
 - Тесты — Vitest + Testing Library + MSW (`src/test/server.ts`), ответы типизировать схемами контракта.
+
+## Design System
+Read DESIGN.md before visual or UI work: it defines the fonts, colors, spacing, and
+aesthetic direction. Ask the user before departing from it. When reviewing or QA-ing
+UI, flag code that doesn't match DESIGN.md.
