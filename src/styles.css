@@ -589,7 +589,6 @@ details.agreement-box { max-height: none; }
 .settings-list li + li { border-top: 1px solid var(--separator); }
 .settings-link { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px 14px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .settings-link:hover { background: var(--sunken); }
-.settings-link > span:first-child { display: grid; gap: 2px; }
 .settings-link .hint { font-size: .88rem; }
 .settings-link .chev { font-size: 1.4rem; color: var(--faint); }
 .appearance { display: grid; gap: 12px; }
@@ -601,3 +600,15 @@ details.agreement-box { max-height: none; }
 .mobile-only { display: none; }
 @media (max-width: 760px) { .mobile-only { display: grid; } .toolbar .back { flex-basis: 100%; justify-content: flex-start; } }
 fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
+/* Эмодзи у кнопок (lib/buttonIcons.ts): «/ ""» — скринридер читает только подпись */
+.btn[data-ico]::before, .segments button[data-ico]::before { content: attr(data-ico); content: attr(data-ico) / ""; font-size: 1.05em; line-height: 1; margin-right: 6px; }
+.btn[data-ico]::before { margin-right: 0; }
+.ico { font-style: normal; }
+.settings-link { justify-content: flex-start; }
+.settings-emoji { flex: none; width: 1.8em; font-size: 1.25rem; text-align: center; }
+.settings-text { flex: 1; display: grid; gap: 2px; }
+.profile-card { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 14px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); }
+.profile-photo { flex: none; width: 64px; height: 64px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; font-size: 2rem; background: var(--accent-soft); }
+.profile-text { flex: 1 1 180px; display: grid; gap: 2px; }
+.profile-text strong { font-size: 1.15rem; font-family: var(--display); }
+.profile-about { font-size: .92rem; }

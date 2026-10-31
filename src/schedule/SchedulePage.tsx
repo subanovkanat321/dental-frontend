@@ -327,7 +327,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                         <span className="appt-time num">{short ? timeOf(a.startAt!) : `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`}</span>
                         <span className="appt-name">{a.patient?.fullName}</span>
                         {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
-                        {(short || h > 56) && <span className="appt-state"><span className="dot" /> {s.label}</span>}
+                        {(short || h > 56) && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
                         {h > 80 && a.comment && <span className="appt-note">{a.comment}</span>}
                         {h > 80 && a.depositStatus && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
                           <span className="appt-note">Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>

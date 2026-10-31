@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { debtLine } from '../lib/debt'
+import { serviceEmoji } from '../lib/serviceEmoji'
 import { shortDate, somText, todayIn } from '../lib/time'
 import { useAppointmentAction } from './useAppointmentAction'
 
@@ -118,7 +119,7 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
           onClick={() => {
             onPick(s.priceSom!, used)
             setUsed(true)
-          }}>{s.name} · {somText(s.priceSom!)}</button>
+          }}><span aria-hidden="true">{serviceEmoji(s.name)} </span>{s.name} · {somText(s.priceSom!)}</button>
       ))}
     </div>
   )

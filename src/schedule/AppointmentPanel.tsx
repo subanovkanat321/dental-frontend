@@ -99,7 +99,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         {a.patient?.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
       </section>
       <MedAlerts an={anamnesis.data} compact />
-      <span className={`chip s-${s.kind}`}><span className="dot" />{s.label}</span>
+      <span className={`chip s-${s.kind}`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
       {a.source === 'PATIENT' && <p className="hint">Запись через бота</p>}
       {a.reminderOpenedAt && a.status === 'SCHEDULED' && <p className="hint">Напоминание отправлено {agoText(a.reminderOpenedAt)}, в {timeOf(a.reminderOpenedAt)}</p>}
       {a.rating != null && (

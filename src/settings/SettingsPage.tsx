@@ -11,6 +11,9 @@ import { HoursPage } from './HoursPage'
 
 type Me = Schemas['BookingViewsMe']
 
+/** Значки пунктов — как в меню прежнего приложения. */
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒' }
+
 type Item = {
   key: string
   title: string
@@ -77,7 +80,8 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
 
   return (
     <div className="settings">
-      <header className="toolbar"><h1>Настройки</h1></header>
+      <header className="toolbar"><h1>⚙️ Настройки</h1></header>
+      <Profile me={me} />
       {GROUPS.map(([group, items]) => {
         const shown = items.filter((i) => i.show(me))
         if (!shown.length) return null
@@ -88,7 +92,8 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
               {shown.map((i) => (
                 <li key={i.key}>
                   <button type="button" className="settings-link" onClick={() => openSettings(i.key)}>
-                    <span><strong>{i.title}</strong><span className="hint">{i.hint}</span></span>
+                    <span className="settings-emoji" aria-hidden="true">{EMOJI[i.key]}</span>
+                    <span className="settings-text"><strong>{i.title}</strong><span className="hint">{i.hint}</span></span>
                     <span aria-hidden="true" className="chev">›</span>
                   </button>
                 </li>
@@ -102,7 +107,8 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
           <h2>Платформа</h2>
           <ul className="settings-list">
             <li><button type="button" className="settings-link" onClick={() => { window.location.hash = '/platform' }}>
-              <span><strong>Платформа Tish</strong><span className="hint">Клиники, тарифы, обращения</span></span><span aria-hidden="true" className="chev">›</span>
+              <span className="settings-emoji" aria-hidden="true">🧭</span>
+              <span className="settings-text"><strong>Платформа Tish</strong><span className="hint">Клиники, тарифы, обращения</span></span><span aria-hidden="true" className="chev">›</span>
             </button></li>
           </ul>
         </section>
@@ -128,7 +134,7 @@ function Appearance() {
   const [size, setSize] = useState(textSize)
   return (
     <section className="settings-group" aria-label="Оформление">
-      <h2>Оформление</h2>
+      <h2>🎨 Оформление</h2>
       <div className="card-block appearance">
         <div className="field"><span>Тема</span>
           <div className="segments wrap" role="group" aria-label="Тема">
@@ -146,6 +152,31 @@ function Appearance() {
         </div>
         <p className="hint">Сохраняется на этом устройстве.</p>
       </div>
+    </section>
+  )
+}
+
+/**
+ * Профиль сверху «Настроек»: кто вошёл — фото, имя, роль и клиника. Врачу — «Изменить профиль»
+ * (имя, фото, «о себе» — их видят пациенты при записи).
+ */
+function Profile({ me }: { me: Me }) {
+  const own = (me.doctors ?? []).find((d) => d.id === me.doctorId)
+  const roles = [me.admin ? 'администратор' : null, me.reception ? 'регистратура' : null, me.doctorId != null ? 'врач' : null,
+    me.owner ? 'владелец платформы' : me.platform ? 'менеджер платформы' : null].filter(Boolean)
+  const clinic = me.clinic?.brandName || me.clinic?.name
+  const name = own?.fullName ?? me.fullName ?? 'Без имени'
+  return (
+    <section className="profile-card" aria-label="Профиль">
+      {own?.photoUrl ? <img className="profile-photo" src={own.photoUrl} alt="" />
+        : <span className="profile-photo" aria-hidden="true">{me.doctorId != null ? '🧑‍⚕️' : '👤'}</span>}
+      <div className="profile-text">
+        <strong>{name}</strong>
+        <span className="hint">{roles.join(' · ') || 'сотрудник'}</span>
+        {clinic && <span className="hint">🏥 {clinic}</span>}
+        {own?.about && <span className="profile-about">{own.about}</span>}
+      </div>
+      {me.doctorId != null && <button type="button" className="btn" onClick={() => openSettings('profile')}>Изменить профиль</button>}
     </section>
   )
 }

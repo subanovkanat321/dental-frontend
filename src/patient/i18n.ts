@@ -290,14 +290,7 @@ export function priceText(lang: Lang, som?: number | null): string | null {
   return lang === 'ky' ? `${n} сомдон` : `от ${n} сом`
 }
 
-/** Значок услуги по названию — как в приложении. */
-export function serviceEmoji(name = ''): string {
-  const n = name.toLowerCase()
-  const map: [string, string][] = [['брекет', '😁'], ['кариес', '🦷'], ['чистк', '✨'], ['гигиен', '✨'], ['удален', '🩹'],
-    ['канал', '🔬'], ['отбел', '💎'], ['имплант', '🔩'], ['протез', '👑'], ['коронк', '👑'], ['детск', '🧸'],
-    ['осмотр', '🩺'], ['консульт', '🩺']]
-  return map.find(([key]) => n.includes(key))?.[1] ?? '🦷'
-}
+export { serviceEmoji } from '../lib/serviceEmoji'
 
 export function initials(name = ''): string {
   return name.trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('')

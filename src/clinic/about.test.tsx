@@ -111,7 +111,7 @@ test('«Часы работы»: часы клиники с субботой, о
   expect(await screen.findByRole('group', { name: 'Часы работы' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Дастан Т\./ })).toHaveAttribute('aria-expanded', 'false')
   await user.click(screen.getByRole('button', { name: '‹ Настройки' }))
-  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: '⚙️ Настройки' })).toBeInTheDocument()
 })
 
 test('«Настройки → Оформление»: тёмная тема и крупный текст сразу и запоминаются', async () => {

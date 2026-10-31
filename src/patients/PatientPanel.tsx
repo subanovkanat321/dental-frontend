@@ -74,7 +74,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     const body = (
       <>
         <span className="nowrap num">{shortDate(a.startAt!, true)}</span>
-        {' '}<span className={`chip small s-${s.kind}`}><span className="dot" />{s.label}</span>
+        {' '}<span className={`chip small s-${s.kind}`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
         {a.serviceName && <span className="hint"> · {a.serviceName}</span>}
         {many && <span className="hint"> · {doctorName(a.doctorId)}</span>}
         {note && <span className="visit-note">📝 {note}</span>}

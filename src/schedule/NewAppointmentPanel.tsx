@@ -6,6 +6,7 @@ import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { dayTitle, formatPhone, shortDate, slotInstant, todayIn } from '../lib/time'
+import { serviceEmoji } from '../lib/serviceEmoji'
 import { TimePicker } from './TimePicker'
 
 type Me = Schemas['BookingViewsMe']
@@ -214,34 +215,6 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
       <form className="form" onSubmit={(e) => void submit(e)}>
-        {walkIn ? (
-          <div className="row">
-            <label className="field"><span>Время</span>
-              <input type="time" step={300} value={time} required onChange={(e) => setTime(e.target.value)} /></label>
-            {durationField}
-          </div>
-        ) : (
-          <div className="row">
-            <label className="field"><span>День</span>
-              <input type="date" value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} /></label>
-            {durationField}
-          </div>
-        )}
-        <label className="field">
-          <span>Врач</span>
-          <select value={doctorId} onChange={(e) => setDoctorId(Number(e.target.value))}>
-            {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-          </select>
-        </label>
-
-        {!walkIn && (
-          <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} value={time}
-            onChange={setTime} error={fieldError('startAt') ?? (create.error?.code === 'time-taken' ? create.error.message : null)} />
-        )}
-        {walkIn && fieldError('startAt') && <p className="error">{fieldError('startAt')}</p>}
-
-        <WaitlistCandidates doctorId={doctorId} duration={duration} startAt={startAt} onBooked={onCreated} />
-
         <fieldset className="field">
           <legend>Пациент</legend>
           {patient ? (
@@ -304,6 +277,35 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           )}
         </fieldset>
 
+        {walkIn ? (
+          <div className="row">
+            <label className="field"><span>Время</span>
+              <input type="time" step={300} value={time} required onChange={(e) => setTime(e.target.value)} /></label>
+            {durationField}
+          </div>
+        ) : (
+          <div className="row">
+            <label className="field"><span>День</span>
+              <input type="date" value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} /></label>
+            {durationField}
+          </div>
+        )}
+        <label className="field">
+          <span>Врач</span>
+          <select value={doctorId} onChange={(e) => setDoctorId(Number(e.target.value))}>
+            {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
+          </select>
+        </label>
+
+        {!walkIn && (
+          <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} value={time}
+            onChange={setTime} error={fieldError('startAt') ?? (create.error?.code === 'time-taken' ? create.error.message : null)} />
+        )}
+        {walkIn && fieldError('startAt') && <p className="error">{fieldError('startAt')}</p>}
+
+        <WaitlistCandidates doctorId={doctorId} duration={duration} startAt={startAt} onBooked={onCreated} />
+
+
         {activeServices.length > 0 && (
           <div className="field"><span>Услуга (необязательно) — длительность подставится сама</span>
             <div className="price-hints" role="group" aria-label="Услуга">
@@ -312,7 +314,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
                   const next = sv.id === serviceId ? '' : sv.id!
                   setServiceId(next)
                   if (next !== '' && sv.durationMinutes) setDuration(sv.durationMinutes)
-                }}>{sv.name}<span className="hint"> · {sv.durationMinutes} мин</span></button>
+                }}><span aria-hidden="true">{serviceEmoji(sv.name)} </span>{sv.name}<span className="hint"> · {sv.durationMinutes} мин</span></button>
               ))}
               {shownServices.length < activeServices.length && (
                 <button type="button" className="chip more" onClick={() => setAllServices(true)}>Ещё {activeServices.length - shownServices.length}…</button>
