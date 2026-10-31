@@ -50,6 +50,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   // Только что отметили неявку или отмену — «Вернуть», как было (сервер проверит версию)
   const [undo, setUndo] = useState<{ label: string; previous: Status } | null>(null)
   const close = () => setEditing(null)
+  // После переноса или передачи — что сделать дальше (напомнить заново)
+  const [moved, setMoved] = useState('')
   const s = statusOf(a)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   const doctor = (me.doctors ?? []).find((d) => d.id === a.doctorId)
@@ -138,10 +140,11 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
               <ContactButtons phone={a.patient?.phone} whatsapp={false} />
             </div>
           )}
+          {moved && <p className="tone-ok" role="status">{moved}</p>}
           {a.status === 'SCHEDULED' && <Remind appointment={a} />}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && (editing === 'move'
-            ? <Reschedule appointment={a} me={me} onDone={close} />
-            : <button type="button" className="btn" onClick={() => setEditing('move')}>{doctors.length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>)}
+            ? <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />
+            : <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{doctors.length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>)}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && <DepositBox appointment={a} />}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && future && a.patient && (
             <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>

@@ -99,7 +99,13 @@ test('отменить запись — только после подтверж
 test('нажать на пустое место у врача — «Новая запись»: найти пациента, записать на это время', async () => {
   backend([])
   let created: unknown
+  let waiting: unknown
   server.use(
+    http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: ['09:00', '10:00'].map((t) => new Date(`${todayIn()}T${t}:00+06:00`).toISOString()) })),
+    http.post('*/api/waitlist', async ({ request }) => {
+      waiting = await request.json()
+      return HttpResponse.json({ id: 1 }, { status: 201 })
+    }),
     http.get('*/api/service-types', () => HttpResponse.json([{ id: 5, name: 'Чистка', durationMinutes: 60, active: true, priceSom: 3000 }])),
     http.post('*/api/patients/search', () => HttpResponse.json([{ id: 7, fullName: 'Нурлан К.', phone: '996700111222' }])),
     http.post('*/api/appointments', async ({ request }) => {
@@ -111,13 +117,15 @@ test('нажать на пустое место у врача — «Новая �
   // В jsdom у колонки нет размеров: нажатие приходится на верх — начало дня клиники, 09:00
   await userEvent.click(await screen.findByRole('group', { name: 'Дастан Т.' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
-  expect(within(panel).getByLabelText('Время')).toHaveValue('09:00')
+  const grid = await within(panel).findByRole('group', { name: 'Свободное время' })
+  expect(within(grid).getByRole('button', { name: '09:00' })).toHaveAttribute('aria-pressed', 'true')
   expect(within(panel).getByLabelText('Врач')).toHaveValue('2')
 
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
   await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
-  await userEvent.selectOptions(within(panel).getByLabelText('Услуга (необязательно)'), 'Чистка')
+  await userEvent.click(within(within(panel).getByRole('group', { name: 'Услуга' })).getByRole('button', { name: /Чистка/ }))
   expect(within(panel).getByLabelText('Длительность')).toHaveValue('60')
+  await userEvent.click(within(panel).getByLabelText(/Хочет раньше/))
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
 
   // После записи справа — карточка нового приёма
@@ -125,6 +133,7 @@ test('нажать на пустое место у врача — «Новая �
   expect(created).toEqual({
     doctorId: 2, patientId: 7, startAt: new Date(`${todayIn()}T09:00:00+06:00`).toISOString(), durationMinutes: 60, serviceTypeId: 5,
   })
+  expect(waiting).toEqual({ patientId: 7, doctorId: 2, durationMinutes: 60 })
 })
 
 test('новый пациент с номером, который уже есть, — «Выбрать его», затем запись', async () => {

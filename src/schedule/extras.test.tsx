@@ -43,7 +43,7 @@ test('перенести на другое время у того же врач�
   const panel = await openCard(/Бакыт М\./)
   await userEvent.click(within(panel).getByRole('button', { name: 'Перенести или передать врачу' }))
   const form = within(panel).getByRole('form', { name: 'Перенос записи' })
-  await userEvent.clear(within(form).getByLabelText('Время'))
+  await userEvent.clear(await within(form).findByLabelText('Время'))
   await userEvent.type(within(form).getByLabelText('Время'), '16:30')
   await userEvent.click(within(form).getByRole('button', { name: 'Перенести' }))
 
@@ -52,13 +52,35 @@ test('перенести на другое время у того же врач�
   expect(await screen.findByRole('button', { name: /16:30/ })).toBeInTheDocument()
 })
 
+test('перенос по сетке свободного времени: старое время приёма не мешает, после — «напомните заново»', async () => {
+  const sent = backend(appointment(10, 1, '15:00', 'Бакыт М.', { version: 2 }))
+  const asked: URLSearchParams[] = []
+  server.use(http.get('*/api/slots', ({ request }) => {
+    asked.push(new URL(request.url).searchParams)
+    return HttpResponse.json({ workingDay: true, starts: ['15:00', '16:30'].map((t) => new Date(`${todayIn()}T${t}:00+06:00`).toISOString()) })
+  }))
+  const panel = await openCard(/Бакыт М\./)
+  await userEvent.click(within(panel).getByRole('button', { name: 'Перенести или передать врачу' }))
+  const form = within(panel).getByRole('form', { name: 'Перенос записи' })
+  const grid = await within(form).findByRole('group', { name: 'Свободное время' })
+  expect(within(grid).getByRole('button', { name: '15:00' })).toHaveAttribute('aria-pressed', 'true')
+  expect(asked[0]!.get('exclude')).toBe('10')
+  await userEvent.click(within(grid).getByRole('button', { name: '16:30' }))
+  expect(within(form).getByText('Приём: 16:30–17:00')).toBeInTheDocument()
+  await userEvent.click(within(form).getByRole('button', { name: 'Перенести' }))
+
+  expect(await within(panel).findByRole('status')).toHaveTextContent('напомните пациенту заново')
+  expect(sent[0]).toMatchObject({ path: 'reschedule', body: { startAt: new Date(`${todayIn()}T16:30:00+06:00`).toISOString() } })
+})
+
 test('передать другому врачу — /transfer с врачом', async () => {
   const sent = backend(appointment(10, 1, '15:00', 'Бакыт М.'))
   const panel = await openCard(/Бакыт М\./)
   await userEvent.click(within(panel).getByRole('button', { name: 'Перенести или передать врачу' }))
   const form = within(panel).getByRole('form', { name: 'Перенос записи' })
-  await userEvent.selectOptions(within(form).getByLabelText('Врач'), 'Дастан Т.')
-  await userEvent.click(within(form).getByRole('button', { name: 'Перенести' }))
+  await userEvent.click(within(within(form).getByRole('group', { name: 'Врач' })).getByRole('button', { name: 'Дастан Т.' }))
+  expect(within(form).getByText(/Новому врачу придёт уведомление/)).toBeInTheDocument()
+  await userEvent.click(within(form).getByRole('button', { name: 'Передать' }))
   await vi.waitFor(() => expect(sent.map((x) => x.path)).toEqual(['transfer']))
   expect(sent[0]!.body).toMatchObject({ doctorId: 2, durationMinutes: 30 })
 })

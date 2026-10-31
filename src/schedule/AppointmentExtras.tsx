@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { reminderText, whatsappUrl } from '../lib/texts'
 import { minutesOf, slotInstant, timeOf, ZONE } from '../lib/time'
+import { TimePicker } from './TimePicker'
 import { useAppointmentAction } from './useAppointmentAction'
 
 type Me = Schemas['BookingViewsMe']
@@ -21,10 +22,11 @@ function errorText(e: ApiError | null): string | null {
 }
 
 /**
- * «Перенести»: день, время, длительность и врач. Тот же врач — /reschedule, другой — /transfer
- * (как «Передать другому врачу» в приложении). Занятое время не пустит база — покажем её ответ.
+ * «Перенести»: день, длительность, врач и время из сетки свободного (старое время приёма в ней
+ * свободно). Тот же врач — /reschedule, другой — /transfer (как «Передать другому врачу»):
+ * новому врачу придёт уведомление, пациенту из бота — сообщение. Занятое время не пустит база.
  */
-export function Reschedule({ appointment: a, me, onDone }: { appointment: Appointment; me: Me; onDone: () => void }) {
+export function Reschedule({ appointment: a, me, onDone }: { appointment: Appointment; me: Me; onDone: (text?: string) => void }) {
   const action = useAppointmentAction(a)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   const minutes = (minutesOf(a.endAt!) - minutesOf(a.startAt!) + 24 * 60) % (24 * 60) || 30
@@ -32,43 +34,52 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
   const [time, setTime] = useState(timeOf(a.startAt!))
   const [duration, setDuration] = useState(minutes)
   const [doctorId, setDoctorId] = useState(a.doctorId!)
+  const [problem, setProblem] = useState('')
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
+    if (!time) {
+      setProblem('Выберите время')
+      return
+    }
+    setProblem('')
     const [h, m] = time.split(':').map(Number)
     const startAt = slotInstant(date, (h ?? 0) * 60 + (m ?? 0))
     const body = { version: a.version ?? 0, startAt, durationMinutes: duration }
-    action.mutate(doctorId === a.doctorId ? { kind: 'reschedule', body } : { kind: 'transfer', body: { ...body, doctorId } }, { onSuccess: onDone })
+    const other = doctors.find((d) => d.id === doctorId)
+    if (doctorId === a.doctorId) action.mutate({ kind: 'reschedule', body }, { onSuccess: () => onDone('Время изменилось — напомните пациенту заново') })
+    else action.mutate({ kind: 'transfer', body: { ...body, doctorId } }, { onSuccess: () => onDone(`Приём передан: ${other?.fullName ?? 'другой врач'}`) })
   }
 
   return (
     <form className="form sub-form" aria-label="Перенос записи" onSubmit={submit}>
+      {doctors.length > 1 && (
+        <div className="field"><span>Врач</span>
+          <div className="segments wrap" role="group" aria-label="Врач">
+            {doctors.map((d) => (
+              <button key={d.id} type="button" aria-pressed={d.id === doctorId} onClick={() => setDoctorId(d.id!)}>
+                {d.fullName}{d.id === a.doctorId ? ' (сейчас)' : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="row">
         <label className="field"><span>День</span>
-          <input type="date" value={date} required onChange={(e) => setDate(e.target.value)} />
+          <input type="date" value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} />
         </label>
-        <label className="field"><span>Время</span>
-          <input type="time" step={900} value={time} required onChange={(e) => setTime(e.target.value)} />
-        </label>
-      </div>
-      <div className="row">
         <label className="field"><span>Длительность</span>
           <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
             {[...new Set([...DURATIONS, duration])].sort((x, y) => x - y).map((d) => <option key={d} value={d}>{d} мин</option>)}
           </select>
         </label>
-        {doctors.length > 1 && (
-          <label className="field"><span>Врач</span>
-            <select value={doctorId} onChange={(e) => setDoctorId(Number(e.target.value))}>
-              {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-            </select>
-          </label>
-        )}
       </div>
-      {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
+      <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} exclude={doctorId === a.doctorId ? a.id : undefined}
+        value={time} onChange={(t) => { setTime(t); setProblem('') }} error={problem || errorText(action.error)} />
+      {doctorId !== a.doctorId && <p className="hint small">Новому врачу придёт уведомление, а пациенту, если он записан через бота, — сообщение с именем врача и временем.</p>}
       <div className="actions">
-        <button type="submit" className="btn primary" disabled={action.isPending}>Перенести</button>
-        <button type="button" className="btn ghost" onClick={onDone}>Отмена</button>
+        <button type="submit" className="btn primary" disabled={action.isPending}>{doctorId === a.doctorId ? 'Перенести' : 'Передать'}</button>
+        <button type="button" className="btn ghost" onClick={() => onDone()}>Отмена</button>
       </div>
     </form>
   )

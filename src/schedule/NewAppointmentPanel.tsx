@@ -5,7 +5,8 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
-import { dayTitle, formatPhone, shortDate, slotInstant } from '../lib/time'
+import { dayTitle, formatPhone, shortDate, slotInstant, todayIn } from '../lib/time'
+import { TimePicker } from './TimePicker'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -16,6 +17,9 @@ const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180, 240]
 /** Слот, на который нажали: врач, день и минуты от полуночи по Бишкеку. */
 /** Куда записать; duration — длительность по умолчанию («Записать снова» — как прошлый приём). */
 export type Slot = { doctorId: number; date: string; minutes: number; duration?: number }
+
+type ContactsNavigator = Navigator & { contacts?: { select: (props: string[]) => Promise<{ name?: string[]; tel?: string[] }[]> } }
+const contactsSupported = () => typeof navigator !== 'undefined' && 'contacts' in navigator
 
 function timeText(minutes: number): string {
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
@@ -51,7 +55,11 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const client = useQueryClient()
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   const [doctorId, setDoctorId] = useState(slot.doctorId)
+  const [date, setDate] = useState(slot.date)
   const [time, setTime] = useState(timeText(slot.minutes))
+  const [birthDate, setBirthDate] = useState('')
+  const [wantsEarlier, setWantsEarlier] = useState(false)
+  const [allServices, setAllServices] = useState(false)
   const [duration, setDuration] = useState(slot.duration ?? 30)
   const [serviceId, setServiceId] = useState<number | ''>('')
   const [comment, setComment] = useState('')
@@ -69,6 +77,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   if (shown !== slot) {
     setShown(slot)
     setDoctorId(slot.doctorId)
+    setDate(slot.date)
     setTime(timeText(slot.minutes))
   }
 
@@ -88,29 +97,35 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
 
   const createPatient = useMutation<Patient, ApiError, { allowDuplicate: boolean }>({
     mutationFn: ({ allowDuplicate }) => unwrap(api.POST('/api/patients', {
-      body: { fullName: name.trim(), phone: `+996${phone.replace(/\D/g, '')}`, allowDuplicate },
+      body: { fullName: name.trim(), phone: `+996${phone.replace(/\D/g, '')}`, allowDuplicate, birthDate: birthDate || undefined },
     })),
   })
 
   const [hh, mm] = time.split(':').map(Number)
-  const startAt = time ? slotInstant(slot.date, (hh ?? 0) * 60 + (mm ?? 0)) : null
+  const startAt = time ? slotInstant(date, (hh ?? 0) * 60 + (mm ?? 0)) : null
 
   const create = useMutation<Appointment, ApiError, Patient>({
-    mutationFn: (p) => {
-      const [h, m] = time.split(':').map(Number)
-      return unwrap(api.POST('/api/appointments', {
+    mutationFn: async (p) => {
+      const created = await unwrap(api.POST('/api/appointments', {
         body: {
           doctorId,
           patientId: p.id!,
-          startAt: slotInstant(slot.date, (h ?? 0) * 60 + (m ?? 0)),
+          startAt: startAt!,
           durationMinutes: duration,
           serviceTypeId: serviceId === '' ? undefined : serviceId,
           comment: comment.trim() || undefined,
         },
       }))
+      // «Хочет раньше»: запись есть, а освободится время раньше — предложим (лист ожидания)
+      if (wantsEarlier) {
+        await unwrap(api.POST('/api/waitlist', { body: { patientId: p.id!, doctorId, durationMinutes: duration } })).catch(() => undefined)
+      }
+      return created
     },
     onSuccess: (a) => {
       void client.invalidateQueries({ queryKey: ['appointments'] })
+      void client.invalidateQueries({ queryKey: ['slots'] })
+      if (wantsEarlier) void client.invalidateQueries({ queryKey: ['waitlist'] })
       onCreated(a)
     },
   })
@@ -119,6 +134,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     e.preventDefault()
     setProblem('')
     create.reset()
+    if (!time) {
+      setProblem('Выберите время')
+      return
+    }
     let who = patient
     if (!who) {
       if (!adding) {
@@ -141,13 +160,48 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     create.mutate(who)
   }
 
+  /**
+   * Записная книжка телефона (Contact Picker API — Chrome на Android): номер ищем среди пациентов;
+   * нашёлся один — он, нет — «Новый пациент» с именем и номером из контакта.
+   */
+  const pickContact = async () => {
+    let contact: { name?: string[]; tel?: string[] } | undefined
+    try {
+      [contact] = await (navigator as ContactsNavigator).contacts!.select(['name', 'tel'])
+    } catch {
+      return
+    }
+    const tel = contact?.tel?.[0]
+    if (!tel) return
+    const contactName = contact?.name?.[0] ?? ''
+    const list = await unwrap(api.POST('/api/patients/search', { body: { query: tel } })).catch(() => [] as Patient[])
+    const same = list.find((p) => p.fullName?.toLowerCase() === contactName.toLowerCase()) ?? (list.length === 1 ? list[0] : undefined)
+    if (same) {
+      setPatient(same)
+      return
+    }
+    setAdding(true)
+    setName(contactName)
+    setPhone(tel.replace(/\D/g, '').slice(-9))
+  }
+
   const fieldError = (field: string) =>
     create.error?.fieldErrors[field] ?? createPatient.error?.fieldErrors[field]
   const error = problem
-    || (create.error && !create.error.fieldErrors.startAt && create.error.message)
+    || (create.error && !create.error.fieldErrors.startAt && (walkIn || create.error.code !== 'time-taken') && create.error.message)
     || (createPatient.error && !Object.keys(createPatient.error.fieldErrors).length && createPatient.error.code !== 'duplicate-patient'
       && createPatient.error.message)
   const busy = create.isPending || createPatient.isPending
+  const durationField = (
+    <label className="field">
+      <span>Длительность</span>
+      <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
+        {[...new Set([...DURATIONS, duration])].sort((x, y) => x - y).map((d) => <option key={d} value={d}>{d} мин</option>)}
+      </select>
+    </label>
+  )
+  const activeServices = services.data ?? []
+  const shownServices = allServices ? activeServices : activeServices.filter((sv, i) => i < 8 || sv.id === serviceId)
 
   return (
     <aside className="panel" aria-label={walkIn ? 'Принять сейчас' : 'Новая запись'}>
@@ -155,30 +209,36 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
         <div>
           <h2>{walkIn ? 'Принять сейчас' : 'Новая запись'}</h2>
           {walkIn && <p className="hint">Пациент пришёл без записи: приём с этой минуты, без напоминаний.</p>}
-          <span className="hint">{dayTitle(slot.date)}</span>
+          <span className="hint">{dayTitle(date)}</span>
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
       <form className="form" onSubmit={(e) => void submit(e)}>
-        <div className="row">
-          <label className="field">
-            <span>Время</span>
-            <input type="time" step={900} value={time} required onChange={(e) => setTime(e.target.value)} />
-          </label>
-          <label className="field">
-            <span>Длительность</span>
-            <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-              {[...new Set([...DURATIONS, duration])].sort((x, y) => x - y).map((d) => <option key={d} value={d}>{d} мин</option>)}
-            </select>
-          </label>
-        </div>
-        {fieldError('startAt') && <p className="error">{fieldError('startAt')}</p>}
+        {walkIn ? (
+          <div className="row">
+            <label className="field"><span>Время</span>
+              <input type="time" step={300} value={time} required onChange={(e) => setTime(e.target.value)} /></label>
+            {durationField}
+          </div>
+        ) : (
+          <div className="row">
+            <label className="field"><span>День</span>
+              <input type="date" value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} /></label>
+            {durationField}
+          </div>
+        )}
         <label className="field">
           <span>Врач</span>
           <select value={doctorId} onChange={(e) => setDoctorId(Number(e.target.value))}>
             {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
           </select>
         </label>
+
+        {!walkIn && (
+          <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} value={time}
+            onChange={setTime} error={fieldError('startAt') ?? (create.error?.code === 'time-taken' ? create.error.message : null)} />
+        )}
+        {walkIn && fieldError('startAt') && <p className="error">{fieldError('startAt')}</p>}
 
         <WaitlistCandidates doctorId={doctorId} duration={duration} startAt={startAt} onBooked={onCreated} />
 
@@ -200,6 +260,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
                   onChange={(e) => { setPhone(e.target.value); setDuplicate(null) }} />
               </div>
               {fieldError('phone') && <p className="error">{fieldError('phone')}</p>}
+              <label className="field"><span>Дата рождения (необязательно)</span>
+                <input type="date" min="1900-01-01" max={todayIn()} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} /></label>
+              {fieldError('birthDate') && <p className="error">{fieldError('birthDate')}</p>}
               {createPatient.error?.code === 'duplicate-patient' && (
                 <div className="duplicate" role="alert">
                   <p>{createPatient.error.message}{duplicate ? `: ${duplicate.fullName}` : ''}</p>
@@ -236,26 +299,37 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
                 if (digits.length >= 9) setPhone(digits.slice(-9))
                 else if (query.trim()) setName(query.trim())
               }}>＋ Новый пациент</button>
+              {contactsSupported() && <button type="button" className="link" onClick={() => void pickContact()}>📇 Из контактов телефона</button>}
             </>
           )}
         </fieldset>
 
+        {activeServices.length > 0 && (
+          <div className="field"><span>Услуга (необязательно) — длительность подставится сама</span>
+            <div className="price-hints" role="group" aria-label="Услуга">
+              {shownServices.map((sv) => (
+                <button key={sv.id} type="button" className="chip" aria-pressed={sv.id === serviceId} onClick={() => {
+                  const next = sv.id === serviceId ? '' : sv.id!
+                  setServiceId(next)
+                  if (next !== '' && sv.durationMinutes) setDuration(sv.durationMinutes)
+                }}>{sv.name}<span className="hint"> · {sv.durationMinutes} мин</span></button>
+              ))}
+              {shownServices.length < activeServices.length && (
+                <button type="button" className="chip more" onClick={() => setAllServices(true)}>Ещё {activeServices.length - shownServices.length}…</button>
+              )}
+            </div>
+          </div>
+        )}
         <label className="field">
-          <span>Услуга (необязательно)</span>
-          <select value={serviceId} onChange={(e) => {
-            const id = e.target.value === '' ? '' : Number(e.target.value)
-            setServiceId(id)
-            const service = services.data?.find((s) => s.id === id)
-            if (service?.durationMinutes) setDuration(service.durationMinutes)
-          }}>
-            <option value="">—</option>
-            {services.data?.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <span>Комментарий (необязательно)</span>
+          <textarea rows={2} maxLength={500} placeholder="Например: болит справа внизу, придёт с ребёнком" value={comment} onChange={(e) => setComment(e.target.value)} />
         </label>
-        <label className="field">
-          <span>Комментарий</span>
-          <textarea rows={2} maxLength={500} value={comment} onChange={(e) => setComment(e.target.value)} />
-        </label>
+        {!walkIn && (
+          <label className="check">
+            <input type="checkbox" checked={wantsEarlier} onChange={(e) => setWantsEarlier(e.target.checked)} />
+            Хочет раньше — в лист ожидания: освободится время, предложим
+          </label>
+        )}
         {error && <p className="error" role="alert">{error}</p>}
         <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Записываем…' : walkIn ? 'Начать приём' : 'Записать'}</button>
       </form>

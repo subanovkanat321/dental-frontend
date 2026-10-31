@@ -181,6 +181,13 @@ button, input, select, textarea { font-family: inherit; }
 .price-hints .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
 .payment-part, .payment-extra-row { display: grid; gap: 8px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--sunken); }
 .pay-form > .link { justify-self: start; }
+.price-hints .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.price-hints .chip.more { color: var(--link); }
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; max-height: 240px; overflow-y: auto; padding: 2px; }
+.slot { padding: 8px 0; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--card); color: var(--text); font: inherit; font-size: .92rem; cursor: pointer; }
+.slot[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); font-weight: 600; }
+.field > .link { justify-self: start; }
+.appt-end { margin: 0; }
 .pay-form, .form { display: grid; gap: 10px; }
 .field { display: grid; gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
 .field > span, .field > legend { font-size: .85rem; color: var(--hint); padding: 0; }
