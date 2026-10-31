@@ -115,3 +115,9 @@ export async function botUsername(): Promise<string | null> {
   const body = await response.json().catch(() => null) as { botUsername?: string | null } | null
   return body?.botUsername ?? null
 }
+
+/** Тарифы, как их видят клиники на /join. /web/tariffs — не часть контракта /api; форма — Tariffs. */
+export async function webTariffs(): Promise<Schemas['Tariffs'] | null> {
+  const response = await globalThis.fetch(new Request(new URL('/web/tariffs', window.location.origin), { credentials: 'same-origin' }))
+  return response.ok ? (await response.json()) as Schemas['Tariffs'] : null
+}

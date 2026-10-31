@@ -1,0 +1,144 @@
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+
+import type { Schemas } from '../api/client'
+import { me, renderApp } from '../test/fixtures'
+import { server } from '../test/server'
+import { byHealth, extendPaid, noShowShare } from './health'
+
+beforeEach(() => {
+  window.location.hash = '/platform'
+  server.use(http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot' })))
+})
+afterEach(() => {
+  window.location.hash = ''
+})
+
+const owner = { ...me, owner: true, platform: true }
+const clinic = (id: number, name: string, extra: Partial<Schemas['PlatformServiceClinicRow']> = {}) => ({
+  id, name, code: `c${id}`, doctors: 2, staff: 1, patients: 30, appointments: 40, done30: 18, noShow30: 2, health: 'OK', billing: { state: 'FREE' }, ...extra,
+}) satisfies Schemas['PlatformServiceClinicRow']
+
+function backend(clinics: Schemas['PlatformServiceClinicRow'][]) {
+  server.use(
+    http.get('*/api/platform/clinics', () => HttpResponse.json(clinics)),
+    http.get('*/api/platform/applications', () => HttpResponse.json([])),
+    http.get('*/api/platform/agreements/statuses', () => HttpResponse.json({ 1: { acceptedVersion: 2 } })),
+    http.get('*/api/platform/pay-requests', () => HttpResponse.json([])),
+    http.get('*/api/platform/clinics/:id/agreement', () => HttpResponse.json({ scans: [] })),
+    http.get('*/api/platform/clinics/:id/plan', () => HttpResponse.json({
+      billing: { state: 'ACTIVE', paidUntil: '2026-11-10', daysLeft: 10 }, doctors: 2, tariff: { name: 'Клиника', monthSom: 3490, yearSom: 34900 }, payments: [],
+    } satisfies Schemas['ClinicPaymentsPlan'])),
+  )
+}
+
+test('здоровье клиник, неявки и продление срока', () => {
+  expect(byHealth([clinic(1, 'Б'), clinic(2, 'А', { health: 'ASLEEP' }), clinic(3, 'В', { health: 'NEW' })]).map((c) => c.name)).toEqual(['А', 'В', 'Б'])
+  expect(noShowShare(2, 18)).toBe(10)
+  expect(noShowShare(0, 0)).toBeNull()
+  expect(extendPaid('2026-11-10', 1, '2026-10-31')).toBe('2026-12-10')
+  expect(extendPaid('2026-01-31', 1, '2026-01-31')).toBe('2026-02-28')
+  expect(extendPaid(undefined, 3, '2026-10-31')).toBe('2027-01-31')
+})
+
+test('владелец: клиники таблицей, карточка — отметить оплату и пригласить админа', async () => {
+  backend([clinic(1, 'Стоматология «Тест»'), clinic(2, 'Улыбка', { health: 'ASLEEP' })])
+  let paid: unknown = null
+  let invited: unknown = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.post('*/api/platform/clinics/2/payments', async ({ request }) => {
+      paid = await request.json()
+      return HttpResponse.json({ billing: { state: 'ACTIVE', paidUntil: '2027-02-10' }, payments: [] })
+    }),
+    http.post('*/api/platform/clinics/2/admin-invite', async ({ request }) => {
+      invited = await request.json()
+      return HttpResponse.json({ token: 'adm1' })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Клиники' })
+  const rows = within(table).getAllByRole('row')
+  expect(rows[1]).toHaveTextContent('Улыбка') // «уснувшая» — первой
+  expect(rows[2]).toHaveTextContent('v2')
+
+  await user.click(within(table).getByRole('button', { name: 'Улыбка' }))
+  const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
+  await user.click(await within(panel).findByRole('button', { name: '3 мес' }))
+  expect(within(panel).getByRole('spinbutton', { name: 'Сумма, сом' })).toHaveValue(10470)
+  expect(within(panel).getByText(/Оплачено будет до 10 февр/)).toBeInTheDocument()
+  await user.click(within(panel).getByRole('button', { name: 'Отметить оплату' }))
+  expect(await within(panel).findByText(/Оплата отмечена/)).toBeInTheDocument()
+  expect(paid).toMatchObject({ months: 3, amountSom: 10470 })
+
+  const form = within(panel).getByRole('form', { name: 'Пригласить админа клиники' })
+  await user.type(within(form).getByRole('textbox', { name: 'Имя админа' }), 'Айгерим')
+  await user.click(within(form).getByRole('button', { name: 'Создать ссылку' }))
+  expect(await within(panel).findByRole('link', { name: 'https://t.me/tish_test_bot?start=staff_adm1' })).toBeInTheDocument()
+  expect(invited).toEqual({ fullName: 'Айгерим', alsoDoctor: false })
+})
+
+test('заявка с /join: одобрить — открывается новая клиника с именем админа', async () => {
+  let clinics = [clinic(1, 'Стоматология «Тест»')]
+  backend(clinics)
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/clinics', () => HttpResponse.json(clinics)),
+    http.get('*/api/platform/applications', () => HttpResponse.json(clinics.length > 1 ? [] : [
+      { id: 5, clinicName: 'Дент Плюс', contactName: 'Бакыт', phone: '996700111222', city: 'Ош', solo: true },
+    ])),
+    http.post('*/api/platform/applications/5/approve', () => {
+      clinics = [...clinics, clinic(9, 'Дент Плюс', { health: 'NEW' })]
+      return HttpResponse.json({ clinic: clinics[1], contactName: 'Бакыт', solo: true })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const card = await screen.findByRole('group', { name: 'Заявка: Дент Плюс' })
+  expect(card).toHaveTextContent('частный врач · Ош')
+  await user.click(within(card).getByRole('button', { name: 'Одобрить и завести клинику' }))
+  const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
+  expect(within(panel).getByRole('heading', { name: 'Дент Плюс' })).toBeInTheDocument()
+  expect(within(panel).getByRole('textbox', { name: 'Имя админа' })).toHaveValue('Бакыт')
+  expect(within(panel).getByRole('checkbox', { name: /частный врач/ })).toBeChecked()
+})
+
+test('менеджер без клиники: только «Платформа», без оплаты и входа в клинику', async () => {
+  backend([clinic(1, 'Стоматология «Тест»')])
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: false, fullName: 'Мира' })))
+  const user = userEvent.setup()
+  renderApp()
+  const nav = await screen.findByRole('navigation', { name: 'Разделы' })
+  expect(within(nav).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual(['Платформа'])
+  expect(screen.queryByRole('tab', { name: 'Настройки' })).not.toBeInTheDocument()
+  await user.click(await screen.findByRole('button', { name: 'Стоматология «Тест»' }))
+  const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
+  expect(within(panel).queryByRole('button', { name: 'Отметить оплату' })).not.toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Войти как админ' })).not.toBeInTheDocument()
+})
+
+test('рассылка клиникам: подтверждение и итог', async () => {
+  backend([clinic(1, 'А'), clinic(2, 'Б')])
+  let sent: unknown = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/broadcasts', () => HttpResponse.json([])),
+    http.post('*/api/platform/broadcasts', async ({ request }) => {
+      sent = await request.json()
+      return HttpResponse.json({ id: 1, recipients: 1, delivered: 1 })
+    }),
+  )
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Сообщение клиникам' }))
+  const form = screen.getByRole('form', { name: 'Сообщение клиникам' })
+  await user.type(within(form).getByRole('textbox'), 'Плановые работы в субботу')
+  await user.click(within(form).getByRole('button', { name: 'Выбрать' }))
+  await user.click(await within(form).findByRole('checkbox', { name: 'Б' }))
+  await user.click(within(form).getByRole('button', { name: 'Отправить админам' }))
+  expect(await within(form).findByText('Отправлено: дошло 1 из 1')).toBeInTheDocument()
+  expect(sent).toEqual({ text: 'Плановые работы в субботу', clinicIds: [2] })
+})

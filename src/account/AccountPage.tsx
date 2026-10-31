@@ -4,23 +4,24 @@ import { useState } from 'react'
 import { api, unwrap, type Schemas } from '../api/client'
 import { AgreementTab } from './AgreementTab'
 import { DataTab } from './DataTab'
+import { DentalNewsTab } from './DentalNewsTab'
 import { PlanTab } from './PlanTab'
 import { PrivacyTab } from './PrivacyTab'
 import { SupportTab } from './SupportTab'
 
 type Me = Schemas['BookingViewsMe']
-type Tab = 'plan' | 'agreement' | 'data' | 'support' | 'privacy'
+type Tab = 'plan' | 'agreement' | 'data' | 'news' | 'support' | 'privacy'
 
 /**
  * «Аккаунт»: отношения клиники с платформой. Админу — тариф и оплата, договор, данные (выгрузка
- * и журнал); всем — техподдержка и конфиденциальность. Права проверяет и сервер.
+ * и журнал); всем — техподдержка, новости стоматологии и конфиденциальность. Права проверяет и сервер.
  */
 export function AccountPage({ me }: { me: Me }) {
   const seesAll = Boolean(me.admin && !me.clinic?.independentDoctors)
   const tabs: [Tab, string][] = [
     ...(me.admin ? [['plan', 'Тариф и оплата'], ['agreement', 'Договор']] as [Tab, string][] : []),
     ...(me.admin || seesAll ? [['data', 'Данные']] as [Tab, string][] : []),
-    ['support', 'Техподдержка'], ['privacy', 'Конфиденциальность'],
+    ['support', 'Техподдержка'], ['news', 'Новости стоматологии'], ['privacy', 'Конфиденциальность'],
   ]
   const [tab, setTab] = useState<Tab>(tabs[0]![0])
   const [panel, setPanel] = useState(false)
@@ -46,6 +47,7 @@ export function AccountPage({ me }: { me: Me }) {
           {tab === 'agreement' && <AgreementTab />}
           {tab === 'data' && <DataTab me={me} seesAll={seesAll} />}
           {tab === 'privacy' && <PrivacyTab me={me} />}
+          {tab === 'news' && <DentalNewsTab me={me} />}
         </section>
       )}
     </div>

@@ -6,20 +6,27 @@ import { Icon } from './Icon'
 
 type Me = Schemas['BookingViewsMe']
 
-const SECTIONS = [
-  { key: 'schedule', title: 'Расписание', ready: true },
-  { key: 'patients', title: 'Пациенты', ready: true },
-  { key: 'cash', title: 'Касса', ready: true },
-  { key: 'stock', title: 'Склад', ready: true },
-  { key: 'team', title: 'Команда', ready: true },
-  { key: 'clinic', title: 'Клиника', ready: true },
-  { key: 'account', title: 'Аккаунт', ready: true },
+/** Разделы клиники — сотрудникам; «Платформа» — команде Tish (владелец и менеджеры). */
+const CLINIC_SECTIONS = [
+  { key: 'schedule', title: 'Расписание' },
+  { key: 'patients', title: 'Пациенты' },
+  { key: 'cash', title: 'Касса' },
+  { key: 'stock', title: 'Склад' },
+  { key: 'team', title: 'Команда' },
+  { key: 'clinic', title: 'Клиника' },
+  { key: 'account', title: 'Аккаунт' },
 ] as const
+const PLATFORM = { key: 'platform', title: 'Платформа' } as const
 
-/** Раскладка CRM: меню слева, рабочая область; пока не перенесённое — в приложении (/). */
+function sectionsOf(me: Me): readonly { key: Page; title: string }[] {
+  return [...(me.doctor ? CLINIC_SECTIONS : []), ...(me.platform ? [PLATFORM] : [])]
+}
+
+/** Раскладка CRM: меню слева (разделы — по ролям), рабочая область. */
 export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
-  const clinic = me.clinic?.brandName || me.clinic?.name || 'Клиника'
-  const role = me.admin ? 'администратор' : me.reception ? 'регистратура' : 'врач'
+  const clinic = me.doctor ? me.clinic?.brandName || me.clinic?.name || 'Клиника' : 'Команда Tish'
+  const role = !me.doctor ? (me.owner ? 'владелец платформы' : 'менеджер платформы')
+    : me.admin ? 'администратор' : me.reception ? 'регистратура' : 'врач'
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -32,12 +39,10 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           <span>{me.fullName ? `${me.fullName} · ` : ''}{role}</span>
         </div>
         <nav aria-label="Разделы">
-          {SECTIONS.map((s) => (
-            <button key={s.key} type="button" className={s.key === page ? 'nav active' : 'nav'} disabled={!s.ready}
-              aria-current={s.key === page ? 'page' : undefined}
-              title={s.ready ? undefined : 'Скоро — пока в приложении'} onClick={() => s.ready && onNavigate(s.key as Page)}>
+          {sectionsOf(me).map((s) => (
+            <button key={s.key} type="button" className={s.key === page ? 'nav active' : 'nav'}
+              aria-current={s.key === page ? 'page' : undefined} onClick={() => onNavigate(s.key)}>
               <Icon name={s.key} /> <span>{s.title}</span>
-              {!s.ready && <span className="soon">скоро</span>}
             </button>
           ))}
         </nav>

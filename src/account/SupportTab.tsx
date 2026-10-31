@@ -3,10 +3,10 @@ import { useCallback, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
-import { formatPhone, shortDate, timeOf } from '../lib/time'
-import { useBlobUrl } from '../lib/useBlobUrl'
-import { resizePhoto } from '../medical/thumb'
+import { formatPhone, shortDate } from '../lib/time'
 import { DeveloperContacts } from './Contacts'
+import { ShotPicker, TicketPanel } from './TicketThread'
+import { ticketForm } from './tickets'
 import { TICKET_KINDS, TICKET_STATUS } from './texts'
 
 type Me = Schemas['BookingViewsMe']
@@ -20,17 +20,6 @@ const FAQ: [string, string][] = [
   ['Пациенту не дошло напоминание в Telegram', 'Пациент мог удалить чат с ботом. Напомните в WhatsApp или позвоните — кнопки в карточке приёма.'],
   ['«Время занято», хотя окно пустое', 'Его только что занял другой пациент или заявка. Обновите расписание — сетка покажет свободное.'],
 ]
-
-/**
- * Тело обращения — полями формы, а не в адресе: текст не попадает в логи сервера и прокси.
- * Скриншот — до 1600 px: текст на экране читается, а файл лёгкий.
- */
-async function ticketForm(fields: Record<string, string>, file: File | null): Promise<FormData> {
-  const form = new FormData()
-  for (const [k, v] of Object.entries(fields)) form.append(k, v)
-  if (file) form.append('file', await resizePhoto(file, 1600, 0.85), 'screenshot.jpg')
-  return form
-}
 
 /**
  * «Техподдержка»: написать команде Tish (вопрос, идея, проблема) и переписка — справа; контакты
@@ -104,16 +93,6 @@ export function SupportTab({ me, clinic, header, onPanel }: {
   )
 }
 
-function ShotPicker({ file, onChange }: { file: File | null; onChange: (f: File | null) => void }) {
-  return (
-    <div className="actions">
-      <label className="btn">{file ? `Скриншот: ${file.name}` : 'Приложить скриншот'}
-        <input type="file" className="sr-only" accept="image/*" aria-label="Скриншот" onChange={(e) => onChange(e.target.files?.[0] ?? null)} /></label>
-      {file && <button type="button" className="btn ghost" onClick={() => onChange(null)}>Убрать</button>}
-    </div>
-  )
-}
-
 function NewTicketPanel({ kind, onClose, onSent }: { kind: string; onClose: () => void; onSent: (id: number) => void }) {
   useClose(onClose)
   const client = useQueryClient()
@@ -147,72 +126,4 @@ function NewTicketPanel({ kind, onClose, onSent }: { kind: string; onClose: () =
       </form>
     </aside>
   )
-}
-
-/** Переписка: сообщения, скриншоты, дописать и «Закрыть — вопрос решён». */
-function TicketPanel({ id, onClose }: { id: number; onClose: () => void }) {
-  useClose(onClose)
-  const client = useQueryClient()
-  const thread = useQuery({ queryKey: ['support-ticket', id], queryFn: () => unwrap(api.GET('/api/support/tickets/{id}', { params: { path: { id } } })) })
-  const [text, setText] = useState('')
-  const [file, setFile] = useState<File | null>(null)
-  const onSaved = (t: Thread) => {
-    client.setQueryData(['support-ticket', id], t)
-    void client.invalidateQueries({ queryKey: ['support-tickets'] })
-  }
-  const send = useMutation<Thread, ApiError | Error>({
-    mutationFn: async () => upload(`/api/support/tickets/${id}/messages`, await ticketForm({ text }, file)),
-    onSuccess: (t) => {
-      setText('')
-      setFile(null)
-      onSaved(t)
-    },
-  })
-  const closeTicket = useMutation<Thread, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/support/tickets/{id}/close', { params: { path: { id } } })),
-    onSuccess: onSaved,
-  })
-  const t = thread.data?.ticket
-  const [status, cls] = TICKET_STATUS[t?.status ?? 'OPEN'] ?? ['', 's-quiet']
-  return (
-    <aside className="panel" aria-label="Обращение">
-      <header className="panel-head">
-        <div>
-          <h2>{TICKET_KINDS[t?.kind ?? 'QUESTION']?.title ?? 'Обращение'}</h2>
-          {t && <span className={`chip small ${cls}`}>{status}</span>}
-        </div>
-        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
-      </header>
-      {thread.isPending && <p className="hint">Загрузка…</p>}
-      {thread.error && <p className="error">{thread.error.message}</p>}
-      <div className="ticket-thread">
-        {(thread.data?.messages ?? []).map((m) => (
-          <div key={m.id} className={m.fromPlatform ? 'ticket-msg from-platform' : 'ticket-msg'}>
-            <p className="hint">{m.author} · {m.createdAt ? `${shortDate(m.createdAt)} ${timeOf(m.createdAt)}` : ''}</p>
-            <p>{m.text}</p>
-            {m.hasImage && <MessageImage id={m.id!} />}
-          </div>
-        ))}
-      </div>
-      {t?.status === 'CLOSED' ? <p className="hint">Обращение закрыто. Новый вопрос — новым обращением.</p> : t && (
-        <form className="form" onSubmit={(e) => { e.preventDefault(); send.mutate() }}>
-          <label className="field"><span>Дописать</span>
-            <textarea rows={3} maxLength={2000} required value={text} onChange={(e) => setText(e.target.value)} /></label>
-          <ShotPicker file={file} onChange={setFile} />
-          {send.error && <p className="error" role="alert">{send.error instanceof ApiError ? send.error.fieldErrors.text ?? send.error.message : 'Это не картинка — приложите скриншот'}</p>}
-          <div className="actions">
-            <button type="submit" className="btn primary" disabled={send.isPending || !text.trim()}>Отправить</button>
-            <button type="button" className="btn" disabled={closeTicket.isPending}
-              onClick={() => window.confirm('Закрыть обращение — вопрос решён?') && closeTicket.mutate()}>Закрыть — вопрос решён</button>
-          </div>
-        </form>
-      )}
-    </aside>
-  )
-}
-
-function MessageImage({ id }: { id: number }) {
-  const img = useBlobUrl(`/api/support/messages/${id}/image`)
-  if (!img || img === 'error') return null
-  return <a href={img.url} target="_blank" rel="noopener noreferrer"><img className="receipt" src={img.url} alt="Скриншот" /></a>
 }

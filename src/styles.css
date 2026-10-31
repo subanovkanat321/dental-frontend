@@ -443,3 +443,8 @@ details.agreement-box { max-height: none; }
   .facts dd { margin-bottom: 6px; }
 }
 .card-block > .btn, .card-block > label.btn, .form.narrow > label.btn { justify-self: start; }
+/* Платформа: редактор договора — панель шире */
+.schedule.with-panel:has(.panel.wide) { grid-template-columns: 1fr 600px; }
+.agreement-edit { font: .88rem/1.5 var(--mono); }
+.checks { display: grid; gap: 4px; max-height: 240px; overflow: auto; padding: 8px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+@media (max-width: 720px) { .schedule.with-panel:has(.panel.wide) { grid-template-columns: 1fr; } }

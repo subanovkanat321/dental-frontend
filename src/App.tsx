@@ -10,6 +10,7 @@ import { telegram } from './lib/telegram'
 import { CashPage } from './cash/CashPage'
 import { ClinicPage } from './clinic/ClinicPage'
 import { PatientsPage } from './patients/PatientsPage'
+import { PlatformPage } from './platform/PlatformPage'
 import { SchedulePage } from './schedule/SchedulePage'
 import { StockPage } from './stock/StockPage'
 import { TeamPage } from './team/TeamPage'
@@ -36,7 +37,7 @@ export function App() {
     }
     return <div className="center error">Нет связи с сервером: {me.error.message}</div>
   }
-  if (!me.data.doctor) {
+  if (!me.data.doctor && !me.data.platform) {
     return (
       <div className="center">
         <h1>Tish CRM — для клиник</h1>
@@ -44,15 +45,18 @@ export function App() {
       </div>
     )
   }
+  // Команда платформы без своей клиники видит только «Платформу»
+  const shown = me.data.doctor ? page : 'platform'
   return (
-    <Shell me={me.data} page={page} onNavigate={go}>
-      {page === 'patients' && <PatientsPage me={me.data} onBook={(p) => { setBooking(p); go('schedule') }} />}
-      {page === 'cash' && <CashPage me={me.data} />}
-      {page === 'stock' && <StockPage me={me.data} />}
-      {page === 'team' && <TeamPage me={me.data} />}
-      {page === 'clinic' && <ClinicPage me={me.data} />}
-      {page === 'account' && <AccountPage me={me.data} />}
-      {page === 'schedule' && <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
+    <Shell me={me.data} page={shown} onNavigate={go}>
+      {shown === 'patients' && <PatientsPage me={me.data} onBook={(p) => { setBooking(p); go('schedule') }} />}
+      {shown === 'cash' && <CashPage me={me.data} />}
+      {shown === 'stock' && <StockPage me={me.data} />}
+      {shown === 'team' && <TeamPage me={me.data} />}
+      {shown === 'clinic' && <ClinicPage me={me.data} />}
+      {shown === 'account' && <AccountPage me={me.data} />}
+      {shown === 'platform' && me.data.platform && <PlatformPage me={me.data} />}
+      {shown === 'schedule' && <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
     </Shell>
   )
 }
