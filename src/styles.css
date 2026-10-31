@@ -210,6 +210,9 @@ button, input, select, textarea { font-family: inherit; }
 .row-link { padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
 .row-link:hover { color: var(--link); }
 .nowrap { white-space: nowrap; }
+/* Суммы в таблицах — вправо, моноширинно: разряды стоят столбиком (FINDING-004) */
+.r { text-align: right; }
+.table td.num { font-size: .93rem; }
 .stats { display: flex; gap: 14px; }
 .panel h3 { margin: 6px 0 4px; font-size: .85rem; color: var(--hint); text-transform: uppercase; letter-spacing: .03em; }
 .visits { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .9rem; }

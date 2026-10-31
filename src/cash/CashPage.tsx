@@ -148,7 +148,7 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
   return (
     <table className="table" aria-label={label}>
       <thead>
-        <tr><th>Пациент</th><th>Приём</th><th>Врач</th><th>Услуга</th><th>{money === 'debtSom' ? 'Долг' : 'Сумма'}</th>{money === 'debtSom' && <th>Доплатит до</th>}</tr>
+        <tr><th>Пациент</th><th>Приём</th><th>Врач</th><th>Услуга</th><th className="r">{money === 'debtSom' ? 'Долг' : 'Сумма'}</th>{money === 'debtSom' && <th>Доплатит до</th>}</tr>
       </thead>
       <tbody>
         {rows.map((d) => (
@@ -157,7 +157,7 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
             <td className="nowrap">{d.startAt ? shortDate(d.startAt, true) : ''}</td>
             <td>{d.doctor}</td>
             <td className="hint">{d.service ?? '—'}</td>
-            <td className="nowrap strong">{somText(d[money] ?? 0)}</td>
+            <td className="nowrap strong num r">{somText(d[money] ?? 0)}</td>
             {money === 'debtSom' && (
               <td className={`nowrap${d.dueOn && d.dueOn < today ? ' tone-bad' : ''}`}>
                 {d.dueOn ? shortDate(`${d.dueOn}T12:00:00Z`) : '—'}
