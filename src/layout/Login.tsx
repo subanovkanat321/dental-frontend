@@ -54,7 +54,7 @@ export function Login() {
     <div className="center login">
       <img src={`${import.meta.env.BASE_URL}tooth.svg`} alt="" width={64} height={64} />
       <h1>Вход для клиники</h1>
-      <p className="hint">Врачи, регистратура и администраторы. Входите тем же Telegram, что привязан в «Команда → Врачи».</p>
+      <p className="hint">Врачи, регистратура и администраторы. Входите тем же Telegram, что привязан в «Настройки → Врачи».</p>
       {bot.isPending && <p className="hint">Загрузка…</p>}
       {bot.isSuccess && !bot.data && <p className="error">Вход сейчас недоступен: бот не настроен или не отвечает. Обновите страницу через минуту.</p>}
       <div ref={box} className="login-widget" aria-label="Войти через Telegram" />

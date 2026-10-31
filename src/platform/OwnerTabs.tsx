@@ -148,7 +148,7 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
       <section className="schedule-main">
         {header}
         <section className="card-block">
-          <p className="hint">Неопубликованную версию видите только вы. Опубликованную видят админы клиник и подписывают её в «Аккаунт → Договор»;
+          <p className="hint">Неопубликованную версию видите только вы. Опубликованную видят админы клиник и подписывают её в «Настройки → Договор»;
             менять её нельзя — выпустите новую. Перед публикацией — показать юристу.</p>
           {list.error && <p className="error">{list.error.message}</p>}
           {versions.length > 0 && (
