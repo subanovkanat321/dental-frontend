@@ -11,7 +11,8 @@ afterEach(() => {
 
 test('адреса кнопок бота → раздел CRM', () => {
   expect(readDeepLink('?day=tomorrow&v=abc', '2026-11-01')).toEqual({ page: 'schedule', date: '2026-11-02' })
-  expect(readDeepLink('?day=tomorrow&doctor=2', '2026-11-01')).toEqual({ page: 'schedule', date: '2026-11-02' })
+  expect(readDeepLink('?day=tomorrow&doctor=2', '2026-11-01')).toEqual({ page: 'schedule', date: '2026-11-02', doctorId: 2 })
+  expect(readDeepLink('?doctor=2', '2026-11-01')).toEqual({ page: 'schedule', doctorId: 2, date: undefined })
   expect(readDeepLink('?appointment=15&v=x')).toEqual({ page: 'schedule', appointmentId: 15 })
   expect(readDeepLink('?supply=7')).toEqual({ page: 'stock', supplyId: 7 })
   expect(readDeepLink('?screen=support&ticket=4')).toEqual({ page: 'account', tab: 'support', ticketId: 4 })
@@ -33,4 +34,16 @@ test('«Открыть приём» из уведомления: день при
   expect(within(panel).getByRole('button', { name: 'Бакыт М. ›' })).toBeInTheDocument()
   expect(window.location.search).toBe('')
   expect(window.location.hash).toBe('#/schedule')
+})
+
+test('«Приёмы коллеги» (?doctor=2): расписание сразу этого врача', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+  )
+  window.history.replaceState(null, '', '/?doctor=2')
+  renderApp()
+  expect(await screen.findByRole('group', { name: 'Дастан Т.' })).toBeInTheDocument()
+  expect(screen.queryByRole('group', { name: 'Айгерим Садыкова' })).not.toBeInTheDocument()
+  expect(window.location.search).toBe('')
 })

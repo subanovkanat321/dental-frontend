@@ -64,7 +64,7 @@ test('перенос по сетке свободного времени: ста
   const form = within(panel).getByRole('form', { name: 'Перенос записи' })
   const grid = await within(form).findByRole('group', { name: 'Свободное время' })
   expect(within(grid).getByRole('button', { name: '15:00' })).toHaveAttribute('aria-pressed', 'true')
-  expect(asked[0]!.get('exclude')).toBe('10')
+  expect(asked.some((q) => q.get('exclude') === '10')).toBe(true)
   await userEvent.click(within(grid).getByRole('button', { name: '16:30' }))
   expect(within(form).getByText('Приём: 16:30–17:00')).toBeInTheDocument()
   await userEvent.click(within(form).getByRole('button', { name: 'Перенести' }))

@@ -196,6 +196,10 @@ button, input, select, textarea { font-family: inherit; }
 .patient-expenses { display: grid; gap: 6px; }
 .bars.months .bar { flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 2px; text-align: center; }
 .bars.months { height: 110px; }
+.grid-off { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, var(--sunken) 0 6px, transparent 6px 12px); pointer-events: none; display: flex; align-items: flex-start; justify-content: center; }
+.grid-off span { margin-top: 12px; padding: 2px 8px; border-radius: var(--r-sm); background: var(--card); color: var(--hint); font-size: .85rem; }
+.grid-break { position: absolute; left: 4px; right: 4px; border-radius: var(--r-sm); background: var(--sunken); border: 1px dashed var(--line-strong); color: var(--hint); font-size: .8rem; overflow: hidden; padding: 1px 6px; pointer-events: none; }
+.appt-note { display: block; font-size: .78rem; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pay-form, .form { display: grid; gap: 10px; }
 .field { display: grid; gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
 .field > span, .field > legend { font-size: .85rem; color: var(--hint); padding: 0; }

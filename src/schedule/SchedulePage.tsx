@@ -65,7 +65,9 @@ function useNarrow(): boolean {
  * «Расписание»: день всех врачей колонками, как настольный календарь. Нажать на приём — карточка
  * справа с действиями; на пустое место — «Новая запись» на это время. Расписание остаётся на экране.
  */
-export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate, initialDate, openAppointment, onOpenPatient }: {
+export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
+  /** Кнопка бота «приёмы коллеги» (?doctor=ID): сразу этот врач. */
+  initialDoctor?: number
   me: Me
   /** Имя пациента в карточке приёма → его карточка в «Пациентах». */
   onOpenPatient?: (patientId: number) => void
@@ -98,6 +100,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   // Чьё расписание: все врачи колонками или один. Выбор запоминается на устройстве (только id врача —
   // не личные данные). По умолчанию на телефоне — свой врач, на компьютере — все
   const [view, setViewState] = useState<number | 'all'>(() => {
+    if (initialDoctor && doctors.some((d) => d.id === initialDoctor)) return initialDoctor
     try {
       const saved = localStorage.getItem('crm.schedule.view')
       if (saved === 'all') return 'all'
@@ -127,6 +130,16 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       queryKey: ['appointments', date, d.id],
       queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: { date, doctorId: d.id! } } })),
       refetchInterval: REFRESH_MS,
+    })),
+  })
+
+  // Часы врача, перерывы и выходной — тот же ответ, что у «Дня» на телефоне (кэш общий)
+  const slots = useQueries({
+    queries: doctors.map((d) => ({
+      queryKey: ['slots', date, d.id],
+      queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId: d.id! } } })),
+      staleTime: 60_000,
+      enabled: !dayList,
     })),
   })
 
@@ -260,7 +273,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId: dayList.id!, date: walkIn ? today : date, minutes }, walkIn })} />
         ) : doctors.length === 0 ? (
-          <p className="hint">В клинике пока нет врачей — добавьте их в приложении: «Меню → Врачи».</p>
+          <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => onNavigate?.('team')}>добавьте их в «Команде»</button>.</p>
         ) : (
           <div className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(180px, 1fr))`, '--cols': shown.length } as CSSProperties}>
             <div className="grid-corner" />
@@ -279,11 +292,26 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             </div>
             {shown.map((d) => {
               const q = days[doctors.indexOf(d)]
+              const sl = slots[doctors.indexOf(d)]?.data
+              const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
+              const workFrom = sl?.workStart ? minutesOfTime(sl.workStart.slice(0, 5)) : null
+              const workTo = sl?.workEnd ? minutesOfTime(sl.workEnd.slice(0, 5)) : null
               return (
                 <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
                   title="Нажмите на свободное время — новая запись" onClick={pick(d.id!)}>
                   {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
                   {nowTop != null && <div className="grid-past" style={{ height: nowTop }} />}
+                  {sl && !sl.workingDay && (
+                    <div className="grid-off" style={{ top: 0, height }}><span>{sl.dayOff ? `${sl.dayOff.emoji ?? ''} ${sl.dayOff.title ?? ''}` : 'Выходной'}</span></div>
+                  )}
+                  {sl?.workingDay && workFrom != null && workFrom > from && <div className="grid-off" style={{ top: 0, height: y(workFrom) }} />}
+                  {sl?.workingDay && workTo != null && workTo < to && <div className="grid-off" style={{ top: y(workTo), height: height - y(workTo) }} />}
+                  {(sl?.breaks ?? []).map((b) => (
+                    <div key={b.start} className="grid-break" style={{ top: y(minutesOf(b.start!)), height: Math.max(y(minutesOf(b.end!)) - y(minutesOf(b.start!)), 14) }}
+                      title={`${timeOf(b.start!)}–${timeOf(b.end!)} ${b.title ?? ''}`}>
+                      <span>{b.emoji} {b.title}</span>
+                    </div>
+                  ))}
                   {nowTop != null && <div className="grid-now" style={{ top: nowTop }} />}
                   {q?.isPending && <div className="hint grid-loading">Загрузка…</div>}
                   {q?.error && <div className="error grid-loading">{q.error.message}</div>}
@@ -300,6 +328,10 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                         <span className="appt-name">{a.patient?.fullName}</span>
                         {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
                         {(short || h > 56) && <span className="appt-state"><span className="dot" /> {s.label}</span>}
+                        {h > 80 && a.comment && <span className="appt-note">{a.comment}</span>}
+                        {h > 80 && a.depositStatus && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
+                          <span className="appt-note">Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>
+                        )}
                       </button>
                     )
                   })}

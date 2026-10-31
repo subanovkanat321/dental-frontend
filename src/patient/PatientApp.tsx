@@ -6,6 +6,7 @@ import { groupByCategory } from '../clinic/services'
 import { formatPhone, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
 import { haptic, openLink, telegram } from '../lib/telegram'
 import { useBlobUrl } from '../lib/useBlobUrl'
+import { startSearch } from '../lib/deepLink'
 import { BackButton, MainButton } from './MainButton'
 import { bookingDays, breakNote, initials, normalizeLang, priceText, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
 import './patient.css'
@@ -35,7 +36,7 @@ const dateOf = (instant: string) => new Intl.DateTimeFormat('en-CA', { timeZone:
  */
 function firstScreen(me: Me): Screen {
   if (me.clinicChoices?.length) return { name: 'clinics', back: null }
-  const params = new URLSearchParams(window.location.search)
+  const params = new URLSearchParams(startSearch)
   const doctors = me.doctors ?? []
   const again = doctors.find((d) => d.id === Number(params.get('doctor')))
   if (me.booking && params.get('screen') === 'reschedule') return { name: 'reschedule' }

@@ -97,7 +97,7 @@ export function App() {
       {shown === 'platform' && me.data.platform && <PlatformPage me={me.data} initialTab={link?.page === 'platform' ? link.tab : undefined} />}
       {shown === 'schedule' && (link?.appointmentId || link?.bookPatientId
         ? <LinkedSchedule key={link.appointmentId ?? link.bookPatientId} link={link} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
-        : <SchedulePage me={me.data} initialDate={link?.date} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} onOpenPatient={openPatient} />)}
+        : <SchedulePage me={me.data} initialDate={link?.date} initialDoctor={link?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} onOpenPatient={openPatient} />)}
       </Suspense>
     </Shell>
   )
