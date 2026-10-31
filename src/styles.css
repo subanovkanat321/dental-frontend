@@ -272,6 +272,8 @@ button, input, select, textarea { font-family: inherit; }
   .table { display: block; overflow-x: auto; white-space: nowrap; }
   .block-head .segments { min-width: 0; width: 100%; }
   .card-block { padding: 12px; }
+  /* «Сегодня» на телефоне — одной строкой с прокруткой вбок, а не четыре строки над расписанием (FINDING-006) */
+  .today-strip { flex-wrap: nowrap; overflow-x: auto; margin-right: -10px; padding-right: 10px; scrollbar-width: none; }
   .total { font-size: 1.6rem; }
 }
 
