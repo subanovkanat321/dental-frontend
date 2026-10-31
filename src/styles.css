@@ -169,3 +169,38 @@ h2 { font-size: 1.15rem; margin: 0; }
 .empty p { margin: 0; }
 .stock-big { font-size: 1.15rem; font-weight: 800; }
 .danger-zone { padding-top: 10px; border-top: 1px solid var(--separator); }
+
+/*
+ * Телефон и узкое окно: меню — панель внизу (как в приложениях), карточка справа — на весь
+ * экран поверх (✕ закрывает), таблицы и колонки врачей прокручиваются вбок.
+ */
+@media (max-width: 760px) {
+  :root { font-size: 14px; }
+  .shell { grid-template-columns: 1fr; }
+  .sidebar {
+    position: fixed; top: auto; bottom: 0; left: 0; right: 0; z-index: 30; height: auto;
+    flex-direction: row; padding: 4px 6px calc(4px + env(safe-area-inset-bottom));
+    border-right: 0; border-top: 1px solid var(--separator);
+  }
+  .sidebar .brand, .sidebar .clinic, .sidebar .link-out, .nav .soon { display: none; }
+  .sidebar nav { display: flex; width: 100%; }
+  .nav { flex: 1; flex-direction: column; gap: 2px; padding: 6px 2px; font-size: .75rem; text-align: center; justify-content: center; }
+  .nav span[aria-hidden] { font-size: 1.25rem; }
+  .workspace { padding: 10px 10px calc(72px + env(safe-area-inset-bottom)); }
+
+  .schedule.with-panel { grid-template-columns: 1fr; }
+  .panel {
+    position: fixed; inset: 0; z-index: 40; max-height: none; border-radius: 0;
+    align-self: stretch; justify-self: stretch; align-content: start;
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); overflow: auto;
+  }
+  .toolbar { gap: 8px; }
+  .toolbar h1 { font-size: 1.1rem; flex-basis: 100%; }
+  .search { min-width: 0; flex: 1; }
+  .push { margin-left: 0; }
+  .grid { grid-template-columns: 44px repeat(var(--cols, 1), minmax(150px, 1fr)) !important; }
+  .table { display: block; overflow-x: auto; white-space: nowrap; }
+  .block-head .segments { min-width: 0; width: 100%; }
+  .card-block { padding: 12px; }
+  .total { font-size: 1.6rem; }
+}

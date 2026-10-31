@@ -1,5 +1,5 @@
 import { useQueries } from '@tanstack/react-query'
-import { useCallback, useEffect, useState, type MouseEvent } from 'react'
+import { useCallback, useEffect, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { addDays, dayTitle, minutesOf, minutesOfTime, timeOf, todayIn } from '../lib/time'
@@ -99,7 +99,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown }: {
         {doctors.length === 0 ? (
           <p className="hint">В клинике пока нет врачей — добавьте их в приложении: «Меню → Врачи».</p>
         ) : (
-          <div className="grid" style={{ gridTemplateColumns: `56px repeat(${doctors.length}, minmax(180px, 1fr))` }}>
+          <div className="grid" style={{ gridTemplateColumns: `56px repeat(${doctors.length}, minmax(180px, 1fr))`, '--cols': doctors.length } as CSSProperties}>
             <div className="grid-corner" />
             {doctors.map((d) => (
               <div key={d.id} className="grid-head" title={d.fullName}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</div>
