@@ -35,9 +35,11 @@ function useDebounced(value: string, ms = 300): string {
  * минутам). Пациента — найти по имени или номеру, или завести нового (+996). Занятое время
  * не пустит база (appointment_no_overlap → 409): показываем её ответ.
  */
-export function NewAppointmentPanel({ slot, me, initialPatient = null, onClose, onCreated }: {
+export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = false, onClose, onCreated }: {
   slot: Slot
   me: Me
+  /** «Принять сейчас (без записи)»: пациент пришёл сам — приём с этой минуты, без напоминаний. */
+  walkIn?: boolean
   /** Пациент уже выбран — «Записать» из его карточки в «Пациентах». */
   initialPatient?: Patient | null
   onClose: () => void
@@ -147,10 +149,11 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, onClose, 
   const busy = create.isPending || createPatient.isPending
 
   return (
-    <aside className="panel" aria-label="Новая запись">
+    <aside className="panel" aria-label={walkIn ? 'Принять сейчас' : 'Новая запись'}>
       <header className="panel-head">
         <div>
-          <h2>Новая запись</h2>
+          <h2>{walkIn ? 'Принять сейчас' : 'Новая запись'}</h2>
+          {walkIn && <p className="hint">Пациент пришёл без записи: приём с этой минуты, без напоминаний.</p>}
           <span className="hint">{dayTitle(slot.date)}</span>
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
@@ -253,7 +256,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, onClose, 
           <textarea rows={2} maxLength={500} value={comment} onChange={(e) => setComment(e.target.value)} />
         </label>
         {error && <p className="error" role="alert">{error}</p>}
-        <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Записываем…' : 'Записать'}</button>
+        <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Записываем…' : walkIn ? 'Начать приём' : 'Записать'}</button>
       </form>
     </aside>
   )

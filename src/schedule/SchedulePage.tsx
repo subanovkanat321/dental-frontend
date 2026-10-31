@@ -5,6 +5,7 @@ import { api, unwrap, type Schemas } from '../api/client'
 import type { Page } from '../lib/route'
 import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { AppointmentPanel } from './AppointmentPanel'
+import { DayList } from './DayList'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 
@@ -40,7 +41,25 @@ const PAD = 10
 /** Расписание само перечитывается раз в минуту: кто-то записал с телефона — видно без F5. */
 const REFRESH_MS = 60_000
 
-type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView'] } | null
+type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView']; walkIn?: boolean } | null
+
+/** Узкий экран (телефон): там «День» списком, а не сетка колонок. */
+function isNarrow(): boolean {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
+}
+
+/** Ширина экрана меняется (повернули телефон, сузили окно) — перерисовать. */
+function useNarrow(): boolean {
+  const [narrow, setNarrow] = useState(isNarrow)
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const query = window.matchMedia('(max-width: 760px)')
+    const onChange = () => setNarrow(query.matches)
+    query.addEventListener?.('change', onChange)
+    return () => query.removeEventListener?.('change', onChange)
+  }, [])
+  return narrow
+}
 
 /**
  * «Расписание»: день всех врачей колонками, как настольный календарь. Нажать на приём — карточка
@@ -84,8 +103,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     } catch {
       // приватный режим
     }
-    const narrow = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
-    return narrow && me.doctorId != null && doctors.some((d) => d.id === me.doctorId) ? me.doctorId : 'all'
+    // На телефоне — один врач списком, как в прежнем приложении: свой, а у админа — первый
+    if (!isNarrow()) return 'all'
+    return doctors.find((d) => d.id === me.doctorId)?.id ?? doctors[0]?.id ?? 'all'
   })
   const setView = (next: number | 'all') => {
     setViewState(next)
@@ -96,6 +116,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     }
   }
   const shown = view === 'all' ? doctors : doctors.filter((d) => d.id === view)
+  const narrow = useNarrow()
+  // Один врач на телефоне — «День» списком (лента дней, свободные окна, «Принять сейчас»)
+  const dayList = narrow && view !== 'all' && shown.length === 1 ? shown[0]! : null
 
   const days = useQueries({
     queries: doctors.map((d) => ({
@@ -155,6 +178,11 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     const minutes = Math.min(Math.max(from + Math.floor(y / PX / 15) * 15, from), to - 15)
     setSide({ kind: 'new', slot: { doctorId, date, minutes } })
   }
+  /** «Принять сейчас (без записи)» — к выбранному врачу или к себе; приём с этой минуты. */
+  const walkInHere = () => {
+    const first = (view === 'all' ? null : doctors.find((d) => d.id === view)) ?? doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
+    if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date: today, minutes: minutesOf(new Date().toISOString()) }, walkIn: true })
+  }
   const newHere = () => {
     const first = (view === 'all' ? null : doctors.find((d) => d.id === view)) ?? doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
     if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date, minutes: minutesOfTime(me.clinic?.workStart ?? '09:00') } })
@@ -178,6 +206,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           {date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
           <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
           {doctors.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
+          {doctors.length > 0 && date === today && !dayList && (me.admin || me.reception || me.doctorId != null) && (
+            <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
+          )}
         </header>
 
         <div className="today-strip" role="group" aria-label="Требует внимания">
@@ -222,7 +253,11 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
 
-        {doctors.length === 0 ? (
+        {dayList ? (
+          <DayList me={me} doctorId={dayList.id!} date={date} onDate={setDate} selectedId={selected?.id}
+            onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
+            onNew={(minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId: dayList.id!, date: walkIn ? today : date, minutes }, walkIn })} />
+        ) : doctors.length === 0 ? (
           <p className="hint">В клинике пока нет врачей — добавьте их в приложении: «Меню → Врачи».</p>
         ) : (
           <div className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(180px, 1fr))`, '--cols': shown.length } as CSSProperties}>
@@ -274,7 +309,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       </section>
       {selected && <AppointmentPanel appointment={selected} me={me} onClose={close} />}
       {side?.kind === 'new' && (
-        <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} onClose={close}
+        <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} walkIn={side.walkIn} onClose={close}
           onCreated={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} />
       )}
     </div>
