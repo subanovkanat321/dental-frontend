@@ -74,6 +74,28 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   }, [bookPatient, onBookingShown])
   const close = useCallback(() => setSide(null), [])
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
+  // Чьё расписание: все врачи колонками или один. Выбор запоминается на устройстве (только id врача —
+  // не личные данные). По умолчанию на телефоне — свой врач, на компьютере — все
+  const [view, setViewState] = useState<number | 'all'>(() => {
+    try {
+      const saved = localStorage.getItem('crm.schedule.view')
+      if (saved === 'all') return 'all'
+      if (saved && doctors.some((d) => String(d.id) === saved)) return Number(saved)
+    } catch {
+      // приватный режим
+    }
+    const narrow = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
+    return narrow && me.doctorId != null && doctors.some((d) => d.id === me.doctorId) ? me.doctorId : 'all'
+  })
+  const setView = (next: number | 'all') => {
+    setViewState(next)
+    try {
+      localStorage.setItem('crm.schedule.view', String(next))
+    } catch {
+      // приватный режим
+    }
+  }
+  const shown = view === 'all' ? doctors : doctors.filter((d) => d.id === view)
 
   const days = useQueries({
     queries: doctors.map((d) => ({
@@ -134,7 +156,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     setSide({ kind: 'new', slot: { doctorId, date, minutes } })
   }
   const newHere = () => {
-    const first = doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
+    const first = (view === 'all' ? null : doctors.find((d) => d.id === view)) ?? doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
     if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date, minutes: minutesOfTime(me.clinic?.workStart ?? '09:00') } })
   }
 
@@ -189,12 +211,23 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           )}
         </div>
 
+        {doctors.length > 1 && (
+          <div className="segments tabs doctor-switch" role="group" aria-label="Чьё расписание">
+            <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все врачи</button>
+            {doctors.map((d) => (
+              <button key={d.id} type="button" aria-pressed={view === d.id} onClick={() => setView(d.id!)}>
+                {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
+              </button>
+            ))}
+          </div>
+        )}
+
         {doctors.length === 0 ? (
           <p className="hint">В клинике пока нет врачей — добавьте их в приложении: «Меню → Врачи».</p>
         ) : (
-          <div className="grid" style={{ gridTemplateColumns: `56px repeat(${doctors.length}, minmax(180px, 1fr))`, '--cols': doctors.length } as CSSProperties}>
+          <div className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(180px, 1fr))`, '--cols': shown.length } as CSSProperties}>
             <div className="grid-corner" />
-            {doctors.map((d) => (
+            {shown.map((d) => (
               <div key={d.id} className="grid-head" title={d.fullName}>
                 <span className="avatar" style={{ background: AVATARS[doctors.indexOf(d) % AVATARS.length] }} aria-hidden="true">{initials(d.fullName)}</span>
                 <span className="grid-head-name">{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</span>
@@ -207,8 +240,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               ))}
               {nowTop != null && <span className="now-label num" style={{ top: nowTop }}>{timeOf(new Date().toISOString())}</span>}
             </div>
-            {doctors.map((d, i) => {
-              const q = days[i]
+            {shown.map((d) => {
+              const q = days[doctors.indexOf(d)]
               return (
                 <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
                   title="Нажмите на свободное время — новая запись" onClick={pick(d.id!)}>

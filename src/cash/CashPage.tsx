@@ -1,13 +1,33 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { periodOf, shortDate, somText, todayIn } from '../lib/time'
+import { periodOf, shortDate, somText, todayIn, ZONE } from '../lib/time'
 import { AppointmentPanel } from '../schedule/AppointmentPanel'
 import { ExpensesTab, ReportTab, StatsTab } from './MoreTabs'
+import { PaymentsTable } from './PaymentsTable'
+import { SortTh } from '../layout/SortTh'
+import { useSort } from '../lib/useSort'
 
 type Me = Schemas['BookingViewsMe']
 type Debt = Schemas['PaymentQueryDebt']
+
+/** Месяцы периода 'YYYY-MM' — не больше 12 (отчёт сервер отдаёт помесячно). */
+function monthsOf(from: string, to: string): string[] {
+  const out: string[] = []
+  let m = from.slice(0, 7)
+  while (m <= to.slice(0, 7) && out.length < 12) {
+    out.push(m)
+    const [y, mm] = m.split('-').map(Number)
+    m = mm === 12 ? `${y! + 1}-01` : `${y}-${String(mm! + 1).padStart(2, '0')}`
+  }
+  return out
+}
+
+/** День приёма по Бишкеку. */
+function dayOf(instant: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
+}
 
 const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
 
@@ -53,6 +73,19 @@ export function CashPage({ me, initialTab }: { me: Me; initialTab?: string }) {
     queryFn: () => unwrap(api.GET('/api/appointments/to-pay')),
     enabled: toPayShown,
   })
+
+  // Приёмы с оплатой за период — новые сверху. Отчёт сервер отдаёт по месяцам: берём месяцы периода
+  const months = monthsOf(range.from, range.to)
+  const reports = useQueries({
+    queries: months.map((month) => ({
+      queryKey: ['report', month, doctorId],
+      queryFn: () => unwrap(api.GET('/api/appointments/report', { params: { query: { month, ...doctorQuery } } })),
+      enabled: money && tab === 'money',
+    })),
+  })
+  const payments = reports.flatMap((q) => q.data ?? [])
+    .filter((x) => x.startAt && dayOf(x.startAt) >= range.from && dayOf(x.startAt) <= range.to)
+    .filter((x) => x.paidSom != null || (x.debtSom ?? 0) > 0)
 
   const r = revenue.data
   const max = Math.max(1, ...(r?.days ?? []).map((d) => d.totalSom ?? 0))
@@ -135,6 +168,14 @@ export function CashPage({ me, initialTab }: { me: Me; initialTab?: string }) {
 
         {money && (
           <section className="card-block">
+            <h2>Последние оплаты</h2>
+            {reports.some((q) => q.isPending) ? <p className="hint">Загрузка…</p>
+              : <PaymentsTable rows={payments} label="Последние оплаты" onOpen={setOpened} active={opened} />}
+          </section>
+        )}
+
+        {money && (
+          <section className="card-block">
             <h2>Долги пациентов {debts.data?.length ? `· ${somText(debts.data.reduce((s, d) => s + (d.debtSom ?? 0), 0))}` : ''}</h2>
             <DebtTable rows={debts.data} pending={debts.isPending} error={debts.error?.message} empty="Долгов нет"
               money="debtSom" onOpen={setOpened} active={opened} label="Долги пациентов" />
@@ -149,6 +190,9 @@ export function CashPage({ me, initialTab }: { me: Me; initialTab?: string }) {
   )
 }
 
+type DebtKey = 'patient' | 'when' | 'doctor' | 'service' | 'sum' | 'due'
+
+/** Долги и «К оплате» таблицей: новые сверху, сортировка по любой колонке, поиск по пациенту. */
 function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }: {
   rows?: Debt[]
   pending: boolean
@@ -159,32 +203,54 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
   active: number | null
   label: string
 }) {
+  const [query, setQuery] = useState('')
+  const value = useCallback((d: Debt, key: DebtKey) => ({
+    patient: d.patient, when: d.startAt, doctor: d.doctor, service: d.service, sum: d[money], due: d.dueOn,
+  })[key], [money])
+  const text = query.trim().toLowerCase()
+  const filtered = (rows ?? []).filter((d) => !text || (d.patient ?? '').toLowerCase().includes(text))
+  const { sorted, sort, toggle } = useSort<Debt, DebtKey>(filtered, value, { key: 'when', desc: true })
   if (pending) return <p className="hint">Загрузка…</p>
   if (error) return <p className="error">{error}</p>
   if (!rows?.length) return <p className="hint">{empty}</p>
   const today = todayIn()
   return (
-    <table className="table" aria-label={label}>
-      <thead>
-        <tr><th>Пациент</th><th>Приём</th><th>Врач</th><th>Услуга</th><th className="r">{money === 'debtSom' ? 'Долг' : 'Сумма'}</th>{money === 'debtSom' && <th>Доплатит до</th>}</tr>
-      </thead>
-      <tbody>
-        {rows.map((d) => (
-          <tr key={d.appointmentId} className={d.appointmentId === active ? 'active' : undefined}>
-            <td><button type="button" className="row-link" onClick={() => onOpen(d.appointmentId!)}>{d.patient}</button></td>
-            <td className="nowrap">{d.startAt ? shortDate(d.startAt, true) : ''}</td>
-            <td>{d.doctor}</td>
-            <td className="hint">{d.service ?? '—'}</td>
-            <td className="nowrap strong num r">{somText(d[money] ?? 0)}</td>
-            {money === 'debtSom' && (
-              <td className={`nowrap${d.dueOn && d.dueOn < today ? ' tone-bad' : ''}`}>
-                {d.dueOn ? shortDate(`${d.dueOn}T12:00:00Z`) : '—'}
-              </td>
-            )}
+    <>
+      {rows.length > 5 && (
+        <div className="filters">
+          <input type="search" aria-label={`Пациент: ${label}`} placeholder="Пациент" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </div>
+      )}
+      <table className="table" aria-label={label}>
+        <thead>
+          <tr>
+            <SortTh k="patient" title="Пациент" sort={sort} onSort={toggle} />
+            <SortTh k="when" title="Приём" sort={sort} onSort={toggle} desc />
+            <SortTh k="doctor" title="Врач" sort={sort} onSort={toggle} />
+            <SortTh k="service" title="Услуга" sort={sort} onSort={toggle} />
+            <SortTh k="sum" title={money === 'debtSom' ? 'Долг' : 'Сумма'} sort={sort} onSort={toggle} desc right />
+            {money === 'debtSom' && <SortTh k="due" title="Доплатит до" sort={sort} onSort={toggle} />}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {sorted.map((d) => (
+            <tr key={d.appointmentId} className={d.appointmentId === active ? 'active' : undefined}>
+              <td><button type="button" className="row-link" onClick={() => onOpen(d.appointmentId!)}>{d.patient}</button></td>
+              <td className="nowrap">{d.startAt ? shortDate(d.startAt, true) : ''}</td>
+              <td>{d.doctor}</td>
+              <td className="hint">{d.service ?? '—'}</td>
+              <td className="nowrap strong num r">{somText(d[money] ?? 0)}</td>
+              {money === 'debtSom' && (
+                <td className={`nowrap${d.dueOn && d.dueOn < today ? ' tone-bad' : ''}`}>
+                  {d.dueOn ? shortDate(`${d.dueOn}T12:00:00Z`) : '—'}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {!sorted.length && <p className="hint">По поиску никого.</p>}
+    </>
   )
 }
 

@@ -60,7 +60,7 @@ test('расходы: список по статьям, прибыль, доба
   await user.selectOptions(within(form).getByRole('combobox', { name: 'Статья' }), '*')
   await user.type(within(form).getByRole('textbox', { name: 'Своя статья' }), 'Реклама')
   await user.click(within(form).getByRole('button', { name: 'Добавить' }))
-  expect(await screen.findByText('Реклама')).toBeInTheDocument()
+  expect(await screen.findByRole('cell', { name: 'Реклама' })).toBeInTheDocument()
   expect(posted[0]).toMatchObject({ amountSom: 2000, category: 'Реклама', spentOn: todayIn() })
 
   await user.click(screen.getByRole('button', { name: 'Удалить расход: Аренда 30000' }))

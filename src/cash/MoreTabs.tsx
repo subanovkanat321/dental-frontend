@@ -1,10 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState, type FormEvent } from 'react'
+import { useCallback, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SortTh } from '../layout/SortTh'
+import { useSort } from '../lib/useSort'
+import { PaymentsTable } from './PaymentsTable'
 import { shortDate, somText, todayIn, weekLabel } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
+type Expense = Schemas['ExpensesExpense']
+type ExpenseKey = 'when' | 'category' | 'sum'
 
 /** 'YYYY-MM' → с 1-го по последнее число месяца. */
 function monthRange(month: string): { from: string; to: string } {
@@ -62,6 +67,10 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
     mutationFn: (id) => unwrap(api.DELETE('/api/expenses/{id}', { params: { path: { id } } })),
     onSuccess: refresh,
   })
+  const [category, setCategory] = useState('')
+  const expenseValue = useCallback((x: Expense, key: ExpenseKey) => ({ when: x.spentOn, category: x.category, sum: x.amountSom })[key], [])
+  const visible = (list.data ?? []).filter((x) => !category || x.category === category)
+  const { sorted, sort, toggle } = useSort<Expense, ExpenseKey>(visible, expenseValue, { key: 'when', desc: true })
   const total = (list.data ?? []).reduce((s, x) => s + (x.amountSom ?? 0), 0)
   const byCategory = Object.entries((list.data ?? []).reduce<Record<string, number>>((acc, x) => ({ ...acc, [x.category ?? '—']: (acc[x.category ?? '—'] ?? 0) + (x.amountSom ?? 0) }), {}))
     .sort((a, b) => b[1] - a[1])
@@ -110,11 +119,24 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
       </section>
 
       <section className="card-block">
+        {byCategory.length > 1 && (
+          <div className="filters">
+            <select aria-label="Статья расходов" value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="">Все статьи</option>
+              {byCategory.map(([c]) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        )}
         {list.isPending ? <p className="hint">Загрузка…</p> : list.data?.length ? (
           <table className="table" aria-label="Расходы">
-            <thead><tr><th>Дата</th><th>Статья</th><th>Комментарий</th>{seesAll && (me.doctors?.length ?? 0) > 1 && <th>Врач</th>}<th className="r">Сумма</th><th /></tr></thead>
+            <thead><tr>
+              <SortTh k="when" title="Дата" sort={sort} onSort={toggle} desc />
+              <SortTh k="category" title="Статья" sort={sort} onSort={toggle} />
+              <th>Комментарий</th>{seesAll && (me.doctors?.length ?? 0) > 1 && <th>Врач</th>}
+              <SortTh k="sum" title="Сумма" sort={sort} onSort={toggle} desc right /><th />
+            </tr></thead>
             <tbody>
-              {list.data.map((x) => (
+              {sorted.map((x) => (
                 <tr key={x.id}>
                   <td className="nowrap">{x.spentOn ? shortDate(`${x.spentOn}T12:00:00Z`) : ''}</td>
                   <td>{x.category}</td>
@@ -214,8 +236,6 @@ export function ReportTab({ doctorId }: { doctorId: number | null }) {
   const send = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/report', { body: { month, ...scope(doctorId) } })),
   })
-  const paid = (rows.data ?? []).reduce((s, x) => s + (x.paidSom ?? 0), 0)
-  const debt = (rows.data ?? []).reduce((s, x) => s + (x.debtSom ?? 0), 0)
   return (
     <section className="card-block">
       <div className="block-head">
@@ -227,26 +247,9 @@ export function ReportTab({ doctorId }: { doctorId: number | null }) {
       </div>
       {send.isSuccess && <p className="tone-ok" role="status">Отчёт отправлен в Telegram</p>}
       {send.error && <p className="error" role="alert">{errorText(send.error)}</p>}
-      <p className="hint">Оплачено: <b className="num">{somText(paid)}</b>{debt ? <> · долги: <b className="num">{somText(debt)}</b></> : null} · приёмов: {rows.data?.length ?? 0}</p>
       {rows.error && <p className="error">{rows.error.message}</p>}
-      {rows.data?.length ? (
-        <table className="table" aria-label="Отчёт за месяц">
-          <thead><tr><th>Когда</th><th>Пациент</th><th>Врач</th><th>Услуга</th><th>Статус</th><th className="r">Оплачено</th><th className="r">Долг</th></tr></thead>
-          <tbody>
-            {rows.data.map((x) => (
-              <tr key={x.id}>
-                <td className="nowrap num">{x.startAt ? shortDate(x.startAt, true) : ''}</td>
-                <td>{x.patient}</td>
-                <td>{x.doctor}</td>
-                <td className="hint">{x.service ?? '—'}</td>
-                <td className="hint">{x.status}</td>
-                <td className="r num nowrap">{x.paidSom != null ? somText(x.paidSom) : '—'}</td>
-                <td className="r num nowrap">{x.debtSom ? somText(x.debtSom) : ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : rows.isSuccess ? <p className="hint">Приёмов за {monthTitle(month)} нет.</p> : null}
+      {rows.data?.length ? <PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus />
+        : rows.isSuccess ? <p className="hint">Приёмов за {monthTitle(month)} нет.</p> : null}
     </section>
   )
 }
