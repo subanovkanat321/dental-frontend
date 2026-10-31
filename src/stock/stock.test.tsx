@@ -1,0 +1,118 @@
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+
+import type { Schemas } from '../api/client'
+import { me, renderApp } from '../test/fixtures'
+import { server } from '../test/server'
+
+type Supply = Schemas['SupplyView']
+
+beforeEach(() => {
+  window.location.hash = '/stock'
+})
+afterEach(() => {
+  window.location.hash = ''
+})
+
+/** Фальшивый склад: движения меняют остаток, как на сервере. */
+function backend(list: Supply[], who: Schemas['BookingViewsMe'] = me) {
+  const stock = list.map((s) => ({ ...s }))
+  const moves: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(who)),
+    http.get('*/api/supplies', () => HttpResponse.json(stock)),
+    http.get('*/api/supplies/:id/history', () => HttpResponse.json([
+      { delta: 10, reason: 'DELIVERY', doctorName: 'Айгерим Садыкова', createdAt: '2026-10-20T05:00:00Z', costSom: 2500 },
+    ])),
+    http.post('*/api/supplies/:id/move', async ({ request, params }) => {
+      const body = (await request.json()) as { delta: number }
+      moves.push(body)
+      const s = stock.find((x) => x.id === Number(params.id))!
+      s.quantity = s.quantity! + body.delta
+      s.low = s.quantity <= s.minQuantity!
+      return HttpResponse.json(s)
+    }),
+  )
+  return moves
+}
+
+const glove: Supply = { id: 1, name: 'Перчатки', unit: 'уп', quantity: 12, minQuantity: 3, low: false }
+const anesthetic: Supply = { id: 2, name: 'Анестетик', unit: 'карп.', quantity: 2, minQuantity: 5, low: true }
+const cotton: Supply = { id: 3, name: 'Валики', unit: 'уп', quantity: 0, minQuantity: 1, low: true, orderedAt: '2026-10-30T05:00:00Z', orderedBy: 'регистратура' }
+
+test('заканчивается — сверху; фильтр «Только заканчивается» и поиск', async () => {
+  backend([glove, anesthetic, cotton])
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Материалы' })
+  const names = () => within(table).getAllByRole('row').slice(1).map((r) => within(r).getAllByRole('cell')[0]!.textContent)
+  expect(names()).toEqual(['Анестетик', 'Валики', 'Перчатки'])
+  expect(table).toHaveTextContent('❌ закончился')
+  expect(table).toHaveTextContent('✅ заказан')
+  expect(table).toHaveTextContent('нужно заказать')
+
+  await userEvent.click(screen.getByLabelText(/Только заканчивается \(2\)/))
+  expect(names()).toEqual(['Анестетик', 'Валики'])
+  await userEvent.type(screen.getByLabelText('Поиск материала'), 'вал')
+  expect(names()).toEqual(['Валики'])
+})
+
+test('карточка материала: пришла поставка с ценой — остаток растёт, «мало» уходит; история с ценой за штуку', async () => {
+  const moves = backend([anesthetic])
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
+  const panel = screen.getByRole('complementary', { name: 'Материал' })
+  expect(panel).toHaveTextContent('Осталось: 2 карп. — мало')
+  expect(await within(panel).findByText(/по 250 сом\/карп\./)).toBeInTheDocument()
+
+  const amount = within(panel).getByLabelText('Сколько, карп.')
+  await userEvent.clear(amount)
+  await userEvent.type(amount, '10')
+  await userEvent.type(within(panel).getByLabelText(/Сколько заплатили/), '3000')
+  await userEvent.click(within(panel).getByRole('button', { name: '➕ Пришла поставка' }))
+
+  expect(await within(panel).findByRole('status')).toHaveTextContent(/Принято 10 карп\. · 💸 3\s000 сом/)
+  expect(await within(panel).findByText('Осталось: 12 карп.')).toBeInTheDocument()
+  expect(moves).toEqual([{ delta: 10, reason: 'DELIVERY', costSom: 3000 }])
+})
+
+test('пустой склад — «Добавить типовой набор»', async () => {
+  let added = false
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/supplies', () => HttpResponse.json(added ? [glove] : [])),
+    http.post('*/api/supplies/samples', () => {
+      added = true
+      return HttpResponse.json({ added: 1 })
+    }),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Добавить типовой набор' }))
+  expect(await screen.findByRole('button', { name: 'Перчатки' })).toBeInTheDocument()
+})
+
+test('новый материал: «свой склад у каждого врача» — админ выбирает, чей', async () => {
+  let created: unknown
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, clinic: { ...me.clinic, separateSupplies: true } })),
+    http.get('*/api/supplies', () => HttpResponse.json([])),
+    http.post('*/api/supplies', async ({ request }) => {
+      created = await request.json()
+      return HttpResponse.json({ id: 9, name: 'Композит', unit: 'шпр', quantity: 4, minQuantity: 2, low: false, doctorId: 2, doctorName: 'Дастан Т.' },
+        { status: 201 })
+    }),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '＋ Материал' }))
+  const panel = screen.getByRole('complementary', { name: 'Новый материал' })
+  await userEvent.type(within(panel).getByLabelText('Название'), 'Композит')
+  await userEvent.clear(within(panel).getByLabelText('Единица'))
+  await userEvent.type(within(panel).getByLabelText('Единица'), 'шпр')
+  await userEvent.type(within(panel).getByLabelText('Сколько есть'), '4')
+  await userEvent.clear(within(panel).getByLabelText('Минимум'))
+  await userEvent.type(within(panel).getByLabelText('Минимум'), '2')
+  await userEvent.selectOptions(within(panel).getByLabelText('Чей склад'), 'Дастан Т.')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Добавить' }))
+
+  await vi.waitFor(() => expect(created).toEqual({ name: 'Композит', unit: 'шпр', quantity: 4, minQuantity: 2, doctorId: 2 }))
+})

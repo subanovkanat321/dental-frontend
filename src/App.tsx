@@ -8,6 +8,7 @@ import { usePage } from './lib/route'
 import { CashPage } from './cash/CashPage'
 import { PatientsPage } from './patients/PatientsPage'
 import { SchedulePage } from './schedule/SchedulePage'
+import { StockPage } from './stock/StockPage'
 
 /**
  * CRM для компьютера (ADR 0001 бэкенда): тот же вход, что у сайта, — cookie-сессия после
@@ -42,7 +43,9 @@ export function App() {
         ? <PatientsPage me={me.data} onBook={(p) => { setBooking(p); go('schedule') }} />
         : page === 'cash'
           ? <CashPage me={me.data} />
-          : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} />}
+          : page === 'stock'
+            ? <StockPage me={me.data} />
+            : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} />}
     </Shell>
   )
 }

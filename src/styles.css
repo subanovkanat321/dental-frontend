@@ -161,3 +161,11 @@ h2 { font-size: 1.15rem; margin: 0; }
 .bars { display: flex; align-items: flex-end; gap: 3px; height: 90px; padding-top: 6px; }
 .bar { flex: 1; height: 100%; display: flex; align-items: flex-end; }
 .bar span { width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
+
+/* Склад */
+.toolbar .check { white-space: nowrap; }
+.toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text); }
+.empty { display: grid; gap: 10px; justify-items: start; padding: 20px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.empty p { margin: 0; }
+.stock-big { font-size: 1.15rem; font-weight: 800; }
+.danger-zone { padding-top: 10px; border-top: 1px solid var(--separator); }
