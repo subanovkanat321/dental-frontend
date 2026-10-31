@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
+import { AdminNotices } from './AdminNotices'
 import { Icon } from './Icon'
 
 type Me = Schemas['BookingViewsMe']
@@ -48,7 +49,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </nav>
         <a className="nav link-out" href="/"><Icon name="external" /> <span>Открыть приложение</span></a>
       </aside>
-      <main className="workspace">{children}</main>
+      <main className="workspace"><AdminNotices me={me} onNavigate={onNavigate} />{children}</main>
     </div>
   )
 }

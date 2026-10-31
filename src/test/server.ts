@@ -14,5 +14,9 @@ export const server = setupServer(
   http.get('*/api/waitlist', () => HttpResponse.json([])),
   http.get('*/api/appointments/:id/note', () => HttpResponse.json({ note: '' })),
   http.get('*/api/patients/:id/anamnesis', () => HttpResponse.json({ items: [] })),
+  // Напоминания админу (AdminNotices): по умолчанию всё в порядке — напоминаний нет
+  http.get('*/api/clinic/billing', () => HttpResponse.json({ state: 'FREE' })),
+  http.get('*/api/clinic/agreement', () => HttpResponse.json({ scans: [] })),
+  http.get('*/api/clinic', () => HttpResponse.json({ legalName: 'ИП Тест', address: 'Бишкек' })),
   http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»' })),
 )
