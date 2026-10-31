@@ -13,7 +13,16 @@ import type { Page } from './route'
  * Адрес запуска, каким он пришёл: App чистит его после разбора, а самозаписи пациента нужен
  * свой ?doctor=… («Записаться снова» к тому же врачу).
  */
-export const startSearch = typeof window === 'undefined' ? '' : window.location.search
+let launched: string | null = null
+
+/** App запоминает адрес запуска перед тем, как почистить его. */
+export function rememberLaunch(search: string): void {
+  launched = search
+}
+
+export function launchSearch(): string {
+  return launched ?? window.location.search
+}
 
 export type DeepLink = {
   page: Page

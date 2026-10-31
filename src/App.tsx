@@ -6,7 +6,7 @@ import { lazy, Suspense, useState } from 'react'
 import type { Schemas } from './api/client'
 import { Login } from './layout/Login'
 import { Shell } from './layout/Shell'
-import { readDeepLink, type DeepLink } from './lib/deepLink'
+import { readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
 import { usePage, type Page } from './lib/route'
 import { telegram } from './lib/telegram'
 
@@ -32,6 +32,7 @@ export function App() {
   // Кнопка бота (?appointment=…, ?screen=cash…): куда открыть — один раз; адрес чистим, чтобы
   // обновление страницы не открывало то же снова. Раздел — в #, как при обычном переходе
   const [link, setLink] = useState<DeepLink | null>(() => {
+    rememberLaunch(window.location.search)
     const found = readDeepLink(window.location.search)
     if (found) window.history.replaceState(null, '', `${window.location.pathname}#/${found.page}`)
     return found
