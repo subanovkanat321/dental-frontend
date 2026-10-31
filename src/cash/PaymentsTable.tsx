@@ -9,6 +9,10 @@ type Row = Schemas['AppointmentServiceReportRow']
 type Key = 'when' | 'patient' | 'doctor' | 'service' | 'status' | 'paid' | 'debt'
 
 const METHOD_TEXT: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
+const STATUS_TEXT: Record<string, [string, string]> = {
+  DONE: ['Состоялся', 's-done'], NO_SHOW: ['Неявка', 's-bad'], CANCELLED: ['Отменён', 's-quiet'],
+  SCHEDULED: ['Записан', 's-ok'], REQUESTED: ['Заявка', 's-request'],
+}
 
 /**
  * Приёмы с оплатами таблицей: по умолчанию новые сверху; сортировка по любой колонке, поиск по
@@ -25,11 +29,14 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false 
   const [method, setMethod] = useState('')
   const [doctor, setDoctor] = useState('')
   const [debtOnly, setDebtOnly] = useState(false)
+  const [status, setStatus] = useState('')
+  const statuses = [...new Set(rows.map((r) => r.status).filter((x): x is string => Boolean(x)))]
   const doctors = [...new Set(rows.map((r) => r.doctor).filter((d): d is string => Boolean(d)))].sort((a, b) => a.localeCompare(b, 'ru'))
   const methods = [...new Set(rows.map((r) => r.method).filter((m): m is string => Boolean(m)))]
   const text = query.trim().toLowerCase()
   const filtered = rows.filter((r) => (!text || `${r.patient ?? ''} ${r.service ?? ''}`.toLowerCase().includes(text))
-    && (!method || r.method === method) && (!doctor || r.doctor === doctor) && (!debtOnly || (r.debtSom ?? 0) > 0))
+    && (!method || r.method === method) && (!doctor || r.doctor === doctor) && (!debtOnly || (r.debtSom ?? 0) > 0)
+    && (!status || r.status === status))
   const value = useCallback((r: Row, key: Key) => ({
     when: r.startAt, patient: r.patient, doctor: r.doctor, service: r.service, status: r.status, paid: r.paidSom, debt: r.debtSom,
   })[key], [])
@@ -53,9 +60,19 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false 
             {doctors.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         )}
+        {withStatus && statuses.length > 1 && (
+          <select aria-label="Статус" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">Любой статус</option>
+            {statuses.map((x) => <option key={x} value={x}>{STATUS_TEXT[x]?.[0] ?? x}</option>)}
+          </select>
+        )}
         <label className="check"><input type="checkbox" checked={debtOnly} onChange={(e) => setDebtOnly(e.target.checked)} /> Только с долгом</label>
       </div>
-      <p className="hint">Оплачено: <b className="num">{somText(paid)}</b>{debt ? <> · долги: <b className="num">{somText(debt)}</b></> : null} · приёмов: {filtered.length}</p>
+      <p className="hint">Оплачено: <b className="num">{somText(paid)}</b>{debt ? <> · долги: <b className="num">{somText(debt)}</b></> : null} · приёмов: {filtered.length}
+        {withStatus && <> · состоялось: {filtered.filter((r) => r.status === 'DONE').length}
+          {filtered.some((r) => r.status === 'NO_SHOW') && <span className="tone-bad"> · неявок: {filtered.filter((r) => r.status === 'NO_SHOW').length}</span>}</>}
+        {Object.entries(filtered.reduce<Record<string, number>>((acc, r) => (r.method && r.paidSom ? { ...acc, [r.method]: (acc[r.method] ?? 0) + r.paidSom } : acc), {}))
+          .map(([m, sum]) => ` · ${(METHOD_TEXT[m] ?? m).toLowerCase()}: ${somText(sum)}`).join('')}</p>
       {sorted.length ? (
         <table className="table" aria-label={label}>
           <thead>
@@ -76,7 +93,7 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false 
                 <td>{onOpen ? <button type="button" className="row-link" onClick={() => onOpen(r.id!)}>{r.patient}</button> : r.patient}</td>
                 <td>{r.doctor}</td>
                 <td className="hint">{r.service ?? '—'}</td>
-                {withStatus && <td className="hint">{r.status}</td>}
+                {withStatus && <td><span className={`chip small ${STATUS_TEXT[r.status ?? '']?.[1] ?? 's-quiet'}`}>{STATUS_TEXT[r.status ?? '']?.[0] ?? r.status}</span></td>}
                 <td className="r num nowrap">{r.paidSom != null ? somText(r.paidSom) : '—'}{r.method && <span className="hint"> · {(METHOD_TEXT[r.method] ?? r.method).toLowerCase()}</span>}</td>
                 <td className={`r num nowrap${r.debtSom ? ' tone-bad' : ''}`}>{r.debtSom ? somText(r.debtSom) : ''}</td>
               </tr>

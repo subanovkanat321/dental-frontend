@@ -116,3 +116,23 @@ test('новый материал: «свой склад у каждого вр�
 
   await vi.waitFor(() => expect(created).toEqual({ name: 'Композит', unit: 'шпр', quantity: 4, minQuantity: 2, doctorId: 2 }))
 })
+
+test('«−1» в списке списывает одну штуку; «Расходы на склад» — покупки месяца и по материалам', async () => {
+  const moves = backend([glove])
+  server.use(http.get('*/api/supplies/spending', () => HttpResponse.json({
+    purchasedSom: 5000, usedSom: 1200, revenueSom: 50000, unpricedDeliveries: 1, unpricedUsed: 0,
+    months: [{ month: '2026-09-01', purchasedSom: 3000 }, { month: '2026-10-01', purchasedSom: 5000 }],
+    items: [{ supplyId: 1, name: 'Перчатки', unit: 'уп', bought: 10, boughtSom: 5000, used: 2, usedSom: 1000 }],
+  } satisfies Schemas['SpendingView'])))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Списать 1: Перчатки' }))
+  expect(await screen.findByText('11 уп')).toBeInTheDocument()
+  expect(moves).toEqual([{ delta: -1 }])
+  expect(screen.getByText(/добавить типовой набор/)).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Расходы на склад' }))
+  const block = await screen.findByRole('region', { name: 'Расходы на склад' })
+  expect(await within(block).findByText(/10% выручки/)).toBeInTheDocument()
+  expect(block).toHaveTextContent('Поставок без суммы: 1')
+  expect(within(within(block).getByRole('table', { name: 'Расходы по материалам' })).getByText('Перчатки')).toBeInTheDocument()
+})

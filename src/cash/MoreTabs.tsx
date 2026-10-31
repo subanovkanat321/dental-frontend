@@ -227,7 +227,7 @@ export function StatsTab({ doctorId }: { doctorId: number | null }) {
  * «Отчёт за месяц»: все приёмы с оплатой и долгами — таблицей; «Отправить в бот» — файл
  * придёт в Telegram (как в приложении), удобно переслать бухгалтеру.
  */
-export function ReportTab({ doctorId }: { doctorId: number | null }) {
+export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | null; onOpen?: (id: number) => void; active?: number | null }) {
   const [month, setMonth] = useState(todayIn().slice(0, 7))
   const rows = useQuery({
     queryKey: ['report', month, doctorId],
@@ -248,7 +248,7 @@ export function ReportTab({ doctorId }: { doctorId: number | null }) {
       {send.isSuccess && <p className="tone-ok" role="status">Отчёт отправлен в Telegram</p>}
       {send.error && <p className="error" role="alert">{errorText(send.error)}</p>}
       {rows.error && <p className="error">{rows.error.message}</p>}
-      {rows.data?.length ? <PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus />
+      {rows.data?.length ? <PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus onOpen={onOpen} active={active} />
         : rows.isSuccess ? <p className="hint">Приёмов за {monthTitle(month)} нет.</p> : null}
     </section>
   )

@@ -112,7 +112,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
 
         {tab === 'expenses' && <ExpensesTab me={me} doctorId={doctorId} seesAll={seesAll} />}
         {tab === 'stats' && <StatsTab doctorId={doctorId} />}
-        {tab === 'report' && <ReportTab doctorId={doctorId} />}
+        {tab === 'report' && <ReportTab doctorId={doctorId} onOpen={setOpened} active={opened} />}
         {tab === 'money' && <>
 
         {toPayShown && (
@@ -177,6 +177,14 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
         {money && (
           <section className="card-block">
             <h2>Долги пациентов {debts.data?.length ? `· ${somText(debts.data.reduce((s, d) => s + (d.debtSom ?? 0), 0))}` : ''}</h2>
+            {debts.data?.length ? (
+              <p className="hint">
+                Пациентов: {new Set(debts.data.map((d) => d.patientId ?? d.patient)).size}
+                {debts.data.some((d) => d.dueOn && d.dueOn < todayIn()) && (
+                  <span className="tone-bad"> · просрочено: {debts.data.filter((d) => d.dueOn && d.dueOn < todayIn()).length}</span>
+                )}
+              </p>
+            ) : null}
             <DebtTable rows={debts.data} pending={debts.isPending} error={debts.error?.message} empty="Долгов нет"
               money="debtSom" onOpen={setOpened} active={opened} label="Долги пациентов" />
           </section>

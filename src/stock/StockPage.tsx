@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
-import { api, unwrap, type Schemas } from '../api/client'
+import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
+import { SpendingBlock } from './Spending'
 import { NewSupplyPanel, SupplyPanel } from './SupplyPanel'
 
 type Me = Schemas['BookingViewsMe']
@@ -21,7 +22,10 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   const separate = Boolean(me.clinic?.separateSupplies)
   const choosesDoctor = separate && (me.admin || me.reception || me.doctorId == null)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
-  const [doctorId, setDoctorId] = useState<number | null>(null)
+  // Чей склад: весь, только общий или врача
+  const [owner, setOwner] = useState<'' | 'shared' | number>('')
+  const doctorId = typeof owner === 'number' ? owner : null
+  const [spending, setSpending] = useState(false)
   const [query, setQuery] = useState('')
   const [lowOnly, setLowOnly] = useState(false)
   const [side, setSide] = useState<Side>(initialSupply ? { kind: 'supply', id: initialSupply } : null)
@@ -31,6 +35,11 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
     queryKey: ['supplies', doctorId],
     queryFn: () => unwrap(api.GET('/api/supplies', { params: { query: doctorId == null ? {} : { doctorId } } })),
   })
+  // Быстрое «−1» прямо в списке: взяли одну карпулу — не открывая карточку
+  const take = useMutation<Supply, ApiError, Supply>({
+    mutationFn: (s) => unwrap(api.POST('/api/supplies/{id}/move', { params: { path: { id: s.id! } }, body: { delta: -1 } })),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['supplies'] }),
+  })
   const samples = useMutation({
     mutationFn: () => unwrap(api.POST('/api/supplies/samples')),
     onSuccess: () => client.invalidateQueries({ queryKey: ['supplies'] }),
@@ -39,7 +48,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   const all = supplies.data ?? []
   const text = query.trim().toLowerCase()
   const shown = all
-    .filter((s) => (!lowOnly || s.low) && (!text || s.name?.toLowerCase().includes(text)))
+    .filter((s) => (!lowOnly || s.low) && (!text || s.name?.toLowerCase().includes(text)) && (owner !== 'shared' || s.doctorId == null))
     // Заканчивается — сверху: это то, что надо заказать сегодня
     .sort((a, b) => Number(b.low) - Number(a.low) || (a.name ?? '').localeCompare(b.name ?? '', 'ru'))
   const low = all.filter((s) => s.low).length
@@ -53,8 +62,12 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
           <input type="search" className="search" aria-label="Поиск материала" placeholder="Название" value={query}
             onChange={(e) => setQuery(e.target.value)} />
           {choosesDoctor && doctors.length > 0 && (
-            <select aria-label="Чей склад" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
+            <select aria-label="Чей склад" value={owner} onChange={(e) => {
+              const v = e.target.value
+              setOwner(v === '' || v === 'shared' ? v : Number(v))
+            }}>
               <option value="">Весь склад</option>
+              <option value="shared">Общий</option>
               {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
             </select>
           )}
@@ -62,8 +75,10 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
             <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} />
             Только заканчивается{low ? ` (${low})` : ''}
           </label>
-          <button type="button" className="btn primary push" onClick={() => setSide({ kind: 'new' })}>＋ Материал</button>
+          {me.admin && <button type="button" className="btn push" aria-pressed={spending} onClick={() => setSpending(!spending)}>Расходы на склад</button>}
+          <button type="button" className={me.admin ? 'btn primary' : 'btn primary push'} onClick={() => setSide({ kind: 'new' })}>＋ Материал</button>
         </header>
+        {spending && <SpendingBlock />}
 
         {supplies.isPending && <p className="hint">Загрузка…</p>}
         {supplies.error && <p className="error">{supplies.error.message}</p>}
@@ -74,7 +89,12 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
             {samples.error && <p className="error">{samples.error.message}</p>}
           </div>
         )}
+        {supplies.isSuccess && all.length > 0 && all.length < 10 && (
+          <p className="hint">Материалов пока мало — <button type="button" className="link" disabled={samples.isPending} onClick={() => samples.mutate()}>добавить типовой набор</button> (повторы не появятся).</p>
+        )}
         {all.length > 0 && shown.length === 0 && <p className="hint">Ничего не нашли.</p>}
+        {samples.data && <p className="tone-ok" role="status">{samples.data.added ? `Добавлено материалов: ${samples.data.added}` : 'Типовой набор уже на складе'}</p>}
+        {take.error && <p className="error" role="alert">{take.error.fieldErrors.delta ?? take.error.message}</p>}
         {shown.length > 0 && (
           <table className="table" aria-label="Материалы">
             <thead>
@@ -84,6 +104,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
                 <th>Минимум</th>
                 {separate && <th>Чей</th>}
                 <th>Заказ</th>
+                <th><span className="sr-only">Списать</span></th>
               </tr>
             </thead>
             <tbody>
@@ -96,6 +117,12 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
                   <td className="hint nowrap">{s.minQuantity} {s.unit}</td>
                   {separate && <td className="hint">{s.doctorName ?? 'общий'}</td>}
                   <td className="hint">{s.orderedAt ? `заказан ${shortDate(s.orderedAt)}${s.orderedBy ? ` · ${s.orderedBy}` : ''}` : s.low ? 'нужно заказать' : ''}</td>
+                  <td className="r">
+                    {(s.quantity ?? 0) > 0 && (
+                      <button type="button" className="btn small" aria-label={`Списать 1: ${s.name}`} disabled={take.isPending}
+                        onClick={() => take.mutate(s)}>−1</button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

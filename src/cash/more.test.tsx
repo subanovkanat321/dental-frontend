@@ -89,7 +89,8 @@ test('отчёт: строки месяца, итоги и отправка в �
   let sent: unknown = null
   server.use(
     http.get('*/api/appointments/report', () => HttpResponse.json([
-      { id: 1, startAt: `${todayIn()}T04:00:00Z`, patient: 'Бакыт М.', doctor: 'Айгерим Садыкова', status: 'Состоялся', paidSom: 3000, debtSom: 1000 },
+      { id: 1, startAt: `${todayIn()}T04:00:00Z`, patient: 'Бакыт М.', doctor: 'Айгерим Садыкова', status: 'DONE', paidSom: 3000, debtSom: 1000 },
+      { id: 2, startAt: `${todayIn()}T05:00:00Z`, patient: 'Нурлан К.', doctor: 'Айгерим Садыкова', status: 'NO_SHOW' },
     ] satisfies Schemas['AppointmentServiceReportRow'][])),
     http.post('*/api/appointments/report', async ({ request }) => {
       sent = await request.json()
@@ -100,7 +101,11 @@ test('отчёт: строки месяца, итоги и отправка в �
   renderApp()
   await user.click(await screen.findByRole('tab', { name: 'Отчёт' }))
   expect(await screen.findByRole('cell', { name: 'Бакыт М.' })).toBeInTheDocument()
-  expect(screen.getByText(/Оплачено:/)).toHaveTextContent('3 000 сом · долги: 1 000 сом · приёмов: 1')
+  expect(screen.getByText(/Оплачено:/)).toHaveTextContent('3 000 сом · долги: 1 000 сом · приёмов: 2 · состоялось: 1 · неявок: 1')
+  expect(screen.getByRole('cell', { name: 'Состоялся' })).toBeInTheDocument()
+  await user.selectOptions(screen.getByLabelText('Статус'), 'Неявка')
+  expect(screen.queryByRole('cell', { name: 'Бакыт М.' })).not.toBeInTheDocument()
+  await user.selectOptions(screen.getByLabelText('Статус'), '')
   await user.click(screen.getByRole('button', { name: 'Отправить в бот' }))
   expect(await screen.findByRole('status')).toHaveTextContent('Отчёт отправлен в Telegram')
   expect(sent).toEqual({ month: todayIn().slice(0, 7) })
