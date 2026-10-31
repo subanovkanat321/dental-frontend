@@ -51,8 +51,8 @@ test('заявку подтверждают из карточки: уходит 
   const panel = await open(/Бакыт М\./)
   expect(panel).toHaveTextContent('Заявка — подтвердите')
 
-  await userEvent.click(within(panel).getByRole('button', { name: '✓ Подтвердить' }))
-  expect(await within(panel).findByRole('button', { name: '✅ Приём состоялся' })).toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Подтвердить' }))
+  expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
   expect(sent).toEqual([{ path: 'status', body: { version: 3, status: 'SCHEDULED' } }])
   expect(panel).not.toHaveTextContent('Заявка — подтвердите')
 })
@@ -66,7 +66,7 @@ test('приём состоялся — оплата: сумма из цены �
 
   await userEvent.click(within(form).getByRole('button', { name: 'Карта' }))
   await userEvent.click(within(form).getByRole('button', { name: 'Сохранить оплату' }))
-  expect(await within(panel).findByText(/💰 2\s500 сом/)).toHaveTextContent('карта')
+  expect(await within(panel).findByText(/^2\s500 сом/)).toHaveTextContent('карта')
   expect(sent).toEqual([{ path: 'payment', body: { amountSom: 2500, method: 'CARD' } }])
 })
 

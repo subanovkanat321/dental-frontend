@@ -119,7 +119,7 @@ export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => v
                 <tr key={p.id} className={p.id === selected ? 'active' : undefined}>
                   <td>
                     <button type="button" className="row-link" onClick={() => setSelected(p.id!)}>{p.fullName}</button>
-                    {p.telegram && <span className="tg" title="Пишет боту в Telegram — напоминания придут туда"> ✈️</span>}
+                    {p.telegram && <span className="tg" title="Пишет боту в Telegram — напоминания придут туда">Telegram</span>}
                   </td>
                   <td className="nowrap num">{p.phone ? formatPhone(p.phone) : '—'}</td>
                   <td className="nowrap">{p.lastVisit ? shortDate(p.lastVisit) : '—'}</td>

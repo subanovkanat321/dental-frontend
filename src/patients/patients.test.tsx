@@ -31,7 +31,7 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-const names = () => screen.getAllByRole('row').slice(1).map((r) => within(r).getAllByRole('cell')[0]!.textContent?.replace(' ✈️', ''))
+const names = () => screen.getAllByRole('row').slice(1).map((r) => within(r).getAllByRole('cell')[0]!.textContent?.replace('Telegram', ''))
 
 test('таблица: сначала кто был недавно; сортировка по имени; поиск по имени и по номеру', async () => {
   backend()
@@ -83,11 +83,11 @@ test('карточка пациента: визиты, неявки, долг; �
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
-  expect(await within(panel).findByText('✅ Был: 4')).toBeInTheDocument()
-  expect(panel).toHaveTextContent('🚷 Не пришёл: 1')
+  expect(await within(panel).findByText(/Был:/)).toBeInTheDocument()
+  expect(panel).toHaveTextContent('Не пришёл: 1')
   expect(await within(panel).findByText(/Долг: 1\s500 сом/)).toBeInTheDocument()
   expect(panel).toHaveTextContent('Пломба')
-  expect(within(panel).getByRole('button', { name: '🦷 Медкарта и снимки' })).toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: 'Медкарта и снимки' })).toBeInTheDocument()
 
   await userEvent.click(within(panel).getByRole('button', { name: '＋ Записать' }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })

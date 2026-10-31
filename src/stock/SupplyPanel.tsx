@@ -53,7 +53,7 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
       body: { delta, reason: delta < 0 ? 'USE' : 'DELIVERY', costSom: delta > 0 && cost ? Number(cost) : undefined },
     })),
     onSuccess: (_updated, delta) => {
-      setDone(delta < 0 ? `➖ Списано ${-delta} ${s.unit}` : `➕ Принято ${delta} ${s.unit}${cost ? ` · 💸 ${somText(Number(cost))}` : ''}`)
+      setDone(delta < 0 ? `Списано ${-delta} ${s.unit}` : `Принято ${delta} ${s.unit}${cost ? ` · ${somText(Number(cost))}` : ''}`)
       setCost('')
       refresh()
     },
@@ -99,9 +99,9 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
       <p className={`stock-big ${s.quantity === 0 ? 'tone-bad' : s.low ? 'tone-wait' : 'tone-ok'}`}>
-        {s.quantity === 0 ? '❌ Закончился' : `Осталось: ${s.quantity} ${s.unit}${s.low ? ' — мало' : ''}`}
+        {s.quantity === 0 ? 'Закончился' : `Осталось: ${s.quantity} ${s.unit}${s.low ? ' — мало' : ''}`}
       </p>
-      {s.orderedAt && <p className="hint">✅ Заказан {shortDate(s.orderedAt)}{s.orderedBy ? ` · ${s.orderedBy}` : ''}</p>}
+      {s.orderedAt && <p className="hint">Заказан {shortDate(s.orderedAt)}{s.orderedBy ? ` · ${s.orderedBy}` : ''}</p>}
 
       <div className="form">
         <label className="field">
@@ -114,8 +114,8 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
           <input type="number" min={0} step={10} inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} />
         </label>
         <div className="actions">
-          <button type="button" className="btn" disabled={move.isPending || !(n > 0)} onClick={() => doMove(-1)}>➖ Списать</button>
-          <button type="button" className="btn primary" disabled={move.isPending || !(n > 0)} onClick={() => doMove(1)}>➕ Пришла поставка</button>
+          <button type="button" className="btn" disabled={move.isPending || !(n > 0)} onClick={() => doMove(-1)}>− Списать</button>
+          <button type="button" className="btn primary" disabled={move.isPending || !(n > 0)} onClick={() => doMove(1)}>＋ Пришла поставка</button>
         </div>
         {move.error && <p className="error" role="alert">{move.error.fieldErrors.delta ?? move.error.fieldErrors.costSom ?? move.error.message}</p>}
         {done && <p className="tone-ok" role="status">{done}</p>}
@@ -146,7 +146,7 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
               <li key={i}>
                 <b className={(m.delta ?? 0) < 0 ? 'tone-bad' : 'tone-ok'}>{(m.delta ?? 0) > 0 ? '+' : '−'}{Math.abs(m.delta ?? 0)}</b>
                 {' '}{REASONS[m.reason ?? ''] ?? ''}{m.doctorName ? ` · ${m.doctorName}` : ''}
-                {m.costSom != null && <span> · 💸 {somText(m.costSom)}<span className="hint">{unitPrice(m.costSom, m.delta ?? 0, s.unit)}</span></span>}
+                {m.costSom != null && <span> · {somText(m.costSom)}<span className="hint">{unitPrice(m.costSom, m.delta ?? 0, s.unit)}</span></span>}
                 {m.createdAt && <span className="hint"> · {shortDate(m.createdAt, true)}</span>}
               </li>
             ))}

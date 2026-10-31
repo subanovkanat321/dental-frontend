@@ -89,11 +89,11 @@ export function StockPage({ me }: { me: Me }) {
                 <tr key={s.id} className={selected?.id === s.id ? 'active' : undefined}>
                   <td><button type="button" className="row-link" onClick={() => setSide({ kind: 'supply', id: s.id! })}>{s.name}</button></td>
                   <td className={`nowrap strong ${s.quantity === 0 ? 'tone-bad' : s.low ? 'tone-wait' : ''}`}>
-                    {s.quantity === 0 ? '❌ закончился' : `${s.low ? '⚠️ ' : ''}${s.quantity} ${s.unit}`}
+                    {s.quantity === 0 ? 'закончился' : `${s.quantity} ${s.unit}${s.low ? ' · мало' : ''}`}
                   </td>
                   <td className="hint nowrap">{s.minQuantity} {s.unit}</td>
                   {separate && <td className="hint">{s.doctorName ?? 'общий'}</td>}
-                  <td className="hint">{s.orderedAt ? `✅ заказан ${shortDate(s.orderedAt)}${s.orderedBy ? ` · ${s.orderedBy}` : ''}` : s.low ? 'нужно заказать' : ''}</td>
+                  <td className="hint">{s.orderedAt ? `заказан ${shortDate(s.orderedAt)}${s.orderedBy ? ` · ${s.orderedBy}` : ''}` : s.low ? 'нужно заказать' : ''}</td>
                 </tr>
               ))}
             </tbody>

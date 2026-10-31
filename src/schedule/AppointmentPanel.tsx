@@ -52,21 +52,21 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
         {a.patient?.phone && <a href={`tel:+${a.patient.phone}`}>{formatPhone(a.patient.phone)}</a>}
       </section>
       <span className={`chip s-${s.kind}`}><span className="dot" />{s.label}</span>
-      {a.serviceName && <p>🦷 {a.serviceName}</p>}
-      {a.comment && <p className="hint">💬 {a.comment}</p>}
-      {a.depositStatus && a.paidSom == null && <p className="hint">💳 Предоплата {somText(a.depositSom ?? 0)}</p>}
+      {a.serviceName && <p><span className="hint">Услуга:</span> {a.serviceName}</p>}
+      {a.comment && <p className="comment">{a.comment}</p>}
+      {a.depositStatus && a.paidSom == null && <p className="hint">Предоплата {somText(a.depositSom ?? 0)}</p>}
 
       {a.status === 'REQUESTED' && (
         <div className="actions">
-          <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>✓ Подтвердить</button>
+          <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>Подтвердить</button>
           <button type="button" className="btn" disabled={action.isPending}
             onClick={() => setStatus('CANCELLED', 'Отклонить заявку? Пациенту придёт сообщение.')}>Отклонить</button>
         </div>
       )}
       {a.status === 'SCHEDULED' && (
         <div className="actions">
-          {started && <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('DONE')}>✅ Приём состоялся</button>}
-          {started && <button type="button" className="btn" disabled={action.isPending} onClick={() => setStatus('NO_SHOW')}>🚷 Неявка</button>}
+          {started && <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('DONE')}>Приём состоялся</button>}
+          {started && <button type="button" className="btn" disabled={action.isPending} onClick={() => setStatus('NO_SHOW')}>Неявка</button>}
           <button type="button" className="btn danger" disabled={action.isPending}
             onClick={() => setStatus('CANCELLED', `Отменить запись ${a.patient?.fullName ?? ''}? Время освободится.`)}>Отменить запись</button>
         </div>

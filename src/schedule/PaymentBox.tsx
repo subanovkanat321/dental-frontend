@@ -23,7 +23,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
     return (
       <div className="payment">
         <p className="payment-done">
-          💰 {a.chargeSom != null ? `${somText(a.paidSom)} из ${somText(a.chargeSom)}` : somText(a.paidSom)}
+          {a.chargeSom != null ? `${somText(a.paidSom)} из ${somText(a.chargeSom)}` : somText(a.paidSom)}
           {a.chargeSom == null && a.paymentMethod && <span className="hint"> · {METHOD_NAME[a.paymentMethod]}</span>}
           {a.debtSom ? <span className="tone-wait"> · долг {somText(a.debtSom)}</span> : null}
         </p>
@@ -34,7 +34,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   if (a.chargeSom != null) {
     return (
       <div className="payment">
-        <p className="payment-done">💳 К оплате на кассе: {somText(a.chargeSom)}</p>
+        <p className="payment-done">К оплате на кассе: {somText(a.chargeSom)}</p>
         <p className="hint small">{me.reception ? 'Пациент платит здесь — отметьте, как заплатил.' : 'Регистратура примет оплату — ей пришло сообщение.'}</p>
         <PayForm a={a} me={me} mode="cashier" />
       </div>
@@ -115,7 +115,7 @@ function PayForm({ a, me, mode }: { a: Appointment; me: Me; mode: 'new' | 'cashi
         {mode === 'extra' ? 'Принять доплату' : mode === 'cashier' ? 'Принять оплату' : 'Сохранить оплату'}
       </button>
       {toCashier && (
-        <button type="button" className="btn" disabled={action.isPending} onClick={bill}>📨 На кассу — оплатит в регистратуре</button>
+        <button type="button" className="btn" disabled={action.isPending} onClick={bill}>На кассу — оплатит в регистратуре</button>
       )}
     </form>
   )

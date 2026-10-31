@@ -59,7 +59,7 @@ function backend(options: { forbidden?: boolean } = {}) {
 async function openMedical() {
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
-  await userEvent.click(await screen.findByRole('button', { name: '🦷 Медкарта и снимки' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Медкарта и снимки' }))
   expect(await screen.findByRole('heading', { name: 'Медкарта · Айгуль Т.' })).toBeInTheDocument()
 }
 

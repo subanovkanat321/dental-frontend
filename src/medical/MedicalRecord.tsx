@@ -54,7 +54,7 @@ export function MedicalRecord({ patient, onBack }: { patient: Patient; onBack: (
         <h1>Медкарта · {patient.fullName}</h1>
       </header>
       {forbidden ? (
-        <p className="empty">🔒 {forbidden}</p>
+        <p className="empty">{forbidden}</p>
       ) : (
         <>
           <ToothChart patientId={id} teeth={teeth.data} error={teeth.error?.message} />
@@ -283,7 +283,7 @@ function Files({ patientId }: { patientId: number }) {
       }
     }
     if (done === picked.length) {
-      setStatus(`✅ Загружено: ${done}`)
+      setStatus(`Загружено: ${done}`)
       setCaption('')
     }
     if (input.current) input.current.value = ''
@@ -330,7 +330,7 @@ function Files({ patientId }: { patientId: number }) {
             onChange={(e) => e.target.files?.length && void send([...e.target.files])} />
         </label>
       </div>
-      {status && <p role="status" className={status.startsWith('✅') ? 'tone-ok' : 'hint'}>{status}</p>}
+      {status && <p role="status" className={status.startsWith('Загружено') ? 'tone-ok' : 'hint'}>{status}</p>}
       {remove.error && <p className="error">{remove.error.message}</p>}
     </section>
   )

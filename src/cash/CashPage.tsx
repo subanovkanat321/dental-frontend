@@ -67,7 +67,7 @@ export function CashPage({ me }: { me: Me }) {
 
         {toPayShown && (
           <section className="card-block">
-            <h2>💳 К оплате на кассе</h2>
+            <h2>К оплате на кассе</h2>
             <DebtTable rows={toPay.data} pending={toPay.isPending} error={toPay.error?.message} empty="Никто не ждёт оплаты"
               money="chargeSom" onOpen={setOpened} active={opened} label="К оплате на кассе" />
           </section>

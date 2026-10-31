@@ -77,15 +77,15 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
       <p className="hint">
-        {patient?.telegram ? '✈️ Пишет боту — напоминания в Telegram' : 'Без бота — напоминание в WhatsApp'}
+        {patient?.telegram ? 'Пишет боту — напоминания в Telegram' : 'Без бота — напоминание в WhatsApp'}
         {patient?.birthDate ? ` · родился ${shortDate(`${patient.birthDate}T12:00:00Z`)}` : ''}
         {patient?.workplace ? ` · ${patient.workplace}` : ''}
       </p>
       <p className="stats">
-        <span className="tone-ok">✅ Был: {done ?? 0}</span>
-        <span className={noShow ? 'tone-bad' : 'hint'}>🚷 Не пришёл: {noShow ?? 0}</span>
+        <span className="chip small s-done">Был: <b className="num">{done ?? 0}</b></span>
+        <span className={`chip small ${noShow ? 's-bad' : 's-quiet'}`}>Не пришёл: <b className="num">{noShow ?? 0}</b></span>
       </p>
-      {owed > 0 && <p className="tone-wait">💳 Долг: {somText(owed)}</p>}
+      {owed > 0 && <span className="chip s-wait">Долг: {somText(owed)}</span>}
 
       <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>
 
@@ -99,7 +99,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
         {past.length > PAST && <p className="hint small">И ещё {past.length - PAST} — в приложении</p>}
       </section>
 
-      <button type="button" className="btn" onClick={() => patient && onMedical(patient)}>🦷 Медкарта и снимки</button>
+      <button type="button" className="btn" onClick={() => patient && onMedical(patient)}>Медкарта и снимки</button>
     </aside>
   )
 }

@@ -47,8 +47,8 @@ test('заканчивается — сверху; фильтр «Только �
   const table = await screen.findByRole('table', { name: 'Материалы' })
   const names = () => within(table).getAllByRole('row').slice(1).map((r) => within(r).getAllByRole('cell')[0]!.textContent)
   expect(names()).toEqual(['Анестетик', 'Валики', 'Перчатки'])
-  expect(table).toHaveTextContent('❌ закончился')
-  expect(table).toHaveTextContent('✅ заказан')
+  expect(table).toHaveTextContent('закончился')
+  expect(table).toHaveTextContent('заказан')
   expect(table).toHaveTextContent('нужно заказать')
 
   await userEvent.click(screen.getByLabelText(/Только заканчивается \(2\)/))
@@ -69,9 +69,9 @@ test('карточка материала: пришла поставка с це
   await userEvent.clear(amount)
   await userEvent.type(amount, '10')
   await userEvent.type(within(panel).getByLabelText(/Сколько заплатили/), '3000')
-  await userEvent.click(within(panel).getByRole('button', { name: '➕ Пришла поставка' }))
+  await userEvent.click(within(panel).getByRole('button', { name: '＋ Пришла поставка' }))
 
-  expect(await within(panel).findByRole('status')).toHaveTextContent(/Принято 10 карп\. · 💸 3\s000 сом/)
+  expect(await within(panel).findByRole('status')).toHaveTextContent(/Принято 10 карп\. · 3\s000 сом/)
   expect(await within(panel).findByText('Осталось: 12 карп.')).toBeInTheDocument()
   expect(moves).toEqual([{ delta: 10, reason: 'DELIVERY', costSom: 3000 }])
 })

@@ -318,3 +318,7 @@ button, input, select, textarea { font-family: inherit; }
   .jaw .tooth:nth-child(8) { margin-right: 0; }
   .plan-add { grid-template-columns: 60px 1fr; }
 }
+
+/* Подписи без эмодзи: метка Telegram в таблице, комментарий к записи */
+.tg { margin-left: 8px; padding: 1px 6px; border-radius: var(--r-sm); background: var(--req-bg); color: var(--req-ink); font-size: .75rem; font-weight: 500; vertical-align: 1px; }
+.comment { padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .93rem; }
