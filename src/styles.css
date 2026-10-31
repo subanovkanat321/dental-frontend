@@ -386,3 +386,12 @@ tr.inactive td { opacity: .55; }
 .catalog-section summary { cursor: pointer; font-weight: 600; }
 .catalog-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0 4px 4px; }
 .catalog-row input[type=number] { width: 96px; font: inherit; height: 32px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.about-col { display: grid; gap: 10px; align-content: start; }
+.about-col h2 { margin: 8px 0 0; }
+.about > .btn { justify-self: start; margin-top: 12px; }
+.qr-row { display: flex; align-items: center; gap: 12px; }
+.pay-qr { width: 120px; height: 120px; object-fit: contain; border-radius: var(--r-md); background: #fff; }
+.phone.full { padding-left: 0; }
+.phone.full input { padding-left: 10px; }
+@media (max-width: 720px) { .about-grid { grid-template-columns: 1fr; } }

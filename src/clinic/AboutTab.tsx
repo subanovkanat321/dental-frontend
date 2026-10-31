@@ -1,0 +1,262 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState, type FormEvent } from 'react'
+
+import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
+import { WEEK, type Weekday } from '../team/texts'
+import { PhoneInput } from './PhoneInput'
+import { phoneFromInput, phoneToInput } from './phone'
+
+type Me = Schemas['BookingViewsMe']
+type Clinic = Schemas['ClinicView']
+
+const FIELDS = ['brandName', 'whatsappPhone', 'legalName', 'address', 'mapUrl', 'supportTelegram', 'supportPhone', 'workEnd', 'workDays'] as const
+
+/**
+ * «О клинике»: что видят пациенты (название, WhatsApp, адрес, 2ГИС, часы), как работают врачи
+ * (независимо, свой склад), кто отвечает за данные (для согласия). Меняют админ и врачи;
+ * «независимо» и «свой склад» — только админ. Админу ещё предоплата и «с чистого листа».
+ */
+export function AboutTab({ me }: { me: Me }) {
+  const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
+  if (clinic.isPending) return <p className="hint">Загрузка…</p>
+  if (clinic.error) return <p className="error">{clinic.error.message}</p>
+  return (
+    <>
+      <AboutForm me={me} clinic={clinic.data} />
+      {me.admin && <DepositSettings />}
+      {me.admin && <ClearAll />}
+    </>
+  )
+}
+
+function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
+  const client = useQueryClient()
+  const canEdit = Boolean(me.admin || me.doctorId != null)
+  const [f, setF] = useState({
+    brandName: c.brandName ?? '', whatsappPhone: phoneToInput(c.whatsappPhone), legalName: c.legalName ?? '', address: c.address ?? '',
+    mapUrl: c.mapUrl ?? '', supportTelegram: c.supportTelegram ? `@${c.supportTelegram}` : '', supportPhone: phoneToInput(c.supportPhone),
+    workStart: (c.workStart ?? '09:00').slice(0, 5), workEnd: (c.workEnd ?? '18:00').slice(0, 5),
+    independentDoctors: Boolean(c.independentDoctors), separateSupplies: Boolean(c.separateSupplies), listed: c.listed !== false,
+  })
+  const [days, setDays] = useState<Set<Weekday>>(new Set(c.workDays ?? WEEK.map(([code]) => code)))
+  const [done, setDone] = useState(false)
+  const save = useMutation<Clinic, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/clinic', {
+      body: {
+        ...f, whatsappPhone: phoneFromInput(f.whatsappPhone), supportPhone: phoneFromInput(f.supportPhone),
+        workDays: WEEK.map(([code]) => code).filter((code) => days.has(code)),
+      },
+    })),
+    onSuccess: (saved) => {
+      setDone(true)
+      client.setQueryData(['clinic'], saved)
+      // Название, часы и режимы клиники приходят и в me (шапка, сетка «Расписания», склад)
+      void client.invalidateQueries({ queryKey: ['me'] })
+    },
+  })
+  const err = (k: string) => save.error?.fieldErrors[k]
+  const set = (k: keyof typeof f) => (v: string | boolean) => {
+    setDone(false)
+    setF({ ...f, [k]: v })
+  }
+  const text = (k: keyof typeof f) => (e: { target: { value: string } }) => set(k)(e.target.value)
+  const flag = (k: keyof typeof f) => (e: { target: { checked: boolean } }) => set(k)(e.target.checked)
+  const toggleDay = (code: Weekday) => {
+    setDone(false)
+    const next = new Set(days)
+    if (next.has(code)) next.delete(code)
+    else next.add(code)
+    setDays(next)
+  }
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    setDone(false)
+    save.mutate()
+  }
+  const page = c.code ? `${window.location.origin}/c/${c.code}` : null
+
+  return (
+    <form className="card-block about" aria-label="О клинике" onSubmit={submit}>
+      <fieldset className="about-grid" disabled={!canEdit}>
+        {!canEdit && <p className="tone-wait">Только просмотр: «О клинике» меняют администратор и врачи.</p>}
+        <div className="about-col">
+          <h2>Для пациентов</h2>
+          <p className="hint">Адрес и ссылку на карту пациенты видят при записи и в напоминаниях бота.</p>
+          <label className="field"><span>Название для пациентов</span>
+            <input value={f.brandName} maxLength={100} placeholder="Стоматология «Улыбка»" onChange={text('brandName')} /></label>
+          {err('brandName') && <p className="error">{err('brandName')}</p>}
+          <label className="field"><span>WhatsApp клиники</span>
+            <PhoneInput label="WhatsApp клиники" value={f.whatsappPhone} onChange={set('whatsappPhone')} /></label>
+          {err('whatsappPhone') && <p className="error">{err('whatsappPhone')}</p>}
+          <label className="field"><span>Адрес</span>
+            <input value={f.address} maxLength={200} placeholder="Например: Бишкек, ул. Шевченко 6" onChange={text('address')} /></label>
+          {err('address') && <p className="error">{err('address')}</p>}
+          <label className="field"><span>Ссылка 2ГИС</span>
+            <input type="url" value={f.mapUrl} maxLength={300} placeholder="https://2gis.kg/bishkek/…" onChange={text('mapUrl')} /></label>
+          {err('mapUrl') && <p className="error">{err('mapUrl')}</p>}
+          <p className="hint">В 2ГИС найдите кабинет → «Поделиться» → «Скопировать ссылку» и вставьте сюда.</p>
+          {page && (
+            <div className="field"><span>Страница для Instagram — запись, WhatsApp, врачи, услуги, адрес</span>
+              <a className="invite-link" href={page} target="_blank" rel="noopener noreferrer">{page}</a>
+            </div>
+          )}
+          <label className="check"><input type="checkbox" checked={f.listed} onChange={flag('listed')} /> Показывать клинику в общем каталоге /clinics</label>
+
+          <h2>Часы клиники</h2>
+          <div className="row">
+            <label className="field"><span>С</span><input type="time" step={900} value={f.workStart} onChange={text('workStart')} /></label>
+            <label className="field"><span>До</span><input type="time" step={900} value={f.workEnd} onChange={text('workEnd')} /></label>
+          </div>
+          {err('workEnd') && <p className="error">{err('workEnd')}</p>}
+          <div className="field"><span>Рабочие дни</span>
+            <div className="weekdays" role="group" aria-label="Рабочие дни клиники">
+              {WEEK.map(([code, name, short]) => (
+                <button key={code} type="button" className="day" aria-label={name} aria-pressed={days.has(code)} onClick={() => toggleDay(code)}>{short}</button>
+              ))}
+            </div>
+          </div>
+          {err('workDays') && <p className="error">{err('workDays')}</p>}
+          <p className="hint">По этим часам — свободное время у врачей, которые не задали свои «Часы работы» (Команда → врач).</p>
+        </div>
+
+        <div className="about-col">
+          <h2>Как работают врачи</h2>
+          <label className="check"><input type="checkbox" checked={f.independentDoctors} disabled={!me.admin} onChange={flag('independentDoctors')} />
+            Врачи работают независимо: медкарты, заметки и выручку врача видит только он сам</label>
+          <p className="hint">Для частных врачей в одном кабинете. Расписание и пациенты остаются общими. Выключено — администратор видит всё.</p>
+          <label className="check"><input type="checkbox" checked={f.separateSupplies} disabled={!me.admin} onChange={flag('separateSupplies')} />
+            Свой склад у каждого врача</label>
+          <p className="hint">Когда каждый врач закупает материалы сам: врач видит и тратит свои материалы и общие. Выключено — один склад на всех.</p>
+
+          <h2>Для согласия пациентов</h2>
+          <label className="field"><span>Клиника или ИП</span>
+            <input value={f.legalName} maxLength={150} placeholder="ИП Садыкова А. или Стоматология «Улыбка»" onChange={text('legalName')} /></label>
+          {err('legalName') && <p className="error">{err('legalName')}</p>}
+          <p className="hint">Кто отвечает за данные пациентов: это название пациент видит в согласии и в «Политике обработки данных».</p>
+
+          <h2>Техподдержка приложения</h2>
+          <label className="field"><span>Telegram</span>
+            <input value={f.supportTelegram} maxLength={40} placeholder="@ник" onChange={text('supportTelegram')} /></label>
+          {err('supportTelegram') && <p className="error">{err('supportTelegram')}</p>}
+          <label className="field"><span>Телефон</span>
+            <PhoneInput label="Телефон техподдержки" value={f.supportPhone} onChange={set('supportPhone')} /></label>
+          {err('supportPhone') && <p className="error">{err('supportPhone')}</p>}
+        </div>
+      </fieldset>
+      {save.error && !FIELDS.some((k) => err(k)) && <p className="error" role="alert">{save.error.message}</p>}
+      {done && <p className="tone-ok" role="status">Сохранено</p>}
+      {canEdit && <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>}
+    </form>
+  )
+}
+
+type Deposit = Schemas['DepositsSettings']
+const MODES: [NonNullable<Deposit['mode']>, string][] = [['OFF', 'Не просить'], ['NEW', 'Новых пациентов'], ['ALL', 'Всех через бота']]
+
+/**
+ * Предоплата за запись: кто записался через бота, переводит её по QR и жмёт «Я оплатил(а)»;
+ * клиника сверяет и отмечает «Получена». После приёма — первый платёж, не пришёл — остаётся у клиники.
+ */
+function DepositSettings() {
+  const client = useQueryClient()
+  const st = useQuery({ queryKey: ['deposit-settings'], queryFn: () => unwrap(api.GET('/api/clinic/deposit')) })
+  if (st.isPending) return <section className="card-block"><h2>Предоплата за запись</h2><p className="hint">Загрузка…</p></section>
+  if (st.error) return <section className="card-block"><h2>Предоплата за запись</h2><p className="error">{st.error.message}</p></section>
+  return <DepositForm st={st.data} onSaved={(d) => client.setQueryData(['deposit-settings'], d)} />
+}
+
+function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => void }) {
+  const [mode, setMode] = useState(st.mode ?? 'OFF')
+  const [amount, setAmount] = useState(st.amountSom == null ? '' : String(st.amountSom))
+  const [details, setDetails] = useState(st.details ?? '')
+  const [done, setDone] = useState('')
+  const [qrUrl, setQrUrl] = useState<string | null>(null)
+  useEffect(() => {
+    if (!st.hasQr) return
+    let url: string | null = null
+    let alive = true
+    fetchBlob('/api/clinic/deposit/qr').then((blob) => {
+      url = URL.createObjectURL(blob)
+      if (alive) setQrUrl(url)
+    }).catch(() => {})
+    return () => {
+      alive = false
+      if (url) URL.revokeObjectURL(url)
+    }
+  }, [st.hasQr])
+  const save = useMutation<Deposit, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/clinic/deposit', { body: { mode, amountSom: amount === '' ? undefined : Number(amount), details } })),
+    onSuccess: (d) => {
+      onSaved(d)
+    },
+  })
+  const qr = useMutation<Deposit, ApiError, File>({
+    mutationFn: (file) => {
+      const body = new FormData()
+      body.append('file', file)
+      return upload('/api/clinic/deposit/qr', body)
+    },
+    onSuccess: (d) => {
+      setDone('QR загружен')
+      onSaved(d)
+    },
+  })
+  const error = save.error ?? qr.error
+
+  return (
+    <section className="card-block">
+      <h2>Предоплата за запись</h2>
+      <div className="form narrow">
+        <p className="hint">Меньше неявок: кто записался через бота, переводит предоплату по QR и жмёт «Я оплатил(а)». Вы сверяете и отмечаете
+          «Получена». После приёма она станет первым платежом, не пришёл — остаётся у клиники. Попросить вручную — в карточке записи.</p>
+        <div className="segments" role="group" aria-label="Когда просить предоплату">
+          {MODES.map(([code, name]) => <button key={code} type="button" aria-pressed={mode === code} onClick={() => { setDone(''); setMode(code) }}>{name}</button>)}
+        </div>
+        <label className="field"><span>Сколько, сом</span>
+          <input type="number" min={1} step={100} inputMode="numeric" placeholder="Например: 1000" value={amount} onChange={(e) => { setDone(''); setAmount(e.target.value) }} /></label>
+        <label className="field"><span>Как перевести (номер, банк, получатель)</span>
+          <textarea rows={2} maxLength={500} placeholder="MBank: 0555 123 456 (Стоматология «Улыбка»)" value={details} onChange={(e) => { setDone(''); setDetails(e.target.value) }} /></label>
+        <div className="qr-row">
+          {qrUrl && <img className="pay-qr" src={qrUrl} alt="QR для предоплаты" />}
+          <label className="btn">{st.hasQr ? 'Заменить QR' : 'Загрузить QR'}
+            <input type="file" accept="image/jpeg,image/png" className="sr-only" aria-label="QR для предоплаты"
+              onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) qr.mutate(file) }} /></label>
+        </div>
+        {error && <p className="error" role="alert">{error.fieldErrors.amountSom ?? error.fieldErrors.details ?? error.fieldErrors.file ?? error.message}</p>}
+        {done && <p className="tone-ok" role="status">{done}</p>}
+        {save.isSuccess && <p className="tone-ok" role="status">Предоплата сохранена</p>}
+        <button type="button" className="btn primary" disabled={save.isPending} onClick={() => save.mutate()}>Сохранить предоплату</button>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * «Начать с чистого листа»: удалить все приёмы и заявки (после показа или тестов). Врачи, услуги,
+ * пациенты и склад остаются. Слово «УДАЛИТЬ» проверяет сервер — кнопка его не обходит.
+ */
+function ClearAll() {
+  const client = useQueryClient()
+  const [word, setWord] = useState('')
+  const run = useMutation<Schemas['AppointmentControllerDeleted'], ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/appointments/delete-all', { body: { confirm: word } })),
+    onSuccess: () => {
+      setWord('')
+      void client.invalidateQueries()
+    },
+  })
+  return (
+    <section className="card-block danger-zone">
+      <h2>Начать с чистого листа</h2>
+      <div className="form narrow">
+        <p className="hint">Удалит все приёмы и заявки — например, после показа или тестов. Врачи, услуги, пациенты и склад останутся.
+          Вернуть можно только из резервной копии.</p>
+        <label className="field"><span>Впишите УДАЛИТЬ</span>
+          <input value={word} maxLength={20} autoComplete="off" placeholder="УДАЛИТЬ" onChange={(e) => { run.reset(); setWord(e.target.value) }} /></label>
+        {run.error && <p className="error" role="alert">{run.error.fieldErrors.confirm ?? run.error.message}</p>}
+        {run.isSuccess && <p className="tone-ok" role="status">Удалено записей: {run.data.deleted ?? 0}</p>}
+        <button type="button" className="btn danger" disabled={run.isPending || !word} onClick={() => run.mutate()}>Удалить все записи</button>
+      </div>
+    </section>
+  )
+}
