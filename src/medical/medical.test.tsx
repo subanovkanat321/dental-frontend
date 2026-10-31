@@ -1,0 +1,103 @@
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+
+import type { Schemas } from '../api/client'
+import { me, renderApp } from '../test/fixtures'
+import { server } from '../test/server'
+
+beforeEach(() => {
+  window.location.hash = '/patients'
+})
+afterEach(() => {
+  window.location.hash = ''
+})
+
+type Step = Schemas['TreatmentStepView']
+
+/** Вымышленный пациент; медкарта меняется, как на сервере. */
+function backend(options: { forbidden?: boolean } = {}) {
+  let teeth: Schemas['ToothView'][] = [{ number: 16, state: 'CARIES', note: 'глубокий', doctorName: 'Айгерим Садыкова', updatedAt: '2026-10-20T05:00:00Z' }]
+  let plan: Step[] = [{ id: 1, tooth: 16, title: 'Пломба', priceSom: 3000 }]
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+    http.get('*/api/patients/recent', () => HttpResponse.json([{ id: 2, fullName: 'Айгуль Т.', phone: '996700333444' }])),
+    http.get('*/api/appointments/by-patient/2', () => HttpResponse.json({
+      patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444' }, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [],
+    })),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/patients/2/teeth', () => options.forbidden
+      ? HttpResponse.json({ status: 403, detail: 'Медкарту видят врач пациента и администратор' }, { status: 403 })
+      : HttpResponse.json(teeth)),
+    http.put('*/api/patients/2/teeth/:n', async ({ request, params }) => {
+      const body = (await request.json()) as Schemas['ChartControllerUpdate']
+      sent.push({ tooth: Number(params.n), ...body })
+      teeth = [...teeth.filter((t) => t.number !== Number(params.n)), { number: Number(params.n), state: body.state, note: body.note }]
+      return HttpResponse.json(teeth)
+    }),
+    http.get('*/api/patients/2/plan', () => HttpResponse.json(plan)),
+    http.post('*/api/patients/2/plan', async ({ request }) => {
+      const body = (await request.json()) as Step
+      sent.push({ plan: body })
+      plan = [...plan, { ...body, id: 2 }]
+      return HttpResponse.json(plan)
+    }),
+    http.put('*/api/patients/2/plan/:id', async ({ request }) => {
+      const body = (await request.json()) as { done: boolean }
+      plan = plan.map((s) => ({ ...s, doneAt: body.done ? '2026-10-31T05:00:00Z' : undefined }))
+      return HttpResponse.json(plan)
+    }),
+    http.get('*/api/patients/2/notes', () => HttpResponse.json([{ appointmentId: 5, startAt: '2026-10-20T05:00:00Z', note: 'Жалобы на холодное', doctorName: 'Айгерим Садыкова' }])),
+    http.get('*/api/patients/2/files', () => HttpResponse.json([{ id: 7, kind: 'XRAY', caption: 'Прицельный 16', takenOn: '2026-10-20', canDelete: true }])),
+    http.get('*/api/patients/2/files/7', () => new HttpResponse(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/jpeg' } })),
+  )
+  return sent
+}
+
+async function openMedical() {
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
+  await userEvent.click(await screen.findByRole('button', { name: '🦷 Медкарта и снимки' }))
+  expect(await screen.findByRole('heading', { name: 'Медкарта · Айгуль Т.' })).toBeInTheDocument()
+}
+
+test('медкарта: зуб 16 — кариес с заметкой; отметить 26 «Пломба»; план — сумма, отметить сделанным, добавить этап', async () => {
+  const sent = backend()
+  await openMedical()
+  expect(await screen.findByRole('button', { name: 'Зуб 16: Кариес, есть заметка' })).toBeInTheDocument()
+  expect(screen.getByText('Жалобы на холодное')).toBeInTheDocument()
+  expect(await screen.findByText('Прицельный 16')).toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Зуб 26: Здоров' }))
+  const editor = screen.getByRole('form', { name: 'Зуб 26' })
+  await userEvent.click(within(editor).getByRole('button', { name: /Пломба/ }))
+  await userEvent.type(within(editor).getByLabelText('Заметка'), 'композит')
+  await userEvent.click(within(editor).getByRole('button', { name: 'Сохранить' }))
+  expect(await screen.findByRole('button', { name: 'Зуб 26: Пломба, есть заметка' })).toBeInTheDocument()
+  expect(sent).toContainEqual({ tooth: 26, state: 'FILLING', note: 'композит' })
+
+  const plan = screen.getByRole('list', { name: 'Этапы лечения' })
+  expect(await screen.findByRole('heading', { name: /План лечения/ })).toHaveTextContent(/3\s000 сом/)
+  await userEvent.click(within(plan).getByLabelText('Сделано: Пломба'))
+  expect(await within(plan).findByLabelText('Сделано: Пломба')).toBeChecked()
+
+  const add = screen.getByRole('form', { name: 'Новый этап' })
+  await userEvent.type(within(add).getByLabelText('Зуб'), '26')
+  await userEvent.type(within(add).getByLabelText('Что сделать'), 'Коронка')
+  await userEvent.type(within(add).getByLabelText('Цена, сом'), '12000')
+  await userEvent.click(within(add).getByRole('button', { name: '＋ Этап' }))
+  expect(await within(plan).findByText('Коронка')).toBeInTheDocument()
+  expect(sent).toContainEqual({ plan: { title: 'Коронка', tooth: 26, priceSom: 12000 } })
+
+  await userEvent.click(screen.getByRole('button', { name: '← К списку' }))
+  expect(await screen.findByRole('complementary', { name: 'Карточка пациента' })).toBeInTheDocument()
+})
+
+test('не свой пациент — 403: замок с текстом сервера, а не ошибка всей CRM', async () => {
+  backend({ forbidden: true })
+  await openMedical()
+  expect(await screen.findByText(/Медкарту видят врач пациента и администратор/)).toBeInTheDocument()
+  expect(screen.queryByRole('group', { name: 'Верхняя челюсть' })).not.toBeInTheDocument()
+})

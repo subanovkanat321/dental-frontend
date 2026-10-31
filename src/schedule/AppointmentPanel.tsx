@@ -76,7 +76,7 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
       {a.status === 'DONE' && <PaymentBox key={`${a.id}-${a.version}`} appointment={a} me={me} />}
 
       <a className="btn" href={`/?appointment=${a.id}`} target="_blank" rel="noopener">Открыть в приложении</a>
-      <p className="hint small">Перенос, услуга, материалы, медкарта — пока в приложении.</p>
+      <p className="hint small">Перенос, услуга и материалы — пока в приложении; медкарта — в «Пациентах».</p>
     </aside>
   )
 }

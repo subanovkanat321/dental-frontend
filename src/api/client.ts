@@ -74,3 +74,29 @@ export async function unwrap<T>(request: Promise<{ data?: T; error?: unknown; re
   }
   return data as T
 }
+
+/**
+ * Загрузка файла (multipart): openapi-fetch шлёт JSON, а снимку нужна форма. Тот же заголовок
+ * X-Dental-Web и те же ошибки ApiError, что у {@link api}.
+ */
+export async function upload<T>(path: string, form: FormData): Promise<T> {
+  const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), {
+    method: 'POST', body: form, credentials: 'same-origin', headers: { 'X-Dental-Web': '1' },
+  }))
+  const body: unknown = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw toApiError(response.status, body)
+  }
+  return body as T
+}
+
+/** Картинка с сервера (снимок пациента) — с заголовком сайта; в <img> — через URL.createObjectURL. */
+export async function fetchBlob(path: string): Promise<Blob> {
+  const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), {
+    credentials: 'same-origin', headers: { 'X-Dental-Web': '1' },
+  }))
+  if (!response.ok) {
+    throw toApiError(response.status, await response.json().catch(() => null))
+  }
+  return response.blob()
+}

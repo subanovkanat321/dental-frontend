@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { formatPhone, shortDate } from '../lib/time'
+import { MedicalRecord } from '../medical/MedicalRecord'
 import { PatientPanel } from './PatientPanel'
 
 type Me = Schemas['BookingViewsMe']
@@ -35,6 +36,8 @@ export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => v
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'last', desc: true })
   const [selected, setSelected] = useState<number | null>(null)
+  // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
+  const [medical, setMedical] = useState<Patient | null>(null)
   const close = useCallback(() => setSelected(null), [])
 
   const recent = useQuery({
@@ -78,6 +81,14 @@ export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => v
     </th>
   )
 
+  if (medical) {
+    return (
+      <div className="schedule">
+        <MedicalRecord patient={medical} onBack={() => { setSelected(medical.id!); setMedical(null) }} />
+      </div>
+    )
+  }
+
   return (
     <div className={selected ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
@@ -119,7 +130,8 @@ export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => v
           </table>
         )}
       </section>
-      {selected && <PatientPanel key={selected} patientId={selected} me={me} onClose={close} onBook={onBook} />}
+      {selected && <PatientPanel key={selected} patientId={selected} me={me} onClose={close} onBook={onBook}
+        onMedical={(p) => { setSelected(null); setMedical(p) }} />}
     </div>
   )
 }

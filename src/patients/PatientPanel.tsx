@@ -14,14 +14,15 @@ const PAST = 10
 
 /**
  * Карточка пациента справа: контакты, сколько раз был / не пришёл, ближайшие записи, история,
- * долги. «Записать» — «Новая запись» в «Расписании» на него. Медкарта и снимки — пока в
- * приложении (?patientCard=ID): их перенесём следующими.
+ * долги. «Записать» — «Новая запись» в «Расписании» на него; «Медкарта» — карта зубов, план,
+ * заметки и снимки во всю ширину.
  */
-export function PatientPanel({ patientId, me, onClose, onBook }: {
+export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
   patientId: number
   me: Me
   onClose: () => void
   onBook: (p: Patient) => void
+  onMedical: (p: Patient) => void
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -98,7 +99,7 @@ export function PatientPanel({ patientId, me, onClose, onBook }: {
         {past.length > PAST && <p className="hint small">И ещё {past.length - PAST} — в приложении</p>}
       </section>
 
-      <a className="btn" href={`/?patientCard=${patientId}`} target="_blank" rel="noopener">Медкарта и снимки — в приложении</a>
+      <button type="button" className="btn" onClick={() => patient && onMedical(patient)}>🦷 Медкарта и снимки</button>
     </aside>
   )
 }

@@ -87,7 +87,7 @@ test('карточка пациента: визиты, неявки, долг; �
   expect(panel).toHaveTextContent('🚷 Не пришёл: 1')
   expect(await within(panel).findByText(/Долг: 1\s500 сом/)).toBeInTheDocument()
   expect(panel).toHaveTextContent('Пломба')
-  expect(within(panel).getByRole('link', { name: 'Медкарта и снимки — в приложении' })).toHaveAttribute('href', '/?patientCard=2')
+  expect(within(panel).getByRole('button', { name: '🦷 Медкарта и снимки' })).toBeInTheDocument()
 
   await userEvent.click(within(panel).getByRole('button', { name: '＋ Записать' }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })

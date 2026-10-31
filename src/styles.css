@@ -204,3 +204,45 @@ h2 { font-size: 1.15rem; margin: 0; }
   .card-block { padding: 12px; }
   .total { font-size: 1.6rem; }
 }
+
+/* Медкарта */
+.medical { display: grid; gap: 16px; align-content: start; }
+.jaw { display: grid; grid-template-columns: repeat(16, minmax(34px, 1fr)); gap: 4px; }
+.jaw + .jaw { margin-top: 2px; padding-top: 8px; border-top: 2px dashed var(--separator); }
+.jaw .tooth:nth-child(8) { margin-right: 6px; }
+.tooth {
+  position: relative; display: grid; justify-items: center; gap: 2px; padding: 6px 0; border: 1px solid var(--separator);
+  border-radius: 10px; background: var(--card); color: var(--text); font: inherit; cursor: pointer;
+}
+.tooth:hover, .tooth.active { border-color: var(--accent); background: var(--accent-soft); }
+.tooth-icon { height: 1.2em; }
+.tooth-number { font-size: .75rem; font-weight: 700; color: var(--hint); }
+.tooth-dot { position: absolute; top: 0; right: 4px; color: var(--status-wait); font-weight: 800; }
+.tooth[data-state=CARIES], .tooth[data-state=TREATING] { border-color: color-mix(in srgb, var(--status-wait) 50%, transparent); }
+.tooth[data-state=MISSING] { opacity: .55; }
+.legend { margin: 0; white-space: pre-wrap; }
+.tooth-editor { padding: 12px; border-radius: 12px; background: var(--accent-soft); }
+.tooth-editor h3 { margin: 0; }
+.segments.wrap { flex-wrap: wrap; }
+.segments.wrap button { flex: 1 0 auto; }
+.plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.plan li { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--separator); }
+.plan li.done span { text-decoration: line-through; color: var(--hint); }
+.plan-add { display: grid; grid-template-columns: 70px 1fr 110px auto; gap: 8px; }
+.plan-add input, .upload input:not([type=file]) { font: inherit; padding: 7px 10px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text); min-width: 0; }
+.notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.notes p { margin: 2px 0 0; white-space: pre-wrap; }
+.files { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.files li { display: grid; gap: 2px; font-size: .85rem; }
+.file { padding: 0; border: 0; border-radius: 10px; overflow: hidden; aspect-ratio: 4 / 3; background: var(--accent-soft); cursor: zoom-in; display: grid; place-items: center; }
+.file img { width: 100%; height: 100%; object-fit: cover; }
+.thumb-wait { font-size: 2rem; opacity: .4; }
+.danger-link { color: var(--destructive); justify-self: start; font-size: .85rem; }
+.upload { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.upload .segments { min-width: 260px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 760px) {
+  .jaw { grid-template-columns: repeat(8, 1fr); }
+  .jaw .tooth:nth-child(8) { margin-right: 0; }
+  .plan-add { grid-template-columns: 60px 1fr; }
+}
