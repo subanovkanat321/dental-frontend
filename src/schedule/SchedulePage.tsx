@@ -196,7 +196,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               </div>
             ))}
             <div className="grid-times" style={{ height }}>
-              {hours.map((m) => (
+              {/* Час рядом с меткой «сейчас» прячем — иначе «11:00» и «11:10» наезжают друг на друга */}
+              {hours.filter((m) => nowTop == null || Math.abs(m - nowMinutes) > 15).map((m) => (
                 <span key={m} className="num" style={{ top: PAD + (m - from) * PX }}>{String(Math.floor(m / 60)).padStart(2, '0')}:00</span>
               ))}
               {nowTop != null && <span className="now-label num" style={{ top: nowTop }}>{timeOf(new Date().toISOString())}</span>}
