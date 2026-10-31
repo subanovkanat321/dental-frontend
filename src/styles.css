@@ -522,7 +522,7 @@ details.agreement-box { max-height: none; }
 /* Расписание: «Все врачи» или один врач — листается вбок, если врачей много */
 .doctor-switch { margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; }
 .doctor-switch::-webkit-scrollbar { display: none; }
-.doctor-switch button { flex: 0 0 auto; padding: 7px 14px; white-space: nowrap; }
+.doctor-switch button { flex: 1 0 auto; padding: 7px 14px; white-space: nowrap; }
 /* Фильтры над таблицей: поиск и выпадающие списки в строку, на телефоне — друг под другом */
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
 .filters input[type=search], .filters select { font: inherit; height: 36px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
