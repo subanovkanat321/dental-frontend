@@ -152,6 +152,8 @@ button, input, select, textarea { font-family: inherit; }
   transition: background-color .15s ease-out;
 }
 .appt.short { flex-direction: row; align-items: baseline; gap: 6px; padding-top: 3px; }
+.appt.short .appt-name { flex: 0 1 auto; min-width: 0; }
+.appt.short .appt-state { flex: 1 1 0; min-width: 0; align-self: baseline; }
 .appt.active { outline: 2px solid var(--accent); outline-offset: 1px; }
 .appt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .appt-time { font-size: .78rem; font-weight: 500; opacity: .85; white-space: nowrap; }

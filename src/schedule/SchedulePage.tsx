@@ -223,7 +223,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                         aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
                         <span className="appt-time num">{short ? timeOf(a.startAt!) : `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`}</span>
                         <span className="appt-name">{a.patient?.fullName}</span>
-                        {h > 56 && <span className="appt-state"><span className="dot" /> {s.label}</span>}
+                        {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
+                        {(short || h > 56) && <span className="appt-state"><span className="dot" /> {s.label}</span>}
                       </button>
                     )
                   })}
