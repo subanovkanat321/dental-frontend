@@ -42,7 +42,7 @@ const TABS: [Tab, string][] = [['money', 'Деньги'], ['expenses', 'Расх
  * сервере: всю клинику видит админ (если врачи не независимы), врач — свою; «К оплате» —
  * регистратура и клиники с регистратурой.
  */
-export function CashPage({ me, initialTab }: { me: Me; initialTab?: string }) {
+export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab?: string; onOpenPatient?: (patientId: number) => void }) {
   const seesAll = Boolean(me.admin && !me.clinic?.independentDoctors)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   // Чья касса: админ выбирает (пусто — вся клиника), врач — всегда своя
@@ -185,7 +185,7 @@ export function CashPage({ me, initialTab }: { me: Me; initialTab?: string }) {
         {!money && !toPayShown && <p className="hint">Касса — у администратора и врачей.</p>}
         </>}
       </section>
-      {opened && <OpenedAppointment id={opened} me={me} onClose={close} />}
+      {opened && <OpenedAppointment id={opened} me={me} onClose={close} onOpenPatient={onOpenPatient} />}
     </div>
   )
 }
@@ -255,12 +255,12 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
 }
 
 /** Приём из строки таблицы — с сервера, и карточка с оплатой справа. */
-function OpenedAppointment({ id, me, onClose }: { id: number; me: Me; onClose: () => void }) {
+function OpenedAppointment({ id, me, onClose, onOpenPatient }: { id: number; me: Me; onClose: () => void; onOpenPatient?: (patientId: number) => void }) {
   const a = useQuery({
     queryKey: ['appointment', id],
     queryFn: () => unwrap(api.GET('/api/appointments/{id}', { params: { path: { id } } })),
   })
   if (a.isPending) return <aside className="panel" aria-label="Карточка приёма"><p className="hint">Загрузка…</p></aside>
   if (a.error) return <aside className="panel" aria-label="Карточка приёма"><p className="error">{a.error.message}</p></aside>
-  return <AppointmentPanel appointment={a.data} me={me} onClose={onClose} />
+  return <AppointmentPanel appointment={a.data} me={me} onClose={onClose} onOpenPatient={onOpenPatient} />
 }

@@ -55,7 +55,8 @@ test('расписание: все врачи колонками, нажать �
   expect(panel).toHaveTextContent('Бакыт М.')
   expect(panel).toHaveTextContent('+996 555 123 456')
   expect(panel).toHaveTextContent('Осмотр')
-  expect(screen.getByRole('link', { name: 'Открыть в приложении' })).toHaveAttribute('href', '/?appointment=10')
+  // Прежнего приложения больше нет — ссылки на него в карточке тоже
+  expect(screen.queryByRole('link', { name: 'Открыть в приложении' })).not.toBeInTheDocument()
 
   await userEvent.keyboard('{Escape}')
   expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument()

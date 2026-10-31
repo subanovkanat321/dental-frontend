@@ -531,3 +531,9 @@ details.agreement-box { max-height: none; }
 .remind-quick { flex: none; align-self: center; width: 44px; height: 44px; margin-right: 6px; border: 1px solid var(--line-strong); border-radius: 50%;
   background: var(--card); color: var(--ok-ink); font: 700 .78rem var(--display); cursor: pointer; }
 .remind-quick.tg { color: #2AABEE; }
+/* Карточка приёма: «Вернуть» после неявки или отмены, оценка, отзыв */
+.undo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
+.rating { margin: 0; color: var(--wait-ink); letter-spacing: 2px; }
+.review-comment { margin: 0; padding: 8px 10px; border-left: 3px solid var(--line-strong); background: var(--sunken); border-radius: var(--r-sm); white-space: pre-wrap; }
+.patient-name.link { font-size: 1.05rem; font-weight: 700; }
+.contact .btn { flex: 1; justify-content: center; text-decoration: none; }

@@ -11,10 +11,11 @@ type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
 type Appointment = Schemas['AppointmentView']
 
-const DURATIONS = [15, 30, 45, 60, 90, 120]
+const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180, 240]
 
 /** Слот, на который нажали: врач, день и минуты от полуночи по Бишкеку. */
-export type Slot = { doctorId: number; date: string; minutes: number }
+/** Куда записать; duration — длительность по умолчанию («Записать снова» — как прошлый приём). */
+export type Slot = { doctorId: number; date: string; minutes: number; duration?: number }
 
 function timeText(minutes: number): string {
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
@@ -51,7 +52,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   const [doctorId, setDoctorId] = useState(slot.doctorId)
   const [time, setTime] = useState(timeText(slot.minutes))
-  const [duration, setDuration] = useState(30)
+  const [duration, setDuration] = useState(slot.duration ?? 30)
   const [serviceId, setServiceId] = useState<number | ''>('')
   const [comment, setComment] = useState('')
   const [patient, setPatient] = useState<Patient | null>(initialPatient)

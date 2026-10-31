@@ -30,7 +30,7 @@ test('«Открыть приём» из уведомления: день при
   window.history.replaceState(null, '', '/?appointment=15&v=abc')
   renderApp()
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
-  expect(within(panel).getByText('Бакыт М.')).toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: 'Бакыт М. ›' })).toBeInTheDocument()
   expect(window.location.search).toBe('')
   expect(window.location.hash).toBe('#/schedule')
 })

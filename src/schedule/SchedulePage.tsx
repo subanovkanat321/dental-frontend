@@ -65,8 +65,10 @@ function useNarrow(): boolean {
  * «Расписание»: день всех врачей колонками, как настольный календарь. Нажать на приём — карточка
  * справа с действиями; на пустое место — «Новая запись» на это время. Расписание остаётся на экране.
  */
-export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate, initialDate, openAppointment }: {
+export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate, initialDate, openAppointment, onOpenPatient }: {
   me: Me
+  /** Имя пациента в карточке приёма → его карточка в «Пациентах». */
+  onOpenPatient?: (patientId: number) => void
   /** Кнопка бота: «Открыть завтра» — сразу этот день; «Открыть приём» — его день и карточка. */
   initialDate?: string
   openAppointment?: Appointment
@@ -307,7 +309,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
       </section>
-      {selected && <AppointmentPanel appointment={selected} me={me} onClose={close} />}
+      {selected && <AppointmentPanel appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
+        onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />}
       {side?.kind === 'new' && (
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} walkIn={side.walkIn} onClose={close}
           onCreated={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} />

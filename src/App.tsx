@@ -41,6 +41,11 @@ export function App() {
     setLink(null)
     goPage(next)
   }
+  // Имя пациента в карточке приёма → «Пациенты» с его карточкой
+  const openPatient = (patientId: number) => {
+    setLink({ page: 'patients', patientId })
+    goPage('patients')
+  }
   // «Записать» из карточки пациента: в «Расписание» с открытой «Новой записью» на него
   const [booking, setBooking] = useState<Schemas['PatientView'] | null>(null)
 
@@ -79,15 +84,15 @@ export function App() {
     <Shell me={me.data} page={shown} onNavigate={go}>
       <Suspense fallback={<p className="hint">Загрузка…</p>}>
       {shown === 'patients' && <PatientsPage me={me.data} initialPatient={link?.patientId} onBook={(p) => { setBooking(p); go('schedule') }} />}
-      {shown === 'cash' && <CashPage me={me.data} initialTab={link?.tab} />}
+      {shown === 'cash' && <CashPage me={me.data} initialTab={link?.tab} onOpenPatient={openPatient} />}
       {shown === 'stock' && <StockPage me={me.data} initialSupply={link?.supplyId} />}
       {shown === 'team' && <TeamPage me={me.data} />}
       {shown === 'clinic' && <ClinicPage me={me.data} />}
       {shown === 'account' && <AccountPage me={me.data} initialTab={link?.tab} initialTicket={link?.ticketId} />}
       {shown === 'platform' && me.data.platform && <PlatformPage me={me.data} initialTab={link?.page === 'platform' ? link.tab : undefined} />}
       {shown === 'schedule' && (link?.appointmentId || link?.bookPatientId
-        ? <LinkedSchedule link={link} me={me.data} onNavigate={go} />
-        : <SchedulePage me={me.data} initialDate={link?.date} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />)}
+        ? <LinkedSchedule link={link} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
+        : <SchedulePage me={me.data} initialDate={link?.date} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} onOpenPatient={openPatient} />)}
       </Suspense>
     </Shell>
   )
@@ -97,10 +102,11 @@ export function App() {
  * «Расписание» по кнопке бота: «Открыть приём» — день приёма с его карточкой; «Записать на приём»
  * из присланного боту контакта — «Новая запись» на этого пациента. Не нашёлся — просто сегодня.
  */
-function LinkedSchedule({ link, me, onNavigate }: {
+function LinkedSchedule({ link, me, onNavigate, onOpenPatient }: {
   link: DeepLink
   me: Schemas['BookingViewsMe']
   onNavigate: (page: Page) => void
+  onOpenPatient: (patientId: number) => void
 }) {
   const appointment = useQuery({
     queryKey: ['appointment', link.appointmentId],
@@ -115,5 +121,5 @@ function LinkedSchedule({ link, me, onNavigate }: {
     retry: false,
   })
   if (appointment.isLoading || patient.isLoading) return <p className="hint">Загрузка…</p>
-  return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null} onNavigate={onNavigate} />
+  return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null} onNavigate={onNavigate} onOpenPatient={onOpenPatient} />
 }
