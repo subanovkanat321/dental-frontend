@@ -5,8 +5,25 @@
  */
 type BackButton = { show(): void; hide(): void; onClick(cb: () => void): void; offClick(cb: () => void): void }
 
+type MainButton = {
+  setText(text: string): void
+  show(): void
+  hide(): void
+  enable(): void
+  disable(): void
+  showProgress(leaveActive?: boolean): void
+  hideProgress(): void
+  onClick(cb: () => void): void
+  offClick(cb: () => void): void
+}
+
 type WebApp = {
   initData: string
+  initDataUnsafe?: { user?: { language_code?: string } }
+  MainButton?: MainButton
+  HapticFeedback?: { notificationOccurred(type: 'success' | 'warning' | 'error'): void }
+  openLink?(url: string): void
+  requestContact?(callback: (shared: boolean) => void): void
   ready(): void
   expand(): void
   setHeaderColor?(color: string): void
@@ -40,4 +57,16 @@ export function startTelegram(): void {
   app.expand()
   app.setHeaderColor?.('#0F2A30')
   document.body.classList.add('in-telegram')
+}
+
+/** Внешняя ссылка: в Telegram — его браузером (Mini App не уходит со страницы), иначе — новая вкладка. */
+export function openLink(url: string): void {
+  const app = telegram()
+  if (app?.openLink) app.openLink(url)
+  else window.open(url, '_blank', 'noopener')
+}
+
+/** Лёгкая вибрация в Telegram: успех, предупреждение, ошибка. Вне Telegram — ничего. */
+export function haptic(type: 'success' | 'warning' | 'error'): void {
+  telegram()?.HapticFeedback?.notificationOccurred(type)
 }

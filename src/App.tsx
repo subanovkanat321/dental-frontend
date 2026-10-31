@@ -1,23 +1,28 @@
-import { AccountPage } from './account/AccountPage'
 import { ApiError } from './api/client'
 import { useMe } from './api/me'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 
 import type { Schemas } from './api/client'
 import { Shell } from './layout/Shell'
 import { usePage } from './lib/route'
 import { telegram } from './lib/telegram'
-import { CashPage } from './cash/CashPage'
-import { ClinicPage } from './clinic/ClinicPage'
-import { PatientsPage } from './patients/PatientsPage'
-import { PlatformPage } from './platform/PlatformPage'
-import { SchedulePage } from './schedule/SchedulePage'
-import { StockPage } from './stock/StockPage'
-import { TeamPage } from './team/TeamPage'
+
+// Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
+const AccountPage = lazy(() => import('./account/AccountPage').then((m) => ({ default: m.AccountPage })))
+const CashPage = lazy(() => import('./cash/CashPage').then((m) => ({ default: m.CashPage })))
+const ClinicPage = lazy(() => import('./clinic/ClinicPage').then((m) => ({ default: m.ClinicPage })))
+const PatientsPage = lazy(() => import('./patients/PatientsPage').then((m) => ({ default: m.PatientsPage })))
+const PlatformPage = lazy(() => import('./platform/PlatformPage').then((m) => ({ default: m.PlatformPage })))
+const SchedulePage = lazy(() => import('./schedule/SchedulePage').then((m) => ({ default: m.SchedulePage })))
+const StockPage = lazy(() => import('./stock/StockPage').then((m) => ({ default: m.StockPage })))
+const TeamPage = lazy(() => import('./team/TeamPage').then((m) => ({ default: m.TeamPage })))
+// Самозапись пациента — тоже отдельный чанк: персонал его не скачивает
+const PatientApp = lazy(() => import('./patient/PatientApp'))
 
 /**
- * CRM для компьютера (ADR 0001 бэкенда): тот же вход, что у сайта, — cookie-сессия после
- * «Войти через Telegram» на /login. Не вошли — ссылка на вход; пациент — сюда не пускаем.
+ * Одно приложение на всех (ADR 0001 и 0002 бэкенда): сотрудник видит CRM, команда платформы —
+ * «Платформу», пациент в Telegram — самозапись. Вход: на сайте — cookie-сессия после «Войти через
+ * Telegram» на /login, в Telegram — подпись запуска. Пациенту вне Telegram — подсказка про бота.
  */
 export function App() {
   const me = useMe()
@@ -37,6 +42,9 @@ export function App() {
     }
     return <div className="center error">Нет связи с сервером: {me.error.message}</div>
   }
+  if (!me.data.doctor && !me.data.platform && telegram()) {
+    return <Suspense fallback={<div className="center hint">Загрузка…</div>}><PatientApp me={me.data} /></Suspense>
+  }
   if (!me.data.doctor && !me.data.platform) {
     return (
       <div className="center">
@@ -49,6 +57,7 @@ export function App() {
   const shown = me.data.doctor ? page : 'platform'
   return (
     <Shell me={me.data} page={shown} onNavigate={go}>
+      <Suspense fallback={<p className="hint">Загрузка…</p>}>
       {shown === 'patients' && <PatientsPage me={me.data} onBook={(p) => { setBooking(p); go('schedule') }} />}
       {shown === 'cash' && <CashPage me={me.data} />}
       {shown === 'stock' && <StockPage me={me.data} />}
@@ -57,6 +66,7 @@ export function App() {
       {shown === 'account' && <AccountPage me={me.data} />}
       {shown === 'platform' && me.data.platform && <PlatformPage me={me.data} />}
       {shown === 'schedule' && <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
+      </Suspense>
     </Shell>
   )
 }
