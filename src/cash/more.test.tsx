@@ -1,0 +1,107 @@
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+
+import type { Schemas } from '../api/client'
+import { todayIn, weekLabel } from '../lib/time'
+import { me, renderApp } from '../test/fixtures'
+import { server } from '../test/server'
+
+beforeEach(() => {
+  window.location.hash = '/cash'
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+  )
+})
+afterEach(() => {
+  window.location.hash = ''
+})
+
+test('подпись недели: в одном месяце и на стыке месяцев', () => {
+  expect(weekLabel('2026-06-01')).toBe('1–7 июн')
+  expect(weekLabel('2026-06-29')).toBe('29 июн – 5 июл')
+})
+
+test('расходы: список по статьям, прибыль, добавить свою статью и удалить', async () => {
+  const month = todayIn().slice(0, 7)
+  let expenses: Schemas['ExpensesExpense'][] = [
+    { id: 1, spentOn: `${month}-01`, amountSom: 30000, category: 'Аренда' },
+    { id: 2, spentOn: `${month}-02`, amountSom: 5000, category: 'Техник', comment: 'коронка' },
+  ]
+  const posted: unknown[] = []
+  server.use(
+    http.get('*/api/expenses', () => HttpResponse.json(expenses)),
+    http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: ['Аренда', 'Техник'], own: [] } satisfies Schemas['ExpenseControllerCategories'])),
+    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 100000, purchasedSom: 10000, expensesSom: 35000 } satisfies Schemas['SpendingView'])),
+    http.post('*/api/expenses', async ({ request }) => {
+      const body = await request.json() as Record<string, unknown>
+      posted.push(body)
+      expenses = [...expenses, { id: 3, spentOn: body.spentOn as string, amountSom: body.amountSom as number, category: body.category as string }]
+      return HttpResponse.json(expenses[2])
+    }),
+    http.delete('*/api/expenses/:id', ({ params }) => {
+      expenses = expenses.filter((x) => String(x.id) !== params.id)
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  const user = userEvent.setup()
+  renderApp()
+
+  await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
+  expect(await screen.findByLabelText('Расходы за месяц')).toHaveTextContent('35 000')
+  expect(screen.getByText('Аренда: 30 000 сом · Техник: 5 000 сом')).toBeInTheDocument()
+  const profit = await screen.findByLabelText('Прибыль за месяц')
+  expect(within(profit).getByText('Прибыль').parentElement).toHaveTextContent('55 000')
+
+  const form = screen.getByRole('form', { name: 'Новый расход' })
+  await user.type(within(form).getByRole('spinbutton', { name: 'Сумма, сом' }), '2000')
+  await user.selectOptions(within(form).getByRole('combobox', { name: 'Статья' }), '*')
+  await user.type(within(form).getByRole('textbox', { name: 'Своя статья' }), 'Реклама')
+  await user.click(within(form).getByRole('button', { name: 'Добавить' }))
+  expect(await screen.findByText('Реклама')).toBeInTheDocument()
+  expect(posted[0]).toMatchObject({ amountSom: 2000, category: 'Реклама', spentOn: todayIn() })
+
+  await user.click(screen.getByRole('button', { name: 'Удалить расход: Аренда 30000' }))
+  expect(await screen.findByLabelText('Расходы за месяц')).toHaveTextContent('7 000')
+})
+
+test('статистика: неявки по неделям, среднее без текущей недели, оценки', async () => {
+  server.use(
+    http.get('*/api/appointments/stats', () => HttpResponse.json([
+      { weekStart: '2026-10-26', booked: 10, done: 3, noShow: 0, cancelled: 0, reminded: 5, unmarked: 0 },
+      { weekStart: '2026-10-19', booked: 20, done: 17, noShow: 2, cancelled: 1, reminded: 15, unmarked: 0 },
+      { weekStart: '2026-10-12', booked: 18, done: 14, noShow: 1, cancelled: 2, reminded: 12, unmarked: 1 },
+    ] satisfies Schemas['WeekStats'][])),
+    http.get('*/api/appointments/ratings', () => HttpResponse.json({ average: 4.5, count: 4, byStars: [0, 0, 0, 2, 2] } satisfies Schemas['RatingSummary'])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Статистика' }))
+  expect(await screen.findByLabelText('Неявок в неделю')).toHaveTextContent('1,5')
+  expect(screen.getByText(/Не отмечено «явка \/ неявка»: 1/)).toBeInTheDocument()
+  expect(within(screen.getByRole('table', { name: 'Неявки по неделям' })).getAllByRole('row')).toHaveLength(4)
+  expect(await screen.findByLabelText('Средняя оценка')).toHaveTextContent('4,5')
+})
+
+test('отчёт: строки месяца, итоги и отправка в бот', async () => {
+  let sent: unknown = null
+  server.use(
+    http.get('*/api/appointments/report', () => HttpResponse.json([
+      { id: 1, startAt: `${todayIn()}T04:00:00Z`, patient: 'Бакыт М.', doctor: 'Айгерим Садыкова', status: 'Состоялся', paidSom: 3000, debtSom: 1000 },
+    ] satisfies Schemas['AppointmentServiceReportRow'][])),
+    http.post('*/api/appointments/report', async ({ request }) => {
+      sent = await request.json()
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Отчёт' }))
+  expect(await screen.findByRole('cell', { name: 'Бакыт М.' })).toBeInTheDocument()
+  expect(screen.getByText(/Оплачено:/)).toHaveTextContent('3 000 сом · долги: 1 000 сом · приёмов: 1')
+  await user.click(screen.getByRole('button', { name: 'Отправить в бот' }))
+  expect(await screen.findByRole('status')).toHaveTextContent('Отчёт отправлен в Telegram')
+  expect(sent).toEqual({ month: todayIn().slice(0, 7) })
+})

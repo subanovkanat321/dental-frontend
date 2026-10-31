@@ -69,3 +69,13 @@ export function periodOf(kind: 'day' | 'week' | 'month', today = todayIn()): { f
   const weekday = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7 // пн = 0
   return { from: addDays(today, -weekday), to: today }
 }
+
+/** «1–7 июн» или «29 июн – 5 июл» — подпись недели. */
+export function weekLabel(weekStart: string): string {
+  const end = addDays(weekStart, 6)
+  const fmt = (d: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', ...opts })
+    .format(new Date(`${d}T00:00:00Z`)).replace('.', '')
+  return weekStart.slice(0, 7) === end.slice(0, 7)
+    ? `${fmt(weekStart, { day: 'numeric' })}–${fmt(end, { day: 'numeric', month: 'short' })}`
+    : `${fmt(weekStart, { day: 'numeric', month: 'short' })} – ${fmt(end, { day: 'numeric', month: 'short' })}`
+}

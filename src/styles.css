@@ -341,3 +341,19 @@ button, input, select, textarea { font-family: inherit; }
 .candidates h3 { margin: 0; color: var(--wait-ink); }
 .candidate { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .remind { display: grid; gap: 8px; }
+
+/* Касса: расходы, прибыль, оценки */
+.expense-form { display: grid; grid-template-columns: 150px 130px minmax(160px, 1fr) minmax(160px, 1.4fr) auto; gap: 8px; align-items: center; }
+.expense-form input, .expense-form select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.methods.profit { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+.methods.profit > div { display: grid; gap: 2px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .86rem; }
+.methods.profit b { font-family: var(--mono, inherit); font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+.stars { display: grid; gap: 6px; margin-top: 10px; max-width: 420px; }
+.stars-row { display: grid; grid-template-columns: 40px 1fr 32px; gap: 8px; align-items: center; }
+.stars-bar { height: 8px; border-radius: 4px; background: var(--sunken); overflow: hidden; }
+.stars-bar > span { display: block; height: 100%; background: var(--accent); }
+@media (max-width: 720px) {
+  .expense-form { grid-template-columns: 1fr 1fr; }
+  .expense-form button { grid-column: 1 / -1; }
+  .methods.profit { grid-template-columns: 1fr 1fr; }
+}

@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 import { api, unwrap, type Schemas } from '../api/client'
 import { periodOf, shortDate, somText, todayIn } from '../lib/time'
 import { AppointmentPanel } from '../schedule/AppointmentPanel'
+import { ExpensesTab, ReportTab, StatsTab } from './MoreTabs'
 
 type Me = Schemas['BookingViewsMe']
 type Debt = Schemas['PaymentQueryDebt']
@@ -11,6 +12,9 @@ type Debt = Schemas['PaymentQueryDebt']
 const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
 
 type Period = 'day' | 'week' | 'month' | 'custom'
+type Tab = 'money' | 'expenses' | 'stats' | 'report'
+
+const TABS: [Tab, string][] = [['money', 'Деньги'], ['expenses', 'Расходы'], ['stats', 'Статистика'], ['report', 'Отчёт']]
 
 /**
  * «Касса»: выручка за период (по способам и по дням), «К оплате на кассе» и долги — таблицами.
@@ -26,6 +30,7 @@ export function CashPage({ me }: { me: Me }) {
   const money = seesAll || me.doctorId != null
   const toPayShown = Boolean(me.reception || me.hasReception)
 
+  const [tab, setTab] = useState<Tab>('money')
   const [period, setPeriod] = useState<Period>('month')
   const [custom, setCustom] = useState(periodOf('month'))
   const range = period === 'custom' ? custom : periodOf(period)
@@ -63,7 +68,19 @@ export function CashPage({ me }: { me: Me }) {
               {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
             </select>
           )}
+          {money && (
+            <div className="segments tabs" role="tablist" aria-label="Разделы кассы">
+              {TABS.map(([key, title]) => (
+                <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>
+              ))}
+            </div>
+          )}
         </header>
+
+        {tab === 'expenses' && <ExpensesTab me={me} doctorId={doctorId} seesAll={seesAll} />}
+        {tab === 'stats' && <StatsTab doctorId={doctorId} />}
+        {tab === 'report' && <ReportTab doctorId={doctorId} />}
+        {tab === 'money' && <>
 
         {toPayShown && (
           <section className="card-block">
@@ -125,6 +142,7 @@ export function CashPage({ me }: { me: Me }) {
         )}
 
         {!money && !toPayShown && <p className="hint">Касса — у администратора и врачей.</p>}
+        </>}
       </section>
       {opened && <OpenedAppointment id={opened} me={me} onClose={close} />}
     </div>
