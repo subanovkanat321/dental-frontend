@@ -7253,10 +7253,29 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "promo" : {
+            "$ref" : "#/components/schemas/TariffsPromo"
+          },
           "tariffs" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/TariffsTariff"
+            }
+          }
+        }
+      },
+      "TariffsPromo" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "points" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
             }
           }
         }

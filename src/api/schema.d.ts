@@ -3326,7 +3326,13 @@ export interface components {
         Tariffs: {
             /** Format: int32 */
             pilotMonths?: number;
+            promo?: components["schemas"]["TariffsPromo"];
             tariffs?: components["schemas"]["TariffsTariff"][];
+        };
+        TariffsPromo: {
+            title?: string;
+            text?: string;
+            points?: string[];
         };
         TariffsTariff: {
             code?: string;
