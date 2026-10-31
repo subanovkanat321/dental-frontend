@@ -11,4 +11,6 @@ export const server = setupServer(
   http.get('*/api/appointments/to-pay', () => HttpResponse.json([])),
   http.get('*/api/appointments/:id/supplies', () => HttpResponse.json([])),
   http.get('*/api/service-types', () => HttpResponse.json([])),
+  http.get('*/api/waitlist', () => HttpResponse.json([])),
+  http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»' })),
 )

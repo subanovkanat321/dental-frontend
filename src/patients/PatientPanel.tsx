@@ -4,6 +4,7 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
 import { formatPhone, shortDate, somText } from '../lib/time'
 import { statusOf } from '../schedule/status'
+import { WaitlistBox } from './WaitlistTab'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -84,6 +85,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
       {owed > 0 && <span className="chip s-wait">Долг: {somText(owed)}</span>}
 
       <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>
+      {patient && <WaitlistBox patient={patient} me={me} />}
 
       <section>
         <h3>Записан</h3>

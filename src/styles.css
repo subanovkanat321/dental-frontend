@@ -331,3 +331,12 @@ button, input, select, textarea { font-family: inherit; }
 .supplies-box .spent { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .add-supply { grid-template-columns: 1fr auto; }
 .add-supply select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+
+/* Лист ожидания: вкладки «Пациентов», блок в карточке */
+.segments.tabs { min-width: 0; }
+.segments.tabs button { padding: 7px 14px; white-space: nowrap; }
+.waitlist-box { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.waitlist-box select { font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.candidates { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-md); background: var(--wait-bg); }
+.candidates h3 { margin: 0; color: var(--wait-ink); }
+.candidate { display: flex; justify-content: space-between; align-items: center; gap: 8px; }

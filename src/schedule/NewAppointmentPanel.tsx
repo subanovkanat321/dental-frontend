@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
-import { dayTitle, formatPhone, slotInstant } from '../lib/time'
+import { freeSlotText, whatsappUrl } from '../lib/texts'
+import { dayTitle, formatPhone, shortDate, slotInstant } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -86,6 +88,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, onClose, 
       body: { fullName: name.trim(), phone: `+996${phone.replace(/\D/g, '')}`, allowDuplicate },
     })),
   })
+
+  const [hh, mm] = time.split(':').map(Number)
+  const startAt = time ? slotInstant(slot.date, (hh ?? 0) * 60 + (mm ?? 0)) : null
 
   const create = useMutation<Appointment, ApiError, Patient>({
     mutationFn: (p) => {
@@ -171,6 +176,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, onClose, 
           </select>
         </label>
 
+        <WaitlistCandidates doctorId={doctorId} duration={duration} startAt={startAt} onBooked={onCreated} />
+
         <fieldset className="field">
           <legend>Пациент</legend>
           {patient ? (
@@ -249,5 +256,60 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, onClose, 
         <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Записываем…' : 'Записать'}</button>
       </form>
     </aside>
+  )
+}
+
+type WaitlistEntry = Schemas['WaitlistView']
+
+/**
+ * Лист ожидания для этого окна (как fitsWindow в приложении): к этому врачу или к любому,
+ * помещается по длительности и, если уже записан к этому врачу, окно раньше его записи.
+ * WhatsApp — «освободилось время»; «Записать сюда» — сервер запишет (или перенесёт) и уберёт из листа.
+ */
+function WaitlistCandidates({ doctorId, duration, startAt, onBooked }: {
+  doctorId: number
+  duration: number
+  startAt: string | null
+  onBooked: (a: Appointment) => void
+}) {
+  const client = useQueryClient()
+  const list = useWaitlist()
+  const settings = useSettings()
+  const book = useMutation<Appointment, ApiError, WaitlistEntry>({
+    mutationFn: (e) => unwrap(api.POST('/api/waitlist/{id}/book', { params: { path: { id: e.id! } }, body: { doctorId, startAt: startAt! } })),
+    onSuccess: (a) => {
+      void client.invalidateQueries({ queryKey: ['waitlist'] })
+      void client.invalidateQueries({ queryKey: ['appointments'] })
+      onBooked(a)
+    },
+  })
+  if (!startAt) return null
+  const fits = (list.data ?? []).filter((e) => {
+    if (e.doctorId != null && e.doctorId !== doctorId) return false
+    const sameDoctor = !e.upcoming || e.upcoming.doctorId === doctorId
+    const earlier = !e.upcoming || !sameDoctor || startAt < (e.upcoming.startAt ?? '')
+    return earlier && (e.durationMinutes ?? 30) <= duration
+  })
+  if (!fits.length) return null
+  return (
+    <section className="candidates" aria-label="Ждут свободного времени">
+      <h3>Ждут свободного времени</h3>
+      {fits.map((e) => (
+        <div key={e.id} className="candidate">
+          <span>
+            <strong>{e.patient?.fullName}</strong>
+            <span className="hint small"> · {e.upcoming?.startAt ? `сейчас ${shortDate(e.upcoming.startAt, true)}` : 'записи нет'} · {e.durationMinutes} мин</span>
+          </span>
+          <span className="actions">
+            <a className="btn small" target="_blank" rel="noopener"
+              href={whatsappUrl(e.patient?.phone ?? '', freeSlotText(e.patient?.fullName ?? '', startAt, settings.data?.clinicSignature))}>WhatsApp</a>
+            <button type="button" className="btn small primary" disabled={book.isPending} onClick={() => book.mutate(e)}>
+              {e.upcoming ? 'Перенести сюда' : 'Записать сюда'}
+            </button>
+          </span>
+        </div>
+      ))}
+      {book.error && <p className="error">{book.error.message}</p>}
+    </section>
   )
 }

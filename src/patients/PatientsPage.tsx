@@ -2,9 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
+import { useWaitlist } from '../api/settings'
 import { formatPhone, shortDate } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { PatientPanel } from './PatientPanel'
+import { RecallTab, WaitlistTab } from './WaitlistTab'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -38,6 +40,9 @@ export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => v
   const [selected, setSelected] = useState<number | null>(null)
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
+  // Вкладки: все пациенты, лист ожидания, «позвать на профосмотр» — как в «Пациентах» приложения
+  const [tab, setTab] = useState<'all' | 'waitlist' | 'recall'>('all')
+  const waitlist = useWaitlist()
   const close = useCallback(() => setSelected(null), [])
 
   const recent = useQuery({
@@ -94,17 +99,29 @@ export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => v
       <section className="schedule-main">
         <header className="toolbar">
           <h1>Пациенты</h1>
-          <input type="search" className="search" aria-label="Поиск пациента" placeholder="Имя или номер телефона"
-            value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
-          <span className="hint">
-            {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
-          </span>
+          <div className="segments tabs" role="tablist" aria-label="Списки пациентов">
+            {([['all', 'Все'], ['waitlist', `Лист ожидания${waitlist.data?.length ? ` · ${waitlist.data.length}` : ''}`], ['recall', 'Профосмотр']] as const)
+              .map(([key, title]) => (
+                <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>
+              ))}
+          </div>
+          {tab === 'all' && (
+            <>
+              <input type="search" className="search" aria-label="Поиск пациента" placeholder="Имя или номер телефона"
+                value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
+              <span className="hint">
+                {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
+              </span>
+            </>
+          )}
         </header>
-        {recent.error && <p className="error">{recent.error.message}</p>}
-        {recent.isSuccess && sorted.length === 0 && (
+        {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} />}
+        {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
+        {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
+        {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
           <p className="hint">{text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}».`) : 'Пациентов пока нет — они появятся с первой записью.'}</p>
         )}
-        {sorted.length > 0 && (
+        {tab === 'all' && sorted.length > 0 && (
           <table className="table">
             <thead>
               <tr>
