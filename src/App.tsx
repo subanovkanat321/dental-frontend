@@ -11,14 +11,12 @@ import { usePage, type Page } from './lib/route'
 import { telegram } from './lib/telegram'
 
 // Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
-const AccountPage = lazy(() => import('./account/AccountPage').then((m) => ({ default: m.AccountPage })))
 const CashPage = lazy(() => import('./cash/CashPage').then((m) => ({ default: m.CashPage })))
-const ClinicPage = lazy(() => import('./clinic/ClinicPage').then((m) => ({ default: m.ClinicPage })))
 const PatientsPage = lazy(() => import('./patients/PatientsPage').then((m) => ({ default: m.PatientsPage })))
 const PlatformPage = lazy(() => import('./platform/PlatformPage').then((m) => ({ default: m.PlatformPage })))
 const SchedulePage = lazy(() => import('./schedule/SchedulePage').then((m) => ({ default: m.SchedulePage })))
 const StockPage = lazy(() => import('./stock/StockPage').then((m) => ({ default: m.StockPage })))
-const TeamPage = lazy(() => import('./team/TeamPage').then((m) => ({ default: m.TeamPage })))
+const SettingsPage = lazy(() => import('./settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 // Самозапись пациента — тоже отдельный чанк: персонал его не скачивает
 const PatientApp = lazy(() => import('./patient/PatientApp'))
 
@@ -34,7 +32,10 @@ export function App() {
   const [link, setLink] = useState<DeepLink | null>(() => {
     rememberLaunch(window.location.search)
     const found = readDeepLink(window.location.search)
-    if (found) window.history.replaceState(null, '', `${window.location.pathname}#/${found.page}`)
+    if (found) {
+      const hash = found.page === 'settings' && found.tab ? `settings/${found.tab}` : found.page
+      window.history.replaceState(null, '', `${window.location.pathname}#/${hash}`)
+    }
     return found
   })
   const [page, goPage] = usePage()
@@ -92,9 +93,7 @@ export function App() {
       {shown === 'patients' && <PatientsPage me={me.data} initialPatient={link?.patientId} onOpenAppointment={openAppointment} onBook={(p) => { setBooking(p); go('schedule') }} />}
       {shown === 'cash' && <CashPage me={me.data} initialTab={link?.tab} onOpenPatient={openPatient} />}
       {shown === 'stock' && <StockPage me={me.data} initialSupply={link?.supplyId} />}
-      {shown === 'team' && <TeamPage me={me.data} />}
-      {shown === 'clinic' && <ClinicPage me={me.data} />}
-      {shown === 'account' && <AccountPage me={me.data} initialTab={link?.tab} initialTicket={link?.ticketId} />}
+      {shown === 'settings' && <SettingsPage me={me.data} initialTicket={link?.ticketId} />}
       {shown === 'platform' && me.data.platform && <PlatformPage me={me.data} initialTab={link?.page === 'platform' ? link.tab : undefined} />}
       {shown === 'schedule' && (link?.appointmentId || link?.bookPatientId
         ? <LinkedSchedule key={link.appointmentId ?? link.bookPatientId} link={link} me={me.data} onNavigate={go} onOpenPatient={openPatient} />

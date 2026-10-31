@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
 import { timeOffWhen } from './texts'
 
 beforeEach(() => {
-  window.location.hash = '/team'
+  window.location.hash = '/settings/doctors'
   server.use(http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot' })))
 })
 afterEach(() => {
@@ -84,7 +84,7 @@ test('сотрудники: пригласить регистратора ссы
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Сотрудники' }))
+  openItem('members')
   expect(await screen.findByText('Администратор · врач · это вы')).toBeInTheDocument()
   const form = screen.getByRole('form', { name: 'Пригласить сотрудника' })
   await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Айпери')
@@ -115,7 +115,7 @@ test('перерывы: список, добавить еженедельный,
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Перерывы' }))
+  openItem('timeoff')
   const table = await screen.findByRole('table', { name: 'Перерывы' })
   expect(within(table).getByText('Все врачи')).toBeInTheDocument()
 
@@ -144,7 +144,6 @@ test('врач (не админ): без «Сотрудников», откры�
   const user = userEvent.setup()
   renderApp()
   const table = await screen.findByRole('table', { name: 'Врачи' })
-  expect(screen.queryByRole('tab', { name: 'Сотрудники' })).not.toBeInTheDocument()
   expect(within(table).queryByRole('button', { name: 'Дастан Т.' })).not.toBeInTheDocument()
   await user.click(within(table).getByRole('button', { name: 'Айгерим Садыкова' }))
   const panel = await screen.findByRole('complementary', { name: 'Врач' })

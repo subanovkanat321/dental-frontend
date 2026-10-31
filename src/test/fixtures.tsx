@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
+import { act } from 'react'
 
 import type { Schemas } from '../api/client'
 import { App } from '../App'
@@ -23,4 +24,12 @@ export function appointment(id: number, doctorId: number, time: string, name: st
 export function renderApp() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(<QueryClientProvider client={client}><App /></QueryClientProvider>)
+}
+
+/** Пункт «Настроек» (#/settings/<item>) — как нажать его в списке. */
+export function openItem(item: string) {
+  act(() => {
+    window.location.hash = `/settings/${item}`
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+  })
 }

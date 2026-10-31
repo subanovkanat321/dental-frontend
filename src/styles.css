@@ -13,23 +13,23 @@
   --link: #0E8A80;
   --separator: #DCE4E5;
   --line-strong: #C8D3D5;
-  --destructive: #B23A3A;
+  --destructive: #C02626;
   --accent: #0E8A80;
   --accent-hover: #0B746C;
   --accent-text: #FFFFFF;
   --accent-soft: #E0F2EF;
-  --status-ok: #1D7A45;
-  --status-wait: #8F5A0B;
+  --status-ok: #11683A;
+  --status-wait: #8A5200;
   --now: #E8573F;
   --rail: #0F2A30;
   --rail-text: #B9CFCC;
   /* Статусы приёма: заливка + текст (DESIGN.md → Colors) */
-  --req-bg: #E3ECFD; --req-ink: #1F4FB8;
-  --ok-bg: #DCF1E4; --ok-ink: #1D7A45;
-  --wait-bg: #FFF0D2; --wait-ink: #8F5A0B;
-  --bad-bg: #FBE3E3; --bad-ink: #B23A3A;
-  --done-bg: #ECF0F1; --done-ink: #5A6F75;
-  --cash-bg: #FDE8D7; --cash-ink: #9A4A12;
+  --req-bg: #D3E2FF; --req-ink: #1642A6;
+  --ok-bg: #C9EED7; --ok-ink: #11683A;
+  --wait-bg: #FFE3A8; --wait-ink: #7A4600;
+  --bad-bg: #FFD0D0; --bad-ink: #A11F1F;
+  --done-bg: #E6ECED; --done-ink: #4D6268;
+  --cash-bg: #FFD7B5; --cash-ink: #8A3605;
   --shadow: 0 1px 2px rgba(15, 42, 48, .06), 0 2px 8px rgba(15, 42, 48, .05);
   --panel-shadow: -8px 0 24px rgba(15, 42, 48, .08);
   --radius: 10px;
@@ -39,24 +39,38 @@
   --ui: 'Golos Text', sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, monospace;
   font-family: var(--ui);
-  font-size: 14px;
+  font-size: calc(14px * var(--text-scale, 1));
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
+/* Тёмная тема: выбор в «Настройки → Оформление» (data-theme на <html>, lib/theme.ts) */
+:root[data-theme=dark] {
+  color-scheme: dark;
+  --page: #0D1A1D; --card: #13252A; --sunken: #0F1F23; --text: #E4EFEF; --hint: #93AAB0; --faint: #6C858B;
+  --separator: #21383E; --line-strong: #2C4850; --link: #2BB5A8; --destructive: #FF9C9C;
+  --accent: #2BB5A8; --accent-hover: #3CC6B9; --accent-text: #06201E; --accent-soft: #133B39;
+  --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #081215; --rail-text: #93AAB0;
+  --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
+  --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
+  --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3); --panel-shadow: -8px 0 24px rgba(0, 0, 0, .35);
+}
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     color-scheme: dark;
     --page: #0D1A1D; --card: #13252A; --sunken: #0F1F23; --text: #E4EFEF; --hint: #93AAB0; --faint: #6C858B;
     --separator: #21383E; --line-strong: #2C4850; --link: #2BB5A8; --destructive: #FF9C9C;
     --accent: #2BB5A8; --accent-hover: #3CC6B9; --accent-text: #06201E; --accent-soft: #133B39;
     --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #081215; --rail-text: #93AAB0;
-    --req-bg: #1A2A4A; --req-ink: #9DBBFF; --ok-bg: #12352A; --ok-ink: #7FD9A3;
-    --wait-bg: #3A2C10; --wait-ink: #F2C46D; --bad-bg: #3D1A1C; --bad-ink: #FF9C9C;
-    --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #3A2414; --cash-ink: #FFB27A;
+    --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
+    --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
+    --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3); --panel-shadow: -8px 0 24px rgba(0, 0, 0, .35);
   }
 }
+:root[data-text-size=large] { --text-scale: 1.15; }
 * { box-sizing: border-box; }
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--page); color: var(--text); }
 a { color: var(--link); }
 h1, h2, h3 { font-family: var(--display); letter-spacing: -.01em; }
@@ -106,7 +120,7 @@ button, input, select, textarea { font-family: inherit; }
 .clinic strong { color: #fff; font-weight: 600; }
 .nav { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: var(--r-md); background: none; color: var(--rail-text); font: inherit; font-weight: 500; text-align: left; cursor: pointer; text-decoration: none; }
 .nav:hover:not(:disabled) { background: rgba(255, 255, 255, .06); color: #fff; }
-.nav.active { background: rgba(43, 181, 168, .18); color: #fff; }
+.nav.active { background: rgba(43, 181, 168, .28); color: #fff; box-shadow: inset 3px 0 0 var(--accent); }
 .nav:disabled { opacity: .5; cursor: default; }
 .nav .soon { margin-left: auto; font-size: .7rem; padding: 1px 6px; border-radius: 99px; background: rgba(255, 255, 255, .1); }
 .icon { width: 18px; height: 18px; flex: none; }
@@ -150,6 +164,7 @@ button, input, select, textarea { font-family: inherit; }
   position: absolute; left: 4px; right: 4px; z-index: 2; display: flex; flex-direction: column; gap: 1px; padding: 4px 8px; overflow: hidden;
   border: 0; border-radius: var(--r-sm); font: inherit; font-size: .93rem; line-height: 1.25; text-align: left; cursor: pointer;
   transition: background-color .15s ease-out;
+  border-left: 4px solid currentColor;
 }
 .appt.short { flex-direction: row; align-items: baseline; gap: 6px; padding-top: 3px; }
 .appt.short .appt-name { flex: 0 1 auto; min-width: 0; }
@@ -271,7 +286,9 @@ button, input, select, textarea { font-family: inherit; }
  * экран поверх (✕ закрывает), таблицы и колонки врачей прокручиваются вбок.
  */
 @media (max-width: 760px) {
-  :root { font-size: 14px; }
+  /* Телефон: текст крупнее; поля не мельче 16px — иначе iPhone приближает страницу при вводе */
+  :root { font-size: calc(16px * var(--text-scale, 1)); }
+  input, select, textarea { font-size: max(16px, 1rem) !important; }
   .shell { grid-template-columns: 1fr; }
   .sidebar {
     position: fixed; top: auto; bottom: 0; left: 0; right: 0; z-index: 30; height: auto;
@@ -563,3 +580,24 @@ details.agreement-box { max-height: none; }
 .review-comment { margin: 0; padding: 8px 10px; border-left: 3px solid var(--line-strong); background: var(--sunken); border-radius: var(--r-sm); white-space: pre-wrap; }
 .patient-name.link { font-size: 1.05rem; font-weight: 700; }
 .contact .btn { flex: 1; justify-content: center; text-decoration: none; }
+
+/* «Настройки»: группы пунктов, как меню прежнего приложения */
+.settings { display: grid; gap: 16px; max-width: 760px; }
+.settings-group { display: grid; gap: 8px; }
+.settings-group h2 { font-size: 1rem; color: var(--hint); text-transform: uppercase; letter-spacing: .04em; font-family: var(--ui); }
+.settings-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); overflow: hidden; }
+.settings-list li + li { border-top: 1px solid var(--separator); }
+.settings-link { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px 14px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.settings-link:hover { background: var(--sunken); }
+.settings-link > span:first-child { display: grid; gap: 2px; }
+.settings-link .hint { font-size: .88rem; }
+.settings-link .chev { font-size: 1.4rem; color: var(--faint); }
+.appearance { display: grid; gap: 12px; }
+.toolbar .back { padding-left: 6px; color: var(--link); }
+.hours-doctor { border-top: 1px solid var(--separator); padding: 4px 0; }
+.hours-toggle { display: flex; justify-content: space-between; width: 100%; padding: 10px 0; border: 0; background: none; color: var(--text); font: inherit; cursor: pointer; text-align: left; }
+.stock-mode { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; }
+.web-version { display: grid; gap: 6px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--separator); }
+.mobile-only { display: none; }
+@media (max-width: 760px) { .mobile-only { display: grid; } .toolbar .back { flex-basis: 100%; justify-content: flex-start; } }
+fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }

@@ -18,18 +18,18 @@ colors:
   rail: "#0F2A30"
   rail-text: "#B9CFCC"
   now: "#E8573F"
-  request-bg: "#E3ECFD"
-  request-ink: "#1F4FB8"
-  success-bg: "#DCF1E4"
-  success: "#1D7A45"
-  warning-bg: "#FFF0D2"
-  warning: "#8F5A0B"
-  error-bg: "#FBE3E3"
-  error: "#B23A3A"
-  done-bg: "#ECF0F1"
-  done-ink: "#5A6F75"
-  cashier-bg: "#FDE8D7"
-  cashier-ink: "#9A4A12"
+  request-bg: "#D3E2FF"
+  request-ink: "#1642A6"
+  success-bg: "#C9EED7"
+  success: "#11683A"
+  warning-bg: "#FFE3A8"
+  warning: "#7A4600"
+  error-bg: "#FFD0D0"
+  error: "#A11F1F"
+  done-bg: "#E6ECED"
+  done-ink: "#4D6268"
+  cashier-bg: "#FFD7B5"
+  cashier-ink: "#8A3605"
 typography:
   display:
     fontFamily: Geologica
@@ -157,3 +157,4 @@ components:
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-11-01 | Initial design system created | Created by /design-consultation: «Всё под контролем», веб-поиск по стоматологическим CRM, второе мнение (направление «Ширдак» — из него взяты «живой день» и статусы заливкой) |
+| 2026-11-01 | Статусы ярче, блок приёма с полосой слева, тема (светлая/тёмная/как в Telegram) и «крупный текст» в «Настройках», на телефоне база 16px, без зума | Просьба владельца: «некоторые нужно выделять ярче», «на телефоне шрифты маленькие», «зум убрать»; как в прежнем приложении |

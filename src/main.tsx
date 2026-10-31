@@ -25,7 +25,8 @@ import '@fontsource/jetbrains-mono/cyrillic-600.css'
 import '@fontsource/jetbrains-mono/latin-600.css'
 
 import { App } from './App'
-import { startTelegram } from './lib/telegram'
+import { startTelegram, telegram } from './lib/telegram'
+import { applyLook } from './lib/theme'
 import './styles.css'
 
 const queryClient = new QueryClient({
@@ -36,6 +37,10 @@ const queryClient = new QueryClient({
 })
 
 startTelegram()
+// Тема и размер текста — до первой отрисовки; «как в Telegram/системе» следит за сменой
+applyLook()
+telegram()?.onEvent?.('themeChanged', applyLook)
+window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', applyLook)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

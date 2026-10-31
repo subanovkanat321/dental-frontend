@@ -9,7 +9,7 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-test('админу: оплата кончается и новый договор — напоминания ведут в «Аккаунт»', async () => {
+test('админу: оплата кончается и новый договор — напоминания ведут в «Настройки»', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
@@ -19,7 +19,7 @@ test('админу: оплата кончается и новый договор
   renderApp()
   expect(await screen.findByRole('button', { name: /Приложение: оплачено до 3 нояб 2026/ })).toBeInTheDocument()
   await userEvent.click(await screen.findByRole('button', { name: /Договор с платформой обновился \(версия 2\)/ }))
-  expect(window.location.hash).toBe('#/account')
+  expect(window.location.hash).toBe('#/settings/agreement')
 })
 
 test('врачу напоминаний нет', async () => {

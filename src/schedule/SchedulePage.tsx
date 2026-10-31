@@ -2,7 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import type { Page } from '../lib/route'
+import { openSettings, type Page } from '../lib/route'
 import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { AppointmentPanel } from './AppointmentPanel'
 import { DayList } from './DayList'
@@ -273,7 +273,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId: dayList.id!, date: walkIn ? today : date, minutes }, walkIn })} />
         ) : doctors.length === 0 ? (
-          <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => onNavigate?.('team')}>добавьте их в «Команде»</button>.</p>
+          <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => openSettings('doctors')}>добавьте их в «Настройки → Врачи»</button>.</p>
         ) : (
           <div className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(180px, 1fr))`, '--cols': shown.length } as CSSProperties}>
             <div className="grid-corner" />

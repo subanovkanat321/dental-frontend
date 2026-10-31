@@ -20,9 +20,7 @@ const CLINIC_SECTIONS = [
   { key: 'patients', title: 'Пациенты' },
   { key: 'cash', title: 'Касса' },
   { key: 'stock', title: 'Склад' },
-  { key: 'team', title: 'Команда' },
-  { key: 'clinic', title: 'Клиника' },
-  { key: 'account', title: 'Аккаунт' },
+  { key: 'settings', title: 'Настройки' },
 ] as const
 const PLATFORM = { key: 'platform', title: 'Платформа' } as const
 
@@ -35,14 +33,17 @@ const MOBILE_MAIN = 4
 
 /**
  * Раскладка CRM: меню слева (разделы — по ролям), рабочая область. На телефоне меню — полоса внизу:
- * главные разделы и «Ещё» (команда, клиника, аккаунт, платформа, выход).
+ * расписание, пациенты, касса, склад и «Настройки» (шестерёнка); у команды платформы — ещё «Ещё».
  */
 export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
   const clinic = me.doctor ? me.clinic?.brandName || me.clinic?.name || 'Клиника' : 'Команда Tish'
   const role = !me.doctor ? (me.owner ? 'владелец платформы' : 'менеджер платформы')
     : me.admin ? 'администратор' : me.reception ? 'регистратура' : 'врач'
   const sections = sectionsOf(me)
-  const extra = sections.length > MOBILE_MAIN + 1 ? sections.slice(MOBILE_MAIN) : []
+  // «Платформа» у сотрудника клиники на телефоне — в «Настройках»: внизу пять кнопок без «Ещё»
+  const extra = me.doctor ? sections.filter((x) => x.key === 'platform')
+    : sections.length > MOBILE_MAIN + 1 ? sections.slice(MOBILE_MAIN) : []
+  const moreButton = extra.length > 0 && !me.doctor
   const [more, setMore] = useState(false)
   const go = (key: Page) => {
     setMore(false)
@@ -66,7 +67,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
               <Icon name={s.key} /> <span>{s.title}</span>
             </button>
           ))}
-          {extra.length > 0 && (
+          {moreButton && (
             <button type="button" className={extra.some((s) => s.key === page) || more ? 'nav more active' : 'nav more'}
               aria-expanded={more} onClick={() => setMore(!more)}>
               <Icon name="more" /> <span>Ещё</span>
@@ -91,7 +92,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </div>
       )}
       {/* Напоминания админу — на главном экране, чтобы не занимать место в каждом разделе */}
-      <main className="workspace">{page === 'schedule' && <AdminNotices me={me} onNavigate={onNavigate} />}{children}</main>
+      <main className="workspace">{page === 'schedule' && <AdminNotices me={me} />}{children}</main>
     </div>
   )
 }

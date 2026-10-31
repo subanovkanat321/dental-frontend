@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
+import { SubHeader } from '../settings/SubHeader'
 import { AgreementTab } from './AgreementTab'
 import { DataTab } from './DataTab'
 import { DentalNewsTab } from './DentalNewsTab'
@@ -10,24 +11,33 @@ import { PrivacyTab } from './PrivacyTab'
 import { SupportTab } from './SupportTab'
 
 type Me = Schemas['BookingViewsMe']
-type Tab = 'plan' | 'agreement' | 'data' | 'news' | 'support' | 'privacy'
+export type AccountTab = 'plan' | 'agreement' | 'data' | 'news' | 'support' | 'privacy'
+type Tab = AccountTab
 
 /**
  * «Аккаунт»: отношения клиники с платформой. Админу — тариф и оплата, договор, данные (выгрузка
  * и журнал); всем — техподдержка, новости стоматологии и конфиденциальность. Права проверяет и сервер.
  */
-export function AccountPage({ me, initialTab, initialTicket }: { me: Me; initialTab?: string; initialTicket?: number }) {
+export function AccountPage({ me, initialTab, initialTicket, only, title, onBack }: {
+  me: Me
+  initialTab?: string
+  initialTicket?: number
+  only?: Tab
+  title?: string
+  onBack?: () => void
+}) {
   const seesAll = Boolean(me.admin && !me.clinic?.independentDoctors)
   const tabs: [Tab, string][] = [
     ...(me.admin ? [['plan', 'Тариф и оплата'], ['agreement', 'Договор']] as [Tab, string][] : []),
     ...(me.admin || seesAll ? [['data', 'Данные']] as [Tab, string][] : []),
     ['support', 'Техподдержка'], ['news', 'Новости стоматологии'], ['privacy', 'Конфиденциальность'],
   ]
-  const [tab, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? tabs[0]![0])
+  const [chosen, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? tabs[0]![0])
+  const tab = only ?? chosen
   const [panel, setPanel] = useState(false)
   // Контакты поддержки клиники — из «О клинике» (читать могут все сотрудники)
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')), enabled: tab === 'support' })
-  const header = (
+  const header = only && onBack ? <SubHeader title={title ?? ''} onBack={onBack} /> : (
     <header className="toolbar">
       <h1>Аккаунт</h1>
       <div className="segments tabs" role="tablist" aria-label="Разделы аккаунта">

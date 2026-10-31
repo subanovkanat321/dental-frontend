@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
 import { agreementBlocks, billingLine, fillAgreement } from './texts'
 
 beforeEach(() => {
-  window.location.hash = '/account'
+  window.location.hash = '/settings/plan'
   server.use(http.get('*/api/platform-info', () => HttpResponse.json({ supportUrl: 'https://t.me/tish_support' } satisfies Schemas['PlatformInfoInfo'])))
 })
 afterEach(() => {
@@ -73,7 +73,7 @@ test('договор: реквизиты подставляются в текс�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Договор' }))
+  openItem('agreement')
   expect(await screen.findByText('Клиника ИП Тест в лице ________________')).toBeInTheDocument()
   const form = screen.getByRole('form', { name: 'Подписать договор' })
   await user.type(within(form).getByRole('textbox', { name: 'ФИО подписанта' }), 'Садыкова А.')
@@ -101,8 +101,8 @@ test('врач: только поддержка и конфиденциальн�
   )
   const user = userEvent.setup()
   renderApp()
-  expect(await screen.findByRole('tab', { name: 'Техподдержка' })).toHaveAttribute('aria-selected', 'true')
-  expect(screen.queryByRole('tab', { name: 'Тариф и оплата' })).not.toBeInTheDocument()
+  openItem('support')
+  expect(await screen.findByRole('heading', { name: 'Техподдержка' })).toBeInTheDocument()
   expect(await screen.findByRole('link', { name: 'Позвонить: +996 555 000 111' })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Предложить идею' }))
   const panel = screen.getByRole('complementary', { name: 'Предложить идею' })

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SubHeader } from '../settings/SubHeader'
 import { DoctorPanel, NewDoctorPanel } from './DoctorPanel'
 import { MembersTab } from './MembersTab'
 import { ROLE_TEXT } from './texts'
@@ -9,17 +10,26 @@ import { TimeOffTab } from './TimeOffTab'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
-type Tab = 'doctors' | 'members' | 'timeoff'
+export type TeamTab = 'doctors' | 'members' | 'timeoff'
+type Tab = TeamTab
 
 /**
  * «Команда»: врачи (профиль, фото, часы работы, приглашение, права), сотрудники (админы и
  * регистратура) и перерывы с выходными. Врачей и сотрудников ведёт админ; врач правит себя,
  * регистратура — часы врачей. Проверяет и сервер.
  */
-export function TeamPage({ me }: { me: Me }) {
+export function TeamPage({ me, only, title, onBack, initialOpened = null }: {
+  me: Me
+  only?: Tab
+  title?: string
+  onBack?: () => void
+  /** «Мой профиль»: сразу карточка этого врача. */
+  initialOpened?: number | null
+}) {
   const tabs: [Tab, string][] = [['doctors', 'Врачи'], ...(me.admin ? [['members', 'Сотрудники'] as [Tab, string]] : []), ['timeoff', 'Перерывы']]
-  const [tab, setTab] = useState<Tab>('doctors')
-  const [opened, setOpened] = useState<number | 'new' | null>(null)
+  const [chosen, setTab] = useState<Tab>('doctors')
+  const tab = only ?? chosen
+  const [opened, setOpened] = useState<number | 'new' | null>(initialOpened)
   const close = useCallback(() => setOpened(null), [setOpened])
   const admin = useQuery({
     queryKey: ['doctors-admin'],
@@ -34,16 +44,22 @@ export function TeamPage({ me }: { me: Me }) {
   return (
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
-        <header className="toolbar">
-          <h1>Команда</h1>
-          <div className="segments tabs" role="tablist" aria-label="Разделы команды">
-            {tabs.map(([key, title]) => (
-              <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key}
-                onClick={() => { setTab(key); setOpened(null) }}>{title}</button>
-            ))}
-          </div>
-          {tab === 'doctors' && me.admin && <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить врача</button>}
-        </header>
+        {only && onBack ? (
+          <SubHeader title={title ?? ''} onBack={onBack}>
+            {tab === 'doctors' && me.admin && <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить врача</button>}
+          </SubHeader>
+        ) : (
+          <header className="toolbar">
+            <h1>Команда</h1>
+            <div className="segments tabs" role="tablist" aria-label="Разделы команды">
+              {tabs.map(([key, name]) => (
+                <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key}
+                  onClick={() => { setTab(key); setOpened(null) }}>{name}</button>
+              ))}
+            </div>
+            {tab === 'doctors' && me.admin && <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить врача</button>}
+          </header>
+        )}
 
         {tab === 'doctors' && (
           <section className="card-block">

@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
 
 beforeEach(() => {
-  window.location.hash = '/clinic'
+  window.location.hash = '/settings/questions'
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/service-types', () => HttpResponse.json([])),
@@ -39,7 +39,6 @@ test('анкета: разделы, порядок, новый вопрос с �
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Анкета' }))
   const table = await screen.findByRole('table', { name: 'Анкета пациента' })
   expect(within(table).getByText('в плашке · ответов: 4')).toBeInTheDocument()
   expect(within(table).getByRole('button', { name: 'Выше: Аллергия?' })).toBeDisabled()
@@ -78,7 +77,7 @@ test('новости: опубликовать с подтверждением �
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Новости' }))
+  openItem('patient-news')
   expect(await screen.findByText(/в бот: 9 из 10/)).toBeInTheDocument()
   await user.type(screen.getByRole('textbox', { name: 'Текст новости' }), 'Скидка на чистку')
   await user.click(screen.getByRole('button', { name: 'Опубликовать и разослать' }))
@@ -91,9 +90,13 @@ test('новости: опубликовать с подтверждением �
   await vi.waitFor(() => expect(screen.queryByText('Работаем в субботу')).not.toBeInTheDocument())
 })
 
-test('не админ: вкладки «Новости» нет', async () => {
+test('не админ: в «Настройках» нет новостей для пациентов, тарифа и сотрудников', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false })))
+  window.location.hash = '/settings'
   renderApp()
-  expect(await screen.findByRole('tab', { name: 'Анкета' })).toBeInTheDocument()
-  expect(screen.queryByRole('tab', { name: 'Новости' })).not.toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /Анкета пациента/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Часы работы/ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Новости для пациентов/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Тариф и оплата/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Сотрудники/ })).not.toBeInTheDocument()
 })

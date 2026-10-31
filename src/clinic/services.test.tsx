@@ -8,7 +8,7 @@ import { server } from '../test/server'
 import { groupByCategory } from './services'
 
 beforeEach(() => {
-  window.location.hash = '/clinic'
+  window.location.hash = '/settings/services'
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
 })
 afterEach(() => {

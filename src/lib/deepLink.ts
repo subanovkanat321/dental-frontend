@@ -49,8 +49,8 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (num('supply')) return { page: 'stock', supplyId: num('supply') }
   if (screen === 'cash') return { page: 'cash', tab: 'money' }
   if (screen === 'stats') return { page: 'cash', tab: 'stats' }
-  if (screen === 'dental-news') return { page: 'account', tab: 'news' }
-  if (screen === 'support') return { page: 'account', tab: 'support', ticketId: num('ticket') }
+  if (screen === 'dental-news') return { page: 'settings', tab: 'dental-news' }
+  if (screen === 'support') return { page: 'settings', tab: 'support', ticketId: num('ticket') }
   if (screen === 'support-tickets') return { page: 'platform', tab: 'tickets' }
   if (screen === 'pay-requests') return { page: 'platform', tab: 'clinics' }
   const tomorrow = p.get('day') === 'tomorrow' ? addDays(today, 1) : undefined

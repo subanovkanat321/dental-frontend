@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
+import { clinicRequest } from '../settings/clinicUpdate'
 import { SpendingBlock } from './Spending'
 import { NewSupplyPanel, SupplyPanel } from './SupplyPanel'
 
@@ -78,6 +79,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
           {me.admin && <button type="button" className="btn push" aria-pressed={spending} onClick={() => setSpending(!spending)}>Расходы на склад</button>}
           <button type="button" className={me.admin ? 'btn primary' : 'btn primary push'} onClick={() => setSide({ kind: 'new' })}>＋ Материал</button>
         </header>
+        {me.admin && <SeparateSupplies />}
         {spending && <SpendingBlock />}
 
         {supplies.isPending && <p className="hint">Загрузка…</p>}
@@ -133,6 +135,34 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
       {side?.kind === 'new' && (
         <NewSupplyPanel me={me} doctorId={doctorId} onClose={close} onCreated={(s) => setSide({ kind: 'supply', id: s.id! })} />
       )}
+    </div>
+  )
+}
+
+/**
+ * Админу — прямо на складе: один склад на всех или свой у каждого врача (врач видит и тратит свои
+ * и общие). Сохраняется сразу; тот же флажок — в «О клинике».
+ */
+function SeparateSupplies() {
+  const client = useQueryClient()
+  const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
+  const save = useMutation<Schemas['ClinicView'], ApiError, boolean>({
+    mutationFn: (on) => unwrap(api.PUT('/api/clinic', { body: clinicRequest(clinic.data!, { separateSupplies: on }) })),
+    onSuccess: (saved) => {
+      client.setQueryData(['clinic'], saved)
+      void client.invalidateQueries({ queryKey: ['me'] })
+      void client.invalidateQueries({ queryKey: ['supplies'] })
+    },
+  })
+  if (!clinic.data) return null
+  return (
+    <div className="stock-mode">
+      <label className="check">
+        <input type="checkbox" checked={Boolean(clinic.data.separateSupplies)} disabled={save.isPending} onChange={(e) => save.mutate(e.target.checked)} />
+        Свой склад у каждого врача
+      </label>
+      <span className="hint">{clinic.data.separateSupplies ? 'Врач видит и тратит свои материалы и общие.' : 'Сейчас один склад на всех.'}</span>
+      {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </div>
   )
 }

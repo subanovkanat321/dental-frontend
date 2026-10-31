@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
-import { WEEK, type Weekday } from '../team/texts'
+import { openLink, telegram } from '../lib/telegram'
 import { PhoneInput } from './PhoneInput'
 import { phoneFromInput, phoneToInput } from './phone'
 
@@ -38,13 +38,13 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
     workStart: (c.workStart ?? '09:00').slice(0, 5), workEnd: (c.workEnd ?? '18:00').slice(0, 5),
     independentDoctors: Boolean(c.independentDoctors), separateSupplies: Boolean(c.separateSupplies), listed: c.listed !== false,
   })
-  const [days, setDays] = useState<Set<Weekday>>(new Set(c.workDays ?? WEEK.map(([code]) => code)))
   const [done, setDone] = useState(false)
   const save = useMutation<Clinic, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/clinic', {
       body: {
         ...f, whatsappPhone: phoneFromInput(f.whatsappPhone), supportPhone: phoneFromInput(f.supportPhone),
-        workDays: WEEK.map(([code]) => code).filter((code) => days.has(code)),
+        // Часы меняются в «Часах работы» — здесь берём текущие, чтобы не затереть их
+        workStart: c.workStart, workEnd: c.workEnd, workDays: c.workDays,
       },
     })),
     onSuccess: (saved) => {
@@ -61,13 +61,6 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   }
   const text = (k: keyof typeof f) => (e: { target: { value: string } }) => set(k)(e.target.value)
   const flag = (k: keyof typeof f) => (e: { target: { checked: boolean } }) => set(k)(e.target.checked)
-  const toggleDay = (code: Weekday) => {
-    setDone(false)
-    const next = new Set(days)
-    if (next.has(code)) next.delete(code)
-    else next.add(code)
-    setDays(next)
-  }
   const submit = (e: FormEvent) => {
     e.preventDefault()
     setDone(false)
@@ -80,6 +73,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
       <fieldset className="about-grid" disabled={!canEdit}>
         {!canEdit && <p className="tone-wait">Только просмотр: «О клинике» меняют администратор и врачи.</p>}
         <div className="about-col">
+          <WebVersion />
           <h2>Для пациентов</h2>
           <p className="hint">Адрес и ссылку на карту пациенты видят при записи и в напоминаниях бота.</p>
           <label className="field"><span>Название для пациентов</span>
@@ -102,21 +96,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
           )}
           <label className="check"><input type="checkbox" checked={f.listed} onChange={flag('listed')} /> Показывать клинику в общем каталоге /clinics</label>
 
-          <h2>Часы клиники</h2>
-          <div className="row">
-            <label className="field"><span>С</span><input type="time" step={900} value={f.workStart} onChange={text('workStart')} /></label>
-            <label className="field"><span>До</span><input type="time" step={900} value={f.workEnd} onChange={text('workEnd')} /></label>
-          </div>
-          {err('workEnd') && <p className="error">{err('workEnd')}</p>}
-          <div className="field"><span>Рабочие дни</span>
-            <div className="weekdays" role="group" aria-label="Рабочие дни клиники">
-              {WEEK.map(([code, name, short]) => (
-                <button key={code} type="button" className="day" aria-label={name} aria-pressed={days.has(code)} onClick={() => toggleDay(code)}>{short}</button>
-              ))}
-            </div>
-          </div>
-          {err('workDays') && <p className="error">{err('workDays')}</p>}
-          <p className="hint">По этим часам — свободное время у врачей, которые не задали свои «Часы работы» (Команда → врач).</p>
+          <p className="hint">Часы клиники и каждого врача — в «Настройки → Часы работы».</p>
         </div>
 
         <div className="about-col">
@@ -258,5 +238,34 @@ function ClearAll() {
         <button type="button" className="btn danger" disabled={run.isPending || !word} onClick={() => run.mutate()}>Удалить все записи</button>
       </div>
     </section>
+  )
+}
+
+/**
+ * «Работать с компьютера»: та же CRM в браузере — удобно в регистратуре. Вход через Telegram тем
+ * же аккаунтом. Ссылку скопировать и открыть на компьютере (в Telegram — открыть браузером).
+ */
+function WebVersion() {
+  const url = `${window.location.origin}/login`
+  const [copied, setCopied] = useState(false)
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+    } catch {
+      window.prompt('Скопируйте ссылку', url)
+    }
+  }
+  return (
+    <div className="web-version">
+      <h2>Работать с компьютера</h2>
+      <p className="hint">То же приложение в браузере — удобно на компьютере в регистратуре. Вход — через Telegram, тем же аккаунтом, что и в боте.</p>
+      <a className="invite-link" href={url} target="_blank" rel="noopener noreferrer">{url}</a>
+      <div className="actions">
+        <button type="button" className="btn" onClick={() => void copy()}>Скопировать ссылку</button>
+        {telegram() && <button type="button" className="btn" onClick={() => openLink(url)}>Открыть в браузере</button>}
+      </div>
+      {copied && <p className="tone-ok" role="status">Ссылка скопирована — откройте её в браузере на компьютере</p>}
+    </div>
   )
 }

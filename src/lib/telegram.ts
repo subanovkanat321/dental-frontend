@@ -26,6 +26,8 @@ type WebApp = {
   requestContact?(callback: (shared: boolean) => void): void
   ready(): void
   expand(): void
+  colorScheme?: string
+  onEvent?(event: string, cb: () => void): void
   setHeaderColor?(color: string): void
   setBackgroundColor?(color: string): void
   BackButton?: BackButton

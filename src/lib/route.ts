@@ -1,13 +1,28 @@
 import { useEffect, useState } from 'react'
 
 /** Разделы CRM. Адрес — во фрагменте (#/patients): CRM отдаёт nginx одним index.html. */
-export type Page = 'schedule' | 'patients' | 'cash' | 'stock' | 'team' | 'clinic' | 'account' | 'platform'
+export type Page = 'schedule' | 'patients' | 'cash' | 'stock' | 'settings' | 'platform'
 
-const PAGES: readonly Page[] = ['schedule', 'patients', 'cash', 'stock', 'team', 'clinic', 'account', 'platform']
+const PAGES: readonly Page[] = ['schedule', 'patients', 'cash', 'stock', 'settings', 'platform']
+/** Прежние адреса разделов (закладки) — теперь пункты «Настроек». */
+const OLD: Record<string, string> = { team: 'doctors', clinic: 'about', account: 'support' }
 
 function current(): Page {
-  const name = window.location.hash.replace(/^#\/?/, '')
+  const [name = ''] = window.location.hash.replace(/^#\/?/, '').split('/')
+  if (OLD[name]) return 'settings'
   return (PAGES as readonly string[]).includes(name) ? (name as Page) : 'schedule'
+}
+
+/** Пункт «Настроек» из адреса: #/settings/hours → 'hours'; на главной «Настроек» — null. */
+export function settingsItem(): string | null {
+  const [name = '', item] = window.location.hash.replace(/^#\/?/, '').split('/')
+  if (OLD[name]) return OLD[name]!
+  return name === 'settings' && item ? item : null
+}
+
+/** Открыть пункт «Настроек» (или их главную) — отдельной записью в истории: «Назад» вернёт. */
+export function openSettings(item: string | null): void {
+  window.location.hash = item ? `/settings/${item}` : '/settings'
 }
 
 /**

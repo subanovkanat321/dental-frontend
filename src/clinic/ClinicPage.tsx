@@ -1,24 +1,27 @@
 import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
+import { SubHeader } from '../settings/SubHeader'
 import { AboutTab } from './AboutTab'
 import { NewsTab } from './NewsTab'
 import { QuestionsTab } from './QuestionsTab'
 import { ServicesTab } from './ServicesTab'
 
 type Me = Schemas['BookingViewsMe']
-type Tab = 'services' | 'about' | 'questions' | 'news'
+export type ClinicTab = 'services' | 'about' | 'questions' | 'news'
+type Tab = ClinicTab
 
 /**
  * «Клиника»: настройки, которые видят пациенты, — услуги (для самозаписи в боте), «О клинике»,
  * анкета пациента и новости (админ). Вкладка сама рисует рабочую область и карточку справа.
  */
-export function ClinicPage({ me }: { me: Me }) {
+export function ClinicPage({ me, only, title, onBack }: { me: Me; only?: Tab; title?: string; onBack?: () => void }) {
   const tabs: [Tab, string][] = [['services', 'Услуги'], ['about', 'О клинике'], ['questions', 'Анкета'],
     ...(me.admin ? [['news', 'Новости'] as [Tab, string]] : [])]
-  const [tab, setTab] = useState<Tab>('services')
+  const [chosen, setTab] = useState<Tab>('services')
+  const tab = only ?? chosen
   const [panel, setPanel] = useState(false)
-  const header = (
+  const header = only && onBack ? <SubHeader title={title ?? ''} onBack={onBack} /> : (
     <header className="toolbar">
       <h1>Клиника</h1>
       <div className="segments tabs" role="tablist" aria-label="Разделы клиники">
