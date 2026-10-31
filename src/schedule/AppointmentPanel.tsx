@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
+import { useClose } from '../lib/useClose'
 import { dayTitle, formatPhone, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { CommentEdit, Reschedule, ServiceEdit, Supplies } from './AppointmentExtras'
 import { PaymentBox } from './PaymentBox'
@@ -21,11 +22,7 @@ function dateOf(instant: string): string {
  * заявку подтвердить, приём отметить (состоялся / неявка), отменить, принять оплату. Esc — закрыть.
  */
 export function AppointmentPanel({ appointment: a, me, onClose }: { appointment: Appointment; me: Me; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useClose(onClose)
 
   const action = useAppointmentAction(a)
   // Какая форма открыта внутри карточки: одна за раз, чтобы карточка не превращалась в анкету

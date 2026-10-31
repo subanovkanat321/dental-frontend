@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { useClose } from '../lib/useClose'
 import { dayTitle, formatPhone, slotInstant } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
@@ -40,11 +41,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, onClose, 
   onClose: () => void
   onCreated: (a: Appointment) => void
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useClose(onClose)
 
   const client = useQueryClient()
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
@@ -24,6 +24,7 @@ export function StockPage({ me }: { me: Me }) {
   const [query, setQuery] = useState('')
   const [lowOnly, setLowOnly] = useState(false)
   const [side, setSide] = useState<Side>(null)
+  const close = useCallback(() => setSide(null), [setSide])
 
   const supplies = useQuery({
     queryKey: ['supplies', doctorId],
@@ -100,9 +101,9 @@ export function StockPage({ me }: { me: Me }) {
           </table>
         )}
       </section>
-      {selected && <SupplyPanel key={selected.id} supply={selected} me={me} onClose={() => setSide(null)} />}
+      {selected && <SupplyPanel key={selected.id} supply={selected} me={me} onClose={close} />}
       {side?.kind === 'new' && (
-        <NewSupplyPanel me={me} doctorId={doctorId} onClose={() => setSide(null)} onCreated={(s) => setSide({ kind: 'supply', id: s.id! })} />
+        <NewSupplyPanel me={me} doctorId={doctorId} onClose={close} onCreated={(s) => setSide({ kind: 'supply', id: s.id! })} />
       )}
     </div>
   )

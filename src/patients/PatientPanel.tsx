@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
+import { useClose } from '../lib/useClose'
 import { formatPhone, shortDate, somText } from '../lib/time'
 import { statusOf } from '../schedule/status'
 
@@ -24,11 +24,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
   onBook: (p: Patient) => void
   onMedical: (p: Patient) => void
 }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  useClose(onClose)
 
   const card = useQuery({
     queryKey: ['patient-card', patientId],

@@ -25,6 +25,7 @@ import '@fontsource/jetbrains-mono/cyrillic-600.css'
 import '@fontsource/jetbrains-mono/latin-600.css'
 
 import { App } from './App'
+import { startTelegram } from './lib/telegram'
 import './styles.css'
 
 const queryClient = new QueryClient({
@@ -33,6 +34,8 @@ const queryClient = new QueryClient({
     queries: { staleTime: 30_000, refetchOnWindowFocus: true, retry: 1 },
   },
 })
+
+startTelegram()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,5 +1,7 @@
 import createClient, { type Middleware } from 'openapi-fetch'
 
+import { authHeaders } from '../lib/telegram'
+
 import type { components, paths } from './schema'
 
 /** Схемы ответов и запросов из контракта (docs/api/openapi.json бэкенда). */
@@ -35,6 +37,8 @@ export class ApiError extends Error {
 const webHeader: Middleware = {
   onRequest({ request }) {
     request.headers.set('X-Dental-Web', '1')
+    // В Telegram — подпись initData вместо cookie (ADR 0002)
+    for (const [name, value] of Object.entries(authHeaders())) request.headers.set(name, value)
     return request
   },
 }
@@ -81,7 +85,7 @@ export async function unwrap<T>(request: Promise<{ data?: T; error?: unknown; re
  */
 export async function upload<T>(path: string, form: FormData): Promise<T> {
   const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), {
-    method: 'POST', body: form, credentials: 'same-origin', headers: { 'X-Dental-Web': '1' },
+    method: 'POST', body: form, credentials: 'same-origin', headers: { 'X-Dental-Web': '1', ...authHeaders() },
   }))
   const body: unknown = await response.json().catch(() => null)
   if (!response.ok) {
@@ -93,7 +97,7 @@ export async function upload<T>(path: string, form: FormData): Promise<T> {
 /** Картинка с сервера (снимок пациента) — с заголовком сайта; в <img> — через URL.createObjectURL. */
 export async function fetchBlob(path: string): Promise<Blob> {
   const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), {
-    credentials: 'same-origin', headers: { 'X-Dental-Web': '1' },
+    credentials: 'same-origin', headers: { 'X-Dental-Web': '1', ...authHeaders() },
   }))
   if (!response.ok) {
     throw toApiError(response.status, await response.json().catch(() => null))

@@ -1,21 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { useClose } from '../lib/useClose'
 import { shortDate, somText } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
 
 const REASONS: Record<string, string> = { USE: 'списали', DELIVERY: 'поставка', CORRECTION: 'пересчёт' }
-
-function useEscape(onClose: () => void) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
-}
 
 /** Склад и его история — перечитать после любого изменения материала. */
 function useRefresh() {
@@ -36,7 +29,7 @@ function unitPrice(costSom: number, delta: number, unit?: string): string {
  * поменять название, единицу и минимум, история движений. Удалить — только админ.
  */
 export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me; onClose: () => void }) {
-  useEscape(onClose)
+  useClose(onClose)
   const refresh = useRefresh()
   const [amount, setAmount] = useState('1')
   const [cost, setCost] = useState('')
@@ -172,7 +165,7 @@ export function NewSupplyPanel({ me, doctorId, onClose, onCreated }: {
   onClose: () => void
   onCreated: (s: Supply) => void
 }) {
-  useEscape(onClose)
+  useClose(onClose)
   const refresh = useRefresh()
   const separate = Boolean(me.clinic?.separateSupplies)
   const choosesDoctor = separate && (me.admin || me.reception || me.doctorId == null)

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import type { Schemas } from './api/client'
 import { Shell } from './layout/Shell'
 import { usePage } from './lib/route'
+import { telegram } from './lib/telegram'
 import { CashPage } from './cash/CashPage'
 import { PatientsPage } from './patients/PatientsPage'
 import { SchedulePage } from './schedule/SchedulePage'
@@ -25,7 +26,10 @@ export function App() {
   }
   if (me.error) {
     if (me.error instanceof ApiError && me.error.status === 401) {
-      return <Login />
+      // В Telegram вход — подпись запуска; устарела — открыть заново из бота, а не «Войти через Telegram»
+      return telegram()
+        ? <div className="center"><h1>Tish CRM</h1><p className="hint">{me.error.message || 'Сессия устарела — закройте и откройте заново из бота.'}</p></div>
+        : <Login />
     }
     return <div className="center error">Нет связи с сервером: {me.error.message}</div>
   }
