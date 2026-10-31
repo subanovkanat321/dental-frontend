@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/clinics/{id}/hidden": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["hide"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/agreements/{id}": {
         parameters: {
             query?: never;
@@ -2763,6 +2779,42 @@ export interface components {
             /** Format: date */
             pausesOn?: string;
         };
+        Hidden: {
+            hidden?: boolean;
+        };
+        ClinicRow: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            code?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: int64 */
+            doctors?: number;
+            /** Format: int64 */
+            staff?: number;
+            /** Format: int64 */
+            patients?: number;
+            /** Format: int64 */
+            appointments?: number;
+            /** Format: date-time */
+            staffSeenAt?: string;
+            /** Format: int64 */
+            bookedWeek?: number;
+            /** Format: int64 */
+            selfBooked30?: number;
+            /** Format: int64 */
+            noShow30?: number;
+            /** Format: int64 */
+            done30?: number;
+            /** Format: int64 */
+            unmarked?: number;
+            /** @enum {string} */
+            health?: "OK" | "QUIET" | "ASLEEP" | "NEW";
+            billing?: components["schemas"]["Billing"];
+            admins?: string;
+            hidden?: boolean;
+        };
         Draft: {
             title?: string;
             body?: string;
@@ -3151,38 +3203,6 @@ export interface components {
         };
         Name: {
             name?: string;
-        };
-        ClinicRow: {
-            /** Format: int64 */
-            id?: number;
-            name?: string;
-            code?: string;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: int64 */
-            doctors?: number;
-            /** Format: int64 */
-            staff?: number;
-            /** Format: int64 */
-            patients?: number;
-            /** Format: int64 */
-            appointments?: number;
-            /** Format: date-time */
-            staffSeenAt?: string;
-            /** Format: int64 */
-            bookedWeek?: number;
-            /** Format: int64 */
-            selfBooked30?: number;
-            /** Format: int64 */
-            noShow30?: number;
-            /** Format: int64 */
-            done30?: number;
-            /** Format: int64 */
-            unmarked?: number;
-            /** @enum {string} */
-            health?: "OK" | "QUIET" | "ASLEEP" | "NEW";
-            billing?: components["schemas"]["Billing"];
-            admins?: string;
         };
         PaymentRequest: {
             /** Format: date */
@@ -3979,6 +3999,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Billing"];
+                };
+            };
+        };
+    };
+    hide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Hidden"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicRow"];
                 };
             };
         };

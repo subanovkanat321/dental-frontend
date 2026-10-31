@@ -264,6 +264,43 @@
         }
       }
     },
+    "/api/platform/clinics/{id}/hidden" : {
+      "put" : {
+        "tags" : [ "platform-controller" ],
+        "operationId" : "hide",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Hidden"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicRow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
@@ -5930,6 +5967,86 @@
           }
         }
       },
+      "Hidden" : {
+        "type" : "object",
+        "properties" : {
+          "hidden" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ClinicRow" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "staff" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patients" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "appointments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "staffSeenAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "bookedWeek" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "selfBooked30" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "noShow30" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "done30" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "unmarked" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "health" : {
+            "type" : "string",
+            "enum" : [ "OK", "QUIET", "ASLEEP", "NEW" ]
+          },
+          "billing" : {
+            "$ref" : "#/components/schemas/Billing"
+          },
+          "admins" : {
+            "type" : "string"
+          },
+          "hidden" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "Draft" : {
         "type" : "object",
         "properties" : {
@@ -6907,75 +7024,6 @@
         "type" : "object",
         "properties" : {
           "name" : {
-            "type" : "string"
-          }
-        }
-      },
-      "ClinicRow" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "code" : {
-            "type" : "string"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "doctors" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "staff" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "patients" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "appointments" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "staffSeenAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "bookedWeek" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "selfBooked30" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "noShow30" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "done30" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "unmarked" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "health" : {
-            "type" : "string",
-            "enum" : [ "OK", "QUIET", "ASLEEP", "NEW" ]
-          },
-          "billing" : {
-            "$ref" : "#/components/schemas/Billing"
-          },
-          "admins" : {
             "type" : "string"
           }
         }
