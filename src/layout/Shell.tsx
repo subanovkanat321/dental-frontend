@@ -1,18 +1,19 @@
 import type { ReactNode } from 'react'
 
 import type { Schemas } from '../api/client'
+import type { Page } from '../lib/route'
 
 type Me = Schemas['BookingViewsMe']
 
 const SECTIONS = [
   { key: 'schedule', icon: '📅', title: 'Расписание', ready: true },
-  { key: 'patients', icon: '👥', title: 'Пациенты', ready: false },
+  { key: 'patients', icon: '👥', title: 'Пациенты', ready: true },
   { key: 'cash', icon: '💰', title: 'Касса', ready: false },
   { key: 'stock', icon: '📦', title: 'Склад', ready: false },
 ] as const
 
 /** Раскладка CRM: меню слева, рабочая область; пока не перенесённое — в приложении (/). */
-export function Shell({ me, children }: { me: Me; children: ReactNode }) {
+export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
   const clinic = me.clinic?.brandName || me.clinic?.name || 'Клиника'
   const role = me.admin ? 'администратор' : me.reception ? 'регистратура' : 'врач'
   return (
@@ -28,8 +29,9 @@ export function Shell({ me, children }: { me: Me; children: ReactNode }) {
         </div>
         <nav aria-label="Разделы">
           {SECTIONS.map((s) => (
-            <button key={s.key} type="button" className={s.key === 'schedule' ? 'nav active' : 'nav'} disabled={!s.ready}
-              title={s.ready ? undefined : 'Скоро — пока в приложении'}>
+            <button key={s.key} type="button" className={s.key === page ? 'nav active' : 'nav'} disabled={!s.ready}
+              aria-current={s.key === page ? 'page' : undefined}
+              title={s.ready ? undefined : 'Скоро — пока в приложении'} onClick={() => s.ready && onNavigate(s.key as Page)}>
               <span aria-hidden="true">{s.icon}</span> {s.title}
               {!s.ready && <span className="soon">скоро</span>}
             </button>

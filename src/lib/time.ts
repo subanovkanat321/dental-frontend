@@ -53,3 +53,11 @@ export function slotInstant(date: string, minutes: number): string {
   const mm = String(minutes % 60).padStart(2, '0')
   return new Date(`${date}T${hh}:${mm}:00+06:00`).toISOString()
 }
+
+/** '2026-10-31T04:30:00Z' → «31 окт 2026» (или «31 окт, 10:30» с временем) — по Бишкеку. */
+export function shortDate(instant: string, withTime = false): string {
+  const d = new Date(instant)
+  const date = new Intl.DateTimeFormat('ru-RU', { timeZone: ZONE, day: 'numeric', month: 'short', year: withTime ? undefined : 'numeric' })
+    .format(d).replace(/\./g, '').replace(/ г$/, '')
+  return withTime ? `${date}, ${timeOf(instant)}` : date
+}

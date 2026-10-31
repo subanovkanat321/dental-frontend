@@ -1,5 +1,5 @@
 import { useQueries } from '@tanstack/react-query'
-import { useCallback, useState, type MouseEvent } from 'react'
+import { useCallback, useEffect, useState, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { addDays, dayTitle, minutesOf, minutesOfTime, timeOf, todayIn } from '../lib/time'
@@ -19,16 +19,31 @@ const PAD = 10
 /** Расписание само перечитывается раз в минуту: кто-то записал с телефона — видно без F5. */
 const REFRESH_MS = 60_000
 
-type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot } | null
+type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView'] } | null
 
 /**
  * «Расписание»: день всех врачей колонками, как настольный календарь. Нажать на приём — карточка
  * справа с действиями; на пустое место — «Новая запись» на это время. Расписание остаётся на экране.
  */
-export function SchedulePage({ me }: { me: Me }) {
+export function SchedulePage({ me, bookPatient = null, onBookingShown }: {
+  me: Me
+  /** Пришли из «Пациентов» по «Записать»: сразу «Новая запись» на этого пациента. */
+  bookPatient?: Schemas['PatientView'] | null
+  onBookingShown?: () => void
+}) {
   const today = todayIn()
   const [date, setDate] = useState(today)
-  const [side, setSide] = useState<Side>(null)
+  const [side, setSide] = useState<Side>(() => {
+    const doctor = (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
+      ?? (me.doctors ?? []).find((d) => d.active !== false)
+    return bookPatient && doctor
+      ? { kind: 'new', patient: bookPatient, slot: { doctorId: doctor.id!, date: today, minutes: minutesOfTime(me.clinic?.workStart ?? '09:00') } }
+      : null
+  })
+  // Пациента для записи взяли — забыть, чтобы при следующем заходе «Расписание» открылось как обычно
+  useEffect(() => {
+    if (bookPatient) onBookingShown?.()
+  }, [bookPatient, onBookingShown])
   const close = useCallback(() => setSide(null), [])
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
 
@@ -124,7 +139,7 @@ export function SchedulePage({ me }: { me: Me }) {
       </section>
       {selected && <AppointmentPanel appointment={selected} me={me} onClose={close} />}
       {side?.kind === 'new' && (
-        <NewAppointmentPanel slot={side.slot} me={me} onClose={close}
+        <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} onClose={close}
           onCreated={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} />
       )}
     </div>

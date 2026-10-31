@@ -1,6 +1,11 @@
 import { ApiError } from './api/client'
 import { useMe } from './api/me'
+import { useState } from 'react'
+
+import type { Schemas } from './api/client'
 import { Shell } from './layout/Shell'
+import { usePage } from './lib/route'
+import { PatientsPage } from './patients/PatientsPage'
 import { SchedulePage } from './schedule/SchedulePage'
 
 /**
@@ -9,6 +14,9 @@ import { SchedulePage } from './schedule/SchedulePage'
  */
 export function App() {
   const me = useMe()
+  const [page, go] = usePage()
+  // «Записать» из карточки пациента: в «Расписание» с открытой «Новой записью» на него
+  const [booking, setBooking] = useState<Schemas['PatientView'] | null>(null)
 
   if (me.isPending) {
     return <div className="center hint">Загрузка…</div>
@@ -28,8 +36,10 @@ export function App() {
     )
   }
   return (
-    <Shell me={me.data}>
-      <SchedulePage me={me.data} />
+    <Shell me={me.data} page={page} onNavigate={go}>
+      {page === 'patients'
+        ? <PatientsPage me={me.data} onBook={(p) => { setBooking(p); go('schedule') }} />
+        : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} />}
     </Shell>
   )
 }

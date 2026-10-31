@@ -32,9 +32,11 @@ function useDebounced(value: string, ms = 300): string {
  * минутам). Пациента — найти по имени или номеру, или завести нового (+996). Занятое время
  * не пустит база (appointment_no_overlap → 409): показываем её ответ.
  */
-export function NewAppointmentPanel({ slot, me, onClose, onCreated }: {
+export function NewAppointmentPanel({ slot, me, initialPatient = null, onClose, onCreated }: {
   slot: Slot
   me: Me
+  /** Пациент уже выбран — «Записать» из его карточки в «Пациентах». */
+  initialPatient?: Patient | null
   onClose: () => void
   onCreated: (a: Appointment) => void
 }) {
@@ -51,7 +53,7 @@ export function NewAppointmentPanel({ slot, me, onClose, onCreated }: {
   const [duration, setDuration] = useState(30)
   const [serviceId, setServiceId] = useState<number | ''>('')
   const [comment, setComment] = useState('')
-  const [patient, setPatient] = useState<Patient | null>(null)
+  const [patient, setPatient] = useState<Patient | null>(initialPatient)
   const [query, setQuery] = useState('')
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
