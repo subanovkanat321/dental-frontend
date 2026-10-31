@@ -5,6 +5,7 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { useWaitlist } from '../api/settings'
 import { formatPhone, shortDate } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
+import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
 
@@ -37,7 +38,7 @@ function phoneDigits(text: string): string {
 export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => void }) {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'last', desc: true })
-  const [selected, setSelected] = useState<number | null>(null)
+  const [selected, setSelected] = useState<number | 'new' | null>(null)
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
   // Вкладки: все пациенты, лист ожидания, «позвать на профосмотр» — как в «Пациентах» приложения
@@ -109,6 +110,7 @@ export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => v
             <>
               <input type="search" className="search" aria-label="Поиск пациента" placeholder="Имя или номер телефона"
                 value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
+              <button type="button" className="btn" onClick={() => setSelected('new')}>＋ Новый пациент</button>
               <span className="hint">
                 {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
               </span>
@@ -147,7 +149,8 @@ export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => v
           </table>
         )}
       </section>
-      {selected && <PatientPanel key={selected} patientId={selected} me={me} onClose={close} onBook={onBook}
+      {selected === 'new' && <NewPatientPanel onClose={close} onCreated={setSelected} />}
+      {typeof selected === 'number' && <PatientPanel key={selected} patientId={selected} me={me} onClose={close} onBook={onBook}
         onMedical={(p) => { setSelected(null); setMedical(p) }} />}
     </div>
   )

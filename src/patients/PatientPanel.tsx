@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
@@ -6,6 +7,7 @@ import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
 import { formatPhone, shortDate, somText } from '../lib/time'
 import { statusOf } from '../schedule/status'
+import { PatientForm } from './PatientForm'
 import { WaitlistBox } from './WaitlistTab'
 
 type Me = Schemas['BookingViewsMe']
@@ -28,6 +30,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
   onMedical: (p: Patient) => void
 }) {
   useClose(onClose)
+  const [editing, setEditing] = useState(false)
 
   const card = useQuery({
     queryKey: ['patient-card', patientId],
@@ -77,6 +80,9 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
+      {editing && patient ? <PatientForm patient={patient} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} /> : (
+        <button type="button" className="link" onClick={() => setEditing(true)}>Изменить данные пациента</button>
+      )}
       <p className="hint">
         {patient?.telegram ? 'Пишет боту — напоминания в Telegram' : 'Без бота — напоминание в WhatsApp'}
         {patient?.birthDate ? ` · родился ${shortDate(`${patient.birthDate}T12:00:00Z`)}` : ''}
