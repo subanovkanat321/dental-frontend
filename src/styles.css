@@ -142,7 +142,8 @@ button, input, select, textarea { font-family: inherit; }
 .grid-times .now-label { right: 4px; padding: 1px 5px; border-radius: 4px; background: var(--now); color: #fff; font-weight: 600; z-index: 4; }
 .grid-col { position: relative; border-left: 1px solid var(--separator); }
 .grid-hour { position: absolute; left: 0; right: 0; border-top: 1px solid var(--separator); }
-.grid-past { position: absolute; left: 0; right: 0; top: 0; background: color-mix(in srgb, var(--page) 45%, transparent); pointer-events: none; z-index: 3; }
+/* Прошлое — приглушён фон колонки, а не приёмы: «ждёт оплаты» в прошлом надо читать (FINDING-001) */
+.grid-past { position: absolute; left: 0; right: 0; top: 0; background: color-mix(in srgb, var(--page) 70%, transparent); pointer-events: none; z-index: 1; }
 .grid-now { position: absolute; left: 0; right: 0; height: 2px; background: var(--now); z-index: 4; pointer-events: none; transition: top .25s ease-in-out; }
 .grid-loading { padding: 8px; }
 .appt {
