@@ -375,4 +375,14 @@ tr.inactive td { opacity: .55; }
 .weekdays .day[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 700; }
 .form.narrow { max-width: 520px; }
 .block-head input[type=month] { font: inherit; height: 34px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
-.table th.r { text-align: right; }
+.table th.r, .table td.r { text-align: right; }
+
+/* Клиника: услуги по категориям, справочник */
+.table tr.group-row th { padding-top: 16px; font: 700 .8rem var(--display); color: var(--hint); text-transform: uppercase; letter-spacing: .03em; text-align: left; background: none; position: static; }
+.chips-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.chips-pick .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
+.chips-pick .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.catalog-section { border-top: 1px solid var(--separator); padding: 8px 0; }
+.catalog-section summary { cursor: pointer; font-weight: 600; }
+.catalog-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0 4px 4px; }
+.catalog-row input[type=number] { width: 96px; font: inherit; height: 32px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }

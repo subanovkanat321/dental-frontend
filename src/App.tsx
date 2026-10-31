@@ -7,6 +7,7 @@ import { Shell } from './layout/Shell'
 import { usePage } from './lib/route'
 import { telegram } from './lib/telegram'
 import { CashPage } from './cash/CashPage'
+import { ClinicPage } from './clinic/ClinicPage'
 import { PatientsPage } from './patients/PatientsPage'
 import { SchedulePage } from './schedule/SchedulePage'
 import { StockPage } from './stock/StockPage'
@@ -44,15 +45,12 @@ export function App() {
   }
   return (
     <Shell me={me.data} page={page} onNavigate={go}>
-      {page === 'patients'
-        ? <PatientsPage me={me.data} onBook={(p) => { setBooking(p); go('schedule') }} />
-        : page === 'cash'
-          ? <CashPage me={me.data} />
-          : page === 'stock'
-            ? <StockPage me={me.data} />
-            : page === 'team'
-              ? <TeamPage me={me.data} />
-              : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
+      {page === 'patients' && <PatientsPage me={me.data} onBook={(p) => { setBooking(p); go('schedule') }} />}
+      {page === 'cash' && <CashPage me={me.data} />}
+      {page === 'stock' && <StockPage me={me.data} />}
+      {page === 'team' && <TeamPage me={me.data} />}
+      {page === 'clinic' && <ClinicPage me={me.data} />}
+      {page === 'schedule' && <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
     </Shell>
   )
 }
