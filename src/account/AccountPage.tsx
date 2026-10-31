@@ -16,14 +16,14 @@ type Tab = 'plan' | 'agreement' | 'data' | 'news' | 'support' | 'privacy'
  * «Аккаунт»: отношения клиники с платформой. Админу — тариф и оплата, договор, данные (выгрузка
  * и журнал); всем — техподдержка, новости стоматологии и конфиденциальность. Права проверяет и сервер.
  */
-export function AccountPage({ me }: { me: Me }) {
+export function AccountPage({ me, initialTab, initialTicket }: { me: Me; initialTab?: string; initialTicket?: number }) {
   const seesAll = Boolean(me.admin && !me.clinic?.independentDoctors)
   const tabs: [Tab, string][] = [
     ...(me.admin ? [['plan', 'Тариф и оплата'], ['agreement', 'Договор']] as [Tab, string][] : []),
     ...(me.admin || seesAll ? [['data', 'Данные']] as [Tab, string][] : []),
     ['support', 'Техподдержка'], ['news', 'Новости стоматологии'], ['privacy', 'Конфиденциальность'],
   ]
-  const [tab, setTab] = useState<Tab>(tabs[0]![0])
+  const [tab, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? tabs[0]![0])
   const [panel, setPanel] = useState(false)
   // Контакты поддержки клиники — из «О клинике» (читать могут все сотрудники)
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')), enabled: tab === 'support' })
@@ -40,7 +40,7 @@ export function AccountPage({ me }: { me: Me }) {
   )
   return (
     <div className={panel ? 'schedule with-panel' : 'schedule'}>
-      {tab === 'support' ? <SupportTab me={me} clinic={clinic.data} header={header} onPanel={setPanel} /> : (
+      {tab === 'support' ? <SupportTab me={me} clinic={clinic.data} header={header} onPanel={setPanel} initialTicket={initialTicket} /> : (
         <section className="schedule-main">
           {header}
           {tab === 'plan' && <PlanTab />}

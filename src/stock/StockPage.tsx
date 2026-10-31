@@ -15,7 +15,8 @@ type Side = { kind: 'supply'; id: number } | { kind: 'new' } | null
  * принять поставку, настроить минимум, история. «Свой склад у каждого врача» (V61): врач видит
  * свой и общий, админ и регистратура — весь или выбранного врача. Права проверяет сервер.
  */
-export function StockPage({ me }: { me: Me }) {
+/** initialSupply — кнопка бота «Открыть склад» в сигнале «заканчивается»: сразу этот материал. */
+export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: number }) {
   const client = useQueryClient()
   const separate = Boolean(me.clinic?.separateSupplies)
   const choosesDoctor = separate && (me.admin || me.reception || me.doctorId == null)
@@ -23,7 +24,7 @@ export function StockPage({ me }: { me: Me }) {
   const [doctorId, setDoctorId] = useState<number | null>(null)
   const [query, setQuery] = useState('')
   const [lowOnly, setLowOnly] = useState(false)
-  const [side, setSide] = useState<Side>(null)
+  const [side, setSide] = useState<Side>(initialSupply ? { kind: 'supply', id: initialSupply } : null)
   const close = useCallback(() => setSide(null), [setSide])
 
   const supplies = useQuery({

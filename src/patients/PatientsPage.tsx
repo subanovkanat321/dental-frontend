@@ -35,10 +35,10 @@ function phoneDigits(text: string): string {
  * дате визита (/api/patients/recent, как в приложении); не нашли среди них — ищем на сервере
  * по всей клинике (/api/patients/search).
  */
-export function PatientsPage({ me, onBook }: { me: Me; onBook: (p: Patient) => void }) {
+export function PatientsPage({ me, onBook, initialPatient }: { me: Me; onBook: (p: Patient) => void; initialPatient?: number }) {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'last', desc: true })
-  const [selected, setSelected] = useState<number | 'new' | null>(null)
+  const [selected, setSelected] = useState<number | 'new' | null>(initialPatient ?? null)
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
   // Вкладки: все пациенты, лист ожидания, «позвать на профосмотр» — как в «Пациентах» приложения

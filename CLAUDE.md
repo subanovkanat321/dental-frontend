@@ -1,14 +1,14 @@
 # dental-frontend — инструкции для Claude
 
-Фронтенд приложения записи к стоматологу (Tish): сейчас — CRM для компьютера (`/crm/`); по
-плану сюда переедет весь фронт из бэкенда (`static/js`) по экрану, старый убираем, когда новый
-умеет всё то же. Бэкенд — репозиторий
+Весь фронтенд приложения записи к стоматологу (Tish), с корня домена `/`: CRM сотрудников
+(компьютер и Telegram), «Платформа», самозапись пациента (`src/patient`, ru/ky) и страницы сайта
+(`site/*.html` + `src/site`). Старый фронт бэкенда (`static/js`) заменён (ADR 0002 бэкенда). Бэкенд — репозиторий
 `subanovkanat321/dental` (Spring Boot, REST `/api`), решение — его `docs/adr/0001-web-crm.md`.
 Владелец — Java-разработчик, учится фронтенду; код пишет Claude, объясняя решения. Общение на русском.
 
 ## Команды
 
-- `npm ci`, `npm run dev` (http://localhost:5173/crm/, нужен бэкенд на :8080), `npm test`, `npm run lint`,
+- `npm ci`, `npm run dev` (http://localhost:5173/, нужен бэкенд на :8080), `npm test`, `npm run lint`,
   `npm run typecheck`, `npm run build`.
 - `npm run api:sync` — контракт из `../dental/docs/api/openapi.json` → `api/openapi.json` и `src/api/schema.d.ts`.
 

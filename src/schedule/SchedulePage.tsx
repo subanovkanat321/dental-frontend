@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState, type CSSProperties, type MouseEvent }
 
 import { api, unwrap, type Schemas } from '../api/client'
 import type { Page } from '../lib/route'
-import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn } from '../lib/time'
+import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { AppointmentPanel } from './AppointmentPanel'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
@@ -46,8 +46,11 @@ type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind
  * «Расписание»: день всех врачей колонками, как настольный календарь. Нажать на приём — карточка
  * справа с действиями; на пустое место — «Новая запись» на это время. Расписание остаётся на экране.
  */
-export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate }: {
+export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate, initialDate, openAppointment }: {
   me: Me
+  /** Кнопка бота: «Открыть завтра» — сразу этот день; «Открыть приём» — его день и карточка. */
+  initialDate?: string
+  openAppointment?: Appointment
   /** Переход в другой раздел из полосы «Сегодня» (касса, склад). */
   onNavigate?: (page: Page) => void
   /** Пришли из «Пациентов» по «Записать»: сразу «Новая запись» на этого пациента. */
@@ -55,8 +58,10 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   onBookingShown?: () => void
 }) {
   const today = todayIn()
-  const [date, setDate] = useState(today)
+  const [date, setDate] = useState(() => (openAppointment?.startAt
+    ? new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(openAppointment.startAt)) : initialDate ?? today))
   const [side, setSide] = useState<Side>(() => {
+    if (openAppointment) return { kind: 'appointment', id: openAppointment.id!, fallback: openAppointment }
     const doctor = (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
       ?? (me.doctors ?? []).find((d) => d.active !== false)
     return bookPatient && doctor

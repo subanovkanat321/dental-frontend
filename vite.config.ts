@@ -7,8 +7,9 @@ import { defineConfig } from 'vite'
 const backend = process.env.DENTAL_BACKEND ?? 'http://localhost:8080'
 
 export default defineConfig({
-  // На проде CRM живёт по адресу /crm/ того же домена, что и Mini App (ADR 0001 бэкенда)
-  base: '/crm/',
+  // Весь фронт — с корня домена (ADR 0002 бэкенда, этап 5): CRM и Mini App — index.html, страницы
+  // сайта — site/*.html; nginx раскладывает адреса (deploy/nginx/default.conf.template бэкенда)
+  base: '/',
   plugins: [react()],
   build: {
     rollupOptions: {
@@ -21,11 +22,11 @@ export default defineConfig({
   },
   server: {
     // Тот же origin, что на проде: браузер ходит на localhost:5173, Vite передаёт /api, /web и
-    // /login в Spring Boot — без CORS, cookie-сессия сайта (dental_session) работает как за nginx
+    // /doctors (фото врачей) в Spring Boot — без CORS, cookie-сессия сайта (dental_session) работает как за nginx
     proxy: {
       '/api': backend,
       '/web': backend,
-      '/login': backend,
+      '/doctors': backend,
     },
   },
   test: {

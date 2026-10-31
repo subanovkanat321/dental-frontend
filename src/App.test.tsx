@@ -18,6 +18,7 @@ test('не вошли (401) — виджет «Войти через Telegram»;
     }),
     http.get('*/api/appointments', () => HttpResponse.json([])),
   )
+  window.history.replaceState(null, '', '/login')
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Вход для клиники' })).toBeInTheDocument()
   const widget = await vi.waitFor(() => {
@@ -30,6 +31,8 @@ test('не вошли (401) — виджет «Войти через Telegram»;
   window.onTelegramAuth!({ id: 111, hash: 'abc' })
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
   expect(posted).toEqual({ id: 111, hash: 'abc' })
+  // Вошли — адрес чистый, без /login
+  expect(window.location.pathname).toBe('/')
 })
 
 test('расписание: все врачи колонками, нажать на приём — карточка справа, Esc — закрыть', async () => {

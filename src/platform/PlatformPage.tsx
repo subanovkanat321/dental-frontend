@@ -12,10 +12,10 @@ type Tab = 'clinics' | 'tickets' | 'broadcast' | 'agreements' | 'settings'
  * «Платформа» — команда Tish: клиники (менеджеры и владелец); обращения, рассылка, договор и
  * настройки — только владелец. Права проверяет сервер (/api/platform/*).
  */
-export function PlatformPage({ me }: { me: Me }) {
+export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }) {
   const tabs: [Tab, string][] = [['clinics', 'Клиники'],
     ...(me.owner ? [['tickets', 'Обращения'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['settings', 'Настройки']] as [Tab, string][] : [])]
-  const [tab, setTab] = useState<Tab>('clinics')
+  const [tab, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? 'clinics')
   const [panel, setPanel] = useState(false)
   const header = (
     <header className="toolbar">

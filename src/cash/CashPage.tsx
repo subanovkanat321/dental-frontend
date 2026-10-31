@@ -22,7 +22,7 @@ const TABS: [Tab, string][] = [['money', 'Деньги'], ['expenses', 'Расх
  * сервере: всю клинику видит админ (если врачи не независимы), врач — свою; «К оплате» —
  * регистратура и клиники с регистратурой.
  */
-export function CashPage({ me }: { me: Me }) {
+export function CashPage({ me, initialTab }: { me: Me; initialTab?: string }) {
   const seesAll = Boolean(me.admin && !me.clinic?.independentDoctors)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   // Чья касса: админ выбирает (пусто — вся клиника), врач — всегда своя
@@ -30,7 +30,7 @@ export function CashPage({ me }: { me: Me }) {
   const money = seesAll || me.doctorId != null
   const toPayShown = Boolean(me.reception || me.hasReception)
 
-  const [tab, setTab] = useState<Tab>('money')
+  const [tab, setTab] = useState<Tab>(TABS.some(([key]) => key === initialTab) ? initialTab as Tab : 'money')
   const [period, setPeriod] = useState<Period>('month')
   const [custom, setCustom] = useState(periodOf('month'))
   const range = period === 'custom' ? custom : periodOf(period)

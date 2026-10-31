@@ -1,11 +1,13 @@
-import { ApiError } from './api/client'
+import { api, ApiError, unwrap } from './api/client'
 import { useMe } from './api/me'
+import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useState } from 'react'
 
 import type { Schemas } from './api/client'
 import { Login } from './layout/Login'
 import { Shell } from './layout/Shell'
-import { usePage } from './lib/route'
+import { readDeepLink, type DeepLink } from './lib/deepLink'
+import { usePage, type Page } from './lib/route'
 import { telegram } from './lib/telegram'
 
 // Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
@@ -27,7 +29,18 @@ const PatientApp = lazy(() => import('./patient/PatientApp'))
  */
 export function App() {
   const me = useMe()
-  const [page, go] = usePage()
+  // Кнопка бота (?appointment=…, ?screen=cash…): куда открыть — один раз; адрес чистим, чтобы
+  // обновление страницы не открывало то же снова. Раздел — в #, как при обычном переходе
+  const [link, setLink] = useState<DeepLink | null>(() => {
+    const found = readDeepLink(window.location.search)
+    if (found) window.history.replaceState(null, '', `${window.location.pathname}#/${found.page}`)
+    return found
+  })
+  const [page, goPage] = usePage()
+  const go = (next: Page) => {
+    setLink(null)
+    goPage(next)
+  }
   // «Записать» из карточки пациента: в «Расписание» с открытой «Новой записью» на него
   const [booking, setBooking] = useState<Schemas['PatientView'] | null>(null)
 
@@ -37,9 +50,15 @@ export function App() {
   if (me.error) {
     if (me.error instanceof ApiError && me.error.status === 401) {
       // В Telegram вход — подпись запуска; устарела — открыть заново из бота, а не «Войти через Telegram»
-      return telegram()
-        ? <div className="center"><h1>Tish CRM</h1><p className="hint">{me.error.message || 'Сессия устарела — закройте и откройте заново из бота.'}</p></div>
-        : <Login />
+      if (telegram()) {
+        return <div className="center"><h1>Tish CRM</h1><p className="hint">{me.error.message || 'Сессия устарела — закройте и откройте заново из бота.'}</p></div>
+      }
+      // Браузер без входа на главной (пациент набрал адрес) — общий каталог клиник; вход — /login
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/clinics')
+        return <div className="center hint">Загрузка…</div>
+      }
+      return <Login />
     }
     return <div className="center error">Нет связи с сервером: {me.error.message}</div>
   }
@@ -59,15 +78,42 @@ export function App() {
   return (
     <Shell me={me.data} page={shown} onNavigate={go}>
       <Suspense fallback={<p className="hint">Загрузка…</p>}>
-      {shown === 'patients' && <PatientsPage me={me.data} onBook={(p) => { setBooking(p); go('schedule') }} />}
-      {shown === 'cash' && <CashPage me={me.data} />}
-      {shown === 'stock' && <StockPage me={me.data} />}
+      {shown === 'patients' && <PatientsPage me={me.data} initialPatient={link?.patientId} onBook={(p) => { setBooking(p); go('schedule') }} />}
+      {shown === 'cash' && <CashPage me={me.data} initialTab={link?.tab} />}
+      {shown === 'stock' && <StockPage me={me.data} initialSupply={link?.supplyId} />}
       {shown === 'team' && <TeamPage me={me.data} />}
       {shown === 'clinic' && <ClinicPage me={me.data} />}
-      {shown === 'account' && <AccountPage me={me.data} />}
-      {shown === 'platform' && me.data.platform && <PlatformPage me={me.data} />}
-      {shown === 'schedule' && <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
+      {shown === 'account' && <AccountPage me={me.data} initialTab={link?.tab} initialTicket={link?.ticketId} />}
+      {shown === 'platform' && me.data.platform && <PlatformPage me={me.data} initialTab={link?.page === 'platform' ? link.tab : undefined} />}
+      {shown === 'schedule' && (link?.appointmentId || link?.bookPatientId
+        ? <LinkedSchedule link={link} me={me.data} onNavigate={go} />
+        : <SchedulePage me={me.data} initialDate={link?.date} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />)}
       </Suspense>
     </Shell>
   )
+}
+
+/**
+ * «Расписание» по кнопке бота: «Открыть приём» — день приёма с его карточкой; «Записать на приём»
+ * из присланного боту контакта — «Новая запись» на этого пациента. Не нашёлся — просто сегодня.
+ */
+function LinkedSchedule({ link, me, onNavigate }: {
+  link: DeepLink
+  me: Schemas['BookingViewsMe']
+  onNavigate: (page: Page) => void
+}) {
+  const appointment = useQuery({
+    queryKey: ['appointment', link.appointmentId],
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}', { params: { path: { id: link.appointmentId! } } })),
+    enabled: link.appointmentId != null,
+    retry: false,
+  })
+  const patient = useQuery({
+    queryKey: ['patient-card', link.bookPatientId],
+    queryFn: () => unwrap(api.GET('/api/appointments/by-patient/{patientId}', { params: { path: { patientId: link.bookPatientId! } } })),
+    enabled: link.bookPatientId != null,
+    retry: false,
+  })
+  if (appointment.isLoading || patient.isLoading) return <p className="hint">Загрузка…</p>
+  return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null} onNavigate={onNavigate} />
 }

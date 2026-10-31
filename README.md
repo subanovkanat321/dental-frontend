@@ -1,21 +1,23 @@
 # Tish — фронтенд
 
-Интерфейс приложения записи к стоматологу. Сейчас — **CRM для работы за компьютером**:
-расписание всех врачей, карточки сбоку, дальше — пациенты, касса и склад таблицами. Со временем
-сюда переедет весь фронт из бэкенда (`static/js`): приложение сотрудников на телефоне и пациента. Бэкенд и Mini App —
-репозиторий [`subanovkanat321/dental`](https://github.com/subanovkanat321/dental), решение —
-его `docs/adr/0001-web-crm.md`.
+Весь интерфейс приложения записи к стоматологу (Tish): **CRM** для сотрудников (компьютер и
+Telegram), раздел **«Платформа»** для команды Tish, **самозапись пациента** в Telegram (ru/ky) и
+**страницы сайта** (`/clinics`, `/c/<код>`, `/join`, `/go`). Бэкенд — репозиторий
+[`subanovkanat321/dental`](https://github.com/subanovkanat321/dental), решения — его
+`docs/adr/0001-web-crm.md` и `0002-frontend-migration.md`.
 
 - React 19 + TypeScript + Vite, данные — TanStack Query, запросы — `openapi-fetch` с типами из
   контракта `api/openapi.json` (копия `docs/api/openapi.json` бэкенда).
-- Адрес на проде — `/crm/` того же домена, что и Mini App; вход — тот же («Войти через
-  Telegram» на `/login`), cookie-сессия сайта.
+- Адрес на проде — корень домена `/`: nginx отдаёт `index.html` (CRM, «Платформа», самозапись —
+  что показать, решает ответ `/api/patient/me`) и `site/*.html` (страницы сайта со своими og:-тегами).
+  Вход на сайте — виджет «Войти через Telegram» (cookie-сессия), в Telegram — подпись запуска.
+- Разделы CRM и самозапись — отдельные lazy-чанки: пациент не скачивает CRM.
 
 ## Команды
 
 ```bash
 npm ci                 # зависимости
-npm run dev            # http://localhost:5173/crm/ — нужен бэкенд на :8080 (./mvnw spring-boot:run в dental)
+npm run dev            # http://localhost:5173/ (сайт: /site/clinics.html) — нужен бэкенд на :8080 (./mvnw spring-boot:run в dental)
 npm test               # Vitest + Testing Library + MSW
 npm run lint && npm run typecheck && npm run build
 npm run api:sync       # контракт из ../dental/docs/api/openapi.json → api/openapi.json и src/api/schema.d.ts

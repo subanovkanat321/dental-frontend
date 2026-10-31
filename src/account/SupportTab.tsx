@@ -25,14 +25,16 @@ const FAQ: [string, string][] = [
  * «Техподдержка»: написать команде Tish (вопрос, идея, проблема) и переписка — справа; контакты
  * поддержки клиники и разработчиков; частые вопросы.
  */
-export function SupportTab({ me, clinic, header, onPanel }: {
+export function SupportTab({ me, clinic, header, onPanel, initialTicket }: {
   me: Me
   clinic?: Schemas['ClinicView']
   header: ReactNode
   onPanel: (open: boolean) => void
+  /** Кнопка бота «Открыть ответ»: сразу переписка по обращению. */
+  initialTicket?: number
 }) {
   const list = useQuery({ queryKey: ['support-tickets'], queryFn: () => unwrap(api.GET('/api/support/tickets')) })
-  const [opened, setOpenedState] = useState<number | string | null>(null)
+  const [opened, setOpenedState] = useState<number | string | null>(initialTicket ?? null)
   const setOpened = useCallback((next: number | string | null) => {
     setOpenedState(next)
     onPanel(next != null)

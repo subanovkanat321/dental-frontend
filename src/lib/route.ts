@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-/** Разделы CRM. Адрес — во фрагменте (#/patients): /crm/ отдаёт nginx одним index.html. */
+/** Разделы CRM. Адрес — во фрагменте (#/patients): CRM отдаёт nginx одним index.html. */
 export type Page = 'schedule' | 'patients' | 'cash' | 'stock' | 'team' | 'clinic' | 'account' | 'platform'
 
 const PAGES: readonly Page[] = ['schedule', 'patients', 'cash', 'stock', 'team', 'clinic', 'account', 'platform']
