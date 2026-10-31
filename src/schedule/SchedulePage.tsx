@@ -1,8 +1,9 @@
-import { useQueries } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { addDays, dayTitle, minutesOf, minutesOfTime, timeOf, todayIn } from '../lib/time'
+import type { Page } from '../lib/route'
+import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn } from '../lib/time'
 import { AppointmentPanel } from './AppointmentPanel'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
@@ -10,8 +11,28 @@ import { statusOf } from './status'
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 
-/** Сколько пикселей на минуту: час — 72 px, приём на 30 минут — 36 px, хватает на две строки. */
-const PX = 1.2
+/** Сколько пикселей на минуту: час — 78 px; приём на 45 минут вмещает время, имя и статус. */
+const PX = 1.3
+
+/** Ниже этой высоты блок — одной строкой: время начала и имя. */
+const SHORT = 46
+
+/** Цвета аватаров врачей — по порядку, различимы рядом и на светлой, и на тёмной теме. */
+const AVATARS = ['#0E8A80', '#5B7FD6', '#C2793B', '#8E5BB5', '#2F8F5B', '#C2506B']
+
+function initials(name = ''): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+}
+
+/** Минуты от полуночи «сейчас» по Бишкеку; обновляются раз в минуту — линия «сейчас» ползёт сама. */
+function useNowMinutes(): number {
+  const [now, setNow] = useState(() => minutesOf(new Date().toISOString()))
+  useEffect(() => {
+    const t = setInterval(() => setNow(minutesOf(new Date().toISOString())), 60_000)
+    return () => clearInterval(t)
+  }, [])
+  return now
+}
 
 /** Отступ сверху и снизу сетки: подпись первого часа («09:00») не обрезается. */
 const PAD = 10
@@ -25,8 +46,10 @@ type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind
  * «Расписание»: день всех врачей колонками, как настольный календарь. Нажать на приём — карточка
  * справа с действиями; на пустое место — «Новая запись» на это время. Расписание остаётся на экране.
  */
-export function SchedulePage({ me, bookPatient = null, onBookingShown }: {
+export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate }: {
   me: Me
+  /** Переход в другой раздел из полосы «Сегодня» (касса, склад). */
+  onNavigate?: (page: Page) => void
   /** Пришли из «Пациентов» по «Записать»: сразу «Новая запись» на этого пациента. */
   bookPatient?: Schemas['PatientView'] | null
   onBookingShown?: () => void
@@ -68,6 +91,35 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown }: {
   }
   const hours = Array.from({ length: Math.ceil((to - from) / 60) }, (_, i) => from + i * 60)
   const height = (to - from) * PX + PAD * 2
+  // Линия «сейчас» — только у сегодняшнего дня и внутри сетки; выше неё день приглушён
+  const nowMinutes = useNowMinutes()
+  const nowTop = date === today && nowMinutes >= from && nowMinutes <= to ? PAD + (nowMinutes - from) * PX : null
+
+  // Полоса «Сегодня»: что требует действия — одним рядом (DESIGN.md → Components)
+  const seesMoney = Boolean(me.admin && !me.clinic?.independentDoctors) || me.doctorId != null
+  const toPay = useQuery({
+    queryKey: ['to-pay'],
+    queryFn: () => unwrap(api.GET('/api/appointments/to-pay')),
+    enabled: Boolean(me.reception || me.hasReception),
+  })
+  const supplies = useQuery({
+    queryKey: ['supplies', null],
+    queryFn: () => unwrap(api.GET('/api/supplies')),
+    staleTime: 5 * 60_000,
+  })
+  const moneyScope = me.admin && !me.clinic?.independentDoctors ? {} : { doctorId: me.doctorId ?? undefined }
+  const revenue = useQuery({
+    queryKey: ['revenue', date, date, me.admin && !me.clinic?.independentDoctors ? null : me.doctorId],
+    queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: date, to: date, ...moneyScope } } })),
+    enabled: seesMoney,
+  })
+  const requests = all.filter((a) => a.status === 'REQUESTED')
+  const waiting = all.filter((a) => a.status === 'SCHEDULED' && statusOf(a).kind === 'wait')
+  const low = (supplies.data ?? []).filter((x) => x.low).length
+  const firstOf = (list: Appointment[]) => () => {
+    const first = [...list].sort((a, b) => (a.startAt! < b.startAt! ? -1 : 1))[0]
+    if (first) setSide({ kind: 'appointment', id: first.id! })
+  }
 
   /** Пустое место в колонке врача → «Новая запись» на это время, вниз до 15 минут. */
   const pick = (doctorId: number) => (e: MouseEvent<HTMLDivElement>) => {
@@ -86,15 +138,51 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown }: {
       <section className="schedule-main">
         <header className="toolbar">
           <div className="day-switch">
-            <button type="button" className="btn" aria-label="Предыдущий день" onClick={() => setDate(addDays(date, -1))}>‹</button>
-            <button type="button" className="btn" disabled={date === today} onClick={() => setDate(today)}>Сегодня</button>
-            <button type="button" className="btn" aria-label="Следующий день" onClick={() => setDate(addDays(date, 1))}>›</button>
+            <button type="button" className="btn ghost" aria-label="Предыдущий день" onClick={() => setDate(addDays(date, -1))}>‹</button>
+            <button type="button" className="btn ghost" aria-label="Следующий день" onClick={() => setDate(addDays(date, 1))}>›</button>
           </div>
-          <h1>{dayTitle(date)}{date === today ? ' · сегодня' : ''}</h1>
+          <div className="day-title">
+            <h1>{dayTitle(date)}</h1>
+            <span className="hint">
+              {date === today ? 'сегодня · ' : ''}{all.length ? `Записей: ${all.length}` : 'Записей нет'}
+              {doctors.length > 1 ? ` · врачей ${doctors.length}` : ''}
+            </span>
+          </div>
+          {date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
           <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
-          <span className="hint">{all.length ? `Записей: ${all.length}` : 'Записей нет'}</span>
           {doctors.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
         </header>
+
+        <div className="today-strip" role="group" aria-label="Требует внимания">
+          {requests.length > 0 && (
+            <button type="button" className="stat s-request" onClick={firstOf(requests)}>
+              <b>{requests.length}</b> {requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить
+            </button>
+          )}
+          {waiting.length > 0 && (
+            <button type="button" className="stat s-wait" onClick={firstOf(waiting)}>
+              <b>{waiting.length}</b> ждём ответа на напоминание
+            </button>
+          )}
+          {(toPay.data?.length ?? 0) > 0 && (
+            <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}>
+              <b>{toPay.data!.length}</b> ждут оплаты на кассе
+            </button>
+          )}
+          {revenue.data && (
+            <button type="button" className="stat s-quiet" onClick={() => onNavigate?.('cash')}>
+              <b>{somText(revenue.data.totalSom ?? 0).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
+            </button>
+          )}
+          {low > 0 && (
+            <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}>
+              <b>{low}</b> на складе заканчивается
+            </button>
+          )}
+          {!requests.length && !waiting.length && !toPay.data?.length && !low && (
+            <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>
+          )}
+        </div>
 
         {doctors.length === 0 ? (
           <p className="hint">В клинике пока нет врачей — добавьте их в приложении: «Меню → Врачи».</p>
@@ -102,12 +190,16 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown }: {
           <div className="grid" style={{ gridTemplateColumns: `56px repeat(${doctors.length}, minmax(180px, 1fr))`, '--cols': doctors.length } as CSSProperties}>
             <div className="grid-corner" />
             {doctors.map((d) => (
-              <div key={d.id} className="grid-head" title={d.fullName}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</div>
+              <div key={d.id} className="grid-head" title={d.fullName}>
+                <span className="avatar" style={{ background: AVATARS[doctors.indexOf(d) % AVATARS.length] }} aria-hidden="true">{initials(d.fullName)}</span>
+                <span className="grid-head-name">{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</span>
+              </div>
             ))}
             <div className="grid-times" style={{ height }}>
               {hours.map((m) => (
-                <span key={m} style={{ top: PAD + (m - from) * PX }}>{String(Math.floor(m / 60)).padStart(2, '0')}:00</span>
+                <span key={m} className="num" style={{ top: PAD + (m - from) * PX }}>{String(Math.floor(m / 60)).padStart(2, '0')}:00</span>
               ))}
+              {nowTop != null && <span className="now-label num" style={{ top: nowTop }}>{timeOf(new Date().toISOString())}</span>}
             </div>
             {doctors.map((d, i) => {
               const q = days[i]
@@ -115,19 +207,22 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown }: {
                 <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
                   title="Нажмите на свободное время — новая запись" onClick={pick(d.id!)}>
                   {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
+                  {nowTop != null && <div className="grid-past" style={{ height: nowTop }} />}
+                  {nowTop != null && <div className="grid-now" style={{ top: nowTop }} />}
                   {q?.isPending && <div className="hint grid-loading">Загрузка…</div>}
                   {q?.error && <div className="error grid-loading">{q.error.message}</div>}
                   {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => {
                     const s = statusOf(a)
                     const top = PAD + (minutesOf(a.startAt!) - from) * PX
                     const h = Math.max((minutesOf(a.endAt!) - minutesOf(a.startAt!)) * PX - 2, 22)
+                    const short = h < SHORT
                     return (
-                      <button key={a.id} type="button" className={`appt tone-${s.tone}${selected?.id === a.id ? ' active' : ''}`}
+                      <button key={a.id} type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${selected?.id === a.id ? ' active' : ''}`}
                         style={{ top, height: h }} onClick={() => setSide({ kind: 'appointment', id: a.id! })}
                         aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
-                        <span className="appt-time">{timeOf(a.startAt!)}–{timeOf(a.endAt!)}</span>
+                        <span className="appt-time num">{short ? timeOf(a.startAt!) : `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`}</span>
                         <span className="appt-name">{a.patient?.fullName}</span>
-                        {h > 40 && <span className="appt-state">{s.icon} {s.label}</span>}
+                        {h > 56 && <span className="appt-state"><span className="dot" /> {s.label}</span>}
                       </button>
                     )
                   })}

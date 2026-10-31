@@ -2,14 +2,15 @@ import type { ReactNode } from 'react'
 
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
+import { Icon } from './Icon'
 
 type Me = Schemas['BookingViewsMe']
 
 const SECTIONS = [
-  { key: 'schedule', icon: '📅', title: 'Расписание', ready: true },
-  { key: 'patients', icon: '👥', title: 'Пациенты', ready: true },
-  { key: 'cash', icon: '💰', title: 'Касса', ready: true },
-  { key: 'stock', icon: '📦', title: 'Склад', ready: true },
+  { key: 'schedule', title: 'Расписание', ready: true },
+  { key: 'patients', title: 'Пациенты', ready: true },
+  { key: 'cash', title: 'Касса', ready: true },
+  { key: 'stock', title: 'Склад', ready: true },
 ] as const
 
 /** Раскладка CRM: меню слева, рабочая область; пока не перенесённое — в приложении (/). */
@@ -25,19 +26,19 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </div>
         <div className="clinic">
           <strong>{clinic}</strong>
-          <span className="hint">{me.fullName ? `${me.fullName} · ` : ''}{role}</span>
+          <span>{me.fullName ? `${me.fullName} · ` : ''}{role}</span>
         </div>
         <nav aria-label="Разделы">
           {SECTIONS.map((s) => (
             <button key={s.key} type="button" className={s.key === page ? 'nav active' : 'nav'} disabled={!s.ready}
               aria-current={s.key === page ? 'page' : undefined}
               title={s.ready ? undefined : 'Скоро — пока в приложении'} onClick={() => s.ready && onNavigate(s.key as Page)}>
-              <span aria-hidden="true">{s.icon}</span> {s.title}
+              <Icon name={s.key} /> <span>{s.title}</span>
               {!s.ready && <span className="soon">скоро</span>}
             </button>
           ))}
         </nav>
-        <a className="nav link-out" href="/">↗ Открыть приложение</a>
+        <a className="nav link-out" href="/"><Icon name="external" /> <span>Открыть приложение</span></a>
       </aside>
       <main className="workspace">{children}</main>
     </div>

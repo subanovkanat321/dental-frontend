@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -24,7 +24,7 @@ test('расписание: все врачи колонками, нажать �
   renderApp()
   expect(await screen.findByRole('group', { name: 'Айгерим Садыкова' })).toBeInTheDocument()
   expect(screen.getByRole('group', { name: 'Дастан Т.' })).toBeInTheDocument()
-  expect(await screen.findByText('Записей: 2')).toBeInTheDocument()
+  expect(await screen.findByText(/Записей: 2/)).toBeInTheDocument()
 
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
@@ -41,4 +41,29 @@ test('пациенту — «для клиник», расписания нет'
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false })))
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Tish CRM — для клиник' })).toBeInTheDocument()
+})
+
+test('полоса «Сегодня»: заявки — открыть первую; склад заканчивается — перейти в «Склад»; линия «сейчас»', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', ({ request }) => {
+      const doctorId = new URL(request.url).searchParams.get('doctorId')
+      return HttpResponse.json(doctorId === '1'
+        ? [appointment(10, 1, '23:00', 'Бакыт М.', { status: 'REQUESTED' }), appointment(11, 1, '23:30', 'Айгуль Т.', { status: 'REQUESTED' })]
+        : [])
+    }),
+    http.get('*/api/supplies', () => HttpResponse.json([{ id: 1, name: 'Анестетик', unit: 'карп.', quantity: 1, minQuantity: 5, low: true }])),
+    http.get('*/api/appointments/revenue', () => HttpResponse.json({ totalSom: 12500, paidCount: 3, unpaidCount: 0, byMethod: {}, days: [] })),
+  )
+  renderApp()
+  const strip = await screen.findByRole('group', { name: 'Требует внимания' })
+  expect(await within(strip).findByRole('button', { name: /2 заявки из бота — подтвердить/ })).toBeInTheDocument()
+  expect(await within(strip).findByRole('button', { name: /12\s500 сом сегодня/ })).toBeInTheDocument()
+
+  await userEvent.click(within(strip).getByRole('button', { name: /заявки из бота/ }))
+  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Бакыт М.')
+
+  await userEvent.click(await within(strip).findByRole('button', { name: /на складе заканчивается/ }))
+  expect(await screen.findByRole('heading', { name: 'Склад' })).toBeInTheDocument()
+  window.location.hash = ''
 })

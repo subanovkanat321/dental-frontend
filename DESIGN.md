@@ -106,7 +106,7 @@ components:
 - **Geologica 600** (Google Fonts, кириллица) — заголовки разделов, дата дня, итоги в сомах (с `font-variant-numeric: tabular-nums`). Не для абзацев.
 - **Golos Text 400/500/600** (Google Fonts, кириллица; сделан для русскоязычных интерфейсов) — весь интерфейс: таблицы, формы, кнопки, блоки приёмов. Базовый размер 14px, подписи 12px.
 - **JetBrains Mono 400–600** (Google Fonts, кириллица) — время приёма, телефоны, суммы в таблицах и истории. Крупные итоги — не mono, а Geologica с ровными цифрами (mono на больших размерах выглядит «дырявым»).
-- Загрузка: `https://fonts.googleapis.com/css2?family=Geologica:wght@500;600;700&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap`.
+- Загрузка: свои файлы из пакетов `@fontsource/geologica`, `@fontsource/golos-text`, `@fontsource/jetbrains-mono` (подмножества cyrillic и latin, импорт в `src/main.tsx`) — без запросов к Google с компьютеров клиники.
 - Шкала: 12 / 13 / 14 / 15 / 20 / 28–36. Заголовок отличается от текста размером, а не только жирностью.
 
 ## Layout

@@ -45,8 +45,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
     const s = statusOf(a)
     return (
       <li key={a.id}>
-        <span className="nowrap">{shortDate(a.startAt!, true)}</span>
-        <span className={`tone-${s.tone}`}> {s.icon} {s.label}</span>
+        <span className="nowrap num">{shortDate(a.startAt!, true)}</span>
+        {' '}<span className={`chip small s-${s.kind}`}><span className="dot" />{s.label}</span>
         {a.serviceName && <span className="hint"> · {a.serviceName}</span>}
         {many && <span className="hint"> · {doctorName(a.doctorId)}</span>}
       </li>

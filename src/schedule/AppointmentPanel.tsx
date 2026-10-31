@@ -51,7 +51,7 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
         <strong className="patient-name">{a.patient?.fullName}</strong>
         {a.patient?.phone && <a href={`tel:+${a.patient.phone}`}>{formatPhone(a.patient.phone)}</a>}
       </section>
-      <p className={`status tone-${s.tone}`}>{s.icon} {s.label}</p>
+      <span className={`chip s-${s.kind}`}><span className="dot" />{s.label}</span>
       {a.serviceName && <p>🦷 {a.serviceName}</p>}
       {a.comment && <p className="hint">💬 {a.comment}</p>}
       {a.depositStatus && a.paidSom == null && <p className="hint">💳 Предоплата {somText(a.depositSom ?? 0)}</p>}

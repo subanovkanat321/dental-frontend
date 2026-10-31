@@ -45,7 +45,7 @@ export function App() {
           ? <CashPage me={me.data} />
           : page === 'stock'
             ? <StockPage me={me.data} />
-            : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} />}
+            : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
     </Shell>
   )
 }
