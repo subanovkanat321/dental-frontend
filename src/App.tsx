@@ -40,8 +40,8 @@ function Login() {
       <img src={`${import.meta.env.BASE_URL}tooth.svg`} alt="" width={64} height={64} />
       <h1>Tish CRM</h1>
       <p className="hint">Расписание всех врачей, пациенты и касса — на большом экране.</p>
-      <a className="btn primary" href="/login">Войти через Telegram</a>
-      <p className="hint small">После входа откройте этот адрес снова.</p>
+      <a className="btn primary" href="/login?next=/crm/">Войти через Telegram</a>
+      <p className="hint small">После входа вернётесь сюда.</p>
     </div>
   )
 }

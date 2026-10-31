@@ -30,7 +30,7 @@ function renderApp() {
 test('не вошли (401) — экран входа со ссылкой на «Войти через Telegram»', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ detail: 'Войдите' }, { status: 401 })))
   renderApp()
-  expect(await screen.findByRole('link', { name: 'Войти через Telegram' })).toHaveAttribute('href', '/login')
+  expect(await screen.findByRole('link', { name: 'Войти через Telegram' })).toHaveAttribute('href', '/login?next=/crm/')
 })
 
 test('расписание: все врачи колонками, нажать на приём — карточка справа, Esc — закрыть', async () => {
