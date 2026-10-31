@@ -16,6 +16,8 @@ export const server = setupServer(
   http.get('*/api/waitlist', () => HttpResponse.json([])),
   http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [], free: [], breaks: [] })),
   http.get('*/api/appointments/:id/note', () => HttpResponse.json({ note: '' })),
+  http.get('*/api/patients/:id/notes', () => HttpResponse.json([])),
+  http.get('*/api/patients/:id/expenses', () => HttpResponse.json([])),
   http.get('*/api/patients/:id/anamnesis', () => HttpResponse.json({ items: [] })),
   // Напоминания админу (AdminNotices): по умолчанию всё в порядке — напоминаний нет
   http.get('*/api/clinic/billing', () => HttpResponse.json({ state: 'FREE' })),

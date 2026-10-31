@@ -77,7 +77,9 @@ test('карточка пациента: визиты, неявки, долг; �
       past: [visit],
     })),
     http.get('*/api/appointments/debts', ({ request }) => HttpResponse.json(
-      new URL(request.url).searchParams.get('patientId') === '2' ? [{ appointmentId: 50, debtSom: 1500 }] : [])),
+      new URL(request.url).searchParams.get('patientId') === '2' ? [{ appointmentId: 50, debtSom: 1500, startAt: visit.startAt }] : [])),
+    http.get('*/api/patients/2/notes', () => HttpResponse.json([{ appointmentId: 50, note: 'Пломба 36, контроль через год' }])),
+    http.get('*/api/patients/2/expenses', () => HttpResponse.json([{ id: 1, amountSom: 2000, category: 'Зуботехническая лаборатория' }])),
     http.get('*/api/service-types', () => HttpResponse.json([])),
   ])
   renderApp()
@@ -85,12 +87,33 @@ test('карточка пациента: визиты, неявки, долг; �
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
   expect(await within(panel).findByText(/Был:/)).toBeInTheDocument()
   expect(panel).toHaveTextContent('Не пришёл: 1')
-  expect(await within(panel).findByText(/Долг: 1\s500 сом/)).toBeInTheDocument()
+  expect(panel).toHaveTextContent('Отмен: 0')
+  expect(await within(panel).findByRole('button', { name: /Долг 1\s500 сом — приём/ })).toBeInTheDocument()
   expect(panel).toHaveTextContent('Пломба')
+  expect(await within(panel).findByText(/Пломба 36, контроль через год/)).toBeInTheDocument()
+  expect(await within(panel).findByText(/Расходы по пациенту/)).toHaveTextContent(/зуботехническая лаборатория 2\s000 сом/)
+  expect(within(panel).getByRole('button', { name: 'WhatsApp' })).toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: 'Медкарта и снимки' })).toBeInTheDocument()
 
   await userEvent.click(within(panel).getByRole('button', { name: '＋ Записать' }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })
   expect(within(form).getByText('Айгуль Т.')).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/schedule')
+})
+
+test('визит в карточке пациента открывает карточку приёма в «Расписании»', async () => {
+  const visit = appointment(50, 1, '10:00', 'Айгуль Т.', { status: 'DONE', serviceName: 'Пломба' })
+  backend([
+    http.get('*/api/appointments/by-patient/2', () => HttpResponse.json({
+      patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444' }, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [visit],
+    })),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/appointments/50', () => HttpResponse.json(visit)),
+  ])
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
+  const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
+  await userEvent.click(await within(panel).findByRole('button', { name: /Пломба/ }))
+  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айгуль Т.')
   expect(window.location.hash).toBe('#/schedule')
 })

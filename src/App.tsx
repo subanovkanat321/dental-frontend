@@ -46,6 +46,11 @@ export function App() {
     setLink({ page: 'patients', patientId })
     goPage('patients')
   }
+  // Визит или долг в карточке пациента → «Расписание» с карточкой этого приёма
+  const openAppointment = (appointmentId: number) => {
+    setLink({ page: 'schedule', appointmentId })
+    goPage('schedule')
+  }
   // «Записать» из карточки пациента: в «Расписание» с открытой «Новой записью» на него
   const [booking, setBooking] = useState<Schemas['PatientView'] | null>(null)
 
@@ -83,7 +88,7 @@ export function App() {
   return (
     <Shell me={me.data} page={shown} onNavigate={go}>
       <Suspense fallback={<p className="hint">Загрузка…</p>}>
-      {shown === 'patients' && <PatientsPage me={me.data} initialPatient={link?.patientId} onBook={(p) => { setBooking(p); go('schedule') }} />}
+      {shown === 'patients' && <PatientsPage me={me.data} initialPatient={link?.patientId} onOpenAppointment={openAppointment} onBook={(p) => { setBooking(p); go('schedule') }} />}
       {shown === 'cash' && <CashPage me={me.data} initialTab={link?.tab} onOpenPatient={openPatient} />}
       {shown === 'stock' && <StockPage me={me.data} initialSupply={link?.supplyId} />}
       {shown === 'team' && <TeamPage me={me.data} />}
@@ -91,7 +96,7 @@ export function App() {
       {shown === 'account' && <AccountPage me={me.data} initialTab={link?.tab} initialTicket={link?.ticketId} />}
       {shown === 'platform' && me.data.platform && <PlatformPage me={me.data} initialTab={link?.page === 'platform' ? link.tab : undefined} />}
       {shown === 'schedule' && (link?.appointmentId || link?.bookPatientId
-        ? <LinkedSchedule link={link} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
+        ? <LinkedSchedule key={link.appointmentId ?? link.bookPatientId} link={link} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
         : <SchedulePage me={me.data} initialDate={link?.date} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} onOpenPatient={openPatient} />)}
       </Suspense>
     </Shell>

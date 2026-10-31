@@ -188,6 +188,12 @@ button, input, select, textarea { font-family: inherit; }
 .slot[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); font-weight: 600; }
 .field > .link { justify-self: start; }
 .appt-end { margin: 0; }
+.visit-link { display: block; width: 100%; padding: 4px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.visit-link:hover { color: var(--link); }
+.visit-note { display: block; font-size: .88rem; color: var(--hint); }
+.visits li.struck .num { text-decoration: line-through; }
+.debt-line { justify-content: flex-start; text-align: left; }
+.patient-expenses { display: grid; gap: 6px; }
 .pay-form, .form { display: grid; gap: 10px; }
 .field { display: grid; gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
 .field > span, .field > legend { font-size: .85rem; color: var(--hint); padding: 0; }

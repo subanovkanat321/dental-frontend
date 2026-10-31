@@ -35,7 +35,12 @@ function phoneDigits(text: string): string {
  * дате визита (/api/patients/recent, как в приложении); не нашли среди них — ищем на сервере
  * по всей клинике (/api/patients/search).
  */
-export function PatientsPage({ me, onBook, initialPatient }: { me: Me; onBook: (p: Patient) => void; initialPatient?: number }) {
+export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: {
+  me: Me
+  onBook: (p: Patient) => void
+  initialPatient?: number
+  onOpenAppointment?: (appointmentId: number) => void
+}) {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'last', desc: true })
   const [selected, setSelected] = useState<number | 'new' | null>(initialPatient ?? null)
@@ -150,7 +155,7 @@ export function PatientsPage({ me, onBook, initialPatient }: { me: Me; onBook: (
         )}
       </section>
       {selected === 'new' && <NewPatientPanel onClose={close} onCreated={setSelected} />}
-      {typeof selected === 'number' && <PatientPanel key={selected} patientId={selected} me={me} onClose={close} onBook={onBook}
+      {typeof selected === 'number' && <PatientPanel key={selected} patientId={selected} me={me} onClose={close} onBook={onBook} onOpenAppointment={onOpenAppointment}
         onMedical={(p) => { setSelected(null); setMedical(p) }} />}
     </div>
   )
