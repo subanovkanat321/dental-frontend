@@ -69,8 +69,9 @@ test('заметка о приёме у прошедшего приёма — с
   server.use(
     http.get('*/api/appointments/10/note', () => HttpResponse.json({ note: '' })),
     http.put('*/api/appointments/10/note', async ({ request }) => {
-      saved = await request.json()
-      return HttpResponse.json(saved)
+      const body = (await request.json()) as { note: string }
+      saved = body
+      return HttpResponse.json(body)
     }),
   )
   renderApp()
