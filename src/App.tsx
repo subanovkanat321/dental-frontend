@@ -1,3 +1,4 @@
+import { AccountPage } from './account/AccountPage'
 import { ApiError } from './api/client'
 import { useMe } from './api/me'
 import { useState } from 'react'
@@ -50,6 +51,7 @@ export function App() {
       {page === 'stock' && <StockPage me={me.data} />}
       {page === 'team' && <TeamPage me={me.data} />}
       {page === 'clinic' && <ClinicPage me={me.data} />}
+      {page === 'account' && <AccountPage me={me.data} />}
       {page === 'schedule' && <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
     </Shell>
   )

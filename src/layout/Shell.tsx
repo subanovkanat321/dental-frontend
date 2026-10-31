@@ -13,6 +13,7 @@ const SECTIONS = [
   { key: 'stock', title: 'Склад', ready: true },
   { key: 'team', title: 'Команда', ready: true },
   { key: 'clinic', title: 'Клиника', ready: true },
+  { key: 'account', title: 'Аккаунт', ready: true },
 ] as const
 
 /** Раскладка CRM: меню слева, рабочая область; пока не перенесённое — в приложении (/). */

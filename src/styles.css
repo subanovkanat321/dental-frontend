@@ -411,3 +411,35 @@ tr.inactive td { opacity: .55; }
 .anamnesis .question input:not([type=checkbox]), .anamnesis textarea { font: inherit; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 @media (max-width: 720px) { .anamnesis-grid { grid-template-columns: 1fr; } }
 .receipt { max-width: 100%; max-height: 240px; border-radius: var(--r-md); border: 1px solid var(--separator); }
+
+/* Аккаунт: оплата, тарифы, договор, обращения, конфиденциальность */
+.pay-status { border-left: 4px solid currentColor; }
+.pay-status h2 { margin: 0; }
+.pay-status.tone-ok { color: var(--ok-ink); } .pay-status.tone-wait { color: var(--wait-ink); } .pay-status.tone-bad { color: var(--bad-ink); } .pay-status.tone-hint { color: var(--hint); }
+.pay-status .hint { color: var(--hint); }
+.tariffs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 10px 0; }
+.tariff { display: grid; gap: 4px; align-content: start; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+.tariff.current { border-color: var(--accent); background: var(--accent-soft); }
+.tariff-price { font: 700 1.2rem var(--mono); }
+.pay-details { white-space: pre-wrap; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
+.agreement-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+.agreement-box { display: grid; gap: 8px; max-height: 70vh; overflow: auto; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+details.agreement-box { max-height: none; }
+.agreement-text { display: grid; gap: 6px; font-size: .93rem; }
+.agreement-text h3 { margin: 10px 0 0; }
+.agreement-text p { margin: 0; }
+.ticket-thread { display: grid; gap: 8px; }
+.ticket-msg { padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
+.ticket-msg.from-platform { background: var(--accent-soft); }
+.ticket-msg p { margin: 0; white-space: pre-wrap; }
+.faq { padding: 8px 0; border-top: 1px solid var(--separator); }
+.faq summary { cursor: pointer; font-weight: 600; }
+.faq p { margin: 6px 0 0; }
+.facts { display: grid; grid-template-columns: 220px 1fr; gap: 8px 16px; margin: 0; }
+.facts dt { font-weight: 600; }
+.facts dd { margin: 0; color: var(--hint); }
+@media (max-width: 720px) {
+  .agreement-grid, .facts { grid-template-columns: 1fr; }
+  .facts dd { margin-bottom: 6px; }
+}
+.card-block > .btn, .card-block > label.btn, .form.narrow > label.btn { justify-self: start; }
