@@ -37,7 +37,11 @@ export function useAppointmentAction(a: Appointment) {
     onSuccess: (updated) => {
       client.setQueriesData<Appointment[]>({ queryKey: ['appointments'] }, (day) =>
         day?.map((x) => (x.id === updated.id ? updated : x)))
-      void client.invalidateQueries({ queryKey: ['appointments'] })
+      client.setQueryData(['appointment', updated.id], updated)
+      // Оплата и статус меняют и «Кассу», и карточку пациента — перечитать всё, что на экране
+      for (const key of ['appointments', 'to-pay', 'debts', 'revenue', 'patient-card']) {
+        void client.invalidateQueries({ queryKey: [key] })
+      }
     },
     onError: (error) => {
       if (error.status === 409) void client.invalidateQueries({ queryKey: ['appointments'] })

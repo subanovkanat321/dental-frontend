@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 
 /** Разделы CRM. Адрес — во фрагменте (#/patients): /crm/ отдаёт nginx одним index.html. */
-export type Page = 'schedule' | 'patients'
+export type Page = 'schedule' | 'patients' | 'cash'
 
-const PAGES: readonly Page[] = ['schedule', 'patients']
+const PAGES: readonly Page[] = ['schedule', 'patients', 'cash']
 
 function current(): Page {
   const name = window.location.hash.replace(/^#\/?/, '')
@@ -12,7 +12,7 @@ function current(): Page {
 
 /**
  * Раздел из адреса: обновили страницу или нажали «Назад» в браузере — остаёмся где были.
- * Своя маленькая «маршрутизация» вместо React Router: разделов пока два, библиотека — лишний вес.
+ * Своя маленькая «маршрутизация» вместо React Router: разделов пока немного, библиотека — лишний вес.
  */
 export function usePage(): [Page, (page: Page) => void] {
   const [page, setPage] = useState(current)

@@ -146,3 +146,18 @@ h2 { font-size: 1.15rem; margin: 0; }
 .stats { display: flex; gap: 14px; }
 .panel h3 { margin: 6px 0 4px; font-size: .85rem; color: var(--hint); text-transform: uppercase; letter-spacing: .03em; }
 .visits { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .9rem; }
+
+/* Касса */
+.cash { display: grid; gap: 16px; align-content: start; }
+.cash .toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text); }
+.card-block { display: grid; gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.card-block h2 { font-size: 1.05rem; }
+.card-block .table { box-shadow: none; }
+.block-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.block-head .segments { min-width: 340px; }
+.dates { max-width: 360px; }
+.total { margin: 0; font-size: 2rem; font-weight: 800; }
+.strong { font-weight: 700; }
+.bars { display: flex; align-items: flex-end; gap: 3px; height: 90px; padding-top: 6px; }
+.bar { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.bar span { width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, var(--accent-2), var(--accent)); }

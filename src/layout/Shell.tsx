@@ -8,7 +8,7 @@ type Me = Schemas['BookingViewsMe']
 const SECTIONS = [
   { key: 'schedule', icon: '📅', title: 'Расписание', ready: true },
   { key: 'patients', icon: '👥', title: 'Пациенты', ready: true },
-  { key: 'cash', icon: '💰', title: 'Касса', ready: false },
+  { key: 'cash', icon: '💰', title: 'Касса', ready: true },
   { key: 'stock', icon: '📦', title: 'Склад', ready: false },
 ] as const
 

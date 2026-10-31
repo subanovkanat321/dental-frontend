@@ -5,6 +5,7 @@ import { useState } from 'react'
 import type { Schemas } from './api/client'
 import { Shell } from './layout/Shell'
 import { usePage } from './lib/route'
+import { CashPage } from './cash/CashPage'
 import { PatientsPage } from './patients/PatientsPage'
 import { SchedulePage } from './schedule/SchedulePage'
 
@@ -39,7 +40,9 @@ export function App() {
     <Shell me={me.data} page={page} onNavigate={go}>
       {page === 'patients'
         ? <PatientsPage me={me.data} onBook={(p) => { setBooking(p); go('schedule') }} />
-        : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} />}
+        : page === 'cash'
+          ? <CashPage me={me.data} />
+          : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} />}
     </Shell>
   )
 }

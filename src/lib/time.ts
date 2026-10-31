@@ -61,3 +61,11 @@ export function shortDate(instant: string, withTime = false): string {
     .format(d).replace(/\./g, '').replace(/ г$/, '')
   return withTime ? `${date}, ${timeOf(instant)}` : date
 }
+
+/** С понедельника этой недели или с 1-го числа месяца — до сегодня (по Бишкеку). */
+export function periodOf(kind: 'day' | 'week' | 'month', today = todayIn()): { from: string; to: string } {
+  if (kind === 'day') return { from: today, to: today }
+  if (kind === 'month') return { from: `${today.slice(0, 8)}01`, to: today }
+  const weekday = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7 // пн = 0
+  return { from: addDays(today, -weekday), to: today }
+}
