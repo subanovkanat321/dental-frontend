@@ -89,7 +89,7 @@ function ToothChart({ patientId, teeth, error }: { patientId: number; teeth?: To
 
   return (
     <section className="card-block">
-      <h2>🦷 Карта зубов</h2>
+      <h2>Карта зубов</h2>
       {error && <p className="error">{error}</p>}
       <div className="jaw" role="group" aria-label="Верхняя челюсть">{UPPER.map(tooth)}</div>
       <div className="jaw" role="group" aria-label="Нижняя челюсть">{LOWER.map(tooth)}</div>
@@ -181,7 +181,7 @@ function Plan({ patientId }: { patientId: number }) {
 
   return (
     <section className="card-block">
-      <h2>🗂 План лечения{total ? <span className="hint"> · {somText(total)}{left && left !== total ? `, осталось ${somText(left)}` : ''}</span> : null}</h2>
+      <h2>План лечения{total ? <span className="hint"> · {somText(total)}{left && left !== total ? `, осталось ${somText(left)}` : ''}</span> : null}</h2>
       {steps.length > 0 && (
         <ul className="plan" aria-label="Этапы лечения">
           {steps.map((s) => (
@@ -219,7 +219,7 @@ function Notes({ patientId }: { patientId: number }) {
   if (!notes.data?.length) return null
   return (
     <section className="card-block">
-      <h2>📝 Заметки о визитах</h2>
+      <h2>Заметки о визитах</h2>
       <ul className="notes">
         {notes.data.map((n) => (
           <li key={n.appointmentId}>
@@ -301,7 +301,7 @@ function Files({ patientId }: { patientId: number }) {
 
   return (
     <section className="card-block">
-      <h2>🩻 Снимки и фото{files.data?.length ? <span className="hint"> · {files.data.length}</span> : null}</h2>
+      <h2>Снимки и фото{files.data?.length ? <span className="hint"> · {files.data.length}</span> : null}</h2>
       {files.data?.length ? (
         <ul className="files">
           {files.data.map((f) => (
