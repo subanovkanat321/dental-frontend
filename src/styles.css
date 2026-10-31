@@ -340,3 +340,4 @@ button, input, select, textarea { font-family: inherit; }
 .candidates { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-md); background: var(--wait-bg); }
 .candidates h3 { margin: 0; color: var(--wait-ink); }
 .candidate { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.remind { display: grid; gap: 8px; }

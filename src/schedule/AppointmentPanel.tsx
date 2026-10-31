@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
 import { dayTitle, formatPhone, somText, timeOf, todayIn, ZONE } from '../lib/time'
-import { CommentEdit, Reschedule, ServiceEdit, Supplies } from './AppointmentExtras'
+import { CommentEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { PaymentBox } from './PaymentBox'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
@@ -75,6 +75,7 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
             onClick={() => setStatus('CANCELLED', 'Отклонить заявку? Пациенту придёт сообщение.')}>Отклонить</button>
         </div>
       )}
+      {a.status === 'SCHEDULED' && <Remind appointment={a} />}
       {a.status === 'SCHEDULED' && (
         <div className="actions">
           {started && <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('DONE')}>Приём состоялся</button>}
@@ -94,6 +95,8 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
       {a.status === 'DONE' && <PaymentBox key={`${a.id}-${a.version}`} appointment={a} me={me} />}
       {/* Материалы — у приёма, который идёт или был (как в приложении) */}
       {(a.status === 'DONE' || (a.status === 'SCHEDULED' && started)) && <Supplies appointment={a} />}
+      {/* Заметка — к приёму, который идёт или был (как в приложении) */}
+      {(a.status === 'DONE' || a.status === 'NO_SHOW' || (a.status === 'SCHEDULED' && started)) && <VisitNote appointment={a} />}
 
       <a className="btn ghost small" href={`/?appointment=${a.id}`} target="_blank" rel="noopener">Открыть в приложении</a>
     </aside>

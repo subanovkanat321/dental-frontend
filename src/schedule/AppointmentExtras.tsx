@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { reminderText, whatsappUrl } from '../lib/texts'
 import { minutesOf, slotInstant, timeOf, ZONE } from '../lib/time'
 import { useAppointmentAction } from './useAppointmentAction'
 
@@ -181,5 +182,91 @@ export function Supplies({ appointment: a }: { appointment: Appointment }) {
       </div>
       {move.error && <p className="error" role="alert">{errorText(move.error)}</p>}
     </section>
+  )
+}
+
+const REPLIES = [['CONFIRMED', 'Придёт'], ['RESCHEDULE', 'Перенос'], ['NO_ANSWER', 'Нет ответа']] as const
+
+/**
+ * Напомнить о приёме и отметить ответ — как в «Дне» приложения:
+ * - Telegram (пациент записывался через бота): сообщение с кнопками «Приду / Перенести» шлёт бот;
+ *   отметку «напомнили» сервер ставит после доставки;
+ * - WhatsApp: готовый текст в wa.me и отметка «напомнили» сразу (ответ придёт в WhatsApp);
+ * - ответ пациента (по телефону, в WhatsApp) — «Придёт / Перенос / Нет ответа», повторное нажатие снимает.
+ */
+export function Remind({ appointment: a }: { appointment: Appointment }) {
+  const client = useQueryClient()
+  const action = useAppointmentAction(a)
+  const settings = useQuery({ queryKey: ['settings'], queryFn: () => unwrap(api.GET('/api/settings')), staleTime: 10 * 60_000 })
+  const opened = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
+  })
+  const canRemind = a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
+  const whatsapp = () => {
+    opened.mutate()
+    window.open(whatsappUrl(a.patient?.phone ?? '', reminderText({ startAt: a.startAt!, patient: a.patient ?? {} },
+      settings.data?.clinicSignature, settings.data?.botUrl)), '_blank', 'noopener')
+  }
+  return (
+    <section className="remind" aria-label="Напоминание">
+      {canRemind && (
+        <div className="actions">
+          {a.patient?.telegram && (
+            <button type="button" className="btn primary" disabled={action.isPending} onClick={() => action.mutate({ kind: 'remindTelegram' })}>
+              Напомнить в Telegram
+            </button>
+          )}
+          {a.patient?.phone && (
+            <button type="button" className={a.patient?.telegram ? 'btn' : 'btn primary'} onClick={whatsapp}>Напомнить в WhatsApp</button>
+          )}
+        </div>
+      )}
+      <div className="segments" role="group" aria-label="Ответ пациента">
+        {REPLIES.map(([reply, title]) => (
+          <button key={reply} type="button" aria-pressed={a.reply === reply} disabled={action.isPending}
+            onClick={() => action.mutate({ kind: 'reply', body: { version: a.version ?? 0, reply: a.reply === reply ? 'NONE' : reply } })}>
+            {title}
+          </button>
+        ))}
+      </div>
+      {(action.error ?? opened.error) && <p className="error" role="alert">{errorText(action.error ?? opened.error)}</p>}
+    </section>
+  )
+}
+
+/**
+ * «Заметка о приёме»: что сделали, что дальше — медданные, видят врач приёма и админ (403 — нет
+ * блока). Сохраняется здесь же; в медкарте пациента — в «Заметках о визитах».
+ */
+export function VisitNote({ appointment: a }: { appointment: Appointment }) {
+  const client = useQueryClient()
+  const note = useQuery({
+    queryKey: ['note', a.id],
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/note', { params: { path: { id: a.id! } } })),
+    retry: false,
+  })
+  const [text, setText] = useState<string | null>(null)
+  const save = useMutation<Schemas['ChartControllerNote'], ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/appointments/{id}/note', { params: { path: { id: a.id! } }, body: { note: (text ?? '').trim() } })),
+    onSuccess: (saved) => {
+      client.setQueryData(['note', a.id], saved)
+      void client.invalidateQueries({ queryKey: ['notes'] })
+      setText(null)
+    },
+  })
+  if (note.isPending || note.error) return null
+  const value = text ?? note.data.note ?? ''
+  const changed = text != null && text.trim() !== (note.data.note ?? '')
+  return (
+    <form className="form" aria-label="Заметка о приёме" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
+      <label className="field"><span>Заметка о приёме — видят врач и администратор</span>
+        <textarea rows={3} maxLength={2000} value={value} placeholder="Что сделали, что дальше"
+          onChange={(e) => setText(e.target.value)} />
+      </label>
+      {changed && <button type="submit" className="btn" disabled={save.isPending}>Сохранить заметку</button>}
+      {save.isSuccess && !changed && <p className="tone-ok small" role="status">Сохранено</p>}
+      {save.error && <p className="error" role="alert">{errorText(save.error)}</p>}
+    </form>
   )
 }
