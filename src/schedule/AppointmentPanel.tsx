@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { Schemas } from '../api/client'
 import { dayTitle, formatPhone, somText, timeOf, todayIn, ZONE } from '../lib/time'
+import { CommentEdit, Reschedule, ServiceEdit, Supplies } from './AppointmentExtras'
 import { PaymentBox } from './PaymentBox'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
@@ -27,6 +28,10 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
   }, [onClose])
 
   const action = useAppointmentAction(a)
+  // Какая форма открыта внутри карточки: одна за раз, чтобы карточка не превращалась в анкету
+  const [editing, setEditing] = useState<'move' | 'service' | 'comment' | null>(null)
+  const close = () => setEditing(null)
+  const active = a.status === 'REQUESTED' || a.status === 'SCHEDULED'
   const s = statusOf(a)
   const doctor = (me.doctors ?? []).find((d) => d.id === a.doctorId)
   const date = a.startAt ? dateOf(a.startAt) : todayIn()
@@ -52,8 +57,18 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
         {a.patient?.phone && <a href={`tel:+${a.patient.phone}`}>{formatPhone(a.patient.phone)}</a>}
       </section>
       <span className={`chip s-${s.kind}`}><span className="dot" />{s.label}</span>
-      {a.serviceName && <p><span className="hint">Услуга:</span> {a.serviceName}</p>}
-      {a.comment && <p className="comment">{a.comment}</p>}
+      {editing === 'service' ? <ServiceEdit appointment={a} onDone={close} /> : (
+        <p className="line-edit">
+          <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
+          {a.status !== 'CANCELLED' && <button type="button" className="link" onClick={() => setEditing('service')}>изменить</button>}
+        </p>
+      )}
+      {editing === 'comment' ? <CommentEdit appointment={a} onDone={close} /> : a.comment ? (
+        <p className="comment line-edit"><span>{a.comment}</span>
+          <button type="button" className="link" onClick={() => setEditing('comment')}>изменить</button></p>
+      ) : a.status !== 'CANCELLED' && (
+        <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
+      )}
       {a.depositStatus && a.paidSom == null && <p className="hint">Предоплата {somText(a.depositSom ?? 0)}</p>}
 
       {a.status === 'REQUESTED' && (
@@ -71,12 +86,19 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
             onClick={() => setStatus('CANCELLED', `Отменить запись ${a.patient?.fullName ?? ''}? Время освободится.`)}>Отменить запись</button>
         </div>
       )}
+      {active && editing !== 'move' && (
+        <button type="button" className="btn" onClick={() => setEditing('move')}>
+          {(me.doctors ?? []).filter((d) => d.active !== false).length > 1 ? 'Перенести или передать врачу' : 'Перенести'}
+        </button>
+      )}
+      {editing === 'move' && <Reschedule appointment={a} me={me} onDone={close} />}
       {action.error && <p className="error" role="alert">{action.error.message}</p>}
 
       {a.status === 'DONE' && <PaymentBox key={`${a.id}-${a.version}`} appointment={a} me={me} />}
+      {/* Материалы — у приёма, который идёт или был (как в приложении) */}
+      {(a.status === 'DONE' || (a.status === 'SCHEDULED' && started)) && <Supplies appointment={a} />}
 
-      <a className="btn" href={`/?appointment=${a.id}`} target="_blank" rel="noopener">Открыть в приложении</a>
-      <p className="hint small">Перенос, услуга и материалы — пока в приложении; медкарта — в «Пациентах».</p>
+      <a className="btn ghost small" href={`/?appointment=${a.id}`} target="_blank" rel="noopener">Открыть в приложении</a>
     </aside>
   )
 }

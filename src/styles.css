@@ -322,3 +322,12 @@ button, input, select, textarea { font-family: inherit; }
 /* Подписи без эмодзи: метка Telegram в таблице, комментарий к записи */
 .tg { margin-left: 8px; padding: 1px 6px; border-radius: var(--r-sm); background: var(--req-bg); color: var(--req-ink); font-size: .75rem; font-weight: 500; vertical-align: 1px; }
 .comment { padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .93rem; }
+
+/* Карточка приёма: строки с «изменить», вложенные формы, материалы */
+.line-edit { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.line-edit .link { font-size: .86rem; flex: none; }
+.sub-form { padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
+.supplies-box { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--separator); }
+.supplies-box .spent { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.add-supply { grid-template-columns: 1fr auto; }
+.add-supply select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }

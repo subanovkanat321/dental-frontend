@@ -10,6 +10,10 @@ export type Action =
   | { kind: 'payment'; body: Schemas['AppointmentControllerPayment'] }
   | { kind: 'extra'; body: Schemas['AppointmentControllerExtra'] }
   | { kind: 'bill'; body: Schemas['AppointmentControllerBill'] }
+  | { kind: 'reschedule'; body: Schemas['AppointmentRequestsReschedule'] }
+  | { kind: 'transfer'; body: Schemas['AppointmentRequestsTransfer'] }
+  | { kind: 'service'; body: Schemas['AppointmentRequestsService'] }
+  | { kind: 'comment'; body: Schemas['AppointmentRequestsComment'] }
 
 function send(id: number, action: Action): Promise<Appointment> {
   const path = { params: { path: { id } } }
@@ -22,6 +26,14 @@ function send(id: number, action: Action): Promise<Appointment> {
       return unwrap(api.POST('/api/appointments/{id}/payment/extra', { ...path, body: action.body }))
     case 'bill':
       return unwrap(api.POST('/api/appointments/{id}/payment/bill', { ...path, body: action.body }))
+    case 'reschedule':
+      return unwrap(api.POST('/api/appointments/{id}/reschedule', { ...path, body: action.body }))
+    case 'transfer':
+      return unwrap(api.POST('/api/appointments/{id}/transfer', { ...path, body: action.body }))
+    case 'service':
+      return unwrap(api.PUT('/api/appointments/{id}/service', { ...path, body: action.body }))
+    case 'comment':
+      return unwrap(api.PUT('/api/appointments/{id}/comment', { ...path, body: action.body }))
   }
 }
 
