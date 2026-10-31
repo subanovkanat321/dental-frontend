@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Логотип">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#19c2b2"/>
+      <stop offset="1" stop-color="#0e8fb8"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e6faf7"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <!-- Зуб: две корневые «ножки», мягкий верх -->
+  <path d="M178 104c-50 0-84 38-84 92 0 38 15 68 29 102 15 37 21 106 52 106 30 0 31-62 45-91 7-14 15-21 36-21s29 7 36 21c14 29 15 91 45 91 31 0 37-69 52-106 14-34 29-64 29-102 0-54-34-92-84-92-30 0-45 15-78 15s-48-15-78-15z"
+        fill="url(#shine)"/>
+  <!-- Галочка «записан» -->
+  <path d="M196 214l42 42 82-86" fill="none" stroke="#12a99b" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

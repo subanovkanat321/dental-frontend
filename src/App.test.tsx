@@ -5,10 +5,31 @@ import { http, HttpResponse } from 'msw'
 import { appointment, me, renderApp } from './test/fixtures'
 import { server } from './test/server'
 
-test('не вошли (401) — экран входа со ссылкой на «Войти через Telegram»', async () => {
-  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ detail: 'Войдите' }, { status: 401 })))
+test('не вошли (401) — виджет «Войти через Telegram»; вошли — CRM', async () => {
+  let session = false
+  let posted: unknown = null
+  server.use(
+    http.get('*/api/patient/me', () => (session ? HttpResponse.json(me) : HttpResponse.json({ detail: 'Войдите' }, { status: 401 }))),
+    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot' })),
+    http.post('*/web/login', async ({ request }) => {
+      posted = await request.json()
+      session = true
+      return new HttpResponse(null, { status: 204 })
+    }),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+  )
   renderApp()
-  expect(await screen.findByRole('link', { name: 'Войти через Telegram' })).toHaveAttribute('href', '/login?next=/crm/')
+  expect(await screen.findByRole('heading', { name: 'Вход для клиники' })).toBeInTheDocument()
+  const widget = await vi.waitFor(() => {
+    const s = document.querySelector('script[data-telegram-login]')
+    if (!s) throw new Error('виджета нет')
+    return s as HTMLScriptElement
+  })
+  expect(widget.dataset.telegramLogin).toBe('tish_test_bot')
+  // Telegram вызывает onTelegramAuth с подписанными данными — сервер проверяет подпись
+  window.onTelegramAuth!({ id: 111, hash: 'abc' })
+  expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
+  expect(posted).toEqual({ id: 111, hash: 'abc' })
 })
 
 test('расписание: все врачи колонками, нажать на приём — карточка справа, Esc — закрыть', async () => {

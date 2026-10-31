@@ -2,10 +2,17 @@ import type { ReactNode } from 'react'
 
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
+import { telegram } from '../lib/telegram'
 import { AdminNotices } from './AdminNotices'
 import { Icon } from './Icon'
 
 type Me = Schemas['BookingViewsMe']
+
+/** Выйти на сайте: сервер гасит cookie-сессию — снова экран входа. В Telegram выходить не из чего. */
+async function logout(): Promise<void> {
+  await fetch('/web/logout', { method: 'POST', headers: { 'X-Dental-Web': '1' } }).catch(() => null)
+  window.location.reload()
+}
 
 /** Разделы клиники — сотрудникам; «Платформа» — команде Tish (владелец и менеджеры). */
 const CLINIC_SECTIONS = [
@@ -47,7 +54,9 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
             </button>
           ))}
         </nav>
-        <a className="nav link-out" href="/"><Icon name="external" /> <span>Открыть приложение</span></a>
+        {!telegram() && (
+          <button type="button" className="nav link-out" onClick={() => void logout()}><Icon name="external" /> <span>Выйти</span></button>
+        )}
       </aside>
       <main className="workspace"><AdminNotices me={me} onNavigate={onNavigate} />{children}</main>
     </div>

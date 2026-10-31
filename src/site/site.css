@@ -1,0 +1,38 @@
+/* Страницы сайта: один столбец под телефон, тот же «Пульт клиники», что и CRM (DESIGN.md) */
+body.site { background: var(--page); }
+.site-page { max-width: 640px; margin: 0 auto; padding: 16px 16px 40px; display: grid; gap: 14px; color: var(--text); }
+.site-page h1 { margin: 0; font: 700 1.5rem var(--display); }
+.site-page h2 { margin: 10px 0 0; font: 700 1.1rem var(--display); }
+.site-page p { margin: 0; }
+.site-page .btn { min-height: 48px; justify-content: center; text-decoration: none; }
+.site-page .lang-switch { display: flex; justify-content: flex-end; gap: 4px; }
+.site-page .lang-switch button { padding: 4px 10px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--hint); font: inherit; font-size: .82rem; cursor: pointer; }
+.site-page .lang-switch button[aria-pressed=true] { border-color: var(--accent); color: var(--link); font-weight: 700; }
+.site-hero { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 18px; background: var(--accent-soft); }
+.site-hero img { flex: none; width: 72px; height: 72px; }
+.site-hero p { margin-top: 4px; color: var(--hint); }
+.site-actions { display: grid; gap: 8px; }
+.site-card { display: grid; gap: 10px; padding: 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--separator); }
+.site-doctor { display: flex; align-items: center; gap: 12px; }
+.site-doctor img, .site-doctor .initials { flex: none; width: 52px; height: 52px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: var(--accent-soft); color: var(--link); font: 700 1.1rem var(--display); }
+.site-doctor.small img, .site-doctor.small .initials { width: 40px; height: 40px; font-size: .9rem; }
+.site-doctor span { display: grid; gap: 2px; }
+.site-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.site-services li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--separator); }
+.site-services li:last-child { border-bottom: 0; }
+.site-how { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.site-footer { text-align: center; color: var(--hint); font-size: .85rem; margin-top: 12px; }
+.site-footer a { color: var(--link); }
+.site-search { width: 100%; height: 46px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; }
+.go-link { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--separator); color: var(--text); text-decoration: none; }
+.go-link:hover { border-color: var(--accent); }
+.go-link .ico { font-size: 1.4rem; }
+.go-link span span { display: block; color: var(--hint); font-size: .86rem; }
+.site-promo { display: grid; gap: 8px; padding: 18px; border-radius: 18px; background: var(--ok-bg); color: var(--ok-ink); }
+.site-promo ul { margin: 0; padding-left: 20px; }
+.site-features { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.site-features li { display: flex; gap: 12px; }
+.site-features .ico { font-size: 1.5rem; }
+.site-features span span { display: block; color: var(--hint); font-size: .9rem; }
+.trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.site-message { padding: 24px; text-align: center; }

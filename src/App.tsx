@@ -3,6 +3,7 @@ import { useMe } from './api/me'
 import { lazy, Suspense, useState } from 'react'
 
 import type { Schemas } from './api/client'
+import { Login } from './layout/Login'
 import { Shell } from './layout/Shell'
 import { usePage } from './lib/route'
 import { telegram } from './lib/telegram'
@@ -68,17 +69,5 @@ export function App() {
       {shown === 'schedule' && <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
       </Suspense>
     </Shell>
-  )
-}
-
-function Login() {
-  return (
-    <div className="center login">
-      <img src={`${import.meta.env.BASE_URL}tooth.svg`} alt="" width={64} height={64} />
-      <h1>Tish CRM</h1>
-      <p className="hint">Расписание всех врачей, пациенты и касса — на большом экране.</p>
-      <a className="btn primary" href="/login?next=/crm/">Войти через Telegram</a>
-      <p className="hint small">После входа вернётесь сюда.</p>
-    </div>
   )
 }
