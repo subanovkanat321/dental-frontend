@@ -16,6 +16,7 @@ export type Action =
   | { kind: 'comment'; body: Schemas['AppointmentRequestsComment'] }
   | { kind: 'reply'; body: Schemas['AppointmentRequestsChangeReply'] }
   | { kind: 'remindTelegram' }
+  | { kind: 'deposit'; body: Schemas['DepositControllerAction'] }
 
 function send(id: number, action: Action): Promise<Appointment> {
   const path = { params: { path: { id } } }
@@ -40,6 +41,8 @@ function send(id: number, action: Action): Promise<Appointment> {
       return unwrap(api.POST('/api/appointments/{id}/reply', { ...path, body: action.body }))
     case 'remindTelegram':
       return unwrap(api.POST('/api/appointments/{id}/remind-telegram', path))
+    case 'deposit':
+      return unwrap(api.POST('/api/appointments/{id}/deposit', { ...path, body: action.body }))
   }
 }
 

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
 import { shortDate, somText, todayIn } from '../lib/time'
+import { AnamnesisBlock } from './Anamnesis'
 import { resizePhoto } from './thumb'
 
 type Patient = Schemas['PatientView']
@@ -36,7 +37,7 @@ function denied(error: unknown): string | null {
 }
 
 /**
- * Медкарта в CRM: карта зубов, план лечения, заметки о визитах и снимки — то же, что в
+ * Медкарта в CRM: анкета (аллергии, болезни), карта зубов, план лечения, заметки о визитах и снимки — то же, что в
  * приложении, но на большом экране. Права проверяет сервер.
  */
 export function MedicalRecord({ patient, onBack }: { patient: Patient; onBack: () => void }) {
@@ -57,6 +58,7 @@ export function MedicalRecord({ patient, onBack }: { patient: Patient; onBack: (
         <p className="empty">{forbidden}</p>
       ) : (
         <>
+          <AnamnesisBlock patientId={id} />
           <ToothChart patientId={id} teeth={teeth.data} error={teeth.error?.message} />
           <Plan patientId={id} />
           <Notes patientId={id} />

@@ -2,8 +2,11 @@ import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
+import { useAnamnesis } from '../api/anamnesis'
+import { MedAlerts } from '../medical/Anamnesis'
 import { dayTitle, formatPhone, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { CommentEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
+import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
@@ -34,6 +37,9 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
   const date = a.startAt ? dateOf(a.startAt) : todayIn()
   // «Состоялся» сервер разрешает с дня приёма: будущий приём ещё не мог пройти
   const started = date <= todayIn()
+  // Аллергия и важное из анкеты — перед лечением, тому, кто видит медкарту (врач приёма, админ)
+  const clinical = (Boolean(me.admin) && !me.clinic?.independentDoctors) || a.doctorId === me.doctorId
+  const anamnesis = useAnamnesis(a.patient?.id, clinical && a.status !== 'CANCELLED')
 
   const setStatus = (status: Status, question?: string) => {
     if (question && !window.confirm(question)) return
@@ -54,6 +60,7 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
         {a.patient?.phone && <a href={`tel:+${a.patient.phone}`}>{formatPhone(a.patient.phone)}</a>}
       </section>
       <span className={`chip s-${s.kind}`}><span className="dot" />{s.label}</span>
+      <MedAlerts an={anamnesis.data} compact />
       {editing === 'service' ? <ServiceEdit appointment={a} onDone={close} /> : (
         <p className="line-edit">
           <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
@@ -66,7 +73,10 @@ export function AppointmentPanel({ appointment: a, me, onClose }: { appointment:
       ) : a.status !== 'CANCELLED' && (
         <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
       )}
-      {a.depositStatus && a.paidSom == null && <p className="hint">Предоплата {somText(a.depositSom ?? 0)}</p>}
+      {active && <DepositBox appointment={a} />}
+      {a.status === 'CANCELLED' && a.depositStatus === 'RECEIVED' && (
+        <p className="tone-wait">Предоплата {somText(a.depositSom ?? 0)} получена — верните пациенту или запишите его снова.</p>
+      )}
 
       {a.status === 'REQUESTED' && (
         <div className="actions">

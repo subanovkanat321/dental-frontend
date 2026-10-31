@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { api, unwrap, type Schemas } from '../api/client'
+import { useAnamnesis } from '../api/anamnesis'
+import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
 import { formatPhone, shortDate, somText } from '../lib/time'
 import { statusOf } from '../schedule/status'
@@ -36,6 +38,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
     queryFn: () => unwrap(api.GET('/api/appointments/debts', { params: { query: { patientId } } })),
   })
 
+  // Плашка из анкеты — только тем, кто видит медкарту (врач и админ); регистратуре сервер не отдаст
+  const anamnesis = useAnamnesis(patientId, Boolean(me.admin || me.doctorId != null))
   const doctorName = (id?: number) => (me.doctors ?? []).find((d) => d.id === id)?.fullName
   const many = (me.doctors ?? []).length > 1
   const line = (a: Appointment) => {
@@ -82,6 +86,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical }: {
         <span className="chip small s-done">Был: <b className="num">{done ?? 0}</b></span>
         <span className={`chip small ${noShow ? 's-bad' : 's-quiet'}`}>Не пришёл: <b className="num">{noShow ?? 0}</b></span>
       </p>
+      <MedAlerts an={anamnesis.data} />
       {owed > 0 && <span className="chip s-wait">Долг: {somText(owed)}</span>}
 
       <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>

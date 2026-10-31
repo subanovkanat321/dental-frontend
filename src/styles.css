@@ -398,3 +398,16 @@ tr.inactive td { opacity: .55; }
 .news-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .news-item { display: grid; gap: 4px; justify-items: start; padding: 10px 0; border-top: 1px solid var(--separator); }
 .news-item p { margin: 0; white-space: pre-wrap; }
+
+/* Анкета пациента и плашка «важно перед лечением» */
+.med-alert { display: grid; gap: 2px; padding: 8px 12px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--wait-ink); font-weight: 600; font-size: .9rem; border-left: 3px solid currentColor; }
+.med-alert.danger { background: var(--bad-bg); color: var(--bad-ink); }
+.anamnesis { display: grid; gap: 12px; }
+.anamnesis > .btn { justify-self: start; }
+.anamnesis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.anamnesis-col { display: grid; gap: 8px; align-content: start; margin: 0; padding: 0; border: 0; min-width: 0; }
+.anamnesis-col legend { padding: 0 0 6px; font: 700 .8rem var(--display); color: var(--hint); text-transform: uppercase; letter-spacing: .03em; }
+.anamnesis .question { display: grid; gap: 4px; }
+.anamnesis .question input:not([type=checkbox]), .anamnesis textarea { font: inherit; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+@media (max-width: 720px) { .anamnesis-grid { grid-template-columns: 1fr; } }
+.receipt { max-width: 100%; max-height: 240px; border-radius: var(--r-md); border: 1px solid var(--separator); }
