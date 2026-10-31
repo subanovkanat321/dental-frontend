@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import type { Schemas } from '../api/client'
 
-type Me = Schemas['Me']
+type Me = Schemas['BookingViewsMe']
 
 const SECTIONS = [
   { key: 'schedule', icon: '📅', title: 'Расписание', ready: true },

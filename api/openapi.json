@@ -27,7 +27,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Update"
+                "$ref" : "#/components/schemas/SupplyControllerUpdate"
               }
             }
           },
@@ -82,7 +82,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request"
+                "$ref" : "#/components/schemas/ServiceTypeControllerRequest"
               }
             }
           },
@@ -119,7 +119,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Deleted"
+                  "$ref" : "#/components/schemas/ServiceTypeControllerDeleted"
                 }
               }
             }
@@ -137,7 +137,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Settings"
+                  "$ref" : "#/components/schemas/PayRequestsSettings"
                 }
               }
             }
@@ -151,7 +151,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/SettingsRequest"
+                "$ref" : "#/components/schemas/PayControllerSettingsRequest"
               }
             }
           },
@@ -163,7 +163,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Settings"
+                  "$ref" : "#/components/schemas/PayRequestsSettings"
                 }
               }
             }
@@ -179,7 +179,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request"
+                "$ref" : "#/components/schemas/PlatformInfoControllerRequest"
               }
             }
           },
@@ -191,7 +191,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Info"
+                  "$ref" : "#/components/schemas/PlatformInfoInfo"
                 }
               }
             }
@@ -207,7 +207,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Access"
+                "$ref" : "#/components/schemas/PlatformInfoControllerAccess"
               }
             }
           },
@@ -219,7 +219,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Info"
+                  "$ref" : "#/components/schemas/PlatformInfoInfo"
                 }
               }
             }
@@ -244,7 +244,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/PaidUntil"
+                "$ref" : "#/components/schemas/BillingControllerPaidUntil"
               }
             }
           },
@@ -256,7 +256,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Billing"
+                  "$ref" : "#/components/schemas/ClinicBillingBilling"
                 }
               }
             }
@@ -281,7 +281,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Hidden"
+                "$ref" : "#/components/schemas/PlatformControllerHidden"
               }
             }
           },
@@ -293,7 +293,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ClinicRow"
+                  "$ref" : "#/components/schemas/PlatformServiceClinicRow"
                 }
               }
             }
@@ -318,7 +318,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Draft"
+                "$ref" : "#/components/schemas/AgreementControllerDraft"
               }
             }
           },
@@ -330,7 +330,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Version"
+                  "$ref" : "#/components/schemas/AgreementsVersion"
                 }
               }
             }
@@ -381,7 +381,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Update"
+                "$ref" : "#/components/schemas/ChartControllerUpdate"
               }
             }
           },
@@ -429,7 +429,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Step"
+                "$ref" : "#/components/schemas/ChartControllerStep"
               }
             }
           },
@@ -507,7 +507,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/View"
+                  "$ref" : "#/components/schemas/AnamnesisView"
                 }
               }
             }
@@ -530,7 +530,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Answers"
+                "$ref" : "#/components/schemas/MedicalRecordControllerAnswers"
               }
             }
           },
@@ -542,7 +542,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/View"
+                  "$ref" : "#/components/schemas/AnamnesisView"
                 }
               }
             }
@@ -595,7 +595,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Subscription"
+                "$ref" : "#/components/schemas/NewsControllerSubscription"
               }
             }
           },
@@ -607,7 +607,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Subscription"
+                  "$ref" : "#/components/schemas/NewsControllerSubscription"
                 }
               }
             }
@@ -623,7 +623,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Language"
+                "$ref" : "#/components/schemas/PatientBookingControllerLanguage"
               }
             }
           },
@@ -644,7 +644,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ClinicChoice"
+                "$ref" : "#/components/schemas/PatientBookingControllerClinicChoice"
               }
             }
           },
@@ -674,7 +674,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AdminRequest"
+                "$ref" : "#/components/schemas/DoctorControllerAdminRequest"
               }
             }
           },
@@ -729,7 +729,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ProfileRequest"
+                "$ref" : "#/components/schemas/DoctorControllerProfileRequest"
               }
             }
           },
@@ -791,7 +791,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request"
+                "$ref" : "#/components/schemas/DoctorHoursControllerRequest"
               }
             }
           },
@@ -828,7 +828,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AdminRole"
+                "$ref" : "#/components/schemas/DoctorControllerAdminRole"
               }
             }
           },
@@ -849,7 +849,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Digest"
+                "$ref" : "#/components/schemas/DentalNewsControllerDigest"
               }
             }
           },
@@ -861,7 +861,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Digest"
+                  "$ref" : "#/components/schemas/DentalNewsControllerDigest"
                 }
               }
             }
@@ -893,7 +893,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request"
+                "$ref" : "#/components/schemas/ClinicControllerRequest"
               }
             }
           },
@@ -923,7 +923,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Settings"
+                  "$ref" : "#/components/schemas/DepositsSettings"
                 }
               }
             }
@@ -937,7 +937,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/SettingsRequest"
+                "$ref" : "#/components/schemas/DepositControllerSettingsRequest"
               }
             }
           },
@@ -949,7 +949,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Settings"
+                  "$ref" : "#/components/schemas/DepositsSettings"
                 }
               }
             }
@@ -974,7 +974,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Service"
+                "$ref" : "#/components/schemas/AppointmentRequestsService"
               }
             }
           },
@@ -1011,7 +1011,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Due"
+                "$ref" : "#/components/schemas/AppointmentControllerDue"
               }
             }
           },
@@ -1050,7 +1050,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Note"
+                  "$ref" : "#/components/schemas/ChartControllerNote"
                 }
               }
             }
@@ -1073,7 +1073,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Note"
+                "$ref" : "#/components/schemas/ChartControllerNote"
               }
             }
           },
@@ -1085,7 +1085,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Note"
+                  "$ref" : "#/components/schemas/ChartControllerNote"
                 }
               }
             }
@@ -1110,7 +1110,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Comment"
+                "$ref" : "#/components/schemas/AppointmentRequestsComment"
               }
             }
           },
@@ -1147,7 +1147,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/QuestionRequest"
+                "$ref" : "#/components/schemas/AnamnesisQuestionRequest"
               }
             }
           },
@@ -1161,7 +1161,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Question"
+                    "$ref" : "#/components/schemas/AnamnesisQuestion"
                   }
                 }
               }
@@ -1189,7 +1189,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Question"
+                    "$ref" : "#/components/schemas/AnamnesisQuestion"
                   }
                 }
               }
@@ -1225,7 +1225,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Add"
+                "$ref" : "#/components/schemas/WaitlistControllerAdd"
               }
             }
           },
@@ -1262,7 +1262,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Book"
+                "$ref" : "#/components/schemas/WaitlistControllerBook"
               }
             }
           },
@@ -1309,7 +1309,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request"
+                "$ref" : "#/components/schemas/TimeOffControllerRequest"
               }
             }
           },
@@ -1341,7 +1341,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Ticket"
+                    "$ref" : "#/components/schemas/SupportTicketsTicket"
                   }
                 }
               }
@@ -1389,7 +1389,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Thread"
+                  "$ref" : "#/components/schemas/SupportTicketsThread"
                 }
               }
             }
@@ -1433,7 +1433,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Create"
+                "$ref" : "#/components/schemas/SupplyControllerCreate"
               }
             }
           },
@@ -1470,7 +1470,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Move"
+                "$ref" : "#/components/schemas/SupplyControllerMove"
               }
             }
           },
@@ -1500,7 +1500,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Added"
+                  "$ref" : "#/components/schemas/SupplyControllerAdded"
                 }
               }
             }
@@ -1535,7 +1535,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request"
+                "$ref" : "#/components/schemas/ServiceTypeControllerRequest"
               }
             }
           },
@@ -1567,7 +1567,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/CatalogSection"
+                    "$ref" : "#/components/schemas/ServiceTypeServiceCatalogSection"
                   }
                 }
               }
@@ -1582,7 +1582,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Picks"
+                "$ref" : "#/components/schemas/ServiceTypeControllerPicks"
               }
             }
           },
@@ -1594,7 +1594,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Added"
+                  "$ref" : "#/components/schemas/ServiceTypeControllerAdded"
                 }
               }
             }
@@ -1643,7 +1643,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Thread"
+                  "$ref" : "#/components/schemas/SupportTicketsThread"
                 }
               }
             }
@@ -1692,7 +1692,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Thread"
+                  "$ref" : "#/components/schemas/SupportTicketsThread"
                 }
               }
             }
@@ -1719,7 +1719,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Thread"
+                  "$ref" : "#/components/schemas/SupportTicketsThread"
                 }
               }
             }
@@ -1746,7 +1746,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Thread"
+                  "$ref" : "#/components/schemas/SupportTicketsThread"
                 }
               }
             }
@@ -1796,7 +1796,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Settings"
+                  "$ref" : "#/components/schemas/PayRequestsSettings"
                 }
               }
             }
@@ -1812,7 +1812,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Settings"
+                  "$ref" : "#/components/schemas/PayRequestsSettings"
                 }
               }
             }
@@ -1837,7 +1837,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Reject"
+                "$ref" : "#/components/schemas/PayControllerReject"
               }
             }
           }
@@ -1848,7 +1848,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Request"
+                  "$ref" : "#/components/schemas/PayRequestsRequest"
                 }
               }
             }
@@ -1895,7 +1895,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Request"
+                  "$ref" : "#/components/schemas/PayRequestsRequest"
                 }
               }
             }
@@ -1915,7 +1915,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Feed"
+                    "$ref" : "#/components/schemas/DentalNewsServiceFeed"
                   }
                 }
               }
@@ -1930,7 +1930,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AddFeed"
+                "$ref" : "#/components/schemas/DentalNewsControllerAddFeed"
               }
             }
           },
@@ -1942,7 +1942,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Feed"
+                  "$ref" : "#/components/schemas/DentalNewsServiceFeed"
                 }
               }
             }
@@ -1958,7 +1958,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Person"
+                "$ref" : "#/components/schemas/PlatformControllerPerson"
               }
             }
           },
@@ -1970,7 +1970,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Invite"
+                  "$ref" : "#/components/schemas/DoctorInvitesInvite"
                 }
               }
             }
@@ -1990,7 +1990,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/ClinicRow"
+                    "$ref" : "#/components/schemas/PlatformServiceClinicRow"
                   }
                 }
               }
@@ -2005,7 +2005,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Name"
+                "$ref" : "#/components/schemas/PlatformControllerName"
               }
             }
           },
@@ -2017,7 +2017,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ClinicRow"
+                  "$ref" : "#/components/schemas/PlatformServiceClinicRow"
                 }
               }
             }
@@ -2042,7 +2042,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/PaymentRequest"
+                "$ref" : "#/components/schemas/BillingControllerPaymentRequest"
               }
             }
           },
@@ -2054,7 +2054,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Plan"
+                  "$ref" : "#/components/schemas/ClinicPaymentsPlan"
                 }
               }
             }
@@ -2081,7 +2081,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Result"
+                  "$ref" : "#/components/schemas/ExportControllerResult"
                 }
               }
             }
@@ -2106,7 +2106,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Enter"
+                "$ref" : "#/components/schemas/PlatformControllerEnter"
               }
             }
           },
@@ -2184,7 +2184,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Person"
+                "$ref" : "#/components/schemas/PlatformControllerPerson"
               }
             }
           },
@@ -2196,7 +2196,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Invite"
+                  "$ref" : "#/components/schemas/DoctorInvitesInvite"
                 }
               }
             }
@@ -2216,7 +2216,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Broadcast"
+                    "$ref" : "#/components/schemas/PlatformBroadcastsBroadcast"
                   }
                 }
               }
@@ -2231,7 +2231,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/BroadcastRequest"
+                "$ref" : "#/components/schemas/PlatformControllerBroadcastRequest"
               }
             }
           },
@@ -2243,7 +2243,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Broadcast"
+                  "$ref" : "#/components/schemas/PlatformBroadcastsBroadcast"
                 }
               }
             }
@@ -2290,7 +2290,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Approved"
+                  "$ref" : "#/components/schemas/ClinicApplicationsApproved"
                 }
               }
             }
@@ -2310,7 +2310,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Version"
+                    "$ref" : "#/components/schemas/AgreementsVersion"
                   }
                 }
               }
@@ -2325,7 +2325,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Draft"
+                "$ref" : "#/components/schemas/AgreementControllerDraft"
               }
             }
           },
@@ -2337,7 +2337,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Version"
+                  "$ref" : "#/components/schemas/AgreementsVersion"
                 }
               }
             }
@@ -2364,7 +2364,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Version"
+                  "$ref" : "#/components/schemas/AgreementsVersion"
                 }
               }
             }
@@ -2465,7 +2465,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Step"
+                "$ref" : "#/components/schemas/ChartControllerStep"
               }
             }
           },
@@ -2509,7 +2509,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/View"
+                    "$ref" : "#/components/schemas/PatientFilesView"
                   }
                 }
               }
@@ -2577,7 +2577,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/View"
+                  "$ref" : "#/components/schemas/PatientFilesView"
                 }
               }
             }
@@ -2690,7 +2690,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Book"
+                "$ref" : "#/components/schemas/PatientBookingControllerBook"
               }
             }
           },
@@ -2702,7 +2702,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Booking"
+                  "$ref" : "#/components/schemas/BookingViewsBooking"
                 }
               }
             }
@@ -2718,7 +2718,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Reschedule"
+                "$ref" : "#/components/schemas/PatientBookingControllerReschedule"
               }
             }
           },
@@ -2730,7 +2730,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Booking"
+                  "$ref" : "#/components/schemas/BookingViewsBooking"
                 }
               }
             }
@@ -2759,7 +2759,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/StaffNews"
+                  "$ref" : "#/components/schemas/NewsControllerStaffNews"
                 }
               }
             }
@@ -2773,7 +2773,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Create"
+                "$ref" : "#/components/schemas/NewsControllerCreate"
               }
             }
           },
@@ -2785,7 +2785,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/News"
+                  "$ref" : "#/components/schemas/NewsServiceNews"
                 }
               }
             }
@@ -2801,7 +2801,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/InviteRequest"
+                "$ref" : "#/components/schemas/StaffMembersControllerInviteRequest"
               }
             }
           },
@@ -2813,7 +2813,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Invite"
+                  "$ref" : "#/components/schemas/DoctorInvitesInvite"
                 }
               }
             }
@@ -2858,7 +2858,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Expense"
+                    "$ref" : "#/components/schemas/ExpensesExpense"
                   }
                 }
               }
@@ -2873,7 +2873,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Draft"
+                "$ref" : "#/components/schemas/ExpensesDraft"
               }
             }
           },
@@ -2885,7 +2885,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Expense"
+                  "$ref" : "#/components/schemas/ExpensesExpense"
                 }
               }
             }
@@ -2920,7 +2920,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/AdminRequest"
+                "$ref" : "#/components/schemas/DoctorControllerAdminRequest"
               }
             }
           },
@@ -3027,7 +3027,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Invite"
+                  "$ref" : "#/components/schemas/DoctorInvitesInvite"
                 }
               }
             }
@@ -3043,7 +3043,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/SelfRequest"
+                "$ref" : "#/components/schemas/DoctorControllerSelfRequest"
               }
             }
           },
@@ -3073,7 +3073,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/SupportAccess"
+                  "$ref" : "#/components/schemas/PlatformControllerSupportAccess"
                 }
               }
             }
@@ -3087,7 +3087,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Grant"
+                "$ref" : "#/components/schemas/PlatformControllerGrant"
               }
             }
           },
@@ -3099,7 +3099,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/SupportAccess"
+                  "$ref" : "#/components/schemas/PlatformControllerSupportAccess"
                 }
               }
             }
@@ -3150,7 +3150,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Request"
+                  "$ref" : "#/components/schemas/PayRequestsRequest"
                 }
               }
             }
@@ -3188,7 +3188,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Result"
+                  "$ref" : "#/components/schemas/ExportControllerResult"
                 }
               }
             }
@@ -3238,7 +3238,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Settings"
+                  "$ref" : "#/components/schemas/DepositsSettings"
                 }
               }
             }
@@ -3254,7 +3254,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Settings"
+                  "$ref" : "#/components/schemas/DepositsSettings"
                 }
               }
             }
@@ -3287,7 +3287,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Scan"
+                  "$ref" : "#/components/schemas/AgreementsScan"
                 }
               }
             }
@@ -3334,7 +3334,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Accept"
+                "$ref" : "#/components/schemas/AgreementControllerAccept"
               }
             }
           },
@@ -3346,7 +3346,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ClinicAgreement"
+                  "$ref" : "#/components/schemas/AgreementsClinicAgreement"
                 }
               }
             }
@@ -3398,7 +3398,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Create"
+                "$ref" : "#/components/schemas/AppointmentRequestsCreate"
               }
             }
           },
@@ -3435,7 +3435,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Undo"
+                "$ref" : "#/components/schemas/AppointmentRequestsUndo"
               }
             }
           },
@@ -3472,7 +3472,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Transfer"
+                "$ref" : "#/components/schemas/AppointmentRequestsTransfer"
               }
             }
           },
@@ -3517,7 +3517,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/OnAppointment"
+                "$ref" : "#/components/schemas/SupplyControllerOnAppointment"
               }
             }
           },
@@ -3529,7 +3529,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Spent"
+                  "$ref" : "#/components/schemas/SupplyControllerSpent"
                 }
               }
             }
@@ -3554,7 +3554,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ChangeStatus"
+                "$ref" : "#/components/schemas/AppointmentRequestsChangeStatus"
               }
             }
           },
@@ -3591,7 +3591,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Reschedule"
+                "$ref" : "#/components/schemas/AppointmentRequestsReschedule"
               }
             }
           },
@@ -3628,7 +3628,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ChangeReply"
+                "$ref" : "#/components/schemas/AppointmentRequestsChangeReply"
               }
             }
           },
@@ -3712,7 +3712,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Payment"
+                "$ref" : "#/components/schemas/AppointmentControllerPayment"
               }
             }
           },
@@ -3749,7 +3749,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Extra"
+                "$ref" : "#/components/schemas/AppointmentControllerExtra"
               }
             }
           },
@@ -3786,7 +3786,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Bill"
+                "$ref" : "#/components/schemas/AppointmentControllerBill"
               }
             }
           },
@@ -3823,7 +3823,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Bill"
+                "$ref" : "#/components/schemas/AppointmentControllerBill"
               }
             }
           },
@@ -3860,7 +3860,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Action"
+                "$ref" : "#/components/schemas/DepositControllerAction"
               }
             }
           },
@@ -3908,7 +3908,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/ReportRow"
+                    "$ref" : "#/components/schemas/AppointmentServiceReportRow"
                   }
                 }
               }
@@ -3923,7 +3923,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Request"
+                "$ref" : "#/components/schemas/ReportControllerRequest"
               }
             }
           },
@@ -3944,7 +3944,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DeleteAll"
+                "$ref" : "#/components/schemas/AppointmentControllerDeleteAll"
               }
             }
           },
@@ -3956,7 +3956,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Deleted"
+                  "$ref" : "#/components/schemas/AppointmentControllerDeleted"
                 }
               }
             }
@@ -3976,7 +3976,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Question"
+                    "$ref" : "#/components/schemas/AnamnesisQuestion"
                   }
                 }
               }
@@ -3991,7 +3991,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/QuestionRequest"
+                "$ref" : "#/components/schemas/AnamnesisQuestionRequest"
               }
             }
           },
@@ -4005,7 +4005,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Question"
+                    "$ref" : "#/components/schemas/AnamnesisQuestion"
                   }
                 }
               }
@@ -4031,7 +4031,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Move"
+                "$ref" : "#/components/schemas/MedicalRecordControllerMove"
               }
             }
           },
@@ -4045,7 +4045,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Question"
+                    "$ref" : "#/components/schemas/AnamnesisQuestion"
                   }
                 }
               }
@@ -4180,7 +4180,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Settings"
+                  "$ref" : "#/components/schemas/SettingsControllerSettings"
                 }
               }
             }
@@ -4200,7 +4200,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Ticket"
+                    "$ref" : "#/components/schemas/SupportTicketsTicket"
                   }
                 }
               }
@@ -4228,7 +4228,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Thread"
+                  "$ref" : "#/components/schemas/SupportTicketsThread"
                 }
               }
             }
@@ -4255,7 +4255,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Thread"
+                  "$ref" : "#/components/schemas/SupportTicketsThread"
                 }
               }
             }
@@ -4331,7 +4331,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Request"
+                    "$ref" : "#/components/schemas/PayRequestsRequest"
                   }
                 }
               }
@@ -4352,7 +4352,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/ManagerView"
+                    "$ref" : "#/components/schemas/PlatformMembersManagerView"
                   }
                 }
               }
@@ -4380,7 +4380,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Plan"
+                  "$ref" : "#/components/schemas/ClinicPaymentsPlan"
                 }
               }
             }
@@ -4407,7 +4407,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ClinicAgreement"
+                  "$ref" : "#/components/schemas/AgreementsClinicAgreement"
                 }
               }
             }
@@ -4427,7 +4427,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/ApplicationView"
+                    "$ref" : "#/components/schemas/ClinicApplicationsApplicationView"
                   }
                 }
               }
@@ -4446,7 +4446,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Template"
+                  "$ref" : "#/components/schemas/AgreementControllerTemplate"
                 }
               }
             }
@@ -4466,7 +4466,7 @@
                 "schema" : {
                   "type" : "object",
                   "additionalProperties" : {
-                    "$ref" : "#/components/schemas/Status"
+                    "$ref" : "#/components/schemas/AgreementsStatus"
                   }
                 }
               }
@@ -4485,7 +4485,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Info"
+                  "$ref" : "#/components/schemas/PlatformInfoInfo"
                 }
               }
             }
@@ -4644,7 +4644,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Expense"
+                    "$ref" : "#/components/schemas/ExpensesExpense"
                   }
                 }
               }
@@ -4665,7 +4665,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/PatientRow"
+                    "$ref" : "#/components/schemas/PatientListControllerPatientRow"
                   }
                 }
               }
@@ -4709,7 +4709,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Slots"
+                  "$ref" : "#/components/schemas/BookingViewsSlots"
                 }
               }
             }
@@ -4727,7 +4727,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/PatientNews"
+                  "$ref" : "#/components/schemas/NewsControllerPatientNews"
                 }
               }
             }
@@ -4745,7 +4745,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Me"
+                  "$ref" : "#/components/schemas/BookingViewsMe"
                 }
               }
             }
@@ -4763,7 +4763,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ForPatient"
+                  "$ref" : "#/components/schemas/DepositsForPatient"
                 }
               }
             }
@@ -4802,7 +4802,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Choice"
+                    "$ref" : "#/components/schemas/ClinicLinksChoice"
                   }
                 }
               }
@@ -4830,7 +4830,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Slots"
+                  "$ref" : "#/components/schemas/BookingViewsSlots"
                 }
               }
             }
@@ -4850,7 +4850,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/MemberView"
+                    "$ref" : "#/components/schemas/StaffMembersMemberView"
                   }
                 }
               }
@@ -4869,7 +4869,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Categories"
+                  "$ref" : "#/components/schemas/ExpenseControllerCategories"
                 }
               }
             }
@@ -4908,7 +4908,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Feed"
+                  "$ref" : "#/components/schemas/DentalNewsControllerFeed"
                 }
               }
             }
@@ -4928,7 +4928,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Entry"
+                    "$ref" : "#/components/schemas/PlatformAccessLogEntry"
                   }
                 }
               }
@@ -4947,7 +4947,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Plan"
+                  "$ref" : "#/components/schemas/ClinicPaymentsPlan"
                 }
               }
             }
@@ -4965,7 +4965,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ClinicView"
+                  "$ref" : "#/components/schemas/PayRequestsClinicView"
                 }
               }
             }
@@ -5030,7 +5030,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Billing"
+                  "$ref" : "#/components/schemas/ClinicBillingBilling"
                 }
               }
             }
@@ -5050,7 +5050,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Entry"
+                    "$ref" : "#/components/schemas/AuditLogEntry"
                   }
                 }
               }
@@ -5069,7 +5069,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ClinicAgreement"
+                  "$ref" : "#/components/schemas/AgreementsClinicAgreement"
                 }
               }
             }
@@ -5162,7 +5162,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Used"
+                    "$ref" : "#/components/schemas/SupplyQueryUsed"
                   }
                 }
               }
@@ -5192,7 +5192,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Entry"
+                    "$ref" : "#/components/schemas/PaymentQueryEntry"
                   }
                 }
               }
@@ -5241,7 +5241,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Debt"
+                    "$ref" : "#/components/schemas/PaymentQueryDebt"
                   }
                 }
               }
@@ -5428,7 +5428,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/Debt"
+                    "$ref" : "#/components/schemas/PaymentQueryDebt"
                   }
                 }
               }
@@ -5608,7 +5608,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/Confirm"
+                "$ref" : "#/components/schemas/PlatformControllerConfirm"
               }
             }
           },
@@ -5640,7 +5640,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/Plan"
+                  "$ref" : "#/components/schemas/ClinicPaymentsPlan"
                 }
               }
             }
@@ -5751,8 +5751,7 @@
   },
   "components" : {
     "schemas" : {
-      "Update" : {
-        "type" : "object",
+      "SupplyControllerUpdate" : {
         "properties" : {
           "name" : {
             "type" : "string"
@@ -5767,7 +5766,6 @@
         }
       },
       "SupplyView" : {
-        "type" : "object",
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -5806,8 +5804,7 @@
           }
         }
       },
-      "Request" : {
-        "type" : "object",
+      "ServiceTypeControllerRequest" : {
         "properties" : {
           "name" : {
             "type" : "string",
@@ -5838,7 +5835,6 @@
         "required" : [ "durationMinutes", "name" ]
       },
       "ServiceTypeView" : {
-        "type" : "object",
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -5863,8 +5859,7 @@
           }
         }
       },
-      "SettingsRequest" : {
-        "type" : "object",
+      "PayControllerSettingsRequest" : {
         "properties" : {
           "details" : {
             "type" : "string"
@@ -5874,8 +5869,7 @@
           }
         }
       },
-      "Settings" : {
-        "type" : "object",
+      "PayRequestsSettings" : {
         "properties" : {
           "details" : {
             "type" : "string"
@@ -5891,8 +5885,26 @@
           }
         }
       },
-      "Info" : {
-        "type" : "object",
+      "PlatformInfoControllerRequest" : {
+        "properties" : {
+          "legalName" : {
+            "type" : "string"
+          },
+          "hosting" : {
+            "type" : "string"
+          },
+          "supportTelegram" : {
+            "type" : "string"
+          },
+          "supportPhone" : {
+            "type" : "string"
+          },
+          "supportEmail" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PlatformInfoInfo" : {
         "properties" : {
           "legalName" : {
             "type" : "string"
@@ -5923,8 +5935,7 @@
           }
         }
       },
-      "Access" : {
-        "type" : "object",
+      "PlatformInfoControllerAccess" : {
         "properties" : {
           "log" : {
             "type" : "boolean"
@@ -5937,8 +5948,7 @@
           }
         }
       },
-      "PaidUntil" : {
-        "type" : "object",
+      "BillingControllerPaidUntil" : {
         "properties" : {
           "paidUntil" : {
             "type" : "string",
@@ -5946,8 +5956,7 @@
           }
         }
       },
-      "Billing" : {
-        "type" : "object",
+      "ClinicBillingBilling" : {
         "properties" : {
           "paidUntil" : {
             "type" : "string",
@@ -5967,16 +5976,14 @@
           }
         }
       },
-      "Hidden" : {
-        "type" : "object",
+      "PlatformControllerHidden" : {
         "properties" : {
           "hidden" : {
             "type" : "boolean"
           }
         }
       },
-      "ClinicRow" : {
-        "type" : "object",
+      "PlatformServiceClinicRow" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6037,7 +6044,7 @@
             "enum" : [ "OK", "QUIET", "ASLEEP", "NEW" ]
           },
           "billing" : {
-            "$ref" : "#/components/schemas/Billing"
+            "$ref" : "#/components/schemas/ClinicBillingBilling"
           },
           "admins" : {
             "type" : "string"
@@ -6047,8 +6054,7 @@
           }
         }
       },
-      "Draft" : {
-        "type" : "object",
+      "AgreementControllerDraft" : {
         "properties" : {
           "title" : {
             "type" : "string"
@@ -6058,8 +6064,7 @@
           }
         }
       },
-      "Version" : {
-        "type" : "object",
+      "AgreementsVersion" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6092,8 +6097,18 @@
           }
         }
       },
+      "ChartControllerUpdate" : {
+        "properties" : {
+          "state" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "note" : {
+            "type" : "string"
+          }
+        }
+      },
       "ToothView" : {
-        "type" : "object",
         "properties" : {
           "number" : {
             "type" : "integer",
@@ -6115,8 +6130,7 @@
           }
         }
       },
-      "Step" : {
-        "type" : "object",
+      "ChartControllerStep" : {
         "properties" : {
           "tooth" : {
             "type" : "integer",
@@ -6135,7 +6149,6 @@
         }
       },
       "TreatmentStepView" : {
-        "type" : "object",
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6158,8 +6171,7 @@
           }
         }
       },
-      "Answer" : {
-        "type" : "object",
+      "AnamnesisAnswer" : {
         "properties" : {
           "questionId" : {
             "type" : "integer",
@@ -6173,19 +6185,17 @@
           }
         }
       },
-      "Answers" : {
-        "type" : "object",
+      "MedicalRecordControllerAnswers" : {
         "properties" : {
           "answers" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Answer"
+              "$ref" : "#/components/schemas/AnamnesisAnswer"
             }
           }
         }
       },
-      "Item" : {
-        "type" : "object",
+      "AnamnesisItem" : {
         "properties" : {
           "questionId" : {
             "type" : "integer",
@@ -6220,13 +6230,12 @@
           }
         }
       },
-      "View" : {
-        "type" : "object",
+      "AnamnesisView" : {
         "properties" : {
           "items" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Item"
+              "$ref" : "#/components/schemas/AnamnesisItem"
             }
           },
           "updatedAt" : {
@@ -6239,7 +6248,6 @@
         }
       },
       "PatientRequest" : {
-        "type" : "object",
         "properties" : {
           "fullName" : {
             "type" : "string",
@@ -6266,7 +6274,6 @@
         "required" : [ "fullName", "phone" ]
       },
       "PatientView" : {
-        "type" : "object",
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6290,24 +6297,21 @@
           }
         }
       },
-      "Subscription" : {
-        "type" : "object",
+      "NewsControllerSubscription" : {
         "properties" : {
           "subscribed" : {
             "type" : "boolean"
           }
         }
       },
-      "Language" : {
-        "type" : "object",
+      "PatientBookingControllerLanguage" : {
         "properties" : {
           "lang" : {
             "type" : "string"
           }
         }
       },
-      "ClinicChoice" : {
-        "type" : "object",
+      "PatientBookingControllerClinicChoice" : {
         "properties" : {
           "clinicId" : {
             "type" : "integer",
@@ -6315,8 +6319,7 @@
           }
         }
       },
-      "AdminRequest" : {
-        "type" : "object",
+      "DoctorControllerAdminRequest" : {
         "properties" : {
           "fullName" : {
             "type" : "string"
@@ -6334,7 +6337,6 @@
         }
       },
       "DoctorAdminView" : {
-        "type" : "object",
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6361,8 +6363,7 @@
           }
         }
       },
-      "ProfileRequest" : {
-        "type" : "object",
+      "DoctorControllerProfileRequest" : {
         "properties" : {
           "fullName" : {
             "type" : "string"
@@ -6373,7 +6374,6 @@
         }
       },
       "DoctorView" : {
-        "type" : "object",
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6396,8 +6396,17 @@
           }
         }
       },
-      "Day" : {
-        "type" : "object",
+      "DoctorHoursControllerRequest" : {
+        "properties" : {
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DoctorHoursViewDay"
+            }
+          }
+        }
+      },
+      "DoctorHoursViewDay" : {
         "properties" : {
           "weekday" : {
             "type" : "string",
@@ -6414,7 +6423,6 @@
         }
       },
       "DoctorHoursView" : {
-        "type" : "object",
         "properties" : {
           "custom" : {
             "type" : "boolean"
@@ -6422,29 +6430,75 @@
           "days" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Day"
+              "$ref" : "#/components/schemas/DoctorHoursViewDay"
             }
           }
         }
       },
-      "AdminRole" : {
-        "type" : "object",
+      "DoctorControllerAdminRole" : {
         "properties" : {
           "admin" : {
             "type" : "boolean"
           }
         }
       },
-      "Digest" : {
-        "type" : "object",
+      "DentalNewsControllerDigest" : {
         "properties" : {
           "on" : {
             "type" : "boolean"
           }
         }
       },
+      "ClinicControllerRequest" : {
+        "properties" : {
+          "brandName" : {
+            "type" : "string"
+          },
+          "legalName" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "whatsappPhone" : {
+            "type" : "string"
+          },
+          "mapUrl" : {
+            "type" : "string"
+          },
+          "supportTelegram" : {
+            "type" : "string"
+          },
+          "supportPhone" : {
+            "type" : "string"
+          },
+          "workStart" : {
+            "type" : "string",
+            "format" : "time-local"
+          },
+          "workEnd" : {
+            "type" : "string",
+            "format" : "time-local"
+          },
+          "workDays" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+            }
+          },
+          "independentDoctors" : {
+            "type" : "boolean"
+          },
+          "listed" : {
+            "type" : "boolean"
+          },
+          "separateSupplies" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "ClinicView" : {
-        "type" : "object",
         "properties" : {
           "brandName" : {
             "type" : "string"
@@ -6502,8 +6556,40 @@
           }
         }
       },
-      "Service" : {
-        "type" : "object",
+      "DepositControllerSettingsRequest" : {
+        "properties" : {
+          "mode" : {
+            "type" : "string",
+            "enum" : [ "OFF", "NEW", "ALL" ]
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "details" : {
+            "type" : "string"
+          }
+        }
+      },
+      "DepositsSettings" : {
+        "properties" : {
+          "mode" : {
+            "type" : "string",
+            "enum" : [ "OFF", "NEW", "ALL" ]
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "details" : {
+            "type" : "string"
+          },
+          "hasQr" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "AppointmentRequestsService" : {
         "properties" : {
           "serviceTypeId" : {
             "type" : "integer",
@@ -6512,7 +6598,6 @@
         }
       },
       "AppointmentView" : {
-        "type" : "object",
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6599,8 +6684,7 @@
           }
         }
       },
-      "Due" : {
-        "type" : "object",
+      "AppointmentControllerDue" : {
         "properties" : {
           "dueOn" : {
             "type" : "string",
@@ -6608,16 +6692,14 @@
           }
         }
       },
-      "Note" : {
-        "type" : "object",
+      "ChartControllerNote" : {
         "properties" : {
           "note" : {
             "type" : "string"
           }
         }
       },
-      "Comment" : {
-        "type" : "object",
+      "AppointmentRequestsComment" : {
         "properties" : {
           "comment" : {
             "type" : "string",
@@ -6626,8 +6708,7 @@
           }
         }
       },
-      "QuestionRequest" : {
-        "type" : "object",
+      "AnamnesisQuestionRequest" : {
         "properties" : {
           "section" : {
             "type" : "string"
@@ -6652,8 +6733,7 @@
           }
         }
       },
-      "Question" : {
-        "type" : "object",
+      "AnamnesisQuestion" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6693,8 +6773,7 @@
           }
         }
       },
-      "Add" : {
-        "type" : "object",
+      "WaitlistControllerAdd" : {
         "properties" : {
           "patientId" : {
             "type" : "integer",
@@ -6714,7 +6793,6 @@
         "required" : [ "durationMinutes", "patientId" ]
       },
       "WaitlistView" : {
-        "type" : "object",
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6740,8 +6818,7 @@
           }
         }
       },
-      "Book" : {
-        "type" : "object",
+      "WaitlistControllerBook" : {
         "properties" : {
           "doctorId" : {
             "type" : "integer",
@@ -6754,8 +6831,41 @@
         },
         "required" : [ "doctorId", "startAt" ]
       },
+      "TimeOffControllerRequest" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "weekday" : {
+            "type" : "string",
+            "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+          },
+          "firstDay" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "lastDay" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "startTime" : {
+            "type" : "string",
+            "format" : "time-local"
+          },
+          "endTime" : {
+            "type" : "string",
+            "format" : "time-local"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "emoji" : {
+            "type" : "string"
+          }
+        }
+      },
       "TimeOffView" : {
-        "type" : "object",
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6793,8 +6903,7 @@
           }
         }
       },
-      "Message" : {
-        "type" : "object",
+      "SupportTicketsMessage" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6818,22 +6927,20 @@
           }
         }
       },
-      "Thread" : {
-        "type" : "object",
+      "SupportTicketsThread" : {
         "properties" : {
           "ticket" : {
-            "$ref" : "#/components/schemas/Ticket"
+            "$ref" : "#/components/schemas/SupportTicketsTicket"
           },
           "messages" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Message"
+              "$ref" : "#/components/schemas/SupportTicketsMessage"
             }
           }
         }
       },
-      "Ticket" : {
-        "type" : "object",
+      "SupportTicketsTicket" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6870,8 +6977,7 @@
           }
         }
       },
-      "Create" : {
-        "type" : "object",
+      "SupplyControllerCreate" : {
         "properties" : {
           "name" : {
             "type" : "string"
@@ -6897,8 +7003,7 @@
           }
         }
       },
-      "Move" : {
-        "type" : "object",
+      "SupplyControllerMove" : {
         "properties" : {
           "delta" : {
             "type" : "integer",
@@ -6913,8 +7018,7 @@
           }
         }
       },
-      "Added" : {
-        "type" : "object",
+      "SupplyControllerAdded" : {
         "properties" : {
           "added" : {
             "type" : "integer",
@@ -6922,8 +7026,7 @@
           }
         }
       },
-      "Pick" : {
-        "type" : "object",
+      "ServiceTypeControllerPick" : {
         "properties" : {
           "name" : {
             "type" : "string",
@@ -6938,13 +7041,12 @@
         },
         "required" : [ "name" ]
       },
-      "Picks" : {
-        "type" : "object",
+      "ServiceTypeControllerPicks" : {
         "properties" : {
           "items" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Pick"
+              "$ref" : "#/components/schemas/ServiceTypeControllerPick"
             },
             "maxItems" : 200,
             "minItems" : 1
@@ -6952,24 +7054,77 @@
         },
         "required" : [ "items" ]
       },
-      "Reject" : {
-        "type" : "object",
+      "ServiceTypeControllerAdded" : {
+        "properties" : {
+          "added" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PayControllerReject" : {
         "properties" : {
           "comment" : {
             "type" : "string"
           }
         }
       },
-      "AddFeed" : {
-        "type" : "object",
+      "PayRequestsRequest" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "months" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tariff" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "PENDING", "CONFIRMED", "REJECTED", "CANCELLED" ]
+          },
+          "hasReceipt" : {
+            "type" : "boolean"
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "decidedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "paidUntil" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "DentalNewsControllerAddFeed" : {
         "properties" : {
           "url" : {
             "type" : "string"
           }
         }
       },
-      "Feed" : {
-        "type" : "object",
+      "DentalNewsServiceFeed" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -6997,8 +7152,7 @@
           }
         }
       },
-      "Person" : {
-        "type" : "object",
+      "PlatformControllerPerson" : {
         "properties" : {
           "fullName" : {
             "type" : "string"
@@ -7008,8 +7162,7 @@
           }
         }
       },
-      "Invite" : {
-        "type" : "object",
+      "DoctorInvitesInvite" : {
         "properties" : {
           "token" : {
             "type" : "string"
@@ -7020,16 +7173,14 @@
           }
         }
       },
-      "Name" : {
-        "type" : "object",
+      "PlatformControllerName" : {
         "properties" : {
           "name" : {
             "type" : "string"
           }
         }
       },
-      "PaymentRequest" : {
-        "type" : "object",
+      "BillingControllerPaymentRequest" : {
         "properties" : {
           "paidOn" : {
             "type" : "string",
@@ -7045,8 +7196,7 @@
           }
         }
       },
-      "Payment" : {
-        "type" : "object",
+      "ClinicPaymentsPayment" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -7074,18 +7224,17 @@
           }
         }
       },
-      "Plan" : {
-        "type" : "object",
+      "ClinicPaymentsPlan" : {
         "properties" : {
           "billing" : {
-            "$ref" : "#/components/schemas/Billing"
+            "$ref" : "#/components/schemas/ClinicBillingBilling"
           },
           "doctors" : {
             "type" : "integer",
             "format" : "int64"
           },
           "tariff" : {
-            "$ref" : "#/components/schemas/Tariff"
+            "$ref" : "#/components/schemas/TariffsTariff"
           },
           "tariffs" : {
             "$ref" : "#/components/schemas/Tariffs"
@@ -7093,13 +7242,26 @@
           "payments" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Payment"
+              "$ref" : "#/components/schemas/ClinicPaymentsPayment"
             }
           }
         }
       },
-      "Tariff" : {
-        "type" : "object",
+      "Tariffs" : {
+        "properties" : {
+          "pilotMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tariffs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TariffsTariff"
+            }
+          }
+        }
+      },
+      "TariffsTariff" : {
         "properties" : {
           "code" : {
             "type" : "string"
@@ -7124,23 +7286,7 @@
           }
         }
       },
-      "Tariffs" : {
-        "type" : "object",
-        "properties" : {
-          "pilotMonths" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "tariffs" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Tariff"
-            }
-          }
-        }
-      },
-      "Result" : {
-        "type" : "object",
+      "ExportControllerResult" : {
         "properties" : {
           "patients" : {
             "type" : "integer",
@@ -7156,8 +7302,7 @@
           }
         }
       },
-      "Enter" : {
-        "type" : "object",
+      "PlatformControllerEnter" : {
         "properties" : {
           "reception" : {
             "type" : "boolean"
@@ -7167,8 +7312,7 @@
           }
         }
       },
-      "BroadcastRequest" : {
-        "type" : "object",
+      "PlatformControllerBroadcastRequest" : {
         "properties" : {
           "text" : {
             "type" : "string"
@@ -7182,8 +7326,7 @@
           }
         }
       },
-      "Broadcast" : {
-        "type" : "object",
+      "PlatformBroadcastsBroadcast" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -7210,11 +7353,10 @@
           }
         }
       },
-      "Approved" : {
-        "type" : "object",
+      "ClinicApplicationsApproved" : {
         "properties" : {
           "clinic" : {
-            "$ref" : "#/components/schemas/ClinicRow"
+            "$ref" : "#/components/schemas/PlatformServiceClinicRow"
           },
           "contactName" : {
             "type" : "string"
@@ -7224,16 +7366,75 @@
           }
         }
       },
+      "PatientFilesView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "XRAY", "PHOTO", "OTHER" ]
+          },
+          "caption" : {
+            "type" : "string"
+          },
+          "takenOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "sizeBytes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "createdBy" : {
+            "type" : "string"
+          },
+          "canDelete" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "SearchPatientsRequest" : {
-        "type" : "object",
         "properties" : {
           "query" : {
             "type" : "string"
           }
         }
       },
-      "Booking" : {
-        "type" : "object",
+      "PatientBookingControllerBook" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "consent" : {
+            "type" : "boolean"
+          },
+          "comment" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "doctorId", "serviceTypeId", "startAt" ]
+      },
+      "BookingViewsBooking" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -7273,8 +7474,7 @@
           }
         }
       },
-      "Reschedule" : {
-        "type" : "object",
+      "PatientBookingControllerReschedule" : {
         "properties" : {
           "startAt" : {
             "type" : "string",
@@ -7283,8 +7483,14 @@
         },
         "required" : [ "startAt" ]
       },
-      "News" : {
-        "type" : "object",
+      "NewsControllerCreate" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "NewsServiceNews" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -7307,8 +7513,7 @@
           }
         }
       },
-      "InviteRequest" : {
-        "type" : "object",
+      "StaffMembersControllerInviteRequest" : {
         "properties" : {
           "role" : {
             "type" : "string",
@@ -7322,8 +7527,33 @@
           }
         }
       },
-      "Expense" : {
-        "type" : "object",
+      "ExpensesDraft" : {
+        "properties" : {
+          "spentOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "ExpensesExpense" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -7359,16 +7589,14 @@
           }
         }
       },
-      "SelfRequest" : {
-        "type" : "object",
+      "DoctorControllerSelfRequest" : {
         "properties" : {
           "fullName" : {
             "type" : "string"
           }
         }
       },
-      "Grant" : {
-        "type" : "object",
+      "PlatformControllerGrant" : {
         "properties" : {
           "hours" : {
             "type" : "integer",
@@ -7376,8 +7604,7 @@
           }
         }
       },
-      "SupportAccess" : {
-        "type" : "object",
+      "PlatformControllerSupportAccess" : {
         "properties" : {
           "required" : {
             "type" : "boolean"
@@ -7388,8 +7615,7 @@
           }
         }
       },
-      "Scan" : {
-        "type" : "object",
+      "AgreementsScan" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -7411,8 +7637,7 @@
           }
         }
       },
-      "Accept" : {
-        "type" : "object",
+      "AgreementControllerAccept" : {
         "properties" : {
           "sha256" : {
             "type" : "string"
@@ -7440,8 +7665,7 @@
           }
         }
       },
-      "Acceptance" : {
-        "type" : "object",
+      "AgreementsAcceptance" : {
         "properties" : {
           "version" : {
             "type" : "integer",
@@ -7480,17 +7704,16 @@
           }
         }
       },
-      "ClinicAgreement" : {
-        "type" : "object",
+      "AgreementsClinicAgreement" : {
         "properties" : {
           "current" : {
-            "$ref" : "#/components/schemas/Version"
+            "$ref" : "#/components/schemas/AgreementsVersion"
           },
           "accepted" : {
-            "$ref" : "#/components/schemas/Acceptance"
+            "$ref" : "#/components/schemas/AgreementsAcceptance"
           },
           "last" : {
-            "$ref" : "#/components/schemas/Acceptance"
+            "$ref" : "#/components/schemas/AgreementsAcceptance"
           },
           "legalName" : {
             "type" : "string"
@@ -7507,13 +7730,44 @@
           "scans" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Scan"
+              "$ref" : "#/components/schemas/AgreementsScan"
             }
           }
         }
       },
-      "Undo" : {
-        "type" : "object",
+      "AppointmentRequestsCreate" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 240,
+            "minimum" : 15
+          },
+          "comment" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          },
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "doctorId", "durationMinutes", "patientId", "startAt" ]
+      },
+      "AppointmentRequestsUndo" : {
         "properties" : {
           "version" : {
             "type" : "integer",
@@ -7526,8 +7780,7 @@
         },
         "required" : [ "previousStatus", "version" ]
       },
-      "Transfer" : {
-        "type" : "object",
+      "AppointmentRequestsTransfer" : {
         "properties" : {
           "version" : {
             "type" : "integer",
@@ -7550,8 +7803,7 @@
         },
         "required" : [ "doctorId", "durationMinutes", "startAt", "version" ]
       },
-      "OnAppointment" : {
-        "type" : "object",
+      "SupplyControllerOnAppointment" : {
         "properties" : {
           "delta" : {
             "type" : "integer",
@@ -7559,8 +7811,7 @@
           }
         }
       },
-      "Spent" : {
-        "type" : "object",
+      "SupplyControllerSpent" : {
         "properties" : {
           "supply" : {
             "$ref" : "#/components/schemas/SupplyView"
@@ -7568,13 +7819,12 @@
           "used" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Used"
+              "$ref" : "#/components/schemas/SupplyQueryUsed"
             }
           }
         }
       },
-      "Used" : {
-        "type" : "object",
+      "SupplyQueryUsed" : {
         "properties" : {
           "supplyId" : {
             "type" : "integer",
@@ -7592,8 +7842,7 @@
           }
         }
       },
-      "ChangeStatus" : {
-        "type" : "object",
+      "AppointmentRequestsChangeStatus" : {
         "properties" : {
           "version" : {
             "type" : "integer",
@@ -7606,8 +7855,26 @@
         },
         "required" : [ "status", "version" ]
       },
-      "ChangeReply" : {
-        "type" : "object",
+      "AppointmentRequestsReschedule" : {
+        "properties" : {
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 240,
+            "minimum" : 15
+          }
+        },
+        "required" : [ "durationMinutes", "startAt", "version" ]
+      },
+      "AppointmentRequestsChangeReply" : {
         "properties" : {
           "version" : {
             "type" : "integer",
@@ -7620,8 +7887,33 @@
         },
         "required" : [ "reply", "version" ]
       },
-      "Extra" : {
-        "type" : "object",
+      "AppointmentControllerPayment" : {
+        "properties" : {
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+          },
+          "chargeSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "dueOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "parts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PaymentQueryPart"
+            }
+          }
+        }
+      },
+      "PaymentQueryPart" : {
         "properties" : {
           "amountSom" : {
             "type" : "integer",
@@ -7633,8 +7925,19 @@
           }
         }
       },
-      "Bill" : {
-        "type" : "object",
+      "AppointmentControllerExtra" : {
+        "properties" : {
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+          }
+        }
+      },
+      "AppointmentControllerBill" : {
         "properties" : {
           "chargeSom" : {
             "type" : "integer",
@@ -7642,8 +7945,7 @@
           }
         }
       },
-      "Action" : {
-        "type" : "object",
+      "DepositControllerAction" : {
         "properties" : {
           "action" : {
             "type" : "string"
@@ -7658,16 +7960,25 @@
           }
         }
       },
-      "DeleteAll" : {
-        "type" : "object",
+      "ReportControllerRequest" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AppointmentControllerDeleteAll" : {
         "properties" : {
           "confirm" : {
             "type" : "string"
           }
         }
       },
-      "Deleted" : {
-        "type" : "object",
+      "AppointmentControllerDeleted" : {
         "properties" : {
           "deleted" : {
             "type" : "integer",
@@ -7675,8 +7986,15 @@
           }
         }
       },
+      "MedicalRecordControllerMove" : {
+        "properties" : {
+          "direction" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "MovementView" : {
-        "type" : "object",
         "properties" : {
           "delta" : {
             "type" : "integer",
@@ -7698,21 +8016,7 @@
           }
         }
       },
-      "Month" : {
-        "type" : "object",
-        "properties" : {
-          "month" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "purchasedSom" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }
-      },
       "SpendingView" : {
-        "type" : "object",
         "properties" : {
           "from" : {
             "type" : "string",
@@ -7741,13 +8045,13 @@
           "items" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Item"
+              "$ref" : "#/components/schemas/SpendingViewItem"
             }
           },
           "months" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Month"
+              "$ref" : "#/components/schemas/SpendingViewMonth"
             }
           },
           "revenueSom" : {
@@ -7760,27 +8064,56 @@
           }
         }
       },
-      "Break" : {
-        "type" : "object",
+      "SpendingViewItem" : {
         "properties" : {
-          "start" : {
-            "type" : "string",
-            "format" : "date-time"
+          "supplyId" : {
+            "type" : "integer",
+            "format" : "int64"
           },
-          "end" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "title" : {
+          "name" : {
             "type" : "string"
           },
-          "emoji" : {
+          "unit" : {
             "type" : "string"
+          },
+          "archived" : {
+            "type" : "boolean"
+          },
+          "bought" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "boughtSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "unpricedDeliveries" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "used" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "usedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "SpendingViewMonth" : {
+        "properties" : {
+          "month" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "purchasedSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
       "SlotsView" : {
-        "type" : "object",
         "properties" : {
           "workingDay" : {
             "type" : "boolean"
@@ -7809,11 +8142,11 @@
           "breaks" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Break"
+              "$ref" : "#/components/schemas/SlotsViewBreak"
             }
           },
           "dayOff" : {
-            "$ref" : "#/components/schemas/Break"
+            "$ref" : "#/components/schemas/SlotsViewBreak"
           },
           "taken" : {
             "type" : "array",
@@ -7824,8 +8157,25 @@
           }
         }
       },
+      "SlotsViewBreak" : {
+        "properties" : {
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "emoji" : {
+            "type" : "string"
+          }
+        }
+      },
       "TimeRange" : {
-        "type" : "object",
         "properties" : {
           "start" : {
             "type" : "string",
@@ -7837,8 +8187,17 @@
           }
         }
       },
-      "CatalogItem" : {
-        "type" : "object",
+      "SettingsControllerSettings" : {
+        "properties" : {
+          "clinicSignature" : {
+            "type" : "string"
+          },
+          "botUrl" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ServiceTypeServiceCatalogItem" : {
         "properties" : {
           "name" : {
             "type" : "string"
@@ -7852,8 +8211,7 @@
           }
         }
       },
-      "CatalogSection" : {
-        "type" : "object",
+      "ServiceTypeServiceCatalogSection" : {
         "properties" : {
           "category" : {
             "type" : "string"
@@ -7861,13 +8219,12 @@
           "items" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/CatalogItem"
+              "$ref" : "#/components/schemas/ServiceTypeServiceCatalogItem"
             }
           }
         }
       },
-      "ManagerView" : {
-        "type" : "object",
+      "PlatformMembersManagerView" : {
         "properties" : {
           "telegramId" : {
             "type" : "integer",
@@ -7882,8 +8239,7 @@
           }
         }
       },
-      "ApplicationView" : {
-        "type" : "object",
+      "ClinicApplicationsApplicationView" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -7924,8 +8280,7 @@
           }
         }
       },
-      "Template" : {
-        "type" : "object",
+      "AgreementControllerTemplate" : {
         "properties" : {
           "title" : {
             "type" : "string"
@@ -7935,8 +8290,7 @@
           }
         }
       },
-      "Status" : {
-        "type" : "object",
+      "AgreementsStatus" : {
         "properties" : {
           "acceptedVersion" : {
             "type" : "integer",
@@ -7953,7 +8307,6 @@
         }
       },
       "VisitNoteView" : {
-        "type" : "object",
         "properties" : {
           "appointmentId" : {
             "type" : "integer",
@@ -7975,8 +8328,7 @@
           }
         }
       },
-      "PatientRow" : {
-        "type" : "object",
+      "PatientListControllerPatientRow" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -8001,8 +8353,7 @@
           }
         }
       },
-      "Slots" : {
-        "type" : "object",
+      "BookingViewsSlots" : {
         "properties" : {
           "workingDay" : {
             "type" : "boolean"
@@ -8017,11 +8368,11 @@
           "breaks" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Break"
+              "$ref" : "#/components/schemas/SlotsViewBreak"
             }
           },
           "dayOff" : {
-            "$ref" : "#/components/schemas/Break"
+            "$ref" : "#/components/schemas/SlotsViewBreak"
           },
           "taken" : {
             "type" : "array",
@@ -8032,13 +8383,12 @@
           }
         }
       },
-      "PatientNews" : {
-        "type" : "object",
+      "NewsControllerPatientNews" : {
         "properties" : {
           "news" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/PatientNewsItem"
+              "$ref" : "#/components/schemas/NewsControllerPatientNewsItem"
             }
           },
           "subscribed" : {
@@ -8046,8 +8396,7 @@
           }
         }
       },
-      "PatientNewsItem" : {
-        "type" : "object",
+      "NewsControllerPatientNewsItem" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -8062,23 +8411,7 @@
           }
         }
       },
-      "Choice" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "address" : {
-            "type" : "string"
-          }
-        }
-      },
-      "Me" : {
-        "type" : "object",
+      "BookingViewsMe" : {
         "properties" : {
           "doctor" : {
             "type" : "boolean"
@@ -8109,7 +8442,7 @@
             "type" : "string"
           },
           "booking" : {
-            "$ref" : "#/components/schemas/Booking"
+            "$ref" : "#/components/schemas/BookingViewsBooking"
           },
           "services" : {
             "type" : "array",
@@ -8139,7 +8472,7 @@
           "clinicChoices" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Choice"
+              "$ref" : "#/components/schemas/ClinicLinksChoice"
             }
           },
           "canChangeClinic" : {
@@ -8153,8 +8486,21 @@
           }
         }
       },
-      "ForPatient" : {
-        "type" : "object",
+      "ClinicLinksChoice" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          }
+        }
+      },
+      "DepositsForPatient" : {
         "properties" : {
           "appointmentId" : {
             "type" : "integer",
@@ -8175,13 +8521,12 @@
           }
         }
       },
-      "StaffNews" : {
-        "type" : "object",
+      "NewsControllerStaffNews" : {
         "properties" : {
           "news" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/News"
+              "$ref" : "#/components/schemas/NewsServiceNews"
             }
           },
           "subscribers" : {
@@ -8190,8 +8535,7 @@
           }
         }
       },
-      "MemberView" : {
-        "type" : "object",
+      "StaffMembersMemberView" : {
         "properties" : {
           "telegramId" : {
             "type" : "integer",
@@ -8216,8 +8560,7 @@
           }
         }
       },
-      "Categories" : {
-        "type" : "object",
+      "ExpenseControllerCategories" : {
         "properties" : {
           "standard" : {
             "type" : "array",
@@ -8233,8 +8576,41 @@
           }
         }
       },
-      "Entry" : {
-        "type" : "object",
+      "DentalNewsControllerFeed" : {
+        "properties" : {
+          "articles" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DentalNewsServiceArticle"
+            }
+          },
+          "digest" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "DentalNewsServiceArticle" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "source" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PlatformAccessLogEntry" : {
         "properties" : {
           "role" : {
             "type" : "string"
@@ -8245,8 +8621,72 @@
           }
         }
       },
-      "Debt" : {
-        "type" : "object",
+      "PayRequestsClinicView" : {
+        "properties" : {
+          "settings" : {
+            "$ref" : "#/components/schemas/PayRequestsSettings"
+          },
+          "periods" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PayRequestsPeriod"
+            }
+          },
+          "pending" : {
+            "$ref" : "#/components/schemas/PayRequestsRequest"
+          },
+          "last" : {
+            "$ref" : "#/components/schemas/PayRequestsRequest"
+          }
+        }
+      },
+      "PayRequestsPeriod" : {
+        "properties" : {
+          "months" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AuditLogEntry" : {
+        "properties" : {
+          "who" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "at" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "PaymentQueryEntry" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+          },
+          "paidAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "PaymentQueryDebt" : {
         "properties" : {
           "appointmentId" : {
             "type" : "integer",
@@ -8292,7 +8732,6 @@
         }
       },
       "WeekStats" : {
-        "type" : "object",
         "properties" : {
           "weekStart" : {
             "type" : "string",
@@ -8325,7 +8764,6 @@
         }
       },
       "RevenueView" : {
-        "type" : "object",
         "properties" : {
           "from" : {
             "type" : "string",
@@ -8357,13 +8795,24 @@
           "days" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/Day"
+              "$ref" : "#/components/schemas/RevenueViewDay"
             }
           }
         }
       },
-      "ReportRow" : {
-        "type" : "object",
+      "RevenueViewDay" : {
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "totalSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AppointmentServiceReportRow" : {
         "properties" : {
           "id" : {
             "type" : "integer",
@@ -8399,7 +8848,6 @@
         }
       },
       "RecallView" : {
-        "type" : "object",
         "properties" : {
           "patient" : {
             "$ref" : "#/components/schemas/PatientView"
@@ -8415,7 +8863,6 @@
         }
       },
       "RatingSummary" : {
-        "type" : "object",
         "properties" : {
           "count" : {
             "type" : "integer",
@@ -8434,7 +8881,6 @@
         }
       },
       "DayCount" : {
-        "type" : "object",
         "properties" : {
           "date" : {
             "type" : "string",
@@ -8451,7 +8897,6 @@
         }
       },
       "PatientCard" : {
-        "type" : "object",
         "properties" : {
           "patient" : {
             "$ref" : "#/components/schemas/PatientView"
@@ -8482,8 +8927,14 @@
           }
         }
       },
-      "Confirm" : {
-        "type" : "object",
+      "ServiceTypeControllerDeleted" : {
+        "properties" : {
+          "deleted" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PlatformControllerConfirm" : {
         "properties" : {
           "confirm" : {
             "type" : "string"

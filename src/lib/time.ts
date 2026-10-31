@@ -46,3 +46,10 @@ export function formatPhone(digits: string): string {
   const kg = /^996(\d{3})(\d{3})(\d{3})$/.exec(digits)
   return kg ? `+996 ${kg[1]} ${kg[2]} ${kg[3]}` : `+${digits}`
 }
+
+/** '2026-10-31' + 630 минут по Бишкеку (UTC+6, без летнего времени) → ISO в UTC. */
+export function slotInstant(date: string, minutes: number): string {
+  const hh = String(Math.floor(minutes / 60)).padStart(2, '0')
+  const mm = String(minutes % 60).padStart(2, '0')
+  return new Date(`${date}T${hh}:${mm}:00+06:00`).toISOString()
+}

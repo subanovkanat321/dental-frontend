@@ -1,28 +1,43 @@
 import { useEffect } from 'react'
 
 import type { Schemas } from '../api/client'
-import { dayTitle, formatPhone, somText, timeOf, todayIn } from '../lib/time'
+import { dayTitle, formatPhone, somText, timeOf, todayIn, ZONE } from '../lib/time'
+import { PaymentBox } from './PaymentBox'
 import { statusOf } from './status'
+import { useAppointmentAction } from './useAppointmentAction'
 
+type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
-type Doctor = Schemas['DoctorView']
+type Status = Schemas['AppointmentRequestsChangeStatus']['status']
 
-const METHOD: Record<string, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта' }
+/** День приёма по Бишкеку: 'YYYY-MM-DD'. */
+function dateOf(instant: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
+}
 
 /**
- * Карточка приёма справа: кто, когда, к кому, статус, оплата. Esc — закрыть. Действия (отметить,
- * перенести, оплата) — пока «Открыть в приложении»: перенесём на следующих этапах.
+ * Карточка приёма справа: кто, когда, к кому, статус и действия — как в «Дне» Mini App:
+ * заявку подтвердить, приём отметить (состоялся / неявка), отменить, принять оплату. Esc — закрыть.
  */
-export function AppointmentPanel({ appointment: a, doctors, onClose }: { appointment: Appointment; doctors: Doctor[]; onClose: () => void }) {
+export function AppointmentPanel({ appointment: a, me, onClose }: { appointment: Appointment; me: Me; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
+  const action = useAppointmentAction(a)
   const s = statusOf(a)
-  const doctor = doctors.find((d) => d.id === a.doctorId)
-  const date = a.startAt ? new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bishkek' }).format(new Date(a.startAt)) : todayIn()
+  const doctor = (me.doctors ?? []).find((d) => d.id === a.doctorId)
+  const date = a.startAt ? dateOf(a.startAt) : todayIn()
+  // «Состоялся» сервер разрешает с дня приёма: будущий приём ещё не мог пройти
+  const started = date <= todayIn()
+
+  const setStatus = (status: Status, question?: string) => {
+    if (question && !window.confirm(question)) return
+    action.mutate({ kind: 'status', body: { version: a.version ?? 0, status } })
+  }
+
   return (
     <aside className="panel" aria-label="Карточка приёма">
       <header className="panel-head">
@@ -39,13 +54,29 @@ export function AppointmentPanel({ appointment: a, doctors, onClose }: { appoint
       <p className={`status tone-${s.tone}`}>{s.icon} {s.label}</p>
       {a.serviceName && <p>🦷 {a.serviceName}</p>}
       {a.comment && <p className="hint">💬 {a.comment}</p>}
-      {a.paidSom != null && (
-        <p>💰 {somText(a.paidSom)}{a.paymentMethod ? ` · ${METHOD[a.paymentMethod] ?? a.paymentMethod}` : ''}
-          {a.debtSom ? <span className="tone-wait"> · долг {somText(a.debtSom)}</span> : null}</p>
+      {a.depositStatus && a.paidSom == null && <p className="hint">💳 Предоплата {somText(a.depositSom ?? 0)}</p>}
+
+      {a.status === 'REQUESTED' && (
+        <div className="actions">
+          <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>✓ Подтвердить</button>
+          <button type="button" className="btn" disabled={action.isPending}
+            onClick={() => setStatus('CANCELLED', 'Отклонить заявку? Пациенту придёт сообщение.')}>Отклонить</button>
+        </div>
       )}
-      {a.depositStatus && <p className="hint">💳 Предоплата {somText(a.depositSom ?? 0)}</p>}
-      <a className="btn primary" href={`/?appointment=${a.id}`} target="_blank" rel="noopener">Открыть в приложении</a>
-      <p className="hint small">Отметить приём, оплату и перенос — пока в приложении. В CRM появятся на следующих этапах.</p>
+      {a.status === 'SCHEDULED' && (
+        <div className="actions">
+          {started && <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('DONE')}>✅ Приём состоялся</button>}
+          {started && <button type="button" className="btn" disabled={action.isPending} onClick={() => setStatus('NO_SHOW')}>🚷 Неявка</button>}
+          <button type="button" className="btn danger" disabled={action.isPending}
+            onClick={() => setStatus('CANCELLED', `Отменить запись ${a.patient?.fullName ?? ''}? Время освободится.`)}>Отменить запись</button>
+        </div>
+      )}
+      {action.error && <p className="error" role="alert">{action.error.message}</p>}
+
+      {a.status === 'DONE' && <PaymentBox key={`${a.id}-${a.version}`} appointment={a} me={me} />}
+
+      <a className="btn" href={`/?appointment=${a.id}`} target="_blank" rel="noopener">Открыть в приложении</a>
+      <p className="hint small">Перенос, услуга, материалы, медкарта — пока в приложении.</p>
     </aside>
   )
 }

@@ -1,31 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
-import type { Schemas } from './api/client'
-import { App } from './App'
-import { todayIn } from './lib/time'
+import { appointment, me, renderApp } from './test/fixtures'
 import { server } from './test/server'
-
-const me: Schemas['Me'] = {
-  doctor: true, admin: true, reception: false, doctorId: 1, fullName: 'Айгерим',
-  clinic: { brandName: 'Стоматология «Тест»', workStart: '09:00:00', workEnd: '18:00:00' },
-  doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true }, { id: 2, fullName: 'Дастан Т.', active: true }],
-}
-
-const appointment = (id: number, doctorId: number, time: string, name: string, extra: Partial<Schemas['AppointmentView']> = {}) => {
-  const start = new Date(`${todayIn()}T${time}:00+06:00`)
-  return {
-    id, doctorId, startAt: start.toISOString(), endAt: new Date(start.getTime() + 30 * 60000).toISOString(),
-    status: 'SCHEDULED', reply: 'NONE', patient: { id, fullName: name, phone: '996555123456' }, ...extra,
-  } satisfies Schemas['AppointmentView']
-}
-
-function renderApp() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={client}><App /></QueryClientProvider>)
-}
 
 test('не вошли (401) — экран входа со ссылкой на «Войти через Telegram»', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ detail: 'Войдите' }, { status: 401 })))

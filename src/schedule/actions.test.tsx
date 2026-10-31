@@ -1,0 +1,162 @@
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+
+import type { Schemas } from '../api/client'
+import { todayIn } from '../lib/time'
+import { appointment, me, renderApp } from '../test/fixtures'
+import { server } from '../test/server'
+
+type Appointment = Schemas['AppointmentView']
+
+/** Фальшивый бэкенд с одним днём: список приёмов меняется, как на сервере. */
+function backend(list: Appointment[], who: Schemas['BookingViewsMe'] = me) {
+  const day = [...list]
+  const replace = (a: Appointment) => {
+    day.splice(day.findIndex((x) => x.id === a.id), 1, a)
+    return HttpResponse.json(a)
+  }
+  const sent: { path: string; body: unknown }[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(who)),
+    http.get('*/api/appointments', ({ request }) => {
+      const doctorId = Number(new URL(request.url).searchParams.get('doctorId'))
+      return HttpResponse.json(day.filter((a) => a.doctorId === doctorId))
+    }),
+    http.post('*/api/appointments/:id/:action', async ({ request, params }) => {
+      const body = (await request.json()) as Record<string, unknown>
+      sent.push({ path: String(params.action), body })
+      const a = day.find((x) => x.id === Number(params.id))!
+      if (params.action === 'status') return replace({ ...a, status: body.status as Appointment['status'], version: a.version! + 1 })
+      return replace({ ...a, paidSom: body.amountSom as number, paymentMethod: body.method as Appointment['paymentMethod'], version: a.version! + 1 })
+    }),
+    http.post('*/api/appointments/:id/payment/bill', async ({ request, params }) => {
+      const body = (await request.json()) as { chargeSom: number }
+      sent.push({ path: 'bill', body })
+      const a = day.find((x) => x.id === Number(params.id))!
+      return replace({ ...a, chargeSom: body.chargeSom, version: a.version! + 1 })
+    }),
+  )
+  return sent
+}
+
+async function open(name: RegExp) {
+  await userEvent.click(await screen.findByRole('button', { name }))
+  return screen.getByRole('complementary', { name: 'Карточка приёма' })
+}
+
+test('заявку подтверждают из карточки: уходит статус с версией, карточка и колонка обновляются', async () => {
+  const sent = backend([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'REQUESTED', version: 3 })])
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  expect(panel).toHaveTextContent('Заявка — подтвердите')
+
+  await userEvent.click(within(panel).getByRole('button', { name: '✓ Подтвердить' }))
+  expect(await within(panel).findByRole('button', { name: '✅ Приём состоялся' })).toBeInTheDocument()
+  expect(sent).toEqual([{ path: 'status', body: { version: 3, status: 'SCHEDULED' } }])
+  expect(panel).not.toHaveTextContent('Заявка — подтвердите')
+})
+
+test('приём состоялся — оплата: сумма из цены услуги, способ «Карта»', async () => {
+  const sent = backend([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', servicePriceSom: 2500, version: 1 })])
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  const form = within(panel).getByRole('form', { name: 'Оплата' })
+  expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(2500)
+
+  await userEvent.click(within(form).getByRole('button', { name: 'Карта' }))
+  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить оплату' }))
+  expect(await within(panel).findByText(/💰 2\s500 сом/)).toHaveTextContent('карта')
+  expect(sent).toEqual([{ path: 'payment', body: { amountSom: 2500, method: 'CARD' } }])
+})
+
+test('в клинике есть регистратура — врач отправляет «На кассу», карточка ждёт оплаты', async () => {
+  const sent = backend([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 })], { ...me, admin: false, hasReception: true })
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  await userEvent.type(within(panel).getByLabelText('Сумма, сом'), '4000')
+  await userEvent.click(within(panel).getByRole('button', { name: /На кассу/ }))
+
+  expect(await within(panel).findByText(/К оплате на кассе: 4\s000 сом/)).toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: 'Принять оплату' })).toBeInTheDocument()
+  expect(sent).toEqual([{ path: 'bill', body: { chargeSom: 4000 } }])
+})
+
+test('отменить запись — только после подтверждения в диалоге', async () => {
+  const sent = backend([appointment(10, 1, '10:00', 'Бакыт М.')])
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+
+  await userEvent.click(within(panel).getByRole('button', { name: 'Отменить запись' }))
+  expect(sent).toEqual([])
+  await userEvent.click(within(panel).getByRole('button', { name: 'Отменить запись' }))
+  expect(await within(panel).findByText(/Отменён/)).toBeInTheDocument()
+  expect(sent).toEqual([{ path: 'status', body: { version: 0, status: 'CANCELLED' } }])
+  confirm.mockRestore()
+})
+
+test('нажать на пустое место у врача — «Новая запись»: найти пациента, записать на это время', async () => {
+  backend([])
+  let created: unknown
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json([{ id: 5, name: 'Чистка', durationMinutes: 60, active: true, priceSom: 3000 }])),
+    http.post('*/api/patients/search', () => HttpResponse.json([{ id: 7, fullName: 'Нурлан К.', phone: '996700111222' }])),
+    http.post('*/api/appointments', async ({ request }) => {
+      created = await request.json()
+      return HttpResponse.json(appointment(99, 2, '09:00', 'Нурлан К.', { serviceName: 'Чистка' }), { status: 201 })
+    }),
+  )
+  renderApp()
+  // В jsdom у колонки нет размеров: нажатие приходится на верх — начало дня клиники, 09:00
+  await userEvent.click(await screen.findByRole('group', { name: 'Дастан Т.' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  expect(within(panel).getByLabelText('Время')).toHaveValue('09:00')
+  expect(within(panel).getByLabelText('Врач')).toHaveValue('2')
+
+  await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
+  await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
+  await userEvent.selectOptions(within(panel).getByLabelText('Услуга (необязательно)'), 'Чистка')
+  expect(within(panel).getByLabelText('Длительность')).toHaveValue('60')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+
+  // После записи справа — карточка нового приёма
+  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Нурлан К.')
+  expect(created).toEqual({
+    doctorId: 2, patientId: 7, startAt: new Date(`${todayIn()}T09:00:00+06:00`).toISOString(), durationMinutes: 60, serviceTypeId: 5,
+  })
+})
+
+test('новый пациент с номером, который уже есть, — «Выбрать его», затем запись', async () => {
+  backend([])
+  let created: { patientId?: number } = {}
+  let phone: unknown
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json([])),
+    http.post('*/api/patients', async ({ request }) => {
+      phone = ((await request.json()) as { phone: string }).phone
+      return HttpResponse.json({
+        title: 'Conflict', status: 409, detail: 'Пациент с этим номером уже есть', code: 'duplicate-patient',
+        patient: { id: 8, fullName: 'Айжан Б.', phone: '996555000111' },
+      }, { status: 409 })
+    }),
+    http.post('*/api/appointments', async ({ request }) => {
+      created = (await request.json()) as { patientId: number }
+      return HttpResponse.json(appointment(98, 1, '09:00', 'Айжан Б.'), { status: 201 })
+    }),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  await userEvent.click(within(panel).getByRole('button', { name: '＋ Новый пациент' }))
+  await userEvent.type(within(panel).getByLabelText('Имя и фамилия'), 'Айжан')
+  await userEvent.type(within(panel).getByLabelText('Телефон'), '555 000 111')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+
+  expect(await within(panel).findByText(/Пациент с этим номером уже есть: Айжан Б\./)).toBeInTheDocument()
+  expect(phone).toBe('+996555000111')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Выбрать его' }))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айжан Б.')
+  expect(created.patientId).toBe(8)
+})

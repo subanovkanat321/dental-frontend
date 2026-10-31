@@ -2696,7 +2696,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Update: {
+        SupplyControllerUpdate: {
             name?: string;
             unit?: string;
             /** Format: int32 */
@@ -2719,7 +2719,7 @@ export interface components {
             doctorId?: number;
             doctorName?: string;
         };
-        Request: {
+        ServiceTypeControllerRequest: {
             name: string;
             /** Format: int32 */
             durationMinutes: number;
@@ -2739,17 +2739,24 @@ export interface components {
             priceSom?: number;
             category?: string;
         };
-        SettingsRequest: {
+        PayControllerSettingsRequest: {
             details?: string;
             requisites?: string;
         };
-        Settings: {
+        PayRequestsSettings: {
             details?: string;
             requisites?: string;
             hasRequisites?: boolean;
             hasQr?: boolean;
         };
-        Info: {
+        PlatformInfoControllerRequest: {
+            legalName?: string;
+            hosting?: string;
+            supportTelegram?: string;
+            supportPhone?: string;
+            supportEmail?: string;
+        };
+        PlatformInfoInfo: {
             legalName?: string;
             hosting?: string;
             supportTelegram?: string;
@@ -2760,16 +2767,16 @@ export interface components {
             accessNotify?: boolean;
             accessRequiresGrant?: boolean;
         };
-        Access: {
+        PlatformInfoControllerAccess: {
             log?: boolean;
             alert?: boolean;
             grant?: boolean;
         };
-        PaidUntil: {
+        BillingControllerPaidUntil: {
             /** Format: date */
             paidUntil?: string;
         };
-        Billing: {
+        ClinicBillingBilling: {
             /** Format: date */
             paidUntil?: string;
             /** @enum {string} */
@@ -2779,10 +2786,10 @@ export interface components {
             /** Format: date */
             pausesOn?: string;
         };
-        Hidden: {
+        PlatformControllerHidden: {
             hidden?: boolean;
         };
-        ClinicRow: {
+        PlatformServiceClinicRow: {
             /** Format: int64 */
             id?: number;
             name?: string;
@@ -2811,15 +2818,15 @@ export interface components {
             unmarked?: number;
             /** @enum {string} */
             health?: "OK" | "QUIET" | "ASLEEP" | "NEW";
-            billing?: components["schemas"]["Billing"];
+            billing?: components["schemas"]["ClinicBillingBilling"];
             admins?: string;
             hidden?: boolean;
         };
-        Draft: {
+        AgreementControllerDraft: {
             title?: string;
             body?: string;
         };
-        Version: {
+        AgreementsVersion: {
             /** Format: int64 */
             id?: number;
             /** Format: int32 */
@@ -2834,6 +2841,11 @@ export interface components {
             /** Format: int32 */
             acceptances?: number;
         };
+        ChartControllerUpdate: {
+            /** @enum {string} */
+            state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            note?: string;
+        };
         ToothView: {
             /** Format: int32 */
             number?: number;
@@ -2844,7 +2856,7 @@ export interface components {
             updatedAt?: string;
             doctorName?: string;
         };
-        Step: {
+        ChartControllerStep: {
             /** Format: int32 */
             tooth?: number;
             title?: string;
@@ -2863,16 +2875,16 @@ export interface components {
             /** Format: date-time */
             doneAt?: string;
         };
-        Answer: {
+        AnamnesisAnswer: {
             /** Format: int64 */
             questionId?: number;
             yes?: boolean;
             text?: string;
         };
-        Answers: {
-            answers?: components["schemas"]["Answer"][];
+        MedicalRecordControllerAnswers: {
+            answers?: components["schemas"]["AnamnesisAnswer"][];
         };
-        Item: {
+        AnamnesisItem: {
             /** Format: int64 */
             questionId?: number;
             code?: string;
@@ -2885,8 +2897,8 @@ export interface components {
             yes?: boolean;
             text?: string;
         };
-        View: {
-            items?: components["schemas"]["Item"][];
+        AnamnesisView: {
+            items?: components["schemas"]["AnamnesisItem"][];
             /** Format: date-time */
             updatedAt?: string;
             updatedBy?: string;
@@ -2909,17 +2921,17 @@ export interface components {
             /** Format: date */
             birthDate?: string;
         };
-        Subscription: {
+        NewsControllerSubscription: {
             subscribed?: boolean;
         };
-        Language: {
+        PatientBookingControllerLanguage: {
             lang?: string;
         };
-        ClinicChoice: {
+        PatientBookingControllerClinicChoice: {
             /** Format: int64 */
             clinicId?: number;
         };
-        AdminRequest: {
+        DoctorControllerAdminRequest: {
             fullName?: string;
             about?: string;
             /** Format: int64 */
@@ -2937,7 +2949,7 @@ export interface components {
             telegramId?: number;
             role?: string;
         };
-        ProfileRequest: {
+        DoctorControllerProfileRequest: {
             fullName?: string;
             about?: string;
         };
@@ -2950,7 +2962,10 @@ export interface components {
             active?: boolean;
             telegramLinked?: boolean;
         };
-        Day: {
+        DoctorHoursControllerRequest: {
+            days?: components["schemas"]["DoctorHoursViewDay"][];
+        };
+        DoctorHoursViewDay: {
             /** @enum {string} */
             weekday?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
             /** Format: time-local */
@@ -2960,13 +2975,30 @@ export interface components {
         };
         DoctorHoursView: {
             custom?: boolean;
-            days?: components["schemas"]["Day"][];
+            days?: components["schemas"]["DoctorHoursViewDay"][];
         };
-        AdminRole: {
+        DoctorControllerAdminRole: {
             admin?: boolean;
         };
-        Digest: {
+        DentalNewsControllerDigest: {
             on?: boolean;
+        };
+        ClinicControllerRequest: {
+            brandName?: string;
+            legalName?: string;
+            address?: string;
+            whatsappPhone?: string;
+            mapUrl?: string;
+            supportTelegram?: string;
+            supportPhone?: string;
+            /** Format: time-local */
+            workStart?: string;
+            /** Format: time-local */
+            workEnd?: string;
+            workDays?: ("MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY")[];
+            independentDoctors?: boolean;
+            listed?: boolean;
+            separateSupplies?: boolean;
         };
         ClinicView: {
             brandName?: string;
@@ -2988,7 +3020,22 @@ export interface components {
             separateSupplies?: boolean;
             name?: string;
         };
-        Service: {
+        DepositControllerSettingsRequest: {
+            /** @enum {string} */
+            mode?: "OFF" | "NEW" | "ALL";
+            /** Format: int32 */
+            amountSom?: number;
+            details?: string;
+        };
+        DepositsSettings: {
+            /** @enum {string} */
+            mode?: "OFF" | "NEW" | "ALL";
+            /** Format: int32 */
+            amountSom?: number;
+            details?: string;
+            hasQr?: boolean;
+        };
+        AppointmentRequestsService: {
             /** Format: int64 */
             serviceTypeId?: number;
         };
@@ -3033,17 +3080,17 @@ export interface components {
             reviewComment?: string;
             comment?: string;
         };
-        Due: {
+        AppointmentControllerDue: {
             /** Format: date */
             dueOn?: string;
         };
-        Note: {
+        ChartControllerNote: {
             note?: string;
         };
-        Comment: {
+        AppointmentRequestsComment: {
             comment?: string;
         };
-        QuestionRequest: {
+        AnamnesisQuestionRequest: {
             section?: string;
             kind?: string;
             title?: string;
@@ -3052,7 +3099,7 @@ export interface components {
             alert?: boolean;
             active?: boolean;
         };
-        Question: {
+        AnamnesisQuestion: {
             /** Format: int64 */
             id?: number;
             code?: string;
@@ -3068,7 +3115,7 @@ export interface components {
             /** Format: int64 */
             answers?: number;
         };
-        Add: {
+        WaitlistControllerAdd: {
             /** Format: int64 */
             patientId: number;
             /** Format: int64 */
@@ -3088,11 +3135,27 @@ export interface components {
             createdAt?: string;
             upcoming?: components["schemas"]["AppointmentView"];
         };
-        Book: {
+        WaitlistControllerBook: {
             /** Format: int64 */
             doctorId: number;
             /** Format: date-time */
             startAt: string;
+        };
+        TimeOffControllerRequest: {
+            /** Format: int64 */
+            doctorId?: number;
+            /** @enum {string} */
+            weekday?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+            /** Format: date */
+            firstDay?: string;
+            /** Format: date */
+            lastDay?: string;
+            /** Format: time-local */
+            startTime?: string;
+            /** Format: time-local */
+            endTime?: string;
+            title?: string;
+            emoji?: string;
         };
         TimeOffView: {
             /** Format: int64 */
@@ -3112,7 +3175,7 @@ export interface components {
             title?: string;
             emoji?: string;
         };
-        Message: {
+        SupportTicketsMessage: {
             /** Format: int64 */
             id?: number;
             fromPlatform?: boolean;
@@ -3122,11 +3185,11 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
-        Thread: {
-            ticket?: components["schemas"]["Ticket"];
-            messages?: components["schemas"]["Message"][];
+        SupportTicketsThread: {
+            ticket?: components["schemas"]["SupportTicketsTicket"];
+            messages?: components["schemas"]["SupportTicketsMessage"][];
         };
-        Ticket: {
+        SupportTicketsTicket: {
             /** Format: int64 */
             id?: number;
             /** Format: int64 */
@@ -3143,7 +3206,7 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
         };
-        Create: {
+        SupplyControllerCreate: {
             name?: string;
             unit?: string;
             /** Format: int32 */
@@ -3155,32 +3218,58 @@ export interface components {
             /** Format: int64 */
             doctorId?: number;
         };
-        Move: {
+        SupplyControllerMove: {
             /** Format: int32 */
             delta?: number;
             reason?: string;
             /** Format: int32 */
             costSom?: number;
         };
-        Added: {
+        SupplyControllerAdded: {
             /** Format: int32 */
             added?: number;
         };
-        Pick: {
+        ServiceTypeControllerPick: {
             name: string;
             /** Format: int32 */
             priceSom?: number;
         };
-        Picks: {
-            items: components["schemas"]["Pick"][];
+        ServiceTypeControllerPicks: {
+            items: components["schemas"]["ServiceTypeControllerPick"][];
         };
-        Reject: {
+        ServiceTypeControllerAdded: {
+            /** Format: int32 */
+            added?: number;
+        };
+        PayControllerReject: {
             comment?: string;
         };
-        AddFeed: {
+        PayRequestsRequest: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            clinicId?: number;
+            clinicName?: string;
+            /** Format: int32 */
+            months?: number;
+            /** Format: int64 */
+            amountSom?: number;
+            tariff?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED";
+            hasReceipt?: boolean;
+            comment?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            decidedAt?: string;
+            /** Format: date */
+            paidUntil?: string;
+        };
+        DentalNewsControllerAddFeed: {
             url?: string;
         };
-        Feed: {
+        DentalNewsServiceFeed: {
             /** Format: int64 */
             id?: number;
             url?: string;
@@ -3192,19 +3281,19 @@ export interface components {
             /** Format: int64 */
             articles?: number;
         };
-        Person: {
+        PlatformControllerPerson: {
             fullName?: string;
             alsoDoctor?: boolean;
         };
-        Invite: {
+        DoctorInvitesInvite: {
             token?: string;
             /** Format: date-time */
             expiresAt?: string;
         };
-        Name: {
+        PlatformControllerName: {
             name?: string;
         };
-        PaymentRequest: {
+        BillingControllerPaymentRequest: {
             /** Format: date */
             paidOn?: string;
             /** Format: int64 */
@@ -3212,7 +3301,7 @@ export interface components {
             /** Format: int32 */
             months?: number;
         };
-        Payment: {
+        ClinicPaymentsPayment: {
             /** Format: int64 */
             id?: number;
             /** Format: date */
@@ -3226,15 +3315,20 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
-        Plan: {
-            billing?: components["schemas"]["Billing"];
+        ClinicPaymentsPlan: {
+            billing?: components["schemas"]["ClinicBillingBilling"];
             /** Format: int64 */
             doctors?: number;
-            tariff?: components["schemas"]["Tariff"];
+            tariff?: components["schemas"]["TariffsTariff"];
             tariffs?: components["schemas"]["Tariffs"];
-            payments?: components["schemas"]["Payment"][];
+            payments?: components["schemas"]["ClinicPaymentsPayment"][];
         };
-        Tariff: {
+        Tariffs: {
+            /** Format: int32 */
+            pilotMonths?: number;
+            tariffs?: components["schemas"]["TariffsTariff"][];
+        };
+        TariffsTariff: {
             code?: string;
             name?: string;
             who?: string;
@@ -3245,12 +3339,7 @@ export interface components {
             /** Format: int64 */
             yearSom?: number;
         };
-        Tariffs: {
-            /** Format: int32 */
-            pilotMonths?: number;
-            tariffs?: components["schemas"]["Tariff"][];
-        };
-        Result: {
+        ExportControllerResult: {
             /** Format: int32 */
             patients?: number;
             /** Format: int32 */
@@ -3258,15 +3347,15 @@ export interface components {
             /** Format: int32 */
             filesSkipped?: number;
         };
-        Enter: {
+        PlatformControllerEnter: {
             reception?: boolean;
             emergency?: boolean;
         };
-        BroadcastRequest: {
+        PlatformControllerBroadcastRequest: {
             text?: string;
             clinicIds?: number[];
         };
-        Broadcast: {
+        PlatformBroadcastsBroadcast: {
             /** Format: int64 */
             id?: number;
             text?: string;
@@ -3279,15 +3368,41 @@ export interface components {
             /** Format: date-time */
             sentAt?: string;
         };
-        Approved: {
-            clinic?: components["schemas"]["ClinicRow"];
+        ClinicApplicationsApproved: {
+            clinic?: components["schemas"]["PlatformServiceClinicRow"];
             contactName?: string;
             solo?: boolean;
+        };
+        PatientFilesView: {
+            /** Format: int64 */
+            id?: number;
+            /** @enum {string} */
+            kind?: "XRAY" | "PHOTO" | "OTHER";
+            caption?: string;
+            /** Format: date */
+            takenOn?: string;
+            /** Format: int32 */
+            sizeBytes?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            createdBy?: string;
+            canDelete?: boolean;
         };
         SearchPatientsRequest: {
             query?: string;
         };
-        Booking: {
+        PatientBookingControllerBook: {
+            /** Format: int64 */
+            doctorId: number;
+            /** Format: int64 */
+            serviceTypeId: number;
+            /** Format: date-time */
+            startAt: string;
+            fullName?: string;
+            consent?: boolean;
+            comment?: string;
+        };
+        BookingViewsBooking: {
             /** Format: int64 */
             id?: number;
             /** Format: date-time */
@@ -3305,11 +3420,14 @@ export interface components {
             depositSom?: number;
             depositStatus?: string;
         };
-        Reschedule: {
+        PatientBookingControllerReschedule: {
             /** Format: date-time */
             startAt: string;
         };
-        News: {
+        NewsControllerCreate: {
+            text?: string;
+        };
+        NewsServiceNews: {
             /** Format: int64 */
             id?: number;
             text?: string;
@@ -3320,13 +3438,25 @@ export interface components {
             /** Format: int32 */
             delivered?: number;
         };
-        InviteRequest: {
+        StaffMembersControllerInviteRequest: {
             /** @enum {string} */
             role?: "ADMIN" | "RECEPTION";
             fullName?: string;
             alsoDoctor?: boolean;
         };
-        Expense: {
+        ExpensesDraft: {
+            /** Format: date */
+            spentOn?: string;
+            /** Format: int64 */
+            amountSom?: number;
+            category?: string;
+            comment?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            patientId?: number;
+        };
+        ExpensesExpense: {
             /** Format: int64 */
             id?: number;
             /** Format: date */
@@ -3342,19 +3472,19 @@ export interface components {
             patientId?: number;
             patient?: string;
         };
-        SelfRequest: {
+        DoctorControllerSelfRequest: {
             fullName?: string;
         };
-        Grant: {
+        PlatformControllerGrant: {
             /** Format: int32 */
             hours?: number;
         };
-        SupportAccess: {
+        PlatformControllerSupportAccess: {
             required?: boolean;
             /** Format: date-time */
             grantedUntil?: string;
         };
-        Scan: {
+        AgreementsScan: {
             /** Format: int64 */
             id?: number;
             fileName?: string;
@@ -3364,7 +3494,7 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
-        Accept: {
+        AgreementControllerAccept: {
             sha256?: string;
             clinicName?: string;
             clinicInn?: string;
@@ -3374,7 +3504,7 @@ export interface components {
             signerBasis?: string;
             confirm?: boolean;
         };
-        Acceptance: {
+        AgreementsAcceptance: {
             /** Format: int32 */
             version?: number;
             textSha256?: string;
@@ -3389,24 +3519,37 @@ export interface components {
             /** Format: date-time */
             acceptedAt?: string;
         };
-        ClinicAgreement: {
-            current?: components["schemas"]["Version"];
-            accepted?: components["schemas"]["Acceptance"];
-            last?: components["schemas"]["Acceptance"];
+        AgreementsClinicAgreement: {
+            current?: components["schemas"]["AgreementsVersion"];
+            accepted?: components["schemas"]["AgreementsAcceptance"];
+            last?: components["schemas"]["AgreementsAcceptance"];
             legalName?: string;
             address?: string;
             platform?: {
                 [key: string]: string;
             };
-            scans?: components["schemas"]["Scan"][];
+            scans?: components["schemas"]["AgreementsScan"][];
         };
-        Undo: {
+        AppointmentRequestsCreate: {
+            /** Format: int64 */
+            doctorId: number;
+            /** Format: int64 */
+            patientId: number;
+            /** Format: date-time */
+            startAt: string;
+            /** Format: int32 */
+            durationMinutes: number;
+            comment?: string;
+            /** Format: int64 */
+            serviceTypeId?: number;
+        };
+        AppointmentRequestsUndo: {
             /** Format: int64 */
             version: number;
             /** @enum {string} */
             previousStatus: "REQUESTED" | "SCHEDULED" | "CANCELLED" | "DONE" | "NO_SHOW";
         };
-        Transfer: {
+        AppointmentRequestsTransfer: {
             /** Format: int64 */
             version: number;
             /** Format: int64 */
@@ -3416,15 +3559,15 @@ export interface components {
             /** Format: int32 */
             durationMinutes: number;
         };
-        OnAppointment: {
+        SupplyControllerOnAppointment: {
             /** Format: int32 */
             delta?: number;
         };
-        Spent: {
+        SupplyControllerSpent: {
             supply?: components["schemas"]["SupplyView"];
-            used?: components["schemas"]["Used"][];
+            used?: components["schemas"]["SupplyQueryUsed"][];
         };
-        Used: {
+        SupplyQueryUsed: {
             /** Format: int64 */
             supplyId?: number;
             name?: string;
@@ -3432,41 +3575,75 @@ export interface components {
             /** Format: int32 */
             used?: number;
         };
-        ChangeStatus: {
+        AppointmentRequestsChangeStatus: {
             /** Format: int64 */
             version: number;
             /** @enum {string} */
             status: "REQUESTED" | "SCHEDULED" | "CANCELLED" | "DONE" | "NO_SHOW";
         };
-        ChangeReply: {
+        AppointmentRequestsReschedule: {
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            startAt: string;
+            /** Format: int32 */
+            durationMinutes: number;
+        };
+        AppointmentRequestsChangeReply: {
             /** Format: int64 */
             version: number;
             /** @enum {string} */
             reply: "NONE" | "CONFIRMED" | "RESCHEDULE" | "NO_ANSWER";
         };
-        Extra: {
+        AppointmentControllerPayment: {
+            /** Format: int32 */
+            amountSom?: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD";
+            /** Format: int32 */
+            chargeSom?: number;
+            /** Format: date */
+            dueOn?: string;
+            parts?: components["schemas"]["PaymentQueryPart"][];
+        };
+        PaymentQueryPart: {
             /** Format: int32 */
             amountSom?: number;
             /** @enum {string} */
             method?: "CASH" | "TRANSFER" | "CARD";
         };
-        Bill: {
+        AppointmentControllerExtra: {
+            /** Format: int32 */
+            amountSom?: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD";
+        };
+        AppointmentControllerBill: {
             /** Format: int32 */
             chargeSom?: number;
         };
-        Action: {
+        DepositControllerAction: {
             action?: string;
             /** Format: int32 */
             amountSom?: number;
             /** @enum {string} */
             method?: "CASH" | "TRANSFER" | "CARD";
         };
-        DeleteAll: {
+        ReportControllerRequest: {
+            month?: string;
+            /** Format: int64 */
+            doctorId?: number;
+        };
+        AppointmentControllerDeleteAll: {
             confirm?: string;
         };
-        Deleted: {
+        AppointmentControllerDeleted: {
             /** Format: int32 */
             deleted?: number;
+        };
+        MedicalRecordControllerMove: {
+            /** Format: int32 */
+            direction?: number;
         };
         MovementView: {
             /** Format: int32 */
@@ -3477,12 +3654,6 @@ export interface components {
             createdAt?: string;
             /** Format: int32 */
             costSom?: number;
-        };
-        Month: {
-            /** Format: date */
-            month?: string;
-            /** Format: int64 */
-            purchasedSom?: number;
         };
         SpendingView: {
             /** Format: date */
@@ -3497,20 +3668,35 @@ export interface components {
             unpricedUsed?: number;
             /** Format: int64 */
             unpricedDeliveries?: number;
-            items?: components["schemas"]["Item"][];
-            months?: components["schemas"]["Month"][];
+            items?: components["schemas"]["SpendingViewItem"][];
+            months?: components["schemas"]["SpendingViewMonth"][];
             /** Format: int64 */
             revenueSom?: number;
             /** Format: int64 */
             expensesSom?: number;
         };
-        Break: {
-            /** Format: date-time */
-            start?: string;
-            /** Format: date-time */
-            end?: string;
-            title?: string;
-            emoji?: string;
+        SpendingViewItem: {
+            /** Format: int64 */
+            supplyId?: number;
+            name?: string;
+            unit?: string;
+            archived?: boolean;
+            /** Format: int32 */
+            bought?: number;
+            /** Format: int64 */
+            boughtSom?: number;
+            /** Format: int64 */
+            unpricedDeliveries?: number;
+            /** Format: int32 */
+            used?: number;
+            /** Format: int64 */
+            usedSom?: number;
+        };
+        SpendingViewMonth: {
+            /** Format: date */
+            month?: string;
+            /** Format: int64 */
+            purchasedSom?: number;
         };
         SlotsView: {
             workingDay?: boolean;
@@ -3520,9 +3706,17 @@ export interface components {
             workEnd?: string;
             free?: components["schemas"]["TimeRange"][];
             starts?: string[];
-            breaks?: components["schemas"]["Break"][];
-            dayOff?: components["schemas"]["Break"];
+            breaks?: components["schemas"]["SlotsViewBreak"][];
+            dayOff?: components["schemas"]["SlotsViewBreak"];
             taken?: string[];
+        };
+        SlotsViewBreak: {
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            title?: string;
+            emoji?: string;
         };
         TimeRange: {
             /** Format: date-time */
@@ -3530,24 +3724,28 @@ export interface components {
             /** Format: date-time */
             end?: string;
         };
-        CatalogItem: {
+        SettingsControllerSettings: {
+            clinicSignature?: string;
+            botUrl?: string;
+        };
+        ServiceTypeServiceCatalogItem: {
             name?: string;
             /** Format: int32 */
             durationMinutes?: number;
             added?: boolean;
         };
-        CatalogSection: {
+        ServiceTypeServiceCatalogSection: {
             category?: string;
-            items?: components["schemas"]["CatalogItem"][];
+            items?: components["schemas"]["ServiceTypeServiceCatalogItem"][];
         };
-        ManagerView: {
+        PlatformMembersManagerView: {
             /** Format: int64 */
             telegramId?: number;
             fullName?: string;
             /** Format: date-time */
             createdAt?: string;
         };
-        ApplicationView: {
+        ClinicApplicationsApplicationView: {
             /** Format: int64 */
             id?: number;
             clinicName?: string;
@@ -3564,11 +3762,11 @@ export interface components {
             createdAt?: string;
             solo?: boolean;
         };
-        Template: {
+        AgreementControllerTemplate: {
             title?: string;
             body?: string;
         };
-        Status: {
+        AgreementsStatus: {
             /** Format: int32 */
             acceptedVersion?: number;
             /** Format: date-time */
@@ -3586,7 +3784,7 @@ export interface components {
             updatedAt?: string;
             doctorName?: string;
         };
-        PatientRow: {
+        PatientListControllerPatientRow: {
             /** Format: int64 */
             id?: number;
             fullName?: string;
@@ -3597,31 +3795,25 @@ export interface components {
             /** Format: date-time */
             nextVisit?: string;
         };
-        Slots: {
+        BookingViewsSlots: {
             workingDay?: boolean;
             starts?: string[];
-            breaks?: components["schemas"]["Break"][];
-            dayOff?: components["schemas"]["Break"];
+            breaks?: components["schemas"]["SlotsViewBreak"][];
+            dayOff?: components["schemas"]["SlotsViewBreak"];
             taken?: string[];
         };
-        PatientNews: {
-            news?: components["schemas"]["PatientNewsItem"][];
+        NewsControllerPatientNews: {
+            news?: components["schemas"]["NewsControllerPatientNewsItem"][];
             subscribed?: boolean;
         };
-        PatientNewsItem: {
+        NewsControllerPatientNewsItem: {
             /** Format: int64 */
             id?: number;
             text?: string;
             /** Format: date-time */
             createdAt?: string;
         };
-        Choice: {
-            /** Format: int64 */
-            id?: number;
-            name?: string;
-            address?: string;
-        };
-        Me: {
+        BookingViewsMe: {
             doctor?: boolean;
             admin?: boolean;
             reception?: boolean;
@@ -3632,7 +3824,7 @@ export interface components {
             bookingEnabled?: boolean;
             fullName?: string;
             phone?: string;
-            booking?: components["schemas"]["Booking"];
+            booking?: components["schemas"]["BookingViewsBooking"];
             services?: components["schemas"]["ServiceTypeView"][];
             clinicContact?: string;
             /** Format: int32 */
@@ -3640,12 +3832,18 @@ export interface components {
             doctors?: components["schemas"]["DoctorView"][];
             clinic?: components["schemas"]["ClinicView"];
             lang?: string;
-            clinicChoices?: components["schemas"]["Choice"][];
+            clinicChoices?: components["schemas"]["ClinicLinksChoice"][];
             canChangeClinic?: boolean;
             waiting?: boolean;
             hasReception?: boolean;
         };
-        ForPatient: {
+        ClinicLinksChoice: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            address?: string;
+        };
+        DepositsForPatient: {
             /** Format: int64 */
             appointmentId?: number;
             /** Format: int32 */
@@ -3654,12 +3852,12 @@ export interface components {
             details?: string;
             hasQr?: boolean;
         };
-        StaffNews: {
-            news?: components["schemas"]["News"][];
+        NewsControllerStaffNews: {
+            news?: components["schemas"]["NewsServiceNews"][];
             /** Format: int32 */
             subscribers?: number;
         };
-        MemberView: {
+        StaffMembersMemberView: {
             /** Format: int64 */
             telegramId?: number;
             fullName?: string;
@@ -3670,16 +3868,57 @@ export interface components {
             me?: boolean;
             doctor?: boolean;
         };
-        Categories: {
+        ExpenseControllerCategories: {
             standard?: string[];
             own?: string[];
         };
-        Entry: {
+        DentalNewsControllerFeed: {
+            articles?: components["schemas"]["DentalNewsServiceArticle"][];
+            digest?: boolean;
+        };
+        DentalNewsServiceArticle: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            link?: string;
+            /** Format: date-time */
+            publishedAt?: string;
+            source?: string;
+        };
+        PlatformAccessLogEntry: {
             role?: string;
             /** Format: date-time */
             enteredAt?: string;
         };
-        Debt: {
+        PayRequestsClinicView: {
+            settings?: components["schemas"]["PayRequestsSettings"];
+            periods?: components["schemas"]["PayRequestsPeriod"][];
+            pending?: components["schemas"]["PayRequestsRequest"];
+            last?: components["schemas"]["PayRequestsRequest"];
+        };
+        PayRequestsPeriod: {
+            /** Format: int32 */
+            months?: number;
+            /** Format: int64 */
+            amountSom?: number;
+        };
+        AuditLogEntry: {
+            who?: string;
+            text?: string;
+            /** Format: date-time */
+            at?: string;
+        };
+        PaymentQueryEntry: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            amountSom?: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD";
+            /** Format: date-time */
+            paidAt?: string;
+        };
+        PaymentQueryDebt: {
             /** Format: int64 */
             appointmentId?: number;
             /** Format: date-time */
@@ -3730,9 +3969,15 @@ export interface components {
             byMethod?: {
                 [key: string]: number;
             };
-            days?: components["schemas"]["Day"][];
+            days?: components["schemas"]["RevenueViewDay"][];
         };
-        ReportRow: {
+        RevenueViewDay: {
+            /** Format: date */
+            date?: string;
+            /** Format: int64 */
+            totalSom?: number;
+        };
+        AppointmentServiceReportRow: {
             /** Format: int64 */
             id?: number;
             /** Format: date-time */
@@ -3779,7 +4024,10 @@ export interface components {
             upcoming?: components["schemas"]["AppointmentView"][];
             past?: components["schemas"]["AppointmentView"][];
         };
-        Confirm: {
+        ServiceTypeControllerDeleted: {
+            deleted?: boolean;
+        };
+        PlatformControllerConfirm: {
             confirm?: string;
         };
     };
@@ -3802,7 +4050,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Update"];
+                "application/json": components["schemas"]["SupplyControllerUpdate"];
             };
         };
         responses: {
@@ -3848,7 +4096,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Request"];
+                "application/json": components["schemas"]["ServiceTypeControllerRequest"];
             };
         };
         responses: {
@@ -3880,7 +4128,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Deleted"];
+                    "application/json": components["schemas"]["ServiceTypeControllerDeleted"];
                 };
             };
         };
@@ -3900,7 +4148,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    "application/json": components["schemas"]["PayRequestsSettings"];
                 };
             };
         };
@@ -3914,7 +4162,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SettingsRequest"];
+                "application/json": components["schemas"]["PayControllerSettingsRequest"];
             };
         };
         responses: {
@@ -3924,7 +4172,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    "application/json": components["schemas"]["PayRequestsSettings"];
                 };
             };
         };
@@ -3938,7 +4186,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Request"];
+                "application/json": components["schemas"]["PlatformInfoControllerRequest"];
             };
         };
         responses: {
@@ -3948,7 +4196,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Info"];
+                    "application/json": components["schemas"]["PlatformInfoInfo"];
                 };
             };
         };
@@ -3962,7 +4210,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Access"];
+                "application/json": components["schemas"]["PlatformInfoControllerAccess"];
             };
         };
         responses: {
@@ -3972,7 +4220,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Info"];
+                    "application/json": components["schemas"]["PlatformInfoInfo"];
                 };
             };
         };
@@ -3988,7 +4236,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PaidUntil"];
+                "application/json": components["schemas"]["BillingControllerPaidUntil"];
             };
         };
         responses: {
@@ -3998,7 +4246,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Billing"];
+                    "application/json": components["schemas"]["ClinicBillingBilling"];
                 };
             };
         };
@@ -4014,7 +4262,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Hidden"];
+                "application/json": components["schemas"]["PlatformControllerHidden"];
             };
         };
         responses: {
@@ -4024,7 +4272,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ClinicRow"];
+                    "application/json": components["schemas"]["PlatformServiceClinicRow"];
                 };
             };
         };
@@ -4040,7 +4288,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Draft"];
+                "application/json": components["schemas"]["AgreementControllerDraft"];
             };
         };
         responses: {
@@ -4050,7 +4298,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Version"];
+                    "application/json": components["schemas"]["AgreementsVersion"];
                 };
             };
         };
@@ -4087,7 +4335,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Update"];
+                "application/json": components["schemas"]["ChartControllerUpdate"];
             };
         };
         responses: {
@@ -4114,7 +4362,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Step"];
+                "application/json": components["schemas"]["ChartControllerStep"];
             };
         };
         responses: {
@@ -4169,7 +4417,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["View"];
+                    "application/json": components["schemas"]["AnamnesisView"];
                 };
             };
         };
@@ -4185,7 +4433,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Answers"];
+                "application/json": components["schemas"]["MedicalRecordControllerAnswers"];
             };
         };
         responses: {
@@ -4195,7 +4443,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["View"];
+                    "application/json": components["schemas"]["AnamnesisView"];
                 };
             };
         };
@@ -4235,7 +4483,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Subscription"];
+                "application/json": components["schemas"]["NewsControllerSubscription"];
             };
         };
         responses: {
@@ -4245,7 +4493,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Subscription"];
+                    "application/json": components["schemas"]["NewsControllerSubscription"];
                 };
             };
         };
@@ -4259,7 +4507,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Language"];
+                "application/json": components["schemas"]["PatientBookingControllerLanguage"];
             };
         };
         responses: {
@@ -4281,7 +4529,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ClinicChoice"];
+                "application/json": components["schemas"]["PatientBookingControllerClinicChoice"];
             };
         };
         responses: {
@@ -4305,7 +4553,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AdminRequest"];
+                "application/json": components["schemas"]["DoctorControllerAdminRequest"];
             };
         };
         responses: {
@@ -4351,7 +4599,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ProfileRequest"];
+                "application/json": components["schemas"]["DoctorControllerProfileRequest"];
             };
         };
         responses: {
@@ -4399,7 +4647,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Request"];
+                "application/json": components["schemas"]["DoctorHoursControllerRequest"];
             };
         };
         responses: {
@@ -4425,7 +4673,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AdminRole"];
+                "application/json": components["schemas"]["DoctorControllerAdminRole"];
             };
         };
         responses: {
@@ -4447,7 +4695,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Digest"];
+                "application/json": components["schemas"]["DentalNewsControllerDigest"];
             };
         };
         responses: {
@@ -4457,7 +4705,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Digest"];
+                    "application/json": components["schemas"]["DentalNewsControllerDigest"];
                 };
             };
         };
@@ -4491,7 +4739,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Request"];
+                "application/json": components["schemas"]["ClinicControllerRequest"];
             };
         };
         responses: {
@@ -4521,7 +4769,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    "application/json": components["schemas"]["DepositsSettings"];
                 };
             };
         };
@@ -4535,7 +4783,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SettingsRequest"];
+                "application/json": components["schemas"]["DepositControllerSettingsRequest"];
             };
         };
         responses: {
@@ -4545,7 +4793,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    "application/json": components["schemas"]["DepositsSettings"];
                 };
             };
         };
@@ -4561,7 +4809,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Service"];
+                "application/json": components["schemas"]["AppointmentRequestsService"];
             };
         };
         responses: {
@@ -4587,7 +4835,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Due"];
+                "application/json": components["schemas"]["AppointmentControllerDue"];
             };
         };
         responses: {
@@ -4619,7 +4867,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Note"];
+                    "application/json": components["schemas"]["ChartControllerNote"];
                 };
             };
         };
@@ -4635,7 +4883,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Note"];
+                "application/json": components["schemas"]["ChartControllerNote"];
             };
         };
         responses: {
@@ -4645,7 +4893,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Note"];
+                    "application/json": components["schemas"]["ChartControllerNote"];
                 };
             };
         };
@@ -4661,7 +4909,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Comment"];
+                "application/json": components["schemas"]["AppointmentRequestsComment"];
             };
         };
         responses: {
@@ -4687,7 +4935,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QuestionRequest"];
+                "application/json": components["schemas"]["AnamnesisQuestionRequest"];
             };
         };
         responses: {
@@ -4697,7 +4945,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Question"][];
+                    "application/json": components["schemas"]["AnamnesisQuestion"][];
                 };
             };
         };
@@ -4719,7 +4967,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Question"][];
+                    "application/json": components["schemas"]["AnamnesisQuestion"][];
                 };
             };
         };
@@ -4753,7 +5001,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Add"];
+                "application/json": components["schemas"]["WaitlistControllerAdd"];
             };
         };
         responses: {
@@ -4779,7 +5027,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Book"];
+                "application/json": components["schemas"]["WaitlistControllerBook"];
             };
         };
         responses: {
@@ -4823,7 +5071,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Request"];
+                "application/json": components["schemas"]["TimeOffControllerRequest"];
             };
         };
         responses: {
@@ -4853,7 +5101,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Ticket"][];
+                    "application/json": components["schemas"]["SupportTicketsTicket"][];
                 };
             };
         };
@@ -4883,7 +5131,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Thread"];
+                    "application/json": components["schemas"]["SupportTicketsThread"];
                 };
             };
         };
@@ -4919,7 +5167,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Create"];
+                "application/json": components["schemas"]["SupplyControllerCreate"];
             };
         };
         responses: {
@@ -4945,7 +5193,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Move"];
+                "application/json": components["schemas"]["SupplyControllerMove"];
             };
         };
         responses: {
@@ -4975,7 +5223,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Added"];
+                    "application/json": components["schemas"]["SupplyControllerAdded"];
                 };
             };
         };
@@ -5009,7 +5257,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Request"];
+                "application/json": components["schemas"]["ServiceTypeControllerRequest"];
             };
         };
         responses: {
@@ -5039,7 +5287,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CatalogSection"][];
+                    "application/json": components["schemas"]["ServiceTypeServiceCatalogSection"][];
                 };
             };
         };
@@ -5053,7 +5301,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Picks"];
+                "application/json": components["schemas"]["ServiceTypeControllerPicks"];
             };
         };
         responses: {
@@ -5063,7 +5311,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Added"];
+                    "application/json": components["schemas"]["ServiceTypeControllerAdded"];
                 };
             };
         };
@@ -5094,7 +5342,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Thread"];
+                    "application/json": components["schemas"]["SupportTicketsThread"];
                 };
             };
         };
@@ -5125,7 +5373,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Thread"];
+                    "application/json": components["schemas"]["SupportTicketsThread"];
                 };
             };
         };
@@ -5147,7 +5395,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Thread"];
+                    "application/json": components["schemas"]["SupportTicketsThread"];
                 };
             };
         };
@@ -5169,7 +5417,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Thread"];
+                    "application/json": components["schemas"]["SupportTicketsThread"];
                 };
             };
         };
@@ -5216,7 +5464,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    "application/json": components["schemas"]["PayRequestsSettings"];
                 };
             };
         };
@@ -5236,7 +5484,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    "application/json": components["schemas"]["PayRequestsSettings"];
                 };
             };
         };
@@ -5252,7 +5500,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["Reject"];
+                "application/json": components["schemas"]["PayControllerReject"];
             };
         };
         responses: {
@@ -5262,7 +5510,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Request"];
+                    "application/json": components["schemas"]["PayRequestsRequest"];
                 };
             };
         };
@@ -5304,7 +5552,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Request"];
+                    "application/json": components["schemas"]["PayRequestsRequest"];
                 };
             };
         };
@@ -5324,7 +5572,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Feed"][];
+                    "application/json": components["schemas"]["DentalNewsServiceFeed"][];
                 };
             };
         };
@@ -5338,7 +5586,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AddFeed"];
+                "application/json": components["schemas"]["DentalNewsControllerAddFeed"];
             };
         };
         responses: {
@@ -5348,7 +5596,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Feed"];
+                    "application/json": components["schemas"]["DentalNewsServiceFeed"];
                 };
             };
         };
@@ -5362,7 +5610,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Person"];
+                "application/json": components["schemas"]["PlatformControllerPerson"];
             };
         };
         responses: {
@@ -5372,7 +5620,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Invite"];
+                    "application/json": components["schemas"]["DoctorInvitesInvite"];
                 };
             };
         };
@@ -5392,7 +5640,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ClinicRow"][];
+                    "application/json": components["schemas"]["PlatformServiceClinicRow"][];
                 };
             };
         };
@@ -5406,7 +5654,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Name"];
+                "application/json": components["schemas"]["PlatformControllerName"];
             };
         };
         responses: {
@@ -5416,7 +5664,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ClinicRow"];
+                    "application/json": components["schemas"]["PlatformServiceClinicRow"];
                 };
             };
         };
@@ -5432,7 +5680,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PaymentRequest"];
+                "application/json": components["schemas"]["BillingControllerPaymentRequest"];
             };
         };
         responses: {
@@ -5442,7 +5690,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Plan"];
+                    "application/json": components["schemas"]["ClinicPaymentsPlan"];
                 };
             };
         };
@@ -5464,7 +5712,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Result"];
+                    "application/json": components["schemas"]["ExportControllerResult"];
                 };
             };
         };
@@ -5480,7 +5728,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Enter"];
+                "application/json": components["schemas"]["PlatformControllerEnter"];
             };
         };
         responses: {
@@ -5545,7 +5793,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Person"];
+                "application/json": components["schemas"]["PlatformControllerPerson"];
             };
         };
         responses: {
@@ -5555,7 +5803,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Invite"];
+                    "application/json": components["schemas"]["DoctorInvitesInvite"];
                 };
             };
         };
@@ -5575,7 +5823,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Broadcast"][];
+                    "application/json": components["schemas"]["PlatformBroadcastsBroadcast"][];
                 };
             };
         };
@@ -5589,7 +5837,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["BroadcastRequest"];
+                "application/json": components["schemas"]["PlatformControllerBroadcastRequest"];
             };
         };
         responses: {
@@ -5599,7 +5847,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Broadcast"];
+                    "application/json": components["schemas"]["PlatformBroadcastsBroadcast"];
                 };
             };
         };
@@ -5641,7 +5889,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Approved"];
+                    "application/json": components["schemas"]["ClinicApplicationsApproved"];
                 };
             };
         };
@@ -5661,7 +5909,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Version"][];
+                    "application/json": components["schemas"]["AgreementsVersion"][];
                 };
             };
         };
@@ -5675,7 +5923,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Draft"];
+                "application/json": components["schemas"]["AgreementControllerDraft"];
             };
         };
         responses: {
@@ -5685,7 +5933,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Version"];
+                    "application/json": components["schemas"]["AgreementsVersion"];
                 };
             };
         };
@@ -5707,7 +5955,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Version"];
+                    "application/json": components["schemas"]["AgreementsVersion"];
                 };
             };
         };
@@ -5789,7 +6037,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Step"];
+                "application/json": components["schemas"]["ChartControllerStep"];
             };
         };
         responses: {
@@ -5821,7 +6069,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["View"][];
+                    "application/json": components["schemas"]["PatientFilesView"][];
                 };
             };
         };
@@ -5856,7 +6104,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["View"];
+                    "application/json": components["schemas"]["PatientFilesView"];
                 };
             };
         };
@@ -5975,7 +6223,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Book"];
+                "application/json": components["schemas"]["PatientBookingControllerBook"];
             };
         };
         responses: {
@@ -5985,7 +6233,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Booking"];
+                    "application/json": components["schemas"]["BookingViewsBooking"];
                 };
             };
         };
@@ -5999,7 +6247,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Reschedule"];
+                "application/json": components["schemas"]["PatientBookingControllerReschedule"];
             };
         };
         responses: {
@@ -6009,7 +6257,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Booking"];
+                    "application/json": components["schemas"]["BookingViewsBooking"];
                 };
             };
         };
@@ -6047,7 +6295,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StaffNews"];
+                    "application/json": components["schemas"]["NewsControllerStaffNews"];
                 };
             };
         };
@@ -6061,7 +6309,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Create"];
+                "application/json": components["schemas"]["NewsControllerCreate"];
             };
         };
         responses: {
@@ -6071,7 +6319,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["News"];
+                    "application/json": components["schemas"]["NewsServiceNews"];
                 };
             };
         };
@@ -6085,7 +6333,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["InviteRequest"];
+                "application/json": components["schemas"]["StaffMembersControllerInviteRequest"];
             };
         };
         responses: {
@@ -6095,7 +6343,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Invite"];
+                    "application/json": components["schemas"]["DoctorInvitesInvite"];
                 };
             };
         };
@@ -6119,7 +6367,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Expense"][];
+                    "application/json": components["schemas"]["ExpensesExpense"][];
                 };
             };
         };
@@ -6133,7 +6381,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Draft"];
+                "application/json": components["schemas"]["ExpensesDraft"];
             };
         };
         responses: {
@@ -6143,7 +6391,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Expense"];
+                    "application/json": components["schemas"]["ExpensesExpense"];
                 };
             };
         };
@@ -6177,7 +6425,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AdminRequest"];
+                "application/json": components["schemas"]["DoctorControllerAdminRequest"];
             };
         };
         responses: {
@@ -6260,7 +6508,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Invite"];
+                    "application/json": components["schemas"]["DoctorInvitesInvite"];
                 };
             };
         };
@@ -6274,7 +6522,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SelfRequest"];
+                "application/json": components["schemas"]["DoctorControllerSelfRequest"];
             };
         };
         responses: {
@@ -6304,7 +6552,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SupportAccess"];
+                    "application/json": components["schemas"]["PlatformControllerSupportAccess"];
                 };
             };
         };
@@ -6318,7 +6566,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Grant"];
+                "application/json": components["schemas"]["PlatformControllerGrant"];
             };
         };
         responses: {
@@ -6328,7 +6576,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SupportAccess"];
+                    "application/json": components["schemas"]["PlatformControllerSupportAccess"];
                 };
             };
         };
@@ -6375,7 +6623,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Request"];
+                    "application/json": components["schemas"]["PayRequestsRequest"];
                 };
             };
         };
@@ -6415,7 +6663,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Result"];
+                    "application/json": components["schemas"]["ExportControllerResult"];
                 };
             };
         };
@@ -6462,7 +6710,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    "application/json": components["schemas"]["DepositsSettings"];
                 };
             };
         };
@@ -6482,7 +6730,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    "application/json": components["schemas"]["DepositsSettings"];
                 };
             };
         };
@@ -6509,7 +6757,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Scan"];
+                    "application/json": components["schemas"]["AgreementsScan"];
                 };
             };
         };
@@ -6561,7 +6809,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Accept"];
+                "application/json": components["schemas"]["AgreementControllerAccept"];
             };
         };
         responses: {
@@ -6571,7 +6819,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ClinicAgreement"];
+                    "application/json": components["schemas"]["AgreementsClinicAgreement"];
                 };
             };
         };
@@ -6608,7 +6856,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Create"];
+                "application/json": components["schemas"]["AppointmentRequestsCreate"];
             };
         };
         responses: {
@@ -6634,7 +6882,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Undo"];
+                "application/json": components["schemas"]["AppointmentRequestsUndo"];
             };
         };
         responses: {
@@ -6660,7 +6908,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Transfer"];
+                "application/json": components["schemas"]["AppointmentRequestsTransfer"];
             };
         };
         responses: {
@@ -6687,7 +6935,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["OnAppointment"];
+                "application/json": components["schemas"]["SupplyControllerOnAppointment"];
             };
         };
         responses: {
@@ -6697,7 +6945,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Spent"];
+                    "application/json": components["schemas"]["SupplyControllerSpent"];
                 };
             };
         };
@@ -6713,7 +6961,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ChangeStatus"];
+                "application/json": components["schemas"]["AppointmentRequestsChangeStatus"];
             };
         };
         responses: {
@@ -6739,7 +6987,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Reschedule"];
+                "application/json": components["schemas"]["AppointmentRequestsReschedule"];
             };
         };
         responses: {
@@ -6765,7 +7013,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ChangeReply"];
+                "application/json": components["schemas"]["AppointmentRequestsChangeReply"];
             };
         };
         responses: {
@@ -6833,7 +7081,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Payment"];
+                "application/json": components["schemas"]["AppointmentControllerPayment"];
             };
         };
         responses: {
@@ -6859,7 +7107,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Extra"];
+                "application/json": components["schemas"]["AppointmentControllerExtra"];
             };
         };
         responses: {
@@ -6885,7 +7133,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Bill"];
+                "application/json": components["schemas"]["AppointmentControllerBill"];
             };
         };
         responses: {
@@ -6911,7 +7159,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Bill"];
+                "application/json": components["schemas"]["AppointmentControllerBill"];
             };
         };
         responses: {
@@ -6937,7 +7185,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Action"];
+                "application/json": components["schemas"]["DepositControllerAction"];
             };
         };
         responses: {
@@ -6970,7 +7218,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ReportRow"][];
+                    "application/json": components["schemas"]["AppointmentServiceReportRow"][];
                 };
             };
         };
@@ -6984,7 +7232,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Request"];
+                "application/json": components["schemas"]["ReportControllerRequest"];
             };
         };
         responses: {
@@ -7006,7 +7254,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeleteAll"];
+                "application/json": components["schemas"]["AppointmentControllerDeleteAll"];
             };
         };
         responses: {
@@ -7016,7 +7264,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Deleted"];
+                    "application/json": components["schemas"]["AppointmentControllerDeleted"];
                 };
             };
         };
@@ -7036,7 +7284,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Question"][];
+                    "application/json": components["schemas"]["AnamnesisQuestion"][];
                 };
             };
         };
@@ -7050,7 +7298,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QuestionRequest"];
+                "application/json": components["schemas"]["AnamnesisQuestionRequest"];
             };
         };
         responses: {
@@ -7060,7 +7308,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Question"][];
+                    "application/json": components["schemas"]["AnamnesisQuestion"][];
                 };
             };
         };
@@ -7076,7 +7324,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Move"];
+                "application/json": components["schemas"]["MedicalRecordControllerMove"];
             };
         };
         responses: {
@@ -7086,7 +7334,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Question"][];
+                    "application/json": components["schemas"]["AnamnesisQuestion"][];
                 };
             };
         };
@@ -7176,7 +7424,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Settings"];
+                    "application/json": components["schemas"]["SettingsControllerSettings"];
                 };
             };
         };
@@ -7196,7 +7444,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Ticket"][];
+                    "application/json": components["schemas"]["SupportTicketsTicket"][];
                 };
             };
         };
@@ -7218,7 +7466,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Thread"];
+                    "application/json": components["schemas"]["SupportTicketsThread"];
                 };
             };
         };
@@ -7240,7 +7488,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Thread"];
+                    "application/json": components["schemas"]["SupportTicketsThread"];
                 };
             };
         };
@@ -7304,7 +7552,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Request"][];
+                    "application/json": components["schemas"]["PayRequestsRequest"][];
                 };
             };
         };
@@ -7324,7 +7572,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ManagerView"][];
+                    "application/json": components["schemas"]["PlatformMembersManagerView"][];
                 };
             };
         };
@@ -7346,7 +7594,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Plan"];
+                    "application/json": components["schemas"]["ClinicPaymentsPlan"];
                 };
             };
         };
@@ -7368,7 +7616,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ClinicAgreement"];
+                    "application/json": components["schemas"]["AgreementsClinicAgreement"];
                 };
             };
         };
@@ -7388,7 +7636,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApplicationView"][];
+                    "application/json": components["schemas"]["ClinicApplicationsApplicationView"][];
                 };
             };
         };
@@ -7408,7 +7656,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Template"];
+                    "application/json": components["schemas"]["AgreementControllerTemplate"];
                 };
             };
         };
@@ -7429,7 +7677,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        [key: string]: components["schemas"]["Status"];
+                        [key: string]: components["schemas"]["AgreementsStatus"];
                     };
                 };
             };
@@ -7450,7 +7698,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Info"];
+                    "application/json": components["schemas"]["PlatformInfoInfo"];
                 };
             };
         };
@@ -7562,7 +7810,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Expense"][];
+                    "application/json": components["schemas"]["ExpensesExpense"][];
                 };
             };
         };
@@ -7582,7 +7830,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PatientRow"][];
+                    "application/json": components["schemas"]["PatientListControllerPatientRow"][];
                 };
             };
         };
@@ -7606,7 +7854,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Slots"];
+                    "application/json": components["schemas"]["BookingViewsSlots"];
                 };
             };
         };
@@ -7626,7 +7874,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PatientNews"];
+                    "application/json": components["schemas"]["NewsControllerPatientNews"];
                 };
             };
         };
@@ -7646,7 +7894,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Me"];
+                    "application/json": components["schemas"]["BookingViewsMe"];
                 };
             };
         };
@@ -7666,7 +7914,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ForPatient"];
+                    "application/json": components["schemas"]["DepositsForPatient"];
                 };
             };
         };
@@ -7706,7 +7954,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Choice"][];
+                    "application/json": components["schemas"]["ClinicLinksChoice"][];
                 };
             };
         };
@@ -7728,7 +7976,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Slots"];
+                    "application/json": components["schemas"]["BookingViewsSlots"];
                 };
             };
         };
@@ -7748,7 +7996,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MemberView"][];
+                    "application/json": components["schemas"]["StaffMembersMemberView"][];
                 };
             };
         };
@@ -7768,7 +8016,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Categories"];
+                    "application/json": components["schemas"]["ExpenseControllerCategories"];
                 };
             };
         };
@@ -7808,7 +8056,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Feed"];
+                    "application/json": components["schemas"]["DentalNewsControllerFeed"];
                 };
             };
         };
@@ -7828,7 +8076,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Entry"][];
+                    "application/json": components["schemas"]["PlatformAccessLogEntry"][];
                 };
             };
         };
@@ -7848,7 +8096,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Plan"];
+                    "application/json": components["schemas"]["ClinicPaymentsPlan"];
                 };
             };
         };
@@ -7868,7 +8116,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ClinicView"];
+                    "application/json": components["schemas"]["PayRequestsClinicView"];
                 };
             };
         };
@@ -7930,7 +8178,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Billing"];
+                    "application/json": components["schemas"]["ClinicBillingBilling"];
                 };
             };
         };
@@ -7950,7 +8198,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Entry"][];
+                    "application/json": components["schemas"]["AuditLogEntry"][];
                 };
             };
         };
@@ -7970,7 +8218,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ClinicAgreement"];
+                    "application/json": components["schemas"]["AgreementsClinicAgreement"];
                 };
             };
         };
@@ -8054,7 +8302,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Used"][];
+                    "application/json": components["schemas"]["SupplyQueryUsed"][];
                 };
             };
         };
@@ -8076,7 +8324,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Entry"][];
+                    "application/json": components["schemas"]["PaymentQueryEntry"][];
                 };
             };
         };
@@ -8118,7 +8366,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Debt"][];
+                    "application/json": components["schemas"]["PaymentQueryDebt"][];
                 };
             };
         };
@@ -8233,7 +8481,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Debt"][];
+                    "application/json": components["schemas"]["PaymentQueryDebt"][];
                 };
             };
         };
@@ -8375,7 +8623,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["Confirm"];
+                "application/json": components["schemas"]["PlatformControllerConfirm"];
             };
         };
         responses: {
@@ -8405,7 +8653,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Plan"];
+                    "application/json": components["schemas"]["ClinicPaymentsPlan"];
                 };
             };
         };

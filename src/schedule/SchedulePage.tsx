@@ -1,12 +1,13 @@
 import { useQueries } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useCallback, useState, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { addDays, dayTitle, minutesOf, minutesOfTime, timeOf, todayIn } from '../lib/time'
 import { AppointmentPanel } from './AppointmentPanel'
+import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 
-type Me = Schemas['Me']
+type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 
 /** Сколько пикселей на минуту: час — 72 px, приём на 30 минут — 36 px, хватает на две строки. */
@@ -15,24 +16,34 @@ const PX = 1.2
 /** Отступ сверху и снизу сетки: подпись первого часа («09:00») не обрезается. */
 const PAD = 10
 
+/** Расписание само перечитывается раз в минуту: кто-то записал с телефона — видно без F5. */
+const REFRESH_MS = 60_000
+
+type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot } | null
+
 /**
  * «Расписание»: день всех врачей колонками, как настольный календарь. Нажать на приём — карточка
- * справа, расписание остаётся на экране. Запись и перенос — пока в приложении (следующие этапы).
+ * справа с действиями; на пустое место — «Новая запись» на это время. Расписание остаётся на экране.
  */
 export function SchedulePage({ me }: { me: Me }) {
   const today = todayIn()
   const [date, setDate] = useState(today)
-  const [selected, setSelected] = useState<Appointment | null>(null)
+  const [side, setSide] = useState<Side>(null)
+  const close = useCallback(() => setSide(null), [])
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
 
   const days = useQueries({
     queries: doctors.map((d) => ({
       queryKey: ['appointments', date, d.id],
       queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: { date, doctorId: d.id! } } })),
+      refetchInterval: REFRESH_MS,
     })),
   })
 
-  const all = days.flatMap((q) => q.data ?? []).filter((a) => a.status !== 'CANCELLED')
+  const loaded = days.flatMap((q) => q.data ?? [])
+  const all = loaded.filter((a) => a.status !== 'CANCELLED')
+  // Карточка — всегда свежая версия приёма из кэша дня (после действий и автообновления)
+  const selected = side?.kind === 'appointment' ? loaded.find((a) => a.id === side.id) ?? side.fallback ?? null : null
   // Сетка — часы клиники; приём раньше или позже — сетка растягивается до него
   let from = minutesOfTime(me.clinic?.workStart ?? '09:00')
   let to = minutesOfTime(me.clinic?.workEnd ?? '18:00')
@@ -43,8 +54,20 @@ export function SchedulePage({ me }: { me: Me }) {
   const hours = Array.from({ length: Math.ceil((to - from) / 60) }, (_, i) => from + i * 60)
   const height = (to - from) * PX + PAD * 2
 
+  /** Пустое место в колонке врача → «Новая запись» на это время, вниз до 15 минут. */
+  const pick = (doctorId: number) => (e: MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('.appt')) return
+    const y = e.clientY - e.currentTarget.getBoundingClientRect().top - PAD
+    const minutes = Math.min(Math.max(from + Math.floor(y / PX / 15) * 15, from), to - 15)
+    setSide({ kind: 'new', slot: { doctorId, date, minutes } })
+  }
+  const newHere = () => {
+    const first = doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
+    if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date, minutes: minutesOfTime(me.clinic?.workStart ?? '09:00') } })
+  }
+
   return (
-    <div className={selected ? 'schedule with-panel' : 'schedule'}>
+    <div className={side ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
         <header className="toolbar">
           <div className="day-switch">
@@ -55,6 +78,7 @@ export function SchedulePage({ me }: { me: Me }) {
           <h1>{dayTitle(date)}{date === today ? ' · сегодня' : ''}</h1>
           <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
           <span className="hint">{all.length ? `Записей: ${all.length}` : 'Записей нет'}</span>
+          {doctors.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
         </header>
 
         {doctors.length === 0 ? (
@@ -73,7 +97,8 @@ export function SchedulePage({ me }: { me: Me }) {
             {doctors.map((d, i) => {
               const q = days[i]
               return (
-                <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}>
+                <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
+                  title="Нажмите на свободное время — новая запись" onClick={pick(d.id!)}>
                   {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
                   {q?.isPending && <div className="hint grid-loading">Загрузка…</div>}
                   {q?.error && <div className="error grid-loading">{q.error.message}</div>}
@@ -83,7 +108,7 @@ export function SchedulePage({ me }: { me: Me }) {
                     const h = Math.max((minutesOf(a.endAt!) - minutesOf(a.startAt!)) * PX - 2, 22)
                     return (
                       <button key={a.id} type="button" className={`appt tone-${s.tone}${selected?.id === a.id ? ' active' : ''}`}
-                        style={{ top, height: h }} onClick={() => setSelected(a)}
+                        style={{ top, height: h }} onClick={() => setSide({ kind: 'appointment', id: a.id! })}
                         aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
                         <span className="appt-time">{timeOf(a.startAt!)}–{timeOf(a.endAt!)}</span>
                         <span className="appt-name">{a.patient?.fullName}</span>
@@ -97,7 +122,11 @@ export function SchedulePage({ me }: { me: Me }) {
           </div>
         )}
       </section>
-      {selected && <AppointmentPanel appointment={selected} doctors={doctors} onClose={() => setSelected(null)} />}
+      {selected && <AppointmentPanel appointment={selected} me={me} onClose={close} />}
+      {side?.kind === 'new' && (
+        <NewAppointmentPanel slot={side.slot} me={me} onClose={close}
+          onCreated={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} />
+      )}
     </div>
   )
 }

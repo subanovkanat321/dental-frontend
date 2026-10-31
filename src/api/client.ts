@@ -12,12 +12,19 @@ export type Schemas = components['schemas']
 export class ApiError extends Error {
   readonly status: number
   readonly fieldErrors: Readonly<Record<string, string>>
+  /** Тело Problem Details целиком: у 409 там code ('time-taken', 'stale', 'duplicate-patient') и данные. */
+  readonly problem: Readonly<Record<string, unknown>>
 
-  constructor(status: number, detail: string, fieldErrors: Record<string, string> = {}) {
+  constructor(status: number, detail: string, fieldErrors: Record<string, string> = {}, problem: Record<string, unknown> = {}) {
     super(detail)
     this.name = 'ApiError'
     this.status = status
     this.fieldErrors = fieldErrors
+    this.problem = problem
+  }
+
+  get code(): string | undefined {
+    return typeof this.problem.code === 'string' ? this.problem.code : undefined
   }
 }
 
@@ -56,7 +63,7 @@ export function toApiError(status: number, body: unknown): ApiError {
     }
   }
   const detail = typeof problem.detail === 'string' ? problem.detail : `Ошибка сервера (${status})`
-  return new ApiError(status, detail, fieldErrors)
+  return new ApiError(status, detail, fieldErrors, problem as Record<string, unknown>)
 }
 
 /** Данные ответа или {@link ApiError}: компоненты работают только с удачным результатом. */
