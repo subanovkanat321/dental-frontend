@@ -453,3 +453,26 @@ details.agreement-box { max-height: none; }
 .notice { text-align: left; padding: 8px 12px; border: 0; border-left: 3px solid currentColor; border-radius: var(--r-md); font: inherit; font-size: .9rem; cursor: pointer; }
 .notice.tone-wait { background: var(--wait-bg); color: var(--wait-ink); }
 .notice.tone-bad { background: var(--bad-bg); color: var(--bad-ink); }
+
+/* Телефон: внизу 4 раздела и «Ещё»; вкладки и поиск — на всю ширину, вкладки листаются вбок */
+.nav.more, .more-sheet { display: none; }
+@media (max-width: 760px) {
+  .nav.extra { display: none; }
+  .nav.more { display: flex; }
+  .nav { font-size: .78rem; }
+  .more-sheet { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(15, 42, 48, .35); }
+  .more-card { position: absolute; left: 0; right: 0; bottom: calc(60px + env(safe-area-inset-bottom)); display: grid; gap: 4px;
+    padding: 14px 12px; border-radius: 16px 16px 0 0; background: var(--card); box-shadow: 0 -8px 24px rgba(0, 0, 0, .15); }
+  .more-who { display: grid; gap: 2px; margin: 0 4px 8px; }
+  .more-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border: 0; border-radius: var(--r-md);
+    background: none; color: var(--text); font: inherit; font-size: 1rem; text-align: left; cursor: pointer; }
+  .more-item.active { background: var(--accent-soft); color: var(--link); font-weight: 600; }
+  .more-item .icon { width: 22px; height: 22px; }
+
+  .toolbar .segments.tabs { flex-basis: 100%; overflow-x: auto; scrollbar-width: none; }
+  .toolbar .segments.tabs::-webkit-scrollbar { display: none; }
+  .toolbar .segments.tabs button { flex: 1 0 auto; padding: 8px 12px; }
+  .toolbar .search, .toolbar > input[type=search] { flex-basis: 100%; }
+  .toolbar > .btn { flex: 1 1 auto; }
+  .notices .notice { font-size: .85rem; padding: 6px 10px; }
+}

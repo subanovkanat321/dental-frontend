@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
@@ -30,11 +30,24 @@ function sectionsOf(me: Me): readonly { key: Page; title: string }[] {
   return [...(me.doctor ? CLINIC_SECTIONS : []), ...(me.platform ? [PLATFORM] : [])]
 }
 
-/** Раскладка CRM: меню слева (разделы — по ролям), рабочая область. */
+/** На телефоне внизу помещается 4 раздела и «Ещё»: остальное — в выезжающем меню. */
+const MOBILE_MAIN = 4
+
+/**
+ * Раскладка CRM: меню слева (разделы — по ролям), рабочая область. На телефоне меню — полоса внизу:
+ * главные разделы и «Ещё» (команда, клиника, аккаунт, платформа, выход).
+ */
 export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
   const clinic = me.doctor ? me.clinic?.brandName || me.clinic?.name || 'Клиника' : 'Команда Tish'
   const role = !me.doctor ? (me.owner ? 'владелец платформы' : 'менеджер платформы')
     : me.admin ? 'администратор' : me.reception ? 'регистратура' : 'врач'
+  const sections = sectionsOf(me)
+  const extra = sections.length > MOBILE_MAIN + 1 ? sections.slice(MOBILE_MAIN) : []
+  const [more, setMore] = useState(false)
+  const go = (key: Page) => {
+    setMore(false)
+    onNavigate(key)
+  }
   return (
     <div className="shell">
       <aside className="sidebar">
@@ -47,18 +60,38 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           <span>{me.fullName ? `${me.fullName} · ` : ''}{role}</span>
         </div>
         <nav aria-label="Разделы">
-          {sectionsOf(me).map((s) => (
-            <button key={s.key} type="button" className={s.key === page ? 'nav active' : 'nav'}
-              aria-current={s.key === page ? 'page' : undefined} onClick={() => onNavigate(s.key)}>
+          {sections.map((s) => (
+            <button key={s.key} type="button" className={['nav', s.key === page ? 'active' : '', extra.includes(s) ? 'extra' : ''].join(' ').trim()}
+              aria-current={s.key === page ? 'page' : undefined} onClick={() => go(s.key)}>
               <Icon name={s.key} /> <span>{s.title}</span>
             </button>
           ))}
+          {extra.length > 0 && (
+            <button type="button" className={extra.some((s) => s.key === page) || more ? 'nav more active' : 'nav more'}
+              aria-expanded={more} onClick={() => setMore(!more)}>
+              <Icon name="more" /> <span>Ещё</span>
+            </button>
+          )}
         </nav>
         {!telegram() && (
           <button type="button" className="nav link-out" onClick={() => void logout()}><Icon name="external" /> <span>Выйти</span></button>
         )}
       </aside>
-      <main className="workspace"><AdminNotices me={me} onNavigate={onNavigate} />{children}</main>
+      {more && (
+        <div className="more-sheet" role="dialog" aria-label="Ещё разделы" onClick={() => setMore(false)}>
+          <div className="more-card" onClick={(e) => e.stopPropagation()}>
+            <p className="more-who"><strong>{clinic}</strong><span className="hint">{me.fullName ? `${me.fullName} · ` : ''}{role}</span></p>
+            {extra.map((s) => (
+              <button key={s.key} type="button" className={s.key === page ? 'more-item active' : 'more-item'} onClick={() => go(s.key)}>
+                <Icon name={s.key} /> <span>{s.title}</span>
+              </button>
+            ))}
+            {!telegram() && <button type="button" className="more-item" onClick={() => void logout()}><Icon name="external" /> <span>Выйти</span></button>}
+          </div>
+        </div>
+      )}
+      {/* Напоминания админу — на главном экране, чтобы не занимать место в каждом разделе */}
+      <main className="workspace">{page === 'schedule' && <AdminNotices me={me} onNavigate={onNavigate} />}{children}</main>
     </div>
   )
 }
