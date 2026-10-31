@@ -10,6 +10,7 @@ export type Action =
   | { kind: 'payment'; body: Schemas['AppointmentControllerPayment'] }
   | { kind: 'extra'; body: Schemas['AppointmentControllerExtra'] }
   | { kind: 'bill'; body: Schemas['AppointmentControllerBill'] }
+  | { kind: 'charge'; body: Schemas['AppointmentControllerBill'] }
   | { kind: 'reschedule'; body: Schemas['AppointmentRequestsReschedule'] }
   | { kind: 'transfer'; body: Schemas['AppointmentRequestsTransfer'] }
   | { kind: 'service'; body: Schemas['AppointmentRequestsService'] }
@@ -30,6 +31,8 @@ function send(id: number, action: Action): Promise<Appointment> {
       return unwrap(api.POST('/api/appointments/{id}/payment/extra', { ...path, body: action.body }))
     case 'bill':
       return unwrap(api.POST('/api/appointments/{id}/payment/bill', { ...path, body: action.body }))
+    case 'charge':
+      return unwrap(api.POST('/api/appointments/{id}/payment/charge', { ...path, body: action.body }))
     case 'reschedule':
       return unwrap(api.POST('/api/appointments/{id}/reschedule', { ...path, body: action.body }))
     case 'transfer':

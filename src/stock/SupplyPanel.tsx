@@ -104,7 +104,7 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
         {!(n > 0) && amount !== '' && <p className="error">Целое число больше 0</p>}
         <label className="field">
           <span>Сколько заплатили за поставку, сом — необязательно</span>
-          <input type="number" min={0} step={10} inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} />
+          <input type="number" min={0} inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} />
         </label>
         <div className="actions">
           <button type="button" className="btn" disabled={move.isPending || !(n > 0)} onClick={() => doMove(-1)}>− Списать</button>

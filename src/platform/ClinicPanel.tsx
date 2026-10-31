@@ -114,7 +114,7 @@ function BillingForm({ id, plan }: { id: number; plan: Plan }) {
       </div>
       <div className="row">
         <label className="field"><span>Дата оплаты</span><input type="date" max={today} value={paidOn} onChange={(e) => setPaidOn(e.target.value)} /></label>
-        <label className="field"><span>Сумма, сом</span><input type="number" min={0} step={10} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
+        <label className="field"><span>Сумма, сом</span><input type="number" min={0} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
       </div>
       <p className="hint">Оплачено будет до {day(extendPaid(plan.billing?.paidUntil, months, paidOn || today))}</p>
       {error && <p className="error" role="alert">{Object.values(error.fieldErrors)[0] ?? error.message}</p>}

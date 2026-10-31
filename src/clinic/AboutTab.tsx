@@ -213,7 +213,7 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
           {MODES.map(([code, name]) => <button key={code} type="button" aria-pressed={mode === code} onClick={() => { setDone(''); setMode(code) }}>{name}</button>)}
         </div>
         <label className="field"><span>Сколько, сом</span>
-          <input type="number" min={1} step={100} inputMode="numeric" placeholder="Например: 1000" value={amount} onChange={(e) => { setDone(''); setAmount(e.target.value) }} /></label>
+          <input type="number" min={1} inputMode="numeric" placeholder="Например: 1000" value={amount} onChange={(e) => { setDone(''); setAmount(e.target.value) }} /></label>
         <label className="field"><span>Как перевести (номер, банк, получатель)</span>
           <textarea rows={2} maxLength={500} placeholder="MBank: 0555 123 456 (Стоматология «Улыбка»)" value={details} onChange={(e) => { setDone(''); setDetails(e.target.value) }} /></label>
         <div className="qr-row">

@@ -147,7 +147,7 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
             <input type="number" min={15} max={240} step={15} required value={form.duration} onChange={set('duration')} />
           </label>
           <label className="field"><span>Цена «от», сом</span>
-            <input type="number" min={0} step={100} inputMode="numeric" placeholder="Не показывать" value={form.price} onChange={set('price')} />
+            <input type="number" min={0} inputMode="numeric" placeholder="Не показывать" value={form.price} onChange={set('price')} />
           </label>
         </div>
         {(error('durationMinutes') || error('priceSom')) && <p className="error">{error('durationMinutes') ?? error('priceSom')}</p>}
@@ -219,7 +219,7 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
                 <label className="check"><input type="checkbox" checked={item.name! in picked} onChange={(e) => toggle(item.name!, e.target.checked)} />
                   {item.name} <span className="hint">· {item.durationMinutes} мин</span></label>
                 {item.name! in picked && (
-                  <input type="number" min={0} step={100} inputMode="numeric" placeholder="цена" aria-label={`Цена: ${item.name}`}
+                  <input type="number" min={0} inputMode="numeric" placeholder="цена" aria-label={`Цена: ${item.name}`}
                     value={picked[item.name!]} onChange={(e) => setPicked({ ...picked, [item.name!]: e.target.value })} />
                 )}
               </div>

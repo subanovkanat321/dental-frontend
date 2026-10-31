@@ -37,7 +37,7 @@ export function DepositBox({ appointment: a }: { appointment: Appointment }) {
     return (
       <div className="sub-form form" role="group" aria-label="Предоплата">
         <label className="field"><span>Сколько предоплаты, сом</span>
-          <input type="number" min={1} step={100} inputMode="numeric" value={shownAmount} onChange={(e) => setAmount(e.target.value)} /></label>
+          <input type="number" min={1} inputMode="numeric" value={shownAmount} onChange={(e) => setAmount(e.target.value)} /></label>
         <p className="hint">{a.patient?.telegram ? 'Пациенту в бот уйдёт сообщение: сумма, QR и «Я оплатил(а)».'
           : 'У пациента нет бота — отправьте ему реквизиты сами (WhatsApp) и отметьте, когда деньги придут.'}</p>
         {error}

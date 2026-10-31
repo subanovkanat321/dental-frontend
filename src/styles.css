@@ -173,7 +173,14 @@ button, input, select, textarea { font-family: inherit; }
 .btn.small { min-height: 30px; padding: 0 10px; font-size: .85rem; }
 .link { padding: 0; border: 0; background: none; color: var(--link); font: inherit; cursor: pointer; text-align: left; }
 .payment { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
-.payment-done { font-weight: 700; }
+.payment-done { font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.payment-done .link { font-weight: 500; }
+.payment-debt { font-weight: 600; }
+.payment-history { margin: 0; font-size: .88rem; }
+.price-hints { display: flex; flex-wrap: wrap; gap: 6px; }
+.price-hints .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
+.payment-part, .payment-extra-row { display: grid; gap: 8px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--sunken); }
+.pay-form > .link { justify-self: start; }
 .pay-form, .form { display: grid; gap: 10px; }
 .field { display: grid; gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
 .field > span, .field > legend { font-size: .85rem; color: var(--hint); padding: 0; }
