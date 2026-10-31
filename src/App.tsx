@@ -10,6 +10,7 @@ import { CashPage } from './cash/CashPage'
 import { PatientsPage } from './patients/PatientsPage'
 import { SchedulePage } from './schedule/SchedulePage'
 import { StockPage } from './stock/StockPage'
+import { TeamPage } from './team/TeamPage'
 
 /**
  * CRM для компьютера (ADR 0001 бэкенда): тот же вход, что у сайта, — cookie-сессия после
@@ -49,7 +50,9 @@ export function App() {
           ? <CashPage me={me.data} />
           : page === 'stock'
             ? <StockPage me={me.data} />
-            : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
+            : page === 'team'
+              ? <TeamPage me={me.data} />
+              : <SchedulePage me={me.data} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} />}
     </Shell>
   )
 }

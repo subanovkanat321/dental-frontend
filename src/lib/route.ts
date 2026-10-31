@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 
 /** Разделы CRM. Адрес — во фрагменте (#/patients): /crm/ отдаёт nginx одним index.html. */
-export type Page = 'schedule' | 'patients' | 'cash' | 'stock'
+export type Page = 'schedule' | 'patients' | 'cash' | 'stock' | 'team'
 
-const PAGES: readonly Page[] = ['schedule', 'patients', 'cash', 'stock']
+const PAGES: readonly Page[] = ['schedule', 'patients', 'cash', 'stock', 'team']
 
 function current(): Page {
   const name = window.location.hash.replace(/^#\/?/, '')

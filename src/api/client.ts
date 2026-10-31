@@ -104,3 +104,14 @@ export async function fetchBlob(path: string): Promise<Blob> {
   }
   return response.blob()
 }
+
+/**
+ * Имя бота клиники — для ссылок-приглашений (t.me/<бот>?start=…). /web/config — не часть
+ * REST-контракта /api (его отдаёт вход сайта), поэтому тип — здесь, а не из schema.d.ts.
+ */
+export async function botUsername(): Promise<string | null> {
+  const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
+  if (!response.ok) return null
+  const body = await response.json().catch(() => null) as { botUsername?: string | null } | null
+  return body?.botUsername ?? null
+}
