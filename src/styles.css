@@ -1,0 +1,100 @@
+/* Цвета — как у Mini App (static/app.css бэкенда): одна марка Tish */
+:root {
+  color-scheme: light;
+  --page: #f4fafb;
+  --card: #ffffff;
+  --text: #13303b;
+  --hint: #6f8893;
+  --link: #0c9c90;
+  --separator: #e3eef0;
+  --destructive: #e5484d;
+  --accent: #12a99b;
+  --accent-2: #3cbfdc;
+  --accent-text: #fff;
+  --accent-soft: rgba(18, 169, 155, .10);
+  --status-ok: #15803d;
+  --status-wait: #b45309;
+  --shadow: 0 1px 2px rgba(19, 48, 59, .04), 0 4px 14px rgba(19, 48, 59, .06);
+  --radius: 14px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0e1a1f; --card: #15252c; --text: #e6f1f3; --hint: #8aa3ad; --separator: #23363e;
+    --accent-soft: rgba(18, 169, 155, .18); --status-ok: #4ade80; --status-wait: #fbbf24;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); }
+a { color: var(--link); }
+h1 { font-size: 1.3rem; margin: 0; }
+h2 { font-size: 1.15rem; margin: 0; }
+.hint { color: var(--hint); }
+.small { font-size: .85rem; }
+.error { color: var(--destructive); }
+.tone-ok { color: var(--status-ok); }
+.tone-wait { color: var(--status-wait); }
+.tone-bad { color: var(--destructive); }
+.tone-hint { color: var(--hint); }
+.center { max-width: 420px; margin: 12vh auto; padding: 0 16px; text-align: center; display: grid; gap: 12px; justify-items: center; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 14px;
+  border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text);
+  font: inherit; font-weight: 600; cursor: pointer; text-decoration: none;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { border: 0; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: var(--accent-text); }
+.btn.ghost { border-color: transparent; background: none; }
+
+/* Раскладка: меню слева, рабочая область */
+.shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 4px; padding: 16px 12px; background: var(--card); border-right: 1px solid var(--separator); }
+.brand { display: flex; align-items: center; gap: 8px; font-size: 1.25rem; font-weight: 800; margin-bottom: 8px; }
+.clinic { display: grid; gap: 2px; padding: 8px 6px 14px; border-bottom: 1px solid var(--separator); margin-bottom: 8px; }
+.clinic .hint { font-size: .82rem; }
+.nav { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px; border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; text-decoration: none; }
+.nav:hover:not(:disabled) { background: var(--accent-soft); }
+.nav.active { background: var(--accent-soft); color: var(--link); font-weight: 700; }
+.nav:disabled { color: var(--hint); cursor: default; }
+.nav .soon { margin-left: auto; font-size: .7rem; padding: 1px 6px; border-radius: 99px; background: var(--separator); }
+.link-out { margin-top: auto; color: var(--hint); }
+.workspace { min-width: 0; padding: 16px 20px; }
+
+/* Расписание: колонки врачей, слева часы; карточка — справа */
+.schedule { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.schedule.with-panel { grid-template-columns: 1fr 340px; }
+.schedule-main { min-width: 0; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
+.day-switch { display: flex; gap: 4px; }
+.toolbar input[type=date] { font: inherit; padding: 6px 8px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text); }
+.grid { display: grid; column-gap: 8px; overflow-x: auto; }
+.grid-corner, .grid-head { position: sticky; top: 0; z-index: 3; background: var(--page); }
+.grid-head { padding: 8px 10px; margin-bottom: 6px; border-radius: 10px; background: var(--card); box-shadow: var(--shadow); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grid-times { position: relative; }
+.grid-times span { position: absolute; right: 6px; transform: translateY(-50%); font-size: .75rem; color: var(--hint); }
+.grid-col { position: relative; border-radius: 10px; background: var(--card); box-shadow: var(--shadow); }
+.grid-hour { position: absolute; left: 0; right: 0; border-top: 1px solid var(--separator); }
+.grid-loading { padding: 8px; }
+.appt {
+  position: absolute; left: 4px; right: 4px; display: flex; flex-direction: column; gap: 1px; padding: 3px 8px; overflow: hidden;
+  border: 0; border-radius: 8px; background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--hint);
+  color: var(--text); font: inherit; font-size: .82rem; text-align: left; cursor: pointer;
+}
+.appt.tone-ok { box-shadow: inset 3px 0 0 var(--status-ok); }
+.appt.tone-wait { box-shadow: inset 3px 0 0 var(--status-wait); background: color-mix(in srgb, var(--status-wait) 12%, var(--card)); }
+.appt.tone-bad { box-shadow: inset 3px 0 0 var(--destructive); }
+.appt.active { outline: 2px solid var(--accent); }
+.appt-time { font-weight: 700; }
+.appt-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.appt-state { color: var(--hint); font-size: .75rem; }
+
+.panel { position: sticky; top: 16px; align-self: start; display: grid; gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.panel-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
+.panel section { display: grid; gap: 2px; }
+.patient-name { font-size: 1.1rem; }
+.panel p { margin: 0; }

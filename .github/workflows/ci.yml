@@ -1,0 +1,30 @@
+# Проверки на каждый push и PR: мерж — только при зелёном CI (как в репозитории бэкенда)
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      # ci, а не install: ставит ровно версии из package-lock.json и падает, если lock устарел
+      - run: npm ci
+      - name: Типы API совпадают с контрактом (api/openapi.json)
+        run: |
+          npm run api:types
+          if ! git diff --quiet -- src/api/schema.d.ts; then
+            echo "src/api/schema.d.ts устарел: npm run api:types (или api:sync) и закоммитьте"; exit 1
+          fi
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
