@@ -47,6 +47,8 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth', { params: { path: { patientId: id } } })),
   })
   const forbidden = denied(teeth.error)
+  // «В план лечения» из зуба: номер подставится в новый этап; счётчик — чтобы тот же зуб можно было ещё раз
+  const [planTooth, setPlanTooth] = useState<{ tooth: number; n: number } | null>(null)
 
   return (
     <section className="schedule-main medical">
@@ -59,8 +61,9 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
       ) : (
         <>
           <AnamnesisBlock patientId={id} />
-          <ToothChart patientId={id} teeth={teeth.data} error={teeth.error?.message} />
-          <Plan patientId={id} />
+          <ToothChart patientId={id} teeth={teeth.data} error={teeth.error?.message}
+            onPlan={(tooth) => setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 })} />
+          <Plan patientId={id} prefill={planTooth} />
           <Notes patientId={id} />
           <Files patientId={id} />
         </>
@@ -69,10 +72,12 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
   )
 }
 
-function ToothChart({ patientId, teeth, error }: { patientId: number; teeth?: Tooth[]; error?: string }) {
+function ToothChart({ patientId, teeth, error, onPlan }: { patientId: number; teeth?: Tooth[]; error?: string; onPlan: (tooth: number) => void }) {
   const client = useQueryClient()
   const [open, setOpen] = useState<number | null>(null)
   const byNumber = new Map((teeth ?? []).map((t) => [t.number, t]))
+  // Отмеченные зубы списком — заметки видно сразу, без нажатия на каждый (на телефоне подсказки нет)
+  const marked = (teeth ?? []).filter((t) => t.state !== 'HEALTHY' || t.note).sort((x, y) => (x.number ?? 0) - (y.number ?? 0))
   const counts = (teeth ?? []).reduce<Record<string, number>>((acc, t) => ({ ...acc, [t.state!]: (acc[t.state!] ?? 0) + 1 }), {})
 
   const tooth = (n: number) => {
@@ -101,18 +106,32 @@ function ToothChart({ patientId, teeth, error }: { patientId: number; teeth?: To
       </p>
       {open != null && (
         <ToothEditor key={open} patientId={patientId} number={open} tooth={byNumber.get(open)}
-          onSaved={(fresh) => { client.setQueryData(['teeth', patientId], fresh); setOpen(null) }} onCancel={() => setOpen(null)} />
+          onSaved={(fresh) => { client.setQueryData(['teeth', patientId], fresh); setOpen(null) }} onCancel={() => setOpen(null)}
+          onPlan={() => { onPlan(open); setOpen(null) }} />
+      )}
+      {marked.length > 0 && (
+        <ul className="marked-teeth" aria-label="Отмеченные зубы">
+          {marked.map((t) => (
+            <li key={t.number}>
+              <button type="button" className="row-link" onClick={() => setOpen(t.number!)}>
+                <b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {TOOTH_STATES[t.state ?? 'HEALTHY'][0]}
+              </button>
+              {t.note && <span className="hint"> — {t.note}</span>}
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   )
 }
 
-function ToothEditor({ patientId, number, tooth, onSaved, onCancel }: {
+function ToothEditor({ patientId, number, tooth, onSaved, onCancel, onPlan }: {
   patientId: number
   number: number
   tooth?: Tooth
   onSaved: (teeth: Tooth[]) => void
   onCancel: () => void
+  onPlan: () => void
 }) {
   const [state, setState] = useState<State>(tooth?.state ?? 'HEALTHY')
   const [note, setNote] = useState(tooth?.note ?? '')
@@ -136,20 +155,37 @@ function ToothEditor({ patientId, number, tooth, onSaved, onCancel }: {
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
+        <button type="button" className="btn" onClick={onPlan}>В план лечения</button>
         <button type="button" className="btn" onClick={onCancel}>Отмена</button>
       </div>
     </form>
   )
 }
 
-function Plan({ patientId }: { patientId: number }) {
+type Step = Schemas['TreatmentStepView']
+
+function Plan({ patientId, prefill }: { patientId: number; prefill: { tooth: number; n: number } | null }) {
   const client = useQueryClient()
   const plan = useQuery({
     queryKey: ['plan', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan', { params: { path: { patientId } } })),
   })
   const [form, setForm] = useState({ tooth: '', title: '', price: '' })
-  const saved = (steps: Schemas['TreatmentStepView'][]) => client.setQueryData(['plan', patientId], steps)
+  const [editing, setEditing] = useState<number | null>(null)
+  const title = useRef<HTMLInputElement>(null)
+  // Пришёл зуб из карты — подставить в новый этап (состояние меняем при отрисовке, без эффекта)
+  const [applied, setApplied] = useState(prefill)
+  if (prefill !== applied) {
+    setApplied(prefill)
+    if (prefill) setForm((f) => ({ ...f, tooth: String(prefill.tooth) }))
+  }
+  useEffect(() => {
+    if (prefill) {
+      title.current?.scrollIntoView?.({ block: 'center' })
+      title.current?.focus()
+    }
+  }, [prefill])
+  const saved = (steps: Step[]) => client.setQueryData(['plan', patientId], steps)
 
   const add = useMutation<Schemas['TreatmentStepView'][], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/patients/{patientId}/plan', {
@@ -188,12 +224,19 @@ function Plan({ patientId }: { patientId: number }) {
         <ul className="plan" aria-label="Этапы лечения">
           {steps.map((s) => (
             <li key={s.id} className={s.doneAt ? 'done' : undefined}>
-              <label className="check">
-                <input type="checkbox" checked={Boolean(s.doneAt)} disabled={toggle.isPending} onChange={() => toggle.mutate(s)}
-                  aria-label={`Сделано: ${s.title}`} />
-                <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}</span>
-              </label>
-              <span className="nowrap">{s.priceSom != null ? somText(s.priceSom) : ''}</span>
+              {editing === s.id ? (
+                <StepEdit patientId={patientId} step={s} onDone={(steps) => { if (steps) saved(steps); setEditing(null) }} />
+              ) : (
+                <>
+                  <label className="check">
+                    <input type="checkbox" checked={Boolean(s.doneAt)} disabled={toggle.isPending} onChange={() => toggle.mutate(s)}
+                      aria-label={`Сделано: ${s.title}`} />
+                    <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}</span>
+                  </label>
+                  <span className="nowrap">{s.priceSom != null ? somText(s.priceSom) : ''}</span>
+                  <button type="button" className="btn ghost small" aria-label={`Изменить этап: ${s.title}`} onClick={() => setEditing(s.id!)}>✏️</button>
+                </>
+              )}
               <button type="button" className="btn ghost small" aria-label={`Удалить этап: ${s.title}`}
                 onClick={() => window.confirm(`Удалить этап «${s.title}»?`) && remove.mutate(s.id!)}>✕</button>
             </li>
@@ -203,13 +246,35 @@ function Plan({ patientId }: { patientId: number }) {
       {plan.isSuccess && steps.length === 0 && <p className="hint">Плана пока нет — добавьте первый этап.</p>}
       <form className="plan-add" aria-label="Новый этап" onSubmit={submit}>
         <input aria-label="Зуб" placeholder="Зуб" inputMode="numeric" value={form.tooth} onChange={(e) => setForm({ ...form, tooth: e.target.value })} />
-        <input aria-label="Что сделать" placeholder="Что сделать: пломба, чистка…" value={form.title} maxLength={200}
+        <input ref={title} aria-label="Что сделать" placeholder="Что сделать: пломба, чистка…" value={form.title} maxLength={200}
           onChange={(e) => setForm({ ...form, title: e.target.value })} />
         <input aria-label="Цена, сом" placeholder="Цена" type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
         <button type="submit" className="btn" disabled={add.isPending || !form.title.trim()}>＋ Этап</button>
       </form>
       {error && <p className="error" role="alert">{Object.values(error.fieldErrors)[0] ?? error.message}</p>}
     </section>
+  )
+}
+
+/** Правка этапа: зуб, что сделать и цена; отметка «сделано» остаётся как была. */
+function StepEdit({ patientId, step, onDone }: { patientId: number; step: Step; onDone: (steps?: Step[]) => void }) {
+  const [f, setF] = useState({ tooth: step.tooth != null ? String(step.tooth) : '', title: step.title ?? '', price: step.priceSom != null ? String(step.priceSom) : '' })
+  const save = useMutation<Step[], ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/patients/{patientId}/plan/{stepId}', {
+      params: { path: { patientId, stepId: step.id! } },
+      body: { tooth: f.tooth ? Number(f.tooth) : undefined, title: f.title.trim(), priceSom: f.price ? Number(f.price) : undefined, done: Boolean(step.doneAt) },
+    })),
+    onSuccess: (steps) => onDone(steps),
+  })
+  return (
+    <form className="plan-add step-edit" aria-label={`Этап: ${step.title}`} onSubmit={(e) => { e.preventDefault(); if (f.title.trim()) save.mutate() }}>
+      <input aria-label="Зуб этапа" placeholder="Зуб" inputMode="numeric" value={f.tooth} onChange={(e) => setF({ ...f, tooth: e.target.value })} />
+      <input aria-label="Что сделать на этапе" value={f.title} maxLength={200} autoFocus onChange={(e) => setF({ ...f, title: e.target.value })} />
+      <input aria-label="Цена этапа, сом" placeholder="Цена" type="number" min={0} value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} />
+      <button type="submit" className="btn primary" disabled={save.isPending || !f.title.trim()}>Сохранить</button>
+      <button type="button" className="btn ghost" onClick={() => onDone()}>Отмена</button>
+      {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}
+    </form>
   )
 }
 
@@ -327,7 +392,12 @@ function Files({ patientId }: { patientId: number }) {
         <input aria-label="Подпись" placeholder="Подпись — необязательно" maxLength={200} value={caption} onChange={(e) => setCaption(e.target.value)} />
         <input aria-label="Дата снимка" type="date" value={takenOn} max={todayIn()} onChange={(e) => setTakenOn(e.target.value)} />
         <label className="btn primary">
-          ＋ Загрузить с компьютера
+          📷 Сфотографировать
+          <input type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Сфотографировать снимок"
+            onChange={(e) => e.target.files?.length && void send([...e.target.files])} />
+        </label>
+        <label className="btn">
+          ＋ Выбрать файлы
           <input ref={input} type="file" accept="image/*" multiple className="sr-only" aria-label="Файлы снимков"
             onChange={(e) => e.target.files?.length && void send([...e.target.files])} />
         </label>

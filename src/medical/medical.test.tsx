@@ -44,9 +44,12 @@ function backend(options: { forbidden?: boolean } = {}) {
       plan = [...plan, { ...body, id: 2 }]
       return HttpResponse.json(plan)
     }),
-    http.put('*/api/patients/2/plan/:id', async ({ request }) => {
-      const body = (await request.json()) as { done: boolean }
-      plan = plan.map((s) => ({ ...s, doneAt: body.done ? '2026-10-31T05:00:00Z' : undefined }))
+    http.put('*/api/patients/2/plan/:id', async ({ request, params }) => {
+      const body = (await request.json()) as { done: boolean; title?: string; tooth?: number; priceSom?: number }
+      sent.push({ step: Number(params.id), ...body })
+      plan = plan.map((s) => (s.id === Number(params.id)
+        ? { ...s, title: body.title ?? s.title, tooth: body.tooth, priceSom: body.priceSom, doneAt: body.done ? '2026-10-31T05:00:00Z' : undefined }
+        : s))
       return HttpResponse.json(plan)
     }),
     http.get('*/api/patients/2/notes', () => HttpResponse.json([{ appointmentId: 5, startAt: '2026-10-20T05:00:00Z', note: 'Жалобы на холодное', doctorName: 'Айгерим Садыкова' }])),
@@ -100,4 +103,28 @@ test('не свой пациент — 403: замок с текстом сер�
   await openMedical()
   expect(await screen.findByText(/Медкарту видят врач пациента и администратор/)).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: 'Верхняя челюсть' })).not.toBeInTheDocument()
+})
+
+test('отмеченные зубы списком; зуб → «В план лечения» подставляет номер; этап можно изменить', async () => {
+  const sent = backend()
+  await openMedical()
+  const marked = await screen.findByRole('list', { name: 'Отмеченные зубы' })
+  expect(marked).toHaveTextContent(/16.*Кариес.*глубокий/)
+
+  await userEvent.click(screen.getByRole('button', { name: 'Зуб 16: Кариес, есть заметка' }))
+  await userEvent.click(within(screen.getByRole('form', { name: 'Зуб 16' })).getByRole('button', { name: 'В план лечения' }))
+  const add = screen.getByRole('form', { name: 'Новый этап' })
+  expect(within(add).getByLabelText('Зуб')).toHaveValue('16')
+  expect(within(add).getByLabelText('Что сделать')).toHaveFocus()
+
+  const plan = screen.getByRole('list', { name: 'Этапы лечения' })
+  await userEvent.click(within(plan).getByRole('button', { name: 'Изменить этап: Пломба' }))
+  const edit = within(plan).getByRole('form', { name: 'Этап: Пломба' })
+  await userEvent.clear(within(edit).getByLabelText('Что сделать на этапе'))
+  await userEvent.type(within(edit).getByLabelText('Что сделать на этапе'), 'Пломба композит')
+  await userEvent.clear(within(edit).getByLabelText('Цена этапа, сом'))
+  await userEvent.type(within(edit).getByLabelText('Цена этапа, сом'), '3500')
+  await userEvent.click(within(edit).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(plan).findByText('Пломба композит')).toBeInTheDocument()
+  expect(sent).toContainEqual({ step: 1, tooth: 16, title: 'Пломба композит', priceSom: 3500, done: false })
 })

@@ -615,3 +615,5 @@ fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
 .crash { display: grid; gap: 10px; max-width: 520px; }
 .duration-custom { display: flex; align-items: center; gap: 8px; }
 .duration-custom input { width: 90px; }
+.marked-teeth { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: .92rem; }
+.step-edit { flex-wrap: wrap; width: 100%; }
