@@ -30,6 +30,8 @@
   --bad-bg: #FFD0D0; --bad-ink: #A11F1F;
   --done-bg: #E6ECED; --done-ink: #4D6268;
   --cash-bg: #FFD7B5; --cash-ink: #8A3605;
+  /* «Не напомнили» и прочее тихое: заливка светлее/темнее поля, чтобы блок не сливался с сеткой */
+  --quiet-bg: #E9EFEF;
   --shadow: 0 1px 2px rgba(15, 42, 48, .06), 0 2px 8px rgba(15, 42, 48, .05);
   --panel-shadow: -8px 0 24px rgba(15, 42, 48, .08);
   --radius: 10px;
@@ -52,7 +54,7 @@
   --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #081215; --rail-text: #93AAB0;
   --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
   --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
-  --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A;
+  --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A; --quiet-bg: #1F343A;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3); --panel-shadow: -8px 0 24px rgba(0, 0, 0, .35);
 }
 @media (prefers-color-scheme: dark) {
@@ -64,7 +66,7 @@
     --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #081215; --rail-text: #93AAB0;
     --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
     --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
-    --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A;
+    --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A; --quiet-bg: #1F343A;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3); --panel-shadow: -8px 0 24px rgba(0, 0, 0, .35);
   }
 }
@@ -110,7 +112,7 @@ button, input, select, textarea { font-family: inherit; }
 .s-done { background: var(--done-bg); color: var(--done-ink); }
 .s-cashier { background: var(--cash-bg); color: var(--cash-ink); }
 .s-bad { background: var(--bad-bg); color: var(--bad-ink); }
-.s-quiet { background: var(--sunken); color: var(--hint); }
+.s-quiet { background: var(--quiet-bg); color: var(--hint); }
 
 /* Раскладка: меню слева, рабочая область */
 .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
