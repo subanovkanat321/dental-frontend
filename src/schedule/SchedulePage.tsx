@@ -341,7 +341,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
       </section>
-      {selected && <AppointmentPanel appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
+      {/* key: другой приём — новая карточка, формы и «Вернуть» прежнего не переносятся */}
+      {selected && <AppointmentPanel key={selected.id} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
         onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />}
       {side?.kind === 'new' && (
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} walkIn={side.walkIn} onClose={close}

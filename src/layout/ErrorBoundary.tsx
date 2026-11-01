@@ -1,0 +1,52 @@
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+
+const RELOADED = 'crm.reloadedForUpdate'
+
+/** Куска кода старой версии больше нет на сервере (обновили, пока вкладка была открыта). */
+function isStaleChunk(error: unknown): boolean {
+  const text = error instanceof Error ? `${error.name} ${error.message}` : String(error)
+  return /dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i.test(text)
+}
+
+/**
+ * Предохранитель раздела: если экран упал, вместо белого экрана — «Что-то пошло не так» и
+ * «Обновить», остальное приложение работает. Вышла новая версия, а вкладка старая — один раз
+ * перезагружаемся сами: врач получит новую версию, не заметив обновления.
+ */
+export class ErrorBoundary extends Component<{ children: ReactNode }, { error: unknown }> {
+  state = { error: null as unknown }
+
+  static getDerivedStateFromError(error: unknown) {
+    return { error }
+  }
+
+  componentDidCatch(error: unknown, info: ErrorInfo) {
+    if (isStaleChunk(error)) {
+      let already = false
+      try {
+        already = sessionStorage.getItem(RELOADED) === '1'
+        sessionStorage.setItem(RELOADED, '1')
+      } catch {
+        // приватный режим — перезагрузимся один раз без отметки
+      }
+      if (!already) window.location.reload()
+      return
+    }
+    // Без данных пациентов: только текст ошибки и где она случилась
+    console.error('Экран упал:', error instanceof Error ? error.message : error, info.componentStack?.split('\n')[1]?.trim())
+  }
+
+  render() {
+    if (this.state.error == null) return this.props.children
+    return (
+      <div className="card-block crash" role="alert">
+        <h2>😕 Что-то пошло не так</h2>
+        <p className="hint">Этот экран не открылся. Данные не потеряны — обновите приложение. Если повторится, напишите в «Настройки → Техподдержка».</p>
+        <div className="actions">
+          <button type="button" className="btn primary" onClick={() => window.location.reload()}>Обновить</button>
+          <button type="button" className="btn" onClick={() => this.setState({ error: null })}>Попробовать ещё раз</button>
+        </div>
+      </div>
+    )
+  }
+}

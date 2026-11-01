@@ -126,6 +126,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     onSuccess: (a) => {
       void client.invalidateQueries({ queryKey: ['appointments'] })
       void client.invalidateQueries({ queryKey: ['slots'] })
+      void client.invalidateQueries({ queryKey: ['counts'] })
       if (wantsEarlier) void client.invalidateQueries({ queryKey: ['waitlist'] })
       onCreated(a)
     },

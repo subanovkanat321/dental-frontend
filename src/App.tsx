@@ -6,6 +6,7 @@ import { lazy, Suspense, useState } from 'react'
 import type { Schemas } from './api/client'
 import { Login } from './layout/Login'
 import { Shell } from './layout/Shell'
+import { ErrorBoundary } from './layout/ErrorBoundary'
 import { readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
 import { usePage, type Page } from './lib/route'
 import { telegram } from './lib/telegram'
@@ -75,7 +76,7 @@ export function App() {
     return <div className="center error">Нет связи с сервером: {me.error.message}</div>
   }
   if (!me.data.doctor && !me.data.platform && telegram()) {
-    return <Suspense fallback={<div className="center hint">Загрузка…</div>}><PatientApp me={me.data} /></Suspense>
+    return <ErrorBoundary><Suspense fallback={<div className="center hint">Загрузка…</div>}><PatientApp me={me.data} /></Suspense></ErrorBoundary>
   }
   if (!me.data.doctor && !me.data.platform) {
     return (
@@ -89,6 +90,8 @@ export function App() {
   const shown = me.data.doctor ? page : 'platform'
   return (
     <Shell me={me.data} page={shown} onNavigate={go}>
+      {/* Предохранитель на раздел: упал один экран — остальное работает; ключ — раздел, ушли и вернулись — заново */}
+      <ErrorBoundary key={shown}>
       <Suspense fallback={<p className="hint">Загрузка…</p>}>
       {shown === 'patients' && <PatientsPage me={me.data} initialPatient={link?.patientId} onOpenAppointment={openAppointment} onBook={(p) => { setBooking(p); go('schedule') }} />}
       {shown === 'cash' && <CashPage me={me.data} initialTab={link?.tab} onOpenPatient={openPatient} />}
@@ -99,6 +102,7 @@ export function App() {
         ? <LinkedSchedule key={link.appointmentId ?? link.bookPatientId} link={link} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
         : <SchedulePage me={me.data} initialDate={link?.date} initialDoctor={link?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} onOpenPatient={openPatient} />)}
       </Suspense>
+      </ErrorBoundary>
     </Shell>
   )
 }

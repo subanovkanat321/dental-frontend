@@ -169,3 +169,15 @@ test('новый пациент с номером, который уже ест�
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айжан Б.')
   expect(created.patientId).toBe(8)
 })
+
+test('открыли «Перенести» у одного приёма и нажали другой — карточка другого, без формы и данных прежнего', async () => {
+  backend([appointment(10, 1, '10:00', 'Бакыт М.'), appointment(11, 1, '14:00', 'Нурлан К.')])
+  renderApp()
+  const first = await open(/Бакыт М\./)
+  await userEvent.click(within(first).getByRole('button', { name: 'Перенести или передать врачу' }))
+  expect(within(first).getByRole('form', { name: 'Перенос записи' })).toBeInTheDocument()
+
+  const second = await open(/Нурлан К\./)
+  expect(second).toHaveTextContent('14:00')
+  expect(within(second).queryByRole('form', { name: 'Перенос записи' })).not.toBeInTheDocument()
+})

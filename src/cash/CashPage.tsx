@@ -270,5 +270,5 @@ function OpenedAppointment({ id, me, onClose, onOpenPatient }: { id: number; me:
   })
   if (a.isPending) return <aside className="panel" aria-label="Карточка приёма"><p className="hint">Загрузка…</p></aside>
   if (a.error) return <aside className="panel" aria-label="Карточка приёма"><p className="error">{a.error.message}</p></aside>
-  return <AppointmentPanel appointment={a.data} me={me} onClose={onClose} onOpenPatient={onOpenPatient} />
+  return <AppointmentPanel key={a.data.id} appointment={a.data} me={me} onClose={onClose} onOpenPatient={onOpenPatient} />
 }

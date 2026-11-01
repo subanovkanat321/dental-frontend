@@ -25,6 +25,7 @@ import '@fontsource/jetbrains-mono/cyrillic-600.css'
 import '@fontsource/jetbrains-mono/latin-600.css'
 
 import { App } from './App'
+import { ErrorBoundary } from './layout/ErrorBoundary'
 import { startTelegram, telegram } from './lib/telegram'
 import { startButtonIcons } from './lib/buttonIcons'
 import { applyLook } from './lib/theme'
@@ -46,10 +47,21 @@ window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change',
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
     </QueryClientProvider>
   </StrictMode>,
 )
 
 // Эмодзи у кнопок по подписи — как в прежнем приложении
 startButtonIcons()
+
+// Перезагрузка «вышла новая версия» — одна; проработали минуту без сбоев — снова разрешена
+setTimeout(() => {
+  try {
+    sessionStorage.removeItem('crm.reloadedForUpdate')
+  } catch {
+    // нет хранилища
+  }
+}, 60_000)

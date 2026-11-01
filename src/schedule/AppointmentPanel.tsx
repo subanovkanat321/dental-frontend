@@ -67,7 +67,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const remove = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.DELETE('/api/appointments/{id}', { params: { path: { id: a.id! } } })),
     onSuccess: () => {
-      void client.invalidateQueries({ queryKey: ['appointments'] })
+      for (const key of ['appointments', 'slots', 'counts', 'patient-card']) void client.invalidateQueries({ queryKey: [key] })
       onClose()
     },
   })

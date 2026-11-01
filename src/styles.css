@@ -612,3 +612,4 @@ fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
 .profile-text { flex: 1 1 180px; display: grid; gap: 2px; }
 .profile-text strong { font-size: 1.15rem; font-family: var(--display); }
 .profile-about { font-size: .92rem; }
+.crash { display: grid; gap: 10px; max-width: 520px; }

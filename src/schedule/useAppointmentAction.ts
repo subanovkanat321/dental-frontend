@@ -66,12 +66,16 @@ export function useAppointmentAction(a: Appointment) {
         day?.map((x) => (x.id === updated.id ? updated : x)))
       client.setQueryData(['appointment', updated.id], updated)
       // Оплата и статус меняют и «Кассу», и карточку пациента — перечитать всё, что на экране
-      for (const key of ['appointments', 'to-pay', 'debts', 'revenue', 'patient-card']) {
+      // Перенос и отмена освобождают и занимают время — свободные окна и счётчики дней тоже
+      for (const key of ['appointments', 'to-pay', 'debts', 'revenue', 'patient-card', 'slots', 'counts']) {
         void client.invalidateQueries({ queryKey: [key] })
       }
     },
     onError: (error) => {
-      if (error.status === 409) void client.invalidateQueries({ queryKey: ['appointments'] })
+      if (error.status === 409) {
+        void client.invalidateQueries({ queryKey: ['appointments'] })
+        void client.invalidateQueries({ queryKey: ['slots'] })
+      }
     },
   })
 }

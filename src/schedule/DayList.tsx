@@ -64,6 +64,8 @@ export function DayList({ me, doctorId, date, onDate, onOpen, onNew, selectedId 
   const slots = useQuery({
     queryKey: ['slots', date, doctorId],
     queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId } } })),
+    // Окна меняются вместе с приёмами (запись из бота, коллега с компьютера) — обновлять так же
+    refetchInterval: 60_000,
   })
   const waitlist = useWaitlist()
   const seesMoney = (Boolean(me.admin) && !me.clinic?.independentDoctors) || doctorId === me.doctorId
