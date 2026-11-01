@@ -557,6 +557,7 @@ details.agreement-box { max-height: none; }
 .day-list .rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .day-list .row { display: flex; align-items: stretch; gap: 6px; border-radius: 12px; background: var(--card); border: 1px solid var(--separator); border-left: 4px solid var(--line-strong); }
 .day-list .row.s-request { border-left-color: var(--req-ink); }
+.day-list .row.s-request .state { color: var(--req-ink); }
 .day-list .row.s-ok, .day-list .row.s-done { border-left-color: var(--ok-ink); }
 .day-list .row.s-wait, .day-list .row.s-cashier { border-left-color: var(--wait-ink); }
 .day-list .row.s-bad { border-left-color: var(--bad-ink); }
