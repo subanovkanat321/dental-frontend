@@ -223,7 +223,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .field { display: grid; gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
 .field > span, .field > legend { font-size: .85rem; color: var(--hint); padding: 0; }
 .field input, .field select, .field textarea, .phone {
-  width: 100%; font: inherit; padding: 7px 10px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text);
+  width: 100%; font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text);
 }
 .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -245,7 +245,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .panel { max-height: calc(100vh - 32px); overflow: auto; }
 
 /* Пациенты: таблица и карточка */
-.search { min-width: 280px; font: inherit; padding: 7px 12px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text); }
+.search { min-width: 280px; font: inherit; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
 .table th, .table td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--separator); }
 .table th { font-size: .82rem; color: var(--hint); font-weight: 600; background: var(--card); position: sticky; top: 0; }
@@ -264,7 +264,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 
 /* Касса */
 .cash { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; }
-.cash .toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text); }
+.cash .toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .card-block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .card-block h2 { font-size: 1.05rem; }
 .card-block .table { box-shadow: none; }
@@ -282,7 +282,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 
 /* Склад */
 .toolbar .check { white-space: nowrap; }
-.toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text); }
+.toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .empty { display: grid; gap: 10px; justify-items: start; padding: 20px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .empty p { margin: 0; }
 .stock-big { font-size: 1.15rem; font-weight: 800; }
@@ -355,7 +355,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .plan li { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--separator); }
 .plan li.done span { text-decoration: line-through; color: var(--hint); }
 .plan-add { display: grid; grid-template-columns: 70px 1fr 110px auto; gap: 8px; }
-.plan-add input, .upload input:not([type=file]) { font: inherit; padding: 7px 10px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text); min-width: 0; }
+.plan-add input, .upload input:not([type=file]) { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); min-width: 0; }
 .notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .notes p { margin: 2px 0 0; white-space: pre-wrap; }
 .files { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
