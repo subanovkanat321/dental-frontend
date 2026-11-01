@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Mous
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { openSettings, type Page } from '../lib/route'
+import { telegram } from '../lib/telegram'
+import { MainButton } from '../lib/MainButton'
 import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
@@ -104,6 +106,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   // не личные данные). По умолчанию на телефоне — свой врач, на компьютере — все
   const [view, setViewState] = useState<number | 'all'>(() => {
     if (initialDoctor && doctors.some((d) => d.id === initialDoctor)) return initialDoctor
+    // Телефон — как в прежнем приложении: каждый раз открывается свой день
+    if (isNarrow() && doctors.some((d) => d.id === me.doctorId)) return me.doctorId!
     try {
       const saved = localStorage.getItem('crm.schedule.view')
       if (saved === 'all') return 'all'
@@ -125,6 +129,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   }
   const shown = view === 'all' ? doctors : doctors.filter((d) => d.id === view)
   const narrow = useNarrow()
+  const inTelegram = Boolean(telegram()?.MainButton)
   // Один врач на телефоне — «День» списком (лента дней, свободные окна, «Принять сейчас»)
   // Телефон — всегда «День» списком (как в прежнем приложении): один врач или «Все врачи» вместе
   const dayList = narrow && shown.length > 0 ? shown : null
@@ -245,6 +250,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               <h1>{dayTitle(date)}</h1>
               <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
             </label>
+            {date !== today && <button type="button" className="btn small push" onClick={() => setDate(today)}>Сегодня</button>}
           </header>
         ) : (
           <header className="toolbar">
@@ -268,50 +274,56 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </header>
         )}
 
-        <div className="today-strip" role="group" aria-label="Требует внимания">
-          {requests.length > 0 && (
-            <button type="button" className="stat s-request" onClick={firstOf(requests)}>
-              <b>{requests.length}</b> {requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить
-            </button>
-          )}
-          {waiting.length > 0 && (
-            <button type="button" className="stat s-wait" onClick={firstOf(waiting)}>
-              <b>{waiting.length}</b> ждём ответа на напоминание
-            </button>
-          )}
-          {(toPay.data?.length ?? 0) > 0 && (
-            <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}>
-              <b>{toPay.data!.length}</b> ждут оплаты на кассе
-            </button>
-          )}
-          {revenue.data && !dayList && (
-            <button type="button" className="stat s-quiet" onClick={() => onNavigate?.('cash')}>
-              <b>{somText(revenue.data.totalSom ?? 0).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
-            </button>
-          )}
-          {low > 0 && (
-            <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}>
-              <b>{low}</b> на складе заканчивается
-            </button>
-          )}
-          {!dayList && !requests.length && !waiting.length && !toPay.data?.length && !low && (
-            <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>
-          )}
-        </div>
-
-        {doctors.length > 1 && (
-          <div className="segments tabs doctor-switch" role="group" aria-label="Чьё расписание">
-            <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все врачи</button>
-            {doctors.map((d) => (
-              <button key={d.id} type="button" aria-pressed={view === d.id} onClick={() => setView(d.id!)}>
-                {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
+        {!dayList && (
+          <div className="today-strip" role="group" aria-label="Требует внимания">
+            {requests.length > 0 && (
+              <button type="button" className="stat s-request" onClick={firstOf(requests)}>
+                <b>{requests.length}</b> {requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить
               </button>
-            ))}
+            )}
+            {waiting.length > 0 && (
+              <button type="button" className="stat s-wait" onClick={firstOf(waiting)}>
+                <b>{waiting.length}</b> ждём ответа на напоминание
+              </button>
+            )}
+            {(toPay.data?.length ?? 0) > 0 && (
+              <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}>
+                <b>{toPay.data!.length}</b> ждут оплаты на кассе
+              </button>
+            )}
+            {revenue.data && (
+              <button type="button" className="stat s-quiet" onClick={() => onNavigate?.('cash')}>
+                <b>{somText(revenue.data.totalSom ?? 0).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
+              </button>
+            )}
+            {low > 0 && (
+              <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}>
+                <b>{low}</b> на складе заканчивается
+              </button>
+            )}
+            {!requests.length && !waiting.length && !toPay.data?.length && !low && (
+              <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>
+            )}
           </div>
         )}
 
+        {doctors.length > 1 && (
+          <div className="segments tabs doctor-switch" role="group" aria-label="Чьё расписание">
+            {!narrow && <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все врачи</button>}
+            {doctors.map((d) => (
+              <button key={d.id} type="button" aria-pressed={view === d.id} onClick={() => setView(d.id!)}>
+                {narrow ? (d.fullName ?? '').trim().split(/\s+/)[0] : d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
+              </button>
+            ))}
+            {/* Телефон, как в прежнем приложении: сначала врачи, «Все» — последней */}
+            {narrow && <button type="button" aria-label="Все врачи" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все</button>}
+          </div>
+        )}
+
+        {/* В Telegram «Новая запись» — его синяя кнопка внизу, как в прежнем приложении */}
+        {dayList && inTelegram && !side && <MainButton text="Новая запись" onClick={newHere} />}
         {dayList ? (
-          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id} onNewHere={newHere}
+          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id} onNewHere={inTelegram ? undefined : newHere}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />
         ) : doctors.length === 0 ? (

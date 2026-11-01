@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-import { telegram } from '../lib/telegram'
+import { telegram } from './telegram'
 
 /**
  * Главная кнопка экрана: в Telegram — его MainButton внизу (как в приложении), в браузере и

@@ -560,7 +560,7 @@ details.agreement-box { max-height: none; }
 .strip-day .badge.requested { background: var(--req-bg); color: var(--req-ink); }
 .day-actions { display: flex; gap: 8px; }
 .day-actions .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
-.day-actions .btn.walk-in { flex: 0 1 auto; padding: 0 14px; }
+.day-actions .btn.primary + .btn.walk-in { flex: 0 1 auto; padding: 0 14px; }
 /* Телефон: заголовок дня — он же кнопка календаря (поле даты прозрачное поверх) */
 .day-title.pick { position: relative; cursor: pointer; }
 .day-title.pick h1::after { content: " ▾"; color: var(--hint); font-size: .8em; }

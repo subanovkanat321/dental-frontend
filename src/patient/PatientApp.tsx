@@ -7,7 +7,7 @@ import { formatPhone, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
 import { haptic, openLink, telegram } from '../lib/telegram'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { launchSearch } from '../lib/deepLink'
-import { BackButton, MainButton } from './MainButton'
+import { BackButton, MainButton } from '../lib/MainButton'
 import { bookingDays, breakNote, initials, normalizeLang, priceText, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
 import './patient.css'
 

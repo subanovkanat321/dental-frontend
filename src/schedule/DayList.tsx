@@ -147,7 +147,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
         {onNewHere && <button type="button" className="btn primary" onClick={onNewHere}>＋ Новая запись</button>}
         {date === today && walkInDoctor && (
           <button type="button" className="btn walk-in" aria-label="Принять сейчас (без записи)"
-            onClick={() => onNew(walkInDoctor.id, minutesOf(new Date().toISOString()), true)}>⚡ Без записи</button>
+            onClick={() => onNew(walkInDoctor.id, minutesOf(new Date().toISOString()), true)}>{onNewHere ? '⚡ Без записи' : '🚶 Принять сейчас (без записи)'}</button>
         )}
       </div>
       {note && <p className="hint day-note">{note}</p>}

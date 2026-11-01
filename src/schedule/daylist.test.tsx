@@ -42,8 +42,11 @@ test('телефон, «Все врачи» — список: приёмы об�
   backend()
   localStorage.setItem('crm.schedule.view', 'all')
   renderApp()
+  // Как в прежнем приложении: открывается свой день, даже если в прошлый раз смотрели всех
   expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /12:00–12:30, Нурлан К\./ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /12:00–12:30, Нурлан К\./ })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Все врачи' }))
+  expect(await screen.findByRole('button', { name: /12:00–12:30, Нурлан К\./ })).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: 'Дастан Т.' })).not.toBeInTheDocument() // не сетка
   // Верх на телефоне — без повторов: дни листают лентой, одна «Новая запись» рядом с «Без записи»
   expect(screen.queryByRole('button', { name: 'Предыдущий день' })).not.toBeInTheDocument()
@@ -68,4 +71,21 @@ test('телефон, один врач — только его приёмы и 
   expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /12:00–12:30, Нурлан К\./ })).not.toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Свободно с 13:00 до 15:00, записать/ })).toBeInTheDocument()
+})
+
+test('телефон в Telegram — «Новая запись» синей кнопкой Telegram внизу, а не в ряду', async () => {
+  backend()
+  const texts: string[] = []
+  let click = () => {}
+  vi.stubGlobal('Telegram', { WebApp: { initData: 'query_id=test', ready() {}, expand() {}, MainButton: {
+    setText: (t: string) => texts.push(t), show() {}, hide() {}, enable() {}, disable() {}, showProgress() {}, hideProgress() {},
+    onClick: (cb: () => void) => { click = cb }, offClick() {},
+  } } })
+  renderApp()
+  expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
+  expect(texts).toContain('Новая запись')
+  expect(screen.queryByRole('button', { name: '＋ Новая запись' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Принять сейчас (без записи)' })).toHaveTextContent('Принять сейчас (без записи)')
+  click()
+  expect(await screen.findByRole('complementary', { name: 'Новая запись' })).toBeInTheDocument()
 })
