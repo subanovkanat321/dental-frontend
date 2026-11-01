@@ -19,11 +19,12 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   // Вымышленные врачи; сервер считает сам, тест только отвечает тем, что сервер бы вернул
   let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0 }
   const aigerim: Row = { doctorId: 1, doctor: 'Айгерим Садыкова', percent: 40, baseSom: 0, revenueSom: 20000, dueSom: 8000, paidSom: 8000 }
+  const asel: Row = { assistantId: 7201, doctor: 'Асель', percent: 10, baseSom: 5000, revenueSom: 70000, dueSom: 12000, paidSom: 0 }
   const sent: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments/debts', () => HttpResponse.json([])),
-    http.get('*/api/salaries', () => HttpResponse.json([aigerim, dastan])),
+    http.get('*/api/salaries', () => HttpResponse.json([aigerim, dastan, asel])),
     http.put('*/api/salaries/2', async ({ request }) => {
       sent.push(await request.json())
       dastan = { ...dastan, percent: 30, baseSom: 10000, dueSom: 25000 }
@@ -50,7 +51,12 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   await user.type(within(card).getByLabelText('Оклад в месяц, сом'), '10000')
   await user.click(within(card).getByRole('button', { name: 'Сохранить' }))
   expect(await within(card).findByText('30% от выручки + оклад 10 000 сом')).toBeInTheDocument()
-  expect(screen.getByLabelText('Осталось выплатить')).toHaveTextContent(/25\s000 сом/)
+  expect(screen.getByLabelText('Осталось выплатить')).toHaveTextContent(/37\s000 сом/)
+  // Ассистент — процент от выручки его врачей
+  const aselCard = screen.getByRole('region', { name: 'Зарплата: Асель' })
+  expect(aselCard).toHaveTextContent('· ассистент')
+  expect(aselCard).toHaveTextContent('10% от выручки его врачей + оклад 5 000 сом')
+  expect(aselCard).toHaveTextContent('Выручка врачей')
 
   await user.click(within(card).getByRole('button', { name: /Выплатить 25\s000 сом/ }))
   expect(within(card).getByLabelText('Сумма выплаты, сом')).toHaveValue('25000')

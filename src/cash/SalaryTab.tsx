@@ -17,7 +17,8 @@ function previousMonth(today = todayIn()): string {
 
 function termsText(r: Row): string {
   const percent = Number(r.percent ?? 0)
-  const parts = [percent ? `${String(percent).replace('.', ',')}% от выручки` : '', r.baseSom ? `оклад ${somText(r.baseSom)}` : '']
+  const of = r.assistantId != null ? 'от выручки его врачей' : 'от выручки'
+  const parts = [percent ? `${String(percent).replace('.', ',')}% ${of}` : '', r.baseSom ? `оклад ${somText(r.baseSom)}` : '']
   return parts.filter(Boolean).join(' + ') || 'Условия не заданы'
 }
 
@@ -26,7 +27,8 @@ function errorText(e: ApiError | null): string | null {
 }
 
 /**
- * «Касса → Зарплата»: к выплате врачу за месяц = оклад + процент от его выручки. Админ задаёт
+ * «Касса → Зарплата»: к выплате врачу за месяц = оклад + процент от его выручки, ассистенту — от
+ * выручки его врачей. Админ задаёт
  * условия и отмечает выплату (она же расход «Зарплата» — прибыль её учтёт); врач видит свою строку.
  * Считает сервер — здесь только показываем и отправляем.
  */
@@ -47,13 +49,14 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
         </div>
         <input type="month" aria-label="Месяц зарплаты" value={month} max={todayIn().slice(0, 7)} onChange={(e) => e.target.value && setMonth(e.target.value)} />
       </div>
-      <p className="hint">Зарплата за {monthTitle(month)}: оклад + процент от выручки врача (оплаты пациентов за его приёмы в этом месяце).</p>
+      <p className="hint">Зарплата за {monthTitle(month)}: оклад + процент от выручки врача (оплаты пациентов за его приёмы в этом месяце);
+        ассистенту — от выручки врачей, которым он помогает.</p>
       {list.isPending ? <p className="hint">Загрузка…</p>
         : list.error ? <p className="error">{list.error.message}</p>
           : rows.length === 0 ? <p className="hint">Врачей пока нет.</p> : (
             <>
               {seesAll && rows.length > 1 && <p className="total-line" aria-label="Осталось выплатить">Осталось выплатить: <b className="num">{somText(due)}</b></p>}
-              {rows.map((r) => <SalaryCard key={r.doctorId} row={r} month={month} seesAll={seesAll} />)}
+              {rows.map((r) => <SalaryCard key={r.doctorId != null ? `d${r.doctorId}` : `a${r.assistantId}`} row={r} month={month} seesAll={seesAll} />)}
             </>
           )}
     </>
@@ -72,11 +75,11 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   return (
     <section className="card-block salary" aria-label={`Зарплата: ${r.doctor}`}>
       <div className="salary-head">
-        <h2>{r.doctor}</h2>
+        <h2>{r.doctor}{r.assistantId != null && <span className="hint"> · ассистент</span>}</h2>
         {left === 0 && (r.dueSom ?? 0) > 0 && <span className="badge-ok">✅ Выплачено</span>}
       </div>
       <dl className="salary-sums">
-        <div><dt>Выручка</dt><dd className="num">{somText(r.revenueSom ?? 0)}</dd></div>
+        <div><dt>{r.assistantId != null ? 'Выручка врачей' : 'Выручка'}</dt><dd className="num">{somText(r.revenueSom ?? 0)}</dd></div>
         <div><dt>К выплате</dt><dd className="num strong">{somText(r.dueSom ?? 0)}</dd></div>
         <div><dt>Выплачено</dt><dd className="num">{somText(r.paidSom ?? 0)}</dd></div>
       </dl>
@@ -97,10 +100,12 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
   const [percent, setPercent] = useState(String(Number(r.percent ?? 0) || ''))
   const [base, setBase] = useState(r.baseSom ? String(r.baseSom) : '')
   const save = useMutation<Row, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/salaries/{doctorId}', {
-      params: { path: { doctorId: r.doctorId! }, query: { month } },
-      body: { percent: Number(percent.replace(',', '.') || 0), baseSom: Number(base || 0) },
-    })),
+    mutationFn: () => {
+      const body = { percent: Number(percent.replace(',', '.') || 0), baseSom: Number(base || 0) }
+      return unwrap(r.assistantId != null
+        ? api.PUT('/api/salaries/assistants/{telegramId}', { params: { path: { telegramId: r.assistantId }, query: { month } }, body })
+        : api.PUT('/api/salaries/{doctorId}', { params: { path: { doctorId: r.doctorId! }, query: { month } }, body }))
+    },
     onSuccess: onDone,
   })
   const submit = (e: FormEvent) => {
@@ -127,10 +132,12 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
 function PayForm({ row: r, month, left, onDone, onCancel }: { row: Row; month: string; left: number; onDone: () => void; onCancel: () => void }) {
   const [amount, setAmount] = useState(String(left))
   const pay = useMutation<Row, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/salaries/{doctorId}/pay', {
-      params: { path: { doctorId: r.doctorId! } },
-      body: { month, amountSom: Number(amount || 0) },
-    })),
+    mutationFn: () => {
+      const body = { month, amountSom: Number(amount || 0) }
+      return unwrap(r.assistantId != null
+        ? api.POST('/api/salaries/assistants/{telegramId}/pay', { params: { path: { telegramId: r.assistantId } }, body })
+        : api.POST('/api/salaries/{doctorId}/pay', { params: { path: { doctorId: r.doctorId! } }, body }))
+    },
     onSuccess: onDone,
   })
   const submit = (e: FormEvent) => {

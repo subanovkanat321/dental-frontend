@@ -171,6 +171,50 @@
         }
       }
     },
+    "/api/salaries/assistants/{telegramId}" : {
+      "put" : {
+        "tags" : [ "salary-controller" ],
+        "operationId" : "assistantTerms",
+        "parameters" : [ {
+          "name" : "telegramId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "month",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SalaryControllerTerms"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalaryControllerSalaryRow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/tariffs" : {
       "put" : {
         "tags" : [ "billing-controller" ],
@@ -1710,6 +1754,43 @@
         "operationId" : "pay",
         "parameters" : [ {
           "name" : "doctorId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SalaryControllerPayout"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalaryControllerSalaryRow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/salaries/assistants/{telegramId}/pay" : {
+      "post" : {
+        "tags" : [ "salary-controller" ],
+        "operationId" : "payAssistant",
+        "parameters" : [ {
+          "name" : "telegramId",
           "in" : "path",
           "required" : true,
           "schema" : {
@@ -6093,6 +6174,10 @@
       "SalaryControllerSalaryRow" : {
         "properties" : {
           "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "assistantId" : {
             "type" : "integer",
             "format" : "int64"
           },
