@@ -33,7 +33,7 @@ function dateOf(instant: string): string {
  * связаться, «Записать снова», «Исправить: приём состоялся». Отменён: «Восстановить». Приём
  * коллеги — только посмотреть и позвонить. Удалить запись — админ. Esc — закрыть.
  */
-export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, onBook }: {
+export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, onBook, onMedical }: {
   appointment: Appointment
   me: Me
   onClose: () => void
@@ -41,6 +41,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   onOpenPatient?: (patientId: number) => void
   /** «Записать снова» / «на следующий визит» — «Новая запись» на этого пациента. */
   onBook?: (slot: Slot, patient: Patient) => void
+  /** «Медкарта и снимки» прямо с приёма — карта зубов, план, анкета, снимки; «Назад» — к приёму. */
+  onMedical?: (patient: Patient) => void
 }) {
   useClose(onClose)
   const client = useQueryClient()
@@ -99,6 +101,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         {a.patient?.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
       </section>
       <MedAlerts an={anamnesis.data} compact />
+      {clinical && onMedical && a.patient && a.status !== 'CANCELLED' && (
+        <button type="button" className="btn" onClick={() => onMedical(a.patient!)}>Карта зубов и план лечения</button>
+      )}
       <span className={`chip s-${s.kind}`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
       {a.source === 'PATIENT' && <p className="hint">Запись через бота</p>}
       {a.reminderOpenedAt && a.status === 'SCHEDULED' && <p className="hint">Напоминание отправлено {agoText(a.reminderOpenedAt)}, в {timeOf(a.reminderOpenedAt)}</p>}

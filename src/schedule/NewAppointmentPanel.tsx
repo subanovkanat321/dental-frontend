@@ -7,13 +7,12 @@ import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { dayTitle, formatPhone, shortDate, slotInstant, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
+import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
 type Appointment = Schemas['AppointmentView']
-
-const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180, 240]
 
 /** Слот, на который нажали: врач, день и минуты от полуночи по Бишкеку. */
 /** Куда записать; duration — длительность по умолчанию («Записать снова» — как прошлый приём). */
@@ -194,14 +193,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     || (createPatient.error && !Object.keys(createPatient.error.fieldErrors).length && createPatient.error.code !== 'duplicate-patient'
       && createPatient.error.message)
   const busy = create.isPending || createPatient.isPending
-  const durationField = (
-    <label className="field">
-      <span>Длительность</span>
-      <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-        {[...new Set([...DURATIONS, duration])].sort((x, y) => x - y).map((d) => <option key={d} value={d}>{d} мин</option>)}
-      </select>
-    </label>
-  )
+  const durationField = <DurationField value={duration} onChange={setDuration} />
   const activeServices = services.data ?? []
   const shownServices = allServices ? activeServices : activeServices.filter((sv, i) => i < 8 || sv.id === serviceId)
 

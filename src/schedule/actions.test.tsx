@@ -181,3 +181,18 @@ test('открыли «Перенести» у одного приёма и на
   expect(second).toHaveTextContent('14:00')
   expect(within(second).queryByRole('form', { name: 'Перенос записи' })).not.toBeInTheDocument()
 })
+
+test('из карточки приёма — медкарта пациента и обратно к этому приёму', async () => {
+  backend([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 })])
+  server.use(
+    http.get('*/api/patients/:id/teeth', () => HttpResponse.json([])),
+    http.get('*/api/patients/:id/plan', () => HttpResponse.json([])),
+    http.get('*/api/patients/:id/files', () => HttpResponse.json([])),
+  )
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  await userEvent.click(within(panel).getByRole('button', { name: 'Карта зубов и план лечения' }))
+  expect(await screen.findByRole('heading', { name: /Медкарта · Бакыт М\./ })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: '← К приёму' }))
+  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Бакыт М.')
+})

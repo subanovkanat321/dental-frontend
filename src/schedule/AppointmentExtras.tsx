@@ -4,13 +4,13 @@ import { useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { reminderText, whatsappUrl } from '../lib/texts'
 import { minutesOf, slotInstant, timeOf, ZONE } from '../lib/time'
+import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { useAppointmentAction } from './useAppointmentAction'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 
-const DURATIONS = [15, 30, 45, 60, 90, 120, 180, 240]
 
 function dateOf(instant: string): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
@@ -68,11 +68,7 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
         <label className="field"><span>День</span>
           <input type="date" value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} />
         </label>
-        <label className="field"><span>Длительность</span>
-          <select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>
-            {[...new Set([...DURATIONS, duration])].sort((x, y) => x - y).map((d) => <option key={d} value={d}>{d} мин</option>)}
-          </select>
-        </label>
+        <DurationField value={duration} onChange={setDuration} />
       </div>
       <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} exclude={doctorId === a.doctorId ? a.id : undefined}
         value={time} onChange={(t) => { setTime(t); setProblem('') }} error={problem || errorText(action.error)} />

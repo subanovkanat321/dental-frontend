@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type CSSProperties, type MouseEvent }
 import { api, unwrap, type Schemas } from '../api/client'
 import { openSettings, type Page } from '../lib/route'
 import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn, ZONE } from '../lib/time'
+import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
 import { DayList } from './DayList'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
@@ -83,6 +84,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const today = todayIn()
   const [date, setDate] = useState(() => (openAppointment?.startAt
     ? new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(openAppointment.startAt)) : initialDate ?? today))
+  // Медкарта пациента во всю рабочую область — открыта с приёма; «Назад» вернёт к этому приёму
+  const [medical, setMedical] = useState<{ patient: Schemas['PatientView']; from: number } | null>(null)
   const [side, setSide] = useState<Side>(() => {
     if (openAppointment) return { kind: 'appointment', id: openAppointment.id!, fallback: openAppointment }
     const doctor = (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
@@ -201,6 +204,15 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const newHere = () => {
     const first = (view === 'all' ? null : doctors.find((d) => d.id === view)) ?? doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
     if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date, minutes: minutesOfTime(me.clinic?.workStart ?? '09:00') } })
+  }
+
+  if (medical) {
+    return (
+      <div className="schedule">
+        <MedicalRecord patient={medical.patient} backLabel="← К приёму"
+          onBack={() => { setSide({ kind: 'appointment', id: medical.from }); setMedical(null) }} />
+      </div>
+    )
   }
 
   return (
@@ -343,6 +355,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       </section>
       {/* key: другой приём — новая карточка, формы и «Вернуть» прежнего не переносятся */}
       {selected && <AppointmentPanel key={selected.id} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
+        onMedical={(patient) => setMedical({ patient, from: selected.id! })}
         onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />}
       {side?.kind === 'new' && (
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} walkIn={side.walkIn} onClose={close}

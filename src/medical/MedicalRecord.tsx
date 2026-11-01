@@ -40,7 +40,7 @@ function denied(error: unknown): string | null {
  * Медкарта в CRM: анкета (аллергии, болезни), карта зубов, план лечения, заметки о визитах и снимки — то же, что в
  * приложении, но на большом экране. Права проверяет сервер.
  */
-export function MedicalRecord({ patient, onBack }: { patient: Patient; onBack: () => void }) {
+export function MedicalRecord({ patient, onBack, backLabel = '← К списку' }: { patient: Patient; onBack: () => void; backLabel?: string }) {
   const id = patient.id!
   const teeth = useQuery({
     queryKey: ['teeth', id],
@@ -51,7 +51,7 @@ export function MedicalRecord({ patient, onBack }: { patient: Patient; onBack: (
   return (
     <section className="schedule-main medical">
       <header className="toolbar">
-        <button type="button" className="btn" onClick={onBack}>← К списку</button>
+        <button type="button" className="btn" onClick={onBack}>{backLabel}</button>
         <h1>Медкарта · {patient.fullName}</h1>
       </header>
       {forbidden ? (
