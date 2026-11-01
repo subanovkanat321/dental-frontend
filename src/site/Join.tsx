@@ -69,7 +69,7 @@ export function Join() {
   return (
     <main className="site-page">
       <div className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" width={72} height={72} />
+        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={126} height={120} />
         <div><p className="strong">Tish</p><h1>Запись пациентов для стоматологии</h1>
           <p>Пациенты записываются в Telegram, бот напоминает о приёме, всё расписание — в телефоне.</p></div>
       </div>

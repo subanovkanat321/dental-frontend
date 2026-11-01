@@ -52,7 +52,7 @@ export function Login() {
   }, [bot.data, client])
   return (
     <div className="center login">
-      <img src={`${import.meta.env.BASE_URL}tooth.svg`} alt="" width={64} height={64} />
+      <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
       <h1>Вход для клиники</h1>
       <p className="hint">Врачи, регистратура и администраторы. Входите тем же Telegram, что привязан в «Настройки → Врачи».</p>
       {bot.isPending && <p className="hint">Загрузка…</p>}

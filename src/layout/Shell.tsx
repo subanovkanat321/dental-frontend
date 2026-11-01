@@ -53,7 +53,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">
-          <img src={`${import.meta.env.BASE_URL}tooth.svg`} alt="" width={28} height={28} />
+          <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={24} height={36} />
           <span>Tish</span>
         </div>
         <div className="clinic">

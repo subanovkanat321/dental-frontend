@@ -37,7 +37,7 @@ export function Directory() {
     <main className="site-page">
       <LangSwitch lang={lang} onChange={setLang} />
       <div className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}tooth.svg`} alt="" width={72} height={72} />
+        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={95} height={90} />
         <div><h1>{t.title}</h1><p>{t.tagline}</p></div>
       </div>
       {clinics === 'error' ? <p className="site-message">{t.error}</p> : clinics === null ? <p className="site-message hint">{t.loading}</p> : (

@@ -130,7 +130,7 @@ function LangSwitch({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => voi
 function Hero({ title, subtitle, doctor, t }: { title: string; subtitle: string; doctor?: { photoUrl?: string; fullName?: string; about?: string }; t: T }) {
   return (
     <div className="hero">
-      <img src={doctor?.photoUrl || `${import.meta.env.BASE_URL}tooth.svg`} alt={doctor?.photoUrl ? t('doctorPhoto') : ''} width={72} height={72}
+      <img src={doctor?.photoUrl || `${import.meta.env.BASE_URL}tishka-icon.svg`} alt={doctor?.photoUrl ? t('doctorPhoto') : ''} width={72} height={72}
         className={doctor?.photoUrl ? 'hero-photo' : undefined} />
       <div>
         <h1>{title}</h1>

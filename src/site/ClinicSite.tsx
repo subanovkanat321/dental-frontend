@@ -60,7 +60,7 @@ export function ClinicSite() {
     <main className="site-page">
       <LangSwitch lang={lang} onChange={setLang} />
       <div className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}tooth.svg`} alt="" width={72} height={72} />
+        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={95} height={90} />
         <div><h1>{name}</h1><p>{t.tagline}</p></div>
       </div>
       <div className="site-actions">

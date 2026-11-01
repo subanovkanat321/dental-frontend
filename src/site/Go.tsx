@@ -28,7 +28,7 @@ export function Go() {
   return (
     <main className="site-page">
       <header className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="" width={52} height={52} />
+        <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={40} height={62} />
         <div><h1>Tish</h1><p>Запись к стоматологу в Telegram — без звонков и очередей</p></div>
       </header>
       <h2>Пациентам</h2>
