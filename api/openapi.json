@@ -729,6 +729,36 @@
         }
       }
     },
+    "/api/members/{telegramId}/doctors" : {
+      "put" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "assistantDoctors",
+        "parameters" : [ {
+          "name" : "telegramId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffMembersControllerAssistantDoctors"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/doctors/{id}" : {
       "put" : {
         "tags" : [ "doctor-controller" ],
@@ -6630,6 +6660,17 @@
           }
         }
       },
+      "StaffMembersControllerAssistantDoctors" : {
+        "properties" : {
+          "doctorIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        }
+      },
       "DoctorControllerAdminRequest" : {
         "properties" : {
           "fullName" : {
@@ -7800,13 +7841,20 @@
         "properties" : {
           "role" : {
             "type" : "string",
-            "enum" : [ "ADMIN", "RECEPTION" ]
+            "enum" : [ "ADMIN", "RECEPTION", "ASSISTANT" ]
           },
           "fullName" : {
             "type" : "string"
           },
           "alsoDoctor" : {
             "type" : "boolean"
+          },
+          "doctorIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         }
       },
@@ -8766,6 +8814,13 @@
           },
           "hasReception" : {
             "type" : "boolean"
+          },
+          "assistantOf" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         }
       },
@@ -8829,7 +8884,7 @@
           },
           "role" : {
             "type" : "string",
-            "enum" : [ "ADMIN", "RECEPTION" ]
+            "enum" : [ "ADMIN", "RECEPTION", "ASSISTANT" ]
           },
           "createdAt" : {
             "type" : "string",
@@ -8840,6 +8895,13 @@
           },
           "doctor" : {
             "type" : "boolean"
+          },
+          "doctorIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         }
       },

@@ -460,6 +460,7 @@ tr.inactive td { opacity: .55; }
 .anamnesis { display: grid; gap: 12px; }
 .anamnesis > .btn { justify-self: start; }
 .anamnesis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+fieldset.anamnesis-grid { border: 0; padding: 0; margin: 0; min-width: 0; }
 .anamnesis-col { display: grid; gap: 8px; align-content: start; margin: 0; padding: 0; border: 0; min-width: 0; }
 .anamnesis-col legend { padding: 0 0 6px; font: 700 .8rem var(--display); color: var(--hint); text-transform: uppercase; letter-spacing: .03em; }
 .anamnesis .question { display: grid; gap: 4px; }

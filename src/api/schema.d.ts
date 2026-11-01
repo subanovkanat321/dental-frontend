@@ -276,6 +276,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/members/{telegramId}/doctors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["assistantDoctors"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/doctors/{id}": {
         parameters: {
             query?: never;
@@ -3061,6 +3077,9 @@ export interface components {
             /** Format: int64 */
             clinicId?: number;
         };
+        StaffMembersControllerAssistantDoctors: {
+            doctorIds?: number[];
+        };
         DoctorControllerAdminRequest: {
             fullName?: string;
             about?: string;
@@ -3559,9 +3578,10 @@ export interface components {
         };
         StaffMembersControllerInviteRequest: {
             /** @enum {string} */
-            role?: "ADMIN" | "RECEPTION";
+            role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
             fullName?: string;
             alsoDoctor?: boolean;
+            doctorIds?: number[];
         };
         ExpensesDraft: {
             /** Format: date */
@@ -3955,6 +3975,7 @@ export interface components {
             canChangeClinic?: boolean;
             waiting?: boolean;
             hasReception?: boolean;
+            assistantOf?: number[];
         };
         ClinicLinksChoice: {
             /** Format: int64 */
@@ -3981,11 +4002,12 @@ export interface components {
             telegramId?: number;
             fullName?: string;
             /** @enum {string} */
-            role?: "ADMIN" | "RECEPTION";
+            role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
             /** Format: date-time */
             createdAt?: string;
             me?: boolean;
             doctor?: boolean;
+            doctorIds?: number[];
         };
         ExpenseControllerCategories: {
             standard?: string[];
@@ -4714,6 +4736,30 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PatientBookingControllerClinicChoice"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    assistantDoctors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                telegramId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffMembersControllerAssistantDoctors"];
             };
         };
         responses: {

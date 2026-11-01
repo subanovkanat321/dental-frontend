@@ -11,6 +11,7 @@ import { AppointmentPanel } from './AppointmentPanel'
 import { DayList } from './DayList'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
+import { isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -101,13 +102,15 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     if (bookPatient) onBookingShown?.()
   }, [bookPatient, onBookingShown])
   const close = useCallback(() => setSide(null), [])
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
+  // Ассистент видит только своих врачей (V68): чужие расписания ему не нужны
+  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
   // Чьё расписание: все врачи колонками или один. Выбор запоминается на устройстве (только id врача —
   // не личные данные). По умолчанию на телефоне — свой врач, на компьютере — все
   const [view, setViewState] = useState<number | 'all'>(() => {
     if (initialDoctor && doctors.some((d) => d.id === initialDoctor)) return initialDoctor
     // Телефон — как в прежнем приложении: каждый раз открывается свой день
     if (isNarrow() && doctors.some((d) => d.id === me.doctorId)) return me.doctorId!
+    if (isNarrow() && isAssistant(me) && doctors[0]) return doctors[0].id!
     try {
       const saved = localStorage.getItem('crm.schedule.view')
       if (saved === 'all') return 'all'
@@ -234,7 +237,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   if (medical) {
     return (
       <div className="schedule">
-        <MedicalRecord patient={medical.patient} backLabel="← К приёму"
+        <MedicalRecord patient={medical.patient} backLabel="← К приёму" readOnly={isAssistant(me)}
           onBack={() => { setSide({ kind: 'appointment', id: medical.from }); setMedical(null) }} />
       </div>
     )
@@ -268,7 +271,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             {date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
             <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
             {doctors.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
-            {doctors.length > 0 && date === today && (me.admin || me.reception || me.doctorId != null) && (
+            {doctors.length > 0 && date === today && (me.admin || me.reception || me.doctorId != null || isAssistant(me)) && (
               <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
             )}
           </header>

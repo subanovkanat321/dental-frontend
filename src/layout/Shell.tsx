@@ -5,6 +5,7 @@ import type { Page } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { AdminNotices } from './AdminNotices'
 import { Icon } from './Icon'
+import { isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -19,7 +20,9 @@ const CLINIC_SECTIONS = [
 const PLATFORM = { key: 'platform', title: 'Платформа' } as const
 
 function sectionsOf(me: Me): readonly { key: Page; title: string }[] {
-  return [...(me.doctor ? CLINIC_SECTIONS : []), ...(me.platform ? [PLATFORM] : [])]
+  // Ассистенту — без «Кассы»: денег он не видит
+  const clinic = isAssistant(me) ? CLINIC_SECTIONS.filter((s) => s.key !== 'cash') : CLINIC_SECTIONS
+  return [...(me.doctor ? clinic : []), ...(me.platform ? [PLATFORM] : [])]
 }
 
 /** На телефоне внизу помещается 4 раздела и «Ещё»: остальное — в выезжающем меню. */
@@ -32,7 +35,7 @@ const MOBILE_MAIN = 4
 export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
   const clinic = me.doctor ? me.clinic?.brandName || me.clinic?.name || 'Клиника' : 'Команда Tish'
   const role = !me.doctor ? (me.owner ? 'владелец платформы' : 'менеджер платформы')
-    : me.admin ? 'администратор' : me.reception ? 'регистратура' : 'врач'
+    : me.admin ? 'администратор' : me.reception ? 'регистратура' : isAssistant(me) ? 'ассистент' : 'врач'
   const sections = sectionsOf(me)
   // «Платформа» у сотрудника клиники на телефоне — в «Настройках»: внизу пять кнопок без «Ещё»
   const extra = me.doctor ? sections.filter((x) => x.key === 'platform')

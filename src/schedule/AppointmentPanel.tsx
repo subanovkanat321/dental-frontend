@@ -15,6 +15,7 @@ import { PaymentBox } from './PaymentBox'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
+import { canEditDoctor, isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -61,7 +62,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   // «Состоялся» сервер разрешает с дня приёма: будущий приём ещё не мог пройти
   const started = date <= todayIn()
   const future = a.startAt ? new Date(a.startAt) > new Date() : false
-  const canEdit = Boolean(me.admin || me.reception || a.doctorId === me.doctorId)
+  const canEdit = canEditDoctor(me, a.doctorId)
   // Аллергия и важное из анкеты — перед лечением, тому, кто видит медкарту (врач приёма, админ)
   const clinical = (Boolean(me.admin) && !me.clinic?.independentDoctors) || a.doctorId === me.doctorId
   const anamnesis = useAnamnesis(a.patient?.id, clinical && a.status !== 'CANCELLED')
@@ -171,7 +172,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             <>
               {/* Ключ — по самим деньгам: оплата на сервере версию приёма не меняет, а блок после
                   сохранения должен открыться заново («оплачено», а не форма) */}
-              <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />
+              {/* Ассистенту деньги не показываем: оплату принимает врач или регистратура */}
+              {!isAssistant(me) && <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />}
               <ContactButtons phone={a.patient?.phone} />
               {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
             </>

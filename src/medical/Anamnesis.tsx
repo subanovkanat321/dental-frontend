@@ -31,19 +31,19 @@ type Answer = { yes: boolean; text: string }
  * Анкета в медкарте: вопросы клиники галочками, «да» открывает «что именно». Одна на пациента —
  * врачи клиники видят одно и то же. Вопросы настраивают в «Настройки → Анкета пациента».
  */
-export function AnamnesisBlock({ patientId }: { patientId: number }) {
+export function AnamnesisBlock({ patientId, readOnly = false }: { patientId: number; readOnly?: boolean }) {
   const an = useAnamnesis(patientId)
   return (
     <section className="card-block">
       <h2>Анкета: аллергии, болезни, лекарства</h2>
       {an.isPending && <p className="hint">Загрузка…</p>}
       {an.error && <p className="error">{an.error.message}</p>}
-      {an.data && <AnamnesisForm patientId={patientId} an={an.data} />}
+      {an.data && <AnamnesisForm patientId={patientId} an={an.data} readOnly={readOnly} />}
     </section>
   )
 }
 
-function AnamnesisForm({ patientId, an }: { patientId: number; an: Anamnesis }) {
+function AnamnesisForm({ patientId, an, readOnly }: { patientId: number; an: Anamnesis; readOnly: boolean }) {
   const client = useQueryClient()
   const items = an.items ?? []
   const [answers, setAnswers] = useState<Record<number, Answer>>(() =>
@@ -92,7 +92,8 @@ function AnamnesisForm({ patientId, an }: { patientId: number; an: Anamnesis }) 
   return (
     <form className="anamnesis" aria-label="Анкета пациента" onSubmit={submit}>
       <MedAlerts an={an} />
-      <div className="anamnesis-grid">
+      {/* Ассистент — только смотрит: поля выключены, без «Сохранить» */}
+      <fieldset className="anamnesis-grid" disabled={readOnly}>
         {SECTIONS.map(([code, name]) => {
           const list = items.filter((i) => i.section === code)
           return list.length ? (
@@ -102,11 +103,11 @@ function AnamnesisForm({ patientId, an }: { patientId: number; an: Anamnesis }) 
             </fieldset>
           ) : null
         })}
-      </div>
+      </fieldset>
       {an.updatedAt && <p className="hint">Обновлено {shortDate(an.updatedAt)}{an.updatedBy ? ` · ${an.updatedBy}` : ''}</p>}
       {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}
       {save.isSuccess && <p className="tone-ok" role="status">Анкета сохранена</p>}
-      <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить анкету</button>
+      {!readOnly && <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить анкету</button>}
     </form>
   )
 }

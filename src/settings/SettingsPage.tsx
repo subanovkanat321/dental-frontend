@@ -7,6 +7,7 @@ import { openSettings, settingsItem } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
 import type { TeamTab } from '../team/TeamPage'
+import { isAssistant } from '../lib/roles'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
 // код «Договора» или «Услуг» скачивается, только когда пункт открыли
@@ -171,7 +172,7 @@ function Appearance() {
  */
 function Profile({ me }: { me: Me }) {
   const own = (me.doctors ?? []).find((d) => d.id === me.doctorId)
-  const roles = [me.admin ? 'администратор' : null, me.reception ? 'регистратура' : null, me.doctorId != null ? 'врач' : null,
+  const roles = [me.admin ? 'администратор' : null, me.reception ? 'регистратура' : null, isAssistant(me) ? 'ассистент врача' : null, me.doctorId != null ? 'врач' : null,
     me.owner ? 'владелец платформы' : me.platform ? 'менеджер платформы' : null].filter(Boolean)
   const clinic = me.clinic?.brandName || me.clinic?.name
   const name = own?.fullName ?? me.fullName ?? 'Без имени'

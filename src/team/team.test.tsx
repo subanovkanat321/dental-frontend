@@ -94,6 +94,42 @@ test('сотрудники: пригласить регистратора ссы
   expect(invited).toEqual({ role: 'RECEPTION', fullName: 'Айпери', alsoDoctor: false })
 })
 
+test('сотрудники: ассистент — выбрать врача, потом поменять врачей', async () => {
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
+    http.get('*/api/members', () => HttpResponse.json([
+      { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true },
+      { telegramId: 7201, fullName: 'Асель', role: 'ASSISTANT', doctorIds: [2] },
+    ] satisfies Schemas['StaffMembersMemberView'][])),
+    http.post('*/api/members/invite', async ({ request }) => {
+      sent.push(await request.json())
+      return HttpResponse.json({ token: 'asst' } satisfies Schemas['DoctorInvitesInvite'])
+    }),
+    http.put('*/api/members/7201/doctors', async ({ request }) => {
+      sent.push(await request.json())
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  openItem('members')
+  expect(await screen.findByText(/Помогает: Дастан Т\./)).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'изменить' }))
+  const edit = screen.getByRole('form', { name: /Врачи ассистента Асель/ })
+  await user.click(within(edit).getByRole('checkbox', { name: 'Айгерим Садыкова' }))
+  await user.click(within(edit).getByRole('button', { name: 'Сохранить' }))
+
+  const form = screen.getByRole('form', { name: 'Пригласить сотрудника' })
+  await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Жылдыз')
+  await user.click(within(form).getByRole('button', { name: 'Ассистент' }))
+  await user.click(within(form).getByRole('checkbox', { name: 'Дастан Т.' }))
+  await user.click(within(form).getByRole('button', { name: 'Создать ссылку' }))
+  expect(await screen.findByText(/Отправьте её ассистенту/)).toBeInTheDocument()
+  expect(sent).toEqual([{ doctorIds: [2, 1] }, { role: 'ASSISTANT', fullName: 'Жылдыз', doctorIds: [2] }])
+})
+
 test('перерывы: список, добавить еженедельный, удалить', async () => {
   let list: Schemas['TimeOffView'][] = [{ id: 1, doctorId: undefined, weekday: 'FRIDAY', startTime: '12:00:00', endTime: '14:00:00', title: 'Джума-намаз', emoji: '🕌' }]
   let posted: unknown = null

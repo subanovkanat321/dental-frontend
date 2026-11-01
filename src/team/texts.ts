@@ -2,7 +2,7 @@ import type { Schemas } from '../api/client'
 
 /** Подписи раздела «Команда» — как в приложении (static/js бэкенда), чтобы клиника видела одно и то же. */
 
-export const ROLE_TEXT: Record<string, string> = { ADMIN: 'Администратор', RECEPTION: 'Регистратор' }
+export const ROLE_TEXT: Record<string, string> = { ADMIN: 'Администратор', RECEPTION: 'Регистратор', ASSISTANT: 'Ассистент' }
 
 export type Weekday = NonNullable<Schemas['TimeOffView']['weekday']>
 

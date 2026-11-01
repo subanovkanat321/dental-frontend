@@ -9,6 +9,7 @@ import { addDays, minutesOf, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
+import { canEditDoctor as canEdit } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -60,7 +61,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
 }) {
   const today = todayIn()
   const many = doctors.length > 1
-  const canEditDoctor = (id: number) => Boolean(me.admin || me.reception || id === me.doctorId)
+  const canEditDoctor = (id: number) => canEdit(me, id)
   const days = stripDays(today)
   const counts = useQueries({
     queries: doctors.map((d) => ({

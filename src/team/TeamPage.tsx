@@ -91,7 +91,7 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null }: {
             {me.doctorId == null && (me.admin || me.reception) && <AddSelf />}
           </section>
         )}
-        {tab === 'members' && me.admin && <MembersTab />}
+        {tab === 'members' && me.admin && <MembersTab me={me} />}
         {tab === 'timeoff' && <TimeOffTab me={me} />}
       </section>
       {opened === 'new' && <NewDoctorPanel onClose={close} onCreated={(d) => setOpened(d.id!)} />}

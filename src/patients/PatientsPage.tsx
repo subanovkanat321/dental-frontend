@@ -8,6 +8,7 @@ import { MedicalRecord } from '../medical/MedicalRecord'
 import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
+import { isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -53,7 +54,8 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
 
   // Чьи пациенты: все или одного врача (у кого был или будет приём у него)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
-  const [doctorId, setDoctorId] = useState<number | null>(null)
+  // Ассистент сразу видит пациентов своего врача
+  const [doctorId, setDoctorId] = useState<number | null>(() => (me.assistantOf?.length === 1 ? me.assistantOf[0]! : null))
   const recent = useQuery({
     queryKey: ['patients', 'recent', doctorId],
     queryFn: () => unwrap(api.GET('/api/patients/recent', { params: { query: { doctorId: doctorId ?? undefined } } })),
@@ -99,7 +101,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
   if (medical) {
     return (
       <div className="schedule">
-        <MedicalRecord patient={medical} onBack={() => { setSelected(medical.id!); setMedical(null) }} />
+        <MedicalRecord patient={medical} readOnly={isAssistant(me)} onBack={() => { setSelected(medical.id!); setMedical(null) }} />
       </div>
     )
   }

@@ -41,7 +41,10 @@ function denied(error: unknown): string | null {
  * Медкарта в CRM: анкета (аллергии, болезни), карта зубов, план лечения, заметки о визитах и снимки — то же, что в
  * приложении, но на большом экране. Права проверяет сервер.
  */
-export function MedicalRecord({ patient, onBack, backLabel = '← К списку' }: { patient: Patient; onBack: () => void; backLabel?: string }) {
+/** @param readOnly ассистент: смотрит анкету, зубы, план и заметки, загружает снимки; править — врач */
+export function MedicalRecord({ patient, onBack, backLabel = '← К списку', readOnly = false }: {
+  patient: Patient; onBack: () => void; backLabel?: string; readOnly?: boolean
+}) {
   const id = patient.id!
   // Стрелка Telegram — туда же, откуда пришли (к приёму или к списку пациентов)
   useBack(onBack)
@@ -63,10 +66,11 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
         <p className="empty">{forbidden}</p>
       ) : (
         <>
-          <AnamnesisBlock patientId={id} />
-          <ToothChart patientId={id} teeth={teeth.data} error={teeth.error?.message}
+          {readOnly && <p className="hint">Вы ассистент: медкарту смотрите и загружаете снимки, записи о лечении ведёт врач.</p>}
+          <AnamnesisBlock patientId={id} readOnly={readOnly} />
+          <ToothChart patientId={id} teeth={teeth.data} error={teeth.error?.message} readOnly={readOnly}
             onPlan={(tooth) => setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 })} />
-          <Plan patientId={id} prefill={planTooth} />
+          <Plan patientId={id} prefill={planTooth} readOnly={readOnly} />
           <Notes patientId={id} />
           <Files patientId={id} />
         </>
@@ -75,7 +79,9 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
   )
 }
 
-function ToothChart({ patientId, teeth, error, onPlan }: { patientId: number; teeth?: Tooth[]; error?: string; onPlan: (tooth: number) => void }) {
+function ToothChart({ patientId, teeth, error, onPlan, readOnly }: {
+  patientId: number; teeth?: Tooth[]; error?: string; onPlan: (tooth: number) => void; readOnly: boolean
+}) {
   const client = useQueryClient()
   const [open, setOpen] = useState<number | null>(null)
   const byNumber = new Map((teeth ?? []).map((t) => [t.number, t]))
@@ -107,7 +113,7 @@ function ToothChart({ patientId, teeth, error, onPlan }: { patientId: number; te
         {Object.entries(TOOTH_STATES).filter(([k]) => k !== 'HEALTHY')
           .map(([k, [label, icon]]) => `${icon} ${label}${counts[k] ? ` · ${counts[k]}` : ''}`).join('   ')}
       </p>
-      {open != null && (
+      {open != null && !readOnly && (
         <ToothEditor key={open} patientId={patientId} number={open} tooth={byNumber.get(open)}
           onSaved={(fresh) => { client.setQueryData(['teeth', patientId], fresh); setOpen(null) }} onCancel={() => setOpen(null)}
           onPlan={() => { onPlan(open); setOpen(null) }} />
@@ -167,7 +173,7 @@ function ToothEditor({ patientId, number, tooth, onSaved, onCancel, onPlan }: {
 
 type Step = Schemas['TreatmentStepView']
 
-function Plan({ patientId, prefill }: { patientId: number; prefill: { tooth: number; n: number } | null }) {
+function Plan({ patientId, prefill, readOnly }: { patientId: number; prefill: { tooth: number; n: number } | null; readOnly: boolean }) {
   const client = useQueryClient()
   const plan = useQuery({
     queryKey: ['plan', patientId],
@@ -232,28 +238,30 @@ function Plan({ patientId, prefill }: { patientId: number; prefill: { tooth: num
               ) : (
                 <>
                   <label className="check">
-                    <input type="checkbox" checked={Boolean(s.doneAt)} disabled={toggle.isPending} onChange={() => toggle.mutate(s)}
+                    <input type="checkbox" checked={Boolean(s.doneAt)} disabled={readOnly || toggle.isPending} onChange={() => toggle.mutate(s)}
                       aria-label={`Сделано: ${s.title}`} />
                     <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}</span>
                   </label>
                   <span className="nowrap">{s.priceSom != null ? somText(s.priceSom) : ''}</span>
-                  <button type="button" className="btn ghost small" aria-label={`Изменить этап: ${s.title}`} onClick={() => setEditing(s.id!)}>✏️</button>
+                  {!readOnly && <button type="button" className="btn ghost small" aria-label={`Изменить этап: ${s.title}`} onClick={() => setEditing(s.id!)}>✏️</button>}
                 </>
               )}
-              <button type="button" className="btn ghost small" aria-label={`Удалить этап: ${s.title}`}
-                onClick={() => window.confirm(`Удалить этап «${s.title}»?`) && remove.mutate(s.id!)}>✕</button>
+              {!readOnly && (
+                <button type="button" className="btn ghost small" aria-label={`Удалить этап: ${s.title}`}
+                  onClick={() => window.confirm(`Удалить этап «${s.title}»?`) && remove.mutate(s.id!)}>✕</button>
+              )}
             </li>
           ))}
         </ul>
       )}
-      {plan.isSuccess && steps.length === 0 && <p className="hint">Плана пока нет — добавьте первый этап.</p>}
-      <form className="plan-add" aria-label="Новый этап" onSubmit={submit}>
+      {plan.isSuccess && steps.length === 0 && <p className="hint">{readOnly ? 'Плана пока нет.' : 'Плана пока нет — добавьте первый этап.'}</p>}
+      {!readOnly && <form className="plan-add" aria-label="Новый этап" onSubmit={submit}>
         <input aria-label="Зуб" placeholder="Зуб" inputMode="numeric" value={form.tooth} onChange={(e) => setForm({ ...form, tooth: e.target.value })} />
         <input ref={title} aria-label="Что сделать" placeholder="Что сделать: пломба, чистка…" value={form.title} maxLength={200}
           onChange={(e) => setForm({ ...form, title: e.target.value })} />
         <input aria-label="Цена, сом" placeholder="Цена" type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
         <button type="submit" className="btn" disabled={add.isPending || !form.title.trim()}>＋ Этап</button>
-      </form>
+      </form>}
       {error && <p className="error" role="alert">{Object.values(error.fieldErrors)[0] ?? error.message}</p>}
     </section>
   )
