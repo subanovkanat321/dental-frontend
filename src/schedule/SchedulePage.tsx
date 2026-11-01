@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useState, type CSSProperties, type MouseEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { openSettings, type Page } from '../lib/route'
@@ -163,6 +163,17 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   // Линия «сейчас» — только у сегодняшнего дня и внутри сетки; выше неё день приглушён
   const nowMinutes = useNowMinutes()
   const nowTop = date === today && nowMinutes >= from && nowMinutes <= to ? PAD + (nowMinutes - from) * PX : null
+  // Открыли день — сетка сама к «сейчас» (сегодня) или к первому приёму; один раз на день
+  const grid = useRef<HTMLDivElement>(null)
+  const scrolledFor = useRef<string | null>(null)
+  const ready = days.length > 0 && days.every((q) => !q.isPending)
+  const firstTop = all.length ? PAD + (Math.min(...all.map((a) => minutesOf(a.startAt!))) - from) * PX : null
+  useEffect(() => {
+    if (!ready || !grid.current || scrolledFor.current === date) return
+    scrolledFor.current = date
+    const target = nowTop ?? firstTop
+    if (target != null) grid.current.scrollTop = Math.max(0, target - 80)
+  }, [ready, date, nowTop, firstTop])
 
   // Полоса «Сегодня»: что требует действия — одним рядом (DESIGN.md → Components)
   const seesMoney = Boolean(me.admin && !me.clinic?.independentDoctors) || me.doctorId != null
@@ -288,7 +299,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         ) : doctors.length === 0 ? (
           <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => openSettings('doctors')}>добавьте их в «Настройки → Врачи»</button>.</p>
         ) : (
-          <div className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(180px, 1fr))`, '--cols': shown.length } as CSSProperties}>
+          <div ref={grid} className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(180px, 1fr))`, '--cols': shown.length } as CSSProperties}>
             <div className="grid-corner" />
             {shown.map((d) => (
               <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}

@@ -617,7 +617,12 @@ fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
 .duration-custom input { width: 90px; }
 .marked-teeth { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: .92rem; }
 .step-edit { flex-wrap: wrap; width: 100%; }
-button.grid-head { border: 0; border-left: 1px solid var(--separator); background: var(--card); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+button.grid-head { border: 0; border-left: 1px solid var(--separator); border-bottom: 1px solid var(--separator); background: var(--card); color: inherit; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
 button.grid-head:disabled { cursor: default; }
 button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .row-doctor { color: var(--link); font-weight: 600; }
+/* Сетка прокручивается сама, на высоту экрана: имена врачей наверху и часы слева видны всегда */
+.grid { overflow: auto; max-height: calc(100dvh - 150px); min-height: 360px; overscroll-behavior: contain; }
+.grid-corner { left: 0; z-index: 6; }
+.grid-times { position: sticky; left: 0; z-index: 4; background: var(--card); }
+@media (max-width: 760px) { .grid { max-height: calc(100dvh - 140px - 72px - env(safe-area-inset-bottom)); } }
