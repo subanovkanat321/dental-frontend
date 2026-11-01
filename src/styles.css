@@ -608,7 +608,7 @@ fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
 .settings-emoji { flex: none; width: 1.8em; font-size: 1.25rem; text-align: center; }
 .settings-text { flex: 1; display: grid; gap: 2px; }
 .profile-card { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 14px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); }
-.profile-photo { flex: none; width: 64px; height: 64px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; font-size: 2rem; background: var(--accent-soft); }
+.me-photo { flex: none; width: 64px; height: 64px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; font-size: 2rem; background: var(--accent-soft); }
 .profile-text { flex: 1 1 180px; display: grid; gap: 2px; }
 .profile-text strong { font-size: 1.15rem; font-family: var(--display); }
 .profile-about { font-size: .92rem; }
@@ -633,3 +633,5 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-day-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 4px; background: var(--page); font-size: 1.05rem; }
 .doctor-day-head .avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .9rem; }
 .doctor-day-head .hint { font-weight: 500; font-size: .9rem; }
+.doctor-inline { display: grid; gap: 10px; max-width: 640px; }
+.doctor-inline .panel-head { margin-bottom: 4px; }

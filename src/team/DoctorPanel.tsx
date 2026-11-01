@@ -27,7 +27,13 @@ function firstError(e: ApiError | null): string | null {
  * Карточка врача справа. Админ: имя, «кратко», Telegram, «работает», приглашение по ссылке, права
  * администратора, удалить. Врач сам себе — профиль и фото (их видят пациенты в боте) и часы работы.
  */
-export function DoctorPanel({ doctor: d, me, onClose }: { doctor: Doctor; me: Me; onClose: () => void }) {
+export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
+  doctor: Doctor
+  me: Me
+  onClose: () => void
+  /** «Мой профиль»: карточка во всю рабочую область, а не панель справа */
+  inline?: boolean
+}) {
   useClose(onClose)
   const refresh = useRefreshDoctors()
   const self = d.id === me.doctorId
@@ -102,13 +108,13 @@ export function DoctorPanel({ doctor: d, me, onClose }: { doctor: Doctor; me: Me
   }
 
   return (
-    <aside className="panel" aria-label="Врач">
+    <aside className={inline ? 'card-block doctor-inline' : 'panel'} aria-label="Врач">
       <header className="panel-head">
         <div>
           <h2>{d.fullName}</h2>
           <span className="hint">{[self ? 'это вы' : null, isAdmin ? 'и администратор' : null, d.active === false ? 'скрыт' : null].filter(Boolean).join(' · ') || 'Врач'}</span>
         </div>
-        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        {!inline && <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>}
       </header>
 
       {editsProfile && <>

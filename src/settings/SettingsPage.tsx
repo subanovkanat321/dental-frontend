@@ -8,6 +8,7 @@ import { telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
 import { TeamPage, type TeamTab } from '../team/TeamPage'
 import { HoursPage } from './HoursPage'
+import { ProfilePage } from './ProfilePage'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -59,7 +60,7 @@ const GROUPS: [string, Item[]][] = [
   ]],
   ['Профиль и помощь', [
     item('profile', 'Мой профиль', 'Имя, фото, о себе — что видят пациенты', (me) => me.doctorId != null,
-      (title) => (me, back) => <TeamPage me={me} only="doctors" title={title} onBack={back} initialOpened={me.doctorId ?? null} />),
+      () => (me, back) => <ProfilePage me={me} onBack={back} />),
     item('support', 'Техподдержка', 'Написать команде Tish, частые вопросы', all, account('support')),
     item('dental-news', 'Новости стоматологии', 'Подборка профессиональных изданий', all, account('news')),
     item('privacy', 'Конфиденциальность', 'Как мы обращаемся с данными пациентов', all, account('privacy')),
@@ -76,7 +77,8 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
   }, [])
   const back = () => openSettings(null)
   const found = GROUPS.flatMap(([, items]) => items).find((i) => i.key === current && i.show(me))
-  if (found) return <div className="settings-item">{found.render(me, back, { ticketId: initialTicket })}</div>
+  // key — свой экран у каждого пункта: «Мой профиль» и «Врачи» не делят открытую карточку
+  if (found) return <div key={found.key} className="settings-item">{found.render(me, back, { ticketId: initialTicket })}</div>
 
   return (
     <div className="settings">
@@ -168,8 +170,8 @@ function Profile({ me }: { me: Me }) {
   const name = own?.fullName ?? me.fullName ?? 'Без имени'
   return (
     <section className="profile-card" aria-label="Профиль">
-      {own?.photoUrl ? <img className="profile-photo" src={own.photoUrl} alt="" />
-        : <span className="profile-photo" aria-hidden="true">{me.doctorId != null ? '🧑‍⚕️' : '👤'}</span>}
+      {own?.photoUrl ? <img className="me-photo" src={own.photoUrl} alt="" />
+        : <span className="me-photo" aria-hidden="true">{me.doctorId != null ? '🧑‍⚕️' : '👤'}</span>}
       <div className="profile-text">
         <strong>{name}</strong>
         <span className="hint">{roles.join(' · ') || 'сотрудник'}</span>
