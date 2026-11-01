@@ -673,3 +673,37 @@ tr.clickable:hover td { background: var(--sunken); }
 .day-filter .field { flex: 0 1 150px; }
 .day-filter .chips-pick { margin: 0; }
 .compare { margin: 2px 0 6px; }
+
+/* Диаграммы «Аналитики» (dataviz): цвета прошли проверку validate_palette — свет и тьма */
+:root { --chart-1: #0B9488; --chart-bad: #D03A3A; }
+:root[data-theme=dark] { --chart-1: #23A99A; --chart-bad: #D9534F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --chart-1: #23A99A; --chart-bad: #D9534F; } }
+.analytics-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 4px; }
+.analytics-filter .segments { min-width: 200px; }
+.chart h2 { margin-bottom: 4px; }
+.chart-headline { margin: 0 0 10px; font-size: 1.05rem; }
+.chart-headline b { font-size: 1.5rem; }
+.vbars { display: flex; align-items: stretch; gap: 2px; height: 180px; padding-top: 18px; }
+.vbar { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px;
+  padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; }
+.vbar-fill { display: block; width: 72%; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--chart-1); }
+.vbar.partial .vbar-fill { background: repeating-linear-gradient(135deg, var(--chart-1) 0 6px, color-mix(in srgb, var(--chart-1) 55%, transparent) 6px 10px); }
+.vbar.picked .vbar-fill { outline: 2px solid var(--text); outline-offset: 1px; }
+.vbar-value { font-size: .72rem; color: var(--hint); white-space: nowrap; }
+.vbar-label { font-size: .75rem; color: var(--hint); }
+.vbars.stacked { height: 150px; }
+.vbar-stack { display: flex; flex-direction: column; width: 72%; min-height: 2px; gap: 2px; }
+.vbar-stack .seg { display: block; min-height: 3px; }
+.vbar-stack .seg:first-child { border-radius: 4px 4px 0 0; }
+.seg.done, .key.done { background: var(--chart-1); }
+.seg.bad, .key.bad { background: var(--chart-bad); }
+.legend { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--hint); margin-bottom: 4px; }
+.legend .key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.legend .key + * , .legend .key.bad { margin-left: 8px; }
+.hbars { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.hbars li { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; align-items: center; gap: 8px; font-size: .9rem; }
+.hbar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbar-track { height: 14px; }
+.hbar-fill { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--chart-1); }
+.hbar-value { white-space: nowrap; font-size: .85rem; }
+@media (max-width: 760px) { .hbars li { grid-template-columns: 1fr auto; } .hbar-track { grid-column: 1 / -1; order: 3; } }
