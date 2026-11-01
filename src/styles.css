@@ -718,3 +718,4 @@ tr.clickable:hover td { background: var(--sunken); }
 .day-quick .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
 @media (max-width: 760px) { .day-pick { grid-template-columns: 1fr; } .day-quick .chip { flex: 1; } }
 input[type=date], input[type=month], input[type=time] { min-width: 0; max-width: 100%; }
+.period-line { margin: 2px 0 6px; }

@@ -36,3 +36,29 @@ export function changeOf(now: number, was: number): { text: string; tone: 'ok' |
   if (pct === 0) return { text: 'как было', tone: 'hint' }
   return pct > 0 ? { text: `▲ ${pct}%`, tone: 'ok' } : { text: `▼ ${Math.abs(pct)}%`, tone: 'bad' }
 }
+
+const DAY = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', day: 'numeric', month: 'short' })
+const WEEKDAY = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'long' })
+const dayText = (date: string) => DAY.format(new Date(`${date}T00:00:00Z`)).replace('.', '')
+
+/** Даты периода словами: «26 окт – 1 нояб»; один день — «1 нояб». */
+export function datesText({ from, to }: Range): string {
+  return from === to ? dayText(from) : `${dayText(from)} – ${dayText(to)}`
+}
+
+/**
+ * Подпись под «День / Неделя / Месяц»: какие именно дни считаются — чтобы было видно, почему
+ * неделя уже с деньгами, а месяц пуст (1-е число: месяц только начался).
+ */
+export function periodText(kind: 'day' | 'week' | 'month' | 'custom', range: Range, today: string): string {
+  if (kind === 'day') return `${dayText(range.from)}, ${WEEKDAY.format(new Date(`${range.from}T00:00:00Z`))}${range.from === today ? ' — сегодня' : ''}`
+  if (kind === 'week') {
+    return range.from === range.to ? `${dayText(range.from)} — неделя только началась (понедельник)`
+      : `${datesText(range)} — с понедельника${range.to === today ? ' по сегодня' : ''}`
+  }
+  if (kind === 'month') {
+    return range.from === range.to ? `${dayText(range.from)} — месяц только начался, пока один день`
+      : `${datesText(range)} — с 1-го числа${range.to === today ? ' по сегодня' : ''}`
+  }
+  return datesText(range)
+}

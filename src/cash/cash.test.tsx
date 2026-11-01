@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { previousRange } from '../lib/compare'
+import { periodText, previousRange } from '../lib/compare'
 import { addDays, periodOf, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
@@ -45,6 +45,8 @@ test('админ: выручка за месяц, по способам; выб�
   expect(screen.getByText(/без оплаты: 1/)).toBeInTheDocument()
   const month = periodOf('month')
   expect(asked).toContain(`${month.from}..${month.to} все`)
+  // Под переключателем видно, какие даты входят в «Месяц»
+  expect(screen.getByLabelText('Даты периода')).toHaveTextContent(periodText('month', month, todayIn()))
 
   await userEvent.selectOptions(screen.getByLabelText('Чья касса'), 'Дастан Т.')
   expect(await screen.findByLabelText('Выручка за период')).toHaveTextContent(/7\s000 сом/)

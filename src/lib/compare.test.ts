@@ -1,4 +1,4 @@
-import { changeOf, previousRange } from './compare'
+import { changeOf, datesText, periodText, previousRange } from './compare'
 
 test('с чем сравнивать: день — с тем же днём недели, месяц — те же числа, период — столько же дней до', () => {
   expect(previousRange('day', { from: '2026-11-03', to: '2026-11-03' })).toMatchObject({ from: '2026-10-27', to: '2026-10-27' })
@@ -14,4 +14,13 @@ test('изменение: рост, падение, как было, из нул
   expect(changeOf(7000, 10000)).toEqual({ text: '▼ 30%', tone: 'bad' })
   expect(changeOf(10000, 10000).text).toBe('как было')
   expect(changeOf(5000, 0).text).toBe('раньше было 0')
+})
+
+test('подпись периода: какие дни считаются', () => {
+  const today = '2026-11-01' // воскресенье, 1-е число
+  expect(periodText('day', { from: today, to: today }, today)).toBe('1 нояб, воскресенье — сегодня')
+  expect(periodText('week', { from: '2026-10-26', to: today }, today)).toBe('26 окт – 1 нояб — с понедельника по сегодня')
+  expect(periodText('month', { from: today, to: today }, today)).toBe('1 нояб — месяц только начался, пока один день')
+  expect(periodText('month', { from: '2026-10-01', to: '2026-10-15' }, '2026-10-15')).toBe('1 окт – 15 окт — с 1-го числа по сегодня')
+  expect(datesText({ from: '2026-10-01', to: '2026-10-01' })).toBe('1 окт')
 })

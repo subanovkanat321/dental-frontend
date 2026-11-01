@@ -2,7 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { changeOf, previousRange } from '../lib/compare'
+import { changeOf, datesText, periodText, previousRange } from '../lib/compare'
 import { addDays, periodOf, shortDate, somText, todayIn, ZONE } from '../lib/time'
 import { AppointmentPanel } from '../schedule/AppointmentPanel'
 import { AnalyticsTab } from './Analytics'
@@ -165,6 +165,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
                 </label>
               </div>
             )}
+            {period !== 'custom' && <p className="hint small period-line" aria-label="Даты периода">{periodText(period, range, todayIn())}</p>}
             {revenue.error && <p className="error">{revenue.error.message}</p>}
             {r && (
               <>
@@ -174,7 +175,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
                   return (
                     <p className="compare" aria-label="Сравнение выручки">
                       <b className={`tone-${c.tone}`}>{c.text}</b> {prev.label}
-                      <span className="hint"> · было {somText(before.data.totalSom ?? 0)}, оплат {before.data.paidCount ?? 0}</span>
+                      <span className="hint"> ({datesText(prev)}) · было {somText(before.data.totalSom ?? 0)}, оплат {before.data.paidCount ?? 0}</span>
                     </p>
                   )
                 })()}
