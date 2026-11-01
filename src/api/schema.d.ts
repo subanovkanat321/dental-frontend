@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/tariffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateTariffs"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/pay-settings": {
         parameters: {
             query?: never;
@@ -2739,6 +2755,33 @@ export interface components {
             priceSom?: number;
             category?: string;
         };
+        BillingControllerTariffsRequest: {
+            /** Format: int32 */
+            pilotMonths?: number;
+            tariffs?: components["schemas"]["TariffsTariff"][];
+        };
+        TariffsTariff: {
+            code?: string;
+            name?: string;
+            who?: string;
+            /** Format: int32 */
+            maxDoctors?: number;
+            /** Format: int64 */
+            monthSom?: number;
+            /** Format: int64 */
+            yearSom?: number;
+        };
+        Tariffs: {
+            /** Format: int32 */
+            pilotMonths?: number;
+            promo?: components["schemas"]["TariffsPromo"];
+            tariffs?: components["schemas"]["TariffsTariff"][];
+        };
+        TariffsPromo: {
+            title?: string;
+            text?: string;
+            points?: string[];
+        };
         PayControllerSettingsRequest: {
             details?: string;
             requisites?: string;
@@ -3322,28 +3365,6 @@ export interface components {
             tariff?: components["schemas"]["TariffsTariff"];
             tariffs?: components["schemas"]["Tariffs"];
             payments?: components["schemas"]["ClinicPaymentsPayment"][];
-        };
-        Tariffs: {
-            /** Format: int32 */
-            pilotMonths?: number;
-            promo?: components["schemas"]["TariffsPromo"];
-            tariffs?: components["schemas"]["TariffsTariff"][];
-        };
-        TariffsPromo: {
-            title?: string;
-            text?: string;
-            points?: string[];
-        };
-        TariffsTariff: {
-            code?: string;
-            name?: string;
-            who?: string;
-            /** Format: int32 */
-            maxDoctors?: number;
-            /** Format: int64 */
-            monthSom?: number;
-            /** Format: int64 */
-            yearSom?: number;
         };
         ExportControllerResult: {
             /** Format: int32 */
@@ -4135,6 +4156,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceTypeControllerDeleted"];
+                };
+            };
+        };
+    };
+    updateTariffs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BillingControllerTariffsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tariffs"];
                 };
             };
         };

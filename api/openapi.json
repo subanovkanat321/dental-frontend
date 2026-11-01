@@ -127,6 +127,34 @@
         }
       }
     },
+    "/api/platform/tariffs" : {
+      "put" : {
+        "tags" : [ "billing-controller" ],
+        "operationId" : "updateTariffs",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BillingControllerTariffsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Tariffs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/pay-settings" : {
       "get" : {
         "tags" : [ "pay-controller" ],
@@ -5859,6 +5887,78 @@
           }
         }
       },
+      "BillingControllerTariffsRequest" : {
+        "properties" : {
+          "pilotMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tariffs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TariffsTariff"
+            }
+          }
+        }
+      },
+      "TariffsTariff" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "who" : {
+            "type" : "string"
+          },
+          "maxDoctors" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "monthSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "yearSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "Tariffs" : {
+        "properties" : {
+          "pilotMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "promo" : {
+            "$ref" : "#/components/schemas/TariffsPromo"
+          },
+          "tariffs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TariffsTariff"
+            }
+          }
+        }
+      },
+      "TariffsPromo" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "points" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
       "PayControllerSettingsRequest" : {
         "properties" : {
           "details" : {
@@ -7244,64 +7344,6 @@
             "items" : {
               "$ref" : "#/components/schemas/ClinicPaymentsPayment"
             }
-          }
-        }
-      },
-      "Tariffs" : {
-        "properties" : {
-          "pilotMonths" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "promo" : {
-            "$ref" : "#/components/schemas/TariffsPromo"
-          },
-          "tariffs" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/TariffsTariff"
-            }
-          }
-        }
-      },
-      "TariffsPromo" : {
-        "properties" : {
-          "title" : {
-            "type" : "string"
-          },
-          "text" : {
-            "type" : "string"
-          },
-          "points" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        }
-      },
-      "TariffsTariff" : {
-        "properties" : {
-          "code" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "who" : {
-            "type" : "string"
-          },
-          "maxDoctors" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "monthSom" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "yearSom" : {
-            "type" : "integer",
-            "format" : "int64"
           }
         }
       },

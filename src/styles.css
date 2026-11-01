@@ -626,3 +626,6 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .grid-corner { left: 0; z-index: 6; }
 .grid-times { position: sticky; left: 0; z-index: 4; background: var(--card); }
 @media (max-width: 760px) { .grid { max-height: calc(100dvh - 140px - 72px - env(safe-area-inset-bottom)); } }
+.tariffs-form { display: grid; gap: 12px; max-width: 760px; }
+.tariff-row { display: grid; gap: 8px; margin: 0; padding: 12px; border: 1px solid var(--separator); border-radius: var(--radius); }
+.tariff-row legend { padding: 0 6px; font-weight: 600; }

@@ -6,6 +6,8 @@ import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { dayTitle, formatPhone, shortDate, slotInstant, todayIn } from '../lib/time'
+import { PhoneInput } from '../clinic/PhoneInput'
+import { phoneFromInput } from '../clinic/phone'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
@@ -97,7 +99,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
 
   const createPatient = useMutation<Patient, ApiError, { allowDuplicate: boolean }>({
     mutationFn: ({ allowDuplicate }) => unwrap(api.POST('/api/patients', {
-      body: { fullName: name.trim(), phone: `+996${phone.replace(/\D/g, '')}`, allowDuplicate, birthDate: birthDate || undefined },
+      body: { fullName: name.trim(), phone: phoneFromInput(phone), allowDuplicate, birthDate: birthDate || undefined },
     })),
   })
 
@@ -220,11 +222,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
               <input aria-label="Имя и фамилия" placeholder="Имя и фамилия" value={name} required autoFocus
                 onChange={(e) => setName(e.target.value)} />
               {fieldError('fullName') && <p className="error">{fieldError('fullName')}</p>}
-              <div className="phone">
-                <span>+996</span>
-                <input aria-label="Телефон" type="tel" inputMode="tel" placeholder="555 123 456" value={phone} required
-                  onChange={(e) => { setPhone(e.target.value); setDuplicate(null) }} />
-              </div>
+              <PhoneInput label="Телефон" value={phone} onChange={(v) => { setPhone(v); setDuplicate(null) }} />
               {fieldError('phone') && <p className="error">{fieldError('phone')}</p>}
               <label className="field"><span>Дата рождения (необязательно)</span>
                 <input type="date" min="1900-01-01" max={todayIn()} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} /></label>

@@ -142,3 +142,42 @@ test('рассылка клиникам: подтверждение и итог'
   expect(await within(form).findByText('Отправлено: дошло 1 из 1')).toBeInTheDocument()
   expect(sent).toEqual({ text: 'Плановые работы в субботу', clinicIds: [2] })
 })
+
+test('владелец меняет тарифы: год следует за месяцем, акция, сохранение', async () => {
+  let sent: Schemas['BillingControllerTariffsRequest'] | null = null
+  const tariffs: Schemas['Tariffs'] = {
+    pilotMonths: 3,
+    tariffs: [
+      { code: 'SOLO', name: 'Кабинет', who: '1 врач', maxDoctors: 1, monthSom: 990, yearSom: 9900 },
+      { code: 'LARGE', name: 'Клиника', who: 'Все остальные', monthSom: 2490, yearSom: 24900 },
+    ],
+  }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/clinics', () => HttpResponse.json([])),
+    http.get('*/web/tariffs', () => HttpResponse.json(tariffs)),
+    http.put('*/api/platform/tariffs', async ({ request }) => {
+      sent = (await request.json()) as Schemas['BillingControllerTariffsRequest']
+      return HttpResponse.json({ ...tariffs, pilotMonths: sent.pilotMonths })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Тарифы' }))
+  const form = await screen.findByRole('form', { name: 'Тарифы' })
+  await user.clear(within(form).getByLabelText('В месяц: Кабинет'))
+  await user.type(within(form).getByLabelText('В месяц: Кабинет'), '790')
+  expect(within(form).getByLabelText('За год: Кабинет')).toHaveValue(7900)
+  expect(within(form).getByLabelText('Врачей: Клиника')).toBeDisabled()
+  await user.clear(within(form).getByLabelText(/Бесплатных месяцев/))
+  await user.type(within(form).getByLabelText(/Бесплатных месяцев/), '1')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить тарифы' }))
+  expect(await within(form).findByRole('status')).toHaveTextContent('Тарифы сохранены')
+  expect(sent).toEqual({
+    pilotMonths: 1,
+    tariffs: [
+      { code: 'SOLO', name: 'Кабинет', who: '1 врач', maxDoctors: 1, monthSom: 790, yearSom: 7900 },
+      { code: 'LARGE', name: 'Клиника', who: 'Все остальные', monthSom: 2490, yearSom: 24900 },
+    ],
+  })
+})

@@ -4,9 +4,10 @@ import type { Schemas } from '../api/client'
 import { ClinicsTab } from './ClinicsTab'
 import { AgreementsTab, BroadcastTab, TicketsTab } from './OwnerTabs'
 import { SettingsTab } from './SettingsTab'
+import { TariffsTab } from './TariffsTab'
 
 type Me = Schemas['BookingViewsMe']
-type Tab = 'clinics' | 'tickets' | 'broadcast' | 'agreements' | 'settings'
+type Tab = 'clinics' | 'tickets' | 'broadcast' | 'agreements' | 'tariffs' | 'settings'
 
 /**
  * «Платформа» — команда Tish: клиники (менеджеры и владелец); обращения, рассылка, договор и
@@ -14,7 +15,7 @@ type Tab = 'clinics' | 'tickets' | 'broadcast' | 'agreements' | 'settings'
  */
 export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }) {
   const tabs: [Tab, string][] = [['clinics', 'Клиники'],
-    ...(me.owner ? [['tickets', 'Обращения'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['settings', 'Настройки']] as [Tab, string][] : [])]
+    ...(me.owner ? [['tickets', 'Обращения'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['tariffs', 'Тарифы'], ['settings', 'Настройки']] as [Tab, string][] : [])]
   const [tab, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? 'clinics')
   const [panel, setPanel] = useState(false)
   const header = (
@@ -33,11 +34,12 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
       {tab === 'clinics' && <ClinicsTab me={me} header={header} onPanel={setPanel} />}
       {tab === 'tickets' && <TicketsTab header={header} onPanel={setPanel} />}
       {tab === 'agreements' && <AgreementsTab header={header} onPanel={setPanel} />}
-      {(tab === 'broadcast' || tab === 'settings') && (
+      {(tab === 'broadcast' || tab === 'settings' || tab === 'tariffs') && (
         <section className="schedule-main">
           {header}
           {tab === 'broadcast' && <BroadcastTab />}
           {tab === 'settings' && <SettingsTab />}
+          {tab === 'tariffs' && <TariffsTab />}
         </section>
       )}
     </div>

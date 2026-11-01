@@ -163,7 +163,7 @@ test('новый пациент с номером, который уже ест�
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
 
   expect(await within(panel).findByText(/Пациент с этим номером уже есть: Айжан Б\./)).toBeInTheDocument()
-  expect(phone).toBe('+996555000111')
+  expect(phone).toBe('+996 555 000 111')
   await userEvent.click(within(panel).getByRole('button', { name: 'Выбрать его' }))
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айжан Б.')
