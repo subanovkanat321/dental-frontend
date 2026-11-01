@@ -259,9 +259,9 @@ button, input, select, textarea { font-family: inherit; }
 .visits { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .9rem; }
 
 /* Касса */
-.cash { display: grid; gap: 16px; align-content: start; }
+.cash { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; }
 .cash .toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--separator); border-radius: 10px; background: var(--card); color: var(--text); }
-.card-block { display: grid; gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.card-block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .card-block h2 { font-size: 1.05rem; }
 .card-block .table { box-shadow: none; }
 .block-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
@@ -297,7 +297,9 @@ button, input, select, textarea { font-family: inherit; }
   }
   .sidebar .brand, .sidebar .clinic, .sidebar .link-out, .nav .soon { display: none; }
   .sidebar nav { display: flex; width: 100%; }
-  .nav { flex: 1; flex-direction: column; gap: 2px; padding: 6px 2px; font-size: .75rem; text-align: center; justify-content: center; }
+  .nav { flex: 1; min-width: 0; flex-direction: column; gap: 2px; padding: 6px 0; font-size: .75rem; text-align: center; justify-content: center; }
+  /* Узкий телефон: подпись не наезжает на соседнюю кнопку — обрезается многоточием */
+  .nav span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .nav .icon { width: 22px; height: 22px; }
   .workspace { padding: 10px 10px calc(72px + env(safe-area-inset-bottom)); }
 
@@ -502,7 +504,8 @@ details.agreement-box { max-height: none; }
 @media (max-width: 760px) {
   .nav.extra { display: none; }
   .nav.more { display: flex; }
-  .nav { font-size: .78rem; }
+  /* Подписи меню не растут с «Крупным текстом»: «Расписание» в полосе из пяти кнопок не влезло бы */
+  .nav { font-size: calc(.78rem / var(--text-scale, 1)); }
   .more-sheet { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(15, 42, 48, .35); }
   .more-card { position: absolute; left: 0; right: 0; bottom: calc(60px + env(safe-area-inset-bottom)); display: grid; gap: 4px;
     padding: 14px 12px; border-radius: 16px 16px 0 0; background: var(--card); box-shadow: 0 -8px 24px rgba(0, 0, 0, .15); }
