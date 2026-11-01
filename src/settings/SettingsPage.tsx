@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 
 import type { AccountTab } from '../account/AccountPage'
-import type { Schemas } from '../api/client'
+import { logout, type Schemas } from '../api/client'
 import type { ClinicTab } from '../clinic/ClinicPage'
 import { openSettings, settingsItem } from '../lib/route'
 import { telegram } from '../lib/telegram'
@@ -135,11 +135,6 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
       )}
     </div>
   )
-}
-
-async function logout(): Promise<void> {
-  await fetch('/web/logout', { method: 'POST', headers: { 'X-Dental-Web': '1' } }).catch(() => null)
-  window.location.reload()
 }
 
 /** «Оформление»: тема и размер текста — сразу, на этом устройстве. */

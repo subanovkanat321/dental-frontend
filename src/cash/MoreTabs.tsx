@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
 import { changeOf, previousRange } from '../lib/compare'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -53,15 +53,18 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
     void client.invalidateQueries({ queryKey: ['spending'] })
   }
   const [form, setForm] = useState({ spentOn: todayIn(), amount: '', category: '', other: '', comment: '' })
+  // Расход по пациенту (техник, лаборатория) — необязательно, как в прежнем приложении
+  const [patient, setPatient] = useState<{ id: number; fullName: string } | null>(null)
   const add = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/expenses', {
       body: {
         spentOn: form.spentOn, amountSom: Number(form.amount), category: form.category === '*' ? form.other.trim() : form.category,
-        comment: form.comment.trim() || undefined, doctorId: doctorId ?? undefined,
+        comment: form.comment.trim() || undefined, doctorId: doctorId ?? undefined, patientId: patient?.id,
       },
     })),
     onSuccess: () => {
       setForm({ ...form, amount: '', comment: '', other: '' })
+      setPatient(null)
       refresh()
     },
   })
@@ -127,6 +130,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
           </select>
           {form.category === '*' && <input aria-label="Своя статья" placeholder="Например: реклама" required maxLength={60} value={form.other} onChange={(e) => setForm({ ...form, other: e.target.value })} />}
           <input aria-label="Комментарий" placeholder="Комментарий — необязательно" maxLength={200} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} />
+          <PatientPick value={patient} onChange={setPatient} />
           <button type="submit" className="btn primary" disabled={add.isPending}>Добавить</button>
         </form>
         {add.error && <p className="error" role="alert">{errorText(add.error)}</p>}
@@ -265,5 +269,38 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
       {rows.data?.length ? <PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus onOpen={onOpen} active={active} days={monthRange(month)} />
         : rows.isSuccess ? <p className="hint">Приёмов за {monthTitle(month)} нет.</p> : null}
     </section>
+  )
+}
+
+/** Пациент расхода — необязательно: найти по имени или номеру, выбрать; «✕» — без пациента. */
+function PatientPick({ value, onChange }: { value: { id: number; fullName: string } | null; onChange: (p: { id: number; fullName: string } | null) => void }) {
+  const [query, setQuery] = useState('')
+  const [search, setSearch] = useState('')
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(query.trim()), 300)
+    return () => clearTimeout(t)
+  }, [query])
+  const found = useQuery({
+    queryKey: ['patients', 'search', search],
+    queryFn: () => unwrap(api.POST('/api/patients/search', { body: { query: search } })),
+    enabled: !value && search.length >= 2,
+  })
+  if (value) {
+    return (
+      <span className="chip picked-patient">Пациент: {value.fullName}
+        <button type="button" className="link" aria-label="Без пациента" onClick={() => onChange(null)}>✕</button></span>
+    )
+  }
+  return (
+    <div className="patient-pick">
+      <input type="search" aria-label="Пациент — необязательно" placeholder="Пациент — необязательно" value={query} onChange={(e) => setQuery(e.target.value)} />
+      {found.data && found.data.length > 0 && (
+        <ul className="found">
+          {found.data.slice(0, 6).map((p) => (
+            <li key={p.id}><button type="button" onClick={() => { onChange({ id: p.id!, fullName: p.fullName ?? '' }); setQuery('') }}>{p.fullName}</button></li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }

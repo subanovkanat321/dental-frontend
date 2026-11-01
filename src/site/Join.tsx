@@ -108,7 +108,9 @@ export function Join() {
           <button type="button" aria-pressed={!solo} onClick={() => setSolo(false)}>Клиника</button>
           <button type="button" aria-pressed={solo} onClick={() => setSolo(true)}>Частный врач</button>
         </div>
-        <p className="hint">Частный врач работает один (например, арендует кабинет): он и ведёт приём, и управляет записью.</p>
+        <p className="hint">{solo
+          ? 'Частный врач работает один (например, арендует кабинет): он и ведёт приём, и управляет записью.'
+          : 'Клиника — несколько врачей, у каждого своё расписание; регистратура и администратор — по желанию.'}</p>
         <label className="field"><span>{solo ? 'Кабинет (как вас найдут пациенты)' : 'Клиника'}</span>
           <input value={f.clinicName} maxLength={100} autoComplete="organization" placeholder={solo ? 'Стоматолог Айгерим Садыкова' : 'Стоматология «Улыбка»'} onChange={(e) => set('clinicName')(e.target.value)} /></label>
         {err('clinicName')}

@@ -32,6 +32,7 @@ test('расходы: список по статьям, прибыль, доба
   const posted: unknown[] = []
   server.use(
     http.get('*/api/expenses', () => HttpResponse.json(expenses)),
+    http.post('*/api/patients/search', () => HttpResponse.json([{ id: 7, fullName: 'Бакыт М.', phone: '996555000111' }])),
     http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: ['Аренда', 'Техник'], own: [] } satisfies Schemas['ExpenseControllerCategories'])),
     http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 100000, purchasedSom: 10000, expensesSom: 35000 } satisfies Schemas['SpendingView'])),
     http.post('*/api/expenses', async ({ request }) => {
@@ -59,9 +60,13 @@ test('расходы: список по статьям, прибыль, доба
   await user.type(within(form).getByRole('spinbutton', { name: 'Сумма, сом' }), '2000')
   await user.selectOptions(within(form).getByRole('combobox', { name: 'Статья' }), '*')
   await user.type(within(form).getByRole('textbox', { name: 'Своя статья' }), 'Реклама')
+  // Расход по пациенту — необязательно: найти и выбрать
+  await user.type(within(form).getByRole('searchbox', { name: 'Пациент — необязательно' }), 'Бак')
+  await user.click(await within(form).findByRole('button', { name: 'Бакыт М.' }))
+  expect(within(form).getByText(/Пациент: Бакыт М\./)).toBeInTheDocument()
   await user.click(within(form).getByRole('button', { name: 'Добавить' }))
   expect(await screen.findByRole('cell', { name: 'Реклама' })).toBeInTheDocument()
-  expect(posted[0]).toMatchObject({ amountSom: 2000, category: 'Реклама', spentOn: todayIn() })
+  expect(posted[0]).toMatchObject({ amountSom: 2000, category: 'Реклама', spentOn: todayIn(), patientId: 7 })
 
   await user.click(screen.getByRole('button', { name: 'Удалить расход: Аренда 30000' }))
   expect(await screen.findByLabelText('Расходы за месяц')).toHaveTextContent('7 000')

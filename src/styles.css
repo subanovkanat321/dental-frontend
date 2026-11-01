@@ -397,7 +397,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .remind { display: grid; gap: 8px; }
 
 /* Касса: расходы, прибыль, оценки */
-.expense-form { display: grid; grid-template-columns: 150px 130px minmax(160px, 1fr) minmax(160px, 1.4fr) auto; gap: 8px; align-items: center; }
+.expense-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; align-items: center; }
 .expense-form input, .expense-form select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .methods.profit { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
 .methods.profit > div { display: grid; gap: 2px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .86rem; }
@@ -707,3 +707,6 @@ tr.clickable:hover td { background: var(--sunken); }
 .hbar-fill { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--chart-1); }
 .hbar-value { white-space: nowrap; font-size: .85rem; }
 @media (max-width: 760px) { .hbars li { grid-template-columns: 1fr auto; } .hbar-track { grid-column: 1 / -1; order: 3; } }
+.patient-pick { position: relative; min-width: 0; }
+.patient-pick input { width: 100%; }
+.picked-patient { align-self: center; background: var(--accent-soft); color: var(--link); }

@@ -116,6 +116,14 @@ export async function botUsername(): Promise<string | null> {
   return body?.botUsername ?? null
 }
 
+/** Выйти на сайте: сервер гасит cookie-сессию — снова экран входа. В Telegram выходить не из чего. */
+export async function logout(): Promise<void> {
+  await globalThis.fetch(new Request(new URL('/web/logout', window.location.origin), {
+    method: 'POST', credentials: 'same-origin', headers: { 'X-Dental-Web': '1' },
+  })).catch(() => null)
+  window.location.reload()
+}
+
 /** Тарифы, как их видят клиники на /join. /web/tariffs — не часть контракта /api; форма — Tariffs. */
 export async function webTariffs(): Promise<Schemas['Tariffs'] | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/tariffs', window.location.origin), { credentials: 'same-origin' }))
