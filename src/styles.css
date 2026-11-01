@@ -266,6 +266,9 @@ button, input, select, textarea { font-family: inherit; }
 .card-block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .card-block h2 { font-size: 1.05rem; }
 .card-block .table { box-shadow: none; }
+/* Несколько секций подряд в рабочей области — с отступом, а не впритык; расстояние между абзацами — gap сетки, без полей браузера */
+.schedule-main:not(.cash) > .card-block + .card-block { margin-top: 16px; }
+.card-block > p { margin: 0; }
 .block-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
 .block-head .segments { min-width: 340px; }
 .dates { max-width: 360px; }
