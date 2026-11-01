@@ -36,10 +36,10 @@
 .step-attention { animation: attention 1.2s ease; }
 @keyframes attention { 0%, 100% { box-shadow: none; } 30% { box-shadow: 0 0 0 3px var(--accent); } }
 
-.services { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.services-group { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.services { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.services-group { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 .services-group h3 { grid-column: 1 / -1; margin: 6px 0 0; font-size: .8rem; color: var(--hint); text-transform: uppercase; letter-spacing: .04em; }
-.btn.service { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 6px; min-height: 92px; padding: 12px; text-align: left; font-weight: 600; white-space: normal; }
+.btn.service { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 6px; min-height: 92px; padding: 12px; text-align: left; font-weight: 600; white-space: normal; overflow-wrap: anywhere; hyphens: auto; }
 .btn.service[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); }
 .btn.service .dur { font-size: .82rem; font-weight: 500; color: var(--hint); }
 .btn.service .price { font-size: .85rem; font-weight: 700; color: var(--accent); }
