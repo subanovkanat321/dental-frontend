@@ -1,5 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type CSSProperties } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useWaitlist } from '../api/settings'
@@ -147,8 +147,8 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, selectedId }
       {note && <p className="hint day-note">{note}</p>}
       {pending ? <p className="hint">Загрузка…</p>
         : failed ? <p className="error">{failed.message}</p>
-          : items.length === 0 ? <p className="day-empty hint">{offText ? `${offText} — записей нет` : 'На этот день записей нет'}</p> : (
-            groups.map((g) => {
+          : items.length === 0 ? <p className="day-empty hint">{offText ? `${offText} — записей нет` : 'На этот день записей нет'}</p> : (() => {
+            const blocks = groups.map((g) => {
               const rows = (
                 <ul className="rows">
                   {g.items.map((item) => item.kind === 'appointment'
@@ -172,16 +172,18 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, selectedId }
               // «Все врачи» — у каждого врача свой блок; имя прилипает сверху при прокрутке
               return many ? (
                 <section key={g.doctor.id} className="doctor-day" aria-label={g.doctor.name}>
-                  <h3 className="doctor-day-head">
+                  <h3 className="doctor-day-head" title={g.doctor.name}>
                     <span className="avatar" aria-hidden="true">{g.doctor.name.slice(0, 1)}</span>
-                    {g.doctor.name}{g.doctor.id === me.doctorId ? ' (я)' : ''}
-                    <span className="hint"> · {g.booked ? `записей: ${g.booked}` : 'записей нет'}</span>
+                    <span className="doctor-day-name">{shortName(g.doctor.name)}{g.doctor.id === me.doctorId ? ' (я)' : ''}</span>
+                    <span className="doctor-day-count" aria-label={`записей: ${g.booked}`}>{g.booked}</span>
                   </h3>
                   {rows}
                 </section>
               ) : <div key={g.doctor.id}>{rows}</div>
             })
-          )}
+            // «Все врачи» — списки врачей рядом, колонками; больше двух — листаются вбок
+            return many ? <div className="doctor-columns" style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div> : blocks
+          })()}
     </div>
   )
 }
@@ -190,11 +192,12 @@ function FreeRow({ start, end, canEdit, doctor, waiting, onPick }: {
   start: string
   end: string
   canEdit: boolean
+  /** «Все врачи» (узкая колонка): коротко «до 13:00» */
   doctor?: string
   waiting: number
   onPick: () => void
 }) {
-  const text = <>свободно до {timeOf(end)}{waiting > 0 && <span className="waiting"> · ждут: {waiting}</span>}</>
+  const text = <>{doctor ? 'до' : 'свободно до'} {timeOf(end)}{waiting > 0 && <span className="waiting"> · ждут: {waiting}</span>}</>
   if (!canEdit) return <li className="row free readonly"><span className="time num">{timeOf(start)}</span><span className="hint">{text}</span></li>
   return (
     <li className="row free">

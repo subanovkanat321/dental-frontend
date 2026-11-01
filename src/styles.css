@@ -648,3 +648,21 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-day-head .hint { font-weight: 500; font-size: .9rem; }
 .doctor-inline { display: grid; gap: 10px; max-width: 640px; }
 .doctor-inline .panel-head { margin-bottom: 4px; }
+/* Телефон, «Все врачи»: списки врачей рядом, компактные строки (время сверху, имя под ним) */
+.doctor-columns { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(158px, 1fr)); gap: 8px; overflow-x: auto; align-items: start; margin-top: 10px; scrollbar-width: none; }
+.doctor-columns::-webkit-scrollbar { display: none; }
+.doctor-columns .doctor-day { margin-top: 0; min-width: 0; }
+.doctor-columns .doctor-day-head { gap: 6px; padding: 6px 2px; font-size: .95rem; }
+.doctor-day-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doctor-day-count { flex: none; min-width: 24px; padding: 0 7px; border-radius: 99px; background: var(--accent-soft); color: var(--link); font: 600 .8rem/22px var(--mono); text-align: center; }
+.doctor-columns .row-button { grid-template-columns: 1fr; gap: 1px; padding: 8px 8px; }
+.doctor-columns .row .time { font-size: .88rem; }
+.doctor-columns .row .end { display: none; }
+.doctor-columns .row .name { white-space: normal; overflow-wrap: anywhere; font-size: .92rem; line-height: 1.2; }
+.doctor-columns .row .state, .doctor-columns .row .row-note { grid-column: auto; font-size: .78rem; }
+.doctor-columns .row .state .hint { display: none; }
+.doctor-columns .remind-quick { width: 34px; height: 34px; margin: 6px 6px 0 0; align-self: flex-start; font-size: .7rem; }
+.doctor-columns .row.free .row-button { grid-template-columns: auto 1fr auto; align-items: center; gap: 6px; }
+.doctor-columns .row.free { background: var(--ok-bg); border-color: transparent; }
+.doctor-columns .row.free .hint { font-size: .8rem; }
+.doctor-columns .row.pause { flex-wrap: wrap; padding: 8px; gap: 2px 6px; font-size: .82rem; }
