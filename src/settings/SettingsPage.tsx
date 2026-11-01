@@ -1,14 +1,20 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 
-import { AccountPage, type AccountTab } from '../account/AccountPage'
+import type { AccountTab } from '../account/AccountPage'
 import type { Schemas } from '../api/client'
-import { ClinicPage, type ClinicTab } from '../clinic/ClinicPage'
+import type { ClinicTab } from '../clinic/ClinicPage'
 import { openSettings, settingsItem } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
-import { TeamPage, type TeamTab } from '../team/TeamPage'
-import { HoursPage } from './HoursPage'
-import { ProfilePage } from './ProfilePage'
+import type { TeamTab } from '../team/TeamPage'
+
+// Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
+// код «Договора» или «Услуг» скачивается, только когда пункт открыли
+const AccountPage = lazy(() => import('../account/AccountPage').then((m) => ({ default: m.AccountPage })))
+const ClinicPage = lazy(() => import('../clinic/ClinicPage').then((m) => ({ default: m.ClinicPage })))
+const TeamPage = lazy(() => import('../team/TeamPage').then((m) => ({ default: m.TeamPage })))
+const HoursPage = lazy(() => import('./HoursPage').then((m) => ({ default: m.HoursPage })))
+const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
 
 type Me = Schemas['BookingViewsMe']
 
@@ -78,7 +84,13 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
   const back = () => openSettings(null)
   const found = GROUPS.flatMap(([, items]) => items).find((i) => i.key === current && i.show(me))
   // key — свой экран у каждого пункта: «Мой профиль» и «Врачи» не делят открытую карточку
-  if (found) return <div key={found.key} className="settings-item">{found.render(me, back, { ticketId: initialTicket })}</div>
+  if (found) {
+    return (
+      <div key={found.key} className="settings-item">
+        <Suspense fallback={<p className="hint">Загрузка…</p>}>{found.render(me, back, { ticketId: initialTicket })}</Suspense>
+      </div>
+    )
+  }
 
   return (
     <div className="settings">
