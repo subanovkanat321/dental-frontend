@@ -7868,7 +7868,9 @@ export interface operations {
     };
     recent: {
         parameters: {
-            query?: never;
+            query?: {
+                doctorId?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;

@@ -51,9 +51,12 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
   const waitlist = useWaitlist()
   const close = useCallback(() => setSelected(null), [])
 
+  // Чьи пациенты: все или одного врача (у кого был или будет приём у него)
+  const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
+  const [doctorId, setDoctorId] = useState<number | null>(null)
   const recent = useQuery({
-    queryKey: ['patients', 'recent'],
-    queryFn: () => unwrap(api.GET('/api/patients/recent')),
+    queryKey: ['patients', 'recent', doctorId],
+    queryFn: () => unwrap(api.GET('/api/patients/recent', { params: { query: { doctorId: doctorId ?? undefined } } })),
   })
 
   const text = query.trim().toLowerCase()
@@ -67,7 +70,8 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
   const remote = useQuery({
     queryKey: ['patients', 'search', search],
     queryFn: () => unwrap(api.POST('/api/patients/search', { body: { query: search } })),
-    enabled: search.length >= 2 && recent.isSuccess && local.length === 0,
+    // У одного врача не нашли — не ищем по всей клинике: врач выбран, чужие пациенты не нужны
+    enabled: search.length >= 2 && recent.isSuccess && local.length === 0 && doctorId == null,
   })
   const rows: Row[] = local.length || !text ? local : (remote.data ?? []).map((p) => ({ ...p }))
 
@@ -115,9 +119,15 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
             <>
               <input type="search" className="search" aria-label="Поиск пациента" placeholder="Имя или номер телефона"
                 value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
+              {doctors.length > 1 && (
+                <select aria-label="Чьи пациенты" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
+                  <option value="">Все врачи</option>
+                  {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>)}
+                </select>
+              )}
               <button type="button" className="btn" onClick={() => setSelected('new')}>＋ Новый пациент</button>
               <span className="hint">
-                {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
+                {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
               </span>
             </>
           )}
@@ -126,7 +136,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
-          <p className="hint">{text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}».`) : 'Пациентов пока нет — они появятся с первой записью.'}</p>
+          <p className="hint">{text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»${doctorId != null ? ' у этого врача' : ''}.`) : doctorId != null ? 'У этого врача пока не было пациентов.' : 'Пациентов пока нет — они появятся с первой записью.'}</p>
         )}
         {tab === 'all' && sorted.length > 0 && (
           <table className="table">

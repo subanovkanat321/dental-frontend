@@ -4685,6 +4685,15 @@
       "get" : {
         "tags" : [ "patient-list-controller" ],
         "operationId" : "recent",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",

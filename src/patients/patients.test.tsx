@@ -117,3 +117,22 @@ test('визит в карточке пациента открывает кар�
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айгуль Т.')
   expect(window.location.hash).toBe('#/schedule')
 })
+
+test('фильтр по врачу: только его пациенты, сервер получает doctorId', async () => {
+  const asked: (string | null)[] = []
+  backend()
+  server.use(http.get('*/api/patients/recent', ({ request }) => {
+    const doctorId = new URL(request.url).searchParams.get('doctorId')
+    asked.push(doctorId)
+    return HttpResponse.json(doctorId === '2' ? rows.slice(1, 2) : rows)
+  }))
+  renderApp()
+  await screen.findByText('Нурлан К.')
+  expect(asked).toEqual([null])
+  await userEvent.selectOptions(screen.getByLabelText('Чьи пациенты'), 'Дастан Т.')
+  expect(await screen.findByText('Пациентов врача: 1')).toBeInTheDocument()
+  expect(names()).toEqual(['Айгуль Т.'])
+  expect(asked).toContain('2')
+  await userEvent.selectOptions(screen.getByLabelText('Чьи пациенты'), 'Все врачи')
+  expect(await screen.findByText('Нурлан К.')).toBeInTheDocument()
+})
