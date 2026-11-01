@@ -27,6 +27,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
 }) {
   useClose(onClose)
   const owner = Boolean(me.owner)
+  const here = Boolean(c.code) && me.clinic?.code === c.code
   const page = c.code ? `${window.location.origin}/c/${c.code}` : null
   return (
     <aside className="panel" aria-label="Клиника на платформе">
@@ -37,6 +38,9 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
+      {/* «Войти в клинику» — первым: ради этого карточку чаще всего и открывают; в свою — незачем */}
+      {owner && !here && <EnterBox id={c.id!} />}
+      {owner && here && <p className="hint">Это ваша текущая клиника.</p>}
       {owner && <BillingBox id={c.id!} />}
       <AgreementBox id={c.id!} owner={owner} />
       {page && (
@@ -46,7 +50,6 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
           <a className="invite-link" href={page} target="_blank" rel="noopener noreferrer">{page}</a>
         </section>
       )}
-      {owner && <EnterBox id={c.id!} />}
       <AdminInvite clinic={c} initial={invite} owner={owner} />
       {owner && <ExportBox id={c.id!} />}
       {owner && <HideBox clinic={c} />}

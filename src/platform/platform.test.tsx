@@ -184,3 +184,28 @@ test('владелец меняет тарифы: год следует за м�
     ],
   })
 })
+
+test('владелец: нажать в любом месте строки клиники — карточка, «Войти в клинику» первым', async () => {
+  backend([clinic(5, 'Улыбка Вымышленная', { health: 'ASLEEP' })])
+  let entered: unknown = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.post('*/api/platform/clinics/5/enter', async ({ request }) => {
+      entered = await request.json()
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const reload = vi.fn()
+  vi.stubGlobal('location', { ...window.location, reload })
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table')
+  // Не на названии, а на ячейке «Врачей» той же строки
+  await user.click(within(table).getAllByRole('row')[1]!.querySelectorAll('td')[4]!)
+  const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
+  expect(within(panel).getAllByRole('heading', { level: 3 })[0]).toHaveTextContent('Войти в клинику')
+  await user.click(within(panel).getByRole('button', { name: 'Войти как админ' }))
+  await vi.waitFor(() => expect(entered).toEqual({ reception: false }))
+  expect(reload).toHaveBeenCalled()
+  vi.unstubAllGlobals()
+})

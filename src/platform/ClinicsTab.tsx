@@ -45,9 +45,10 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
           const ag = agreements.data?.[String(c.id)]
           const share = noShowShare(c.noShow30, c.done30)
           return (
-            <tr key={c.id} className={c.id === opened?.id ? 'active' : undefined}>
+            // Вся строка нажимается — карточка клиники (оплата, договор, «Войти в клинику»)
+            <tr key={c.id} className={['clickable', c.id === opened?.id ? 'active' : ''].join(' ').trim()} onClick={() => setOpened({ id: c.id! })}>
               <td>
-                <button type="button" className="row-link" onClick={() => setOpened({ id: c.id! })}>{c.name}</button>
+                <button type="button" className="row-link open-link" onClick={(e) => { e.stopPropagation(); setOpened({ id: c.id! }) }}>{c.name}<span aria-hidden="true"> ›</span></button>
                 {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
                 <div><span className={`chip small ${hl.chip}`}>{hl.label}</span></div>
               </td>
