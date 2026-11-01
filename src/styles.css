@@ -727,3 +727,15 @@ tr.clickable:hover td { background: var(--sunken); }
 @media (max-width: 760px) { .day-pick { grid-template-columns: 1fr; } .day-quick .chip { flex: 1; } }
 input[type=date], input[type=month], input[type=time] { min-width: 0; max-width: 100%; }
 .period-line { margin: 2px 0 6px; }
+
+/* «Касса → Зарплата»: карточка врача — три суммы в ряд, условия, действия */
+.salary { display: grid; gap: 8px; }
+.salary-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.salary-head h2 { margin: 0; }
+.salary-sums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.salary-sums div { padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken, var(--quiet-bg)); }
+.salary-sums dt { color: var(--hint); font-size: .8rem; }
+.salary-sums dd { margin: 2px 0 0; font-size: .95rem; white-space: nowrap; }
+.salary-sums dd.strong { font-weight: 700; color: var(--link); }
+.badge-ok { padding: 2px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok-ink); font-size: .85rem; font-weight: 600; white-space: nowrap; }
+.total-line { margin: 4px 0; font-size: 1.05rem; }

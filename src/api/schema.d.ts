@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/salaries/{doctorId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["terms"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/tariffs": {
         parameters: {
             query?: never;
@@ -596,6 +612,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/salaries/{doctorId}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["pay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/support/tickets/{id}/messages": {
         parameters: {
             query?: never;
@@ -781,7 +813,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["pay"];
+        post: operations["pay_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1732,6 +1764,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/salaries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/support/tickets": {
         parameters: {
             query?: never;
@@ -2139,7 +2187,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2771,6 +2819,25 @@ export interface components {
             priceSom?: number;
             category?: string;
         };
+        SalaryControllerTerms: {
+            percent?: number;
+            /** Format: int64 */
+            baseSom?: number;
+        };
+        SalaryControllerSalaryRow: {
+            /** Format: int64 */
+            doctorId?: number;
+            doctor?: string;
+            percent?: number;
+            /** Format: int64 */
+            baseSom?: number;
+            /** Format: int64 */
+            revenueSom?: number;
+            /** Format: int64 */
+            dueSom?: number;
+            /** Format: int64 */
+            paidSom?: number;
+        };
         BillingControllerTariffsRequest: {
             /** Format: int32 */
             pilotMonths?: number;
@@ -3303,6 +3370,11 @@ export interface components {
         ServiceTypeControllerAdded: {
             /** Format: int32 */
             added?: number;
+        };
+        SalaryControllerPayout: {
+            month?: string;
+            /** Format: int64 */
+            amountSom?: number;
         };
         PayControllerReject: {
             comment?: string;
@@ -4189,6 +4261,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceTypeControllerDeleted"];
+                };
+            };
+        };
+    };
+    terms: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path: {
+                doctorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalaryControllerTerms"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalaryControllerSalaryRow"];
                 };
             };
         };
@@ -5400,6 +5500,32 @@ export interface operations {
             };
         };
     };
+    pay: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doctorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalaryControllerPayout"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalaryControllerSalaryRow"];
+                };
+            };
+        };
+    };
     reply: {
         parameters: {
             query?: {
@@ -5753,7 +5879,7 @@ export interface operations {
             };
         };
     };
-    pay: {
+    pay_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -7513,6 +7639,28 @@ export interface operations {
             };
         };
     };
+    list_4: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalaryControllerSalaryRow"][];
+                };
+            };
+        };
+    };
     all_4: {
         parameters: {
             query?: never;
@@ -8067,7 +8215,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;

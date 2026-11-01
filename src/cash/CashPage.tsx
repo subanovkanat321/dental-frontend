@@ -6,6 +6,7 @@ import { changeOf, datesText, periodText, previousRange } from '../lib/compare'
 import { addDays, periodOf, shortDate, somText, todayIn, ZONE } from '../lib/time'
 import { AppointmentPanel } from '../schedule/AppointmentPanel'
 import { AnalyticsTab } from './Analytics'
+import { SalaryTab } from './SalaryTab'
 import { ExpensesTab, ReportTab, StatsTab } from './MoreTabs'
 import { PaymentsTable } from './PaymentsTable'
 import { SortTh } from '../layout/SortTh'
@@ -34,9 +35,9 @@ function dayOf(instant: string): string {
 const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
 
 type Period = 'day' | 'week' | 'month' | 'custom'
-type Tab = 'money' | 'analytics' | 'expenses' | 'stats' | 'report'
+type Tab = 'money' | 'analytics' | 'expenses' | 'salary' | 'stats' | 'report'
 
-const TABS: [Tab, string][] = [['money', 'Деньги'], ['analytics', 'Аналитика'], ['expenses', 'Расходы'], ['stats', 'Статистика'], ['report', 'Отчёт']]
+const TABS: [Tab, string][] = [['money', 'Деньги'], ['analytics', 'Аналитика'], ['expenses', 'Расходы'], ['salary', 'Зарплата'], ['stats', 'Статистика'], ['report', 'Отчёт']]
 
 /**
  * «Касса»: выручка за период (по способам и по дням), «К оплате на кассе» и долги — таблицами.
@@ -123,6 +124,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
 
         {tab === 'analytics' && <AnalyticsTab me={me} doctorId={doctorId} seesAll={seesAll} />}
         {tab === 'expenses' && <ExpensesTab me={me} doctorId={doctorId} seesAll={seesAll} />}
+        {tab === 'salary' && <SalaryTab seesAll={seesAll} />}
         {tab === 'stats' && <StatsTab doctorId={doctorId} />}
         {tab === 'report' && <ReportTab doctorId={doctorId} onOpen={setOpened} active={opened} />}
         {tab === 'money' && <>

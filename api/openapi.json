@@ -127,6 +127,50 @@
         }
       }
     },
+    "/api/salaries/{doctorId}" : {
+      "put" : {
+        "tags" : [ "salary-controller" ],
+        "operationId" : "terms",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "month",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SalaryControllerTerms"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalaryControllerSalaryRow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/tariffs" : {
       "put" : {
         "tags" : [ "billing-controller" ],
@@ -1630,6 +1674,43 @@
         }
       }
     },
+    "/api/salaries/{doctorId}/pay" : {
+      "post" : {
+        "tags" : [ "salary-controller" ],
+        "operationId" : "pay",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SalaryControllerPayout"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalaryControllerSalaryRow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/support/tickets/{id}/messages" : {
       "post" : {
         "tags" : [ "support-controller" ],
@@ -2056,7 +2137,7 @@
     "/api/platform/clinics/{id}/payments" : {
       "post" : {
         "tags" : [ "billing-controller" ],
-        "operationId" : "pay",
+        "operationId" : "pay_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4216,6 +4297,35 @@
         }
       }
     },
+    "/api/salaries" : {
+      "get" : {
+        "tags" : [ "salary-controller" ],
+        "operationId" : "list_4",
+        "parameters" : [ {
+          "name" : "month",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SalaryControllerSalaryRow"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/support/tickets" : {
       "get" : {
         "tags" : [ "support-controller" ],
@@ -4878,7 +4988,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_4",
+        "operationId" : "list_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5936,6 +6046,47 @@
           },
           "category" : {
             "type" : "string"
+          }
+        }
+      },
+      "SalaryControllerTerms" : {
+        "properties" : {
+          "percent" : {
+            "type" : "number"
+          },
+          "baseSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "SalaryControllerSalaryRow" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "percent" : {
+            "type" : "number"
+          },
+          "baseSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "dueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -7219,6 +7370,17 @@
           "added" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "SalaryControllerPayout" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
