@@ -27,6 +27,8 @@ export default defineConfig({
       '/api': backend,
       '/web': backend,
       '/doctors': backend,
+      // Вход без Telegram на ноутбуке: подпись у бэкенда в профиле local (lib/telegram.ts → startDevLogin)
+      '/dev/init-data': backend,
     },
   },
   test: {

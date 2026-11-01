@@ -15,13 +15,23 @@ Telegram), раздел **«Платформа»** для команды Tish, *
 
 ## Команды
 
+Нужны Node.js 22.12+ и запущенный бэкенд на :8080 (в соседней папке `../dental`:
+`./mvnw spring-boot:run`, нужны JDK 25 и Docker).
+
 ```bash
 npm ci                 # зависимости
-npm run dev            # http://localhost:5173/ (сайт: /site/clinics.html) — нужен бэкенд на :8080 (./mvnw spring-boot:run в dental)
+npm run dev            # http://localhost:5173/ — CRM; сайт: /site/clinics.html, /site/join.html …
 npm test               # Vitest + Testing Library + MSW
 npm run lint && npm run typecheck && npm run build
 npm run api:sync       # контракт из ../dental/docs/api/openapi.json → api/openapi.json и src/api/schema.d.ts
 ```
+
+**Вход на ноутбуке.** `npm run dev` входит сам: берёт подпись у бэкенда (`/dev/init-data`, есть
+только в его профиле `local`) за первого из `ALLOWED_TELEGRAM_IDS` — по умолчанию пользователь 1,
+админ клиники №1 и владелец платформы. Виджет «Войти через Telegram» на localhost не работает.
+Бэкенд не в `local` (например, `java -jar` для e2e) — входа нет, `/` уводит на `/clinics`.
+Посмотреть, что видит пациент или другой сотрудник, — в бэкенде `ALLOWED_TELEGRAM_IDS=<id>`.
+Бэкенд на другом адресе — `DENTAL_BACKEND=http://localhost:8081 npm run dev`.
 
 ## Что готово
 

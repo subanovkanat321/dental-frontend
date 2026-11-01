@@ -26,7 +26,7 @@ import '@fontsource/jetbrains-mono/latin-600.css'
 
 import { App } from './App'
 import { ErrorBoundary } from './layout/ErrorBoundary'
-import { startTelegram, telegram } from './lib/telegram'
+import { startDevLogin, startTelegram, telegram } from './lib/telegram'
 import { startButtonIcons } from './lib/buttonIcons'
 import { applyLook } from './lib/theme'
 import './styles.css'
@@ -44,15 +44,21 @@ applyLook()
 telegram()?.onEvent?.('themeChanged', applyLook)
 window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', applyLook)
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </QueryClientProvider>
-  </StrictMode>,
-)
+function render(): void {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </QueryClientProvider>
+    </StrictMode>,
+  )
+}
+
+// На ноутбуке (npm run dev) — сначала вход без Telegram (lib/telegram.ts → startDevLogin)
+if (import.meta.env.DEV) void startDevLogin().then(render)
+else render()
 
 // Эмодзи у кнопок по подписи — как в прежнем приложении
 startButtonIcons()

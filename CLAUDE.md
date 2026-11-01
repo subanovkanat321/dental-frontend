@@ -9,7 +9,8 @@
 
 ## Команды
 
-- `npm ci`, `npm run dev` (http://localhost:5173/, нужен бэкенд на :8080), `npm test`, `npm run lint`,
+- `npm ci`, `npm run dev` (http://localhost:5173/, нужен бэкенд на :8080 в профиле `local` — тогда
+  вход сам, через `/dev/init-data`; README, «Вход на ноутбуке»), `npm test`, `npm run lint`,
   `npm run typecheck`, `npm run build`.
 - `npm run api:sync` — контракт из `../dental/docs/api/openapi.json` → `api/openapi.json` и `src/api/schema.d.ts`.
 

@@ -45,10 +45,30 @@ export function telegram(): WebApp | null {
   return app && app.initData ? app : null
 }
 
+/** Подпись для входа на ноутбуке (`npm run dev`) — см. startDevLogin. */
+let devInitData = ''
+
 /** Заголовок входа для запросов: в Telegram — подпись initData, в браузере — ничего (cookie). */
 export function authHeaders(): Record<string, string> {
-  const app = telegram()
-  return app ? { Authorization: `tma ${app.initData}` } : {}
+  const initData = telegram()?.initData || devInitData
+  return initData ? { Authorization: `tma ${initData}` } : {}
+}
+
+/**
+ * Только `npm run dev`: вход без Telegram. Виджет «Войти через Telegram» на localhost не работает,
+ * поэтому подпись берём у бэкенда — `/dev/init-data` есть лишь в его профиле local (на проде 404)
+ * и подписывает первого из ALLOWED_TELEGRAM_IDS (по умолчанию 1 — админ клиники №1). Бэкенд не в
+ * local — ответ не 200, остаётся обычный вход. В сборке (`npm run build`) этого кода нет: вызов —
+ * под `import.meta.env.DEV`.
+ */
+export async function startDevLogin(): Promise<void> {
+  if (telegram() || window.location.pathname === '/login') return
+  try {
+    const response = await fetch('/dev/init-data')
+    if (response.ok) devInitData = (await response.text()).trim()
+  } catch {
+    // бэкенд не запущен — экран «Нет связи с сервером» скажет сам
+  }
 }
 
 /** Сообщить Telegram, что CRM готова: на весь экран, шапка в цвет тёмного меню. */
