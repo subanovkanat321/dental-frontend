@@ -149,8 +149,16 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
 
   const loaded = days.flatMap((q) => q.data ?? [])
   const all = loaded.filter((a) => a.status !== 'CANCELLED')
-  // Карточка — всегда свежая версия приёма из кэша дня (после действий и автообновления)
-  const selected = side?.kind === 'appointment' ? loaded.find((a) => a.id === side.id) ?? side.fallback ?? null : null
+  // Карточка — всегда свежая версия приёма: из кэша дня (после действий и автообновления), а приём,
+  // перенесённый на другой день, — из ответа на действие (useAppointmentAction кладёт его в ['appointment', id])
+  const openedId = side?.kind === 'appointment' ? side.id : null
+  const lastAction = useQuery({
+    queryKey: ['appointment', openedId],
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}', { params: { path: { id: openedId! } } })),
+    enabled: false,
+  })
+  const selected = side?.kind === 'appointment'
+    ? loaded.find((a) => a.id === side.id) ?? lastAction.data ?? side.fallback ?? null : null
   // Сетка — часы клиники; приём раньше или позже — сетка растягивается до него
   let from = minutesOfTime(me.clinic?.workStart ?? '09:00')
   let to = minutesOfTime(me.clinic?.workEnd ?? '18:00')
