@@ -11,7 +11,7 @@
 .patient .link { justify-self: start; }
 
 .lang-switch { display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 4px; }
-.lang-switch button { padding: 4px 10px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--hint); font: inherit; font-size: .82rem; cursor: pointer; }
+.lang-switch button { min-height: 36px; padding: 4px 14px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--hint); font: inherit; font-size: .82rem; cursor: pointer; }
 .lang-switch button[aria-pressed=true] { border-color: var(--accent); color: var(--link); font-weight: 700; }
 
 .hero { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: var(--accent-soft); }

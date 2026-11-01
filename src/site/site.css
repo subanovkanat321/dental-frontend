@@ -6,7 +6,7 @@ body.site { background: var(--page); }
 .site-page p { margin: 0; }
 .site-page .btn { min-height: 48px; justify-content: center; text-decoration: none; }
 .site-page .lang-switch { display: flex; justify-content: flex-end; gap: 4px; }
-.site-page .lang-switch button { padding: 4px 10px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--hint); font: inherit; font-size: .82rem; cursor: pointer; }
+.site-page .lang-switch button { min-height: 36px; padding: 4px 14px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--hint); font: inherit; font-size: .82rem; cursor: pointer; }
 .site-page .lang-switch button[aria-pressed=true] { border-color: var(--accent); color: var(--link); font-weight: 700; }
 .site-hero { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 18px; background: var(--accent-soft); }
 .site-hero img { flex: none; width: 72px; height: 72px; }
