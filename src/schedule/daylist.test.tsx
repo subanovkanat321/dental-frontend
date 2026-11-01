@@ -73,19 +73,15 @@ test('телефон, один врач — только его приёмы и 
   expect(screen.getByRole('button', { name: /Свободно с 13:00 до 15:00, записать/ })).toBeInTheDocument()
 })
 
-test('телефон в Telegram — «Новая запись» синей кнопкой Telegram внизу, а не в ряду', async () => {
+test('телефон в Telegram — «＋ Новая запись» кнопкой на экране, рядом с «Без записи»', async () => {
   backend()
-  const texts: string[] = []
-  let click = () => {}
-  vi.stubGlobal('Telegram', { WebApp: { initData: 'query_id=test', ready() {}, expand() {}, MainButton: {
-    setText: (t: string) => texts.push(t), show() {}, hide() {}, enable() {}, disable() {}, showProgress() {}, hideProgress() {},
-    onClick: (cb: () => void) => { click = cb }, offClick() {},
-  } } })
-  renderApp()
-  expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
-  expect(texts).toContain('Новая запись')
-  expect(screen.queryByRole('button', { name: '＋ Новая запись' })).not.toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Принять сейчас (без записи)' })).toHaveTextContent('Принять сейчас (без записи)')
-  click()
-  expect(await screen.findByRole('complementary', { name: 'Новая запись' })).toBeInTheDocument()
+  vi.stubGlobal('Telegram', { WebApp: { initData: 'query_id=test', platform: 'ios', ready() {}, expand() {} } })
+  try {
+    renderApp()
+    expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: '＋ Новая запись' }))
+    expect(await screen.findByRole('complementary', { name: 'Новая запись' })).toBeInTheDocument()
+  } finally {
+    vi.unstubAllGlobals()
+  }
 })

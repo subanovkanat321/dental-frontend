@@ -3,8 +3,6 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Mous
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { openSettings, type Page } from '../lib/route'
-import { telegram } from '../lib/telegram'
-import { MainButton } from '../lib/MainButton'
 import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
@@ -132,7 +130,6 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   }
   const shown = view === 'all' ? doctors : doctors.filter((d) => d.id === view)
   const narrow = useNarrow()
-  const inTelegram = Boolean(telegram()?.MainButton)
   // Один врач на телефоне — «День» списком (лента дней, свободные окна, «Принять сейчас»)
   // Телефон — всегда «День» списком (как в прежнем приложении): один врач или «Все врачи» вместе
   const dayList = narrow && shown.length > 0 ? shown : null
@@ -323,10 +320,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
 
-        {/* В Telegram «Новая запись» — его синяя кнопка внизу, как в прежнем приложении */}
-        {dayList && inTelegram && !side && <MainButton text="Новая запись" onClick={newHere} />}
         {dayList ? (
-          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id} onNewHere={inTelegram ? undefined : newHere}
+          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id} onNewHere={newHere}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />
         ) : doctors.length === 0 ? (

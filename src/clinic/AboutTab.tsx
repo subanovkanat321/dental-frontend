@@ -249,7 +249,6 @@ function WebVersion() {
   const url = `${window.location.origin}/login`
   const app = telegram()
   const phone = /^(ios|android)/.test(app?.platform ?? '')
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent('CRM Tish — открыть на компьютере')}`
   const [copied, setCopied] = useState(false)
   const copy = async () => {
     try {
@@ -266,15 +265,10 @@ function WebVersion() {
       <a className="invite-link" href={url} target="_blank" rel="noopener noreferrer">{url}</a>
       <div className="actions">
         <button type="button" className="btn" onClick={() => void copy()}>Скопировать ссылку</button>
-        {/* Telegram на телефоне открывает ссылки своим встроенным браузером — вход через Telegram
-            там не срабатывает. Ссылку — себе в «Избранное», открыть на компьютере. На компьютере —
-            обычный браузер */}
-        {app && phone && app.openTelegramLink && (
-          <button type="button" className="btn" onClick={() => app.openTelegramLink!(shareUrl)}>Отправить ссылку себе</button>
-        )}
+        {/* На телефоне Telegram открыл бы ссылку своим встроенным браузером, где вход через Telegram
+            не срабатывает, — там только ссылка и «Скопировать». На компьютере — обычный браузер */}
         {app && !phone && <button type="button" className="btn" onClick={() => openLink(url)}>Открыть в браузере</button>}
       </div>
-      {app && phone && <p className="hint">На телефоне CRM уже открыта здесь, в Telegram. Для компьютера отправьте ссылку себе в «Избранное» и откройте её там.</p>}
       {copied && <p className="tone-ok" role="status">Ссылка скопирована — откройте её в браузере на компьютере</p>}
     </div>
   )
