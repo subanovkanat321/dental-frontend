@@ -98,19 +98,14 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, selectedId }
   }, [date])
 
   const nameOf = new Map(doctors.map((d) => [d.id, shortName(d.name)]))
-  const pauses = new Set<string>()
-  const items: Item[] = [
-    ...list.map((a) => ({ kind: 'appointment' as const, at: a.startAt!, a })),
-    ...doctors.flatMap((d, i) => (slots[i]?.data?.free ?? []).map((w) => ({ kind: 'free' as const, at: w.start!, end: w.end!, doctorId: d.id }))),
-    // Общий перерыв клиники (намаз) у всех врачей — одной строкой
-    ...doctors.flatMap((d, i) => (slots[i]?.data?.breaks ?? []).map((b) => ({ kind: 'pause' as const, at: b.start!, end: b.end!, title: b.title ?? '', emoji: b.emoji ?? '', doctorId: d.id })))
-      .filter((b) => {
-        const key = `${b.at}|${b.title}`
-        if (pauses.has(key)) return false
-        pauses.add(key)
-        return true
-      }),
+  // Строки одного врача по времени: приёмы, свободные окна, перерывы
+  const itemsOf = (d: Doctor, i: number): Item[] => [
+    ...list.filter((a) => a.doctorId === d.id).map((a) => ({ kind: 'appointment' as const, at: a.startAt!, a })),
+    ...(slots[i]?.data?.free ?? []).map((w) => ({ kind: 'free' as const, at: w.start!, end: w.end!, doctorId: d.id })),
+    ...(slots[i]?.data?.breaks ?? []).map((b) => ({ kind: 'pause' as const, at: b.start!, end: b.end!, title: b.title ?? '', emoji: b.emoji ?? '', doctorId: d.id })),
   ].sort((x, y) => x.at.localeCompare(y.at))
+  const groups = doctors.map((d, i) => ({ doctor: d, items: itemsOf(d, i), booked: list.filter((a) => a.doctorId === d.id).length }))
+  const items = groups.flatMap((g) => g.items)
   const scheduled = list.filter((a) => a.status === 'SCHEDULED')
   const ready = scheduled.filter((a) => a.reminderOpenedAt || (a.reply && a.reply !== 'NONE')).length
   const now = new Date().toISOString()
@@ -153,23 +148,39 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, selectedId }
       {pending ? <p className="hint">Загрузка…</p>
         : failed ? <p className="error">{failed.message}</p>
           : items.length === 0 ? <p className="day-empty hint">{offText ? `${offText} — записей нет` : 'На этот день записей нет'}</p> : (
-            <ul className="rows">
-              {items.map((item) => item.kind === 'appointment'
-                ? <Row key={`a${item.a.id}`} a={item.a} next={item.a === next} active={item.a.id === selectedId}
-                    canEdit={canEditDoctor(item.a.doctorId!)} doctor={many ? nameOf.get(item.a.doctorId!) : undefined} onOpen={onOpen} />
-                : item.kind === 'pause' ? (
-                  <li key={`p${item.doctorId}${item.at}`} className="row pause">
-                    <span className="time num">{timeOf(item.at)}</span>
-                    <span className="name"><span aria-hidden="true">{item.emoji} </span>{item.title}</span>
-                    <span className="end num hint">{timeOf(item.end)}</span>
-                  </li>
-                ) : (
-                  <FreeRow key={`f${item.doctorId}${item.at}`} start={item.at} end={item.end} canEdit={canEditDoctor(item.doctorId)}
-                    doctor={many ? nameOf.get(item.doctorId) : undefined}
-                    waiting={(waitlist.data ?? []).filter((w) => fits(w, item.at, item.end, item.doctorId)).length}
-                    onPick={() => onNew(item.doctorId, minutesOf(item.at))} />
-                ))}
-            </ul>
+            groups.map((g) => {
+              const rows = (
+                <ul className="rows">
+                  {g.items.map((item) => item.kind === 'appointment'
+                    ? <Row key={`a${item.a.id}`} a={item.a} next={item.a === next} active={item.a.id === selectedId}
+                        canEdit={canEditDoctor(item.a.doctorId!)} onOpen={onOpen} />
+                    : item.kind === 'pause' ? (
+                      <li key={`p${item.at}`} className="row pause">
+                        <span className="time num">{timeOf(item.at)}</span>
+                        <span className="name"><span aria-hidden="true">{item.emoji} </span>{item.title}</span>
+                        <span className="end num hint">{timeOf(item.end)}</span>
+                      </li>
+                    ) : (
+                      <FreeRow key={`f${item.at}`} start={item.at} end={item.end} canEdit={canEditDoctor(item.doctorId)}
+                        doctor={many ? g.doctor.name : undefined}
+                        waiting={(waitlist.data ?? []).filter((w) => fits(w, item.at, item.end, item.doctorId)).length}
+                        onPick={() => onNew(item.doctorId, minutesOf(item.at))} />
+                    ))}
+                  {g.items.length === 0 && <li className="hint day-empty">Нет записей</li>}
+                </ul>
+              )
+              // «Все врачи» — у каждого врача свой блок; имя прилипает сверху при прокрутке
+              return many ? (
+                <section key={g.doctor.id} className="doctor-day" aria-label={g.doctor.name}>
+                  <h3 className="doctor-day-head">
+                    <span className="avatar" aria-hidden="true">{g.doctor.name.slice(0, 1)}</span>
+                    {g.doctor.name}{g.doctor.id === me.doctorId ? ' (я)' : ''}
+                    <span className="hint"> · {g.booked ? `записей: ${g.booked}` : 'записей нет'}</span>
+                  </h3>
+                  {rows}
+                </section>
+              ) : <div key={g.doctor.id}>{rows}</div>
+            })
           )}
     </div>
   )
@@ -183,7 +194,7 @@ function FreeRow({ start, end, canEdit, doctor, waiting, onPick }: {
   waiting: number
   onPick: () => void
 }) {
-  const text = <>свободно до {timeOf(end)}{doctor && <b className="row-doctor"> · {doctor}</b>}{waiting > 0 && <span className="waiting"> · ждут: {waiting}</span>}</>
+  const text = <>свободно до {timeOf(end)}{waiting > 0 && <span className="waiting"> · ждут: {waiting}</span>}</>
   if (!canEdit) return <li className="row free readonly"><span className="time num">{timeOf(start)}</span><span className="hint">{text}</span></li>
   return (
     <li className="row free">

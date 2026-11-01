@@ -629,3 +629,7 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .tariffs-form { display: grid; gap: 12px; max-width: 760px; }
 .tariff-row { display: grid; gap: 8px; margin: 0; padding: 12px; border: 1px solid var(--separator); border-radius: var(--radius); }
 .tariff-row legend { padding: 0 6px; font-weight: 600; }
+.doctor-day { display: grid; gap: 6px; margin-top: 12px; }
+.doctor-day-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 4px; background: var(--page); font-size: 1.05rem; }
+.doctor-day-head .avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .9rem; }
+.doctor-day-head .hint { font-weight: 500; font-size: .9rem; }
