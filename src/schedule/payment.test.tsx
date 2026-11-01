@@ -16,7 +16,8 @@ function backend(a: Appointment, after: (path: string, body: Record<string, unkn
   const reply = async (path: string, request: Request) => {
     const body = (await request.json()) as Record<string, unknown>
     sent.push({ path, body })
-    current = { ...current, ...after(path, body), version: current.version! + 1 }
+    // Как на сервере: деньги версию приёма не меняют
+    current = { ...current, ...after(path, body) }
     return HttpResponse.json(current)
   }
   server.use(

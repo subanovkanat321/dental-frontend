@@ -150,7 +150,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && (editing === 'move'
             ? <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />
             : <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{doctors.length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>)}
-          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && <DepositBox appointment={a} />}
+          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && <DepositBox key={a.depositStatus ?? 'none'} appointment={a} />}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && future && a.patient && (
             <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>
           )}
@@ -169,7 +169,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
           {a.status === 'DONE' && (
             <>
-              <PaymentBox key={`${a.id}-${a.version}`} appointment={a} me={me} />
+              {/* Ключ — по самим деньгам: оплата на сервере версию приёма не меняет, а блок после
+                  сохранения должен открыться заново («оплачено», а не форма) */}
+              <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />
               <ContactButtons phone={a.patient?.phone} />
               {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
             </>

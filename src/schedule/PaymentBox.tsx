@@ -31,7 +31,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   // Регистратура открывает счёт с кассы — сразу форма оплаты с суммой счёта
   const [view, setView] = useState<View>(a.paidSom != null ? 'show' : a.chargeSom != null && !me.reception ? 'billed' : 'edit')
   const history = useQuery({
-    queryKey: ['payments', a.id, a.version],
+    queryKey: ['payments', a.id, a.version, a.paidSom],
     queryFn: () => unwrap(api.GET('/api/appointments/{id}/payments', { params: { path: { id: a.id! } } })),
     enabled: a.paidSom != null,
   })
