@@ -34,5 +34,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     unstubGlobals: true,
+    // Больше asyncUtilTimeout (5 с) из setup.ts: тест с несколькими ожиданиями успевает дождаться
+    testTimeout: 20_000,
   },
 })

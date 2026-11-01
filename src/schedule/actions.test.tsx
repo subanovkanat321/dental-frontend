@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -195,4 +195,72 @@ test('из карточки приёма — медкарта пациента �
   expect(await screen.findByRole('heading', { name: /Медкарта · Бакыт М\./ })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '← К приёму' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Бакыт М.')
+})
+
+test('время успели занять (409 time-taken) — «Время занято» под временем, один раз, и сетка свободного перечитывается', async () => {
+  backend([])
+  let slotCalls = 0
+  server.use(
+    http.get('*/api/slots', () => {
+      slotCalls++
+      return HttpResponse.json({ workingDay: true, starts: [new Date(`${todayIn()}T09:00:00+06:00`).toISOString()] })
+    }),
+    http.get('*/api/service-types', () => HttpResponse.json([])),
+    http.post('*/api/patients/search', () => HttpResponse.json([{ id: 7, fullName: 'Нурлан К.', phone: '996700111222' }])),
+    http.post('*/api/appointments', () =>
+      HttpResponse.json({ title: 'Conflict', status: 409, detail: 'Время занято', code: 'time-taken' }, { status: 409 })),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('group', { name: 'Дастан Т.' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  await within(panel).findByRole('group', { name: 'Свободное время' })
+  await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
+  await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
+  const before = slotCalls
+  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+
+  await waitFor(() => expect(within(panel).getAllByRole('alert')).toHaveLength(1))
+  expect(within(panel).getByRole('alert')).toHaveTextContent('Время занято')
+  await waitFor(() => expect(slotCalls).toBeGreaterThan(before))
+  // Панель осталась открытой — можно выбрать другое время
+  expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument()
+})
+
+test('приём успели изменить в другом окне (409 stale) — «обновите», день перечитан, повтор уходит с новой версией', async () => {
+  let version = 3
+  let status: Appointment['status'] = 'REQUESTED'
+  let dayCalls = 0
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', ({ request }) => {
+      dayCalls++
+      const doctorId = Number(new URL(request.url).searchParams.get('doctorId'))
+      return HttpResponse.json([appointment(10, 1, '10:00', 'Бакыт М.', { status, version })].filter((a) => a.doctorId === doctorId))
+    }),
+    http.post('*/api/appointments/:id/status', async ({ request }) => {
+      const body = (await request.json()) as { version: number; status: string }
+      sent.push(body)
+      if (body.version !== version) {
+        return HttpResponse.json({ title: 'Conflict', status: 409, detail: 'Приём изменён, обновите', code: 'stale' }, { status: 409 })
+      }
+      version++
+      status = 'SCHEDULED'
+      return HttpResponse.json(appointment(10, 1, '10:00', 'Бакыт М.', { status, version }))
+    }),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  // Пока карточка открыта, ассистент в другом окне ответил за пациента — версия на сервере 4
+  version = 4
+  const before = dayCalls
+
+  await userEvent.click(within(panel).getByRole('button', { name: 'Подтвердить' }))
+  await waitFor(() => expect(within(panel).getByRole('alert')).toHaveTextContent('Приём изменён, обновите'))
+  await waitFor(() => expect(dayCalls).toBeGreaterThan(before))
+
+  await userEvent.click(within(panel).getByRole('button', { name: 'Подтвердить' }))
+  expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
+  expect(sent).toEqual([{ version: 3, status: 'SCHEDULED' }, { version: 4, status: 'SCHEDULED' }])
 })
