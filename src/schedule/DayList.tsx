@@ -47,13 +47,15 @@ function shortName(name: string): string {
  * Один врач — его день; «Все врачи» — все приёмы вместе, у строки имя врача, свободные окна
  * каждого врача отдельно. У приёма — быстрое напоминание (Telegram или WhatsApp). Завтра — «Готово X из Y».
  */
-export function DayList({ me, doctors, date, onDate, onOpen, onNew, selectedId }: {
+export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, selectedId }: {
   me: Me
   doctors: Doctor[]
   date: string
   onDate: (date: string) => void
   onOpen: (a: Appointment) => void
   onNew: (doctorId: number, minutes: number, walkIn?: boolean) => void
+  /** «＋ Новая запись» на этот день (врач и время — в форме). */
+  onNewHere?: () => void
   selectedId?: number
 }) {
   const today = todayIn()
@@ -141,9 +143,13 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, selectedId }
         })}
       </div>
       {single && !canEditDoctor(single.id) && <p className="readonly-note">Расписание коллеги — только просмотр</p>}
-      {date === today && walkInDoctor && (
-        <button type="button" className="btn walk-in" onClick={() => onNew(walkInDoctor.id, minutesOf(new Date().toISOString()), true)}>Принять сейчас (без записи)</button>
-      )}
+      <div className="day-actions">
+        {onNewHere && <button type="button" className="btn primary" onClick={onNewHere}>＋ Новая запись</button>}
+        {date === today && walkInDoctor && (
+          <button type="button" className="btn walk-in" aria-label="Принять сейчас (без записи)"
+            onClick={() => onNew(walkInDoctor.id, minutesOf(new Date().toISOString()), true)}>⚡ Без записи</button>
+        )}
+      </div>
       {note && <p className="hint day-note">{note}</p>}
       {pending ? <p className="hint">Загрузка…</p>
         : failed ? <p className="error">{failed.message}</p>

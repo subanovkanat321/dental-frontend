@@ -238,25 +238,35 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   return (
     <div className={side ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
-        <header className="toolbar">
-          <div className="day-switch">
-            <button type="button" className="btn ghost" aria-label="Предыдущий день" onClick={() => setDate(addDays(date, -1))}>‹</button>
-            <button type="button" className="btn ghost" aria-label="Следующий день" onClick={() => setDate(addDays(date, 1))}>›</button>
-          </div>
-          <div className="day-title">
-            <h1>{dayTitle(date)}</h1>
-            <span className="hint">
-              {date === today ? 'сегодня · ' : ''}{all.length ? `Записей: ${all.length}` : 'Записей нет'}
-              {doctors.length > 1 ? ` · врачей ${doctors.length}` : ''}
-            </span>
-          </div>
-          {date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
-          <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
-          {doctors.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
-          {doctors.length > 0 && date === today && !dayList && (me.admin || me.reception || me.doctorId != null) && (
-            <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
-          )}
-        </header>
+        {dayList ? (
+          // Телефон: только день — ‹ ›, дата и «Сегодня» уже в ленте дней ниже; нажать на день — календарь
+          <header className="toolbar day-head">
+            <label className="day-title pick">
+              <h1>{dayTitle(date)}</h1>
+              <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
+            </label>
+          </header>
+        ) : (
+          <header className="toolbar">
+            <div className="day-switch">
+              <button type="button" className="btn ghost" aria-label="Предыдущий день" onClick={() => setDate(addDays(date, -1))}>‹</button>
+              <button type="button" className="btn ghost" aria-label="Следующий день" onClick={() => setDate(addDays(date, 1))}>›</button>
+            </div>
+            <div className="day-title">
+              <h1>{dayTitle(date)}</h1>
+              <span className="hint">
+                {date === today ? 'сегодня · ' : ''}{all.length ? `Записей: ${all.length}` : 'Записей нет'}
+                {doctors.length > 1 ? ` · врачей ${doctors.length}` : ''}
+              </span>
+            </div>
+            {date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
+            <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
+            {doctors.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
+            {doctors.length > 0 && date === today && (me.admin || me.reception || me.doctorId != null) && (
+              <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
+            )}
+          </header>
+        )}
 
         <div className="today-strip" role="group" aria-label="Требует внимания">
           {requests.length > 0 && (
@@ -274,7 +284,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               <b>{toPay.data!.length}</b> ждут оплаты на кассе
             </button>
           )}
-          {revenue.data && (
+          {revenue.data && !dayList && (
             <button type="button" className="stat s-quiet" onClick={() => onNavigate?.('cash')}>
               <b>{somText(revenue.data.totalSom ?? 0).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
             </button>
@@ -284,7 +294,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               <b>{low}</b> на складе заканчивается
             </button>
           )}
-          {!requests.length && !waiting.length && !toPay.data?.length && !low && (
+          {!dayList && !requests.length && !waiting.length && !toPay.data?.length && !low && (
             <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>
           )}
         </div>
@@ -301,7 +311,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         )}
 
         {dayList ? (
-          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id}
+          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id} onNewHere={newHere}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />
         ) : doctors.length === 0 ? (

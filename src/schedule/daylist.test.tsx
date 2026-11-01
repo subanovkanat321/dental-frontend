@@ -45,6 +45,11 @@ test('телефон, «Все врачи» — список: приёмы об�
   expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /12:00–12:30, Нурлан К\./ })).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: 'Дастан Т.' })).not.toBeInTheDocument() // не сетка
+  // Верх на телефоне — без повторов: дни листают лентой, одна «Новая запись» рядом с «Без записи»
+  expect(screen.queryByRole('button', { name: 'Предыдущий день' })).not.toBeInTheDocument()
+  expect(screen.getAllByRole('button', { name: '＋ Новая запись' })).toHaveLength(1)
+  expect(screen.getByRole('button', { name: 'Принять сейчас (без записи)' })).toBeInTheDocument()
+  expect(screen.getByLabelText('Выбрать дату')).toBeInTheDocument()
   // У каждого врача свой блок: приём Нурлана — в блоке Дастана, не в общем списке
   const dastan = screen.getByRole('region', { name: 'Дастан Т.' })
   expect(within(dastan).getByRole('button', { name: /12:00–12:30, Нурлан К\./ })).toBeInTheDocument()
