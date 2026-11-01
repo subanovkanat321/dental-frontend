@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
+import { useBack } from '../lib/back'
 import { shortDate, somText, todayIn } from '../lib/time'
 import { AnamnesisBlock } from './Anamnesis'
 import { resizePhoto } from './thumb'
@@ -42,6 +43,8 @@ function denied(error: unknown): string | null {
  */
 export function MedicalRecord({ patient, onBack, backLabel = '← К списку' }: { patient: Patient; onBack: () => void; backLabel?: string }) {
   const id = patient.id!
+  // Стрелка Telegram — туда же, откуда пришли (к приёму или к списку пациентов)
+  useBack(onBack)
   const teeth = useQuery({
     queryKey: ['teeth', id],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth', { params: { path: { patientId: id } } })),

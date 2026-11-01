@@ -3,6 +3,8 @@ import { useState } from 'react'
 import type { Schemas } from '../api/client'
 import { ClinicsTab } from './ClinicsTab'
 import { AgreementsTab, BroadcastTab, TicketsTab } from './OwnerTabs'
+import { useBack } from '../lib/back'
+import { openSettings } from '../lib/route'
 import { SettingsTab } from './SettingsTab'
 import { TariffsTab } from './TariffsTab'
 
@@ -18,8 +20,12 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
     ...(me.owner ? [['tickets', 'Обращения'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['tariffs', 'Тарифы'], ['settings', 'Настройки']] as [Tab, string][] : [])]
   const [tab, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? 'clinics')
   const [panel, setPanel] = useState(false)
+  // Сотрудник клиники на телефоне попадает сюда из «Настроек» — стрелка Telegram ведёт обратно
+  const fromSettings = Boolean(me.doctor) && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
+  useBack(fromSettings ? () => openSettings(null) : null)
   const header = (
     <header className="toolbar">
+      {fromSettings && <button type="button" className="btn ghost back" onClick={() => openSettings(null)}>‹ Настройки</button>}
       <h1>Платформа</h1>
       <div className="segments tabs" role="tablist" aria-label="Разделы платформы">
         {tabs.map(([key, title]) => (

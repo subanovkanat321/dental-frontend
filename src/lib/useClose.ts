@@ -1,22 +1,20 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
-import { telegram } from './telegram'
+import { useBack } from './back'
 
 /**
- * Закрыть карточку справа: Esc на компьютере, системная кнопка «Назад» в Telegram. Пока карточка
- * открыта, «Назад» Telegram закрывает её, а не всё приложение.
+ * Закрыть карточку справа: Esc на компьютере, стрелка «назад» в Telegram. Пока карточка
+ * открыта, «назад» закрывает её, а не уводит с экрана (стопка шагов — lib/back.ts).
  */
 export function useClose(onClose: () => void): void {
+  useBack(onClose)
+  const handler = useRef(onClose)
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    handler.current = onClose
+  })
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && handler.current()
     window.addEventListener('keydown', onKey)
-    const back = telegram()?.BackButton
-    back?.onClick(onClose)
-    back?.show()
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      back?.offClick(onClose)
-      back?.hide()
-    }
-  }, [onClose])
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 }
