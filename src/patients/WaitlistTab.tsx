@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
@@ -24,10 +25,11 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
   if (list.isPending) return <p className="hint">Загрузка…</p>
   if (list.error) return <p className="error">{list.error.message}</p>
   if (!list.data.length) {
-    return <p className="empty">Пока никто не ждёт. Добавить — в карточке пациента: «В лист ожидания».</p>
+    return <><WaitlistAdd me={me} /><p className="empty">Пока никто не ждёт.</p></>
   }
   return (
     <>
+      <WaitlistAdd me={me} />
       <table className="table" aria-label="Лист ожидания">
         <thead><tr><th>Пациент</th><th>Телефон</th><th>Врач</th><th>Нужно</th><th>Сейчас записан</th><th>Ждёт с</th><th /></tr></thead>
         <tbody>
@@ -141,5 +143,52 @@ export function WaitlistBox({ patient, me, defaultMinutes = 30 }: { patient: Pat
       <button type="submit" className="btn" disabled={add.isPending}>В лист ожидания</button>
       {error && <p className="error">{error.message}</p>}
     </form>
+  )
+}
+
+/**
+ * «➕ Добавить в лист ожидания» прямо во вкладке, как в прежнем приложении: найти пациента по
+ * имени или номеру, дальше — длительность и врач (тот же блок, что в карточке пациента).
+ */
+function WaitlistAdd({ me }: { me: Me }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [search, setSearch] = useState('')
+  const [patient, setPatient] = useState<Patient | null>(null)
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(query.trim()), 300)
+    return () => clearTimeout(t)
+  }, [query])
+  const found = useQuery({
+    queryKey: ['patients', 'search', search],
+    queryFn: () => unwrap(api.POST('/api/patients/search', { body: { query: search } })),
+    enabled: open && search.length >= 2 && !patient,
+  })
+  if (!open) return <button type="button" className="btn" onClick={() => setOpen(true)}>➕ Добавить в лист ожидания</button>
+  return (
+    <section className="card-block waitlist-add" aria-label="Добавить в лист ожидания">
+      {patient ? (
+        <>
+          <p><strong>{patient.fullName}</strong>{patient.phone && <span className="hint"> · {formatPhone(patient.phone)}</span>}
+            {' '}<button type="button" className="link" onClick={() => setPatient(null)}>другой</button></p>
+          <WaitlistBox patient={patient} me={me} />
+        </>
+      ) : (
+        <>
+          <input type="search" aria-label="Найти пациента для листа ожидания" placeholder="Имя или номер" autoFocus value={query}
+            onChange={(e) => setQuery(e.target.value)} />
+          {found.data?.length ? (
+            <ul className="found">
+              {found.data.map((p) => (
+                <li key={p.id}><button type="button" onClick={() => setPatient(p)}>
+                  <strong>{p.fullName}</strong>{p.phone && <span className="hint"> · {formatPhone(p.phone)}</span>}
+                </button></li>
+              ))}
+            </ul>
+          ) : found.data ? <p className="hint small">Не нашли «{search}» — добавьте пациента в «Пациентах».</p> : null}
+        </>
+      )}
+      <button type="button" className="link" onClick={() => { setOpen(false); setPatient(null); setQuery('') }}>Закрыть</button>
+    </section>
   )
 }

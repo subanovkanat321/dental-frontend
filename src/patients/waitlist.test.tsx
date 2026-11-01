@@ -105,3 +105,19 @@ test('«Новая запись» предлагает пациентов из �
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айгуль Т.')
   expect(booked).toEqual({ doctorId: 1, startAt: new Date(`${todayIn()}T09:00:00+06:00`).toISOString() })
 })
+
+test('вкладка «Лист ожидания»: «Добавить» — найти пациента и записать в лист', async () => {
+  const sent = backend()
+  server.use(http.post('*/api/patients/search', () => HttpResponse.json([aigul])))
+  window.location.hash = '/patients'
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: /Лист ожидания/ }))
+  await userEvent.click(await screen.findByRole('button', { name: /Добавить в лист ожидания/ }))
+  await userEvent.type(screen.getByLabelText('Найти пациента для листа ожидания'), 'Айг')
+  await userEvent.click(await screen.findByRole('button', { name: /Айгуль Т\./ }))
+  const box = screen.getByRole('form', { name: 'В лист ожидания' })
+  await userEvent.click(within(box).getByRole('button', { name: 'В лист ожидания' }))
+  expect(await screen.findByRole('table', { name: 'Лист ожидания' })).toHaveTextContent('Айгуль Т.')
+  expect(sent).toHaveLength(1)
+  expect(sent[0]).toMatchObject({ patientId: 2 })
+})

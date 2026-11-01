@@ -290,10 +290,11 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           <div className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(180px, 1fr))`, '--cols': shown.length } as CSSProperties}>
             <div className="grid-corner" />
             {shown.map((d) => (
-              <div key={d.id} className="grid-head" title={d.fullName}>
+              <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}
+                onClick={() => setView(d.id!)}>
                 <span className="avatar" style={{ background: AVATARS[doctors.indexOf(d) % AVATARS.length] }} aria-hidden="true">{initials(d.fullName)}</span>
                 <span className="grid-head-name">{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</span>
-              </div>
+              </button>
             ))}
             <div className="grid-times" style={{ height }}>
               {/* Час рядом с меткой «сейчас» прячем — иначе «11:00» и «11:10» наезжают друг на друга */}
