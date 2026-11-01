@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { periodOf, todayIn } from '../lib/time'
+import { previousRange } from '../lib/compare'
+import { addDays, periodOf, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
@@ -47,11 +48,20 @@ test('админ: выручка за месяц, по способам; выб�
 
   await userEvent.selectOptions(screen.getByLabelText('Чья касса'), 'Дастан Т.')
   expect(await screen.findByLabelText('Выручка за период')).toHaveTextContent(/7\s000 сом/)
-  expect(asked.at(-1)).toBe(`${month.from}..${month.to} 2`)
+  expect(asked).toContain(`${month.from}..${month.to} 2`)
+  // Сравнение — с теми же числами прошлого месяца; ответ тот же, значит «как было»
+  const prev = previousRange('month', month)
+  expect(asked).toContain(`${prev.from}..${prev.to} 2`)
+  expect(await screen.findByLabelText('Сравнение выручки')).toHaveTextContent('как было к тем же дням прошлого месяца')
 
-  await userEvent.click(screen.getByRole('button', { name: 'Сегодня' }))
+  await userEvent.click(screen.getByRole('button', { name: 'День' }))
   await screen.findByLabelText('Выручка за период')
-  expect(asked.at(-1)).toBe(`${todayIn()}..${todayIn()} 2`)
+  expect(asked).toContain(`${todayIn()}..${todayIn()} 2`)
+  // Любой день: «Вчера» — выручка за вчера и сравнение с тем же днём прошлой недели
+  await userEvent.click(screen.getByRole('button', { name: 'Вчера' }))
+  const yesterday = addDays(todayIn(), -1)
+  await vi.waitFor(() => expect(asked).toContain(`${yesterday}..${yesterday} 2`))
+  expect(asked).toContain(`${addDays(yesterday, -7)}..${addDays(yesterday, -7)} 2`)
 
   const debts = screen.getByRole('table', { name: 'Долги пациентов' })
   expect(debts).toHaveTextContent('Бакыт М.')

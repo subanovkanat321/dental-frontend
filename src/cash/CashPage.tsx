@@ -2,7 +2,8 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { periodOf, shortDate, somText, todayIn, ZONE } from '../lib/time'
+import { changeOf, previousRange } from '../lib/compare'
+import { addDays, periodOf, shortDate, somText, todayIn, ZONE } from '../lib/time'
 import { AppointmentPanel } from '../schedule/AppointmentPanel'
 import { ExpensesTab, ReportTab, StatsTab } from './MoreTabs'
 import { PaymentsTable } from './PaymentsTable'
@@ -53,7 +54,10 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
   const [tab, setTab] = useState<Tab>(TABS.some(([key]) => key === initialTab) ? initialTab as Tab : 'money')
   const [period, setPeriod] = useState<Period>('month')
   const [custom, setCustom] = useState(periodOf('month'))
-  const range = period === 'custom' ? custom : periodOf(period)
+  // «День» — любой день: по умолчанию сегодня, можно выбрать вчера или любую дату
+  const [day, setDay] = useState(todayIn())
+  const range = period === 'custom' ? custom : period === 'day' ? { from: day, to: day } : periodOf(period)
+  const prev = previousRange(period, range)
   const [opened, setOpened] = useState<number | null>(null)
   const close = useCallback(() => setOpened(null), [setOpened])
 
@@ -62,6 +66,12 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
     queryKey: ['revenue', range.from, range.to, doctorId],
     queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { ...range, ...doctorQuery } } })),
     enabled: money && range.from <= range.to,
+  })
+  // С чем сравнить: тот же день прошлой недели, прошлая неделя, те же числа прошлого месяца
+  const before = useQuery({
+    queryKey: ['revenue', prev.from, prev.to, doctorId],
+    queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: prev.from, to: prev.to, ...doctorQuery } } })),
+    enabled: money && tab === 'money' && range.from <= range.to,
   })
   const debts = useQuery({
     queryKey: ['debts', 'cash', doctorId],
@@ -128,11 +138,21 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
             <div className="block-head">
               <h2>Выручка</h2>
               <div className="segments" role="group" aria-label="Период">
-                {([['day', 'Сегодня'], ['week', 'Неделя'], ['month', 'Месяц'], ['custom', 'Период']] as const).map(([key, title]) => (
+                {([['day', 'День'], ['week', 'Неделя'], ['month', 'Месяц'], ['custom', 'Период']] as const).map(([key, title]) => (
                   <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
                 ))}
               </div>
             </div>
+            {period === 'day' && (
+              <div className="row dates">
+                <label className="field"><span>День</span>
+                  <input type="date" value={day} max={todayIn()} onChange={(e) => e.target.value && setDay(e.target.value)} /></label>
+                <div className="chips-pick" role="group" aria-label="Быстро">
+                  <button type="button" className="chip" aria-pressed={day === todayIn()} onClick={() => setDay(todayIn())}>Сегодня</button>
+                  <button type="button" className="chip" aria-pressed={day === addDays(todayIn(), -1)} onClick={() => setDay(addDays(todayIn(), -1))}>Вчера</button>
+                </div>
+              </div>
+            )}
             {period === 'custom' && (
               <div className="row dates">
                 <label className="field"><span>С</span>
@@ -147,6 +167,15 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
             {r && (
               <>
                 <p className="total" aria-label="Выручка за период">{somText(r.totalSom ?? 0)}</p>
+                {before.data && (() => {
+                  const c = changeOf(r.totalSom ?? 0, before.data.totalSom ?? 0)
+                  return (
+                    <p className="compare" aria-label="Сравнение выручки">
+                      <b className={`tone-${c.tone}`}>{c.text}</b> {prev.label}
+                      <span className="hint"> · было {somText(before.data.totalSom ?? 0)}, оплат {before.data.paidCount ?? 0}</span>
+                    </p>
+                  )
+                })()}
                 <p className="hint">
                   Оплачено приёмов: {r.paidCount ?? 0}
                   {r.unpaidCount ? <span className="tone-wait"> · без оплаты: {r.unpaidCount}</span> : null}

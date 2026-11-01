@@ -669,3 +669,7 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 tr.clickable { cursor: pointer; }
 tr.clickable:hover td { background: var(--sunken); }
 .row-link.open-link { color: var(--link); }
+.day-filter { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; width: 100%; }
+.day-filter .field { flex: 0 1 150px; }
+.day-filter .chips-pick { margin: 0; }
+.compare { margin: 2px 0 6px; }

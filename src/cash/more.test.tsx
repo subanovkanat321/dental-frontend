@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -109,4 +109,23 @@ test('отчёт: строки месяца, итоги и отправка в �
   await user.click(screen.getByRole('button', { name: 'Отправить в бот' }))
   expect(await screen.findByRole('status')).toHaveTextContent('Отчёт отправлен в Telegram')
   expect(sent).toEqual({ month: todayIn().slice(0, 7) })
+})
+
+test('отчёт: дни внутри месяца — «с … по …» и быстрые кнопки', async () => {
+  const m = todayIn().slice(0, 7)
+  server.use(
+    http.get('*/api/appointments/report', () => HttpResponse.json([
+      { id: 1, startAt: `${m}-03T04:00:00Z`, patient: 'Бакыт М.', doctor: 'Айгерим Садыкова', status: 'DONE', paidSom: 3000 },
+      { id: 2, startAt: `${m}-05T04:00:00Z`, patient: 'Нурлан К.', doctor: 'Айгерим Садыкова', status: 'DONE', paidSom: 2000 },
+    ] satisfies Schemas['AppointmentServiceReportRow'][])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Отчёт' }))
+  expect(await screen.findByRole('cell', { name: 'Нурлан К.' })).toBeInTheDocument()
+  fireEvent.change(screen.getByLabelText('По день'), { target: { value: `${m}-03` } })
+  expect(screen.queryByRole('cell', { name: 'Нурлан К.' })).not.toBeInTheDocument()
+  expect(screen.getByText(/Оплачено:/)).toHaveTextContent('3 000 сом')
+  await user.click(screen.getByRole('button', { name: 'Весь месяц' }))
+  expect(screen.getByRole('cell', { name: 'Нурлан К.' })).toBeInTheDocument()
 })

@@ -2,11 +2,15 @@ import { useCallback, useState } from 'react'
 
 import type { Schemas } from '../api/client'
 import { SortTh } from '../layout/SortTh'
-import { shortDate, somText } from '../lib/time'
+import { addDays, shortDate, somText, todayIn, ZONE } from '../lib/time'
 import { useSort } from '../lib/useSort'
 
 type Row = Schemas['AppointmentServiceReportRow']
 type Key = 'when' | 'patient' | 'doctor' | 'service' | 'status' | 'paid' | 'debt'
+
+/** День приёма по Бишкеку: 'YYYY-MM-DD'. */
+const DAY = new Intl.DateTimeFormat('en-CA', { timeZone: ZONE })
+const dayOfInstant = (instant: string) => DAY.format(new Date(instant))
 
 const METHOD_TEXT: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
 const STATUS_TEXT: Record<string, [string, string]> = {
@@ -18,13 +22,24 @@ const STATUS_TEXT: Record<string, [string, string]> = {
  * Приёмы с оплатами таблицей: по умолчанию новые сверху; сортировка по любой колонке, поиск по
  * пациенту и услуге, фильтры «способ оплаты», «врач», «только с долгом». Нажать строку — карточка приёма.
  */
-export function PaymentsTable({ rows, label, onOpen, active, withStatus = false }: {
+export function PaymentsTable({ rows, label, onOpen, active, withStatus = false, days }: {
   rows: Row[]
   label: string
   onOpen?: (id: number) => void
   active?: number | null
   withStatus?: boolean
+  /** Отчёт за месяц: можно сузить до дней внутри него («с … по …», «сегодня», «вчера», «7 дней») */
+  days?: { from: string; to: string }
 }) {
+  const [dayFrom, setDayFrom] = useState(days?.from ?? '')
+  const [dayTo, setDayTo] = useState(days?.to ?? '')
+  const [bounds, setBounds] = useState(days)
+  if (days && (days.from !== bounds?.from || days.to !== bounds?.to)) {
+    // Другой месяц — фильтр дней снова на весь месяц
+    setBounds(days)
+    setDayFrom(days.from)
+    setDayTo(days.to)
+  }
   const [query, setQuery] = useState('')
   const [method, setMethod] = useState('')
   const [doctor, setDoctor] = useState('')
@@ -36,7 +51,8 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false 
   const text = query.trim().toLowerCase()
   const filtered = rows.filter((r) => (!text || `${r.patient ?? ''} ${r.service ?? ''}`.toLowerCase().includes(text))
     && (!method || r.method === method) && (!doctor || r.doctor === doctor) && (!debtOnly || (r.debtSom ?? 0) > 0)
-    && (!status || r.status === status))
+    && (!status || r.status === status)
+    && (!days || !r.startAt || (dayOfInstant(r.startAt) >= dayFrom && dayOfInstant(r.startAt) <= dayTo)))
   const value = useCallback((r: Row, key: Key) => ({
     when: r.startAt, patient: r.patient, doctor: r.doctor, service: r.service, status: r.status, paid: r.paidSom, debt: r.debtSom,
   })[key], [])
@@ -66,6 +82,31 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false 
             {statuses.map((x) => <option key={x} value={x}>{STATUS_TEXT[x]?.[0] ?? x}</option>)}
           </select>
         )}
+        {days && (() => {
+          const today = todayIn()
+          const quick: [string, string, string][] = [
+            ['Весь месяц', days.from, days.to],
+            ['Сегодня', today, today],
+            ['Вчера', addDays(today, -1), addDays(today, -1)],
+            ['7 дней', addDays(today, -6), today],
+          ]
+          return (
+            <div className="day-filter" role="group" aria-label="Дни">
+              <label className="field"><span>С</span>
+                <input type="date" aria-label="С дня" value={dayFrom} min={days.from} max={dayTo} onChange={(e) => e.target.value && setDayFrom(e.target.value)} /></label>
+              <label className="field"><span>По</span>
+                <input type="date" aria-label="По день" value={dayTo} min={dayFrom} max={days.to} onChange={(e) => e.target.value && setDayTo(e.target.value)} /></label>
+              <div className="chips-pick">
+                {quick.filter(([, f, t]) => t >= days.from && f <= days.to).map(([name, f, t]) => {
+                  const from = f < days.from ? days.from : f
+                  const to = t > days.to ? days.to : t
+                  return <button key={name} type="button" className="chip" aria-pressed={dayFrom === from && dayTo === to}
+                    onClick={() => { setDayFrom(from); setDayTo(to) }}>{name}</button>
+                })}
+              </div>
+            </div>
+          )
+        })()}
         <label className="check"><input type="checkbox" checked={debtOnly} onChange={(e) => setDebtOnly(e.target.checked)} /> Только с долгом</label>
       </div>
       <p className="hint">Оплачено: <b className="num">{somText(paid)}</b>{debt ? <> · долги: <b className="num">{somText(debt)}</b></> : null} · приёмов: {filtered.length}

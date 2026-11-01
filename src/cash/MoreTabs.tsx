@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState, type FormEvent } from 'react'
 
+import { changeOf, previousRange } from '../lib/compare'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SortTh } from '../layout/SortTh'
 import { useSort } from '../lib/useSort'
@@ -37,6 +38,14 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
   const spending = useQuery({
     queryKey: ['spending', month],
     queryFn: () => unwrap(api.GET('/api/supplies/spending', { params: { query: range } })),
+    enabled: seesAll && doctorId == null,
+  })
+  // Сравнение прибыли: текущий месяц — с теми же числами прошлого, прошедший — с прошлым целиком
+  const current = month === todayIn().slice(0, 7)
+  const before = previousRange('month', current ? { from: range.from, to: todayIn() } : range)
+  const spendingBefore = useQuery({
+    queryKey: ['spending', 'before', before.from, before.to],
+    queryFn: () => unwrap(api.GET('/api/supplies/spending', { params: { query: { from: before.from, to: before.to } } })),
     enabled: seesAll && doctorId == null,
   })
   const refresh = () => {
@@ -92,6 +101,18 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
             <div className={profit < 0 ? 'tone-bad' : 'tone-ok'}>Прибыль<b>{somText(profit)}</b></div>
           </div>
         )}
+        {profit != null && spendingBefore.data && (() => {
+          const b = spendingBefore.data
+          const was = (b.revenueSom ?? 0) - (b.purchasedSom ?? 0) - (b.expensesSom ?? 0)
+          const c = changeOf(profit, was)
+          return (
+            <p className="compare" aria-label="Сравнение прибыли">
+              Прибыль <b className={`tone-${c.tone}`}>{c.text}</b> {current ? before.label : 'к прошлому месяцу'}
+              <span className="hint"> · было: получено {somText(b.revenueSom ?? 0)}, прибыль {somText(was)}</span>
+            </p>
+          )
+        })()}
+        {(sp?.unpricedDeliveries ?? 0) > 0 && <p className="tone-wait small">Поставок без суммы: {sp!.unpricedDeliveries} — расходы на склад занижены.</p>}
       </section>
 
       <section className="card-block">
@@ -241,7 +262,7 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
       {send.isSuccess && <p className="tone-ok" role="status">Отчёт отправлен в Telegram</p>}
       {send.error && <p className="error" role="alert">{errorText(send.error)}</p>}
       {rows.error && <p className="error">{rows.error.message}</p>}
-      {rows.data?.length ? <PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus onOpen={onOpen} active={active} />
+      {rows.data?.length ? <PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus onOpen={onOpen} active={active} days={monthRange(month)} />
         : rows.isSuccess ? <p className="hint">Приёмов за {monthTitle(month)} нет.</p> : null}
     </section>
   )
