@@ -13,6 +13,11 @@ declare global {
  * «Войти через Telegram» на сайте: виджет Telegram подписывает данные входа, сервер проверяет
  * подпись (/web/login) и ставит cookie-сессию. Скрипт виджета — только здесь: в Mini App не нужен.
  */
+/** Браузер внутри Instagram, Facebook и т. п.: окно входа Telegram там часто не открывается. */
+function inAppBrowser(): boolean {
+  return /Instagram|FBAN|FBAV|Line\/|TikTok|musical_ly/i.test(navigator.userAgent)
+}
+
 export function Login() {
   const client = useQueryClient()
   const bot = useQuery({ queryKey: ['bot-username'], queryFn: botUsername, staleTime: Infinity })
@@ -59,6 +64,14 @@ export function Login() {
       {bot.isSuccess && !bot.data && <p className="error">Вход сейчас недоступен: бот не настроен или не отвечает. Обновите страницу через минуту.</p>}
       <div ref={box} className="login-widget" aria-label="Войти через Telegram" />
       {error && <p className="error" role="alert">{error}</p>}
+      {inAppBrowser() && (
+        <p className="tone-wait">Вы во встроенном браузере Instagram — вход через Telegram здесь может не открыться.
+          Нажмите «⋯» вверху и выберите «Открыть в браузере».</p>
+      )}
+      {bot.data && (
+        <p className="hint">Кнопка не сработала? Откройте CRM прямо в Telegram:{' '}
+          <a href={`https://t.me/${bot.data}`} target="_blank" rel="noopener noreferrer">@{bot.data}</a> → кнопка «Открыть» внизу чата.</p>
+      )}
       <p className="hint small">Пациенты записываются через бота в Telegram: <a href="/clinics">выбрать клинику</a></p>
     </div>
   )
