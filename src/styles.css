@@ -710,3 +710,11 @@ tr.clickable:hover td { background: var(--sunken); }
 .patient-pick { position: relative; min-width: 0; }
 .patient-pick input { width: 100%; }
 .picked-patient { align-self: center; background: var(--accent-soft); color: var(--link); }
+/* «День» в выручке: дата на всю ширину (iPhone растягивает поле даты), под ней — «Сегодня / Вчера» */
+.day-pick { display: grid; grid-template-columns: minmax(0, 220px) auto; align-items: end; gap: 8px 10px; margin-top: 10px; }
+.day-pick input[type=date] { width: 100%; min-width: 0; box-sizing: border-box; }
+.day-quick { display: flex; gap: 8px; }
+.day-quick .chip { justify-content: center; min-height: 38px; padding: 0 14px; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .9rem; cursor: pointer; }
+.day-quick .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+@media (max-width: 760px) { .day-pick { grid-template-columns: 1fr; } .day-quick .chip { flex: 1; } }
+input[type=date], input[type=month], input[type=time] { min-width: 0; max-width: 100%; }

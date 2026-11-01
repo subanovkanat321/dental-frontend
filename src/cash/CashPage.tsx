@@ -146,10 +146,10 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
               </div>
             </div>
             {period === 'day' && (
-              <div className="row dates">
+              <div className="day-pick">
                 <label className="field"><span>День</span>
                   <input type="date" value={day} max={todayIn()} onChange={(e) => e.target.value && setDay(e.target.value)} /></label>
-                <div className="chips-pick" role="group" aria-label="Быстро">
+                <div className="day-quick" role="group" aria-label="Быстро">
                   <button type="button" className="chip" aria-pressed={day === todayIn()} onClick={() => setDay(todayIn())}>Сегодня</button>
                   <button type="button" className="chip" aria-pressed={day === addDays(todayIn(), -1)} onClick={() => setDay(addDays(todayIn(), -1))}>Вчера</button>
                 </div>
