@@ -22,7 +22,9 @@ export function TariffsTab() {
   const loaded = useQuery({ queryKey: ['tariffs'], queryFn: webTariffs })
   if (loaded.isPending) return <p className="hint">Загрузка…</p>
   if (!loaded.data) return <p className="error">Тарифы не загрузились — обновите страницу.</p>
-  return <TariffsForm key={JSON.stringify(loaded.data.tariffs)} tariffs={loaded.data} />
+  // Без key из цен: после «Сохранить» ответ с новыми ценами пересоздал бы форму — и пропало бы «Тарифы сохранены».
+  // В форме и так ровно то, что сохранили.
+  return <TariffsForm tariffs={loaded.data} />
 }
 
 function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
