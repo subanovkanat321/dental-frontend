@@ -620,3 +620,4 @@ fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
 button.grid-head { border: 0; border-left: 1px solid var(--separator); background: var(--card); color: inherit; font: inherit; text-align: left; cursor: pointer; }
 button.grid-head:disabled { cursor: default; }
 button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
+.row-doctor { color: var(--link); font-weight: 600; }

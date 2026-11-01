@@ -126,7 +126,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const shown = view === 'all' ? doctors : doctors.filter((d) => d.id === view)
   const narrow = useNarrow()
   // Один врач на телефоне — «День» списком (лента дней, свободные окна, «Принять сейчас»)
-  const dayList = narrow && view !== 'all' && shown.length === 1 ? shown[0]! : null
+  // Телефон — всегда «День» списком (как в прежнем приложении): один врач или «Все врачи» вместе
+  const dayList = narrow && shown.length > 0 ? shown : null
 
   const days = useQueries({
     queries: doctors.map((d) => ({
@@ -281,9 +282,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         )}
 
         {dayList ? (
-          <DayList me={me} doctorId={dayList.id!} date={date} onDate={setDate} selectedId={selected?.id}
+          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
-            onNew={(minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId: dayList.id!, date: walkIn ? today : date, minutes }, walkIn })} />
+            onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />
         ) : doctors.length === 0 ? (
           <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => openSettings('doctors')}>добавьте их в «Настройки → Врачи»</button>.</p>
         ) : (
