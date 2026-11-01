@@ -79,6 +79,8 @@ h1, h2, h3 { font-family: var(--display); letter-spacing: -.01em; }
 h1 { font-size: 1.43rem; font-weight: 600; margin: 0; }
 h2 { font-size: 1.15rem; font-weight: 600; margin: 0; }
 button, input, select, textarea { font-family: inherit; }
+/* Галочки и переключатели — в цвет Tish; в тёмной теме не белые квадраты браузера */
+input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 /* Время, телефоны, суммы в таблицах — цифры столбиком */
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .hint { color: var(--hint); }
