@@ -8,9 +8,16 @@ body.site { background: var(--page); }
 .site-page .lang-switch { display: flex; justify-content: flex-end; gap: 4px; }
 .site-page .lang-switch button { min-height: 36px; padding: 4px 14px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--hint); font: inherit; font-size: .82rem; cursor: pointer; }
 .site-page .lang-switch button[aria-pressed=true] { border-color: var(--accent); color: var(--link); font-weight: 700; }
-.site-hero { display: flex; align-items: center; gap: 14px; padding: 18px; border-radius: 18px; background: var(--accent-soft); }
-.site-hero img { flex: none; width: 72px; height: 72px; }
-.site-hero p { margin-top: 4px; color: var(--hint); }
+/* Шапка — яркая, как посты Instagram: бирюзовый градиент и Тишка, в любой теме одинаково */
+.site-hero { position: relative; overflow: hidden; display: flex; align-items: center; gap: 14px; padding: 20px 18px;
+  border-radius: 22px; color: #fff; box-shadow: 0 10px 28px rgba(14, 138, 128, .28);
+  background: radial-gradient(circle at 100% 0, rgba(255, 214, 102, .6) 0 52px, transparent 53px),
+    radial-gradient(circle at 100% 100%, rgba(255, 255, 255, .14) 0 70px, transparent 71px),
+    linear-gradient(135deg, #0A6A63 0%, #0E8A80 55%, #17A898 100%); }
+.site-hero img { flex: none; width: 88px; height: auto; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .2)); }
+.site-hero > div { position: relative; }
+.site-hero h1 { color: #fff; }
+.site-hero p { margin-top: 4px; color: rgba(255, 255, 255, .9); }
 .site-actions { display: grid; gap: 8px; }
 .site-card { display: grid; gap: 10px; padding: 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--separator); }
 .site-doctor { display: flex; align-items: center; gap: 12px; }
@@ -24,10 +31,28 @@ body.site { background: var(--page); }
 .site-footer { text-align: center; color: var(--hint); font-size: .85rem; margin-top: 12px; }
 .site-footer a { color: var(--link); }
 .site-search { width: 100%; height: 46px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; }
-.go-link { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--separator); color: var(--text); text-decoration: none; }
-.go-link:hover { border-color: var(--accent); }
-.go-link .ico { font-size: 1.4rem; }
+/* /go: у каждой ссылки свой цвет значка; главные (записаться, подключить) — залиты цветом */
+.go-link { --tone: #0E8A80; --tone2: #17A898; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px;
+  background: var(--card); border: 1px solid var(--separator); color: var(--text); text-decoration: none;
+  transition: transform .12s ease, border-color .12s ease; }
+.go-link:hover { border-color: var(--tone); }
+.go-link:active { transform: scale(.98); }
+.go-link .ico { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; font-size: 1.4rem;
+  background: linear-gradient(135deg, var(--tone), var(--tone2)); box-shadow: 0 4px 10px color-mix(in srgb, var(--tone) 35%, transparent); }
 .go-link span span { display: block; color: var(--hint); font-size: .86rem; }
+.go-link.main { border: 0; color: #fff; background: linear-gradient(135deg, var(--tone), var(--tone2));
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--tone) 40%, transparent); }
+.go-link.main span span { color: rgba(255, 255, 255, .9); }
+.go-link.main .ico { background: rgba(255, 255, 255, .22); box-shadow: none; }
+.go-link.tone-teal { --tone: #0A7A71; --tone2: #0E8A80; }
+.go-link.tone-orange { --tone: #C2410C; --tone2: #D9480F; }
+.go-link.tone-violet { --tone: #6741D9; --tone2: #845EF7; }
+.go-link.tone-blue { --tone: #1971C2; --tone2: #339AF0; }
+.go-link.tone-tg { --tone: #1C8ADB; --tone2: #2AABEE; }
+.go-link.tone-wa { --tone: #1FAF55; --tone2: #25D366; }
+.go-link.tone-gold { --tone: #F08C00; --tone2: #FAB005; }
+.go-promo { justify-self: start; padding: 8px 14px; border-radius: 999px; font-weight: 700;
+  background: linear-gradient(135deg, #FFD43B, #FFA94D); color: #3D2400; }
 .site-promo { display: grid; gap: 8px; padding: 18px; border-radius: 18px; background: var(--ok-bg); color: var(--ok-ink); }
 .site-promo ul { margin: 0; padding-left: 20px; }
 .site-features { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
