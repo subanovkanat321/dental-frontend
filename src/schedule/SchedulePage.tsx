@@ -243,16 +243,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   return (
     <div className={side ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
-        {dayList ? (
-          // Телефон: только день — ‹ ›, дата и «Сегодня» уже в ленте дней ниже; нажать на день — календарь
-          <header className="toolbar day-head">
-            <label className="day-title pick">
-              <h1>{dayTitle(date)}</h1>
-              <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
-            </label>
-            {date !== today && <button type="button" className="btn small push" onClick={() => setDate(today)}>Сегодня</button>}
-          </header>
-        ) : (
+        {/* Телефон: без заголовка дня — день выбирают в ленте (там же месяц и «📅 другой день») */}
+        {!dayList && (
           <header className="toolbar">
             <div className="day-switch">
               <button type="button" className="btn ghost" aria-label="Предыдущий день" onClick={() => setDate(addDays(date, -1))}>‹</button>

@@ -21,6 +21,8 @@ type Item =
   | { kind: 'pause'; at: string; end: string; title: string; emoji: string; doctorId: number }
 
 const WEEKDAY = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'short' })
+const MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'short' })
+const monthOf = (d: string) => MONTH.format(new Date(`${d}T00:00:00Z`)).replace('.', '')
 
 /** Лента дней: неделя назад и три вперёд; число — сколько записей, оранжевое — есть заявки. */
 function stripDays(today: string): string[] {
@@ -138,10 +140,18 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
               aria-label={`${d === today ? 'Сегодня' : WEEKDAY.format(new Date(`${d}T00:00:00Z`))}, ${Number(d.slice(8))}${booked ? `: записей ${booked}` : ''}`}>
               <span className="wd">{d === today ? 'Сегодня' : WEEKDAY.format(new Date(`${d}T00:00:00Z`)).replace(/^./, (x) => x.toUpperCase())}</span>
               <span className="dn">{Number(d.slice(8))}</span>
+              <span className="mn">{monthOf(d)}</span>
               <span className={requested ? 'badge requested' : 'badge'} aria-hidden="true">{booked || ''}</span>
             </button>
           )
         })}
+        {/* Любой другой день — календарём; выбран день вне ленты — он здесь и подсвечен */}
+        <label className={days.includes(date) ? "strip-day pick" : "strip-day pick active"}>
+          {days.includes(date) ? <><span className="wd">Другой</span><span className="dn" aria-hidden="true">📅</span><span className="mn">день</span></>
+            : <><span className="wd">{WEEKDAY.format(new Date(`${date}T00:00:00Z`)).replace(/^./, (x) => x.toUpperCase())}</span>
+              <span className="dn">{Number(date.slice(8))}</span><span className="mn">{monthOf(date)}</span></>}
+          <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && onDate(e.target.value)} />
+        </label>
       </div>
       {single && !canEditDoctor(single.id) && <p className="readonly-note">Расписание коллеги — только просмотр</p>}
       <div className="day-actions">

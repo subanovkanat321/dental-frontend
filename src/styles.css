@@ -551,6 +551,13 @@ details.agreement-box { max-height: none; }
   border: 1px solid var(--separator); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
 .strip-day .wd { font-size: .72rem; color: var(--hint); }
 .strip-day .dn { font: 700 1.1rem var(--display); }
+.strip-day .mn { font-size: .66rem; color: var(--hint); line-height: 1; }
+.strip-day[aria-pressed=true] .mn, .strip-day.pick.active .mn { color: inherit; opacity: .85; }
+/* «📅 другой день»: прозрачное поле даты поверх — нажатие открывает календарь */
+.strip-day.pick { cursor: pointer; overflow: hidden; }
+.strip-day.pick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.strip-day.pick.active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.strip-day.pick.active .wd { color: inherit; }
 .strip-day.weekend .wd { color: var(--bad-ink); }
 .strip-day.today { border-color: var(--accent); }
 .strip-day[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
