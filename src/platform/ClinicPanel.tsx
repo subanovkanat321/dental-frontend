@@ -47,7 +47,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
         </section>
       )}
       {owner && <EnterBox id={c.id!} />}
-      <AdminInvite clinic={c} initial={invite} />
+      <AdminInvite clinic={c} initial={invite} owner={owner} />
       {owner && <ExportBox id={c.id!} />}
       {owner && <HideBox clinic={c} />}
       {owner && c.id !== 1 && <DeleteBox clinic={c} onDeleted={onClose} />}
@@ -218,8 +218,12 @@ function EnterBox({ id }: { id: number }) {
   )
 }
 
-/** Пригласить админа клиники ссылкой; админ уже есть — свёрнуто (второй управляющий, сменил Telegram). */
-function AdminInvite({ clinic: c, initial }: { clinic: Row; initial?: { name: string; solo: boolean } }) {
+/**
+ * Пригласить админа клиники ссылкой; админ уже есть — свёрнуто (второй управляющий, сменил Telegram).
+ * Ещё одного админа в работающую клинику приглашает только владелец: менеджер открыл бы ссылку сам
+ * и увидел бы пациентов (сервер ответит 403).
+ */
+function AdminInvite({ clinic: c, initial, owner }: { clinic: Row; initial?: { name: string; solo: boolean }; owner: boolean }) {
   const [name, setName] = useState(initial?.name ?? '')
   const [alsoDoctor, setAlsoDoctor] = useState(initial?.solo ?? false)
   const make = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
@@ -237,7 +241,7 @@ function AdminInvite({ clinic: c, initial }: { clinic: Row; initial?: { name: st
     <section className="form">
       <h3>Админ клиники</h3>
       <p>{c.admins}</p>
-      <details><summary>Пригласить ещё одного админа</summary>{form}</details>
+      {owner && <details><summary>Пригласить ещё одного админа</summary>{form}</details>}
     </section>
   ) : (
     <section className="form">

@@ -106,7 +106,7 @@ test('заявка с /join: одобрить — открывается нов�
 })
 
 test('менеджер без клиники: только «Платформа», без оплаты и входа в клинику', async () => {
-  backend([clinic(1, 'Стоматология «Тест»')])
+  backend([clinic(1, 'Стоматология «Тест»', { admins: 'Айгуль' })])
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: false, fullName: 'Мира' })))
   const user = userEvent.setup()
   renderApp()
@@ -117,6 +117,9 @@ test('менеджер без клиники: только «Платформа�
   const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
   expect(within(panel).queryByRole('button', { name: 'Отметить оплату' })).not.toBeInTheDocument()
   expect(within(panel).queryByRole('button', { name: 'Войти как админ' })).not.toBeInTheDocument()
+  // Второго админа в работающую клинику приглашает только владелец
+  expect(within(panel).getByText('Айгуль')).toBeInTheDocument()
+  expect(within(panel).queryByText('Пригласить ещё одного админа')).not.toBeInTheDocument()
 })
 
 test('рассылка клиникам: подтверждение и итог', async () => {
