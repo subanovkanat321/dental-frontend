@@ -32,6 +32,9 @@ test('аналитика: выручка по месяцам, по врачам,
       { id: 2, startAt: `${todayIn()}T05:00:00Z`, patient: 'Нурлан К.', doctor: 'Айгерим', service: 'Пломба', status: 'DONE', paidSom: 3000 },
       { id: 3, startAt: `${todayIn()}T06:00:00Z`, patient: 'Асель У.', doctor: 'Дастан', service: 'Чистка', status: 'DONE', paidSom: 2000 },
     ] satisfies Schemas['AppointmentServiceReportRow'][])),
+    http.get('*/api/appointments/sources', () => HttpResponse.json({
+      newPatients: [{ source: 'INSTAGRAM', patients: 3 }, { patients: 1 }], firstVisits: 4, repeatVisits: 12,
+    } satisfies Schemas['SourcesControllerSourcesView'])),
     http.get('*/api/appointments/stats', () => HttpResponse.json([
       { weekStart: '2026-10-26', booked: 10, done: 9, noShow: 1, cancelled: 0 },
       { weekStart: '2026-10-19', booked: 10, done: 7, noShow: 3, cancelled: 1 },
@@ -52,6 +55,12 @@ test('аналитика: выручка по месяцам, по врачам,
 
   const services = screen.getByRole('region', { name: 'Выручка по услугам' })
   expect((await within(services).findAllByRole('listitem'))[0]).toHaveTextContent(/Пломба.*6\s000 сом.*75%/)
+
+  const sources = screen.getByRole('region', { name: 'Откуда новые пациенты' })
+  expect(await within(sources).findByText('новых пациентов')).toBeInTheDocument()
+  expect(within(sources).getAllByRole('listitem')[0]).toHaveTextContent(/Instagram.*3 чел\..*75%/)
+  expect(within(sources).getByText(/Не указано» — в карточке/)).toBeInTheDocument()
+  expect(within(sources).getByLabelText('Первичные и повторные визиты')).toHaveTextContent(/16.*первичных 4, повторных 12.*возвращаются 75%/)
 
   const noShow = screen.getByRole('region', { name: 'Неявки по неделям' })
   expect(await within(noShow).findByText('20%')).toBeInTheDocument() // 4 неявки из 20

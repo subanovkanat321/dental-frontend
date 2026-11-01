@@ -9,6 +9,7 @@ import { dayTitle, formatPhone, shortDate, slotInstant, todayIn } from '../lib/t
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { serviceEmoji } from '../lib/serviceEmoji'
+import { SOURCES, type PatientSource } from '../lib/sources'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 
@@ -60,6 +61,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const [date, setDate] = useState(slot.date)
   const [time, setTime] = useState(timeText(slot.minutes))
   const [birthDate, setBirthDate] = useState('')
+  const [source, setSource] = useState<PatientSource | ''>('')
   const [wantsEarlier, setWantsEarlier] = useState(false)
   const [allServices, setAllServices] = useState(false)
   const [duration, setDuration] = useState(slot.duration ?? 30)
@@ -99,7 +101,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
 
   const createPatient = useMutation<Patient, ApiError, { allowDuplicate: boolean }>({
     mutationFn: ({ allowDuplicate }) => unwrap(api.POST('/api/patients', {
-      body: { fullName: name.trim(), phone: phoneFromInput(phone), allowDuplicate, birthDate: birthDate || undefined },
+      body: { fullName: name.trim(), phone: phoneFromInput(phone), allowDuplicate, birthDate: birthDate || undefined, source: source || undefined },
     })),
   })
 
@@ -227,6 +229,11 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
               <label className="field"><span>Дата рождения (необязательно)</span>
                 <input type="date" min="1900-01-01" max={todayIn()} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} /></label>
               {fieldError('birthDate') && <p className="error">{fieldError('birthDate')}</p>}
+              <label className="field"><span>Откуда узнал о клинике (необязательно)</span>
+                <select value={source} onChange={(e) => setSource(e.target.value as PatientSource | '')}>
+                  <option value="">Не указано</option>
+                  {SOURCES.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
+                </select></label>
               {createPatient.error?.code === 'duplicate-patient' && (
                 <div className="duplicate" role="alert">
                   <p>{createPatient.error.message}{duplicate ? `: ${duplicate.fullName}` : ''}</p>

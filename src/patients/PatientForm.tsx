@@ -4,15 +4,16 @@ import { useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneToInput } from '../clinic/phone'
+import { SOURCES, type PatientSource } from '../lib/sources'
 import { formatPhone, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
 
 type Patient = Schemas['PatientView']
 
-const FIELDS = ['fullName', 'phone', 'birthDate', 'workplace'] as const
+const FIELDS = ['fullName', 'phone', 'birthDate', 'workplace', 'source'] as const
 
 /**
- * Имя, телефон, дата рождения и место работы — новый пациент или правка. Те же проверки, что на
+ * Имя, телефон, дата рождения, место работы и откуда узнал — новый пациент или правка. Те же проверки, что на
  * сервере: ошибки под полями (422), такой номер уже есть (409) — открыть того или «это другой человек».
  */
 export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
@@ -22,10 +23,11 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
   onCancel?: () => void
 }) {
   const client = useQueryClient()
-  const [f, setF] = useState({ fullName: p?.fullName ?? '', phone: phoneToInput(p?.phone), birthDate: p?.birthDate ?? '', workplace: p?.workplace ?? '' })
+  const [f, setF] = useState({ fullName: p?.fullName ?? '', phone: phoneToInput(p?.phone), birthDate: p?.birthDate ?? '', workplace: p?.workplace ?? '', source: p?.source ?? '' })
   const save = useMutation<Patient, ApiError, boolean>({
     mutationFn: (allowDuplicate) => {
-      const body = { fullName: f.fullName, phone: phoneFromInput(f.phone), allowDuplicate, birthDate: f.birthDate || undefined, workplace: f.workplace }
+      const body = { fullName: f.fullName, phone: phoneFromInput(f.phone), allowDuplicate, birthDate: f.birthDate || undefined, workplace: f.workplace,
+        source: (f.source || undefined) as PatientSource | undefined }
       return unwrap(p ? api.PUT('/api/patients/{id}', { params: { path: { id: p.id! } }, body }) : api.POST('/api/patients', { body }))
     },
     onSuccess: (saved) => {
@@ -59,6 +61,11 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
           <input value={f.workplace} maxLength={200} autoComplete="off" placeholder="Например: школа №5" onChange={(e) => set('workplace')(e.target.value)} /></label>
       </div>
       {(err('birthDate') || err('workplace')) && <p className="error">{err('birthDate') ?? err('workplace')}</p>}
+      <label className="field"><span>Откуда узнал о клинике</span>
+        <select value={f.source} onChange={(e) => set('source')(e.target.value)}>
+          <option value="">Не указано</option>
+          {SOURCES.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
+        </select></label>
       {other ? (
         <div className="duplicate" role="alert">
           <p>{save.error?.message}: {other.fullName}, {other.phone ? formatPhone(other.phone) : ''}</p>

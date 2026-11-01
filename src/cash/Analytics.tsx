@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf } from '../lib/compare'
+import { sourceText } from '../lib/sources'
 import { addDays, monthRange, somText, todayIn, weekLabel, ZONE } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
@@ -31,7 +32,7 @@ function short(som: number): string {
  * «Аналитика» — четыре вопроса владельца клиники, по одной диаграмме на вопрос (dataviz: одна ось,
  * один цвет на ряд, подписи текстом, значение — по нажатию; таблицы — в «Отчёте» и «Статистике»):
  * растём ли (выручка 6 месяцев), кто сколько приносит (врачи), что приносит деньги (услуги),
- * сколько теряем на неявках (недели). Считает сервер — здесь только рисуем.
+ * откуда приходят новые пациенты (и сколько возвращается), сколько теряем на неявках (недели). Считает сервер — здесь только рисуем.
  */
 /** Период блоков «врачи» и «услуги»: последние 30 дней (по умолчанию — не пусто в начале месяца) или месяц. */
 type Period = { label: string; from: string; to: string; months: string[] }
@@ -59,6 +60,7 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
       <MonthsChart month={month ?? todayIn().slice(0, 7)} scope={scope} />
       {seesAll && doctorId == null && (me.doctors ?? []).filter((d) => d.active !== false).length > 1 && <DoctorsChart me={me} period={period} />}
       <ServicesChart period={period} scope={scope} />
+      <SourcesChart period={period} scope={scope} />
       <NoShowChart scope={scope} />
     </>
   )
@@ -115,16 +117,16 @@ function MonthsChart({ month, scope }: { month: string; scope: { doctorId?: numb
 }
 
 /** Горизонтальные столбики «название — сумма», по убыванию; подпись значения — текстом рядом. */
-function HBars({ rows, label }: { rows: { name: string; value: number; note?: string }[]; label: string }) {
+function HBars({ rows, label, format = somText }: { rows: { name: string; value: number; note?: string }[]; label: string; format?: (v: number) => string }) {
   const max = Math.max(1, ...rows.map((r) => r.value))
   const total = rows.reduce((s, r) => s + r.value, 0)
   return (
     <ul className="hbars" aria-label={label}>
       {rows.map((r) => (
-        <li key={r.name} title={`${r.name}: ${somText(r.value)}${r.note ? ` · ${r.note}` : ''}`}>
+        <li key={r.name} title={`${r.name}: ${format(r.value)}${r.note ? ` · ${r.note}` : ''}`}>
           <span className="hbar-name">{r.name}</span>
           <span className="hbar-track"><span className="hbar-fill" style={{ width: `${(r.value / max) * 100}%` }} /></span>
-          <span className="hbar-value num">{somText(r.value)}<span className="hint"> · {total ? Math.round((r.value / total) * 100) : 0}%</span></span>
+          <span className="hbar-value num">{format(r.value)}<span className="hint"> · {total ? Math.round((r.value / total) * 100) : 0}%</span></span>
         </li>
       ))}
     </ul>
@@ -181,6 +183,43 @@ function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: 
       {reports.some((q) => q.isPending) ? <p className="hint">Загрузка…</p>
         : top.length ? <HBars rows={top} label="Выручка по услугам" />
           : <p className="hint">Оплат за этот период нет. Услугу ставят при записи или в карточке приёма — тогда видно, что приносит деньги.</p>}
+    </section>
+  )
+}
+
+const people = (n: number) => `${n} чел.`
+
+/**
+ * Откуда приходят новые пациенты (первый приём в клинике — в этом периоде) и сколько визитов
+ * первичных, а сколько повторных: работает ли реклама и возвращаются ли пациенты.
+ */
+function SourcesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const data = useQuery({
+    queryKey: ['sources', period.from, period.to, scope.doctorId ?? null],
+    queryFn: () => unwrap(api.GET('/api/appointments/sources', { params: { query: { from: period.from, to: period.to, ...scope } } })),
+  })
+  const rows = (data.data?.newPatients ?? []).map((s) => ({ name: sourceText(s.source), value: s.patients ?? 0 }))
+  const total = rows.reduce((sum, r) => sum + r.value, 0)
+  const first = data.data?.firstVisits ?? 0
+  const repeat = data.data?.repeatVisits ?? 0
+  const unknown = rows.find((r) => r.name === 'Не указано')?.value ?? 0
+  return (
+    <section className="card-block chart" aria-label="Откуда новые пациенты">
+      <h2>📣 Откуда новые пациенты {period.label}</h2>
+      {data.isPending ? <p className="hint">Загрузка…</p>
+        : data.error ? <p className="error">{data.error.message}</p>
+          : (
+            <>
+              <p className="chart-headline"><b className="num">{total}</b> {total === 1 ? 'новый пациент' : 'новых пациентов'}</p>
+              {rows.length ? <HBars rows={rows} label="Новые пациенты по источникам" format={people} />
+                : <p className="hint">Новых пациентов за этот период нет.</p>}
+              {unknown > 0 && <p className="hint">«Не указано» — в карточке пациента не выбрано «Откуда узнал о клинике». Спрашивайте при первой записи — так видно, какая реклама работает.</p>}
+              <p className="visits-split" aria-label="Первичные и повторные визиты">
+                Состоялось визитов: <b className="num">{first + repeat}</b> — первичных <b className="num">{first}</b>, повторных <b className="num">{repeat}</b>
+                {first + repeat > 0 && <span className="hint"> · возвращаются {Math.round((repeat / (first + repeat)) * 100)}%</span>}
+              </p>
+            </>
+          )}
     </section>
   )
 }

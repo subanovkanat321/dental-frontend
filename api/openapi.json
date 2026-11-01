@@ -5326,6 +5326,49 @@
         }
       }
     },
+    "/api/appointments/sources" : {
+      "get" : {
+        "tags" : [ "sources-controller" ],
+        "operationId" : "sources",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SourcesControllerSourcesView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/revenue" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -6378,6 +6421,10 @@
           "birthDate" : {
             "type" : "string",
             "format" : "date"
+          },
+          "source" : {
+            "type" : "string",
+            "enum" : [ "INSTAGRAM", "RECOMMENDATION", "MAPS", "SIGN", "ADS", "OTHER" ]
           }
         },
         "required" : [ "fullName", "phone" ]
@@ -6403,6 +6450,10 @@
           "birthDate" : {
             "type" : "string",
             "format" : "date"
+          },
+          "source" : {
+            "type" : "string",
+            "enum" : [ "INSTAGRAM", "RECOMMENDATION", "MAPS", "SIGN", "ADS", "OTHER" ]
           }
         }
       },
@@ -8830,6 +8881,36 @@
           "reminded" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "SourcesControllerSourceCount" : {
+        "properties" : {
+          "source" : {
+            "type" : "string",
+            "enum" : [ "INSTAGRAM", "RECOMMENDATION", "MAPS", "SIGN", "ADS", "OTHER" ]
+          },
+          "patients" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SourcesControllerSourcesView" : {
+        "properties" : {
+          "newPatients" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SourcesControllerSourceCount"
+            }
+          },
+          "firstVisits" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "repeatVisits" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },

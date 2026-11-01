@@ -2436,6 +2436,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/revenue": {
         parameters: {
             query?: never;
@@ -2953,6 +2969,8 @@ export interface components {
             workplace?: string;
             /** Format: date */
             birthDate?: string;
+            /** @enum {string} */
+            source?: "INSTAGRAM" | "RECOMMENDATION" | "MAPS" | "SIGN" | "ADS" | "OTHER";
         };
         PatientView: {
             /** Format: int64 */
@@ -2963,6 +2981,8 @@ export interface components {
             workplace?: string;
             /** Format: date */
             birthDate?: string;
+            /** @enum {string} */
+            source?: "INSTAGRAM" | "RECOMMENDATION" | "MAPS" | "SIGN" | "ADS" | "OTHER";
         };
         NewsControllerSubscription: {
             subscribed?: boolean;
@@ -3981,6 +4001,19 @@ export interface components {
             unmarked?: number;
             /** Format: int64 */
             reminded?: number;
+        };
+        SourcesControllerSourceCount: {
+            /** @enum {string} */
+            source?: "INSTAGRAM" | "RECOMMENDATION" | "MAPS" | "SIGN" | "ADS" | "OTHER";
+            /** Format: int32 */
+            patients?: number;
+        };
+        SourcesControllerSourcesView: {
+            newPatients?: components["schemas"]["SourcesControllerSourceCount"][];
+            /** Format: int32 */
+            firstVisits?: number;
+            /** Format: int32 */
+            repeatVisits?: number;
         };
         RevenueView: {
             /** Format: date */
@@ -8443,6 +8476,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WeekStats"][];
+                };
+            };
+        };
+    };
+    sources: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourcesControllerSourcesView"];
                 };
             };
         };

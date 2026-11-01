@@ -6,6 +6,7 @@ import { useAnamnesis } from '../api/anamnesis'
 import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
 import { debtLine } from '../lib/debt'
+import { sourceText } from '../lib/sources'
 import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
 import { ContactButtons } from '../schedule/Contact'
 import { statusOf } from '../schedule/status'
@@ -117,6 +118,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         {patient?.telegram ? 'Пишет боту — напоминания в Telegram' : 'Без бота — напоминание в WhatsApp'}
         {patient?.birthDate ? ` · ${shortDate(`${patient.birthDate}T12:00:00Z`)} (${ageText(patient.birthDate)})` : ''}
         {patient?.workplace ? ` · 💼 ${patient.workplace}` : ''}
+        {patient?.source ? ` · ${sourceText(patient.source)}` : ''}
       </p>
       <p className="stats">
         <span className="chip small s-done">Был: <b className="num">{done ?? 0}</b></span>
