@@ -128,3 +128,19 @@ test('«Настройки → Оформление»: тёмная тема и 
   await user.click(screen.getByRole('button', { name: 'Обычный' }))
   expect(document.documentElement.dataset.theme).toBe('light')
 })
+
+test('«Работать с компьютера» в Telegram на телефоне: ссылку — себе в Telegram, а не встроенным браузером', async () => {
+  const opened: string[] = []
+  vi.stubGlobal('Telegram', { WebApp: { initData: 'query_id=test', platform: 'ios', ready() {}, expand() {},
+    openTelegramLink: (url: string) => opened.push(url), openLink: () => opened.push('browser') } })
+  try {
+    server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
+    renderApp()
+    await userEvent.click(await screen.findByRole('button', { name: 'Отправить ссылку себе' }))
+    expect(screen.queryByRole('button', { name: 'Открыть в браузере' })).not.toBeInTheDocument()
+    expect(opened).toHaveLength(1)
+    expect(opened[0]).toMatch(/^https:\/\/t\.me\/share\/url\?url=.*%2Flogin/)
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})

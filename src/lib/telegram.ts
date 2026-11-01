@@ -23,6 +23,10 @@ type WebApp = {
   MainButton?: MainButton
   HapticFeedback?: { notificationOccurred(type: 'success' | 'warning' | 'error'): void }
   openLink?(url: string): void
+  /** t.me-ссылка внутри Telegram (например, «поделиться»), без браузера */
+  openTelegramLink?(url: string): void
+  /** ios, android, tdesktop, macos, weba… — где открыт Mini App */
+  platform?: string
   requestContact?(callback: (shared: boolean) => void): void
   ready(): void
   expand(): void
