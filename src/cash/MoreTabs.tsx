@@ -5,18 +5,11 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SortTh } from '../layout/SortTh'
 import { useSort } from '../lib/useSort'
 import { PaymentsTable } from './PaymentsTable'
-import { shortDate, somText, todayIn, weekLabel } from '../lib/time'
+import { monthRange, shortDate, somText, todayIn, weekLabel } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
 type Expense = Schemas['ExpensesExpense']
 type ExpenseKey = 'when' | 'category' | 'sum'
-
-/** 'YYYY-MM' → с 1-го по последнее число месяца. */
-function monthRange(month: string): { from: string; to: string } {
-  const [y, m] = month.split('-').map(Number)
-  const last = new Date(Date.UTC(y!, m!, 0)).getUTCDate()
-  return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, '0')}` }
-}
 
 function monthTitle(month: string): string {
   return new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(new Date(`${month}-01T00:00:00Z`)).replace(' г.', '')

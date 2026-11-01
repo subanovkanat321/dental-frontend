@@ -70,6 +70,13 @@ export function periodOf(kind: 'day' | 'week' | 'month', today = todayIn()): { f
   return { from: addDays(today, -weekday), to: today }
 }
 
+/** 'YYYY-MM' → с 1-го по последнее число месяца. */
+export function monthRange(month: string): { from: string; to: string } {
+  const [y, m] = month.split('-').map(Number)
+  const last = new Date(Date.UTC(y!, m!, 0)).getUTCDate()
+  return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, '0')}` }
+}
+
 /** «1–7 июн» или «29 июн – 5 июл» — подпись недели. */
 export function weekLabel(weekStart: string): string {
   const end = addDays(weekStart, 6)

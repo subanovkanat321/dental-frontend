@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, unwrap } from '../api/client'
-import { periodOf, somText, todayIn } from '../lib/time'
+import { monthRange, somText, todayIn } from '../lib/time'
 
 const MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' })
 const MONTH_SHORT = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'short' })
@@ -15,7 +15,7 @@ const monthTitle = (date: string) => MONTH.format(new Date(`${date.slice(0, 7)}-
  */
 export function SpendingBlock() {
   const [month, setMonth] = useState(todayIn().slice(0, 7))
-  const { from, to } = periodOf('month', `${month}-01`)
+  const { from, to } = monthRange(month)
   const data = useQuery({
     queryKey: ['spending', 'stock', month],
     queryFn: () => unwrap(api.GET('/api/supplies/spending', { params: { query: { from, to } } })),

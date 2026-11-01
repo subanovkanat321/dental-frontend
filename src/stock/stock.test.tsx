@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -135,4 +135,18 @@ test('«−1» в списке списывает одну штуку; «Рас�
   expect(await within(block).findByText(/10% выручки/)).toBeInTheDocument()
   expect(block).toHaveTextContent('Поставок без суммы: 1')
   expect(within(within(block).getByRole('table', { name: 'Расходы по материалам' })).getByText('Перчатки')).toBeInTheDocument()
+})
+
+test('«Расходы на склад» за месяц — с первого по последнее число, а не только первое', async () => {
+  backend([glove])
+  const periods: string[] = []
+  server.use(http.get('*/api/supplies/spending', ({ request }) => {
+    const url = new URL(request.url)
+    periods.push(`${url.searchParams.get('from')}..${url.searchParams.get('to')}`)
+    return HttpResponse.json({ purchasedSom: 0, usedSom: 0, months: [], items: [] } satisfies Schemas['SpendingView'])
+  }))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Расходы на склад' }))
+  fireEvent.change(await screen.findByLabelText('Месяц расходов на склад'), { target: { value: '2026-02' } })
+  await vi.waitFor(() => expect(periods).toContain('2026-02-01..2026-02-28'))
 })
