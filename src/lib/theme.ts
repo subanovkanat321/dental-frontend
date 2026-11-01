@@ -5,8 +5,8 @@ import { telegram } from './telegram'
  * приложении: светлая (по умолчанию), тёмная или «как в Telegram» (вне Telegram — как в системе).
  * Размер текста — обычный или крупный. Ключ темы тот же, что у прежнего приложения: выбор сохранится.
  */
-export type ThemeChoice = 'light' | 'dark' | 'auto'
-export type TextSize = 'normal' | 'large'
+type ThemeChoice = 'light' | 'dark' | 'auto'
+type TextSize = 'normal' | 'large'
 
 export const THEMES: [ThemeChoice, string][] = [['light', 'Светлая'], ['dark', 'Тёмная'], ['auto', telegram() ? 'Как в Telegram' : 'Как в системе']]
 export const TEXT_SIZES: [TextSize, string][] = [['normal', 'Обычный'], ['large', 'Крупный']]
@@ -40,7 +40,7 @@ export function textSize(): TextSize {
 }
 
 /** Тема на экране: «авто» — по Telegram, вне его — по системе. */
-export function resolveTheme(choice: ThemeChoice, telegramScheme?: string, systemDark = false): 'light' | 'dark' {
+function resolveTheme(choice: ThemeChoice, telegramScheme?: string, systemDark = false): 'light' | 'dark' {
   if (choice === 'auto') return (telegramScheme ?? (systemDark ? 'dark' : 'light')) === 'dark' ? 'dark' : 'light'
   return choice
 }

@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 type Appointment = Schemas['AppointmentView']
 
 /** Что сделать с приёмом: у каждого действия свой адрес и тело — как в AppointmentController. */
-export type Action =
+type Action =
   | { kind: 'status'; body: Schemas['AppointmentRequestsChangeStatus'] }
   | { kind: 'payment'; body: Schemas['AppointmentControllerPayment'] }
   | { kind: 'extra'; body: Schemas['AppointmentControllerExtra'] }

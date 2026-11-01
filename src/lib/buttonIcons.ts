@@ -134,7 +134,7 @@ const ICONS: Record<string, string> = {
 }
 
 /** Значок для подписи. Подпись уже с «＋» — значок не нужен: плюс и есть значок. */
-export function iconOf(label: string): string | undefined {
+function iconOf(label: string): string | undefined {
   const text = label.replace(/\s+/g, ' ').trim()
   if (/^[＋+]/.test(text)) return undefined
   return ICONS[text]

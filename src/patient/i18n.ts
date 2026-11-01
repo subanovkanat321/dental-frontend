@@ -240,7 +240,7 @@ function dateOf(instant: string): string {
 }
 
 /** «сегодня» / «в среду, 3 июня» — и «бүгүн» / «3-июнь, шаршемби». */
-export function whenText(lang: Lang, startAt: string, now = new Date()): string {
+function whenText(lang: Lang, startAt: string, now = new Date()): string {
   const day = dateOf(startAt)
   const today = todayIn(now)
   if (day === today) return lang === 'ru' ? 'сегодня' : 'бүгүн'

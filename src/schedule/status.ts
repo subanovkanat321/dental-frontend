@@ -2,15 +2,15 @@ import type { Schemas } from '../api/client'
 
 type Appointment = Schemas['AppointmentView']
 
-export type Tone = 'ok' | 'wait' | 'bad' | 'hint'
+type Tone = 'ok' | 'wait' | 'bad' | 'hint'
 
 /**
  * Вид статуса — заливка блока и чипа (DESIGN.md → Colors): заявка синяя, ждём ответа янтарная,
  * придёт зелёная, состоялся серая, ждёт оплаты на кассе персиковая, неявка красная.
  */
-export type Kind = 'request' | 'wait' | 'ok' | 'done' | 'cashier' | 'bad' | 'quiet'
+type Kind = 'request' | 'wait' | 'ok' | 'done' | 'cashier' | 'bad' | 'quiet'
 
-export type Status = { label: string; icon: string; tone: Tone; kind: Kind }
+type Status = { label: string; icon: string; tone: Tone; kind: Kind }
 
 /** Подпись приёма — как строка «Дня» в Mini App (state.js rowState), без кнопок. */
 export function statusOf(a: Appointment, now = new Date()): Status {

@@ -55,7 +55,7 @@ export const api = createClient<paths>({
 })
 api.use(webHeader)
 
-export function toApiError(status: number, body: unknown): ApiError {
+function toApiError(status: number, body: unknown): ApiError {
   const problem = (typeof body === 'object' && body !== null ? body : {}) as {
     detail?: unknown
     errors?: { field?: unknown; message?: unknown }[]

@@ -17,7 +17,7 @@ export function billingLine(b?: Billing | null): { text: string; tone: 'hint' | 
 
 export const PAY_PERIOD_TEXT: Record<number, string> = { 1: '1 месяц', 3: '3 месяца', 6: '6 месяцев', 12: 'Год' }
 
-export type Block = { type: 'heading' | 'note' | 'item' | 'para'; text: string }
+type Block = { type: 'heading' | 'note' | 'item' | 'para'; text: string }
 
 /**
  * Текст договора (простая разметка шаблона) → блоки: «#» — заголовок, «> » — примечание,

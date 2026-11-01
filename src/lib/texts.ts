@@ -13,7 +13,7 @@ function dateOf(instant: string): string {
 }
 
 /** «сегодня», «завтра» или «в пятницу, 7 ноября» — по Бишкеку. */
-export function whenText(startAt: string, now = new Date()): string {
+function whenText(startAt: string, now = new Date()): string {
   const day = dateOf(startAt)
   const today = todayIn(now)
   if (day === today) return 'сегодня'
