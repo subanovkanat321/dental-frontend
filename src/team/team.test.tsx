@@ -194,3 +194,18 @@ test('врач (не админ): без «Сотрудников», откры�
   expect(await within(panel).findByText('Сохранено')).toBeInTheDocument()
   expect(profile).toEqual({ fullName: 'Айгерим Садыкова', about: '' })
 })
+
+test('ассистент: перерывы и выходные только смотрит — без формы и «Удалить»', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [2] })),
+    http.get('*/api/time-off', () => HttpResponse.json([
+      { id: 1, doctorId: 2, weekday: 'FRIDAY', startTime: '12:00:00', endTime: '14:00:00', title: 'Джума-намаз', emoji: '🕌' },
+    ] satisfies Schemas['TimeOffView'][])),
+  )
+  renderApp()
+  openItem('timeoff')
+  expect(await screen.findByText(/Джума-намаз/)).toBeInTheDocument()
+  expect(screen.queryByRole('form', { name: 'Новый перерыв' })).not.toBeInTheDocument()
+  expect(screen.getByText(/ставят врач, регистратура или администратор/)).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Удалить/ })).not.toBeInTheDocument()
+})

@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
 import { TIME_OFF_EMOJI, timeOffWhen, WEEK, type Weekday } from './texts'
+import { isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -48,7 +49,8 @@ export function TimeOffTab({ me }: { me: Me }) {
         ) : <p className="hint">Перерывов нет.</p>}
         {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
       </section>
-      <NewTimeOff me={me} />
+      {/* Ассистент только смотрит: перерывы и выходные ставят врач, регистратура и админ */}
+      {isAssistant(me) ? <p className="hint">Перерывы и выходные ставят врач, регистратура или администратор.</p> : <NewTimeOff me={me} />}
     </>
   )
 }
