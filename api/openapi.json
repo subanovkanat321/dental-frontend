@@ -6469,6 +6469,12 @@
           },
           "hidden" : {
             "type" : "boolean"
+          },
+          "contactName" : {
+            "type" : "string"
+          },
+          "contactPhone" : {
+            "type" : "string"
           }
         }
       },
@@ -7768,6 +7774,9 @@
             "$ref" : "#/components/schemas/PlatformServiceClinicRow"
           },
           "contactName" : {
+            "type" : "string"
+          },
+          "phone" : {
             "type" : "string"
           },
           "solo" : {

@@ -3,7 +3,9 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { billingLine } from '../account/texts'
-import { shortDate, somText, todayIn } from '../lib/time'
+import { openLink } from '../lib/telegram'
+import { whatsappUrl } from '../lib/texts'
+import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { InviteLink } from '../team/InviteLink'
 import { extendPaid } from './health'
@@ -29,6 +31,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
   const owner = Boolean(me.owner)
   const here = Boolean(c.code) && me.clinic?.code === c.code
   const page = c.code ? `${window.location.origin}/c/${c.code}` : null
+  const inviteFirst = Boolean(invite) && !c.admins
   return (
     <aside className="panel" aria-label="Клиника на платформе">
       <header className="panel-head">
@@ -38,6 +41,9 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
+      {c.contactPhone && <ContactBox name={c.contactName} phone={c.contactPhone} />}
+      {/* Только что одобрили заявку или создали клинику — приглашение админу сразу под контактом */}
+      {inviteFirst && <AdminInvite clinic={c} initial={invite} owner={owner} />}
       {/* «Войти в клинику» — первым: ради этого карточку чаще всего и открывают; в свою — незачем */}
       {owner && !here && <EnterBox id={c.id!} />}
       {owner && here && <p className="hint">Это ваша текущая клиника.</p>}
@@ -50,7 +56,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
           <a className="invite-link" href={page} target="_blank" rel="noopener noreferrer">{page}</a>
         </section>
       )}
-      <AdminInvite clinic={c} initial={invite} owner={owner} />
+      {!inviteFirst && <AdminInvite clinic={c} initial={invite} owner={owner} />}
       {owner && <ExportBox id={c.id!} />}
       {owner && <HideBox clinic={c} />}
       {owner && c.id !== 1 && <DeleteBox clinic={c} onDeleted={onClose} />}
@@ -232,7 +238,7 @@ function AdminInvite({ clinic: c, initial, owner }: { clinic: Row; initial?: { n
   const make = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/platform/clinics/{id}/admin-invite', { params: { path: { id: c.id! } }, body: { fullName: name, alsoDoctor } })),
   })
-  const form = make.data?.token ? <InviteLink start={`staff_${make.data.token}`} name={name.trim()} toWhom="админу клиники" /> : (
+  const form = make.data?.token ? <InviteLink start={`staff_${make.data.token}`} name={name.trim()} toWhom="админу клиники" phone={c.contactPhone} /> : (
     <form className="form" aria-label="Пригласить админа клиники" onSubmit={(e) => { e.preventDefault(); make.mutate() }}>
       <label className="field"><span>Имя админа</span><input value={name} required maxLength={100} onChange={(e) => setName(e.target.value)} /></label>
       <label className="check"><input type="checkbox" checked={alsoDoctor} onChange={(e) => setAlsoDoctor(e.target.checked)} /> Он же ведёт приём (частный врач) — станет и врачом</label>
@@ -251,6 +257,20 @@ function AdminInvite({ clinic: c, initial, owner }: { clinic: Row; initial?: { n
       <h3>Пригласить админа клиники</h3>
       <p className="hint">Админ откроет ссылку, нажмёт «Начать» и сам добавит врачей и регистратуру, заполнит «О клинике» и цены.</p>
       {form}
+    </section>
+  )
+}
+
+/** Кто оставил заявку на /join: позвонить или написать в WhatsApp — договориться и отправить ссылку. */
+function ContactBox({ name, phone }: { name?: string | null; phone: string }) {
+  return (
+    <section className="form" aria-label="Контакт из заявки">
+      <h3>Контакт из заявки</h3>
+      <p>{name ? `${name} · ` : ''}<a href={`tel:+${phone}`}>{formatPhone(phone)}</a></p>
+      <div className="actions">
+        <a className="btn" href={`tel:+${phone}`}>Позвонить</a>
+        <button type="button" className="btn" onClick={() => openLink(whatsappUrl(phone, name ? `Здравствуйте, ${name}! Это Tish — по вашей заявке.` : 'Здравствуйте! Это Tish — по вашей заявке.'))}>Написать в WhatsApp</button>
+      </div>
     </section>
   )
 }

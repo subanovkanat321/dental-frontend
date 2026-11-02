@@ -2997,6 +2997,8 @@ export interface components {
             billing?: components["schemas"]["ClinicBillingBilling"];
             admins?: string;
             hidden?: boolean;
+            contactName?: string;
+            contactPhone?: string;
         };
         AgreementControllerDraft: {
             title?: string;
@@ -3543,6 +3545,7 @@ export interface components {
         ClinicApplicationsApproved: {
             clinic?: components["schemas"]["PlatformServiceClinicRow"];
             contactName?: string;
+            phone?: string;
             solo?: boolean;
         };
         PatientFilesView: {

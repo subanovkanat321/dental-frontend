@@ -80,7 +80,7 @@ test('владелец: клиники таблицей, карточка — о
   expect(invited).toEqual({ fullName: 'Айгерим', alsoDoctor: false })
 })
 
-test('заявка с /join: одобрить — открывается новая клиника с именем админа', async () => {
+test('заявка с /join: одобрить — новая клиника с контактом из заявки, ссылка админу — сразу в его WhatsApp', async () => {
   let clinics = [clinic(1, 'Стоматология «Тест»')]
   backend(clinics)
   server.use(
@@ -90,10 +90,12 @@ test('заявка с /join: одобрить — открывается нов�
       { id: 5, clinicName: 'Дент Плюс', contactName: 'Бакыт', phone: '996700111222', city: 'Ош', solo: true },
     ])),
     http.post('*/api/platform/applications/5/approve', () => {
-      clinics = [...clinics, clinic(9, 'Дент Плюс', { health: 'NEW' })]
-      return HttpResponse.json({ clinic: clinics[1], contactName: 'Бакыт', solo: true })
+      clinics = [...clinics, clinic(9, 'Дент Плюс', { health: 'NEW', contactName: 'Бакыт', contactPhone: '996700111222' })]
+      return HttpResponse.json({ clinic: clinics[1], contactName: 'Бакыт', phone: '996700111222', solo: true })
     }),
+    http.post('*/api/platform/clinics/9/admin-invite', () => HttpResponse.json({ token: 'adm9' })),
   )
+  const open = vi.spyOn(window, 'open').mockReturnValue(null)
   const user = userEvent.setup()
   renderApp()
   const card = await screen.findByRole('group', { name: 'Заявка: Дент Плюс' })
@@ -103,6 +105,16 @@ test('заявка с /join: одобрить — открывается нов�
   expect(within(panel).getByRole('heading', { name: 'Дент Плюс' })).toBeInTheDocument()
   expect(within(panel).getByRole('textbox', { name: 'Имя админа' })).toHaveValue('Бакыт')
   expect(within(panel).getByRole('checkbox', { name: /частный врач/ })).toBeChecked()
+  // Связаться с тем, кто оставил заявку: номер остаётся в карточке клиники
+  const contact = within(panel).getByRole('region', { name: 'Контакт из заявки' })
+  expect(contact).toHaveTextContent('Бакыт')
+  expect(within(contact).getByRole('link', { name: 'Позвонить' })).toHaveAttribute('href', 'tel:+996700111222')
+  await user.click(within(panel).getByRole('button', { name: 'Создать ссылку' }))
+  await user.click(await within(panel).findByRole('button', { name: 'Отправить в WhatsApp' }))
+  const url = String(open.mock.calls.at(-1)?.[0])
+  expect(url).toMatch(/^https:\/\/wa\.me\/996700111222\?text=/)
+  expect(decodeURIComponent(url)).toContain('https://t.me/tish_test_bot?start=staff_adm9')
+  open.mockRestore()
 })
 
 test('менеджер без клиники: только «Платформа», без оплаты и входа в клинику', async () => {
