@@ -70,12 +70,13 @@ test('заявка клиники: ошибки полей с сервера, п
   await user.click(within(form).getByRole('button', { name: 'Частный врач' }))
   await user.type(within(form).getByRole('textbox', { name: /Кабинет/ }), 'Стоматолог Айгерим')
   await user.type(within(form).getByRole('textbox', { name: 'Телефон или WhatsApp' }), '555 000 111')
+  await user.type(within(form).getByRole('textbox', { name: 'Telegram — по желанию' }), '@aigerim_dent ')
   await user.click(within(form).getByRole('button', { name: 'Оставить заявку' }))
   expect(await within(form).findByText('Нужно согласие')).toBeInTheDocument()
   await user.click(within(form).getByRole('checkbox'))
   await user.click(within(form).getByRole('button', { name: 'Оставить заявку' }))
   expect(await screen.findByRole('heading', { name: 'Заявка отправлена' })).toBeInTheDocument()
-  expect(bodies[1]).toMatchObject({ clinicName: 'Стоматолог Айгерим', phone: '+996 555 000 111', solo: true, consent: true, website: '', doctors: null })
+  expect(bodies[1]).toMatchObject({ clinicName: 'Стоматолог Айгерим', phone: '+996 555 000 111', telegram: '@aigerim_dent', solo: true, consent: true, website: '', doctors: null })
 })
 
 test('/go: ссылки пациентам и клиникам, контакты из «Сведений о платформе»', async () => {

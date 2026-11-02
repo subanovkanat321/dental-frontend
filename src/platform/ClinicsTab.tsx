@@ -200,7 +200,8 @@ function Application({ a, onApproved }: { a: Schemas['ClinicApplicationsApplicat
     <div className="sub-form form" role="group" aria-label={`Заявка: ${a.clinicName}`}>
       <strong>{a.clinicName}</strong>
       <span className="hint">{[a.solo ? 'частный врач' : null, a.city, a.doctors ? `врачей: ${a.doctors}` : null, a.createdAt ? shortDate(a.createdAt, true) : null].filter(Boolean).join(' · ')}</span>
-      <span>{a.contactName} · {a.phone && <a href={`tel:+${a.phone}`}>{formatPhone(a.phone)}</a>}</span>
+      <span>{a.contactName} · {a.phone && <a href={`tel:+${a.phone}`}>{formatPhone(a.phone)}</a>}
+        {a.telegram && <> · <a href={`https://t.me/${a.telegram}`} target="_blank" rel="noopener noreferrer">@{a.telegram}</a></>}</span>
       {a.message && <span className="hint">{a.message}</span>}
       <div className="actions">
         <button type="button" className="btn primary" disabled={approve.isPending} onClick={() => approve.mutate()}>Одобрить и завести клинику</button>

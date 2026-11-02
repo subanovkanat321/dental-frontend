@@ -2999,6 +2999,7 @@ export interface components {
             hidden?: boolean;
             contactName?: string;
             contactPhone?: string;
+            contactTelegram?: string;
         };
         AgreementControllerDraft: {
             title?: string;
@@ -3546,6 +3547,7 @@ export interface components {
             clinic?: components["schemas"]["PlatformServiceClinicRow"];
             contactName?: string;
             phone?: string;
+            telegram?: string;
             solo?: boolean;
         };
         PatientFilesView: {
@@ -3937,6 +3939,7 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             solo?: boolean;
+            telegram?: string;
         };
         AgreementControllerTemplate: {
             title?: string;

@@ -41,7 +41,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
-      {c.contactPhone && <ContactBox name={c.contactName} phone={c.contactPhone} />}
+      {c.contactPhone && <ContactBox name={c.contactName} phone={c.contactPhone} telegram={c.contactTelegram} />}
       {/* Только что одобрили заявку или создали клинику — приглашение админу сразу под контактом */}
       {inviteFirst && <AdminInvite clinic={c} initial={invite} owner={owner} />}
       {/* «Войти в клинику» — первым: ради этого карточку чаще всего и открывают; в свою — незачем */}
@@ -262,14 +262,15 @@ function AdminInvite({ clinic: c, initial, owner }: { clinic: Row; initial?: { n
 }
 
 /** Кто оставил заявку на /join: позвонить или написать в WhatsApp — договориться и отправить ссылку. */
-function ContactBox({ name, phone }: { name?: string | null; phone: string }) {
+function ContactBox({ name, phone, telegram }: { name?: string | null; phone: string; telegram?: string | null }) {
   return (
     <section className="form" aria-label="Контакт из заявки">
       <h3>Контакт из заявки</h3>
-      <p>{name ? `${name} · ` : ''}<a href={`tel:+${phone}`}>{formatPhone(phone)}</a></p>
+      <p>{name ? `${name} · ` : ''}<a href={`tel:+${phone}`}>{formatPhone(phone)}</a>{telegram && ` · @${telegram}`}</p>
       <div className="actions">
         <a className="btn" href={`tel:+${phone}`}>Позвонить</a>
         <button type="button" className="btn" onClick={() => openLink(whatsappUrl(phone, name ? `Здравствуйте, ${name}! Это Tish — по вашей заявке.` : 'Здравствуйте! Это Tish — по вашей заявке.'))}>Написать в WhatsApp</button>
+        {telegram && <button type="button" className="btn" onClick={() => openLink(`https://t.me/${telegram}`)}>Написать в Telegram</button>}
       </div>
     </section>
   )

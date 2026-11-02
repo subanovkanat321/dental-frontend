@@ -6475,6 +6475,9 @@
           },
           "contactPhone" : {
             "type" : "string"
+          },
+          "contactTelegram" : {
+            "type" : "string"
           }
         }
       },
@@ -7779,6 +7782,9 @@
           "phone" : {
             "type" : "string"
           },
+          "telegram" : {
+            "type" : "string"
+          },
           "solo" : {
             "type" : "boolean"
           }
@@ -8702,6 +8708,9 @@
           },
           "solo" : {
             "type" : "boolean"
+          },
+          "telegram" : {
+            "type" : "string"
           }
         }
       },

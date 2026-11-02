@@ -22,7 +22,7 @@ const som = (n = 0) => `${new Intl.NumberFormat('ru-RU').format(n)} сом`
 export function Join() {
   const [tariffs, setTariffs] = useState<Tariffs | null>(null)
   const [solo, setSolo] = useState(false)
-  const [f, setF] = useState({ clinicName: '', contactName: '', phone: '', city: '', doctors: '', message: '', website: '' })
+  const [f, setF] = useState({ clinicName: '', contactName: '', phone: '', telegram: '', city: '', doctors: '', message: '', website: '' })
   const [consent, setConsent] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [sending, setSending] = useState(false)
@@ -43,7 +43,7 @@ export function Join() {
     try {
       const response = await fetch('/web/clinic-applications', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...f, phone: phoneFromInput(f.phone), doctors: f.doctors ? Number(f.doctors) : null, consent, solo }),
+        body: JSON.stringify({ ...f, phone: phoneFromInput(f.phone), telegram: f.telegram.trim() || null, doctors: f.doctors ? Number(f.doctors) : null, consent, solo }),
       })
       if (response.ok) {
         setSent(true)
@@ -119,6 +119,10 @@ export function Join() {
         {err('contactName')}
         <label className="field"><span>Телефон или WhatsApp</span><PhoneInput label="Телефон или WhatsApp" value={f.phone} onChange={set('phone')} /></label>
         {err('phone')}
+        <label className="field"><span>Telegram — по желанию</span>
+          <input value={f.telegram} maxLength={60} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="@username"
+            onChange={(e) => set('telegram')(e.target.value)} /></label>
+        {err('telegram')}
         <label className="field"><span>Город</span><input value={f.city} maxLength={60} placeholder="Бишкек" onChange={(e) => set('city')(e.target.value)} /></label>
         {err('city')}
         {!solo && <label className="field"><span>Сколько врачей</span><input type="number" min={1} max={100} inputMode="numeric" placeholder="2" value={f.doctors} onChange={(e) => set('doctors')(e.target.value)} /></label>}
