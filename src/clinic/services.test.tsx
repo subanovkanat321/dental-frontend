@@ -175,7 +175,7 @@ test('«Заполнить по умолчанию»: что поставим, �
   expect(await within(panel).findByRole('status')).toHaveTextContent(
     'Готово: памятки поставлены (услуг: 1), новых материалов на складе: 1, «что обычно уходит» задано (услуг: 1).')
   expect(sent).toEqual(['memos', { stock: true }])
-  await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }))
+  await userEvent.click(await within(panel).findByText('Закрыть', { selector: 'button' }))
   // Заполнили — плашки больше нет
   await vi.waitFor(() => expect(screen.queryByRole('region', { name: 'Стартовая настройка' })).not.toBeInTheDocument())
 })

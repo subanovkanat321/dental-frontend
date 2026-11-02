@@ -87,6 +87,7 @@ export function StarterPanel({ onClose }: { onClose: () => void }) {
       {(memos.isPending || supplies.isPending) && <p className="hint">Загрузка…</p>}
       {(memos.error || supplies.error) && <p className="error">{(memos.error ?? supplies.error)!.message}</p>}
       {done && <p className="tone-ok" role="status">{done}</p>}
+      {done && nothing && <div className="actions"><button type="button" className="btn" onClick={onClose}>Закрыть</button></div>}
       {!done && nothing && memos.isSuccess && supplies.isSuccess && <p className="hint">Всё уже настроено — заполнять нечего.</p>}
 
       {memoList.length > 0 && (
