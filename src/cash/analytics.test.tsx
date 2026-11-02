@@ -152,3 +152,12 @@ test('аналитика: выручка по дням — оплат нет', a
   expect(await within(chart).findByText('Оплат за этот период нет.')).toBeInTheDocument()
   expect(within(chart).queryByRole('group')).not.toBeInTheDocument()
 })
+
+test('«Аналитика»: под «30 дней / Месяц» — какие именно дни считаются', async () => {
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  expect(await screen.findByLabelText('Даты периода')).toHaveTextContent('последние 30 дней по сегодня')
+  await userEvent.click(screen.getByRole('button', { name: 'Месяц' }))
+  expect(screen.getByLabelText('Даты периода')).toHaveTextContent(/с 1-го числа|месяц только начался/)
+})

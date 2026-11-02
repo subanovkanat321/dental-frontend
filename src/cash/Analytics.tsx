@@ -2,7 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useRef, useState, type KeyboardEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { changeOf } from '../lib/compare'
+import { changeOf, datesText, periodText } from '../lib/compare'
 import { sourceLabel } from '../lib/sources'
 import { addDays, monthRange, somText, todayIn, weekLabel, ZONE } from '../lib/time'
 import { MonthPicker } from '../layout/MonthPicker'
@@ -59,6 +59,10 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
         </div>
         {month && <MonthPicker label="Месяц аналитики" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />}
       </div>
+      {/* Какие именно дни считаются: в начале месяца «Месяц» почти пуст, а «30 дней» — нет */}
+      <p className="hint small period-line" aria-label="Даты периода">
+        {month ? periodText('month', period, todayIn()) : `${datesText(period)} — последние 30 дней по сегодня`}
+      </p>
       <MonthsChart month={month ?? todayIn().slice(0, 7)} scope={scope} />
       <DaysChart key={`${period.from}-${period.to}`} period={period} scope={scope} />
       {seesAll && doctorId == null && (me.doctors ?? []).filter((d) => d.active !== false).length > 1 && <DoctorsChart me={me} period={period} />}
