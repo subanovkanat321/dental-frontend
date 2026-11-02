@@ -197,6 +197,14 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .btn.danger { color: var(--destructive); }
 .btn.small { min-height: 30px; padding: 0 10px; font-size: .85rem; }
 .link { padding: 0; border: 0; background: none; color: var(--link); font: inherit; cursor: pointer; text-align: left; }
+/* Телефон: кнопки и ссылки-действия — не ниже 44px, чтобы попадать пальцем (ссылки внутри текста не трогаем) */
+@media (max-width: 760px) {
+  .btn, .btn.small { min-height: 44px; }
+  .btn.small { padding: 0 14px; }
+  :where(.panel, .form, .sub-form, .pay-form, .field, .actions, .line-edit, .payment-done, .waitlist-box, .chosen, .card-block, .day-actions, .undo) > .link {
+    display: inline-flex; align-items: center; min-height: 44px;
+  }
+}
 .payment { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
 .payment-done { font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .payment-done .link { font-weight: 500; }

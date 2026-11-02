@@ -155,7 +155,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
       {!canEdit ? (
         <>
-          <p className="readonly-note">Это приём коллеги — менять его может {doctor?.fullName ?? 'его врач'} или администратор.</p>
+          <p className="readonly-note">Это приём коллеги — менять его может врач{doctor?.fullName ? ` (${doctor.fullName})` : ''}, его ассистент, регистратура или администратор.</p>
           <ContactButtons phone={a.patient?.phone} whatsapp={false} />
         </>
       ) : (

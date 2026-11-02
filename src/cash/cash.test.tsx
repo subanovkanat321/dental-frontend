@@ -100,3 +100,13 @@ test('регистратура: «К оплате на кассе» — нажа
   expect(await screen.findByText('Никто не ждёт оплаты')).toBeInTheDocument()
   expect(paid).toEqual({ amountSom: 4000, method: 'CASH' })
 })
+
+test('админ без своего приёма в режиме «Врачи работают независимо» — объяснение, почему кассы нет', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined, clinic: { ...me.clinic, independentDoctors: true } })),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+  )
+  renderApp()
+  expect(await screen.findByText(/каждый врач видит только свою кассу/)).toBeInTheDocument()
+})
