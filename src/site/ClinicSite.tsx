@@ -54,7 +54,7 @@ export function ClinicSite() {
   const name = d.name || t.title
   const price = (som: number) => {
     const n = new Intl.NumberFormat('ru-RU').format(som)
-    return lang === 'ky' ? `${n} сомдон` : `от ${n} сом`
+    return lang === 'ky' ? `${n} сомдон баштап` : `от ${n} сом`
   }
   return (
     <main className="site-page">

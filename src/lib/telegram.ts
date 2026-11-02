@@ -30,6 +30,8 @@ type WebApp = {
   /** ios, android, tdesktop, macos, weba… — где открыт Mini App */
   platform?: string
   requestContact?(callback: (shared: boolean) => void): void
+  /** Версия Bot API клиента не ниже: requestContact — с 6.9 */
+  isVersionAtLeast?(version: string): boolean
   ready(): void
   expand(): void
   colorScheme?: string

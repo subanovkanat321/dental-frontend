@@ -50,8 +50,10 @@
 .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .slots > .hint, .slots > .break-note { grid-column: 1 / -1; }
 .slot { height: 46px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: 600 1rem var(--mono); cursor: pointer; }
-.slot.taken { display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: .5; text-decoration: line-through; cursor: not-allowed; }
-.slot.taken small { font: .65rem var(--body, inherit); text-decoration: none; }
+/* Занятое — читается (без полупрозрачности): серый текст на «утопленном» фоне, пунктир, подпись не мельче 12px */
+.slot.taken { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; height: auto; min-height: 46px;
+  background: var(--sunken); border-style: dashed; color: var(--hint); text-decoration: line-through; cursor: not-allowed; }
+.slot.taken small { font: 500 .75rem var(--body, inherit); text-decoration: none; }
 .slot[aria-pressed=true], .days .day[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: var(--accent-text, #fff); }
 .break-note { padding: 8px 10px; border-radius: 10px; background: var(--wait-bg); color: var(--wait-ink); font-size: .88rem; }
 

@@ -46,9 +46,38 @@ function firstScreen(me: Me): Screen {
   return { name: 'doctors' }
 }
 
-/** Ошибка для пациента: нет связи — на его языке; текст сервера — как пришёл. */
-function errorText(t: T, e: unknown): string {
-  return e instanceof ApiError ? e.message : t('noConnection')
+/** Известные коды ошибок сервера → текст на языке пациента; к «запись закрыта» — как связаться с клиникой. */
+const ERRORS: Record<string, [key: string, call: boolean]> = {
+  'subscription-paused': ['errPaused', true],
+  'booking-off': ['errBookingOff', true],
+  'already-booked': ['errAlreadyBooked', false],
+  'no-booking': ['errNoBooking', false],
+  'already-waiting': ['errAlreadyWaiting', false],
+  'deposit-closed': ['errDepositClosed', false],
+  'time-taken': ['taken', false],
+}
+
+/** «Позвоните в клинику: …» — только с номером; номера нет — «Свяжитесь с клиникой». */
+function callText(t: T, phone?: string | null): string {
+  return phone ? t('callClinic', { phone }) : t('contactClinic')
+}
+
+/**
+ * Ошибка для пациента: известный код — своими словами на его языке (сервер пишет по-русски, а в
+ * «позвоните в клинику: » номер бывает пустым); нет записи (404) — что её уже нет; нет связи — на
+ * его языке; остальное — текст сервера.
+ */
+function errorText(t: T, e: unknown, phone?: string | null): string {
+  if (!(e instanceof ApiError)) return t('noConnection')
+  const known = e.code ? ERRORS[e.code] : undefined
+  if (known) return known[1] ? `${t(known[0])} ${callText(t, phone)}` : t(known[0])
+  if (e.status === 404) return t('errBookingGone')
+  return e.message
+}
+
+/** Сколько дней в ленте: столько, на сколько вперёд сервер даёт записаться (daysAhead и сегодня); нет — две недели. */
+function stripLength(me: Me): number {
+  return me.daysAhead ? Math.min(me.daysAhead + 1, 62) : 14
 }
 
 /**
@@ -195,7 +224,7 @@ function ClinicsScreen({ ctx, back }: { ctx: Ctx; back: Screen | null }) {
     <section className="screen">
       <BackButton onBack={back ? () => ctx.go(back) : null} />
       <Hero t={t} title={t('chooseClinic')} subtitle={t('chooseClinicSub')} />
-      {list.error && <p className="error">{errorText(t, list.error)}</p>}
+      {list.error && <p className="error">{errorText(t, list.error, ctx.me.clinicContact)}</p>}
       {choices.map((c) => (
         <button key={c.id} type="button" className={c.name === currentName ? 'doctor-card current' : 'doctor-card'} disabled={choose.isPending}
           onClick={() => choose.mutate(c.id!)}>
@@ -204,7 +233,7 @@ function ClinicsScreen({ ctx, back }: { ctx: Ctx; back: Screen | null }) {
           <span className="chevron" aria-hidden="true">›</span>
         </button>
       ))}
-      {choose.error && <p className="error" role="alert">{errorText(t, choose.error)}</p>}
+      {choose.error && <p className="error" role="alert">{errorText(t, choose.error, ctx.me.clinicContact)}</p>}
     </section>
   )
 }
@@ -261,7 +290,7 @@ function DayStrip({ ctx, date, onPick }: { ctx: Ctx; date: string; onPick: (d: s
   }, [date])
   return (
     <div ref={ref} className="days" role="group" aria-label={ctx.t('day')}>
-      {bookingDays(ctx.lang, todayIn(), Math.min(ctx.me.daysAhead ?? 14, 14)).map((d) => (
+      {bookingDays(ctx.lang, todayIn(), stripLength(ctx.me)).map((d) => (
         <button key={d.date} type="button" className="day" aria-pressed={d.date === date} onClick={() => onPick(d.date)}>{d.label}</button>
       ))}
     </div>
@@ -288,7 +317,7 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   const serviceRef = useRef<HTMLElement>(null)
   const timeRef = useRef<HTMLElement>(null)
   const dataRef = useRef<HTMLElement>(null)
-  const days = bookingDays(lang, todayIn(), Math.min(me.daysAhead ?? 14, 14)).map((d) => d.date)
+  const days = bookingDays(lang, todayIn(), stripLength(me)).map((d) => d.date)
 
   // Пока день не выбран сам — первый день со свободным временем (сегодня мест нет — завтра и т. д.);
   // две недели пусто — сказать, что делать. Перебор — в одном запросе, без мигания пустых сеток
@@ -297,11 +326,17 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
     queryFn: async () => {
       const load = (d: string) => unwrap(api.GET('/api/patient/slots', { params: { query: { date: d, doctorId: doctor.id!, serviceTypeId: service!.id! } } }))
       if (dateTouched) return { date, slots: await load(date), noneSoon: false }
-      for (const d of days) {
-        const found = await load(d)
-        if (found.starts?.length) return { date: d, slots: found, noneSoon: false }
+      // По неделе за раз, параллельно (а не 14–30 запросов друг за другом); первый день со
+      // свободным временем — по порядку дней, а не какой ответ пришёл раньше
+      let first: Slots | undefined
+      for (let i = 0; i < days.length; i += WEEK) {
+        const batch = days.slice(i, i + WEEK)
+        const found = await Promise.all(batch.map(load))
+        first ??= found[0]
+        const free = found.findIndex((x) => x.starts?.length)
+        if (free >= 0) return { date: batch[free]!, slots: found[free]!, noneSoon: false }
       }
-      return { date: days[0]!, slots: await load(days[0]!), noneSoon: true }
+      return { date: days[0]!, slots: first ?? await load(days[0]!), noneSoon: true }
     },
     enabled: service != null,
   })
@@ -343,7 +378,7 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
         const f = e.fieldErrors
         const own = (key: string, fallback: string) => (f[key] ? (lang === 'ru' ? f[key] : t(fallback)) : '')
         const next = { name: own('fullName', 'nameRequired'), phone: own('phone', 'phoneRequired'), consent: own('consent', 'consentRequired') }
-        setErrors(Object.values(next).some(Boolean) ? next : { form: e.message })
+        setErrors(Object.values(next).some(Boolean) ? next : { form: errorText(t, e, me.clinicContact) })
       }
     },
   })
@@ -371,7 +406,12 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
       setErrors({ phone: t('openFromBot') })
       return
     }
-    app.requestContact(async (shared) => {
+    // requestContact — с Bot API 6.9: на старом Telegram вызов молча не срабатывает или падает
+    if (app.isVersionAtLeast && !app.isVersionAtLeast('6.9')) {
+      setErrors({ phone: t('oldTelegram') })
+      return
+    }
+    const received = async (shared: boolean) => {
       if (!shared) {
         setErrors({ phone: t('needPhone') })
         return
@@ -393,7 +433,12 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
       }
       setSharing(false)
       setErrors({ phone: t('phoneLost') })
-    })
+    }
+    try {
+      app.requestContact((shared) => void received(shared))
+    } catch {
+      setErrors({ phone: t('oldTelegram') })
+    }
   }
 
   const groups = groupByCategory(services)
@@ -436,8 +481,8 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
           {errors.time && <p className="error" role="alert">{errors.time}</p>}
           {!service ? <p className="hint">{t('pickServiceFirst')}</p>
             : slots.isPending ? <p className="hint">{t('loading')}</p>
-              : slots.error ? <p className="error">{errorText(t, slots.error)}</p>
-                : slots.data.noneSoon ? <p className="hint">{t('noFreeSoon')}</p>
+              : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
+                : slots.data.noneSoon ? <p className="hint">{t('noFreeSoon')} {callText(t, me.clinicContact)}</p>
                   : <SlotGrid ctx={ctx} slots={slots.data.slots} chosen={chosen}
                     onPick={(time) => { setChosen(time); setErrors({}); scrollTo('data') }}
                     empty={slots.data.slots.dayOff ? t('otherDay') : slots.data.slots.workingDay ? t('noFree') : t('dayOff')} />}
@@ -475,6 +520,9 @@ function minutesOf(time: string): number {
   return h! * 60 + m!
 }
 
+/** Сколько дней спрашивать за раз при поиске первого свободного дня. */
+const WEEK = 7
+
 const STATUS: Record<string, string> = { REQUESTED: 'requested', SCHEDULED: 'scheduled' }
 
 /** «Ваша запись»: когда, что, подтверждена ли; предоплата, «хочу раньше», перенести, отменить. */
@@ -484,6 +532,12 @@ function BookingScreen({ ctx }: { ctx: Ctx }) {
   const b = me.booking!
   const doctor = (me.doctors ?? []).find((d) => d.id === b.doctorId)
   const [sure, setSure] = useState(false)
+  // «Точно отменить?» — ненадолго: через 5 секунд кнопка снова обычная, случайное второе нажатие позже не отменит
+  useEffect(() => {
+    if (!sure) return
+    const timer = setTimeout(() => setSure(false), 5000)
+    return () => clearTimeout(timer)
+  }, [sure])
   const cancel = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/patient/booking/cancel')),
     onSuccess: () => {
@@ -519,7 +573,7 @@ function BookingScreen({ ctx }: { ctx: Ctx }) {
       ) : <button type="button" className="btn" disabled={waitlist.isPending} onClick={() => waitlist.mutate(true)}><span aria-hidden="true">🔔 </span>{t('waitlistJoin')}</button>}
       <ClinicCard ctx={ctx} />
       {me.clinicContact && <p className="hint">{t('clinicPhone', { phone: me.clinicContact })}</p>}
-      {error && <p className="error" role="alert">{errorText(t, error)}</p>}
+      {error && <p className="error" role="alert">{errorText(t, error, ctx.me.clinicContact)}</p>}
       <Footer ctx={ctx} />
       <div className="danger-zone">
         {/* Отмена — вторым нажатием: случайно отменить запись к врачу обидно */}
@@ -561,7 +615,7 @@ function PatientDeposit({ ctx }: { ctx: Ctx }) {
       {qr && qr !== 'error' && <img className="pay-qr" src={qr.url} alt="QR" />}
       <label className="btn"><span aria-hidden="true">📎 </span>{file ? file.name : t('depositReceipt')}
         <input type="file" className="sr-only" accept="application/pdf,image/jpeg,image/png" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
-      {paid.error && <p className="error" role="alert">{errorText(t, paid.error)}</p>}
+      {paid.error && <p className="error" role="alert">{errorText(t, paid.error, ctx.me.clinicContact)}</p>}
       <button type="button" className="btn primary" disabled={paid.isPending} onClick={() => paid.mutate()}>{t('depositPaid')}</button>
     </div>
   )
@@ -572,7 +626,12 @@ function RescheduleScreen({ ctx }: { ctx: Ctx }) {
   const { me, t, lang } = ctx
   const client = useQueryClient()
   const b = me.booking!
-  const [date, setDate] = useState(dateOf(b.startAt!))
+  // День записи — если он есть в ленте; запись дальше ленты (или в прошлом) — первый день ленты
+  const [date, setDate] = useState(() => {
+    const days = bookingDays(lang, todayIn(), stripLength(me)).map((d) => d.date)
+    const day = dateOf(b.startAt!)
+    return days.includes(day) ? day : days[0]!
+  })
   const [chosen, setChosen] = useState('')
   const [error, setError] = useState('')
   const slots = useQuery({
@@ -592,7 +651,7 @@ function RescheduleScreen({ ctx }: { ctx: Ctx }) {
         setError(t('taken'))
         setChosen('')
         void slots.refetch()
-      } else setError(errorText(t, e))
+      } else setError(errorText(t, e, ctx.me.clinicContact))
     },
   })
   return (
@@ -604,7 +663,7 @@ function RescheduleScreen({ ctx }: { ctx: Ctx }) {
         <DayStrip ctx={ctx} date={date} onPick={(d) => { setDate(d); setChosen(''); setError('') }} /></div>
       <div className="field"><span>{t('time')}</span>
         {error && <p className="error" role="alert">{error}</p>}
-        {slots.isPending ? <p className="hint">{t('loading')}</p> : slots.error ? <p className="error">{errorText(t, slots.error)}</p>
+        {slots.isPending ? <p className="hint">{t('loading')}</p> : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
           : <SlotGrid ctx={ctx} slots={slots.data} chosen={chosen} onPick={(time) => { setChosen(time); setError('') }}
             empty={slots.data.workingDay ? t('noFree') : t('dayOff')} />}
       </div>
@@ -630,13 +689,13 @@ function NewsScreen({ ctx, back }: { ctx: Ctx; back: Screen }) {
     <section className="screen">
       <BackButton onBack={() => ctx.go(back)} />
       <h1>{t('news')}</h1>
-      {news.error && <p className="error">{errorText(t, news.error)}</p>}
+      {news.error && <p className="error">{errorText(t, news.error, ctx.me.clinicContact)}</p>}
       {d && (
         <>
           <p className="hint">{d.subscribed ? t('newsSubscribed') : t('newsOffer')}</p>
           <button type="button" className={d.subscribed ? 'btn' : 'btn primary'} disabled={toggle.isPending}
             onClick={() => toggle.mutate(!d.subscribed)}>{d.subscribed ? t('newsOff') : t('newsOn')}</button>
-          {toggle.error && <p className="error" role="alert">{errorText(t, toggle.error)}</p>}
+          {toggle.error && <p className="error" role="alert">{errorText(t, toggle.error, ctx.me.clinicContact)}</p>}
           {d.news?.length ? (
             <ul className="news-list">
               {d.news.map((n, i) => <li key={i} className="news-item"><p className="hint">📰 {n.createdAt ? whenAt(lang, n.createdAt) : ''}</p><p>{n.text}</p></li>)}

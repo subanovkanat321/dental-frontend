@@ -32,7 +32,7 @@ test('даты и тексты на русском и кыргызском', () 
   expect(whenAt('ru', tomorrow10)).toBe('Завтра, в 10:00')
   expect(whenAt('ky', tomorrow10)).toBe('Эртең, саат 10:00')
   expect(bookingDays('ky', '2026-11-04', 3).map((d) => d.label)).toEqual(['Бүгүн', 'Эртең', 'Жм 6'])
-  expect(priceText('ky', 1500)).toMatch(/^1\s500 сомдон$/)
+  expect(priceText('ky', 1500)).toMatch(/^1\s500 сомдон баштап$/)
   expect(breakNote('ru', { start: slotInstant('2026-11-06', 780), end: slotInstant('2026-11-06', 900), title: 'Джума-намаз', emoji: '🕌' }))
     .toBe('🕌 С 13:00 до 15:00 — джума-намаз, врач не принимает')
 })
@@ -150,4 +150,81 @@ test('вне Telegram пациенту — подсказка про бота, �
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(patient())))
   renderApp()
   expect(await screen.findByText(/Пациенты записываются через бота в Telegram/)).toBeInTheDocument()
+})
+
+test('поиск первого свободного дня — неделями параллельно, но день по порядку, а не по скорости ответа', async () => {
+  fakeTelegram()
+  const today = todayIn()
+  const asked: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ daysAhead: 30, doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/slots', async ({ request }) => {
+      const date = new URL(request.url).searchParams.get('date')!
+      asked.push(date)
+      // Свободно на 3-й и 5-й день; ответ про 3-й приходит позже
+      if (date === addDays(today, 3)) await new Promise((r) => setTimeout(r, 50))
+      return HttpResponse.json(date === addDays(today, 3) || date === addDays(today, 5)
+        ? { workingDay: true, starts: [slotInstant(date, 600)], taken: [], breaks: [] }
+        : { workingDay: true, starts: [], taken: [], breaks: [] })
+    }),
+  )
+  renderApp()
+  const grid = await screen.findByRole('group', { name: 'Свободное время' })
+  expect(within(grid).getByRole('button', { name: '10:00' })).toBeInTheDocument()
+  const strip = screen.getByRole('group', { name: 'День' })
+  expect(strip.querySelector('[aria-pressed=true]')).toHaveTextContent(bookingDays('ru', today, 4)[3]!.label)
+  // Лента — на столько дней, на сколько сервер даёт записаться (30 и сегодня); спросили одну неделю
+  expect(within(strip).getAllByRole('button')).toHaveLength(31)
+  expect(asked).toHaveLength(7)
+})
+
+test('ошибка записи по коду — текст на языке пациента; номера клиники нет — без «Позвоните в клинику: »', async () => {
+  fakeTelegram()
+  const tomorrow = addDays(todayIn(), 1)
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ lang: 'ky', doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
+    http.post('*/api/patient/booking', () => HttpResponse.json({ status: 409, code: 'subscription-paused', detail: 'Оплата клиники закончилась — новые записи на паузе.' }, { status: 409 })),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: '10:00' }))
+  await user.click(screen.getByRole('checkbox', { name: /атымды жана телефонумду/ }))
+  await user.click(screen.getByRole('button', { name: 'Жазылуу' }))
+  const alert = await screen.findByText(/Клиника азыр бот аркылуу жаңы жазылууларды кабыл албай жатат/)
+  expect(alert).toHaveTextContent('Клиника менен байланышыңыз.')
+  expect(alert).not.toHaveTextContent(/Оплата|чалыңыз:/)
+})
+
+test('старый Telegram без requestContact 6.9 — подсказка обновить или отправить контакт боту', async () => {
+  const requestContact = vi.fn()
+  fakeTelegram({ requestContact, isVersionAtLeast: (v: string) => v <= '6.0' })
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ phone: undefined, doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [], taken: [], breaks: [] })),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Поделиться номером' }))
+  expect(screen.getByText(/Обновите Telegram или отправьте номер боту в чат/)).toBeInTheDocument()
+  expect(requestContact).not.toHaveBeenCalled()
+})
+
+test('перенос: запись дальше ленты — выбран первый день, а не несуществующий', async () => {
+  fakeTelegram()
+  const far = addDays(todayIn(), 40)
+  const asked: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ booking: { id: 9, startAt: slotInstant(far, 600), status: 'SCHEDULED', doctorId: 1 } }))),
+    http.get('*/api/patient/booking/slots', ({ request }) => {
+      asked.push(new URL(request.url).searchParams.get('date')!)
+      return HttpResponse.json({ workingDay: true, starts: [], taken: [], breaks: [] })
+    }),
+  )
+  window.history.replaceState(null, '', '/?screen=reschedule')
+  renderApp()
+  expect(await screen.findByRole('heading', { name: 'Перенести запись' })).toBeInTheDocument()
+  expect(screen.getByRole('group', { name: 'День' }).querySelector('[aria-pressed=true]')).toHaveTextContent('Сегодня')
+  await vi.waitFor(() => expect(asked).toEqual([todayIn()]))
+  window.history.replaceState(null, '', '/')
 })
