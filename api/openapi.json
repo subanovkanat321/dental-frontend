@@ -407,6 +407,86 @@
         }
       }
     },
+    "/api/platform/surveys/{id}" : {
+      "get" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "get",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SurveyDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "update_3",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SurveyDefinition"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SurveyDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "delete_3",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/platform/pay-settings" : {
       "get" : {
         "tags" : [ "pay-controller" ],
@@ -510,7 +590,7 @@
     "/api/platform/content/{id}" : {
       "put" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "update_3",
+        "operationId" : "update_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -545,7 +625,7 @@
       },
       "delete" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "delete_3",
+        "operationId" : "delete_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -639,7 +719,7 @@
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "update_4",
+        "operationId" : "update_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -674,7 +754,7 @@
       },
       "delete" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "delete_4",
+        "operationId" : "delete_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -694,7 +774,7 @@
     "/api/patients/{patientId}/teeth/{number}" : {
       "put" : {
         "tags" : [ "chart-controller" ],
-        "operationId" : "update_5",
+        "operationId" : "update_6",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -888,7 +968,7 @@
     "/api/patients/{id}" : {
       "put" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "update_6",
+        "operationId" : "update_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -995,7 +1075,7 @@
     "/api/patient-sources/{id}" : {
       "put" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "update_7",
+        "operationId" : "update_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1102,7 +1182,7 @@
     "/api/doctors/{id}" : {
       "put" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "update_8",
+        "operationId" : "update_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1137,7 +1217,7 @@
       },
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_5",
+        "operationId" : "delete_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1256,7 +1336,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_9",
+        "operationId" : "update_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1367,7 +1447,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_10",
+        "operationId" : "update_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1483,7 +1563,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_11",
+        "operationId" : "update_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1956,6 +2036,63 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/TimeOffView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/surveys/{id}/responses" : {
+      "post" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "answer",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SurveyControllerResponses"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/surveys/{id}/later" : {
+      "post" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "later",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SurveyControllerLater"
                 }
               }
             }
@@ -2539,6 +2676,107 @@
         }
       }
     },
+    "/api/platform/surveys" : {
+      "get" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "list_2",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SurveySummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "create_4",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SurveyDefinition"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SurveyDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/surveys/{id}/stop" : {
+      "post" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "stop",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SurveyDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/surveys/{id}/start" : {
+      "post" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "start",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SurveyDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/support/tickets/{id}/messages" : {
       "post" : {
         "tags" : [ "support-controller" ],
@@ -2918,7 +3156,7 @@
     "/api/platform/content" : {
       "get" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -2954,7 +3192,7 @@
       },
       "post" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "create_4",
+        "operationId" : "create_5",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3140,7 +3378,7 @@
       },
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "create_5",
+        "operationId" : "create_6",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3469,7 +3707,7 @@
       },
       "post" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "create_6",
+        "operationId" : "create_7",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3544,7 +3782,7 @@
     "/api/patients" : {
       "post" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "create_7",
+        "operationId" : "create_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4091,7 +4329,7 @@
     "/api/news" : {
       "get" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "list_3",
+        "operationId" : "list_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4200,7 +4438,7 @@
     "/api/expenses" : {
       "get" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "list_4",
+        "operationId" : "list_5",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -4291,7 +4529,7 @@
       },
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "create_8",
+        "operationId" : "create_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4495,7 +4733,7 @@
     "/api/clinic/pay/requests" : {
       "post" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "create_9",
+        "operationId" : "create_10",
         "parameters" : [ {
           "name" : "months",
           "in" : "query",
@@ -4733,7 +4971,7 @@
     "/api/care-memos" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4752,7 +4990,7 @@
       },
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "create_10",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4853,7 +5091,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_11",
+        "operationId" : "create_12",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5696,6 +5934,24 @@
         }
       }
     },
+    "/api/surveys/current" : {
+      "get" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "current",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SurveyAnswersCurrent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/supplies/{id}/history" : {
       "get" : {
         "tags" : [ "supply-controller" ],
@@ -5833,7 +6089,7 @@
     "/api/salaries" : {
       "get" : {
         "tags" : [ "salary-controller" ],
-        "operationId" : "list_6",
+        "operationId" : "list_7",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -5877,6 +6133,95 @@
         }
       }
     },
+    "/api/platform/surveys/{id}/results" : {
+      "get" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "results",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "role",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "DOCTOR", "RECEPTION", "ASSISTANT" ]
+          }
+        }, {
+          "name" : "clinicId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SurveyResultsResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/surveys/{id}/results.csv" : {
+      "get" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "csv",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/csv" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/surveys/template" : {
+      "get" : {
+        "tags" : [ "survey-controller" ],
+        "operationId" : "template",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SurveyDefinition"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/support/tickets" : {
       "get" : {
         "tags" : [ "support-controller" ],
@@ -5901,7 +6246,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get",
+        "operationId" : "get_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5928,7 +6273,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6128,7 +6473,7 @@
     "/api/platform/agreements/template" : {
       "get" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "template",
+        "operationId" : "template_1",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -6167,7 +6512,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -6314,7 +6659,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_6",
+        "operationId" : "delete_7",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -6592,7 +6937,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_7",
+        "operationId" : "list_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -6922,7 +7267,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6947,7 +7292,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_7",
+        "operationId" : "delete_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7532,7 +7877,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_8",
+        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7592,7 +7937,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_9",
+        "operationId" : "delete_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7649,7 +7994,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7689,7 +8034,7 @@
     "/api/expenses/{id}" : {
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8106,6 +8451,127 @@
             "type" : "array",
             "items" : {
               "type" : "string"
+            }
+          }
+        }
+      },
+      "SurveyDefinition" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "intro" : {
+            "type" : "string"
+          },
+          "roles" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMIN", "DOCTOR", "RECEPTION", "ASSISTANT" ]
+            },
+            "uniqueItems" : true
+          },
+          "startsOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "endsOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "announce" : {
+            "type" : "boolean"
+          },
+          "questions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SurveyQuestion"
+            }
+          }
+        }
+      },
+      "SurveyQuestion" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "RATING", "NPS", "SINGLE", "MULTI", "TEXT", "CONTACT" ]
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "options" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "required" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "SurveyDetails" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "intro" : {
+            "type" : "string"
+          },
+          "roles" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMIN", "DOCTOR", "RECEPTION", "ASSISTANT" ]
+            },
+            "uniqueItems" : true
+          },
+          "startsOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "endsOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "announce" : {
+            "type" : "boolean"
+          },
+          "announcedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "invited" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "DRAFT", "SCHEDULED", "OPEN", "FINISHED", "STOPPED" ]
+          },
+          "responses" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "questions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SurveyQuestion"
             }
           }
         }
@@ -9497,6 +9963,46 @@
           }
         }
       },
+      "SurveyAnswersAnswer" : {
+        "properties" : {
+          "questionId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "choices" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SurveyControllerResponses" : {
+        "properties" : {
+          "answers" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SurveyAnswersAnswer"
+            }
+          }
+        }
+      },
+      "SurveyControllerLater" : {
+        "properties" : {
+          "snoozedUntil" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
       "SupportTicketsMessage" : {
         "properties" : {
           "id" : {
@@ -10793,6 +11299,37 @@
           }
         }
       },
+      "SurveyAnswersCurrent" : {
+        "properties" : {
+          "survey" : {
+            "$ref" : "#/components/schemas/SurveyForm"
+          },
+          "snoozedUntil" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "SurveyForm" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "intro" : {
+            "type" : "string"
+          },
+          "questions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SurveyQuestion"
+            }
+          }
+        }
+      },
       "SupportBotInfo" : {
         "properties" : {
           "ai" : {
@@ -11096,6 +11633,216 @@
             "items" : {
               "$ref" : "#/components/schemas/ServiceTypeServiceCatalogItem"
             }
+          }
+        }
+      },
+      "SurveySummary" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "roles" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMIN", "DOCTOR", "RECEPTION", "ASSISTANT" ]
+            },
+            "uniqueItems" : true
+          },
+          "startsOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "endsOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "DRAFT", "SCHEDULED", "OPEN", "FINISHED", "STOPPED" ]
+          },
+          "responses" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "SurveyResultsClinicCount" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SurveyResultsContact" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "roles" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMIN", "DOCTOR", "RECEPTION", "ASSISTANT" ]
+            },
+            "uniqueItems" : true
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "SurveyResultsNps" : {
+        "properties" : {
+          "score" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "promoters" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "passives" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "detractors" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SurveyResultsQuestionResult" : {
+        "properties" : {
+          "questionId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "RATING", "NPS", "SINGLE", "MULTI", "TEXT", "CONTACT" ]
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "options" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "answered" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "average" : {
+            "type" : "number"
+          },
+          "nps" : {
+            "$ref" : "#/components/schemas/SurveyResultsNps"
+          },
+          "counts" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "texts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SurveyResultsTextAnswer"
+            }
+          }
+        }
+      },
+      "SurveyResultsResults" : {
+        "properties" : {
+          "surveyId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "responses" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "byRole" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SurveyResultsRoleCount"
+            }
+          },
+          "byClinic" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SurveyResultsClinicCount"
+            }
+          },
+          "questions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SurveyResultsQuestionResult"
+            }
+          },
+          "contacts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SurveyResultsContact"
+            }
+          }
+        }
+      },
+      "SurveyResultsRoleCount" : {
+        "properties" : {
+          "role" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "DOCTOR", "RECEPTION", "ASSISTANT" ]
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SurveyResultsTextAnswer" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "roles" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "ADMIN", "DOCTOR", "RECEPTION", "ASSISTANT" ]
+            },
+            "uniqueItems" : true
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },

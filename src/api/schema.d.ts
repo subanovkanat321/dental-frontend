@@ -132,6 +132,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/surveys/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put: operations["update_3"];
+        post?: never;
+        delete: operations["delete_3"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/pay-settings": {
         parameters: {
             query?: never;
@@ -188,9 +204,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_3"];
+        put: operations["update_4"];
         post?: never;
-        delete: operations["delete_3"];
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
         patch?: never;
@@ -236,9 +252,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_4"];
+        put: operations["update_5"];
         post?: never;
-        delete: operations["delete_4"];
+        delete: operations["delete_5"];
         options?: never;
         head?: never;
         patch?: never;
@@ -252,7 +268,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_5"];
+        put: operations["update_6"];
         post?: never;
         delete?: never;
         options?: never;
@@ -300,7 +316,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_6"];
+        put: operations["update_7"];
         post?: never;
         delete?: never;
         options?: never;
@@ -364,7 +380,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_7"];
+        put: operations["update_8"];
         post?: never;
         delete?: never;
         options?: never;
@@ -412,9 +428,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_8"];
+        put: operations["update_9"];
         post?: never;
-        delete: operations["delete_5"];
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
         patch?: never;
@@ -460,7 +476,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view"];
-        put: operations["update_9"];
+        put: operations["update_10"];
         post?: never;
         delete?: never;
         options?: never;
@@ -508,7 +524,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_1"];
-        put: operations["update_10"];
+        put: operations["update_11"];
         post?: never;
         delete?: never;
         options?: never;
@@ -556,7 +572,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_11"];
+        put: operations["update_12"];
         post?: never;
         delete?: never;
         options?: never;
@@ -718,6 +734,38 @@ export interface paths {
         get: operations["all"];
         put?: never;
         post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/surveys/{id}/responses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["answer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/surveys/{id}/later": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["later"];
         delete?: never;
         options?: never;
         head?: never;
@@ -948,6 +996,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/surveys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_2"];
+        put?: never;
+        post: operations["create_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/surveys/{id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["stop"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/surveys/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/support/tickets/{id}/messages": {
         parameters: {
             query?: never;
@@ -1115,9 +1211,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
-        post: operations["create_4"];
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1213,7 +1309,7 @@ export interface paths {
         };
         get: operations["clinics"];
         put?: never;
-        post: operations["create_5"];
+        post: operations["create_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1373,7 +1469,7 @@ export interface paths {
         };
         get: operations["versions"];
         put?: never;
-        post: operations["create_6"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1421,7 +1517,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_7"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1643,7 +1739,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post: operations["publish_1"];
         delete?: never;
@@ -1691,7 +1787,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post: operations["add_4"];
         delete?: never;
@@ -1709,7 +1805,7 @@ export interface paths {
         };
         get: operations["all_5"];
         put?: never;
-        post: operations["create_8"];
+        post: operations["create_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1789,7 +1885,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_9"];
+        post: operations["create_10"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1915,9 +2011,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
-        post: operations["create_10"];
+        post: operations["create_11"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1949,7 +2045,7 @@ export interface paths {
         };
         get: operations["day"];
         put?: never;
-        post: operations["create_11"];
+        post: operations["create_12"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2308,6 +2404,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/surveys/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["current"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/supplies/{id}/history": {
         parameters: {
             query?: never;
@@ -2379,7 +2491,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2396,6 +2508,54 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/surveys/{id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["results"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/surveys/{id}/results.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["csv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/surveys/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["template"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2427,7 +2587,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get"];
+        get: operations["get_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2443,7 +2603,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_1"];
+        get: operations["get_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2571,7 +2731,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template"];
+        get: operations["template_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2603,7 +2763,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_2"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2670,7 +2830,7 @@ export interface paths {
         get: operations["content"];
         put?: never;
         post?: never;
-        delete: operations["delete_6"];
+        delete: operations["delete_7"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2843,7 +3003,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3099,10 +3259,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
-        delete: operations["delete_7"];
+        delete: operations["delete_8"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3390,7 +3550,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_8"];
+        delete: operations["delete_9"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3438,7 +3598,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_9"];
+        delete: operations["delete_10"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3470,7 +3630,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_10"];
+        delete: operations["delete_11"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3502,7 +3662,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_11"];
+        delete: operations["delete_12"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3690,6 +3850,50 @@ export interface components {
             title?: string;
             text?: string;
             points?: string[];
+        };
+        SurveyDefinition: {
+            title?: string;
+            intro?: string;
+            roles?: ("ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT")[];
+            /** Format: date */
+            startsOn?: string;
+            /** Format: date */
+            endsOn?: string;
+            announce?: boolean;
+            questions?: components["schemas"]["SurveyQuestion"][];
+        };
+        SurveyQuestion: {
+            /** Format: int64 */
+            id?: number;
+            /** @enum {string} */
+            type?: "RATING" | "NPS" | "SINGLE" | "MULTI" | "TEXT" | "CONTACT";
+            text?: string;
+            options?: string[];
+            required?: boolean;
+        };
+        SurveyDetails: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            intro?: string;
+            roles?: ("ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT")[];
+            /** Format: date */
+            startsOn?: string;
+            /** Format: date */
+            endsOn?: string;
+            active?: boolean;
+            announce?: boolean;
+            /** Format: date-time */
+            announcedAt?: string;
+            /** Format: int32 */
+            invited?: number;
+            /** @enum {string} */
+            status?: "DRAFT" | "SCHEDULED" | "OPEN" | "FINISHED" | "STOPPED";
+            /** Format: int32 */
+            responses?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            questions?: components["schemas"]["SurveyQuestion"][];
         };
         PayControllerSettingsRequest: {
             details?: string;
@@ -4252,6 +4456,21 @@ export interface components {
             title?: string;
             emoji?: string;
         };
+        SurveyAnswersAnswer: {
+            /** Format: int64 */
+            questionId?: number;
+            /** Format: int32 */
+            number?: number;
+            choices?: number[];
+            text?: string;
+        };
+        SurveyControllerResponses: {
+            answers?: components["schemas"]["SurveyAnswersAnswer"][];
+        };
+        SurveyControllerLater: {
+            /** Format: date-time */
+            snoozedUntil?: string;
+        };
         SupportTicketsMessage: {
             /** Format: int64 */
             id?: number;
@@ -4811,6 +5030,18 @@ export interface components {
             /** Format: int32 */
             direction?: number;
         };
+        SurveyAnswersCurrent: {
+            survey?: components["schemas"]["SurveyForm"];
+            /** Format: date-time */
+            snoozedUntil?: string;
+        };
+        SurveyForm: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            intro?: string;
+            questions?: components["schemas"]["SurveyQuestion"][];
+        };
         SupportBotInfo: {
             ai?: boolean;
             /** Format: int32 */
@@ -4932,6 +5163,83 @@ export interface components {
         ServiceTypeServiceCatalogSection: {
             category?: string;
             items?: components["schemas"]["ServiceTypeServiceCatalogItem"][];
+        };
+        SurveySummary: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            roles?: ("ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT")[];
+            /** Format: date */
+            startsOn?: string;
+            /** Format: date */
+            endsOn?: string;
+            /** @enum {string} */
+            status?: "DRAFT" | "SCHEDULED" | "OPEN" | "FINISHED" | "STOPPED";
+            /** Format: int32 */
+            responses?: number;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        SurveyResultsClinicCount: {
+            /** Format: int64 */
+            clinicId?: number;
+            clinicName?: string;
+            /** Format: int32 */
+            count?: number;
+        };
+        SurveyResultsContact: {
+            name?: string;
+            clinicName?: string;
+            roles?: ("ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT")[];
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        SurveyResultsNps: {
+            /** Format: int32 */
+            score?: number;
+            /** Format: int32 */
+            promoters?: number;
+            /** Format: int32 */
+            passives?: number;
+            /** Format: int32 */
+            detractors?: number;
+        };
+        SurveyResultsQuestionResult: {
+            /** Format: int64 */
+            questionId?: number;
+            /** @enum {string} */
+            type?: "RATING" | "NPS" | "SINGLE" | "MULTI" | "TEXT" | "CONTACT";
+            text?: string;
+            options?: string[];
+            /** Format: int32 */
+            answered?: number;
+            average?: number;
+            nps?: components["schemas"]["SurveyResultsNps"];
+            counts?: number[];
+            texts?: components["schemas"]["SurveyResultsTextAnswer"][];
+        };
+        SurveyResultsResults: {
+            /** Format: int64 */
+            surveyId?: number;
+            /** Format: int32 */
+            responses?: number;
+            byRole?: components["schemas"]["SurveyResultsRoleCount"][];
+            byClinic?: components["schemas"]["SurveyResultsClinicCount"][];
+            questions?: components["schemas"]["SurveyResultsQuestionResult"][];
+            contacts?: components["schemas"]["SurveyResultsContact"][];
+        };
+        SurveyResultsRoleCount: {
+            /** @enum {string} */
+            role?: "ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT";
+            /** Format: int32 */
+            count?: number;
+        };
+        SurveyResultsTextAnswer: {
+            text?: string;
+            clinicName?: string;
+            roles?: ("ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT")[];
+            /** Format: date-time */
+            createdAt?: string;
         };
         PlatformMembersManagerView: {
             /** Format: int64 */
@@ -5654,6 +5962,74 @@ export interface operations {
             };
         };
     };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyDetails"];
+                };
+            };
+        };
+    };
+    update_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyDefinition"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyDetails"];
+                };
+            };
+        };
+    };
+    delete_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     settings: {
         parameters: {
             query?: never;
@@ -5746,7 +6122,7 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    update_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -5772,7 +6148,7 @@ export interface operations {
             };
         };
     };
-    delete_3: {
+    delete_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -5844,7 +6220,7 @@ export interface operations {
             };
         };
     };
-    update_4: {
+    update_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -5870,7 +6246,7 @@ export interface operations {
             };
         };
     };
-    delete_4: {
+    delete_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -5890,7 +6266,7 @@ export interface operations {
             };
         };
     };
-    update_5: {
+    update_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -6015,7 +6391,7 @@ export interface operations {
             };
         };
     };
-    update_6: {
+    update_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -6109,7 +6485,7 @@ export interface operations {
             };
         };
     };
-    update_7: {
+    update_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -6185,7 +6561,7 @@ export interface operations {
             };
         };
     };
-    update_8: {
+    update_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -6211,7 +6587,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -6305,7 +6681,7 @@ export interface operations {
             };
         };
     };
-    update_9: {
+    update_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -6399,7 +6775,7 @@ export interface operations {
             };
         };
     };
-    update_10: {
+    update_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -6511,7 +6887,7 @@ export interface operations {
             };
         };
     };
-    update_11: {
+    update_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -6873,6 +7249,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TimeOffView"];
+                };
+            };
+        };
+    };
+    answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyControllerResponses"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    later: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControllerLater"];
                 };
             };
         };
@@ -7363,6 +7785,94 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveySummary"][];
+                };
+            };
+        };
+    };
+    create_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyDefinition"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyDetails"];
+                };
+            };
+        };
+    };
+    stop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyDetails"];
+                };
+            };
+        };
+    };
+    start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyDetails"];
+                };
+            };
+        };
+    };
     reply: {
         parameters: {
             query?: {
@@ -7672,7 +8182,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: {
                 from?: string;
@@ -7695,7 +8205,7 @@ export interface operations {
             };
         };
     };
-    create_4: {
+    create_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -7851,7 +8361,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -8124,7 +8634,7 @@ export interface operations {
             };
         };
     };
-    create_6: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -8190,7 +8700,7 @@ export interface operations {
             };
         };
     };
-    create_7: {
+    create_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -8648,7 +9158,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -8742,7 +9252,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query: {
                 from: string;
@@ -8810,7 +9320,7 @@ export interface operations {
             };
         };
     };
-    create_8: {
+    create_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -8993,7 +9503,7 @@ export interface operations {
             };
         };
     };
-    create_9: {
+    create_10: {
         parameters: {
             query?: {
                 months?: number;
@@ -9218,7 +9728,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -9238,7 +9748,7 @@ export interface operations {
             };
         };
     };
-    create_10: {
+    create_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -9325,7 +9835,7 @@ export interface operations {
             };
         };
     };
-    create_11: {
+    create_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -9957,6 +10467,26 @@ export interface operations {
             };
         };
     };
+    current: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAnswersCurrent"];
+                };
+            };
+        };
+    };
     history: {
         parameters: {
             query?: never;
@@ -10047,7 +10577,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query: {
                 month: string;
@@ -10089,6 +10619,73 @@ export interface operations {
             };
         };
     };
+    results: {
+        parameters: {
+            query?: {
+                role?: "ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT";
+                clinicId?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyResultsResults"];
+                };
+            };
+        };
+    };
+    csv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+        };
+    };
+    template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyDefinition"];
+                };
+            };
+        };
+    };
     all_6: {
         parameters: {
             query?: never;
@@ -10109,7 +10706,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -10131,7 +10728,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -10301,7 +10898,7 @@ export interface operations {
             };
         };
     };
-    template: {
+    template_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -10343,7 +10940,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -10454,7 +11051,7 @@ export interface operations {
             };
         };
     };
-    delete_6: {
+    delete_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -10687,7 +11284,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -11011,7 +11608,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -11033,7 +11630,7 @@ export interface operations {
             };
         };
     };
-    delete_7: {
+    delete_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -11436,7 +12033,7 @@ export interface operations {
             };
         };
     };
-    delete_8: {
+    delete_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -11496,7 +12093,7 @@ export interface operations {
             };
         };
     };
-    delete_9: {
+    delete_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -11542,7 +12139,7 @@ export interface operations {
             };
         };
     };
-    delete_10: {
+    delete_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -11582,7 +12179,7 @@ export interface operations {
             };
         };
     };
-    delete_11: {
+    delete_12: {
         parameters: {
             query?: never;
             header?: never;
