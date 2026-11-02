@@ -93,9 +93,9 @@ test('карточка приёма: «Откуда узнал» — пацие�
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  const source = await within(panel).findByRole('combobox', { name: 'Откуда узнал о клинике' })
-  expect(source).toHaveValue('')
-  const option = within(source).getAllByRole('option')[1]!
-  await userEvent.selectOptions(source, option)
-  await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', sourceId: Number(option.getAttribute('value')) }))
+  const source = await within(panel).findByRole('group', { name: 'Откуда узнал о клинике' })
+  // В приёме варианты свёрнуты, чтобы не сдвигать кнопки приёма: «выбрать» — раскрыть
+  await userEvent.click(within(source).getByRole('button', { name: 'выбрать' }))
+  await userEvent.click(within(source).getByRole('button', { name: '📱 Instagram' }))
+  await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', sourceId: expect.any(Number) }))
 })

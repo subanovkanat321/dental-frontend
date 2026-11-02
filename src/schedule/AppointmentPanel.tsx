@@ -123,7 +123,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           : <strong className="patient-name">{a.patient?.fullName}</strong>}
         {a.patient?.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
         {/* Откуда узнал — у врача и регистратуры прямо в приёме: пациент не ответил в боте — отметят здесь */}
-        {a.patient?.id != null && <SourceLine patient={a.patient} canEdit={canEditDoctor(me, a.doctorId)} />}
+        {a.patient?.id != null && <SourceLine patient={a.patient} canEdit={canEditDoctor(me, a.doctorId)} compact />}
       </section>
       <MedAlerts an={anamnesis.data} compact />
       {clinical && onMedical && a.patient && a.status !== 'CANCELLED' && (

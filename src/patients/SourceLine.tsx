@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { sourceChoices, sourceText, useSources } from '../lib/sources'
@@ -8,7 +9,7 @@ import { sourceChoices, sourceText, useSources } from '../lib/sources'
  * (раньше только в «Изменить данные», и пустое в карточке не показывалось). По нему — «Касса →
  * Аналитика → Откуда пациенты».
  */
-export function SourceLine({ patient: p, canEdit }: { patient: Schemas['PatientView']; canEdit: boolean }) {
+export function SourceLine({ patient: p, canEdit, compact = false }: { patient: Schemas['PatientView']; canEdit: boolean; compact?: boolean }) {
   const client = useQueryClient()
   const sources = useSources()
   const save = useMutation<Schemas['PatientView'], ApiError, string>({
@@ -18,16 +19,30 @@ export function SourceLine({ patient: p, canEdit }: { patient: Schemas['PatientV
     })),
     onSuccess: () => { for (const key of ['patients', 'patient-card', 'appointments', 'appointment', 'sources']) void client.invalidateQueries({ queryKey: [key] }) },
   })
+  const [open, setOpen] = useState(false)
+  const choices = sourceChoices(sources.data, p.sourceId)
+  const chosen = p.sourceId != null
+  const pick = (id: number) => save.mutate(String(id), { onSuccess: () => setOpen(false) })
+  // Указано — коротко «📱 Instagram · изменить»; не указано — кнопки-варианты (compact, в карточке приёма —
+  // «выбрать», чтобы варианты не сдвигали кнопки приёма вниз)
   return (
-    <div className="source-line">
-      <span className="hint">Откуда узнал о клинике</span>
-      {canEdit ? (
-        <select aria-label="Откуда узнал о клинике" value={p.sourceId ?? ''} disabled={save.isPending}
-          className={p.sourceId != null ? '' : 'empty'} onChange={(e) => save.mutate(e.target.value)}>
-          <option value="">— не указано, выбрать</option>
-          {sourceChoices(sources.data, p.sourceId).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-        </select>
-      ) : <strong>{sourceText(sources.data, p.sourceId)}</strong>}
+    <div className={chosen ? 'source-line' : 'source-line empty'} role="group" aria-label="Откуда узнал о клинике">
+      <div className="source-head">
+        <span className="hint">Откуда узнал о клинике{chosen ? '' : '?'}</span>
+        {chosen && <strong>{sourceText(sources.data, p.sourceId)}</strong>}
+        {canEdit && (chosen || compact) && (
+          <button type="button" className="link" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'свернуть' : chosen ? 'изменить' : 'выбрать'}</button>
+        )}
+        {!chosen && !canEdit && <strong>Не указано</strong>}
+      </div>
+      {canEdit && ((!chosen && !compact) || open) && (
+        <div className="source-chips">
+          {choices.map((o) => (
+            <button key={o.id} type="button" className="source-chip" aria-pressed={o.id === p.sourceId} disabled={save.isPending}
+              onClick={() => pick(o.id)}>{o.label}</button>
+          ))}
+        </div>
+      )}
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </div>
   )
