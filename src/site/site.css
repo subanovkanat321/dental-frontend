@@ -1,70 +1,96 @@
-/* Страницы сайта: один столбец под телефон, тот же «Пульт клиники», что и CRM (DESIGN.md) */
-body.site { background: var(--page); }
-.site-page { max-width: 640px; margin: 0 auto; padding: 16px 16px 40px; display: grid; gap: 14px; color: var(--text); }
-.site-page h1 { margin: 0; font: 700 1.5rem var(--display); }
-.site-page h2 { margin: 10px 0 0; font: 700 1.1rem var(--display); }
+/*
+ * Страницы сайта (/go, /join, /clinics, /c/<код>): один столбец под телефон, «Пульт клиники» из
+ * DESIGN.md → «Сайт». Спокойно: светлый фон, белые карточки, один цвет действия — бирюзовый
+ * (--accent), один тёплый — только акция (--promo-*). Главное действие раздела — одно, залито.
+ */
+body.site {
+  --promo-bg: #FFF4DE; --promo-line: #F2DDB0; --promo-ink: #6B3E00; --promo-badge: #FFD98A;
+  --hero-ink: #2F5552;
+  background: var(--page);
+}
+.site-page { max-width: 560px; margin: 0 auto; padding: 8px 16px 40px; padding-bottom: max(40px, env(safe-area-inset-bottom));
+  display: grid; gap: 20px; color: var(--text); font-size: 1rem; line-height: 1.5; }
+.site-page h1 { margin: 0; font: 600 1.6rem/1.2 var(--display); letter-spacing: -.01em; text-wrap: balance; }
+.site-page h2 { margin: 0; font: 600 1.1rem/1.3 var(--display); text-wrap: balance; }
 .site-page p { margin: 0; }
-.site-page .btn { min-height: 48px; justify-content: center; text-decoration: none; }
-.site-page .lang-switch { display: flex; justify-content: flex-end; gap: 4px; }
-.site-page .lang-switch button { min-height: 36px; padding: 4px 14px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--hint); font: inherit; font-size: .82rem; cursor: pointer; }
-.site-page .lang-switch button[aria-pressed=true] { border-color: var(--accent); color: var(--link); font-weight: 700; }
-/* Шапка — яркая, как посты Instagram: бирюзовый градиент и Тишка, в любой теме одинаково */
-.site-hero { position: relative; overflow: hidden; display: flex; align-items: center; gap: 14px; padding: 20px 18px;
-  border-radius: 22px; color: #fff; box-shadow: 0 10px 28px rgba(14, 138, 128, .28);
-  background: radial-gradient(circle at 100% 0, rgba(255, 214, 102, .6) 0 52px, transparent 53px),
-    radial-gradient(circle at 100% 100%, rgba(255, 255, 255, .14) 0 70px, transparent 71px),
-    linear-gradient(135deg, #0A6A63 0%, #0E8A80 55%, #17A898 100%); }
-.site-hero img { flex: none; width: 88px; height: auto; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .2)); }
-.site-hero > div { position: relative; }
-.site-hero h1 { color: #fff; }
-.site-hero p { margin-top: 4px; color: rgba(255, 255, 255, .9); }
+.site-page .btn { min-height: 48px; justify-content: center; text-decoration: none; border-radius: 12px; }
+.site-page a:not(.btn) { text-underline-offset: 3px; }
+
+/* Шапка: «‹ Назад» слева (во встроенном браузере Instagram своей почти не видно), справа — Tish или язык */
+.site-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; }
+.site-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding-right: 12px;
+  color: var(--text); font-weight: 600; text-decoration: none; }
+.site-back span { font-size: 1.5rem; line-height: 1; color: var(--accent); }
+.site-brand { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--text); font: 600 1rem var(--display); text-decoration: none; }
+.site-page .lang-switch { display: flex; gap: 4px; }
+.site-page .lang-switch button { min-height: 36px; padding: 4px 12px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card);
+  color: var(--hint); font: inherit; font-size: .85rem; cursor: pointer; }
+.site-page .lang-switch button[aria-pressed=true] { border-color: var(--accent); color: var(--link); font-weight: 600; }
+
+/* Шапка страницы: мягкая бирюзовая плашка, Тишка и заголовок — без градиентов и пятен */
+.site-hero { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 16px; background: var(--accent-soft); }
+.site-hero img { flex: none; width: 72px; height: auto; }
+.site-hero p { margin-top: 6px; color: var(--hero-ink); }
+
+.site-section { display: grid; gap: 10px; }
 .site-actions { display: grid; gap: 8px; }
-.site-card { display: grid; gap: 10px; padding: 16px; border-radius: 16px; background: var(--card); border: 1px solid var(--separator); }
+.site-card { display: grid; gap: 12px; padding: 16px; border-radius: 14px; background: var(--card); border: 1px solid var(--separator); }
+.site-address { color: var(--hint); }
 .site-doctor { display: flex; align-items: center; gap: 12px; }
-.site-doctor img, .site-doctor .initials { flex: none; width: 52px; height: 52px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: var(--accent-soft); color: var(--link); font: 700 1.1rem var(--display); }
+.site-doctor img, .site-doctor .initials { flex: none; width: 52px; height: 52px; border-radius: 50%; object-fit: cover; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--link); font: 600 1.1rem var(--display); }
 .site-doctor.small img, .site-doctor.small .initials { width: 40px; height: 40px; font-size: .9rem; }
 .site-doctor span { display: grid; gap: 2px; }
 .site-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .site-services li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--separator); }
 .site-services li:last-child { border-bottom: 0; }
 .site-how { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
-.site-footer { text-align: center; color: var(--hint); font-size: .85rem; margin-top: 12px; }
+.site-footer { text-align: center; color: var(--hint); font-size: .875rem; }
 .site-footer a { color: var(--link); }
-/* /go: у каждой ссылки свой цвет значка; главные (записаться, подключить) — залиты цветом */
-.go-link { --tone: #0E8A80; --tone2: #17A898; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px;
+
+/* /go: строки-ссылки. Значок на мягкой бирюзовой плашке; главное действие раздела залито бирюзовым */
+.go-link { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 12px 14px; border-radius: 14px;
   background: var(--card); border: 1px solid var(--separator); color: var(--text); text-decoration: none;
-  transition: transform .12s ease, border-color .12s ease; }
-.go-link:hover { border-color: var(--tone); }
-.go-link:active { transform: scale(.98); }
-.go-link .ico { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; font-size: 1.4rem;
-  background: linear-gradient(135deg, var(--tone), var(--tone2)); box-shadow: 0 4px 10px color-mix(in srgb, var(--tone) 35%, transparent); }
-.go-link span span { display: block; color: var(--hint); font-size: .86rem; }
-.go-link.main { border: 0; color: #fff; background: linear-gradient(135deg, var(--tone), var(--tone2));
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--tone) 40%, transparent); }
-.go-link.main span span { color: rgba(255, 255, 255, .9); }
-.go-link.main .ico { background: rgba(255, 255, 255, .22); box-shadow: none; }
-.go-link.tone-teal { --tone: #0A7A71; --tone2: #0E8A80; }
-.go-link.tone-orange { --tone: #C2410C; --tone2: #D9480F; }
-.go-link.tone-violet { --tone: #6741D9; --tone2: #845EF7; }
-.go-link.tone-blue { --tone: #1971C2; --tone2: #339AF0; }
-.go-link.tone-tg { --tone: #1C8ADB; --tone2: #2AABEE; }
-.go-link.tone-wa { --tone: #1FAF55; --tone2: #25D366; }
-.go-link.tone-gold { --tone: #F08C00; --tone2: #FAB005; }
-.go-promo { justify-self: start; padding: 8px 14px; border-radius: 999px; font-weight: 700;
-  background: linear-gradient(135deg, #FFD43B, #FFA94D); color: #3D2400; }
-.site-promo { display: grid; gap: 8px; padding: 18px; border-radius: 18px; background: var(--ok-bg); color: var(--ok-ink); }
-.site-promo ul { margin: 0; padding-left: 20px; }
-.site-features { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  transition: border-color .15s ease-out, transform .1s ease-out; }
+.go-link:hover { border-color: var(--accent); }
+.go-link:active { transform: scale(.99); }
+.go-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.go-link .ico { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; font-size: 1.3rem; background: var(--accent-soft); }
+.go-text { flex: 1; display: grid; gap: 2px; }
+.go-text > span:not(.go-badge) { color: var(--hint); font-size: .9rem; }
+.go-arrow { flex: none; color: var(--faint); font-size: 1.4rem; line-height: 1; }
+.go-link.main { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+.go-link.main:hover { background: var(--accent-hover); }
+.go-link.main .ico { background: rgba(255, 255, 255, .18); }
+.go-link.main .go-text > span:not(.go-badge), .go-link.main .go-arrow { color: rgba(255, 255, 255, .88); }
+/* Акция — плашкой на главной кнопке «Подключить»: сразу видно, что это кнопка */
+.go-badge { justify-self: start; margin-bottom: 4px; padding: 2px 8px; border-radius: 6px; background: var(--promo-badge); color: var(--promo-ink);
+  font-size: .82rem; font-weight: 600; }
+.go-note { padding: 0 4px; font-size: .9rem; }
+
+/* /join: акция — тёплая плашка (единственное тёплое место на сайте) */
+.site-promo { display: grid; gap: 10px; padding: 18px; border-radius: 16px; background: var(--promo-bg); border: 1px solid var(--promo-line); }
+.site-promo h2 { color: var(--promo-ink); }
+.site-promo ul { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
+.site-features { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .site-features li { display: flex; gap: 12px; }
-.site-features .ico { font-size: 1.5rem; }
+.site-features .ico { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--accent-soft); font-size: 1.2rem; }
 .site-features span span { display: block; color: var(--hint); font-size: .9rem; }
 .trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .site-message { padding: 24px; text-align: center; }
 .site-message p { margin: 0 0 12px; }
-/* /clinics: «Вы врач или администратор клиники? Войти в CRM» — сверху, для сотрудников */
-.site-staff { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin-bottom: 12px; padding: 10px 14px;
-  border-radius: 12px; background: var(--card); border: 1px solid var(--line-strong); color: var(--text); text-decoration: none; font-size: .95rem; }
+/* /clinics: «Вы врач или администратор клиники? Войти в CRM» — для сотрудников */
+.site-staff { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; padding: 10px 14px;
+  border-radius: 12px; background: var(--card); border: 1px solid var(--separator); color: var(--text); text-decoration: none; font-size: .95rem; }
 .site-staff strong { color: var(--link); white-space: nowrap; }
 /* Встроенный браузер Instagram: подсказка и запасная ссылка tg:// */
 .site-inapp { margin: 0; font-size: .9rem; }
 .site-inapp-link { display: inline-block; margin-top: 6px; font-weight: 600; }
+
+@media (min-width: 900px) {
+  .site-page { padding-top: 24px; gap: 24px; }
+  .site-hero { padding: 28px; }
+  .site-hero img { width: 96px; }
+  .site-page h1 { font-size: 2rem; }
+}
+@media (prefers-reduced-motion: reduce) { .go-link { transition: none; } .go-link:active { transform: none; } }

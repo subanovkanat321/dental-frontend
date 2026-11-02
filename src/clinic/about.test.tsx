@@ -8,7 +8,7 @@ import { server } from '../test/server'
 import { phoneFromInput, phoneToInput } from './phone'
 
 const clinic: Schemas['ClinicView'] = {
-  brandName: 'Стоматология «Тест»', whatsappPhone: '996555123456', code: 'test1', workStart: '09:00:00', workEnd: '18:00:00',
+  brandName: 'Стоматология «Тест»', phones: ['996555123456'], whatsappPhone: '996555123456', code: 'test1', workStart: '09:00:00', workEnd: '18:00:00',
   workDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'], listed: true,
 }
 
@@ -98,13 +98,49 @@ test('«Часы работы»: часы клиники с субботой, о
   await user.click(within(form).getByRole('button', { name: 'Суббота' }))
   await user.click(within(form).getByRole('button', { name: 'Сохранить часы клиники' }))
   expect(await within(form).findByText('Часы клиники сохранены')).toBeInTheDocument()
-  expect(saved).toMatchObject({ brandName: 'Стоматология «Тест»', whatsappPhone: '996555123456', workStart: '09:00', workEnd: '18:00',
+  expect(saved).toMatchObject({ brandName: 'Стоматология «Тест»', phones: ['996555123456'], whatsappPhone: '996555123456', workStart: '09:00', workEnd: '18:00',
     workDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'] })
   // Свой врач раскрыт сразу, коллега — по нажатию
   expect(await screen.findByRole('group', { name: 'Часы работы' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Дастан Т\./ })).toHaveAttribute('aria-expanded', 'false')
   await user.click(screen.getByRole('button', { name: '‹ Настройки' }))
   expect(await screen.findByRole('heading', { name: '⚙️ Настройки' })).toBeInTheDocument()
+})
+
+test('«О клинике»: несколько телефонов (до трёх, по порядку) и WhatsApp другим номером; ошибка номера — под полем', async () => {
+  let saved: Schemas['ClinicControllerRequest'] | null = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.put('*/api/clinic', async ({ request }) => {
+      saved = await request.json() as Schemas['ClinicControllerRequest']
+      return saved.phones?.includes('+996 12')
+        ? HttpResponse.json({ status: 422, errors: [{ field: 'phones', message: 'Телефон 2: Номер в формате 0555 123 456' }] }, { status: 422 })
+        : HttpResponse.json({ ...clinic, ...saved })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const form = await screen.findByRole('form', { name: 'О клинике' })
+  expect(within(form).getByRole('textbox', { name: 'Телефон клиники' })).toHaveValue('555 123 456')
+  await user.click(within(form).getByRole('button', { name: '＋ Ещё номер' }))
+  await user.type(within(form).getByRole('textbox', { name: 'Телефон клиники 2' }), '12')
+  await user.click(within(form).getByRole('button', { name: '＋ Ещё номер' }))
+  // Три номера — больше не добавить
+  expect(within(form).queryByRole('button', { name: '＋ Ещё номер' })).not.toBeInTheDocument()
+  await user.click(within(form).getByRole('button', { name: 'Убрать номер 3' }))
+  const whatsapp = within(form).getByRole('textbox', { name: 'WhatsApp клиники' })
+  await user.clear(whatsapp)
+  await user.type(whatsapp, '700 999 888')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  expect((await within(form).findAllByText('Телефон 2: Номер в формате 0555 123 456')).length).toBeGreaterThan(0)
+  expect(saved).toMatchObject({ phones: ['+996 555 123 456', '+996 12'], whatsappPhone: '+996 700 999 888' })
+
+  const second = within(form).getByRole('textbox', { name: 'Телефон клиники 2' })
+  await user.clear(second)
+  await user.type(second, '700 111 222')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(form).findByRole('status')).toHaveTextContent('«О клинике» сохранено')
+  expect(saved).toMatchObject({ phones: ['+996 555 123 456', '+996 700 111 222'] })
 })
 
 test('«Настройки → Оформление»: тёмная тема и крупный текст сразу и запоминаются', async () => {

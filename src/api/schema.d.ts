@@ -3707,6 +3707,8 @@ export interface components {
             supportTelegram?: string;
             supportPhone?: string;
             supportEmail?: string;
+            supportPhones?: string[];
+            supportWhatsapp?: string;
         };
         PlatformInfoInfo: {
             legalName?: string;
@@ -3718,6 +3720,8 @@ export interface components {
             accessLog?: boolean;
             accessNotify?: boolean;
             accessRequiresGrant?: boolean;
+            supportPhones?: string[];
+            supportWhatsapp?: string;
         };
         PlatformInfoControllerAccess: {
             log?: boolean;
@@ -4032,6 +4036,7 @@ export interface components {
             listed?: boolean;
             separateSupplies?: boolean;
             city?: string;
+            phones?: string[];
         };
         ClinicView: {
             brandName?: string;
@@ -4055,6 +4060,7 @@ export interface components {
             settingUp?: boolean;
             ownHours?: boolean;
             city?: string;
+            phones?: string[];
         };
         VisitReportControllerAiChange: {
             on?: boolean;

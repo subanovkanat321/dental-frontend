@@ -4,6 +4,8 @@
  * а не cookie сайта. SDK — официальный telegram-web-app.js из index.html; вне Telegram initData пуста.
  */
 
+import type { MouseEvent } from 'react'
+
 import { isLoginPath } from './route'
 type BackButton = { show(): void; hide(): void; onClick(cb: () => void): void; offClick(cb: () => void): void }
 
@@ -103,6 +105,19 @@ export function openLink(url: string): void {
   const app = telegram()
   if (app?.openLink) app.openLink(url)
   else window.open(url, '_blank', 'noopener')
+}
+
+/**
+ * Нажатие на ссылку в Telegram (Mini App, CRM в боте): tel: там не открывает звонилку, а wa.me
+ * открывается внутри Telegram — уводим в браузер телефона. Звонок — через свою страницу call.html,
+ * номер во фрагменте # (на сервер он не уходит). Вне Telegram — обычная ссылка.
+ */
+export function inTelegram(url: string): (e: MouseEvent) => void {
+  return (e: MouseEvent) => {
+    if (!telegram()) return
+    e.preventDefault()
+    openLink(url.startsWith('tel:+') ? `${window.location.origin}/call.html#${url.slice(5)}` : url)
+  }
 }
 
 /** Лёгкая вибрация в Telegram: успех, предупреждение, ошибка. Вне Telegram — ничего. */

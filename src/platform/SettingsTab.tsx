@@ -4,7 +4,8 @@ import { useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, upload, webTariffs, type Schemas } from '../api/client'
 import { usePlatformInfo } from '../api/platform'
 import { PhoneInput } from '../clinic/PhoneInput'
-import { phoneFromInput, phoneToInput } from '../clinic/phone'
+import { phoneFromInput, phonesFromInput, phonesToInput, phoneToInput } from '../clinic/phone'
+import { PhoneListInput } from '../clinic/PhoneListInput'
 import { SaveBar } from '../layout/SaveBar'
 import { useDirty } from '../lib/unsaved'
 import { somText } from '../lib/time'
@@ -46,11 +47,13 @@ function InfoForm({ info }: { info: Info }) {
   const client = useQueryClient()
   const [f, setF] = useState({
     legalName: info.legalName ?? '', hosting: info.hosting ?? '', supportTelegram: info.supportTelegram ?? '',
-    supportEmail: info.supportEmail ?? '', supportPhone: phoneToInput(info.supportPhone),
+    supportEmail: info.supportEmail ?? '', supportPhones: phonesToInput(info.supportPhones), supportWhatsapp: phoneToInput(info.supportWhatsapp),
   })
   const { dirty, commit } = useDirty(f)
   const save = useMutation<Info, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/platform/info', { body: { ...f, supportPhone: phoneFromInput(f.supportPhone) } })),
+    mutationFn: () => unwrap(api.PUT('/api/platform/info', {
+      body: { ...f, supportPhones: phonesFromInput(f.supportPhones), supportWhatsapp: phoneFromInput(f.supportWhatsapp) },
+    })),
     onSuccess: (saved) => {
       commit()
       client.setQueryData(['platform-info'], saved)
@@ -69,14 +72,17 @@ function InfoForm({ info }: { info: Info }) {
         {FIELDS.map(([key, label, placeholder]) => (
           <div key={key} className="field">
             <label className="field"><span>{label}</span>
-              <input value={f[key as keyof typeof f]} maxLength={200} placeholder={placeholder} type={key === 'supportEmail' ? 'email' : 'text'}
+              <input value={f[key as 'legalName' | 'hosting' | 'supportTelegram' | 'supportEmail']} maxLength={200} placeholder={placeholder} type={key === 'supportEmail' ? 'email' : 'text'}
                 onChange={(e) => { save.reset(); setF({ ...f, [key]: e.target.value }) }} /></label>
             {err(key) && <p className="error">{err(key)}</p>}
           </div>
         ))}
-        <label className="field"><span>Телефон поддержки</span>
-          <PhoneInput label="Телефон поддержки" value={f.supportPhone} onChange={(v) => { save.reset(); setF({ ...f, supportPhone: v }) }} /></label>
-        {err('supportPhone') && <p className="error">{err('supportPhone')}</p>}
+        <div className="field"><span>Телефоны поддержки — первый главный</span>
+          <PhoneListInput label="Телефон поддержки" values={f.supportPhones} onChange={(v) => { save.reset(); setF({ ...f, supportPhones: v }) }} /></div>
+        {err('supportPhones') && <p className="error">{err('supportPhones')}</p>}
+        <label className="field"><span>WhatsApp поддержки — пусто: кнопки WhatsApp на /go и /join нет</span>
+          <PhoneInput label="WhatsApp поддержки" value={f.supportWhatsapp} onChange={(v) => { save.reset(); setF({ ...f, supportWhatsapp: v }) }} /></label>
+        {err('supportWhatsapp') && <p className="error">{err('supportWhatsapp')}</p>}
         <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="Сведения о платформе сохранены"
           error={save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message)} />
       </form>

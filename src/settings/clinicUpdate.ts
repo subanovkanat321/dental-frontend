@@ -9,7 +9,7 @@ type Request = Schemas['ClinicControllerRequest']
  */
 export function clinicRequest(c: Clinic, change: Partial<Request>): Request {
   return {
-    brandName: c.brandName, legalName: c.legalName, address: c.address, whatsappPhone: c.whatsappPhone, mapUrl: c.mapUrl,
+    brandName: c.brandName, legalName: c.legalName, address: c.address, phones: c.phones, whatsappPhone: c.whatsappPhone, mapUrl: c.mapUrl,
     supportTelegram: c.supportTelegram, supportPhone: c.supportPhone, workStart: c.workStart, workEnd: c.workEnd,
     workDays: c.workDays, independentDoctors: c.independentDoctors, listed: c.listed, separateSupplies: c.separateSupplies,
     ...change,

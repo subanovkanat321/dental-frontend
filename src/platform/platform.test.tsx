@@ -263,3 +263,29 @@ test('выгрузка клиники: доступ поддержке не от
   expect(sent).toEqual([{}, { emergency: true }])
   confirm.mockRestore()
 })
+
+test('«Сведения о платформе»: несколько телефонов поддержки и WhatsApp своим номером', async () => {
+  let saved: Schemas['PlatformInfoControllerRequest'] | null = null
+  const info: Schemas['PlatformInfoInfo'] = { supportTelegram: 'tish_help', supportPhone: '996555000111', supportPhones: ['996555000111'] }
+  backend([])
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform-info', () => HttpResponse.json(info)),
+    http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [] })),
+    http.put('*/api/platform/info', async ({ request }) => {
+      saved = await request.json() as Schemas['PlatformInfoControllerRequest']
+      return HttpResponse.json({ ...info, supportPhones: ['996555000111', '996700222333'], supportWhatsapp: '996770444555' })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Настройки' }))
+  const form = await screen.findByRole('form', { name: 'Сведения о платформе' })
+  expect(within(form).getByRole('textbox', { name: 'Телефон поддержки' })).toHaveValue('555 000 111')
+  await user.click(within(form).getByRole('button', { name: '＋ Ещё номер' }))
+  await user.type(within(form).getByRole('textbox', { name: 'Телефон поддержки 2' }), '700 222 333')
+  await user.type(within(form).getByRole('textbox', { name: 'WhatsApp поддержки' }), '770 444 555')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(form).findByRole('status')).toHaveTextContent('Сведения о платформе сохранены')
+  expect(saved).toMatchObject({ supportPhones: ['+996 555 000 111', '+996 700 222 333'], supportWhatsapp: '+996 770 444 555' })
+})

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { ClinicFilters } from '../lib/ClinicFilters'
 import { useClinicFilter, withCity } from '../lib/clinicSearch'
 import { InAppHint, LangSwitch } from './ClinicSite'
+import { SiteHeader } from './SiteHeader'
 import { getJson, inAppBrowser, initials, tgLink, useSiteLang, type DirectoryClinic } from './web'
 
 const TEXTS = {
@@ -10,7 +11,7 @@ const TEXTS = {
     title: 'Запись к стоматологу', tagline: 'Выберите клинику или врача и запишитесь в Telegram за минуту — бот напомнит о приёме 😊',
     search: 'Клиника, врач или адрес', cities: 'Город', allCities: 'Все города', showAll: 'Показать все клиники', book: 'Записаться в Telegram', more: 'Врачи, услуги и цены', map: 'На карте', doctors: 'Врачи',
     clinic: 'Стоматология', nothing: 'Ничего не нашлось — попробуйте другое слово.', empty: 'Клиники скоро появятся здесь.',
-    forClinics: 'Для клиник', login: 'Вход для клиники', join: 'Подключить клинику',
+    forClinics: 'Для клиник', back: 'Назад', login: 'Вход для клиники', join: 'Подключить клинику',
     staff: 'Вы врач или администратор клиники?', staffLogin: 'Войти в CRM',
     error: 'Не удалось загрузить список — обновите страницу через минуту.', loading: 'Загрузка…',
     inAppTop: 'Открыли из Instagram? Если Telegram не открывается — нажмите ⋮ вверху → «Открыть в браузере» или «📲 открыть Telegram» у клиники.', openTg: 'открыть Telegram',
@@ -19,7 +20,7 @@ const TEXTS = {
     title: 'Тиш дарыгерине жазылуу', tagline: 'Клиниканы же дарыгерди тандап, Telegram аркылуу бир мүнөттө жазылыңыз — бот эскертет 😊',
     search: 'Клиника, дарыгер же дарек', cities: 'Шаар', allCities: 'Бардык шаарлар', showAll: 'Бардык клиникаларды көрсөтүү', book: 'Telegram аркылуу жазылуу', more: 'Дарыгерлер, кызматтар жана баалар', map: 'Картада', doctors: 'Дарыгерлер',
     clinic: 'Стоматология', nothing: 'Эч нерсе табылган жок — башка сөз менен издеңиз.', empty: 'Клиникалар жакында ушул жерде болот.',
-    forClinics: 'Клиникалар үчүн', login: 'Клиника үчүн кирүү', join: 'Клиниканы туташтыруу',
+    forClinics: 'Клиникалар үчүн', back: 'Артка', login: 'Клиника үчүн кирүү', join: 'Клиниканы туташтыруу',
     staff: 'Сиз клиниканын дарыгерисизби же администраторусузбу?', staffLogin: 'CRMге кирүү',
     error: 'Тизме жүктөлгөн жок — бир мүнөттөн кийин жаңыртыңыз.', loading: 'Жүктөлүүдө…',
     inAppTop: 'Instagram’дан ачтыңызбы? Telegram ачылбаса — жогорудагы ⋮ → «Браузерде ачуу» же клиниканын «📲 Telegram’ды ачуу» баскычын басыңыз.', openTg: 'Telegram’ды ачуу',
@@ -41,11 +42,11 @@ export function Directory() {
   const found = filter.shown
   return (
     <main className="site-page">
+      <SiteHeader back={t.back}><LangSwitch lang={lang} onChange={setLang} /></SiteHeader>
       {/* Сотрудники клиник набирают tish.kg и попадают сюда — вход в CRM сразу видно, а не только внизу */}
       <a className="site-staff" href="/login"><span>{t.staff}</span><strong>{t.staffLogin} →</strong></a>
-      <LangSwitch lang={lang} onChange={setLang} />
       <div className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={95} height={90} />
+        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} />
         <div><h1>{t.title}</h1><p>{t.tagline}</p></div>
       </div>
       <InAppHint text={t.inAppTop} link="" />

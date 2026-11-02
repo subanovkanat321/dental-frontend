@@ -48,3 +48,16 @@ export function joinPhone(country: string, local: string): string {
   const c = phoneCountry(country)
   return c.code ? `+${c.code} ${local}` : `+${local}`
 }
+
+/** Сколько номеров для звонка — как на сервере (ContactPhones.MAX). */
+export const MAX_PHONES = 3
+
+/** Номера из ответа (цифры) → поля формы; пустой список — одно пустое поле. */
+export function phonesToInput(digits?: string[] | null): string[] {
+  return digits?.length ? digits.map(phoneToInput) : ['']
+}
+
+/** Поля формы → запрос: пустые не отправляем, порядок сохраняем (первый — главный). */
+export function phonesFromInput(values: string[]): string[] {
+  return values.map(phoneFromInput).filter(Boolean)
+}

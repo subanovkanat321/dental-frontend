@@ -258,6 +258,11 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .phone:focus-within { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .phone > input { order: 1; flex: 1; min-width: 0; border: 0; padding-left: 8px; }
 .phone > input:focus { outline: none; }
+/* Несколько телефонов (PhoneListInput): поле на строку, ✕ справа, «＋ Ещё номер» — тихой ссылкой */
+.phone-list { display: grid; gap: 8px; }
+.phone-list-row { display: flex; align-items: center; gap: 6px; }
+.phone-list-row > .phone { flex: 1; min-width: 0; }
+.phone-list .add-phone { justify-self: start; color: var(--link); }
 .chosen { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--accent-soft); }
 .found { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; border: 1px solid var(--separator); border-radius: 10px; }
 .found button { width: 100%; padding: 8px 10px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
