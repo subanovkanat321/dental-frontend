@@ -268,6 +268,9 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .cash { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; }
 .cash .toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .card-block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+.card-block.guide { gap: 6px; margin-top: 12px; }
+.card-block.guide h2 { margin: 0; font-size: 1rem; }
+.card-block.guide ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; line-height: 1.4; }
 .card-block h2 { font-size: 1.05rem; }
 .card-block .table { box-shadow: none; }
 /* Несколько секций подряд в рабочей области — с отступом, а не впритык; расстояние между абзацами — gap сетки, без полей браузера */

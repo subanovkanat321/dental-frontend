@@ -15,12 +15,13 @@ const AccountPage = lazy(() => import('../account/AccountPage').then((m) => ({ d
 const ClinicPage = lazy(() => import('../clinic/ClinicPage').then((m) => ({ default: m.ClinicPage })))
 const TeamPage = lazy(() => import('../team/TeamPage').then((m) => ({ default: m.TeamPage })))
 const HoursPage = lazy(() => import('./HoursPage').then((m) => ({ default: m.HoursPage })))
+const GuidePage = lazy(() => import('./GuidePage').then((m) => ({ default: m.GuidePage })))
 const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
 
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘' }
 
 type Item = {
   key: string
@@ -68,6 +69,8 @@ const GROUPS: [string, Item[]][] = [
   ['Профиль и помощь', [
     item('profile', 'Мой профиль', 'Имя, фото, о себе — что видят пациенты', (me) => me.doctorId != null,
       () => (me, back) => <ProfilePage me={me} onBack={back} />),
+    item('guide', 'Памятка', 'Как записать, напомнить и принять оплату — по ролям', all,
+      () => (me, back) => <GuidePage me={me} onBack={back} />),
     item('support', 'Техподдержка', 'Написать команде Tish, частые вопросы', all, account('support')),
     item('dental-news', 'Новости стоматологии', 'Подборка профессиональных изданий', all, account('news')),
     item('privacy', 'Конфиденциальность', 'Как мы обращаемся с данными пациентов', all, account('privacy')),
