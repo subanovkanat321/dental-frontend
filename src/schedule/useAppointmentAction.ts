@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 
@@ -53,6 +53,17 @@ function send(id: number, action: Action): Promise<Appointment> {
 }
 
 /**
+ * Что зависит от приёмов: день и окна врачей, счётчики дней, «Касса» (к оплате, долги, выручка,
+ * отчёт, статистика, источники, зарплата) и карточка пациента. После записи, действия и удаления
+ * приёма перечитываем всё это — открытые экраны покажут свежее без F5.
+ */
+const APPOINTMENT_DATA = ['appointments', 'slots', 'counts', 'to-pay', 'debts', 'revenue', 'report', 'stats', 'sources', 'salaries', 'patient-card']
+
+export function refreshAppointmentData(client: QueryClient, extra: string[] = []): void {
+  for (const key of [...APPOINTMENT_DATA, ...extra]) void client.invalidateQueries({ queryKey: [key] })
+}
+
+/**
  * Действие над приёмом и обновление расписания. Ответ сервера — свежий приём: кладём его в кэш
  * дня, чтобы карточка и колонка сразу показали новое, и перечитываем день на всякий случай.
  * 409 «stale» — приём успели изменить с другого устройства: перечитываем и просим повторить.
@@ -65,11 +76,9 @@ export function useAppointmentAction(a: Appointment) {
       client.setQueriesData<Appointment[]>({ queryKey: ['appointments'] }, (day) =>
         day?.map((x) => (x.id === updated.id ? updated : x)))
       client.setQueryData(['appointment', updated.id], updated)
-      // Оплата и статус меняют и «Кассу», и карточку пациента — перечитать всё, что на экране
-      // Перенос и отмена освобождают и занимают время — свободные окна и счётчики дней тоже
-      for (const key of ['appointments', 'to-pay', 'debts', 'revenue', 'patient-card', 'slots', 'counts']) {
-        void client.invalidateQueries({ queryKey: [key] })
-      }
+      // Оплата и статус меняют и «Кассу» с отчётом, и карточку пациента — перечитать всё, что на экране;
+      // перенос и отмена освобождают и занимают время — свободные окна и счётчики дней тоже
+      refreshAppointmentData(client)
     },
     onError: (error) => {
       if (error.status === 409) {

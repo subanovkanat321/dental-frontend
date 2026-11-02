@@ -14,7 +14,7 @@ import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
-import { useAppointmentAction } from './useAppointmentAction'
+import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
 import { canEditDoctor, isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
@@ -72,7 +72,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const remove = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.DELETE('/api/appointments/{id}', { params: { path: { id: a.id! } } })),
     onSuccess: () => {
-      for (const key of ['appointments', 'slots', 'counts', 'patient-card']) void client.invalidateQueries({ queryKey: [key] })
+      // С записью удаляются её оплата и долг — «Касса» и отчёт тоже перечитываются
+      refreshAppointmentData(client)
       onClose()
     },
   })

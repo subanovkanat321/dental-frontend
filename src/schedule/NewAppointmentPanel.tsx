@@ -13,6 +13,7 @@ import { serviceEmoji } from '../lib/serviceEmoji'
 import { SOURCES, type PatientSource } from '../lib/sources'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
+import { refreshAppointmentData } from './useAppointmentAction'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -136,10 +137,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
       return created
     },
     onSuccess: (a) => {
-      void client.invalidateQueries({ queryKey: ['appointments'] })
-      void client.invalidateQueries({ queryKey: ['slots'] })
-      void client.invalidateQueries({ queryKey: ['counts'] })
-      if (wantsEarlier) void client.invalidateQueries({ queryKey: ['waitlist'] })
+      // Новая запись — и в «Пациентах» (недавние, карточка, «Позвать на профосмотр»)
+      refreshAppointmentData(client, ['patients', 'recall', ...(wantsEarlier ? ['waitlist'] : [])])
       onCreated(a)
     },
   })
@@ -365,8 +364,8 @@ function WaitlistCandidates({ doctorId, duration, startAt, onBooked }: {
   const book = useMutation<Appointment, ApiError, WaitlistEntry>({
     mutationFn: (e) => unwrap(api.POST('/api/waitlist/{id}/book', { params: { path: { id: e.id! } }, body: { doctorId, startAt: startAt! } })),
     onSuccess: (a) => {
-      void client.invalidateQueries({ queryKey: ['waitlist'] })
-      void client.invalidateQueries({ queryKey: ['appointments'] })
+      // Записали или перенесли — окна, счётчики и карточка пациента тоже меняются
+      refreshAppointmentData(client, ['waitlist', 'patients', 'recall'])
       onBooked(a)
     },
   })

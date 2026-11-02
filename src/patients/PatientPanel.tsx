@@ -58,7 +58,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   })
   // Заметки о приёмах — медданные: сервер отдаст только его врачу и админу, иначе — без них
   const notes = useQuery({
-    queryKey: ['patient-notes', patientId],
+    // Тот же ключ, что у медкарты: заметку сохранили на приёме (['notes']) — обновятся оба экрана
+    queryKey: ['notes', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/notes', { params: { path: { patientId } } })),
     enabled: staff,
     retry: false,
