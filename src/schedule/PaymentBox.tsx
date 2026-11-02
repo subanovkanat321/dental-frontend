@@ -166,6 +166,9 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
       return
     }
     const paid = main == null ? null : main + extra.reduce((s, p) => s + p.amountSom, 0)
+    // Стёрли сумму у оплаченного приёма — это снятие оплаты: деньги пропадут из «Кассы», переспросить
+    if (paid == null && a.paidSom != null
+      && !window.confirm(`Снять отметку оплаты ${somText(a.paidSom)}? Сумма пропадёт из «Кассы» и отчёта.`)) return
     let cost = partial && charge !== '' ? Number(charge) : null
     if (partial && paid != null && cost != null && cost <= paid) {
       setProblem('Стоимость должна быть больше, чем оплачено сейчас — иначе это полная оплата')

@@ -55,8 +55,49 @@ test('карточка пациента: «В лист ожидания» на 4
   await userEvent.click(screen.getByRole('tab', { name: /Лист ожидания · 1/ }))
   const table = await screen.findByRole('table', { name: 'Лист ожидания' })
   expect(table).toHaveTextContent('Дастан Т.')
+  // «Убрать» переспрашивает: нажали случайно — пациент остаётся в листе
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+  await userEvent.click(within(table).getByRole('button', { name: 'Убрать из листа: Айгуль Т.' }))
+  expect(confirm).toHaveBeenCalledWith('Убрать Айгуль Т. из листа ожидания?')
+  expect(table).toHaveTextContent('Айгуль Т.')
   await userEvent.click(within(table).getByRole('button', { name: 'Убрать из листа: Айгуль Т.' }))
   expect(await screen.findByText(/Пока никто не ждёт/)).toBeInTheDocument()
+  confirm.mockRestore()
+})
+
+test('лист ожидания: «Убрать» не прошло — ошибка видна', async () => {
+  window.location.hash = '/patients'
+  backend([{ id: 7, patient: aigul, durationMinutes: 30, createdAt: '2026-10-20T04:00:00Z' }])
+  server.use(http.delete('*/api/waitlist/:id', () => HttpResponse.json({ title: 'Forbidden', status: 403, detail: 'Нет доступа' }, { status: 403 })))
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: /Лист ожидания/ }))
+  const table = await screen.findByRole('table', { name: 'Лист ожидания' })
+  await userEvent.click(within(table).getByRole('button', { name: 'Убрать из листа: Айгуль Т.' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Нет доступа')
+  vi.restoreAllMocks()
+})
+
+test('«Хочет раньше»: запись создана, а в лист не попал — об этом предупреждают', async () => {
+  backend()
+  server.use(
+    http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [new Date(`${todayIn()}T23:00:00+06:00`).toISOString()] })),
+    http.post('*/api/patients/search', () => HttpResponse.json([aigul])),
+    http.post('*/api/appointments', () => HttpResponse.json(appointment(55, 1, '23:00', 'Айгуль Т.'), { status: 201 })),
+    http.post('*/api/waitlist', () => HttpResponse.json({ title: 'Conflict', status: 409, detail: 'Уже в листе ожидания' }, { status: 409 })),
+  )
+  const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined)
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  await userEvent.click(await within(panel).findByRole('button', { name: '23:00' }))
+  await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Айг')
+  await userEvent.click(await within(panel).findByRole('button', { name: /Айгуль Т\./ }))
+  await userEvent.click(within(panel).getByLabelText(/Хочет раньше/))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toBeInTheDocument()
+  expect(alert).toHaveBeenCalledWith(expect.stringMatching(/Запись создана, но в лист ожидания пациент не попал: Уже в листе ожидания/))
+  vi.restoreAllMocks()
 })
 
 test('профосмотр: WhatsApp — отметка «позвали» и готовый текст; «Записать» — «Новая запись» на пациента', async () => {

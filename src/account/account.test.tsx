@@ -114,3 +114,24 @@ test('врач: только поддержка и конфиденциальн�
   expect(sent!.get('kind')).toBe('IDEA')
   expect(sent!.get('text')).toBe('Сделайте тёмную тему')
 })
+
+test('«Данные» (админ): под выгрузкой — «Удалить все записи» с предупреждением про оплаты и долги', async () => {
+  let cleared: unknown = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/clinic/audit', () => HttpResponse.json([])),
+    http.post('*/api/appointments/delete-all', async ({ request }) => {
+      cleared = await request.json()
+      return HttpResponse.json({ deleted: 3 } satisfies Schemas['AppointmentControllerDeleted'])
+    }),
+  )
+  window.location.hash = '/settings/data'
+  const user = userEvent.setup()
+  renderApp()
+  expect(await screen.findByRole('button', { name: 'Прислать архив в бот' })).toBeInTheDocument()
+  expect(screen.getByRole('note')).toHaveTextContent('Вместе с записями удалятся все оплаты, долги и предоплаты')
+  await user.type(screen.getByRole('textbox', { name: 'Впишите УДАЛИТЬ' }), 'УДАЛИТЬ')
+  await user.click(screen.getByRole('button', { name: 'Удалить все записи' }))
+  expect(await screen.findByText('Удалено записей: 3')).toBeInTheDocument()
+  expect(cleared).toEqual({ confirm: 'УДАЛИТЬ' })
+})

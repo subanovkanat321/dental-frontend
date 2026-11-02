@@ -126,3 +126,20 @@ test('на кассе: врач меняет сумму счёта', async () =>
   expect(await within(panel).findByText(/К оплате на кассе: 4\s500 сом/)).toBeInTheDocument()
   expect(sent).toEqual([{ path: 'bill', body: { chargeSom: 4500 } }])
 })
+
+test('стёрли сумму у оплаченного приёма — сначала вопрос: «Снять отметку оплаты 1 500 сом?»', async () => {
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1, paidSom: 1500, paymentMethod: 'CASH' }),
+    (_, b) => ({ paidSom: b.amountSom as number | undefined }))
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+  renderApp()
+  const panel = await card()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Изменить' }))
+  const form = await within(panel).findByRole('form', { name: 'Оплата' })
+  await userEvent.clear(within(form).getByLabelText('Сумма, сом'))
+  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить оплату' }))
+  expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/Снять отметку оплаты 1\s500 сом/))
+  expect(sent).toEqual([])
+  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить оплату' }))
+  await vi.waitFor(() => expect(sent).toHaveLength(1))
+  confirm.mockRestore()
+})

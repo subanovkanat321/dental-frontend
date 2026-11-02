@@ -31,10 +31,9 @@ test('телефон: местный номер получает +996, полн�
   expect(phoneToInput('996555123456')).toBe('555 123 456')
 })
 
-test('админ: сохранить «О клинике» с днями и WhatsApp, предоплата, чистый лист', async () => {
+test('админ: сохранить «О клинике» с днями и WhatsApp, предоплата; «чистого листа» здесь нет', async () => {
   let saved: Schemas['ClinicControllerRequest'] | null = null
   let deposit: unknown = null
-  let cleared: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.put('*/api/clinic', async ({ request }) => {
@@ -44,10 +43,6 @@ test('админ: сохранить «О клинике» с днями и What
     http.put('*/api/clinic/deposit', async ({ request }) => {
       deposit = await request.json()
       return HttpResponse.json({ mode: 'NEW', amountSom: 1000, hasQr: false } satisfies Schemas['DepositsSettings'])
-    }),
-    http.post('*/api/appointments/delete-all', async ({ request }) => {
-      cleared = await request.json()
-      return HttpResponse.json({ deleted: 3 } satisfies Schemas['AppointmentControllerDeleted'])
     }),
   )
   const user = userEvent.setup()
@@ -71,10 +66,8 @@ test('админ: сохранить «О клинике» с днями и What
   expect(await screen.findByText('Предоплата сохранена')).toBeInTheDocument()
   expect(deposit).toEqual({ mode: 'NEW', amountSom: 1000, details: '' })
 
-  await user.type(screen.getByRole('textbox', { name: 'Впишите УДАЛИТЬ' }), 'УДАЛИТЬ')
-  await user.click(screen.getByRole('button', { name: 'Удалить все записи' }))
-  expect(await screen.findByText('Удалено записей: 3')).toBeInTheDocument()
-  expect(cleared).toEqual({ confirm: 'УДАЛИТЬ' })
+  // «Удалить все записи» переехал в «Данные» — под выгрузку
+  expect(screen.queryByRole('button', { name: 'Удалить все записи' })).not.toBeInTheDocument()
 })
 
 test('регистратура: «О клинике» только просмотр, без предоплаты и удаления', async () => {

@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { Fragment } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Fragment, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { dayTitle, timeOf, ZONE } from '../lib/time'
@@ -40,6 +40,7 @@ export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
           </div>
         </section>
       )}
+      {me.admin && <ClearAll />}
       {me.admin && (
         <section className="card-block">
           <h2>Журнал действий</h2>
@@ -63,5 +64,38 @@ export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
         </section>
       )}
     </>
+  )
+}
+
+/**
+ * «Начать с чистого листа» (админ): удалить все приёмы и заявки (после показа или тестов) — вместе
+ * с ними удаляются их оплаты, долги, предоплаты и заметки (on delete cascade). Врачи, услуги,
+ * пациенты и склад остаются. Слово «УДАЛИТЬ» проверяет сервер — кнопка его не обходит.
+ * Здесь, в «Данных», под выгрузкой: сначала сохранить архив, потом стирать.
+ */
+function ClearAll() {
+  const client = useQueryClient()
+  const [word, setWord] = useState('')
+  const run = useMutation<Schemas['AppointmentControllerDeleted'], ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/appointments/delete-all', { body: { confirm: word } })),
+    onSuccess: () => {
+      setWord('')
+      void client.invalidateQueries()
+    },
+  })
+  return (
+    <section className="card-block danger-zone">
+      <h2>Начать с чистого листа</h2>
+      <div className="form narrow">
+        <p>Удалит все приёмы и заявки — например, после показа или тестов. Врачи, услуги, пациенты и склад останутся.</p>
+        <p className="tone-bad" role="note"><strong>Вместе с записями удалятся все оплаты, долги и предоплаты</strong> — «Касса», отчёт
+          и зарплата за всё время обнулятся, — а также заметки о приёмах. Вернуть можно только из резервной копии: сначала выгрузите архив выше.</p>
+        <label className="field"><span>Впишите УДАЛИТЬ</span>
+          <input value={word} maxLength={20} autoComplete="off" placeholder="УДАЛИТЬ" onChange={(e) => { run.reset(); setWord(e.target.value) }} /></label>
+        {run.error && <p className="error" role="alert">{run.error.fieldErrors.confirm ?? run.error.message}</p>}
+        {run.isSuccess && <p className="tone-ok" role="status">Удалено записей: {run.data.deleted ?? 0}</p>}
+        <button type="button" className="btn danger" disabled={run.isPending || !word} onClick={() => run.mutate()}>Удалить все записи</button>
+      </div>
+    </section>
   )
 }

@@ -43,11 +43,13 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
               <td className="nowrap">{e.upcoming?.startAt ? shortDate(e.upcoming.startAt, true) : <span className="hint">нет записи</span>}</td>
               <td className="nowrap hint">{e.createdAt ? agoText(e.createdAt) : ''}</td>
               <td className="r"><button type="button" className="btn small ghost" disabled={remove.isPending}
-                onClick={() => remove.mutate(e.id!)} aria-label={`Убрать из листа: ${e.patient?.fullName}`}>Убрать</button></td>
+                onClick={() => window.confirm(`Убрать ${e.patient?.fullName ?? 'пациента'} из листа ожидания?`) && remove.mutate(e.id!)}
+                aria-label={`Убрать из листа: ${e.patient?.fullName}`}>Убрать</button></td>
             </tr>
           ))}
         </tbody>
       </table>
+      {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
       <p className="hint small">Освободилось время — нажмите на него в «Расписании»: «Новая запись» предложит этих пациентов.</p>
     </>
   )

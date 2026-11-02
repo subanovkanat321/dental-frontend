@@ -14,7 +14,7 @@ const FIELDS = ['brandName', 'whatsappPhone', 'legalName', 'address', 'mapUrl', 
 /**
  * «О клинике»: что видят пациенты (название, WhatsApp, адрес, 2ГИС, часы), как работают врачи
  * (независимо, свой склад), кто отвечает за данные (для согласия). Меняют админ и врачи;
- * «независимо» и «свой склад» — только админ. Админу ещё предоплата и «с чистого листа».
+ * «независимо» и «свой склад» — только админ. Админу ещё предоплата («с чистого листа» — в «Данных»).
  */
 export function AboutTab({ me }: { me: Me }) {
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
@@ -24,7 +24,6 @@ export function AboutTab({ me }: { me: Me }) {
     <>
       <AboutForm me={me} clinic={clinic.data} />
       {me.admin && <DepositSettings />}
-      {me.admin && <ClearAll />}
     </>
   )
 }
@@ -206,36 +205,6 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
         {done && <p className="tone-ok" role="status">{done}</p>}
         {save.isSuccess && <p className="tone-ok" role="status">Предоплата сохранена</p>}
         <button type="button" className="btn primary" disabled={save.isPending} onClick={() => save.mutate()}>Сохранить предоплату</button>
-      </div>
-    </section>
-  )
-}
-
-/**
- * «Начать с чистого листа»: удалить все приёмы и заявки (после показа или тестов). Врачи, услуги,
- * пациенты и склад остаются. Слово «УДАЛИТЬ» проверяет сервер — кнопка его не обходит.
- */
-function ClearAll() {
-  const client = useQueryClient()
-  const [word, setWord] = useState('')
-  const run = useMutation<Schemas['AppointmentControllerDeleted'], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/appointments/delete-all', { body: { confirm: word } })),
-    onSuccess: () => {
-      setWord('')
-      void client.invalidateQueries()
-    },
-  })
-  return (
-    <section className="card-block danger-zone">
-      <h2>Начать с чистого листа</h2>
-      <div className="form narrow">
-        <p className="hint">Удалит все приёмы и заявки — например, после показа или тестов. Врачи, услуги, пациенты и склад останутся.
-          Вернуть можно только из резервной копии.</p>
-        <label className="field"><span>Впишите УДАЛИТЬ</span>
-          <input value={word} maxLength={20} autoComplete="off" placeholder="УДАЛИТЬ" onChange={(e) => { run.reset(); setWord(e.target.value) }} /></label>
-        {run.error && <p className="error" role="alert">{run.error.fieldErrors.confirm ?? run.error.message}</p>}
-        {run.isSuccess && <p className="tone-ok" role="status">Удалено записей: {run.data.deleted ?? 0}</p>}
-        <button type="button" className="btn danger" disabled={run.isPending || !word} onClick={() => run.mutate()}>Удалить все записи</button>
       </div>
     </section>
   )

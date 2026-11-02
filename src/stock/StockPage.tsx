@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
@@ -37,10 +37,28 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
     queryFn: () => unwrap(api.GET('/api/supplies', { params: { query: doctorId == null ? {} : { doctorId } } })),
   })
   // Быстрое «−1» прямо в списке: взяли одну карпулу — не открывая карточку
+  // Списали не то — «Вернуть» несколько секунд (пересчёт +1, как «вернуть» на приёме)
+  const [taken, setTaken] = useState<Supply | null>(null)
   const take = useMutation<Supply, ApiError, Supply>({
     mutationFn: (s) => unwrap(api.POST('/api/supplies/{id}/move', { params: { path: { id: s.id! } }, body: { delta: -1 } })),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['supplies'] }),
+    onSuccess: (_, s) => {
+      setTaken(s)
+      void client.invalidateQueries({ queryKey: ['supplies'] })
+    },
   })
+  const giveBack = useMutation<Supply, ApiError, Supply>({
+    mutationFn: (s) => unwrap(api.POST('/api/supplies/{id}/move', { params: { path: { id: s.id! } }, body: { delta: 1, reason: 'CORRECTION' } })),
+    onSuccess: () => {
+      setTaken(null)
+      void client.invalidateQueries({ queryKey: ['supplies'] })
+      void client.invalidateQueries({ queryKey: ['supply-history'] })
+    },
+  })
+  useEffect(() => {
+    if (!taken) return
+    const t = setTimeout(() => setTaken(null), 8000)
+    return () => clearTimeout(t)
+  }, [taken])
   const samples = useMutation({
     mutationFn: () => unwrap(api.POST('/api/supplies/samples')),
     onSuccess: () => client.invalidateQueries({ queryKey: ['supplies'] }),
@@ -97,6 +115,13 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
         {all.length > 0 && shown.length === 0 && <p className="hint">Ничего не нашли.</p>}
         {samples.data && <p className="tone-ok" role="status">{samples.data.added ? `Добавлено материалов: ${samples.data.added}` : 'Типовой набор уже на складе'}</p>}
         {take.error && <p className="error" role="alert">{take.error.fieldErrors.delta ?? take.error.message}</p>}
+        {taken && (
+          <div className="undo" role="status">
+            <span>Списано 1 {taken.unit}: {taken.name}</span>
+            <button type="button" className="btn small" disabled={giveBack.isPending} onClick={() => giveBack.mutate(taken)}>Вернуть</button>
+          </div>
+        )}
+        {giveBack.error && <p className="error" role="alert">{giveBack.error.message}</p>}
         {shown.length > 0 && (
           <table className="table" aria-label="Материалы">
             <thead>

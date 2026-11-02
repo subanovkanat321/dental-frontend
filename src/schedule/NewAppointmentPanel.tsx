@@ -132,9 +132,13 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           comment: comment.trim() || undefined,
         },
       }))
-      // «Хочет раньше»: запись есть, а освободится время раньше — предложим (лист ожидания)
+      // «Хочет раньше»: запись есть, а освободится время раньше — предложим (лист ожидания).
+      // Запись уже создана — не проваливаем её, но и не молчим: скажем, что в лист не попал
       if (wantsEarlier) {
-        await unwrap(api.POST('/api/waitlist', { body: { patientId: p.id!, doctorId, durationMinutes: duration } })).catch(() => undefined)
+        await unwrap(api.POST('/api/waitlist', { body: { patientId: p.id!, doctorId, durationMinutes: duration } })).catch((error: unknown) => {
+          window.alert(`Запись создана, но в лист ожидания пациент не попал${error instanceof Error && error.message ? `: ${error.message}` : ''}.`
+            + ' Добавьте его из карточки приёма — «В лист ожидания».')
+        })
       }
       return created
     },

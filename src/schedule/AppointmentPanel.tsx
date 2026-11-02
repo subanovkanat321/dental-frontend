@@ -78,6 +78,17 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     },
   })
 
+  // Удалить насовсем — деньги приёма исчезнут из «Кассы» и отчётов: называем суммы в вопросе
+  const money = [
+    a.paidSom ? `оплата ${somText(a.paidSom)}` : null,
+    a.debtSom ? `долг ${somText(a.debtSom)}` : null,
+    a.paidSom == null && a.chargeSom ? `счёт на кассу ${somText(a.chargeSom)}` : null,
+    a.depositStatus === 'RECEIVED' && a.depositSom && !a.paidSom ? `предоплата ${somText(a.depositSom)}` : null,
+  ].filter(Boolean)
+  const removeQuestion = money.length
+    ? `Удалить запись насовсем? Вместе с ней исчезнут ${money.join(', ')} — из «Кассы», отчёта и зарплаты. Для обычной отмены есть «Отменить запись».`
+    : 'Удалить запись насовсем? Для обычной отмены есть «Отменить запись».'
+
   const setStatus = (status: Status, opts: { question?: string; undo?: string } = {}) => {
     if (opts.question && !window.confirm(opts.question)) return
     const previous = a.status as Status
@@ -221,7 +232,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
               {/* Удалить насовсем (ошибочная или тестовая запись) — только админ; для отмены есть «Отменить» */}
               {me.admin && (
                 <button type="button" className="btn danger" disabled={remove.isPending}
-                  onClick={() => window.confirm('Удалить запись насовсем? Для обычной отмены есть «Отменить запись».') && remove.mutate()}>Удалить запись</button>
+                  onClick={() => window.confirm(removeQuestion) && remove.mutate()}>Удалить запись</button>
               )}
             </div>
           )}

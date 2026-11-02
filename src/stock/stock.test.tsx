@@ -129,6 +129,13 @@ test('«−1» в списке списывает одну штуку; «Рас�
   expect(await screen.findByText('11 уп')).toBeInTheDocument()
   expect(moves).toEqual([{ delta: -1 }])
   expect(screen.getByText(/добавить типовой набор/)).toBeInTheDocument()
+  // Списали по ошибке — «Вернуть» сразу под рукой: пересчёт +1
+  const undo = screen.getByRole('status')
+  expect(undo).toHaveTextContent('Списано 1 уп: Перчатки')
+  await userEvent.click(within(undo).getByRole('button', { name: 'Вернуть' }))
+  expect(await screen.findByText('12 уп')).toBeInTheDocument()
+  expect(moves).toEqual([{ delta: -1 }, { delta: 1, reason: 'CORRECTION' }])
+  expect(screen.queryByText(/Списано 1 уп/)).not.toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('button', { name: 'Расходы на склад' }))
   const block = await screen.findByRole('region', { name: 'Расходы на склад' })
