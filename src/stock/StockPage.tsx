@@ -6,6 +6,8 @@ import { shortDate } from '../lib/time'
 import { clinicRequest } from '../settings/clinicUpdate'
 import { SpendingBlock } from './Spending'
 import { NewSupplyPanel, SupplyPanel } from './SupplyPanel'
+import { stickyHead } from '../layout/stickyHead'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -76,7 +78,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   return (
     <div className={side ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
-        <header className="toolbar">
+        <header ref={stickyHead} className="toolbar sticky-head">
           <h1>Склад</h1>
           <input type="search" className="search" aria-label="Поиск материала" placeholder="Название" value={query}
             onChange={(e) => setQuery(e.target.value)} />
@@ -103,16 +105,17 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
         {supplies.isPending && <p className="hint">Загрузка…</p>}
         {supplies.error && <p className="error">{supplies.error.message}</p>}
         {supplies.isSuccess && all.length === 0 && (
-          <div className="empty">
-            <p>Склад пуст. Добавьте материалы по одному или начните с типового набора — потом поправите количество.</p>
+          <EmptyState icon="📦" title="Склад пуст." action={(
             <button type="button" className="btn" disabled={samples.isPending} onClick={() => samples.mutate()}>Добавить типовой набор</button>
-            {samples.error && <p className="error">{samples.error.message}</p>}
-          </div>
+          )}>
+            Добавьте материалы по одному или начните с типового набора — потом поправите количество.
+            {samples.error && <span className="error"> {samples.error.message}</span>}
+          </EmptyState>
         )}
         {supplies.isSuccess && all.length > 0 && all.length < 10 && (
           <p className="hint">Материалов пока мало — <button type="button" className="link" disabled={samples.isPending} onClick={() => samples.mutate()}>добавить типовой набор</button> (повторы не появятся).</p>
         )}
-        {all.length > 0 && shown.length === 0 && <p className="hint">Ничего не нашли.</p>}
+        {all.length > 0 && shown.length === 0 && <EmptyState compact icon="🔍" title="Ничего не нашли." />}
         {samples.data && <p className="tone-ok" role="status">{samples.data.added ? `Добавлено материалов: ${samples.data.added}` : 'Типовой набор уже на складе'}</p>}
         {take.error && <p className="error" role="alert">{take.error.fieldErrors.delta ?? take.error.message}</p>}
         {taken && (

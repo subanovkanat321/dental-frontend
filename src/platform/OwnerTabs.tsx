@@ -8,6 +8,7 @@ import { shortDate } from '../lib/time'
 import { SaveBar } from '../layout/SaveBar'
 import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
+import { EmptyState } from '../layout/EmptyState'
 
 type Version = Schemas['AgreementsVersion']
 
@@ -45,7 +46,7 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
                 })}
               </tbody>
             </table>
-          ) : <p className="hint">Обращений пока нет.</p>}
+          ) : <EmptyState icon="💬" title="Обращений пока нет." />}
         </section>
       </section>
       {opened != null && <TicketPanel key={opened} id={opened} platform onClose={close} />}

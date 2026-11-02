@@ -5,6 +5,9 @@ import { api, ApiError, staticJson, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { addDays, dayTitle, monthRange, todayIn, weekLabel } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
+import { EmptyState } from '../layout/EmptyState'
+import { DateInput } from '../layout/DateInput'
+import { MonthPicker } from '../layout/MonthPicker'
 
 type Post = Schemas['ContentPostsPost']
 type Draft = Schemas['ContentPostsDraft']
@@ -16,19 +19,6 @@ const STATUS: Record<NonNullable<Post['status']>, [string, string]> = {
 }
 /** Готовый план — статичный файл из сборки фронта (public/content/plan.json). */
 const PLAN_URL = '/content/plan.json'
-
-const MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' })
-
-function monthTitle(month: string): string {
-  const text = MONTH.format(new Date(`${month}-01T00:00:00Z`)).replace(/ г\.?$/, '')
-  return text.charAt(0).toUpperCase() + text.slice(1)
-}
-
-function shiftMonth(month: string, by: number): string {
-  const [y, m] = month.split('-').map(Number)
-  const d = new Date(Date.UTC(y!, m! - 1 + by, 1))
-  return d.toISOString().slice(0, 7)
-}
 
 /** Понедельник недели этого дня. */
 function weekStart(date: string): string {
@@ -72,11 +62,12 @@ export function ContentTab() {
   return (
     <>
       <section className="card-block">
-        <div className="toolbar content-month">
-          <button type="button" className="btn ghost" aria-label="Прошлый месяц" onClick={() => setMonth(shiftMonth(month, -1))}>‹</button>
-          <h2>{monthTitle(month)}</h2>
-          <button type="button" className="btn ghost" aria-label="Следующий месяц" onClick={() => setMonth(shiftMonth(month, 1))}>›</button>
-          {month !== today.slice(0, 7) && <button type="button" className="btn small" onClick={() => setMonth(today.slice(0, 7))}>Сегодня</button>}
+        <div className="block-head content-month">
+          <h2>Контент-план</h2>
+          <span className="actions">
+            {month !== today.slice(0, 7) && <button type="button" className="btn small" onClick={() => setMonth(today.slice(0, 7))}>Этот месяц</button>}
+            <MonthPicker label="Месяц контент-плана" value={month} onChange={setMonth} />
+          </span>
         </div>
         <p className="hint">Пост дня бот пришлёт вам в 10:00: картинки, текст для копирования и что снять. В 19:00 напомнит, если не отмечен.</p>
         <div className="actions">
@@ -94,7 +85,7 @@ export function ContentTab() {
       <section className="card-block" aria-label="Контент-план">
         {list.error && <p className="error">{list.error.message}</p>}
         {list.isPending ? <p className="hint">Загрузка…</p> : posts.length === 0 ? (
-          <p className="hint">В этом месяце постов нет. Добавьте пост или загрузите готовый план.</p>
+          <EmptyState icon="🗓️" title="В этом месяце постов нет.">Добавьте пост или загрузите готовый план.</EmptyState>
         ) : (
           <>
             <p className="hint">Постов: {posts.length} · ждут публикации: {planned}</p>
@@ -208,7 +199,7 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
     <section className="card-block">
       <h2>{label}</h2>
       <form className="form narrow" aria-label={label} onSubmit={submit}>
-        <label className="field"><span>День</span><input type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></label>
+        <label className="field"><span>День</span><DateInput weekday required value={date} onChange={(e) => setDate(e.target.value)} /></label>
         {errors.date && <p className="error">{errors.date}</p>}
         <label className="field"><span>Тип</span>
           <select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>

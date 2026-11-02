@@ -8,6 +8,7 @@ import { useBack } from '../lib/back'
 import { openSettings } from '../lib/route'
 import { SettingsTab } from './SettingsTab'
 import { TariffsTab } from './TariffsTab'
+import { stickyHead } from '../layout/stickyHead'
 
 type Me = Schemas['BookingViewsMe']
 type Tab = 'clinics' | 'tickets' | 'broadcast' | 'agreements' | 'tariffs' | 'content' | 'settings'
@@ -25,7 +26,7 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
   const fromSettings = Boolean(me.doctor) && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
   useBack(fromSettings ? () => openSettings(null) : null)
   const header = (
-    <header className="toolbar">
+    <header ref={stickyHead} className="toolbar sticky-head">
       {fromSettings && <button type="button" className="btn ghost back" onClick={() => openSettings(null)}>‹ Настройки</button>}
       <h1>Платформа</h1>
       <div className="segments tabs" role="tablist" aria-label="Разделы платформы">

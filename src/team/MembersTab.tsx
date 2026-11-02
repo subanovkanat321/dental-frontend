@@ -6,6 +6,7 @@ import { SaveBar } from '../layout/SaveBar'
 import { useUnsaved } from '../lib/unsaved'
 import { InviteLink } from './InviteLink'
 import { ROLE_TEXT } from './texts'
+import { EmptyState } from '../layout/EmptyState'
 
 type Role = NonNullable<Schemas['StaffMembersControllerInviteRequest']['role']>
 type Me = Schemas['BookingViewsMe']
@@ -121,7 +122,7 @@ export function MembersTab({ me }: { me: Me }) {
               ))}
             </tbody>
           </table>
-        ) : <p className="hint">Сотрудников пока нет.</p>}
+        ) : <EmptyState compact icon="👥" title="Сотрудников пока нет." />}
         {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
       </section>
 

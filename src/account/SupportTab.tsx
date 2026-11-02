@@ -8,6 +8,7 @@ import { DeveloperContacts } from './Contacts'
 import { ShotPicker, TicketPanel } from './TicketThread'
 import { ticketForm } from './tickets'
 import { TICKET_KINDS, TICKET_STATUS } from './texts'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Thread = Schemas['SupportTicketsThread']
@@ -70,7 +71,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket }: {
                 })}
               </tbody>
             </table>
-          ) : <p className="hint">Пока нет обращений.</p>}
+          ) : <EmptyState compact icon="💬" title="Пока нет обращений." />}
         </section>
         <section className="card-block">
           <h2>Поддержка клиники</h2>

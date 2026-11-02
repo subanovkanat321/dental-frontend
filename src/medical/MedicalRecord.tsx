@@ -7,6 +7,8 @@ import { shortDate, somText, todayIn } from '../lib/time'
 import { AnamnesisBlock } from './Anamnesis'
 import { PlanDocs } from '../print/PlanDocs'
 import { resizePhoto } from './thumb'
+import { EmptyState } from '../layout/EmptyState'
+import { DateInput } from '../layout/DateInput'
 
 type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
@@ -417,13 +419,13 @@ function Files({ patientId }: { patientId: number }) {
             </li>
           ))}
         </ul>
-      ) : files.isSuccess ? <p className="hint">Снимков пока нет.</p> : null}
+      ) : files.isSuccess ? <EmptyState compact icon="🩻" title="Снимков пока нет." /> : null}
       <div className="upload">
         <div className="segments" role="group" aria-label="Что загружаем">
           {KINDS.map(([k, name]) => <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)}>{name}</button>)}
         </div>
         <input aria-label="Подпись" placeholder="Подпись — необязательно" maxLength={200} value={caption} onChange={(e) => setCaption(e.target.value)} />
-        <input aria-label="Дата снимка" type="date" value={takenOn} max={todayIn()} onChange={(e) => setTakenOn(e.target.value)} />
+        <DateInput aria-label="Дата снимка" value={takenOn} max={todayIn()} onChange={(e) => setTakenOn(e.target.value)} />
         <label className="btn primary">
           📷 Сфотографировать
           <input type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Сфотографировать снимок"

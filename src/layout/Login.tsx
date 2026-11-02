@@ -68,6 +68,7 @@ export function Login() {
   }
   return (
     <div className="center login">
+      <div className="login-card">
       <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
       <h1>Вход для клиники</h1>
       <p className="hint">Врачи, регистратура и администраторы. Входите тем же Telegram, что привязан в «Настройки → Врачи» или «Сотрудники».</p>
@@ -90,6 +91,7 @@ export function Login() {
           <a href={`https://t.me/${bot.data.username}`} target="_blank" rel="noopener noreferrer">@{bot.data.username}</a> → кнопка «Открыть» внизу чата.</p>
       )}
       <p className="hint small">Пациенты записываются через бота в Telegram: <a href="/clinics">выбрать клинику</a></p>
+      </div>
     </div>
   )
 }

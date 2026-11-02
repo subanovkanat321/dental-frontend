@@ -1096,6 +1096,36 @@ tr.clickable .row-link:not(.open-link)::after { content: " ›"; content: " ›"
   .mp-pop { left: 0; transform: none; }
 }
 
+/* Пустое состояние: значок на плашке, фраза, подсказка, действие (layout/EmptyState.tsx) */
+.empty-state { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 22px 20px; border: 1px dashed var(--line-strong); border-radius: var(--radius); background: var(--card); }
+.empty-ico { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 12px; background: var(--accent-soft); font-size: 1.5rem; }
+.empty-body { flex: 1 1 240px; display: grid; gap: 2px; min-width: 0; }
+.empty-body p { margin: 0; }
+.empty-title { font-weight: 600; }
+.empty-action { flex: none; }
+.empty-state.compact { padding: 12px 14px; gap: 10px 12px; border-style: solid; border-color: transparent; background: var(--sunken); }
+.empty-state.compact .empty-ico { width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; background: var(--card); }
+
+/* Напоминания админу: спокойная плашка со значком, «Открыть ›» и ✕ «скрыть до конца сеанса» */
+.notice { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 12px; border: 1px solid color-mix(in srgb, var(--wait-ink) 22%, transparent); border-left-width: 1px; cursor: default; }
+.notice.tone-wait { background: color-mix(in srgb, var(--wait-bg) 38%, var(--card)); color: var(--text); }
+.notice.tone-bad { background: color-mix(in srgb, var(--bad-bg) 55%, var(--card)); color: var(--text); border-color: color-mix(in srgb, var(--bad-ink) 30%, transparent); }
+.notice-ico { flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--wait-ink); color: var(--card); font: 700 .78rem/1 var(--display); }
+.notice.tone-bad .notice-ico { background: var(--bad-ink); }
+.notice-text { flex: 1; min-width: 0; padding: 4px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.notice-text:hover .notice-open { text-decoration: underline; }
+.notice-open { margin-left: 6px; color: var(--link); font-weight: 600; white-space: nowrap; }
+.notice-close { flex: none; width: 30px; height: 30px; border: 0; border-radius: var(--r-md); background: none; color: var(--hint); font: inherit; cursor: pointer; }
+.notice-close:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+.notice :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@media (max-width: 760px) { .notice-open { display: none; } .notice-close { width: 40px; height: 40px; } }
+
+/* Таблицы: углы скругляет clip — шапка таблицы может прилипать (overflow: hidden её держал) */
+.table { overflow: clip; }
+.table th { z-index: 3; }
+.table th:first-child { border-top-left-radius: var(--radius); }
+.table th:last-child { border-top-right-radius: var(--radius); }
+
 /* Расписание на компьютере: сводка дня справа (schedule/DaySummary.tsx) */
 .schedule.with-summary { grid-template-columns: minmax(0, 1fr) 300px; }
 .day-summary { position: sticky; top: 16px; align-self: start; display: grid; gap: 12px; max-height: calc(100vh - 32px); overflow: auto; padding: 1px; }
@@ -1152,3 +1182,55 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .day-switch { align-items: center; }
 /* Сетка — до низа окна (--grid-top ставит SchedulePage) */
 @media (min-width: 761px) { .grid { max-height: max(420px, calc(100dvh - var(--grid-top, 150px) - 16px)); } }
+
+/* Шапка раздела на компьютере прилипает к верху (layout/stickyHead.ts), под ней — шапки таблиц */
+@media (min-width: 761px) {
+  .toolbar { min-height: 44px; }
+  .toolbar.sticky-head {
+    position: sticky; top: 0; z-index: 12; margin: -16px 0 12px -20px; padding: 16px 0 12px 20px;
+    background: var(--page); transition: box-shadow .15s ease-out;
+  }
+  .schedule:not(.with-panel) .toolbar.sticky-head { margin-right: -20px; padding-right: 20px; }
+  .toolbar.sticky-head.stuck { box-shadow: 0 1px 0 var(--separator), 0 8px 16px -10px rgba(15, 42, 48, .22); }
+  .schedule-main .table th { top: var(--head-h, 0px); }
+  /* «Пациенты»: заголовок, вкладки и «Новый пациент» в первой строке, поиск и фильтры — во второй */
+  .patients-head .head-action { order: 1; margin-left: auto; }
+  .head-filters { order: 2; flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .head-filters .search { flex: 0 1 380px; }
+  .head-filters select { min-width: 200px; }
+  /* «Касса»: вкладки сразу за заголовком, «Чья касса» — справа */
+  .cash > .toolbar select { order: 3; margin-left: auto; min-width: 200px; }
+}
+@media (max-width: 760px) {
+  .head-filters { display: contents; }
+  .patients-head .head-filters .hint { order: 2; }
+}
+@media (min-width: 761px) { .cash > .toolbar.sticky-head { margin-bottom: 0; } }
+
+/* Ширина: формы и длинный текст не растягиваются на 1900px */
+.settings-item { max-width: 1280px; }
+.agreement-text, .faq, .card-block.guide, .privacy-text { max-width: 860px; }
+.card-block > p.hint, .settings-item .card-block > p { max-width: 920px; }
+.medical { max-width: 1480px; }
+.cash > p.hint, .cash > .hint { max-width: 920px; margin: 0; }
+/* Карточки и блоки — одинаковые отступы; заголовок раздела и действия на одной линии */
+.card-block { padding: 18px 20px; }
+.block-head { min-height: 36px; }
+@media (max-width: 760px) { .card-block { padding: 12px; } }
+.money-cell { gap: 4px; }
+.money-cell p { margin: 0; }
+.money-cell .total { margin: 2px 0; }
+
+/* Склад: шапка одной строкой, «Свой склад у каждого врача» — тихой строкой под ней */
+.stock-mode { padding: 8px 12px; border-radius: var(--r-md); background: var(--sunken); }
+
+/* Вход на компьютере: карточка по центру экрана; телефон — как был, без рамки */
+@media (min-width: 761px) {
+  .center.login { max-width: none; width: 100%; min-height: 100vh; margin: 0; padding: 24px; align-content: center;
+    background: radial-gradient(circle at 50% 0%, var(--accent-soft), transparent 55%), var(--page); }
+  .login-card { width: 440px; display: grid; gap: 12px; justify-items: center; padding: 32px 32px 24px; border: 1px solid var(--separator);
+    border-radius: 16px; background: var(--card); box-shadow: 0 2px 4px rgba(15, 42, 48, .05), 0 16px 40px rgba(15, 42, 48, .08); }
+  .login-card p { margin: 0; }
+}
+.login-card { display: contents; }
+@media (min-width: 761px) { .login-card { display: grid; } }

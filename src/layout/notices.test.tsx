@@ -32,3 +32,22 @@ test('врачу напоминаний нет', async () => {
   await screen.findByRole('navigation', { name: 'Разделы' })
   expect(screen.queryByText(/Приложение:/)).not.toBeInTheDocument()
 })
+
+test('напоминание скрывается ✕ до конца сеанса, новое — видно', async () => {
+  sessionStorage.clear()
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+    http.get('*/api/clinic/billing', () => HttpResponse.json({ state: 'ACTIVE', paidUntil: '2026-11-03', daysLeft: 3 })),
+    http.get('*/api/clinic/agreement', () => HttpResponse.json({ current: { version: 2 }, last: { version: 1 }, scans: [] })),
+  )
+  renderApp()
+  await screen.findByRole('button', { name: /Договор с платформой обновился/ })
+  const close = screen.getAllByRole('button', { name: 'Скрыть напоминание до конца сеанса' })
+  expect(close).toHaveLength(2)
+  await userEvent.click(close[1]!)
+  expect(screen.queryByRole('button', { name: /Договор с платформой обновился/ })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Приложение: оплачено до/ })).toBeInTheDocument()
+  expect(JSON.parse(sessionStorage.getItem('crm.notices.hidden') ?? '[]')).toEqual(['agreement:2'])
+  sessionStorage.clear()
+})

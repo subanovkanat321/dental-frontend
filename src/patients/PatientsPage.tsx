@@ -10,6 +10,8 @@ import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
 import { isAssistant } from '../lib/roles'
+import { stickyHead } from '../layout/stickyHead'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -112,7 +114,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
   return (
     <div className={selected ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
-        <header className="toolbar">
+        <header ref={stickyHead} className="toolbar sticky-head patients-head">
           <h1>Пациенты</h1>
           <div className="segments tabs" role="tablist" aria-label="Списки пациентов">
             {([['all', 'Все'], ['waitlist', `Лист ожидания${waitlist.data?.length ? ` · ${waitlist.data.length}` : ''}`], ['recall', 'Профосмотр']] as const)
@@ -122,18 +124,21 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
           </div>
           {tab === 'all' && (
             <>
-              <input type="search" className="search" aria-label="Поиск пациента" placeholder="Имя или номер телефона"
-                value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
-              {doctors.length > 1 && (
-                <select aria-label="Чьи пациенты" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
-                  <option value="">Все врачи</option>
-                  {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>)}
-                </select>
-              )}
-              <button type="button" className="btn" onClick={() => setSelected('new')}>＋ Новый пациент</button>
-              <span className="hint">
-                {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}${doctorId != null && !local.length && sorted.length ? ' — по всей клинике' : ''}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
-              </span>
+              {/* На компьютере: строка поиска и фильтров под заголовком, «Новый пациент» — справа от вкладок */}
+              <div className="head-filters">
+                <input type="search" className="search" aria-label="Поиск пациента" placeholder="Имя или номер телефона"
+                  value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
+                {doctors.length > 1 && (
+                  <select aria-label="Чьи пациенты" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
+                    <option value="">Все врачи</option>
+                    {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>)}
+                  </select>
+                )}
+                <span className="hint">
+                  {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}${doctorId != null && !local.length && sorted.length ? ' — по всей клинике' : ''}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
+                </span>
+              </div>
+              <button type="button" className="btn primary head-action" onClick={() => setSelected('new')}>＋ Новый пациент</button>
             </>
           )}
         </header>
@@ -141,7 +146,9 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
-          <p className="hint">{text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}».`) : doctorId != null ? 'У этого врача пока не было пациентов.' : 'Пациентов пока нет — они появятся с первой записью.'}</p>
+          <EmptyState icon={text ? '🔍' : '🧑‍🤝‍🧑'} title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}».`) : doctorId != null ? 'У этого врача пока не было пациентов.' : 'Пациентов пока нет — они появятся с первой записью.'}>
+            {text && !remote.isFetching ? 'Проверьте написание или ищите по последним цифрам телефона.' : undefined}
+          </EmptyState>
         )}
         {tab === 'all' && sorted.length > 0 && (
           <table className="table">

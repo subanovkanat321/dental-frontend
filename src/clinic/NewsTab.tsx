@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
+import { EmptyState } from '../layout/EmptyState'
 
 /**
  * «Новости для пациентов»: видны всем пациентам в приложении; в бот приходят тем, кто подписался.
@@ -58,7 +59,7 @@ export function NewsTab() {
               </li>
             ))}
           </ul>
-        ) : <p className="hint">Новостей пока нет.</p>}
+        ) : <EmptyState compact icon="📰" title="Новостей пока нет." />}
         {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
       </section>
     </>

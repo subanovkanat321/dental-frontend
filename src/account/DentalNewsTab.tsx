@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -37,7 +38,7 @@ export function DentalNewsTab({ me }: { me: Me }) {
               </li>
             ))}
           </ul>
-        ) : <p className="hint">Статей пока нет — сервер забирает ленты раз в 3 часа.</p>}
+        ) : <EmptyState compact icon="📚" title="Статей пока нет.">Сервер забирает ленты раз в 3 часа.</EmptyState>}
       </section>
       {me.owner && <Feeds />}
     </>

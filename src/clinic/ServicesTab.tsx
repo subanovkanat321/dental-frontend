@@ -9,6 +9,7 @@ import { canEditServices } from '../lib/roles'
 import { ServiceMemo } from './MemosTab'
 import { ServiceSupplies } from './ServiceSupplies'
 import { groupByCategory, priceText, SERVICE_CATEGORIES } from './services'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Service = Schemas['ServiceTypeView']
@@ -75,7 +76,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
               ))}
             </tbody>
           </table>
-        ) : <p className="hint">Услуг пока нет — добавьте свои или отметьте типовые в справочнике.</p>}
+        ) : <EmptyState icon="🦷" title="Услуг пока нет.">Добавьте свои или отметьте типовые в справочнике.</EmptyState>}
       </section>
       </section>
       {opened === 'new' && <ServicePanel me={me} all={services} onClose={close} />}

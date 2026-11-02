@@ -12,6 +12,9 @@ import { ExpensesTab, ReportTab, StatsTab } from './MoreTabs'
 import { PaymentsTable } from './PaymentsTable'
 import { SortTh } from '../layout/SortTh'
 import { useSort } from '../lib/useSort'
+import { stickyHead } from '../layout/stickyHead'
+import { EmptyState } from '../layout/EmptyState'
+import { DateInput } from '../layout/DateInput'
 
 type Me = Schemas['BookingViewsMe']
 type Debt = Schemas['PaymentQueryDebt']
@@ -108,7 +111,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
   return (
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main cash">
-        <header className="toolbar">
+        <header ref={stickyHead} className="toolbar sticky-head">
           <h1>Касса</h1>
           {seesAll && doctors.length > 1 && (
             <select aria-label="Чья касса" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
@@ -153,7 +156,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
             {period === 'day' && (
               <div className="day-pick">
                 <label className="field"><span>День</span>
-                  <input type="date" value={day} max={todayIn()} onChange={(e) => e.target.value && setDay(e.target.value)} /></label>
+                  <DateInput weekday value={day} max={todayIn()} onChange={(e) => e.target.value && setDay(e.target.value)} /></label>
                 <div className="day-quick" role="group" aria-label="Быстро">
                   <button type="button" className="chip" aria-pressed={day === todayIn()} onClick={() => setDay(todayIn())}>Сегодня</button>
                   <button type="button" className="chip" aria-pressed={day === addDays(todayIn(), -1)} onClick={() => setDay(addDays(todayIn(), -1))}>Вчера</button>
@@ -163,10 +166,10 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
             {period === 'custom' && (
               <div className="row dates">
                 <label className="field"><span>С</span>
-                  <input type="date" value={custom.from} max={custom.to} onChange={(e) => e.target.value && setCustom({ ...custom, from: e.target.value })} />
+                  <DateInput value={custom.from} max={custom.to} onChange={(e) => e.target.value && setCustom({ ...custom, from: e.target.value })} />
                 </label>
                 <label className="field"><span>По</span>
-                  <input type="date" value={custom.to} min={custom.from} onChange={(e) => e.target.value && setCustom({ ...custom, to: e.target.value })} />
+                  <DateInput value={custom.to} min={custom.from} onChange={(e) => e.target.value && setCustom({ ...custom, to: e.target.value })} />
                 </label>
               </div>
             )}
@@ -281,7 +284,7 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
   const { sorted, sort, toggle } = useSort<Debt, DebtKey>(filtered, value, { key: 'when', desc: true })
   if (pending) return <p className="hint">Загрузка…</p>
   if (error) return <p className="error">{error}</p>
-  if (!rows?.length) return <p className="hint">{empty}</p>
+  if (!rows?.length) return <EmptyState compact icon={money === 'debtSom' ? '🤝' : '✅'} title={empty} />
   const today = todayIn()
   return (
     <>
@@ -318,7 +321,7 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
           ))}
         </tbody>
       </table>
-      {!sorted.length && <p className="hint">По поиску никого.</p>}
+      {!sorted.length && <EmptyState compact icon="🔍" title="По поиску никого." />}
     </>
   )
 }

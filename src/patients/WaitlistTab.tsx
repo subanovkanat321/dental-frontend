@@ -8,6 +8,7 @@ import { agoText, recallText, whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
 import { openLink } from '../lib/telegram'
 import { isAssistant } from '../lib/roles'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -28,7 +29,7 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
   if (list.isPending) return <p className="hint">Загрузка…</p>
   if (list.error) return <p className="error">{list.error.message}</p>
   if (!list.data.length) {
-    return <><WaitlistAdd me={me} /><p className="empty">Пока никто не ждёт.</p></>
+    return <><WaitlistAdd me={me} /><EmptyState icon="⏳" title="Пока никто не ждёт.">Добавьте пациента — когда освободится время, CRM подскажет, кого позвать.</EmptyState></>
   }
   return (
     <>
@@ -77,7 +78,7 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
 
   if (due.isPending) return <p className="hint">Загрузка…</p>
   if (due.error) return <p className="error">{due.error.message}</p>
-  if (!due.data.length) return <p className="empty">Звать некого — все записаны или были недавно.</p>
+  if (!due.data.length) return <EmptyState icon="🦷" title="Звать некого — все записаны или были недавно." />
   return (
     <table className="table" aria-label="Позвать на профосмотр">
       <thead><tr><th>Пациент</th><th>Телефон</th><th>Был</th><th>Позвали</th><th /></tr></thead>
