@@ -82,3 +82,25 @@ test('заметка о приёме у прошедшего приёма — с
   expect(await within(panel).findByText('Сохранено')).toBeInTheDocument()
   expect(saved).toEqual({ note: 'Пломба 36, контроль через полгода' })
 })
+
+test('SMS: кнопки нет, пока не включили «Напоминать SMS с этого телефона»; включили — «Сообщения» с коротким текстом', async () => {
+  const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  let panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  expect(within(panel).queryByRole('link', { name: 'Напомнить SMS' })).not.toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }))
+
+  localStorage.setItem('crm.sms', 'on')
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  const sms = within(panel).getByRole('link', { name: 'Напомнить SMS' })
+  const href = sms.getAttribute('href')!
+  expect(href).toMatch(/^sms:\+996\d+\?&body=/)
+  expect(decodeURIComponent(href)).toContain('Ответьте 1 — приду, 2 — перенести.')
+  expect(decodeURIComponent(href)).not.toContain('🦷')
+  sms.addEventListener('click', (e) => e.preventDefault())
+  await userEvent.click(sms)
+  await vi.waitFor(() => expect(calls).toEqual(['opened']))
+  localStorage.clear()
+})

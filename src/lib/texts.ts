@@ -58,6 +58,20 @@ export function freeSlotText(fullName: string, startAt: string, signature?: stri
 }
 
 /** Напоминание о приёме: «1 — приду, 2 — перенести»; без бота — ссылка на бота клиники. */
+/**
+ * То же напоминание для SMS — короче и без эмодзи: SMS кириллицей — 70 знаков на часть, каждая
+ * часть платная. Без ссылки на бота: у кого нет ни Telegram, ни WhatsApp, тому она не поможет.
+ */
+export function smsReminderText(a: { startAt: string; patient: { fullName?: string } }, signature?: string | null, now = new Date()): string {
+  return signed(`Здравствуйте, ${a.patient.fullName}! Напоминаем: ${whenText(a.startAt, now)} в ${timeOf(a.startAt)} `
+    + 'приём у стоматолога. Ответьте 1 — приду, 2 — перенести.', signature)
+}
+
+/** SMS с телефона сотрудника: открывается «Сообщения» с номером и текстом (форма ссылки — для iPhone и Android). */
+export function smsUrl(phone: string, text: string): string {
+  return `sms:+${phone}?&body=${encodeURIComponent(text)}`
+}
+
 export function reminderText(a: { startAt: string; patient: { fullName?: string; telegram?: boolean } },
   signature?: string | null, botUrl?: string | null, now = new Date()): string {
   const text = signed(`Здравствуйте, ${a.patient.fullName}! 👋 Напоминаем: ${whenText(a.startAt, now)} в ${timeOf(a.startAt)} `

@@ -8,6 +8,7 @@ import { telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
 import type { TeamTab } from '../team/TeamPage'
 import { isAssistant } from '../lib/roles'
+import { setSmsEnabled, smsEnabled } from '../lib/sms'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
 // код «Договора» или «Услуг» скачивается, только когда пункт открыли
@@ -132,12 +133,27 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
         </section>
       )}
       <Appearance />
+      <ThisPhone />
       {!telegram() && (
         <section className="settings-group">
           <button type="button" className="btn danger" onClick={() => void logout()}>Выйти</button>
         </section>
       )}
     </div>
+  )
+}
+
+/** «Этот телефон»: напоминать SMS с SIM-карты этого телефона — тем, у кого нет Telegram и WhatsApp. */
+function ThisPhone() {
+  const [sms, setSms] = useState(smsEnabled)
+  return (
+    <section className="settings-group" aria-label="Этот телефон">
+      <h2>📱 Этот телефон</h2>
+      <div className="card-block">
+        <label className="check"><input type="checkbox" checked={sms} onChange={(e) => { setSmsEnabled(e.target.checked); setSms(e.target.checked) }} /> Напоминать SMS с этого телефона</label>
+        <p className="hint">В карточке приёма появится «Напомнить SMS»: откроются «Сообщения» с готовым текстом — SMS уйдёт с SIM-карты этого телефона по вашему тарифу. Для пациентов без Telegram и WhatsApp.</p>
+      </div>
+    </section>
   )
 }
 
