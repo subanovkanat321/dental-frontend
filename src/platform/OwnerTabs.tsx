@@ -5,7 +5,9 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { TicketPanel } from '../account/TicketThread'
 import { agreementBlocks, TICKET_KINDS, TICKET_STATUS } from '../account/texts'
 import { shortDate } from '../lib/time'
+import { SaveBar } from '../layout/SaveBar'
 import { useClose } from '../lib/useClose'
+import { useDirty } from '../lib/unsaved'
 
 type Version = Schemas['AgreementsVersion']
 
@@ -176,16 +178,17 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
 }
 
 function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
-  useClose(onClose)
+  const close = useClose(onClose)
   const client = useQueryClient()
   const refresh = () => client.invalidateQueries({ queryKey: ['platform-agreements'] })
   const [title, setTitle] = useState(v.title ?? '')
   const [body, setBody] = useState(v.body ?? '')
   const [done, setDone] = useState('')
+  const { dirty, commit } = useDirty({ title, body })
   const save = useMutation<Version, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/agreements/{id}', { params: { path: { id: v.id! } }, body: { title, body } })),
     onSuccess: () => {
-      setDone('Сохранено')
+      commit()
       void refresh()
     },
   })
@@ -194,7 +197,11 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
       await unwrap(api.PUT('/api/platform/agreements/{id}', { params: { path: { id: v.id! } }, body: { title, body } }))
       return unwrap(api.POST('/api/platform/agreements/{id}/publish', { params: { path: { id: v.id! } } }))
     },
-    onSuccess: () => void refresh(),
+    onSuccess: () => {
+      // Публикация сохранила и текст
+      commit()
+      void refresh()
+    },
   })
   const pdf = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/platform/agreements/{id}/pdf/send', { params: { path: { id: v.id! } } })),
@@ -207,7 +214,7 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
       onClose()
     },
   })
-  const error = save.error ?? publish.error ?? pdf.error ?? remove.error
+  const error = publish.error ?? pdf.error ?? remove.error
   return (
     <aside className="panel wide" aria-label="Версия договора">
       <header className="panel-head">
@@ -215,7 +222,7 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
           <h2>Версия {v.version}{v.publishedAt ? '' : ' · не опубликована'}</h2>
           {v.publishedAt && <span className="hint">Опубликована {shortDate(v.publishedAt)} · подписали: {v.acceptances} · отпечаток {(v.sha256 ?? '').slice(0, 16)}…</span>}
         </div>
-        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>
       </header>
       {v.publishedAt ? (
         <div className="agreement-text">
@@ -224,16 +231,17 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
         </div>
       ) : (
         <div className="form">
-          <label className="field"><span>Название</span><input value={title} maxLength={200} onChange={(e) => { setDone(''); setTitle(e.target.value) }} /></label>
+          <label className="field"><span>Название</span><input value={title} maxLength={200} onChange={(e) => { setDone(''); save.reset(); setTitle(e.target.value) }} /></label>
           {save.error?.fieldErrors.title && <p className="error">{save.error.fieldErrors.title}</p>}
           <label className="field"><span>Текст договора</span>
-            <textarea className="agreement-edit" rows={18} value={body} onChange={(e) => { setDone(''); setBody(e.target.value) }} /></label>
+            <textarea className="agreement-edit" rows={18} value={body} onChange={(e) => { setDone(''); save.reset(); setBody(e.target.value) }} /></label>
           {save.error?.fieldErrors.body && <p className="error">{save.error.fieldErrors.body}</p>}
           <p className="hint">Разметка: «# » — заголовок, «## » — раздел, «- » — пункт, «**…**» — жирное. Подставляются сами: {'{{date}}'}, {'{{clinic.name}}'},
             {' {{clinic.inn}}'}, {'{{clinic.address}}'}, {'{{signer.name}}'}, {'{{signer.position}}'}, {'{{signer.basis}}'} — из формы клиники;
             {' {{platform.name}}'}, {'{{platform.hosting}}'}, {'{{platform.support}}'} — из «Сведений о платформе».</p>
+          <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="Черновик договора сохранён"
+            error={save.error && (save.error.fieldErrors.title ?? save.error.fieldErrors.body ?? save.error.message)} onSave={() => save.mutate()} />
           <div className="actions">
-            <button type="button" className="btn" disabled={save.isPending} onClick={() => save.mutate()}>Сохранить</button>
             <button type="button" className="btn primary" disabled={publish.isPending}
               onClick={() => window.confirm(`Опубликовать версию ${v.version}? Клиники увидят её и будут подписывать.`) && publish.mutate()}>Опубликовать — клиники увидят</button>
           </div>
@@ -241,7 +249,7 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
       )}
       <button type="button" className="btn" disabled={pdf.isPending} onClick={() => pdf.mutate()}>
         {v.publishedAt ? 'Пустой экземпляр — PDF в бот' : 'Как будет выглядеть — PDF в бот'}</button>
-      {error && !save.error?.fieldErrors.title && !save.error?.fieldErrors.body && <p className="error" role="alert">{error.message}</p>}
+      {error && <p className="error" role="alert">{error.message}</p>}
       {done && <p className="tone-ok" role="status">{done}</p>}
       <div className="danger-zone">
         {(v.acceptances ?? 0) > 0 && <p className="hint">Её подписали клиник: {v.acceptances} — отметки о подписи удалятся вместе с ней.</p>}

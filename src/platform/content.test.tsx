@@ -126,7 +126,9 @@ test('«＋ Добавить пост»: картинки по строкам, �
   await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Утро в клинике')
   await user.type(within(form).getByRole('textbox', { name: /Картинки/ }), 'https://x.example/a.png')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
-  expect(await within(form).findByText('картинка — адрес на сайте вида /content/…')).toBeInTheDocument()
+  // Ошибка поля — под полем и в полосе «Сохранить» (поле может быть выше, за краем экрана)
+  expect(await within(form).findByRole('alert')).toHaveTextContent('картинка — адрес на сайте вида /content/…')
+  expect(within(form).getAllByText('картинка — адрес на сайте вида /content/…')).toHaveLength(2)
 
   await user.clear(within(form).getByRole('textbox', { name: /Картинки/ }))
   await user.type(within(form).getByRole('textbox', { name: /Картинки/ }), '/content/a.png{Enter}{Enter} /content/b.png ')

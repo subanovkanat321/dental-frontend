@@ -63,7 +63,7 @@ test('«Памятки после процедур»: у какой услуги
   await userEvent.clear(text)
   await userEvent.type(text, 'Без кофе 2 дня.')
   await userEvent.click(within(panel).getByRole('button', { name: 'Сохранить' }))
-  expect(await within(panel).findByText('Сохранено')).toBeInTheDocument()
+  expect(await within(panel).findByText('Памятка сохранена')).toBeInTheDocument()
   expect(sent).toContainEqual({ id: 2, title: 'После отбеливания', body: 'Без кофе 2 дня.', active: true })
   await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }))
 

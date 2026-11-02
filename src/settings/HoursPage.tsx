@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
+import { useDirty } from '../lib/unsaved'
 import { HoursEditor } from '../team/HoursEditor'
 import { WEEK, type Weekday } from '../team/texts'
 import { clinicRequest } from './clinicUpdate'
@@ -48,11 +50,13 @@ function ClinicHours({ clinic: c, canEdit }: { clinic: Clinic; canEdit: boolean 
   const [start, setStart] = useState((c.workStart ?? '09:00').slice(0, 5))
   const [end, setEnd] = useState((c.workEnd ?? '18:00').slice(0, 5))
   const [days, setDays] = useState<Set<Weekday>>(new Set(c.workDays ?? WEEK.map(([code]) => code)))
+  const { dirty, commit } = useDirty({ start, end, days: WEEK.map(([code]) => code).filter((code) => days.has(code)) })
   const save = useMutation<Clinic, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/clinic', {
       body: clinicRequest(c, { workStart: start, workEnd: end, workDays: WEEK.map(([code]) => code).filter((code) => days.has(code)) }),
     })),
     onSuccess: (saved) => {
+      commit()
       client.setQueryData(['clinic'], saved)
       void client.invalidateQueries({ queryKey: ['me'] })
     },
@@ -79,9 +83,8 @@ function ClinicHours({ clinic: c, canEdit }: { clinic: Clinic; canEdit: boolean 
           </div>
         </div>
       </fieldset>
-      {save.error && <p className="error" role="alert">{save.error.fieldErrors.workEnd ?? save.error.fieldErrors.workDays ?? save.error.message}</p>}
-      {save.isSuccess && <p className="tone-ok" role="status">Часы клиники сохранены</p>}
-      {canEdit && <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить часы клиники</button>}
+      {canEdit && <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label="Сохранить часы клиники" savedText="Часы клиники сохранены"
+        error={save.error && (save.error.fieldErrors.workEnd ?? save.error.fieldErrors.workDays ?? save.error.message)} />}
     </form>
   )
 }

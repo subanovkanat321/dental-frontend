@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, staticJson, unwrap, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
 import { addDays, dayTitle, monthRange, todayIn, weekLabel } from '../lib/time'
+import { useDirty } from '../lib/unsaved'
 
 type Post = Schemas['ContentPostsPost']
 type Draft = Schemas['ContentPostsDraft']
@@ -42,6 +44,8 @@ export function ContentTab() {
   const today = todayIn()
   const [month, setMonth] = useState(today.slice(0, 7))
   const [editing, setEditing] = useState<Post | 'new' | null>(null)
+  // Форма поста после «Сохранить» закрывается — подтверждение показывает план
+  const [postSaved, setPostSaved] = useState(false)
   const range = monthRange(month)
   const list = useQuery({
     queryKey: ['platform-content', month],
@@ -76,7 +80,7 @@ export function ContentTab() {
         </div>
         <p className="hint">Пост дня бот пришлёт вам в 10:00: картинки, текст для копирования и что снять. В 19:00 напомнит, если не отмечен.</p>
         <div className="actions">
-          <button type="button" className="btn primary" onClick={() => setEditing('new')}>＋ Добавить пост</button>
+          <button type="button" className="btn primary" onClick={() => { setPostSaved(false); setEditing('new') }}>＋ Добавить пост</button>
           <button type="button" className="btn" disabled={load.isPending} onClick={() => load.mutate()}>Загрузить готовый план</button>
         </div>
         {load.isSuccess && (load.data == null
@@ -85,7 +89,8 @@ export function ContentTab() {
         {load.error && <p className="error" role="alert">{load.error.message}</p>}
       </section>
       {editing && <PostForm key={editing === 'new' ? 'new' : editing.id} post={editing === 'new' ? null : editing}
-        today={today} onDone={() => { setEditing(null); void refresh() }} onCancel={() => setEditing(null)} />}
+        today={today} onDone={() => { setEditing(null); setPostSaved(true); void refresh() }} onCancel={() => setEditing(null)} />}
+      <SaveBar dirty={false} saving={false} saved={postSaved} savedText="Пост сохранён" />
       <section className="card-block" aria-label="Контент-план">
         {list.error && <p className="error">{list.error.message}</p>}
         {list.isPending ? <p className="hint">Загрузка…</p> : posts.length === 0 ? (
@@ -96,7 +101,7 @@ export function ContentTab() {
             {[...weeks.entries()].map(([start, items]) => (
               <section key={start} className="content-week" aria-label={`Неделя ${weekLabel(start)}`}>
                 <h3>{weekLabel(start)}</h3>
-                {items.map((p) => <PostCard key={p.id} post={p} today={today} onEdit={() => setEditing(p)} onChanged={() => void refresh()} />)}
+                {items.map((p) => <PostCard key={p.id} post={p} today={today} onEdit={() => { setPostSaved(false); setEditing(p) }} onChanged={() => void refresh()} />)}
               </section>
             ))}
           </>
@@ -183,6 +188,7 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
   const [caption, setCaption] = useState(post?.caption ?? '')
   const [images, setImages] = useState((post?.images ?? []).join('\n'))
   const [note, setNote] = useState(post?.note ?? '')
+  const { dirty } = useDirty({ date, kind, title, caption, images, note })
   const save = useMutation<Post, ApiError>({
     mutationFn: () => {
       const body: Draft = { date, kind, title, caption, note, images: images.split('\n').map((s) => s.trim()).filter(Boolean) }
@@ -219,11 +225,10 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
         <label className="field"><span>{kind === 'REELS' ? 'Что снять' : 'Заметка для себя'}</span>
           <textarea rows={2} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {errors.note && <p className="error">{errors.note}</p>}
-        {save.error && Object.keys(errors).length === 0 && <p className="error" role="alert">{save.error.message}</p>}
         <div className="actions">
-          <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
           <button type="button" className="btn" onClick={onCancel}>Отмена</button>
         </div>
+        <SaveBar dirty={dirty} saving={save.isPending} saved={false} error={save.error && (Object.values(errors)[0] ?? save.error.message)} />
       </form>
     </section>
   )

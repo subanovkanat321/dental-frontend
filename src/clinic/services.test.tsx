@@ -58,7 +58,7 @@ test('услуги: таблица по группам, правка и нова
   await user.clear(within(panel).getByRole('spinbutton', { name: 'Цена «от», сом' }))
   await user.type(within(panel).getByRole('spinbutton', { name: 'Цена «от», сом' }), '3000')
   await user.click(within(panel).getByRole('button', { name: 'Сохранить' }))
-  expect(await within(panel).findByText('Сохранено')).toBeInTheDocument()
+  expect(await within(panel).findByText('Услуга сохранена')).toBeInTheDocument()
   expect(bodies[0]).toEqual({ name: 'Лечение кариеса', category: 'Терапия', durationMinutes: 60, active: true, priceSom: 3000 })
 
   await user.click(screen.getByRole('button', { name: '+ Добавить услугу' }))
@@ -136,6 +136,6 @@ test('услуга: материалы по умолчанию — добави�
   await user.click(within(box).getByRole('button', { name: 'Убрать: Перчатки' }))
   await user.click(within(box).getByRole('button', { name: 'Сохранить материалы' }))
 
-  expect(await within(box).findByText('Сохранено')).toBeInTheDocument()
+  expect(await within(box).findByText('Материалы сохранены')).toBeInTheDocument()
   expect(saved).toEqual({ items: [{ supplyId: 3, quantity: 2 }, { supplyId: 4, quantity: 1 }] })
 })

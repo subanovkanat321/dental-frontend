@@ -1,11 +1,16 @@
 import { useBack } from '../lib/back'
+import { guarded } from '../lib/unsaved'
 
-/** Шапка пункта «Настроек»: «‹ Настройки» назад (и стрелка Telegram) и название пункта. */
+/**
+ * Шапка пункта «Настроек»: «‹ Настройки» назад (и стрелка Telegram) и название пункта. Есть
+ * несохранённые правки — сначала спросим, выйти ли без сохранения.
+ */
 export function SubHeader({ title, onBack, children }: { title: string; onBack: () => void; children?: React.ReactNode }) {
-  useBack(onBack)
+  const back = guarded(onBack)
+  useBack(back)
   return (
     <header className="toolbar">
-      <button type="button" className="btn ghost back" onClick={onBack}>‹ Настройки</button>
+      <button type="button" className="btn ghost back" onClick={back}>‹ Настройки</button>
       <h1>{title}</h1>
       {children}
     </header>

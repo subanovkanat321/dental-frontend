@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
+import { useUnsaved } from '../lib/unsaved'
 
 type Item = Schemas['ServiceSuppliesItem']
 type Row = { supplyId: number; name: string; unit: string; quantity: string; owner?: string | null }
@@ -23,10 +25,10 @@ export function ServiceSupplies({ serviceId }: { serviceId: number }) {
   const stock = useQuery({ queryKey: ['supplies', null], queryFn: () => unwrap(api.GET('/api/supplies')) })
   const [draft, setDraft] = useState<Row[] | null>(null)
   const [pick, setPick] = useState<number | ''>('')
-  const [done, setDone] = useState('')
+  useUnsaved(draft != null)
   const rows = draft ?? (saved.data ?? []).map(rowOf)
   const change = (next: Row[]) => {
-    setDone('')
+    save.reset()
     setDraft(next)
   }
   const save = useMutation<Item[], ApiError>({
@@ -37,7 +39,6 @@ export function ServiceSupplies({ serviceId }: { serviceId: number }) {
     onSuccess: (items) => {
       client.setQueryData(['service-supplies', serviceId], items)
       setDraft(null)
-      setDone('Сохранено')
     },
   })
   const add = () => {
@@ -80,9 +81,8 @@ export function ServiceSupplies({ serviceId }: { serviceId: number }) {
         </div>
       ) : !stock.data.length && <p className="hint small">На складе пока нет материалов — добавьте их в «Склад».</p>)}
       {invalid && <p className="error">Сколько — целое число от 1 до 1000</p>}
-      {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}
-      {done && <p className="tone-ok" role="status">{done}</p>}
-      {draft && <button type="button" className="btn primary" disabled={save.isPending || invalid} onClick={() => save.mutate()}>Сохранить материалы</button>}
+      <SaveBar dirty={draft != null} saving={save.isPending} saved={save.isSuccess} disabled={invalid} label="Сохранить материалы"
+        savedText="Материалы сохранены" error={save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message)} onSave={() => save.mutate()} />
     </section>
   )
 }

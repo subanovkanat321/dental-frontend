@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
 import { canEditServices } from '../lib/roles'
 import { useClose } from '../lib/useClose'
+import { useDirty } from '../lib/unsaved'
 
 type Me = Schemas['BookingViewsMe']
 type Memo = Schemas['CareMemosCareMemoView']
@@ -60,54 +62,52 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
 }
 
 function MemoPanel({ memo: m, editable, onClose }: { memo?: Memo; editable: boolean; onClose: () => void }) {
-  useClose(onClose)
+  const close = useClose(onClose)
   const client = useQueryClient()
   const [form, setForm] = useState({
     title: m?.title ?? '',
     body: m?.body ?? `• \n\nЕсли боль, отёк или кровотечение усиливаются — звоните в клинику: ${PHONE}. Это общие рекомендации — следуйте указаниям вашего врача.`,
     active: m ? m.active !== false : true,
   })
-  const [done, setDone] = useState('')
+  const { dirty, commit } = useDirty(form)
   const save = useMutation<Memo, ApiError>({
     mutationFn: () => unwrap(m
       ? api.PUT('/api/care-memos/{id}', { params: { path: { id: m.id! } }, body: form })
       : api.POST('/api/care-memos', { body: { title: form.title, body: form.body } })),
     onSuccess: () => {
+      commit()
       void client.invalidateQueries({ queryKey: ['care-memos'] })
       void client.invalidateQueries({ queryKey: ['care-memo'] })
-      if (m) setDone('Сохранено')
-      else onClose()
+      if (!m) onClose()
     },
   })
   const error = (key: string) => save.error?.fieldErrors[key]
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    setDone('')
     save.mutate()
   }
   return (
     <aside className="panel" aria-label={m ? 'Памятка' : 'Новая памятка'}>
       <header className="panel-head">
         <h2>{m ? m.title : 'Новая памятка'}</h2>
-        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>
       </header>
       {editable ? (
         <form className="form" onSubmit={submit}>
           <label className="field"><span>Название</span>
             <input value={form.title} required maxLength={100} placeholder="Например: После удаления зуба"
-              onChange={(e) => { setDone(''); setForm({ ...form, title: e.target.value }) }} />
+              onChange={(e) => { save.reset(); setForm({ ...form, title: e.target.value }) }} />
           </label>
           {error('title') && <p className="error">{error('title')}</p>}
           <label className="field"><span>Текст для пациента</span>
-            <textarea rows={14} maxLength={3500} value={form.body} onChange={(e) => { setDone(''); setForm({ ...form, body: e.target.value }) }} />
+            <textarea rows={14} maxLength={3500} value={form.body} onChange={(e) => { save.reset(); setForm({ ...form, body: e.target.value }) }} />
           </label>
           <p className="hint small">{PHONE} заменится на телефон клиники из «О клинике».</p>
           {error('body') && <p className="error">{error('body')}</p>}
           {m && <label className="check"><input type="checkbox" checked={form.active}
-            onChange={(e) => { setDone(''); setForm({ ...form, active: e.target.checked }) }} /> Предлагать после приёма</label>}
-          {save.error && !error('title') && !error('body') && <p className="error" role="alert">{save.error.message}</p>}
-          {done && <p className="tone-ok" role="status">{done}</p>}
-          <button type="submit" className="btn primary" disabled={save.isPending}>{m ? 'Сохранить' : 'Добавить'}</button>
+            onChange={(e) => { save.reset(); setForm({ ...form, active: e.target.checked }) }} /> Предлагать после приёма</label>}
+          <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label={m ? 'Сохранить' : 'Добавить'} savedText="Памятка сохранена"
+            error={save.error && (error('title') ?? error('body') ?? save.error.message)} />
         </form>
       ) : (
         <>

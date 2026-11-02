@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
+import { useDirty } from '../lib/unsaved'
 import { WEEK, type Weekday } from './texts'
 
 type Day = { on: boolean; start: string; end: string }
@@ -28,15 +30,21 @@ function HoursForm({ doctorId, loaded }: { doctorId: number; loaded: Schemas['Do
     on: Boolean(byDay[code]), start: (byDay[code]?.start ?? '09:00').slice(0, 5), end: (byDay[code]?.end ?? '18:00').slice(0, 5),
   }])) as Record<Weekday, Day>)
   const [error, setError] = useState('')
+  // «Как у клиники» — дни не важны: переключили туда-обратно без правок — правок нет
+  const { dirty, commit } = useDirty(custom ? days : null)
   const save = useMutation<Schemas['DoctorHoursView'], ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/hours', {
       params: { path: { id: doctorId } },
       body: { days: custom ? WEEK.filter(([code]) => days[code].on).map(([code]) => ({ weekday: code, start: days[code].start, end: days[code].end })) : [] },
     })),
-    onSuccess: (saved) => client.setQueryData(['doctor-hours', doctorId], saved),
+    onSuccess: (saved) => {
+      commit()
+      client.setQueryData(['doctor-hours', doctorId], saved)
+    },
   })
   const set = (code: Weekday, patch: Partial<Day>) => {
     save.reset()
+    setError('')
     setDays({ ...days, [code]: { ...days[code], ...patch } })
   }
   const submit = () => {
@@ -66,9 +74,8 @@ function HoursForm({ doctorId, loaded }: { doctorId: number; loaded: Schemas['Do
           ))}
         </div>
       )}
-      {(error || save.error) && <p className="error" role="alert">{error || save.error?.fieldErrors.days || save.error?.message}</p>}
-      {save.isSuccess && <p className="tone-ok" role="status">Часы работы сохранены</p>}
-      <button type="button" className="btn" disabled={save.isPending} onClick={submit}>Сохранить часы</button>
+      <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label="Сохранить часы" savedText="Часы работы сохранены"
+        error={error || (save.error && (save.error.fieldErrors.days ?? save.error.message))} onSave={submit} />
     </div>
   )
 }

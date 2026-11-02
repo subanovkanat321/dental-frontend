@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
+import { useUnsaved } from '../lib/unsaved'
 import { InviteLink } from './InviteLink'
 import { ROLE_TEXT } from './texts'
 
@@ -30,6 +32,9 @@ function AssistantDoctors({ me, member }: { me: Me; member: Member }) {
   const client = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [ids, setIds] = useState<number[]>(member.doctorIds ?? [])
+  const sorted = (list: number[]) => [...list].sort((a, b) => a - b).join()
+  const dirty = editing && sorted(ids) !== sorted(member.doctorIds ?? [])
+  useUnsaved(dirty)
   const names = (member.doctorIds ?? []).map((id) => me.doctors?.find((d) => d.id === id)?.fullName).filter(Boolean)
   const save = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/members/{telegramId}/doctors', { params: { path: { telegramId: member.telegramId! } }, body: { doctorIds: ids } })),
@@ -40,18 +45,21 @@ function AssistantDoctors({ me, member }: { me: Me; member: Member }) {
   })
   if (!editing) {
     return (
-      <div className="hint">Помогает: {names.join(', ') || '—'}{' '}
-        <button type="button" className="link" onClick={() => { setIds(member.doctorIds ?? []); setEditing(true) }}>изменить</button></div>
+      <>
+        <div className="hint">Помогает: {names.join(', ') || '—'}{' '}
+          <button type="button" className="link" onClick={() => { save.reset(); setIds(member.doctorIds ?? []); setEditing(true) }}>изменить</button></div>
+        <SaveBar dirty={false} saving={false} saved={save.isSuccess} savedText="Врачи ассистента сохранены" />
+      </>
     )
   }
   return (
     <form onSubmit={(e) => { e.preventDefault(); save.mutate() }} aria-label={`Врачи ассистента ${member.fullName ?? ''}`}>
       <DoctorChecks me={me} value={ids} onChange={setIds} />
-      {save.error && <p className="error" role="alert">{save.error.fieldErrors.doctorIds ?? save.error.message}</p>}
       <div className="actions">
-        <button type="submit" className="btn small primary" disabled={save.isPending || !ids.length}>Сохранить</button>
         <button type="button" className="btn small ghost" onClick={() => setEditing(false)}>Отмена</button>
       </div>
+      <SaveBar dirty={dirty} saving={save.isPending} saved={false} disabled={!ids.length}
+        error={save.error && (save.error.fieldErrors.doctorIds ?? save.error.message)} />
     </form>
   )
 }

@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, webTariffs, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
 import { somText } from '../lib/time'
+import { useDirty } from '../lib/unsaved'
 
 type Tariffs = Schemas['Tariffs']
 type Tariff = Schemas['TariffsTariff']
@@ -31,6 +33,7 @@ function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
   const client = useQueryClient()
   const [rows, setRows] = useState<Row[]>((tariffs.tariffs ?? []).map(toRow))
   const [pilot, setPilot] = useState(String(tariffs.pilotMonths ?? 0))
+  const { dirty, commit } = useDirty({ rows, pilot })
   const save = useMutation<Tariffs, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/tariffs', {
       body: {
@@ -43,6 +46,7 @@ function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
       },
     })),
     onSuccess: (fresh) => {
+      commit()
       client.setQueryData(['tariffs'], fresh)
       // Те же цены видят «Настройки» платформы, «Тариф и оплата» клиники и /join
       for (const key of ['clinic-plan', 'web-tariffs']) void client.invalidateQueries({ queryKey: [key] })
@@ -96,9 +100,8 @@ function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
       })}
       <label className="field"><span>Бесплатных месяцев новым клиникам (акция; 0 — без акции)</span>
         <input type="number" min={0} max={24} inputMode="numeric" value={pilot} onChange={(e) => { save.reset(); setPilot(e.target.value) }} /></label>
-      {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}
-      {save.isSuccess && <p className="tone-ok" role="status">Тарифы сохранены — новые цены уже видят клиники</p>}
-      <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить тарифы</button>
+      <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label="Сохранить тарифы" savedText="Тарифы сохранены — новые цены уже видят клиники"
+        error={save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message)} />
     </form>
   )
 }

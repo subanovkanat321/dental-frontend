@@ -2,7 +2,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
 import { resizePhoto } from '../medical/thumb'
+import { useDirty } from '../lib/unsaved'
 import { useClose } from '../lib/useClose'
 import { HoursEditor } from './HoursEditor'
 import { DoctorServices } from './DoctorServices'
@@ -36,13 +38,14 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
   inline?: boolean
 }) {
   // Встроена в «Мой профиль»: «назад» и Esc — у страницы, иначе Esc уводит с несохранённым текстом
-  useClose(onClose, !inline)
+  const close = useClose(onClose, !inline)
   const refresh = useRefreshDoctors()
   const self = d.id === me.doctorId
   // Профиль и фото — сам врач или админ; регистратура — только часы работы
   const editsProfile = Boolean(me.admin) || self
   const [form, setForm] = useState({ fullName: d.fullName ?? '', about: d.about ?? '', telegramId: d.telegramId == null ? '' : String(d.telegramId), active: d.active !== false })
-  const [done, setDone] = useState('')
+  // Telegram id и «работает» меняет только админ — у врача их нет в форме
+  const { dirty, commit } = useDirty(me.admin ? form : { fullName: form.fullName, about: form.about })
   const [invite, setInvite] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState('')
   const tgInvalid = form.telegramId.trim() !== '' && !/^\d{3,15}$/.test(form.telegramId.trim())
@@ -55,7 +58,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
       }))
       : unwrap(api.PUT('/api/doctors/{id}/profile', { params: { path: { id: d.id! } }, body: { fullName: form.fullName, about: form.about } }))),
     onSuccess: () => {
-      setDone('Сохранено')
+      commit()
       refresh()
     },
   })
@@ -95,7 +98,6 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    setDone('')
     if (!tgInvalid) save.mutate()
   }
   const pick = (e: ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +107,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
     if (file) photo.mutate(file)
   }
   const set = (key: 'fullName' | 'about' | 'telegramId') => (e: { target: { value: string } }) => {
-    setDone('')
+    save.reset()
     setForm({ ...form, [key]: e.target.value })
   }
 
@@ -116,7 +118,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
           <h2>{d.fullName}</h2>
           <span className="hint">{[self ? 'это вы' : null, isAdmin ? 'и администратор' : null, d.active === false ? 'скрыт' : null].filter(Boolean).join(' · ') || 'Врач'}</span>
         </div>
-        {!inline && <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>}
+        {!inline && <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>}
       </header>
 
       {editsProfile && <>
@@ -145,12 +147,11 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
               <input value={form.telegramId} inputMode="numeric" placeholder="Например: 512345678" onChange={set('telegramId')} />
             </label>
             {tgInvalid && <p className="error">Только цифры, как пишет @userinfobot</p>}
-            <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { setDone(''); setForm({ ...form, active: e.target.checked }) }} /> Работает (показывать пациентам)</label>
+            <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { save.reset(); setForm({ ...form, active: e.target.checked }) }} /> Работает (показывать пациентам)</label>
           </>
         )}
-        {save.error && <p className="error" role="alert">{save.error.code === 'telegram-taken' ? save.error.message : firstError(save.error)}</p>}
-        {done && <p className="tone-ok" role="status">{done}</p>}
-        <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
+        <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} disabled={tgInvalid} savedText="Профиль врача сохранён"
+          error={save.error && (save.error.code === 'telegram-taken' ? save.error.message : firstError(save.error))} />
       </form>
       </>}
 

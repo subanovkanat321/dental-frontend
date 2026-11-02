@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useCallback, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
 import { useClose } from '../lib/useClose'
+import { useDirty } from '../lib/unsaved'
 import { canEditServices } from '../lib/roles'
 import { ServiceMemo } from './MemosTab'
 import { ServiceSupplies } from './ServiceSupplies'
@@ -85,13 +87,14 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
 
 /** Новая услуга или правка: название, категория, длительность, цена «от», показывать пациентам. */
 function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Service; all: Service[]; onClose: () => void }) {
-  useClose(onClose)
+  const close = useClose(onClose)
   const refresh = useRefreshServices()
   const [form, setForm] = useState({
     name: s?.name ?? '', category: s?.category ?? '', duration: String(s?.durationMinutes ?? 30),
     price: s?.priceSom == null ? '' : String(s.priceSom), active: s ? s.active !== false : true,
   })
   const [done, setDone] = useState('')
+  const { dirty, commit } = useDirty(form)
   const known = [...new Set([...SERVICE_CATEGORIES, ...all.map((x) => x.category).filter((c): c is string => Boolean(c))])]
   const save = useMutation<Service, ApiError>({
     mutationFn: () => {
@@ -104,9 +107,10 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
         : api.POST('/api/service-types', { body }))
     },
     onSuccess: () => {
+      commit()
       refresh()
-      if (s) setDone('Сохранено')
-      else onClose()
+      // Новая услуга добавлена — карточка закрывается, услуга уже в списке
+      if (!s) onClose()
     },
   })
   const remove = useMutation<Schemas['ServiceTypeControllerDeleted'], ApiError>({
@@ -120,6 +124,7 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
   const error = (key: string) => save.error?.fieldErrors[key]
   const set = (key: 'name' | 'category' | 'duration' | 'price') => (e: { target: { value: string } }) => {
     setDone('')
+    save.reset()
     setForm({ ...form, [key]: e.target.value })
   }
   const submit = (e: FormEvent) => {
@@ -132,7 +137,7 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
     <aside className="panel" aria-label={s ? 'Услуга' : 'Новая услуга'}>
       <header className="panel-head">
         <h2>{s ? s.name : 'Новая услуга'}</h2>
-        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>
       </header>
       <form className="form" onSubmit={submit}>
         <label className="field"><span>Название</span>
@@ -143,7 +148,7 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
           <div className="chips-pick" role="group" aria-label="Категории">
             {known.map((c) => (
               <button key={c} type="button" className="chip" aria-pressed={form.category === c}
-                onClick={() => setForm({ ...form, category: form.category === c ? '' : c })}>{c}</button>
+                onClick={() => { save.reset(); setForm({ ...form, category: form.category === c ? '' : c }) }}>{c}</button>
             ))}
           </div>
           <input aria-label="Категория" value={form.category} maxLength={40} placeholder="Или своя: например, Терапия" onChange={set('category')} />
@@ -158,10 +163,10 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
           </label>
         </div>
         {(error('durationMinutes') || error('priceSom')) && <p className="error">{error('durationMinutes') ?? error('priceSom')}</p>}
-        {s && <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { setDone(''); setForm({ ...form, active: e.target.checked }) }} /> Показывать пациентам</label>}
-        {save.error && !['name', 'category', 'durationMinutes', 'priceSom'].some((k) => error(k)) && <p className="error" role="alert">{save.error.message}</p>}
+        {s && <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { setDone(''); save.reset(); setForm({ ...form, active: e.target.checked }) }} /> Показывать пациентам</label>}
         {done && <p className="tone-ok" role="status">{done}</p>}
-        <button type="submit" className="btn primary" disabled={save.isPending}>{s ? 'Сохранить' : 'Добавить'}</button>
+        <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label={s ? 'Сохранить' : 'Добавить'} savedText="Услуга сохранена"
+          error={save.error && (['name', 'category', 'durationMinutes', 'priceSom'].map((k) => error(k)).find(Boolean) ?? save.error.message)} />
       </form>
       {s && <ServiceSupplies serviceId={s.id!} />}
       {s && <ServiceMemo serviceId={s.id!} />}

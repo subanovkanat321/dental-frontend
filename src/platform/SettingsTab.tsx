@@ -5,6 +5,8 @@ import { api, ApiError, unwrap, upload, webTariffs, type Schemas } from '../api/
 import { usePlatformInfo } from '../api/platform'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneToInput } from '../clinic/phone'
+import { SaveBar } from '../layout/SaveBar'
+import { useDirty } from '../lib/unsaved'
 import { somText } from '../lib/time'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { InviteLink } from '../team/InviteLink'
@@ -46,9 +48,13 @@ function InfoForm({ info }: { info: Info }) {
     legalName: info.legalName ?? '', hosting: info.hosting ?? '', supportTelegram: info.supportTelegram ?? '',
     supportEmail: info.supportEmail ?? '', supportPhone: phoneToInput(info.supportPhone),
   })
+  const { dirty, commit } = useDirty(f)
   const save = useMutation<Info, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/info', { body: { ...f, supportPhone: phoneFromInput(f.supportPhone) } })),
-    onSuccess: (saved) => client.setQueryData(['platform-info'], saved),
+    onSuccess: (saved) => {
+      commit()
+      client.setQueryData(['platform-info'], saved)
+    },
   })
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -71,9 +77,8 @@ function InfoForm({ info }: { info: Info }) {
         <label className="field"><span>Телефон поддержки</span>
           <PhoneInput label="Телефон поддержки" value={f.supportPhone} onChange={(v) => { save.reset(); setF({ ...f, supportPhone: v }) }} /></label>
         {err('supportPhone') && <p className="error">{err('supportPhone')}</p>}
-        {save.error && !Object.keys(save.error.fieldErrors).length && <p className="error" role="alert">{save.error.message}</p>}
-        {save.isSuccess && <p className="tone-ok" role="status">Сохранено</p>}
-        <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
+        <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="Сведения о платформе сохранены"
+          error={save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message)} />
       </form>
     </section>
   )
@@ -121,10 +126,14 @@ function PayForm({ st }: { st: PaySettings }) {
   const onSaved = (s: PaySettings) => client.setQueryData(['platform-pay-settings'], s)
   const [details, setDetails] = useState(st.details ?? '')
   const [requisites, setRequisites] = useState(st.requisites ?? '')
+  const { dirty, commit } = useDirty({ details, requisites })
   const qr = useBlobUrl(st.hasQr ? '/api/platform/pay-settings/qr' : null)
   const save = useMutation<PaySettings, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/pay-settings', { body: { details, requisites } })),
-    onSuccess: onSaved,
+    onSuccess: (s) => {
+      commit()
+      onSaved(s)
+    },
   })
   const addQr = useMutation<PaySettings, ApiError, File>({
     mutationFn: (file) => {
@@ -138,7 +147,7 @@ function PayForm({ st }: { st: PaySettings }) {
     mutationFn: () => unwrap(api.DELETE('/api/platform/pay-settings/qr')),
     onSuccess: onSaved,
   })
-  const error = save.error ?? addQr.error ?? dropQr.error
+  const error = addQr.error ?? dropQr.error
   return (
     <div className="form narrow">
       <p className="hint">Это видят админы клиник в «Тариф и оплата → Оплатить». После перевода они жмут «Я оплатил» — вам придёт сообщение
@@ -147,8 +156,8 @@ function PayForm({ st }: { st: PaySettings }) {
         <textarea rows={3} maxLength={1000} value={details} placeholder={'MBank: 0555 123 456 (Иван И.)\nЭлсом: 0700 123 456'} onChange={(e) => { save.reset(); setDetails(e.target.value) }} /></label>
       <label className="field"><span>Реквизиты для счёта PDF (ИНН, банк, счёт)</span>
         <textarea rows={4} maxLength={1000} value={requisites} placeholder={'ИНН 2xxxxxxxxxxxxx\nБанк: ОАО «…», БИК 1xxxxx\nр/с 1xxxxxxxxxxxxxxx'} onChange={(e) => { save.reset(); setRequisites(e.target.value) }} /></label>
-      {save.isSuccess && <p className="tone-ok" role="status">Сохранено</p>}
-      <button type="button" className="btn primary" disabled={save.isPending} onClick={() => save.mutate()}>Сохранить способы оплаты</button>
+      <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label="Сохранить способы оплаты" savedText="Способы оплаты сохранены"
+        error={save.error && (save.error.fieldErrors.details ?? save.error.fieldErrors.requisites ?? save.error.message)} onSave={() => save.mutate()} />
       <h3>QR для оплаты</h3>
       {qr && qr !== 'error' ? <img className="pay-qr" src={qr.url} alt="QR для оплаты" />
         : !st.hasQr && <p className="hint">QR не загружен. Сохраните QR из приложения банка картинкой и загрузите сюда.</p>}
@@ -158,7 +167,7 @@ function PayForm({ st }: { st: PaySettings }) {
             onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) addQr.mutate(file) }} /></label>
         {st.hasQr && <button type="button" className="btn ghost" disabled={dropQr.isPending} onClick={() => window.confirm('Убрать QR?') && dropQr.mutate()}>Убрать QR</button>}
       </div>
-      {error && <p className="error" role="alert">{error.fieldErrors.details ?? error.fieldErrors.requisites ?? error.fieldErrors.file ?? error.message}</p>}
+      {error && <p className="error" role="alert">{error.fieldErrors.file ?? error.message}</p>}
     </div>
   )
 }

@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
 import { somText, todayIn } from '../lib/time'
+import { useDirty } from '../lib/unsaved'
 
 type Row = Schemas['SalaryControllerSalaryRow']
 
@@ -68,6 +70,8 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   const client = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [paying, setPaying] = useState(false)
+  // Форма условий после «Сохранить» закрывается — подтверждение показывает карточка
+  const [termsSaved, setTermsSaved] = useState(false)
   const left = Math.max(0, (r.dueSom ?? 0) - (r.paidSom ?? 0))
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['salaries'] })
@@ -92,10 +96,11 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
       {seesAll && !r.former && !editing && !paying && (
         <div className="actions">
           {left > 0 && <button type="button" className="btn primary" onClick={() => setPaying(true)}>Выплатить {somText(left)}</button>}
-          <button type="button" className="btn" onClick={() => setEditing(true)}>Условия</button>
+          <button type="button" className="btn" onClick={() => { setTermsSaved(false); setEditing(true) }}>Условия</button>
         </div>
       )}
-      {editing && <TermsForm row={r} month={month} onDone={() => { setEditing(false); refresh() }} onCancel={() => setEditing(false)} />}
+      {editing && <TermsForm row={r} month={month} onDone={() => { setEditing(false); setTermsSaved(true); refresh() }} onCancel={() => setEditing(false)} />}
+      <SaveBar dirty={false} saving={false} saved={termsSaved} savedText="Условия сохранены — «К выплате» пересчитано" />
       {paying && <PayForm row={r} month={month} left={left} onDone={() => { setPaying(false); refresh() }} onCancel={() => setPaying(false)} />}
     </section>
   )
@@ -104,6 +109,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
 function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: string; onDone: () => void; onCancel: () => void }) {
   const [percent, setPercent] = useState(String(Number(r.percent ?? 0) || ''))
   const [base, setBase] = useState(r.baseSom ? String(r.baseSom) : '')
+  const { dirty } = useDirty({ percent, base })
   const save = useMutation<Row, ApiError>({
     mutationFn: () => {
       const body = { percent: Number(percent.replace(',', '.') || 0), baseSom: Number(base || 0) }
@@ -125,11 +131,10 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
         <label className="field"><span>Оклад в месяц, сом</span>
           <input inputMode="numeric" value={base} placeholder="0 — без оклада" onChange={(e) => setBase(e.target.value.replace(/\D/g, ''))} /></label>
       </div>
-      {save.error && <p className="error" role="alert">{errorText(save.error)}</p>}
       <div className="actions">
-        <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
         <button type="button" className="btn ghost" onClick={onCancel}>Отмена</button>
       </div>
+      <SaveBar dirty={dirty} saving={save.isPending} saved={false} error={errorText(save.error)} />
     </form>
   )
 }

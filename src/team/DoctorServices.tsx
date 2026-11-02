@@ -3,7 +3,9 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { groupByCategory } from '../clinic/services'
+import { SaveBar } from '../layout/SaveBar'
 import { chosenServiceIds } from '../lib/doctorServices'
+import { useDirty } from '../lib/unsaved'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -22,24 +24,24 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
   const saved = chosenServiceIds(me.doctorServices, doctorId)
   const [some, setSome] = useState(saved != null)
   const [picked, setPicked] = useState<number[]>(saved ?? [])
-  const [done, setDone] = useState('')
+  const { dirty, commit } = useDirty(some ? [...picked].sort((a, b) => a - b) : null)
   const [problem, setProblem] = useState('')
   const save = useMutation<Schemas['DoctorServicesView'], ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/service-types', {
       params: { path: { id: doctorId } }, body: { serviceTypeIds: some ? picked : [] },
     })),
     onSuccess: () => {
-      setDone('Сохранено')
+      commit()
       void client.invalidateQueries({ queryKey: ['me'] })
     },
   })
   const toggle = (id: number, on: boolean) => {
-    setDone('')
+    save.reset()
     setProblem('')
     setPicked(on ? [...picked, id] : picked.filter((x) => x !== id))
   }
   const choose = (next: boolean) => {
-    setDone('')
+    save.reset()
     setProblem('')
     setSome(next)
   }
@@ -75,9 +77,8 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
           <p className="hint small">Новую услугу клиники сюда нужно будет отметить отдельно.</p>
         </div>
       ) : <p className="hint">Услуг пока нет — добавьте их в «Настройки → Услуги».</p>)}
-      {(problem || save.error) && <p className="error" role="alert">{problem || (save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message))}</p>}
-      {done && <p className="tone-ok" role="status">{done}</p>}
-      <button type="button" className="btn primary" disabled={save.isPending} onClick={submit}>Сохранить услуги</button>
+      <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label="Сохранить услуги" savedText="Услуги врача сохранены"
+        error={problem || (save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message))} onSave={submit} />
     </section>
   )
 }

@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useCallback, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
 import { useClose } from '../lib/useClose'
+import { useDirty } from '../lib/unsaved'
 
 type Me = Schemas['BookingViewsMe']
 type Question = Schemas['AnamnesisQuestion']
@@ -83,10 +85,10 @@ export function QuestionsTab({ me, header, onPanel }: { me: Me; header: ReactNod
 
 /** Вопрос: новый (без id) или существующий. Удалить — пока никто не ответил; иначе только скрыть. */
 function QuestionPanel({ question: q, onClose }: { question: Question; onClose: () => void }) {
-  useClose(onClose)
+  const close = useClose(onClose)
   const client = useQueryClient()
   const [f, setF] = useState({ title: q.title ?? '', label: q.label ?? '', hint: q.hint ?? '', kind: q.kind ?? 'CHECK', alert: Boolean(q.alert), active: q.active !== false })
-  const [done, setDone] = useState(false)
+  const { dirty, commit } = useDirty(f)
   const section = SECTIONS.find(([code]) => code === q.section)?.[1]
   const onSaved = (all: Question[]) => client.setQueryData(['anamnesis-questions'], all)
   const save = useMutation<Question[], ApiError>({
@@ -97,9 +99,9 @@ function QuestionPanel({ question: q, onClose }: { question: Question; onClose: 
         : api.POST('/api/anamnesis/questions', { body }))
     },
     onSuccess: (all) => {
+      commit()
       onSaved(all)
-      if (q.id) setDone(true)
-      else onClose()
+      if (!q.id) onClose()
     },
   })
   const remove = useMutation<Question[], ApiError>({
@@ -111,12 +113,11 @@ function QuestionPanel({ question: q, onClose }: { question: Question; onClose: 
   })
   const err = (k: string) => save.error?.fieldErrors[k]
   const set = (k: 'title' | 'label' | 'hint') => (e: { target: { value: string } }) => {
-    setDone(false)
+    save.reset()
     setF({ ...f, [k]: e.target.value })
   }
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    setDone(false)
     save.mutate()
   }
 
@@ -127,7 +128,7 @@ function QuestionPanel({ question: q, onClose }: { question: Question; onClose: 
           <h2>{q.id ? 'Вопрос анкеты' : 'Новый вопрос'}</h2>
           <span className="hint">Раздел: {section}</span>
         </div>
-        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>
       </header>
       <form className="form" onSubmit={submit}>
         <label className="field"><span>Вопрос</span>
@@ -135,7 +136,7 @@ function QuestionPanel({ question: q, onClose }: { question: Question; onClose: 
         {err('title') && <p className="error">{err('title')}</p>}
         <div className="field"><span>Как отвечают</span>
           <div className="segments wrap" role="group" aria-label="Как отвечают">
-            {KINDS.map(([code, name]) => <button key={code} type="button" aria-pressed={f.kind === code} onClick={() => { setDone(false); setF({ ...f, kind: code }) }}>{name}</button>)}
+            {KINDS.map(([code, name]) => <button key={code} type="button" aria-pressed={f.kind === code} onClick={() => { save.reset(); setF({ ...f, kind: code }) }}>{name}</button>)}
           </div>
         </div>
         {f.kind !== 'CHECK' && (
@@ -143,14 +144,13 @@ function QuestionPanel({ question: q, onClose }: { question: Question; onClose: 
             <input value={f.hint} maxLength={120} placeholder="Например: с какого года" onChange={set('hint')} /></label>
         )}
         {err('hint') && <p className="error">{err('hint')}</p>}
-        <label className="check"><input type="checkbox" checked={f.alert} onChange={(e) => { setDone(false); setF({ ...f, alert: e.target.checked }) }} /> Показывать ответ «да» в плашке перед лечением</label>
+        <label className="check"><input type="checkbox" checked={f.alert} onChange={(e) => { save.reset(); setF({ ...f, alert: e.target.checked }) }} /> Показывать ответ «да» в плашке перед лечением</label>
         <label className="field"><span>Коротко для плашки — необязательно</span>
           <input value={f.label} maxLength={60} placeholder="Например: Брекеты" onChange={set('label')} /></label>
         {err('label') && <p className="error">{err('label')}</p>}
-        {q.id != null && <label className="check"><input type="checkbox" checked={f.active} onChange={(e) => { setDone(false); setF({ ...f, active: e.target.checked }) }} /> Показывать в анкете</label>}
-        {save.error && !['title', 'hint', 'label'].some((k) => err(k)) && <p className="error" role="alert">{save.error.message}</p>}
-        {done && <p className="tone-ok" role="status">Сохранено</p>}
-        <button type="submit" className="btn primary" disabled={save.isPending}>{q.id ? 'Сохранить' : 'Добавить'}</button>
+        {q.id != null && <label className="check"><input type="checkbox" checked={f.active} onChange={(e) => { save.reset(); setF({ ...f, active: e.target.checked }) }} /> Показывать в анкете</label>}
+        <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label={q.id ? 'Сохранить' : 'Добавить'} savedText="Вопрос сохранён"
+          error={save.error && (['title', 'hint', 'label'].map((k) => err(k)).find(Boolean) ?? save.error.message)} />
       </form>
       {q.id != null && (
         <div className="danger-zone">

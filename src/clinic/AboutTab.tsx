@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
+import { SaveBar } from '../layout/SaveBar'
 import { openLink, telegram } from '../lib/telegram'
+import { useDirty } from '../lib/unsaved'
 import { PhoneInput } from './PhoneInput'
 import { SetupChecklist } from './SetupChecklist'
 import { phoneFromInput, phoneToInput } from './phone'
@@ -39,7 +41,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
     workStart: (c.workStart ?? '09:00').slice(0, 5), workEnd: (c.workEnd ?? '18:00').slice(0, 5),
     independentDoctors: Boolean(c.independentDoctors), separateSupplies: Boolean(c.separateSupplies), listed: c.listed !== false,
   })
-  const [done, setDone] = useState(false)
+  const { dirty, commit } = useDirty(f)
   const save = useMutation<Clinic, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/clinic', {
       body: {
@@ -49,7 +51,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
       },
     })),
     onSuccess: (saved) => {
-      setDone(true)
+      commit()
       client.setQueryData(['clinic'], saved)
       // Название, часы и режимы клиники приходят и в me (шапка, сетка «Расписания», склад)
       void client.invalidateQueries({ queryKey: ['me'] })
@@ -57,14 +59,13 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   })
   const err = (k: string) => save.error?.fieldErrors[k]
   const set = (k: keyof typeof f) => (v: string | boolean) => {
-    setDone(false)
+    save.reset()
     setF({ ...f, [k]: v })
   }
   const text = (k: keyof typeof f) => (e: { target: { value: string } }) => set(k)(e.target.value)
   const flag = (k: keyof typeof f) => (e: { target: { checked: boolean } }) => set(k)(e.target.checked)
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    setDone(false)
     save.mutate()
   }
   const page = c.code ? `${window.location.origin}/c/${c.code}` : null
@@ -124,9 +125,9 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
           {err('supportPhone') && <p className="error">{err('supportPhone')}</p>}
         </div>
       </fieldset>
-      {save.error && !FIELDS.some((k) => err(k)) && <p className="error" role="alert">{save.error.message}</p>}
-      {done && <p className="tone-ok" role="status">Сохранено</p>}
-      {canEdit && <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>}
+      {/* Ошибка поля — и под полем, и в полосе: поле может быть выше, за краем экрана */}
+      {canEdit && <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="«О клинике» сохранено — пациенты видят новое"
+        error={save.error && (FIELDS.map((k) => err(k)).find(Boolean) ?? save.error.message)} />}
     </form>
   )
 }
@@ -151,6 +152,7 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
   const [amount, setAmount] = useState(st.amountSom == null ? '' : String(st.amountSom))
   const [details, setDetails] = useState(st.details ?? '')
   const [done, setDone] = useState('')
+  const { dirty, commit } = useDirty({ mode, amount, details })
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   useEffect(() => {
     if (!st.hasQr) return
@@ -168,6 +170,7 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
   const save = useMutation<Deposit, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/clinic/deposit', { body: { mode, amountSom: amount === '' ? undefined : Number(amount), details } })),
     onSuccess: (d) => {
+      commit()
       onSaved(d)
     },
   })
@@ -182,7 +185,7 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
       onSaved(d)
     },
   })
-  const error = save.error ?? qr.error
+  const errorText = (e: ApiError | null) => e && (e.fieldErrors.amountSom ?? e.fieldErrors.details ?? e.fieldErrors.file ?? e.message)
 
   return (
     <section className="card-block">
@@ -191,22 +194,22 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
         <p className="hint">Меньше неявок: кто записался через бота, переводит предоплату по QR и жмёт «Я оплатил(а)». Вы сверяете и отмечаете
           «Получена». После приёма она станет первым платежом, не пришёл — остаётся у клиники. Попросить вручную — в карточке записи.</p>
         <div className="segments" role="group" aria-label="Когда просить предоплату">
-          {MODES.map(([code, name]) => <button key={code} type="button" aria-pressed={mode === code} onClick={() => { setDone(''); setMode(code) }}>{name}</button>)}
+          {MODES.map(([code, name]) => <button key={code} type="button" aria-pressed={mode === code} onClick={() => { setDone(''); save.reset(); setMode(code) }}>{name}</button>)}
         </div>
         <label className="field"><span>Сколько, сом</span>
-          <input type="number" min={1} inputMode="numeric" placeholder="Например: 1000" value={amount} onChange={(e) => { setDone(''); setAmount(e.target.value) }} /></label>
+          <input type="number" min={1} inputMode="numeric" placeholder="Например: 1000" value={amount} onChange={(e) => { setDone(''); save.reset(); setAmount(e.target.value) }} /></label>
         <label className="field"><span>Как перевести (номер, банк, получатель)</span>
-          <textarea rows={2} maxLength={500} placeholder="MBank: 0555 123 456 (Стоматология «Улыбка»)" value={details} onChange={(e) => { setDone(''); setDetails(e.target.value) }} /></label>
+          <textarea rows={2} maxLength={500} placeholder="MBank: 0555 123 456 (Стоматология «Улыбка»)" value={details} onChange={(e) => { setDone(''); save.reset(); setDetails(e.target.value) }} /></label>
         <div className="qr-row">
           {qrUrl && <img className="pay-qr" src={qrUrl} alt="QR для предоплаты" />}
           <label className="btn">{st.hasQr ? 'Заменить QR' : 'Загрузить QR'}
             <input type="file" accept="image/jpeg,image/png" className="sr-only" aria-label="QR для предоплаты"
               onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) qr.mutate(file) }} /></label>
         </div>
-        {error && <p className="error" role="alert">{error.fieldErrors.amountSom ?? error.fieldErrors.details ?? error.fieldErrors.file ?? error.message}</p>}
+        {qr.error && <p className="error" role="alert">{errorText(qr.error)}</p>}
         {done && <p className="tone-ok" role="status">{done}</p>}
-        {save.isSuccess && <p className="tone-ok" role="status">Предоплата сохранена</p>}
-        <button type="button" className="btn primary" disabled={save.isPending} onClick={() => save.mutate()}>Сохранить предоплату</button>
+        <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} error={errorText(save.error)}
+          label="Сохранить предоплату" savedText="Предоплата сохранена" onSave={() => save.mutate()} />
       </div>
     </section>
   )

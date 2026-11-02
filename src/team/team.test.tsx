@@ -56,7 +56,7 @@ test('админ: врачи таблицей; карточка — сохран
   await user.clear(within(form).getByRole('textbox', { name: 'Telegram id врача' }))
   await user.type(within(form).getByRole('textbox', { name: 'Telegram id врача' }), '222333')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
-  expect(await within(panel).findByText('Сохранено')).toBeInTheDocument()
+  expect(await within(panel).findByText('Профиль врача сохранён')).toBeInTheDocument()
   expect(saved.doctor).toEqual({ fullName: 'Дастан Т.', about: 'хирург', telegramId: 222333, active: true })
 
   await user.click(await within(panel).findByRole('button', { name: 'Свои часы' }))
@@ -190,9 +190,12 @@ test('врач (не админ): без «Сотрудников», откры�
   await user.click(within(table).getByRole('button', { name: 'Айгерим Садыкова' }))
   const panel = await screen.findByRole('complementary', { name: 'Врач' })
   expect(within(panel).queryByRole('textbox', { name: 'Telegram id врача' })).not.toBeInTheDocument()
+  // Без правок «Сохранить» нет — нечего сохранять
+  expect(within(panel).queryByRole('button', { name: 'Сохранить' })).not.toBeInTheDocument()
+  await user.type(within(panel).getByRole('textbox', { name: /Кратко/ }), 'терапевт')
   await user.click(within(panel).getByRole('button', { name: 'Сохранить' }))
-  expect(await within(panel).findByText('Сохранено')).toBeInTheDocument()
-  expect(profile).toEqual({ fullName: 'Айгерим Садыкова', about: '' })
+  expect(await within(panel).findByText('Профиль врача сохранён')).toBeInTheDocument()
+  expect(profile).toEqual({ fullName: 'Айгерим Садыкова', about: 'терапевт' })
 })
 
 test('ассистент: перерывы и выходные только смотрит — без формы и «Удалить»', async () => {
@@ -244,7 +247,7 @@ test('карточка врача: «Услуги врача» — все или
   expect(within(box).getByRole('alert')).toHaveTextContent('Отметьте хотя бы одну услугу')
   await user.click(within(box).getByRole('checkbox', { name: 'Удаление зуба' }))
   await user.click(within(box).getByRole('button', { name: 'Сохранить услуги' }))
-  expect(await within(box).findByText('Сохранено')).toBeInTheDocument()
+  expect(await within(box).findByText('Услуги врача сохранены')).toBeInTheDocument()
 
   await user.click(within(box).getByRole('button', { name: 'Все услуги клиники' }))
   await user.click(within(box).getByRole('button', { name: 'Сохранить услуги' }))

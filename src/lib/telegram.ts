@@ -39,6 +39,9 @@ type WebApp = {
   setHeaderColor?(color: string): void
   setBackgroundColor?(color: string): void
   BackButton?: BackButton
+  /** Спросить «закрыть?», когда Mini App закрывают с несохранёнными правками (Bot API 6.2) */
+  enableClosingConfirmation?(): void
+  disableClosingConfirmation?(): void
 }
 
 /** Окно входа Telegram (скрипт telegram-widget.js): user — подписанные данные входа, false — закрыли окно. */
