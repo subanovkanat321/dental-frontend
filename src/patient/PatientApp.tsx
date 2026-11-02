@@ -370,6 +370,9 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   const [consent, setConsent] = useState(false)
   // «Откуда вы о нас узнали?» — только новому пациенту (сервер прислал варианты), необязательно
   const [sourceId, setSourceId] = useState<number | null>(null)
+  // Промокод из рекламы: из ссылки (бот запомнил — me.promoCode; Mini App по ссылке с ?promo=) или вписал сам
+  const [promo, setPromo] = useState(() => me.promoCode ?? promoFromUrl())
+  const [promoOpen, setPromoOpen] = useState(() => promo !== '')
   const [phone, setPhone] = useState(me.phone ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [sharing, setSharing] = useState(false)
@@ -417,7 +420,8 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
 
   const book = useMutation<Schemas['BookingViewsBooking'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/patient/booking', {
-      body: { doctorId: doctor.id!, serviceTypeId: service!.id!, startAt: slotInstant(shownDate, minutesOf(chosen)), fullName: name, consent: true, comment, sourceId: sourceId ?? undefined },
+      body: { doctorId: doctor.id!, serviceTypeId: service!.id!, startAt: slotInstant(shownDate, minutesOf(chosen)), fullName: name, consent: true, comment, sourceId: sourceId ?? undefined,
+        promoCode: promo.trim() || undefined },
     })),
     onSuccess: (booking) => {
       haptic('success')
@@ -436,7 +440,9 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
         // Ошибки полей — своими словами на языке пациента (сервер отвечает по-русски)
         const f = e.fieldErrors
         const own = (key: string, fallback: string) => (f[key] ? (lang === 'ru' ? f[key] : t(fallback)) : '')
-        const next = { name: own('fullName', 'nameRequired'), phone: own('phone', 'phoneRequired'), consent: own('consent', 'consentRequired') }
+        const next = { name: own('fullName', 'nameRequired'), phone: own('phone', 'phoneRequired'), consent: own('consent', 'consentRequired'),
+          promo: own('promoCode', 'promoInvalid') }
+        if (next.promo) setPromoOpen(true)
         setErrors(Object.values(next).some(Boolean) ? next : { form: errorText(t, e, me.clinicContact) })
       }
     },
@@ -566,6 +572,8 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
         {errors.phone && <p className="error">{errors.phone}</p>}
         <label className="field"><span>{t('comment')}</span>
           <textarea rows={2} maxLength={500} placeholder={t('commentHint')} value={comment} onChange={(e) => setComment(e.target.value)} /></label>
+        <PromoField ctx={ctx} value={promo} open={promoOpen} error={errors.promo}
+          onOpen={() => setPromoOpen(true)} onChange={(v) => { setPromo(v); setErrors({}) }} />
         {(me.sourceChoices ?? []).length > 0 && (
           <div className="field">
             <span>{t('sourceQuestion')}</span>
@@ -590,6 +598,48 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
       <MainButton busy={book.isPending} onClick={next}
         text={missing === 'service' ? t('nextService') : missing === 'time' ? t('nextTime') : missing === 'data' ? t('nextData') : t('book')} />
     </section>
+  )
+}
+
+/** ?promo=КОД в адресе Mini App (ссылка из рекламы); нет — пусто. Код — не личные данные. */
+function promoFromUrl(): string {
+  try {
+    const code = new URLSearchParams(window.location.search).get('promo') ?? ''
+    return /^[\p{L}\d]{3,20}$/u.test(code) ? code.toUpperCase() : ''
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * «Промокод (если есть)»: свёрнут ссылкой «У меня есть промокод», из ссылки рекламы — сразу открыт
+ * с кодом. «Проверить» — сервер скажет, подходит ли, и покажет скидку-подсказку: её применяет
+ * клиника на приёме. Неподходящий код не даст записаться — его исправляют или убирают.
+ */
+function PromoField({ ctx, value, open, error, onOpen, onChange }: {
+  ctx: Ctx; value: string; open: boolean; error?: string; onOpen: () => void; onChange: (v: string) => void
+}) {
+  const { t, lang } = ctx
+  const check = useMutation<Schemas['BookingViewsPromo'], ApiError, string>({
+    mutationFn: (code) => unwrap(api.GET('/api/patient/promo-code', { params: { query: { code } } })),
+  })
+  if (!open) return <button type="button" className="link promo-open" onClick={onOpen}>{t('promoHave')}</button>
+  const accepted = check.data && check.data.code === value.trim().toUpperCase() ? check.data : null
+  const failed = check.error && check.variables === value ? (lang === 'ru' ? check.error.fieldErrors.promoCode ?? check.error.message : t('promoInvalid')) : ''
+  const discount = accepted ? [accepted.discountPercent ? `−${accepted.discountPercent}%` : '', accepted.discountText ?? ''].filter(Boolean).join(' · ') : ''
+  return (
+    <div className="field promo-field">
+      <label htmlFor="promo-code">{t('promoLabel')}</label>
+      <div className="promo-row">
+        <input id="promo-code" value={value} maxLength={20} autoComplete="off" autoCapitalize="characters" placeholder={t('promoPlaceholder')}
+          enterKeyHint="done" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (value.trim()) check.mutate(value) } }}
+          onChange={(e) => { check.reset(); onChange(e.target.value.toUpperCase()) }} />
+        <button type="button" className="btn" disabled={!value.trim() || check.isPending} onClick={() => check.mutate(value)}>{t('promoCheck')}</button>
+        {value && <button type="button" className="link" onClick={() => { check.reset(); onChange('') }}>{t('promoRemove')}</button>}
+      </div>
+      {accepted && <p className="tone-ok" role="status">✓ {t('promoAccepted')}{discount ? `: ${discount}` : ''}. {t('promoClinicApplies')}</p>}
+      {(failed || error) && <p className="error" role="alert">{failed || error}</p>}
+    </div>
   )
 }
 
@@ -641,6 +691,7 @@ function BookingScreen({ ctx }: { ctx: Ctx }) {
         <p className="big">📅 {whenAt(lang, b.startAt!)}</p>
         <div>{serviceEmoji(b.serviceName)} {b.serviceName || t('defaultService')}</div>
         {b.comment && <p className="hint booking-comment">💬 {b.comment}</p>}
+        {b.promoCode && <p className="hint">🎟 {t('promoBooking', { code: b.promoCode })}</p>}
         <p><span className={b.status === 'SCHEDULED' ? 'status tone-ok' : 'status tone-wait'}>{STATUS[b.status ?? ''] ? t(STATUS[b.status!]!) : b.status}</span></p>
       </div>
       {b.depositStatus && <PatientDeposit ctx={ctx} />}

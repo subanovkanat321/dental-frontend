@@ -12,6 +12,7 @@ import { phoneFromInput } from '../clinic/phone'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { sourceChoices, useSources } from '../lib/sources'
+import { expired, usePromoCodes } from '../lib/promo'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { refreshAppointmentData } from './useAppointmentAction'
@@ -83,6 +84,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const [duration, setDuration] = useState(slot.duration ?? 30)
   const [serviceId, setServiceId] = useState<number | ''>('')
   const [comment, setComment] = useState('')
+  const [promoCode, setPromoCode] = useState('')
+  const promoCodes = usePromoCodes()
   const [patient, setPatient] = useState<Patient | null>(initialPatient)
   const [query, setQuery] = useState('')
   const [adding, setAdding] = useState(false)
@@ -134,6 +137,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           durationMinutes: duration,
           serviceTypeId: serviceId === '' ? undefined : serviceId,
           comment: comment.trim() || undefined,
+          promoCode: promoCode || undefined,
         },
       }))
       // «Хочет раньше»: запись есть, а освободится время раньше — предложим (лист ожидания).
@@ -215,6 +219,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     || (createPatient.error && !Object.keys(createPatient.error.fieldErrors).length && createPatient.error.code !== 'duplicate-patient'
       && createPatient.error.message)
   const busy = create.isPending || createPatient.isPending
+  const offeredCodes = (promoCodes.data ?? []).filter((p) => p.active !== false && !expired(p, todayIn()))
   const durationField = <DurationField value={duration} onChange={setDuration} />
   // Услуги выбранного врача (выбраны у него — только они, иначе все услуги клиники)
   const activeServices = servicesOfDoctor(services.data ?? [], me.doctorServices, doctorId)
@@ -345,6 +350,15 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           <span>Комментарий (необязательно)</span>
           <textarea rows={2} maxLength={500} placeholder="Например: болит справа внизу, придёт с ребёнком" value={comment} onChange={(e) => setComment(e.target.value)} />
         </label>
+        {/* Пациент назвал промокод из рекламы по телефону: выбор из действующих кодов клиники */}
+        {offeredCodes.length > 0 && (
+          <label className="field"><span>Промокод (необязательно)</span>
+            <Select value={promoCode} onChange={(e) => setPromoCode(e.target.value)}>
+              <option value="">Без промокода</option>
+              {offeredCodes.map((p) => <option key={p.id} value={p.code}>{`🎟 ${p.code}${p.description ? ` · ${p.description}` : ''}`}</option>)}
+            </Select>
+          </label>
+        )}
         {!walkIn && (
           <label className="check">
             <input type="checkbox" checked={wantsEarlier} onChange={(e) => setWantsEarlier(e.target.checked)} />

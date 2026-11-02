@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/promo-codes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_2"];
+        post?: never;
+        delete: operations["delete_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/tariffs": {
         parameters: {
             query?: never;
@@ -156,9 +172,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_2"];
+        put: operations["update_3"];
         post?: never;
-        delete: operations["delete_2"];
+        delete: operations["delete_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -204,9 +220,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_3"];
+        put: operations["update_4"];
         post?: never;
-        delete: operations["delete_3"];
+        delete: operations["delete_4"];
         options?: never;
         head?: never;
         patch?: never;
@@ -220,7 +236,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_4"];
+        put: operations["update_5"];
         post?: never;
         delete?: never;
         options?: never;
@@ -268,7 +284,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_5"];
+        put: operations["update_6"];
         post?: never;
         delete?: never;
         options?: never;
@@ -332,7 +348,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_6"];
+        put: operations["update_7"];
         post?: never;
         delete?: never;
         options?: never;
@@ -364,9 +380,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_7"];
+        put: operations["update_8"];
         post?: never;
-        delete: operations["delete_4"];
+        delete: operations["delete_5"];
         options?: never;
         head?: never;
         patch?: never;
@@ -412,7 +428,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view"];
-        put: operations["update_8"];
+        put: operations["update_9"];
         post?: never;
         delete?: never;
         options?: never;
@@ -460,7 +476,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_1"];
-        put: operations["update_9"];
+        put: operations["update_10"];
         post?: never;
         delete?: never;
         options?: never;
@@ -492,7 +508,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_10"];
+        put: operations["update_11"];
         post?: never;
         delete?: never;
         options?: never;
@@ -525,6 +541,22 @@ export interface paths {
         };
         get?: never;
         put: operations["service"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/promo-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["promoCode"];
         post?: never;
         delete?: never;
         options?: never;
@@ -804,6 +836,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/promo-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["all_3"];
+        put?: never;
+        post: operations["add_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/support/tickets/{id}/messages": {
         parameters: {
             query?: never;
@@ -941,7 +989,7 @@ export interface paths {
         };
         get: operations["feeds"];
         put?: never;
-        post: operations["add_1"];
+        post: operations["add_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1451,9 +1499,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["all_3"];
+        get: operations["all_4"];
         put?: never;
-        post: operations["add_2"];
+        post: operations["add_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1517,7 +1565,7 @@ export interface paths {
         };
         get: operations["list_4"];
         put?: never;
-        post: operations["add_3"];
+        post: operations["add_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1531,7 +1579,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["all_4"];
+        get: operations["all_5"];
         put?: never;
         post: operations["create_8"];
         delete?: never;
@@ -2187,7 +2235,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["all_5"];
+        get: operations["all_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2446,7 +2494,7 @@ export interface paths {
         get: operations["content"];
         put?: never;
         post?: never;
-        delete: operations["delete_5"];
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2492,6 +2540,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["slots_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient/promo-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["promoCode_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2830,7 +2894,7 @@ export interface paths {
         get: operations["get_3"];
         put?: never;
         post?: never;
-        delete: operations["delete_6"];
+        delete: operations["delete_7"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3012,6 +3076,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/promo-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["report_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/debts": {
         parameters: {
             query?: never;
@@ -3086,7 +3166,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_7"];
+        delete: operations["delete_8"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3134,7 +3214,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_8"];
+        delete: operations["delete_9"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3166,7 +3246,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_9"];
+        delete: operations["delete_10"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3198,7 +3278,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_10"];
+        delete: operations["delete_11"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3326,6 +3406,30 @@ export interface components {
             /** Format: int64 */
             paidSom?: number;
             former?: boolean;
+        };
+        PromoCodesRequest: {
+            code?: string;
+            description?: string;
+            /** Format: int32 */
+            discountPercent?: number;
+            discountText?: string;
+            active?: boolean;
+            /** Format: date */
+            validUntil?: string;
+        };
+        PromoCodesCode: {
+            /** Format: int64 */
+            id?: number;
+            code?: string;
+            description?: string;
+            /** Format: int32 */
+            discountPercent?: number;
+            discountText?: string;
+            active?: boolean;
+            /** Format: date */
+            validUntil?: string;
+            /** Format: int64 */
+            appointments?: number;
         };
         BillingControllerTariffsRequest: {
             /** Format: int32 */
@@ -3788,6 +3892,10 @@ export interface components {
             depositStatus?: string;
             reviewComment?: string;
             comment?: string;
+            promoCode?: string;
+        };
+        AppointmentRequestsPromoCode: {
+            promoCode?: string;
         };
         AppointmentControllerDue: {
             /** Format: date */
@@ -4131,6 +4239,7 @@ export interface components {
             comment?: string;
             /** Format: int64 */
             sourceId?: number;
+            promoCode?: string;
         };
         BookingViewsBooking: {
             /** Format: int64 */
@@ -4149,6 +4258,7 @@ export interface components {
             /** Format: int32 */
             depositSom?: number;
             depositStatus?: string;
+            promoCode?: string;
         };
         PatientBookingControllerReschedule: {
             /** Format: date-time */
@@ -4281,6 +4391,7 @@ export interface components {
             comment?: string;
             /** Format: int64 */
             serviceTypeId?: number;
+            promoCode?: string;
         };
         AppointmentRequestsUndo: {
             /** Format: int64 */
@@ -4579,6 +4690,12 @@ export interface components {
             dayOff?: components["schemas"]["SlotsViewBreak"];
             taken?: string[];
         };
+        BookingViewsPromo: {
+            code?: string;
+            /** Format: int32 */
+            discountPercent?: number;
+            discountText?: string;
+        };
         NewsControllerPatientNews: {
             news?: components["schemas"]["NewsControllerPatientNewsItem"][];
             subscribed?: boolean;
@@ -4623,6 +4740,7 @@ export interface components {
             elsewhere?: components["schemas"]["BookingViewsElsewhere"];
             doctorServices?: components["schemas"]["DoctorServicesView"][];
             sourceChoices?: components["schemas"]["PatientSourcesChoice"][];
+            promoCode?: string;
         };
         ClinicLinksChoice: {
             /** Format: int64 */
@@ -4873,6 +4991,25 @@ export interface components {
             average?: number;
             byStars?: number[];
         };
+        PromoReportControllerPromoReport: {
+            rows?: components["schemas"]["PromoReportControllerRow"][];
+            money?: boolean;
+        };
+        PromoReportControllerRow: {
+            /** Format: int64 */
+            promoCodeId?: number;
+            code?: string;
+            description?: string;
+            active?: boolean;
+            /** Format: int32 */
+            bookings?: number;
+            /** Format: int32 */
+            visits?: number;
+            /** Format: int32 */
+            newPatients?: number;
+            /** Format: int64 */
+            revenueSom?: number;
+        };
         DayCount: {
             /** Format: date */
             date?: string;
@@ -5105,6 +5242,54 @@ export interface operations {
             };
         };
     };
+    update_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromoCodesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromoCodesCode"][];
+                };
+            };
+        };
+    };
+    delete_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromoCodesCode"][];
+                };
+            };
+        };
+    };
     updateTariffs: {
         parameters: {
             query?: never;
@@ -5221,7 +5406,7 @@ export interface operations {
             };
         };
     };
-    update_2: {
+    update_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -5247,7 +5432,7 @@ export interface operations {
             };
         };
     };
-    delete_2: {
+    delete_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -5319,7 +5504,7 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    update_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -5345,7 +5530,7 @@ export interface operations {
             };
         };
     };
-    delete_3: {
+    delete_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -5365,7 +5550,7 @@ export interface operations {
             };
         };
     };
-    update_4: {
+    update_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -5490,7 +5675,7 @@ export interface operations {
             };
         };
     };
-    update_5: {
+    update_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -5584,7 +5769,7 @@ export interface operations {
             };
         };
     };
-    update_6: {
+    update_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -5634,7 +5819,7 @@ export interface operations {
             };
         };
     };
-    update_7: {
+    update_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -5660,7 +5845,7 @@ export interface operations {
             };
         };
     };
-    delete_4: {
+    delete_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -5754,7 +5939,7 @@ export interface operations {
             };
         };
     };
-    update_8: {
+    update_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -5848,7 +6033,7 @@ export interface operations {
             };
         };
     };
-    update_9: {
+    update_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -5916,7 +6101,7 @@ export interface operations {
             };
         };
     };
-    update_10: {
+    update_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -5980,6 +6165,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AppointmentRequestsService"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    promoCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointmentRequestsPromoCode"];
             };
         };
         responses: {
@@ -6628,6 +6839,50 @@ export interface operations {
             };
         };
     };
+    all_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromoCodesCode"][];
+                };
+            };
+        };
+    };
+    add_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromoCodesRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromoCodesCode"][];
+                };
+            };
+        };
+    };
     reply: {
         parameters: {
             query?: {
@@ -6889,7 +7144,7 @@ export interface operations {
             };
         };
     };
-    add_1: {
+    add_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -7775,7 +8030,7 @@ export interface operations {
             };
         };
     };
-    all_3: {
+    all_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -7795,7 +8050,7 @@ export interface operations {
             };
         };
     };
-    add_2: {
+    add_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -7937,7 +8192,7 @@ export interface operations {
             };
         };
     };
-    add_3: {
+    add_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -7961,7 +8216,7 @@ export interface operations {
             };
         };
     };
-    all_4: {
+    all_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -9192,7 +9447,7 @@ export interface operations {
             };
         };
     };
-    all_5: {
+    all_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -9557,7 +9812,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -9642,6 +9897,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookingViewsSlots"];
+                };
+            };
+        };
+    };
+    promoCode_1: {
+        parameters: {
+            query: {
+                code: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingViewsPromo"];
                 };
             };
         };
@@ -10072,7 +10349,7 @@ export interface operations {
             };
         };
     };
-    delete_6: {
+    delete_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -10340,6 +10617,30 @@ export interface operations {
             };
         };
     };
+    report_1: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromoReportControllerPromoReport"];
+                };
+            };
+        };
+    };
     debts: {
         parameters: {
             query?: {
@@ -10429,7 +10730,7 @@ export interface operations {
             };
         };
     };
-    delete_7: {
+    delete_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -10489,7 +10790,7 @@ export interface operations {
             };
         };
     };
-    delete_8: {
+    delete_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -10535,7 +10836,7 @@ export interface operations {
             };
         };
     };
-    delete_9: {
+    delete_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -10575,7 +10876,7 @@ export interface operations {
             };
         };
     };
-    delete_10: {
+    delete_11: {
         parameters: {
             query?: never;
             header?: never;

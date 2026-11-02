@@ -38,6 +38,23 @@ test('страница клиники: запись в Telegram, WhatsApp, зв�
   expect(localStorage.getItem('clinic.lang')).toBe('ky')
 })
 
+test('страница клиники с ?promo= из рекламы: код уходит в ссылку бота, кириллица и мусор — нет', async () => {
+  server.use(http.get('*/web/clinic', () => HttpResponse.json({
+    name: 'Улыбка', telegramUrl: 'https://t.me/tish_bot?start=c_abc123', doctors: [], services: [],
+  } satisfies ClinicPage)))
+  window.history.replaceState(null, '', '/c/abc123?promo=zuby10')
+  const { unmount } = render(<ClinicSite />)
+  expect(await screen.findByRole('link', { name: /Записаться онлайн в Telegram/ }))
+    .toHaveAttribute('href', 'https://t.me/tish_bot?start=c_abc123-ZUBY10')
+  expect(screen.getByText(/Промокод ZUBY10 подставится при записи в боте/)).toBeInTheDocument()
+  unmount()
+
+  window.history.replaceState(null, '', '/c/abc123?promo=%D0%9E%D0%A1%D0%95%D0%9D%D0%AC')
+  render(<ClinicSite />)
+  expect(await screen.findByRole('link', { name: /Записаться онлайн в Telegram/ })).toHaveAttribute('href', 'https://t.me/tish_bot?start=c_abc123')
+  expect(screen.queryByText(/подставится/)).toBeNull()
+})
+
 test('каталог: поиск по врачу без учёта «ё» и регистра — когда клиник больше пяти', async () => {
   const clinic = (name: string, doctor: string) => ({ name, pageUrl: `/c/${name}`, doctors: [{ fullName: doctor }] } satisfies DirectoryClinic)
   server.use(http.get('*/web/clinics', () => HttpResponse.json([clinic('Улыбка', 'Айгерим'), clinic('Дент', 'Пётр'), clinic('А', 'Б'), clinic('В', 'Г'),

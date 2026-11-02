@@ -457,6 +457,12 @@ tr.inactive td { opacity: .55; }
 .profile-photo .photo-empty { display: grid; place-items: center; background: var(--accent-soft); color: var(--link); font: 700 1.6rem var(--display); }
 .invite { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
 .invite-link { font-family: var(--mono); font-size: .9rem; word-break: break-all; }
+/* Промокоды: ссылки с кодом в карточке промокода */
+.promo-links { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); margin-top: 12px; }
+.promo-links h3 { margin: 0; font-size: 1rem; }
+.promo-link { display: grid; gap: 4px; }
+.promo-link a { font-family: var(--mono); font-size: .85rem; word-break: break-all; }
+.promo-link .btn { justify-self: start; }
 .hours { display: grid; gap: 6px; }
 .hours-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
 .hours-row input[type=time], .form input[type=time] { min-width: 0; font: inherit; height: 34px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }

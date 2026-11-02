@@ -87,3 +87,8 @@
 .main-button-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--page); border-top: 1px solid var(--separator); z-index: 5; }
 .main-button-bar .btn { width: 100%; max-width: 560px; margin: 0 auto; display: flex; min-height: 50px; }
 .empty-filter { display: grid; gap: 8px; text-align: center; }
+
+/* Промокод из рекламы: поле и «Проверить» в строку, на узком экране кнопки переносятся */
+.promo-open { justify-self: start; }
+.promo-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.promo-row input { flex: 1 1 140px; min-width: 0; text-transform: uppercase; }
