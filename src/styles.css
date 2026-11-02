@@ -8,8 +8,8 @@
   --card: #FFFFFF;
   --sunken: #E9EFEF;
   --text: #0F2A30;
-  --hint: #5A6F75;
-  --faint: #8A9CA1;
+  --hint: #4C6268;
+  --faint: #75898E;
   --link: #0E8A80;
   --separator: #DCE4E5;
   --line-strong: #C8D3D5;
@@ -39,11 +39,11 @@
   --r-md: 8px;
   --display: 'Geologica', 'Golos Text', sans-serif;
   --ui: 'Golos Text', sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  /* Время, телефоны, суммы — тем же Golos Text, полужирнее: моноширинный выглядел как код */
+  --mono: 'Golos Text', sans-serif;
   font-family: var(--ui);
-  font-size: calc(14px * var(--text-scale, 1));
-  line-height: 1.45;
-  -webkit-font-smoothing: antialiased;
+  font-size: calc(15px * var(--text-scale, 1));
+  line-height: 1.5;
 }
 /* Тёмная тема: выбор в «Настройки → Оформление» (data-theme на <html>, lib/theme.ts) */
 :root[data-theme=dark] {
@@ -82,9 +82,9 @@ button, input, select, textarea { font-family: inherit; }
 /* Галочки и переключатели — в цвет Tish; в тёмной теме не белые квадраты браузера */
 input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 /* Время, телефоны, суммы в таблицах — цифры столбиком */
-.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.num { font-family: var(--mono); font-weight: 500; white-space: nowrap; }
 .hint { color: var(--hint); }
-.small { font-size: .86rem; }
+.small { font-size: .9rem; }
 .error { color: var(--destructive); }
 .tone-ok { color: var(--status-ok); }
 .tone-wait { color: var(--status-wait); }
@@ -158,7 +158,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .grid-head-name { overflow: hidden; text-overflow: ellipsis; }
 .avatar { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #fff; font: 600 .78rem var(--display); }
 .grid-times { position: relative; }
-.grid-times span { position: absolute; right: 8px; transform: translateY(-50%); font-size: .78rem; color: var(--faint); }
+.grid-times span { position: absolute; right: 8px; transform: translateY(-50%); font-size: .85rem; color: var(--faint); }
 .grid-times .now-label { right: 4px; padding: 1px 5px; border-radius: 4px; background: var(--now); color: #fff; font-weight: 600; z-index: 4; }
 .grid-col { position: relative; border-left: 1px solid var(--separator); }
 .grid-hour { position: absolute; left: 0; right: 0; border-top: 1px solid var(--separator); }
@@ -177,7 +177,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .appt.short .appt-state { flex: 1 1 0; min-width: 0; align-self: baseline; }
 .appt.active { outline: 2px solid var(--accent); outline-offset: 1px; }
 .appt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.appt-time { font-size: .78rem; font-weight: 500; opacity: .85; white-space: nowrap; }
+.appt-time { font-size: .85rem; font-weight: 500; opacity: .9; white-space: nowrap; }
 .appt-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .appt-state { display: flex; align-items: center; gap: 5px; font-size: .86rem; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -219,8 +219,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .bars.months { height: 110px; }
 .grid-off { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, var(--sunken) 0 6px, transparent 6px 12px); pointer-events: none; display: flex; align-items: flex-start; justify-content: center; }
 .grid-off span { margin-top: 12px; padding: 2px 8px; border-radius: var(--r-sm); background: var(--card); color: var(--hint); font-size: .85rem; }
-.grid-break { position: absolute; left: 4px; right: 4px; border-radius: var(--r-sm); background: var(--sunken); border: 1px dashed var(--line-strong); color: var(--hint); font-size: .8rem; overflow: hidden; padding: 1px 6px; pointer-events: none; }
-.appt-note { display: block; font-size: .78rem; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grid-break { position: absolute; left: 4px; right: 4px; border-radius: var(--r-sm); background: var(--sunken); border: 1px dashed var(--line-strong); color: var(--hint); font-size: .85rem; overflow: hidden; padding: 1px 6px; pointer-events: none; }
+.appt-note { display: block; font-size: .85rem; opacity: .9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pay-form, .form { display: grid; gap: 10px; }
 .field { display: grid; gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
 .field > span, .field > legend { font-size: .85rem; color: var(--hint); padding: 0; }
@@ -250,7 +250,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .search { min-width: 280px; font: inherit; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
 .table th, .table td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--separator); }
-.table th { font-size: .82rem; color: var(--hint); font-weight: 600; background: var(--card); position: sticky; top: 0; }
+.table th { font-size: .85rem; color: var(--hint); font-weight: 600; background: var(--card); position: sticky; top: 0; }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover, .table tbody tr.active { background: var(--accent-soft); }
 .th-sort { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
@@ -261,7 +261,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .r { text-align: right; }
 .table td.num { font-size: .93rem; }
 .stats { display: flex; gap: 14px; }
-.panel h3 { margin: 6px 0 4px; font-size: .85rem; color: var(--hint); text-transform: uppercase; letter-spacing: .03em; }
+.panel h3 { margin: 8px 0 4px; font-size: .95rem; color: var(--hint); font-weight: 600; }
 .visits { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .9rem; }
 
 /* Касса */
@@ -347,7 +347,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 }
 .tooth:hover, .tooth.active { border-color: var(--accent); background: var(--accent-soft); }
 .tooth-icon { height: 1.2em; }
-.tooth-number { font-size: .75rem; font-weight: 700; color: var(--hint); }
+.tooth-number { font-size: .8rem; font-weight: 700; color: var(--hint); }
 .tooth-dot { position: absolute; top: 0; right: 4px; color: var(--status-wait); font-weight: 800; }
 .tooth[data-state=CARIES], .tooth[data-state=TREATING] { border-color: color-mix(in srgb, var(--status-wait) 50%, transparent); }
 .tooth[data-state=MISSING] { opacity: .55; }
@@ -379,7 +379,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 }
 
 /* Подписи без эмодзи: метка Telegram в таблице, комментарий к записи */
-.tg { margin-left: 8px; padding: 1px 6px; border-radius: var(--r-sm); background: var(--req-bg); color: var(--req-ink); font-size: .75rem; font-weight: 500; vertical-align: 1px; }
+.tg { margin-left: 8px; padding: 1px 6px; border-radius: var(--r-sm); background: var(--req-bg); color: var(--req-ink); font-size: .8rem; font-weight: 500; vertical-align: 1px; }
 .comment { padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .93rem; }
 
 /* Карточка приёма: строки с «изменить», вложенные формы, материалы */
@@ -425,7 +425,7 @@ tr.inactive td { opacity: .55; }
 .profile-photo img, .profile-photo .photo-empty { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; flex: none; }
 .profile-photo .photo-empty { display: grid; place-items: center; background: var(--accent-soft); color: var(--link); font: 700 1.6rem var(--display); }
 .invite { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
-.invite-link { font-family: var(--mono); font-size: .86rem; word-break: break-all; }
+.invite-link { font-family: var(--mono); font-size: .9rem; word-break: break-all; }
 .hours { display: grid; gap: 6px; }
 .hours-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
 .hours-row input[type=time], .form input[type=time] { min-width: 0; font: inherit; height: 34px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
@@ -437,7 +437,7 @@ tr.inactive td { opacity: .55; }
 .table th.r, .table td.r { text-align: right; }
 
 /* Клиника: услуги по категориям, справочник */
-.table tr.group-row th { padding-top: 16px; font: 700 .8rem var(--display); color: var(--hint); text-transform: uppercase; letter-spacing: .03em; text-align: left; background: none; position: static; }
+.table tr.group-row th { padding-top: 16px; font: 600 .95rem var(--display); color: var(--hint); text-align: left; background: none; position: static; }
 .chips-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
 .chips-pick .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
 .chips-pick .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
@@ -466,7 +466,7 @@ tr.inactive td { opacity: .55; }
 .anamnesis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 fieldset.anamnesis-grid { border: 0; padding: 0; margin: 0; min-width: 0; }
 .anamnesis-col { display: grid; gap: 8px; align-content: start; margin: 0; padding: 0; border: 0; min-width: 0; }
-.anamnesis-col legend { padding: 0 0 6px; font: 700 .8rem var(--display); color: var(--hint); text-transform: uppercase; letter-spacing: .03em; }
+.anamnesis-col legend { padding: 0 0 6px; font: 600 .95rem var(--display); color: var(--hint); }
 .anamnesis .question { display: grid; gap: 4px; }
 .anamnesis .question input:not([type=checkbox]), .anamnesis textarea { font: inherit; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 @media (max-width: 720px) { .anamnesis-grid { grid-template-columns: 1fr; } }
@@ -505,7 +505,7 @@ details.agreement-box { max-height: none; }
 .card-block > .btn, .card-block > label.btn, .form.narrow > label.btn { justify-self: start; }
 /* Платформа: редактор договора — панель шире */
 .schedule.with-panel:has(.panel.wide) { grid-template-columns: 1fr 600px; }
-.agreement-edit { font: .88rem/1.5 var(--mono); }
+.agreement-edit { font: .95rem/1.55 var(--ui); }
 .checks { display: grid; gap: 4px; max-height: 240px; overflow: auto; padding: 8px; border: 1px solid var(--separator); border-radius: var(--r-md); }
 @media (max-width: 720px) { .schedule.with-panel:has(.panel.wide) { grid-template-columns: 1fr; } }
 /* Напоминания админу над рабочей областью */
@@ -553,9 +553,9 @@ details.agreement-box { max-height: none; }
 .strip::-webkit-scrollbar { display: none; }
 .strip-day { position: relative; flex: none; display: grid; justify-items: center; gap: 1px; min-width: 52px; padding: 6px 4px 8px;
   border: 1px solid var(--separator); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
-.strip-day .wd { font-size: .72rem; color: var(--hint); }
+.strip-day .wd { font-size: .78rem; color: var(--hint); }
 .strip-day .dn { font: 700 1.1rem var(--display); }
-.strip-day .mn { font-size: .66rem; color: var(--hint); line-height: 1; }
+.strip-day .mn { font-size: .72rem; color: var(--hint); line-height: 1; }
 .strip-day[aria-pressed=true] .mn, .strip-day.pick.active .mn { color: inherit; opacity: .85; }
 /* «📅 другой день»: прозрачное поле даты поверх — нажатие открывает календарь */
 .strip-day.pick { cursor: pointer; overflow: hidden; }
@@ -590,7 +590,7 @@ details.agreement-box { max-height: none; }
   padding: 10px 10px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .day-list .row .time { font: 600 .95rem var(--mono); }
 .day-list .row .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.day-list .row .end { font-size: .8rem; }
+.day-list .row .end { font-size: .85rem; }
 .day-list .row .state, .day-list .row .row-note { grid-column: 2 / -1; font-size: .85rem; }
 .day-list .row-note { color: var(--hint); }
 .day-list .row.free { border-style: dashed; border-left-width: 1px; background: none; }
@@ -612,7 +612,7 @@ details.agreement-box { max-height: none; }
 /* «Настройки»: группы пунктов, как меню прежнего приложения */
 .settings { display: grid; gap: 16px; max-width: 760px; }
 .settings-group { display: grid; gap: 8px; }
-.settings-group h2 { font-size: 1rem; color: var(--hint); text-transform: uppercase; letter-spacing: .04em; font-family: var(--ui); }
+.settings-group h2 { font-size: 1.05rem; color: var(--hint); font-weight: 600; font-family: var(--ui); }
 .settings-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); overflow: hidden; }
 .settings-list li + li { border-top: 1px solid var(--separator); }
 .settings-link { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px 14px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
@@ -672,12 +672,12 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-columns .row .time { font-size: .88rem; }
 .doctor-columns .row .end { display: none; }
 .doctor-columns .row .name { white-space: normal; overflow-wrap: anywhere; font-size: .92rem; line-height: 1.2; }
-.doctor-columns .row .state, .doctor-columns .row .row-note { grid-column: auto; font-size: .78rem; }
+.doctor-columns .row .state, .doctor-columns .row .row-note { grid-column: auto; font-size: .85rem; }
 .doctor-columns .row .state .hint { display: none; }
 .doctor-columns .remind-quick { width: 34px; height: 34px; margin: 6px 6px 0 0; align-self: flex-start; font-size: .7rem; }
 .doctor-columns .row.free .row-button { grid-template-columns: auto 1fr auto; align-items: center; gap: 6px; }
 .doctor-columns .row.free { background: var(--ok-bg); border-color: transparent; }
-.doctor-columns .row.free .hint { font-size: .8rem; }
+.doctor-columns .row.free .hint { font-size: .85rem; }
 .doctor-columns .row.pause { flex-wrap: wrap; padding: 8px; gap: 2px 6px; font-size: .82rem; }
 tr.clickable { cursor: pointer; }
 tr.clickable:hover td { background: var(--sunken); }
@@ -702,8 +702,8 @@ tr.clickable:hover td { background: var(--sunken); }
 .vbar-fill { display: block; width: 72%; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--chart-1); }
 .vbar.partial .vbar-fill { background: repeating-linear-gradient(135deg, var(--chart-1) 0 6px, color-mix(in srgb, var(--chart-1) 55%, transparent) 6px 10px); }
 .vbar.picked .vbar-fill { outline: 2px solid var(--text); outline-offset: 1px; }
-.vbar-value { font-size: .72rem; color: var(--hint); white-space: nowrap; }
-.vbar-label { font-size: .75rem; color: var(--hint); }
+.vbar-value { font-size: .8rem; color: var(--hint); white-space: nowrap; }
+.vbar-label { font-size: .8rem; color: var(--hint); }
 .vbars.stacked { height: 150px; }
 .vbar-stack { display: flex; flex-direction: column; width: 72%; min-height: 2px; gap: 2px; }
 .vbar-stack .seg { display: block; min-height: 3px; }
@@ -739,7 +739,7 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .salary-head h2 { margin: 0; }
 .salary-sums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
 .salary-sums div { padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken, var(--quiet-bg)); }
-.salary-sums dt { color: var(--hint); font-size: .8rem; }
+.salary-sums dt { color: var(--hint); font-size: .85rem; }
 .salary-sums dd { margin: 2px 0 0; font-size: .95rem; white-space: nowrap; }
 .salary-sums dd.strong { font-weight: 700; color: var(--link); }
 .badge-ok { padding: 2px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok-ink); font-size: .85rem; font-weight: 600; white-space: nowrap; }
@@ -771,10 +771,10 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 @media (min-width: 1000px) { .chart-pair { grid-template-columns: 1fr 1fr; } }
 
 /* Тепловая карта загрузки: дни × часы, один цвет от светлого к тёмному */
-.heatmap { display: grid; gap: 3px; align-items: center; font-size: .75rem; max-width: 820px; }
+.heatmap { display: grid; gap: 3px; align-items: center; font-size: .8rem; max-width: 820px; }
 .heat-row { display: contents; }
 .heat-h { text-align: center; color: var(--hint); }
 .heat-d { color: var(--hint); font-weight: 600; }
 .heat-cell { display: block; height: clamp(16px, 5vw, 30px); border-radius: 4px; }
-.heat-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: .8rem; }
+.heat-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: .85rem; }
 .heat-legend .heat-cell { width: 16px; height: 16px; }
