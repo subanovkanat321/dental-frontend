@@ -778,3 +778,47 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .heat-cell { display: block; height: clamp(16px, 5vw, 30px); border-radius: 4px; }
 .heat-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: .85rem; }
 .heat-legend .heat-cell { width: 16px; height: 16px; }
+
+/*
+ * Цвет кнопок по смыслу (data-tone ставит lib/buttonIcons.ts по подписи): мягкая заливка и
+ * тёмный текст того же цвета. Главная кнопка экрана (.primary) — бирюзовая, как была.
+ */
+:root { --wa-bg: #D3F5DF; --wa-ink: #0A7034; --tg-bg: #D6EEFC; --tg-ink: #0F6AA6; }
+:root[data-theme=dark] { --wa-bg: #17432C; --wa-ink: #7FE0A3; --tg-bg: #173A52; --tg-ink: #8FD0FF; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --wa-bg: #17432C; --wa-ink: #7FE0A3; --tg-bg: #173A52; --tg-ink: #8FD0FF; } }
+.btn[data-tone]:not(.primary) { border-color: transparent; font-weight: 600; }
+.btn[data-tone=ok]:not(.primary) { background: var(--ok-bg); color: var(--ok-ink); }
+.btn[data-tone=info]:not(.primary) { background: var(--req-bg); color: var(--req-ink); }
+.btn[data-tone=warn]:not(.primary) { background: var(--wait-bg); color: var(--wait-ink); }
+.btn[data-tone=cash]:not(.primary) { background: var(--cash-bg); color: var(--cash-ink); }
+.btn[data-tone=bad]:not(.primary) { background: var(--bad-bg); color: var(--bad-ink); }
+.btn[data-tone=wa]:not(.primary) { background: var(--wa-bg); color: var(--wa-ink); }
+.btn[data-tone=tg]:not(.primary) { background: var(--tg-bg); color: var(--tg-ink); }
+.btn[data-tone=now]:not(.primary) { background: var(--accent-soft); color: var(--link); }
+.btn[data-tone]:not(.primary):hover:not(:disabled) { filter: brightness(.95); }
+:root[data-theme=dark] .btn[data-tone]:not(.primary):hover:not(:disabled) { filter: brightness(1.15); }
+
+/* Приёмы списком (телефон): лёгкая заливка цветом статуса — день читается по цвету */
+.day-list .row.s-request { background: color-mix(in srgb, var(--req-bg) 45%, var(--card)); }
+.day-list .row.s-ok { background: color-mix(in srgb, var(--ok-bg) 45%, var(--card)); }
+.day-list .row.s-wait { background: color-mix(in srgb, var(--wait-bg) 45%, var(--card)); }
+.day-list .row.s-cashier { background: color-mix(in srgb, var(--cash-bg) 45%, var(--card)); }
+.day-list .row.s-bad { background: color-mix(in srgb, var(--bad-bg) 45%, var(--card)); }
+.day-list .row.s-done { background: var(--card); }
+.day-list .row.s-done .name { color: var(--hint); }
+.remind-quick { background: var(--wa-bg); border-color: transparent; color: var(--wa-ink); }
+.remind-quick.tg { background: var(--tg-bg); color: var(--tg-ink); }
+
+/* Меню: у каждого раздела свой цвет значка — раздел узнаётся сразу */
+.nav[data-section=schedule] .icon { color: #3CCFC0; }
+.nav[data-section=patients] .icon { color: #7FB2FF; }
+.nav[data-section=cash] .icon { color: #F5C451; }
+.nav[data-section=stock] .icon { color: #C9A2FF; }
+.nav[data-section=settings] .icon { color: #FF9F80; }
+.nav[data-section=platform] .icon { color: #9FD8E8; }
+
+/* «Настройки»: значок пункта — на цветной плашке, у каждой группы свой цвет */
+.settings-emoji { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: color-mix(in srgb, #3CCFC0 30%, var(--card)); font-size: 1.3rem; }
+.settings-group[data-group="1"] .settings-emoji { background: var(--req-bg); }
+.settings-group[data-group="2"] .settings-emoji { background: var(--wait-bg); }
+.settings-group[data-group="3"] .settings-emoji { background: color-mix(in srgb, #C9A2FF 35%, var(--card)); }

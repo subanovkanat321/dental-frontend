@@ -134,6 +134,28 @@ const ICONS: Record<string, string> = {
   'Все': '👥',
 }
 
+
+/**
+ * Цвет кнопки по смыслу (data-tone, красит CSS): зелёный — подтвердить и «состоялся», синий —
+ * связаться и медкарта, янтарный — перенести, персиковый — деньги, красный — отменить и удалить,
+ * WhatsApp и Telegram — своими цветами. Главная кнопка экрана (.primary) остаётся бирюзовой.
+ */
+const TONES: Record<string, string> = {
+  Подтвердить: 'ok', 'Приём состоялся': 'ok', 'Исправить: приём состоялся': 'ok', Записать: 'ok', Придёт: 'ok',
+  'Одобрить и завести клинику': 'ok', 'Записать снова': 'ok', 'Записать на следующий визит': 'ok', Восстановить: 'ok', Вернуть: 'ok',
+  Позвонить: 'info', 'Карта зубов и план лечения': 'info', 'Медкарта и снимки': 'info', 'Заметка о приёме': 'info',
+  Напомнить: 'info', 'Позвать на профосмотр': 'info',
+  'Напомнить в WhatsApp': 'wa', 'Написать в WhatsApp': 'wa', WhatsApp: 'wa',
+  'Напомнить в Telegram': 'tg', 'Написать в Telegram': 'tg', 'Отправить в Telegram': 'tg', 'Отправить в бот': 'tg',
+  Перенести: 'warn', 'Перенести или передать врачу': 'warn', Перенос: 'warn', Передать: 'warn', 'Нет ответа': 'warn',
+  'Лист ожидания': 'warn', 'В лист ожидания': 'warn',
+  'Принять оплату': 'cash', 'Принять доплату': 'cash', 'Сохранить оплату': 'cash', 'Сохранить доплату': 'cash',
+  'Указать стоимость и принять остаток': 'cash', 'На кассу — оплатит в регистратуре': 'cash', 'К оплате': 'cash',
+  'Отклонить заявку': 'bad', Неявка: 'bad', 'Исправить: неявка': 'bad', 'Отменить приём': 'bad', 'Отменить запись': 'bad',
+  'Удалить запись': 'bad', 'Удалить этап': 'bad', 'Удалить услугу': 'bad', 'Удалить материал': 'bad', Отклонить: 'bad',
+  'Принять сейчас': 'now', 'Принять сейчас (без записи)': 'now', 'Начать приём': 'now', 'Без записи': 'now',
+}
+
 /** Значок для подписи. Подпись уже с «＋» — значок не нужен: плюс и есть значок. */
 function iconOf(label: string): string | undefined {
   const text = label.replace(/\s+/g, ' ').trim()
@@ -142,6 +164,13 @@ function iconOf(label: string): string | undefined {
 }
 
 function decorate(el: Element): void {
+  const text = (el.textContent ?? '').replace(/\s+/g, ' ').trim()
+  const tone = TONES[text.replace(/^[^\p{L}]+/u, '')]
+  if (tone) {
+    if (el.getAttribute('data-tone') !== tone) el.setAttribute('data-tone', tone)
+  } else if (el.hasAttribute('data-tone')) {
+    el.removeAttribute('data-tone')
+  }
   const icon = iconOf(el.textContent ?? '')
   if (icon) {
     if (el.getAttribute('data-ico') !== icon) el.setAttribute('data-ico', icon)

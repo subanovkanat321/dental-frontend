@@ -100,11 +100,11 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
     <div className="settings">
       <header className="toolbar"><h1>⚙️ Настройки</h1></header>
       <Profile me={me} />
-      {GROUPS.map(([group, items]) => {
+      {GROUPS.map(([group, items], index) => {
         const shown = items.filter((i) => i.show(me))
         if (!shown.length) return null
         return (
-          <section key={group} className="settings-group">
+          <section key={group} className="settings-group" data-group={index}>
             <h2>{group}</h2>
             <ul className="settings-list">
               {shown.map((i) => (

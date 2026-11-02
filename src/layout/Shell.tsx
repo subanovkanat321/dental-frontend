@@ -59,7 +59,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </div>
         <nav aria-label="Разделы">
           {sections.map((s) => (
-            <button key={s.key} type="button" className={['nav', s.key === page ? 'active' : '', extra.includes(s) ? 'extra' : ''].join(' ').trim()}
+            <button key={s.key} type="button" className={['nav', s.key === page ? 'active' : '', extra.includes(s) ? 'extra' : ''].join(' ').trim()} data-section={s.key}
               aria-current={s.key === page ? 'page' : undefined} onClick={() => go(s.key)}>
               <Icon name={s.key} /> <span>{s.title}</span>
             </button>
