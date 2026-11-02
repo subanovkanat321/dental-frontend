@@ -117,3 +117,35 @@ test('/join из Instagram: подсказка «открыть в браузе�
   expect(within(form).getByRole('textbox', { name: 'Как к вам обращаться' })).toHaveAttribute('autocomplete', 'off')
   vi.restoreAllMocks()
 })
+
+test('Instagram: подсказка «⋮ → Открыть в браузере» и запасная ссылка tg:// с тем же start', async () => {
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone) Instagram 300.0')
+  window.history.replaceState(null, '', '/c/abc123')
+  server.use(http.get('*/web/clinic', () => HttpResponse.json({
+    name: 'Улыбка', telegramUrl: 'https://t.me/tish_bot?start=c_abc123', doctors: [], services: [],
+  } satisfies ClinicPage)))
+  render(<ClinicSite />)
+  expect(await screen.findByText(/Открыть в браузере/)).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'открыть приложение Telegram' })).toHaveAttribute('href', 'tg://resolve?domain=tish_bot&start=c_abc123')
+  vi.restoreAllMocks()
+})
+
+test('каталог в Instagram: у клиники — «📲 открыть Telegram» по tg://', async () => {
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 Instagram 300.0')
+  server.use(http.get('*/web/clinics', () => HttpResponse.json([
+    { name: 'Улыбка', pageUrl: '/c/u', telegramUrl: 'https://t.me/tish_bot?start=c_u', doctors: [] } satisfies DirectoryClinic,
+  ])))
+  render(<Directory />)
+  expect(await screen.findByRole('link', { name: /открыть Telegram/ })).toHaveAttribute('href', 'tg://resolve?domain=tish_bot&start=c_u')
+  expect(screen.getByText(/Открыть в браузере/)).toBeInTheDocument()
+  vi.restoreAllMocks()
+})
+
+test('обычный браузер — без подсказки про Instagram', async () => {
+  server.use(http.get('*/web/clinics', () => HttpResponse.json([
+    { name: 'Улыбка', pageUrl: '/c/u', telegramUrl: 'https://t.me/tish_bot?start=c_u', doctors: [] } satisfies DirectoryClinic,
+  ])))
+  render(<Directory />)
+  expect(await screen.findByRole('heading', { name: 'Улыбка' })).toBeInTheDocument()
+  expect(screen.queryByText(/Открыть в браузере/)).not.toBeInTheDocument()
+})

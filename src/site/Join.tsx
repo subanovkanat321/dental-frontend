@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
-import { getJson, type Links, type Tariffs } from './web'
+import { getJson, inAppBrowser, type Links, type Tariffs } from './web'
 
 const FEATURES: [string, string, string][] = [
   ['📲', 'Запись в Telegram', 'Пациент выбирает врача, услугу и время сам — врач подтверждает одним нажатием.'],
@@ -15,8 +15,6 @@ const FEATURES: [string, string, string][] = [
 
 const som = (n = 0) => `${new Intl.NumberFormat('ru-RU').format(n)} сом`
 
-/** Браузер внутри Instagram, Facebook и т. п. (ссылка из профиля Instagram открывается в нём). */
-const inAppBrowser = () => /Instagram|FBAN|FBAV|Line\/|TikTok|musical_ly/i.test(navigator.userAgent)
 
 /**
  * Страница для клиник (/join): что умеет приложение, тарифы и форма заявки. Заявку разбирает

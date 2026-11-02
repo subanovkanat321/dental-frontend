@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { formatPhone } from '../lib/time'
-import { clinicCode, getJson, initials, useSiteLang, type ClinicPage } from './web'
+import { clinicCode, getJson, inAppBrowser, initials, tgLink, useSiteLang, type ClinicPage } from './web'
 
 const TEXTS = {
   ru: {
@@ -10,6 +10,7 @@ const TEXTS = {
     min: 'мин', waText: 'Здравствуйте! Хочу записаться на приём 🦷', howTitle: 'Как записаться',
     how: ['Нажмите «Записаться онлайн в Telegram»', 'Выберите врача, услугу и удобное время', 'Врач подтвердит запись, бот напомнит накануне'],
     error: 'Не удалось загрузить страницу — обновите её через минуту.', loading: 'Загрузка…',
+    inApp: 'Открыли из Instagram? Если Telegram не открывается — нажмите ⋮ вверху → «Открыть в браузере» или', openTg: 'открыть приложение Telegram',
   },
   ky: {
     title: 'Стоматология', tagline: 'Бир мүнөттө онлайн жазылыңыз — бот кабыл алуу тууралуу эскертет 😊', book: 'Telegram аркылуу онлайн жазылуу',
@@ -17,6 +18,7 @@ const TEXTS = {
     min: 'мүн.', waText: 'Саламатсызбы! Кабыл алууга жазылгым келет 🦷', howTitle: 'Кантип жазылуу керек',
     how: ['«Telegram аркылуу онлайн жазылуу» баскычын басыңыз', 'Дарыгерди, кызматты жана ыңгайлуу убакытты тандаңыз', 'Дарыгер жазылууну ырастайт, бот бир күн мурун эскертет'],
     error: 'Барак жүктөлгөн жок — бир мүнөттөн кийин жаңыртыңыз.', loading: 'Жүктөлүүдө…',
+    inApp: 'Instagram’дан ачтыңызбы? Telegram ачылбаса — жогорудагы ⋮ → «Браузерде ачуу» басыңыз же', openTg: 'Telegram колдонмосун ачыңыз',
   },
 }
 
@@ -69,6 +71,7 @@ export function ClinicSite() {
         {d.phone && <a className="btn" href={`tel:+${d.phone}`}>📞 {t.call} {d.phoneText || formatPhone(d.phone)}</a>}
         {d.mapUrl && <a className="btn" href={d.mapUrl} target="_blank" rel="noopener noreferrer">🗺️ {t.map}</a>}
       </div>
+      {d.telegramUrl && <InAppHint url={d.telegramUrl} text={t.inApp} link={t.openTg} />}
       {d.address && <p>📍 {d.address}</p>}
       {d.telegramUrl && (
         <section className="site-card">
@@ -101,4 +104,14 @@ export function ClinicSite() {
       <footer className="site-footer">© {new Date().getFullYear()} {name}</footer>
     </main>
   )
+}
+
+/**
+ * Встроенный браузер Instagram (ссылка из шапки профиля) часто не открывает t.me: подсказка
+ * «⋮ → Открыть в браузере» и запасная ссылка tg://resolve с тем же start — сразу в Telegram.
+ */
+export function InAppHint({ url, text, link }: { url?: string; text: string; link: string }) {
+  const tg = tgLink(url)
+  if (!inAppBrowser()) return null
+  return <p className="tone-wait site-inapp">{tg ? <>{text} <a href={tg}>{link}</a>.</> : text}</p>
 }

@@ -72,3 +72,23 @@ export function matches(c: DirectoryClinic, query: string): boolean {
   const text = norm([c.name, c.address, ...c.doctors.map((d) => d.fullName)].filter(Boolean).join(' '))
   return norm(query).split(/\s+/).filter(Boolean).every((w) => text.includes(w))
 }
+
+/** Браузер внутри Instagram, Facebook, TikTok и т. п.: ссылка t.me там часто не открывает Telegram. */
+export const inAppBrowser = () => /Instagram|FBAN|FBAV|Line\/|TikTok|musical_ly/i.test(navigator.userAgent)
+
+/**
+ * Запасная ссылка в приложение Telegram для https://t.me/<бот>?start=<…>: tg://resolve с тем же
+ * start — встроенный браузер Instagram открывает её сразу в Telegram. Не t.me — null.
+ */
+export function tgLink(url?: string | null): string | null {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    const domain = u.pathname.split('/').filter(Boolean)[0]
+    if (u.hostname !== 't.me' || !domain || !/^\w+$/.test(domain)) return null
+    const start = u.searchParams.get('start')
+    return `tg://resolve?domain=${domain}${start ? `&start=${encodeURIComponent(start)}` : ''}`
+  } catch {
+    return null
+  }
+}

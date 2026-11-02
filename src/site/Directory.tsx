@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { LangSwitch } from './ClinicSite'
-import { getJson, initials, matches, useSiteLang, type DirectoryClinic } from './web'
+import { InAppHint, LangSwitch } from './ClinicSite'
+import { getJson, inAppBrowser, initials, matches, tgLink, useSiteLang, type DirectoryClinic } from './web'
 
 const TEXTS = {
   ru: {
@@ -11,6 +11,7 @@ const TEXTS = {
     forClinics: 'Для клиник', login: 'Вход для клиники', join: 'Подключить клинику',
     staff: 'Вы врач или администратор клиники?', staffLogin: 'Войти в CRM',
     error: 'Не удалось загрузить список — обновите страницу через минуту.', loading: 'Загрузка…',
+    inAppTop: 'Открыли из Instagram? Если Telegram не открывается — нажмите ⋮ вверху → «Открыть в браузере» или «📲 открыть Telegram» у клиники.', openTg: 'открыть Telegram',
   },
   ky: {
     title: 'Тиш дарыгерине жазылуу', tagline: 'Клиниканы же дарыгерди тандап, Telegram аркылуу бир мүнөттө жазылыңыз — бот эскертет 😊',
@@ -19,6 +20,7 @@ const TEXTS = {
     forClinics: 'Клиникалар үчүн', login: 'Клиника үчүн кирүү', join: 'Клиниканы туташтыруу',
     staff: 'Сиз клиниканын дарыгерисизби же администраторусузбу?', staffLogin: 'CRMге кирүү',
     error: 'Тизме жүктөлгөн жок — бир мүнөттөн кийин жаңыртыңыз.', loading: 'Жүктөлүүдө…',
+    inAppTop: 'Instagram’дан ачтыңызбы? Telegram ачылбаса — жогорудагы ⋮ → «Браузерде ачуу» же клиниканын «📲 Telegram’ды ачуу» баскычын басыңыз.', openTg: 'Telegram’ды ачуу',
   },
 }
 
@@ -44,6 +46,7 @@ export function Directory() {
         <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={95} height={90} />
         <div><h1>{t.title}</h1><p>{t.tagline}</p></div>
       </div>
+      <InAppHint text={t.inAppTop} link="" />
       {clinics === 'error' ? <p className="site-message">{t.error}</p> : clinics === null ? <p className="site-message hint">{t.loading}</p> : (
         <>
           {clinics.length > 3 && <input type="search" className="site-search" placeholder={t.search} aria-label={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />}
@@ -65,6 +68,7 @@ export function Directory() {
                 {c.telegramUrl && <a className="btn primary" href={c.telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
                 <a className="btn" href={c.pageUrl}>🦷 {t.more}</a>
               </div>
+              {c.telegramUrl && inAppBrowser() && tgLink(c.telegramUrl) && <a className="site-inapp-link" href={tgLink(c.telegramUrl)!}>📲 {t.openTg}</a>}
             </article>
           ))}
         </>

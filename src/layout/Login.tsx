@@ -69,7 +69,7 @@ export function Login() {
     <div className="center login">
       <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
       <h1>Вход для клиники</h1>
-      <p className="hint">Врачи, регистратура и администраторы. Входите тем же Telegram, что привязан в «Настройки → Врачи».</p>
+      <p className="hint">Врачи, регистратура и администраторы. Входите тем же Telegram, что привязан в «Настройки → Врачи» или «Сотрудники».</p>
       {bot.isPending && <p className="hint">Загрузка…</p>}
       {bot.isSuccess && !bot.data?.id && <p className="error">Вход сейчас недоступен: бот не настроен или не отвечает. Обновите страницу через минуту.</p>}
       {bot.data?.id != null && (
@@ -84,7 +84,7 @@ export function Login() {
           Нажмите «⋯» вверху и выберите «Открыть в браузере».</p>
       )}
       {bot.data?.username && (
-        <p className="hint">Кнопка не сработала? Откройте CRM прямо в Telegram:{' '}
+        <p className="hint">Окно не открылось или пишет «Bot domain invalid»? Войдите через бота:{' '}
           <a href={`https://t.me/${bot.data.username}`} target="_blank" rel="noopener noreferrer">@{bot.data.username}</a> → кнопка «Открыть» внизу чата.</p>
       )}
       <p className="hint small">Пациенты записываются через бота в Telegram: <a href="/clinics">выбрать клинику</a></p>
