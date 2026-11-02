@@ -23,6 +23,7 @@ import { App } from './App'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { startDevLogin, startTelegram, telegram } from './lib/telegram'
 import { startButtonIcons } from './lib/buttonIcons'
+import { startTableLabels } from './lib/tableLabels'
 import { applyLook } from './lib/theme'
 import './styles.css'
 
@@ -53,6 +54,7 @@ else render()
 
 // Эмодзи у кнопок по подписи — как в прежнем приложении
 startButtonIcons()
+startTableLabels()
 
 // Перезагрузка «вышла новая версия» — одна; проработали минуту без сбоев — снова разрешена
 setTimeout(() => {
