@@ -60,6 +60,11 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
       <MonthsChart month={month ?? todayIn().slice(0, 7)} scope={scope} />
       {seesAll && doctorId == null && (me.doctors ?? []).filter((d) => d.active !== false).length > 1 && <DoctorsChart me={me} period={period} />}
       <ServicesChart period={period} scope={scope} />
+      <div className="chart-pair">
+        <MethodsChart period={period} scope={scope} />
+        <OutcomesChart period={period} scope={scope} />
+      </div>
+      <LoadHeatmap period={period} scope={scope} />
       <SourcesChart period={period} scope={scope} />
       <NoShowChart scope={scope} />
     </>
@@ -155,20 +160,31 @@ function DoctorsChart({ me, period }: { me: Me; period: Period }) {
   )
 }
 
-/** Услуги по оплатам за месяц: что приносит деньги. Топ-6, остальное — «Другое». */
-function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
-  // Отчёт сервер отдаёт по месяцам: 30 дней — это два месяца, лишние дни отбрасываем
+/**
+ * Приёмы периода (кроме заявок) из отчёта: сервер отдаёт его по месяцам, а 30 дней — это два
+ * месяца, поэтому лишние дни отбрасываем. Общий кэш для услуг, исходов и загрузки.
+ */
+function usePeriodRows(period: Period, scope: { doctorId?: number }) {
   const reports = useQueries({
     queries: period.months.map((m) => ({
       queryKey: ['report', m, scope.doctorId ?? null],
       queryFn: () => unwrap(api.GET('/api/appointments/report', { params: { query: { month: m, ...scope } } })),
     })),
   })
-  const sums = new Map<string, { value: number; count: number }>()
-  for (const r of reports.flatMap((q) => q.data ?? [])) {
-    if (!r.paidSom || !r.startAt) continue
+  const rows = reports.flatMap((q) => q.data ?? []).filter((r) => {
+    if (!r.startAt) return false
     const day = DAY.format(new Date(r.startAt))
-    if (day < period.from || day > period.to) continue
+    return day >= period.from && day <= period.to
+  })
+  return { rows, pending: reports.some((q) => q.isPending) }
+}
+
+/** Услуги по оплатам за месяц: что приносит деньги. Топ-6, остальное — «Другое». */
+function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const { rows, pending } = usePeriodRows(period, scope)
+  const sums = new Map<string, { value: number; count: number }>()
+  for (const r of rows) {
+    if (!r.paidSom) continue
     const name = r.service || 'Без услуги'
     const s = sums.get(name) ?? { value: 0, count: 0 }
     sums.set(name, { value: s.value + r.paidSom, count: s.count + 1 })
@@ -180,7 +196,7 @@ function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: 
   return (
     <section className="card-block chart" aria-label="Выручка по услугам">
       <h2>🦷 Что приносит деньги {period.label}</h2>
-      {reports.some((q) => q.isPending) ? <p className="hint">Загрузка…</p>
+      {pending ? <p className="hint">Загрузка…</p>
         : top.length ? <HBars rows={top} label="Выручка по услугам" />
           : <p className="hint">Оплат за этот период нет. Услугу ставят при записи или в карточке приёма — тогда видно, что приносит деньги.</p>}
     </section>
@@ -188,6 +204,140 @@ function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: 
 }
 
 const people = (n: number) => `${n} чел.`
+
+type Part = { key: string; name: string; value: number; color: string; icon?: string }
+
+/**
+ * Одно целое на части, с одного взгляда (dataviz: «tall segmented bar», вместо пирога): у каждой
+ * части свой блок с долей на нём, если влезает, и легенда с суммой. Цвет — по сущности, не по месту.
+ */
+function SegmentedBar({ parts, label, format }: { parts: Part[]; label: string; format: (v: number) => string }) {
+  const total = parts.reduce((s, p) => s + p.value, 0)
+  const shown = parts.filter((p) => p.value > 0)
+  // Доли так, чтобы в сумме было ровно 100% (метод наибольших остатков), а не 101%
+  const exact = parts.map((p) => (total ? (p.value / total) * 100 : 0))
+  const shares = exact.map(Math.floor)
+  const left = total ? 100 - shares.reduce((a, b) => a + b, 0) : 0
+  exact.map((x, i) => [x - Math.floor(x), i] as const).sort((a, b) => b[0] - a[0]).slice(0, left).forEach(([, i]) => { shares[i]! += 1 })
+  const share = (p: Part) => shares[parts.indexOf(p)] ?? 0
+  return (
+    <>
+      <div className="segbar" role="img" aria-label={`${label}: ${shown.map((p) => `${p.name} ${format(p.value)} (${share(p)}%)`).join(', ')}`}>
+        {shown.map((p) => (
+          <span key={p.key} className="segbar-part" style={{ flexGrow: p.value, background: p.color }} title={`${p.name}: ${format(p.value)} · ${share(p)}%`}>
+            {share(p) >= 12 && <span className="segbar-share">{share(p)}%</span>}
+          </span>
+        ))}
+      </div>
+      <ul className="segbar-legend">
+        {parts.map((p) => (
+          <li key={p.key}><span className="swatch" style={{ background: p.color }} aria-hidden="true" />
+            {p.icon && <span aria-hidden="true">{p.icon} </span>}{p.name}
+            <b className="num">{format(p.value)}</b><span className="hint">{share(p)}%</span></li>
+        ))}
+      </ul>
+    </>
+  )
+}
+
+/** Как платят пациенты: наличные, перевод, карта — за период (выручка по способам). */
+function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const data = useQuery({
+    queryKey: ['revenue', period.from, period.to, scope.doctorId ?? null],
+    queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: period.from, to: period.to, ...scope } } })),
+  })
+  const by = data.data?.byMethod ?? {}
+  const parts: Part[] = [
+    { key: 'CASH', name: 'Наличные', value: by.CASH ?? 0, color: 'var(--series-1)', icon: '💵' },
+    { key: 'TRANSFER', name: 'Перевод', value: by.TRANSFER ?? 0, color: 'var(--series-2)', icon: '📲' },
+    { key: 'CARD', name: 'Карта', value: by.CARD ?? 0, color: 'var(--series-3)', icon: '💳' },
+  ]
+  return (
+    <section className="card-block chart" aria-label="Способы оплаты">
+      <h2>💳 Как платят {period.label}</h2>
+      {data.isPending ? <p className="hint">Загрузка…</p>
+        : !parts.some((p) => p.value) ? <p className="hint">Оплат за этот период нет.</p>
+          : <SegmentedBar parts={parts} label="Способы оплаты" format={somText} />}
+    </section>
+  )
+}
+
+/** Чем закончились приёмы периода: состоялся, неявка, отменён (статусные цвета со значками). */
+function OutcomesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const { rows, pending } = usePeriodRows(period, scope)
+  const count = (status: string) => rows.filter((r) => r.status === status).length
+  const parts: Part[] = [
+    { key: 'DONE', name: 'Состоялись', value: count('DONE'), color: 'var(--chart-1)', icon: '✅' },
+    { key: 'NO_SHOW', name: 'Не пришли', value: count('NO_SHOW'), color: 'var(--chart-bad)', icon: '❌' },
+    { key: 'CANCELLED', name: 'Отменены', value: count('CANCELLED'), color: 'var(--faint)', icon: '↩️' },
+  ]
+  return (
+    <section className="card-block chart" aria-label="Чем закончились приёмы">
+      <h2>📋 Чем закончились приёмы {period.label}</h2>
+      {pending ? <p className="hint">Загрузка…</p>
+        : !parts.some((p) => p.value) ? <p className="hint">Прошедших приёмов за этот период нет.</p>
+          : <SegmentedBar parts={parts} label="Чем закончились приёмы" format={(n) => String(n)} />}
+    </section>
+  )
+}
+
+const WEEK_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+const HOUR = new Intl.DateTimeFormat('en-GB', { timeZone: ZONE, hour: '2-digit', hourCycle: 'h23' })
+const WEEKDAY_NUM = new Intl.DateTimeFormat('en-US', { timeZone: ZONE, weekday: 'short' })
+const WD_INDEX: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 }
+
+/**
+ * Загрузка: когда в клинике больше всего приёмов — дни недели × часы (dataviz: тепловая карта,
+ * один цвет от светлого к тёмному). Видно, когда ставить второго врача или ассистента, а когда
+ * давать рекламу «есть свободное время».
+ */
+function LoadHeatmap({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const { rows, pending } = usePeriodRows(period, scope)
+  const grid = Array.from({ length: 7 }, () => new Map<number, number>())
+  for (const r of rows) {
+    if (r.status === 'CANCELLED') continue
+    const at = new Date(r.startAt!)
+    const h = Number(HOUR.format(at))
+    const wd = WD_INDEX[WEEKDAY_NUM.format(at)] ?? 0
+    grid[wd]!.set(h, (grid[wd]!.get(h) ?? 0) + 1)
+  }
+  const hours = grid.flatMap((m) => [...m.keys()])
+  const from = hours.length ? Math.min(...hours, 9) : 9
+  const to = hours.length ? Math.max(...hours, 17) : 17
+  const cols = Array.from({ length: to - from + 1 }, (_, i) => from + i)
+  const days = WEEK_SHORT.map((_, i) => i).filter((i) => i < 6 || grid[i]!.size > 0)
+  const max = Math.max(1, ...grid.flatMap((m) => [...m.values()]))
+  let peak = { wd: -1, h: 0, n: 0 }
+  grid.forEach((m, wd) => m.forEach((n, h) => { if (n > peak.n) peak = { wd, h, n } }))
+  const fill = (n: number) => (n ? `color-mix(in oklab, var(--chart-1) ${Math.round(18 + (82 * n) / max)}%, var(--card))` : 'var(--sunken)')
+  return (
+    <section className="card-block chart" aria-label="Загрузка по дням и часам">
+      <h2>🔥 Когда больше всего приёмов {period.label}</h2>
+      {pending ? <p className="hint">Загрузка…</p> : !rows.length ? <p className="hint">Приёмов за этот период нет.</p> : (
+        <>
+          {peak.n > 0 && <p className="chart-headline">Пик — <b>{WEEK_SHORT[peak.wd]} {String(peak.h).padStart(2, '0')}:00</b> <span className="hint">· {peak.n} {peak.n === 1 ? 'приём' : 'приёмов'}</span></p>}
+          <div className="heatmap" role="table" aria-label="Приёмы по дням недели и часам" style={{ gridTemplateColumns: `2.4em repeat(${cols.length}, minmax(0, 1fr))` }}>
+            <span role="columnheader" />
+            {cols.map((h) => <span key={h} role="columnheader" className="heat-h num">{h}</span>)}
+            {days.map((wd) => (
+              <div key={wd} role="row" className="heat-row">
+                <span role="rowheader" className="heat-d">{WEEK_SHORT[wd]}</span>
+                {cols.map((h) => {
+                  const n = grid[wd]!.get(h) ?? 0
+                  return <span key={h} role="cell" className="heat-cell" style={{ background: fill(n) }}
+                    title={`${WEEK_SHORT[wd]} ${String(h).padStart(2, '0')}:00 — ${n} ${n === 1 ? 'приём' : 'приёмов'}`}
+                    aria-label={`${WEEK_SHORT[wd]} ${h}:00 — ${n}`} />
+                })}
+              </div>
+            ))}
+          </div>
+          <p className="heat-legend hint" aria-hidden="true">меньше
+            {[0.15, 0.4, 0.65, 1].map((k) => <span key={k} className="heat-cell" style={{ background: fill(Math.max(1, Math.round(k * max))) }} />)} больше</p>
+        </>
+      )}
+    </section>
+  )
+}
 
 /**
  * Откуда приходят новые пациенты (первый приём в клинике — в этом периоде) и сколько визитов

@@ -24,7 +24,7 @@ test('аналитика: выручка по месяцам, по врачам,
       const doctor = q.get('doctorId')
       // Текущий месяц — 50 000, прошлые — 40 000; по врачам — 30 000 и 20 000
       const total = doctor ? (doctor === '1' ? 30000 : 20000) : q.get('from')!.startsWith(thisMonth) ? 50000 : 40000
-      return HttpResponse.json({ totalSom: total, paidCount: 5, unpaidCount: 0, byMethod: {}, days: [] } satisfies Schemas['RevenueView'])
+      return HttpResponse.json({ totalSom: total, paidCount: 5, unpaidCount: 0, byMethod: doctor ? {} : { CASH: total * 0.6, TRANSFER: total * 0.4 }, days: [] } satisfies Schemas['RevenueView'])
     }),
     // Отчёт — по месяцам: строки только за запрошенный месяц (30 дней могут захватить два)
     http.get('*/api/appointments/report', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('month') !== thisMonth ? [] : [
@@ -55,6 +55,17 @@ test('аналитика: выручка по месяцам, по врачам,
 
   const services = screen.getByRole('region', { name: 'Выручка по услугам' })
   expect((await within(services).findAllByRole('listitem'))[0]).toHaveTextContent(/Пломба.*6\s000 сом.*75%/)
+
+  // Как платят: наличные 60%, перевод 40% — на полосе и в легенде с суммами (сумма — от даты)
+  const methods = screen.getByRole('region', { name: 'Способы оплаты' })
+  expect(within(methods).getByRole('img').getAttribute('aria-label')).toMatch(/Наличные [\d\s]+ сом \(60%\), Перевод [\d\s]+ сом \(40%\)/)
+  // Чем закончились приёмы: все три состоялись
+  const outcomes = screen.getByRole('region', { name: 'Чем закончились приёмы' })
+  expect(within(outcomes).getByRole('img').getAttribute('aria-label')).toMatch(/Состоялись 3 \(100%\)/)
+  // Загрузка: три приёма сегодня — пик в одном из часов, таблица дней × часов
+  const load = screen.getByRole('region', { name: 'Загрузка по дням и часам' })
+  expect(within(load).getByText(/Пик —/)).toBeInTheDocument()
+  expect(within(load).getByRole('table', { name: 'Приёмы по дням недели и часам' })).toBeInTheDocument()
 
   const sources = screen.getByRole('region', { name: 'Откуда новые пациенты' })
   expect(await within(sources).findByText('новых пациентов')).toBeInTheDocument()
