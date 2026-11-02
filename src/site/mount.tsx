@@ -13,5 +13,8 @@ import './site.css'
  * React Query и без скрипта Telegram. Свой HTML у каждой — свои og:-теги для превью ссылки.
  */
 export function mount(page: ReactNode): void {
+  // Всегда светлые, как посты Instagram: в тёмной теме телефона (и во встроенном браузере
+  // Instagram) страница была тёмной. data-theme=light отключает тёмные цвета из styles.css
+  document.documentElement.dataset.theme = 'light'
   createRoot(document.getElementById('root')!).render(<StrictMode>{page}</StrictMode>)
 }
