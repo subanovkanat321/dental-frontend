@@ -138,3 +138,18 @@ export async function webTariffs(): Promise<Schemas['Tariffs'] | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/tariffs', window.location.origin), { credentials: 'same-origin' }))
   return response.ok ? (await response.json()) as Schemas['Tariffs'] : null
 }
+
+/**
+ * Статичный JSON сайта (например, /content/plan.json — готовый контент-план из сборки фронта): не
+ * API, без заголовков входа. Нет файла (404) — null; не JSON — ApiError.
+ */
+export async function staticJson(path: string): Promise<unknown> {
+  const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), { credentials: 'same-origin', cache: 'no-cache' }))
+  if (response.status === 404) return null
+  if (!response.ok) throw new ApiError(response.status, `Файл ${path} не открылся (${response.status})`)
+  try {
+    return await response.json() as unknown
+  } catch {
+    throw new ApiError(response.status, `Файл ${path} — не JSON`)
+  }
+}

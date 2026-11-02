@@ -876,3 +876,21 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .money-cell h3 { margin: 0; font-size: .95rem; font-weight: 600; }
 .money-cell + .money-cell { border-left: 1px solid var(--separator); padding-left: 16px; }
 @media (max-width: 760px) { .money-cell + .money-cell { border-left: 0; padding-left: 0; border-top: 1px solid var(--separator); padding-top: 12px; } }
+
+/* «Платформа → Контент»: контент-план по неделям; пост — карточка без вложенных карточек */
+.content-month { margin-bottom: 0; }
+.content-month h2 { margin: 0; min-width: 9em; text-align: center; font-family: var(--display); }
+.content-week { display: grid; gap: 10px; }
+.content-week + .content-week { padding-top: 12px; border-top: 1px solid var(--separator); }
+.content-week h3 { margin: 0; font-size: .95rem; }
+.content-post { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+.content-post.today { border-color: var(--now); }
+.content-post h4 { margin: 0; font-size: 1rem; }
+.content-post p { margin: 0; }
+.content-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.content-thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
+.content-thumbs img, .content-video { width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-sm); background: var(--sunken); display: grid; place-items: center; font-size: .8rem; color: var(--hint); }
+.content-caption { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-sm); background: var(--sunken); }
+.content-caption p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.content-caption .btn { justify-self: start; }
+@media (max-width: 760px) { .content-post .actions .btn { flex: 1 1 auto; } }
