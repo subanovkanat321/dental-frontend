@@ -1361,3 +1361,10 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .debtor-visits { display: flex; flex-wrap: wrap; gap: 6px; }
 .debtor-visits .chip { font: inherit; font-size: .85rem; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); cursor: pointer; }
 @media (max-width: 420px) { .debtors-sum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+/* «📝 Отчёт пациенту» (print/VisitReport.tsx) */
+.visit-report { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); background: var(--card); }
+.visit-report h3 { margin: 0; }
+.visit-report p { margin: 0; }
+.visit-report-text { width: 100%; min-height: 220px; font: inherit; line-height: 1.5; padding: 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
+.ai-switch { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-md); background: var(--sunken); }

@@ -1392,6 +1392,50 @@
         }
       }
     },
+    "/api/clinic/visit-report-ai" : {
+      "get" : {
+        "tags" : [ "visit-report-controller" ],
+        "operationId" : "ai",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportControllerAiSetting"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "visit-report-controller" ],
+        "operationId" : "setAi",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitReportControllerAiChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportControllerAiSetting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/deposit" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
@@ -4834,6 +4878,70 @@
         }
       }
     },
+    "/api/appointments/{id}/visit-report/send" : {
+      "post" : {
+        "tags" : [ "visit-report-controller" ],
+        "operationId" : "send_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitReportControllerSend"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/visit-report/draft" : {
+      "post" : {
+        "tags" : [ "visit-report-controller" ],
+        "operationId" : "draft",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportsDraft"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/undo" : {
       "post" : {
         "tags" : [ "appointment-controller" ],
@@ -5182,7 +5290,7 @@
     "/api/appointments/{id}/receipt/send" : {
       "post" : {
         "tags" : [ "receipt-controller" ],
-        "operationId" : "send_1",
+        "operationId" : "send_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5387,7 +5495,7 @@
     "/api/appointments/{id}/care-memo/send" : {
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "send_2",
+        "operationId" : "send_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6852,6 +6960,33 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/visit-report" : {
+      "get" : {
+        "tags" : [ "visit-report-controller" ],
+        "operationId" : "last",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportsSent"
+                }
+              }
+            }
           }
         }
       }
@@ -8898,6 +9033,23 @@
           }
         }
       },
+      "VisitReportControllerAiChange" : {
+        "properties" : {
+          "on" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "VisitReportControllerAiSetting" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "on" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "DepositControllerSettingsRequest" : {
         "properties" : {
           "mode" : {
@@ -10332,6 +10484,50 @@
         },
         "required" : [ "doctorId", "durationMinutes", "patientId", "startAt" ]
       },
+      "VisitReportControllerSend" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "ai" : {
+            "type" : "boolean"
+          },
+          "via" : {
+            "type" : "string",
+            "enum" : [ "TELEGRAM", "WHATSAPP", "PRINT" ]
+          }
+        }
+      },
+      "PatientMessage" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "VisitReportsDraft" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "ai" : {
+            "type" : "boolean"
+          },
+          "aiAvailable" : {
+            "type" : "boolean"
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          },
+          "telegram" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "AppointmentRequestsUndo" : {
         "properties" : {
           "version" : {
@@ -10958,16 +11154,6 @@
           }
         }
       },
-      "PatientMessage" : {
-        "properties" : {
-          "text" : {
-            "type" : "string"
-          },
-          "telegram" : {
-            "type" : "boolean"
-          }
-        }
-      },
       "VisitNoteView" : {
         "properties" : {
           "appointmentId" : {
@@ -11468,6 +11654,24 @@
           },
           "memo" : {
             "type" : "string"
+          }
+        }
+      },
+      "VisitReportsSent" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "ai" : {
+            "type" : "boolean"
+          },
+          "via" : {
+            "type" : "string",
+            "enum" : [ "TELEGRAM", "WHATSAPP", "PRINT" ]
+          },
+          "sentAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },

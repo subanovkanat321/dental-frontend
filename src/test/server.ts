@@ -33,6 +33,7 @@ export const server = setupServer(
   http.get('*/api/supplies/starter', () => HttpResponse.json({ missing: [], services: [] })),
   http.get('*/api/care-memos/starter', () => HttpResponse.json([])),
   http.get('*/api/families', () => HttpResponse.json([])),
+  http.get('*/api/appointments/:id/visit-report', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/patients/:id/family', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/service-types', () => HttpResponse.json([])),
   http.get('*/api/appointments/:id/payments', () => HttpResponse.json([])),

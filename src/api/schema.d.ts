@@ -516,6 +516,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/visit-report-ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ai"];
+        put: operations["setAi"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/deposit": {
         parameters: {
             query?: never;
@@ -1940,6 +1956,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/visit-report/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["send_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/visit-report/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/undo": {
         parameters: {
             query?: never;
@@ -2093,7 +2141,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_1"];
+        post: operations["send_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2189,7 +2237,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_2"];
+        post: operations["send_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3055,6 +3103,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["delete_7"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/visit-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["last"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -3992,6 +4056,13 @@ export interface components {
             ownHours?: boolean;
             city?: string;
         };
+        VisitReportControllerAiChange: {
+            on?: boolean;
+        };
+        VisitReportControllerAiSetting: {
+            available?: boolean;
+            on?: boolean;
+        };
         DepositControllerSettingsRequest: {
             /** @enum {string} */
             mode?: "OFF" | "NEW" | "ALL";
@@ -4610,6 +4681,24 @@ export interface components {
             serviceTypeId?: number;
             promoCode?: string;
         };
+        VisitReportControllerSend: {
+            text?: string;
+            ai?: boolean;
+            /** @enum {string} */
+            via?: "TELEGRAM" | "WHATSAPP" | "PRINT";
+        };
+        PatientMessage: {
+            text?: string;
+            telegram?: boolean;
+        };
+        VisitReportsDraft: {
+            text?: string;
+            ai?: boolean;
+            aiAvailable?: boolean;
+            /** @enum {string} */
+            lang?: "RU" | "KY";
+            telegram?: boolean;
+        };
         AppointmentRequestsUndo: {
             /** Format: int64 */
             version: number;
@@ -4875,10 +4964,6 @@ export interface components {
             /** Format: int32 */
             scans?: number;
         };
-        PatientMessage: {
-            text?: string;
-            telegram?: boolean;
-        };
         VisitNoteView: {
             /** Format: int64 */
             appointmentId?: number;
@@ -5067,6 +5152,14 @@ export interface components {
             /** Format: int64 */
             memoId?: number;
             memo?: string;
+        };
+        VisitReportsSent: {
+            text?: string;
+            ai?: boolean;
+            /** @enum {string} */
+            via?: "TELEGRAM" | "WHATSAPP" | "PRINT";
+            /** Format: date-time */
+            sentAt?: string;
         };
         ReceiptsPayment: {
             /** Format: date-time */
@@ -6320,6 +6413,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClinicView"];
+                };
+            };
+        };
+    };
+    ai: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitReportControllerAiSetting"];
+                };
+            };
+        };
+    };
+    setAi: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitReportControllerAiChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitReportControllerAiSetting"];
                 };
             };
         };
@@ -9206,6 +9343,54 @@ export interface operations {
             };
         };
     };
+    send_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitReportControllerSend"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientMessage"];
+                };
+            };
+        };
+    };
+    draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitReportsDraft"];
+                };
+            };
+        };
+    };
     undo: {
         parameters: {
             query?: never;
@@ -9453,7 +9638,7 @@ export interface operations {
             };
         };
     };
-    send_1: {
+    send_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -9603,7 +9788,7 @@ export interface operations {
             };
         };
     };
-    send_2: {
+    send_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -10859,6 +11044,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    last: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitReportsSent"];
+                };
             };
         };
     };
