@@ -6,6 +6,7 @@ import { debtLine } from '../lib/debt'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { shortDate, somText, todayIn } from '../lib/time'
 import { useAppointmentAction } from './useAppointmentAction'
+import { DateInput } from '../layout/DateInput'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -239,7 +240,7 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
           <label className="field"><span>Стоимость приёма, сом</span>
             <input type="number" min={0} inputMode="numeric" value={charge} onChange={(e) => setCharge(e.target.value)} /></label>
           <label className="field"><span>Доплатит до (можно не указывать)</span>
-            <input type="date" min={todayIn()} value={due} onChange={(e) => setDue(e.target.value)} /></label>
+            <DateInput min={todayIn()} value={due} onChange={(e) => setDue(e.target.value)} /></label>
         </div>
       )}
       <MethodButtons value={method} onChange={setMethod} />

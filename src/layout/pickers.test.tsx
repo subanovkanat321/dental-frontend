@@ -1,0 +1,39 @@
+import { fireEvent, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
+
+import { DateInput } from './DateInput'
+import { MonthPicker } from './MonthPicker'
+
+function Month({ initial, max }: { initial: string; max?: string }) {
+  const [month, setMonth] = useState(initial)
+  return <><MonthPicker label="Месяц" value={month} max={max} onChange={setMonth} /><output>{month}</output></>
+}
+
+test('месяц: «‹ Ноябрь 2026 ›», стрелки через год, окошко с месяцами, будущее закрыто', async () => {
+  render(<Month initial="2026-01" max="2026-11" />)
+  const picker = screen.getByRole('group', { name: 'Месяц' })
+  expect(within(picker).getByRole('button', { expanded: false })).toHaveTextContent('Январь 2026')
+  await userEvent.click(within(picker).getByRole('button', { name: 'Предыдущий месяц' }))
+  expect(screen.getByRole('status')).toHaveTextContent('2025-12')
+  await userEvent.click(within(picker).getByRole('button', { expanded: false }))
+  const dialog = within(picker).getByRole('dialog', { name: 'Выбор месяца' })
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Следующий год' }))
+  expect(within(dialog).getByRole('button', { name: 'Декабрь 2026' })).toBeDisabled()
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Ноябрь 2026' }))
+  expect(screen.getByRole('status')).toHaveTextContent('2026-11')
+  expect(within(picker).queryByRole('dialog')).not.toBeInTheDocument()
+  expect(within(picker).getByRole('button', { name: 'Следующий месяц' })).toBeDisabled()
+})
+
+test('дата: по-русски, поле браузера — под подписью, меняется как обычное', () => {
+  function Day() {
+    const [day, setDay] = useState('2026-11-02')
+    return <label className="field"><span>День</span><DateInput weekday value={day} onChange={(e) => setDay(e.target.value)} /></label>
+  }
+  const { container } = render(<Day />)
+  const input = screen.getByLabelText('День')
+  expect(container.querySelector('.date-text')).toHaveAttribute('data-text', 'пн, 2 ноября 2026')
+  fireEvent.change(input, { target: { value: '2026-12-31' } })
+  expect(container.querySelector('.date-text')).toHaveAttribute('data-text', 'чт, 31 декабря 2026')
+})

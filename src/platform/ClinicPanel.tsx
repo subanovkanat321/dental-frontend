@@ -10,6 +10,7 @@ import { useClose } from '../lib/useClose'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { InviteLink } from '../team/InviteLink'
 import { extendPaid } from './health'
+import { DateInput } from '../layout/DateInput'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -130,7 +131,7 @@ function BillingForm({ id, plan }: { id: number; plan: Plan }) {
         ))}
       </div>
       <div className="row">
-        <label className="field"><span>Дата оплаты</span><input type="date" max={today} value={paidOn} onChange={(e) => setPaidOn(e.target.value)} /></label>
+        <label className="field"><span>Дата оплаты</span><DateInput max={today} value={paidOn} onChange={(e) => setPaidOn(e.target.value)} /></label>
         <label className="field"><span>Сумма, сом</span><input type="number" min={0} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
       </div>
       <p className="hint">Оплачено будет до {day(extendPaid(plan.billing?.paidUntil, months, paidOn || today))}</p>
@@ -149,7 +150,7 @@ function BillingForm({ id, plan }: { id: number; plan: Plan }) {
       <details>
         <summary>Поправить срок вручную</summary>
         <div className="form">
-          <label className="field"><span>Оплачено до</span><input type="date" value={manual} onChange={(e) => setManual(e.target.value)} /></label>
+          <label className="field"><span>Оплачено до</span><DateInput value={manual} onChange={(e) => setManual(e.target.value)} /></label>
           <div className="actions">
             <button type="button" className="btn" disabled={!manual || setUntil.isPending} onClick={() => setUntil.mutate(manual)}>Сохранить срок</button>
             <button type="button" className="btn" disabled={setUntil.isPending} onClick={() => setUntil.mutate(null)}>Бесплатно (пилот)</button>

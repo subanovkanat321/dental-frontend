@@ -11,6 +11,7 @@ import { TimePicker } from './TimePicker'
 import { useAppointmentAction } from './useAppointmentAction'
 import { editableDoctors } from '../lib/roles'
 import { servicesOfDoctor } from '../lib/doctorServices'
+import { DateInput } from '../layout/DateInput'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -71,7 +72,7 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
       )}
       <div className="row">
         <label className="field"><span>День</span>
-          <input type="date" value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} />
+          <DateInput weekday value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} />
         </label>
         {/* Другая длительность — выбранное время могло перестать помещаться: выбрать заново */}
         <DurationField value={duration} onChange={(d) => { if (d !== duration) setTime(''); setDuration(d) }} />

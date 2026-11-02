@@ -16,6 +16,7 @@ import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { refreshAppointmentData } from './useAppointmentAction'
 import { editableDoctors } from '../lib/roles'
+import { DateInput } from '../layout/DateInput'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -303,7 +304,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
         ) : (
           <div className="row">
             <label className="field"><span>День</span>
-              <input type="date" value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} /></label>
+              <DateInput weekday value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} /></label>
             {durationField}
           </div>
         )}

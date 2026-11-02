@@ -4,6 +4,7 @@ import type { Schemas } from '../api/client'
 import { SortTh } from '../layout/SortTh'
 import { addDays, shortDate, somText, todayIn, ZONE } from '../lib/time'
 import { useSort } from '../lib/useSort'
+import { DateInput } from '../layout/DateInput'
 
 type Row = Schemas['AppointmentServiceReportRow']
 type Key = 'when' | 'patient' | 'doctor' | 'service' | 'status' | 'paid' | 'debt'
@@ -93,9 +94,9 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false,
           return (
             <div className="day-filter" role="group" aria-label="Дни">
               <label className="field"><span>С</span>
-                <input type="date" aria-label="С дня" value={dayFrom} min={days.from} max={dayTo} onChange={(e) => e.target.value && setDayFrom(e.target.value)} /></label>
+                <DateInput aria-label="С дня" value={dayFrom} min={days.from} max={dayTo} onChange={(e) => e.target.value && setDayFrom(e.target.value)} /></label>
               <label className="field"><span>По</span>
-                <input type="date" aria-label="По день" value={dayTo} min={dayFrom} max={days.to} onChange={(e) => e.target.value && setDayTo(e.target.value)} /></label>
+                <DateInput aria-label="По день" value={dayTo} min={dayFrom} max={days.to} onChange={(e) => e.target.value && setDayTo(e.target.value)} /></label>
               <div className="chips-pick">
                 {quick.filter(([, f, t]) => t >= days.from && f <= days.to).map(([name, f, t]) => {
                   const from = f < days.from ? days.from : f

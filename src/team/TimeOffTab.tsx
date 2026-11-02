@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
 import { TIME_OFF_EMOJI, timeOffWhen, WEEK, type Weekday } from './texts'
 import { isAssistant } from '../lib/roles'
+import { DateInput } from '../layout/DateInput'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -125,10 +126,10 @@ function NewTimeOff({ me }: { me: Me }) {
         ) : (
           <div className="row">
             <label className="field"><span>С даты</span>
-              <input type="date" value={firstDay} required onChange={(e) => { setFirstDay(e.target.value); if (lastDay < e.target.value) setLastDay(e.target.value) }} />
+              <DateInput weekday value={firstDay} required onChange={(e) => { setFirstDay(e.target.value); if (lastDay < e.target.value) setLastDay(e.target.value) }} />
             </label>
             <label className="field"><span>По дату (включительно)</span>
-              <input type="date" value={lastDay} min={firstDay} required onChange={(e) => setLastDay(e.target.value)} />
+              <DateInput weekday value={lastDay} min={firstDay} required onChange={(e) => setLastDay(e.target.value)} />
             </label>
           </div>
         )}

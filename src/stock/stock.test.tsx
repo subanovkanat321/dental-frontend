@@ -1,10 +1,11 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { todayIn } from '../lib/time'
 
 type Supply = Schemas['SupplyView']
 
@@ -154,6 +155,14 @@ test('«Расходы на склад» за месяц — с первого �
   }))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Расходы на склад' }))
-  fireEvent.change(await screen.findByLabelText('Месяц расходов на склад'), { target: { value: '2026-02' } })
+  // «‹ Ноябрь 2026 ›»: нажать на месяц — окошко с месяцами года, выбрать февраль
+  const picker = await screen.findByRole('group', { name: 'Месяц расходов на склад' })
+  await userEvent.click(within(picker).getByRole('button', { expanded: false }))
+  const year = Number(todayIn().slice(0, 4))
+  while (Number(within(picker).getByRole('dialog').querySelector('.mp-year b')!.textContent) > 2026) {
+    await userEvent.click(within(picker).getByRole('button', { name: 'Предыдущий год' }))
+  }
+  expect(year).toBeGreaterThanOrEqual(2026)
+  await userEvent.click(within(picker).getByRole('button', { name: 'Февраль 2026' }))
   await vi.waitFor(() => expect(periods).toContain('2026-02-01..2026-02-28'))
 })

@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { somText, todayIn } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
+import { MonthPicker } from '../layout/MonthPicker'
 
 type Row = Schemas['SalaryControllerSalaryRow']
 
@@ -44,12 +45,13 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
   const due = rows.reduce((s, r) => s + Math.max(0, (r.dueSom ?? 0) - (r.paidSom ?? 0)), 0)
   return (
     <>
-      <div className="analytics-filter" role="group" aria-label="Месяц зарплаты">
-        <div className="segments">
-          <button type="button" aria-pressed={month === previousMonth()} onClick={() => setMonth(previousMonth())}>Прошлый месяц</button>
-          <button type="button" aria-pressed={month === todayIn().slice(0, 7)} onClick={() => setMonth(todayIn().slice(0, 7))}>Этот месяц</button>
+      {/* Месяц — «‹ Октябрь 2026 ›»; по умолчанию прошлый (его зарплату выплачивают), «Этот месяц» — одним нажатием */}
+      <div className="analytics-filter">
+        <MonthPicker label="Месяц зарплаты" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
+        <div className="day-quick" role="group" aria-label="Быстро">
+          <button type="button" className="chip" aria-pressed={month === previousMonth()} onClick={() => setMonth(previousMonth())}>Прошлый месяц</button>
+          <button type="button" className="chip" aria-pressed={month === todayIn().slice(0, 7)} onClick={() => setMonth(todayIn().slice(0, 7))}>Этот месяц</button>
         </div>
-        <input type="month" aria-label="Месяц зарплаты" value={month} max={todayIn().slice(0, 7)} onChange={(e) => e.target.value && setMonth(e.target.value)} />
       </div>
       <p className="hint">Зарплата за {monthTitle(month)}: оклад + процент от выручки врача (оплаты пациентов за его приёмы в этом месяце);
         ассистенту — от выручки врачей, которым он помогает.</p>

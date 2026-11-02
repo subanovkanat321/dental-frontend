@@ -5,6 +5,7 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf } from '../lib/compare'
 import { sourceLabel } from '../lib/sources'
 import { addDays, monthRange, somText, todayIn, weekLabel, ZONE } from '../lib/time'
+import { MonthPicker } from '../layout/MonthPicker'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -55,7 +56,7 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
           <button type="button" aria-pressed={month == null} onClick={() => setMonth(null)}>30 дней</button>
           <button type="button" aria-pressed={month != null} onClick={() => setMonth(month ?? todayIn().slice(0, 7))}>Месяц</button>
         </div>
-        {month && <input type="month" aria-label="Месяц аналитики" value={month} max={todayIn().slice(0, 7)} onChange={(e) => e.target.value && setMonth(e.target.value)} />}
+        {month && <MonthPicker label="Месяц аналитики" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />}
       </div>
       <MonthsChart month={month ?? todayIn().slice(0, 7)} scope={scope} />
       {seesAll && doctorId == null && (me.doctors ?? []).filter((d) => d.active !== false).length > 1 && <DoctorsChart me={me} period={period} />}

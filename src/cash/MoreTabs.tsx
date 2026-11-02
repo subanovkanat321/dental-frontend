@@ -7,6 +7,8 @@ import { SortTh } from '../layout/SortTh'
 import { useSort } from '../lib/useSort'
 import { PaymentsTable } from './PaymentsTable'
 import { monthRange, shortDate, somText, todayIn, weekLabel } from '../lib/time'
+import { MonthPicker } from '../layout/MonthPicker'
+import { DateInput } from '../layout/DateInput'
 
 type Me = Schemas['BookingViewsMe']
 type Expense = Schemas['ExpensesExpense']
@@ -92,7 +94,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
       <section className="card-block">
         <div className="block-head">
           <h2>Расходы · {monthTitle(month)}</h2>
-          <input type="month" aria-label="Месяц" value={month} max={todayIn().slice(0, 7)} onChange={(e) => e.target.value && setMonth(e.target.value)} />
+          <MonthPicker label="Месяц" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
         </div>
         <p className="total" aria-label="Расходы за месяц">{somText(total)}</p>
         {byCategory.length > 0 && <p className="hint">{byCategory.map(([c, sum]) => `${c}: ${somText(sum)}`).join(' · ')}</p>}
@@ -121,7 +123,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
       <section className="card-block">
         <h2>Добавить расход</h2>
         <form className="expense-form" aria-label="Новый расход" onSubmit={submit}>
-          <input type="date" aria-label="Когда" value={form.spentOn} max={todayIn()} required onChange={(e) => setForm({ ...form, spentOn: e.target.value })} />
+          <DateInput aria-label="Когда" value={form.spentOn} max={todayIn()} required onChange={(e) => setForm({ ...form, spentOn: e.target.value })} />
           <input type="number" aria-label="Сумма, сом" placeholder="Сумма, сом" min={1} required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
           <select aria-label="Статья" required value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
             <option value="" disabled>Статья…</option>
@@ -264,7 +266,7 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
       <div className="block-head">
         <h2>Отчёт · {monthTitle(month)}</h2>
         <span className="actions">
-          <input type="month" aria-label="Месяц отчёта" value={month} max={todayIn().slice(0, 7)} onChange={(e) => e.target.value && setMonth(e.target.value)} />
+          <MonthPicker label="Месяц отчёта" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
           <button type="button" className="btn" disabled={send.isPending} onClick={() => send.mutate()}>Отправить в бот</button>
         </span>
       </div>

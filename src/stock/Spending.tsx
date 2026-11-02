@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, unwrap } from '../api/client'
 import { monthRange, somText, todayIn } from '../lib/time'
+import { MonthPicker } from '../layout/MonthPicker'
 
 const MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' })
 const MONTH_SHORT = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'short' })
@@ -27,8 +28,7 @@ export function SpendingBlock() {
     <section className="card-block spending" aria-label="Расходы на склад">
       <div className="block-head">
         <h2>Расходы на склад · {monthTitle(`${month}-01`)}</h2>
-        <input type="month" aria-label="Месяц расходов на склад" value={month} max={todayIn().slice(0, 7)}
-          onChange={(e) => e.target.value && setMonth(e.target.value)} />
+        <MonthPicker label="Месяц расходов на склад" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
       </div>
       {data.isPending && <p className="hint">Загрузка…</p>}
       {data.error && <p className="error">{data.error.message}</p>}
