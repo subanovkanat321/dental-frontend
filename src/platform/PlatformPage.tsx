@@ -7,18 +7,19 @@ import { AgreementsTab, BroadcastTab, TicketsTab } from './OwnerTabs'
 import { useBack } from '../lib/back'
 import { openSettings } from '../lib/route'
 import { SettingsTab } from './SettingsTab'
+import { SurveysTab } from './surveys/SurveysTab'
 import { TariffsTab } from './TariffsTab'
 import { stickyHead } from '../layout/stickyHead'
 
 type Me = Schemas['BookingViewsMe']
-type Tab = 'clinics' | 'tickets' | 'broadcast' | 'agreements' | 'tariffs' | 'content' | 'settings'
+type Tab = 'clinics' | 'surveys' | 'tickets' | 'broadcast' | 'agreements' | 'tariffs' | 'content' | 'settings'
 
 /**
- * «Платформа» — команда Tish: клиники (менеджеры и владелец); обращения, рассылка, договор,
+ * «Платформа» — команда Tish: клиники и опросы сотрудников (менеджеры и владелец); обращения, рассылка, договор,
  * контент-план Instagram и настройки — только владелец. Права проверяет сервер (/api/platform/*).
  */
 export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }) {
-  const tabs: [Tab, string][] = [['clinics', 'Клиники'],
+  const tabs: [Tab, string][] = [['clinics', 'Клиники'], ['surveys', 'Опросы'],
     ...(me.owner ? [['tickets', 'Обращения'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['tariffs', 'Тарифы'], ['content', 'Контент'], ['settings', 'Настройки']] as [Tab, string][] : [])]
   const [tab, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? 'clinics')
   const [panel, setPanel] = useState(false)
@@ -42,9 +43,10 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
       {tab === 'clinics' && <ClinicsTab me={me} header={header} onPanel={setPanel} />}
       {tab === 'tickets' && <TicketsTab header={header} onPanel={setPanel} />}
       {tab === 'agreements' && <AgreementsTab header={header} onPanel={setPanel} />}
-      {(tab === 'broadcast' || tab === 'settings' || tab === 'tariffs' || tab === 'content') && (
+      {(tab === 'surveys' || tab === 'broadcast' || tab === 'settings' || tab === 'tariffs' || tab === 'content') && (
         <section className="schedule-main">
           {header}
+          {tab === 'surveys' && <SurveysTab />}
           {tab === 'broadcast' && <BroadcastTab />}
           {tab === 'settings' && <SettingsTab />}
           {tab === 'tariffs' && <TariffsTab />}

@@ -6,6 +6,7 @@ import { telegram } from '../lib/telegram'
 import { AdminNotices } from './AdminNotices'
 import { Icon } from './Icon'
 import { isAssistant } from '../lib/roles'
+import { SurveyInvite } from '../survey/SurveyInvite'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -89,8 +90,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           </div>
         </div>
       )}
-      {/* Напоминания админу — на главном экране, чтобы не занимать место в каждом разделе */}
-      <main className="workspace">{page === 'schedule' && <AdminNotices me={me} />}{children}</main>
+      {/* Напоминания админу и приглашение в опрос — на главном экране, чтобы не занимать место в каждом разделе */}
+      <main className="workspace">{page === 'schedule' && <><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</main>
     </div>
   )
 }

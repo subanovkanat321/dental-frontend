@@ -1361,3 +1361,64 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .debtor-visits { display: flex; flex-wrap: wrap; gap: 6px; }
 .debtor-visits .chip { font: inherit; font-size: .85rem; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); cursor: pointer; }
 @media (max-width: 420px) { .debtors-sum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+/* ---------- Опросы о платформе (src/survey, src/platform/surveys) ---------- */
+/* Приглашение — спокойная плашка цвета «выбрано», не тревожная: это просьба, а не дело на сегодня */
+.notice.tone-info { background: color-mix(in srgb, var(--accent-soft) 70%, var(--card)); color: var(--text); border-color: color-mix(in srgb, var(--accent) 25%, transparent); }
+.notice.tone-info .notice-ico { background: none; font-size: 1rem; }
+.survey-page, .survey-view { max-width: 860px; }
+.survey-form { gap: 16px; }
+.survey-form h2 { margin: 0; }
+.survey-intro { white-space: pre-line; color: var(--hint); }
+.survey-question { gap: 8px; }
+.survey-question legend { padding: 0; margin-bottom: 6px; font-weight: 600; }
+.survey-required { color: var(--destructive); }
+.survey-question textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.survey-stars { display: flex; gap: 4px; }
+.survey-stars button { width: 40px; height: 40px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--line-strong); font-size: 1.35rem; line-height: 1; cursor: pointer; }
+.survey-stars button.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.survey-stars button:focus-visible, .survey-nps button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.survey-nps button { min-width: 36px; font-weight: 500; }
+.survey-scale { display: flex; justify-content: space-between; font-size: .8rem; }
+.survey-yes-no { max-width: 240px; }
+.survey-options { display: grid; gap: 6px; }
+.survey-thanks h2 { margin: 0; }
+
+/* Редактор */
+.survey-view { display: grid; gap: 12px; }
+.survey-view-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.survey-view-head h2 { margin: 0; font: 600 1.25rem var(--display); }
+.survey-editor { display: grid; gap: 12px; }
+.survey-editor h3 { margin: 8px 0 0; }
+.survey-editor p.notice { display: block; margin: 0; padding: 8px 12px; }
+.survey-dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.survey-q-edit { gap: 8px; }
+.survey-q-head { display: flex; align-items: center; gap: 8px; }
+.survey-q-head .ui-select { flex: 1; max-width: 300px; }
+.survey-q-head .actions { margin-left: auto; }
+.survey-q-edit > input, .survey-option-row input { width: 100%; font: inherit; height: 36px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.survey-options-edit { display: grid; gap: 6px; padding-left: 16px; }
+.survey-option-row { display: flex; gap: 6px; align-items: center; }
+.survey-options-edit > .btn { justify-self: start; }
+
+/* Итоги: одна серия — один цвет (бирюзовый), числа подписаны у каждой полосы */
+.survey-results { display: grid; gap: 12px; }
+.survey-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.survey-tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+.survey-tile { display: grid; gap: 2px; min-width: 110px; padding: 8px 12px; border-radius: var(--r-md); background: var(--sunken); }
+.survey-tile b { font: 600 1.25rem var(--display); font-variant-numeric: tabular-nums; }
+.survey-tile.hero b { font-size: 1.75rem; }
+.survey-q-result h3 { margin: 0; font-size: 1rem; }
+.survey-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.survey-bars li { display: grid; grid-template-columns: minmax(80px, 220px) 1fr auto; gap: 10px; align-items: center; font-size: .9rem; }
+.survey-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.survey-bar-track { height: 10px; border-radius: 4px; background: var(--sunken); }
+.survey-bar-fill { display: block; height: 100%; min-width: 2px; border-radius: 4px; background: var(--accent); }
+.survey-bar-value { min-width: 72px; text-align: right; color: var(--hint); }
+.survey-texts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.survey-texts li { padding: 8px 12px; border-left: 3px solid var(--line-strong); background: var(--sunken); border-radius: var(--r-sm); }
+.survey-texts p { margin: 0 0 2px; white-space: pre-line; }
+@media (max-width: 760px) {
+  .survey-bars li { grid-template-columns: minmax(60px, 120px) 1fr auto; }
+  .survey-stars button { width: 44px; height: 44px; }
+}

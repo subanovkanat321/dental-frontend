@@ -19,11 +19,12 @@ const TeamPage = lazy(() => import('../team/TeamPage').then((m) => ({ default: m
 const HoursPage = lazy(() => import('./HoursPage').then((m) => ({ default: m.HoursPage })))
 const GuidePage = lazy(() => import('./GuidePage').then((m) => ({ default: m.GuidePage })))
 const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
+const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝' }
 
 type Item = {
   key: string
@@ -80,6 +81,9 @@ const GROUPS: [string, Item[]][] = [
       () => (me, back) => <GuidePage me={me} onBack={back} />),
     item('help', 'Помощь', 'Спросить помощника о Tish — ответит сразу', all,
       (title) => (me, back) => <AccountPage me={me} only="support" title={title} onBack={back} initialHelp />),
+    // Опросы команды Tish проходят сотрудники клиник; команда платформы их составляет
+    item('survey', 'Отзыв о Tish', 'Опрос команды Tish — 2–3 минуты', (me) => !me.platform,
+      () => (_me, back) => <SurveyPage onBack={back} />),
     item('support', 'Техподдержка', 'Написать команде Tish, частые вопросы', all, account('support')),
     item('dental-news', 'Новости стоматологии', 'Подборка профессиональных изданий', all, account('news')),
     item('privacy', 'Конфиденциальность', 'Как мы обращаемся с данными пациентов', all, account('privacy')),
