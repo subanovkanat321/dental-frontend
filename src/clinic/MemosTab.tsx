@@ -6,6 +6,7 @@ import { SaveBar } from '../layout/SaveBar'
 import { canEditServices } from '../lib/roles'
 import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 type Memo = Schemas['CareMemosCareMemoView']
@@ -139,10 +140,10 @@ export function ServiceMemo({ serviceId }: { serviceId: number }) {
   return (
     <section className="sub-form">
       <label className="field"><span>📋 Памятка после процедуры</span>
-        <select value={current ?? ''} disabled={save.isPending} onChange={(e) => save.mutate(e.target.value ? Number(e.target.value) : null)}>
+        <Select value={current ?? ''} disabled={save.isPending} onChange={(e) => save.mutate(e.target.value ? Number(e.target.value) : null)}>
           <option value="">Без памятки</option>
           {memos.data.filter((m) => m.active !== false || m.id === current).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
-        </select>
+        </Select>
       </label>
       <p className="hint small">Предложим отдать пациенту после приёма. Тексты — в «Настройки → Памятки после процедур».</p>
       {save.error && <p className="error" role="alert">{save.error.message}</p>}

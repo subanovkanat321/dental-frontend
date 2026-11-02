@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
 import { shortDate, somText } from '../lib/time'
 import { isAssistant } from '../lib/roles'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -221,10 +222,10 @@ export function NewSupplyPanel({ me, doctorId, onClose, onCreated }: {
         </div>
         {choosesDoctor && (
           <label className="field"><span>Чей склад</span>
-            <select value={form.doctorId} onChange={set('doctorId')}>
+            <Select value={form.doctorId} onChange={set('doctorId')}>
               <option value="">Общий</option>
               {(me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!))).map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-            </select>
+            </Select>
           </label>
         )}
         {create.error && !Object.keys(create.error.fieldErrors).includes('name') && (

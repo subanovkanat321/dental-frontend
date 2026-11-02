@@ -7,6 +7,7 @@ import { phoneFromInput, phoneToInput } from '../clinic/phone'
 import { sourceChoices, useSources } from '../lib/sources'
 import { formatPhone, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
+import { Select } from '../layout/Select'
 
 type Patient = Schemas['PatientView']
 
@@ -63,10 +64,10 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
       </div>
       {(err('birthDate') || err('workplace')) && <p className="error">{err('birthDate') ?? err('workplace')}</p>}
       <label className="field"><span>Откуда узнал о клинике</span>
-        <select value={f.source} onChange={(e) => set('source')(e.target.value)}>
+        <Select value={f.source} onChange={(e) => set('source')(e.target.value)}>
           <option value="">Не указано</option>
           {sourceChoices(sources.data, p?.sourceId).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-        </select></label>
+        </Select></label>
       {err('sourceId') && <p className="error">{err('sourceId')}</p>}
       {other ? (
         <div className="duplicate" role="alert">

@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 type Memo = Schemas['CareMemosCareMemoView']
 
@@ -94,9 +95,9 @@ test('карточка услуги: «Памятка после процеду�
   await userEvent.click(await screen.findByRole('button', { name: 'Удаление зуба' }))
   const panel = screen.getByRole('complementary', { name: 'Услуга' })
   const select = await within(panel).findByRole('combobox', { name: /Памятка после процедуры/ })
-  expect(select).toHaveValue('1')
-  await userEvent.selectOptions(select, 'После отбеливания')
+  expect(select).toHaveAttribute('data-value', '1')
+  await choose(select, 'После отбеливания')
   await vi.waitFor(() => expect(sent).toContainEqual({ link: 5, memoId: 2 }))
-  await userEvent.selectOptions(select, 'Без памятки')
+  await choose(select, 'Без памятки')
   await vi.waitFor(() => expect(sent).toContainEqual({ link: 5, memoId: null }))
 })

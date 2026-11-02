@@ -82,7 +82,7 @@ test('состоялся: «Записать на следующий визит�
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать на следующий визит' }))
   const fresh = await screen.findByRole('complementary', { name: 'Новая запись' })
   expect(fresh).toHaveTextContent('Бакыт М.')
-  expect(within(fresh).getByRole('combobox', { name: /Длительность/ })).toHaveValue('30')
+  expect(within(fresh).getByRole('combobox', { name: /Длительность/ })).toHaveAttribute('data-value', '30')
   expect(fresh).toHaveTextContent(new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', day: 'numeric', month: 'long' }).format(new Date(`${addDays(todayIn(), 7)}T00:00:00Z`)))
 })
 

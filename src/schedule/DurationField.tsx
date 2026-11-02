@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Select } from '../layout/Select'
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 150, 180, 240]
 
@@ -33,13 +34,13 @@ export function DurationField({ value, onChange }: { value: number; onChange: (m
           {DURATIONS.includes(value) && <button type="button" className="link" onClick={() => setCustom(false)}>списком</button>}
         </span>
       ) : (
-        <select aria-label="Длительность" value={value} onChange={(e) => {
+        <Select aria-label="Длительность" value={value} onChange={(e) => {
           if (e.target.value === 'custom') setCustom(true)
           else onChange(Number(e.target.value))
         }}>
           {DURATIONS.map((d) => <option key={d} value={d}>{d} мин</option>)}
           <option value="custom">Своя…</option>
-        </select>
+        </Select>
       )}
     </label>
   )

@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -93,7 +94,7 @@ test('услуга и комментарий меняются прямо в ка
   const panel = await openCard(/Бакыт М\./)
   await userEvent.click(within(panel).getAllByRole('button', { name: 'изменить' })[0]!)
   const service = within(panel).getByRole('form', { name: 'Услуга приёма' })
-  await userEvent.selectOptions(within(service).getByLabelText('Услуга'), 'Чистка · 3000 сом')
+  await choose(within(service).getByLabelText('Услуга'), 'Чистка · 3000 сом')
   await userEvent.click(within(service).getByRole('button', { name: 'Сохранить' }))
   expect(await within(panel).findByText('Чистка')).toBeInTheDocument()
 
@@ -121,7 +122,7 @@ test('материалы на приёме: списать со склада, е
   )
   const panel = await openCard(/Бакыт М\./)
   const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
-  await userEvent.selectOptions(await within(box).findByLabelText('Материал со склада'), 'Анестетик · осталось 5 карп.')
+  await choose(await within(box).findByLabelText('Материал со склада'), 'Анестетик · осталось 5 карп.')
   await userEvent.click(within(box).getByRole('button', { name: 'Списать 1' }))
   expect(await within(box).findByText(/Анестетик — /)).toHaveTextContent('Анестетик — 1 карп.')
   await userEvent.click(within(box).getByRole('button', { name: 'Списать ещё 1: Анестетик' }))

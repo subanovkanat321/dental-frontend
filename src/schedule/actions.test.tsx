@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -119,12 +120,12 @@ test('нажать на пустое место у врача — «Новая �
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
   const grid = await within(panel).findByRole('group', { name: 'Свободное время' })
   expect(within(grid).getByRole('button', { name: '09:00' })).toHaveAttribute('aria-pressed', 'true')
-  expect(within(panel).getByLabelText('Врач')).toHaveValue('2')
+  expect(within(panel).getByLabelText('Врач')).toHaveAttribute('data-value', '2')
 
   await userEvent.type(within(panel).getByLabelText('Найти пациента'), 'Нур')
   await userEvent.click(await within(panel).findByRole('button', { name: /Нурлан К\./ }))
   await userEvent.click(within(within(panel).getByRole('group', { name: 'Услуга' })).getByRole('button', { name: /Чистка/ }))
-  expect(within(panel).getByLabelText('Длительность')).toHaveValue('60')
+  expect(within(panel).getByLabelText('Длительность')).toHaveAttribute('data-value', '60')
   await userEvent.click(within(panel).getByLabelText(/Хочет раньше/))
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
 
@@ -286,12 +287,12 @@ test('новая запись: у врача выбраны услуги — т�
   expect(within(chips()).getByRole('button', { name: /Удаление зуба/ })).toBeInTheDocument()
 
   // У врача 1 услуги не выбраны — все услуги клиники
-  await userEvent.selectOptions(within(panel).getByLabelText('Врач'), '1')
+  await choose(within(panel).getByLabelText('Врач'), '1')
   await userEvent.click(within(chips()).getByRole('button', { name: /Чистка/ }))
   expect(within(chips()).getByRole('button', { name: /Чистка/ })).toHaveAttribute('aria-pressed', 'true')
 
   // Обратно к врачу 2: «Чистку» он не оказывает — её нет, выбор снят
-  await userEvent.selectOptions(within(panel).getByLabelText('Врач'), '2')
+  await choose(within(panel).getByLabelText('Врач'), '2')
   expect(within(chips()).queryByRole('button', { name: /Чистка/ })).not.toBeInTheDocument()
   expect(within(chips()).getByRole('button', { name: /Удаление зуба/ })).toHaveAttribute('aria-pressed', 'false')
 })

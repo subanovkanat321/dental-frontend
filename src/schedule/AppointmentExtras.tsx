@@ -12,6 +12,7 @@ import { useAppointmentAction } from './useAppointmentAction'
 import { editableDoctors } from '../lib/roles'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { DateInput } from '../layout/DateInput'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -107,10 +108,10 @@ export function ServiceEdit({ appointment: a, me, onDone, prices = true }: { app
       action.mutate({ kind: 'service', body: { serviceTypeId: chosen === '' ? undefined : chosen } }, { onSuccess: onDone })
     }}>
       <label className="field"><span>Услуга</span>
-        <select value={chosen} onChange={(e) => setServiceId(e.target.value === '' ? '' : Number(e.target.value))}>
+        <Select value={chosen} onChange={(e) => setServiceId(e.target.value === '' ? '' : Number(e.target.value))}>
           <option value="">—</option>
           {offered.map((s) => <option key={s.id} value={s.id}>{s.name}{prices && s.priceSom != null ? ` · ${s.priceSom} сом` : ''}</option>)}
-        </select>
+        </Select>
       </label>
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
       <div className="actions">
@@ -188,12 +189,12 @@ export function Supplies({ appointment: a }: { appointment: Appointment }) {
         </ul>
       )}
       <div className="row add-supply">
-        <select aria-label="Материал со склада" value={pick} onChange={(e) => setPick(e.target.value === '' ? '' : Number(e.target.value))}>
+        <Select aria-label="Материал со склада" value={pick} onChange={(e) => setPick(e.target.value === '' ? '' : Number(e.target.value))}>
           <option value="">Материал со склада…</option>
           {stock.data?.filter((x) => (x.quantity ?? 0) > 0).map((x) => (
             <option key={x.id} value={x.id}>{x.name} · осталось {x.quantity} {x.unit}</option>
           ))}
-        </select>
+        </Select>
         <button type="button" className="btn" disabled={pick === '' || move.isPending}
           onClick={() => pick !== '' && move.mutate({ supplyId: pick, delta: -1 }, { onSuccess: () => setPick('') })}>Списать 1</button>
       </div>

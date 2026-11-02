@@ -237,10 +237,10 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .pay-form, .form { display: grid; gap: 10px; }
 .field { display: grid; gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
 .field > span, .field > legend { font-size: .85rem; color: var(--hint); padding: 0; }
-.field input, .field select, .field textarea, .phone {
+.field input, .field select, .field textarea, .phone, .field .ui-select {
   width: 100%; font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text);
 }
-.field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.field input:focus, .field select:focus, .field textarea:focus, .field .ui-select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 /* «Откуда узнают о клинике»: узкое поле эмодзи рядом с названием и подсказки под ними */
 .row:has(> .emoji-field) { grid-template-columns: 5.5rem 1fr; }
@@ -285,7 +285,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 
 /* Касса */
 .cash { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-content: start; }
-.cash .toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.cash .toolbar select, .cash .toolbar .ui-select { font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .card-block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .card-block.guide { gap: 6px; margin-top: 12px; }
 .card-block.guide h2 { margin: 0; font-size: 1rem; }
@@ -306,7 +306,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 
 /* Склад */
 .toolbar .check { white-space: nowrap; }
-.toolbar select { font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.toolbar select, .toolbar .ui-select { font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .empty { display: grid; gap: 10px; justify-items: start; padding: 20px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .empty p { margin: 0; }
 .stock-big { font-size: 1.15rem; font-weight: 800; }
@@ -418,13 +418,13 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .suggested-supplies { display: grid; gap: 6px; padding: 8px; border-radius: var(--r-md); background: var(--sunken); }
 .doctor-services fieldset { border: 0; padding: 0; margin: 0 0 8px; display: grid; gap: 4px; }
 .doctor-services legend { font-weight: 600; font-size: .85rem; margin-bottom: 4px; }
-.add-supply select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.add-supply select, .add-supply .ui-select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 
 /* Лист ожидания: вкладки «Пациентов», блок в карточке */
 .segments.tabs { min-width: 0; }
 .segments.tabs button { padding: 7px 14px; white-space: nowrap; }
 .waitlist-box { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.waitlist-box select { font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.waitlist-box select, .waitlist-box .ui-select { font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .candidates { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-md); background: var(--wait-bg); }
 .candidates h3 { margin: 0; color: var(--wait-ink); }
 .candidate { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -432,7 +432,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 
 /* Касса: расходы, прибыль, оценки */
 .expense-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; align-items: center; }
-.expense-form input, .expense-form select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.expense-form input, .expense-form select, .expense-form .ui-select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .methods.profit { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
 .methods.profit > div { display: grid; gap: 2px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .86rem; }
 .methods.profit b { font-family: var(--mono, inherit); font-variant-numeric: tabular-nums; font-size: 1.05rem; }
@@ -570,7 +570,7 @@ details.agreement-box { max-height: none; }
 .doctor-switch button { flex: 1 0 auto; padding: 7px 14px; white-space: nowrap; }
 /* Фильтры над таблицей: поиск и выпадающие списки в строку, на телефоне — друг под другом */
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
-.filters input[type=search], .filters select { font: inherit; height: 36px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.filters input[type=search], .filters select, .filters .ui-select { font: inherit; height: 36px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .filters input[type=search] { flex: 1 1 200px; min-width: 0; }
 @media (max-width: 760px) { .filters select { flex: 1 1 140px; } }
 
@@ -1037,14 +1037,14 @@ tr.clickable .row-link:not(.open-link)::after { content: " ›"; content: " ›"
 :root { --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%234C6268' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 :root[data-theme=dark] { --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%2393AAB0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme]) { --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%2393AAB0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); } }
-.shell select:not([multiple]) {
+.shell select:not([multiple]), .shell .ui-select {
   appearance: none; -webkit-appearance: none; min-height: 36px; padding-right: 34px !important;
   background: var(--card) var(--chev) no-repeat right 12px center / 11px 8px !important;
   border: 1px solid var(--line-strong); border-radius: var(--r-md); color: var(--text); cursor: pointer; text-overflow: ellipsis;
 }
-.shell select:not([multiple]):hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
-.shell select:not([multiple]):focus-visible { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-.toolbar select, .filters select { padding-left: 12px; }
+.shell select:not([multiple]):hover, .shell .ui-select:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
+.shell select:not([multiple]):focus-visible, .shell .ui-select:focus-visible { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.toolbar select, .filters select, .toolbar .ui-select, .filters .ui-select { padding-left: 12px; }
 
 /* Поле даты: «2 ноября 2026» по-русски, под ним прозрачное поле браузера (layout/DateInput.tsx) */
 .date-input {
@@ -1197,9 +1197,9 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .patients-head .head-action { order: 1; margin-left: auto; }
   .head-filters { order: 2; flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .head-filters .search { flex: 0 1 380px; }
-  .head-filters select { min-width: 200px; }
+  .head-filters select, .head-filters .ui-select { min-width: 200px; }
   /* «Касса»: вкладки сразу за заголовком, «Чья касса» — справа */
-  .cash > .toolbar select { order: 3; margin-left: auto; min-width: 200px; }
+  .cash > .toolbar select, .cash > .toolbar .ui-select { order: 3; margin-left: auto; min-width: 200px; }
 }
 @media (max-width: 760px) {
   .head-filters { display: contents; }
@@ -1253,3 +1253,38 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 }
 .login-card { display: contents; }
 @media (min-width: 761px) { .login-card { display: grid; } }
+
+/* Свой выпадающий список (layout/Select.tsx) вместо системного: поле — как прежний select */
+.ui-select { display: flex; align-items: center; min-width: 0; max-width: 100%; min-height: 36px; padding: 6px 34px 6px 10px; font: inherit; text-align: left;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); color: var(--text); cursor: pointer;
+  background: var(--card) var(--chev) no-repeat right 12px center / 11px 8px !important; padding-right: 34px !important; }
+.ui-select:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
+.ui-select:focus-visible, .ui-select[aria-expanded=true] { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.ui-select:disabled { opacity: .6; cursor: default; }
+.ui-select.placeholder .ui-select-value { color: var(--hint); }
+.ui-select-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-select-value .hint { font-size: .9em; }
+.ui-select-proxy { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+.ui-select-pop { position: fixed; z-index: 1000; display: flex; flex-direction: column; padding: 6px; border: 1px solid var(--separator); border-radius: 14px;
+  background: var(--card); color: var(--text); box-shadow: 0 12px 32px rgba(15, 42, 48, .18); animation: pick-in .12s ease-out; }
+.ui-select-pop ul { margin: 0; padding: 0; list-style: none; overflow-y: auto; overscroll-behavior: contain; outline: none; }
+.ui-select-pop li { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
+.ui-select-pop li.active { background: var(--sunken); }
+.ui-select-pop li[aria-selected=true] { background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.ui-select-pop li[aria-disabled=true] { color: var(--hint); cursor: default; background: none; }
+.ui-select-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ui-select-text .hint { font-size: .85rem; font-weight: 400; }
+.ui-select-pop li::after { content: ""; flex: none; width: 18px; color: var(--link); font-weight: 700; text-align: center; }
+.ui-select-pop li[aria-selected=true]::after { content: "✓"; }
+.ui-select-search { flex: none; margin: 2px 2px 6px; padding: 8px 10px; font: inherit; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--page); color: var(--text); }
+.ui-select-title { margin: 4px 8px 8px; font: 600 1.05rem var(--display); }
+.ui-select-empty { color: var(--hint); }
+/* Телефон и Telegram — лист снизу экрана, пункты крупнее: удобно большим пальцем */
+.ui-select-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; background: rgba(10, 25, 30, .38); animation: sheet-fade .15s ease-out; }
+.ui-select-pop.sheet { position: static; width: 100%; max-height: 75vh; padding: 10px 10px calc(14px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0;
+  animation: sheet-up .2s ease-out; }
+.ui-select-pop.sheet::before { content: ""; align-self: center; flex: none; width: 40px; height: 4px; margin-bottom: 8px; border-radius: 2px; background: var(--line-strong); }
+.ui-select-pop.sheet li { min-height: 50px; padding: 10px 12px; font-size: 1.05rem; }
+.ui-select-pop.sheet .ui-select-search { font-size: max(16px, 1rem); }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }

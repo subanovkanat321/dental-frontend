@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { useUnsaved } from '../lib/unsaved'
+import { Select } from '../layout/Select'
 
 type Item = Schemas['ServiceSuppliesItem']
 type Row = { supplyId: number; name: string; unit: string; quantity: string; owner?: string | null }
@@ -73,10 +74,10 @@ export function ServiceSupplies({ serviceId }: { serviceId: number }) {
       ) : <p className="hint">Пока ничего — добавьте со склада.</p>}
       {stock.data && (free.length ? (
         <div className="row add-supply">
-          <select aria-label="Добавить материал" value={pick} onChange={(e) => setPick(e.target.value === '' ? '' : Number(e.target.value))}>
+          <Select aria-label="Добавить материал" value={pick} onChange={(e) => setPick(e.target.value === '' ? '' : Number(e.target.value))}>
             <option value="">Материал со склада…</option>
             {free.map((x) => <option key={x.id} value={x.id}>{x.name}{x.doctorName ? ` · ${x.doctorName}` : ''} ({x.unit})</option>)}
-          </select>
+          </Select>
           <button type="button" className="btn" disabled={pick === ''} onClick={add}>Добавить</button>
         </div>
       ) : !stock.data.length && <p className="hint small">На складе пока нет материалов — добавьте их в «Склад».</p>)}

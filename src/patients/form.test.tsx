@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 beforeEach(() => {
   window.location.hash = '/patients'
@@ -66,9 +67,11 @@ test('карточка пациента: изменить место работ�
   const form = within(panel).getByRole('form', { name: 'Данные пациента' })
   expect(within(form).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700 333 444')
   await user.type(within(form).getByRole('textbox', { name: 'Место работы' }), 'школа №5')
-  await user.selectOptions(within(form).getByRole('combobox', { name: 'Откуда узнал о клинике' }), '🤝 Посоветовали знакомые')
+  await choose(within(form).getByRole('combobox', { name: 'Откуда узнал о клинике' }), '🤝 Посоветовали знакомые')
   // Скрытый вариант новому пациенту не предлагается
-  expect(within(within(form).getByRole('combobox', { name: 'Откуда узнал о клинике' })).queryByRole('option', { name: /Реклама/ })).toBeNull()
+  await user.click(within(form).getByRole('combobox', { name: 'Откуда узнал о клинике' }))
+  expect(screen.queryByRole('option', { name: /Реклама/ })).toBeNull()
+  await user.keyboard('{Escape}')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(panel).findByRole('button', { name: 'Изменить данные пациента' })).toBeInTheDocument()
   expect(saved).toEqual({ fullName: 'Айгуль Т.', phone: '+996 700 333 444', allowDuplicate: false, workplace: 'школа №5', sourceId: 16 })

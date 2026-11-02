@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { addDays, slotInstant, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 afterEach(() => {
   window.location.hash = ''
@@ -43,7 +44,7 @@ test('касса: последние оплаты — новые сверху; �
   await user.click(screen.getByRole('checkbox', { name: 'Только с долгом' }))
   expect(names()).toEqual(['Должник Тестов'])
   await user.click(screen.getByRole('checkbox', { name: 'Только с долгом' }))
-  await user.selectOptions(screen.getByRole('combobox', { name: 'Способ оплаты' }), 'CARD')
+  await choose(screen.getByRole('combobox', { name: 'Способ оплаты' }), 'CARD')
   expect(names()).toEqual(['Новый Пациент'])
 })
 

@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 type Appointment = Schemas['AppointmentView']
 type Me = Schemas['BookingViewsMe']
@@ -79,7 +80,7 @@ test('приём состоялся: памятка по услуге — «📤
 
   // Другая памятка — выбрать из списка
   await userEvent.click(within(panel).getByRole('button', { name: 'другая' }))
-  await userEvent.selectOptions(within(panel).getByRole('combobox', { name: 'Выбрать памятку' }), 'После чистки')
+  await choose(within(panel).getByRole('combobox', { name: 'Выбрать памятку' }), 'После чистки')
   expect(await within(panel).findByText('После чистки', { selector: 'b' })).toBeInTheDocument()
 })
 
@@ -164,6 +165,6 @@ test('у услуги нет памятки — выбрать из списка
   renderApp()
   const panel = await card(/Бакыт М\./)
   expect(await within(panel).findByText(/У услуги нет памятки/)).toBeInTheDocument()
-  await userEvent.selectOptions(await within(panel).findByRole('combobox', { name: 'Выбрать памятку' }), 'После чистки')
+  await choose(await within(panel).findByRole('combobox', { name: 'Выбрать памятку' }), 'После чистки')
   expect(await within(panel).findByText('После чистки', { selector: 'b' })).toBeInTheDocument()
 })

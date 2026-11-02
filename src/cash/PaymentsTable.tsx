@@ -5,6 +5,7 @@ import { SortTh } from '../layout/SortTh'
 import { addDays, shortDate, somText, todayIn, ZONE } from '../lib/time'
 import { useSort } from '../lib/useSort'
 import { DateInput } from '../layout/DateInput'
+import { Select } from '../layout/Select'
 
 type Row = Schemas['AppointmentServiceReportRow']
 type Key = 'when' | 'patient' | 'doctor' | 'service' | 'status' | 'paid' | 'debt'
@@ -66,22 +67,22 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false,
       <div className="filters" role="group" aria-label={`Фильтры: ${label}`}>
         <input type="search" aria-label="Пациент или услуга" placeholder="Пациент или услуга" value={query} onChange={(e) => setQuery(e.target.value)} />
         {methods.length > 1 && (
-          <select aria-label="Способ оплаты" value={method} onChange={(e) => setMethod(e.target.value)}>
+          <Select aria-label="Способ оплаты" value={method} onChange={(e) => setMethod(e.target.value)}>
             <option value="">Любой способ</option>
             {methods.map((m) => <option key={m} value={m}>{METHOD_TEXT[m] ?? m}</option>)}
-          </select>
+          </Select>
         )}
         {doctors.length > 1 && (
-          <select aria-label="Врач" value={doctor} onChange={(e) => setDoctor(e.target.value)}>
+          <Select aria-label="Врач" value={doctor} onChange={(e) => setDoctor(e.target.value)}>
             <option value="">Все врачи</option>
             {doctors.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
+          </Select>
         )}
         {withStatus && statuses.length > 1 && (
-          <select aria-label="Статус" value={status} onChange={(e) => setStatus(e.target.value)}>
+          <Select aria-label="Статус" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">Любой статус</option>
             {statuses.map((x) => <option key={x} value={x}>{STATUS_TEXT[x]?.[0] ?? x}</option>)}
-          </select>
+          </Select>
         )}
         {days && (() => {
           const today = todayIn()

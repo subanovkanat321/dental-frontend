@@ -9,6 +9,7 @@ import { PaymentsTable } from './PaymentsTable'
 import { monthRange, shortDate, somText, todayIn, weekLabel } from '../lib/time'
 import { MonthPicker } from '../layout/MonthPicker'
 import { DateInput } from '../layout/DateInput'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 type Expense = Schemas['ExpensesExpense']
@@ -125,11 +126,11 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
         <form className="expense-form" aria-label="Новый расход" onSubmit={submit}>
           <DateInput aria-label="Когда" value={form.spentOn} max={todayIn()} required onChange={(e) => setForm({ ...form, spentOn: e.target.value })} />
           <input type="number" aria-label="Сумма, сом" placeholder="Сумма, сом" min={1} required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
-          <select aria-label="Статья" required value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+          <Select aria-label="Статья" required value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
             <option value="" disabled>Статья…</option>
             {cats.map((c) => <option key={c} value={c}>{c}</option>)}
             <option value="*">Другое — своя статья</option>
-          </select>
+          </Select>
           {form.category === '*' && <input aria-label="Своя статья" placeholder="Например: реклама" required maxLength={60} value={form.other} onChange={(e) => setForm({ ...form, other: e.target.value })} />}
           <input aria-label="Комментарий" placeholder="Комментарий — необязательно" maxLength={200} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} />
           <PatientPick value={patient} onChange={setPatient} />
@@ -141,10 +142,10 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
       <section className="card-block">
         {byCategory.length > 1 && (
           <div className="filters">
-            <select aria-label="Статья расходов" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <Select aria-label="Статья расходов" value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="">Все статьи</option>
               {byCategory.map(([c]) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            </Select>
           </div>
         )}
         {list.isPending ? <p className="hint">Загрузка…</p> : list.data?.length ? (

@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 type Row = Schemas['PatientListControllerPatientRow']
 
@@ -129,10 +130,10 @@ test('фильтр по врачу: только его пациенты, сер
   renderApp()
   await screen.findByText('Нурлан К.')
   expect(asked).toEqual([null])
-  await userEvent.selectOptions(screen.getByLabelText('Чьи пациенты'), 'Дастан Т.')
+  await choose(screen.getByLabelText('Чьи пациенты'), 'Дастан Т.')
   expect(await screen.findByText('Пациентов врача: 1')).toBeInTheDocument()
   expect(names()).toEqual(['Айгуль Т.'])
   expect(asked).toContain('2')
-  await userEvent.selectOptions(screen.getByLabelText('Чьи пациенты'), 'Все врачи')
+  await choose(screen.getByLabelText('Чьи пациенты'), 'Все врачи')
   expect(await screen.findByText('Нурлан К.')).toBeInTheDocument()
 })

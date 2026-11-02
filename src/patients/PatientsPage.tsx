@@ -12,6 +12,7 @@ import { RecallTab, WaitlistTab } from './WaitlistTab'
 import { isAssistant } from '../lib/roles'
 import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -129,10 +130,10 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
                 <input type="search" className="search" aria-label="Поиск пациента" placeholder="Имя или номер телефона"
                   value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
                 {doctors.length > 1 && (
-                  <select aria-label="Чьи пациенты" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
+                  <Select aria-label="Чьи пациенты" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
                     <option value="">Все врачи</option>
                     {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>)}
-                  </select>
+                  </Select>
                 )}
                 <span className="hint">
                   {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}${doctorId != null && !local.length && sorted.length ? ' — по всей клинике' : ''}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}

@@ -8,6 +8,7 @@ import { SpendingBlock } from './Spending'
 import { NewSupplyPanel, SupplyPanel } from './SupplyPanel'
 import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -83,14 +84,14 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
           <input type="search" className="search" aria-label="Поиск материала" placeholder="Название" value={query}
             onChange={(e) => setQuery(e.target.value)} />
           {choosesDoctor && doctors.length > 0 && (
-            <select aria-label="Чей склад" value={owner} onChange={(e) => {
+            <Select aria-label="Чей склад" value={owner} onChange={(e) => {
               const v = e.target.value
               setOwner(v === '' || v === 'shared' ? v : Number(v))
             }}>
               <option value="">Весь склад</option>
               <option value="shared">Общий</option>
               {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-            </select>
+            </Select>
           )}
           <label className="check">
             <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} />

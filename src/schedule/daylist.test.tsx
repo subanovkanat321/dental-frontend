@@ -65,7 +65,7 @@ test('телефон, «Все врачи» — список: приёмы об�
 
   await userEvent.click(screen.getByRole('button', { name: /Свободно с 09:00 до 12:00 у врача Дастан/ }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
-  expect(within(panel).getByLabelText('Врач')).toHaveValue('2')
+  expect(within(panel).getByLabelText('Врач')).toHaveAttribute('data-value', '2')
 })
 
 test('телефон, один врач — только его приёмы и окна', async () => {

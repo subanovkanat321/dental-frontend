@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 
 import { DurationField } from './DurationField'
+import { choose } from '../test/select'
 
 function Host({ start }: { start: number }) {
   const [value, setValue] = useState(start)
@@ -11,7 +12,7 @@ function Host({ start }: { start: number }) {
 
 test('«Своя…» — любое число минут; не из списка (20 мин) — сразу полем', async () => {
   render(<Host start={30} />)
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Длительность' }), 'Своя…')
+  await choose(screen.getByRole('combobox', { name: 'Длительность' }), 'Своя…')
   const minutes = screen.getByRole('spinbutton', { name: 'Длительность, мин' })
   await userEvent.clear(minutes)
   await userEvent.type(minutes, '50')

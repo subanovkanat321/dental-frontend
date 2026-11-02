@@ -8,6 +8,7 @@ import { server } from '../test/server'
 import { todayIn } from '../lib/time'
 // Настоящий готовый план из сборки (public/content/plan.json) — формат должен совпадать с контрактом импорта
 import realPlan from '../../public/content/plan.json?raw'
+import { choose } from '../test/select'
 
 beforeEach(() => {
   window.location.hash = '/platform'
@@ -122,7 +123,7 @@ test('«＋ Добавить пост»: картинки по строкам, �
   const user = await openTab()
   await user.click(await screen.findByRole('button', { name: '＋ Добавить пост' }))
   const form = screen.getByRole('form', { name: 'Новый пост' })
-  await user.selectOptions(within(form).getByRole('combobox', { name: 'Тип' }), 'Reels')
+  await choose(within(form).getByRole('combobox', { name: 'Тип' }), 'Reels')
   await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Утро в клинике')
   await user.type(within(form).getByRole('textbox', { name: /Картинки/ }), 'https://x.example/a.png')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))

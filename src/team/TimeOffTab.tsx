@@ -6,6 +6,7 @@ import { todayIn } from '../lib/time'
 import { TIME_OFF_EMOJI, timeOffWhen, WEEK, type Weekday } from './texts'
 import { isAssistant } from '../lib/roles'
 import { DateInput } from '../layout/DateInput'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -106,9 +107,9 @@ function NewTimeOff({ me }: { me: Me }) {
       <form className="form narrow" aria-label="Новый перерыв" onSubmit={submit}>
         {choices.length > 1 && (
           <label className="field"><span>Для кого</span>
-            <select value={who ?? ''} onChange={(e) => setWho(e.target.value ? Number(e.target.value) : null)}>
+            <Select value={who ?? ''} onChange={(e) => setWho(e.target.value ? Number(e.target.value) : null)}>
               {choices.map(([id, name]) => <option key={id ?? 'all'} value={id ?? ''}>{name}</option>)}
-            </select>
+            </Select>
           </label>
         )}
         <div className="segments" role="group" aria-label="Повтор">

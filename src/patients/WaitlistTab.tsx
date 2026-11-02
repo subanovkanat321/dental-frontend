@@ -9,6 +9,7 @@ import { formatPhone, shortDate } from '../lib/time'
 import { openLink } from '../lib/telegram'
 import { isAssistant } from '../lib/roles'
 import { EmptyState } from '../layout/EmptyState'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -138,14 +139,14 @@ export function WaitlistBox({ patient, me, defaultMinutes = 30 }: { patient: Pat
       const doctor = String(form.get('doctor') ?? '')
       add.mutate({ doctorId: doctor ? Number(doctor) : undefined, durationMinutes: Number(form.get('minutes')) })
     }}>
-      <select name="minutes" aria-label="Сколько нужно времени" defaultValue={defaultMinutes}>
+      <Select name="minutes" aria-label="Сколько нужно времени" defaultValue={defaultMinutes}>
         {[15, 30, 45, 60, 90, 120].map((m) => <option key={m} value={m}>{m} мин</option>)}
-      </select>
+      </Select>
       {doctors.length > 1 && (
-        <select name="doctor" aria-label="К какому врачу" defaultValue="">
+        <Select name="doctor" aria-label="К какому врачу" defaultValue="">
           <option value="">к любому врачу</option>
           {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-        </select>
+        </Select>
       )}
       <button type="submit" className="btn" disabled={add.isPending}>В лист ожидания</button>
       {error && <p className="error">{error.message}</p>}

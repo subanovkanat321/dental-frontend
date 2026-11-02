@@ -7,6 +7,7 @@ import { somText, timeOf } from '../lib/time'
 import { docDate } from './paper'
 import { PrintSheet } from './PrintSheet'
 import { DocActions } from './SendToPatient'
+import { Select } from '../layout/Select'
 
 type Appointment = Schemas['AppointmentView']
 type Me = Schemas['BookingViewsMe']
@@ -52,10 +53,10 @@ function MemoDocs({ appointment: a }: { appointment: Appointment }) {
   const m = memo.data
   const options = (all.data ?? []).filter((x) => x.active !== false || x.id === m.memoId)
   const picker = (
-    <select aria-label="Выбрать памятку" value={m.memoId ?? ''} onChange={(e) => setChosen(e.target.value ? Number(e.target.value) : null)}>
+    <Select aria-label="Выбрать памятку" value={m.memoId ?? ''} onChange={(e) => setChosen(e.target.value ? Number(e.target.value) : null)}>
       <option value="">{m.memoId == null ? 'Выберите памятку…' : 'Как у услуги'}</option>
       {options.map((x) => <option key={x.id} value={x.id}>{x.title}</option>)}
-    </select>
+    </Select>
   )
   if (m.memoId == null) {
     return (

@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { todayIn } from '../lib/time'
+import { choose } from '../test/select'
 
 type Supply = Schemas['SupplyView']
 
@@ -112,7 +113,7 @@ test('новый материал: «свой склад у каждого вр�
   await userEvent.type(within(panel).getByLabelText('Сколько есть'), '4')
   await userEvent.clear(within(panel).getByLabelText('Минимум'))
   await userEvent.type(within(panel).getByLabelText('Минимум'), '2')
-  await userEvent.selectOptions(within(panel).getByLabelText('Чей склад'), 'Дастан Т.')
+  await choose(within(panel).getByLabelText('Чей склад'), 'Дастан Т.')
   await userEvent.click(within(panel).getByRole('button', { name: 'Добавить' }))
 
   await vi.waitFor(() => expect(created).toEqual({ name: 'Композит', unit: 'шпр', quantity: 4, minQuantity: 2, doctorId: 2 }))

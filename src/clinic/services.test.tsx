@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { groupByCategory } from './services'
+import { choose } from '../test/select'
 
 beforeEach(() => {
   window.location.hash = '/settings/services'
@@ -124,9 +125,9 @@ test('услуга: материалы по умолчанию — добави�
   expect(await within(box).findByText('Перчатки')).toBeInTheDocument()
   expect(within(box).queryByRole('button', { name: 'Сохранить материалы' })).not.toBeInTheDocument()
 
-  await user.selectOptions(within(box).getByLabelText('Добавить материал'), 'Анестетик (карп.)')
+  await choose(within(box).getByLabelText('Добавить материал'), 'Анестетик (карп.)')
   await user.click(within(box).getByRole('button', { name: 'Добавить' }))
-  await user.selectOptions(within(box).getByLabelText('Добавить материал'), 'Композит (шт)')
+  await choose(within(box).getByLabelText('Добавить материал'), 'Композит (шт)')
   await user.click(within(box).getByRole('button', { name: 'Добавить' }))
   await user.clear(within(box).getByLabelText('Сколько: Анестетик'))
   await user.type(within(box).getByLabelText('Сколько: Анестетик'), '0')

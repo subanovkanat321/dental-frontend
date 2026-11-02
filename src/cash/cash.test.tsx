@@ -7,6 +7,7 @@ import { periodText, previousRange } from '../lib/compare'
 import { addDays, periodOf, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 beforeEach(() => {
   window.location.hash = '/cash'
@@ -54,7 +55,7 @@ test('админ: выручка за месяц, по способам; выб�
   // Под переключателем видно, какие даты входят в «Месяц»
   expect(screen.getByLabelText('Даты периода')).toHaveTextContent(periodText('month', month, todayIn()))
 
-  await userEvent.selectOptions(screen.getByLabelText('Чья касса'), 'Дастан Т.')
+  await choose(screen.getByLabelText('Чья касса'), 'Дастан Т.')
   expect(await screen.findByLabelText('Выручка за период')).toHaveTextContent(/7\s000 сом/)
   expect(screen.getByLabelText('Касса за период')).toHaveTextContent(/8\s000 сом/)
   expect(asked).toContain(`${month.from}..${month.to} 2`)

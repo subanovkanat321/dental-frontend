@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 type Entry = Schemas['WaitlistView']
 
@@ -46,8 +47,8 @@ test('карточка пациента: «В лист ожидания» на 4
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
   const form = await within(panel).findByRole('form', { name: 'В лист ожидания' })
-  await userEvent.selectOptions(within(form).getByLabelText('Сколько нужно времени'), '45 мин')
-  await userEvent.selectOptions(within(form).getByLabelText('К какому врачу'), 'Дастан Т.')
+  await choose(within(form).getByLabelText('Сколько нужно времени'), '45 мин')
+  await choose(within(form).getByLabelText('К какому врачу'), 'Дастан Т.')
   await userEvent.click(within(form).getByRole('button', { name: 'В лист ожидания' }))
   expect(await within(panel).findByText(/В листе ожидания/)).toHaveTextContent('45 мин')
   expect(sent).toEqual([{ patientId: 2, doctorId: 2, durationMinutes: 45 }])

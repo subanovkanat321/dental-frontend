@@ -8,6 +8,7 @@ import { useDirty } from '../lib/unsaved'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
 import { MonthPicker } from '../layout/MonthPicker'
+import { Select } from '../layout/Select'
 
 type Post = Schemas['ContentPostsPost']
 type Draft = Schemas['ContentPostsDraft']
@@ -202,9 +203,9 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
         <label className="field"><span>День</span><DateInput weekday required value={date} onChange={(e) => setDate(e.target.value)} /></label>
         {errors.date && <p className="error">{errors.date}</p>}
         <label className="field"><span>Тип</span>
-          <select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
+          <Select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
             {(Object.keys(KINDS) as Kind[]).map((k) => <option key={k} value={k}>{KINDS[k]}</option>)}
-          </select></label>
+          </Select></label>
         <label className="field"><span>Название</span><input required maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} /></label>
         {errors.title && <p className="error">{errors.title}</p>}
         <label className="field"><span>Текст поста · {caption.length} / 4000</span>

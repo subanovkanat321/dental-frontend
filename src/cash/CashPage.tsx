@@ -15,6 +15,7 @@ import { useSort } from '../lib/useSort'
 import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 type Debt = Schemas['PaymentQueryDebt']
@@ -114,10 +115,10 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
         <header ref={stickyHead} className="toolbar sticky-head">
           <h1>Касса</h1>
           {seesAll && doctors.length > 1 && (
-            <select aria-label="Чья касса" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
+            <Select aria-label="Чья касса" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
               <option value="">Вся клиника</option>
               {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-            </select>
+            </Select>
           )}
           {money && (
             <div className="segments tabs" role="tablist" aria-label="Разделы кассы">

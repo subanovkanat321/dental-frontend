@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { todayIn, weekLabel } from '../lib/time'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 beforeEach(() => {
   window.location.hash = '/cash'
@@ -58,7 +59,7 @@ test('расходы: список по статьям, прибыль, доба
 
   const form = screen.getByRole('form', { name: 'Новый расход' })
   await user.type(within(form).getByRole('spinbutton', { name: 'Сумма, сом' }), '2000')
-  await user.selectOptions(within(form).getByRole('combobox', { name: 'Статья' }), '*')
+  await choose(within(form).getByRole('combobox', { name: 'Статья' }), '*')
   await user.type(within(form).getByRole('textbox', { name: 'Своя статья' }), 'Реклама')
   // Расход по пациенту — необязательно: найти и выбрать
   await user.type(within(form).getByRole('searchbox', { name: 'Пациент — необязательно' }), 'Бак')
@@ -108,9 +109,9 @@ test('отчёт: строки месяца, итоги и отправка в �
   expect(await screen.findByRole('cell', { name: 'Бакыт М.' })).toBeInTheDocument()
   expect(screen.getByText(/Оплачено:/)).toHaveTextContent('3 000 сом · долги: 1 000 сом · приёмов: 2 · состоялось: 1 · неявок: 1')
   expect(screen.getByRole('cell', { name: 'Состоялся' })).toBeInTheDocument()
-  await user.selectOptions(screen.getByLabelText('Статус'), 'Неявка')
+  await choose(screen.getByLabelText('Статус'), 'Неявка')
   expect(screen.queryByRole('cell', { name: 'Бакыт М.' })).not.toBeInTheDocument()
-  await user.selectOptions(screen.getByLabelText('Статус'), '')
+  await choose(screen.getByLabelText('Статус'), '')
   await user.click(screen.getByRole('button', { name: 'Отправить в бот' }))
   expect(await screen.findByRole('status')).toHaveTextContent('Отчёт отправлен в Telegram')
   expect(sent).toEqual({ month: todayIn().slice(0, 7) })

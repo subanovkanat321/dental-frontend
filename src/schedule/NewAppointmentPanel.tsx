@@ -17,6 +17,7 @@ import { TimePicker } from './TimePicker'
 import { refreshAppointmentData } from './useAppointmentAction'
 import { editableDoctors } from '../lib/roles'
 import { DateInput } from '../layout/DateInput'
+import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -250,10 +251,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
                 <input type="date" min="1900-01-01" max={todayIn()} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} /></label>
               {fieldError('birthDate') && <p className="error">{fieldError('birthDate')}</p>}
               <label className="field"><span>Откуда узнал о клинике (необязательно)</span>
-                <select value={source} onChange={(e) => setSource(e.target.value)}>
+                <Select value={source} onChange={(e) => setSource(e.target.value)}>
                   <option value="">Не указано</option>
                   {sourceChoices(sources.data).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-                </select></label>
+                </Select></label>
               {createPatient.error?.code === 'duplicate-patient' && (
                 <div className="duplicate" role="alert">
                   <p>{createPatient.error.message}{duplicate ? `: ${duplicate.fullName}` : ''}</p>
@@ -310,9 +311,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
         )}
         <label className="field">
           <span>Врач</span>
-          <select value={doctorId} onChange={(e) => setDoctorId(Number(e.target.value))}>
+          <Select value={doctorId} onChange={(e) => setDoctorId(Number(e.target.value))}>
             {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
-          </select>
+          </Select>
         </label>
 
         {!walkIn && (
