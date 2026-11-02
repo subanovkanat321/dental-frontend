@@ -348,9 +348,13 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 
 /* Медкарта */
 .medical { display: grid; gap: 16px; align-content: start; }
-.jaw { display: grid; grid-template-columns: repeat(16, minmax(34px, 1fr)); gap: 4px; }
+.jaw { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
 .jaw + .jaw { margin-top: 2px; padding-top: 8px; border-top: 2px dashed var(--separator); }
-.jaw .tooth:nth-child(8) { margin-right: 6px; }
+.quadrant { display: grid; gap: 4px; min-width: 0; }
+.quadrant + .quadrant { padding-left: 10px; border-left: 2px dashed var(--separator); }
+.quadrant-label { font-size: .8rem; color: var(--hint); }
+.teeth { display: grid; grid-template-columns: repeat(8, minmax(30px, 1fr)); gap: 4px; }
+.tooth-help { margin: 0 0 6px; }
 .tooth {
   position: relative; display: grid; justify-items: center; gap: 2px; padding: 6px 0; border: 1px solid var(--separator);
   border-radius: 10px; background: var(--card); color: var(--text); font: inherit; cursor: pointer;
@@ -383,8 +387,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .upload .segments { min-width: 260px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (max-width: 760px) {
-  .jaw { grid-template-columns: repeat(8, 1fr); }
-  .jaw .tooth:nth-child(8) { margin-right: 0; }
+  .jaw { grid-template-columns: 1fr; }
+  .quadrant + .quadrant { padding-left: 0; border-left: 0; }
   .plan-add { grid-template-columns: 60px 1fr; }
 }
 
@@ -982,3 +986,4 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .source-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: 4px 0 10px; }
 .source-line select { flex: 1 1 200px; max-width: 320px; }
 .source-line select.empty { border-color: var(--wait-ink); background: color-mix(in srgb, var(--wait-bg) 45%, var(--card)); color: var(--wait-ink); font-weight: 600; }
+.tooth-help summary { cursor: pointer; color: var(--link); }

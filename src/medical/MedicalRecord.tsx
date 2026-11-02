@@ -108,8 +108,19 @@ function ToothChart({ patientId, teeth, error, onPlan, readOnly }: {
     <section className="card-block">
       <h2>Карта зубов</h2>
       {error && <p className="error">{error}</p>}
-      <div className="jaw" role="group" aria-label="Верхняя челюсть">{UPPER.map(tooth)}</div>
-      <div className="jaw" role="group" aria-label="Нижняя челюсть">{LOWER.map(tooth)}</div>
+      <details className="hint small tooth-help">
+        <summary>Как читать номера зубов?</summary>
+        Международная нумерация (FDI). Первая цифра — где: 1 верх справа, 2 верх слева, 3 низ слева, 4 низ справа (у пациента).
+        Вторая — какой по счёту от центра: 1 — передний, 8 — зуб мудрости. Карта — как смотрит врач: правая сторона пациента слева.
+      </details>
+      <div className="jaw" role="group" aria-label="Верхняя челюсть">
+        <Quadrant label="Верх · правая сторона" teeth={UPPER.slice(0, 8)} render={tooth} />
+        <Quadrant label="Верх · левая сторона" teeth={UPPER.slice(8)} render={tooth} />
+      </div>
+      <div className="jaw" role="group" aria-label="Нижняя челюсть">
+        <Quadrant label="Низ · правая сторона" teeth={LOWER.slice(0, 8)} render={tooth} />
+        <Quadrant label="Низ · левая сторона" teeth={LOWER.slice(8)} render={tooth} />
+      </div>
       <p className="hint legend">
         {Object.entries(TOOTH_STATES).filter(([k]) => k !== 'HEALTHY')
           .map(([k, [label, icon]]) => `${icon} ${label}${counts[k] ? ` · ${counts[k]}` : ''}`).join('   ')}
@@ -427,5 +438,15 @@ function Files({ patientId }: { patientId: number }) {
       {status && <p role="status" className={status.startsWith('Загружено') ? 'tone-ok' : 'hint'}>{status}</p>}
       {remove.error && <p className="error">{remove.error.message}</p>}
     </section>
+  )
+}
+
+/** Четверть челюсти с подписью: на телефоне челюсть — в две строки, и без подписи номера казались вразнобой. */
+function Quadrant({ label, teeth, render }: { label: string; teeth: number[]; render: (n: number) => React.ReactNode }) {
+  return (
+    <div className="quadrant">
+      <span className="quadrant-label" aria-hidden="true">{label} <span className="num">{teeth[0]}–{teeth[teeth.length - 1]}</span></span>
+      <div className="teeth">{teeth.map(render)}</div>
+    </div>
   )
 }
