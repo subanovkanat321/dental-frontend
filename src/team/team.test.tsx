@@ -209,3 +209,57 @@ test('ассистент: перерывы и выходные только см
   expect(screen.getByText(/ставят врач, регистратура или администратор/)).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Удалить/ })).not.toBeInTheDocument()
 })
+
+test('карточка врача: «Услуги врача» — все или только отмеченные', async () => {
+  const sent: Schemas['DoctorServicesControllerRequest'][] = []
+  let who: Schemas['BookingViewsMe'] = me
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(who)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
+    http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
+    http.get('*/api/service-types', () => HttpResponse.json([
+      { id: 5, name: 'Лечение кариеса', durationMinutes: 60, category: 'Терапия', active: true },
+      { id: 6, name: 'Удаление зуба', durationMinutes: 45, category: 'Хирургия', active: true },
+      { id: 7, name: 'Старая услуга', durationMinutes: 30, active: false },
+    ] satisfies Schemas['ServiceTypeView'][])),
+    http.put('*/api/doctors/:id/service-types', async ({ request, params }) => {
+      const body = await request.json() as Schemas['DoctorServicesControllerRequest']
+      sent.push(body)
+      const ids = body.serviceTypeIds ?? []
+      who = { ...me, doctorServices: ids.length ? [{ doctorId: Number(params.id), serviceTypeIds: ids }] : [] }
+      return HttpResponse.json({ doctorId: Number(params.id), serviceTypeIds: ids } satisfies Schemas['DoctorServicesView'])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(within(await screen.findByRole('table', { name: 'Врачи' })).getByRole('button', { name: 'Дастан Т.' }))
+  const box = within(await screen.findByRole('complementary', { name: 'Врач' })).getByRole('region', { name: 'Услуги врача' })
+  expect(within(box).getByRole('button', { name: 'Все услуги клиники' })).toHaveAttribute('aria-pressed', 'true')
+
+  await user.click(within(box).getByRole('button', { name: 'Только выбранные' }))
+  // Скрытые услуги не предлагаем
+  expect(await within(box).findByRole('checkbox', { name: 'Лечение кариеса' })).toBeInTheDocument()
+  expect(within(box).queryByRole('checkbox', { name: 'Старая услуга' })).not.toBeInTheDocument()
+  await user.click(within(box).getByRole('button', { name: 'Сохранить услуги' }))
+  expect(within(box).getByRole('alert')).toHaveTextContent('Отметьте хотя бы одну услугу')
+  await user.click(within(box).getByRole('checkbox', { name: 'Удаление зуба' }))
+  await user.click(within(box).getByRole('button', { name: 'Сохранить услуги' }))
+  expect(await within(box).findByText('Сохранено')).toBeInTheDocument()
+
+  await user.click(within(box).getByRole('button', { name: 'Все услуги клиники' }))
+  await user.click(within(box).getByRole('button', { name: 'Сохранить услуги' }))
+  await vi.waitFor(() => expect(sent).toEqual([{ serviceTypeIds: [6] }, { serviceTypeIds: [] }]))
+})
+
+test('регистратура открывает врача ради часов — «Услуги врача» не видит', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, reception: true, doctorId: undefined })),
+    http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(within(await screen.findByRole('table', { name: 'Врачи' })).getByRole('button', { name: 'Дастан Т.' }))
+  const panel = await screen.findByRole('complementary', { name: 'Врач' })
+  expect(within(panel).getByText('Часы работы')).toBeInTheDocument()
+  expect(within(panel).queryByRole('region', { name: 'Услуги врача' })).not.toBeInTheDocument()
+})

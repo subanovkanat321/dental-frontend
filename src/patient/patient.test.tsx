@@ -267,3 +267,27 @@ test('клиника на паузе (clinic-paused) и гонка (stale) — �
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
   expect(await screen.findByText(/Данные только что изменились/)).toBeInTheDocument()
 })
+
+test('у врача выбраны услуги — пациент видит у него только их, у другого врача — все', async () => {
+  fakeTelegram()
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({
+      services: [
+        { id: 5, name: 'Лечение кариеса', durationMinutes: 60, category: 'Терапия' },
+        { id: 6, name: 'Удаление зуба', durationMinutes: 45, category: 'Хирургия' },
+      ],
+      doctorServices: [{ doctorId: 2, serviceTypeIds: [6] }],
+    }))),
+    http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [], taken: [], breaks: [] } satisfies Schemas['BookingViewsSlots'])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: /Дастан Т\./ }))
+  expect(await screen.findByRole('button', { name: /Удаление зуба/ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Лечение кариеса/ })).not.toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: '‹ Другой врач' }))
+  await user.click(await screen.findByRole('button', { name: /Айгерим Садыкова/ }))
+  expect(await screen.findByRole('button', { name: /Лечение кариеса/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Удаление зуба/ })).toBeInTheDocument()
+})

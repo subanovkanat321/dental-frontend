@@ -94,3 +94,48 @@ test('справочник: отметить типовые с ценой и д�
   expect(await within(panel).findByText('Добавлено услуг: 1')).toBeInTheDocument()
   expect(picked).toEqual({ items: [{ name: 'Лечение кариеса', priceSom: 2000 }] })
 })
+
+test('услуга: материалы по умолчанию — добавить со склада, поправить количество, убрать, сохранить', async () => {
+  let saved: Schemas['ServiceSupplyControllerLines'] | null = null
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json([
+      { id: 1, name: 'Лечение кариеса', durationMinutes: 60, category: 'Терапия', active: true },
+    ] satisfies Schemas['ServiceTypeView'][])),
+    http.get('*/api/supplies', () => HttpResponse.json([
+      { id: 3, name: 'Анестетик', unit: 'карп.', quantity: 5, minQuantity: 1, low: false },
+      { id: 4, name: 'Композит', unit: 'шт', quantity: 2, minQuantity: 0, low: false },
+      { id: 6, name: 'Перчатки', unit: 'уп', quantity: 3, minQuantity: 1, low: false },
+    ] satisfies Schemas['SupplyView'][])),
+    http.get('*/api/service-types/:id/supplies', () => HttpResponse.json([
+      { supplyId: 6, name: 'Перчатки', unit: 'уп', quantity: 1, inStock: 3 },
+    ] satisfies Schemas['ServiceSuppliesItem'][])),
+    http.put('*/api/service-types/:id/supplies', async ({ request }) => {
+      saved = await request.json() as Schemas['ServiceSupplyControllerLines']
+      return HttpResponse.json((saved.items ?? []).map((i) => ({
+        supplyId: i.supplyId, name: i.supplyId === 3 ? 'Анестетик' : 'Композит', unit: 'шт', quantity: i.quantity, inStock: 5,
+      })) satisfies Schemas['ServiceSuppliesItem'][])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Лечение кариеса' }))
+  const panel = await screen.findByRole('complementary', { name: 'Услуга' })
+  const box = within(panel).getByRole('region', { name: 'Материалы по умолчанию' })
+  expect(await within(box).findByText('Перчатки')).toBeInTheDocument()
+  expect(within(box).queryByRole('button', { name: 'Сохранить материалы' })).not.toBeInTheDocument()
+
+  await user.selectOptions(within(box).getByLabelText('Добавить материал'), 'Анестетик (карп.)')
+  await user.click(within(box).getByRole('button', { name: 'Добавить' }))
+  await user.selectOptions(within(box).getByLabelText('Добавить материал'), 'Композит (шт)')
+  await user.click(within(box).getByRole('button', { name: 'Добавить' }))
+  await user.clear(within(box).getByLabelText('Сколько: Анестетик'))
+  await user.type(within(box).getByLabelText('Сколько: Анестетик'), '0')
+  expect(within(box).getByRole('button', { name: 'Сохранить материалы' })).toBeDisabled()
+  await user.clear(within(box).getByLabelText('Сколько: Анестетик'))
+  await user.type(within(box).getByLabelText('Сколько: Анестетик'), '2')
+  await user.click(within(box).getByRole('button', { name: 'Убрать: Перчатки' }))
+  await user.click(within(box).getByRole('button', { name: 'Сохранить материалы' }))
+
+  expect(await within(box).findByText('Сохранено')).toBeInTheDocument()
+  expect(saved).toEqual({ items: [{ supplyId: 3, quantity: 2 }, { supplyId: 4, quantity: 1 }] })
+})

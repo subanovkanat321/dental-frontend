@@ -133,7 +133,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
       {a.reviewComment && <blockquote className="review-comment"><span className="hint">Пациент написал:</span><br />{a.reviewComment}</blockquote>}
 
-      {editing === 'service' ? <ServiceEdit appointment={a} onDone={close} prices={!isAssistant(me)} /> : (
+      {editing === 'service' ? <ServiceEdit appointment={a} me={me} onDone={close} prices={!isAssistant(me)} /> : (
         <p className="line-edit">
           <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
           {canEdit && a.status !== 'CANCELLED' && <button type="button" className="link" onClick={() => setEditing('service')}>изменить</button>}

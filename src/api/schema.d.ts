@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/service-types/{id}/supplies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ofService"];
+        put: operations["setForService"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/salaries/{doctorId}": {
         parameters: {
             query?: never;
@@ -319,6 +335,22 @@ export interface paths {
         put: operations["update_5"];
         post?: never;
         delete: operations["delete_3"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/doctors/{id}/service-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["set_2"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1508,6 +1540,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/supplies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["usedOn"];
+        put?: never;
+        post: operations["spendAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/supplies/{supplyId}": {
         parameters: {
             query?: never;
@@ -2452,14 +2500,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/appointments/{id}/supplies": {
+    "/api/appointments/{id}/supplies/suggested": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["usedOn"];
+        get: operations["suggested"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2867,6 +2915,28 @@ export interface components {
             priceSom?: number;
             category?: string;
         };
+        ServiceSuppliesLine: {
+            /** Format: int64 */
+            supplyId?: number;
+            /** Format: int32 */
+            quantity?: number;
+        };
+        ServiceSupplyControllerLines: {
+            items?: components["schemas"]["ServiceSuppliesLine"][];
+        };
+        ServiceSuppliesItem: {
+            /** Format: int64 */
+            supplyId?: number;
+            name?: string;
+            unit?: string;
+            /** Format: int32 */
+            quantity?: number;
+            /** Format: int32 */
+            inStock?: number;
+            /** Format: int64 */
+            doctorId?: number;
+            doctorName?: string;
+        };
         SalaryControllerTerms: {
             percent?: number;
             /** Format: int64 */
@@ -3134,6 +3204,14 @@ export interface components {
             /** Format: int64 */
             telegramId?: number;
             role?: string;
+        };
+        DoctorServicesControllerRequest: {
+            serviceTypeIds: number[];
+        };
+        DoctorServicesView: {
+            /** Format: int64 */
+            doctorId?: number;
+            serviceTypeIds?: number[];
         };
         DoctorControllerProfileRequest: {
             fullName?: string;
@@ -3740,14 +3818,6 @@ export interface components {
             /** Format: int32 */
             durationMinutes: number;
         };
-        SupplyControllerOnAppointment: {
-            /** Format: int32 */
-            delta?: number;
-        };
-        SupplyControllerSpent: {
-            supply?: components["schemas"]["SupplyView"];
-            used?: components["schemas"]["SupplyQueryUsed"][];
-        };
         SupplyQueryUsed: {
             /** Format: int64 */
             supplyId?: number;
@@ -3755,6 +3825,14 @@ export interface components {
             unit?: string;
             /** Format: int32 */
             used?: number;
+        };
+        SupplyControllerOnAppointment: {
+            /** Format: int32 */
+            delta?: number;
+        };
+        SupplyControllerSpent: {
+            supply?: components["schemas"]["SupplyView"];
+            used?: components["schemas"]["SupplyQueryUsed"][];
         };
         AppointmentRequestsChangeStatus: {
             /** Format: int64 */
@@ -4026,6 +4104,7 @@ export interface components {
             hasReception?: boolean;
             assistantOf?: number[];
             elsewhere?: components["schemas"]["BookingViewsElsewhere"];
+            doctorServices?: components["schemas"]["DoctorServicesView"][];
         };
         ClinicLinksChoice: {
             /** Format: int64 */
@@ -4333,6 +4412,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceTypeControllerDeleted"];
+                };
+            };
+        };
+    };
+    ofService: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceSuppliesItem"][];
+                };
+            };
+        };
+    };
+    setForService: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceSupplyControllerLines"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceSuppliesItem"][];
                 };
             };
         };
@@ -4893,6 +5020,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    set_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DoctorServicesControllerRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorServicesView"];
+                };
             };
         };
     };
@@ -7287,6 +7440,54 @@ export interface operations {
             };
         };
     };
+    usedOn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplyQueryUsed"][];
+                };
+            };
+        };
+    };
+    spendAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceSupplyControllerLines"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplyQueryUsed"][];
+                };
+            };
+        };
+    };
     spend: {
         parameters: {
             query?: never;
@@ -8673,7 +8874,7 @@ export interface operations {
             };
         };
     };
-    usedOn: {
+    suggested: {
         parameters: {
             query?: never;
             header?: never;
@@ -8690,7 +8891,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SupplyQueryUsed"][];
+                    "application/json": components["schemas"]["ServiceSuppliesItem"][];
                 };
             };
         };

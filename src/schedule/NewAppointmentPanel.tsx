@@ -10,6 +10,7 @@ import { dayTitle, formatPhone, shortDate, slotInstant, timeStep, todayIn } from
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { serviceEmoji } from '../lib/serviceEmoji'
+import { servicesOfDoctor } from '../lib/doctorServices'
 import { SOURCES, type PatientSource } from '../lib/sources'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
@@ -212,7 +213,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
       && createPatient.error.message)
   const busy = create.isPending || createPatient.isPending
   const durationField = <DurationField value={duration} onChange={setDuration} />
-  const activeServices = services.data ?? []
+  // Услуги выбранного врача (выбраны у него — только они, иначе все услуги клиники)
+  const activeServices = servicesOfDoctor(services.data ?? [], me.doctorServices, doctorId)
+  // Врач сменился (и нажатием в другую колонку), а выбранную услугу он не оказывает — снять выбор
+  if (serviceId !== '' && services.data && !activeServices.some((sv) => sv.id === serviceId)) setServiceId('')
   const shownServices = allServices ? activeServices : activeServices.filter((sv, i) => i < 8 || sv.id === serviceId)
 
   return (

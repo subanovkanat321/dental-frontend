@@ -128,3 +128,63 @@ test('материалы на приёме: списать со склада, е
   await userEvent.click(await within(box).findByRole('button', { name: 'Вернуть 1: Анестетик' }))
   await vi.waitFor(() => expect(moves).toEqual([-1, -1, 1]))
 })
+
+test('материалы услуги: «Обычно уходит» — поправить, убрать лишнее и «Списать всё» одним запросом', async () => {
+  backend(appointment(10, 1, '09:00', 'Бакыт М.', { status: 'DONE', serviceName: 'Пломба' }))
+  let used: Schemas['SupplyQueryUsed'][] = []
+  let sent: Schemas['ServiceSupplyControllerLines'] | null = null
+  server.use(
+    http.get('*/api/appointments/:id/supplies/suggested', () => HttpResponse.json([
+      { supplyId: 3, name: 'Анестетик', unit: 'карп.', quantity: 1, inStock: 5 },
+      { supplyId: 4, name: 'Композит', unit: 'шт', quantity: 1, inStock: 2 },
+      { supplyId: 6, name: 'Бонд', unit: 'шт', quantity: 1, inStock: 0 },
+    ] satisfies Schemas['ServiceSuppliesItem'][])),
+    http.get('*/api/appointments/:id/supplies', () => HttpResponse.json(used)),
+    http.post('*/api/appointments/:id/supplies', async ({ request }) => {
+      sent = await request.json() as Schemas['ServiceSupplyControllerLines']
+      used = [{ supplyId: 3, name: 'Анестетик', unit: 'карп.', used: 2 }, { supplyId: 4, name: 'Композит', unit: 'шт', used: 1 }]
+      return HttpResponse.json(used)
+    }),
+  )
+  const panel = await openCard(/Бакыт М\./)
+  const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
+  expect(await within(box).findByText('Обычно уходит: Анестетик 1 карп., Композит 1 шт, Бонд 1 шт')).toBeInTheDocument()
+  // Склад ничего не списал сам — только предложение
+  expect(sent).toBeNull()
+  expect(within(box).getByText(/на складе 0 шт/)).toBeInTheDocument()
+
+  await userEvent.clear(within(box).getByLabelText('Сколько списать: Анестетик'))
+  await userEvent.type(within(box).getByLabelText('Сколько списать: Анестетик'), '2')
+  await userEvent.click(within(box).getByRole('button', { name: 'Не списывать: Бонд' }))
+  await userEvent.click(within(box).getByRole('button', { name: 'Списать всё' }))
+
+  expect(await within(box).findByText(/Композит — /)).toHaveTextContent('Композит — 1 шт')
+  expect(sent).toEqual({ items: [{ supplyId: 3, quantity: 2 }, { supplyId: 4, quantity: 1 }] })
+  expect(within(box).queryByRole('button', { name: 'Списать всё' })).not.toBeInTheDocument()
+})
+
+test('материалы услуги: уже что-то списали — не предлагаем; «Не нужно» скрывает', async () => {
+  backend(appointment(10, 1, '09:00', 'Бакыт М.', { status: 'DONE' }))
+  const suggested = [{ supplyId: 3, name: 'Анестетик', unit: 'карп.', quantity: 1, inStock: 5 }] satisfies Schemas['ServiceSuppliesItem'][]
+  server.use(http.get('*/api/appointments/:id/supplies/suggested', () => HttpResponse.json(suggested)))
+  const panel = await openCard(/Бакыт М\./)
+  const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
+  await userEvent.click(await within(box).findByRole('button', { name: 'Не нужно' }))
+  expect(within(box).queryByText(/Обычно уходит/)).not.toBeInTheDocument()
+})
+
+test('материалы услуги: на приёме уже списан материал — список «Обычно уходит» не показываем', async () => {
+  backend(appointment(10, 1, '09:00', 'Бакыт М.', { status: 'DONE' }))
+  server.use(
+    http.get('*/api/appointments/:id/supplies/suggested', () => HttpResponse.json([
+      { supplyId: 3, name: 'Анестетик', unit: 'карп.', quantity: 1, inStock: 5 },
+    ] satisfies Schemas['ServiceSuppliesItem'][])),
+    http.get('*/api/appointments/:id/supplies', () => HttpResponse.json([
+      { supplyId: 3, name: 'Анестетик', unit: 'карп.', used: 1 },
+    ] satisfies Schemas['SupplyQueryUsed'][])),
+  )
+  const panel = await openCard(/Бакыт М\./)
+  const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
+  expect(await within(box).findByText(/Анестетик — /)).toBeInTheDocument()
+  expect(within(box).queryByText(/Обычно уходит/)).not.toBeInTheDocument()
+})

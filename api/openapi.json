@@ -127,6 +127,74 @@
         }
       }
     },
+    "/api/service-types/{id}/supplies" : {
+      "get" : {
+        "tags" : [ "service-supply-controller" ],
+        "operationId" : "ofService",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ServiceSuppliesItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "service-supply-controller" ],
+        "operationId" : "setForService",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ServiceSupplyControllerLines"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ServiceSuppliesItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/salaries/{doctorId}" : {
       "put" : {
         "tags" : [ "salary-controller" ],
@@ -854,6 +922,43 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/doctors/{id}/service-types" : {
+      "put" : {
+        "tags" : [ "doctor-services-controller" ],
+        "operationId" : "set_2",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DoctorServicesControllerRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoctorServicesView"
+                }
+              }
+            }
           }
         }
       }
@@ -3721,6 +3826,74 @@
         }
       }
     },
+    "/api/appointments/{id}/supplies" : {
+      "get" : {
+        "tags" : [ "supply-controller" ],
+        "operationId" : "usedOn",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SupplyQueryUsed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "service-supply-controller" ],
+        "operationId" : "spendAll",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ServiceSupplyControllerLines"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SupplyQueryUsed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/supplies/{supplyId}" : {
       "post" : {
         "tags" : [ "supply-controller" ],
@@ -5408,10 +5581,10 @@
         }
       }
     },
-    "/api/appointments/{id}/supplies" : {
+    "/api/appointments/{id}/supplies/suggested" : {
       "get" : {
-        "tags" : [ "supply-controller" ],
-        "operationId" : "usedOn",
+        "tags" : [ "service-supply-controller" ],
+        "operationId" : "suggested",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5429,7 +5602,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/SupplyQueryUsed"
+                    "$ref" : "#/components/schemas/ServiceSuppliesItem"
                   }
                 }
               }
@@ -6169,6 +6342,57 @@
           }
         }
       },
+      "ServiceSuppliesLine" : {
+        "properties" : {
+          "supplyId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "ServiceSupplyControllerLines" : {
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ServiceSuppliesLine"
+            }
+          }
+        }
+      },
+      "ServiceSuppliesItem" : {
+        "properties" : {
+          "supplyId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "inStock" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorName" : {
+            "type" : "string"
+          }
+        }
+      },
       "SalaryControllerTerms" : {
         "properties" : {
           "percent" : {
@@ -6815,6 +7039,35 @@
           },
           "role" : {
             "type" : "string"
+          }
+        }
+      },
+      "DoctorServicesControllerRequest" : {
+        "properties" : {
+          "serviceTypeIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            },
+            "maxItems" : 500,
+            "minItems" : 0
+          }
+        },
+        "required" : [ "serviceTypeIds" ]
+      },
+      "DoctorServicesView" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceTypeIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         }
       },
@@ -8250,6 +8503,24 @@
         },
         "required" : [ "doctorId", "durationMinutes", "startAt", "version" ]
       },
+      "SupplyQueryUsed" : {
+        "properties" : {
+          "supplyId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "used" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "SupplyControllerOnAppointment" : {
         "properties" : {
           "delta" : {
@@ -8268,24 +8539,6 @@
             "items" : {
               "$ref" : "#/components/schemas/SupplyQueryUsed"
             }
-          }
-        }
-      },
-      "SupplyQueryUsed" : {
-        "properties" : {
-          "supplyId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "unit" : {
-            "type" : "string"
-          },
-          "used" : {
-            "type" : "integer",
-            "format" : "int32"
           }
         }
       },
@@ -8957,6 +9210,12 @@
           },
           "elsewhere" : {
             "$ref" : "#/components/schemas/BookingViewsElsewhere"
+          },
+          "doctorServices" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DoctorServicesView"
+            }
           }
         }
       },

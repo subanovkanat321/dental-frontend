@@ -401,6 +401,14 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .supplies-box { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--separator); }
 .supplies-box .spent { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .add-supply { grid-template-columns: 1fr auto; }
+/* Материалы по умолчанию (услуга) и «Обычно уходит» (приём): строка — название, количество, ✕ */
+.supply-rows { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .9rem; }
+.supply-rows li { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 36px; }
+.supply-rows .actions { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+.supply-rows input { width: 64px; height: 32px; padding: 0 6px; font: inherit; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.suggested-supplies { display: grid; gap: 6px; padding: 8px; border-radius: var(--r-md); background: var(--sunken); }
+.doctor-services fieldset { border: 0; padding: 0; margin: 0 0 8px; display: grid; gap: 4px; }
+.doctor-services legend { font-weight: 600; font-size: .85rem; margin-bottom: 4px; }
 .add-supply select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 
 /* Лист ожидания: вкладки «Пациентов», блок в карточке */

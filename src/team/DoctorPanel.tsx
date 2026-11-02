@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { resizePhoto } from '../medical/thumb'
 import { useClose } from '../lib/useClose'
 import { HoursEditor } from './HoursEditor'
+import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
 
 type Me = Schemas['BookingViewsMe']
@@ -152,6 +153,8 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
         <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
       </form>
       </>}
+
+      {editsProfile && <DoctorServices key={d.id} doctorId={d.id!} me={me} />}
 
       <section className="form">
         <h3>Часы работы</h3>

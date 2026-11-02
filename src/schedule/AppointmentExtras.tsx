@@ -10,6 +10,7 @@ import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { useAppointmentAction } from './useAppointmentAction'
 import { editableDoctors } from '../lib/roles'
+import { servicesOfDoctor } from '../lib/doctorServices'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -86,8 +87,8 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
   )
 }
 
-/** Услуга приёма: выбрать из услуг клиники; «—» — без услуги. */
-export function ServiceEdit({ appointment: a, onDone, prices = true }: { appointment: Appointment; onDone: () => void; prices?: boolean }) {
+/** Услуга приёма: выбрать из услуг врача приёма (выбраны — только они, иначе все услуги клиники); «—» — без услуги. */
+export function ServiceEdit({ appointment: a, me, onDone, prices = true }: { appointment: Appointment; me: Me; onDone: () => void; prices?: boolean }) {
   const action = useAppointmentAction(a)
   const services = useQuery({
     queryKey: ['service-types'],
@@ -98,6 +99,7 @@ export function ServiceEdit({ appointment: a, onDone, prices = true }: { appoint
   const current = services.data?.find((s) => s.name === a.serviceName)?.id ?? ''
   const [serviceId, setServiceId] = useState<number | ''>('')
   const chosen = serviceId === '' ? current : serviceId
+  const offered = servicesOfDoctor(services.data ?? [], me.doctorServices, a.doctorId, current)
   return (
     <form className="form sub-form" aria-label="Услуга приёма" onSubmit={(e) => {
       e.preventDefault()
@@ -106,7 +108,7 @@ export function ServiceEdit({ appointment: a, onDone, prices = true }: { appoint
       <label className="field"><span>Услуга</span>
         <select value={chosen} onChange={(e) => setServiceId(e.target.value === '' ? '' : Number(e.target.value))}>
           <option value="">—</option>
-          {services.data?.map((s) => <option key={s.id} value={s.id}>{s.name}{prices && s.priceSom != null ? ` · ${s.priceSom} сом` : ''}</option>)}
+          {offered.map((s) => <option key={s.id} value={s.id}>{s.name}{prices && s.priceSom != null ? ` · ${s.priceSom} сом` : ''}</option>)}
         </select>
       </label>
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
@@ -167,6 +169,8 @@ export function Supplies({ appointment: a }: { appointment: Appointment }) {
   return (
     <section className="supplies-box" aria-label="Материалы на приёме">
       <h3>Материалы</h3>
+      {/* Ничего ещё не списали — предложить материалы услуги; списывает врач сам, кнопкой */}
+      {used.isSuccess && list.length === 0 && <SuggestedSupplies appointment={a} />}
       {list.length > 0 && (
         <ul className="visits">
           {list.map((u) => (
@@ -194,6 +198,67 @@ export function Supplies({ appointment: a }: { appointment: Appointment }) {
       </div>
       {move.error && <p className="error" role="alert">{errorText(move.error)}</p>}
     </section>
+  )
+}
+
+type SuggestedRow = { supplyId: number; name: string; unit: string; quantity: string; inStock: number }
+
+/**
+ * «Обычно уходит»: материалы по умолчанию услуги приёма (Настройки → Услуги), готовым списком.
+ * Врач правит количество, убирает лишнее и нажимает «Списать всё» — всё или ничего, как «−1»
+ * по каждому (остатки, «заканчивается», «вернуть»). «Не нужно» — скрыть до следующего открытия.
+ */
+function SuggestedSupplies({ appointment: a }: { appointment: Appointment }) {
+  const client = useQueryClient()
+  const suggested = useQuery({
+    queryKey: ['appointment-supplies-suggested', a.id],
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/supplies/suggested', { params: { path: { id: a.id! } } })),
+  })
+  const [draft, setDraft] = useState<SuggestedRow[] | null>(null)
+  const [hidden, setHidden] = useState(false)
+  const rows = draft ?? (suggested.data ?? []).map((i) => ({
+    supplyId: i.supplyId!, name: i.name ?? '', unit: i.unit ?? '', quantity: String(i.quantity ?? 1), inStock: i.inStock ?? 0,
+  }))
+  const spend = useMutation<Schemas['SupplyQueryUsed'][], ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/supplies', {
+      params: { path: { id: a.id! } },
+      body: { items: rows.map((r) => ({ supplyId: r.supplyId, quantity: Number(r.quantity) })) },
+    })),
+    onSuccess: (used) => {
+      client.setQueryData(['appointment-supplies', a.id], used)
+      void client.invalidateQueries({ queryKey: ['appointment-supplies', a.id] })
+      void client.invalidateQueries({ queryKey: ['supplies'] })
+    },
+  })
+  if (hidden || !suggested.data?.length) return null
+  const invalid = rows.some((r) => !/^\d+$/.test(r.quantity) || Number(r.quantity) < 1 || Number(r.quantity) > 1000)
+  const summary = (suggested.data ?? []).map((i) => `${i.name} ${i.quantity} ${i.unit}`).join(', ')
+  return (
+    <div className="suggested-supplies" aria-label="Обычно уходит">
+      <p className="hint">Обычно уходит: {summary}</p>
+      {rows.length > 0 && (
+        <ul className="supply-rows">
+          {rows.map((r, i) => (
+            <li key={r.supplyId}>
+              <span>{r.name}{Number(r.quantity) > r.inStock && <span className="tone-wait"> · на складе {r.inStock} {r.unit}</span>}</span>
+              <span className="actions">
+                <input type="number" min={1} max={1000} inputMode="numeric" aria-label={`Сколько списать: ${r.name}`} value={r.quantity}
+                  onChange={(e) => setDraft(rows.map((x, j) => (j === i ? { ...x, quantity: e.target.value } : x)))} />
+                <span className="hint">{r.unit}</span>
+                <button type="button" className="btn small ghost" aria-label={`Не списывать: ${r.name}`}
+                  onClick={() => setDraft(rows.filter((_, j) => j !== i))}>✕</button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {invalid && <p className="error">Сколько — целое число от 1 до 1000</p>}
+      {spend.error && <p className="error" role="alert">{errorText(spend.error)}</p>}
+      <div className="actions">
+        <button type="button" className="btn primary" disabled={!rows.length || invalid || spend.isPending} onClick={() => spend.mutate()}>Списать всё</button>
+        <button type="button" className="btn ghost" onClick={() => setHidden(true)}>Не нужно</button>
+      </div>
+    </div>
   )
 }
 

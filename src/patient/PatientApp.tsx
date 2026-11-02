@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { groupByCategory } from '../clinic/services'
+import { servicesOfDoctor } from '../lib/doctorServices'
 import { formatPhone, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
 import { haptic, openLink, telegram } from '../lib/telegram'
 import { useBlobUrl } from '../lib/useBlobUrl'
@@ -328,7 +329,8 @@ function DayStrip({ ctx, date, onPick }: { ctx: Ctx; date: string; onPick: (d: s
 function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   const { me, t, lang } = ctx
   const client = useQueryClient()
-  const services = me.services ?? []
+  // У врача выбраны услуги — только они; не выбраны — все услуги клиники
+  const services = servicesOfDoctor(me.services ?? [], me.doctorServices, doctor.id)
   const many = (me.doctors ?? []).length > 1
   const [service, setService] = useState<Service | null>(services.length === 1 ? services[0]! : null)
   const [date, setDate] = useState(todayIn())

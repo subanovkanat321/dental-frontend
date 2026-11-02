@@ -267,3 +267,31 @@ test('приём успели изменить в другом окне (409 sta
   expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
   expect(sent).toEqual([{ version: 3, status: 'SCHEDULED' }, { version: 4, status: 'SCHEDULED' }])
 })
+
+test('новая запись: у врача выбраны услуги — только они; сменили врача — чужая услуга снимается', async () => {
+  backend([], { ...me, doctorServices: [{ doctorId: 2, serviceTypeIds: [6] }] })
+  server.use(
+    http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [new Date(`${todayIn()}T09:00:00+06:00`).toISOString()] })),
+    http.get('*/api/service-types', () => HttpResponse.json([
+      { id: 5, name: 'Чистка', durationMinutes: 60, active: true },
+      { id: 6, name: 'Удаление зуба', durationMinutes: 45, active: true },
+    ] satisfies Schemas['ServiceTypeView'][])),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('group', { name: 'Дастан Т.' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  const chips = () => within(panel).getByRole('group', { name: 'Услуга' })
+  await within(panel).findByRole('group', { name: 'Услуга' })
+  expect(within(chips()).getAllByRole('button')).toHaveLength(1)
+  expect(within(chips()).getByRole('button', { name: /Удаление зуба/ })).toBeInTheDocument()
+
+  // У врача 1 услуги не выбраны — все услуги клиники
+  await userEvent.selectOptions(within(panel).getByLabelText('Врач'), '1')
+  await userEvent.click(within(chips()).getByRole('button', { name: /Чистка/ }))
+  expect(within(chips()).getByRole('button', { name: /Чистка/ })).toHaveAttribute('aria-pressed', 'true')
+
+  // Обратно к врачу 2: «Чистку» он не оказывает — её нет, выбор снят
+  await userEvent.selectOptions(within(panel).getByLabelText('Врач'), '2')
+  expect(within(chips()).queryByRole('button', { name: /Чистка/ })).not.toBeInTheDocument()
+  expect(within(chips()).getByRole('button', { name: /Удаление зуба/ })).toHaveAttribute('aria-pressed', 'false')
+})
