@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 import { botConfig } from '../api/client'
+import { isLoginPath } from '../lib/route'
 
 /**
  * «Войти через Telegram» на сайте: окно входа Telegram (Telegram.Login.auth из telegram-widget.js)
@@ -49,7 +50,7 @@ export function Login() {
     setBusy(false)
     if (response?.ok) {
       // Вошли — в CRM с чистым адресом (/login → /)
-      if (window.location.pathname === '/login') window.history.replaceState(null, '', '/')
+      if (isLoginPath()) window.history.replaceState(null, '', '/')
       void client.invalidateQueries({ queryKey: ['me'] })
       return
     }

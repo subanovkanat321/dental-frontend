@@ -8,7 +8,7 @@ import { Login } from './layout/Login'
 import { Shell } from './layout/Shell'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
-import { usePage, type Page } from './lib/route'
+import { isLoginPath, usePage, type Page } from './lib/route'
 import { telegram } from './lib/telegram'
 
 // Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
@@ -67,7 +67,7 @@ export function App() {
         return <div className="center"><h1>Tish CRM</h1><p className="hint">{me.error.message || 'Сессия устарела — закройте и откройте заново из бота.'}</p></div>
       }
       // Браузер без входа на главной (пациент набрал адрес) — общий каталог клиник; вход — /login
-      if (window.location.pathname !== '/login') {
+      if (!isLoginPath()) {
         window.location.replace('/clinics')
         return <div className="center hint">Загрузка…</div>
       }

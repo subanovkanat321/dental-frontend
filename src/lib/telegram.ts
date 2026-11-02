@@ -3,6 +3,8 @@
  * подписанная Telegram строка initData (заголовок `Authorization: tma …`, как у старого Mini App),
  * а не cookie сайта. SDK — официальный telegram-web-app.js из index.html; вне Telegram initData пуста.
  */
+
+import { isLoginPath } from './route'
 type BackButton = { show(): void; hide(): void; onClick(cb: () => void): void; offClick(cb: () => void): void }
 
 type MainButton = {
@@ -71,7 +73,7 @@ export function authHeaders(): Record<string, string> {
  * под `import.meta.env.DEV`.
  */
 export async function startDevLogin(): Promise<void> {
-  if (telegram() || window.location.pathname === '/login') return
+  if (telegram() || isLoginPath()) return
   try {
     const response = await fetch('/dev/init-data')
     if (response.ok) devInitData = (await response.text()).trim()

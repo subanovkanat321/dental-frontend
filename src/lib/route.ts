@@ -38,3 +38,17 @@ export function usePage(): [Page, (page: Page) => void] {
   }, [])
   return [page, (next) => { window.location.hash = `/${next}` }]
 }
+
+/**
+ * Страница входа: «/login» в любом виде, как его набирают — «/login/», «/Login», «/вход», «/crm», «/admin».
+ * Раньше «/login/» уводил на каталог для пациентов.
+ */
+export function isLoginPath(path = window.location.pathname): boolean {
+  let p = path
+  try {
+    p = decodeURIComponent(path)
+  } catch {
+    // кривой адрес — как есть
+  }
+  return /^\/(login|вход|crm|admin)\/?$/i.test(p)
+}

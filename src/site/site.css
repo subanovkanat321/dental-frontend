@@ -61,3 +61,7 @@ body.site { background: var(--page); }
 .site-features span span { display: block; color: var(--hint); font-size: .9rem; }
 .trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .site-message { padding: 24px; text-align: center; }
+/* /clinics: «Вы врач или администратор клиники? Войти в CRM» — сверху, для сотрудников */
+.site-staff { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin-bottom: 12px; padding: 10px 14px;
+  border-radius: 12px; background: var(--card); border: 1px solid var(--line-strong); color: var(--text); text-decoration: none; font-size: .95rem; }
+.site-staff strong { color: var(--link); white-space: nowrap; }

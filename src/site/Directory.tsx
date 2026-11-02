@@ -9,6 +9,7 @@ const TEXTS = {
     search: 'Клиника, врач или адрес', book: 'Записаться в Telegram', more: 'Врачи, услуги и цены', map: 'На карте', doctors: 'Врачи',
     clinic: 'Стоматология', nothing: 'Ничего не нашлось — попробуйте другое слово.', empty: 'Клиники скоро появятся здесь.',
     forClinics: 'Для клиник', login: 'Вход для клиники', join: 'Подключить клинику',
+    staff: 'Вы врач или администратор клиники?', staffLogin: 'Войти в CRM',
     error: 'Не удалось загрузить список — обновите страницу через минуту.', loading: 'Загрузка…',
   },
   ky: {
@@ -16,6 +17,7 @@ const TEXTS = {
     search: 'Клиника, дарыгер же дарек', book: 'Telegram аркылуу жазылуу', more: 'Дарыгерлер, кызматтар жана баалар', map: 'Картада', doctors: 'Дарыгерлер',
     clinic: 'Стоматология', nothing: 'Эч нерсе табылган жок — башка сөз менен издеңиз.', empty: 'Клиникалар жакында ушул жерде болот.',
     forClinics: 'Клиникалар үчүн', login: 'Клиника үчүн кирүү', join: 'Клиниканы туташтыруу',
+    staff: 'Сиз клиниканын дарыгерисизби же администраторусузбу?', staffLogin: 'CRMге кирүү',
     error: 'Тизме жүктөлгөн жок — бир мүнөттөн кийин жаңыртыңыз.', loading: 'Жүктөлүүдө…',
   },
 }
@@ -35,6 +37,8 @@ export function Directory() {
   const found = Array.isArray(clinics) ? clinics.filter((c) => matches(c, query)) : []
   return (
     <main className="site-page">
+      {/* Сотрудники клиник набирают tish.kg и попадают сюда — вход в CRM сразу видно, а не только внизу */}
+      <a className="site-staff" href="/login"><span>{t.staff}</span><strong>{t.staffLogin} →</strong></a>
       <LangSwitch lang={lang} onChange={setLang} />
       <div className="site-hero">
         <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={95} height={90} />
