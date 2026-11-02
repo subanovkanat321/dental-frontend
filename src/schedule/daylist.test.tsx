@@ -156,7 +156,7 @@ test('телефон: «WA» — WhatsApp с подписью клиники, з
   vi.restoreAllMocks()
 })
 
-test('телефон: короткая полоса «Сегодня» над днём — заявки и склад; нажать на заявку — её карточка', async () => {
+test('телефон: короткая полоса «Сегодня» над днём — только заявки и оплата, без склада; нажать на заявку — её карточка', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1'
@@ -167,7 +167,8 @@ test('телефон: короткая полоса «Сегодня» над д
   renderApp()
   const strip = await screen.findByRole('group', { name: 'Требует внимания' })
   expect(strip).toHaveClass('compact')
-  expect(await within(strip).findByRole('button', { name: /1 склад: мало/ })).toBeInTheDocument()
+  expect(await within(strip).findByRole('button', { name: /1 заявка/ })).toBeInTheDocument()
+  expect(within(strip).queryByRole('button', { name: /склад/ })).not.toBeInTheDocument()
   await userEvent.click(within(strip).getByRole('button', { name: /1 заявка/ }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Бакыт М.')
 })

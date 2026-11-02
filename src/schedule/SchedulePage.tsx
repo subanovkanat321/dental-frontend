@@ -304,22 +304,17 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
 
-        {/* Телефон: та же полоса «Сегодня», коротко — маленькие чипы переносятся на новую строку; без «всё под контролем» */}
-        {dayList && (requests.length > 0 || waiting.length > 0 || (toPay.data?.length ?? 0) > 0 || low > 0) && (
+        {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе. «Ждём ответа» видно в строках
+            дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
+        {dayList && (requests.length > 0 || (toPay.data?.length ?? 0) > 0) && (
           <div className="today-strip compact" role="group" aria-label="Требует внимания">
             {requests.length > 0 && (
               <button type="button" className="stat s-request" onClick={firstOf(requests)}>
                 <b>{requests.length}</b> {requests.length === 1 ? 'заявка' : 'заявки'}
               </button>
             )}
-            {waiting.length > 0 && (
-              <button type="button" className="stat s-wait" onClick={firstOf(waiting)}><b>{waiting.length}</b> ждём ответа</button>
-            )}
             {(toPay.data?.length ?? 0) > 0 && (
               <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}><b>{toPay.data!.length}</b> к оплате</button>
-            )}
-            {low > 0 && (
-              <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}><b>{low}</b> склад: мало</button>
             )}
           </div>
         )}
