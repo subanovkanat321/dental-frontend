@@ -2,7 +2,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { type CSSProperties } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { useWaitlist } from '../api/settings'
+import { useSettings, useWaitlist } from '../api/settings'
 import { reminderText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { addDays, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../lib/time'
@@ -204,7 +204,11 @@ function FreeRow({ start, end, canEdit, doctor, waiting, onPick }: {
   )
 }
 
-/** Строка приёма: время, пациент, статус; быстрая кнопка напомнить (бот — в Telegram, иначе WhatsApp). */
+/**
+ * Строка приёма: время, пациент, статус; быстрая кнопка напомнить (бот — в Telegram, иначе WhatsApp).
+ * Напоминание уже ушло (или только что отправили) — вместо кнопки «✓ отправлено»: повторно — из карточки.
+ * Ошибка — под строкой. WhatsApp — только когда загружены настройки (подпись клиники и ссылка на бота).
+ */
 function Row({ a, next, active, canEdit, onOpen }: {
   a: Appointment
   next: boolean
@@ -214,7 +218,7 @@ function Row({ a, next, active, canEdit, onOpen }: {
 }) {
   const client = useQueryClient()
   const action = useAppointmentAction(a)
-  const settings = useQuery({ queryKey: ['settings'], queryFn: () => unwrap(api.GET('/api/settings')), staleTime: 10 * 60_000 })
+  const settings = useSettings()
   const opened = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
@@ -222,7 +226,10 @@ function Row({ a, next, active, canEdit, onOpen }: {
   const s = statusOf(a)
   const canRemind = canEdit && a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
   const viaBot = Boolean(a.patient?.telegram)
+  const sent = Boolean(a.reminderOpenedAt) || action.isSuccess || opened.isSuccess
+  const busy = action.isPending || opened.isPending || (!viaBot && !settings.data)
   const remind = () => {
+    if (busy || sent) return
     if (viaBot) {
       action.mutate({ kind: 'remindTelegram' })
       return
@@ -231,6 +238,7 @@ function Row({ a, next, active, canEdit, onOpen }: {
     openLink(whatsappUrl(a.patient?.phone ?? '', reminderText({ startAt: a.startAt!, patient: a.patient ?? {} },
       settings.data?.clinicSignature, settings.data?.botUrl)))
   }
+  const error = action.error ?? opened.error
   return (
     <li className={['row', `s-${s.kind}`, next ? 'next' : '', active ? 'active' : '', a.status === 'NO_SHOW' ? 'struck' : ''].join(' ').trim()}>
       <button type="button" className="row-button" onClick={() => onOpen(a)}
@@ -246,11 +254,14 @@ function Row({ a, next, active, canEdit, onOpen }: {
           </span>
         )}
       </button>
-      {canRemind && (
-        <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={action.isPending}
+      {canRemind && (sent ? (
+        <span className="remind-sent tone-ok" role="status" aria-label={`Напоминание отправлено: ${a.patient?.fullName}`}>✓ отправлено</span>
+      ) : (
+        <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={busy}
           aria-label={`${viaBot ? 'Напомнить в Telegram' : 'Напомнить в WhatsApp'}: ${a.patient?.fullName}, ${timeOf(a.startAt!)}`}
           onClick={remind}>{viaBot ? 'TG' : 'WA'}</button>
-      )}
+      ))}
+      {canRemind && error && <p className="error row-error" role="alert">{error.message}</p>}
     </li>
   )
 }

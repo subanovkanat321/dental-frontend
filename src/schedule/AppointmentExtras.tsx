@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { useSettings } from '../api/settings'
 import { reminderText, whatsappUrl } from '../lib/texts'
+import { openLink } from '../lib/telegram'
 import { minutesOf, slotInstant, timeOf, ZONE } from '../lib/time'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
@@ -204,7 +206,7 @@ const REPLIES = [['CONFIRMED', 'Придёт'], ['RESCHEDULE', 'Перенос']
 export function Remind({ appointment: a }: { appointment: Appointment }) {
   const client = useQueryClient()
   const action = useAppointmentAction(a)
-  const settings = useQuery({ queryKey: ['settings'], queryFn: () => unwrap(api.GET('/api/settings')), staleTime: 10 * 60_000 })
+  const settings = useSettings()
   const opened = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
@@ -212,8 +214,9 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
   const canRemind = a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
   const whatsapp = () => {
     opened.mutate()
-    window.open(whatsappUrl(a.patient?.phone ?? '', reminderText({ startAt: a.startAt!, patient: a.patient ?? {} },
-      settings.data?.clinicSignature, settings.data?.botUrl)), '_blank', 'noopener')
+    // openLink: в Telegram ссылка откроется во внешнем браузере / WhatsApp, а не внутри Mini App
+    openLink(whatsappUrl(a.patient?.phone ?? '', reminderText({ startAt: a.startAt!, patient: a.patient ?? {} },
+      settings.data?.clinicSignature, settings.data?.botUrl)))
   }
   return (
     <section className="remind" aria-label="Напоминание">
@@ -225,7 +228,8 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
             </button>
           )}
           {a.patient?.phone && (
-            <button type="button" className={a.patient?.telegram ? 'btn' : 'btn primary'} onClick={whatsapp}>Напомнить в WhatsApp</button>
+            <button type="button" className={a.patient?.telegram ? 'btn' : 'btn primary'} disabled={!settings.data || opened.isPending}
+              onClick={whatsapp}>Напомнить в WhatsApp</button>
           )}
         </div>
       )}

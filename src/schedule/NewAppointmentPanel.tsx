@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
+import { openLink } from '../lib/telegram'
 import { dayTitle, formatPhone, shortDate, slotInstant, timeStep, todayIn } from '../lib/time'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
@@ -387,8 +388,8 @@ function WaitlistCandidates({ doctorId, duration, startAt, onBooked }: {
             <span className="hint small"> · {e.upcoming?.startAt ? `сейчас ${shortDate(e.upcoming.startAt, true)}` : 'записи нет'} · {e.durationMinutes} мин</span>
           </span>
           <span className="actions">
-            <a className="btn small" target="_blank" rel="noopener"
-              href={whatsappUrl(e.patient?.phone ?? '', freeSlotText(e.patient?.fullName ?? '', startAt, settings.data?.clinicSignature))}>WhatsApp</a>
+            <button type="button" className="btn small" disabled={!settings.data}
+              onClick={() => openLink(whatsappUrl(e.patient?.phone ?? '', freeSlotText(e.patient?.fullName ?? '', startAt, settings.data?.clinicSignature)))}>WhatsApp</button>
             <button type="button" className="btn small primary" disabled={book.isPending} onClick={() => book.mutate(e)}>
               {e.upcoming ? 'Перенести сюда' : 'Записать сюда'}
             </button>

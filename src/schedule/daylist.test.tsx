@@ -102,3 +102,56 @@ test('телефон: вместо ленты — один день; стрел�
   expect(within(bar).getByText('Сегодня')).toBeInTheDocument()
   expect(within(bar).queryByRole('button', { name: 'Сегодня' })).not.toBeInTheDocument()
 })
+
+function remindBackend(start: ReturnType<typeof appointment>, fail = false) {
+  let a = { ...start }
+  const calls: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [a] : [])),
+    http.get('*/api/appointments/counts', () => HttpResponse.json([])),
+    http.post('*/api/appointments/:id/remind-telegram', () => {
+      calls.push('telegram')
+      if (fail) return HttpResponse.json({ title: 'Bad Gateway', status: 502, detail: 'Telegram не ответил, попробуйте ещё раз' }, { status: 502 })
+      a = { ...a, reminderOpenedAt: new Date().toISOString(), version: a.version! + 1 }
+      return HttpResponse.json(a)
+    }),
+    http.post('*/api/appointments/:id/reminder-opened', () => {
+      calls.push('opened')
+      a = { ...a, reminderOpenedAt: new Date().toISOString() }
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  return calls
+}
+
+test('телефон: быстрое «TG» — «✓ отправлено» вместо кнопки, второй раз не отправить', async () => {
+  const calls = remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { patient: { id: 10, fullName: 'Бакыт М.', telegram: true } }))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Напомнить в Telegram: Бакыт М\./ }))
+  expect(await screen.findByRole('status', { name: /Напоминание отправлено: Бакыт М\./ })).toHaveTextContent('✓ отправлено')
+  expect(screen.queryByRole('button', { name: /Напомнить в Telegram/ })).not.toBeInTheDocument()
+  expect(calls).toEqual(['telegram'])
+})
+
+test('телефон: быстрое «TG» не прошло — ошибка под приёмом, кнопка остаётся', async () => {
+  remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { patient: { id: 10, fullName: 'Бакыт М.', telegram: true } }), true)
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Напомнить в Telegram: Бакыт М\./ }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Telegram не ответил')
+  expect(screen.getByRole('button', { name: /Напомнить в Telegram: Бакыт М\./ })).toBeEnabled()
+})
+
+test('телефон: «WA» — WhatsApp с подписью клиники, затем «✓ отправлено»; уже напомнили — сразу отметка', async () => {
+  const calls = remindBackend(appointment(10, 1, '23:30', 'Бакыт М.'))
+  const opened: string[] = []
+  vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
+  renderApp()
+  const wa = await screen.findByRole('button', { name: /Напомнить в WhatsApp: Бакыт М\./ })
+  await vi.waitFor(() => expect(wa).toBeEnabled()) // ждёт настройки: без них в тексте нет подписи
+  await userEvent.click(wa)
+  expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
+  expect(await screen.findByRole('status', { name: /Напоминание отправлено: Бакыт М\./ })).toBeInTheDocument()
+  expect(calls).toEqual(['opened'])
+  vi.restoreAllMocks()
+})

@@ -102,7 +102,14 @@ test('«Новая запись» предлагает пациентов из �
   await userEvent.click(await screen.findByRole('button', { name: '09:00' }))
   const box = await screen.findByRole('region', { name: 'Ждут свободного времени' })
   expect(box).toHaveTextContent('Айгуль Т.')
-  expect(within(box).getByRole('link', { name: 'WhatsApp' }).getAttribute('href')).toContain('wa.me/996700333444')
+  // WhatsApp — через openLink (в Telegram откроется снаружи); вне Telegram — window.open
+  const opened: string[] = []
+  vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
+  const wa = within(box).getByRole('button', { name: 'WhatsApp' })
+  await vi.waitFor(() => expect(wa).toBeEnabled())
+  await userEvent.click(wa)
+  expect(opened[0]).toContain('wa.me/996700333444')
+  vi.restoreAllMocks()
   await userEvent.click(within(box).getByRole('button', { name: 'Записать сюда' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айгуль Т.')
   expect(booked).toEqual({ doctorId: 1, startAt: new Date(`${todayIn()}T09:00:00+06:00`).toISOString() })

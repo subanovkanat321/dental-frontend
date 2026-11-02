@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
 import { agoText, recallText, whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
+import { openLink } from '../lib/telegram'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -67,7 +68,7 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
     // Отметка «позвали» — не ждём ответа: WhatsApp открывается сразу, как в приложении
     void api.POST('/api/patients/{id}/recall-invited', { params: { path: { id: p.id! } } })
       .then(() => client.invalidateQueries({ queryKey: ['recall'] }))
-    window.open(whatsappUrl(p.phone!, recallText(p.fullName ?? '', settings.data?.clinicSignature)), '_blank', 'noopener')
+    openLink(whatsappUrl(p.phone!, recallText(p.fullName ?? '', settings.data?.clinicSignature)))
   }
 
   if (due.isPending) return <p className="hint">Загрузка…</p>

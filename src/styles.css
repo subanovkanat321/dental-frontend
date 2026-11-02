@@ -590,6 +590,12 @@ details.agreement-box { max-height: none; }
 .remind-quick { flex: none; align-self: center; width: 44px; height: 44px; margin-right: 6px; border: 1px solid var(--line-strong); border-radius: 50%;
   background: var(--card); color: var(--ok-ink); font: 700 .78rem var(--display); cursor: pointer; }
 .remind-quick.tg { color: #2AABEE; }
+.remind-quick:disabled { opacity: .5; cursor: default; }
+/* Напоминание ушло — вместо кнопки отметка; ошибка — отдельной строкой под приёмом */
+.remind-sent { flex: none; align-self: center; margin-right: 8px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
+.day-list .row:has(.row-error) { flex-wrap: wrap; }
+.day-list .row:has(.row-error) .row-button { flex-basis: 0; }
+.row-error { flex-basis: 100%; margin: 0 10px 8px; font-size: .85rem; }
 /* Карточка приёма: «Вернуть» после неявки или отмены, оценка, отзыв */
 .undo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
 .rating { margin: 0; color: var(--wait-ink); letter-spacing: 2px; }
