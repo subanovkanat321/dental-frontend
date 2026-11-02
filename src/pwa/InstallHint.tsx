@@ -32,7 +32,7 @@ export function InstallHint() {
     <div className="pwa-hint" role="note">
       <p><strong>📲 Tish на экране телефона</strong> — откроется как приложение.{' '}
         {prompt ? null : isIos()
-          ? <>Safari: <ShareIcon /> Поделиться → На экран «Домой».</>
+          ? <>Safari: «⋯» внизу справа → <ShareIcon /> Поделиться → На экран «Домой». <a href="/app">Подробнее</a></>
           : <>Chrome: меню ⋮ → «Установить приложение».</>}
       </p>
       {prompt && <button type="button" className="btn primary small" onClick={() => void install()}>Установить</button>}

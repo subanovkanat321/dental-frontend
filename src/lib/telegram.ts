@@ -24,7 +24,8 @@ type WebApp = {
   initDataUnsafe?: { user?: { language_code?: string } }
   MainButton?: MainButton
   HapticFeedback?: { notificationOccurred(type: 'success' | 'warning' | 'error'): void }
-  openLink?(url: string): void
+  /** try_browser — открыть сразу во внешнем браузере (Android: chrome); на iPhone Telegram открывает свой */
+  openLink?(url: string, options?: { try_browser?: string; try_instant_view?: boolean }): void
   /** t.me-ссылка внутри Telegram (например, «поделиться»), без браузера */
   openTelegramLink?(url: string): void
   /** ios, android, tdesktop, macos, weba… — где открыт Mini App */

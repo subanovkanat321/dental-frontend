@@ -13,6 +13,34 @@ export function ShareIcon() {
   )
 }
 
+/** Три точки «⋯» в круге — кнопка меню нового Safari (iOS 26) внизу справа. */
+function MoreIcon() {
+  return <span className="pwa-more" role="img" aria-label="«⋯»">⋯</span>
+}
+
+/**
+ * iPhone, Safari. В iOS 26 значка «Поделиться» внизу нет — он в меню «⋯» справа от адреса;
+ * в старых iOS — сразу внизу посередине. Рисуем нижнюю полосу Safari, чтобы было видно, куда жать.
+ */
+function IosSteps() {
+  return (
+    <>
+      <div className="pwa-safari" aria-hidden="true">
+        <span className="pwa-safari-btn">‹</span>
+        <span className="pwa-safari-url">{window.location.host}</span>
+        <span className="pwa-safari-btn hot">⋯<span className="pwa-safari-tap">нажмите</span></span>
+      </div>
+      <ol className="pwa-steps">
+        <li>В <strong>Safari</strong> нажмите <MoreIcon /> <strong>внизу справа</strong>, рядом с адресом {window.location.host}.</li>
+        <li>Выберите <ShareIcon /> <strong>Поделиться</strong>.<br />
+          <span className="hint">В старых iPhone значок <ShareIcon /> сразу внизу посередине экрана — нажмите его.</span></li>
+        <li>Пролистайте вниз и выберите <strong>На экран «Домой»</strong>. Не видно — нажмите <strong>Ещё</strong> в конце списка.</li>
+        <li>Нажмите <strong>Добавить</strong> вверху справа — на экране появится значок Tish. Открывайте его, как приложение.</li>
+      </ol>
+    </>
+  )
+}
+
 /** Адрес для установки: вход CRM (корень без входа увёл бы на каталог клиник). */
 function loginUrl(): string {
   return `${window.location.origin}/login`
@@ -41,13 +69,21 @@ export function InstallBody() {
     const copy = () => {
       navigator.clipboard?.writeText(loginUrl()).then(() => setCopied(true), () => setCopied(false))
     }
+    const ios = isIos() || app.platform === 'ios'
     body = (
       <>
-        <p>Из Telegram приложение не установить. Откройте <strong>{window.location.host}</strong> в браузере телефона
-          (Chrome или Safari), войдите и установите оттуда — здесь же, в «Настройках».</p>
+        <p>Из Telegram приложение не установить — только из браузера телефона ({ios ? 'Safari' : 'Chrome'}).</p>
+        <ol className="pwa-steps">
+          <li>Нажмите <strong>Скопировать ссылку</strong>.</li>
+          <li>Откройте <strong>{ios ? 'Safari' : 'Chrome'}</strong>, нажмите на адресную строку и вставьте ссылку.</li>
+          <li>Войдите через Telegram и установите: «Настройки» → «Установить приложение» — там будет подсказка.</li>
+        </ol>
+        <p className="pwa-link"><input readOnly aria-label="Ссылка для браузера" value={loginUrl()} onFocus={(e) => e.currentTarget.select()} /></p>
         <div className="actions">
-          {app.openLink && <button type="button" className="btn primary" onClick={() => app.openLink!(loginUrl())}>Открыть в браузере</button>}
-          <button type="button" className="btn" onClick={copy}>{copied ? 'Ссылка скопирована ✓' : 'Скопировать ссылку'}</button>
+          <button type="button" className="btn primary" onClick={copy}>{copied ? 'Ссылка скопирована ✓' : 'Скопировать ссылку'}</button>
+          {app.openLink && !ios && (
+            <button type="button" className="btn" onClick={() => app.openLink!(loginUrl(), { try_browser: 'chrome' })}>Открыть в браузере</button>
+          )}
         </div>
       </>
     )
@@ -61,13 +97,7 @@ export function InstallBody() {
       </>
     )
   } else if (isIos()) {
-    body = (
-      <ol className="pwa-steps">
-        <li>Откройте этот сайт в <strong>Safari</strong>.</li>
-        <li>Нажмите <ShareIcon /> <strong>Поделиться</strong> внизу экрана.</li>
-        <li>Выберите <strong>На экран «Домой»</strong> → <strong>Добавить</strong>.</li>
-      </ol>
-    )
+    body = <IosSteps />
   } else {
     body = (
       <ul className="pwa-steps">

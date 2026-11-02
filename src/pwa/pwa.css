@@ -37,3 +37,16 @@
 .download-points li { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: var(--r-md); background: var(--card); border: 1px solid var(--separator); }
 .download-points span { font-size: 1.2rem; }
 .download-foot { text-align: center; }
+
+/* iPhone: нарисованная нижняя полоса Safari (iOS 26) — куда нажать «⋯» */
+.pwa-safari { display: flex; align-items: center; gap: 8px; max-width: 340px; padding: 10px; border-radius: 18px; background: #1f2b2e; }
+.pwa-safari-btn { position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #34464a; color: #fff; font-size: 1.3rem; line-height: 1; }
+.pwa-safari-btn.hot { background: #fff; color: #1f2b2e; box-shadow: 0 0 0 3px var(--accent), 0 0 0 7px color-mix(in srgb, var(--accent) 35%, transparent); animation: pwa-pulse 1.6s ease-in-out infinite; }
+.pwa-safari-url { flex: 1; min-width: 0; height: 40px; display: grid; place-items: center; border-radius: 20px; background: #34464a; color: #fff; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pwa-safari-tap { position: absolute; bottom: calc(100% + 8px); right: -4px; padding: 2px 8px; border-radius: 8px; background: var(--accent); color: #fff; font-size: .75rem; font-weight: 600; white-space: nowrap; }
+.pwa-more { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; border: 1px solid var(--line-strong); font-weight: 700; line-height: 1; vertical-align: -2px; }
+.pwa-link { margin: 0; }
+.pwa-link input { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--sunken); color: var(--text); }
+.pwa-safari { margin-top: 18px; }
+@keyframes pwa-pulse { 50% { box-shadow: 0 0 0 3px var(--accent), 0 0 0 10px color-mix(in srgb, var(--accent) 15%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .pwa-safari-btn.hot { animation: none; } }

@@ -55,6 +55,7 @@ test('iPhone: инструкция «Поделиться → На экран �
   userAgent(IPHONE)
   render(<InstallApp />)
   const block = screen.getByRole('region', { name: 'Установить приложение' })
+  expect(block).toHaveTextContent('нажмите ⋯ внизу справа')
   expect(block).toHaveTextContent('Поделиться')
   expect(block).toHaveTextContent('На экран «Домой»')
   expect(screen.queryByRole('button', { name: 'Установить' })).not.toBeInTheDocument()
@@ -66,12 +67,24 @@ test('в Telegram: открыть сайт в браузере и установ
   const writeText = vi.fn(() => Promise.resolve())
   navigatorProp('clipboard', { writeText })
   render(<InstallApp />)
-  expect(screen.getByRole('region', { name: 'Установить приложение' })).toHaveTextContent('в браузере телефона')
+  expect(screen.getByRole('region', { name: 'Установить приложение' })).toHaveTextContent('только из браузера телефона')
   await userEvent.click(screen.getByRole('button', { name: 'Скопировать ссылку' }))
   expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/login`)
   expect(await screen.findByRole('button', { name: 'Ссылка скопирована ✓' })).toBeInTheDocument()
+  expect(screen.getByRole('textbox', { name: 'Ссылка для браузера' })).toHaveValue(`${window.location.origin}/login`)
+  // Android: сразу в Chrome
   await userEvent.click(screen.getByRole('button', { name: 'Открыть в браузере' }))
-  expect(openLink).toHaveBeenCalledWith(`${window.location.origin}/login`)
+  expect(openLink).toHaveBeenCalledWith(`${window.location.origin}/login`, { try_browser: 'chrome' })
+})
+
+test('Telegram на iPhone: «Открыть в браузере» нет (откроется браузер Telegram, оттуда не установить) — копировать в Safari', () => {
+  userAgent(IPHONE)
+  window.Telegram = { WebApp: { initData: 'signed', platform: 'ios', openLink: vi.fn(), ready() {}, expand() {} } }
+  render(<InstallApp />)
+  const block = screen.getByRole('region', { name: 'Установить приложение' })
+  expect(block).toHaveTextContent('Откройте Safari')
+  expect(screen.queryByRole('button', { name: 'Открыть в браузере' })).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Скопировать ссылку' })).toBeInTheDocument()
 })
 
 test('уже установлено (открыто отдельным окном) — «Приложение установлено ✓»', () => {
