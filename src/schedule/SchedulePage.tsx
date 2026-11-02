@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { SetupChecklist } from '../clinic/SetupChecklist'
@@ -8,6 +8,10 @@ import { addDays, dayTitle, minutesOf, minutesOfTime, nowMinutes5, somText, time
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
 import { DayList } from './DayList'
+import { DaySummary } from './DaySummary'
+import { freeMinutes } from './free'
+import { DateInput } from '../layout/DateInput'
+import { useMedia } from '../lib/useMedia'
 import { DoctorPicker } from './DoctorPicker'
 import { AVATARS, initials } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
@@ -17,8 +21,8 @@ import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay } from '../lib/roles
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 
-/** Сколько пикселей на минуту: час — 78 px; приём на 45 минут вмещает время, имя и статус. */
-const PX = 1.3
+/** Сколько пикселей на минуту: час — 90 px; приём на 30 минут вмещает время и имя, на 45 — ещё статус. */
+const PX = 1.5
 
 /** Ниже этой высоты блок — одной строкой: время начала и имя. */
 const SHORT = 46
@@ -146,6 +150,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       queryKey: ['slots', date, d.id],
       queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId: d.id! } } })),
       staleTime: 60_000,
+      // Свободные окна в сетке меняются вместе с приёмами — обновлять так же
+      refetchInterval: REFRESH_MS,
       enabled: !dayList,
     })),
   })
@@ -162,9 +168,13 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   })
   const selected = side?.kind === 'appointment'
     ? loaded.find((a) => a.id === side.id) ?? lastAction.data ?? side.fallback ?? null : null
-  // Сетка — часы клиники; приём раньше или позже — сетка растягивается до него
-  let from = minutesOfTime(me.clinic?.workStart ?? '09:00')
-  let to = minutesOfTime(me.clinic?.workEnd ?? '18:00')
+  // Сетка — рабочие часы врачей на экране (а пока не загружены или все выходные — часы клиники), по
+  // целым часам: без длинных пустых «хвостов» до полуночи. Приём раньше или позже — сетка растягивается до него
+  const hoursOf = shown.map((d) => slots[doctors.indexOf(d)]?.data).filter((x) => x?.workingDay && x.workStart && x.workEnd)
+  let from = hoursOf.length ? Math.min(...hoursOf.map((x) => Math.floor(minutesOfTime(x!.workStart!) / 60) * 60))
+    : minutesOfTime(me.clinic?.workStart ?? '09:00')
+  let to = hoursOf.length ? Math.max(...hoursOf.map((x) => Math.ceil(minutesOfTime(x!.workEnd!) / 60) * 60))
+    : minutesOfTime(me.clinic?.workEnd ?? '18:00')
   for (const a of all) {
     from = Math.min(from, Math.floor(minutesOf(a.startAt!) / 60) * 60)
     to = Math.max(to, Math.ceil(minutesOf(a.endAt!) / 60) * 60 || 24 * 60)
@@ -177,8 +187,16 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   // Открыли день — сетка сама к «сейчас» (сегодня) или к первому приёму; один раз на день
   const grid = useRef<HTMLDivElement>(null)
   const scrolledFor = useRef<string | null>(null)
-  const ready = days.length > 0 && days.every((q) => !q.isPending)
+  const ready = days.length > 0 && days.every((q) => !q.isPending) && (dayList != null || slots.every((q) => !q.isPending))
   const firstTop = all.length ? PAD + (Math.min(...all.map((a) => minutesOf(a.startAt!))) - from) * PX : null
+  // Сетка — до низа окна, где бы она ни начиналась (напоминания, полоса «Сегодня» сверху): без
+  // двойной прокрутки страницы и сетки
+  useLayoutEffect(() => {
+    const el = grid.current
+    if (!el) return
+    const top = el.getBoundingClientRect().top + window.scrollY
+    el.style.setProperty('--grid-top', `${Math.round(top)}px`)
+  })
   useEffect(() => {
     if (!ready || !grid.current || scrolledFor.current === date) return
     scrolledFor.current = date
@@ -214,7 +232,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
 
   /** Пустое место в колонке врача → «Новая запись» на это время, вниз до 15 минут. */
   const pick = (doctorId: number) => (e: MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('.appt')) return
+    if ((e.target as HTMLElement).closest('.appt, .grid-free')) return
     // Расписание коллеги — только просмотр: записать к нему может он сам, регистратура или админ
     if (!canEditDoctor(me, doctorId)) return
     const y = e.clientY - e.currentTarget.getBoundingClientRect().top - PAD
@@ -235,6 +253,18 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date, minutes: null } })
   }
 
+  // Широкий экран: справа от сетки — сводка дня (кто следующий, что требует внимания, свободное время).
+  // Открыли карточку приёма — она встаёт на это место; ноутбук поуже — сводка рядом над сеткой, как была
+  const wide = useMedia('(min-width: 1280px)')
+  const summary = wide && !dayList && !side && doctors.length > 0
+  const nowOrNull = date === today ? nowMinutes : null
+  const free = shown.map((d) => {
+    const sl = slots[doctors.indexOf(d)]?.data
+    const f = sl?.workingDay ? freeMinutes(sl.free ?? [], nowOrNull) : { minutes: 0, first: null }
+    return { doctorId: d.id!, name: d.fullName ?? '', color: AVATARS[doctors.indexOf(d) % AVATARS.length]!, canBook: canEditDoctor(me, d.id), ...f }
+  })
+  const bookAt = (doctorId: number, minutes: number) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })
+
   if (medical) {
     return (
       <div className="schedule">
@@ -245,7 +275,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   }
 
   return (
-    <div className={side ? 'schedule with-panel' : 'schedule'}>
+    <div className={side ? 'schedule with-panel' : summary ? 'schedule with-summary' : 'schedule'}>
       <section className="schedule-main">
         {/* Телефон: без заголовка дня — день выбирают в ленте (там же месяц и «📅 другой день») */}
         {!dayList && (
@@ -253,6 +283,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             <div className="day-switch">
               <button type="button" className="btn ghost" aria-label="Предыдущий день" onClick={() => setDate(addDays(date, -1))}>‹</button>
               <button type="button" className="btn ghost" aria-label="Следующий день" onClick={() => setDate(addDays(date, 1))}>›</button>
+              {/* Календарь — значком рядом со стрелками: дата и так крупно в заголовке */}
+              <DateInput iconOnly aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
             </div>
             <div className="day-title">
               <h1>{dayTitle(date)}</h1>
@@ -262,7 +294,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               </span>
             </div>
             {date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
-            <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
+
             {bookable.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
             {bookable.length > 0 && date === today && (
               <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
@@ -271,7 +303,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         )}
 
         <SetupChecklist me={me} />
-        {!dayList && (
+        {!dayList && !summary && (
           <div className="today-strip" role="group" aria-label="Требует внимания">
             {requests.length > 0 && (
               <button type="button" className="stat s-request" onClick={firstOf(requests)}>
@@ -379,6 +411,23 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                       <span>{b.emoji} {b.title}</span>
                     </div>
                   ))}
+                  {sl?.workingDay && (sl.free ?? []).map((w) => {
+                    // Свободное окно — светлый блок «Свободно 13:00–18:00 · ＋ записать»; сегодня — только то, что впереди
+                    const start = Math.max(minutesOf(w.start!), nowOrNull ?? 0, from)
+                    const end = Math.min(minutesOf(w.end!) || 24 * 60, to)
+                    if (end - start < 15) return null
+                    const text = `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}–${timeOf(w.end!)}`
+                    const h = (end - start) * PX - 4
+                    const style = { top: PAD + (start - from) * PX + 2, height: h }
+                    if (!canEditDoctor(me, d.id)) return <div key={w.start} className="grid-free readonly" style={style}><span className="num">{text}</span> свободно</div>
+                    return (
+                      <button key={w.start} type="button" className={`grid-free${h < 52 ? ' short' : ''}`} style={style}
+                        aria-label={`Свободно с ${text.replace('–', ' до ')}, записать`} onClick={() => bookAt(d.id!, Math.ceil(start / 5) * 5)}>
+                        <span className="grid-free-text">Свободно <span className="num">{text}</span></span>
+                        <span className="grid-free-add">＋ записать</span>
+                      </button>
+                    )
+                  })}
                   {nowTop != null && <div className="grid-now" style={{ top: nowTop }} />}
                   {q?.isPending && <div className="hint grid-loading">Загрузка…</div>}
                   {q?.error && <div className="error grid-loading">{q.error.message}</div>}
@@ -395,7 +444,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                         <span className="appt-name">{a.patient?.fullName}</span>
                         {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
                         {(short || h > 56) && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
-                        {h > 80 && a.comment && <span className="appt-note">{a.comment}</span>}
+                        {h > 66 && a.serviceName && <span className="appt-note">{a.serviceName}</span>}
+                        {h > 88 && a.comment && <span className="appt-note">{a.comment}</span>}
                         {h > 80 && a.depositStatus && seesMoneyOf(me, a.doctorId) && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
                           <span className="appt-note">Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>
                         )}
@@ -408,6 +458,12 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
       </section>
+      {summary && (
+        <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}
+          revenueSom={revenue.data ? revenue.data.totalSom ?? 0 : null} low={low} free={shown.length > 0 && date >= today ? free : []}
+          doctorName={(id) => doctors.find((d) => d.id === id)?.fullName ?? ''}
+          onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} onBook={bookAt} onNavigate={onNavigate} />
+      )}
       {/* key: другой приём — новая карточка, формы и «Вернуть» прежнего не переносятся */}
       {selected && <AppointmentPanel key={selected.id} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
         onMedical={(patient) => setMedical({ patient, from: selected.id! })}
