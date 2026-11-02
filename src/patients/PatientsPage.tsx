@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { rowClick } from '../lib/rowClick'
 import { api, unwrap, type Schemas } from '../api/client'
 import { useWaitlist } from '../api/settings'
 import { formatPhone, shortDate } from '../lib/time'
@@ -154,7 +155,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
             </thead>
             <tbody>
               {sorted.map((p) => (
-                <tr key={p.id} className={p.id === selected ? 'active' : undefined}>
+                <tr key={p.id} className={['clickable', p.id === selected ? 'active' : ''].join(' ').trim()} onClick={rowClick(() => setSelected(p.id!))}>
                   <td>
                     <button type="button" className="row-link" onClick={() => setSelected(p.id!)}>{p.fullName}</button>
                     {p.telegram && <span className="tg" title="Пишет боту в Telegram — напоминания придут туда">Telegram</span>}

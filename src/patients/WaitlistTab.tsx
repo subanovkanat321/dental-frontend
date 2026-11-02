@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
+import { rowClick } from '../lib/rowClick'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
 import { agoText, recallText, whatsappUrl } from '../lib/texts'
@@ -36,7 +37,7 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
         <thead><tr><th>Пациент</th><th>Телефон</th><th>Врач</th><th>Нужно</th><th>Сейчас записан</th><th>Ждёт с</th><th /></tr></thead>
         <tbody>
           {list.data.map((e) => (
-            <tr key={e.id}>
+            <tr key={e.id} className="clickable" onClick={rowClick(() => onOpen(e.patient!.id!))}>
               <td><button type="button" className="row-link" onClick={() => onOpen(e.patient!.id!)}>{e.patient?.fullName}</button></td>
               <td className="nowrap num">{e.patient?.phone ? formatPhone(e.patient.phone) : '—'}</td>
               <td>{doctor(e.doctorId)}</td>
@@ -82,7 +83,7 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
       <thead><tr><th>Пациент</th><th>Телефон</th><th>Был</th><th>Позвали</th><th /></tr></thead>
       <tbody>
         {due.data.map((r) => (
-          <tr key={r.patient?.id}>
+          <tr key={r.patient?.id} className="clickable" onClick={rowClick(() => onOpen(r.patient!.id!))}>
             <td><button type="button" className="row-link" onClick={() => onOpen(r.patient!.id!)}>{r.patient?.fullName}</button></td>
             <td className="nowrap num">{r.patient?.phone ? formatPhone(r.patient.phone) : '—'}</td>
             <td className="nowrap">{r.lastVisit ? agoText(r.lastVisit) : '—'}</td>
