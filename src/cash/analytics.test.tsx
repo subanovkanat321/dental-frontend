@@ -76,3 +76,19 @@ test('аналитика: выручка по месяцам, по врачам,
   const noShow = screen.getByRole('region', { name: 'Неявки по неделям' })
   expect(await within(noShow).findByText('20%')).toBeInTheDocument() // 4 неявки из 20
 })
+
+test('аналитика: ошибка сервера — сообщение, а не «0 сом» и «оплат нет»', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/appointments/revenue', () => HttpResponse.json({ title: 'Нет доступа', detail: 'Нет доступа к выручке', status: 403 }, { status: 403 })),
+    http.get('*/api/appointments/stats', () => HttpResponse.json([])),
+    http.get('*/api/appointments/sources', () => HttpResponse.json({ newPatients: [], firstVisits: 0, repeatVisits: 0 })),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  const months = await screen.findByRole('region', { name: 'Выручка за 6 месяцев' })
+  expect(await within(months).findByText('Нет доступа к выручке')).toBeInTheDocument()
+  expect(within(months).queryByText(/0 сом за/)).not.toBeInTheDocument()
+})

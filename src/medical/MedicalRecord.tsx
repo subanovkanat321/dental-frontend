@@ -122,9 +122,13 @@ function ToothChart({ patientId, teeth, error, onPlan, readOnly }: {
         <ul className="marked-teeth" aria-label="Отмеченные зубы">
           {marked.map((t) => (
             <li key={t.number}>
-              <button type="button" className="row-link" onClick={() => setOpen(t.number!)}>
-                <b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {TOOTH_STATES[t.state ?? 'HEALTHY'][0]}
-              </button>
+              {readOnly ? (
+                <span><b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {TOOTH_STATES[t.state ?? 'HEALTHY'][0]}</span>
+              ) : (
+                <button type="button" className="row-link" onClick={() => setOpen(t.number!)}>
+                  <b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {TOOTH_STATES[t.state ?? 'HEALTHY'][0]}
+                </button>
+              )}
               {t.note && <span className="hint"> — {t.note}</span>}
             </li>
           ))}
@@ -144,6 +148,7 @@ function ToothEditor({ patientId, number, tooth, onSaved, onCancel, onPlan }: {
 }) {
   const [state, setState] = useState<State>(tooth?.state ?? 'HEALTHY')
   const [note, setNote] = useState(tooth?.note ?? '')
+  const changed = state !== (tooth?.state ?? 'HEALTHY') || note.trim() !== (tooth?.note ?? '')
   const save = useMutation<Tooth[], ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/patients/{patientId}/teeth/{number}', {
       params: { path: { patientId, number } }, body: { state, note: note.trim() || undefined },
@@ -164,7 +169,9 @@ function ToothEditor({ patientId, number, tooth, onSaved, onCancel, onPlan }: {
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
-        <button type="button" className="btn" onClick={onPlan}>В план лечения</button>
+        {/* Изменили зуб — сначала сохраняем, потом в план: правка не теряется */}
+        <button type="button" className="btn" disabled={save.isPending}
+          onClick={() => (changed ? save.mutate(undefined, { onSuccess: (fresh) => { onSaved(fresh); onPlan() } }) : onPlan())}>В план лечения</button>
         <button type="button" className="btn" onClick={onCancel}>Отмена</button>
       </div>
     </form>

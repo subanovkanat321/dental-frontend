@@ -22,11 +22,12 @@ export function DurationField({ value, onChange }: { value: number; onChange: (m
       <span>Длительность</span>
       {custom ? (
         <span className="duration-custom">
-          <input type="number" min={5} max={480} step={5} inputMode="numeric" aria-label="Длительность, мин" value={text}
+          <input type="number" min={5} max={480} step={5} inputMode="numeric" aria-label="Длительность, мин" value={text} required
             onChange={(e) => {
               setText(e.target.value)
+              // Только целые минуты от 5: пустое поле или «2.5» не подменяют длительность молча
               const n = Number(e.target.value)
-              if (n > 0) onChange(n)
+              if (Number.isInteger(n) && n >= 5 && n <= 480) onChange(n)
             }} />
           <span className="hint">мин</span>
           {DURATIONS.includes(value) && <button type="button" className="link" onClick={() => setCustom(false)}>списком</button>}

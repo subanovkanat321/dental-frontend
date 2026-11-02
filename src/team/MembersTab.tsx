@@ -41,7 +41,7 @@ function AssistantDoctors({ me, member }: { me: Me; member: Member }) {
   if (!editing) {
     return (
       <div className="hint">Помогает: {names.join(', ') || '—'}{' '}
-        <button type="button" className="link" onClick={() => setEditing(true)}>изменить</button></div>
+        <button type="button" className="link" onClick={() => { setIds(member.doctorIds ?? []); setEditing(true) }}>изменить</button></div>
     )
   }
   return (

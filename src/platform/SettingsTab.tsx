@@ -202,7 +202,7 @@ function Managers() {
   )
 }
 
-/** Тарифы — как их видят клиники («Тариф и оплата» и страница /join). Меняются в коде (Tariffs.java). */
+/** Тарифы — как их видят клиники («Тариф и оплата» и страница /join). Меняются во вкладке «Тарифы». */
 function TariffsBox() {
   const t = useQuery({ queryKey: ['web-tariffs'], queryFn: webTariffs, staleTime: 30 * 60_000 })
   if (!t.data) return null

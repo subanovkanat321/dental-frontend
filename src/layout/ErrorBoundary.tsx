@@ -21,7 +21,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: u
   }
 
   componentDidCatch(error: unknown, info: ErrorInfo) {
-    if (isStaleChunk(error)) {
+    // Нет сети — это не новая версия: не перезагружаемся в офлайн, показываем «Обновить»
+    if (isStaleChunk(error) && navigator.onLine !== false) {
       let already = false
       try {
         already = sessionStorage.getItem(RELOADED) === '1'

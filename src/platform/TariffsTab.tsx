@@ -44,7 +44,8 @@ function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
     })),
     onSuccess: (fresh) => {
       client.setQueryData(['tariffs'], fresh)
-      void client.invalidateQueries({ queryKey: ['clinic-plan'] })
+      // Те же цены видят «Настройки» платформы, «Тариф и оплата» клиники и /join
+      for (const key of ['clinic-plan', 'web-tariffs']) void client.invalidateQueries({ queryKey: [key] })
     },
   })
   const set = (i: number, key: keyof Row, value: string) => {

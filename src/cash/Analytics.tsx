@@ -71,6 +71,11 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
   )
 }
 
+/** Текст первой ошибки запросов: при 403/500 — сообщение, а не «0 сом» и «оплат нет». */
+function failed(queries: { error: Error | null }[]): string | null {
+  return queries.find((q) => q.error)?.error?.message ?? null
+}
+
 /** Диапазон месяца; текущий — до сегодня (будущие дни выручки не дают). */
 function rangeOf(month: string) {
   const r = monthRange(month)
@@ -99,10 +104,10 @@ function MonthsChart({ month, scope }: { month: string; scope: { doctorId?: numb
   return (
     <section className="card-block chart" aria-label="Выручка за 6 месяцев">
       <h2>📈 Растём или нет?</h2>
-      <p className="chart-headline"><b>{somText(last)}</b> за {longMonth(months[full]!)}
-        <span className={`tone-${change.tone}`}> · {change.text}</span><span className="hint"> к прошлому месяцу ({somText(values[full - 1] ?? 0)})</span></p>
-      {data.some((q) => q.isPending) ? <p className="hint">Загрузка…</p> : (
+      {data.some((q) => q.isPending) ? <p className="hint">Загрузка…</p> : failed(data) ? <p className="error">{failed(data)}</p> : (
         <>
+          <p className="chart-headline"><b>{somText(last)}</b> за {longMonth(months[full]!)}
+            <span className={`tone-${change.tone}`}> · {change.text}</span><span className="hint"> к прошлому месяцу ({somText(values[full - 1] ?? 0)})</span></p>
           <div className="vbars" role="img" aria-label={months.map((m, k) => `${longMonth(m)}: ${somText(values[k] ?? 0)}`).join('; ')}>
             {months.map((m, k) => (
               <button key={m} type="button" className={['vbar', k === 5 && current ? 'partial' : '', k === i ? 'picked' : ''].join(' ').trim()}
@@ -154,8 +159,9 @@ function DoctorsChart({ me, period }: { me: Me; period: Period }) {
     <section className="card-block chart" aria-label="Выручка по врачам">
       <h2>👩‍⚕️ Кто сколько приносит {period.label}</h2>
       {data.some((q) => q.isPending) ? <p className="hint">Загрузка…</p>
-        : rows.every((r) => !r.value) ? <p className="hint">Оплат за этот период нет.</p>
-          : <HBars rows={rows} label="Выручка по врачам" />}
+        : failed(data) ? <p className="error">{failed(data)}</p>
+          : rows.every((r) => !r.value) ? <p className="hint">Оплат за этот период нет.</p>
+            : <HBars rows={rows} label="Выручка по врачам" />}
     </section>
   )
 }
@@ -176,12 +182,12 @@ function usePeriodRows(period: Period, scope: { doctorId?: number }) {
     const day = DAY.format(new Date(r.startAt))
     return day >= period.from && day <= period.to
   })
-  return { rows, pending: reports.some((q) => q.isPending) }
+  return { rows, pending: reports.some((q) => q.isPending), error: failed(reports) }
 }
 
 /** Услуги по оплатам за месяц: что приносит деньги. Топ-6, остальное — «Другое». */
 function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
-  const { rows, pending } = usePeriodRows(period, scope)
+  const { rows, pending, error } = usePeriodRows(period, scope)
   const sums = new Map<string, { value: number; count: number }>()
   for (const r of rows) {
     if (!r.paidSom) continue
@@ -197,6 +203,7 @@ function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: 
     <section className="card-block chart" aria-label="Выручка по услугам">
       <h2>🦷 Что приносит деньги {period.label}</h2>
       {pending ? <p className="hint">Загрузка…</p>
+        : error ? <p className="error">{error}</p>
         : top.length ? <HBars rows={top} label="Выручка по услугам" />
           : <p className="hint">Оплат за этот период нет. Услугу ставят при записи или в карточке приёма — тогда видно, что приносит деньги.</p>}
     </section>
@@ -256,6 +263,7 @@ function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: n
     <section className="card-block chart" aria-label="Способы оплаты">
       <h2>💳 Как платят {period.label}</h2>
       {data.isPending ? <p className="hint">Загрузка…</p>
+        : data.error ? <p className="error">{data.error.message}</p>
         : !parts.some((p) => p.value) ? <p className="hint">Оплат за этот период нет.</p>
           : <SegmentedBar parts={parts} label="Способы оплаты" format={somText} />}
     </section>
@@ -264,7 +272,7 @@ function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: n
 
 /** Чем закончились приёмы периода: состоялся, неявка, отменён (статусные цвета со значками). */
 function OutcomesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
-  const { rows, pending } = usePeriodRows(period, scope)
+  const { rows, pending, error } = usePeriodRows(period, scope)
   const count = (status: string) => rows.filter((r) => r.status === status).length
   const parts: Part[] = [
     { key: 'DONE', name: 'Состоялись', value: count('DONE'), color: 'var(--chart-1)', icon: '✅' },
@@ -275,6 +283,7 @@ function OutcomesChart({ period, scope }: { period: Period; scope: { doctorId?: 
     <section className="card-block chart" aria-label="Чем закончились приёмы">
       <h2>📋 Чем закончились приёмы {period.label}</h2>
       {pending ? <p className="hint">Загрузка…</p>
+        : error ? <p className="error">{error}</p>
         : !parts.some((p) => p.value) ? <p className="hint">Прошедших приёмов за этот период нет.</p>
           : <SegmentedBar parts={parts} label="Чем закончились приёмы" format={(n) => String(n)} />}
     </section>
@@ -292,7 +301,7 @@ const WD_INDEX: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 
  * давать рекламу «есть свободное время».
  */
 function LoadHeatmap({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
-  const { rows, pending } = usePeriodRows(period, scope)
+  const { rows, pending, error } = usePeriodRows(period, scope)
   const grid = Array.from({ length: 7 }, () => new Map<number, number>())
   for (const r of rows) {
     if (r.status === 'CANCELLED') continue
@@ -313,7 +322,7 @@ function LoadHeatmap({ period, scope }: { period: Period; scope: { doctorId?: nu
   return (
     <section className="card-block chart" aria-label="Загрузка по дням и часам">
       <h2>🔥 Когда больше всего приёмов {period.label}</h2>
-      {pending ? <p className="hint">Загрузка…</p> : !rows.length ? <p className="hint">Приёмов за этот период нет.</p> : (
+      {pending ? <p className="hint">Загрузка…</p> : error ? <p className="error">{error}</p> : !rows.length ? <p className="hint">Приёмов за этот период нет.</p> : (
         <>
           {peak.n > 0 && <p className="chart-headline">Пик — <b>{WEEK_SHORT[peak.wd]} {String(peak.h).padStart(2, '0')}:00</b> <span className="hint">· {peak.n} {peak.n === 1 ? 'приём' : 'приёмов'}</span></p>}
           <div className="heatmap" role="table" aria-label="Приёмы по дням недели и часам" style={{ gridTemplateColumns: `2.4em repeat(${cols.length}, minmax(0, 1fr))` }}>

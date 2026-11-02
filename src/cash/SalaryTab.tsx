@@ -56,7 +56,8 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
           : rows.length === 0 ? <p className="hint">Врачей пока нет.</p> : (
             <>
               {seesAll && rows.length > 1 && <p className="total-line" aria-label="Осталось выплатить">Осталось выплатить: <b className="num">{somText(due)}</b></p>}
-              {rows.map((r) => <SalaryCard key={r.doctorId != null ? `d${r.doctorId}` : `a${r.assistantId}`} row={r} month={month} seesAll={seesAll} />)}
+              {/* Ключ с месяцем: сменили месяц — открытая форма выплаты не переносит сумму прошлого */}
+              {rows.map((r) => <SalaryCard key={`${month}-${r.doctorId != null ? `d${r.doctorId}` : `a${r.assistantId}`}`} row={r} month={month} seesAll={seesAll} />)}
             </>
           )}
     </>
@@ -71,6 +72,8 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['salaries'] })
     void client.invalidateQueries({ queryKey: ['expenses'] })
+    // Выплата — расход: прибыль в «Расходах» пересчитывается
+    void client.invalidateQueries({ queryKey: ['spending'] })
   }
   return (
     <section className="card-block salary" aria-label={`Зарплата: ${r.doctor}`}>

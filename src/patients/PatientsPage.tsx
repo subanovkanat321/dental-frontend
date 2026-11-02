@@ -72,8 +72,9 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
   const remote = useQuery({
     queryKey: ['patients', 'search', search],
     queryFn: () => unwrap(api.POST('/api/patients/search', { body: { query: search } })),
-    // У одного врача не нашли — не ищем по всей клинике: врач выбран, чужие пациенты не нужны
-    enabled: search.length >= 2 && recent.isSuccess && local.length === 0 && doctorId == null,
+    // Среди списка (или пациентов врача — их там до 300) не нашли — ищем по всей клинике: иначе
+    // старого пациента врача не найти ни по имени, ни по телефону
+    enabled: search.length >= 2 && recent.isSuccess && local.length === 0,
   })
   const rows: Row[] = local.length || !text ? local : (remote.data ?? []).map((p) => ({ ...p }))
 
@@ -129,7 +130,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
               )}
               <button type="button" className="btn" onClick={() => setSelected('new')}>＋ Новый пациент</button>
               <span className="hint">
-                {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
+                {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}${doctorId != null && !local.length && sorted.length ? ' — по всей клинике' : ''}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
               </span>
             </>
           )}
@@ -138,7 +139,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
-          <p className="hint">{text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»${doctorId != null ? ' у этого врача' : ''}.`) : doctorId != null ? 'У этого врача пока не было пациентов.' : 'Пациентов пока нет — они появятся с первой записью.'}</p>
+          <p className="hint">{text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}».`) : doctorId != null ? 'У этого врача пока не было пациентов.' : 'Пациентов пока нет — они появятся с первой записью.'}</p>
         )}
         {tab === 'all' && sorted.length > 0 && (
           <table className="table">

@@ -174,9 +174,13 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
                 <p className="total" aria-label="Выручка за период">{somText(r.totalSom ?? 0)}</p>
                 {before.data && (() => {
                   const c = changeOf(r.totalSom ?? 0, before.data.totalSom ?? 0)
+                  // Период включает сегодня — день ещё идёт, а сравниваем с полным: утром «▼ 80%»
+                  // не тревога, поэтому без красного и с пометкой
+                  const ongoing = range.to >= todayIn()
                   return (
                     <p className="compare" aria-label="Сравнение выручки">
-                      <b className={`tone-${c.tone}`}>{c.text}</b> {prev.label}
+                      <b className={`tone-${ongoing && c.tone === 'bad' ? 'quiet' : c.tone}`}>{c.text}</b> {prev.label}
+                      {ongoing && <span className="hint"> (сегодня ещё идёт)</span>}
                       <span className="hint"> ({datesText(prev)}) · было {somText(before.data.totalSom ?? 0)}, оплат {before.data.paidCount ?? 0}</span>
                     </p>
                   )

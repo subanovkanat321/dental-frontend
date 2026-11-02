@@ -65,7 +65,7 @@ export function Login() {
       <div ref={box} className="login-widget" aria-label="Войти через Telegram" />
       {error && <p className="error" role="alert">{error}</p>}
       {inAppBrowser() && (
-        <p className="tone-wait">Вы во встроенном браузере Instagram — вход через Telegram здесь может не открыться.
+        <p className="tone-wait">Вы во встроенном браузере приложения (Instagram и т. п.) — вход через Telegram здесь может не открыться.
           Нажмите «⋯» вверху и выберите «Открыть в браузере».</p>
       )}
       {bot.data && (

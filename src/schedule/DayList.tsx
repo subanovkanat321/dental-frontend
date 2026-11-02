@@ -226,13 +226,11 @@ function FreeRow({ start, end, canEdit, doctor, waiting, onPick }: {
 }
 
 /** Строка приёма: время, пациент, статус; быстрая кнопка напомнить (бот — в Telegram, иначе WhatsApp). */
-function Row({ a, next, active, canEdit, doctor, onOpen }: {
+function Row({ a, next, active, canEdit, onOpen }: {
   a: Appointment
   next: boolean
   active: boolean
   canEdit: boolean
-  /** «Все врачи» — чей приём. */
-  doctor?: string
   onOpen: (a: Appointment) => void
 }) {
   const client = useQueryClient()
@@ -261,7 +259,7 @@ function Row({ a, next, active, canEdit, doctor, onOpen }: {
         <span className="time num">{timeOf(a.startAt!)}</span>
         <span className="name">{a.patient?.fullName}</span>
         <span className="end num hint">{timeOf(a.endAt!)}</span>
-        <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{doctor && <b className="row-doctor"> · {doctor}</b>}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {a.serviceName}</span> : null}</span>
+        <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {a.serviceName}</span> : null}</span>
         {a.comment && <span className="row-note">{a.comment}</span>}
         {a.depositStatus && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
           <span className={`row-note tone-${a.depositStatus === 'RECEIVED' ? 'ok' : 'wait'}`}>

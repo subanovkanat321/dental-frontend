@@ -34,7 +34,8 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
   /** «Мой профиль»: карточка во всю рабочую область, а не панель справа */
   inline?: boolean
 }) {
-  useClose(onClose)
+  // Встроена в «Мой профиль»: «назад» и Esc — у страницы, иначе Esc уводит с несохранённым текстом
+  useClose(onClose, !inline)
   const refresh = useRefreshDoctors()
   const self = d.id === me.doctorId
   // Профиль и фото — сам врач или админ; регистратура — только часы работы

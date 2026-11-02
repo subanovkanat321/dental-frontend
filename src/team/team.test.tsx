@@ -118,8 +118,14 @@ test('сотрудники: ассистент — выбрать врача, п
   expect(await screen.findByText(/Помогает: Дастан Т\./)).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'изменить' }))
   const edit = screen.getByRole('form', { name: /Врачи ассистента Асель/ })
-  await user.click(within(edit).getByRole('checkbox', { name: 'Айгерим Садыкова' }))
-  await user.click(within(edit).getByRole('button', { name: 'Сохранить' }))
+  // «Отмена» — несохранённые галочки не остаются до следующего «изменить»
+  await user.click(within(edit).getByRole('checkbox', { name: 'Дастан Т.' }))
+  await user.click(within(edit).getByRole('button', { name: 'Отмена' }))
+  await user.click(screen.getByRole('button', { name: 'изменить' }))
+  const again = screen.getByRole('form', { name: /Врачи ассистента Асель/ })
+  expect(within(again).getByRole('checkbox', { name: 'Дастан Т.' })).toBeChecked()
+  await user.click(within(again).getByRole('checkbox', { name: 'Айгерим Садыкова' }))
+  await user.click(within(again).getByRole('button', { name: 'Сохранить' }))
 
   const form = screen.getByRole('form', { name: 'Пригласить сотрудника' })
   await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Жылдыз')

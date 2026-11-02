@@ -64,7 +64,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const future = a.startAt ? new Date(a.startAt) > new Date() : false
   const canEdit = canEditDoctor(me, a.doctorId)
   // Аллергия и важное из анкеты — перед лечением, тому, кто видит медкарту (врач приёма, админ)
+  // …и ассистенту этого врача (смотрит медкарту, как сервер — ChartService)
   const clinical = (Boolean(me.admin) && !me.clinic?.independentDoctors) || a.doctorId === me.doctorId
+    || Boolean(a.doctorId != null && me.assistantOf?.includes(a.doctorId))
   const anamnesis = useAnamnesis(a.patient?.id, clinical && a.status !== 'CANCELLED')
   const length = a.startAt && a.endAt ? (Date.parse(a.endAt) - Date.parse(a.startAt)) / 60_000 : 30
   const remove = useMutation<unknown, ApiError>({

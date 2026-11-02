@@ -89,6 +89,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .tone-ok { color: var(--status-ok); }
 .tone-wait { color: var(--status-wait); }
 .tone-bad { color: var(--destructive); }
+.tone-quiet { color: var(--hint); }
 .tone-hint { color: var(--hint); }
 .center { max-width: 420px; margin: 12vh auto; padding: 0 16px; text-align: center; display: grid; gap: 12px; justify-items: center; }
 
@@ -569,11 +570,6 @@ details.agreement-box { max-height: none; }
 .day-actions { display: flex; gap: 8px; }
 .day-actions .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
 .day-actions .btn.primary + .btn.walk-in { flex: 0 1 auto; padding: 0 14px; }
-/* Телефон: заголовок дня — он же кнопка календаря (поле даты прозрачное поверх) */
-.day-title.pick { position: relative; cursor: pointer; }
-.day-title.pick h1::after { content: " ▾"; color: var(--hint); font-size: .8em; }
-.day-title.pick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-.toolbar.day-head { margin-bottom: 8px; }
 .readonly-note { margin: 0; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); color: var(--hint); font-size: .88rem; }
 .day-note { margin: 0; }
 .day-empty { padding: 24px 0; text-align: center; }
@@ -649,7 +645,6 @@ fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
 button.grid-head { border: 0; border-left: 1px solid var(--separator); border-bottom: 1px solid var(--separator); background: var(--card); color: inherit; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
 button.grid-head:disabled { cursor: default; }
 button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
-.row-doctor { color: var(--link); font-weight: 600; }
 /* Сетка прокручивается сама, на высоту экрана: имена врачей наверху и часы слева видны всегда */
 .grid { overflow: auto; max-height: calc(100dvh - 150px); min-height: 360px; overscroll-behavior: contain; }
 .grid-corner { left: 0; z-index: 6; }
@@ -661,7 +656,6 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-day { display: grid; gap: 6px; margin-top: 12px; }
 .doctor-day-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 4px; background: var(--page); font-size: 1.05rem; }
 .doctor-day-head .avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .9rem; }
-.doctor-day-head .hint { font-weight: 500; font-size: .9rem; }
 .doctor-inline { display: grid; gap: 10px; max-width: 640px; }
 .doctor-inline .panel-head { margin-bottom: 4px; }
 /* Телефон, «Все врачи»: списки врачей рядом, компактные строки (время сверху, имя под ним) */
