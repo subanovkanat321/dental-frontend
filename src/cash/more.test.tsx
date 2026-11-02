@@ -53,7 +53,18 @@ test('расходы: список по статьям, прибыль, доба
 
   await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
   expect(await screen.findByLabelText('Расходы за месяц')).toHaveTextContent('35 000')
-  expect(screen.getByText('Аренда: 30 000 сом · Техник: 5 000 сом')).toBeInTheDocument()
+  // Диаграмма по статьям: по убыванию, сумма и доля текстом
+  const chart = screen.getByRole('list', { name: 'Расходы по статьям' })
+  const bars = within(chart).getAllByRole('button')
+  expect(bars.map((b) => b.textContent?.replace(/\s/g, ' '))).toEqual(['Аренда30 000 сом · 86%', 'Техник5 000 сом · 14%'])
+  // Нажатие на статью — фильтр списка; ещё раз — все статьи
+  await user.click(bars[1]!)
+  expect(bars[1]).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.queryByRole('cell', { name: 'Аренда' })).not.toBeInTheDocument()
+  expect(screen.getByRole('cell', { name: 'Техник' })).toBeInTheDocument()
+  expect(screen.getByRole('combobox', { name: 'Статья расходов' })).toHaveTextContent('Техник')
+  await user.click(bars[1]!)
+  expect(screen.getByRole('cell', { name: 'Аренда' })).toBeInTheDocument()
   const profit = await screen.findByLabelText('Прибыль за месяц')
   expect(within(profit).getByText('Прибыль').parentElement).toHaveTextContent('55 000')
 
@@ -71,6 +82,19 @@ test('расходы: список по статьям, прибыль, доба
 
   await user.click(screen.getByRole('button', { name: 'Удалить расход: Аренда 30000' }))
   expect(await screen.findByLabelText('Расходы за месяц')).toHaveTextContent('7 000')
+})
+
+test('расходы: пустой месяц — без диаграммы', async () => {
+  server.use(
+    http.get('*/api/expenses', () => HttpResponse.json([])),
+    http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: ['Аренда'], own: [] } satisfies Schemas['ExpenseControllerCategories'])),
+    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 0, purchasedSom: 0, expensesSom: 0 } satisfies Schemas['SpendingView'])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
+  expect(await screen.findByText(/расходов нет/)).toBeInTheDocument()
+  expect(screen.queryByRole('list', { name: 'Расходы по статьям' })).not.toBeInTheDocument()
 })
 
 test('статистика: неявки по неделям, среднее без текущей недели, оценки', async () => {

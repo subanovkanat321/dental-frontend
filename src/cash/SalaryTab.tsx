@@ -6,6 +6,7 @@ import { SaveBar } from '../layout/SaveBar'
 import { somText, todayIn } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
 import { MonthPicker } from '../layout/MonthPicker'
+import { Select } from '../layout/Select'
 
 type Row = Schemas['SalaryControllerSalaryRow']
 
@@ -54,6 +55,7 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
         </div>
       </div>
       <SalaryHowTo seesAll={seesAll} noTerms={rows.some((r) => !r.former && !Number(r.percent ?? 0) && !r.baseSom)} />
+      <SalaryCalc rows={rows.filter((r) => !r.former)} />
       {list.isPending ? <p className="hint">Загрузка…</p>
         : list.error ? <p className="error">{list.error.message}</p>
           : rows.length === 0 ? <p className="hint">Врачей пока нет.</p> : (
@@ -198,6 +200,69 @@ function SalaryHowTo({ seesAll, noTerms }: { seesAll: boolean; noTerms: boolean 
         {seesAll && <li><b>Выплата</b> — в начале месяца выберите прошлый месяц и нажмите «Выплатить». Выплата сама запишется в «Расходы» как «Зарплата», прибыль её учтёт.</li>}
       </ol>
       <p className="hint">Пример: 30% + оклад 10 000 сом, выручка за месяц 200 000 сом → к выплате 10 000 + 60 000 = 70 000 сом.</p>
+    </details>
+  )
+}
+
+const digits = (v: string) => v.replace(/\D/g, '')
+const percentText = (p: number) => `${String(p).replace('.', ',')}%`
+
+/**
+ * «Калькулятор зарплаты» — только подсказка: «сколько выйдет, если…». Ничего не сохраняет и
+ * никуда не отправляет. Врачам часто платят процент от выручки минус материалы или техника —
+ * это поле есть здесь, но «К выплате» в карточках считает сервер от всей выручки (без вычета),
+ * об этом — подсказка под итогом. Выручку и условия можно взять из строки сотрудника: только
+ * те строки, что этот человек уже видит на вкладке (врач — свою), доступ не шире.
+ */
+function SalaryCalc({ rows }: { rows: Row[] }) {
+  const [from, setFrom] = useState('')
+  const [revenue, setRevenue] = useState('')
+  const [percent, setPercent] = useState('')
+  const [base, setBase] = useState('')
+  const [materials, setMaterials] = useState('')
+  const keyOf = (r: Row) => (r.doctorId != null ? `d${r.doctorId}` : `a${r.assistantId}`)
+  const pick = (key: string) => {
+    setFrom(key)
+    const r = rows.find((x) => keyOf(x) === key)
+    if (!r) return
+    setRevenue(r.revenueSom ? String(r.revenueSom) : '')
+    setPercent(Number(r.percent ?? 0) ? String(Number(r.percent)) : '')
+    setBase(r.baseSom ? String(r.baseSom) : '')
+  }
+  const rev = Number(revenue || 0)
+  const p = Number(percent.replace(',', '.') || 0)
+  const b = Number(base || 0)
+  const m = Number(materials || 0)
+  const net = Math.max(0, rev - m)
+  const result = b + Math.round((net * p) / 100)
+  const of = m ? `(${somText(rev)} − ${somText(m)})` : somText(rev)
+  return (
+    <details className="card-block salary-calc">
+      <summary>🧮 Калькулятор зарплаты</summary>
+      <p className="hint">Посчитать «а сколько выйдет, если…». Ничего не сохраняется.</p>
+      {rows.length > 0 && (
+        <label className="field"><span>Взять выручку и условия</span>
+          <Select aria-label="Взять выручку и условия" value={from} onChange={(e) => pick(e.target.value)}>
+            <option value="">Свои цифры</option>
+            {rows.map((r) => <option key={keyOf(r)} value={keyOf(r)}>{`${r.doctor} · ${somText(r.revenueSom ?? 0)}`}</option>)}
+          </Select>
+        </label>
+      )}
+      <div className="calc-grid">
+        <label className="field"><span>Выручка, сом</span>
+          <input inputMode="numeric" value={revenue} placeholder="например, 200000" onChange={(e) => setRevenue(digits(e.target.value))} /></label>
+        <label className="field"><span>Процент, %</span>
+          <input inputMode="decimal" value={percent} placeholder="например, 30" onChange={(e) => setPercent(e.target.value.replace(/[^\d.,]/g, ''))} /></label>
+        <label className="field"><span>Оклад, сом</span>
+          <input inputMode="numeric" value={base} placeholder="0 — без оклада" onChange={(e) => setBase(digits(e.target.value))} /></label>
+        <label className="field"><span>Вычесть материалы/техника, сом</span>
+          <input inputMode="numeric" value={materials} placeholder="необязательно" onChange={(e) => setMaterials(digits(e.target.value))} /></label>
+      </div>
+      <p className="salary-preview" aria-label="Результат калькулятора">
+        {b ? `${somText(b)} + ` : ''}{percentText(p)} × {of} = <b className="num">{somText(result)}</b>
+      </p>
+      {m > rev && <p className="tone-wait small">Материалы больше выручки — процент считается от 0.</p>}
+      <p className="hint small">Это подсказка, а не начисление. «К выплате» в карточках считает сервер: оклад + процент от всей выручки, материалы и техника он не вычитает.</p>
     </details>
   )
 }

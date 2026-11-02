@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { todayIn } from '../lib/time'
+import { addDays, todayIn } from '../lib/time'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
@@ -101,4 +101,54 @@ test('аналитика: ошибка сервера — сообщение, а
   const months = await screen.findByRole('region', { name: 'Выручка за 6 месяцев' })
   expect(await within(months).findByText('Нет доступа к выручке')).toBeInTheDocument()
   expect(within(months).queryByText(/0 сом за/)).not.toBeInTheDocument()
+})
+
+test('аналитика: выручка по дням — среднее, лучший день, пустые дни нулём, клавиатура', async () => {
+  const today = todayIn()
+  const best = addDays(today, -3)
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/appointments/stats', () => HttpResponse.json([])),
+    http.get('*/api/appointments/sources', () => HttpResponse.json({ newPatients: [], firstVisits: 0, repeatVisits: 0 })),
+    // Сервер отдаёт только дни с оплатами (вымышленные суммы)
+    http.get('*/api/appointments/revenue', () => HttpResponse.json({
+      totalSom: 17000, paidCount: 4, unpaidCount: 0, byMethod: { CASH: 17000 },
+      days: [{ date: best, totalSom: 12000 }, { date: addDays(today, -1), totalSom: 5000 }],
+    } satisfies Schemas['RevenueView'])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  const chart = await screen.findByRole('region', { name: 'Выручка по дням' })
+  // Текстовая сводка: среднее за день с оплатами и сколько таких дней
+  expect(await within(chart).findByLabelText('Среднее за день')).toHaveTextContent(/8\s500 сом в среднем за день с оплатами · таких дней 2 из 30/)
+  const bars = within(chart).getAllByRole('button')
+  expect(bars).toHaveLength(30)
+  // У каждого столбика — подпись с датой и суммой; выбран лучший день, он один в Tab
+  const picked = within(chart).getByRole('button', { pressed: true })
+  expect(picked.getAttribute('aria-label')).toMatch(/12\s000 сом$/)
+  expect(bars.filter((b) => b.tabIndex === 0)).toEqual([picked])
+  expect(within(chart).getByText(/— лучший день/)).toBeInTheDocument()
+  expect(bars.at(-1)!.getAttribute('aria-label')).toMatch(/: 0 сом$/)
+  // ← → — соседний день
+  picked.focus()
+  await user.keyboard('{ArrowRight}{ArrowRight}')
+  expect(within(chart).getByRole('button', { pressed: true }).getAttribute('aria-label')).toMatch(/5\s000 сом$/)
+  expect(document.activeElement).toBe(within(chart).getByRole('button', { pressed: true }))
+})
+
+test('аналитика: выручка по дням — оплат нет', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/appointments/stats', () => HttpResponse.json([])),
+    http.get('*/api/appointments/sources', () => HttpResponse.json({ newPatients: [], firstVisits: 0, repeatVisits: 0 })),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  const chart = await screen.findByRole('region', { name: 'Выручка по дням' })
+  expect(await within(chart).findByText('Оплат за этот период нет.')).toBeInTheDocument()
+  expect(within(chart).queryByRole('group')).not.toBeInTheDocument()
 })

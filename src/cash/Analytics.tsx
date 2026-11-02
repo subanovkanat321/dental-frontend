@@ -1,11 +1,12 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState, type KeyboardEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf } from '../lib/compare'
 import { sourceLabel } from '../lib/sources'
 import { addDays, monthRange, somText, todayIn, weekLabel, ZONE } from '../lib/time'
 import { MonthPicker } from '../layout/MonthPicker'
+import { HBars } from './HBars'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -32,7 +33,7 @@ function short(som: number): string {
 /**
  * «Аналитика» — четыре вопроса владельца клиники, по одной диаграмме на вопрос (dataviz: одна ось,
  * один цвет на ряд, подписи текстом, значение — по нажатию; таблицы — в «Отчёте» и «Статистике»):
- * растём ли (выручка 6 месяцев), кто сколько приносит (врачи), что приносит деньги (услуги),
+ * растём ли (выручка 6 месяцев), ровно ли идут деньги (по дням периода), кто сколько приносит (врачи), что приносит деньги (услуги),
  * откуда приходят новые пациенты (и сколько возвращается), сколько теряем на неявках (недели). Считает сервер — здесь только рисуем.
  */
 /** Период блоков «врачи» и «услуги»: последние 30 дней (по умолчанию — не пусто в начале месяца) или месяц. */
@@ -59,6 +60,7 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
         {month && <MonthPicker label="Месяц аналитики" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />}
       </div>
       <MonthsChart month={month ?? todayIn().slice(0, 7)} scope={scope} />
+      <DaysChart key={`${period.from}-${period.to}`} period={period} scope={scope} />
       {seesAll && doctorId == null && (me.doctors ?? []).filter((d) => d.active !== false).length > 1 && <DoctorsChart me={me} period={period} />}
       <ServicesChart period={period} scope={scope} />
       <div className="chart-pair">
@@ -130,20 +132,75 @@ function MonthsChart({ month, scope }: { month: string; scope: { doctorId?: numb
   )
 }
 
-/** Горизонтальные столбики «название — сумма», по убыванию; подпись значения — текстом рядом. */
-function HBars({ rows, label, format = somText }: { rows: { name: string; value: number; note?: string }[]; label: string; format?: (v: number) => string }) {
-  const max = Math.max(1, ...rows.map((r) => r.value))
-  const total = rows.reduce((s, r) => s + r.value, 0)
+const DAY_MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', day: 'numeric', month: 'short' })
+const DOW = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб']
+const at = (d: string) => new Date(`${d}T12:00:00Z`)
+/** '2026-10-14' → «пн, 14 окт». */
+const dayText = (d: string) => `${DOW[at(d).getUTCDay()]}, ${DAY_MONTH.format(at(d)).replace('.', '')}`
+
+/**
+ * Выручка по дням периода (по приёмам — как зарплаты и прибыль): ровно ли идут деньги, какие дни
+ * пустые. dataviz: величина во времени, один ряд → столбики одного цвета от общей нулевой линии
+ * (не линия: дни отдельные, у многих 0 — линия «протянула» бы выручку через выходные); не пирог —
+ * частей больше 6. Подписи — только понедельники (неделя видна, на 360px не слипается); сумма —
+ * у выбранного дня под графиком. Клавиатура: один столбик в Tab, ← → — соседний день, у каждого
+ * столбика своя подпись для экранного диктора.
+ */
+function DaysChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  // Тот же запрос и ключ, что у «Как платят»: второй раз на сервер не ходим
+  const data = useQuery({
+    queryKey: ['revenue', period.from, period.to, scope.doctorId ?? null],
+    queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: period.from, to: period.to, ...scope } } })),
+  })
+  // Сервер отдаёт только дни с оплатами — пустые дни дорисовываем нулём
+  const byDate = new Map((data.data?.days ?? []).map((d) => [d.date, d.totalSom ?? 0]))
+  const dates: string[] = []
+  for (let d = period.from; d <= period.to && dates.length < 62; d = addDays(d, 1)) dates.push(d)
+  const values = dates.map((d) => byDate.get(d) ?? 0)
+  const total = values.reduce((s, v) => s + v, 0)
+  const worked = values.filter((v) => v > 0).length
+  const max = Math.max(1, ...values)
+  const best = values.indexOf(Math.max(...values))
+  const [picked, setPicked] = useState<number | null>(null)
+  const i = picked ?? best
+  const bars = useRef<(HTMLButtonElement | null)[]>([])
+  const move = (e: KeyboardEvent, k: number) => {
+    const next = e.key === 'ArrowLeft' ? k - 1 : e.key === 'ArrowRight' ? k + 1 : e.key === 'Home' ? 0 : e.key === 'End' ? dates.length - 1 : null
+    if (next == null || next < 0 || next >= dates.length) return
+    e.preventDefault()
+    setPicked(next)
+    bars.current[next]?.focus()
+  }
   return (
-    <ul className="hbars" aria-label={label}>
-      {rows.map((r) => (
-        <li key={r.name} title={`${r.name}: ${format(r.value)}${r.note ? ` · ${r.note}` : ''}`}>
-          <span className="hbar-name">{r.name}</span>
-          <span className="hbar-track"><span className="hbar-fill" style={{ width: `${(r.value / max) * 100}%` }} /></span>
-          <span className="hbar-value num">{format(r.value)}<span className="hint"> · {total ? Math.round((r.value / total) * 100) : 0}%</span></span>
-        </li>
-      ))}
-    </ul>
+    <section className="card-block chart" aria-label="Выручка по дням">
+      <h2>📅 Выручка по дням {period.label}</h2>
+      {data.isPending ? <p className="hint">Загрузка…</p>
+        : data.error ? <p className="error">{data.error.message}</p>
+          : !total ? <p className="hint">Оплат за этот период нет.</p> : (
+            <>
+              <p className="chart-headline" aria-label="Среднее за день"><b>{somText(Math.round(total / worked))}</b> в среднем за день с оплатами
+                <span className="hint"> · таких дней {worked} из {dates.length}</span></p>
+              <div className="dbars" role="group" aria-label="Выручка по дням, столбики">
+                {dates.map((d, k) => {
+                  const v = values[k] ?? 0
+                  const monday = at(d).getUTCDay() === 1
+                  return (
+                    <button key={d} ref={(el) => { bars.current[k] = el }} type="button"
+                      className={['dbar', v ? '' : 'zero', k === i ? 'picked' : ''].join(' ').trim()}
+                      aria-label={`${dayText(d)}: ${somText(v)}`} aria-pressed={k === i} tabIndex={k === i ? 0 : -1} title={`${dayText(d)}: ${somText(v)}`}
+                      onClick={() => setPicked(k)} onKeyDown={(e) => move(e, k)}>
+                      <span className="dbar-plot"><span className="dbar-fill" style={{ height: v ? `${(v / max) * 100}%` : undefined }} /></span>
+                      <span className="dbar-label num" aria-hidden="true">{monday || k === 0 ? Number(d.slice(8)) : ''}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="hint small" aria-live="polite">{dayText(dates[i]!)}: <b className="num">{somText(values[i] ?? 0)}</b>
+                {picked == null && <span> — лучший день</span>}{dates[i] === todayIn() && <span> · сегодня ещё идёт</span>}</p>
+              <p className="hint small">Подписи под столбиками — понедельники. Нажмите столбик — сумма за день.</p>
+            </>
+          )}
+    </section>
   )
 }
 

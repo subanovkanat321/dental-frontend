@@ -735,12 +735,30 @@ tr.clickable:hover td { background: var(--sunken); }
 .legend .key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
 .legend .key + * , .legend .key.bad { margin-left: 8px; }
 .hbars { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.hbars li { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; align-items: center; gap: 8px; font-size: .9rem; }
+.hbars li, .hbar-row { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; align-items: center; gap: 8px; font-size: .9rem; }
+.hbars.pickable { gap: 2px; }
+.hbars.pickable li { display: block; }
+/* Строка-кнопка (фильтр по статье): вся строка — цель нажатия, не только столбик */
+.hbar-row { width: 100%; min-height: 36px; padding: 4px 6px; border: 0; border-radius: var(--r-sm); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.hbar-row:hover { background: var(--sunken); }
+.hbar-row.picked { background: var(--accent-soft); }
+.hbar-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .hbar-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hbar-track { height: 14px; }
 .hbar-fill { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--chart-1); }
 .hbar-value { white-space: nowrap; font-size: .85rem; }
-@media (max-width: 760px) { .hbars li { grid-template-columns: 1fr auto; } .hbar-track { grid-column: 1 / -1; order: 3; } }
+@media (max-width: 760px) { .hbars li, .hbar-row { grid-template-columns: 1fr auto; } .hbar-track { grid-column: 1 / -1; order: 3; } }
+/* «Выручка по дням»: столбики одного цвета от общей линии, ≤24px, 2px просвета; пустой день — черта */
+.dbars { display: flex; align-items: stretch; gap: 2px; height: 150px; }
+.dbar { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 0; border: 0; border-radius: 4px 4px 0 0;
+  background: none; color: inherit; font: inherit; cursor: pointer; }
+.dbar-plot { flex: 1; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid var(--line); }
+.dbar-fill { display: block; width: min(80%, 24px); min-height: 2px; border-radius: 4px 4px 0 0; background: var(--chart-1); }
+.dbar.zero .dbar-fill { height: 2px; border-radius: 0; background: var(--line-strong); }
+.dbar:hover .dbar-plot { background: var(--sunken); }
+.dbar.picked .dbar-fill { outline: 2px solid var(--text); outline-offset: 1px; }
+.dbar:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dbar-label { height: 1.2em; font-size: .75rem; line-height: 1.2; color: var(--hint); text-align: center; white-space: nowrap; overflow: visible; }
 .patient-pick { position: relative; min-width: 0; }
 .patient-pick input { width: 100%; }
 .picked-patient { align-self: center; background: var(--accent-soft); color: var(--link); }
@@ -1293,4 +1311,11 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .salary-howto summary { cursor: pointer; font-weight: 600; }
 .salary-howto ol { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 6px; }
 .salary-preview { margin: 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); }
+/* «🧮 Калькулятор зарплаты»: свёрнут, четыре поля — две колонки, на узком телефоне — одна */
+.salary-calc summary { cursor: pointer; font-weight: 600; }
+.salary-calc[open] { gap: 10px; }
+.salary-calc .field { max-width: 420px; }
+.calc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; gap: 8px 12px; max-width: 640px; }
+.calc-grid .field { max-width: none; }
+@media (max-width: 380px) { .calc-grid { grid-template-columns: minmax(0, 1fr); } }
 .day-quick.wrap { flex-wrap: wrap; }
