@@ -254,6 +254,11 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
   const send = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/report', { body: { month, ...scope(doctorId) } })),
   })
+  const range = monthRange(month)
+  const sums = useQuery({
+    queryKey: ['revenue', range.from, range.to, doctorId],
+    queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { ...range, ...scope(doctorId) } } })),
+  })
   return (
     <section className="card-block">
       <div className="block-head">
@@ -263,6 +268,14 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
           <button type="button" className="btn" disabled={send.isPending} onClick={() => send.mutate()}>Отправить в бот</button>
         </span>
       </div>
+      {sums.data && (
+        <div className="money-pair" aria-label="Итоги месяца">
+          <p className="money-cell"><span>Касса: <b className="num">{somText(sums.data.cash?.totalSom ?? 0)}</b></span>
+            <span className="hint small">деньги, полученные за период</span></p>
+          <p className="money-cell"><span>По приёмам: <b className="num">{somText(sums.data.totalSom ?? 0)}</b></span>
+            <span className="hint small">стоимость состоявшихся приёмов периода</span></p>
+        </div>
+      )}
       {send.isSuccess && <p className="tone-ok" role="status">Отчёт отправлен в Telegram</p>}
       {send.error && <p className="error" role="alert">{errorText(send.error)}</p>}
       {rows.error && <p className="error">{rows.error.message}</p>}

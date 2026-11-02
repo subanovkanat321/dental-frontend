@@ -22,6 +22,12 @@ const day = (d?: string) => (d ? shortDate(`${d}T12:00:00Z`) : '')
  * пациентов, войти в клинику (владелец), пригласить админа, выгрузка, скрыть и удалить (владелец).
  * Менеджер видит только цифры и приглашает админа — пациентов платформа не видит.
  */
+/** Видна ли клиника пациентам: новая — пока админ не нажал «Показать пациентам» (V95 бэкенда). */
+function listedText(c: { listed?: boolean; settingUp?: boolean }): string {
+  if (c.settingUp) return '🛠 Настраивается — пациентам не видна, по ссылке «запись скоро»'
+  return c.listed === false ? 'Не в каталоге — пациенты записываются только по ссылке клиники' : 'Видна пациентам: каталог и выбор клиники в боте'
+}
+
 export function ClinicPanel({ clinic: c, me, invite, onClose }: {
   clinic: Row
   me: Me
@@ -39,6 +45,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
         <div>
           <h2>{c.name}</h2>
           <span className="hint">Врачей {c.doctors} · сотрудников {c.staff} · пациентов {c.patients} · приёмов за 30 дней {c.appointments}</span>
+          <p className={c.settingUp ? 'tone-wait' : c.listed === false ? 'hint' : 'tone-ok'} aria-label="Видна пациентам">{listedText(c)}</p>
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>

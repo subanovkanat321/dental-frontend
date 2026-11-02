@@ -35,6 +35,7 @@ test('админ: выручка за месяц, по способам; выб�
       return HttpResponse.json({
         totalSom: q.get('doctorId') ? 7000 : 25000, paidCount: 6, unpaidCount: 1, byMethod: { CASH: 15000, TRANSFER: 10000 },
         days: [{ date: '2026-10-01', totalSom: 5000 }, { date: '2026-10-02', totalSom: 20000 }],
+        cash: { totalSom: q.get('doctorId') ? 8000 : 31000, paymentsCount: 8, depositsSom: 1000, byMethod: { CASH: 16000, CARD: 15000 }, days: [] },
       } satisfies Schemas['RevenueView'])
     }),
     http.get('*/api/appointments/debts', () => HttpResponse.json([debt(7, 'Бакыт М.', { debtSom: 2000, dueOn: '2020-01-01' })])),
@@ -42,6 +43,11 @@ test('админ: выручка за месяц, по способам; выб�
   renderApp()
   expect(await screen.findByLabelText('Выручка за период')).toHaveTextContent(/25\s000 сом/)
   expect(screen.getByText(/Наличные: 15\s000 сом/)).toBeInTheDocument()
+  // Рядом — касса: деньги, полученные за период, с пояснением и по способам
+  expect(screen.getByLabelText('Касса за период')).toHaveTextContent(/31\s000 сом/)
+  expect(screen.getByText('Касса — деньги, полученные за период')).toBeInTheDocument()
+  expect(screen.getByText('По приёмам — стоимость состоявшихся приёмов периода')).toBeInTheDocument()
+  expect(screen.getByText(/Поступлений: 8 · Наличные: 16\s000 сом · Карта: 15\s000 сом · из них предоплаты: 1\s000 сом/)).toBeInTheDocument()
   expect(screen.getByText(/без оплаты: 1/)).toBeInTheDocument()
   const month = periodOf('month')
   expect(asked).toContain(`${month.from}..${month.to} все`)
@@ -50,6 +56,7 @@ test('админ: выручка за месяц, по способам; выб�
 
   await userEvent.selectOptions(screen.getByLabelText('Чья касса'), 'Дастан Т.')
   expect(await screen.findByLabelText('Выручка за период')).toHaveTextContent(/7\s000 сом/)
+  expect(screen.getByLabelText('Касса за период')).toHaveTextContent(/8\s000 сом/)
   expect(asked).toContain(`${month.from}..${month.to} 2`)
   // Сравнение — с теми же числами прошлого месяца; ответ тот же, значит «как было»
   const prev = previousRange('month', month)

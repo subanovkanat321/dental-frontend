@@ -1,0 +1,55 @@
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+
+import type { Schemas } from '../api/client'
+import { me, renderApp } from '../test/fixtures'
+import { server } from '../test/server'
+
+const clinic = { brandName: 'Новая', listed: false, settingUp: true, ownHours: false } satisfies Schemas['ClinicView']
+
+test('новая клиника: чек-лист настройки над расписанием и «Показать пациентам»', async () => {
+  const sent: { body?: Schemas['ClinicControllerRequest'] } = {}
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, clinic: sent.body ? { ...clinic, listed: true, settingUp: false } : clinic })),
+    http.get('*/api/clinic', () => HttpResponse.json(clinic)),
+    http.get('*/api/service-types', () => HttpResponse.json([
+      { id: 1, name: 'Осмотр', durationMinutes: 30, active: true },
+    ] satisfies Schemas['ServiceTypeView'][])),
+    http.put('*/api/clinic', async ({ request }) => {
+      sent.body = await request.json() as Schemas['ClinicControllerRequest']
+      return HttpResponse.json({ ...clinic, listed: true, settingUp: false } satisfies Schemas['ClinicView'])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const card = await screen.findByRole('region', { name: 'Настройка клиники' })
+  expect(card).toHaveTextContent('Клиника пока не видна пациентам')
+  const steps = within(card).getAllByRole('listitem')
+  expect(steps[0]).toHaveTextContent(/✗Часы работы — Сейчас — часы по умолчанию/)
+  expect(steps[1]).toHaveTextContent(/✗Услуги с ценами/)
+  expect(steps[2]).toHaveTextContent(/✓Врачи/)
+  // Врачи есть — показать можно, но предупреждаем про часы и цены по умолчанию
+  expect(within(card).getByText(/часы или цены ещё по умолчанию/)).toBeInTheDocument()
+  await user.click(within(card).getByRole('button', { name: 'Показать пациентам' }))
+  await vi.waitFor(() => expect(sent.body?.listed).toBe(true))
+  expect(sent.body?.brandName).toBe('Новая')
+  await vi.waitFor(() => expect(screen.queryByRole('region', { name: 'Настройка клиники' })).not.toBeInTheDocument())
+})
+
+test('без работающего врача «Показать пациентам» выключена; не админу и открытой клинике чек-листа нет', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, clinic, doctors: [{ id: 1, fullName: 'Айгерим', active: false }] })),
+    http.get('*/api/clinic', () => HttpResponse.json(clinic)),
+  )
+  const first = renderApp()
+  const card = await screen.findByRole('region', { name: 'Настройка клиники' })
+  expect(within(card).getByRole('button', { name: 'Показать пациентам' })).toBeDisabled()
+  expect(card).toHaveTextContent('сначала добавьте врача')
+  first.unmount()
+
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, clinic })))
+  renderApp()
+  await screen.findByRole('group', { name: 'Требует внимания' })
+  expect(screen.queryByRole('region', { name: 'Настройка клиники' })).not.toBeInTheDocument()
+})

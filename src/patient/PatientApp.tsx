@@ -51,6 +51,7 @@ function firstScreen(me: Me): Screen {
 const ERRORS: Record<string, [key: string, call: boolean]> = {
   'subscription-paused': ['errPaused', true],
   'clinic-paused': ['errClinicPaused', true],
+  'clinic-setting-up': ['settingUp', true],
   // Гонка или двойное нажатие: экран перечитывается сам (createQueryClient), просим повторить
   stale: ['errStale', false],
   'booking-off': ['errBookingOff', true],
@@ -117,6 +118,16 @@ export default function PatientApp({ me }: { me: Me }) {
       <div className="patient center">
         <p>{t('serviceBot')}</p>
         {me.clinicContact && <p>{t('bookBy', { phone: me.clinicContact })}</p>}
+      </div>
+    )
+  }
+  // Новая клиника ещё настраивается (пришёл по прямой ссылке): записи пока нет
+  if (me.clinic?.settingUp && !me.booking) {
+    return (
+      <div className="patient center">
+        <LangSwitch lang={lang} onChange={setLang} />
+        <p role="status">{t('settingUp')}</p>
+        {me.clinicContact && <p>{t('callClinic', { phone: me.clinicContact })}</p>}
       </div>
     )
   }

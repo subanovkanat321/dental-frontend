@@ -6435,6 +6435,9 @@
           "paidSom" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "former" : {
+            "type" : "boolean"
           }
         }
       },
@@ -6711,6 +6714,12 @@
           },
           "contactTelegram" : {
             "type" : "string"
+          },
+          "listed" : {
+            "type" : "boolean"
+          },
+          "settingUp" : {
+            "type" : "boolean"
           }
         }
       },
@@ -7261,6 +7270,12 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "settingUp" : {
+            "type" : "boolean"
+          },
+          "ownHours" : {
+            "type" : "boolean"
           }
         }
       },
@@ -9561,6 +9576,38 @@
               "type" : "integer",
               "format" : "int64"
             }
+          },
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RevenueViewDay"
+            }
+          },
+          "cash" : {
+            "$ref" : "#/components/schemas/RevenueViewCash"
+          }
+        }
+      },
+      "RevenueViewCash" : {
+        "properties" : {
+          "totalSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "byMethod" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "depositsSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "paymentsCount" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "days" : {
             "type" : "array",

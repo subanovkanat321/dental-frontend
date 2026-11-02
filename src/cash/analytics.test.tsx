@@ -24,7 +24,12 @@ test('аналитика: выручка по месяцам, по врачам,
       const doctor = q.get('doctorId')
       // Текущий месяц — 50 000, прошлые — 40 000; по врачам — 30 000 и 20 000
       const total = doctor ? (doctor === '1' ? 30000 : 20000) : q.get('from')!.startsWith(thisMonth) ? 50000 : 40000
-      return HttpResponse.json({ totalSom: total, paidCount: 5, unpaidCount: 0, byMethod: doctor ? {} : { CASH: total * 0.6, TRANSFER: total * 0.4 }, days: [] } satisfies Schemas['RevenueView'])
+      // Касса (по дате платежа) — на 5 000 больше: доплаты за прошлые приёмы; по способам — она
+      const cash = total + 5000
+      return HttpResponse.json({
+        totalSom: total, paidCount: 5, unpaidCount: 0, byMethod: doctor ? {} : { CASH: total * 0.6, TRANSFER: total * 0.4 }, days: [],
+        cash: { totalSom: cash, paymentsCount: 6, depositsSom: 0, byMethod: doctor ? {} : { CASH: cash * 0.6, TRANSFER: cash * 0.4 }, days: [] },
+      } satisfies Schemas['RevenueView'])
     }),
     // Отчёт — по месяцам: строки только за запрошенный месяц (30 дней могут захватить два)
     http.get('*/api/appointments/report', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('month') !== thisMonth ? [] : [
@@ -48,6 +53,8 @@ test('аналитика: выручка по месяцам, по врачам,
   // Главная цифра — последний полный месяц (текущий идёт): 40 000, как месяцем раньше
   expect(await within(months).findByText(/как было/)).toBeInTheDocument()
   expect(within(months).getByRole('img').getAttribute('aria-label')).toMatch(/50\s000 сом$/)
+  // Рядом — касса того же месяца: деньги, полученные за период
+  expect(within(months).getByLabelText('Касса за месяц')).toHaveTextContent(/45\s000 сом — деньги, полученные за период/)
 
   const doctors = await screen.findByRole('region', { name: 'Выручка по врачам' })
   const rows = await within(doctors).findAllByRole('listitem')

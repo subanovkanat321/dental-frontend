@@ -106,7 +106,7 @@ export function MembersTab({ me }: { me: Me }) {
                   <td className="hint">{[ROLE_TEXT[m.role ?? ''], m.doctor ? 'врач' : null, m.me ? 'это вы' : null].filter(Boolean).join(' · ')}</td>
                   <td className="r">
                     <button type="button" className="btn small ghost" disabled={remove.isPending}
-                      onClick={() => window.confirm(m.me ? 'Выйти из администраторов клиники?' : `Убрать «${m.fullName ?? m.telegramId}» из клиники?`) && remove.mutate(m)}>
+                      onClick={() => window.confirm(m.me ? 'Выйти из администраторов клиники?' : `Убрать «${m.fullName ?? m.telegramId}» из клиники?${m.role === 'ASSISTANT' ? ' Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.' : ''}`) && remove.mutate(m)}>
                       {m.me ? 'Выйти из администраторов' : 'Убрать из клиники'}</button>
                   </td>
                 </tr>

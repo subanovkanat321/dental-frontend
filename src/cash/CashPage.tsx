@@ -41,7 +41,8 @@ type Tab = 'money' | 'analytics' | 'expenses' | 'salary' | 'stats' | 'report'
 const TABS: [Tab, string][] = [['money', 'Деньги'], ['analytics', 'Аналитика'], ['expenses', 'Расходы'], ['salary', 'Зарплата'], ['stats', 'Статистика'], ['report', 'Отчёт']]
 
 /**
- * «Касса»: выручка за период (по способам и по дням), «К оплате на кассе» и долги — таблицами.
+ * «Касса»: за период рядом две суммы — касса (деньги, полученные в эти дни, по дате платежа) и
+ * выручка по приёмам (оплачено за состоявшиеся приёмы периода), по способам и по дням, «К оплате на кассе» и долги — таблицами.
  * Нажать на строку — карточка приёма справа с оплатой, как в «Расписании». Права — как на
  * сервере: всю клинику видит админ (если врачи не независимы), врач — свою; «К оплате» —
  * регистратура и клиники с регистратурой.
@@ -142,7 +143,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
         {money && (
           <section className="card-block">
             <div className="block-head">
-              <h2>Выручка</h2>
+              <h2>Касса и выручка</h2>
               <div className="segments" role="group" aria-label="Период">
                 {([['day', 'День'], ['week', 'Неделя'], ['month', 'Месяц'], ['custom', 'Период']] as const).map(([key, title]) => (
                   <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
@@ -173,7 +174,28 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
             {revenue.error && <p className="error">{revenue.error.message}</p>}
             {r && (
               <>
-                <p className="total" aria-label="Выручка за период">{somText(r.totalSom ?? 0)}</p>
+                <div className="money-pair">
+                  <div className="money-cell">
+                    <h3>Касса</h3>
+                    <p className="total" aria-label="Касса за период">{somText(r.cash?.totalSom ?? 0)}</p>
+                    <p className="hint small">Касса — деньги, полученные за период</p>
+                    <p className="hint">
+                      Поступлений: {r.cash?.paymentsCount ?? 0}
+                      {Object.entries(r.cash?.byMethod ?? {}).filter(([, v]) => v).map(([k, v]) => ` · ${METHODS[k] ?? k}: ${somText(v)}`).join('')}
+                      {r.cash?.depositsSom ? ` · из них предоплаты: ${somText(r.cash.depositsSom)}` : ''}
+                    </p>
+                  </div>
+                  <div className="money-cell">
+                    <h3>По приёмам</h3>
+                    <p className="total" aria-label="Выручка за период">{somText(r.totalSom ?? 0)}</p>
+                    <p className="hint small">По приёмам — стоимость состоявшихся приёмов периода</p>
+                    <p className="hint">
+                      Оплачено приёмов: {r.paidCount ?? 0}
+                      {r.unpaidCount ? <span className="tone-wait"> · без оплаты: {r.unpaidCount}</span> : null}
+                      {Object.entries(r.byMethod ?? {}).filter(([, v]) => v).map(([k, v]) => ` · ${METHODS[k] ?? k}: ${somText(v)}`).join('')}
+                    </p>
+                  </div>
+                </div>
                 {before.data && (() => {
                   const c = changeOf(r.totalSom ?? 0, before.data.totalSom ?? 0)
                   // Период включает сегодня — день ещё идёт, а сравниваем с полным: утром «▼ 80%»
@@ -181,17 +203,12 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
                   const ongoing = range.to >= todayIn()
                   return (
                     <p className="compare" aria-label="Сравнение выручки">
-                      <b className={`tone-${ongoing && c.tone === 'bad' ? 'quiet' : c.tone}`}>{c.text}</b> {prev.label}
+                      По приёмам: <b className={`tone-${ongoing && c.tone === 'bad' ? 'quiet' : c.tone}`}>{c.text}</b> {prev.label}
                       {ongoing && <span className="hint"> (сегодня ещё идёт)</span>}
                       <span className="hint"> ({datesText(prev)}) · было {somText(before.data.totalSom ?? 0)}, оплат {before.data.paidCount ?? 0}</span>
                     </p>
                   )
                 })()}
-                <p className="hint">
-                  Оплачено приёмов: {r.paidCount ?? 0}
-                  {r.unpaidCount ? <span className="tone-wait"> · без оплаты: {r.unpaidCount}</span> : null}
-                  {Object.entries(r.byMethod ?? {}).filter(([, v]) => v).map(([k, v]) => ` · ${METHODS[k] ?? k}: ${somText(v)}`).join('')}
-                </p>
                 {(r.days?.length ?? 0) > 1 && (
                   <div className="bars" role="img" aria-label="Выручка по дням">
                     {r.days!.map((d) => (

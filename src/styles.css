@@ -862,3 +862,17 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 /* «Войти через Telegram» — своя кнопка (layout/Login.tsx), цветом Telegram */
 .btn.tg-login { min-height: 48px; padding: 0 26px; gap: 10px; border: 0; border-radius: 12px; background: #2AABEE; color: #fff; font-size: 1.05rem; font-weight: 600; }
 .btn.tg-login:hover:not(:disabled) { background: #229ED9; }
+
+/* Настройка новой клиники (V95): чек-лист до «Показать пациентам» */
+.setup-steps { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.setup-steps li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.setup-mark { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: var(--r-sm); background: var(--sunken); font-weight: 600; }
+.setup-steps li.done .setup-mark { background: var(--ok-bg); color: var(--ok-ink); }
+.setup-steps li.todo .setup-mark { background: var(--wait-bg); color: var(--wait-ink); }
+
+/* «Касса» и «По приёмам» рядом: две суммы периода, на телефоне — одна под другой */
+.money-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.money-cell { display: grid; gap: 2px; align-content: start; }
+.money-cell h3 { margin: 0; font-size: .95rem; font-weight: 600; }
+.money-cell + .money-cell { border-left: 1px solid var(--separator); padding-left: 16px; }
+@media (max-width: 760px) { .money-cell + .money-cell { border-left: 0; padding-left: 0; border-top: 1px solid var(--separator); padding-top: 12px; } }

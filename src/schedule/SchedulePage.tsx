@@ -2,6 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
+import { SetupChecklist } from '../clinic/SetupChecklist'
 import { openSettings, type Page } from '../lib/route'
 import { addDays, dayTitle, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
@@ -269,6 +270,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </header>
         )}
 
+        <SetupChecklist me={me} />
         {!dayList && (
           <div className="today-strip" role="group" aria-label="Требует внимания">
             {requests.length > 0 && (

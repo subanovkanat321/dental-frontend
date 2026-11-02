@@ -13,6 +13,8 @@ export type ClinicPage = {
   name?: string | null; address?: string | null; mapUrl?: string | null; phone?: string | null; phoneText?: string | null
   whatsapp?: string | null; telegramUrl?: string | null; doctors: SiteDoctor[]
   services: { name: string; durationMinutes: number; priceSom?: number | null }[]
+  /** Новая клиника ещё настраивается (V95): записи нет, telegramUrl пуст */
+  settingUp?: boolean
 }
 
 export type DirectoryClinic = {

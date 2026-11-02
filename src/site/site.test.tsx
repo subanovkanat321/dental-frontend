@@ -130,6 +130,17 @@ test('Instagram: подсказка «⋮ → Открыть в браузере
   vi.restoreAllMocks()
 })
 
+test('новая клиника ещё настраивается: «запись скоро» вместо кнопки записи', async () => {
+  window.history.replaceState(null, '', '/c/new123')
+  server.use(http.get('*/web/clinic', () => HttpResponse.json({
+    name: 'Новая', telegramUrl: null, settingUp: true, doctors: [], services: [{ name: 'Осмотр', durationMinutes: 30 }],
+  } satisfies ClinicPage)))
+  render(<ClinicSite />)
+  expect(await screen.findByRole('status')).toHaveTextContent('Клиника ещё настраивается — запись скоро')
+  expect(screen.queryByRole('link', { name: /Записаться онлайн/ })).not.toBeInTheDocument()
+  expect(screen.queryByText(/Запишитесь онлайн за минуту/)).not.toBeInTheDocument()
+})
+
 test('каталог в Instagram: у клиники — «📲 открыть Telegram» по tg://', async () => {
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 Instagram 300.0')
   server.use(http.get('*/web/clinics', () => HttpResponse.json([

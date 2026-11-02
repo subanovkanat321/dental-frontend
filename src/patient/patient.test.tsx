@@ -146,6 +146,17 @@ test('клиник несколько — сначала выбрать клин
   await vi.waitFor(() => expect(chosen).toEqual({ clinicId: 3 }))
 })
 
+test('новая клиника ещё настраивается: «запись скоро» и телефон, без экранов записи', async () => {
+  fakeTelegram()
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(patient({
+    clinicContact: '+996 555 000 111', clinic: { brandName: 'Новая', settingUp: true },
+  }))))
+  renderApp()
+  expect(await screen.findByRole('status')).toHaveTextContent('Клиника ещё настраивается — запись скоро')
+  expect(screen.getByText('Позвоните в клинику: +996 555 000 111')).toBeInTheDocument()
+  expect(screen.queryByText('Айгерим Садыкова')).not.toBeInTheDocument()
+})
+
 test('вне Telegram пациенту — подсказка про бота, без экранов записи', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(patient())))
   renderApp()

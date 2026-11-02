@@ -107,7 +107,10 @@ function MonthsChart({ month, scope }: { month: string; scope: { doctorId?: numb
       {data.some((q) => q.isPending) ? <p className="hint">Загрузка…</p> : failed(data) ? <p className="error">{failed(data)}</p> : (
         <>
           <p className="chart-headline"><b>{somText(last)}</b> за {longMonth(months[full]!)}
+            <span className="hint"> по приёмам</span>
             <span className={`tone-${change.tone}`}> · {change.text}</span><span className="hint"> к прошлому месяцу ({somText(values[full - 1] ?? 0)})</span></p>
+          <p className="hint" aria-label="Касса за месяц">Касса за {longMonth(months[full]!)}: <b className="num">{somText(data[full]?.data?.cash?.totalSom ?? 0)}</b>
+            {' '}— деньги, полученные за период; по приёмам — стоимость состоявшихся приёмов периода</p>
           <div className="vbars" role="img" aria-label={months.map((m, k) => `${longMonth(m)}: ${somText(values[k] ?? 0)}`).join('; ')}>
             {months.map((m, k) => (
               <button key={m} type="button" className={['vbar', k === 5 && current ? 'partial' : '', k === i ? 'picked' : ''].join(' ').trim()}
@@ -247,13 +250,14 @@ function SegmentedBar({ parts, label, format }: { parts: Part[]; label: string; 
   )
 }
 
-/** Как платят пациенты: наличные, перевод, карта — за период (выручка по способам). */
+/** Как платят пациенты: наличные, перевод, карта — касса за период по способам. */
 function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
   const data = useQuery({
     queryKey: ['revenue', period.from, period.to, scope.doctorId ?? null],
     queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: period.from, to: period.to, ...scope } } })),
   })
-  const by = data.data?.byMethod ?? {}
+  // Касса по способам: деньги, полученные за период (доплаты и предоплаты — тоже), а не оплаты приёмов периода
+  const by = data.data?.cash?.byMethod ?? {}
   const parts: Part[] = [
     { key: 'CASH', name: 'Наличные', value: by.CASH ?? 0, color: 'var(--series-1)', icon: '💵' },
     { key: 'TRANSFER', name: 'Перевод', value: by.TRANSFER ?? 0, color: 'var(--series-2)', icon: '📲' },
@@ -262,6 +266,7 @@ function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: n
   return (
     <section className="card-block chart" aria-label="Способы оплаты">
       <h2>💳 Как платят {period.label}</h2>
+      <p className="hint small">Касса — деньги, полученные за период</p>
       {data.isPending ? <p className="hint">Загрузка…</p>
         : data.error ? <p className="error">{data.error.message}</p>
         : !parts.some((p) => p.value) ? <p className="hint">Оплат за этот период нет.</p>

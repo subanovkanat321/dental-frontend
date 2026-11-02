@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
 import { openLink, telegram } from '../lib/telegram'
 import { PhoneInput } from './PhoneInput'
+import { SetupChecklist } from './SetupChecklist'
 import { phoneFromInput, phoneToInput } from './phone'
 
 type Me = Schemas['BookingViewsMe']
@@ -22,6 +23,7 @@ export function AboutTab({ me }: { me: Me }) {
   if (clinic.error) return <p className="error">{clinic.error.message}</p>
   return (
     <>
+      <SetupChecklist me={me} />
       <AboutForm me={me} clinic={clinic.data} />
       {me.admin && <DepositSettings />}
     </>

@@ -6,6 +6,7 @@ import { clinicCode, getJson, inAppBrowser, initials, tgLink, useSiteLang, type 
 const TEXTS = {
   ru: {
     title: 'Стоматология', tagline: 'Запишитесь онлайн за минуту — бот напомнит о приёме 😊', book: 'Записаться онлайн в Telegram',
+    settingUp: '🛠 Клиника ещё настраивается — запись скоро.',
     whatsapp: 'Написать в WhatsApp', call: 'Позвонить', map: 'Как добраться (2ГИС)', doctors: 'Наши врачи', services: 'Услуги и цены',
     min: 'мин', waText: 'Здравствуйте! Хочу записаться на приём 🦷', howTitle: 'Как записаться',
     how: ['Нажмите «Записаться онлайн в Telegram»', 'Выберите врача, услугу и удобное время', 'Врач подтвердит запись, бот напомнит накануне'],
@@ -14,6 +15,7 @@ const TEXTS = {
   },
   ky: {
     title: 'Стоматология', tagline: 'Бир мүнөттө онлайн жазылыңыз — бот кабыл алуу тууралуу эскертет 😊', book: 'Telegram аркылуу онлайн жазылуу',
+    settingUp: '🛠 Клиника азыр даярдалып жатат — жазылуу жакында ачылат.',
     whatsapp: 'WhatsApp’ка жазуу', call: 'Чалуу', map: 'Кантип жетүү керек (2ГИС)', doctors: 'Биздин дарыгерлер', services: 'Кызматтар жана баалар',
     min: 'мүн.', waText: 'Саламатсызбы! Кабыл алууга жазылгым келет 🦷', howTitle: 'Кантип жазылуу керек',
     how: ['«Telegram аркылуу онлайн жазылуу» баскычын басыңыз', 'Дарыгерди, кызматты жана ыңгайлуу убакытты тандаңыз', 'Дарыгер жазылууну ырастайт, бот бир күн мурун эскертет'],
@@ -63,7 +65,7 @@ export function ClinicSite() {
       <LangSwitch lang={lang} onChange={setLang} />
       <div className="site-hero">
         <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={95} height={90} />
-        <div><h1>{name}</h1><p>{t.tagline}</p></div>
+        <div><h1>{name}</h1>{d.settingUp ? <p role="status">{t.settingUp}</p> : <p>{t.tagline}</p>}</div>
       </div>
       <div className="site-actions">
         {d.telegramUrl && <a className="btn primary" href={d.telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}

@@ -78,7 +78,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   return (
     <section className="card-block salary" aria-label={`Зарплата: ${r.doctor}`}>
       <div className="salary-head">
-        <h2>{r.doctor}{r.assistantId != null && <span className="hint"> · ассистент</span>}</h2>
+        <h2>{r.doctor}{r.assistantId != null && <span className="hint"> · {r.former ? 'бывший ассистент' : 'ассистент'}</span>}</h2>
         {left === 0 && (r.dueSom ?? 0) > 0 && <span className="badge-ok">✅ Выплачено</span>}
       </div>
       <dl className="salary-sums">
@@ -86,8 +86,10 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
         <div><dt>К выплате</dt><dd className="num strong">{somText(r.dueSom ?? 0)}</dd></div>
         <div><dt>Выплачено</dt><dd className="num">{somText(r.paidSom ?? 0)}</dd></div>
       </dl>
-      <p className="hint">{termsText(r)}</p>
-      {seesAll && !editing && !paying && (
+      {r.former
+        ? <p className="hint">Убран из «Сотрудников» — выплата за этот месяц сохранена в истории. Вернёте ассистентом — она снова будет в его строке.</p>
+        : <p className="hint">{termsText(r)}</p>}
+      {seesAll && !r.former && !editing && !paying && (
         <div className="actions">
           {left > 0 && <button type="button" className="btn primary" onClick={() => setPaying(true)}>Выплатить {somText(left)}</button>}
           <button type="button" className="btn" onClick={() => setEditing(true)}>Условия</button>

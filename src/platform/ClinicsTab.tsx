@@ -50,7 +50,8 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
               <td>
                 <button type="button" className="row-link open-link" onClick={(e) => { e.stopPropagation(); setOpened({ id: c.id! }) }}>{c.name}<span aria-hidden="true"> ›</span></button>
                 {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
-                <div><span className={`chip small ${hl.chip}`}>{hl.label}</span></div>
+                <div><span className={`chip small ${hl.chip}`}>{hl.label}</span>
+                  {c.settingUp ? <span className="hint"> · 🛠 не видна пациентам</span> : c.listed === false ? <span className="hint"> · не в каталоге</span> : null}</div>
               </td>
               <td className="hint nowrap">{c.staffSeenAt ? agoText(c.staffSeenAt) : 'ещё не заходили'}</td>
               <td className={`tone-${line.tone}`}>{line.text}</td>

@@ -64,3 +64,21 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   expect(await within(card).findByText('✅ Выплачено')).toBeInTheDocument()
   expect(sent).toEqual([{ percent: 30, baseSom: 10000 }, { month: expect.stringMatching(/^\d{4}-\d{2}$/), amountSom: 25000 }])
 })
+
+test('бывший ассистент: выплата месяца осталась в истории, без «Условий» и «Выплатить»', async () => {
+  const former: Row = { assistantId: 7202, doctor: 'Бермет (больше не работает)', percent: 0, baseSom: 0, revenueSom: 0, dueSom: 0, paidSom: 8000, former: true }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/salaries', () => HttpResponse.json([former])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  const card = await screen.findByRole('region', { name: 'Зарплата: Бермет (больше не работает)' })
+  expect(card).toHaveTextContent('· бывший ассистент')
+  expect(card).toHaveTextContent(/Выплачено8\s000 сом/)
+  expect(card).toHaveTextContent('выплата за этот месяц сохранена в истории')
+  expect(within(card).queryByRole('button', { name: 'Условия' })).not.toBeInTheDocument()
+  expect(within(card).queryByRole('button', { name: /Выплатить/ })).not.toBeInTheDocument()
+})

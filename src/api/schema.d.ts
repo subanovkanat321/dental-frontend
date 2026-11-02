@@ -2957,6 +2957,7 @@ export interface components {
             dueSom?: number;
             /** Format: int64 */
             paidSom?: number;
+            former?: boolean;
         };
         BillingControllerTariffsRequest: {
             /** Format: int32 */
@@ -3070,6 +3071,8 @@ export interface components {
             contactName?: string;
             contactPhone?: string;
             contactTelegram?: string;
+            listed?: boolean;
+            settingUp?: boolean;
         };
         AgreementControllerDraft: {
             title?: string;
@@ -3283,6 +3286,8 @@ export interface components {
             listed?: boolean;
             separateSupplies?: boolean;
             name?: string;
+            settingUp?: boolean;
+            ownHours?: boolean;
         };
         DepositControllerSettingsRequest: {
             /** @enum {string} */
@@ -4252,6 +4257,19 @@ export interface components {
             byMethod?: {
                 [key: string]: number;
             };
+            days?: components["schemas"]["RevenueViewDay"][];
+            cash?: components["schemas"]["RevenueViewCash"];
+        };
+        RevenueViewCash: {
+            /** Format: int64 */
+            totalSom?: number;
+            byMethod?: {
+                [key: string]: number;
+            };
+            /** Format: int64 */
+            depositsSom?: number;
+            /** Format: int64 */
+            paymentsCount?: number;
             days?: components["schemas"]["RevenueViewDay"][];
         };
         RevenueViewDay: {

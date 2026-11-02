@@ -43,7 +43,7 @@ test('здоровье клиник, неявки и продление срок
 })
 
 test('владелец: клиники таблицей, карточка — отметить оплату и пригласить админа', async () => {
-  backend([clinic(1, 'Стоматология «Тест»'), clinic(2, 'Улыбка', { health: 'ASLEEP' })])
+  backend([clinic(1, 'Стоматология «Тест»', { listed: true }), clinic(2, 'Улыбка', { health: 'ASLEEP', listed: false, settingUp: true })])
   let paid: unknown = null
   let invited: unknown = null
   server.use(
@@ -63,9 +63,13 @@ test('владелец: клиники таблицей, карточка — о
   const rows = within(table).getAllByRole('row')
   expect(rows[1]).toHaveTextContent('Улыбка') // «уснувшая» — первой
   expect(rows[2]).toHaveTextContent('v2')
+  // Новая клиника ещё настраивается — пациентам не видна
+  expect(rows[1]).toHaveTextContent('не видна пациентам')
+  expect(rows[2]).not.toHaveTextContent('не видна пациентам')
 
   await user.click(within(table).getByRole('button', { name: 'Улыбка' }))
   const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
+  expect(within(panel).getByLabelText('Видна пациентам')).toHaveTextContent('Настраивается — пациентам не видна')
   await user.click(await within(panel).findByRole('button', { name: '3 мес' }))
   expect(within(panel).getByRole('spinbutton', { name: 'Сумма, сом' })).toHaveValue(10470)
   expect(within(panel).getByText(/Оплачено будет до 10 февр/)).toBeInTheDocument()
