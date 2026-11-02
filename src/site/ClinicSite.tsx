@@ -56,8 +56,8 @@ export function ClinicSite() {
   useEffect(() => {
     if (d) document.title = d.name || TEXTS.ru.title
   }, [d])
-  if (state.failed) return <main className="site-page"><p className="site-message">{t.error}</p></main>
-  if (!d) return <main className="site-page"><p className="site-message hint">{t.loading}</p></main>
+  if (state.failed) return <main className="site-page"><SiteHeader back={t.back} /><p className="site-message">{t.error}</p></main>
+  if (!d) return <main className="site-page"><SiteHeader back={t.back} /><p className="site-message hint">{t.loading}</p></main>
   const name = d.name || t.title
   // Ссылка из рекламы с ?promo=КОД — бот получит код вместе с клиникой и подставит его в форму записи
   const promo = promoCode()
