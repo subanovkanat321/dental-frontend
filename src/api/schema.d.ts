@@ -3514,6 +3514,9 @@ export interface components {
             tariffs?: components["schemas"]["Tariffs"];
             payments?: components["schemas"]["ClinicPaymentsPayment"][];
         };
+        ExportControllerPlatformExport: {
+            emergency?: boolean;
+        };
         ExportControllerResult: {
             /** Format: int32 */
             patients?: number;
@@ -3992,6 +3995,12 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        BookingViewsElsewhere: {
+            /** Format: int64 */
+            clinicId?: number;
+            clinicName?: string;
+            booking?: components["schemas"]["BookingViewsBooking"];
+        };
         BookingViewsMe: {
             doctor?: boolean;
             admin?: boolean;
@@ -4016,6 +4025,7 @@ export interface components {
             waiting?: boolean;
             hasReception?: boolean;
             assistantOf?: number[];
+            elsewhere?: components["schemas"]["BookingViewsElsewhere"];
         };
         ClinicLinksChoice: {
             /** Format: int64 */
@@ -6054,7 +6064,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExportControllerPlatformExport"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

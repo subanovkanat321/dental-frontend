@@ -2295,6 +2295,15 @@
             "format" : "int64"
           }
         } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExportControllerPlatformExport"
+              }
+            }
+          }
+        },
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -7704,6 +7713,13 @@
           }
         }
       },
+      "ExportControllerPlatformExport" : {
+        "properties" : {
+          "emergency" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "ExportControllerResult" : {
         "properties" : {
           "patients" : {
@@ -8845,6 +8861,20 @@
           }
         }
       },
+      "BookingViewsElsewhere" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "booking" : {
+            "$ref" : "#/components/schemas/BookingViewsBooking"
+          }
+        }
+      },
       "BookingViewsMe" : {
         "properties" : {
           "doctor" : {
@@ -8924,6 +8954,9 @@
               "type" : "integer",
               "format" : "int64"
             }
+          },
+          "elsewhere" : {
+            "$ref" : "#/components/schemas/BookingViewsElsewhere"
           }
         }
       },

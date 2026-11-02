@@ -52,11 +52,11 @@ export function PrivacyTab({ me }: { me: Me }) {
       {support.data?.required && <SupportAccess until={support.data.grantedUntil} />}
       {access.data && (
         <section className="card-block">
-          <h2>Входы платформы в клинику</h2>
+          <h2>Входы и выгрузки платформы</h2>
           {access.data.length ? (
             <table className="table" aria-label="Входы платформы">
               <tbody>{access.data.map((x, i) => (
-                <tr key={i}><td>{x.role === 'ADMIN' ? 'как админ' : 'как регистратор'}</td><td className="hint">{x.enteredAt ? shortDate(x.enteredAt, true) : ''}</td></tr>
+                <tr key={i}><td>{x.role === 'ADMIN' ? 'вошёл как админ' : x.role === 'EXPORT' ? 'выгрузил данные' : 'вошёл как регистратор'}</td><td className="hint">{x.enteredAt ? shortDate(x.enteredAt, true) : ''}</td></tr>
               ))}</tbody>
             </table>
           ) : <p className="hint">Владелец платформы в вашу клинику не входил.</p>}

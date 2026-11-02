@@ -231,3 +231,31 @@ test('владелец: нажать в любом месте строки кл�
   expect(reload).toHaveBeenCalled()
   vi.unstubAllGlobals()
 })
+
+test('выгрузка клиники: доступ поддержке не открыт — аварийная выгрузка после подтверждения', async () => {
+  backend([clinic(5, 'Улыбка Вымышленная')])
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.post('*/api/platform/clinics/5/export', async ({ request }) => {
+      const body = await request.json().catch(() => null) as { emergency?: boolean } | null
+      sent.push(body)
+      return body?.emergency
+        ? HttpResponse.json({ patients: 30, filesIncluded: 4 } satisfies Schemas['ExportControllerResult'])
+        : HttpResponse.json({ status: 409, code: 'support-access-required', detail: 'Клиника не открыла доступ поддержке' }, { status: 409 })
+    }),
+  )
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table')
+  await user.click(within(table).getAllByRole('row')[1]!.querySelectorAll('td')[4]!)
+  const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
+  await user.click(within(panel).getByRole('button', { name: 'Выгрузить данные клиники — в бот' }))
+  expect(await within(panel).findByText('Клиника не открыла доступ поддержке')).toBeInTheDocument()
+  await user.click(within(panel).getByRole('button', { name: 'Аварийная выгрузка — клиника узнает' }))
+  expect(confirm).toHaveBeenCalledWith('Аварийная выгрузка: клиника получит сообщение. Выгрузить?')
+  expect(await within(panel).findByText(/Архив в чате с ботом: пациентов 30/)).toBeInTheDocument()
+  expect(sent).toEqual([{}, { emergency: true }])
+  confirm.mockRestore()
+})

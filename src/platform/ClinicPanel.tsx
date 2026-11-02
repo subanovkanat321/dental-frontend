@@ -290,17 +290,27 @@ function phoneDigits(input: string): string | undefined {
   return d
 }
 
+/**
+ * Выгрузка клиники владельцем — по правилам входа: клиника не открыла доступ поддержке —
+ * объяснить и предложить аварийную выгрузку (клиника получит сообщение, в её журнале — «выгрузил данные»).
+ */
 function ExportBox({ id }: { id: number }) {
-  const run = useMutation<Schemas['ExportControllerResult'], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/clinics/{id}/export', { params: { path: { id } } })),
+  const run = useMutation<Schemas['ExportControllerResult'], ApiError, { emergency?: boolean }>({
+    mutationFn: (body) => unwrap(api.POST('/api/platform/clinics/{id}/export', { params: { path: { id } }, body })),
   })
   return (
     <section className="form">
       <h3>Выгрузка данных</h3>
       <p className="hint">По просьбе клиники или при её уходе (договор, п. 7.3): все данные одним архивом — в ваш чат с ботом.</p>
       {run.data && <p className="tone-ok" role="status">Архив в чате с ботом: пациентов {run.data.patients}, снимков {run.data.filesIncluded}</p>}
-      {run.error && <p className="error">{run.error.message}</p>}
-      <button type="button" className="btn" disabled={run.isPending} onClick={() => run.mutate()}>Выгрузить данные клиники — в бот</button>
+      {run.error?.code === 'support-access-required' ? (
+        <div className="duplicate" role="alert">
+          <p>{run.error.message}</p>
+          <button type="button" className="btn danger" disabled={run.isPending}
+            onClick={() => window.confirm('Аварийная выгрузка: клиника получит сообщение. Выгрузить?') && run.mutate({ emergency: true })}>Аварийная выгрузка — клиника узнает</button>
+        </div>
+      ) : run.error && <p className="error" role="alert">{run.error.message}</p>}
+      <button type="button" className="btn" disabled={run.isPending} onClick={() => run.mutate({})}>Выгрузить данные клиники — в бот</button>
     </section>
   )
 }
