@@ -23,6 +23,16 @@ function loginUrl(): string {
  * своё окно без адресной строки, значок Тишки. Как именно — зависит от того, где открыта.
  */
 export function InstallApp() {
+  return (
+    <section className="settings-group" aria-label="Установить приложение">
+      <h2>📲 Установить приложение</h2>
+      <div className="card-block pwa-install"><InstallBody /></div>
+    </section>
+  )
+}
+
+/** Что сделать для установки здесь и сейчас — кнопка, шаги для iPhone или подсказка из Telegram. */
+export function InstallBody() {
   const { prompt, installed } = usePwa()
   const [copied, setCopied] = useState(false)
   const app = telegram()
@@ -66,10 +76,5 @@ export function InstallApp() {
       </ul>
     )
   }
-  return (
-    <section className="settings-group" aria-label="Установить приложение">
-      <h2>📲 Установить приложение</h2>
-      <div className="card-block pwa-install">{body}</div>
-    </section>
-  )
+  return body
 }

@@ -26,3 +26,14 @@
   border-radius: var(--radius); background: var(--accent-soft, var(--sunken)); color: var(--text); text-align: left;
 }
 .pwa-hint p { margin: 0; flex: 1; font-size: .9rem; line-height: 1.4; }
+
+/* tish.kg/app — «Скачать Tish» */
+.download { max-width: 640px; margin: 0 auto; padding: 32px 16px 48px; display: grid; gap: 16px; }
+.download-head { display: flex; gap: 16px; align-items: flex-start; }
+.download-head h1 { font-size: 1.8rem; margin: 2px 0 6px; }
+.download-head p { margin: 0; }
+.download-install h2 { margin: 0; }
+.download-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.download-points li { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: var(--r-md); background: var(--card); border: 1px solid var(--separator); }
+.download-points span { font-size: 1.2rem; }
+.download-foot { text-align: center; }

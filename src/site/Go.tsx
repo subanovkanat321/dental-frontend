@@ -43,6 +43,7 @@ export function Go() {
       <GoLink icon="🚀" title="Подключить бесплатно" sub="Без предоплаты — настроим за час" href="/join#form" tone="orange" main />
       <GoLink icon="💰" title="Что умеет приложение" sub="Запись, касса, склад, медкарта" href="/join" tone="gold" />
       <GoLink icon="🔐" title="Вход для клиники" sub="CRM в браузере — все врачи на большом экране" href="/login" tone="violet" />
+      <GoLink icon="📲" title="Скачать приложение" sub="Tish на экране телефона — как обычное приложение" href="/app" tone="blue" />
       {(c.supportUrl || wa) && <h2>Связаться</h2>}
       <GoLink icon="💬" title="Написать в Telegram" sub={c.supportTelegram ? `@${c.supportTelegram}` : null} href={c.supportUrl} tone="tg" />
       <GoLink icon="🟢" title="Написать в WhatsApp" href={wa} tone="wa" />

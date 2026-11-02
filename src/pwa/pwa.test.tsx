@@ -128,3 +128,20 @@ test('запуск с иконки без входа — страница вхо
   expect(await screen.findByRole('heading', { name: 'Вход для клиники' })).toBeInTheDocument()
   expect(replace).not.toHaveBeenCalled()
 })
+
+test('tish.kg/app — страница «Скачать Tish» без входа: кнопка установки и ссылка на вход', async () => {
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ detail: 'Войдите' }, { status: 401 })))
+  const replace = vi.fn()
+  vi.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, pathname: '/app', search: '', replace })
+  userAgent(ANDROID)
+  listenInstallPrompt()
+  renderApp()
+  expect(screen.getByRole('heading', { name: 'Tish на экране телефона' })).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Установить приложение' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Войти в Tish' })).toHaveAttribute('href', '/login')
+  act(() => {
+    window.dispatchEvent(Object.assign(new Event('beforeinstallprompt'), { prompt: vi.fn(), userChoice: Promise.resolve({ outcome: 'dismissed' }) }))
+  })
+  expect(await screen.findByRole('button', { name: 'Установить' })).toBeInTheDocument()
+  expect(replace).not.toHaveBeenCalled()
+})

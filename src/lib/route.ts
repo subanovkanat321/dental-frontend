@@ -52,3 +52,14 @@ export function isLoginPath(path = window.location.pathname): boolean {
   }
   return /^\/(login|вход|crm|admin)\/?$/i.test(p)
 }
+
+/** Страница «Скачать Tish» (PWA): tish.kg/app, а также /app/, /download, /скачать. */
+export function isDownloadPath(path = window.location.pathname): boolean {
+  let p = path
+  try {
+    p = decodeURIComponent(path)
+  } catch {
+    // кривой адрес — как есть
+  }
+  return /^\/(app|download|скачать)\/?$/i.test(p)
+}

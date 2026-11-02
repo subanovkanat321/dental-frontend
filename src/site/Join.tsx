@@ -145,7 +145,7 @@ export function Join() {
         {errors.form && <p className="error" role="alert">{errors.form}</p>}
         <button type="submit" className="btn primary" disabled={sending}>Оставить заявку</button>
       </form>
-      <footer className="site-footer">© {new Date().getFullYear()}</footer>
+      <footer className="site-footer"><a href="/app">📲 Скачать приложение</a> · <a href="/login">Вход для клиники</a> · © {new Date().getFullYear()}</footer>
     </main>
   )
 }

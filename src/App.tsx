@@ -4,11 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import type { Schemas } from './api/client'
+import { DownloadPage } from './pwa/DownloadPage'
 import { Login } from './layout/Login'
 import { Shell } from './layout/Shell'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
-import { isLoginPath, usePage, type Page } from './lib/route'
+import { isDownloadPath, isLoginPath, usePage, type Page } from './lib/route'
 import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
 import { launchedAsApp } from './pwa/pwa'
@@ -60,6 +61,8 @@ export function App() {
   // «Записать» из карточки пациента: в «Расписание» с открытой «Новой записью» на него
   const [booking, setBooking] = useState<Schemas['PatientView'] | null>(null)
 
+  // tish.kg/app — «Скачать Tish»: без входа, до проверки сессии
+  if (isDownloadPath()) return <DownloadPage />
   if (me.isPending) {
     return <div className="center hint">Загрузка…</div>
   }
