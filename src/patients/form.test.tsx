@@ -71,3 +71,27 @@ test('карточка пациента: изменить место работ�
   expect(await within(panel).findByRole('button', { name: 'Изменить данные пациента' })).toBeInTheDocument()
   expect(saved).toEqual({ fullName: 'Айгуль Т.', phone: '+996 700 333 444', allowDuplicate: false, workplace: 'школа №5', source: 'RECOMMENDATION' })
 })
+
+test('карточка пациента: «откуда узнал» не указано — видно сразу и выбирается одним нажатием', async () => {
+  let saved: Record<string, unknown> | null = null
+  const p = { id: 3, fullName: 'Бакыт М.', phone: '996700555666', workplace: 'школа №5' }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([p])),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/appointments/by-patient/3', () => HttpResponse.json(card(saved ? { ...p, source: 'INSTAGRAM' } : p))),
+    http.put('*/api/patients/3', async ({ request }) => {
+      saved = await request.json() as Record<string, unknown>
+      return HttpResponse.json({ ...p, source: 'INSTAGRAM' })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Бакыт М.' }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка пациента' })
+  const source = await within(panel).findByRole('combobox', { name: 'Откуда узнал о клинике' })
+  expect(source).toHaveValue('')
+  await user.selectOptions(source, '📱 Instagram, соцсети')
+  await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', phone: '+996700555666', workplace: 'школа №5', source: 'INSTAGRAM' }))
+  await vi.waitFor(() => expect(within(panel).getByRole('combobox', { name: 'Откуда узнал о клинике' })).toHaveValue('INSTAGRAM'))
+})

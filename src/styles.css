@@ -977,3 +977,8 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
   .table tr.group-row { padding: 12px 2px 0; border: 0; background: none; }
   .table tr.clickable { cursor: pointer; }
 }
+
+/* Карточка пациента: «Откуда узнал о клинике» — заметной строкой, не указано — подсвечено */
+.source-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: 4px 0 10px; }
+.source-line select { flex: 1 1 200px; max-width: 320px; }
+.source-line select.empty { border-color: var(--wait-ink); background: color-mix(in srgb, var(--wait-bg) 45%, var(--card)); color: var(--wait-ink); font-weight: 600; }

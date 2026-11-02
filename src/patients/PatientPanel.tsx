@@ -7,7 +7,7 @@ import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
 import { canEditDoctor, isAssistant, seesMoneyOf } from '../lib/roles'
 import { debtLine } from '../lib/debt'
-import { sourceText } from '../lib/sources'
+import { SOURCES, sourceText, type PatientSource } from '../lib/sources'
 import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
 import { ContactButtons } from '../schedule/Contact'
 import { statusOf } from '../schedule/status'
@@ -135,8 +135,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         {patient?.telegram ? 'Пишет боту — напоминания в Telegram' : 'Без бота — напоминание в WhatsApp'}
         {patient?.birthDate ? ` · ${shortDate(`${patient.birthDate}T12:00:00Z`)} (${ageText(patient.birthDate)})` : ''}
         {patient?.workplace ? ` · 💼 ${patient.workplace}` : ''}
-        {patient?.source ? ` · ${sourceText(patient.source)}` : ''}
       </p>
+      {patient && <SourceLine patient={patient} canEdit={Boolean(mine)} />}
       <p className="stats">
         <span className="chip small s-done">Был: <b className="num">{done ?? 0}</b></span>
         <span className={`chip small ${noShow ? 's-bad' : 's-quiet'}`}>Не пришёл: <b className="num">{noShow ?? 0}</b></span>
@@ -231,6 +231,35 @@ function PatientExpenses({ patient, me }: { patient: Patient; me: Me }) {
       ) : (
         <button type="button" className="btn" onClick={() => setOpen(true)}>💸 Расход по пациенту (техник)</button>
       )}
+    </div>
+  )
+}
+
+/**
+ * «Откуда узнал о клинике» — отдельной строкой: не указано — видно сразу, выбрать — одним нажатием
+ * (раньше только в «Изменить данные», и пустое в карточке не показывалось). По нему — «Касса →
+ * Аналитика → Откуда пациенты».
+ */
+function SourceLine({ patient: p, canEdit }: { patient: Schemas['PatientView']; canEdit: boolean }) {
+  const client = useQueryClient()
+  const save = useMutation<Schemas['PatientView'], ApiError, PatientSource | ''>({
+    mutationFn: (source) => unwrap(api.PUT('/api/patients/{id}', {
+      params: { path: { id: p.id! } },
+      body: { fullName: p.fullName, phone: p.phone ? `+${p.phone}` : p.phone, allowDuplicate: true, birthDate: p.birthDate || undefined, workplace: p.workplace ?? '', source: source || undefined },
+    })),
+    onSuccess: () => { for (const key of ['patients', 'patient-card', 'appointments', 'sources']) void client.invalidateQueries({ queryKey: [key] }) },
+  })
+  return (
+    <div className="source-line">
+      <span className="hint">Откуда узнал о клинике</span>
+      {canEdit ? (
+        <select aria-label="Откуда узнал о клинике" value={p.source ?? ''} disabled={save.isPending}
+          className={p.source ? '' : 'empty'} onChange={(e) => save.mutate(e.target.value as PatientSource | '')}>
+          <option value="">— не указано, выбрать</option>
+          {SOURCES.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
+        </select>
+      ) : <strong>{sourceText(p.source)}</strong>}
+      {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </div>
   )
 }
