@@ -1,5 +1,5 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { type CSSProperties } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useWaitlist } from '../api/settings'
@@ -20,13 +20,16 @@ type Item =
   | { kind: 'free'; at: string; end: string; doctorId: number }
   | { kind: 'pause'; at: string; end: string; title: string; emoji: string; doctorId: number }
 
-const WEEKDAY = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'short' })
-const MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'short' })
-const monthOf = (d: string) => MONTH.format(new Date(`${d}T00:00:00Z`)).replace('.', '')
+const WEEKDAY = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'long' })
+const DAY_MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', day: 'numeric', month: 'long' })
+const at0 = (d: string) => new Date(`${d}T00:00:00Z`)
 
-/** Лента дней: неделя назад и три вперёд; число — сколько записей, оранжевое — есть заявки. */
-function stripDays(today: string): string[] {
-  return Array.from({ length: 28 }, (_, i) => addDays(today, i - 7))
+/** «Сегодня» / «Завтра» / «Вчера» или день недели; ниже — «понедельник, 2 ноября». */
+function dayTitle(date: string, today: string): { main: string; sub: string } {
+  const near = date === today ? 'Сегодня' : date === addDays(today, 1) ? 'Завтра' : date === addDays(today, -1) ? 'Вчера' : null
+  const weekday = WEEKDAY.format(at0(date))
+  const dayMonth = DAY_MONTH.format(at0(date))
+  return near ? { main: near, sub: `${weekday}, ${dayMonth}` } : { main: weekday.replace(/^./, (x) => x.toUpperCase()), sub: dayMonth }
 }
 
 /** Пациент из листа ожидания помещается в окно: по длительности и, если уже записан, окно раньше его приёма. */
@@ -45,7 +48,7 @@ function shortName(name: string): string {
 }
 
 /**
- * «День» списком — как в прежнем приложении на телефоне: лента дней с числом записей,
+ * «День» списком — как в прежнем приложении на телефоне: один день крупно (листать стрелками, любой — календарём),
  * «Принять сейчас», строки по времени — приёмы, «свободно до …» (нажать — записать) и перерывы.
  * Один врач — его день; «Все врачи» — все приёмы вместе, у строки имя врача, свободные окна
  * каждого врача отдельно. У приёма — быстрое напоминание (Telegram или WhatsApp). Завтра — «Готово X из Y».
@@ -64,14 +67,6 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   const today = todayIn()
   const many = doctors.length > 1
   const canEditDoctor = (id: number) => canEdit(me, id)
-  const days = stripDays(today)
-  const counts = useQueries({
-    queries: doctors.map((d) => ({
-      queryKey: ['counts', d.id, days[0]],
-      queryFn: () => unwrap(api.GET('/api/appointments/counts', { params: { query: { from: days[0]!, days: days.length, doctorId: d.id } } })),
-      staleTime: 60_000,
-    })),
-  })
   const appointments = useQueries({
     queries: doctors.map((d) => ({
       queryKey: ['appointments', date, d.id],
@@ -97,10 +92,6 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
     queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: date, to: date, ...(single ? { doctorId: single.id } : {}) } } })),
     enabled: seesMoney && date <= today && list.some((a) => a.status === 'DONE'),
   })
-  const strip = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    strip.current?.querySelector('[aria-pressed=true]')?.scrollIntoView?.({ inline: 'center', block: 'nearest' })
-  }, [date])
 
   const nameOf = new Map(doctors.map((d) => [d.id, shortName(d.name)]))
   // Строки одного врача по времени: приёмы, свободные окна, перерывы
@@ -123,35 +114,23 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
     date === addDays(today, 1) && scheduled.length ? `Готово ${ready} из ${scheduled.length}` : null,
     revenue.data?.totalSom ? `За день: ${somText(revenue.data.totalSom)}` : null,
   ].filter(Boolean).join(' · ')
+  const title = dayTitle(date, today)
   const walkInDoctor = doctors.find((d) => d.id === me.doctorId) ?? doctors.find((d) => canEditDoctor(d.id))
   const pending = appointments.some((q) => q.isPending) || slots.some((q) => q.isPending)
   const failed = appointments.find((q) => q.error)?.error
 
   return (
     <div className="day-list">
-      <div ref={strip} className="strip" role="group" aria-label="Дни">
-        {days.map((d, i) => {
-          const booked = counts.reduce((sum, q) => sum + (q.data?.[i]?.booked ?? 0), 0)
-          const requested = counts.some((q) => q.data?.[i]?.requested)
-          const wd = new Date(`${d}T00:00:00Z`).getUTCDay()
-          return (
-            <button key={d} type="button" className={['strip-day', d === today ? 'today' : '', wd === 0 || wd === 6 ? 'weekend' : ''].join(' ').trim()}
-              aria-pressed={d === date} onClick={() => onDate(d)}
-              aria-label={`${d === today ? 'Сегодня' : WEEKDAY.format(new Date(`${d}T00:00:00Z`))}, ${Number(d.slice(8))}${booked ? `: записей ${booked}` : ''}`}>
-              <span className="wd">{d === today ? 'Сегодня' : WEEKDAY.format(new Date(`${d}T00:00:00Z`)).replace(/^./, (x) => x.toUpperCase())}</span>
-              <span className="dn">{Number(d.slice(8))}</span>
-              <span className="mn">{monthOf(d)}</span>
-              <span className={requested ? 'badge requested' : 'badge'} aria-hidden="true">{booked || ''}</span>
-            </button>
-          )
-        })}
-        {/* Любой другой день — календарём; выбран день вне ленты — он здесь и подсвечен */}
-        <label className={days.includes(date) ? "strip-day pick" : "strip-day pick active"}>
-          {days.includes(date) ? <><span className="wd">Другой</span><span className="dn" aria-hidden="true">📅</span><span className="mn">день</span></>
-            : <><span className="wd">{WEEKDAY.format(new Date(`${date}T00:00:00Z`)).replace(/^./, (x) => x.toUpperCase())}</span>
-              <span className="dn">{Number(date.slice(8))}</span><span className="mn">{monthOf(date)}</span></>}
+      {/* Один день крупно: стрелки — на день назад и вперёд, нажать на дату — календарь, «Сегодня» — назад */}
+      <div className="date-bar" role="group" aria-label="День">
+        <button type="button" className="date-step" aria-label="Предыдущий день" onClick={() => onDate(addDays(date, -1))}>‹</button>
+        <label className="date-pick">
+          <span className="date-main">{title.main} <span className="date-caret" aria-hidden="true">▾</span></span>
+          <span className="date-sub">{title.sub}</span>
           <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && onDate(e.target.value)} />
         </label>
+        <button type="button" className="date-step" aria-label="Следующий день" onClick={() => onDate(addDays(date, 1))}>›</button>
+        {date !== today && <button type="button" className="btn small date-today" onClick={() => onDate(today)}>Сегодня</button>}
       </div>
       {single && !canEditDoctor(single.id) && <p className="readonly-note">Расписание коллеги — только просмотр</p>}
       <div className="day-actions">

@@ -48,8 +48,8 @@ test('телефон, «Все врачи» — список: приёмы об�
   await userEvent.click(screen.getByRole('button', { name: 'Все врачи' }))
   expect(await screen.findByRole('button', { name: /12:00–12:30, Нурлан К\./ })).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: 'Дастан Т.' })).not.toBeInTheDocument() // не сетка
-  // Верх на телефоне — без повторов: дни листают лентой, одна «Новая запись» рядом с «Без записи»
-  expect(screen.queryByRole('button', { name: 'Предыдущий день' })).not.toBeInTheDocument()
+  // Верх на телефоне — без повторов: один день крупно, одна «Новая запись» рядом с «Без записи»
+  expect(screen.getAllByRole('button', { name: 'Предыдущий день' })).toHaveLength(1)
   expect(screen.getAllByRole('button', { name: '＋ Новая запись' })).toHaveLength(1)
   expect(screen.getByRole('button', { name: 'Принять сейчас (без записи)' })).toBeInTheDocument()
   expect(screen.getByLabelText('Выбрать дату')).toBeInTheDocument()
@@ -84,4 +84,17 @@ test('телефон в Telegram — «＋ Новая запись» кнопк�
   } finally {
     vi.unstubAllGlobals()
   }
+})
+
+test('телефон: вместо ленты — один день; стрелка — «Завтра», «Сегодня» — назад', async () => {
+  backend()
+  renderApp()
+  const bar = await screen.findByRole('group', { name: 'День' })
+  expect(within(bar).getByText('Сегодня')).toBeInTheDocument()
+  expect(within(bar).queryByRole('button', { name: 'Сегодня' })).not.toBeInTheDocument()
+  await userEvent.click(within(bar).getByRole('button', { name: 'Следующий день' }))
+  expect(within(bar).getByText('Завтра')).toBeInTheDocument()
+  await userEvent.click(within(bar).getByRole('button', { name: 'Сегодня' }))
+  expect(within(bar).getByText('Сегодня')).toBeInTheDocument()
+  expect(within(bar).queryByRole('button', { name: 'Сегодня' })).not.toBeInTheDocument()
 })
