@@ -1,16 +1,44 @@
-import { isFullPhone } from './phone'
+import { useState } from 'react'
+
+import { Select } from '../layout/Select'
+import { OTHER_COUNTRY, PHONE_COUNTRIES } from '../lib/phone'
+import { joinPhone, phoneCountry, splitPhone } from './phone'
 
 /**
- * Телефон с «+996» перед полем — как в приложении: местный номер «555 123 456» дополняется кодом
- * страны, полный («+7…», «996…», «0555…») отправляется как есть. Проверяет и нормализует сервер.
+ * Телефон: страна (флаг и код) и номер. По умолчанию Кыргызстан — местный «555 123 456» или «0555…»
+ * уходит как набран и дополняется +996 (phoneFromInput). Вставили «+7 701…» или «+998…» — страна
+ * переключается сама. Проверяет и нормализует сервер.
+ *
+ * Поле ввода в разметке — первым: так подпись `<label>` вокруг ведёт в номер, а не открывает список
+ * стран; слева страну ставит CSS (`order`).
  */
 export function PhoneInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  // Выбранная страна нужна, пока номер пуст: в самом значении её ещё нет
+  const [picked, setPicked] = useState(() => splitPhone(value, 'KG').country)
+  const { country, local } = splitPhone(value, picked)
+  const c = phoneCountry(country)
+
+  const type = (text: string) => {
+    // Набрали или вставили номер с «+» — он сам говорит, какая страна
+    const next = splitPhone(/^\s*(\+|00)/.test(text) ? text : joinPhone(country, text) || '', country)
+    setPicked(next.country)
+    onChange(joinPhone(next.country, next.local))
+  }
+
+  const pick = (id: string) => {
+    setPicked(id)
+    onChange(joinPhone(id, local))
+  }
+
   return (
-    <div className={isFullPhone(value) ? 'phone full' : 'phone'}>
-      {!isFullPhone(value) && <span>+996</span>}
-      <input aria-label={label} type="tel" inputMode="tel" autoComplete="off" maxLength={20} placeholder="555 123 456"
-        value={value} onChange={(e) => onChange(e.target.value)} />
+    <div className="phone">
+      <input aria-label={label} type="tel" inputMode="tel" autoComplete="off" maxLength={24} placeholder={c.example}
+        value={local} onChange={(e) => type(e.target.value)} />
+      <Select aria-label="Код страны" value={country} onChange={(e) => pick(e.target.value)}>
+        {[...PHONE_COUNTRIES, OTHER_COUNTRY].map((o) => (
+          <option key={o.id} value={o.id}>{`${o.flag} +${o.code} · ${o.name}`}</option>
+        ))}
+      </Select>
     </div>
   )
 }
-

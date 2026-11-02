@@ -51,11 +51,8 @@ export function somText(som: number): string {
   return `${new Intl.NumberFormat('ru-RU').format(som)} сом`
 }
 
-/** 996555123456 → +996 555 123 456. */
-export function formatPhone(digits: string): string {
-  const kg = /^996(\d{3})(\d{3})(\d{3})$/.exec(digits)
-  return kg ? `+996 ${kg[1]} ${kg[2]} ${kg[3]}` : `+${digits}`
-}
+/** 996555123456 → +996 555 123 456, 77012345678 → +7 701 234 56 78 — правила стран в lib/phone.ts. */
+export { formatPhone } from './phone'
 
 /** '2026-10-31' + 630 минут по Бишкеку (UTC+6, без летнего времени) → ISO в UTC. */
 export function slotInstant(date: string, minutes: number): string {
