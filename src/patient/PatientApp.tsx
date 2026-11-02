@@ -49,6 +49,9 @@ function firstScreen(me: Me): Screen {
 /** Известные коды ошибок сервера → текст на языке пациента; к «запись закрыта» — как связаться с клиникой. */
 const ERRORS: Record<string, [key: string, call: boolean]> = {
   'subscription-paused': ['errPaused', true],
+  'clinic-paused': ['errClinicPaused', true],
+  // Гонка или двойное нажатие: экран перечитывается сам (createQueryClient), просим повторить
+  stale: ['errStale', false],
   'booking-off': ['errBookingOff', true],
   'already-booked': ['errAlreadyBooked', false],
   'no-booking': ['errNoBooking', false],
@@ -134,6 +137,7 @@ export default function PatientApp({ me }: { me: Me }) {
   return (
     <div className="patient">
       {current.name !== 'privacy' && <LangSwitch lang={lang} onChange={setLang} />}
+      {me.elsewhere?.booking?.startAt && current.name !== 'privacy' && current.name !== 'clinics' && <Elsewhere ctx={ctx} />}
       {current.name === 'clinics' && <ClinicsScreen ctx={ctx} back={current.back} />}
       {current.name === 'doctors' && <DoctorsScreen ctx={ctx} />}
       {current.name === 'book' && doctor && <BookScreen key={doctor.id} ctx={ctx} doctor={doctor} />}
@@ -142,6 +146,29 @@ export default function PatientApp({ me }: { me: Me }) {
       {current.name === 'reschedule' && me.booking && <RescheduleScreen ctx={ctx} />}
       {current.name === 'news' && <NewsScreen ctx={ctx} back={current.back} />}
       {current.name === 'privacy' && <PrivacyScreen ctx={ctx} back={current.back} />}
+    </div>
+  )
+}
+
+/**
+ * Запись в другой клинике (в этой записи нет): напомнить о ней и одной кнопкой вернуться в ту
+ * клинику — иначе пациент думает, что запись пропала, и записывается заново.
+ */
+function Elsewhere({ ctx }: { ctx: Ctx }) {
+  const { me, t, lang } = ctx
+  const e = me.elsewhere!
+  const open = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/patient/clinic', { body: { clinicId: e.clinicId! } })),
+    onSuccess: () => {
+      haptic('success')
+      ctx.reload()
+    },
+  })
+  return (
+    <div className="deposit-card elsewhere" role="status">
+      <span>📅 {t('elsewhere', { clinic: e.clinicName ?? '', when: whenAt(lang, e.booking!.startAt!) })}</span>
+      <button type="button" className="btn" disabled={open.isPending} onClick={() => open.mutate()}>{t('elsewhereOpen')}</button>
+      {open.error && <p className="error" role="alert">{errorText(t, open.error, me.clinicContact)}</p>}
     </div>
   )
 }

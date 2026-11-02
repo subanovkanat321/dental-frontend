@@ -228,3 +228,42 @@ test('перенос: запись дальше ленты — выбран пе
   await vi.waitFor(() => expect(asked).toEqual([todayIn()]))
   window.history.replaceState(null, '', '/')
 })
+
+test('запись в другой клинике — карточка и «Открыть эту клинику»', async () => {
+  fakeTelegram()
+  let chosen: unknown = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({
+      elsewhere: { clinicId: 3, clinicName: 'Улыбка', booking: { id: 7, startAt: slotInstant(addDays(todayIn(), 1), 600), status: 'SCHEDULED' } },
+    }))),
+    http.put('*/api/patient/clinic', async ({ request }) => {
+      chosen = await request.json()
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  expect(await screen.findByText('📅 У вас запись в «Улыбка»: Завтра, в 10:00')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Открыть эту клинику' }))
+  await vi.waitFor(() => expect(chosen).toEqual({ clinicId: 3 }))
+})
+
+test('клиника на паузе (clinic-paused) и гонка (stale) — свои тексты; номер клиники — если известен', async () => {
+  fakeTelegram()
+  const tomorrow = addDays(todayIn(), 1)
+  let code = 'clinic-paused'
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ clinicContact: '+996 555 000 111', doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
+    http.post('*/api/patient/booking', () => HttpResponse.json({ status: 409, code, detail: 'серверный текст' }, { status: 409 })),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: '10:00' }))
+  await user.click(screen.getByRole('checkbox', { name: /ИП Тест обрабатывает/ }))
+  await user.click(screen.getByRole('button', { name: 'Записаться' }))
+  expect(await screen.findByText('Запись онлайн временно недоступна. Позвоните в клинику: +996 555 000 111')).toBeInTheDocument()
+  code = 'stale'
+  await user.click(screen.getByRole('button', { name: 'Записаться' }))
+  expect(await screen.findByText(/Данные только что изменились/)).toBeInTheDocument()
+})
