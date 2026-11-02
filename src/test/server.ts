@@ -18,6 +18,8 @@ export const SOURCES: Schemas['PatientSourcesOption'][] = [
  */
 export const server = setupServer(
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // Уведомления в приложение: по умолчанию на сервере не включены — блок в «Настройках» скрыт
+  http.get('*/api/push', () => HttpResponse.json({ enabled: false, channel: 'TELEGRAM', devices: [] })),
   http.get('*/api/patient-sources', () => HttpResponse.json(SOURCES)),
   // Промокоды (V122): по умолчанию у клиники их нет
   http.get('*/api/promo-codes', () => HttpResponse.json([])),

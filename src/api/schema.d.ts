@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/push/channel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["channel"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/promo-codes/{id}": {
         parameters: {
             query?: never;
@@ -830,6 +846,54 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["payAssistant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/push/unsubscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["unsubscribe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/push/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/push/subscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["subscribe_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2228,6 +2292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["view_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/support/tickets": {
         parameters: {
             query?: never;
@@ -2763,7 +2843,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_3"];
+        get: operations["view_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3406,6 +3486,15 @@ export interface components {
             /** Format: int64 */
             paidSom?: number;
             former?: boolean;
+        };
+        PushControllerChannelForm: {
+            channel?: string;
+        };
+        PushControllerPushView: {
+            enabled?: boolean;
+            publicKey?: string;
+            channel?: string;
+            devices?: string[];
         };
         PromoCodesRequest: {
             code?: string;
@@ -4079,6 +4168,18 @@ export interface components {
             month?: string;
             /** Format: int64 */
             amountSom?: number;
+        };
+        PushControllerEndpointForm: {
+            endpoint?: string;
+        };
+        PushControllerTestResult: {
+            /** Format: int32 */
+            sent?: number;
+        };
+        PushControllerSubscriptionForm: {
+            endpoint?: string;
+            p256dh?: string;
+            auth?: string;
         };
         PayControllerReject: {
             comment?: string;
@@ -5238,6 +5339,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SalaryControllerSalaryRow"];
+                };
+            };
+        };
+    };
+    channel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushControllerChannelForm"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushControllerPushView"];
                 };
             };
         };
@@ -6835,6 +6960,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SalaryControllerSalaryRow"];
+                };
+            };
+        };
+    };
+    unsubscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushControllerEndpointForm"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushControllerPushView"];
+                };
+            };
+        };
+    };
+    test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushControllerTestResult"];
+                };
+            };
+        };
+    };
+    subscribe_1: {
+        parameters: {
+            query?: never;
+            header?: {
+                "User-Agent"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushControllerSubscriptionForm"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushControllerPushView"];
                 };
             };
         };
@@ -9447,6 +9642,26 @@ export interface operations {
             };
         };
     };
+    view_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushControllerPushView"];
+                };
+            };
+        };
+    };
     all_6: {
         parameters: {
             query?: never;
@@ -10165,7 +10380,7 @@ export interface operations {
             };
         };
     };
-    view_3: {
+    view_4: {
         parameters: {
             query?: never;
             header?: never;

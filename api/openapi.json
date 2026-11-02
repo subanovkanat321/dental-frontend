@@ -283,6 +283,34 @@
         }
       }
     },
+    "/api/push/channel" : {
+      "put" : {
+        "tags" : [ "push-controller" ],
+        "operationId" : "channel",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PushControllerChannelForm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PushControllerPushView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/promo-codes/{id}" : {
       "put" : {
         "tags" : [ "promo-code-controller" ],
@@ -2291,6 +2319,88 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/SalaryControllerSalaryRow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/push/unsubscribe" : {
+      "post" : {
+        "tags" : [ "push-controller" ],
+        "operationId" : "unsubscribe",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PushControllerEndpointForm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PushControllerPushView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/push/test" : {
+      "post" : {
+        "tags" : [ "push-controller" ],
+        "operationId" : "test",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PushControllerTestResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/push/subscribe" : {
+      "post" : {
+        "tags" : [ "push-controller" ],
+        "operationId" : "subscribe_1",
+        "parameters" : [ {
+          "name" : "User-Agent",
+          "in" : "header",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PushControllerSubscriptionForm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PushControllerPushView"
                 }
               }
             }
@@ -5487,6 +5597,24 @@
         }
       }
     },
+    "/api/push" : {
+      "get" : {
+        "tags" : [ "push-controller" ],
+        "operationId" : "view_3",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PushControllerPushView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/support/tickets" : {
       "get" : {
         "tags" : [ "support-controller" ],
@@ -6319,7 +6447,7 @@
     "/api/clinic/pay" : {
       "get" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "view_3",
+        "operationId" : "view_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -7485,6 +7613,32 @@
           },
           "former" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "PushControllerChannelForm" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PushControllerPushView" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "publicKey" : {
+            "type" : "string"
+          },
+          "channel" : {
+            "type" : "string"
+          },
+          "devices" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -9127,6 +9281,34 @@
           "amountSom" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "PushControllerEndpointForm" : {
+        "properties" : {
+          "endpoint" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PushControllerTestResult" : {
+        "properties" : {
+          "sent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PushControllerSubscriptionForm" : {
+        "properties" : {
+          "endpoint" : {
+            "type" : "string"
+          },
+          "p256dh" : {
+            "type" : "string"
+          },
+          "auth" : {
+            "type" : "string"
           }
         }
       },
