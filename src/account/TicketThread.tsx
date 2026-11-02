@@ -58,7 +58,7 @@ export function TicketPanel({ id, platform = false, onClose }: { id: number; pla
     <aside className="panel" aria-label="Обращение">
       <header className="panel-head">
         <div>
-          <h2>{TICKET_KINDS[t?.kind ?? 'QUESTION']?.title ?? 'Обращение'}</h2>
+          <h2>{t?.viaBot ? '💬 Помощь' : TICKET_KINDS[t?.kind ?? 'QUESTION']?.title ?? 'Обращение'}</h2>
           {t && <span className={`chip small ${cls}`}>{status}</span>}
           {platform && t && <span className="hint"> {t.clinicName} · {t.author}</span>}
         </div>
@@ -69,7 +69,7 @@ export function TicketPanel({ id, platform = false, onClose }: { id: number; pla
       <div className="ticket-thread">
         {(thread.data?.messages ?? []).map((m) => (
           <div key={m.id} className={m.fromPlatform ? 'ticket-msg from-platform' : 'ticket-msg'}>
-            <p className="hint">{m.author} · {m.createdAt ? `${shortDate(m.createdAt)} ${timeOf(m.createdAt)}` : ''}</p>
+            <p className="hint">{m.fromBot ? '🤖 ' : ''}{m.author} · {m.createdAt ? `${shortDate(m.createdAt)} ${timeOf(m.createdAt)}` : ''}</p>
             <p>{m.text}</p>
             {m.hasImage && <MessageImage path={`${base}/messages/${m.id}/image`} />}
           </div>

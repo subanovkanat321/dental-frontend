@@ -38,7 +38,7 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
                   return (
                     <tr key={t.id} className={t.id === opened ? 'active' : undefined}>
                       <td><button type="button" className="row-link" onClick={() => setOpened(t.id!)}>{t.clinicName}</button></td>
-                      <td>{TICKET_KINDS[t.kind ?? 'QUESTION']?.title}<span className="hint"> · {t.preview}</span></td>
+                      <td>{t.viaBot ? (t.escalated ? '💬 Помощь — бот передал вам' : '💬 Помощь — ответил бот') : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}<span className="hint"> · {t.preview}</span></td>
                       <td><span className={`chip small ${cls}`}>{status}</span></td>
                       <td className="hint nowrap">{t.updatedAt ? shortDate(t.updatedAt) : ''} · {t.author}</td>
                     </tr>

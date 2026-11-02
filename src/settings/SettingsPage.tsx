@@ -22,7 +22,7 @@ const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬' }
 
 type Item = {
   key: string
@@ -75,6 +75,8 @@ const GROUPS: [string, Item[]][] = [
       () => (me, back) => <ProfilePage me={me} onBack={back} />),
     item('guide', 'Памятка', 'Как записать, напомнить, принять оплату', all,
       () => (me, back) => <GuidePage me={me} onBack={back} />),
+    item('help', 'Помощь', 'Спросить помощника о Tish — ответит сразу', all,
+      (title) => (me, back) => <AccountPage me={me} only="support" title={title} onBack={back} initialHelp />),
     item('support', 'Техподдержка', 'Написать команде Tish, частые вопросы', all, account('support')),
     item('dental-news', 'Новости стоматологии', 'Подборка профессиональных изданий', all, account('news')),
     item('privacy', 'Конфиденциальность', 'Как мы обращаемся с данными пациентов', all, account('privacy')),

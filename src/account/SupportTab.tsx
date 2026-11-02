@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
 import { formatPhone, shortDate } from '../lib/time'
 import { DeveloperContacts } from './Contacts'
+import { HelpChatPanel } from './HelpChat'
 import { ShotPicker, TicketPanel } from './TicketThread'
 import { ticketForm } from './tickets'
 import { TICKET_KINDS, TICKET_STATUS } from './texts'
@@ -12,6 +13,9 @@ import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Thread = Schemas['SupportTicketsThread']
+
+/** Чат с помощником — вместо вида обращения в состоянии «что открыто справа». */
+const HELP = 'help'
 
 /** Частые вопросы врачей — ответ сразу, без звонка в поддержку. */
 const FAQ: [string, string][] = [
@@ -26,26 +30,37 @@ const FAQ: [string, string][] = [
  * «Техподдержка»: написать команде Tish (вопрос, идея, проблема) и переписка — справа; контакты
  * поддержки клиники и разработчиков; частые вопросы.
  */
-export function SupportTab({ me, clinic, header, onPanel, initialTicket }: {
+export function SupportTab({ me, clinic, header, onPanel, initialTicket, initialHelp = false }: {
   me: Me
   clinic?: Schemas['ClinicView']
   header: ReactNode
   onPanel: (open: boolean) => void
   /** Кнопка бота «Открыть ответ»: сразу переписка по обращению. */
   initialTicket?: number
+  /** «Настройки → Помощь» и «Памятка»: сразу чат с помощником. */
+  initialHelp?: boolean
 }) {
   const list = useQuery({ queryKey: ['support-tickets'], queryFn: () => unwrap(api.GET('/api/support/tickets')) })
-  const [opened, setOpenedState] = useState<number | string | null>(initialTicket ?? null)
+  const [opened, setOpenedState] = useState<number | string | null>(initialTicket ?? (initialHelp ? HELP : null))
   const setOpened = useCallback((next: number | string | null) => {
     setOpenedState(next)
     onPanel(next != null)
   }, [onPanel])
   const close = useCallback(() => setOpened(null), [setOpened])
+  // Переписку из чата помощи открываем снова чатом, а не обычным обращением
+  const openedTicket = typeof opened === 'number' ? list.data?.find((t) => t.id === opened) : undefined
 
   return (
     <>
       <section className="schedule-main">
         {header}
+        <section className="card-block" aria-label="Помощь">
+          <div className="block-head">
+            <h2>💬 Помощь</h2>
+            <span className="actions"><button type="button" className="btn primary" onClick={() => setOpened(HELP)}>Спросить помощника</button></span>
+          </div>
+          <p className="hint">Помощник сразу подскажет, как что-то сделать в Tish. Не знает ответа — передаст вопрос команде Tish.</p>
+        </section>
         <section className="card-block">
           <div className="block-head">
             <h2>Написать команде Tish</h2>
@@ -62,7 +77,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket }: {
                   const [status, cls] = TICKET_STATUS[t.status ?? 'OPEN'] ?? ['', 's-quiet']
                   return (
                     <tr key={t.id} className={t.id === opened ? 'active' : undefined}>
-                      <td><button type="button" className="row-link" onClick={() => setOpened(t.id!)}>{TICKET_KINDS[t.kind ?? 'QUESTION']?.title}</button>
+                      <td><button type="button" className="row-link" onClick={() => setOpened(t.id!)}>{t.viaBot ? '💬 Помощь' : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}</button>
                         <span className="hint"> · {t.preview}</span></td>
                       <td><span className={`chip small ${cls}`}>{status}</span></td>
                       <td className="hint nowrap">{t.updatedAt ? shortDate(t.updatedAt) : ''}{t.author ? ` · ${t.author}` : ''}</td>
@@ -90,8 +105,11 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket }: {
           {FAQ.map(([q, a]) => <details key={q} className="faq"><summary>{q}</summary><p>{a}</p></details>)}
         </section>
       </section>
-      {typeof opened === 'string' && <NewTicketPanel key={opened} kind={opened} onClose={close} onSent={(id) => setOpened(id)} />}
-      {typeof opened === 'number' && <TicketPanel key={opened} id={opened} onClose={close} />}
+      {opened === HELP && <HelpChatPanel key="help" onClose={close} />}
+      {typeof opened === 'string' && opened !== HELP && <NewTicketPanel key={opened} kind={opened} onClose={close} onSent={(id) => setOpened(id)} />}
+      {typeof opened === 'number' && !list.isPending && (openedTicket?.viaBot
+        ? <HelpChatPanel key="help" ticketId={opened} onClose={close} />
+        : <TicketPanel key={opened} id={opened} onClose={close} />)}
     </>
   )
 }
