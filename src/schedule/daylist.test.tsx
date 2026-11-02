@@ -155,3 +155,19 @@ test('телефон: «WA» — WhatsApp с подписью клиники, з
   expect(calls).toEqual(['opened'])
   vi.restoreAllMocks()
 })
+
+test('телефон: короткая полоса «Сегодня» над днём — заявки и склад; нажать на заявку — её карточка', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1'
+      ? [appointment(10, 1, '23:30', 'Бакыт М.', { status: 'REQUESTED' })] : [])),
+    http.get('*/api/appointments/counts', () => HttpResponse.json([])),
+    http.get('*/api/supplies', () => HttpResponse.json([{ id: 1, name: 'Анестетик', unit: 'шт', quantity: 1, minQuantity: 5, low: true }])),
+  )
+  renderApp()
+  const strip = await screen.findByRole('group', { name: 'Требует внимания' })
+  expect(strip).toHaveClass('compact')
+  expect(await within(strip).findByRole('button', { name: /1 склад: мало/ })).toBeInTheDocument()
+  await userEvent.click(within(strip).getByRole('button', { name: /1 заявка/ }))
+  expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Бакыт М.')
+})
