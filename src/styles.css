@@ -1294,3 +1294,12 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .salary-howto ol { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 6px; }
 .salary-preview { margin: 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); }
 .day-quick.wrap { flex-wrap: wrap; }
+
+/* «Заполнить по умолчанию» (clinic/StarterPanel.tsx): плашка над услугами и панель */
+.starter-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--separator)); background: color-mix(in srgb, var(--accent-soft) 45%, var(--card)); }
+.starter-card h2 { margin: 0 0 4px; font-size: 1.05rem; }
+.starter-card p { margin: 0; }
+.starter-block { display: grid; gap: 6px; padding: 12px 0; border-top: 1px solid var(--separator); }
+.starter-block p { margin: 0; }
+.starter-list { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; max-height: 40vh; overflow-y: auto; font-size: .92rem; }

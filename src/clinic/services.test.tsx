@@ -140,3 +140,42 @@ test('услуга: материалы по умолчанию — добави�
   expect(await within(box).findByText('Материалы сохранены')).toBeInTheDocument()
   expect(saved).toEqual({ items: [{ supplyId: 3, quantity: 2 }, { supplyId: 4, quantity: 1 }] })
 })
+
+test('«Заполнить по умолчанию»: что поставим, галочки и «Заполнить» — памятки и материалы', async () => {
+  let memos: Schemas['CareMemosSuggested'][] = [{ serviceId: 7, service: 'Удаление зуба мудрости', memoId: 1, memo: 'После удаления зуба' }]
+  let preview: Schemas['SupplyStarterPreview'] = {
+    missing: [{ name: 'Маски', unit: 'шт' }],
+    services: [{ id: 7, name: 'Удаление зуба мудрости', items: [{ name: 'Анестетик', unit: 'карп.', quantity: 2 }, { name: 'Маски', unit: 'шт', quantity: 1 }] }],
+  }
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json([{ id: 7, name: 'Удаление зуба мудрости', durationMinutes: 60, active: true }])),
+    http.get('*/api/care-memos/starter', () => HttpResponse.json(memos)),
+    http.get('*/api/supplies/starter', () => HttpResponse.json(preview)),
+    http.post('*/api/care-memos/starter', () => {
+      sent.push('memos')
+      memos = []
+      return HttpResponse.json({ services: 1 })
+    }),
+    http.post('*/api/supplies/starter', async ({ request }) => {
+      sent.push(await request.json())
+      preview = { missing: [], services: [] }
+      return HttpResponse.json({ created: 1, services: 1 })
+    }),
+  )
+  renderApp()
+  const card = await screen.findByRole('region', { name: 'Стартовая настройка' })
+  expect(card).toHaveTextContent('памятки (услуг: 1), что обычно уходит (услуг: 1), стандартные материалы на склад (1)')
+  await userEvent.click(within(card).getByRole('button', { name: 'Посмотреть и заполнить' }))
+  const panel = screen.getByRole('complementary', { name: 'Заполнить по умолчанию' })
+  expect(within(panel).getByRole('region', { name: 'Памятки' })).toHaveTextContent('Удаление зуба мудрости → После удаления зуба')
+  expect(within(panel).getByRole('region', { name: 'Материалы' })).toHaveTextContent('Анестетик 2 карп., Маски 1 шт')
+  expect(panel).toHaveTextContent('Новые: Маски (шт).')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Заполнить' }))
+  expect(await within(panel).findByRole('status')).toHaveTextContent(
+    'Готово: памятки поставлены (услуг: 1), новых материалов на складе: 1, «что обычно уходит» задано (услуг: 1).')
+  expect(sent).toEqual(['memos', { stock: true }])
+  await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }))
+  // Заполнили — плашки больше нет
+  await vi.waitFor(() => expect(screen.queryByRole('region', { name: 'Стартовая настройка' })).not.toBeInTheDocument())
+})

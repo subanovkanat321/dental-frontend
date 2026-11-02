@@ -1910,6 +1910,59 @@
         }
       }
     },
+    "/api/supplies/starter" : {
+      "get" : {
+        "tags" : [ "supply-starter-controller" ],
+        "operationId" : "preview",
+        "parameters" : [ {
+          "name" : "stock",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : true
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SupplyStarterPreview"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "supply-starter-controller" ],
+        "operationId" : "apply",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SupplyStarterControllerApply"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SupplyStarterApplied"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/supplies/samples" : {
       "post" : {
         "tags" : [ "supply-controller" ],
@@ -4210,6 +4263,43 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CareMemosCareMemoView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/care-memos/starter" : {
+      "get" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "starter",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CareMemosSuggested"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "applyStarter",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CareMemoControllerLinked"
                 }
               }
             }
@@ -8606,6 +8696,25 @@
           }
         }
       },
+      "SupplyStarterControllerApply" : {
+        "properties" : {
+          "stock" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "SupplyStarterApplied" : {
+        "properties" : {
+          "created" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "services" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "SupplyControllerAdded" : {
         "properties" : {
           "added" : {
@@ -9343,6 +9452,14 @@
           }
         }
       },
+      "CareMemoControllerLinked" : {
+        "properties" : {
+          "services" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "AppointmentRequestsCreate" : {
         "properties" : {
           "doctorId" : {
@@ -9629,6 +9746,63 @@
           "costSom" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "SupplyStarterLine" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SupplyStarterMissing" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SupplyStarterPreview" : {
+        "properties" : {
+          "missing" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SupplyStarterMissing"
+            }
+          },
+          "services" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SupplyStarterServiceLines"
+            }
+          }
+        }
+      },
+      "SupplyStarterServiceLines" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SupplyStarterLine"
+            }
           }
         }
       },
@@ -10352,6 +10526,24 @@
           "at" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "CareMemosSuggested" : {
+        "properties" : {
+          "serviceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "service" : {
+            "type" : "string"
+          },
+          "memoId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "memo" : {
+            "type" : "string"
           }
         }
       },

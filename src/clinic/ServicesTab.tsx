@@ -8,6 +8,7 @@ import { useDirty } from '../lib/unsaved'
 import { canEditServices } from '../lib/roles'
 import { ServiceMemo } from './MemosTab'
 import { ServiceSupplies } from './ServiceSupplies'
+import { StarterCard, StarterPanel } from './StarterPanel'
 import { groupByCategory, priceText, SERVICE_CATEGORIES } from './services'
 import { EmptyState } from '../layout/EmptyState'
 import { clearServiceToOpen, serviceToOpen } from '../lib/openService'
@@ -20,6 +21,10 @@ function useRefreshServices() {
   return () => {
     void client.invalidateQueries({ queryKey: ['service-types'] })
     void client.invalidateQueries({ queryKey: ['service-catalog'] })
+    // Новой услуге сервер сам ставит памятку и материалы по умолчанию
+    void client.invalidateQueries({ queryKey: ['care-memo-links'] })
+    void client.invalidateQueries({ queryKey: ['service-supplies'] })
+    void client.invalidateQueries({ queryKey: ['starter'] })
     // Услуги приходят и в me (новая запись, выбор услуги)
     void client.invalidateQueries({ queryKey: ['me'] })
   }
@@ -33,8 +38,8 @@ function useRefreshServices() {
 export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode; onPanel: (open: boolean) => void }) {
   const list = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')) })
   // Пришли из карточки приёма «Настроить материалы услуги» — сразу открыта эта услуга
-  const [opened, setOpenedState] = useState<number | 'new' | 'catalog' | null>(serviceToOpen)
-  const setOpened = useCallback((next: number | 'new' | 'catalog' | null) => {
+  const [opened, setOpenedState] = useState<number | 'new' | 'catalog' | 'starter' | null>(serviceToOpen)
+  const setOpened = useCallback((next: number | 'new' | 'catalog' | 'starter' | null) => {
     setOpenedState(next)
     onPanel(next != null)
   }, [onPanel])
@@ -52,6 +57,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
     <>
       <section className="schedule-main">
       {header}
+      {editable && services.length > 0 && <StarterCard onOpen={() => setOpened('starter')} />}
       <section className="card-block">
         <div className="block-head">
           <p className="hint">Их видят пациенты, когда записываются сами в боте. Длительность — сколько времени займёт приём.</p>
@@ -89,6 +95,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
       {opened === 'new' && <ServicePanel me={me} all={services} onClose={close} />}
       {openedService && <ServicePanel key={openedService.id} me={me} service={openedService} all={services} onClose={close} />}
       {opened === 'catalog' && <CatalogPanel onClose={close} />}
+      {opened === 'starter' && <StarterPanel onClose={close} />}
     </>
   )
 }

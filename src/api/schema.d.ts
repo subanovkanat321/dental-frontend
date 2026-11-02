@@ -692,6 +692,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/supplies/starter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["preview"];
+        put?: never;
+        post: operations["apply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/supplies/samples": {
         parameters: {
             query?: never;
@@ -1710,6 +1726,22 @@ export interface paths {
         get: operations["list_5"];
         put?: never;
         post: operations["create_10"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/care-memos/starter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["starter"];
+        put?: never;
+        post: operations["applyStarter"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3884,6 +3916,15 @@ export interface components {
             /** Format: int32 */
             costSom?: number;
         };
+        SupplyStarterControllerApply: {
+            stock?: boolean;
+        };
+        SupplyStarterApplied: {
+            /** Format: int32 */
+            created?: number;
+            /** Format: int32 */
+            services?: number;
+        };
         SupplyControllerAdded: {
             /** Format: int32 */
             added?: number;
@@ -4198,6 +4239,10 @@ export interface components {
             };
             scans?: components["schemas"]["AgreementsScan"][];
         };
+        CareMemoControllerLinked: {
+            /** Format: int32 */
+            services?: number;
+        };
         AppointmentRequestsCreate: {
             /** Format: int64 */
             doctorId: number;
@@ -4326,6 +4371,26 @@ export interface components {
             createdAt?: string;
             /** Format: int32 */
             costSom?: number;
+        };
+        SupplyStarterLine: {
+            name?: string;
+            unit?: string;
+            /** Format: int32 */
+            quantity?: number;
+        };
+        SupplyStarterMissing: {
+            name?: string;
+            unit?: string;
+        };
+        SupplyStarterPreview: {
+            missing?: components["schemas"]["SupplyStarterMissing"][];
+            services?: components["schemas"]["SupplyStarterServiceLines"][];
+        };
+        SupplyStarterServiceLines: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            items?: components["schemas"]["SupplyStarterLine"][];
         };
         SpendingView: {
             /** Format: date */
@@ -4602,6 +4667,14 @@ export interface components {
             text?: string;
             /** Format: date-time */
             at?: string;
+        };
+        CareMemosSuggested: {
+            /** Format: int64 */
+            serviceId?: number;
+            service?: string;
+            /** Format: int64 */
+            memoId?: number;
+            memo?: string;
         };
         ReceiptsPayment: {
             /** Format: date-time */
@@ -6265,6 +6338,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SupplyView"];
+                };
+            };
+        };
+    };
+    preview: {
+        parameters: {
+            query?: {
+                stock?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplyStarterPreview"];
+                };
+            };
+        };
+    };
+    apply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupplyStarterControllerApply"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplyStarterApplied"];
                 };
             };
         };
@@ -8230,6 +8349,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CareMemosCareMemoView"];
+                };
+            };
+        };
+    };
+    starter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareMemosSuggested"][];
+                };
+            };
+        };
+    };
+    applyStarter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareMemoControllerLinked"];
                 };
             };
         };
