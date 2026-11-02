@@ -19,10 +19,12 @@ type Tab = AccountTab
  * «Аккаунт»: отношения клиники с платформой. Админу — тариф и оплата, договор, данные (выгрузка
  * и журнал); всем — техподдержка, новости стоматологии и конфиденциальность. Права проверяет и сервер.
  */
-export function AccountPage({ me, initialTab, initialTicket, only, title, onBack }: {
+export function AccountPage({ me, initialTab, initialTicket, initialHelp, only, title, onBack }: {
   me: Me
   initialTab?: string
   initialTicket?: number
+  /** Сразу открыть чат «💬 Помощь» (в «Техподдержке»). */
+  initialHelp?: boolean
   only?: Tab
   title?: string
   onBack?: () => void
@@ -51,7 +53,7 @@ export function AccountPage({ me, initialTab, initialTicket, only, title, onBack
   )
   return (
     <div className={panel ? 'schedule with-panel' : 'schedule'}>
-      {tab === 'support' ? <SupportTab me={me} clinic={clinic.data} header={header} onPanel={setPanel} initialTicket={initialTicket} /> : (
+      {tab === 'support' ? <SupportTab me={me} clinic={clinic.data} header={header} onPanel={setPanel} initialTicket={initialTicket} initialHelp={initialHelp} /> : (
         <section className="schedule-main">
           {header}
           {tab === 'plan' && <PlanTab />}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
+import { openSettings } from '../lib/route'
 import { GUIDES, ORDER, ownRole, type Role } from './guides'
 import { SubHeader } from './SubHeader'
 
@@ -25,6 +26,10 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
           <ol>{t.steps.map((s) => <li key={s}>{s}</li>)}</ol>
         </section>
       ))}
+      <section className="card-block" aria-label="Не нашли ответа">
+        <p>Не нашли ответа? Помощник подскажет сразу, а сложный вопрос передаст команде Tish.</p>
+        <div className="actions"><button type="button" className="btn primary" onClick={() => openSettings('help')}>💬 Спросить помощника</button></div>
+      </section>
     </div>
   )
 }

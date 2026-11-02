@@ -660,6 +660,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/support/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["chatInfo"];
+        put?: never;
+        post: operations["ask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/supplies": {
         parameters: {
             query?: never;
@@ -3877,6 +3893,7 @@ export interface components {
             hasImage?: boolean;
             /** Format: date-time */
             createdAt?: string;
+            fromBot?: boolean;
         };
         SupportTicketsThread: {
             ticket?: components["schemas"]["SupportTicketsTicket"];
@@ -3898,6 +3915,13 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             updatedAt?: string;
+            viaBot?: boolean;
+            escalated?: boolean;
+        };
+        SupportControllerChatQuestion: {
+            /** Format: int64 */
+            ticketId?: number;
+            text?: string;
         };
         SupplyControllerCreate: {
             name?: string;
@@ -4363,6 +4387,15 @@ export interface components {
         MedicalRecordControllerMove: {
             /** Format: int32 */
             direction?: number;
+        };
+        SupportBotInfo: {
+            ai?: boolean;
+            /** Format: int32 */
+            dailyLimit?: number;
+            /** Format: int32 */
+            usedToday?: number;
+            /** Format: int32 */
+            maxLength?: number;
         };
         MovementView: {
             /** Format: int32 */
@@ -6264,6 +6297,50 @@ export interface operations {
         responses: {
             /** @description Created */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportTicketsThread"];
+                };
+            };
+        };
+    };
+    chatInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportBotInfo"];
+                };
+            };
+        };
+    };
+    ask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupportControllerChatQuestion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

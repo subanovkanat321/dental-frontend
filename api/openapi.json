@@ -1817,6 +1817,50 @@
         }
       }
     },
+    "/api/support/chat" : {
+      "get" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "chatInfo",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SupportBotInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "support-controller" ],
+        "operationId" : "ask",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SupportControllerChatQuestion"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SupportTicketsThread"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/supplies" : {
       "get" : {
         "tags" : [ "supply-controller" ],
@@ -8608,6 +8652,9 @@
           "createdAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "fromBot" : {
+            "type" : "boolean"
           }
         }
       },
@@ -8658,6 +8705,23 @@
           "updatedAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "viaBot" : {
+            "type" : "boolean"
+          },
+          "escalated" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "SupportControllerChatQuestion" : {
+        "properties" : {
+          "ticketId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "text" : {
+            "type" : "string"
           }
         }
       },
@@ -9728,6 +9792,25 @@
       "MedicalRecordControllerMove" : {
         "properties" : {
           "direction" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "SupportBotInfo" : {
+        "properties" : {
+          "ai" : {
+            "type" : "boolean"
+          },
+          "dailyLimit" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "usedToday" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "maxLength" : {
             "type" : "integer",
             "format" : "int32"
           }
