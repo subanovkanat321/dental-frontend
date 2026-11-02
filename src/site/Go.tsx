@@ -1,25 +1,30 @@
 import { useEffect, useState } from 'react'
 
+import { ContactLinks } from '../lib/ContactLinks'
 import { getJson, type Links, type Tariffs } from './web'
 
-type Tone = 'teal' | 'orange' | 'violet' | 'blue' | 'tg' | 'wa' | 'gold'
-
-function GoLink({ icon, title, sub, href, tone, main }: {
-  icon: string; title: string; sub?: string | null; href?: string | null; tone: Tone; main?: boolean
+/** Строка-ссылка /go: значок, заголовок, подпись. main — главное действие раздела (залито цветом). */
+function GoLink({ icon, title, sub, href, main, badge }: {
+  icon: string; title: string; sub?: string | null; href?: string | null; main?: boolean; badge?: string | null
 }) {
   if (!href) return null
   const external = /^https?:/.test(href)
   return (
-    <a className={`go-link tone-${tone}${main ? ' main' : ''}`} href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>
+    <a className={main ? 'go-link main' : 'go-link'} href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>
       <span className="ico" aria-hidden="true">{icon}</span>
-      <span><strong>{title}</strong>{sub && <span>{sub}</span>}</span>
+      <span className="go-text">
+        {badge && <span className="go-badge">{badge}</span>}
+        <strong>{title}</strong>{sub && <span>{sub}</span>}
+      </span>
+      <span className="go-arrow" aria-hidden="true">›</span>
     </a>
   )
 }
 
 /**
- * Одна ссылка для профиля Instagram (/go), как Taplink: пациентам — записаться, клиникам —
- * подключиться и войти, всем — написать нам. Контакты — из «Сведений о платформе».
+ * Одна ссылка для профиля Instagram (/go), как Taplink: пациентам — одно действие (выбрать клинику и
+ * записаться), клиникам — подключиться (акция ведёт сразу к форме) и войти, всем — написать нам.
+ * Контакты — из «Сведений о платформе»: WhatsApp только если он задан.
  */
 export function Go() {
   const [c, setC] = useState<Links>({})
@@ -28,26 +33,37 @@ export function Go() {
     void getJson<Links>('/web/links').then(({ data }) => setC(data ?? {}))
     void getJson<Tariffs>('/web/tariffs').then(({ data }) => setT(data))
   }, [])
-  const wa = c.supportPhone ? `https://wa.me/${c.supportPhone}` : null
+  const contacts = Boolean(c.supportUrl || c.supportWhatsapp || c.supportPhones?.length)
   return (
     <main className="site-page">
       <header className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={105} height={100} />
+        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={84} height={80} />
         <div><h1>Tish</h1><p>Запись к стоматологу в Telegram — без звонков и очередей</p></div>
       </header>
-      <h2>Пациентам</h2>
-      <GoLink icon="🦷" title="Записаться к стоматологу" sub="Выберите клинику и врача" href="/clinics" tone="teal" main />
-      <GoLink icon="✈️" title="Бот Tish в Telegram" sub="Запись, напоминания, перенос" href={c.botUrl} tone="tg" />
-      <h2>Клиникам</h2>
-      {t?.promo && <p className="go-promo">🎁 {t.promo.title}</p>}
-      <GoLink icon="🚀" title="Подключить бесплатно" sub="Без предоплаты — настроим за час" href="/join#form" tone="orange" main />
-      <GoLink icon="💰" title="Что умеет приложение" sub="Запись, касса, склад, медкарта" href="/join" tone="gold" />
-      <GoLink icon="🔐" title="Вход для клиники" sub="CRM в браузере — все врачи на большом экране" href="/login" tone="violet" />
-      <GoLink icon="📲" title="Скачать приложение" sub="Tish на экране телефона — как обычное приложение" href="/app" tone="blue" />
-      {(c.supportUrl || wa) && <h2>Связаться</h2>}
-      <GoLink icon="💬" title="Написать в Telegram" sub={c.supportTelegram ? `@${c.supportTelegram}` : null} href={c.supportUrl} tone="tg" />
-      <GoLink icon="🟢" title="Написать в WhatsApp" href={wa} tone="wa" />
-      <GoLink icon="📞" title="Позвонить" href={c.supportPhone ? `tel:+${c.supportPhone}` : null} tone="blue" />
+
+      <section className="site-section" aria-labelledby="go-patients">
+        <h2 id="go-patients">Пациентам</h2>
+        <GoLink icon="🦷" title="Записаться к стоматологу" sub="Выберите клинику — запись в Telegram за минуту" href="/clinics" main />
+      </section>
+
+      <section className="site-section" aria-labelledby="go-clinics">
+        <h2 id="go-clinics">Клиникам</h2>
+        {/* Акция — сама кнопка: нажали — сразу форма заявки */}
+        <GoLink icon="🎁" badge={t?.promo?.title} title="Подключить клинику бесплатно" sub="Без предоплаты — настроим за час" href="/join#form" main />
+        <GoLink icon="📋" title="Что умеет приложение" sub="Запись, напоминания, касса, склад, медкарта" href="/join" />
+        <GoLink icon="🔐" title="Вход для клиники" href="/login" />
+        <p className="hint go-note">Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
+      </section>
+
+      {contacts && (
+        <section className="site-section" aria-labelledby="go-contacts">
+          <h2 id="go-contacts">Связаться</h2>
+          <div className="site-actions">
+            {c.supportUrl && <a className="btn" data-tone="tg" href={c.supportUrl} target="_blank" rel="noopener noreferrer">Написать в Telegram</a>}
+            <ContactLinks className={null} phones={c.supportPhones} whatsapp={c.supportWhatsapp} />
+          </div>
+        </section>
+      )}
       <footer className="site-footer">© {new Date().getFullYear()} Tish</footer>
     </main>
   )

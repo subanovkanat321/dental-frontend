@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 
-import { formatPhone } from '../lib/time'
+import { ContactLinks } from '../lib/ContactLinks'
+import { SiteHeader } from './SiteHeader'
 import { clinicCode, getJson, inAppBrowser, initials, promoCode, tgLink, useSiteLang, withPromo, type ClinicPage } from './web'
 
 const TEXTS = {
   ru: {
     title: 'Стоматология', tagline: 'Запишитесь онлайн за минуту — бот напомнит о приёме 😊', book: 'Записаться онлайн в Telegram',
     settingUp: '🛠 Клиника ещё настраивается — запись скоро.',
-    whatsapp: 'Написать в WhatsApp', call: 'Позвонить', map: 'Как добраться (2ГИС)', doctors: 'Наши врачи', services: 'Услуги и цены',
+    whatsapp: 'Написать в WhatsApp', call: 'Позвонить', back: 'Назад', map: 'Как добраться (2ГИС)', doctors: 'Наши врачи', services: 'Услуги и цены',
     min: 'мин', waText: 'Здравствуйте! Хочу записаться на приём 🦷', howTitle: 'Как записаться',
     how: ['Нажмите «Записаться онлайн в Telegram»', 'Выберите врача, услугу и удобное время', 'Врач подтвердит запись, бот напомнит накануне'],
     error: 'Не удалось загрузить страницу — обновите её через минуту.', loading: 'Загрузка…',
@@ -17,7 +18,7 @@ const TEXTS = {
   ky: {
     title: 'Стоматология', tagline: 'Бир мүнөттө онлайн жазылыңыз — бот кабыл алуу тууралуу эскертет 😊', book: 'Telegram аркылуу онлайн жазылуу',
     settingUp: '🛠 Клиника азыр даярдалып жатат — жазылуу жакында ачылат.',
-    whatsapp: 'WhatsApp’ка жазуу', call: 'Чалуу', map: 'Кантип жетүү керек (2ГИС)', doctors: 'Биздин дарыгерлер', services: 'Кызматтар жана баалар',
+    whatsapp: 'WhatsApp’ка жазуу', call: 'Чалуу', back: 'Артка', map: 'Кантип жетүү керек (2ГИС)', doctors: 'Биздин дарыгерлер', services: 'Кызматтар жана баалар',
     min: 'мүн.', waText: 'Саламатсызбы! Кабыл алууга жазылгым келет 🦷', howTitle: 'Кантип жазылуу керек',
     how: ['«Telegram аркылуу онлайн жазылуу» баскычын басыңыз', 'Дарыгерди, кызматты жана ыңгайлуу убакытты тандаңыз', 'Дарыгер жазылууну ырастайт, бот бир күн мурун эскертет'],
     error: 'Барак жүктөлгөн жок — бир мүнөттөн кийин жаңыртыңыз.', loading: 'Жүктөлүүдө…',
@@ -67,20 +68,20 @@ export function ClinicSite() {
   }
   return (
     <main className="site-page">
-      <LangSwitch lang={lang} onChange={setLang} />
+      <SiteHeader back={t.back}><LangSwitch lang={lang} onChange={setLang} /></SiteHeader>
       <div className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={95} height={90} />
+        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} />
         <div><h1>{name}</h1>{d.settingUp ? <p role="status">{t.settingUp}</p> : <p>{t.tagline}</p>}</div>
       </div>
       <div className="site-actions">
         {telegramUrl && <a className="btn primary" href={telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
-        {d.whatsapp && <a className="btn" href={`https://wa.me/${d.whatsapp}?text=${encodeURIComponent(t.waText)}`} target="_blank" rel="noopener noreferrer">💬 {t.whatsapp}</a>}
-        {d.phone && <a className="btn" href={`tel:+${d.phone}`}>📞 {t.call} {d.phoneText || formatPhone(d.phone)}</a>}
-        {d.mapUrl && <a className="btn" href={d.mapUrl} target="_blank" rel="noopener noreferrer">🗺️ {t.map}</a>}
+        <ContactLinks className={null} phones={d.phones} whatsapp={d.whatsapp} waText={t.waText} texts={t} />
       </div>
       {telegramUrl && promo && <p className="hint">🎟 {t.promo.replace('{code}', promo)}</p>}
       {telegramUrl && <InAppHint url={telegramUrl} text={t.inApp} link={t.openTg} />}
-      {d.address && <p>📍 {d.address}</p>}
+      {(d.address || d.mapUrl) && (
+        <p className="site-address">📍 {d.address}{d.mapUrl && <>{d.address && ' · '}<a href={d.mapUrl} target="_blank" rel="noopener noreferrer">{t.map}</a></>}</p>
+      )}
       {d.telegramUrl && (
         <section className="site-card">
           <h2>{t.howTitle}</h2>

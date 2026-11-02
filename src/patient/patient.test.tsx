@@ -167,6 +167,31 @@ test('«Ваша запись» по-кыргызски: хочу раньше �
   expect(screen.getByRole('heading', { name: 'Запись к стоматологу' })).toBeInTheDocument()
 })
 
+test('своя запись: «Позвонить» на каждый номер клиники и WhatsApp своим номером; без WhatsApp — без кнопки', async () => {
+  const openLink = vi.fn()
+  fakeTelegram({ openLink })
+  const booking = { id: 9, startAt: slotInstant(addDays(todayIn(), 2), 600), status: 'SCHEDULED' as const, doctorId: 1 }
+  let whatsappPhone: string | undefined = '996700999888'
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(patient({
+    booking, clinicContact: '+996 555 000 111, +7 701 234 56 78',
+    clinic: { brandName: 'Стоматология «Тест»', phones: ['996555000111', '77012345678'], whatsappPhone },
+  }))))
+  const user = userEvent.setup()
+  const first = renderApp()
+  const calls = await screen.findAllByRole('link', { name: /Позвонить/ })
+  expect(calls.map((a) => a.getAttribute('href'))).toEqual(['tel:+996555000111', 'tel:+77012345678'])
+  // В Telegram tel: не работает — звонок через свою страницу call.html в браузере
+  await user.click(calls[1]!)
+  expect(openLink).toHaveBeenCalledWith(`${window.location.origin}/call.html#77012345678`)
+  expect(screen.getByRole('link', { name: /Написать в WhatsApp/ })).toHaveAttribute('href', 'https://wa.me/996700999888')
+  first.unmount()
+
+  whatsappPhone = undefined
+  renderApp()
+  expect(await screen.findAllByRole('link', { name: /Позвонить/ })).toHaveLength(2)
+  expect(screen.queryByRole('link', { name: /WhatsApp/ })).not.toBeInTheDocument()
+})
+
 test('перенос: занятое время — заново выбрать', async () => {
   fakeTelegram()
   const day = addDays(todayIn(), 2)

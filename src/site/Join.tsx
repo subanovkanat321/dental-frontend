@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
+import { SiteHeader } from './SiteHeader'
 import { getJson, inAppBrowser, type Links, type Tariffs } from './web'
 
 const FEATURES: [string, string, string][] = [
@@ -79,6 +80,7 @@ export function Join() {
   if (sent) {
     return (
       <main className="site-page">
+        <SiteHeader />
         <div className="site-message"><h1>Заявка отправлена</h1><p>Мы свяжемся с вами в ближайшее время, чтобы подключить клинику.</p></div>
       </main>
     )
@@ -86,15 +88,15 @@ export function Join() {
   const err = (k: string) => errors[k] && <p className="error">{errors[k]}</p>
   return (
     <main className="site-page">
+      <SiteHeader />
       <div className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={126} height={120} />
-        <div><p className="strong">Tish</p><h1>Запись пациентов для стоматологии</h1>
-          <p>Пациенты записываются в Telegram, бот напоминает о приёме, всё расписание — в телефоне.</p></div>
+        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={84} height={80} />
+        <div><h1>Запись пациентов для стоматологии</h1>
+          <p>Пациенты записываются в Telegram, бот напоминает о приёме. Работать можно в Telegram и на сайте — с телефона и компьютера.</p></div>
       </div>
       {tariffs?.promo && (
         <div className="site-promo">
-          <p className="strong">🎁 Бесплатно</p>
-          <h2>{tariffs.promo.title}</h2>
+          <h2>🎁 {tariffs.promo.title}</h2>
           <p>{tariffs.promo.text}</p>
           <ul>{(tariffs.promo.points ?? []).map((x) => <li key={x}>{x}</li>)}</ul>
           <a className="btn primary" href="#form">Подключить бесплатно</a>
@@ -109,10 +111,10 @@ export function Join() {
       <p>{monthsFree(tariffs?.pilotMonths)} — бесплатно: всё приложение, без ограничений и без предоплаты.
         Понравится — договоримся об условиях; нет — просто перестанете пользоваться.</p>
       <h2 id="form">Подключить клинику</h2>
-      {tariffs?.promo && <p className="tone-ok">🎁 {tariffs.promo.title}. Без предоплаты — оставьте заявку, мы позвоним.</p>}
+      <p className="hint">Без предоплаты — оставьте заявку, мы позвоним.</p>
       {inAppBrowser() && (
         <p className="tone-wait">Открыли из Instagram? Если клавиатура закрывается — нажмите ⋮ вверху → «Открыть в браузере»
-          {links.supportPhone && <> или <a href={`https://wa.me/${links.supportPhone}?text=${encodeURIComponent('Здравствуйте! Хотим подключить клинику к Tish.')}`}>напишите нам в WhatsApp</a></>}.</p>
+          {links.supportWhatsapp && <> или <a href={`https://wa.me/${links.supportWhatsapp}?text=${encodeURIComponent('Здравствуйте! Хотим подключить клинику к Tish.')}`}>напишите нам в WhatsApp</a></>}.</p>
       )}
       <form className="form site-card" aria-label="Заявка клиники" onSubmit={(e) => void submit(e)}>
         <div className="segments" role="group" aria-label="Кто вы">
@@ -145,7 +147,7 @@ export function Join() {
         {errors.form && <p className="error" role="alert">{errors.form}</p>}
         <button type="submit" className="btn primary" disabled={sending}>Оставить заявку</button>
       </form>
-      <footer className="site-footer"><a href="/app">📲 Скачать приложение</a> · <a href="/login">Вход для клиники</a> · © {new Date().getFullYear()}</footer>
+      <footer className="site-footer"><a href="/login">Вход для клиники</a> · © {new Date().getFullYear()} Tish</footer>
     </main>
   )
 }

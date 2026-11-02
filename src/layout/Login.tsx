@@ -90,7 +90,7 @@ export function Login() {
         <p className="hint">Окно не открылось или пишет «Bot domain invalid»? Войдите через бота:{' '}
           <a href={`https://t.me/${bot.data.username}`} target="_blank" rel="noopener noreferrer">@{bot.data.username}</a> → кнопка «Открыть» внизу чата.</p>
       )}
-      <p className="hint small"><a href="/app">📲 Скачать Tish на телефон или компьютер</a></p>
+      <p className="hint small">Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
       <p className="hint small">Пациенты записываются через бота в Telegram: <a href="/clinics">выбрать клинику</a></p>
       </div>
     </div>

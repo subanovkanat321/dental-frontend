@@ -1,10 +1,16 @@
 import { StrictMode, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 
-// Только два начертания: страница сайта открывается с телефона по мобильному интернету
-import '@fontsource/geologica/cyrillic-700.css'
+// Мало начертаний: страница сайта открывается с телефона по мобильному интернету. Латиница — для
+// «Tish», «Telegram», «WhatsApp» и цифр телефонов (без неё они рисовались системным шрифтом)
+import '@fontsource/geologica/cyrillic-600.css'
+import '@fontsource/geologica/latin-600.css'
 import '@fontsource/golos-text/cyrillic-400.css'
+import '@fontsource/golos-text/latin-400.css'
+import '@fontsource/golos-text/cyrillic-500.css'
+import '@fontsource/golos-text/latin-500.css'
 import '@fontsource/golos-text/cyrillic-600.css'
+import '@fontsource/golos-text/latin-600.css'
 import '../styles.css'
 import './site.css'
 

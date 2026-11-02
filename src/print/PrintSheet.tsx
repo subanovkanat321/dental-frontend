@@ -74,7 +74,7 @@ export function PrintSheet({ title, onClose, formats = false, tools, children }:
           </div>
           <div>
             {clinic?.address && <div>{clinic.address}</div>}
-            {clinic?.whatsappPhone && <div>{formatPhone(clinic.whatsappPhone)}</div>}
+            {(clinic?.phones?.[0] ?? clinic?.whatsappPhone) && <div>{formatPhone(clinic.phones?.[0] ?? clinic.whatsappPhone!)}</div>}
           </div>
         </header>
         {children(format)}

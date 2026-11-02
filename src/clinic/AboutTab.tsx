@@ -8,16 +8,17 @@ import { CITIES, guessCity } from '../lib/clinicSearch'
 import { openLink, telegram } from '../lib/telegram'
 import { useDirty } from '../lib/unsaved'
 import { PhoneInput } from './PhoneInput'
+import { PhoneListInput } from './PhoneListInput'
 import { SetupChecklist } from './SetupChecklist'
-import { phoneFromInput, phoneToInput } from './phone'
+import { phoneFromInput, phonesFromInput, phonesToInput, phoneToInput } from './phone'
 
 type Me = Schemas['BookingViewsMe']
 type Clinic = Schemas['ClinicView']
 
-const FIELDS = ['brandName', 'whatsappPhone', 'legalName', 'address', 'city', 'mapUrl', 'supportTelegram', 'supportPhone', 'workEnd', 'workDays'] as const
+const FIELDS = ['brandName', 'phones', 'whatsappPhone', 'legalName', 'address', 'city', 'mapUrl', 'supportTelegram', 'supportPhone', 'workEnd', 'workDays'] as const
 
 /**
- * «О клинике»: что видят пациенты (название, WhatsApp, адрес, 2ГИС, часы), как работают врачи
+ * «О клинике»: что видят пациенты (название, телефоны, WhatsApp, адрес, 2ГИС, часы), как работают врачи
  * (независимо, свой склад), кто отвечает за данные (для согласия). Меняют админ и врачи;
  * «независимо» и «свой склад» — только админ. Админу ещё предоплата («с чистого листа» — в «Данных»).
  */
@@ -38,7 +39,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   const client = useQueryClient()
   const canEdit = Boolean(me.admin || me.doctorId != null)
   const [f, setF] = useState({
-    brandName: c.brandName ?? '', whatsappPhone: phoneToInput(c.whatsappPhone), legalName: c.legalName ?? '', address: c.address ?? '', city: c.city ?? '',
+    brandName: c.brandName ?? '', phones: phonesToInput(c.phones), whatsappPhone: phoneToInput(c.whatsappPhone), legalName: c.legalName ?? '', address: c.address ?? '', city: c.city ?? '',
     mapUrl: c.mapUrl ?? '', supportTelegram: c.supportTelegram ? `@${c.supportTelegram}` : '', supportPhone: phoneToInput(c.supportPhone),
     workStart: (c.workStart ?? '09:00').slice(0, 5), workEnd: (c.workEnd ?? '18:00').slice(0, 5),
     independentDoctors: Boolean(c.independentDoctors), separateSupplies: Boolean(c.separateSupplies), listed: c.listed !== false,
@@ -55,7 +56,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   const save = useMutation<Clinic, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/clinic', {
       body: {
-        ...f, whatsappPhone: phoneFromInput(f.whatsappPhone), supportPhone: phoneFromInput(f.supportPhone),
+        ...f, phones: phonesFromInput(f.phones), whatsappPhone: phoneFromInput(f.whatsappPhone), supportPhone: phoneFromInput(f.supportPhone),
         // Часы меняются в «Часах работы» — здесь берём текущие, чтобы не затереть их
         workStart: c.workStart, workEnd: c.workEnd, workDays: c.workDays,
       },
@@ -68,7 +69,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
     },
   })
   const err = (k: string) => save.error?.fieldErrors[k]
-  const set = (k: keyof typeof f) => (v: string | boolean) => {
+  const set = (k: keyof typeof f) => (v: string | boolean | string[]) => {
     save.reset()
     setF({ ...f, [k]: v })
   }
@@ -91,9 +92,13 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
           <label className="field"><span>Название для пациентов</span>
             <input value={f.brandName} maxLength={100} placeholder="Стоматология «Улыбка»" onChange={text('brandName')} /></label>
           {err('brandName') && <p className="error">{err('brandName')}</p>}
-          <label className="field"><span>WhatsApp клиники</span>
+          <div className="field"><span>Телефоны клиники — первый главный</span>
+            <PhoneListInput label="Телефон клиники" values={f.phones} onChange={set('phones')} /></div>
+          {err('phones') && <p className="error">{err('phones')}</p>}
+          <label className="field"><span>WhatsApp клиники — если на другом номере, укажите его</span>
             <PhoneInput label="WhatsApp клиники" value={f.whatsappPhone} onChange={set('whatsappPhone')} /></label>
           {err('whatsappPhone') && <p className="error">{err('whatsappPhone')}</p>}
+          <p className="hint">Пациенты видят кнопку «Позвонить» на каждый номер; без WhatsApp кнопки «Написать в WhatsApp» нет.</p>
           <label className="field"><span>Адрес</span>
             {/* Город не выбран, а в адресе он есть — подставляем сами: одним действием меньше */}
             <input value={f.address} maxLength={200} placeholder="Например: Бишкек, ул. Шевченко 6" onChange={(e) => changeAddress(e.target.value)} /></label>

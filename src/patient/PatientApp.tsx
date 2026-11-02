@@ -9,6 +9,7 @@ import { haptic, openLink, telegram } from '../lib/telegram'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { launchSearch } from '../lib/deepLink'
 import { ClinicFilters } from '../lib/ClinicFilters'
+import { ContactLinks } from '../lib/ContactLinks'
 import { useClinicFilter, withCity } from '../lib/clinicSearch'
 import { BackButton, MainButton } from '../lib/MainButton'
 import { bookingDays, breakNote, initials, normalizeLang, priceText, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
@@ -228,6 +229,19 @@ function ClinicCard({ ctx }: { ctx: Ctx }) {
       {c.mapUrl && <button type="button" className="btn map-btn" onClick={() => openLink(c.mapUrl!)}>{ctx.t('open2gis')}</button>}
     </div>
   )
+}
+
+/**
+ * Связаться с клиникой: «Позвонить» на каждый её номер и WhatsApp — только если клиника его задала
+ * (он может быть другим номером). Номеров нет — прежняя строка с телефоном из настроек сервера.
+ */
+function ClinicContacts({ ctx }: { ctx: Ctx }) {
+  const { me, t } = ctx
+  const c = me.clinic
+  if (!c?.phones?.length && !c?.whatsappPhone) {
+    return me.clinicContact ? <p className="hint">{t('clinicPhone', { phone: me.clinicContact })}</p> : null
+  }
+  return <ContactLinks phones={c.phones} whatsapp={c.whatsappPhone} texts={{ call: t('call'), whatsapp: t('writeWhatsapp') }} />
 }
 
 /** Низ экрана: новости клиники, другая клиника, техподдержка. */
@@ -703,7 +717,7 @@ function BookingScreen({ ctx }: { ctx: Ctx }) {
         </div>
       ) : <button type="button" className="btn" disabled={waitlist.isPending} onClick={() => waitlist.mutate(true)}><span aria-hidden="true">🔔 </span>{t('waitlistJoin')}</button>}
       <ClinicCard ctx={ctx} />
-      {me.clinicContact && <p className="hint">{t('clinicPhone', { phone: me.clinicContact })}</p>}
+      <ClinicContacts ctx={ctx} />
       {error && <p className="error" role="alert">{errorText(t, error, ctx.me.clinicContact)}</p>}
       <Footer ctx={ctx} />
       <div className="danger-zone">

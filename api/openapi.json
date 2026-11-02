@@ -8017,6 +8017,15 @@
           },
           "supportEmail" : {
             "type" : "string"
+          },
+          "supportPhones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "supportWhatsapp" : {
+            "type" : "string"
           }
         }
       },
@@ -8048,6 +8057,15 @@
           },
           "accessRequiresGrant" : {
             "type" : "boolean"
+          },
+          "supportPhones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "supportWhatsapp" : {
+            "type" : "string"
           }
         }
       },
@@ -8828,6 +8846,12 @@
           },
           "city" : {
             "type" : "string"
+          },
+          "phones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
@@ -8895,6 +8919,12 @@
           },
           "city" : {
             "type" : "string"
+          },
+          "phones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },

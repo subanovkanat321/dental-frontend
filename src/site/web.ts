@@ -9,8 +9,9 @@ import type { Schemas } from '../api/client'
  */
 export type SiteDoctor = { fullName: string; about?: string | null; photoUrl?: string | null }
 
+/** phones — номера для звонка (первый — главный), whatsapp — свой номер или null: тогда кнопки WhatsApp нет. */
 export type ClinicPage = {
-  name?: string | null; address?: string | null; mapUrl?: string | null; phone?: string | null; phoneText?: string | null
+  name?: string | null; address?: string | null; mapUrl?: string | null; phones?: string[] | null
   whatsapp?: string | null; telegramUrl?: string | null; doctors: SiteDoctor[]
   services: { name: string; durationMinutes: number; priceSom?: number | null }[]
   /** Новая клиника ещё настраивается (V95): записи нет, telegramUrl пуст */
@@ -22,7 +23,10 @@ export type DirectoryClinic = {
   name?: string | null; address?: string | null; city?: string | null; mapUrl?: string | null; pageUrl: string; telegramUrl?: string | null; doctors: SiteDoctor[]
 }
 
-export type Links = { supportTelegram?: string | null; supportUrl?: string | null; supportPhone?: string | null; botUrl?: string | null }
+/** Контакты платформы: supportPhones — телефоны по порядку, supportWhatsapp — свой номер или null. */
+export type Links = {
+  supportTelegram?: string | null; supportUrl?: string | null; supportPhones?: string[] | null; supportWhatsapp?: string | null; botUrl?: string | null
+}
 
 export type Tariffs = Schemas['Tariffs']
 
@@ -110,5 +114,20 @@ export function withPromo(url: string | null | undefined, promo: string | null):
     return u.toString()
   } catch {
     return url
+  }
+}
+
+/** Главная страница сайта — ссылка из Instagram (/go): с неё приходят на остальные страницы. */
+export const SITE_HOME = '/go'
+
+/**
+ * Пришли сюда с нашей же страницы (/go → /join): тогда «Назад» — шаг назад в истории, со своей
+ * прокруткой. Открыли по ссылке снаружи (Instagram, WhatsApp) — истории нет, «Назад» ведёт на /go.
+ */
+export function cameFromSite(): boolean {
+  try {
+    return window.history.length > 1 && new URL(document.referrer).origin === window.location.origin
+  } catch {
+    return false
   }
 }

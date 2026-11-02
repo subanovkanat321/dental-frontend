@@ -8,20 +8,20 @@ import { ClinicSite } from './ClinicSite'
 import { Directory } from './Directory'
 import { Go } from './Go'
 import { Join } from './Join'
-import type { ClinicPage, DirectoryClinic } from './web'
+import type { ClinicPage, DirectoryClinic, Links } from './web'
 
 afterEach(() => {
   window.history.replaceState(null, '', '/')
   localStorage.clear()
 })
 
-test('страница клиники: запись в Telegram, WhatsApp, звонок, врачи и цены; кыргызский', async () => {
+test('страница клиники: запись в Telegram, WhatsApp, звонок на каждый номер, врачи и цены; кыргызский', async () => {
   window.history.replaceState(null, '', '/c/abc123')
   let asked = ''
   server.use(http.get('*/web/clinic', ({ request }) => {
     asked = new URL(request.url).search
     return HttpResponse.json({
-      name: 'Улыбка', address: 'Бишкек, Шевченко 6', phone: '996555000111', whatsapp: '996555000111', telegramUrl: 'https://t.me/tish_bot?start=c_abc123',
+      name: 'Улыбка', address: 'Бишкек, Шевченко 6', phones: ['996555000111', '77012345678'], whatsapp: '996700999888', telegramUrl: 'https://t.me/tish_bot?start=c_abc123',
       doctors: [{ fullName: 'Айгерим Садыкова', about: 'терапевт' }], services: [{ name: 'Чистка', durationMinutes: 60, priceSom: 2000 }],
     } satisfies ClinicPage)
   }))
@@ -31,6 +31,8 @@ test('страница клиники: запись в Telegram, WhatsApp, зв�
   expect(asked).toBe('?code=abc123')
   expect(screen.getByRole('link', { name: /Записаться онлайн в Telegram/ })).toHaveAttribute('href', 'https://t.me/tish_bot?start=c_abc123')
   expect(screen.getByRole('link', { name: /Позвонить \+996 555 000 111/ })).toHaveAttribute('href', 'tel:+996555000111')
+  expect(screen.getByRole('link', { name: /Позвонить \+7 701 234 56 78/ })).toHaveAttribute('href', 'tel:+77012345678')
+  expect(screen.getByRole('link', { name: 'Написать в WhatsApp' })).toHaveAttribute('href', expect.stringMatching(/^https:\/\/wa\.me\/996700999888\?text=/))
   expect(screen.getByText(/от 2\s000 сом/)).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Кыргызча' }))
   expect(screen.getByRole('link', { name: /Telegram аркылуу онлайн жазылуу/ })).toBeInTheDocument()
@@ -133,15 +135,67 @@ test('заявка клиники: ошибки полей с сервера, п
   expect(bodies[1]).toMatchObject({ clinicName: 'Стоматолог Айгерим', phone: '+996 555 000 111', telegram: '@aigerim_dent', solo: true, consent: true, website: '', doctors: null })
 })
 
-test('/go: ссылки пациентам и клиникам, контакты из «Сведений о платформе»', async () => {
+test('/go: одно действие пациенту, акция ведёт к форме, без «Скачать», контакты из «Сведений о платформе»', async () => {
   server.use(
-    http.get('*/web/links', () => HttpResponse.json({ supportUrl: 'https://t.me/tish_support', supportTelegram: 'tish_support', supportPhone: '996555000111', botUrl: 'https://t.me/tish_bot' })),
-    http.get('*/web/tariffs', () => HttpResponse.json(null, { status: 500 })),
+    http.get('*/web/links', () => HttpResponse.json({
+      supportUrl: 'https://t.me/tish_support', supportTelegram: 'tish_support', supportPhones: ['996555000111', '996700222333'],
+      supportWhatsapp: '996770444555', botUrl: 'https://t.me/tish_bot',
+    } satisfies Links)),
+    http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [], promo: { title: 'Акция запуска: 3 месяца бесплатно', text: '', points: [] } })),
   )
   render(<Go />)
-  expect(await screen.findByRole('link', { name: /Бот Tish в Telegram/ })).toHaveAttribute('href', 'https://t.me/tish_bot')
-  expect(screen.getByRole('link', { name: /Подключить бесплатно/ })).toHaveAttribute('href', '/join#form')
-  expect(screen.getByRole('link', { name: /Написать в WhatsApp/ })).toHaveAttribute('href', 'https://wa.me/996555000111')
+  // Акция — часть главной кнопки «Подключить», ведёт сразу к форме заявки
+  expect(await screen.findByRole('link', { name: /Акция запуска: 3 месяца бесплатно/ })).toHaveAttribute('href', '/join#form')
+  const patients = screen.getByRole('region', { name: 'Пациентам' })
+  expect(within(patients).getAllByRole('link')).toHaveLength(1)
+  expect(within(patients).getByRole('link', { name: /Записаться к стоматологу/ })).toHaveAttribute('href', '/clinics')
+  expect(screen.queryByRole('link', { name: /Бот Tish в Telegram/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: /Скачать/ })).not.toBeInTheDocument()
+  expect(screen.getByText('Работать можно в Telegram и на сайте — с телефона и компьютера.')).toBeInTheDocument()
+  const contacts = screen.getByRole('region', { name: 'Связаться' })
+  expect(within(contacts).getByRole('link', { name: 'Написать в WhatsApp' })).toHaveAttribute('href', 'https://wa.me/996770444555')
+  expect(within(contacts).getAllByRole('link', { name: /^Позвонить/ }).map((a) => a.getAttribute('href'))).toEqual(['tel:+996555000111', 'tel:+996700222333'])
+})
+
+test('/go и страница клиники: нет WhatsApp — нет и кнопки WhatsApp', async () => {
+  server.use(
+    http.get('*/web/links', () => HttpResponse.json({ supportPhones: ['996555000111'] } satisfies Links)),
+    http.get('*/web/tariffs', () => HttpResponse.json(null, { status: 500 })),
+    http.get('*/web/clinic', () => HttpResponse.json({ name: 'Улыбка', phones: ['996555000111'], whatsapp: null, doctors: [], services: [] } satisfies ClinicPage)),
+  )
+  const go = render(<Go />)
+  expect(await screen.findByRole('link', { name: /Позвонить/ })).toHaveAttribute('href', 'tel:+996555000111')
+  // Без акции — та же кнопка «Подключить» без плашки
+  expect(screen.getByRole('link', { name: /Подключить клинику бесплатно/ })).toHaveAttribute('href', '/join#form')
+  expect(screen.queryByRole('link', { name: /WhatsApp/ })).not.toBeInTheDocument()
+  go.unmount()
+
+  render(<ClinicSite />)
+  expect(await screen.findByRole('link', { name: /Позвонить/ })).toHaveAttribute('href', 'tel:+996555000111')
+  expect(screen.queryByRole('link', { name: /WhatsApp/ })).not.toBeInTheDocument()
+})
+
+test('«‹ Назад»: пришли с нашей страницы — шаг назад в истории; по ссылке снаружи — на /go', async () => {
+  server.use(http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [] })))
+  const back = vi.spyOn(window.history, 'back').mockImplementation(() => {})
+  const user = userEvent.setup()
+  const outside = render(<Join />)
+  const link = await screen.findByRole('link', { name: /Назад/ })
+  expect(link).toHaveAttribute('href', '/go')
+  // Открыли из Instagram: referrer чужой — обычная ссылка, history.back не зовём
+  vi.spyOn(document, 'referrer', 'get').mockReturnValue('https://l.instagram.com/')
+  await user.click(link)
+  expect(back).not.toHaveBeenCalled()
+  outside.unmount()
+
+  window.history.pushState(null, '', '/join')
+  vi.spyOn(document, 'referrer', 'get').mockReturnValue(`${window.location.origin}/go`)
+  render(<Join />)
+  await user.click(await screen.findByRole('link', { name: /Назад/ }))
+  expect(back).toHaveBeenCalledOnce()
+  // Внизу /join — без «Скачать приложение»
+  expect(screen.queryByRole('link', { name: /Скачать/ })).not.toBeInTheDocument()
+  vi.restoreAllMocks()
 })
 
 test('звонок: номер из фрагмента адреса', () => {
@@ -162,7 +216,7 @@ test('/join из Instagram: подсказка «открыть в браузе�
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 14) Instagram 300.0.0.0 Android')
   server.use(
     http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [] })),
-    http.get('*/web/links', () => HttpResponse.json({ supportPhone: '996555000111' })),
+    http.get('*/web/links', () => HttpResponse.json({ supportPhones: ['996555000111'], supportWhatsapp: '996555000111' } satisfies Links)),
   )
   render(<Join />)
   expect(await screen.findByText(/Открыли из Instagram\?/)).toBeInTheDocument()
