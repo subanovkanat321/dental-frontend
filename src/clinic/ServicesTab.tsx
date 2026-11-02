@@ -4,6 +4,7 @@ import { Fragment, useCallback, useState, type FormEvent, type ReactNode } from 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
 import { canEditServices } from '../lib/roles'
+import { ServiceMemo } from './MemosTab'
 import { ServiceSupplies } from './ServiceSupplies'
 import { groupByCategory, priceText, SERVICE_CATEGORIES } from './services'
 
@@ -163,6 +164,7 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
         <button type="submit" className="btn primary" disabled={save.isPending}>{s ? 'Сохранить' : 'Добавить'}</button>
       </form>
       {s && <ServiceSupplies serviceId={s.id!} />}
+      {s && <ServiceMemo serviceId={s.id!} />}
       {s && me.admin && (
         <div className="danger-zone">
           <button type="button" className="btn danger" disabled={remove.isPending}

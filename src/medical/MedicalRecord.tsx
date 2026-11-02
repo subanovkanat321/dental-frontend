@@ -5,6 +5,7 @@ import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/c
 import { useBack } from '../lib/back'
 import { shortDate, somText, todayIn } from '../lib/time'
 import { AnamnesisBlock } from './Anamnesis'
+import { PlanDocs } from '../print/PlanDocs'
 import { resizePhoto } from './thumb'
 
 type Patient = Schemas['PatientView']
@@ -70,7 +71,7 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
           <AnamnesisBlock patientId={id} readOnly={readOnly} />
           <ToothChart patientId={id} teeth={teeth.data} error={teeth.error?.message} readOnly={readOnly}
             onPlan={(tooth) => setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 })} />
-          <Plan patientId={id} prefill={planTooth} readOnly={readOnly} />
+          <Plan patient={patient} prefill={planTooth} readOnly={readOnly} />
           <Notes patientId={id} />
           <Files patientId={id} />
         </>
@@ -180,7 +181,8 @@ function ToothEditor({ patientId, number, tooth, onSaved, onCancel, onPlan }: {
 
 type Step = Schemas['TreatmentStepView']
 
-function Plan({ patientId, prefill, readOnly }: { patientId: number; prefill: { tooth: number; n: number } | null; readOnly: boolean }) {
+function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { tooth: number; n: number } | null; readOnly: boolean }) {
+  const patientId = patient.id!
   const client = useQueryClient()
   const plan = useQuery({
     queryKey: ['plan', patientId],
@@ -261,6 +263,8 @@ function Plan({ patientId, prefill, readOnly }: { patientId: number; prefill: { 
           ))}
         </ul>
       )}
+      {/* Печать и отправка — и ассистенту (без цен): он отдаёт план пациенту */}
+      <PlanDocs patient={patient} steps={steps} />
       {plan.isSuccess && steps.length === 0 && <p className="hint">{readOnly ? 'Плана пока нет.' : 'Плана пока нет — добавьте первый этап.'}</p>}
       {!readOnly && <form className="plan-add" aria-label="Новый этап" onSubmit={submit}>
         <input aria-label="Зуб" placeholder="Зуб" inputMode="numeric" value={form.tooth} onChange={(e) => setForm({ ...form, tooth: e.target.value })} />

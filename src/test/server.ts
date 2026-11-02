@@ -1,6 +1,8 @@
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 
+import type { Schemas } from '../api/client'
+
 /**
  * Фальшивый бэкенд для тестов: обработчики добавляет каждый тест (server.use). Здесь — только
  * фоновые запросы полосы «Сегодня» (склад, выручка, касса) и карточки приёма (материалы, услуги): пусто, если тест не задал своё.
@@ -26,4 +28,10 @@ export const server = setupServer(
   http.get('*/api/clinic/agreement', () => HttpResponse.json({ scans: [] })),
   http.get('*/api/clinic', () => HttpResponse.json({ legalName: 'ИП Тест', address: 'Бишкек' })),
   http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»' })),
+  // Документы приёма и плана (src/print): по умолчанию у услуги памятки нет, квитанция пустая
+  http.get('*/api/appointments/:id/care-memo', () => HttpResponse.json({ telegram: false } satisfies Schemas['CareMemosAppointmentMemo'])),
+  http.get('*/api/care-memos', () => HttpResponse.json([] satisfies Schemas['CareMemosCareMemoView'][])),
+  http.get('*/api/care-memos/links', () => HttpResponse.json([] satisfies Schemas['CareMemosLink'][])),
+  http.get('*/api/appointments/:id/receipt', () => HttpResponse.json({ payments: [], text: '', telegram: false } satisfies Schemas['ReceiptsReceiptView'])),
+  http.get('*/api/patients/:id/plan/message', () => HttpResponse.json({ text: '', telegram: false } satisfies Schemas['PatientMessage'])),
 )

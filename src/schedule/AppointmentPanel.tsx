@@ -15,6 +15,7 @@ import { PaymentBox } from './PaymentBox'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
+import { VisitDocs } from '../print/VisitDocs'
 import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
@@ -196,6 +197,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
               {/* Ассистенту деньги не показываем: оплату принимает врач или регистратура */}
               {seesMoney && <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />}
               <ContactButtons phone={a.patient?.phone} />
+              {/* Памятка после процедуры и квитанция: печать и «Отправить пациенту» — только по нажатию */}
+              <VisitDocs appointment={a} me={me} />
               {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
             </>
           )}

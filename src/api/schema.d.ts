@@ -468,6 +468,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/care-memos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_9"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/care-memos/links/{serviceTypeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["link"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/service": {
         parameters: {
             query?: never;
@@ -1220,6 +1252,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/plan/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/files": {
         parameters: {
             query?: never;
@@ -1604,6 +1652,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/care-memos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_5"];
+        put?: never;
+        post: operations["create_10"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments": {
         parameters: {
             query?: never;
@@ -1613,7 +1677,7 @@ export interface paths {
         };
         get: operations["day"];
         put?: never;
-        post: operations["create_10"];
+        post: operations["create_11"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1764,6 +1828,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/receipt/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["send_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/payment": {
         parameters: {
             query?: never;
@@ -1838,6 +1918,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["act"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/care-memo/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["send_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1979,7 +2075,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2212,6 +2308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/plan/message": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["message"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/notes": {
         parameters: {
             query?: never;
@@ -2395,7 +2507,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2596,6 +2708,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/care-memos/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["links"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}": {
         parameters: {
             query?: never;
@@ -2628,6 +2756,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["receipt"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/payments": {
         parameters: {
             query?: never;
@@ -2651,7 +2795,23 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["receipt"];
+        get: operations["receipt_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/care-memo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["forAppointment"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3443,6 +3603,30 @@ export interface components {
             details?: string;
             hasQr?: boolean;
         };
+        CareMemoControllerMemo: {
+            title?: string;
+            body?: string;
+            active?: boolean;
+        };
+        CareMemosCareMemoView: {
+            /** Format: int64 */
+            id?: number;
+            title?: string;
+            body?: string;
+            active?: boolean;
+            standard?: boolean;
+            serviceIds?: number[];
+        };
+        CareMemoControllerLinkRequest: {
+            /** Format: int64 */
+            memoId?: number;
+        };
+        CareMemosLink: {
+            /** Format: int64 */
+            serviceTypeId?: number;
+            /** Format: int64 */
+            memoId?: number;
+        };
         AppointmentRequestsService: {
             /** Format: int64 */
             serviceTypeId?: number;
@@ -4040,6 +4224,10 @@ export interface components {
             /** @enum {string} */
             method?: "CASH" | "TRANSFER" | "CARD";
         };
+        CareMemoControllerSend: {
+            /** Format: int64 */
+            memoId?: number;
+        };
         ReportControllerRequest: {
             month?: string;
             /** Format: int64 */
@@ -4186,6 +4374,10 @@ export interface components {
             /** Format: int32 */
             scans?: number;
         };
+        PatientMessage: {
+            text?: string;
+            telegram?: boolean;
+        };
         VisitNoteView: {
             /** Format: int64 */
             appointmentId?: number;
@@ -4330,6 +4522,33 @@ export interface components {
             /** Format: date-time */
             at?: string;
         };
+        ReceiptsPayment: {
+            /** Format: date-time */
+            paidAt?: string;
+            /** Format: int32 */
+            amountSom?: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD";
+            takenBy?: string;
+        };
+        ReceiptsReceiptView: {
+            /** Format: int64 */
+            appointmentId?: number;
+            /** Format: date-time */
+            startAt?: string;
+            doctor?: string;
+            patient?: string;
+            service?: string;
+            /** Format: int32 */
+            chargeSom?: number;
+            /** Format: int32 */
+            paidSom?: number;
+            /** Format: int32 */
+            debtSom?: number;
+            payments?: components["schemas"]["ReceiptsPayment"][];
+            text?: string;
+            telegram?: boolean;
+        };
         PaymentQueryEntry: {
             /** Format: int64 */
             id?: number;
@@ -4339,6 +4558,14 @@ export interface components {
             method?: "CASH" | "TRANSFER" | "CARD";
             /** Format: date-time */
             paidAt?: string;
+        };
+        CareMemosAppointmentMemo: {
+            /** Format: int64 */
+            memoId?: number;
+            title?: string;
+            body?: string;
+            text?: string;
+            telegram?: boolean;
         };
         PaymentQueryDebt: {
             /** Format: int64 */
@@ -5466,6 +5693,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepositsSettings"];
+                };
+            };
+        };
+    };
+    update_9: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CareMemoControllerMemo"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareMemosCareMemoView"];
+                };
+            };
+        };
+    };
+    link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                serviceTypeId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CareMemoControllerLinkRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareMemosLink"];
                 };
             };
         };
@@ -6939,6 +7218,26 @@ export interface operations {
             };
         };
     };
+    send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     files: {
         parameters: {
             query?: never;
@@ -7711,6 +8010,50 @@ export interface operations {
             };
         };
     };
+    list_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareMemosCareMemoView"][];
+                };
+            };
+        };
+    };
+    create_10: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CareMemoControllerMemo"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareMemosCareMemoView"];
+                };
+            };
+        };
+    };
     day: {
         parameters: {
             query: {
@@ -7734,7 +8077,7 @@ export interface operations {
             };
         };
     };
-    create_10: {
+    create_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -8005,6 +8348,26 @@ export interface operations {
             };
         };
     };
+    send_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     payment: {
         parameters: {
             query?: never;
@@ -8132,6 +8495,30 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AppointmentView"];
                 };
+            };
+        };
+    };
+    send_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CareMemoControllerSend"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -8364,7 +8751,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query: {
                 month: string;
@@ -8682,6 +9069,28 @@ export interface operations {
             };
         };
     };
+    message: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientMessage"];
+                };
+            };
+        };
+    };
     patientNotes: {
         parameters: {
             query?: never;
@@ -8940,7 +9349,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -9202,6 +9611,26 @@ export interface operations {
             };
         };
     };
+    links: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareMemosLink"][];
+                };
+            };
+        };
+    };
     get_3: {
         parameters: {
             query?: never;
@@ -9266,6 +9695,28 @@ export interface operations {
             };
         };
     };
+    receipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptsReceiptView"];
+                };
+            };
+        };
+    };
     payments: {
         parameters: {
             query?: never;
@@ -9288,7 +9739,7 @@ export interface operations {
             };
         };
     };
-    receipt: {
+    receipt_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -9306,6 +9757,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": string;
+                };
+            };
+        };
+    };
+    forAppointment: {
+        parameters: {
+            query?: {
+                memoId?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareMemosAppointmentMemo"];
                 };
             };
         };

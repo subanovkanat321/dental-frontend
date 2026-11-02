@@ -894,3 +894,60 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .content-caption p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .content-caption .btn { justify-self: start; }
 @media (max-width: 760px) { .content-post .actions .btn { flex: 1 1 auto; } }
+
+/* Документы приёма и плана: памятка, квитанция — «🖨 Печать» и «📤 Отправить пациенту» (src/print) */
+.visit-docs {
+  display: grid;
+  gap: 8px;
+}
+
+.doc-box {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--separator);
+  border-radius: var(--r-md);
+  background: var(--sunken);
+}
+
+.doc-box p {
+  margin: 0;
+}
+
+.doc-actions {
+  display: grid;
+  gap: 4px;
+}
+
+.doc-actions .actions {
+  flex-wrap: wrap;
+}
+
+.visits li .visit-docs {
+  margin: 6px 0 4px;
+}
+
+.memo-list {
+  display: grid;
+  gap: 2px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.memo-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--separator);
+}
+
+.memo-list li.inactive {
+  opacity: 0.6;
+}
+
+.memo-text {
+  white-space: pre-wrap;
+}

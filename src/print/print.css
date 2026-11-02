@@ -1,0 +1,183 @@
+/*
+ * Печать документов (план лечения, памятка, квитанция): на экране — лист поверх CRM с кнопками,
+ * при печати (@media print) — только сам лист, без меню, кнопок и карточек. Лист всегда белый с
+ * чёрным текстом — это бумага, тёмная тема его не трогает. Размер страницы (A4 или чек 80 мм)
+ * ставит <style> в PrintSheet.
+ */
+.print-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: auto;
+  padding: 16px;
+  background: var(--page, #f3f6f6);
+}
+
+.print-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  max-width: 210mm;
+  margin: 0 auto 12px;
+}
+
+.print-toolbar h2 {
+  margin: 0 auto 0 0;
+  font-size: 1rem;
+}
+
+.print-toolbar textarea {
+  flex-basis: 100%;
+}
+
+.print-sheet {
+  max-width: 210mm;
+  min-height: 120mm;
+  margin: 0 auto;
+  padding: 14mm 14mm 10mm;
+  background: #fff;
+  color: #111;
+  font: 11pt/1.45 'Golos Text', system-ui, sans-serif;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+.print-sheet.narrow {
+  max-width: 80mm;
+  min-height: 0;
+  padding: 4mm 3mm;
+  font-size: 9pt;
+}
+
+.print-sheet .doc-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+  border-bottom: 1.5px solid #111;
+}
+
+.print-sheet.narrow .doc-head {
+  display: block;
+  text-align: center;
+  border-bottom-style: dashed;
+}
+
+.print-sheet .doc-head b {
+  display: block;
+  font-family: Geologica, 'Golos Text', sans-serif;
+  font-size: 1.2em;
+}
+
+.print-sheet h1 {
+  margin: 4px 0 10px;
+  font-family: Geologica, 'Golos Text', sans-serif;
+  font-size: 1.45em;
+  font-weight: 600;
+}
+
+.print-sheet.narrow h1 {
+  font-size: 1.2em;
+  text-align: center;
+}
+
+.print-sheet dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 0 0 12px;
+}
+
+.print-sheet dt {
+  color: #555;
+}
+
+.print-sheet dd {
+  margin: 0;
+}
+
+.print-sheet table {
+  width: 100%;
+  margin: 8px 0;
+  border-collapse: collapse;
+}
+
+.print-sheet th,
+.print-sheet td {
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #bbb;
+}
+
+.print-sheet th {
+  font-weight: 600;
+  border-bottom-color: #111;
+}
+
+.print-sheet .r {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.print-sheet .total {
+  font-weight: 600;
+  text-align: right;
+}
+
+.print-sheet .memo-body {
+  white-space: pre-wrap;
+}
+
+.print-sheet .signatures {
+  display: flex;
+  gap: 32px;
+  justify-content: space-between;
+  margin-top: 28px;
+}
+
+.print-sheet .note {
+  font-size: 0.85em;
+  color: #444;
+}
+
+.print-sheet .fiscal {
+  margin-top: 10px;
+  font-weight: 600;
+  text-align: center;
+  border: 1px dashed #111;
+  padding: 4px;
+}
+
+.print-sheet .doc-foot {
+  margin-top: 18px;
+  padding-top: 6px;
+  font-size: 0.8em;
+  color: #555;
+  border-top: 1px solid #bbb;
+}
+
+@media print {
+  body.printing > *:not(.print-root) {
+    display: none !important;
+  }
+
+  body.printing .print-root {
+    position: static;
+    padding: 0;
+    overflow: visible;
+    background: #fff;
+  }
+
+  body.printing .print-toolbar {
+    display: none;
+  }
+
+  body.printing .print-sheet {
+    max-width: none;
+    min-height: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+}

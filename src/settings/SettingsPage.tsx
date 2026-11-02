@@ -21,7 +21,7 @@ const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘' }
 
 type Item = {
   key: string
@@ -54,6 +54,7 @@ const GROUPS: [string, Item[]][] = [
     item('timeoff', 'Перерывы и выходные', 'Обед, намаз, отпуск, праздники', all, team('timeoff')),
     // Ассистенту цены не показываем — и пункта «Услуги» у него нет
     item('services', 'Услуги', 'Цены и длительность — для записи и самозаписи', (me) => !isAssistant(me), clinic('services')),
+    item('memos', 'Памятки после процедур', 'Что делать пациенту после удаления, чистки, отбеливания…', all, clinic('memos')),
   ]],
   ['Клиника', [
     item('doctors', 'Врачи', 'Профиль, фото, приглашение, права', all, team('doctors')),

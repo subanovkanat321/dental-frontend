@@ -1263,6 +1263,80 @@
         }
       }
     },
+    "/api/care-memos/{id}" : {
+      "put" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "update_9",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CareMemoControllerMemo"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CareMemosCareMemoView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/care-memos/links/{serviceTypeId}" : {
+      "put" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "link",
+        "parameters" : [ {
+          "name" : "serviceTypeId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CareMemoControllerLinkRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CareMemosLink"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/service" : {
       "put" : {
         "tags" : [ "appointment-controller" ],
@@ -3080,6 +3154,26 @@
         }
       }
     },
+    "/api/patients/{patientId}/plan/send" : {
+      "post" : {
+        "tags" : [ "plan-message-controller" ],
+        "operationId" : "send",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/files" : {
       "get" : {
         "tags" : [ "medical-record-controller" ],
@@ -3946,6 +4040,53 @@
         }
       }
     },
+    "/api/care-memos" : {
+      "get" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "list_5",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CareMemosCareMemoView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "create_10",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CareMemoControllerMemo"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CareMemosCareMemoView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -3985,7 +4126,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_10",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4355,6 +4496,26 @@
         }
       }
     },
+    "/api/appointments/{id}/receipt/send" : {
+      "post" : {
+        "tags" : [ "receipt-controller" ],
+        "operationId" : "send_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/payment" : {
       "post" : {
         "tags" : [ "appointment-controller" ],
@@ -4536,6 +4697,36 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/care-memo/send" : {
+      "post" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "send_2",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CareMemoControllerSend"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
           }
         }
       }
@@ -4851,7 +5042,7 @@
     "/api/salaries" : {
       "get" : {
         "tags" : [ "salary-controller" ],
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -5212,6 +5403,33 @@
         }
       }
     },
+    "/api/patients/{patientId}/plan/message" : {
+      "get" : {
+        "tags" : [ "plan-message-controller" ],
+        "operationId" : "message",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/notes" : {
       "get" : {
         "tags" : [ "chart-controller" ],
@@ -5539,7 +5757,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_6",
+        "operationId" : "list_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5794,6 +6012,27 @@
         }
       }
     },
+    "/api/care-memos/links" : {
+      "get" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "links",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CareMemosLink"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -5869,6 +6108,33 @@
         }
       }
     },
+    "/api/appointments/{id}/receipt" : {
+      "get" : {
+        "tags" : [ "receipt-controller" ],
+        "operationId" : "receipt",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReceiptsReceiptView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/payments" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -5902,7 +6168,7 @@
     "/api/appointments/{id}/deposit/receipt" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
-        "operationId" : "receipt",
+        "operationId" : "receipt_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5920,6 +6186,41 @@
                 "schema" : {
                   "type" : "string",
                   "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/care-memo" : {
+      "get" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "forAppointment",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "memoId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CareMemosAppointmentMemo"
                 }
               }
             }
@@ -7639,6 +7940,66 @@
           }
         }
       },
+      "CareMemoControllerMemo" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "active" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "CareMemosCareMemoView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "standard" : {
+            "type" : "boolean"
+          },
+          "serviceIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        }
+      },
+      "CareMemoControllerLinkRequest" : {
+        "properties" : {
+          "memoId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "CareMemosLink" : {
+        "properties" : {
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "memoId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "AppointmentRequestsService" : {
         "properties" : {
           "serviceTypeId" : {
@@ -9018,6 +9379,14 @@
           }
         }
       },
+      "CareMemoControllerSend" : {
+        "properties" : {
+          "memoId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "ReportControllerRequest" : {
         "properties" : {
           "month" : {
@@ -9364,6 +9733,16 @@
           "scans" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "PatientMessage" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
           }
         }
       },
@@ -9764,6 +10143,70 @@
           }
         }
       },
+      "ReceiptsPayment" : {
+        "properties" : {
+          "paidAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+          },
+          "takenBy" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ReceiptsReceiptView" : {
+        "properties" : {
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "patient" : {
+            "type" : "string"
+          },
+          "service" : {
+            "type" : "string"
+          },
+          "chargeSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "debtSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "payments" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ReceiptsPayment"
+            }
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "PaymentQueryEntry" : {
         "properties" : {
           "id" : {
@@ -9781,6 +10224,26 @@
           "paidAt" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "CareMemosAppointmentMemo" : {
+        "properties" : {
+          "memoId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
           }
         }
       },

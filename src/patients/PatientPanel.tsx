@@ -5,13 +5,14 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
-import { isAssistant } from '../lib/roles'
+import { canEditDoctor, isAssistant, seesMoneyOf } from '../lib/roles'
 import { debtLine } from '../lib/debt'
 import { sourceText } from '../lib/sources'
 import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
 import { ContactButtons } from '../schedule/Contact'
 import { statusOf } from '../schedule/status'
 import { PatientForm } from './PatientForm'
+import { VisitDocs } from '../print/VisitDocs'
 import { WaitlistBox } from './WaitlistTab'
 
 type Me = Schemas['BookingViewsMe']
@@ -46,6 +47,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   useClose(onClose)
   const [editing, setEditing] = useState(false)
   const [allPast, setAllPast] = useState(false)
+  // Визит, у которого открыты «Памятка и квитанция» — один за раз
+  const [docsOf, setDocsOf] = useState<number | null>(null)
   // Деньги и заметки — админу и врачу; регистратуре сервер их не отдаст
   const staff = Boolean(me.admin || me.doctorId != null)
   // Медкарту сервер (ChartService) открывает админу клиники, врачам и ассистентам; регистратуре — никогда
@@ -88,6 +91,12 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     return (
       <li key={a.id} className={a.status === 'NO_SHOW' || a.status === 'CANCELLED' ? 'struck' : undefined}>
         {onOpenAppointment ? <button type="button" className="visit-link" onClick={() => onOpenAppointment(a.id!)}>{body}</button> : body}
+        {a.status === 'DONE' && canEditDoctor(me, a.doctorId) && (
+          <button type="button" className="link small" aria-expanded={docsOf === a.id}
+            onClick={() => setDocsOf(docsOf === a.id ? null : a.id!)}>
+            {seesMoneyOf(me, a.doctorId) && (a.paidSom != null || a.chargeSom != null) ? '📋 Памятка и квитанция' : '📋 Памятка'}</button>
+        )}
+        {docsOf === a.id && <VisitDocs appointment={a} me={me} />}
       </li>
     )
   }
