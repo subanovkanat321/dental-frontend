@@ -109,6 +109,15 @@ export async function fetchBlob(path: string): Promise<Blob> {
  * Имя бота клиники — для ссылок-приглашений (t.me/<бот>?start=…). /web/config — не часть
  * REST-контракта /api (его отдаёт вход сайта), поэтому тип — здесь, а не из schema.d.ts.
  */
+/** Бот для входа на сайт: имя и числовой id (окно входа Telegram.Login.auth); null — вход не настроен. */
+export async function botConfig(): Promise<{ username: string; id: number | null } | null> {
+  const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
+  if (!response.ok) return null
+  const body = await response.json().catch(() => null) as { botUsername?: string | null; botId?: number | null } | null
+  // Для окна входа хватит id: имя бота (getMe) может временно не прийти, если Telegram не ответил
+  return body?.botUsername || body?.botId ? { username: body.botUsername ?? '', id: body.botId ?? null } : null
+}
+
 export async function botUsername(): Promise<string | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
   if (!response.ok) return null

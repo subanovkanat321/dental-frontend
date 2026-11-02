@@ -832,3 +832,7 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .pick-list li:last-child { margin-top: 6px; border-top: 1px solid var(--separator); border-radius: 0 0 12px 12px; padding-top: 12px; }
 .pick-check { flex: none; width: 20px; color: var(--link); font-weight: 700; font-size: 1.15rem; text-align: center; }
 @keyframes pick-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+/* «Войти через Telegram» — своя кнопка (layout/Login.tsx), цветом Telegram */
+.btn.tg-login { min-height: 48px; padding: 0 26px; gap: 10px; border: 0; border-radius: 12px; background: #2AABEE; color: #fff; font-size: 1.05rem; font-weight: 600; }
+.btn.tg-login:hover:not(:disabled) { background: #229ED9; }

@@ -5,12 +5,12 @@ import { http, HttpResponse } from 'msw'
 import { appointment, me, renderApp } from './test/fixtures'
 import { server } from './test/server'
 
-test('не вошли (401) — виджет «Войти через Telegram»; вошли — CRM', async () => {
+test('не вошли (401) — «Войти через Telegram» (окно входа Telegram, без iframe и eval); вошли — CRM', async () => {
   let session = false
   let posted: unknown = null
   server.use(
     http.get('*/api/patient/me', () => (session ? HttpResponse.json(me) : HttpResponse.json({ detail: 'Войдите' }, { status: 401 }))),
-    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot' })),
+    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', botId: 123456 })),
     http.post('*/web/login', async ({ request }) => {
       posted = await request.json()
       session = true
@@ -18,21 +18,21 @@ test('не вошли (401) — виджет «Войти через Telegram»;
     }),
     http.get('*/api/appointments', () => HttpResponse.json([])),
   )
+  // Скрипт telegram-widget.js «уже загружен»: Telegram.Login.auth отдаёт подписанные данные входа
+  const auth = vi.fn((_options: unknown, callback: (user: Record<string, unknown> | false) => void) => callback({ id: 111, hash: 'abc' }))
+  window.Telegram = { Login: { auth } }
   window.history.replaceState(null, '', '/login')
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Вход для клиники' })).toBeInTheDocument()
-  const widget = await vi.waitFor(() => {
-    const s = document.querySelector('script[data-telegram-login]')
-    if (!s) throw new Error('виджета нет')
-    return s as HTMLScriptElement
-  })
-  expect(widget.dataset.telegramLogin).toBe('tish_test_bot')
-  // Telegram вызывает onTelegramAuth с подписанными данными — сервер проверяет подпись
-  window.onTelegramAuth!({ id: 111, hash: 'abc' })
+  const button = await screen.findByRole('button', { name: 'Войти через Telegram' })
+  await vi.waitFor(() => expect(button).toBeEnabled())
+  await userEvent.click(button)
+  expect(auth).toHaveBeenCalledWith({ bot_id: 123456, request_access: 'write', lang: 'ru' }, expect.any(Function))
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
   expect(posted).toEqual({ id: 111, hash: 'abc' })
   // Вошли — адрес чистый, без /login
   expect(window.location.pathname).toBe('/')
+  delete window.Telegram
 })
 
 test('расписание: все врачи колонками, нажать на приём — карточка справа, Esc — закрыть', async () => {

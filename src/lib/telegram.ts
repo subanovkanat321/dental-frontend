@@ -37,9 +37,14 @@ type WebApp = {
   BackButton?: BackButton
 }
 
+/** Окно входа Telegram (скрипт telegram-widget.js): user — подписанные данные входа, false — закрыли окно. */
+export type TelegramLogin = {
+  auth(options: { bot_id: number; request_access?: 'write'; lang?: string }, callback: (user: Record<string, unknown> | false) => void): void
+}
+
 declare global {
   interface Window {
-    Telegram?: { WebApp?: WebApp }
+    Telegram?: { WebApp?: WebApp; Login?: TelegramLogin }
   }
 }
 
