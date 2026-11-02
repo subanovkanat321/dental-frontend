@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { formatPhone } from '../lib/time'
-import { clinicCode, getJson, inAppBrowser, initials, tgLink, useSiteLang, type ClinicPage } from './web'
+import { clinicCode, getJson, inAppBrowser, initials, promoCode, tgLink, useSiteLang, withPromo, type ClinicPage } from './web'
 
 const TEXTS = {
   ru: {
@@ -12,6 +12,7 @@ const TEXTS = {
     how: ['Нажмите «Записаться онлайн в Telegram»', 'Выберите врача, услугу и удобное время', 'Врач подтвердит запись, бот напомнит накануне'],
     error: 'Не удалось загрузить страницу — обновите её через минуту.', loading: 'Загрузка…',
     inApp: 'Открыли из Instagram? Если Telegram не открывается — нажмите ⋮ вверху → «Открыть в браузере» или', openTg: 'открыть приложение Telegram',
+    promo: 'Промокод {code} подставится при записи в боте. Скидку применяет клиника на приёме.',
   },
   ky: {
     title: 'Стоматология', tagline: 'Бир мүнөттө онлайн жазылыңыз — бот кабыл алуу тууралуу эскертет 😊', book: 'Telegram аркылуу онлайн жазылуу',
@@ -21,6 +22,7 @@ const TEXTS = {
     how: ['«Telegram аркылуу онлайн жазылуу» баскычын басыңыз', 'Дарыгерди, кызматты жана ыңгайлуу убакытты тандаңыз', 'Дарыгер жазылууну ырастайт, бот бир күн мурун эскертет'],
     error: 'Барак жүктөлгөн жок — бир мүнөттөн кийин жаңыртыңыз.', loading: 'Жүктөлүүдө…',
     inApp: 'Instagram’дан ачтыңызбы? Telegram ачылбаса — жогорудагы ⋮ → «Браузерде ачуу» басыңыз же', openTg: 'Telegram колдонмосун ачыңыз',
+    promo: '{code} промокоду боттогу жазылууда өзү коюлат. Арзандатууну клиника кабыл алууда колдонот.',
   },
 }
 
@@ -56,6 +58,9 @@ export function ClinicSite() {
   if (state.failed) return <main className="site-page"><p className="site-message">{t.error}</p></main>
   if (!d) return <main className="site-page"><p className="site-message hint">{t.loading}</p></main>
   const name = d.name || t.title
+  // Ссылка из рекламы с ?promo=КОД — бот получит код вместе с клиникой и подставит его в форму записи
+  const promo = promoCode()
+  const telegramUrl = withPromo(d.telegramUrl, promo)
   const price = (som: number) => {
     const n = new Intl.NumberFormat('ru-RU').format(som)
     return lang === 'ky' ? `${n} сомдон баштап` : `от ${n} сом`
@@ -68,12 +73,13 @@ export function ClinicSite() {
         <div><h1>{name}</h1>{d.settingUp ? <p role="status">{t.settingUp}</p> : <p>{t.tagline}</p>}</div>
       </div>
       <div className="site-actions">
-        {d.telegramUrl && <a className="btn primary" href={d.telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
+        {telegramUrl && <a className="btn primary" href={telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
         {d.whatsapp && <a className="btn" href={`https://wa.me/${d.whatsapp}?text=${encodeURIComponent(t.waText)}`} target="_blank" rel="noopener noreferrer">💬 {t.whatsapp}</a>}
         {d.phone && <a className="btn" href={`tel:+${d.phone}`}>📞 {t.call} {d.phoneText || formatPhone(d.phone)}</a>}
         {d.mapUrl && <a className="btn" href={d.mapUrl} target="_blank" rel="noopener noreferrer">🗺️ {t.map}</a>}
       </div>
-      {d.telegramUrl && <InAppHint url={d.telegramUrl} text={t.inApp} link={t.openTg} />}
+      {telegramUrl && promo && <p className="hint">🎟 {t.promo.replace('{code}', promo)}</p>}
+      {telegramUrl && <InAppHint url={telegramUrl} text={t.inApp} link={t.openTg} />}
       {d.address && <p>📍 {d.address}</p>}
       {d.telegramUrl && (
         <section className="site-card">

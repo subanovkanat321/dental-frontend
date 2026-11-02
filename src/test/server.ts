@@ -19,6 +19,9 @@ export const SOURCES: Schemas['PatientSourcesOption'][] = [
 export const server = setupServer(
   http.get('*/api/supplies', () => HttpResponse.json([])),
   http.get('*/api/patient-sources', () => HttpResponse.json(SOURCES)),
+  // Промокоды (V122): по умолчанию у клиники их нет
+  http.get('*/api/promo-codes', () => HttpResponse.json([])),
+  http.get('*/api/appointments/promo-codes', () => HttpResponse.json({ rows: [], money: false })),
   http.get('*/api/appointments/revenue', () => HttpResponse.json({ totalSom: 0, paidCount: 0, unpaidCount: 0, byMethod: {}, days: [] })),
   http.get('*/api/appointments/to-pay', () => HttpResponse.json([])),
   http.get('*/api/appointments/report', () => HttpResponse.json([])),

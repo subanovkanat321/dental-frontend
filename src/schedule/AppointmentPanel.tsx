@@ -9,7 +9,7 @@ import { WaitlistBox } from '../patients/WaitlistTab'
 import { agoText } from '../lib/texts'
 import { useClose } from '../lib/useClose'
 import { addDays, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn, ZONE } from '../lib/time'
-import { CommentEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
+import { CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { ContactButtons } from './Contact'
 import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
@@ -51,7 +51,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const client = useQueryClient()
   const action = useAppointmentAction(a)
   // Какая форма открыта внутри карточки: одна за раз, чтобы карточка не превращалась в анкету
-  const [editing, setEditing] = useState<'move' | 'service' | 'comment' | null>(null)
+  const [editing, setEditing] = useState<'move' | 'service' | 'comment' | 'promo' | null>(null)
   // Только что отметили неявку или отмену — «Вернуть», как было (сервер проверит версию)
   const [undo, setUndo] = useState<{ label: string; previous: Status } | null>(null)
   const close = () => setEditing(null)
@@ -148,6 +148,13 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {canEdit && <button type="button" className="link" onClick={() => setEditing('comment')}>изменить</button>}</p>
       ) : canEdit && a.status !== 'CANCELLED' && (
         <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
+      )}
+      {/* Промокод рекламы: пациент ввёл в боте или назвал по телефону — для отчёта «работает ли промокод» */}
+      {editing === 'promo' ? <PromoEdit appointment={a} onDone={close} /> : a.promoCode ? (
+        <p className="line-edit"><span><span className="hint">Промокод:</span> <b>{`🎟 ${a.promoCode}`}</b></span>
+          {canEdit && <button type="button" className="link" onClick={() => setEditing('promo')}>изменить</button>}</p>
+      ) : canEdit && a.status !== 'CANCELLED' && (
+        <button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button>
       )}
 
       {undo && (

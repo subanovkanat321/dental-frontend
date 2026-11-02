@@ -283,6 +283,74 @@
         }
       }
     },
+    "/api/promo-codes/{id}" : {
+      "put" : {
+        "tags" : [ "promo-code-controller" ],
+        "operationId" : "update_2",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PromoCodesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PromoCodesCode"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "promo-code-controller" ],
+        "operationId" : "delete_2",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PromoCodesCode"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/tariffs" : {
       "put" : {
         "tags" : [ "billing-controller" ],
@@ -414,7 +482,7 @@
     "/api/platform/content/{id}" : {
       "put" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "update_2",
+        "operationId" : "update_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -449,7 +517,7 @@
       },
       "delete" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "delete_2",
+        "operationId" : "delete_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -543,7 +611,7 @@
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "update_3",
+        "operationId" : "update_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -578,7 +646,7 @@
       },
       "delete" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "delete_3",
+        "operationId" : "delete_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -598,7 +666,7 @@
     "/api/patients/{patientId}/teeth/{number}" : {
       "put" : {
         "tags" : [ "chart-controller" ],
-        "operationId" : "update_4",
+        "operationId" : "update_5",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -792,7 +860,7 @@
     "/api/patients/{id}" : {
       "put" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "update_5",
+        "operationId" : "update_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -899,7 +967,7 @@
     "/api/patient-sources/{id}" : {
       "put" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "update_6",
+        "operationId" : "update_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -969,7 +1037,7 @@
     "/api/doctors/{id}" : {
       "put" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "update_7",
+        "operationId" : "update_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1004,7 +1072,7 @@
       },
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_4",
+        "operationId" : "delete_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1123,7 +1191,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_8",
+        "operationId" : "update_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1234,7 +1302,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_9",
+        "operationId" : "update_10",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1306,7 +1374,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_10",
+        "operationId" : "update_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1395,6 +1463,43 @@
             "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/AppointmentRequestsService"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/promo-code" : {
+      "put" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "promoCode",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AppointmentRequestsPromoCode"
               }
             }
           },
@@ -2149,6 +2254,56 @@
         }
       }
     },
+    "/api/promo-codes" : {
+      "get" : {
+        "tags" : [ "promo-code-controller" ],
+        "operationId" : "all_3",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PromoCodesCode"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "promo-code-controller" ],
+        "operationId" : "add_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PromoCodesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PromoCodesCode"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/support/tickets/{id}/messages" : {
       "post" : {
         "tags" : [ "support-controller" ],
@@ -2472,7 +2627,7 @@
       },
       "post" : {
         "tags" : [ "dental-news-controller" ],
-        "operationId" : "add_1",
+        "operationId" : "add_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3531,7 +3686,7 @@
     "/api/patient-sources" : {
       "get" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "all_3",
+        "operationId" : "all_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -3550,7 +3705,7 @@
       },
       "post" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "add_2",
+        "operationId" : "add_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3737,7 +3892,7 @@
       },
       "post" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "add_3",
+        "operationId" : "add_4",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3765,7 +3920,7 @@
     "/api/doctors" : {
       "get" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "all_4",
+        "operationId" : "all_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5291,7 +5446,7 @@
     "/api/platform/support/tickets" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "all_5",
+        "operationId" : "all_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5725,7 +5880,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_5",
+        "operationId" : "delete_6",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -5846,6 +6001,32 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/BookingViewsSlots"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patient/promo-code" : {
+      "get" : {
+        "tags" : [ "patient-booking-controller" ],
+        "operationId" : "promoCode_1",
+        "parameters" : [ {
+          "name" : "code",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookingViewsPromo"
                 }
               }
             }
@@ -6281,7 +6462,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_6",
+        "operationId" : "delete_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6661,6 +6842,49 @@
         }
       }
     },
+    "/api/appointments/promo-codes" : {
+      "get" : {
+        "tags" : [ "promo-report-controller" ],
+        "operationId" : "report_1",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PromoReportControllerPromoReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/debts" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -6796,7 +7020,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_7",
+        "operationId" : "delete_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6856,7 +7080,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_8",
+        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6913,7 +7137,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_9",
+        "operationId" : "delete_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6953,7 +7177,7 @@
     "/api/expenses/{id}" : {
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7217,6 +7441,62 @@
           },
           "former" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "PromoCodesRequest" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "discountPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountText" : {
+            "type" : "string"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "validUntil" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "PromoCodesCode" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "discountPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountText" : {
+            "type" : "string"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "validUntil" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "appointments" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -8365,6 +8645,16 @@
           },
           "comment" : {
             "type" : "string"
+          },
+          "promoCode" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AppointmentRequestsPromoCode" : {
+        "properties" : {
+          "promoCode" : {
+            "type" : "string"
           }
         }
       },
@@ -9138,6 +9428,9 @@
           "sourceId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "promoCode" : {
+            "type" : "string"
           }
         },
         "required" : [ "doctorId", "serviceTypeId", "startAt" ]
@@ -9178,6 +9471,9 @@
             "format" : "int32"
           },
           "depositStatus" : {
+            "type" : "string"
+          },
+          "promoCode" : {
             "type" : "string"
           }
         }
@@ -9494,6 +9790,9 @@
           "serviceTypeId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "promoCode" : {
+            "type" : "string"
           }
         },
         "required" : [ "doctorId", "durationMinutes", "patientId", "startAt" ]
@@ -10192,6 +10491,20 @@
           }
         }
       },
+      "BookingViewsPromo" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "discountPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "discountText" : {
+            "type" : "string"
+          }
+        }
+      },
       "NewsControllerPatientNews" : {
         "properties" : {
           "news" : {
@@ -10328,6 +10641,9 @@
             "items" : {
               "$ref" : "#/components/schemas/PatientSourcesChoice"
             }
+          },
+          "promoCode" : {
+            "type" : "string"
           }
         }
       },
@@ -10922,6 +11238,52 @@
               "type" : "integer",
               "format" : "int64"
             }
+          }
+        }
+      },
+      "PromoReportControllerPromoReport" : {
+        "properties" : {
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PromoReportControllerRow"
+            }
+          },
+          "money" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PromoReportControllerRow" : {
+        "properties" : {
+          "promoCodeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "bookings" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "visits" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "newPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },

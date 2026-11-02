@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings } from '../api/settings'
 import { reminderText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
-import { minutesOf, slotInstant, timeOf, ZONE } from '../lib/time'
+import { minutesOf, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { useAppointmentAction } from './useAppointmentAction'
@@ -14,6 +14,7 @@ import { openServiceLater } from '../lib/openService'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
+import { expired, usePromoCodes } from '../lib/promo'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -135,6 +136,36 @@ export function CommentEdit({ appointment: a, onDone }: { appointment: Appointme
       <label className="field"><span>Комментарий</span>
         <textarea rows={2} maxLength={500} value={comment} autoFocus onChange={(e) => setComment(e.target.value)} />
       </label>
+      {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
+      <div className="actions">
+        <button type="submit" className="btn primary" disabled={action.isPending}>Сохранить</button>
+        <button type="button" className="btn ghost" onClick={onDone}>Отмена</button>
+      </div>
+    </form>
+  )
+}
+
+/**
+ * Промокод записи: пациент назвал его по телефону или на приёме. Выбор из кодов клиники —
+ * действующих и того, что уже стоит; «Без промокода» — убрать.
+ */
+export function PromoEdit({ appointment: a, onDone }: { appointment: Appointment; onDone: () => void }) {
+  const action = useAppointmentAction(a)
+  const codes = usePromoCodes()
+  const [code, setCode] = useState(a.promoCode ?? '')
+  const offered = (codes.data ?? []).filter((p) => p.code === a.promoCode || (p.active !== false && !expired(p, todayIn())))
+  return (
+    <form className="form sub-form" aria-label="Промокод записи" onSubmit={(e) => {
+      e.preventDefault()
+      action.mutate({ kind: 'promo', body: { promoCode: code } }, { onSuccess: onDone })
+    }}>
+      <label className="field"><span>Промокод</span>
+        <Select value={code} onChange={(e) => setCode(e.target.value)}>
+          <option value="">Без промокода</option>
+          {offered.map((p) => <option key={p.id} value={p.code}>{`🎟 ${p.code}${p.description ? ` · ${p.description}` : ''}`}</option>)}
+        </Select>
+      </label>
+      {codes.data?.length === 0 && <p className="hint small">Промокодов нет — их заводят в «Настройки → Промокоды».</p>}
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={action.isPending}>Сохранить</button>

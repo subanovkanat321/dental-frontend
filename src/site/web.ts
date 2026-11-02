@@ -88,3 +88,27 @@ export function tgLink(url?: string | null): string | null {
     return null
   }
 }
+
+/** Промокод рекламы из адреса (?promo=ZUBY10) — только латиница и цифры: их пропускает start бота. */
+export function promoCode(): string | null {
+  const code = new URLSearchParams(window.location.search).get('promo') ?? ''
+  return /^[A-Za-z0-9]{3,20}$/.test(code) ? code.toUpperCase() : null
+}
+
+/**
+ * Ссылка на бота с промокодом: t.me/<бот>?start=c_<клиника> → c_<клиника>-<ПРОМОКОД> (бот запомнит
+ * код и подставит его в форму записи). Нет кода или ссылка не клиники — как была.
+ */
+export function withPromo(url: string | null | undefined, promo: string | null): string | null {
+  if (!url) return null
+  if (!promo) return url
+  try {
+    const u = new URL(url)
+    const start = u.searchParams.get('start')
+    if (!start?.startsWith('c_')) return url
+    u.searchParams.set('start', `${start}-${promo}`)
+    return u.toString()
+  } catch {
+    return url
+  }
+}

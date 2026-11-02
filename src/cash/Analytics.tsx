@@ -69,6 +69,7 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
       </div>
       <LoadHeatmap period={period} scope={scope} />
       <SourcesChart period={period} scope={scope} />
+      <PromoChart period={period} scope={scope} />
       <NoShowChart scope={scope} />
     </>
   )
@@ -442,6 +443,46 @@ function SourcesChart({ period, scope }: { period: Period; scope: { doctorId?: n
                 {first + repeat > 0 && <span className="hint"> · возвращаются {Math.round((repeat / (first + repeat)) * 100)}%</span>}
               </p>
             </>
+          )}
+    </section>
+  )
+}
+
+/**
+ * Промокоды рекламы: по каждому коду за период — записи, пришли, новые пациенты и оплаты (за приём с
+ * кодом и лечение после него). Кодов с записями нет — подсказка, где их завести.
+ */
+function PromoChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const data = useQuery({
+    queryKey: ['promo-report', period.from, period.to, scope.doctorId ?? null],
+    queryFn: () => unwrap(api.GET('/api/appointments/promo-codes', { params: { query: { from: period.from, to: period.to, ...scope } } })),
+  })
+  const rows = (data.data?.rows ?? []).filter((r) => (r.bookings ?? 0) > 0)
+  const money = Boolean(data.data?.money)
+  return (
+    <section className="card-block chart" aria-label="Промокоды">
+      <h2>🎟 Промокоды {period.label}</h2>
+      {data.isPending ? <p className="hint">Загрузка…</p>
+        : data.error ? <p className="error">{data.error.message}</p>
+          : rows.length === 0 ? (
+            <p className="hint">{data.data?.rows?.length ? 'По промокодам за этот период записей нет.'
+              : 'Промокодов нет. Заведите код для рекламы в «Настройки → Промокоды» — здесь будет видно, приводит ли он пациентов.'}</p>
+          ) : (
+            <table className="table" aria-label="Промокоды за период">
+              <thead><tr><th>Промокод</th><th className="num">Записей</th><th className="num">Пришли</th><th className="num">Новых</th>
+                {money && <th className="num">Оплачено</th>}</tr></thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.promoCodeId}>
+                    <td>{r.code}{r.description && <span className="hint"> · {r.description}</span>}</td>
+                    <td className="num">{r.bookings}</td>
+                    <td className="num">{r.visits ?? 0}</td>
+                    <td className="num">{r.newPatients ?? 0}</td>
+                    {money && <td className="num">{somText(r.revenueSom ?? 0)}</td>}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
     </section>
   )
