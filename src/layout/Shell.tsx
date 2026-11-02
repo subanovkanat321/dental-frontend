@@ -49,10 +49,11 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   return (
     <div className="shell">
       <aside className="sidebar">
-        <div className="brand">
+        {/* Логотип — на главную (расписание), как на любом сайте */}
+        <button type="button" className="brand" aria-label="На главную — расписание" onClick={() => go('schedule')}>
           <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={24} height={36} />
           <span>Tish</span>
-        </div>
+        </button>
         <div className="clinic">
           <strong>{clinic}</strong>
           <span>{me.fullName ? `${me.fullName} · ` : ''}{role}</span>

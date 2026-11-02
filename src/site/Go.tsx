@@ -41,7 +41,7 @@ export function Go() {
       <h2>Клиникам</h2>
       {t?.promo && <p className="go-promo">🎁 {t.promo.title}</p>}
       <GoLink icon="🚀" title="Подключить бесплатно" sub="Без предоплаты — настроим за час" href="/join#form" tone="orange" main />
-      <GoLink icon="💰" title="Что умеет и тарифы" sub="Запись, касса, склад, медкарта" href="/join" tone="gold" />
+      <GoLink icon="💰" title="Что умеет приложение" sub="Запись, касса, склад, медкарта" href="/join" tone="gold" />
       <GoLink icon="🔐" title="Вход для клиники" sub="CRM в браузере — все врачи на большом экране" href="/login" tone="violet" />
       {(c.supportUrl || wa) && <h2>Связаться</h2>}
       <GoLink icon="💬" title="Написать в Telegram" sub={c.supportTelegram ? `@${c.supportTelegram}` : null} href={c.supportUrl} tone="tg" />

@@ -65,7 +65,10 @@ test('заявка клиники: ошибки полей с сервера, п
   )
   const user = userEvent.setup()
   render(<Join />)
-  expect(await screen.findByText('Кабинет')).toBeInTheDocument()
+  // Цены пока не показываем — только «первые 3 месяца бесплатно»
+  expect(await screen.findByText(/Первые 3 месяца — бесплатно/)).toBeInTheDocument()
+  expect(screen.queryByText('Кабинет')).not.toBeInTheDocument()
+  expect(screen.queryByText(/1 490 сом/)).not.toBeInTheDocument()
   const form = screen.getByRole('form', { name: 'Заявка клиники' })
   await user.click(within(form).getByRole('button', { name: 'Частный врач' }))
   await user.type(within(form).getByRole('textbox', { name: /Кабинет/ }), 'Стоматолог Айгерим')

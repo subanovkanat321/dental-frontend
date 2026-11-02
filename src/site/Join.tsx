@@ -13,11 +13,19 @@ const FEATURES: [string, string, string][] = [
   ['👩‍⚕️', 'Вся команда', 'Врачи, регистратура и администратор — у каждого свои права.'],
 ]
 
-const som = (n = 0) => `${new Intl.NumberFormat('ru-RU').format(n)} сом`
 
+
+/** «Первые 3 месяца», «Первые 5 месяцев», «Первый месяц»; неизвестно — «Первые месяцы». */
+function monthsFree(n?: number | null): string {
+  if (!n) return 'Первые месяцы'
+  if (n === 1) return 'Первый месяц'
+  const ten = n % 10
+  const hundred = n % 100
+  return `Первые ${n} ${ten >= 2 && ten <= 4 && (hundred < 12 || hundred > 14) ? 'месяца' : 'месяцев'}`
+}
 
 /**
- * Страница для клиник (/join): что умеет приложение, тарифы и форма заявки. Заявку разбирает
+ * Страница для клиник (/join): что умеет приложение, «первые месяцы бесплатно» (цены пока не показываем) и форма заявки. Заявку разбирает
  * владелец платформы в «Платформа → Клиники». Поле-ловушка website — от ботов: человек его не видит.
  */
 export function Join() {
@@ -96,21 +104,10 @@ export function Join() {
       <ul className="site-features">
         {FEATURES.map(([icon, title, text]) => <li key={title}><span className="ico" aria-hidden="true">{icon}</span><span><strong>{title}</strong><span>{text}</span></span></li>)}
       </ul>
-      {tariffs && (
-        <>
-          <h2 id="tariffs">Тарифы</h2>
-          <div className="tariffs">
-            {(tariffs.tariffs ?? []).map((x) => (
-              <div key={x.code} className="tariff">
-                <strong>{x.name}</strong><span className="hint">{x.who}</span>
-                <span className="tariff-price num">{som(x.monthSom)}<span className="hint"> / месяц</span></span>
-                <span className="hint">за год — {som(x.yearSom)} (2 месяца в подарок)</span>
-              </div>
-            ))}
-          </div>
-          <p className="hint">Во всех тарифах — всё приложение. Платить — только после {tariffs.pilotMonths} бесплатных месяцев, если решите остаться.</p>
-        </>
-      )}
+      {/* Цены пока не показываем (владелец, 2026-11-02): клиника сначала пробует бесплатно, о цене — в разговоре */}
+      <h2 id="tariffs">Сколько стоит</h2>
+      <p>{monthsFree(tariffs?.pilotMonths)} — бесплатно: всё приложение, без ограничений и без предоплаты.
+        Понравится — договоримся об условиях; нет — просто перестанете пользоваться.</p>
       <h2 id="form">Подключить клинику</h2>
       {tariffs?.promo && <p className="tone-ok">🎁 {tariffs.promo.title}. Без предоплаты — оставьте заявку, мы позвоним.</p>}
       {inAppBrowser() && (
