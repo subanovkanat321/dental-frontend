@@ -1,7 +1,7 @@
 import { api, ApiError, unwrap } from './api/client'
 import { useMe } from './api/me'
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import type { Schemas } from './api/client'
 import { Login } from './layout/Login'
@@ -9,6 +9,7 @@ import { Shell } from './layout/Shell'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
 import { isLoginPath, usePage, type Page } from './lib/route'
+import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
 
 // Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
@@ -40,20 +41,20 @@ export function App() {
     return found
   })
   const [page, goPage] = usePage()
-  const go = (next: Page) => {
-    setLink(null)
-    goPage(next)
+  // Разделы, где уже были, остаются открытыми (скрыты): вернулись — та же карточка, поиск, вкладка
+  // и прокрутка. Ссылка на конкретное (пациент, приём, материал) открывает раздел заново — ключом.
+  const [visited, setVisited] = useState<Page[]>([])
+  const [keys, setKeys] = useState<Partial<Record<Page, number>>>(() => (link ? { [link.page]: 1 } : {}))
+  const linkTo = (next: DeepLink) => {
+    setLink(next)
+    setKeys((k) => ({ ...k, [next.page]: (k[next.page] ?? 0) + 1 }))
+    goPage(next.page)
   }
+  const go = (next: Page) => goPage(next)
   // Имя пациента в карточке приёма → «Пациенты» с его карточкой
-  const openPatient = (patientId: number) => {
-    setLink({ page: 'patients', patientId })
-    goPage('patients')
-  }
+  const openPatient = (patientId: number) => linkTo({ page: 'patients', patientId })
   // Визит или долг в карточке пациента → «Расписание» с карточкой этого приёма
-  const openAppointment = (appointmentId: number) => {
-    setLink({ page: 'schedule', appointmentId })
-    goPage('schedule')
-  }
+  const openAppointment = (appointmentId: number) => linkTo({ page: 'schedule', appointmentId })
   // «Записать» из карточки пациента: в «Расписание» с открытой «Новой записью» на него
   const [booking, setBooking] = useState<Schemas['PatientView'] | null>(null)
 
@@ -88,22 +89,74 @@ export function App() {
   }
   // Команда платформы без своей клиники видит только «Платформу»
   const shown = me.data.doctor ? page : 'platform'
+  const sections = visited.includes(shown) ? visited : [...visited, shown]
+  // Ссылка (кнопка бота, имя пациента) — только для своего раздела
+  const linkOf = (p: Page) => (link?.page === p ? link : null)
+  const section = (p: Page) => {
+    const l = linkOf(p)
+    switch (p) {
+      case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} onOpenAppointment={openAppointment} onBook={(x) => linkTo({ page: 'schedule', bookPatientId: x.id! })} />
+      case 'cash': return <CashPage me={me.data} initialTab={l?.tab} onOpenPatient={openPatient} />
+      case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} />
+      case 'settings': return <SettingsPage me={me.data} initialTicket={l?.ticketId} />
+      case 'platform': return me.data.platform ? <PlatformPage me={me.data} initialTab={l?.tab} /> : null
+      case 'schedule': return l?.appointmentId || l?.bookPatientId
+        ? <LinkedSchedule link={l} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
+        : <SchedulePage me={me.data} initialDate={l?.date} initialDoctor={l?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} onOpenPatient={openPatient} />
+      default: return null
+    }
+  }
   return (
     <Shell me={me.data} page={shown} onNavigate={go}>
-      {/* Предохранитель на раздел: упал один экран — остальное работает; ключ — раздел, ушли и вернулись — заново */}
-      <ErrorBoundary key={shown}>
-      <Suspense fallback={<p className="hint">Загрузка…</p>}>
-      {shown === 'patients' && <PatientsPage me={me.data} initialPatient={link?.patientId} onOpenAppointment={openAppointment} onBook={(p) => { setBooking(p); go('schedule') }} />}
-      {shown === 'cash' && <CashPage me={me.data} initialTab={link?.tab} onOpenPatient={openPatient} />}
-      {shown === 'stock' && <StockPage me={me.data} initialSupply={link?.supplyId} />}
-      {shown === 'settings' && <SettingsPage me={me.data} initialTicket={link?.ticketId} />}
-      {shown === 'platform' && me.data.platform && <PlatformPage me={me.data} initialTab={link?.page === 'platform' ? link.tab : undefined} />}
-      {shown === 'schedule' && (link?.appointmentId || link?.bookPatientId
-        ? <LinkedSchedule key={link.appointmentId ?? link.bookPatientId} link={link} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
-        : <SchedulePage me={me.data} initialDate={link?.date} initialDoctor={link?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} onOpenPatient={openPatient} />)}
-      </Suspense>
-      </ErrorBoundary>
+      <Sections shown={shown} sections={sections} onVisit={setVisited}>
+        {(p) => (
+          // Предохранитель на раздел: упал один экран — остальное работает
+          <ErrorBoundary key={`${p}:${keys[p] ?? 0}`}>
+            <Suspense fallback={<p className="hint">Загрузка…</p>}>{section(p)}</Suspense>
+          </ErrorBoundary>
+        )}
+      </Sections>
     </Shell>
+  )
+}
+
+/**
+ * Открытые разделы: показан один, остальные скрыты, но живы — вернулись, и всё как было. У каждого
+ * своя прокрутка страницы: ушли — запомнили, вернулись — на то же место; новый раздел — с начала.
+ * Скрытый раздел не слушает «назад» Telegram и Esc (SectionActive).
+ */
+function Sections({ shown, sections, onVisit, children }: {
+  shown: Page
+  sections: Page[]
+  onVisit: (pages: Page[]) => void
+  children: (page: Page) => React.ReactNode
+}) {
+  const scroll = useRef<Partial<Record<Page, number>>>({})
+  const current = useRef(shown)
+  useEffect(() => {
+    if (sections.length) onVisit(sections)
+  }, [sections, onVisit])
+  useEffect(() => {
+    const onScroll = () => { scroll.current[current.current] = window.scrollY }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  useLayoutEffect(() => {
+    current.current = shown
+    const y = scroll.current[shown] ?? 0
+    window.scrollTo(0, y)
+    // Раздел мог ещё догружаться (первый раз, данные) — повторим, когда он нарисуется
+    const t = window.setTimeout(() => { if (current.current === shown && y) window.scrollTo(0, y) }, 120)
+    return () => window.clearTimeout(t)
+  }, [shown])
+  return (
+    <>
+      {sections.map((p) => (
+        <div key={p} className="section" hidden={p !== shown}>
+          <SectionActive.Provider value={p === shown}>{children(p)}</SectionActive.Provider>
+        </div>
+      ))}
+    </>
   )
 }
 

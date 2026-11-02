@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
 
+import { useSectionActive } from './section'
+
 import { telegram } from './telegram'
 
 /**
@@ -32,7 +34,8 @@ export function useBack(onBack: (() => void) | null): void {
   useEffect(() => {
     handler.current = onBack
   })
-  const active = onBack != null
+  const visible = useSectionActive()
+  const active = onBack != null && visible
   useEffect(() => {
     if (!active) return
     const entry = { current: () => handler.current?.() }

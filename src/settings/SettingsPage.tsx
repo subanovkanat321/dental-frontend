@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 
 import type { AccountTab } from '../account/AccountPage'
 import { logout, type Schemas } from '../api/client'
@@ -89,6 +89,23 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
   }, [])
   const back = () => openSettings(null)
   const found = GROUPS.flatMap(([, items]) => items).find((i) => i.key === current && i.show(me))
+  // Пункт открывается с начала, а назад в список — туда, где его листали
+  const listY = useRef(0)
+  const openKey = found?.key ?? null
+  const prevKey = useRef(openKey)
+  // Прокрутку списка запоминаем, пока он на экране: в момент открытия пункта страница уже короче,
+  // и браузер успевает сбросить прокрутку
+  useEffect(() => {
+    if (openKey != null) return
+    const onScroll = () => { listY.current = window.scrollY }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [openKey])
+  useLayoutEffect(() => {
+    if (prevKey.current === openKey) return
+    window.scrollTo(0, openKey == null ? listY.current : 0)
+    prevKey.current = openKey
+  }, [openKey])
   // key — свой экран у каждого пункта: «Мой профиль» и «Врачи» не делят открытую карточку
   if (found) {
     return (
