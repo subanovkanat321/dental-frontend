@@ -54,15 +54,15 @@ const GROUPS: [string, Item[]][] = [
     item('hours', 'Часы работы', 'Часы клиники и каждого врача', all, () => (me, back) => <HoursPage me={me} onBack={back} />),
     item('timeoff', 'Перерывы и выходные', 'Обед, намаз, отпуск, праздники', all, team('timeoff')),
     // Ассистенту цены не показываем — и пункта «Услуги» у него нет
-    item('services', 'Услуги', 'Цены и длительность — для записи и самозаписи', (me) => !isAssistant(me), clinic('services')),
-    item('memos', 'Памятки после процедур', 'Что делать пациенту после удаления, чистки, отбеливания…', all, clinic('memos')),
+    item('services', 'Услуги', 'Цены и длительность приёмов', (me) => !isAssistant(me), clinic('services')),
+    item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),
   ]],
   ['Клиника', [
     item('doctors', 'Врачи', 'Профиль, фото, приглашение, права', all, team('doctors')),
-    item('members', 'Сотрудники', 'Администраторы, регистратура и ассистенты', admin, team('members')),
-    item('about', 'О клинике', 'Адрес, контакты, работа с компьютера, склад врачей, предоплата', all, clinic('about')),
+    item('members', 'Сотрудники', 'Админы, регистратура, ассистенты', admin, team('members')),
+    item('about', 'О клинике', 'Адрес, контакты, предоплата, склад', all, clinic('about')),
     item('questions', 'Анкета пациента', 'Вопросы перед первым приёмом', (me) => Boolean(me.admin || me.doctorId != null), clinic('questions')),
-    item('sources', 'Откуда узнают о клинике', 'Варианты в карточке пациента и вопрос новым пациентам в боте', all, clinic('sources')),
+    item('sources', 'Откуда узнают о клинике', 'Варианты в карточке и вопрос в боте', all, clinic('sources')),
     item('patient-news', 'Новости для пациентов', 'Акции и объявления в боте', admin, clinic('news')),
   ]],
   ['Аккаунт клиники', [
@@ -71,9 +71,9 @@ const GROUPS: [string, Item[]][] = [
     item('data', 'Данные', 'Выгрузка и журнал действий', (me) => admin(me) || seesAll(me), account('data')),
   ]],
   ['Профиль и помощь', [
-    item('profile', 'Мой профиль', 'Имя, фото, о себе — что видят пациенты', (me) => me.doctorId != null,
+    item('profile', 'Мой профиль', 'Имя, фото и «о себе» для пациентов', (me) => me.doctorId != null,
       () => (me, back) => <ProfilePage me={me} onBack={back} />),
-    item('guide', 'Памятка', 'Как записать, напомнить и принять оплату — по ролям', all,
+    item('guide', 'Памятка', 'Как записать, напомнить, принять оплату', all,
       () => (me, back) => <GuidePage me={me} onBack={back} />),
     item('support', 'Техподдержка', 'Написать команде Tish, частые вопросы', all, account('support')),
     item('dental-news', 'Новости стоматологии', 'Подборка профессиональных изданий', all, account('news')),
@@ -121,6 +121,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
     <div className="settings">
       <header className="toolbar"><h1>⚙️ Настройки</h1></header>
       <Profile me={me} />
+      <div className="settings-groups">
       {GROUPS.map(([group, items], index) => {
         const shown = items.filter((i) => i.show(me))
         if (!shown.length) return null
@@ -132,7 +133,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
                 <li key={i.key}>
                   <button type="button" className="settings-link" onClick={() => openSettings(i.key)}>
                     <span className="settings-emoji" aria-hidden="true">{EMOJI[i.key]}</span>
-                    <span className="settings-text"><strong>{i.title}</strong><span className="hint">{i.hint}</span></span>
+                    <span className="settings-text"><strong>{i.title}</strong><span className="hint" title={i.hint}>{i.hint}</span></span>
                     <span aria-hidden="true" className="chev">›</span>
                   </button>
                 </li>
@@ -141,6 +142,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
           </section>
         )
       })}
+      </div>
       {me.platform && (
         <section className="settings-group mobile-only">
           <h2>Платформа</h2>

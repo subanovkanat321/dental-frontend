@@ -1213,6 +1213,25 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .card-block > p.hint, .settings-item .card-block > p { max-width: 920px; }
 .medical { max-width: 1480px; }
 .cash > p.hint, .cash > .hint { max-width: 920px; margin: 0; }
+/* Пункты «Настроек»: короткие поля и переключатели не растягиваются на всю ширину */
+.settings-item .card-block > .row, .settings-item form > .row { max-width: 640px; }
+.settings-item .hours-doctor .segments { max-width: 480px; }
+
+/* «Настройки»: группы двумя ровными колонками без дыр, подсказки в одну строку */
+@media (min-width: 1100px) {
+  .settings { max-width: 1180px; grid-template-columns: 1fr; }
+  .settings-groups { columns: 2; column-gap: 20px; }
+  .settings-groups > .settings-group { break-inside: avoid; margin-bottom: 20px; }
+  .settings-link .hint { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .settings-text { min-width: 0; }
+  .appearance { grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+  .appearance > .hint { grid-column: 1 / -1; margin: 0; }
+}
+.settings-groups { display: grid; gap: 16px; }
+@media (min-width: 1100px) { .settings-groups { display: block; } }
+.settings-link { min-height: 64px; }
+.settings-emoji { width: 38px; height: 38px; font-size: 1.2rem; }
+
 /* Карточки и блоки — одинаковые отступы; заголовок раздела и действия на одной линии */
 .card-block { padding: 18px 20px; }
 .block-head { min-height: 36px; }
