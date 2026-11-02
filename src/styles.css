@@ -253,9 +253,11 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .segments button { flex: 1; padding: 7px 4px; border: 0; background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
 .segments button + button { border-left: 1px solid var(--separator); }
 .segments button[aria-pressed=true] { background: var(--accent-soft); color: var(--link); font-weight: 700; }
-.phone { display: flex; align-items: center; gap: 6px; padding: 0 0 0 10px; }
-.phone span { color: var(--hint); }
-.phone input { border: 0; padding-left: 0; }
+/* Телефон: страна (флаг и код) слева, номер справа — одной рамкой. Номер в разметке первый (PhoneInput.tsx) */
+.phone { display: flex; align-items: stretch; padding: 0; }
+.phone:focus-within { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.phone > input { order: 1; flex: 1; min-width: 0; border: 0; padding-left: 8px; }
+.phone > input:focus { outline: none; }
 .chosen { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; background: var(--accent-soft); }
 .found { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; border: 1px solid var(--separator); border-radius: 10px; }
 .found button { width: 100%; padding: 8px 10px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
@@ -480,8 +482,6 @@ tr.inactive td { opacity: .55; }
 .about > .btn { justify-self: start; margin-top: 12px; }
 .qr-row { display: flex; align-items: center; gap: 12px; }
 .pay-qr { width: 120px; height: 120px; object-fit: contain; border-radius: var(--r-md); background: #fff; }
-.phone.full { padding-left: 0; }
-.phone.full input { padding-left: 10px; }
 @media (max-width: 720px) { .about-grid { grid-template-columns: 1fr; } }
 .news-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .news-item { display: grid; gap: 4px; justify-items: start; padding: 10px 0; border-top: 1px solid var(--separator); }
@@ -1282,6 +1282,11 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .ui-select.placeholder .ui-select-value { color: var(--hint); }
 .ui-select-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-select-value .hint { font-size: .9em; }
+/* Страна в поле телефона: в поле — только флаг и код, название — в списке */
+.phone .ui-select { order: 0; flex: none; width: auto; min-height: 0; border: 0; border-right: 1px solid var(--line); border-radius: var(--r-md) 0 0 var(--r-md);
+  padding: 6px 26px 6px 10px !important; background-color: transparent !important; background-position: right 8px center !important; color: var(--text); }
+.phone .ui-select:focus-visible, .phone .ui-select[aria-expanded=true] { outline: none; background-color: var(--sunken) !important; }
+.phone .ui-select-value .hint { display: none; }
 .ui-select-proxy { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
 .ui-select-pop { position: fixed; z-index: 1000; display: flex; flex-direction: column; padding: 6px; border: 1px solid var(--separator); border-radius: 14px;
   background: var(--card); color: var(--text); box-shadow: 0 12px 32px rgba(15, 42, 48, .18); animation: pick-in .12s ease-out; }

@@ -32,7 +32,7 @@ function useDebounced(value: string, ms = 300): string {
 
 /** Строка поиска как цифры номера: «0555 12» → «55512» (без 0 и кода страны). */
 function phoneDigits(text: string): string {
-  return text.replace(/\D/g, '').replace(/^(996|0)/, '')
+  return text.replace(/\D/g, '').replace(/^(00|996|0)/, '')
 }
 
 /**
