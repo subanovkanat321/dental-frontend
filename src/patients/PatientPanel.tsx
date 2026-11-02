@@ -245,7 +245,7 @@ function SourceLine({ patient: p, canEdit }: { patient: Schemas['PatientView']; 
   const save = useMutation<Schemas['PatientView'], ApiError, PatientSource | ''>({
     mutationFn: (source) => unwrap(api.PUT('/api/patients/{id}', {
       params: { path: { id: p.id! } },
-      body: { fullName: p.fullName, phone: p.phone ? `+${p.phone}` : p.phone, allowDuplicate: true, birthDate: p.birthDate || undefined, workplace: p.workplace ?? '', source: source || undefined },
+      body: { fullName: p.fullName ?? '', phone: p.phone ? `+${p.phone}` : '', allowDuplicate: true, birthDate: p.birthDate || undefined, workplace: p.workplace ?? '', source: source || undefined },
     })),
     onSuccess: () => { for (const key of ['patients', 'patient-card', 'appointments', 'sources']) void client.invalidateQueries({ queryKey: [key] }) },
   })
