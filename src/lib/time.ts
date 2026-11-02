@@ -23,6 +23,16 @@ export function minutesOf(instant: string): number {
   return (h ?? 0) * 60 + (m ?? 0)
 }
 
+/** «Сейчас» в минутах от полуночи по Бишкеку, вниз до 5 минут: поле времени с шагом 5 минут не примет 10:47. */
+export function nowMinutes5(now = new Date()): number {
+  return Math.floor(minutesOf(now.toISOString()) / 5) * 5
+}
+
+/** Шаг поля времени: 5 минут, а для времени не кратного 5 (окно после приёма в 10:47) — минута, иначе форма не отправится. */
+export function timeStep(value: string): number {
+  return Number(value.slice(3, 5)) % 5 ? 60 : 300
+}
+
 /** '09:00' или '09:00:00' → 540. */
 export function minutesOfTime(time: string): number {
   const [h, m] = time.split(':').map(Number)

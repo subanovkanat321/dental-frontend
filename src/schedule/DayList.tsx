@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useWaitlist } from '../api/settings'
 import { reminderText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
-import { addDays, minutesOf, somText, timeOf, todayIn } from '../lib/time'
+import { addDays, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
@@ -137,7 +137,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
         {onNewHere && <button type="button" className="btn primary" onClick={onNewHere}>＋ Новая запись</button>}
         {date === today && walkInDoctor && (
           <button type="button" className="btn walk-in" aria-label="Принять сейчас (без записи)"
-            onClick={() => onNew(walkInDoctor.id, minutesOf(new Date().toISOString()), true)}>{onNewHere ? '⚡ Без записи' : '🚶 Принять сейчас (без записи)'}</button>
+            onClick={() => onNew(walkInDoctor.id, nowMinutes5(), true)}>{onNewHere ? '⚡ Без записи' : '🚶 Принять сейчас (без записи)'}</button>
         )}
       </div>
       {note && <p className="hint day-note">{note}</p>}

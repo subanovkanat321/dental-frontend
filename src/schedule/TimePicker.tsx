@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 import { api, unwrap } from '../api/client'
-import { timeOf } from '../lib/time'
+import { timeOf, timeStep } from '../lib/time'
 
 function endText(time: string, duration: number): string {
   const [h, m] = time.split(':').map(Number)
@@ -57,7 +57,7 @@ export function TimePicker({ date, doctorId, duration, exclude, value, onChange,
             )
       )}
       {manual && (
-        <input type="time" step={300} aria-label="Время" value={value} required onChange={(e) => onChange(e.target.value)} />
+        <input type="time" step={timeStep(value)} aria-label="Время" value={value} required onChange={(e) => onChange(e.target.value)} />
       )}
       <button type="button" className="link" onClick={() => setManual(!manual)}>{manual ? 'Выбрать свободное время' : 'Другое время'}</button>
       {value && <p className="hint appt-end">Приём: {value}–{endText(value, duration)}</p>}

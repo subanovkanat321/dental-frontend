@@ -95,9 +95,11 @@ test('«Новая запись» предлагает пациентов из �
   server.use(http.post('*/api/waitlist/7/book', async ({ request }) => {
     booked = await request.json()
     return HttpResponse.json(appointment(55, 1, '09:00', 'Айгуль Т.'))
-  }))
+  }), http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [new Date(`${todayIn()}T09:00:00+06:00`).toISOString()] })))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
+  // Время не подставлено: окно выбирают в сетке, и тогда — кто его ждёт
+  await userEvent.click(await screen.findByRole('button', { name: '09:00' }))
   const box = await screen.findByRole('region', { name: 'Ждут свободного времени' })
   expect(box).toHaveTextContent('Айгуль Т.')
   expect(within(box).getByRole('link', { name: 'WhatsApp' }).getAttribute('href')).toContain('wa.me/996700333444')

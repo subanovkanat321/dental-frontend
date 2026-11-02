@@ -142,6 +142,7 @@ test('новый пациент с номером, который уже ест�
   let phone: unknown
   server.use(
     http.get('*/api/service-types', () => HttpResponse.json([])),
+    http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [new Date(`${todayIn()}T23:00:00+06:00`).toISOString()] })),
     http.post('*/api/patients', async ({ request }) => {
       phone = ((await request.json()) as { phone: string }).phone
       return HttpResponse.json({
@@ -160,6 +161,8 @@ test('новый пациент с номером, который уже ест�
   await userEvent.click(within(panel).getByRole('button', { name: '＋ Новый пациент' }))
   await userEvent.type(within(panel).getByLabelText('Имя и фамилия'), 'Айжан')
   await userEvent.type(within(panel).getByLabelText('Телефон'), '555 000 111')
+  // Время не подставлено — выбрать в сетке свободного
+  await userEvent.click(await within(panel).findByRole('button', { name: '23:00' }))
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
 
   expect(await within(panel).findByText(/Пациент с этим номером уже есть: Айжан Б\./)).toBeInTheDocument()

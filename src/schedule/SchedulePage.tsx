@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Mous
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { openSettings, type Page } from '../lib/route'
-import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn, ZONE } from '../lib/time'
+import { addDays, dayTitle, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
 import { DayList } from './DayList'
@@ -88,7 +88,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     const doctor = (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
       ?? (me.doctors ?? []).find((d) => d.active !== false)
     return bookPatient && doctor
-      ? { kind: 'new', patient: bookPatient, slot: { doctorId: doctor.id!, date: today, minutes: minutesOfTime(me.clinic?.workStart ?? '09:00') } }
+      // Время не подставляем: открытие клиники могло пройти или быть занято — сетка свободного покажет, что есть
+      ? { kind: 'new', patient: bookPatient, slot: { doctorId: doctor.id!, date: today, minutes: null } }
       : null
   })
   // Пациента для записи взяли — забыть, чтобы при следующем заходе «Расписание» открылось как обычно
@@ -217,14 +218,15 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     const minutes = Math.min(Math.max(from + Math.floor(y / PX / 15) * 15, from), to - 15)
     setSide({ kind: 'new', slot: { doctorId, date, minutes } })
   }
-  /** «Принять сейчас (без записи)» — к выбранному врачу или к себе; приём с этой минуты. */
+  /** «Принять сейчас (без записи)» — к выбранному врачу или к себе; приём с этой минуты (вниз до 5 минут). */
   const walkInHere = () => {
     const first = (view === 'all' ? null : doctors.find((d) => d.id === view)) ?? doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
-    if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date: today, minutes: minutesOf(new Date().toISOString()) }, walkIn: true })
+    if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date: today, minutes: nowMinutes5() }, walkIn: true })
   }
   const newHere = () => {
     const first = (view === 'all' ? null : doctors.find((d) => d.id === view)) ?? doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
-    if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date, minutes: minutesOfTime(me.clinic?.workStart ?? '09:00') } })
+    // Без времени: в форме — сетка свободного, а не 09:00, которое могло пройти или быть занято
+    if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date, minutes: null } })
   }
 
   if (medical) {

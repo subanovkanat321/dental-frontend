@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
-import { dayTitle, formatPhone, shortDate, slotInstant, todayIn } from '../lib/time'
+import { dayTitle, formatPhone, shortDate, slotInstant, timeStep, todayIn } from '../lib/time'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { serviceEmoji } from '../lib/serviceEmoji'
@@ -18,14 +18,22 @@ type Patient = Schemas['PatientView']
 type Appointment = Schemas['AppointmentView']
 
 /** Слот, на который нажали: врач, день и минуты от полуночи по Бишкеку. */
-/** Куда записать; duration — длительность по умолчанию («Записать снова» — как прошлый приём). */
-export type Slot = { doctorId: number; date: string; minutes: number; duration?: number }
+/**
+ * Куда записать; duration — длительность по умолчанию («Записать снова» — как прошлый приём).
+ * minutes: null — время не выбрано: в форме сетка свободного времени.
+ */
+export type Slot = { doctorId: number; date: string; minutes: number | null; duration?: number }
 
 type ContactsNavigator = Navigator & { contacts?: { select: (props: string[]) => Promise<{ name?: string[]; tel?: string[] }[]> } }
 const contactsSupported = () => typeof navigator !== 'undefined' && 'contacts' in navigator
 
 function timeText(minutes: number): string {
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+}
+
+/** Время в форме для слота: не выбрано — пусто, в форме сетка свободного времени. */
+function initialTime(slot: Slot): string {
+  return slot.minutes == null ? '' : timeText(slot.minutes)
 }
 
 /** Пауза перед поиском: не дёргать сервер на каждую букву. */
@@ -59,7 +67,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   const [doctorId, setDoctorId] = useState(slot.doctorId)
   const [date, setDate] = useState(slot.date)
-  const [time, setTime] = useState(timeText(slot.minutes))
+  const [time, setTime] = useState(() => initialTime(slot))
   const [birthDate, setBirthDate] = useState('')
   const [source, setSource] = useState<PatientSource | ''>('')
   const [wantsEarlier, setWantsEarlier] = useState(false)
@@ -82,7 +90,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     setShown(slot)
     setDoctorId(slot.doctorId)
     setDate(slot.date)
-    setTime(timeText(slot.minutes))
+    setTime(initialTime(slot))
   }
 
   const services = useQuery({
@@ -278,7 +286,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
         {walkIn ? (
           <div className="row">
             <label className="field"><span>Время</span>
-              <input type="time" step={300} value={time} required onChange={(e) => setTime(e.target.value)} /></label>
+              <input type="time" step={timeStep(time)} value={time} required onChange={(e) => setTime(e.target.value)} /></label>
             {durationField}
           </div>
         ) : (

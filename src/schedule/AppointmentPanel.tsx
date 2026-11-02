@@ -7,7 +7,7 @@ import { MedAlerts } from '../medical/Anamnesis'
 import { WaitlistBox } from '../patients/WaitlistTab'
 import { agoText } from '../lib/texts'
 import { useClose } from '../lib/useClose'
-import { addDays, dayTitle, formatPhone, minutesOf, somText, timeOf, todayIn, ZONE } from '../lib/time'
+import { addDays, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { CommentEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { ContactButtons } from './Contact'
 import { DepositBox } from './DepositBox'
@@ -86,7 +86,13 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   }
   const back = (updated: Appointment) => action.mutate({ kind: 'undo', body: { version: updated.version ?? 0, previousStatus: undo!.previous } },
     { onSuccess: () => setUndo(null) })
-  const bookAgain = (day: string) => a.patient && onBook?.({ doctorId: a.doctorId!, date: day, minutes: minutesOf(a.startAt!), duration: length }, a.patient)
+  // То же время, что у этого приёма, — если оно ещё не прошло; иначе форма откроется без времени (сетка свободного)
+  const bookAgain = (day: string) => {
+    if (!a.patient) return
+    const minutes = minutesOf(a.startAt!)
+    const past = Date.parse(slotInstant(day, minutes)) < Date.now()
+    onBook?.({ doctorId: a.doctorId!, date: day, minutes: past ? null : minutes, duration: length }, a.patient)
+  }
 
   return (
     <aside className="panel" aria-label="Карточка приёма">
