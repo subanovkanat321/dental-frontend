@@ -179,7 +179,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
       </section>
       {selected === 'new' && <NewPatientPanel onClose={close} onCreated={setSelected} />}
       {typeof selected === 'number' && <PatientPanel key={selected} patientId={selected} me={me} onClose={close} onBook={onBook} onOpenAppointment={onOpenAppointment}
-        onMedical={(p) => { setSelected(null); setMedical(p) }} />}
+        onOpenPatient={setSelected} onMedical={(p) => { setSelected(null); setMedical(p) }} />}
     </div>
   )
 }

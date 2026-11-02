@@ -138,3 +138,21 @@ test('«Должники»: по пациентам — кто сколько д
   expect(items[1]).toHaveTextContent('приёмов: 2')
   expect(items[1]).toHaveTextContent('обещал оплатить до')
 })
+
+test('«Должники»: семья — одной строкой, «Семьи вместе» можно выключить', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/families', () => HttpResponse.json([{ id: 9, name: 'Семья Садыкова', members: [{ id: 5, fullName: 'Айгуль С.' }, { id: 6, fullName: 'Эрлан С.' }] }])),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([
+      { appointmentId: 1, startAt: '2026-10-01T04:00:00Z', patientId: 5, patient: 'Айгуль С.', debtSom: 3000 },
+      { appointmentId: 2, startAt: '2026-10-02T04:00:00Z', patientId: 6, patient: 'Эрлан С.', debtSom: 2000 },
+    ] satisfies Schemas['PaymentQueryDebt'][])),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: 'Должники' }))
+  const box = await screen.findByRole('region', { name: 'Должники' })
+  expect(await within(box).findByText('👨‍👩‍👧 Семья Садыкова')).toBeInTheDocument()
+  expect(within(box).getAllByRole('listitem')).toHaveLength(1)
+  await userEvent.click(within(box).getByRole('checkbox', { name: 'Семьи вместе' }))
+  expect(within(box).getAllByRole('listitem')).toHaveLength(2)
+})

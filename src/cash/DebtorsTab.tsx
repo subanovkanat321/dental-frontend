@@ -1,7 +1,11 @@
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+
+import { api, unwrap } from '../api/client'
 import type { Schemas } from '../api/client'
 import { EmptyState } from '../layout/EmptyState'
 import { shortDate, somText } from '../lib/time'
-import { debtorsOf } from './debtors'
+import { debtorsOf, type FamilyOf } from './debtors'
 
 type Debt = Schemas['PaymentQueryDebt']
 
@@ -16,15 +20,25 @@ export function DebtorsTab({ rows, pending, error, onOpen, onOpenPatient }: {
   onOpen: (appointmentId: number) => void
   onOpenPatient?: (patientId: number) => void
 }) {
+  const families = useQuery({ queryKey: ['families'], queryFn: () => unwrap(api.GET('/api/families')) })
+  const [byFamily, setByFamily] = useState(true)
+  const familyOf: FamilyOf = new Map()
+  for (const f of families.data ?? []) for (const m of f.members ?? []) familyOf.set(m.id!, { id: f.id!, name: f.name ?? 'Семья' })
+  const grouped = byFamily && familyOf.size > 0
   if (pending) return <section className="card-block"><p className="hint">Загрузка…</p></section>
   if (error) return <section className="card-block"><p className="error">{error}</p></section>
-  const list = debtorsOf(rows ?? [])
+  const list = debtorsOf(rows ?? [], undefined, grouped ? familyOf : undefined)
   if (!list.length) return <section className="card-block"><EmptyState icon="🤝" title="Должников нет">Все приёмы оплачены полностью.</EmptyState></section>
   const total = list.reduce((s, x) => s + x.total, 0)
   const overdue = list.filter((x) => x.overdue)
   return (
     <section className="card-block debtors" aria-label="Должники">
-      <h2>Должники</h2>
+      <div className="block-head">
+        <h2>Должники</h2>
+        {familyOf.size > 0 && (
+          <label className="check"><input type="checkbox" checked={byFamily} onChange={(e) => setByFamily(e.target.checked)} /> Семьи вместе</label>
+        )}
+      </div>
       <div className="debtors-sum">
         <div><span className="hint">Должны всего</span><b className="num">{somText(total)}</b></div>
         <div><span className="hint">Пациентов</span><b className="num">{list.length}</b></div>

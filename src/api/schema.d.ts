@@ -388,6 +388,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/families/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["rename"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/doctors/{id}": {
         parameters: {
             query?: never;
@@ -1460,6 +1476,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{id}/family": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ofPatient"];
+        put?: never;
+        post: operations["join"];
+        delete: operations["leave"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/search": {
         parameters: {
             query?: never;
@@ -1614,6 +1646,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/families/{id}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["pay_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2587,7 +2635,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["ofPatient"];
+        get: operations["ofPatient_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2748,6 +2796,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["list_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/families": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["all_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/families/{id}/debts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["debts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3179,7 +3259,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["debts"];
+        get: operations["debts_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3797,6 +3877,20 @@ export interface components {
         StaffMembersControllerAssistantDoctors: {
             doctorIds?: number[];
         };
+        FamilyControllerRename: {
+            name?: string;
+        };
+        FamiliesFamily: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            members?: components["schemas"]["FamiliesMember"][];
+        };
+        FamiliesMember: {
+            /** Format: int64 */
+            id?: number;
+            fullName?: string;
+        };
         DoctorControllerAdminRequest: {
             fullName?: string;
             about?: string;
@@ -4325,6 +4419,10 @@ export interface components {
             createdBy?: string;
             canDelete?: boolean;
         };
+        FamilyControllerJoin: {
+            /** Format: int64 */
+            relativeId?: number;
+        };
         SearchPatientsRequest: {
             query?: string;
         };
@@ -4389,6 +4487,24 @@ export interface components {
             fullName?: string;
             alsoDoctor?: boolean;
             doctorIds?: number[];
+        };
+        FamilyMoneyControllerPay: {
+            /** Format: int32 */
+            amountSom?: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD";
+        };
+        FamilyMoneyControllerApplied: {
+            /** Format: int64 */
+            appointmentId?: number;
+            patient?: string;
+            /** Format: int32 */
+            amountSom?: number;
+        };
+        FamilyMoneyControllerPaid: {
+            applied?: components["schemas"]["FamilyMoneyControllerApplied"][];
+            /** Format: int32 */
+            leftDebtSom?: number;
         };
         ExpensesDraft: {
             /** Format: date */
@@ -4883,6 +4999,27 @@ export interface components {
             doctor?: boolean;
             doctorIds?: number[];
         };
+        PaymentQueryDebt: {
+            /** Format: int64 */
+            appointmentId?: number;
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: int64 */
+            patientId?: number;
+            patient?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            doctor?: string;
+            service?: string;
+            /** Format: int32 */
+            chargeSom?: number;
+            /** Format: int32 */
+            paidSom?: number;
+            /** Format: int32 */
+            debtSom?: number;
+            /** Format: date */
+            dueOn?: string;
+        };
         ExpenseControllerCategories: {
             standard?: string[];
             own?: string[];
@@ -4975,27 +5112,6 @@ export interface components {
             body?: string;
             text?: string;
             telegram?: boolean;
-        };
-        PaymentQueryDebt: {
-            /** Format: int64 */
-            appointmentId?: number;
-            /** Format: date-time */
-            startAt?: string;
-            /** Format: int64 */
-            patientId?: number;
-            patient?: string;
-            /** Format: int64 */
-            doctorId?: number;
-            doctor?: string;
-            service?: string;
-            /** Format: int32 */
-            chargeSom?: number;
-            /** Format: int32 */
-            paidSom?: number;
-            /** Format: int32 */
-            debtSom?: number;
-            /** Format: date */
-            dueOn?: string;
         };
         WeekStats: {
             /** Format: date */
@@ -5941,6 +6057,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FamilyControllerRename"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamiliesFamily"];
+                };
             };
         };
     };
@@ -8074,6 +8216,74 @@ export interface operations {
             };
         };
     };
+    ofPatient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamiliesFamily"];
+                };
+            };
+        };
+    };
+    join: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FamilyControllerJoin"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamiliesFamily"];
+                };
+            };
+        };
+    };
+    leave: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     search: {
         parameters: {
             query?: never;
@@ -8359,6 +8569,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DoctorInvitesInvite"];
+                };
+            };
+        };
+    };
+    pay_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FamilyMoneyControllerPay"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamilyMoneyControllerPaid"];
                 };
             };
         };
@@ -10048,7 +10284,7 @@ export interface operations {
             };
         };
     };
-    ofPatient: {
+    ofPatient_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -10276,6 +10512,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffMembersMemberView"][];
+                };
+            };
+        };
+    };
+    all_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FamiliesFamily"][];
+                };
+            };
+        };
+    };
+    debts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentQueryDebt"][];
                 };
             };
         };
@@ -10856,7 +11134,7 @@ export interface operations {
             };
         };
     };
-    debts: {
+    debts_1: {
         parameters: {
             query?: {
                 doctorId?: number;

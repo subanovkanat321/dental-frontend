@@ -14,6 +14,7 @@ import { PatientForm } from './PatientForm'
 import { VisitDocs } from '../print/VisitDocs'
 import { WaitlistBox } from './WaitlistTab'
 import { SourceLine } from './SourceLine'
+import { FamilyBox } from './FamilyBox'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -35,7 +36,7 @@ function ageText(birth: string, today = todayIn()): string {
  * долги. «Записать» — «Новая запись» в «Расписании» на него; «Медкарта» — карта зубов, план,
  * заметки и снимки во всю ширину.
  */
-export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpenAppointment }: {
+export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpenAppointment, onOpenPatient }: {
   patientId: number
   me: Me
   onClose: () => void
@@ -43,6 +44,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   onMedical: (p: Patient) => void
   /** Визит или долг → карточка приёма в «Расписании». */
   onOpenAppointment?: (appointmentId: number) => void
+  /** Родственник из «Семьи» → его карточка. */
+  onOpenPatient?: (patientId: number) => void
 }) {
   useClose(onClose)
   const [editing, setEditing] = useState(false)
@@ -147,6 +150,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>
       <ContactButtons phone={patient?.phone} />
       {patient && mine && <WaitlistBox patient={patient} me={me} />}
+      {patient && mine && <FamilyBox patient={patient} me={me} onOpenPatient={onOpenPatient} />}
       {(debts.data ?? []).map((d) => {
         const debt = debtLine(d)
         if (!debt) return null
