@@ -114,6 +114,10 @@ test('заявка с /join: одобрить — новая клиника с �
   const url = String(open.mock.calls.at(-1)?.[0])
   expect(url).toMatch(/^https:\/\/wa\.me\/996700111222\?text=/)
   expect(decodeURIComponent(url)).toContain('https://t.me/tish_test_bot?start=staff_adm9')
+  // Клинике без WhatsApp и Telegram — SMS с телефона владельца, тот же текст со ссылкой
+  const sms = within(panel).getByRole('link', { name: 'Отправить SMS' }).getAttribute('href')!
+  expect(sms).toMatch(/^sms:\+996700111222\?&body=/)
+  expect(decodeURIComponent(sms)).toContain('https://t.me/tish_test_bot?start=staff_adm9')
   open.mockRestore()
 })
 

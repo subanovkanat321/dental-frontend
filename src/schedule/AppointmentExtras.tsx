@@ -2,8 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { smsEnabled } from '../lib/sms'
-import { reminderText, smsReminderText, smsUrl, whatsappUrl } from '../lib/texts'
+import { reminderText, whatsappUrl } from '../lib/texts'
 import { minutesOf, slotInstant, timeOf, ZONE } from '../lib/time'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
@@ -227,12 +226,6 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
           )}
           {a.patient?.phone && (
             <button type="button" className={a.patient?.telegram ? 'btn' : 'btn primary'} onClick={whatsapp}>Напомнить в WhatsApp</button>
-          )}
-          {/* Нет ни Telegram, ни WhatsApp — SMS с телефона сотрудника (включается в «Настройки → Этот телефон») */}
-          {a.patient?.phone && smsEnabled() && (
-            // Ссылкой, а не переходом из скрипта: встроенные браузеры (Telegram) так надёжнее открывают «Сообщения»
-            <a className="btn" href={smsUrl(a.patient.phone, smsReminderText({ startAt: a.startAt!, patient: a.patient }, settings.data?.clinicSignature))}
-              onClick={() => opened.mutate()}>Напомнить SMS</a>
           )}
         </div>
       )}

@@ -3,15 +3,16 @@ import { useState } from 'react'
 
 import { botUsername } from '../api/client'
 import { openLink } from '../lib/telegram'
-import { whatsappUrl } from '../lib/texts'
+import { smsUrl, whatsappUrl } from '../lib/texts'
 import { inviteText } from './texts'
 
 /**
  * Готовая ссылка-приглашение на бота: «join_<код>» врача или «staff_<код>» сотрудника. Человек
  * нажимает «Начать» — его Telegram привязывается сам. Отправить в WhatsApp (номер известен — сразу в его
- * чат, иначе WhatsApp спросит кому), в Telegram или скопировать.
+ * чат, иначе WhatsApp спросит кому), в Telegram или скопировать. sms — ещё и SMS (владелец платформы
+ * приглашает клинику без WhatsApp и Telegram: SMS уходит с SIM-карты его телефона).
  */
-export function InviteLink({ start, name, toWhom, phone }: { start: string; name: string; toWhom: string; phone?: string | null }) {
+export function InviteLink({ start, name, toWhom, phone, sms = false }: { start: string; name: string; toWhom: string; phone?: string | null; sms?: boolean }) {
   const bot = useQuery({ queryKey: ['bot-username'], queryFn: botUsername, staleTime: Infinity })
   const [copied, setCopied] = useState('')
   if (bot.isPending) return <p className="hint">Готовим ссылку…</p>
@@ -32,6 +33,8 @@ export function InviteLink({ start, name, toWhom, phone }: { start: string; name
       <a className="invite-link" href={link} target="_blank" rel="noopener noreferrer">{link}</a>
       <div className="actions">
         <button type="button" className="btn" onClick={() => openLink(whatsappUrl(phone ?? '', `${text} ${link}`))}>Отправить в WhatsApp</button>
+        {/* Ссылкой, а не из скрипта: встроенный браузер Telegram так надёжнее открывает «Сообщения» */}
+        {sms && <a className="btn" href={smsUrl(phone ?? '', `${text} ${link}`)}>Отправить SMS</a>}
         <button type="button" className="btn" onClick={() => void copy()}>Скопировать</button>
         <a className="btn" target="_blank" rel="noopener noreferrer"
           href={`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`}>Отправить в Telegram</a>

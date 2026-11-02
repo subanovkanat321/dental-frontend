@@ -7,6 +7,7 @@ import { openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
+import { PhoneInput } from '../clinic/PhoneInput'
 import { InviteLink } from '../team/InviteLink'
 import { extendPaid } from './health'
 
@@ -235,12 +236,16 @@ function EnterBox({ id }: { id: number }) {
 function AdminInvite({ clinic: c, initial, owner }: { clinic: Row; initial?: { name: string; solo: boolean }; owner: boolean }) {
   const [name, setName] = useState(initial?.name ?? '')
   const [alsoDoctor, setAlsoDoctor] = useState(initial?.solo ?? false)
+  // Клинику завели без заявки — номер админа можно вписать здесь (только для WhatsApp и SMS, не сохраняется)
+  const [phone, setPhone] = useState('')
   const make = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/platform/clinics/{id}/admin-invite', { params: { path: { id: c.id! } }, body: { fullName: name, alsoDoctor } })),
   })
-  const form = make.data?.token ? <InviteLink start={`staff_${make.data.token}`} name={name.trim()} toWhom="админу клиники" phone={c.contactPhone} /> : (
+  const form = make.data?.token ? <InviteLink start={`staff_${make.data.token}`} name={name.trim()} toWhom="админу клиники" phone={c.contactPhone ?? phoneDigits(phone)} sms={owner} /> : (
     <form className="form" aria-label="Пригласить админа клиники" onSubmit={(e) => { e.preventDefault(); make.mutate() }}>
       <label className="field"><span>Имя админа</span><input value={name} required maxLength={100} onChange={(e) => setName(e.target.value)} /></label>
+      {!c.contactPhone && <label className="field"><span>Телефон админа — по желанию, чтобы отправить ссылку в WhatsApp{owner ? ' или SMS' : ''}</span>
+        <PhoneInput label="Телефон админа" value={phone} onChange={setPhone} /></label>}
       <label className="check"><input type="checkbox" checked={alsoDoctor} onChange={(e) => setAlsoDoctor(e.target.checked)} /> Он же ведёт приём (частный врач) — станет и врачом</label>
       {make.error && <p className="error" role="alert">{make.error.fieldErrors.fullName ?? make.error.message}</p>}
       <button type="submit" className="btn primary" disabled={make.isPending}>Создать ссылку</button>
@@ -274,6 +279,15 @@ function ContactBox({ name, phone, telegram }: { name?: string | null; phone: st
       </div>
     </section>
   )
+}
+
+/** «0555 123 456», «555123456», «+996 555 123 456» → «996555123456» (для wa.me и sms:); пусто — undefined. */
+function phoneDigits(input: string): string | undefined {
+  const d = input.replace(/\D/g, '')
+  if (!d) return undefined
+  if (/^0\d{9}$/.test(d)) return `996${d.slice(1)}`
+  if (/^\d{9}$/.test(d)) return `996${d}`
+  return d
 }
 
 function ExportBox({ id }: { id: number }) {
