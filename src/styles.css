@@ -811,10 +811,24 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .settings-group[data-group="2"] .settings-emoji { background: var(--wait-bg); }
 .settings-group[data-group="3"] .settings-emoji { background: color-mix(in srgb, #C9A2FF 35%, var(--card)); }
 
-/* Чьё расписание — выпадающим списком (телефон, много врачей) */
-.doctor-pick { position: relative; display: flex; align-items: center; margin-bottom: 4px; }
-.doctor-pick-ico { position: absolute; left: 14px; font-size: 1.15rem; pointer-events: none; }
-.doctor-pick select { width: 100%; min-height: 48px; padding: 0 40px 0 46px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text);
-  font: 600 1.05rem var(--ui); appearance: none; cursor: pointer;
-  background-image: linear-gradient(45deg, transparent 50%, var(--hint) 50%), linear-gradient(135deg, var(--hint) 50%, transparent 50%);
-  background-position: right 20px center, right 14px center; background-size: 6px 6px; background-repeat: no-repeat; }
+/* Чьё расписание — свой список (телефон, много врачей): schedule/DoctorPicker.tsx */
+.doctor-picker { position: relative; margin-bottom: 4px; }
+.pick-current { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 14px 8px 10px; border: 1px solid var(--line-strong); border-radius: 14px;
+  background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; box-shadow: var(--shadow); }
+.pick-current[aria-expanded=true] { border-color: var(--accent); }
+.pick-avatar { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; object-fit: cover; color: #fff; font: 600 1rem var(--display); }
+.pick-avatar.all { background: var(--accent-soft); font-size: 1.3rem; }
+.pick-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.pick-text strong { font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pick-text .hint { font-size: .88rem; }
+.pick-caret { flex: none; color: var(--hint); font-size: 1.1rem; }
+.pick-list { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; border: 1px solid var(--separator);
+  border-radius: 16px; background: var(--card); box-shadow: 0 12px 32px rgba(15, 42, 48, .18); max-height: 60vh; overflow-y: auto; animation: pick-in .15s ease-out; }
+.pick-list li { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; cursor: pointer; }
+.pick-list li + li { margin-top: 2px; }
+.pick-list li:hover, .pick-list li:focus-visible { background: var(--sunken); outline: none; }
+.pick-list li[aria-selected=true] { background: var(--accent-soft); }
+.pick-list li[aria-selected=true] strong { color: var(--link); }
+.pick-list li:last-child { margin-top: 6px; border-top: 1px solid var(--separator); border-radius: 0 0 12px 12px; padding-top: 12px; }
+.pick-check { flex: none; width: 20px; color: var(--link); font-weight: 700; font-size: 1.15rem; text-align: center; }
+@keyframes pick-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }

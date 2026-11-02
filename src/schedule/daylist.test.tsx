@@ -45,7 +45,11 @@ test('телефон, «Все врачи» — список: приёмы об�
   // Как в прежнем приложении: открывается свой день, даже если в прошлый раз смотрели всех
   expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /12:00–12:30, Нурлан К\./ })).not.toBeInTheDocument()
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Чьё расписание' }), 'Все врачи')
+  await userEvent.click(screen.getByRole('button', { name: /^Чьё расписание: Айгерим Садыкова/ }))
+  const options = screen.getByRole('listbox', { name: 'Чьё расписание' })
+  expect(within(options).getAllByRole('option').map((o) => o.querySelector('strong')?.textContent)).toEqual(['Айгерим Садыкова (я)', 'Дастан Т.', 'Все врачи'])
+  await userEvent.click(within(options).getByRole('option', { name: /Все врачи/ }))
+  expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   expect(await screen.findByRole('button', { name: /12:00–12:30, Нурлан К\./ })).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: 'Дастан Т.' })).not.toBeInTheDocument() // не сетка
   // Верх на телефоне — без повторов: один день крупно, одна «Новая запись» рядом с «Без записи»

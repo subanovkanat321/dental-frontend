@@ -7,6 +7,8 @@ import { addDays, dayTitle, minutesOf, minutesOfTime, somText, timeOf, todayIn, 
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
 import { DayList } from './DayList'
+import { DoctorPicker } from './DoctorPicker'
+import { AVATARS, initials } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { isAssistant } from '../lib/roles'
@@ -20,12 +22,6 @@ const PX = 1.3
 /** Ниже этой высоты блок — одной строкой: время начала и имя. */
 const SHORT = 46
 
-/** Цвета аватаров врачей — по порядку, различимы рядом и на светлой, и на тёмной теме. */
-const AVATARS = ['#0E8A80', '#5B7FD6', '#C2793B', '#8E5BB5', '#2F8F5B', '#C2506B']
-
-function initials(name = ''): string {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
-}
 
 /** Минуты от полуночи «сейчас» по Бишкеку; обновляются раз в минуту — линия «сейчас» ползёт сама. */
 function useNowMinutes(): number {
@@ -301,15 +297,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
 
         {doctors.length > 1 && (narrow || doctors.length > 4 ? (
           // Телефон (и много врачей на компьютере): один выпадающий список вместо ряда кнопок
-          <label className="doctor-pick">
-            <span className="doctor-pick-ico" aria-hidden="true">{view === 'all' ? '👥' : '🧑‍⚕️'}</span>
-            <select aria-label="Чьё расписание" value={String(view)} onChange={(e) => setView(e.target.value === 'all' ? 'all' : Number(e.target.value))}>
-              {doctors.map((d) => (
-                <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>
-              ))}
-              <option value="all">Все врачи</option>
-            </select>
-          </label>
+          <DoctorPicker me={me} doctors={doctors} view={view} date={date} onChange={setView} />
         ) : (
           <div className="segments tabs doctor-switch" role="group" aria-label="Чьё расписание">
             <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все врачи</button>
