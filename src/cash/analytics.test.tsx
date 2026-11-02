@@ -38,7 +38,7 @@ test('аналитика: выручка по месяцам, по врачам,
       { id: 3, startAt: `${todayIn()}T06:00:00Z`, patient: 'Асель У.', doctor: 'Дастан', service: 'Чистка', status: 'DONE', paidSom: 2000 },
     ] satisfies Schemas['AppointmentServiceReportRow'][])),
     http.get('*/api/appointments/sources', () => HttpResponse.json({
-      newPatients: [{ source: 'INSTAGRAM', patients: 3 }, { patients: 1 }], firstVisits: 4, repeatVisits: 12,
+      newPatients: [{ sourceId: 11, emoji: '📱', title: 'Instagram', active: true, patients: 3 }, { sourceId: 19, emoji: '📣', title: 'Реклама', active: false, patients: 2 }, { active: true, patients: 1 }], firstVisits: 4, repeatVisits: 12,
     } satisfies Schemas['SourcesControllerSourcesView'])),
     http.get('*/api/appointments/stats', () => HttpResponse.json([
       { weekStart: '2026-10-26', booked: 10, done: 9, noShow: 1, cancelled: 0 },
@@ -76,7 +76,10 @@ test('аналитика: выручка по месяцам, по врачам,
 
   const sources = screen.getByRole('region', { name: 'Откуда новые пациенты' })
   expect(await within(sources).findByText('новых пациентов')).toBeInTheDocument()
-  expect(within(sources).getAllByRole('listitem')[0]).toHaveTextContent(/Instagram.*3 чел\..*75%/)
+  expect(within(sources).getAllByRole('listitem')[0]).toHaveTextContent(/📱 Instagram.*3 чел\..*50%/)
+  // Скрытый вариант — в истории, с пометкой; без варианта — «Не указано»
+  expect(within(sources).getAllByRole('listitem')[1]).toHaveTextContent(/📣 Реклама \(скрыт\).*2 чел\./)
+  expect(within(sources).getAllByRole('listitem')[2]).toHaveTextContent(/Не указано/)
   expect(within(sources).getByText(/Не указано» — в карточке/)).toBeInTheDocument()
   expect(within(sources).getByLabelText('Первичные и повторные визиты')).toHaveTextContent(/16.*первичных 4, повторных 12.*возвращаются 75%/)
 

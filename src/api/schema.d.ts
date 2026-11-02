@@ -324,6 +324,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patient-sources/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_6"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/members/{telegramId}/doctors": {
         parameters: {
             query?: never;
@@ -348,7 +364,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_6"];
+        put: operations["update_7"];
         post?: never;
         delete: operations["delete_4"];
         options?: never;
@@ -396,7 +412,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view"];
-        put: operations["update_7"];
+        put: operations["update_8"];
         post?: never;
         delete?: never;
         options?: never;
@@ -444,7 +460,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_1"];
-        put: operations["update_8"];
+        put: operations["update_9"];
         post?: never;
         delete?: never;
         options?: never;
@@ -476,7 +492,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_9"];
+        put: operations["update_10"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1396,6 +1412,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patient-sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["all_3"];
+        put?: never;
+        post: operations["add_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient-sources/{id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["move_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/news": {
         parameters: {
             query?: never;
@@ -1437,7 +1485,7 @@ export interface paths {
         };
         get: operations["list_4"];
         put?: never;
-        post: operations["add_2"];
+        post: operations["add_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1451,7 +1499,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["all_3"];
+        get: operations["all_4"];
         put?: never;
         post: operations["create_8"];
         delete?: never;
@@ -2091,7 +2139,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["all_4"];
+        get: operations["all_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3461,8 +3509,8 @@ export interface components {
             workplace?: string;
             /** Format: date */
             birthDate?: string;
-            /** @enum {string} */
-            source?: "INSTAGRAM" | "RECOMMENDATION" | "MAPS" | "SIGN" | "ADS" | "OTHER";
+            /** Format: int64 */
+            sourceId?: number;
         };
         PatientView: {
             /** Format: int64 */
@@ -3473,8 +3521,8 @@ export interface components {
             workplace?: string;
             /** Format: date */
             birthDate?: string;
-            /** @enum {string} */
-            source?: "INSTAGRAM" | "RECOMMENDATION" | "MAPS" | "SIGN" | "ADS" | "OTHER";
+            /** Format: int64 */
+            sourceId?: number;
         };
         NewsControllerSubscription: {
             subscribed?: boolean;
@@ -3485,6 +3533,25 @@ export interface components {
         PatientBookingControllerClinicChoice: {
             /** Format: int64 */
             clinicId?: number;
+        };
+        PatientSourcesRequest: {
+            emoji?: string;
+            title?: string;
+            titleKy?: string;
+            active?: boolean;
+        };
+        PatientSourcesOption: {
+            /** Format: int64 */
+            id?: number;
+            code?: string;
+            emoji?: string;
+            title?: string;
+            titleKy?: string;
+            active?: boolean;
+            /** Format: int32 */
+            position?: number;
+            /** Format: int64 */
+            patients?: number;
         };
         StaffMembersControllerAssistantDoctors: {
             doctorIds?: number[];
@@ -3995,6 +4062,8 @@ export interface components {
             fullName?: string;
             consent?: boolean;
             comment?: string;
+            /** Format: int64 */
+            sourceId?: number;
         };
         BookingViewsBooking: {
             /** Format: int64 */
@@ -4017,6 +4086,10 @@ export interface components {
         PatientBookingControllerReschedule: {
             /** Format: date-time */
             startAt: string;
+        };
+        PatientSourcesControllerMove: {
+            /** Format: int32 */
+            direction?: number;
         };
         NewsControllerCreate: {
             text?: string;
@@ -4449,12 +4522,20 @@ export interface components {
             assistantOf?: number[];
             elsewhere?: components["schemas"]["BookingViewsElsewhere"];
             doctorServices?: components["schemas"]["DoctorServicesView"][];
+            sourceChoices?: components["schemas"]["PatientSourcesChoice"][];
         };
         ClinicLinksChoice: {
             /** Format: int64 */
             id?: number;
             name?: string;
             address?: string;
+        };
+        PatientSourcesChoice: {
+            /** Format: int64 */
+            id?: number;
+            emoji?: string;
+            title?: string;
+            titleKy?: string;
         };
         DepositsForPatient: {
             /** Format: int64 */
@@ -4605,8 +4686,11 @@ export interface components {
             reminded?: number;
         };
         SourcesControllerSourceCount: {
-            /** @enum {string} */
-            source?: "INSTAGRAM" | "RECOMMENDATION" | "MAPS" | "SIGN" | "ADS" | "OTHER";
+            /** Format: int64 */
+            sourceId?: number;
+            emoji?: string;
+            title?: string;
+            active?: boolean;
             /** Format: int32 */
             patients?: number;
         };
@@ -5391,6 +5475,32 @@ export interface operations {
             };
         };
     };
+    update_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatientSourcesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientSourcesOption"][];
+                };
+            };
+        };
+    };
     assistantDoctors: {
         parameters: {
             query?: never;
@@ -5415,7 +5525,7 @@ export interface operations {
             };
         };
     };
-    update_6: {
+    update_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -5535,7 +5645,7 @@ export interface operations {
             };
         };
     };
-    update_7: {
+    update_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -5629,7 +5739,7 @@ export interface operations {
             };
         };
     };
-    update_8: {
+    update_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -5697,7 +5807,7 @@ export interface operations {
             };
         };
     };
-    update_9: {
+    update_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -7466,6 +7576,76 @@ export interface operations {
             };
         };
     };
+    all_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientSourcesOption"][];
+                };
+            };
+        };
+    };
+    add_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatientSourcesRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientSourcesOption"][];
+                };
+            };
+        };
+    };
+    move_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatientSourcesControllerMove"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientSourcesOption"][];
+                };
+            };
+        };
+    };
     list_3: {
         parameters: {
             query?: never;
@@ -7558,7 +7738,7 @@ export interface operations {
             };
         };
     };
-    add_2: {
+    add_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -7582,7 +7762,7 @@ export interface operations {
             };
         };
     };
-    all_3: {
+    all_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -8773,7 +8953,7 @@ export interface operations {
             };
         };
     };
-    all_4: {
+    all_5: {
         parameters: {
             query?: never;
             header?: never;

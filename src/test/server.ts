@@ -3,12 +3,22 @@ import { setupServer } from 'msw/node'
 
 import type { Schemas } from '../api/client'
 
+/** «Откуда узнал о клинике» — как стандартный набор новой клиники (V110 бэкенда), часть вариантов. */
+export const SOURCES: Schemas['PatientSourcesOption'][] = [
+  { id: 11, code: 'INSTAGRAM', emoji: '📱', title: 'Instagram', titleKy: 'Instagram', active: true, position: 10, patients: 3 },
+  { id: 12, code: 'MAPS', emoji: '🗺', title: '2ГИС', titleKy: '2ГИС', active: true, position: 20, patients: 0 },
+  { id: 16, code: 'RECOMMENDATION', emoji: '🤝', title: 'Посоветовали знакомые', titleKy: 'Тааныштар сунушташты', active: true, position: 60, patients: 1 },
+  { id: 19, code: 'ADS', emoji: '📣', title: 'Реклама', titleKy: 'Жарнама', active: false, position: 90, patients: 2 },
+  { id: 20, code: 'OTHER', emoji: '✨', title: 'Другое', titleKy: 'Башка', active: true, position: 100, patients: 0 },
+]
+
 /**
  * Фальшивый бэкенд для тестов: обработчики добавляет каждый тест (server.use). Здесь — только
  * фоновые запросы полосы «Сегодня» (склад, выручка, касса) и карточки приёма (материалы, услуги): пусто, если тест не задал своё.
  */
 export const server = setupServer(
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  http.get('*/api/patient-sources', () => HttpResponse.json(SOURCES)),
   http.get('*/api/appointments/revenue', () => HttpResponse.json({ totalSom: 0, paidCount: 0, unpaidCount: 0, byMethod: {}, days: [] })),
   http.get('*/api/appointments/to-pay', () => HttpResponse.json([])),
   http.get('*/api/appointments/report', () => HttpResponse.json([])),

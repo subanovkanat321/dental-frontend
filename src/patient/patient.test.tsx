@@ -79,6 +79,60 @@ test('запись: врач → услуга → первый день со с�
   expect(screen.getByText(/Завтра, в 11:00/)).toBeInTheDocument()
   expect(screen.getByText(/Ждёт подтверждения врача/)).toBeInTheDocument()
   expect(booked).toEqual({ doctorId: 1, serviceTypeId: 5, startAt: slotInstant(tomorrow, 660), fullName: 'Айгуль', consent: true, comment: '' })
+  // Постоянного пациента (сервер не прислал вариантов) «откуда узнали» не спрашиваем
+  expect(screen.queryByText('Откуда вы о нас узнали?')).toBeNull()
+})
+
+/** Новый пациент: «Откуда вы о нас узнали?» — чипсы с эмодзи на его языке; без ответа запись тоже идёт. */
+async function bookAsNewPatient(lang: 'ru' | 'ky', pick: (user: ReturnType<typeof userEvent.setup>) => Promise<void>) {
+  fakeTelegram()
+  const tomorrow = addDays(todayIn(), 1)
+  const sourceChoices: Schemas['PatientSourcesChoice'][] = [
+    { id: 11, emoji: '📱', title: 'Instagram', titleKy: 'Instagram' },
+    { id: 16, emoji: '🤝', title: 'Посоветовали знакомые', titleKy: 'Тааныштар сунушташты' },
+    { id: 30, emoji: '🎬', title: 'YouTube' },
+  ]
+  let booked: Schemas['PatientBookingControllerBook'] | null = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ lang, sourceChoices, doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
+    http.post('*/api/patient/booking', async ({ request }) => {
+      booked = await request.json() as Schemas['PatientBookingControllerBook']
+      return HttpResponse.json({ id: 9, startAt: booked.startAt, status: 'REQUESTED', doctorId: 1 } satisfies Schemas['BookingViewsBooking'])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const grid = await screen.findByRole('group', { name: lang === 'ky' ? 'Бош убакыт' : 'Свободное время' })
+  await user.click(await within(grid).findByRole('button', { name: '10:00' }))
+  await pick(user)
+  await user.click(screen.getByRole('checkbox'))
+  await user.click(screen.getByRole('button', { name: lang === 'ky' ? 'Жазылуу' : 'Записаться' }))
+  await vi.waitFor(() => expect(booked).not.toBeNull())
+  return booked!
+}
+
+test('новый пациент: «Откуда вы о нас узнали?» по-кыргызски — выбрать, передумать, выбрать другое', async () => {
+  const booked = await bookAsNewPatient('ky', async (user) => {
+    const chips = screen.getByRole('group', { name: 'Биз жөнүндө кайдан билдиңиз?' })
+    expect(screen.getByText('Милдеттүү эмес — өткөрүп жиберсеңиз болот')).toBeInTheDocument()
+    // Нет перевода — название как есть
+    expect(within(chips).getByRole('button', { name: /YouTube/ })).toBeInTheDocument()
+    const friends = within(chips).getByRole('button', { name: /Тааныштар сунушташты/ })
+    await user.click(friends)
+    expect(friends).toHaveAttribute('aria-pressed', 'true')
+    await user.click(friends) // ещё раз — выбор снят
+    expect(friends).toHaveAttribute('aria-pressed', 'false')
+    await user.click(within(chips).getByRole('button', { name: /Instagram/ }))
+  })
+  expect(booked.sourceId).toBe(11)
+})
+
+test('новый пациент: вопрос необязательный — без ответа запись уходит без sourceId', async () => {
+  const booked = await bookAsNewPatient('ru', async () => {
+    expect(screen.getByRole('group', { name: 'Откуда вы о нас узнали?' })).toBeInTheDocument()
+  })
+  expect(booked).not.toHaveProperty('sourceId')
 })
 
 test('«Ваша запись» по-кыргызски: хочу раньше и отмена вторым нажатием', async () => {

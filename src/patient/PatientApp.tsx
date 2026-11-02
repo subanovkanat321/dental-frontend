@@ -351,6 +351,8 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   const [name, setName] = useState(me.fullName ?? '')
   const [comment, setComment] = useState('')
   const [consent, setConsent] = useState(false)
+  // «Откуда вы о нас узнали?» — только новому пациенту (сервер прислал варианты), необязательно
+  const [sourceId, setSourceId] = useState<number | null>(null)
   const [phone, setPhone] = useState(me.phone ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [sharing, setSharing] = useState(false)
@@ -398,7 +400,7 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
 
   const book = useMutation<Schemas['BookingViewsBooking'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/patient/booking', {
-      body: { doctorId: doctor.id!, serviceTypeId: service!.id!, startAt: slotInstant(shownDate, minutesOf(chosen)), fullName: name, consent: true, comment },
+      body: { doctorId: doctor.id!, serviceTypeId: service!.id!, startAt: slotInstant(shownDate, minutesOf(chosen)), fullName: name, consent: true, comment, sourceId: sourceId ?? undefined },
     })),
     onSuccess: (booking) => {
       haptic('success')
@@ -542,6 +544,20 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
         {errors.phone && <p className="error">{errors.phone}</p>}
         <label className="field"><span>{t('comment')}</span>
           <textarea rows={2} maxLength={500} placeholder={t('commentHint')} value={comment} onChange={(e) => setComment(e.target.value)} /></label>
+        {(me.sourceChoices ?? []).length > 0 && (
+          <div className="field">
+            <span>{t('sourceQuestion')}</span>
+            <div className="source-chips" role="group" aria-label={t('sourceQuestion')}>
+              {(me.sourceChoices ?? []).map((c) => (
+                <button key={c.id} type="button" className="source-chip" aria-pressed={sourceId === c.id}
+                  onClick={() => setSourceId(sourceId === c.id ? null : c.id!)}>
+                  <span aria-hidden="true">{c.emoji}</span> {(lang === 'ky' && c.titleKy) || c.title}
+                </button>
+              ))}
+            </div>
+            <span className="hint">{t('sourceOptional')}</span>
+          </div>
+        )}
         <label className="consent"><input type="checkbox" checked={consent} onChange={(e) => { setConsent(e.target.checked); setErrors({}) }} />
           {' '}{t('consent', { holder: me.clinic?.legalName || t('holderDefault') })}</label>
         <button type="button" className="link privacy-link" onClick={() => ctx.go({ name: 'privacy', back: ctx.screen })}>{t('privacy')}</button>

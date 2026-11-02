@@ -896,6 +896,46 @@
         }
       }
     },
+    "/api/patient-sources/{id}" : {
+      "put" : {
+        "tags" : [ "patient-sources-controller" ],
+        "operationId" : "update_6",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientSourcesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientSourcesOption"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/members/{telegramId}/doctors" : {
       "put" : {
         "tags" : [ "staff-members-controller" ],
@@ -929,7 +969,7 @@
     "/api/doctors/{id}" : {
       "put" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "update_6",
+        "operationId" : "update_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1083,7 +1123,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_7",
+        "operationId" : "update_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1194,7 +1234,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_8",
+        "operationId" : "update_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1266,7 +1306,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_9",
+        "operationId" : "update_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3435,6 +3475,96 @@
         }
       }
     },
+    "/api/patient-sources" : {
+      "get" : {
+        "tags" : [ "patient-sources-controller" ],
+        "operationId" : "all_3",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientSourcesOption"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "patient-sources-controller" ],
+        "operationId" : "add_2",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientSourcesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientSourcesOption"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patient-sources/{id}/move" : {
+      "post" : {
+        "tags" : [ "patient-sources-controller" ],
+        "operationId" : "move_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientSourcesControllerMove"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PatientSourcesOption"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/news" : {
       "get" : {
         "tags" : [ "news-controller" ],
@@ -3554,7 +3684,7 @@
       },
       "post" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "add_2",
+        "operationId" : "add_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3582,7 +3712,7 @@
     "/api/doctors" : {
       "get" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "all_3",
+        "operationId" : "all_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5071,7 +5201,7 @@
     "/api/platform/support/tickets" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "all_4",
+        "operationId" : "all_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -7567,9 +7697,9 @@
             "type" : "string",
             "format" : "date"
           },
-          "source" : {
-            "type" : "string",
-            "enum" : [ "INSTAGRAM", "RECOMMENDATION", "MAPS", "SIGN", "ADS", "OTHER" ]
+          "sourceId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "fullName", "phone" ]
@@ -7596,9 +7726,9 @@
             "type" : "string",
             "format" : "date"
           },
-          "source" : {
-            "type" : "string",
-            "enum" : [ "INSTAGRAM", "RECOMMENDATION", "MAPS", "SIGN", "ADS", "OTHER" ]
+          "sourceId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -7619,6 +7749,53 @@
       "PatientBookingControllerClinicChoice" : {
         "properties" : {
           "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PatientSourcesRequest" : {
+        "properties" : {
+          "emoji" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "titleKy" : {
+            "type" : "string"
+          },
+          "active" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PatientSourcesOption" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "emoji" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "titleKy" : {
+            "type" : "string"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "position" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "patients" : {
             "type" : "integer",
             "format" : "int64"
           }
@@ -8842,6 +9019,10 @@
             "type" : "string",
             "maxLength" : 500,
             "minLength" : 0
+          },
+          "sourceId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "doctorId", "serviceTypeId", "startAt" ]
@@ -8894,6 +9075,14 @@
           }
         },
         "required" : [ "startAt" ]
+      },
+      "PatientSourcesControllerMove" : {
+        "properties" : {
+          "direction" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
       },
       "NewsControllerCreate" : {
         "properties" : {
@@ -9953,6 +10142,12 @@
             "items" : {
               "$ref" : "#/components/schemas/DoctorServicesView"
             }
+          },
+          "sourceChoices" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PatientSourcesChoice"
+            }
           }
         }
       },
@@ -9966,6 +10161,23 @@
             "type" : "string"
           },
           "address" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PatientSourcesChoice" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "emoji" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "titleKy" : {
             "type" : "string"
           }
         }
@@ -10326,9 +10538,18 @@
       },
       "SourcesControllerSourceCount" : {
         "properties" : {
-          "source" : {
-            "type" : "string",
-            "enum" : [ "INSTAGRAM", "RECOMMENDATION", "MAPS", "SIGN", "ADS", "OTHER" ]
+          "sourceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "emoji" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "active" : {
+            "type" : "boolean"
           },
           "patients" : {
             "type" : "integer",

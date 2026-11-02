@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf } from '../lib/compare'
-import { sourceText } from '../lib/sources'
+import { sourceLabel } from '../lib/sources'
 import { addDays, monthRange, somText, todayIn, weekLabel, ZONE } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
@@ -362,7 +362,8 @@ function SourcesChart({ period, scope }: { period: Period; scope: { doctorId?: n
     queryKey: ['sources', period.from, period.to, scope.doctorId ?? null],
     queryFn: () => unwrap(api.GET('/api/appointments/sources', { params: { query: { from: period.from, to: period.to, ...scope } } })),
   })
-  const rows = (data.data?.newPatients ?? []).map((s) => ({ name: sourceText(s.source), value: s.patients ?? 0 }))
+  // Названия — с сервера, из списка клиники; скрытый вариант тоже: история не пропадает
+  const rows = (data.data?.newPatients ?? []).map((s) => ({ name: `${sourceLabel(s)}${s.active === false ? ' (скрыт)' : ''}`, value: s.patients ?? 0 }))
   const total = rows.reduce((sum, r) => sum + r.value, 0)
   const first = data.data?.firstVisits ?? 0
   const repeat = data.data?.repeatVisits ?? 0

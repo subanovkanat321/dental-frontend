@@ -48,7 +48,11 @@
 .days::-webkit-scrollbar { display: none; }
 .days .day { flex: none; min-width: 64px; height: 44px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
 .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.slots > .hint, .slots > .break-note { grid-column: 1 / -1; }
+.slots > .hint, .slots > /* «Откуда вы о нас узнали?» — чипсы в одно нажатие; повторное нажатие снимает выбор */
+.source-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.source-chip { min-height: 40px; padding: 6px 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .92rem; cursor: pointer; }
+.source-chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.break-note { grid-column: 1 / -1; }
 .slot { height: 46px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: 600 1rem var(--mono); cursor: pointer; }
 /* Занятое — читается (без полупрозрачности): серый текст на «утопленном» фоне, пунктир, подпись не мельче 12px */
 .slot.taken { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; height: auto; min-height: 46px;

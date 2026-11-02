@@ -7,7 +7,7 @@ import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
 import { canEditDoctor, isAssistant, seesMoneyOf } from '../lib/roles'
 import { debtLine } from '../lib/debt'
-import { SOURCES, sourceText, type PatientSource } from '../lib/sources'
+import { sourceChoices, sourceText, useSources } from '../lib/sources'
 import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
 import { ContactButtons } from '../schedule/Contact'
 import { statusOf } from '../schedule/status'
@@ -242,10 +242,11 @@ function PatientExpenses({ patient, me }: { patient: Patient; me: Me }) {
  */
 function SourceLine({ patient: p, canEdit }: { patient: Schemas['PatientView']; canEdit: boolean }) {
   const client = useQueryClient()
-  const save = useMutation<Schemas['PatientView'], ApiError, PatientSource | ''>({
+  const sources = useSources()
+  const save = useMutation<Schemas['PatientView'], ApiError, string>({
     mutationFn: (source) => unwrap(api.PUT('/api/patients/{id}', {
       params: { path: { id: p.id! } },
-      body: { fullName: p.fullName ?? '', phone: p.phone ? `+${p.phone}` : '', allowDuplicate: true, birthDate: p.birthDate || undefined, workplace: p.workplace ?? '', source: source || undefined },
+      body: { fullName: p.fullName ?? '', phone: p.phone ? `+${p.phone}` : '', allowDuplicate: true, birthDate: p.birthDate || undefined, workplace: p.workplace ?? '', sourceId: source ? Number(source) : undefined },
     })),
     onSuccess: () => { for (const key of ['patients', 'patient-card', 'appointments', 'sources']) void client.invalidateQueries({ queryKey: [key] }) },
   })
@@ -253,12 +254,12 @@ function SourceLine({ patient: p, canEdit }: { patient: Schemas['PatientView']; 
     <div className="source-line">
       <span className="hint">Откуда узнал о клинике</span>
       {canEdit ? (
-        <select aria-label="Откуда узнал о клинике" value={p.source ?? ''} disabled={save.isPending}
-          className={p.source ? '' : 'empty'} onChange={(e) => save.mutate(e.target.value as PatientSource | '')}>
+        <select aria-label="Откуда узнал о клинике" value={p.sourceId ?? ''} disabled={save.isPending}
+          className={p.sourceId != null ? '' : 'empty'} onChange={(e) => save.mutate(e.target.value)}>
           <option value="">— не указано, выбрать</option>
-          {SOURCES.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
+          {sourceChoices(sources.data, p.sourceId).map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
         </select>
-      ) : <strong>{sourceText(p.source)}</strong>}
+      ) : <strong>{sourceText(sources.data, p.sourceId)}</strong>}
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </div>
   )

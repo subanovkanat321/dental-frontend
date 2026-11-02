@@ -21,7 +21,7 @@ const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘' }
 
 type Item = {
   key: string
@@ -61,6 +61,7 @@ const GROUPS: [string, Item[]][] = [
     item('members', 'Сотрудники', 'Администраторы, регистратура и ассистенты', admin, team('members')),
     item('about', 'О клинике', 'Адрес, контакты, работа с компьютера, склад врачей, предоплата', all, clinic('about')),
     item('questions', 'Анкета пациента', 'Вопросы перед первым приёмом', (me) => Boolean(me.admin || me.doctorId != null), clinic('questions')),
+    item('sources', 'Откуда узнают о клинике', 'Варианты в карточке пациента и вопрос новым пациентам в боте', all, clinic('sources')),
     item('patient-news', 'Новости для пациентов', 'Акции и объявления в боте', admin, clinic('news')),
   ]],
   ['Аккаунт клиники', [

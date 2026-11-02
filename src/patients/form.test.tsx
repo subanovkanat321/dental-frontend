@@ -55,7 +55,7 @@ test('карточка пациента: изменить место работ�
     http.get('*/api/appointments/by-patient/2', () => HttpResponse.json(card(p))),
     http.put('*/api/patients/2', async ({ request }) => {
       saved = await request.json()
-      return HttpResponse.json({ ...p, workplace: 'школа №5', source: 'RECOMMENDATION' })
+      return HttpResponse.json({ ...p, workplace: 'школа №5', sourceId: 16 })
     }),
   )
   const user = userEvent.setup()
@@ -67,9 +67,11 @@ test('карточка пациента: изменить место работ�
   expect(within(form).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700 333 444')
   await user.type(within(form).getByRole('textbox', { name: 'Место работы' }), 'школа №5')
   await user.selectOptions(within(form).getByRole('combobox', { name: 'Откуда узнал о клинике' }), '🤝 Посоветовали знакомые')
+  // Скрытый вариант новому пациенту не предлагается
+  expect(within(within(form).getByRole('combobox', { name: 'Откуда узнал о клинике' })).queryByRole('option', { name: /Реклама/ })).toBeNull()
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(panel).findByRole('button', { name: 'Изменить данные пациента' })).toBeInTheDocument()
-  expect(saved).toEqual({ fullName: 'Айгуль Т.', phone: '+996 700 333 444', allowDuplicate: false, workplace: 'школа №5', source: 'RECOMMENDATION' })
+  expect(saved).toEqual({ fullName: 'Айгуль Т.', phone: '+996 700 333 444', allowDuplicate: false, workplace: 'школа №5', sourceId: 16 })
 })
 
 test('карточка пациента: «откуда узнал» не указано — видно сразу и выбирается одним нажатием', async () => {
@@ -79,10 +81,10 @@ test('карточка пациента: «откуда узнал» не ука
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/patients/recent', () => HttpResponse.json([p])),
     http.get('*/api/appointments/debts', () => HttpResponse.json([])),
-    http.get('*/api/appointments/by-patient/3', () => HttpResponse.json(card(saved ? { ...p, source: 'INSTAGRAM' } : p))),
+    http.get('*/api/appointments/by-patient/3', () => HttpResponse.json(card(saved ? { ...p, sourceId: 11 } : p))),
     http.put('*/api/patients/3', async ({ request }) => {
       saved = await request.json() as Record<string, unknown>
-      return HttpResponse.json({ ...p, source: 'INSTAGRAM' })
+      return HttpResponse.json({ ...p, sourceId: 11 })
     }),
   )
   const user = userEvent.setup()
@@ -91,7 +93,7 @@ test('карточка пациента: «откуда узнал» не ука
   const panel = screen.getByRole('complementary', { name: 'Карточка пациента' })
   const source = await within(panel).findByRole('combobox', { name: 'Откуда узнал о клинике' })
   expect(source).toHaveValue('')
-  await user.selectOptions(source, '📱 Instagram, соцсети')
-  await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', phone: '+996700555666', workplace: 'школа №5', source: 'INSTAGRAM' }))
-  await vi.waitFor(() => expect(within(panel).getByRole('combobox', { name: 'Откуда узнал о клинике' })).toHaveValue('INSTAGRAM'))
+  await user.selectOptions(source, '📱 Instagram')
+  await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', phone: '+996700555666', workplace: 'школа №5', sourceId: 11 }))
+  await vi.waitFor(() => expect(within(panel).getByRole('combobox', { name: 'Откуда узнал о клинике' })).toHaveValue('11'))
 })
