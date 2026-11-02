@@ -55,7 +55,7 @@ const GROUPS: [string, Item[]][] = [
   ]],
   ['Клиника', [
     item('doctors', 'Врачи', 'Профиль, фото, приглашение, права', all, team('doctors')),
-    item('members', 'Сотрудники', 'Администраторы и регистратура', admin, team('members')),
+    item('members', 'Сотрудники', 'Администраторы, регистратура и ассистенты', admin, team('members')),
     item('about', 'О клинике', 'Адрес, контакты, работа с компьютера, склад врачей, предоплата', all, clinic('about')),
     item('questions', 'Анкета пациента', 'Вопросы перед первым приёмом', (me) => Boolean(me.admin || me.doctorId != null), clinic('questions')),
     item('patient-news', 'Новости для пациентов', 'Акции и объявления в боте', admin, clinic('news')),

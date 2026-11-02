@@ -747,3 +747,11 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .salary-sums dd.strong { font-weight: 700; color: var(--link); }
 .badge-ok { padding: 2px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok-ink); font-size: .85rem; font-weight: 600; white-space: nowrap; }
 .total-line { margin: 4px 0; font-size: 1.05rem; }
+
+/* «Настройки» на компьютере — на всю ширину: группы (Расписание, Клиника, Аккаунт…) колонками,
+   профиль, оформление и «Выйти» — во всю строку */
+@media (min-width: 1100px) {
+  .settings { max-width: none; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); align-items: start; }
+  .settings > * { grid-column: 1 / -1; }
+  .settings > .settings-group:has(> .settings-list):not(.mobile-only) { grid-column: auto; }
+}
