@@ -15,7 +15,7 @@ import { PaymentBox } from './PaymentBox'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
-import { canEditDoctor, isAssistant } from '../lib/roles'
+import { canEditDoctor, editableDoctors, isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -122,7 +122,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
       {a.reviewComment && <blockquote className="review-comment"><span className="hint">Пациент написал:</span><br />{a.reviewComment}</blockquote>}
 
-      {editing === 'service' ? <ServiceEdit appointment={a} onDone={close} /> : (
+      {editing === 'service' ? <ServiceEdit appointment={a} onDone={close} prices={!isAssistant(me)} /> : (
         <p className="line-edit">
           <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
           {canEdit && a.status !== 'CANCELLED' && <button type="button" className="link" onClick={() => setEditing('service')}>изменить</button>}
@@ -159,8 +159,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'SCHEDULED' && <Remind appointment={a} />}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && (editing === 'move'
             ? <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />
-            : <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{doctors.length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>)}
-          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && <DepositBox key={a.depositStatus ?? 'none'} appointment={a} />}
+            : <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>)}
+          {/* Ассистенту деньги не показываем: попросить и отметить предоплату — врач, регистратура, админ */}
+          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && !isAssistant(me) && <DepositBox key={a.depositStatus ?? 'none'} appointment={a} />}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && future && a.patient && (
             <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>
           )}

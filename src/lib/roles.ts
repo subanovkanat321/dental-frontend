@@ -15,3 +15,8 @@ export function canEditDoctor(me: Me, doctorId: number | null | undefined): bool
   if (doctorId == null) return false
   return Boolean(me.admin || me.reception || doctorId === me.doctorId || me.assistantOf?.includes(doctorId))
 }
+
+/** Врачи, к которым этот сотрудник может записать или передать приём (сервер — Staff.requireCanEdit). */
+export function editableDoctors<D extends { id?: number }>(me: Me, doctors: D[]): D[] {
+  return doctors.filter((d) => canEditDoctor(me, d.id))
+}

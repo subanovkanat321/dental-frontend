@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
+import { isAssistant } from '../lib/roles'
 import { debtLine } from '../lib/debt'
 import { sourceText } from '../lib/sources'
 import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
@@ -47,6 +48,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const [allPast, setAllPast] = useState(false)
   // Деньги и заметки — админу и врачу; регистратуре сервер их не отдаст
   const staff = Boolean(me.admin || me.doctorId != null)
+  // Медкарту сервер (ChartService) открывает админу клиники, врачам и ассистентам; регистратуре — никогда
+  const clinical = Boolean(me.admin && !me.clinic?.independentDoctors) || me.doctorId != null || isAssistant(me)
 
   const card = useQuery({
     queryKey: ['patient-card', patientId],
@@ -151,7 +154,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         {past.length > shownPast.length && <button type="button" className="link" onClick={() => setAllPast(true)}>Показать все ({past.length})</button>}
       </section>
 
-      <button type="button" className="btn" onClick={() => patient && onMedical(patient)}>Медкарта и снимки</button>
+      {clinical && <button type="button" className="btn" onClick={() => patient && onMedical(patient)}>Медкарта и снимки</button>}
     </aside>
   )
 }

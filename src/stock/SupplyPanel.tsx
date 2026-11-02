@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
 import { shortDate, somText } from '../lib/time'
+import { isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -102,10 +103,13 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
           <input type="number" min={1} step={1} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
         </label>
         {!(n > 0) && amount !== '' && <p className="error">Целое число больше 0</p>}
-        <label className="field">
-          <span>Сколько заплатили за поставку, сом — необязательно</span>
-          <input type="number" min={0} inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} />
-        </label>
+        {/* Ассистенту деньги не показываем: цену поставки вносит врач или админ */}
+        {!isAssistant(me) && (
+          <label className="field">
+            <span>Сколько заплатили за поставку, сом — необязательно</span>
+            <input type="number" min={0} inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} />
+          </label>
+        )}
         <div className="actions">
           <button type="button" className="btn" disabled={move.isPending || !(n > 0)} onClick={() => doMove(-1)}>− Списать</button>
           <button type="button" className="btn primary" disabled={move.isPending || !(n > 0)} onClick={() => doMove(1)}>＋ Пришла поставка</button>
@@ -139,7 +143,7 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
               <li key={i}>
                 <b className={(m.delta ?? 0) < 0 ? 'tone-bad' : 'tone-ok'}>{(m.delta ?? 0) > 0 ? '+' : '−'}{Math.abs(m.delta ?? 0)}</b>
                 {' '}{REASONS[m.reason ?? ''] ?? ''}{m.doctorName ? ` · ${m.doctorName}` : ''}
-                {m.costSom != null && <span> · {somText(m.costSom)}<span className="hint">{unitPrice(m.costSom, m.delta ?? 0, s.unit)}</span></span>}
+                {m.costSom != null && !isAssistant(me) && <span> · {somText(m.costSom)}<span className="hint">{unitPrice(m.costSom, m.delta ?? 0, s.unit)}</span></span>}
                 {m.createdAt && <span className="hint"> · {shortDate(m.createdAt, true)}</span>}
               </li>
             ))}
@@ -209,15 +213,17 @@ export function NewSupplyPanel({ me, doctorId, onClose, onCreated }: {
           <label className="field"><span>Минимум</span>
             <input type="number" min={0} value={form.minQuantity} onChange={set('minQuantity')} />
           </label>
-          <label className="field"><span>Заплатили, сом</span>
-            <input type="number" min={0} value={form.costSom} placeholder="необязательно" onChange={set('costSom')} />
-          </label>
+          {!isAssistant(me) && (
+            <label className="field"><span>Заплатили, сом</span>
+              <input type="number" min={0} value={form.costSom} placeholder="необязательно" onChange={set('costSom')} />
+            </label>
+          )}
         </div>
         {choosesDoctor && (
           <label className="field"><span>Чей склад</span>
             <select value={form.doctorId} onChange={set('doctorId')}>
               <option value="">Общий</option>
-              {(me.doctors ?? []).filter((d) => d.active !== false).map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
+              {(me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!))).map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
             </select>
           </label>
         )}

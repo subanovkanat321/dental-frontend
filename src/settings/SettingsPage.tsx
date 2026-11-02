@@ -52,7 +52,8 @@ const GROUPS: [string, Item[]][] = [
   ['Расписание', [
     item('hours', 'Часы работы', 'Часы клиники и каждого врача', all, () => (me, back) => <HoursPage me={me} onBack={back} />),
     item('timeoff', 'Перерывы и выходные', 'Обед, намаз, отпуск, праздники', all, team('timeoff')),
-    item('services', 'Услуги', 'Цены и длительность — для записи и самозаписи', all, clinic('services')),
+    // Ассистенту цены не показываем — и пункта «Услуги» у него нет
+    item('services', 'Услуги', 'Цены и длительность — для записи и самозаписи', (me) => !isAssistant(me), clinic('services')),
   ]],
   ['Клиника', [
     item('doctors', 'Врачи', 'Профиль, фото, приглашение, права', all, team('doctors')),

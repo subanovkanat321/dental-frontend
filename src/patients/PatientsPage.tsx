@@ -53,7 +53,8 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
   const close = useCallback(() => setSelected(null), [])
 
   // Чьи пациенты: все или одного врача (у кого был или будет приём у него)
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
+  // Ассистенту — только его врачи
+  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
   // Ассистент сразу видит пациентов своего врача
   const [doctorId, setDoctorId] = useState<number | null>(() => (me.assistantOf?.length === 1 ? me.assistantOf[0]! : null))
   const recent = useQuery({

@@ -78,8 +78,11 @@ test('передать другому врачу — /transfer с врачом',
   const panel = await openCard(/Бакыт М\./)
   await userEvent.click(within(panel).getByRole('button', { name: 'Перенести или передать врачу' }))
   const form = within(panel).getByRole('form', { name: 'Перенос записи' })
+  server.use(http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [new Date(`${todayIn()}T15:00:00+06:00`).toISOString()] })))
   await userEvent.click(within(within(form).getByRole('group', { name: 'Врач' })).getByRole('button', { name: 'Дастан Т.' }))
   expect(within(form).getByText(/Новому врачу придёт уведомление/)).toBeInTheDocument()
+  // Другой врач — время выбирают заново, по его сетке свободного
+  await userEvent.click(await within(form).findByRole('button', { name: '15:00' }))
   await userEvent.click(within(form).getByRole('button', { name: 'Передать' }))
   await vi.waitFor(() => expect(sent.map((x) => x.path)).toEqual(['transfer']))
   expect(sent[0]!.body).toMatchObject({ doctorId: 2, durationMinutes: 30 })

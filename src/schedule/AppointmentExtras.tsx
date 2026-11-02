@@ -9,6 +9,7 @@ import { minutesOf, slotInstant, timeOf, ZONE } from '../lib/time'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { useAppointmentAction } from './useAppointmentAction'
+import { editableDoctors } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -30,7 +31,8 @@ function errorText(e: ApiError | null): string | null {
  */
 export function Reschedule({ appointment: a, me, onDone }: { appointment: Appointment; me: Me; onDone: (text?: string) => void }) {
   const action = useAppointmentAction(a)
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
+  // Передать можно только врачу, чьё расписание мне можно менять (ассистенту — его врачи)
+  const doctors = editableDoctors(me, (me.doctors ?? []).filter((d) => d.active !== false))
   const minutes = (minutesOf(a.endAt!) - minutesOf(a.startAt!) + 24 * 60) % (24 * 60) || 30
   const [date, setDate] = useState(dateOf(a.startAt!))
   const [time, setTime] = useState(timeOf(a.startAt!))
@@ -59,7 +61,7 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
         <div className="field"><span>Врач</span>
           <div className="segments wrap" role="group" aria-label="Врач">
             {doctors.map((d) => (
-              <button key={d.id} type="button" aria-pressed={d.id === doctorId} onClick={() => setDoctorId(d.id!)}>
+              <button key={d.id} type="button" aria-pressed={d.id === doctorId} onClick={() => { if (d.id !== doctorId) setTime(''); setDoctorId(d.id!) }}>
                 {d.fullName}{d.id === a.doctorId ? ' (сейчас)' : ''}
               </button>
             ))}
@@ -70,7 +72,8 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
         <label className="field"><span>День</span>
           <input type="date" value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} />
         </label>
-        <DurationField value={duration} onChange={setDuration} />
+        {/* Другая длительность — выбранное время могло перестать помещаться: выбрать заново */}
+        <DurationField value={duration} onChange={(d) => { if (d !== duration) setTime(''); setDuration(d) }} />
       </div>
       <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} exclude={doctorId === a.doctorId ? a.id : undefined}
         value={time} onChange={(t) => { setTime(t); setProblem('') }} error={problem || errorText(action.error)} />
@@ -84,7 +87,7 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
 }
 
 /** Услуга приёма: выбрать из услуг клиники; «—» — без услуги. */
-export function ServiceEdit({ appointment: a, onDone }: { appointment: Appointment; onDone: () => void }) {
+export function ServiceEdit({ appointment: a, onDone, prices = true }: { appointment: Appointment; onDone: () => void; prices?: boolean }) {
   const action = useAppointmentAction(a)
   const services = useQuery({
     queryKey: ['service-types'],
@@ -103,7 +106,7 @@ export function ServiceEdit({ appointment: a, onDone }: { appointment: Appointme
       <label className="field"><span>Услуга</span>
         <select value={chosen} onChange={(e) => setServiceId(e.target.value === '' ? '' : Number(e.target.value))}>
           <option value="">—</option>
-          {services.data?.map((s) => <option key={s.id} value={s.id}>{s.name}{s.priceSom != null ? ` · ${s.priceSom} сом` : ''}</option>)}
+          {services.data?.map((s) => <option key={s.id} value={s.id}>{s.name}{prices && s.priceSom != null ? ` · ${s.priceSom} сом` : ''}</option>)}
         </select>
       </label>
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}

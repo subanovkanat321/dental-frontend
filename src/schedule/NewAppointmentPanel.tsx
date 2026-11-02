@@ -14,6 +14,7 @@ import { SOURCES, type PatientSource } from '../lib/sources'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { refreshAppointmentData } from './useAppointmentAction'
+import { editableDoctors } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -66,8 +67,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   useClose(onClose)
 
   const client = useQueryClient()
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
-  const [doctorId, setDoctorId] = useState(slot.doctorId)
+  // Только врачи, к которым мне можно записать (свой, мои врачи у ассистента; админ и регистратура — все)
+  const doctors = editableDoctors(me, (me.doctors ?? []).filter((d) => d.active !== false))
+  const [doctorId, setDoctorId] = useState(() => (doctors.some((d) => d.id === slot.doctorId) ? slot.doctorId : doctors[0]?.id ?? slot.doctorId))
   const [date, setDate] = useState(slot.date)
   const [time, setTime] = useState(() => initialTime(slot))
   const [birthDate, setBirthDate] = useState('')

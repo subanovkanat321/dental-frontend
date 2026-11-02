@@ -11,7 +11,7 @@ import { DoctorPicker } from './DoctorPicker'
 import { AVATARS, initials } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
-import { isAssistant } from '../lib/roles'
+import { canEditDoctor, isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -86,7 +86,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const [side, setSide] = useState<Side>(() => {
     if (openAppointment) return { kind: 'appointment', id: openAppointment.id!, fallback: openAppointment }
     const doctor = (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
-      ?? (me.doctors ?? []).find((d) => d.active !== false)
+      ?? (me.doctors ?? []).find((d) => d.active !== false && canEditDoctor(me, d.id))
     return bookPatient && doctor
       // Время не подставляем: открытие клиники могло пройти или быть занято — сетка свободного покажет, что есть
       ? { kind: 'new', patient: bookPatient, slot: { doctorId: doctor.id!, date: today, minutes: null } }
@@ -214,17 +214,22 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   /** Пустое место в колонке врача → «Новая запись» на это время, вниз до 15 минут. */
   const pick = (doctorId: number) => (e: MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('.appt')) return
+    // Расписание коллеги — только просмотр: записать к нему может он сам, регистратура или админ
+    if (!canEditDoctor(me, doctorId)) return
     const y = e.clientY - e.currentTarget.getBoundingClientRect().top - PAD
     const minutes = Math.min(Math.max(from + Math.floor(y / PX / 15) * 15, from), to - 15)
     setSide({ kind: 'new', slot: { doctorId, date, minutes } })
   }
+  // К кому записать с кнопки: выбранный врач, если его расписание можно менять, иначе свой, иначе первый доступный
+  const bookable = doctors.filter((d) => canEditDoctor(me, d.id))
+  const firstBookable = () => (view === 'all' ? null : bookable.find((d) => d.id === view)) ?? bookable.find((d) => d.id === me.doctorId) ?? bookable[0]
   /** «Принять сейчас (без записи)» — к выбранному врачу или к себе; приём с этой минуты (вниз до 5 минут). */
   const walkInHere = () => {
-    const first = (view === 'all' ? null : doctors.find((d) => d.id === view)) ?? doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
+    const first = firstBookable()
     if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date: today, minutes: nowMinutes5() }, walkIn: true })
   }
   const newHere = () => {
-    const first = (view === 'all' ? null : doctors.find((d) => d.id === view)) ?? doctors.find((d) => d.id === me.doctorId) ?? doctors[0]
+    const first = firstBookable()
     // Без времени: в форме — сетка свободного, а не 09:00, которое могло пройти или быть занято
     if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date, minutes: null } })
   }
@@ -257,8 +262,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             </div>
             {date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
             <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
-            {doctors.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
-            {doctors.length > 0 && date === today && (me.admin || me.reception || me.doctorId != null || isAssistant(me)) && (
+            {bookable.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
+            {bookable.length > 0 && date === today && (
               <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
             )}
           </header>
@@ -312,7 +317,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         ))}
 
         {dayList ? (
-          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id} onNewHere={newHere}
+          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id}
+            onNewHere={bookable.length > 0 ? newHere : undefined}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />
         ) : doctors.length === 0 ? (
@@ -342,7 +348,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               const workTo = sl?.workEnd ? minutesOfTime(sl.workEnd.slice(0, 5)) : null
               return (
                 <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
-                  title="Нажмите на свободное время — новая запись" onClick={pick(d.id!)}>
+                  title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id!)}>
                   {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
                   {nowTop != null && <div className="grid-past" style={{ height: nowTop }} />}
                   {sl && !sl.workingDay && (
