@@ -127,10 +127,30 @@ export async function botUsername(): Promise<string | null> {
 
 /** Выйти на сайте: сервер гасит cookie-сессию — снова экран входа. В Telegram выходить не из чего. */
 export async function logout(): Promise<void> {
+  await forgetPushSubscription()
   await globalThis.fetch(new Request(new URL('/web/logout', window.location.origin), {
     method: 'POST', credentials: 'same-origin', headers: { 'X-Dental-Web': '1' },
   })).catch(() => null)
   window.location.reload()
+}
+
+/**
+ * Уведомления этого браузера — не следующему, кто войдёт на общем компьютере регистратуры:
+ * при выходе подписку убираем и на сервере, и в браузере. Не вышло — не мешает выйти.
+ */
+async function forgetPushSubscription(): Promise<void> {
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration()
+    const subscription = await registration?.pushManager?.getSubscription()
+    if (!subscription) return
+    await globalThis.fetch(new Request(new URL('/api/push/unsubscribe', window.location.origin), {
+      method: 'POST', credentials: 'same-origin', headers: { 'X-Dental-Web': '1', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: subscription.endpoint }),
+    }))
+    await subscription.unsubscribe()
+  } catch {
+    // нет service worker или сети — выходим всё равно
+  }
 }
 
 /** Тарифы, как их видят клиники на /join. /web/tariffs — не часть контракта /api; форма — Tariffs. */

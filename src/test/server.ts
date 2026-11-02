@@ -18,6 +18,8 @@ export const SOURCES: Schemas['PatientSourcesOption'][] = [
  */
 export const server = setupServer(
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // Уведомления в приложение: по умолчанию на сервере не включены — блок в «Настройках» скрыт
+  http.get('*/api/push', () => HttpResponse.json({ enabled: false, channel: 'TELEGRAM', devices: [] })),
   http.get('*/api/patient-sources', () => HttpResponse.json(SOURCES)),
   http.get('*/api/appointments/revenue', () => HttpResponse.json({ totalSom: 0, paidCount: 0, unpaidCount: 0, byMethod: {}, days: [] })),
   http.get('*/api/appointments/to-pay', () => HttpResponse.json([])),

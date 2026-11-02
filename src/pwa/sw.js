@@ -83,3 +83,48 @@ async function cacheFirst(request, name) {
 function quietly(promise) {
   promise.catch(() => {})
 }
+
+/*
+ * Уведомления в приложение (Web Push): сотрудник выбрал «В приложение» в «Настройки → 🔔
+ * Уведомления» — сервер (модуль push бэкенда) шлёт сюда то же, что ушло бы в Telegram:
+ * { title, body, url, tag }. Тот же tag — новое уведомление заменяет прежнее, а не копится.
+ */
+self.addEventListener('push', (event) => {
+  let data = {}
+  try {
+    data = event.data ? event.data.json() : {}
+  } catch {
+    data = { body: event.data ? event.data.text() : '' }
+  }
+  const title = data.title || 'Tish'
+  event.waitUntil(self.registration.showNotification(title, {
+    body: data.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: data.tag || undefined,
+    renotify: Boolean(data.tag),
+    data: { url: safeUrl(data.url) },
+  }))
+})
+
+/** Нажали на уведомление: открытая CRM — на передний план и туда, куда ведёт уведомление; нет — открыть. */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = new URL(safeUrl(event.notification.data && event.notification.data.url), self.location.origin).href
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    const open = windows.find((client) => new URL(client.url).origin === self.location.origin)
+    if (open) {
+      await open.focus()
+      // «/?appointment=12» CRM разбирает при загрузке (src/lib/deepLink.ts) — переходим туда
+      if (url !== self.location.origin + '/' && 'navigate' in open) await open.navigate(url).catch(() => {})
+      return
+    }
+    await self.clients.openWindow(url)
+  })())
+})
+
+/** Только адреса своего сайта: «/?appointment=12»; чужое или пустое — главный экран. */
+function safeUrl(url) {
+  return typeof url === 'string' && url.startsWith('/') && !url.startsWith('//') ? url : '/'
+}

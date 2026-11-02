@@ -50,3 +50,4 @@
 .pwa-safari { margin-top: 18px; }
 @keyframes pwa-pulse { 50% { box-shadow: 0 0 0 3px var(--accent), 0 0 0 10px color-mix(in srgb, var(--accent) 15%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .pwa-safari-btn.hot { animation: none; } }
+.pwa-warn { color: var(--wait-ink); }
