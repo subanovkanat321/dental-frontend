@@ -219,3 +219,32 @@ test('«Часы работы» в Telegram: стрелка «назад» с н
     vi.unstubAllGlobals()
   }
 })
+
+test('«О клинике»: город подставляется из адреса, пока его не выбрали руками; выбранный уходит на сервер', async () => {
+  let saved: Schemas['ClinicControllerRequest'] | null = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.put('*/api/clinic', async ({ request }) => {
+      saved = await request.json() as Schemas['ClinicControllerRequest']
+      return HttpResponse.json({ ...clinic, ...saved })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const form = await screen.findByRole('form', { name: 'О клинике' })
+  const city = within(form).getByRole('combobox', { name: 'Город' })
+  expect(city).toHaveTextContent('Не указан')
+  const address = within(form).getByRole('textbox', { name: 'Адрес' })
+  await user.type(address, 'г. Ош')
+  expect(city).toHaveTextContent('Ош')
+  // «Ош» → «Ошская»: город был подставлен, а не выбран — снимается
+  await user.type(address, 'ская 5')
+  expect(city).toHaveTextContent('Не указан')
+  await user.click(city)
+  await user.click(await screen.findByRole('option', { name: 'Каракол' }))
+  await user.clear(address)
+  await user.type(address, 'Бишкек, Манаса 1')
+  expect(city).toHaveTextContent('Каракол')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  await vi.waitFor(() => expect(saved).toMatchObject({ address: 'Бишкек, Манаса 1', city: 'Каракол' }))
+})

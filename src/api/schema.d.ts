@@ -3632,6 +3632,7 @@ export interface components {
             independentDoctors?: boolean;
             listed?: boolean;
             separateSupplies?: boolean;
+            city?: string;
         };
         ClinicView: {
             brandName?: string;
@@ -3654,6 +3655,7 @@ export interface components {
             name?: string;
             settingUp?: boolean;
             ownHours?: boolean;
+            city?: string;
         };
         DepositControllerSettingsRequest: {
             /** @enum {string} */
@@ -4529,6 +4531,7 @@ export interface components {
             id?: number;
             name?: string;
             address?: string;
+            city?: string;
         };
         PatientSourcesChoice: {
             /** Format: int64 */

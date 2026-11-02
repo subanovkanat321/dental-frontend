@@ -30,7 +30,6 @@ body.site { background: var(--page); }
 .site-how { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
 .site-footer { text-align: center; color: var(--hint); font-size: .85rem; margin-top: 12px; }
 .site-footer a { color: var(--link); }
-.site-search { width: 100%; height: 46px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; }
 /* /go: у каждой ссылки свой цвет значка; главные (записаться, подключить) — залиты цветом */
 .go-link { --tone: #0E8A80; --tone2: #17A898; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px;
   background: var(--card); border: 1px solid var(--separator); color: var(--text); text-decoration: none;
@@ -61,6 +60,7 @@ body.site { background: var(--page); }
 .site-features span span { display: block; color: var(--hint); font-size: .9rem; }
 .trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .site-message { padding: 24px; text-align: center; }
+.site-message p { margin: 0 0 12px; }
 /* /clinics: «Вы врач или администратор клиники? Войти в CRM» — сверху, для сотрудников */
 .site-staff { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin-bottom: 12px; padding: 10px 14px;
   border-radius: 12px; background: var(--card); border: 1px solid var(--line-strong); color: var(--text); text-decoration: none; font-size: .95rem; }

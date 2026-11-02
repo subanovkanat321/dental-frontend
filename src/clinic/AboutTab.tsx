@@ -3,6 +3,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 
 import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
+import { Select } from '../layout/Select'
+import { CITIES, guessCity } from '../lib/clinicSearch'
 import { openLink, telegram } from '../lib/telegram'
 import { useDirty } from '../lib/unsaved'
 import { PhoneInput } from './PhoneInput'
@@ -12,7 +14,7 @@ import { phoneFromInput, phoneToInput } from './phone'
 type Me = Schemas['BookingViewsMe']
 type Clinic = Schemas['ClinicView']
 
-const FIELDS = ['brandName', 'whatsappPhone', 'legalName', 'address', 'mapUrl', 'supportTelegram', 'supportPhone', 'workEnd', 'workDays'] as const
+const FIELDS = ['brandName', 'whatsappPhone', 'legalName', 'address', 'city', 'mapUrl', 'supportTelegram', 'supportPhone', 'workEnd', 'workDays'] as const
 
 /**
  * «О клинике»: что видят пациенты (название, WhatsApp, адрес, 2ГИС, часы), как работают врачи
@@ -36,12 +38,20 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   const client = useQueryClient()
   const canEdit = Boolean(me.admin || me.doctorId != null)
   const [f, setF] = useState({
-    brandName: c.brandName ?? '', whatsappPhone: phoneToInput(c.whatsappPhone), legalName: c.legalName ?? '', address: c.address ?? '',
+    brandName: c.brandName ?? '', whatsappPhone: phoneToInput(c.whatsappPhone), legalName: c.legalName ?? '', address: c.address ?? '', city: c.city ?? '',
     mapUrl: c.mapUrl ?? '', supportTelegram: c.supportTelegram ? `@${c.supportTelegram}` : '', supportPhone: phoneToInput(c.supportPhone),
     workStart: (c.workStart ?? '09:00').slice(0, 5), workEnd: (c.workEnd ?? '18:00').slice(0, 5),
     independentDoctors: Boolean(c.independentDoctors), separateSupplies: Boolean(c.separateSupplies), listed: c.listed !== false,
   })
   const { dirty, commit } = useDirty(f)
+  // Город подставлен из адреса (а не выбран руками) — следим за адресом дальше: «Ош» → «Ошская» уже не Ош
+  const [cityGuessed, setCityGuessed] = useState(false)
+  const changeAddress = (address: string) => {
+    save.reset()
+    const guess = !f.city || cityGuessed
+    setF({ ...f, address, city: guess ? guessCity(address) ?? '' : f.city })
+    setCityGuessed(guess)
+  }
   const save = useMutation<Clinic, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/clinic', {
       body: {
@@ -85,8 +95,16 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
             <PhoneInput label="WhatsApp клиники" value={f.whatsappPhone} onChange={set('whatsappPhone')} /></label>
           {err('whatsappPhone') && <p className="error">{err('whatsappPhone')}</p>}
           <label className="field"><span>Адрес</span>
-            <input value={f.address} maxLength={200} placeholder="Например: Бишкек, ул. Шевченко 6" onChange={text('address')} /></label>
+            {/* Город не выбран, а в адресе он есть — подставляем сами: одним действием меньше */}
+            <input value={f.address} maxLength={200} placeholder="Например: Бишкек, ул. Шевченко 6" onChange={(e) => changeAddress(e.target.value)} /></label>
           {err('address') && <p className="error">{err('address')}</p>}
+          <label className="field"><span>Город</span>
+            <Select value={f.city} onChange={(e) => { setCityGuessed(false); set('city')(e.target.value) }}>
+              <option value="">Не указан</option>
+              {CITIES.map((city) => <option key={city} value={city}>{city}</option>)}
+            </Select></label>
+          {err('city') && <p className="error">{err('city')}</p>}
+          <p className="hint">По городу пациенты находят клинику в каталоге /clinics и в боте, когда клиник станет много.</p>
           <label className="field"><span>Ссылка 2ГИС</span>
             <input type="url" value={f.mapUrl} maxLength={300} placeholder="https://2gis.kg/bishkek/…" onChange={text('mapUrl')} /></label>
           {err('mapUrl') && <p className="error">{err('mapUrl')}</p>}

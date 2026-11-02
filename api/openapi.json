@@ -8017,6 +8017,9 @@
           },
           "separateSupplies" : {
             "type" : "boolean"
+          },
+          "city" : {
+            "type" : "string"
           }
         }
       },
@@ -8081,6 +8084,9 @@
           },
           "ownHours" : {
             "type" : "boolean"
+          },
+          "city" : {
+            "type" : "string"
           }
         }
       },
@@ -10161,6 +10167,9 @@
             "type" : "string"
           },
           "address" : {
+            "type" : "string"
+          },
+          "city" : {
             "type" : "string"
           }
         }

@@ -8,6 +8,8 @@ import { formatPhone, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
 import { haptic, openLink, telegram } from '../lib/telegram'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { launchSearch } from '../lib/deepLink'
+import { ClinicFilters } from '../lib/ClinicFilters'
+import { useClinicFilter, withCity } from '../lib/clinicSearch'
 import { BackButton, MainButton } from '../lib/MainButton'
 import { bookingDays, breakNote, initials, normalizeLang, priceText, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
 import './patient.css'
@@ -26,7 +28,8 @@ type Screen =
   | { name: 'news'; back: Screen }
   | { name: 'privacy'; back: Screen }
 
-type Ctx = { me: Me; t: T; lang: Lang; go: (s: Screen) => void; reload: () => void; screen: Screen }
+/** go и reload — с подтверждением что вышло («Запись отменена»): без него экран просто сменился, и непонятно, получилось ли. */
+type Ctx = { me: Me; t: T; lang: Lang; go: (s: Screen, notice?: string) => void; reload: (notice?: string) => void; screen: Screen }
 
 const dateOf = (instant: string) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
 
@@ -93,6 +96,7 @@ export default function PatientApp({ me }: { me: Me }) {
   const client = useQueryClient()
   const [lang, setLangState] = useState<Lang>(() => normalizeLang(me.lang || telegram()?.initDataUnsafe?.user?.language_code))
   const [screen, setScreen] = useState<Screen | null>(null)
+  const [notice, setNotice] = useState('')
   const t = useMemo(() => translator(lang), [lang])
   const saved = useRef(false)
 
@@ -134,13 +138,16 @@ export default function PatientApp({ me }: { me: Me }) {
   const current = screen ?? firstScreen(me)
   const ctx: Ctx = {
     me, t, lang, screen: current,
-    go: (s) => {
+    go: (s, done = '') => {
       setScreen(s)
+      setNotice(done)
       window.scrollTo(0, 0)
     },
     // Запись или клиника поменялись — свежий me, и экран заново по нему
-    reload: () => {
+    reload: (done = '') => {
       setScreen(null)
+      setNotice(done)
+      window.scrollTo(0, 0)
       void client.invalidateQueries({ queryKey: ['me'] })
     },
   }
@@ -149,6 +156,7 @@ export default function PatientApp({ me }: { me: Me }) {
   return (
     <div className="patient">
       {current.name !== 'privacy' && <LangSwitch lang={lang} onChange={setLang} />}
+      {notice && <p className="notice tone-ok" role="status">{notice}</p>}
       {me.elsewhere?.booking?.startAt && current.name !== 'privacy' && current.name !== 'clinics' && <Elsewhere ctx={ctx} />}
       {current.name === 'clinics' && <ClinicsScreen ctx={ctx} back={current.back} />}
       {current.name === 'doctors' && <DoctorsScreen ctx={ctx} />}
@@ -251,6 +259,7 @@ function ClinicsScreen({ ctx, back }: { ctx: Ctx; back: Screen | null }) {
     enabled: !me.clinicChoices?.length,
   })
   const choices = me.clinicChoices?.length ? me.clinicChoices : list.data ?? []
+  const filter = useClinicFilter(choices, (c) => [c.name, c.address])
   const choose = useMutation<unknown, ApiError, number>({
     mutationFn: (clinicId) => unwrap(api.PUT('/api/patient/clinic', { body: { clinicId } })),
     onSuccess: () => {
@@ -264,11 +273,19 @@ function ClinicsScreen({ ctx, back }: { ctx: Ctx; back: Screen | null }) {
       <BackButton onBack={back ? () => ctx.go(back) : null} />
       <Hero t={t} title={t('chooseClinic')} subtitle={t('chooseClinicSub')} />
       {list.error && <p className="error">{errorText(t, list.error, ctx.me.clinicContact)}</p>}
-      {choices.map((c) => (
+      {list.isFetching && !choices.length && <p className="hint">{t('loading')}</p>}
+      <ClinicFilters filter={filter} lang={ctx.lang} texts={{ search: t('clinicSearch'), cities: t('cities'), allCities: t('allCities') }} />
+      {choices.length > 0 && !filter.shown.length && (
+        <div className="empty-filter">
+          <p className="hint">{t('clinicsNone')}</p>
+          <button type="button" className="btn" onClick={() => { filter.setQuery(''); filter.setCity('') }}>{t('clinicsAll')}</button>
+        </div>
+      )}
+      {filter.shown.map((c) => (
         <button key={c.id} type="button" className={c.name === currentName ? 'doctor-card current' : 'doctor-card'} disabled={choose.isPending}
           onClick={() => choose.mutate(c.id!)}>
           <span className="doctor-initials" aria-hidden="true">🏥</span>
-          <span className="doctor-card-text"><strong>{c.name}</strong>{c.address && <span className="hint">📍 {c.address}</span>}</span>
+          <span className="doctor-card-text"><strong>{c.name}</strong>{(c.address || c.city) && <span className="hint">📍 {withCity(c.address, c.city)}</span>}</span>
           <span className="chevron" aria-hidden="true">›</span>
         </button>
       ))}
@@ -528,13 +545,18 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
                   : <SlotGrid ctx={ctx} slots={slots.data.slots} chosen={chosen}
                     onPick={(time) => { setChosen(time); setErrors({}); scrollTo('data') }}
                     empty={slots.data.slots.dayOff ? t('otherDay') : slots.data.slots.workingDay ? t('noFree') : t('dayOff')} />}
+          {/* Сам выбрал день без свободного времени — одним нажатием к ближайшему свободному, а не листать ленту */}
+          {service && dateTouched && slots.data && !slots.data.slots.starts?.length && (
+            <button type="button" className="btn" onClick={() => { setDateTouched(false); setErrors({}) }}>{t('nearestFree')}</button>
+          )}
         </div>
       </section>
 
       <section ref={dataRef} className="step">
         <h2 className="step-title">{t('stepData')}</h2>
         <label className="field"><span>{t('patientName')}</span>
-          <input value={name} maxLength={200} autoComplete="name" onChange={(e) => { setName(e.target.value); setErrors({}) }} /></label>
+          <input value={name} maxLength={200} autoComplete="name" enterKeyHint="done"
+            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }} onChange={(e) => { setName(e.target.value); setErrors({}) }} /></label>
         {errors.name && <p className="error">{errors.name}</p>}
         <div className="field"><span>{t('phone')}</span>
           {phone ? (
@@ -598,7 +620,9 @@ function BookingScreen({ ctx }: { ctx: Ctx }) {
     mutationFn: () => unwrap(api.POST('/api/patient/booking/cancel')),
     onSuccess: () => {
       haptic('success')
-      ctx.reload()
+      // Сразу без записи (а не «Ваша запись» с «Запись отменена», пока me не пришёл заново)
+      client.setQueryData<Me>(['me'], (old) => (old ? { ...old, booking: undefined, waiting: false } : old))
+      ctx.reload(t('cancelled'))
     },
   })
   const waitlist = useMutation<unknown, ApiError, boolean>({
@@ -699,7 +723,7 @@ function RescheduleScreen({ ctx }: { ctx: Ctx }) {
     onSuccess: (booking) => {
       haptic('success')
       client.setQueryData<Me>(['me'], (old) => (old ? { ...old, booking } : old))
-      ctx.go({ name: 'booking' })
+      ctx.go({ name: 'booking' }, t('moved'))
     },
     onError: (e) => {
       haptic('error')
@@ -721,7 +745,7 @@ function RescheduleScreen({ ctx }: { ctx: Ctx }) {
         {error && <p className="error" role="alert">{error}</p>}
         {slots.isPending ? <p className="hint">{t('loading')}</p> : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
           : <SlotGrid ctx={ctx} slots={slots.data} chosen={chosen} onPick={(time) => { setChosen(time); setError('') }}
-            empty={slots.data.workingDay ? t('noFree') : t('dayOff')} />}
+            empty={slots.data.dayOff ? t('otherDay') : slots.data.workingDay ? t('noFree') : t('dayOff')} />}
       </div>
       <MainButton text={t('move')} busy={move.isPending} onClick={() => (chosen ? move.mutate() : setError(t('pickTime')))} />
     </section>

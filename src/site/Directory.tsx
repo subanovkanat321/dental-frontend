@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 
+import { ClinicFilters } from '../lib/ClinicFilters'
+import { useClinicFilter, withCity } from '../lib/clinicSearch'
 import { InAppHint, LangSwitch } from './ClinicSite'
-import { getJson, inAppBrowser, initials, matches, tgLink, useSiteLang, type DirectoryClinic } from './web'
+import { getJson, inAppBrowser, initials, tgLink, useSiteLang, type DirectoryClinic } from './web'
 
 const TEXTS = {
   ru: {
     title: 'Запись к стоматологу', tagline: 'Выберите клинику или врача и запишитесь в Telegram за минуту — бот напомнит о приёме 😊',
-    search: 'Клиника, врач или адрес', book: 'Записаться в Telegram', more: 'Врачи, услуги и цены', map: 'На карте', doctors: 'Врачи',
+    search: 'Клиника, врач или адрес', cities: 'Город', allCities: 'Все города', showAll: 'Показать все клиники', book: 'Записаться в Telegram', more: 'Врачи, услуги и цены', map: 'На карте', doctors: 'Врачи',
     clinic: 'Стоматология', nothing: 'Ничего не нашлось — попробуйте другое слово.', empty: 'Клиники скоро появятся здесь.',
     forClinics: 'Для клиник', login: 'Вход для клиники', join: 'Подключить клинику',
     staff: 'Вы врач или администратор клиники?', staffLogin: 'Войти в CRM',
@@ -15,7 +17,7 @@ const TEXTS = {
   },
   ky: {
     title: 'Тиш дарыгерине жазылуу', tagline: 'Клиниканы же дарыгерди тандап, Telegram аркылуу бир мүнөттө жазылыңыз — бот эскертет 😊',
-    search: 'Клиника, дарыгер же дарек', book: 'Telegram аркылуу жазылуу', more: 'Дарыгерлер, кызматтар жана баалар', map: 'Картада', doctors: 'Дарыгерлер',
+    search: 'Клиника, дарыгер же дарек', cities: 'Шаар', allCities: 'Бардык шаарлар', showAll: 'Бардык клиникаларды көрсөтүү', book: 'Telegram аркылуу жазылуу', more: 'Дарыгерлер, кызматтар жана баалар', map: 'Картада', doctors: 'Дарыгерлер',
     clinic: 'Стоматология', nothing: 'Эч нерсе табылган жок — башка сөз менен издеңиз.', empty: 'Клиникалар жакында ушул жерде болот.',
     forClinics: 'Клиникалар үчүн', login: 'Клиника үчүн кирүү', join: 'Клиниканы туташтыруу',
     staff: 'Сиз клиниканын дарыгерисизби же администраторусузбу?', staffLogin: 'CRMге кирүү',
@@ -29,14 +31,14 @@ export function Directory() {
   const [lang, setLang] = useSiteLang()
   const t = TEXTS[lang]
   const [clinics, setClinics] = useState<DirectoryClinic[] | null | 'error'>(null)
-  const [query, setQuery] = useState('')
   useEffect(() => {
     void getJson<DirectoryClinic[]>('/web/clinics').then(({ data }) => setClinics(data ?? 'error'))
   }, [])
   useEffect(() => {
     document.title = t.title
   }, [t.title])
-  const found = Array.isArray(clinics) ? clinics.filter((c) => matches(c, query)) : []
+  const filter = useClinicFilter(Array.isArray(clinics) ? clinics : [], (c) => [c.name, c.address, ...c.doctors.map((d) => d.fullName)])
+  const found = filter.shown
   return (
     <main className="site-page">
       {/* Сотрудники клиник набирают tish.kg и попадают сюда — вход в CRM сразу видно, а не только внизу */}
@@ -49,11 +51,16 @@ export function Directory() {
       <InAppHint text={t.inAppTop} link="" />
       {clinics === 'error' ? <p className="site-message">{t.error}</p> : clinics === null ? <p className="site-message hint">{t.loading}</p> : (
         <>
-          {clinics.length > 3 && <input type="search" className="site-search" placeholder={t.search} aria-label={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />}
-          {clinics.length === 0 ? <p className="site-message">{t.empty}</p> : found.length === 0 ? <p className="site-message">{t.nothing}</p> : found.map((c) => (
+          <ClinicFilters filter={filter} texts={t} lang={lang} />
+          {clinics.length === 0 ? <p className="site-message">{t.empty}</p> : found.length === 0 ? (
+            <div className="site-message">
+              <p>{t.nothing}</p>
+              <button type="button" className="btn" onClick={() => { filter.setQuery(''); filter.setCity('') }}>{t.showAll}</button>
+            </div>
+          ) : found.map((c) => (
             <article key={c.pageUrl} className="site-card">
               <h2>{c.name || t.clinic}</h2>
-              {c.address && <p>📍 {c.address}{c.mapUrl && <> · <a href={c.mapUrl} target="_blank" rel="noopener noreferrer">{t.map}</a></>}</p>}
+              {(c.address || c.city) && <p>📍 {withCity(c.address, c.city)}{c.mapUrl && <> · <a href={c.mapUrl} target="_blank" rel="noopener noreferrer">{t.map}</a></>}</p>}
               {c.doctors.length > 0 && (
                 <ul className="site-list" aria-label={t.doctors}>
                   {c.doctors.map((d) => (
