@@ -810,3 +810,11 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .settings-group[data-group="1"] .settings-emoji { background: var(--req-bg); }
 .settings-group[data-group="2"] .settings-emoji { background: var(--wait-bg); }
 .settings-group[data-group="3"] .settings-emoji { background: color-mix(in srgb, #C9A2FF 35%, var(--card)); }
+
+/* Чьё расписание — выпадающим списком (телефон, много врачей) */
+.doctor-pick { position: relative; display: flex; align-items: center; margin-bottom: 4px; }
+.doctor-pick-ico { position: absolute; left: 14px; font-size: 1.15rem; pointer-events: none; }
+.doctor-pick select { width: 100%; min-height: 48px; padding: 0 40px 0 46px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text);
+  font: 600 1.05rem var(--ui); appearance: none; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--hint) 50%), linear-gradient(135deg, var(--hint) 50%, transparent 50%);
+  background-position: right 20px center, right 14px center; background-size: 6px 6px; background-repeat: no-repeat; }

@@ -299,18 +299,27 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
 
-        {doctors.length > 1 && (
+        {doctors.length > 1 && (narrow || doctors.length > 4 ? (
+          // Телефон (и много врачей на компьютере): один выпадающий список вместо ряда кнопок
+          <label className="doctor-pick">
+            <span className="doctor-pick-ico" aria-hidden="true">{view === 'all' ? '👥' : '🧑‍⚕️'}</span>
+            <select aria-label="Чьё расписание" value={String(view)} onChange={(e) => setView(e.target.value === 'all' ? 'all' : Number(e.target.value))}>
+              {doctors.map((d) => (
+                <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>
+              ))}
+              <option value="all">Все врачи</option>
+            </select>
+          </label>
+        ) : (
           <div className="segments tabs doctor-switch" role="group" aria-label="Чьё расписание">
-            {!narrow && <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все врачи</button>}
+            <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все врачи</button>
             {doctors.map((d) => (
               <button key={d.id} type="button" aria-pressed={view === d.id} onClick={() => setView(d.id!)}>
-                {narrow ? (d.fullName ?? '').trim().split(/\s+/)[0] : d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
+                {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
               </button>
             ))}
-            {/* Телефон, как в прежнем приложении: сначала врачи, «Все» — последней */}
-            {narrow && <button type="button" aria-label="Все врачи" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все</button>}
           </div>
-        )}
+        ))}
 
         {dayList ? (
           <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id} onNewHere={newHere}
