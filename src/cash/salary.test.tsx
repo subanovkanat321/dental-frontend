@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 
 type Row = Schemas['SalaryControllerSalaryRow']
 
@@ -85,4 +86,40 @@ test('бывший ассистент: выплата месяца остала�
   expect(card).toHaveTextContent('выплата за этот месяц сохранена в истории')
   expect(within(card).queryByRole('button', { name: /условия|процент и оклад/ })).not.toBeInTheDocument()
   expect(within(card).queryByRole('button', { name: /Выплатить/ })).not.toBeInTheDocument()
+})
+
+test('калькулятор зарплаты: свои цифры, минус материалы, выручка из строки — ничего не отправляет', async () => {
+  const aigerim: Row = { doctorId: 1, doctor: 'Айгерим Садыкова', percent: 40, baseSom: 5000, revenueSom: 20000, dueSom: 13000, paidSom: 0 }
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/salaries', () => HttpResponse.json([aigerim])),
+    http.put('*/api/salaries/:id', () => { sent.push('put'); return HttpResponse.json(aigerim) }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  await screen.findByRole('region', { name: 'Зарплата: Айгерим Садыкова' })
+
+  const calc = screen.getByText('🧮 Калькулятор зарплаты').closest('details')!
+  expect(calc).not.toHaveAttribute('open')
+  await user.click(screen.getByText('🧮 Калькулятор зарплаты'))
+  const c = within(calc)
+  await user.type(c.getByLabelText('Выручка, сом'), '200000')
+  await user.type(c.getByLabelText('Процент, %'), '30')
+  await user.type(c.getByLabelText('Оклад, сом'), '10000')
+  expect(c.getByLabelText('Результат калькулятора')).toHaveTextContent(/10\s000 сом \+ 30% × 200\s000 сом = 70\s000 сом/)
+  await user.type(c.getByLabelText('Вычесть материалы/техника, сом'), '20000')
+  expect(c.getByLabelText('Результат калькулятора')).toHaveTextContent(/10\s000 сом \+ 30% × \(200\s000 сом − 20\s000 сом\) = 64\s000 сом/)
+  // Честная подсказка: сервер материалы не вычитает
+  expect(c.getByText(/материалы и техника он не вычитает/)).toBeInTheDocument()
+
+  // Выручка и условия — из строки сотрудника (материалы остаются)
+  await choose(c.getByRole('combobox', { name: 'Взять выручку и условия' }), 'Айгерим Садыкова')
+  expect(c.getByLabelText('Выручка, сом')).toHaveValue('20000')
+  expect(c.getByLabelText('Результат калькулятора')).toHaveTextContent(/5\s000 сом \+ 40% × \(20\s000 сом − 20\s000 сом\) = 5\s000 сом/)
+  await user.clear(c.getByLabelText('Вычесть материалы/техника, сом'))
+  expect(c.getByLabelText('Результат калькулятора')).toHaveTextContent(/= 13\s000 сом/)
+  expect(sent).toEqual([])
 })
