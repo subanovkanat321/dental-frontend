@@ -38,9 +38,10 @@ test('страница клиники: запись в Telegram, WhatsApp, зв�
   expect(localStorage.getItem('clinic.lang')).toBe('ky')
 })
 
-test('каталог: поиск по врачу без учёта «ё» и регистра', async () => {
+test('каталог: поиск по врачу без учёта «ё» и регистра — когда клиник больше пяти', async () => {
   const clinic = (name: string, doctor: string) => ({ name, pageUrl: `/c/${name}`, doctors: [{ fullName: doctor }] } satisfies DirectoryClinic)
-  server.use(http.get('*/web/clinics', () => HttpResponse.json([clinic('Улыбка', 'Айгерим'), clinic('Дент', 'Пётр'), clinic('А', 'Б'), clinic('В', 'Г')])))
+  server.use(http.get('*/web/clinics', () => HttpResponse.json([clinic('Улыбка', 'Айгерим'), clinic('Дент', 'Пётр'), clinic('А', 'Б'), clinic('В', 'Г'),
+    clinic('Д', 'Е'), clinic('Ж', 'З')])))
   const user = userEvent.setup()
   render(<Directory />)
   await user.type(await screen.findByRole('searchbox', { name: 'Клиника, врач или адрес' }), 'петр')
@@ -49,6 +50,39 @@ test('каталог: поиск по врачу без учёта «ё» и р�
   await user.clear(screen.getByRole('searchbox'))
   await user.type(screen.getByRole('searchbox'), 'нет такого')
   expect(screen.getByText('Ничего не нашлось — попробуйте другое слово.')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Показать все клиники' }))
+  expect(screen.getAllByRole('article')).toHaveLength(6)
+  // Город у всех один (нет) — выбора городов нет
+  expect(screen.queryByRole('group', { name: 'Город' })).not.toBeInTheDocument()
+})
+
+test('каталог: клиник мало — ни поиска, ни городов; два города — выбор города, он запоминается', async () => {
+  const clinic = (name: string, city: string | null, address?: string) => ({ name, city, address, pageUrl: `/c/${name}`, doctors: [] } satisfies DirectoryClinic)
+  let list = [clinic('Улыбка', 'Бишкек'), clinic('Дент', 'Бишкек')]
+  server.use(http.get('*/web/clinics', () => HttpResponse.json(list)))
+  const { unmount } = render(<Directory />)
+  expect(await screen.findAllByRole('article')).toHaveLength(2)
+  expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
+  expect(screen.queryByRole('group', { name: 'Город' })).not.toBeInTheDocument()
+  unmount()
+
+  list = [...list, clinic('Ак-Тиш', 'Ош', 'ул. Ленина 1'), clinic('Без города', null)]
+  const user = userEvent.setup()
+  const second = render(<Directory />)
+  const cities = await screen.findByRole('group', { name: 'Город' })
+  expect(within(cities).getAllByRole('button').map((b) => b.textContent)).toEqual(['Все города', 'Бишкек 2', 'Ош 1'])
+  await user.click(within(cities).getByRole('button', { name: /Ош/ }))
+  expect(screen.getAllByRole('article')).toHaveLength(1)
+  expect(screen.getByText(/Ош, ул\. Ленина 1/)).toBeInTheDocument()
+  expect(localStorage.getItem('clinics.city')).toBe('Ош')
+  second.unmount()
+
+  // Вернулся — снова его город; «Все города» — снова все
+  render(<Directory />)
+  expect(await screen.findAllByRole('article')).toHaveLength(1)
+  await user.click(screen.getByRole('button', { name: 'Все города' }))
+  expect(screen.getAllByRole('article')).toHaveLength(4)
+  expect(localStorage.getItem('clinics.city')).toBeNull()
 })
 
 test('заявка клиники: ошибки полей с сервера, потом «Заявка отправлена»', async () => {

@@ -17,8 +17,9 @@ export type ClinicPage = {
   settingUp?: boolean
 }
 
+/** city — город из списка (V121), по нему фильтр «по городам»; null — не указан. */
 export type DirectoryClinic = {
-  name?: string | null; address?: string | null; mapUrl?: string | null; pageUrl: string; telegramUrl?: string | null; doctors: SiteDoctor[]
+  name?: string | null; address?: string | null; city?: string | null; mapUrl?: string | null; pageUrl: string; telegramUrl?: string | null; doctors: SiteDoctor[]
 }
 
 export type Links = { supportTelegram?: string | null; supportUrl?: string | null; supportPhone?: string | null; botUrl?: string | null }
@@ -66,13 +67,6 @@ export function initials(name = ''): string {
 /** Код клиники: из адреса /c/<код> (на проде) или ?code= (проверка до переключения nginx). */
 export function clinicCode(): string | null {
   return window.location.pathname.match(/^\/c\/([a-z0-9]+)/)?.[1] ?? new URLSearchParams(window.location.search).get('code')
-}
-
-/** Поиск без регистра и «ё»: «улыбка», «Айгерим», «Манаса». */
-export function matches(c: DirectoryClinic, query: string): boolean {
-  const norm = (s: string) => s.toLowerCase().replaceAll('ё', 'е')
-  const text = norm([c.name, c.address, ...c.doctors.map((d) => d.fullName)].filter(Boolean).join(' '))
-  return norm(query).split(/\s+/).filter(Boolean).every((w) => text.includes(w))
 }
 
 /** Браузер внутри Instagram, Facebook, TikTok и т. п.: ссылка t.me там часто не открывает Telegram. */

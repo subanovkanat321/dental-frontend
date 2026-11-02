@@ -9,6 +9,9 @@
 .patient h2 { margin: 6px 0 0; font: 700 1.05rem var(--display); }
 .patient .btn { min-height: 46px; justify-content: center; }
 .patient .link { justify-self: start; }
+/* Ссылки-действия («‹ Другой врач», «Политика…», «Больше не нужно») — под палец, не ниже 44px; в строке текста — как есть */
+.patient .screen > .link, .patient .waitlist-on > .link { display: inline-flex; align-items: center; min-height: 44px; }
+.patient .notice { margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; background: var(--ok-bg); color: var(--ok-ink); }
 
 .lang-switch { display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 4px; }
 .lang-switch button { min-height: 36px; padding: 4px 14px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--hint); font: inherit; font-size: .82rem; cursor: pointer; }
@@ -48,7 +51,9 @@
 .days::-webkit-scrollbar { display: none; }
 .days .day { flex: none; min-width: 64px; height: 44px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
 .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.slots > .hint, .slots > /* «Откуда вы о нас узнали?» — чипсы в одно нажатие; повторное нажатие снимает выбор */
+/* Подсказка «свободного времени нет» — на всю ширину сетки, а не в одну колонку из четырёх */
+.slots > .hint { grid-column: 1 / -1; }
+/* «Откуда вы о нас узнали?» — чипсы в одно нажатие; повторное нажатие снимает выбор */
 .source-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .source-chip { min-height: 40px; padding: 6px 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .92rem; cursor: pointer; }
 .source-chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
@@ -63,7 +68,7 @@
 
 .picked { padding: 10px 12px; border-radius: 12px; background: var(--sunken); }
 .consent { display: flex; gap: 8px; align-items: flex-start; font-size: .9rem; }
-.consent input { margin-top: 3px; }
+.consent input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
 
 .booking-card { display: grid; gap: 6px; padding: 18px; border-radius: 18px; background: var(--card); border: 1px solid var(--separator); }
 .booking-card .big { margin: 0; font: 700 1.2rem var(--display); }
@@ -81,3 +86,4 @@
 /* Своя главная кнопка — вне Telegram (в Telegram — его MainButton) */
 .main-button-bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--page); border-top: 1px solid var(--separator); z-index: 5; }
 .main-button-bar .btn { width: 100%; max-width: 560px; margin: 0 auto; display: flex; min-height: 50px; }
+.empty-filter { display: grid; gap: 8px; text-align: center; }
