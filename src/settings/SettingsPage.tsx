@@ -8,6 +8,7 @@ import { telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
 import type { TeamTab } from '../team/TeamPage'
 import { isAssistant } from '../lib/roles'
+import { InstallApp } from '../pwa/InstallApp'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
 // код «Договора» или «Услуг» скачивается, только когда пункт открыли
@@ -152,6 +153,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
         </section>
       )}
       <Appearance />
+      <InstallApp />
       {!telegram() && (
         <section className="settings-group">
           <button type="button" className="btn danger" onClick={() => void logout()}>Выйти</button>

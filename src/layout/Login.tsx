@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 import { botConfig } from '../api/client'
 import { isLoginPath } from '../lib/route'
+import { InstallHint } from '../pwa/InstallHint'
 
 /**
  * «Войти через Telegram» на сайте: окно входа Telegram (Telegram.Login.auth из telegram-widget.js)
@@ -50,7 +51,7 @@ export function Login() {
     setBusy(false)
     if (response?.ok) {
       // Вошли — в CRM с чистым адресом (/login → /)
-      if (isLoginPath()) window.history.replaceState(null, '', '/')
+      if (isLoginPath() || window.location.search) window.history.replaceState(null, '', `/${window.location.hash}`)
       void client.invalidateQueries({ queryKey: ['me'] })
       return
     }
@@ -79,6 +80,7 @@ export function Login() {
         </button>
       )}
       {error && <p className="error" role="alert">{error}</p>}
+      <InstallHint />
       {inAppBrowser() && (
         <p className="tone-wait">Вы во встроенном браузере приложения (Instagram и т. п.) — вход через Telegram здесь может не открыться.
           Нажмите «⋯» вверху и выберите «Открыть в браузере».</p>

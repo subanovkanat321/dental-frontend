@@ -11,6 +11,8 @@ import { readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
 import { isLoginPath, usePage, type Page } from './lib/route'
 import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
+import { launchedAsApp } from './pwa/pwa'
+import { UpdateToast } from './pwa/UpdateToast'
 
 // Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
 const CashPage = lazy(() => import('./cash/CashPage').then((m) => ({ default: m.CashPage })))
@@ -67,12 +69,13 @@ export function App() {
       if (telegram()) {
         return <div className="center"><h1>Tish CRM</h1><p className="hint">{me.error.message || 'Сессия устарела — закройте и откройте заново из бота.'}</p></div>
       }
-      // Браузер без входа на главной (пациент набрал адрес) — общий каталог клиник; вход — /login
-      if (!isLoginPath()) {
+      // Браузер без входа на главной (пациент набрал адрес) — общий каталог клиник; вход — /login.
+      // Запуск с иконки приложения (PWA) — это сотрудник: сразу вход, а не каталог для пациентов
+      if (!isLoginPath() && !launchedAsApp()) {
         window.location.replace('/clinics')
         return <div className="center hint">Загрузка…</div>
       }
-      return <Login />
+      return <><Login /><UpdateToast /></>
     }
     return <div className="center error">Нет связи с сервером: {me.error.message}</div>
   }
@@ -116,6 +119,7 @@ export function App() {
           </ErrorBoundary>
         )}
       </Sections>
+      <UpdateToast />
     </Shell>
   )
 }

@@ -1,16 +1,35 @@
 /// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react'
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 
 // Бэкенд (subanovkanat321/dental) на ноутбуке: ./mvnw spring-boot:run
 const backend = process.env.DENTAL_BACKEND ?? 'http://localhost:8080'
+
+/**
+ * Service worker (PWA, src/pwa/sw.js) → dist/sw.js с версией сборки: хеш имён всех файлов сборки
+ * (в них хеш содержимого) и самого шаблона. Поменялся код — поменялся sw.js, браузер ставит новую
+ * версию и CRM предлагает «Обновить». Только в сборке: в npm run dev service worker не нужен.
+ */
+function serviceWorker(): Plugin {
+  return {
+    name: 'tish-service-worker',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      const template = readFileSync(resolve(import.meta.dirname, 'src/pwa/sw.js'), 'utf8')
+      const version = createHash('sha256').update(Object.keys(bundle).sort().join('\n')).update(template).digest('hex').slice(0, 12)
+      this.emitFile({ type: 'asset', fileName: 'sw.js', source: template.replace('__SW_VERSION__', version) })
+    },
+  }
+}
 
 export default defineConfig({
   // Весь фронт — с корня домена (ADR 0002 бэкенда, этап 5): CRM и Mini App — index.html, страницы
   // сайта — site/*.html; nginx раскладывает адреса (deploy/nginx/default.conf.template бэкенда)
   base: '/',
-  plugins: [react()],
+  plugins: [react(), serviceWorker()],
   build: {
     rollupOptions: {
       // CRM и Mini App — index.html; страницы сайта — свои HTML с og:-тегами и лёгкими скриптами

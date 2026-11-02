@@ -25,12 +25,15 @@ import { startDevLogin, startTelegram, telegram } from './lib/telegram'
 import { startButtonIcons } from './lib/buttonIcons'
 import { startTableLabels } from './lib/tableLabels'
 import { applyLook } from './lib/theme'
+import { listenInstallPrompt } from './pwa/pwa'
 import './styles.css'
 
 // Регистратура держит вкладку открытой весь день: вернулись на вкладку — свежие данные
 const queryClient = createQueryClient({ queries: { staleTime: 30_000, refetchOnWindowFocus: true, retry: 1 } })
 
 startTelegram()
+// «Можно установить» (PWA) браузер присылает один раз и рано — ловим до первой отрисовки
+listenInstallPrompt()
 // Тема и размер текста — до первой отрисовки; «как в Telegram/системе» следит за сменой
 applyLook()
 telegram()?.onEvent?.('themeChanged', applyLook)
