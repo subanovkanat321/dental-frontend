@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
-import { canEditDoctor, isAssistant, seesMoneyOf } from '../lib/roles'
+import { canEditDoctor, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { debtLine } from '../lib/debt'
 import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
 import { ContactButtons } from '../schedule/Contact'
@@ -52,7 +52,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   // Деньги и заметки — админу и врачу; регистратуре сервер их не отдаст
   const staff = Boolean(me.admin || me.doctorId != null)
   // Медкарту сервер (ChartService) открывает админу клиники, врачам и ассистентам; регистратуре — никогда
-  const clinical = Boolean(me.admin && !me.clinic?.independentDoctors) || me.doctorId != null || isAssistant(me)
+  const clinical = seesAllMoney(me) || me.doctorId != null || isAssistant(me)
 
   const card = useQuery({
     queryKey: ['patient-card', patientId],

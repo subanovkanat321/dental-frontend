@@ -7,7 +7,7 @@ import { openSettings, settingsItem } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
 import type { TeamTab } from '../team/TeamPage'
-import { isAssistant } from '../lib/roles'
+import { isAssistant, seesAllMoney } from '../lib/roles'
 import { InstallApp } from '../pwa/InstallApp'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
@@ -39,7 +39,7 @@ const account = (only: AccountTab) => (title: string) => (me: Me, back: () => vo
 
 const all = () => true
 const admin = (me: Me) => Boolean(me.admin)
-const seesAll = (me: Me) => Boolean(me.admin && !me.clinic?.independentDoctors)
+const seesAll = (me: Me) => seesAllMoney(me)
 
 function item(key: string, title: string, hint: string, show: Item['show'], render: (title: string) => Item['render']): Item {
   return { key, title, hint, show, render: render(title) }

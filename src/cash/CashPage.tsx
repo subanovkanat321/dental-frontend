@@ -1,7 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
-import { seesToPay } from '../lib/roles'
+import { seesToPay, seesAllMoney } from '../lib/roles'
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf, datesText, periodText, previousRange } from '../lib/compare'
 import { addDays, periodOf, shortDate, somText, todayIn, ZONE } from '../lib/time'
@@ -16,6 +16,7 @@ import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
+import { DebtorsTab } from './DebtorsTab'
 
 type Me = Schemas['BookingViewsMe']
 type Debt = Schemas['PaymentQueryDebt']
@@ -40,9 +41,9 @@ function dayOf(instant: string): string {
 const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
 
 type Period = 'day' | 'week' | 'month' | 'custom'
-type Tab = 'money' | 'analytics' | 'expenses' | 'salary' | 'stats' | 'report'
+type Tab = 'money' | 'analytics' | 'expenses' | 'debtors' | 'salary' | 'stats' | 'report'
 
-const TABS: [Tab, string][] = [['money', 'Деньги'], ['analytics', 'Аналитика'], ['expenses', 'Расходы'], ['salary', 'Зарплата'], ['stats', 'Статистика'], ['report', 'Отчёт']]
+const TABS: [Tab, string][] = [['money', 'Деньги'], ['analytics', 'Аналитика'], ['expenses', 'Расходы'], ['debtors', 'Должники'], ['salary', 'Зарплата'], ['stats', 'Статистика'], ['report', 'Отчёт']]
 
 /**
  * «Касса»: за период рядом две суммы — касса (деньги, полученные в эти дни, по дате платежа) и
@@ -52,7 +53,7 @@ const TABS: [Tab, string][] = [['money', 'Деньги'], ['analytics', 'Ана�
  * регистратура и клиники с регистратурой.
  */
 export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab?: string; onOpenPatient?: (patientId: number) => void }) {
-  const seesAll = Boolean(me.admin && !me.clinic?.independentDoctors)
+  const seesAll = seesAllMoney(me)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   // Чья касса: админ выбирает (пусто — вся клиника), врач — всегда своя
   const [doctorId, setDoctorId] = useState<number | null>(seesAll ? null : me.doctorId ?? null)
@@ -131,6 +132,8 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
 
         {tab === 'analytics' && <AnalyticsTab me={me} doctorId={doctorId} seesAll={seesAll} />}
         {tab === 'expenses' && <ExpensesTab me={me} doctorId={doctorId} seesAll={seesAll} />}
+        {tab === 'debtors' && <DebtorsTab rows={debts.data} pending={debts.isPending} error={debts.error?.message} onOpen={setOpened}
+          onOpenPatient={onOpenPatient} />}
         {tab === 'salary' && <SalaryTab seesAll={seesAll} />}
         {tab === 'stats' && <StatsTab doctorId={doctorId} />}
         {tab === 'report' && <ReportTab doctorId={doctorId} onOpen={setOpened} active={opened} />}

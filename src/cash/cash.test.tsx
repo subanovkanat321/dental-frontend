@@ -109,12 +109,32 @@ test('регистратура: «К оплате на кассе» — нажа
   expect(paid).toEqual({ amountSom: 4000, method: 'CASH' })
 })
 
-test('админ без своего приёма в режиме «Врачи работают независимо» — объяснение, почему кассы нет', async () => {
+test('«Врачи работают независимо»: владелец (админ без своего приёма) видит всю кассу; админ-врач — только свою', async () => {
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined, clinic: { ...me.clinic, independentDoctors: true } })),
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined, platform: false, clinic: { ...me.clinic, independentDoctors: true } })),
     http.get('*/api/appointments', () => HttpResponse.json([])),
     http.get('*/api/appointments/debts', () => HttpResponse.json([])),
   )
   renderApp()
-  expect(await screen.findByText(/каждый врач видит только свою кассу/)).toBeInTheDocument()
+  expect(await screen.findByRole('combobox', { name: 'Чья касса' })).toHaveTextContent('Вся клиника')
+})
+
+test('«Должники»: по пациентам — кто сколько должен, с какого числа, просрочено; приём — в карточку', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([
+      { appointmentId: 1, startAt: '2026-10-01T04:00:00Z', patientId: 5, patient: 'Айгуль С.', doctor: 'Айгерим', service: 'Пломба', chargeSom: 5000, paidSom: 2000, debtSom: 3000, dueOn: '2026-10-10' },
+      { appointmentId: 2, startAt: '2026-10-20T04:00:00Z', patientId: 5, patient: 'Айгуль С.', doctor: 'Айгерим', chargeSom: 2000, paidSom: 0, debtSom: 2000 },
+      { appointmentId: 3, startAt: '2026-10-25T04:00:00Z', patientId: 6, patient: 'Бакыт М.', doctor: 'Айгерим', chargeSom: 8000, paidSom: 0, debtSom: 8000, dueOn: '2099-01-01' },
+    ] satisfies Schemas['PaymentQueryDebt'][])),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: 'Должники' }))
+  const box = await screen.findByRole('region', { name: 'Должники' })
+  expect(box).toHaveTextContent(/Должны всего13\s000 сом/)
+  expect(box).toHaveTextContent(/Просрочили1 · 5\s000 сом/)
+  const items = within(box).getAllByRole('listitem')
+  expect(items[0]).toHaveTextContent(/Бакыт М\.8\s000 сом/)
+  expect(items[1]).toHaveTextContent('приёмов: 2')
+  expect(items[1]).toHaveTextContent('обещал оплатить до')
 })

@@ -16,7 +16,7 @@ import { DoctorPicker } from './DoctorPicker'
 import { AVATARS, initials } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
-import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay } from '../lib/roles'
+import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -205,7 +205,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   }, [ready, date, nowTop, firstTop])
 
   // Полоса «Сегодня»: что требует действия — одним рядом (DESIGN.md → Components)
-  const seesMoney = Boolean(me.admin && !me.clinic?.independentDoctors) || me.doctorId != null
+  const seesMoney = seesAllMoney(me) || me.doctorId != null
   const toPay = useQuery({
     queryKey: ['to-pay'],
     queryFn: () => unwrap(api.GET('/api/appointments/to-pay')),
@@ -216,9 +216,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     queryFn: () => unwrap(api.GET('/api/supplies')),
     staleTime: 5 * 60_000,
   })
-  const moneyScope = me.admin && !me.clinic?.independentDoctors ? {} : { doctorId: me.doctorId ?? undefined }
+  const moneyScope = seesAllMoney(me) ? {} : { doctorId: me.doctorId ?? undefined }
   const revenue = useQuery({
-    queryKey: ['revenue', date, date, me.admin && !me.clinic?.independentDoctors ? null : me.doctorId],
+    queryKey: ['revenue', date, date, seesAllMoney(me) ? null : me.doctorId],
     queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: date, to: date, ...moneyScope } } })),
     enabled: seesMoney,
   })

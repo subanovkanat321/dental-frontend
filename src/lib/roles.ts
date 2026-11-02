@@ -21,9 +21,13 @@ export function editableDoctors<D extends { id?: number }>(me: Me, doctors: D[])
   return doctors.filter((d) => canEditDoctor(me, d.id))
 }
 
-/** Админ видит деньги всех врачей — если клиника не в режиме «Врачи работают независимо». */
+/**
+ * Деньги всех врачей. Админ — если клиника не в режиме «Врачи работают независимо»; владелец — всегда:
+ * владелец платформы и админ без своего приёма (хозяин кабинета). Как Staff.seesAllDoctors на сервере.
+ */
 export function seesAllMoney(me: Me): boolean {
-  return Boolean(me.admin && !me.clinic?.independentDoctors)
+  if (me.platform) return true
+  return Boolean(me.admin && (!me.clinic?.independentDoctors || me.doctorId == null))
 }
 
 /**

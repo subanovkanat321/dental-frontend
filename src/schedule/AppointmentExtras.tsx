@@ -3,8 +3,9 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings } from '../api/settings'
-import { reminderText, whatsappUrl } from '../lib/texts'
-import { openLink } from '../lib/telegram'
+import { reminderText, smsUrl, whatsappUrl } from '../lib/texts'
+import { isMobile } from '../pwa/pwa'
+import { openLink, telegram } from '../lib/telegram'
 import { minutesOf, slotInstant, timeOf, ZONE } from '../lib/time'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
@@ -289,6 +290,8 @@ const REPLIES = [['CONFIRMED', 'Придёт'], ['RESCHEDULE', 'Перенос']
  * - Telegram (пациент записывался через бота): сообщение с кнопками «Приду / Перенести» шлёт бот;
  *   отметку «напомнили» сервер ставит после доставки;
  * - WhatsApp: готовый текст в wa.me и отметка «напомнили» сразу (ответ придёт в WhatsApp);
+ * - SMS (телефон): у пациента нет ни Telegram, ни WhatsApp — «Сообщения» телефона врача с тем же
+ *   текстом, но без ссылки на бота (короче — дешевле); уходит с его номера, как обычная SMS;
  * - ответ пациента (по телефону, в WhatsApp) — «Придёт / Перенос / Нет ответа», повторное нажатие снимает.
  */
 export function Remind({ appointment: a }: { appointment: Appointment }) {
@@ -299,6 +302,7 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
   })
+  const smsText = reminderText({ startAt: a.startAt!, patient: a.patient ?? {} }, settings.data?.clinicSignature)
   const canRemind = a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
   const whatsapp = () => {
     opened.mutate()
@@ -318,6 +322,16 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
           {a.patient?.phone && (
             <button type="button" className={a.patient?.telegram ? 'btn' : 'btn primary'} disabled={!settings.data || opened.isPending}
               onClick={whatsapp}>Напомнить в WhatsApp</button>
+          )}
+          {/* Ссылкой, а не из скрипта: так «Сообщения» открываются надёжнее; на компьютере SMS не отправить */}
+          {a.patient?.phone && isMobile() && settings.data && (
+            <a className="btn" href={smsUrl(a.patient.phone, smsText)} onClick={(e) => {
+              opened.mutate()
+              // В Telegram ссылка sms: молчит — своя страница в браузере телефона откроет «Сообщения»
+              if (!telegram()) return
+              e.preventDefault()
+              openLink(`${window.location.origin}/call.html#${new URLSearchParams({ sms: a.patient!.phone!, body: smsText })}`)
+            }}>Напомнить по SMS</a>
           )}
         </div>
       )}

@@ -99,3 +99,20 @@ test('карточка приёма: «Откуда узнал» — пацие�
   await userEvent.click(within(source).getByRole('button', { name: '📱 Instagram' }))
   await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', sourceId: expect.any(Number) }))
 })
+
+test('телефон: «Напомнить по SMS» — «Сообщения» с номером пациента и текстом напоминания, без ссылки на бота', async () => {
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36')
+  const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  const sms = await within(panel).findByRole('link', { name: 'Напомнить по SMS' })
+  const href = sms.getAttribute('href')!
+  expect(href.startsWith('sms:+996555123456?&body=')).toBe(true)
+  expect(decodeURIComponent(href)).toContain('Здравствуйте, Бакыт М.!')
+  expect(decodeURIComponent(href)).not.toContain('t.me')
+  sms.addEventListener('click', (e) => e.preventDefault())
+  await userEvent.click(sms)
+  await vi.waitFor(() => expect(calls).toContain('opened'))
+  vi.restoreAllMocks()
+})

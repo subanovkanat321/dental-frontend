@@ -9,7 +9,7 @@ import { addDays, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../li
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
-import { canEditDoctor as canEdit, seesMoneyOf } from '../lib/roles'
+import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -84,7 +84,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   })
   const waitlist = useWaitlist()
   const single = many ? null : doctors[0]
-  const seesAllMoney = Boolean(me.admin) && !me.clinic?.independentDoctors
+  const seesAllMoney = seesAllMoneyOf(me)
   const seesMoney = single ? seesAllMoney || single.id === me.doctorId : seesAllMoney
   const list = appointments.flatMap((q) => q.data ?? []).filter((a) => a.status !== 'CANCELLED')
   const revenue = useQuery({

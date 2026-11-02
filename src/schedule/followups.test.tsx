@@ -35,15 +35,17 @@ async function card(name: RegExp) {
   return screen.getByRole('complementary', { name: 'Карточка приёма' })
 }
 
-test('«независимый» админ: у приёма коллеги нет оплаты и предоплаты, у своего — есть; «к оплате» не спрашиваем', async () => {
-  const independent = { ...me, hasReception: true, doctorId: undefined, clinic: { ...me.clinic, independentDoctors: true } }
+test('«независимый» админ-врач: у приёма коллеги нет оплаты и предоплаты, у своего — есть', async () => {
+  // Админ со своим приёмом (врач 1) в «независимом» кабинете: деньги коллеги (врач 2) не видит
+  const independent = { ...me, hasReception: true, doctorId: 1, platform: false, clinic: { ...me.clinic, independentDoctors: true } }
   const asked = day([appointment(10, 2, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 })], independent)
   renderApp()
   const panel = await card(/Бакыт М\./)
   expect(within(panel).getByText('Приём состоялся')).toBeInTheDocument()
   expect(within(panel).queryByRole('form', { name: 'Оплата' })).not.toBeInTheDocument()
   expect(within(panel).queryByText(/Оплата|к оплате/i)).not.toBeInTheDocument()
-  expect(asked).not.toContain('to-pay')
+  // «Ждут оплаты» — своя очередь врача (сервер отдаёт только его приёмы)
+  expect(asked).toContain('day')
 })
 
 test('свой приём у врача — форма оплаты есть; у коллеги на «Все врачи» — нет предоплаты', async () => {

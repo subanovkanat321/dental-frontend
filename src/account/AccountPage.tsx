@@ -9,6 +9,7 @@ import { DentalNewsTab } from './DentalNewsTab'
 import { PlanTab } from './PlanTab'
 import { PrivacyTab } from './PrivacyTab'
 import { SupportTab } from './SupportTab'
+import { seesAllMoney } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 export type AccountTab = 'plan' | 'agreement' | 'data' | 'news' | 'support' | 'privacy'
@@ -26,7 +27,7 @@ export function AccountPage({ me, initialTab, initialTicket, only, title, onBack
   title?: string
   onBack?: () => void
 }) {
-  const seesAll = Boolean(me.admin && !me.clinic?.independentDoctors)
+  const seesAll = seesAllMoney(me)
   const tabs: [Tab, string][] = [
     ...(me.admin ? [['plan', 'Тариф и оплата'], ['agreement', 'Договор']] as [Tab, string][] : []),
     ...(me.admin || seesAll ? [['data', 'Данные']] as [Tab, string][] : []),
