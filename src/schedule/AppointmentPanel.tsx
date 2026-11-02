@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
+import { SourceLine } from '../patients/SourceLine'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlerts } from '../medical/Anamnesis'
@@ -121,6 +122,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient!.id!)}>{a.patient.fullName} ›</button>
           : <strong className="patient-name">{a.patient?.fullName}</strong>}
         {a.patient?.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
+        {/* Откуда узнал — у врача и регистратуры прямо в приёме: пациент не ответил в боте — отметят здесь */}
+        {a.patient?.id != null && <SourceLine patient={a.patient} canEdit={canEditDoctor(me, a.doctorId)} />}
       </section>
       <MedAlerts an={anamnesis.data} compact />
       {clinical && onMedical && a.patient && a.status !== 'CANCELLED' && (

@@ -82,3 +82,20 @@ test('заметка о приёме у прошедшего приёма — с
   expect(await within(panel).findByText('Сохранено')).toBeInTheDocument()
   expect(saved).toEqual({ note: 'Пломба 36, контроль через полгода' })
 })
+
+test('карточка приёма: «Откуда узнал» — пациент не ответил в боте, врач отмечает прямо в приёме', async () => {
+  backend(appointment(10, 1, '23:30', 'Бакыт М.'))
+  let saved: Record<string, unknown> | null = null
+  server.use(http.put('*/api/patients/:id', async ({ request }) => {
+    saved = await request.json() as Record<string, unknown>
+    return HttpResponse.json({ id: 10, fullName: 'Бакыт М.', phone: '996555123456', sourceId: saved.sourceId as number })
+  }))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  const source = await within(panel).findByRole('combobox', { name: 'Откуда узнал о клинике' })
+  expect(source).toHaveValue('')
+  const option = within(source).getAllByRole('option')[1]!
+  await userEvent.selectOptions(source, option)
+  await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', sourceId: Number(option.getAttribute('value')) }))
+})
