@@ -9,7 +9,7 @@ import { addDays, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../li
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
-import { canEditDoctor as canEdit } from '../lib/roles'
+import { canEditDoctor as canEdit, seesMoneyOf } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -149,7 +149,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                 <ul className="rows">
                   {g.items.map((item) => item.kind === 'appointment'
                     ? <Row key={`a${item.a.id}`} a={item.a} next={item.a === next} active={item.a.id === selectedId}
-                        canEdit={canEditDoctor(item.a.doctorId!)} onOpen={onOpen} />
+                        canEdit={canEditDoctor(item.a.doctorId!)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} />
                     : item.kind === 'pause' ? (
                       <li key={`p${item.at}`} className="row pause">
                         <span className="time num">{timeOf(item.at)}</span>
@@ -209,8 +209,10 @@ function FreeRow({ start, end, canEdit, doctor, waiting, onPick }: {
  * Напоминание уже ушло (или только что отправили) — вместо кнопки «✓ отправлено»: повторно — из карточки.
  * Ошибка — под строкой. WhatsApp — только когда загружены настройки (подпись клиники и ссылка на бота).
  */
-function Row({ a, next, active, canEdit, onOpen }: {
+function Row({ a, next, active, canEdit, money, onOpen }: {
   a: Appointment
+  /** Видит ли деньги этого приёма (seesMoneyOf): иначе сервер прислал их пустыми — строки «предоплата» нет */
+  money: boolean
   next: boolean
   active: boolean
   canEdit: boolean
@@ -248,7 +250,7 @@ function Row({ a, next, active, canEdit, onOpen }: {
         <span className="end num hint">{timeOf(a.endAt!)}</span>
         <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {a.serviceName}</span> : null}</span>
         {a.comment && <span className="row-note">{a.comment}</span>}
-        {a.depositStatus && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
+        {a.depositStatus && money && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
           <span className={`row-note tone-${a.depositStatus === 'RECEIVED' ? 'ok' : 'wait'}`}>
             Предоплата {somText(a.depositSom ?? 0)} · {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? 'пациент оплатил — проверьте' : 'ждём'}
           </span>

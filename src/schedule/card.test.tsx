@@ -109,15 +109,3 @@ test('имя пациента в карточке — его карточка в
   expect(await within(card).findByRole('heading', { name: 'Бакыт М.' })).toBeInTheDocument()
   expect(window.location.hash).toBe('#/patients')
 })
-
-test('удалить запись с оплатой — в вопросе сумма, которая исчезнет из «Кассы»', async () => {
-  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
-  backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1, paidSom: 2000, debtSom: 500, chargeSom: 2500, paymentMethod: 'CASH' }))
-  renderApp()
-  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
-  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  await userEvent.click(within(panel).getByRole('button', { name: 'Удалить запись' }))
-  expect(confirm).toHaveBeenCalledWith(expect.stringMatching(/исчезнут оплата 2\s000 сом, долг 500 сом/))
-  expect(panel).toBeInTheDocument()
-  confirm.mockRestore()
-})

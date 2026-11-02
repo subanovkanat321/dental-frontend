@@ -11,7 +11,7 @@ import { DoctorPicker } from './DoctorPicker'
 import { AVATARS, initials } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
-import { canEditDoctor, isAssistant } from '../lib/roles'
+import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -190,7 +190,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const toPay = useQuery({
     queryKey: ['to-pay'],
     queryFn: () => unwrap(api.GET('/api/appointments/to-pay')),
-    enabled: Boolean(me.reception || me.hasReception),
+    enabled: seesToPay(me),
   })
   const supplies = useQuery({
     queryKey: ['supplies', null],
@@ -399,7 +399,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                         {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
                         {(short || h > 56) && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
                         {h > 80 && a.comment && <span className="appt-note">{a.comment}</span>}
-                        {h > 80 && a.depositStatus && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
+                        {h > 80 && a.depositStatus && seesMoneyOf(me, a.doctorId) && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
                           <span className="appt-note">Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>
                         )}
                       </button>

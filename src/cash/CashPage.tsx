@@ -1,6 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
+import { seesToPay } from '../lib/roles'
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf, datesText, periodText, previousRange } from '../lib/compare'
 import { addDays, periodOf, shortDate, somText, todayIn, ZONE } from '../lib/time'
@@ -51,7 +52,8 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
   // Чья касса: админ выбирает (пусто — вся клиника), врач — всегда своя
   const [doctorId, setDoctorId] = useState<number | null>(seesAll ? null : me.doctorId ?? null)
   const money = seesAll || me.doctorId != null
-  const toPayShown = Boolean(me.reception || me.hasReception)
+  // «Ждут оплаты на кассе»: «независимому» админу без своего кресла сервер его не отдаст (403)
+  const toPayShown = seesToPay(me)
 
   const [tab, setTab] = useState<Tab>(TABS.some(([key]) => key === initialTab) ? initialTab as Tab : 'money')
   const [period, setPeriod] = useState<Period>('month')

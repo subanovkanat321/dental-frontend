@@ -3,6 +3,7 @@ import { Fragment, useCallback, useState, type FormEvent, type ReactNode } from 
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
+import { canEditServices } from '../lib/roles'
 import { groupByCategory, priceText, SERVICE_CATEGORIES } from './services'
 
 type Me = Schemas['BookingViewsMe']
@@ -32,6 +33,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
   }, [onPanel])
   const close = useCallback(() => setOpened(null), [setOpened])
   const services = list.data ?? []
+  const editable = canEditServices(me)
   const openedService = typeof opened === 'number' ? services.find((s) => s.id === opened) : undefined
 
   return (
@@ -41,10 +43,13 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
       <section className="card-block">
         <div className="block-head">
           <p className="hint">Их видят пациенты, когда записываются сами в боте. Длительность — сколько времени займёт приём.</p>
-          <span className="actions">
-            <button type="button" className="btn" onClick={() => setOpened('catalog')}>Из справочника</button>
-            <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить услугу</button>
-          </span>
+          {/* Менять услуги — админ и врачи; регистратуре и ассистенту сервер ответит 403: только список */}
+          {editable && (
+            <span className="actions">
+              <button type="button" className="btn" onClick={() => setOpened('catalog')}>Из справочника</button>
+              <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить услугу</button>
+            </span>
+          )}
         </div>
         {list.error && <p className="error">{list.error.message}</p>}
         {list.isPending ? <p className="hint">Загрузка…</p> : services.length ? (
@@ -56,7 +61,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
                   <tr className="group-row"><th colSpan={4} scope="colgroup">{category || 'Другое'}</th></tr>
                   {items.map((s) => (
                     <tr key={s.id} className={[s.id === opened ? 'active' : '', s.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
-                      <td><button type="button" className="row-link" onClick={() => setOpened(s.id!)}>{s.name}</button></td>
+                      <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(s.id!)}>{s.name}</button> : s.name}</td>
                       <td className="r num nowrap">{s.durationMinutes} мин</td>
                       <td className="r num nowrap">{priceText(s.priceSom) ?? '—'}</td>
                       <td className="hint">{s.active === false ? 'скрыта' : ''}</td>

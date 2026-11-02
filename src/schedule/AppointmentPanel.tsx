@@ -15,7 +15,7 @@ import { PaymentBox } from './PaymentBox'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
-import { canEditDoctor, editableDoctors, isAssistant } from '../lib/roles'
+import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -78,16 +78,16 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     },
   })
 
-  // Удалить насовсем — деньги приёма исчезнут из «Кассы» и отчётов: называем суммы в вопросе
+  // Деньги этого приёма: коллеге и «независимому» админу сервер присылает их пустыми — ни сумм, ни кнопок
+  const seesMoney = seesMoneyOf(me, a.doctorId)
+  // Приём с деньгами сервер не удалит (409 has-records) — сразу говорим, что делать вместо удаления
   const money = [
     a.paidSom ? `оплата ${somText(a.paidSom)}` : null,
     a.debtSom ? `долг ${somText(a.debtSom)}` : null,
     a.paidSom == null && a.chargeSom ? `счёт на кассу ${somText(a.chargeSom)}` : null,
     a.depositStatus === 'RECEIVED' && a.depositSom && !a.paidSom ? `предоплата ${somText(a.depositSom)}` : null,
   ].filter(Boolean)
-  const removeQuestion = money.length
-    ? `Удалить запись насовсем? Вместе с ней исчезнут ${money.join(', ')} — из «Кассы», отчёта и зарплаты. Для обычной отмены есть «Отменить запись».`
-    : 'Удалить запись насовсем? Для обычной отмены есть «Отменить запись».'
+  const removeQuestion = 'Удалить запись насовсем? Для обычной отмены есть «Отменить запись».'
 
   const setStatus = (status: Status, opts: { question?: string; undo?: string } = {}) => {
     if (opts.question && !window.confirm(opts.question)) return
@@ -172,7 +172,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             ? <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />
             : <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>)}
           {/* Ассистенту деньги не показываем: попросить и отметить предоплату — врач, регистратура, админ */}
-          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && !isAssistant(me) && <DepositBox key={a.depositStatus ?? 'none'} appointment={a} />}
+          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && seesMoney && <DepositBox key={a.depositStatus ?? 'none'} appointment={a} />}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && future && a.patient && (
             <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>
           )}
@@ -183,7 +183,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
           {a.status === 'CANCELLED' && (
             <>
-              {a.depositStatus === 'RECEIVED' && <p className="tone-wait">Предоплата {somText(a.depositSom ?? 0)} получена — верните пациенту или запишите его снова.</p>}
+              {a.depositStatus === 'RECEIVED' && seesMoney && <p className="tone-wait">Предоплата {somText(a.depositSom ?? 0)} получена — верните пациенту или запишите его снова.</p>}
               <p className="hint">Восстановленный приём попросит напомнить пациенту заново.</p>
               <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>Восстановить</button>
             </>
@@ -194,7 +194,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
               {/* Ключ — по самим деньгам: оплата на сервере версию приёма не меняет, а блок после
                   сохранения должен открыться заново («оплачено», а не форма) */}
               {/* Ассистенту деньги не показываем: оплату принимает врач или регистратура */}
-              {!isAssistant(me) && <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />}
+              {seesMoney && <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />}
               <ContactButtons phone={a.patient?.phone} />
               {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
             </>
@@ -230,10 +230,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
                 <button type="button" className="btn danger" disabled={action.isPending} onClick={() => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' })}>Исправить: неявка</button>
               )}
               {/* Удалить насовсем (ошибочная или тестовая запись) — только админ; для отмены есть «Отменить» */}
-              {me.admin && (
+              {me.admin && (money.length ? (
+                <p className="hint small">Удалить нельзя: у приёма есть {money.join(', ')}. Ошибочный приём — отмените или исправьте статус.</p>
+              ) : (
                 <button type="button" className="btn danger" disabled={remove.isPending}
                   onClick={() => window.confirm(removeQuestion) && remove.mutate()}>Удалить запись</button>
-              )}
+              ))}
             </div>
           )}
         </>

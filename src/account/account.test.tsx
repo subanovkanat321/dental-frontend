@@ -115,7 +115,7 @@ test('врач: только поддержка и конфиденциальн�
   expect(sent!.get('text')).toBe('Сделайте тёмную тему')
 })
 
-test('«Данные» (админ): под выгрузкой — «Удалить все записи» с предупреждением про оплаты и долги', async () => {
+test('«Данные» (админ): под выгрузкой — «Удалить все записи»; у работающей клиники — текст сервера (has-records)', async () => {
   let cleared: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -129,9 +129,31 @@ test('«Данные» (админ): под выгрузкой — «Удали�
   const user = userEvent.setup()
   renderApp()
   expect(await screen.findByRole('button', { name: 'Прислать архив в бот' })).toBeInTheDocument()
-  expect(screen.getByRole('note')).toHaveTextContent('Вместе с записями удалятся все оплаты, долги и предоплаты')
+  expect(screen.getByRole('note')).toHaveTextContent('Только пока клиника не начала работать')
   await user.type(screen.getByRole('textbox', { name: 'Впишите УДАЛИТЬ' }), 'УДАЛИТЬ')
   await user.click(screen.getByRole('button', { name: 'Удалить все записи' }))
   expect(await screen.findByText('Удалено записей: 3')).toBeInTheDocument()
   expect(cleared).toEqual({ confirm: 'УДАЛИТЬ' })
+
+  server.use(http.post('*/api/appointments/delete-all', () => HttpResponse.json({
+    status: 409, code: 'has-records', detail: 'В клинике уже есть состоявшиеся приёмы, заметки или оплаты — их не удалить.',
+  }, { status: 409 })))
+  await user.type(screen.getByRole('textbox', { name: 'Впишите УДАЛИТЬ' }), 'УДАЛИТЬ')
+  await user.click(screen.getByRole('button', { name: 'Удалить все записи' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('уже есть состоявшиеся приёмы')
+})
+
+test('«Конфиденциальность»: в журнале платформы — входы и «выгрузил данные»', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/platform-info', () => HttpResponse.json({ accessLog: true } satisfies Schemas['PlatformInfoInfo'])),
+    http.get('*/api/clinic/support-access', () => HttpResponse.json({ required: false })),
+    http.get('*/api/clinic/platform-access', () => HttpResponse.json([
+      { role: 'EXPORT', enteredAt: '2026-11-01T05:00:00Z' }, { role: 'ADMIN', enteredAt: '2026-10-30T05:00:00Z' },
+    ] satisfies Schemas['PlatformAccessLogEntry'][])),
+  )
+  window.location.hash = '/settings/privacy'
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Входы платформы' })
+  expect(within(table).getAllByRole('row').map((r) => r.querySelector('td')?.textContent)).toEqual(['выгрузил данные', 'вошёл как админ'])
 })

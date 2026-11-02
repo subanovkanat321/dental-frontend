@@ -1,8 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { render } from '@testing-library/react'
 import { act } from 'react'
 
 import type { Schemas } from '../api/client'
+import { createQueryClient } from '../api/queryClient'
 import { App } from '../App'
 import { todayIn } from '../lib/time'
 
@@ -22,7 +23,7 @@ export function appointment(id: number, doctorId: number, time: string, name: st
 }
 
 export function renderApp() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = createQueryClient({ queries: { retry: false } })
   return render(<QueryClientProvider client={client}><App /></QueryClientProvider>)
 }
 

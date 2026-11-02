@@ -20,3 +20,27 @@ export function canEditDoctor(me: Me, doctorId: number | null | undefined): bool
 export function editableDoctors<D extends { id?: number }>(me: Me, doctors: D[]): D[] {
   return doctors.filter((d) => canEditDoctor(me, d.id))
 }
+
+/** Админ видит деньги всех врачей — если клиника не в режиме «Врачи работают независимо». */
+export function seesAllMoney(me: Me): boolean {
+  return Boolean(me.admin && !me.clinic?.independentDoctors)
+}
+
+/**
+ * Деньги приёма этого врача (оплата, счёт, долг, предоплата): регистратура, админ «видит всех» и сам
+ * врач. Коллеге и «независимому» админу сервер отдаёт приём без сумм — денежных строк и кнопок нет.
+ */
+export function seesMoneyOf(me: Me, doctorId: number | null | undefined): boolean {
+  if (isAssistant(me)) return false
+  return Boolean(me.reception) || seesAllMoney(me) || (doctorId != null && doctorId === me.doctorId)
+}
+
+/** «Ждут оплаты на кассе» (/to-pay): только в клинике с регистратурой и тем, кому сервер его отдаст. */
+export function seesToPay(me: Me): boolean {
+  return Boolean(me.reception || me.hasReception) && (Boolean(me.reception) || seesAllMoney(me) || me.doctorId != null)
+}
+
+/** Менять услуги и цены (и справочник): админ и врачи; регистратура и ассистент только смотрят. */
+export function canEditServices(me: Me): boolean {
+  return Boolean(me.admin || me.doctorId != null)
+}

@@ -6,6 +6,7 @@ import { useSettings, useWaitlist } from '../api/settings'
 import { agoText, recallText, whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
 import { openLink } from '../lib/telegram'
+import { isAssistant } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -105,7 +106,8 @@ export function WaitlistBox({ patient, me, defaultMinutes = 30 }: { patient: Pat
   const client = useQueryClient()
   const list = useWaitlist()
   const entry = list.data?.find((e) => e.patient?.id === patient.id)
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
+  // Ассистент ставит в лист только к своим врачам (сервер ответит 403)
+  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
   const refresh = () => client.invalidateQueries({ queryKey: ['waitlist'] })
   const add = useMutation<unknown, ApiError, { doctorId?: number; durationMinutes: number }>({
     mutationFn: (body) => unwrap(api.POST('/api/waitlist', { body: { patientId: patient.id!, ...body } })),

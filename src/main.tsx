@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -18,6 +18,7 @@ import '@fontsource/golos-text/latin-600.css'
 import '@fontsource/golos-text/cyrillic-700.css'
 import '@fontsource/golos-text/latin-700.css'
 
+import { createQueryClient } from './api/queryClient'
 import { App } from './App'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { startDevLogin, startTelegram, telegram } from './lib/telegram'
@@ -25,12 +26,8 @@ import { startButtonIcons } from './lib/buttonIcons'
 import { applyLook } from './lib/theme'
 import './styles.css'
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    // Регистратура держит вкладку открытой весь день: вернулись на вкладку — свежие данные
-    queries: { staleTime: 30_000, refetchOnWindowFocus: true, retry: 1 },
-  },
-})
+// Регистратура держит вкладку открытой весь день: вернулись на вкладку — свежие данные
+const queryClient = createQueryClient({ queries: { staleTime: 30_000, refetchOnWindowFocus: true, retry: 1 } })
 
 startTelegram()
 // Тема и размер текста — до первой отрисовки; «как в Telegram/системе» следит за сменой

@@ -67,13 +67,16 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   const debt = debtLine(a)
   const list = history.data ?? []
   const split = list.length > 1 && a.chargeSom == null
+  // Доплаты (платежи в разное время): «оплату заново» сервер не примет (409 has-installments) — меняют доплатой
+  const installments = new Set(list.map((e) => e.paidAt)).size > 1
   return (
     <div className="payment">
       <p className="payment-done">
         <span>{a.chargeSom != null ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
           : split ? somText(a.paidSom ?? 0) : `${somText(a.paidSom ?? 0)} · ${methodName(a.paymentMethod)}`}</span>
-        <button type="button" className="link" onClick={() => setView('edit')}>Изменить</button>
+        {!installments && <button type="button" className="link" onClick={() => setView('edit')}>Изменить</button>}
       </p>
+      {installments && <p className="hint small">Есть доплаты — сумму меняют доплатой; ошиблись в платеже — напишите в техподдержку.</p>}
       {debt ? <p className={`tone-${debt.tone} payment-debt`}>{debt.text}</p>
         : a.chargeSom != null ? <p className="tone-ok">✅ Оплачено полностью</p> : null}
       {list.length > 1 && (

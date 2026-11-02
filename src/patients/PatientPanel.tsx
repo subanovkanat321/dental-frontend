@@ -104,6 +104,10 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     )
   }
   const { patient, done, noShow, cancelled, upcoming = [], past = [] } = card.data
+  // Ассистент меняет пациента и лист ожидания только у пациентов своих врачей (или ещё ни разу не
+  // записанных) — как сервер (PatientAccess); чужого он только смотрит
+  const visits = [...upcoming, ...past]
+  const mine = !isAssistant(me) || visits.length === 0 || visits.some((a) => a.doctorId != null && me.assistantOf!.includes(a.doctorId))
   const shownPast = allPast ? past : past.slice(0, PAST)
 
   return (
@@ -115,7 +119,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
-      {editing && patient ? <PatientForm patient={patient} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} /> : (
+      {editing && patient ? <PatientForm patient={patient} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} /> : mine && (
         <button type="button" className="link" onClick={() => setEditing(true)}>Изменить данные пациента</button>
       )}
       <p className="hint">
@@ -133,7 +137,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
 
       <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>
       <ContactButtons phone={patient?.phone} />
-      {patient && <WaitlistBox patient={patient} me={me} />}
+      {patient && mine && <WaitlistBox patient={patient} me={me} />}
       {(debts.data ?? []).map((d) => {
         const debt = debtLine(d)
         if (!debt) return null
