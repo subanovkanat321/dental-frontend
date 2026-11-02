@@ -215,7 +215,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           )}
 
           {/* Материалы и заметка — у приёма, который идёт или был (как в приложении) */}
-          {(a.status === 'DONE' || (a.status === 'SCHEDULED' && started)) && <Supplies appointment={a} />}
+          {(a.status === 'DONE' || (a.status === 'SCHEDULED' && started)) && <Supplies appointment={a} me={me} />}
           {(a.status === 'DONE' || a.status === 'NO_SHOW' || (a.status === 'SCHEDULED' && started)) && <VisitNote appointment={a} />}
 
           {/* Опасные — одной группой внизу; неявку и отмену можно «Вернуть» */}

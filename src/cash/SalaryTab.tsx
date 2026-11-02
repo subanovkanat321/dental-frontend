@@ -53,8 +53,7 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
           <button type="button" className="chip" aria-pressed={month === todayIn().slice(0, 7)} onClick={() => setMonth(todayIn().slice(0, 7))}>Этот месяц</button>
         </div>
       </div>
-      <p className="hint">Зарплата за {monthTitle(month)}: оклад + процент от выручки врача (оплаты пациентов за его приёмы в этом месяце);
-        ассистенту — от выручки врачей, которым он помогает.</p>
+      <SalaryHowTo seesAll={seesAll} noTerms={rows.some((r) => !r.former && !Number(r.percent ?? 0) && !r.baseSom)} />
       {list.isPending ? <p className="hint">Загрузка…</p>
         : list.error ? <p className="error">{list.error.message}</p>
           : rows.length === 0 ? <p className="hint">Врачей пока нет.</p> : (
@@ -75,6 +74,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   // Форма условий после «Сохранить» закрывается — подтверждение показывает карточка
   const [termsSaved, setTermsSaved] = useState(false)
   const left = Math.max(0, (r.dueSom ?? 0) - (r.paidSom ?? 0))
+  const noTerms = !Number(r.percent ?? 0) && !r.baseSom
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['salaries'] })
     void client.invalidateQueries({ queryKey: ['expenses'] })
@@ -94,11 +94,14 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
       </dl>
       {r.former
         ? <p className="hint">Убран из «Сотрудников» — выплата за этот месяц сохранена в истории. Вернёте ассистентом — она снова будет в его строке.</p>
-        : <p className="hint">{termsText(r)}</p>}
+        : noTerms && !editing
+          ? <p className="tone-wait">Условия не заданы — «К выплате» считается как 0. Нажмите «Задать процент и оклад».</p>
+          : !noTerms && <p className="hint">Условия: {termsText(r)}</p>}
       {seesAll && !r.former && !editing && !paying && (
         <div className="actions">
           {left > 0 && <button type="button" className="btn primary" onClick={() => setPaying(true)}>Выплатить {somText(left)}</button>}
-          <button type="button" className="btn" onClick={() => { setTermsSaved(false); setEditing(true) }}>Условия</button>
+          <button type="button" className={noTerms ? 'btn primary' : 'btn'} onClick={() => { setTermsSaved(false); setEditing(true) }}>
+            {noTerms ? '⚙️ Задать процент и оклад' : '⚙️ Изменить условия'}</button>
         </div>
       )}
       {editing && <TermsForm row={r} month={month} onDone={() => { setEditing(false); setTermsSaved(true); refresh() }} onCancel={() => setEditing(false)} />}
@@ -112,6 +115,11 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
   const [percent, setPercent] = useState(String(Number(r.percent ?? 0) || ''))
   const [base, setBase] = useState(r.baseSom ? String(r.baseSom) : '')
   const { dirty } = useDirty({ percent, base })
+  // Пример на выручке этого месяца — подсказка; настоящую сумму считает сервер после «Сохранить»
+  const p = Number(percent.replace(',', '.') || 0)
+  const revenue = r.revenueSom ?? 0
+  const preview = Number(base || 0) + Math.round(revenue * p / 100)
+  const of = r.assistantId != null ? 'выручки его врачей' : 'выручки'
   const save = useMutation<Row, ApiError>({
     mutationFn: () => {
       const body = { percent: Number(percent.replace(',', '.') || 0), baseSom: Number(base || 0) }
@@ -127,12 +135,21 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
   }
   return (
     <form className="form" aria-label={`Условия: ${r.doctor}`} onSubmit={submit}>
+      <p className="hint">Можно только процент, только оклад или оба. Пусто — значит 0.</p>
       <div className="row">
-        <label className="field"><span>Процент от выручки</span>
+        <label className="field"><span>Процент от {of}, %</span>
           <input inputMode="decimal" value={percent} placeholder="например, 30" onChange={(e) => setPercent(e.target.value.replace(/[^\d.,]/g, ''))} /></label>
         <label className="field"><span>Оклад в месяц, сом</span>
           <input inputMode="numeric" value={base} placeholder="0 — без оклада" onChange={(e) => setBase(e.target.value.replace(/\D/g, ''))} /></label>
       </div>
+      <div className="day-quick wrap" role="group" aria-label="Быстро: процент">
+        {(r.assistantId != null ? [5, 10, 15] : [20, 25, 30, 35, 40]).map((x) => (
+          <button key={x} type="button" className="chip" aria-pressed={p === x} onClick={() => setPercent(String(x))}>{x}%</button>
+        ))}
+      </div>
+      <p className="salary-preview" aria-label="Пример расчёта">
+        За {monthTitle(month)}: {Number(base || 0) ? `${somText(Number(base))} + ` : ''}{String(p).replace('.', ',')}% от {somText(revenue)} = <b className="num">{somText(preview)}</b>
+      </p>
       <div className="actions">
         <button type="button" className="btn ghost" onClick={onCancel}>Отмена</button>
       </div>
@@ -167,5 +184,20 @@ function PayForm({ row: r, month, left, onDone, onCancel }: { row: Row; month: s
         <button type="button" className="btn ghost" onClick={onCancel}>Отмена</button>
       </div>
     </form>
+  )
+}
+
+/** «Как это работает»: три шага — условия, расчёт, выплата. Пока условий нет — открыто само. */
+function SalaryHowTo({ seesAll, noTerms }: { seesAll: boolean; noTerms: boolean }) {
+  return (
+    <details className="card-block salary-howto" open={seesAll && noTerms}>
+      <summary>❓ Как работает зарплата</summary>
+      <ol>
+        {seesAll && <li><b>Условия</b> — у каждого врача и ассистента кнопка «⚙️ Задать процент и оклад»: процент от выручки, оклад в месяц или оба. Задаются один раз.</li>}
+        <li><b>Расчёт сам</b> — «К выплате» = оклад + процент от выручки за месяц. Выручка врача — оплаты пациентов за его приёмы; ассистента — оплаты за приёмы врачей, которым он помогает.</li>
+        {seesAll && <li><b>Выплата</b> — в начале месяца выберите прошлый месяц и нажмите «Выплатить». Выплата сама запишется в «Расходы» как «Зарплата», прибыль её учтёт.</li>}
+      </ol>
+      <p className="hint">Пример: 30% + оклад 10 000 сом, выручка за месяц 200 000 сом → к выплате 10 000 + 60 000 = 70 000 сом.</p>
+    </details>
   )
 }

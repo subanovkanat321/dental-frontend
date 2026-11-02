@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Fragment, useCallback, useState, type FormEvent, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
@@ -10,6 +10,7 @@ import { ServiceMemo } from './MemosTab'
 import { ServiceSupplies } from './ServiceSupplies'
 import { groupByCategory, priceText, SERVICE_CATEGORIES } from './services'
 import { EmptyState } from '../layout/EmptyState'
+import { clearServiceToOpen, serviceToOpen } from '../lib/openService'
 
 type Me = Schemas['BookingViewsMe']
 type Service = Schemas['ServiceTypeView']
@@ -31,12 +32,18 @@ function useRefreshServices() {
 /** header — шапка страницы «Клиника» (вкладки): карточка справа — соседняя колонка сетки. */
 export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode; onPanel: (open: boolean) => void }) {
   const list = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')) })
-  const [opened, setOpenedState] = useState<number | 'new' | 'catalog' | null>(null)
+  // Пришли из карточки приёма «Настроить материалы услуги» — сразу открыта эта услуга
+  const [opened, setOpenedState] = useState<number | 'new' | 'catalog' | null>(serviceToOpen)
   const setOpened = useCallback((next: number | 'new' | 'catalog' | null) => {
     setOpenedState(next)
     onPanel(next != null)
   }, [onPanel])
   const close = useCallback(() => setOpened(null), [setOpened])
+  useEffect(() => {
+    if (serviceToOpen() == null) return
+    clearServiceToOpen()
+    onPanel(true)
+  }, [onPanel])
   const services = list.data ?? []
   const editable = canEditServices(me)
   const openedService = typeof opened === 'number' ? services.find((s) => s.id === opened) : undefined

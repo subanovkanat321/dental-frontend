@@ -189,3 +189,13 @@ test('материалы услуги: на приёме уже списан м�
   expect(await within(box).findByText(/Анестетик — /)).toBeInTheDocument()
   expect(within(box).queryByText(/Обычно уходит/)).not.toBeInTheDocument()
 })
+
+test('у услуги нет «Обычно уходит» — ссылка «Настроить материалы услуги» открывает эту услугу в настройках', async () => {
+  backend(appointment(10, 1, '09:00', 'Бакыт М.', { status: 'DONE', serviceName: 'Чистка' }))
+  const panel = await openCard(/Бакыт М\./)
+  const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
+  await userEvent.click(await within(box).findByRole('link', { name: 'Настроить материалы услуги' }))
+  window.dispatchEvent(new HashChangeEvent('hashchange'))
+  const service = await screen.findByRole('complementary', { name: 'Услуга' })
+  expect(within(service).getByRole('region', { name: 'Материалы по умолчанию' })).toBeInTheDocument()
+})

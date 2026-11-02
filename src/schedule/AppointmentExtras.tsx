@@ -9,7 +9,8 @@ import { minutesOf, slotInstant, timeOf, ZONE } from '../lib/time'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { useAppointmentAction } from './useAppointmentAction'
-import { editableDoctors } from '../lib/roles'
+import { canEditServices, editableDoctors } from '../lib/roles'
+import { openServiceLater } from '../lib/openService'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
@@ -147,7 +148,7 @@ export function CommentEdit({ appointment: a, onDone }: { appointment: Appointme
  * Материалы на приёме: что списано и «−1» со склада врача приёма (и общего); «вернуть» — если
  * списали по ошибке. Остаток на складе меняет сервер.
  */
-export function Supplies({ appointment: a }: { appointment: Appointment }) {
+export function Supplies({ appointment: a, me }: { appointment: Appointment; me: Me }) {
   const client = useQueryClient()
   const used = useQuery({
     queryKey: ['appointment-supplies', a.id],
@@ -158,6 +159,19 @@ export function Supplies({ appointment: a }: { appointment: Appointment }) {
     queryFn: () => unwrap(api.GET('/api/supplies', { params: { query: { doctorId: a.doctorId } } })),
   })
   const [pick, setPick] = useState<number | ''>('')
+  // Ничего не предложено: подсказать, где задать «Обычно уходит» для услуги приёма
+  const suggested = useQuery({
+    queryKey: ['appointment-supplies-suggested', a.id],
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/supplies/suggested', { params: { path: { id: a.id! } } })),
+    enabled: !!a.serviceName && canEditServices(me),
+  })
+  const services = useQuery({
+    queryKey: ['service-types'],
+    queryFn: () => unwrap(api.GET('/api/service-types')),
+    staleTime: 5 * 60_000,
+    enabled: !!a.serviceName && canEditServices(me),
+  })
+  const serviceId = services.data?.find((s) => s.name === a.serviceName)?.id
   const move = useMutation<Schemas['SupplyControllerSpent'], ApiError, { supplyId: number; delta: number }>({
     mutationFn: ({ supplyId, delta }) => unwrap(api.POST('/api/appointments/{id}/supplies/{supplyId}', {
       params: { path: { id: a.id!, supplyId } }, body: { delta },
@@ -173,6 +187,10 @@ export function Supplies({ appointment: a }: { appointment: Appointment }) {
       <h3>Материалы</h3>
       {/* Ничего ещё не списали — предложить материалы услуги; списывает врач сам, кнопкой */}
       {used.isSuccess && list.length === 0 && <SuggestedSupplies appointment={a} />}
+      {used.isSuccess && list.length === 0 && suggested.isSuccess && suggested.data.length === 0 && serviceId != null && (
+        <p className="hint supplies-setup">💡 Для «{a.serviceName}» можно задать, что обычно уходит, — тогда здесь будет готовый список и «Списать всё».{' '}
+          <a href="#/settings/services" onClick={() => openServiceLater(serviceId)}>Настроить материалы услуги</a></p>
+      )}
       {list.length > 0 && (
         <ul className="visits">
           {list.map((u) => (

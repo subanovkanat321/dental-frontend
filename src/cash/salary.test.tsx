@@ -41,16 +41,20 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
 
   const aCard = await screen.findByRole('region', { name: 'Зарплата: Айгерим Садыкова' })
-  expect(aCard).toHaveTextContent('40% от выручки')
+  expect(aCard).toHaveTextContent('Условия: 40% от выручки')
   expect(within(aCard).getByText('✅ Выплачено')).toBeInTheDocument()
 
   const card = screen.getByRole('region', { name: 'Зарплата: Дастан Т.' })
   expect(card).toHaveTextContent('Условия не заданы')
-  await user.click(within(card).getByRole('button', { name: 'Условия' }))
-  await user.type(within(card).getByLabelText('Процент от выручки'), '30')
+  // Условий нет — подсказка «Как работает зарплата» открыта, кнопка заметная
+  expect(screen.getByText('❓ Как работает зарплата').closest('details')).toHaveAttribute('open')
+  await user.click(within(card).getByRole('button', { name: '⚙️ Задать процент и оклад' }))
+  await user.click(within(card).getByRole('button', { name: '30%' }))
   await user.type(within(card).getByLabelText('Оклад в месяц, сом'), '10000')
+  expect(within(card).getByLabelText('Процент от выручки, %')).toHaveValue('30')
+  expect(within(card).getByLabelText('Пример расчёта')).toHaveTextContent(/= 25\s000 сом/)
   await user.click(within(card).getByRole('button', { name: 'Сохранить' }))
-  expect(await within(card).findByText('30% от выручки + оклад 10 000 сом')).toBeInTheDocument()
+  expect(await within(card).findByText('Условия: 30% от выручки + оклад 10 000 сом')).toBeInTheDocument()
   expect(screen.getByLabelText('Осталось выплатить')).toHaveTextContent(/37\s000 сом/)
   // Ассистент — процент от выручки его врачей
   const aselCard = screen.getByRole('region', { name: 'Зарплата: Асель' })
@@ -79,6 +83,6 @@ test('бывший ассистент: выплата месяца остала�
   expect(card).toHaveTextContent('· бывший ассистент')
   expect(card).toHaveTextContent(/Выплачено8\s000 сом/)
   expect(card).toHaveTextContent('выплата за этот месяц сохранена в истории')
-  expect(within(card).queryByRole('button', { name: 'Условия' })).not.toBeInTheDocument()
+  expect(within(card).queryByRole('button', { name: /условия|процент и оклад/ })).not.toBeInTheDocument()
   expect(within(card).queryByRole('button', { name: /Выплатить/ })).not.toBeInTheDocument()
 })
