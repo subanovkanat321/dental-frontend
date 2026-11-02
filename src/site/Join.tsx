@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
-import { getJson, type Tariffs } from './web'
+import { getJson, type Links, type Tariffs } from './web'
 
 const FEATURES: [string, string, string][] = [
   ['📲', 'Запись в Telegram', 'Пациент выбирает врача, услугу и время сам — врач подтверждает одним нажатием.'],
@@ -15,6 +15,9 @@ const FEATURES: [string, string, string][] = [
 
 const som = (n = 0) => `${new Intl.NumberFormat('ru-RU').format(n)} сом`
 
+/** Браузер внутри Instagram, Facebook и т. п. (ссылка из профиля Instagram открывается в нём). */
+const inAppBrowser = () => /Instagram|FBAN|FBAV|Line\/|TikTok|musical_ly/i.test(navigator.userAgent)
+
 /**
  * Страница для клиник (/join): что умеет приложение, тарифы и форма заявки. Заявку разбирает
  * владелец платформы в «Платформа → Клиники». Поле-ловушка website — от ботов: человек его не видит.
@@ -22,28 +25,37 @@ const som = (n = 0) => `${new Intl.NumberFormat('ru-RU').format(n)} сом`
 export function Join() {
   const [tariffs, setTariffs] = useState<Tariffs | null>(null)
   const [solo, setSolo] = useState(false)
-  const [f, setF] = useState({ clinicName: '', contactName: '', phone: '', telegram: '', city: '', doctors: '', message: '', website: '' })
+  // Поля — без React-состояния (значения читаются при отправке): на Android во встроенном браузере
+  // Instagram клавиатура закрывалась после первой буквы. Меньше перерисовок во время набора — и без
+  // автозаполнения (autoComplete=off): его подсказка в браузере Instagram и сбивает клавиатуру.
+  const [phone, setPhone] = useState('')
+  const [links, setLinks] = useState<Links>({})
   const [consent, setConsent] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   useEffect(() => {
     document.title = 'Tish — запись пациентов для стоматологии'
+    if (inAppBrowser()) void getJson<Links>('/web/links').then(({ data }) => setLinks(data ?? {}))
     void getJson<Tariffs>('/web/tariffs').then(({ data }) => {
       setTariffs(data)
       // Пришли по ссылке /join#form (со страницы /go) — к форме, когда страница дорисовалась
       if (window.location.hash) setTimeout(() => document.getElementById(window.location.hash.slice(1))?.scrollIntoView(), 0)
     })
   }, [])
-  const set = (k: keyof typeof f) => (v: string) => setF({ ...f, [k]: v })
-  const submit = async (e: FormEvent) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    const data = new FormData(e.currentTarget)
+    const field = (k: string) => String(data.get(k) ?? '')
     setErrors({})
     setSending(true)
     try {
       const response = await fetch('/web/clinic-applications', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...f, phone: phoneFromInput(f.phone), telegram: f.telegram.trim() || null, doctors: f.doctors ? Number(f.doctors) : null, consent, solo }),
+        body: JSON.stringify({
+          clinicName: field('clinicName'), contactName: field('contactName'), phone: phoneFromInput(phone), telegram: field('telegram').trim() || null,
+          city: field('city'), doctors: !solo && field('doctors') ? Number(field('doctors')) : null, message: field('message'), website: field('website'), consent, solo,
+        }),
       })
       if (response.ok) {
         setSent(true)
@@ -103,6 +115,10 @@ export function Join() {
       )}
       <h2 id="form">Подключить клинику</h2>
       {tariffs?.promo && <p className="tone-ok">🎁 {tariffs.promo.title}. Без предоплаты — оставьте заявку, мы позвоним.</p>}
+      {inAppBrowser() && (
+        <p className="tone-wait">Открыли из Instagram? Если клавиатура закрывается — нажмите ⋮ вверху → «Открыть в браузере»
+          {links.supportPhone && <> или <a href={`https://wa.me/${links.supportPhone}?text=${encodeURIComponent('Здравствуйте! Хотим подключить клинику к Tish.')}`}>напишите нам в WhatsApp</a></>}.</p>
+      )}
       <form className="form site-card" aria-label="Заявка клиники" onSubmit={(e) => void submit(e)}>
         <div className="segments" role="group" aria-label="Кто вы">
           <button type="button" aria-pressed={!solo} onClick={() => setSolo(false)}>Клиника</button>
@@ -112,24 +128,23 @@ export function Join() {
           ? 'Частный врач работает один (например, арендует кабинет): он и ведёт приём, и управляет записью.'
           : 'Клиника — несколько врачей, у каждого своё расписание; регистратура и администратор — по желанию.'}</p>
         <label className="field"><span>{solo ? 'Кабинет (как вас найдут пациенты)' : 'Клиника'}</span>
-          <input value={f.clinicName} maxLength={100} autoComplete="organization" placeholder={solo ? 'Стоматолог Айгерим Садыкова' : 'Стоматология «Улыбка»'} onChange={(e) => set('clinicName')(e.target.value)} /></label>
+          <input name="clinicName" maxLength={100} autoComplete="off" placeholder={solo ? 'Стоматолог Айгерим Садыкова' : 'Стоматология «Улыбка»'} /></label>
         {err('clinicName')}
         <label className="field"><span>Как к вам обращаться</span>
-          <input value={f.contactName} maxLength={100} autoComplete="name" placeholder="Айгерим" onChange={(e) => set('contactName')(e.target.value)} /></label>
+          <input name="contactName" maxLength={100} autoComplete="off" placeholder="Айгерим" /></label>
         {err('contactName')}
-        <label className="field"><span>Телефон или WhatsApp</span><PhoneInput label="Телефон или WhatsApp" value={f.phone} onChange={set('phone')} /></label>
+        <label className="field"><span>Телефон или WhatsApp</span><PhoneInput label="Телефон или WhatsApp" value={phone} onChange={setPhone} /></label>
         {err('phone')}
         <label className="field"><span>Telegram — по желанию</span>
-          <input value={f.telegram} maxLength={60} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="@username"
-            onChange={(e) => set('telegram')(e.target.value)} /></label>
+          <input name="telegram" maxLength={60} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="@username" /></label>
         {err('telegram')}
-        <label className="field"><span>Город</span><input value={f.city} maxLength={60} placeholder="Бишкек" onChange={(e) => set('city')(e.target.value)} /></label>
+        <label className="field"><span>Город</span><input name="city" maxLength={60} autoComplete="off" placeholder="Бишкек" /></label>
         {err('city')}
-        {!solo && <label className="field"><span>Сколько врачей</span><input type="number" min={1} max={100} inputMode="numeric" placeholder="2" value={f.doctors} onChange={(e) => set('doctors')(e.target.value)} /></label>}
+        {!solo && <label className="field"><span>Сколько врачей</span><input name="doctors" type="number" min={1} max={100} inputMode="numeric" placeholder="2" /></label>}
         {err('doctors')}
-        <label className="field"><span>Комментарий</span><textarea maxLength={1000} rows={3} placeholder="Что важно для вашей клиники" value={f.message} onChange={(e) => set('message')(e.target.value)} /></label>
+        <label className="field"><span>Комментарий</span><textarea name="message" maxLength={1000} rows={3} placeholder="Что важно для вашей клиники" /></label>
         {err('message')}
-        <input className="trap" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" value={f.website} onChange={(e) => set('website')(e.target.value)} />
+        <input className="trap" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
         <label className="check"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> Согласен(на), чтобы мои имя и телефон использовали, чтобы связаться со мной по заявке</label>
         {err('consent')}
         {errors.form && <p className="error" role="alert">{errors.form}</p>}

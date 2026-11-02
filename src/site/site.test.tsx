@@ -95,3 +95,17 @@ test('звонок: номер из фрагмента адреса', () => {
   render(<Call />)
   expect(screen.getByRole('link', { name: 'Позвонить +996 555 000 111' })).toHaveAttribute('href', 'tel:+996555000111')
 })
+
+test('/join из Instagram: подсказка «открыть в браузере» и WhatsApp, поля без автозаполнения', async () => {
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 14) Instagram 300.0.0.0 Android')
+  server.use(
+    http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [] })),
+    http.get('*/web/links', () => HttpResponse.json({ supportPhone: '996555000111' })),
+  )
+  render(<Join />)
+  expect(await screen.findByText(/Открыли из Instagram\?/)).toBeInTheDocument()
+  expect(await screen.findByRole('link', { name: 'напишите нам в WhatsApp' })).toHaveAttribute('href', expect.stringMatching(/^https:\/\/wa\.me\/996555000111\?text=/))
+  const form = screen.getByRole('form', { name: 'Заявка клиники' })
+  expect(within(form).getByRole('textbox', { name: 'Как к вам обращаться' })).toHaveAttribute('autocomplete', 'off')
+  vi.restoreAllMocks()
+})
