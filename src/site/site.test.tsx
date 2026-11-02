@@ -96,6 +96,14 @@ test('звонок: номер из фрагмента адреса', () => {
   expect(screen.getByRole('link', { name: 'Позвонить +996 555 000 111' })).toHaveAttribute('href', 'tel:+996555000111')
 })
 
+test('SMS из Telegram: номер и текст из фрагмента — «Сообщения» с ними', () => {
+  window.history.replaceState(null, '', `/call.html#${new URLSearchParams({ sms: '996700111222', body: 'Айгерим, приглашаю: https://t.me/bot?start=staff_x' })}`)
+  render(<Call />)
+  const link = screen.getByRole('link', { name: 'Отправить SMS на +996 700 111 222' })
+  expect(link.getAttribute('href')).toMatch(/^sms:\+996700111222\?&body=/)
+  expect(decodeURIComponent(link.getAttribute('href')!)).toContain('https://t.me/bot?start=staff_x')
+})
+
 test('/join из Instagram: подсказка «открыть в браузере» и WhatsApp, поля без автозаполнения', async () => {
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 14) Instagram 300.0.0.0 Android')
   server.use(

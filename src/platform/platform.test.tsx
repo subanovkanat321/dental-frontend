@@ -118,6 +118,12 @@ test('заявка с /join: одобрить — новая клиника с �
   const sms = within(panel).getByRole('link', { name: 'Отправить SMS' }).getAttribute('href')!
   expect(sms).toMatch(/^sms:\+996700111222\?&body=/)
   expect(decodeURIComponent(sms)).toContain('https://t.me/tish_test_bot?start=staff_adm9')
+  // В Telegram ссылка sms: молчит — открывается своя страница браузером телефона, номер и текст — во фрагменте
+  window.Telegram = { WebApp: { initData: 'query_id=1&hash=abc', openLink: vi.fn() } } as unknown as typeof window.Telegram
+  await user.click(within(panel).getByRole('link', { name: 'Отправить SMS' }))
+  const opened = String(vi.mocked(window.Telegram!.WebApp!.openLink!).mock.calls[0]?.[0])
+  expect(opened).toMatch(/\/call\.html#sms=996700111222&body=/)
+  delete window.Telegram
   open.mockRestore()
 })
 

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { botUsername } from '../api/client'
-import { openLink } from '../lib/telegram'
+import { openLink, telegram } from '../lib/telegram'
 import { smsUrl, whatsappUrl } from '../lib/texts'
 import { inviteText } from './texts'
 
@@ -34,7 +34,12 @@ export function InviteLink({ start, name, toWhom, phone, sms = false }: { start:
       <div className="actions">
         <button type="button" className="btn" onClick={() => openLink(whatsappUrl(phone ?? '', `${text} ${link}`))}>Отправить в WhatsApp</button>
         {/* Ссылкой, а не из скрипта: встроенный браузер Telegram так надёжнее открывает «Сообщения» */}
-        {sms && <a className="btn" href={smsUrl(phone ?? '', `${text} ${link}`)}>Отправить SMS</a>}
+        {sms && <a className="btn" href={smsUrl(phone ?? '', `${text} ${link}`)} onClick={(e) => {
+          // В Telegram ссылка sms: молчит — открываем свою страницу браузером телефона, она откроет «Сообщения»
+          if (!telegram()) return
+          e.preventDefault()
+          openLink(`${window.location.origin}/call.html#${new URLSearchParams({ sms: phone ?? '', body: `${text} ${link}` })}`)
+        }}>Отправить SMS</a>}
         <button type="button" className="btn" onClick={() => void copy()}>Скопировать</button>
         <a className="btn" target="_blank" rel="noopener noreferrer"
           href={`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`}>Отправить в Telegram</a>
