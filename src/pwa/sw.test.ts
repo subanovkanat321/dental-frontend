@@ -45,3 +45,17 @@ test('нажали — открытая CRM на передний план и н
   await dispatch(empty.handlers.notificationclick!, { notification: { close, data: { url: 'https://evil.example/' } } })
   expect(empty.self.clients.openWindow).toHaveBeenCalledWith('https://tish.test/')
 })
+
+test('видео — мимо service worker (плееру нужны куски по Range), а JS сборки — из кэша', () => {
+  const { handlers } = loadWorker()
+  const fetchEvent = (path: string) => {
+    const respondWith = vi.fn()
+    handlers.fetch!({ request: { method: 'GET', url: `https://tish.test${path}`, mode: 'no-cors', headers: new Headers() }, respondWith })
+    return respondWith
+  }
+  expect(fetchEvent('/assets/kak-ustanovit-abc123.mp4')).not.toHaveBeenCalled()
+  const js = fetchEvent('/assets/index-abc123.js')
+  expect(js).toHaveBeenCalled()
+  // Ответ из кэша не ждём: в поддельном self кэша нет — гасим отказ, чтобы он не всплыл после теста
+  ;(js.mock.calls[0]![0] as Promise<unknown>).catch(() => {})
+})

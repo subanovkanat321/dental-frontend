@@ -34,3 +34,11 @@ test('«Памятка» открывается на роли сотрудник
 test('ассистенту не советуют принимать оплату — сервер ему это запрещает', () => {
   expect(GUIDES.assistant.topics.map((t) => t.title)).not.toContain('Принять оплату')
 })
+
+test('в «Памятке» — видео, как установить Tish на телефон; качается только по нажатию', () => {
+  const { container } = render(<GuidePage me={me({ admin: true })} onBack={vi.fn()} />)
+  expect(screen.getByRole('region', { name: 'Видео: как установить Tish на телефон' })).toBeInTheDocument()
+  const video = container.querySelector('video')!
+  expect(video).toHaveAttribute('preload', 'none')
+  expect(video.getAttribute('src')).toMatch(/kak-ustanovit.*\.mp4/)
+})

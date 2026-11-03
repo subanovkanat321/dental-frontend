@@ -48,6 +48,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(request))
     return
   }
+  // Видео — мимо service worker: плеер просит кусками (Range), а ответ из кэша целиком iPhone не проиграет
+  if (url.pathname.endsWith('.mp4')) return
   if (url.pathname.startsWith('/assets/')) {
     event.respondWith(cacheFirst(request, ASSETS_CACHE))
     return
