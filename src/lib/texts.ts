@@ -1,3 +1,5 @@
+import type { Schemas } from '../api/client'
+import { applyTemplate, usesVariable } from './reminderTemplate'
 import { addDays, timeOf, todayIn, ZONE } from './time'
 
 /**
@@ -62,12 +64,58 @@ export function freeSlotText(fullName: string, startAt: string, signature?: stri
     + `в ${timeOf(startAt)}. Хотите прийти? Ответьте «да» — запишем 😊`, signature)
 }
 
-/** Напоминание о приёме: «1 — приду, 2 — перенести»; без бота — ссылка на бота клиники. */
-export function reminderText(a: { startAt: string; patient: { fullName?: string; telegram?: boolean } },
-  signature?: string | null, botUrl?: string | null, now = new Date()): string {
-  const text = signed(`Здравствуйте, ${a.patient.fullName}! 👋 Напоминаем: ${whenText(a.startAt, now)} в ${timeOf(a.startAt)} `
-    + 'приём у стоматолога 🦷 Ответьте 1 — приду, 2 — перенести.', signature)
-  return botUrl && !a.patient.telegram
-    ? `${text}\n\n📲 Записываться самим и получать напоминания можно в Telegram: ${botUrl}`
-    : text
+/** Строка-приглашение в бота клиники под напоминанием в WhatsApp/SMS. */
+export const BOT_LINE = '📲 Записываться самим и получать напоминания можно в Telegram:'
+
+/** В WhatsApp/SMS кнопок нет — как ответить, дописываем сами (и к своему тексту клиники). */
+export const REPLY_LINE = 'Ответьте 1 — приду, 2 — перенести.'
+
+/** Что из /api/settings нужно для напоминания: подпись, бот и свой текст клиники с её данными. */
+export type ReminderSettings = Partial<Pick<Schemas['SettingsControllerSettings'],
+  'clinicSignature' | 'botUrl' | 'reminderTemplate' | 'clinicName' | 'clinicAddress' | 'clinicPhone'>>
+
+type ReminderAppointment = { startAt: string; serviceName?: string | null; patient: { fullName?: string; telegram?: boolean } }
+
+/**
+ * {когда} в своём тексте — как у бота (Lang.when бэкенда): «сегодня в 10:00», «завтра в 10:00»
+ * или «понедельник, 26 октября, в 10:00».
+ */
+export function whenAt(startAt: string, now = new Date()): string {
+  const day = dateOf(startAt)
+  const today = todayIn(now)
+  const time = `в ${timeOf(startAt)}`
+  if (day === today) return `сегодня ${time}`
+  if (day === addDays(today, 1)) return `завтра ${time}`
+  const date = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' })
+    .format(new Date(`${day}T00:00:00Z`))
+  return `${date}, ${time}`
+}
+
+/**
+ * Напоминание о приёме в WhatsApp/SMS. Свой текст клиники (reminderTemplate) — тот же шаблон, что
+ * у бота; нет его — стандартный текст. К тексту дописываем сами:
+ * - «Ответьте 1 — приду, 2 — перенести.» — у своего текста (в стандартном она уже есть);
+ * - подпись клиники — если в шаблоне нет {клиника};
+ * - ссылку на бота клиники отдельной строкой — пациенту, который ещё не в боте, если в шаблоне
+ *   нет {бот} (иначе ссылка там, куда её поставила клиника).
+ * Адрес отдельной строкой, как бот, не дописываем: в WhatsApp он только через {адрес}.
+ */
+export function reminderText(a: ReminderAppointment, settings?: ReminderSettings | null, doctor?: string | null,
+  now = new Date()): string {
+  const template = settings?.reminderTemplate?.trim()
+  const botUrl = settings?.botUrl
+  const signature = settings?.clinicSignature
+  const invite = (text: string) => (botUrl && !a.patient.telegram ? `${text}\n\n${BOT_LINE} ${botUrl}` : text)
+  if (!template) {
+    return invite(signed(`Здравствуйте, ${a.patient.fullName}! 👋 Напоминаем: ${whenText(a.startAt, now)} в ${timeOf(a.startAt)} `
+      + `приём у стоматолога 🦷 ${REPLY_LINE}`, signature))
+  }
+  const body = applyTemplate(template, {
+    имя: a.patient.fullName, когда: whenAt(a.startAt, now), врач: doctor, услуга: a.serviceName,
+    клиника: settings?.clinicName, адрес: settings?.clinicAddress, телефон: settings?.clinicPhone, бот: botUrl,
+  })
+  const lines = [body, REPLY_LINE]
+  if (signature && !usesVariable(template, 'клиника')) lines.push(signature)
+  const text = lines.join('\n')
+  return usesVariable(template, 'бот') ? text : invite(text)
 }

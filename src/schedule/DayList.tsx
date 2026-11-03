@@ -2,8 +2,8 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { type CSSProperties } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { useSettings, useWaitlist } from '../api/settings'
-import { reminderText, whatsappUrl } from '../lib/texts'
+import { useReminderText, useWaitlist } from '../api/settings'
+import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { addDays, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
@@ -220,7 +220,7 @@ function Row({ a, next, active, canEdit, money, onOpen }: {
 }) {
   const client = useQueryClient()
   const action = useAppointmentAction(a)
-  const settings = useSettings()
+  const text = useReminderText()
   const opened = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
@@ -229,7 +229,7 @@ function Row({ a, next, active, canEdit, money, onOpen }: {
   const canRemind = canEdit && a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
   const viaBot = Boolean(a.patient?.telegram)
   const sent = Boolean(a.reminderOpenedAt) || action.isSuccess || opened.isSuccess
-  const busy = action.isPending || opened.isPending || (!viaBot && !settings.data)
+  const busy = action.isPending || opened.isPending || (!viaBot && !text)
   const remind = () => {
     if (busy || sent) return
     if (viaBot) {
@@ -237,8 +237,7 @@ function Row({ a, next, active, canEdit, money, onOpen }: {
       return
     }
     opened.mutate()
-    openLink(whatsappUrl(a.patient?.phone ?? '', reminderText({ startAt: a.startAt!, patient: a.patient ?? {} },
-      settings.data?.clinicSignature, settings.data?.botUrl)))
+    openLink(whatsappUrl(a.patient?.phone ?? '', text?.(a) ?? ''))
   }
   const error = action.error ?? opened.error
   return (

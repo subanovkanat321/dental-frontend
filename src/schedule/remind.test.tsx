@@ -100,9 +100,10 @@ test('карточка приёма: «Откуда узнал» — пацие�
   await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', sourceId: expect.any(Number) }))
 })
 
-test('телефон: «Напомнить по SMS» — «Сообщения» с номером пациента и текстом напоминания, без ссылки на бота', async () => {
+test('телефон: «Напомнить по SMS» — «Сообщения» с номером пациента, текстом напоминания и ссылкой на бота', async () => {
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36')
   const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
+  server.use(http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»', botUrl: 'https://t.me/test_bot?start=c_test' })))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
@@ -110,9 +111,29 @@ test('телефон: «Напомнить по SMS» — «Сообщения»
   const href = sms.getAttribute('href')!
   expect(href.startsWith('sms:+996555123456?&body=')).toBe(true)
   expect(decodeURIComponent(href)).toContain('Здравствуйте, Бакыт М.!')
-  expect(decodeURIComponent(href)).not.toContain('t.me')
+  expect(decodeURIComponent(href)).toContain('в Telegram: https://t.me/test_bot?start=c_test')
   sms.addEventListener('click', (e) => e.preventDefault())
   await userEvent.click(sms)
   await vi.waitFor(() => expect(calls).toContain('opened'))
+  vi.restoreAllMocks()
+})
+
+test('свой текст напоминания клиники — в WhatsApp: врач и услуга приёма, «Ответьте 1…», ссылка на бота', async () => {
+  backend(appointment(10, 1, '23:30', 'Бакыт М.', { serviceName: 'Чистка' }))
+  server.use(http.get('*/api/settings', () => HttpResponse.json({
+    clinicSignature: 'Стоматология «Тест»', botUrl: 'https://t.me/test_bot?start=c_test', clinicName: 'Стоматология «Тест»',
+    reminderTemplate: '{имя}, ждём вас {когда}: {врач}, {услуга}. {клиника}',
+  } satisfies Schemas['SettingsControllerSettings'])))
+  const opened: string[] = []
+  vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  await userEvent.click(within(panel).getByRole('button', { name: 'Напомнить в WhatsApp' }))
+  const text = decodeURIComponent(opened[0]!)
+  expect(text).toMatch(/Бакыт М\., ждём вас (сегодня|завтра) в 23:30: Айгерим Садыкова, Чистка\. Стоматология «Тест»\nОтветьте 1 — приду, 2 — перенести\./)
+  // {клиника} в тексте — подпись второй раз не ставим
+  expect(text.split('Стоматология «Тест»')).toHaveLength(2)
+  expect(text).toContain('📲 Записываться самим и получать напоминания можно в Telegram: https://t.me/test_bot?start=c_test')
   vi.restoreAllMocks()
 })

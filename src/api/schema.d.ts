@@ -548,6 +548,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/reminder-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["reminderTemplate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/deposit": {
         parameters: {
             query?: never;
@@ -4420,6 +4436,14 @@ export interface components {
             available?: boolean;
             on?: boolean;
         };
+        ClinicControllerReminderRequest: {
+            reminderTemplate?: string;
+            reminderTemplateKy?: string;
+        };
+        ClinicServiceReminderTemplates: {
+            ru?: string;
+            ky?: string;
+        };
         DepositControllerSettingsRequest: {
             /** @enum {string} */
             mode?: "OFF" | "NEW" | "ALL";
@@ -5347,6 +5371,11 @@ export interface components {
         SettingsControllerSettings: {
             clinicSignature?: string;
             botUrl?: string;
+            reminderTemplate?: string;
+            reminderTemplateKy?: string;
+            clinicName?: string;
+            clinicAddress?: string;
+            clinicPhone?: string;
         };
         ServiceTypeServiceCatalogItem: {
             name?: string;
@@ -7095,6 +7124,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VisitReportControllerAiSetting"];
+                };
+            };
+        };
+    };
+    reminderTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicControllerReminderRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicServiceReminderTemplates"];
                 };
             };
         };

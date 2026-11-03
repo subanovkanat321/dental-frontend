@@ -1516,6 +1516,34 @@
         }
       }
     },
+    "/api/clinic/reminder-template" : {
+      "put" : {
+        "tags" : [ "clinic-controller" ],
+        "operationId" : "reminderTemplate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicControllerReminderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicServiceReminderTemplates"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/deposit" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
@@ -9881,6 +9909,26 @@
           }
         }
       },
+      "ClinicControllerReminderRequest" : {
+        "properties" : {
+          "reminderTemplate" : {
+            "type" : "string"
+          },
+          "reminderTemplateKy" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ClinicServiceReminderTemplates" : {
+        "properties" : {
+          "ru" : {
+            "type" : "string"
+          },
+          "ky" : {
+            "type" : "string"
+          }
+        }
+      },
       "DepositControllerSettingsRequest" : {
         "properties" : {
           "mode" : {
@@ -12052,6 +12100,21 @@
             "type" : "string"
           },
           "botUrl" : {
+            "type" : "string"
+          },
+          "reminderTemplate" : {
+            "type" : "string"
+          },
+          "reminderTemplateKy" : {
+            "type" : "string"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "clinicAddress" : {
+            "type" : "string"
+          },
+          "clinicPhone" : {
             "type" : "string"
           }
         }

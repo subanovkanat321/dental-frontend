@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { useSettings } from '../api/settings'
-import { reminderText, smsUrl, whatsappUrl } from '../lib/texts'
+import { useReminderText } from '../api/settings'
+import { smsUrl, whatsappUrl } from '../lib/texts'
 import { isMobile } from '../pwa/pwa'
 import { openLink, telegram } from '../lib/telegram'
 import { minutesOf, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
@@ -322,24 +322,24 @@ const REPLIES = [['CONFIRMED', 'Придёт'], ['RESCHEDULE', 'Перенос']
  *   отметку «напомнили» сервер ставит после доставки;
  * - WhatsApp: готовый текст в wa.me и отметка «напомнили» сразу (ответ придёт в WhatsApp);
  * - SMS (телефон): у пациента нет ни Telegram, ни WhatsApp — «Сообщения» телефона врача с тем же
- *   текстом, но без ссылки на бота (короче — дешевле); уходит с его номера, как обычная SMS;
+ *   текстом и ссылкой на бота (ответить и получать напоминания в Telegram); уходит с его номера;
+ * - текст — свой текст клиники («Настройки» → «Текст напоминания») или стандартный (useReminderText);
  * - ответ пациента (по телефону, в WhatsApp) — «Придёт / Перенос / Нет ответа», повторное нажатие снимает.
  */
 export function Remind({ appointment: a }: { appointment: Appointment }) {
   const client = useQueryClient()
   const action = useAppointmentAction(a)
-  const settings = useSettings()
+  const text = useReminderText()
   const opened = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
   })
-  const smsText = reminderText({ startAt: a.startAt!, patient: a.patient ?? {} }, settings.data?.clinicSignature)
+  const smsText = text?.(a) ?? ''
   const canRemind = a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
   const whatsapp = () => {
     opened.mutate()
     // openLink: в Telegram ссылка откроется во внешнем браузере / WhatsApp, а не внутри Mini App
-    openLink(whatsappUrl(a.patient?.phone ?? '', reminderText({ startAt: a.startAt!, patient: a.patient ?? {} },
-      settings.data?.clinicSignature, settings.data?.botUrl)))
+    openLink(whatsappUrl(a.patient?.phone ?? '', smsText))
   }
   return (
     <section className="remind" aria-label="Напоминание">
@@ -351,11 +351,11 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
             </button>
           )}
           {a.patient?.phone && (
-            <button type="button" className="btn" disabled={!settings.data || opened.isPending}
+            <button type="button" className="btn" disabled={!text || opened.isPending}
               onClick={whatsapp}>Напомнить в WhatsApp</button>
           )}
           {/* Ссылкой, а не из скрипта: так «Сообщения» открываются надёжнее; на компьютере SMS не отправить */}
-          {a.patient?.phone && isMobile() && settings.data && (
+          {a.patient?.phone && isMobile() && text && (
             <a className="btn" href={smsUrl(a.patient.phone, smsText)} onClick={(e) => {
               opened.mutate()
               // В Telegram ссылка sms: молчит — своя страница в браузере телефона откроет «Сообщения»

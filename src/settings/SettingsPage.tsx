@@ -22,12 +22,13 @@ const HoursPage = lazy(() => import('./HoursPage').then((m) => ({ default: m.Hou
 const GuidePage = lazy(() => import('./GuidePage').then((m) => ({ default: m.GuidePage })))
 const CalendarPage = lazy(() => import('./CalendarPage').then((m) => ({ default: m.CalendarPage })))
 const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
+const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ default: m.ReminderTextPage })))
 const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'reminder': '🔔', 'doctors': '👩‍⚕️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝' }
 
 type Item = {
   key: string
@@ -61,6 +62,9 @@ const GROUPS: [string, Item[]][] = [
     // Ассистенту цены не показываем — и пункта «Услуги» у него нет
     item('services', 'Услуги', 'Цены и длительность приёмов', (me) => !isAssistant(me), clinic('services')),
     item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),
+    // От имени клиники всем пациентам — меняет только админ (сервер: 403 остальным)
+    item('reminder', 'Текст напоминания', 'Что пациент получит перед приёмом', admin,
+      () => (me, back) => <ReminderTextPage me={me} onBack={back} />),
   ]],
   ['Клиника', [
     // Врачи и сотрудники — одним списком с ролями; адрес «doctors» прежний (#/settings/members ведёт сюда же)

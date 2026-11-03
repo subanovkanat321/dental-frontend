@@ -1,0 +1,16 @@
+/* «Текст напоминания» (ReminderTextPage): поле, переменные кнопками и предпросмотр Telegram / WhatsApp */
+.reminder-text { display: grid; gap: 16px; max-width: 860px; }
+.reminder-text .card-block { display: grid; gap: 12px; }
+.reminder-text .segments { max-width: 320px; }
+.reminder-text textarea { width: 100%; min-height: 140px; line-height: 1.45; resize: vertical; }
+.reminder-vars { display: flex; flex-wrap: wrap; gap: 6px; }
+.reminder-vars .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .9rem; }
+.reminder-vars .chip:hover { background: var(--accent-soft); color: var(--link); }
+.reminder-warning { margin: 0; padding: 8px 12px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--text); }
+.reminder-previews { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.reminder-preview { margin: 0; display: grid; gap: 6px; align-content: start; }
+.reminder-preview figcaption { font-weight: 600; }
+.reminder-bubble { margin: 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); color: var(--text);
+  white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
+.reminder-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.reminder-buttons span { padding: 6px; border-radius: var(--r-sm); border: 1px solid var(--line-strong); text-align: center; font-size: .9rem; }
