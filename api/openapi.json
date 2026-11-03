@@ -5892,6 +5892,80 @@
         }
       }
     },
+    "/api/appointments/{id}/dictation/parse" : {
+      "post" : {
+        "tags" : [ "visit-dictation-controller" ],
+        "operationId" : "parse",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitDictationControllerText"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitDictationProposal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/dictation/apply" : {
+      "post" : {
+        "tags" : [ "visit-dictation-controller" ],
+        "operationId" : "apply_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitDictationApply"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitDictationApplied"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/deposit" : {
       "post" : {
         "tags" : [ "deposit-controller" ],
@@ -11734,6 +11808,114 @@
           "chargeSom" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "VisitDictationControllerText" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisitDictationNextVisit" : {
+        "properties" : {
+          "inDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisitDictationPlanStep" : {
+        "properties" : {
+          "tooth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisitDictationProposal" : {
+        "properties" : {
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisitDictationToothChange"
+            }
+          },
+          "plan" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisitDictationPlanStep"
+            }
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "next" : {
+            "$ref" : "#/components/schemas/VisitDictationNextVisit"
+          }
+        }
+      },
+      "VisitDictationToothChange" : {
+        "properties" : {
+          "tooth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "was" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          }
+        }
+      },
+      "VisitDictationApply" : {
+        "properties" : {
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisitDictationToothChange"
+            }
+          },
+          "plan" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisitDictationPlanStep"
+            }
+          },
+          "note" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisitDictationApplied" : {
+        "properties" : {
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ToothView"
+            }
+          },
+          "plan" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TreatmentStepView"
+            }
+          },
+          "note" : {
+            "type" : "string"
           }
         }
       },

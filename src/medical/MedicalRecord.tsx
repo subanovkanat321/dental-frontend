@@ -9,22 +9,13 @@ import { PlanDocs } from '../print/PlanDocs'
 import { resizePhoto } from './thumb'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
+import { TOOTH_STATES, type ToothState } from './toothStates'
 
 type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
-type State = NonNullable<Tooth['state']>
+type State = ToothState
 type FileView = Schemas['PatientFilesView']
 type Kind = NonNullable<FileView['kind']>
-
-const TOOTH_STATES: Record<State, [string, string]> = {
-  HEALTHY: ['Здоров', '⚪'],
-  CARIES: ['Кариес', '🟤'],
-  TREATING: ['Лечится', '🟠'],
-  FILLING: ['Пломба', '🔵'],
-  CROWN: ['Коронка', '👑'],
-  IMPLANT: ['Имплант', '🔩'],
-  MISSING: ['Удалён', '✖️'],
-}
 
 /**
  * Зубы по FDI так, как врач смотрит на пациента: сверху верхняя челюсть (правая сторона
