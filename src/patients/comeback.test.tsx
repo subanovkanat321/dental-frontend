@@ -1,0 +1,60 @@
+import { screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
+
+import type { Schemas } from '../api/client'
+import { me, renderApp } from '../test/fixtures'
+import { server } from '../test/server'
+
+/** Вымышленные пациенты: у Айгуль незаконченный план, Бакыт не пришёл. */
+const board: Schemas['ComebacksBoard'] = {
+  patients: [
+    { patientId: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: true, reason: 'PLAN', planSom: 18000,
+      plan: ['зуб 36 — Коронка', 'Чистка'], lastVisit: '2026-10-10T04:00:00Z' },
+    { patientId: 3, fullName: 'Бакыт М.', phone: '996555111222', telegram: false, reason: 'NO_SHOW', planSom: 0, plan: [] },
+  ],
+  planSom: 18000, planPatients: 1, noShows: 1, recalls: 0,
+}
+
+beforeEach(() => {
+  window.location.hash = '/patients'
+  vi.stubGlobal('open', vi.fn())
+})
+afterEach(() => {
+  window.location.hash = ''
+  vi.unstubAllGlobals()
+})
+
+test('«Вернуть»: деньги на столе, «Tish вернул», приглашение в Telegram с правкой текста', async () => {
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/comebacks', () => HttpResponse.json(board)),
+    http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 5, returned: 2, returnedPlanSom: 40000, paidSom: 12000 })),
+    http.post('*/api/comebacks/2/draft', () => HttpResponse.json({ text: 'Здравствуйте, Айгуль Т.!\n\nОсталась коронка.', ai: false, lang: 'RU', telegram: true })),
+    http.post('*/api/comebacks/2/invite', async ({ request }) => {
+      sent.push(await request.json())
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  const summary = await screen.findByRole('region', { name: 'Деньги на столе' })
+  expect(summary).toHaveTextContent(/Незаконченные планы лечения18\s000 сом/)
+  expect(screen.getByLabelText('Tish вернул')).toHaveTextContent(/вернулись 2 из 5 приглашённых · в их планах 40\s000 сом · уже оплачено 12\s000 сом/)
+  const list = screen.getByRole('list', { name: 'Кого вернуть' })
+  expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('зуб 36 — Коронка · Чистка')
+
+  // Фильтр: только неявки
+  await userEvent.click(within(summary).getByRole('button', { name: /Не пришли/ }))
+  expect(within(list).getAllByRole('listitem')).toHaveLength(1)
+  await userEvent.click(within(summary).getByRole('button', { name: /Не пришли/ }))
+
+  await userEvent.click(within(within(list).getAllByRole('listitem')[0]!).getByRole('button', { name: 'Пригласить' }))
+  const text = await screen.findByRole('textbox', { name: 'Текст приглашения' })
+  await userEvent.type(text, ' Ждём вас!')
+  await userEvent.click(screen.getByRole('button', { name: '📤 В Telegram' }))
+  expect(await screen.findByRole('status')).toHaveTextContent('Приглашение отправлено в Telegram')
+  expect(sent).toEqual([{ text: 'Здравствуйте, Айгуль Т.!\n\nОсталась коронка. Ждём вас!', channel: 'TELEGRAM' }])
+})

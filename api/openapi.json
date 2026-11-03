@@ -4677,6 +4677,70 @@
         }
       }
     },
+    "/api/comebacks/{patientId}/invite" : {
+      "post" : {
+        "tags" : [ "comeback-controller" ],
+        "operationId" : "invite_2",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ComebackControllerInvite"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comebacks/{patientId}/draft" : {
+      "post" : {
+        "tags" : [ "comeback-controller" ],
+        "operationId" : "draft",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ComebacksDraft"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/support-access" : {
       "get" : {
         "tags" : [ "platform-controller" ],
@@ -5156,7 +5220,7 @@
     "/api/appointments/{id}/visit-report/draft" : {
       "post" : {
         "tags" : [ "visit-report-controller" ],
-        "operationId" : "draft",
+        "operationId" : "draft_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7056,6 +7120,59 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/DentalNewsControllerFeed"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comebacks" : {
+      "get" : {
+        "tags" : [ "comeback-controller" ],
+        "operationId" : "board",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ComebacksBoard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comebacks/result" : {
+      "get" : {
+        "tags" : [ "comeback-controller" ],
+        "operationId" : "result",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ComebacksResult"
                 }
               }
             }
@@ -10838,6 +10955,44 @@
           }
         }
       },
+      "ComebackControllerInvite" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "TELEGRAM", "WHATSAPP" ]
+          }
+        }
+      },
+      "PatientMessage" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ComebacksDraft" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "ai" : {
+            "type" : "boolean"
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          },
+          "telegram" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "PlatformControllerGrant" : {
         "properties" : {
           "hours" : {
@@ -11031,16 +11186,6 @@
           "via" : {
             "type" : "string",
             "enum" : [ "TELEGRAM", "WHATSAPP", "PRINT" ]
-          }
-        }
-      },
-      "PatientMessage" : {
-        "properties" : {
-          "text" : {
-            "type" : "string"
-          },
-          "telegram" : {
-            "type" : "boolean"
           }
         }
       },
@@ -12357,6 +12502,95 @@
           },
           "source" : {
             "type" : "string"
+          }
+        }
+      },
+      "ComebacksBoard" : {
+        "properties" : {
+          "patients" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ComebacksCandidate"
+            }
+          },
+          "planSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "planPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "noShows" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "recalls" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "ComebacksCandidate" : {
+        "properties" : {
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          },
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "PLAN", "NO_SHOW", "RECALL" ]
+          },
+          "planSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "plan" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "lastVisit" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "invitedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "ComebacksResult" : {
+        "properties" : {
+          "invited" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "returned" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "returnedPlanSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },

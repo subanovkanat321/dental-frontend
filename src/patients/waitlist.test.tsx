@@ -101,9 +101,11 @@ test('«Хочет раньше»: запись создана, а в лист �
   vi.restoreAllMocks()
 })
 
-test('профосмотр: WhatsApp — отметка «позвали» и готовый текст; «Записать» — «Новая запись» на пациента', async () => {
+test('ассистент — «Профосмотр»: WhatsApp — отметка «позвали» и готовый текст; «Записать» — «Новая запись» на пациента', async () => {
   window.location.hash = '/patients'
   backend()
+  // У ассистента нет денег — вместо «Вернуть» прежний «Профосмотр»
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [1] })))
   let invited = 0
   const opened: string[] = []
   vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })

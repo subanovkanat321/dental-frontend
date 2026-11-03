@@ -1860,6 +1860,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/comebacks/{patientId}/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["invite_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comebacks/{patientId}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/support-access": {
         parameters: {
             query?: never;
@@ -2077,7 +2109,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["draft"];
+        post: operations["draft_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3084,6 +3116,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["feed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comebacks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["board"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comebacks/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["result"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4833,6 +4897,22 @@ export interface components {
         DoctorControllerSelfRequest: {
             fullName?: string;
         };
+        ComebackControllerInvite: {
+            text?: string;
+            /** @enum {string} */
+            channel?: "TELEGRAM" | "WHATSAPP";
+        };
+        PatientMessage: {
+            text?: string;
+            telegram?: boolean;
+        };
+        ComebacksDraft: {
+            text?: string;
+            ai?: boolean;
+            /** @enum {string} */
+            lang?: "RU" | "KY";
+            telegram?: boolean;
+        };
         PlatformControllerGrant: {
             /** Format: int32 */
             hours?: number;
@@ -4911,10 +4991,6 @@ export interface components {
             ai?: boolean;
             /** @enum {string} */
             via?: "TELEGRAM" | "WHATSAPP" | "PRINT";
-        };
-        PatientMessage: {
-            text?: string;
-            telegram?: boolean;
         };
         VisitReportsDraft: {
             text?: string;
@@ -5435,6 +5511,45 @@ export interface components {
             /** Format: date-time */
             publishedAt?: string;
             source?: string;
+        };
+        ComebacksBoard: {
+            patients?: components["schemas"]["ComebacksCandidate"][];
+            /** Format: int32 */
+            planSom?: number;
+            /** Format: int32 */
+            planPatients?: number;
+            /** Format: int32 */
+            noShows?: number;
+            /** Format: int32 */
+            recalls?: number;
+        };
+        ComebacksCandidate: {
+            /** Format: int64 */
+            patientId?: number;
+            fullName?: string;
+            phone?: string;
+            telegram?: boolean;
+            /** @enum {string} */
+            reason?: "PLAN" | "NO_SHOW" | "RECALL";
+            /** Format: int32 */
+            planSom?: number;
+            plan?: string[];
+            /** Format: date-time */
+            lastVisit?: string;
+            /** Format: date-time */
+            invitedAt?: string;
+            /** Format: int64 */
+            doctorId?: number;
+        };
+        ComebacksResult: {
+            /** Format: int32 */
+            invited?: number;
+            /** Format: int32 */
+            returned?: number;
+            /** Format: int32 */
+            returnedPlanSom?: number;
+            /** Format: int32 */
+            paidSom?: number;
         };
         PlatformAccessLogEntry: {
             role?: string;
@@ -9441,6 +9556,54 @@ export interface operations {
             };
         };
     };
+    invite_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComebackControllerInvite"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientMessage"];
+                };
+            };
+        };
+    };
+    draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComebacksDraft"];
+                };
+            };
+        };
+    };
     supportAccess: {
         parameters: {
             query?: never;
@@ -9885,7 +10048,7 @@ export interface operations {
             };
         };
     };
-    draft: {
+    draft_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -11402,6 +11565,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DentalNewsControllerFeed"];
+                };
+            };
+        };
+    };
+    board: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComebacksBoard"];
+                };
+            };
+        };
+    };
+    result: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComebacksResult"];
                 };
             };
         };

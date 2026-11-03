@@ -9,6 +9,7 @@ import { MedicalRecord } from '../medical/MedicalRecord'
 import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
+import { ComebackTab } from './ComebackTab'
 import { isAssistant } from '../lib/roles'
 import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
@@ -52,7 +53,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
   // Вкладки: все пациенты, лист ожидания, «позвать на профосмотр» — как в «Пациентах» приложения
-  const [tab, setTab] = useState<'all' | 'waitlist' | 'recall'>('all')
+  const [tab, setTab] = useState<'all' | 'waitlist' | 'recall' | 'comeback'>('all')
   const waitlist = useWaitlist()
   const close = useCallback(() => setSelected(null), [])
 
@@ -118,7 +119,9 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
         <header ref={stickyHead} className="toolbar sticky-head patients-head">
           <h1>Пациенты</h1>
           <div className="segments tabs" role="tablist" aria-label="Списки пациентов">
-            {([['all', 'Все'], ['waitlist', `Лист ожидания${waitlist.data?.length ? ` · ${waitlist.data.length}` : ''}`], ['recall', 'Профосмотр']] as const)
+            {/* «Вернуть» — деньги на столе и приглашения; ассистенту (денег не видит) — прежний «Профосмотр» */}
+            {([['all', 'Все'], ['waitlist', `Лист ожидания${waitlist.data?.length ? ` · ${waitlist.data.length}` : ''}`],
+              isAssistant(me) ? ['recall', 'Профосмотр'] : ['comeback', 'Вернуть']] satisfies [typeof tab, string][])
               .map(([key, title]) => (
                 <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>
               ))}
@@ -145,6 +148,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
         </header>
         {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} />}
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
+        {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
           <EmptyState icon={text ? '🔍' : '🧑‍🤝‍🧑'} title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}».`) : doctorId != null ? 'У этого врача пока не было пациентов.' : 'Пациентов пока нет — они появятся с первой записью.'}>
