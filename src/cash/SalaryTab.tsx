@@ -9,6 +9,7 @@ import { MonthPicker } from '../layout/MonthPicker'
 import { Select } from '../layout/Select'
 
 type Row = Schemas['SalaryControllerSalaryRow']
+type RentKind = 'none' | 'fixed' | 'percent'
 
 const MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' })
 const monthTitle = (m: string) => MONTH.format(new Date(`${m}-01T00:00:00Z`)).replace(' г.', '')
@@ -28,12 +29,23 @@ function revenueOf(r: Row): string {
   return !isEmployee(r) ? 'выручки' : isAssistantRow(r) ? 'выручки его врачей' : 'выручки клиники'
 }
 
+/** Аренда кресла из условий: «30 000 сом в месяц» / «10% от выручки»; нет — ''. */
+function rentText(r: Row): string {
+  if (r.rentFixedSom) return `${somText(r.rentFixedSom)} в месяц`
+  const p = Number(r.rentPercent ?? 0)
+  return p ? `${String(p).replace('.', ',')}% от выручки` : ''
+}
+
+const hasRent = (r: Row) => !!r.rentFixedSom || Number(r.rentPercent ?? 0) > 0
+
 function termsText(r: Row): string {
   const percent = Number(r.percent ?? 0)
   const of = `от ${revenueOf(r)}`
-  if (!isEmployee(r) && percent === 100 && !r.baseSom) return 'вся выручка — врачу (100%)'
+  const rent = rentText(r)
+  const minusRent = rent ? `, минус аренда кресла ${rent}` : ''
+  if (!isEmployee(r) && percent === 100 && !r.baseSom) return `вся выручка — врачу (100%)${minusRent}`
   const parts = [percent ? `${String(percent).replace('.', ',')}% ${of}` : '', r.baseSom ? `оклад ${somText(r.baseSom)}` : '']
-  return parts.filter(Boolean).join(' + ') || 'Условия не заданы'
+  return (parts.filter(Boolean).join(' + ') || 'Условия не заданы') + minusRent
 }
 
 function errorText(e: ApiError | null): string | null {
@@ -41,7 +53,8 @@ function errorText(e: ApiError | null): string | null {
 }
 
 /**
- * «Касса → Зарплата»: к выплате врачу за месяц = оклад + процент от его выручки; регистратуре и админу
+ * «Касса → Зарплата»: к выплате врачу за месяц = оклад + процент от его выручки − аренда кресла (у
+ * частного врача; больше заработка — «врач должен клинике», без отрицательной выплаты); регистратуре и админу
  * без кресла — от выручки клиники; ассистенту — от выручки его врачей. Админ задаёт
  * условия и отмечает выплату (она же расход «Зарплата» — прибыль её учтёт); врач видит свою строку.
  * Считает сервер — здесь только показываем и отправляем.
@@ -83,10 +96,18 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   const client = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [paying, setPaying] = useState(false)
+  const [receiving, setReceiving] = useState(false)
   // Форма условий после «Сохранить» закрывается — подтверждение показывает карточка
   const [termsSaved, setTermsSaved] = useState(false)
   const left = Math.max(0, (r.dueSom ?? 0) - (r.paidSom ?? 0))
-  const noTerms = !Number(r.percent ?? 0) && !r.baseSom
+  const noTerms = !Number(r.percent ?? 0) && !r.baseSom && !hasRent(r)
+  // Аренда больше заработка: врач должен клинике; сколько ещё не принёс
+  const owes = r.owesSom ?? 0
+  const owesLeft = Math.max(0, owes - (r.rentReceivedSom ?? 0))
+  const cancelRent = useMutation<Row, ApiError>({
+    mutationFn: () => unwrap(api.DELETE('/api/salaries/{doctorId}/rent', { params: { path: { doctorId: r.doctorId! }, query: { month } } })),
+    onSuccess: () => refresh(),
+  })
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['salaries'] })
     void client.invalidateQueries({ queryKey: ['expenses'] })
@@ -98,20 +119,36 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
       <div className="salary-head">
         <h2>{r.doctor}{isEmployee(r) && !r.former && r.position && <span className="hint"> · {r.position}</span>}</h2>
         {left === 0 && (r.dueSom ?? 0) > 0 && <span className="badge-ok">✅ Выплачено</span>}
+        {owes > 0 && owesLeft === 0 && <span className="badge-ok">✅ Аренда получена</span>}
       </div>
       <dl className="salary-sums">
         <div><dt>{!isEmployee(r) ? 'Выручка' : isAssistantRow(r) ? 'Выручка врачей' : 'Выручка клиники'}</dt><dd className="num">{somText(r.revenueSom ?? 0)}</dd></div>
-        <div><dt>К выплате</dt><dd className="num strong">{somText(r.dueSom ?? 0)}</dd></div>
-        <div><dt>Выплачено</dt><dd className="num">{somText(r.paidSom ?? 0)}</dd></div>
+        {(r.rentSom ?? 0) > 0 && <div><dt>Аренда кресла</dt><dd className="num">−{somText(r.rentSom ?? 0)}</dd></div>}
+        {owes > 0
+          ? <div><dt>Врач должен клинике</dt><dd className="num strong tone-bad" aria-label="Врач должен клинике">{somText(owes)}</dd></div>
+          : <div><dt>К выплате</dt><dd className="num strong">{somText(r.dueSom ?? 0)}</dd></div>}
+        {owes > 0
+          ? <div><dt>Получено от врача</dt><dd className="num">{somText(r.rentReceivedSom ?? 0)}</dd></div>
+          : <div><dt>Выплачено</dt><dd className="num">{somText(r.paidSom ?? 0)}</dd></div>}
       </dl>
+      {owes > 0 && (
+        <p className="tone-wait" role="note">
+          Аренда кресла ({somText(r.rentSom ?? 0)}) больше заработка врача за месяц ({somText(r.earnedSom ?? 0)}) — выплаты нет,
+          врач должен клинике {somText(owes)}.{(r.rentReceivedSom ?? 0) > 0 && owesLeft > 0 && ` Осталось получить ${somText(owesLeft)}.`}
+        </p>
+      )}
       {r.former
         ? <p className="hint">Убран из «Персонала» — выплата за этот месяц сохранена в истории. Вернёте в клинику — она снова будет в его строке.</p>
         : noTerms && !editing
           ? <p className="tone-wait">Условия не заданы — «К выплате» считается как 0. Нажмите «Задать процент и оклад».</p>
           : !noTerms && <p className="hint">Условия: {termsText(r)}</p>}
-      {seesAll && !r.former && !editing && !paying && (
+      {seesAll && !r.former && !editing && !paying && !receiving && (
         <div className="actions">
           {left > 0 && <button type="button" className="btn primary" onClick={() => setPaying(true)}>Выплатить {somText(left)}</button>}
+          {owesLeft > 0 && <button type="button" className="btn primary" onClick={() => setReceiving(true)}>Получено от врача…</button>}
+          {(r.rentReceivedSom ?? 0) > 0 && (
+            <button type="button" className="btn quiet" disabled={cancelRent.isPending} onClick={() => cancelRent.mutate()}>Отменить «получено»</button>
+          )}
           <button type="button" className={noTerms ? 'btn primary' : 'btn'} onClick={() => { setTermsSaved(false); setEditing(true) }}>
             {noTerms ? '⚙️ Задать процент и оклад' : '⚙️ Изменить условия'}</button>
         </div>
@@ -119,6 +156,8 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
       {editing && <TermsForm row={r} month={month} onDone={() => { setEditing(false); setTermsSaved(true); refresh() }} onCancel={() => setEditing(false)} />}
       <SaveBar dirty={false} saving={false} saved={termsSaved} savedText="Условия сохранены — «К выплате» пересчитано" />
       {paying && <PayForm row={r} month={month} left={left} onDone={() => { setPaying(false); refresh() }} onCancel={() => setPaying(false)} />}
+      {receiving && <RentForm row={r} month={month} left={owesLeft} onDone={() => { setReceiving(false); refresh() }} onCancel={() => setReceiving(false)} />}
+      {cancelRent.error && <p className="error" role="alert">{errorText(cancelRent.error)}</p>}
     </section>
   )
 }
@@ -126,15 +165,25 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
 function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: string; onDone: () => void; onCancel: () => void }) {
   const [percent, setPercent] = useState(String(Number(r.percent ?? 0) || ''))
   const [base, setBase] = useState(r.baseSom ? String(r.baseSom) : '')
-  const { dirty } = useDirty({ percent, base })
+  // Аренда кресла — только у врача: нет, сумма в месяц или процент от его выручки
+  const [rentKind, setRentKind] = useState<RentKind>(r.rentFixedSom ? 'fixed' : Number(r.rentPercent ?? 0) ? 'percent' : 'none')
+  const [rent, setRent] = useState(r.rentFixedSom ? String(r.rentFixedSom) : Number(r.rentPercent ?? 0) ? String(Number(r.rentPercent)) : '')
+  const { dirty } = useDirty({ percent, base, rentKind, rent })
   // Пример на выручке этого месяца — подсказка; настоящую сумму считает сервер после «Сохранить»
   const p = Number(percent.replace(',', '.') || 0)
   const revenue = r.revenueSom ?? 0
-  const preview = Number(base || 0) + Math.round(revenue * p / 100)
+  const earned = Number(base || 0) + Math.round(revenue * p / 100)
+  const rentValue = Number(rent.replace(',', '.') || 0)
+  const rentSom = rentKind === 'fixed' ? rentValue : rentKind === 'percent' ? Math.round(revenue * rentValue / 100) : 0
+  const preview = earned - rentSom
   const of = revenueOf(r)
+  const privatePreset = p === 100 && !Number(base || 0) && rentKind !== 'none'
   const save = useMutation<Row, ApiError>({
     mutationFn: () => {
-      const body = { percent: Number(percent.replace(',', '.') || 0), baseSom: Number(base || 0) }
+      const body = {
+        percent: Number(percent.replace(',', '.') || 0), baseSom: Number(base || 0),
+        ...(isEmployee(r) ? {} : { rentSom: rentKind === 'fixed' ? rentValue : 0, rentPercent: rentKind === 'percent' ? rentValue : 0 }),
+      }
       return unwrap(r.assistantId != null
         ? api.PUT('/api/salaries/assistants/{telegramId}', { params: { path: { telegramId: r.assistantId }, query: { month } }, body })
         : api.PUT('/api/salaries/{doctorId}', { params: { path: { doctorId: r.doctorId! }, query: { month } }, body }))
@@ -151,8 +200,10 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
       {/* Частые схемы одной кнопкой: частный врач (в том числе в клинике с другими врачами) забирает всё */}
       {!isEmployee(r) && (
         <div className="day-quick wrap" role="group" aria-label="Как платить">
-          <button type="button" className="chip" aria-pressed={p === 100 && !Number(base || 0)}
-            onClick={() => { setPercent('100'); setBase('') }}>Вся выручка — врачу (100%)</button>
+          <button type="button" className="chip" aria-pressed={p === 100 && !Number(base || 0) && rentKind === 'none'}
+            onClick={() => { setPercent('100'); setBase(''); setRentKind('none'); setRent('') }}>Вся выручка — врачу (100%)</button>
+          <button type="button" className="chip" aria-pressed={privatePreset}
+            onClick={() => { setPercent('100'); setBase(''); if (rentKind === 'none') setRentKind('fixed') }}>Частный врач: вся выручка — врачу, минус аренда</button>
           <button type="button" className="chip" aria-pressed={p === 0 && Number(base || 0) > 0}
             onClick={() => setPercent('')}>Только оклад</button>
           <button type="button" className="chip" aria-pressed={p > 0 && p < 100 && Number(base || 0) > 0}
@@ -165,13 +216,31 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
         <label className="field"><span>Оклад в месяц, сом</span>
           <input inputMode="numeric" value={base} placeholder="0 — без оклада" onChange={(e) => setBase(e.target.value.replace(/\D/g, ''))} /></label>
       </div>
+      {!isEmployee(r) && (
+        <div className="row">
+          <label className="field"><span>Аренда кресла</span>
+            <Select aria-label="Аренда кресла" value={rentKind} onChange={(e) => { setRentKind(e.target.value as RentKind); setRent('') }}>
+              <option value="none">Нет</option>
+              <option value="fixed">Сумма в месяц</option>
+              <option value="percent">Процент от выручки врача</option>
+            </Select>
+          </label>
+          {rentKind !== 'none' && (
+            <label className="field"><span>{rentKind === 'fixed' ? 'Аренда в месяц, сом' : 'Аренда, % от выручки'}</span>
+              <input inputMode={rentKind === 'fixed' ? 'numeric' : 'decimal'} value={rent} placeholder={rentKind === 'fixed' ? 'например, 30000' : 'например, 20'}
+                onChange={(e) => setRent(rentKind === 'fixed' ? e.target.value.replace(/\D/g, '') : e.target.value.replace(/[^\d.,]/g, ''))} /></label>
+          )}
+        </div>
+      )}
+      {rentKind !== 'none' && <p className="hint small">Аренду врач платит клинике: она вычитается из «К выплате». Сумма — за весь месяц, по дням не делится; процент — от той же выручки врача.</p>}
       <div className="day-quick wrap" role="group" aria-label="Быстро: процент">
         {(!isEmployee(r) ? [20, 25, 30, 35, 40, 50] : isAssistantRow(r) ? [5, 10, 15] : [1, 2, 3]).map((x) => (
           <button key={x} type="button" className="chip" aria-pressed={p === x} onClick={() => setPercent(String(x))}>{x}%</button>
         ))}
       </div>
       <p className="salary-preview" aria-label="Пример расчёта">
-        За {monthTitle(month)}: {Number(base || 0) ? `${somText(Number(base))} + ` : ''}{String(p).replace('.', ',')}% от {somText(revenue)} = <b className="num">{somText(preview)}</b>
+        За {monthTitle(month)}: {Number(base || 0) ? `${somText(Number(base))} + ` : ''}{String(p).replace('.', ',')}% от {somText(revenue)}
+        {rentSom > 0 && ` − аренда ${somText(rentSom)}`} = <b className="num">{preview < 0 ? `врач должен клинике ${somText(-preview)}` : somText(preview)}</b>
       </p>
       <div className="actions">
         <button type="button" className="btn ghost" onClick={onCancel}>Отмена</button>
@@ -210,6 +279,34 @@ function PayForm({ row: r, month, left, onDone, onCancel }: { row: Row; month: s
   )
 }
 
+/**
+ * «Получено от врача»: аренда больше его заработка — врач приносит разницу. Это доход клиники на
+ * сегодня: прибыль в «Расходах» её учтёт (сервер отдаёт её в сводке как «аренда»).
+ */
+function RentForm({ row: r, month, left, onDone, onCancel }: { row: Row; month: string; left: number; onDone: () => void; onCancel: () => void }) {
+  const [amount, setAmount] = useState(String(left))
+  const receive = useMutation<Row, ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/salaries/{doctorId}/rent', { params: { path: { doctorId: r.doctorId! } }, body: { month, amountSom: Number(amount || 0) } })),
+    onSuccess: onDone,
+  })
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    receive.mutate()
+  }
+  return (
+    <form className="form" aria-label={`Аренда от врача: ${r.doctor}`} onSubmit={submit}>
+      <label className="field"><span>Сколько врач принёс, сом</span>
+        <input inputMode="numeric" value={amount} autoFocus onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))} /></label>
+      <p className="hint">Аренда за {monthTitle(month)} — доход клиники на сегодня: прибыль в «Расходах» её учтёт.</p>
+      {receive.error && <p className="error" role="alert">{errorText(receive.error)}</p>}
+      <div className="actions">
+        <button type="submit" className="btn primary" disabled={receive.isPending || !Number(amount)}>Получено</button>
+        <button type="button" className="btn ghost" onClick={onCancel}>Отмена</button>
+      </div>
+    </form>
+  )
+}
+
 /** «Как это работает»: три шага — условия, расчёт, выплата. Пока условий нет — открыто само. */
 function SalaryHowTo({ seesAll, noTerms }: { seesAll: boolean; noTerms: boolean }) {
   return (
@@ -218,6 +315,7 @@ function SalaryHowTo({ seesAll, noTerms }: { seesAll: boolean; noTerms: boolean 
       <ol>
         {seesAll && <li><b>Условия</b> — у каждого врача и сотрудника (ассистента, регистратуры, администратора) своя кнопка «⚙️ Задать процент и оклад»: процент от выручки, оклад в месяц или оба. Задаются один раз; настраивает и выплачивает только администратор.</li>}
         <li><b>Расчёт сам</b> — «К выплате» = оклад + процент от выручки за месяц. Выручка врача — оплаты пациентов за его приёмы; ассистента — оплаты за приёмы врачей, которым он помогает; регистратуры и администратора — всей клиники (им обычно ставят только оклад).</li>
+        <li><b>Аренда кресла</b> — частный врач забирает выручку своих пациентов, но платит клинике аренду: сумму в месяц или процент от своей выручки. Она вычитается из «К выплате»; если аренда больше заработка — выплаты нет, а карточка покажет, сколько врач должен клинике.</li>
         {seesAll && <li><b>Выплата</b> — в начале месяца выберите прошлый месяц и нажмите «Выплатить». Выплата сама запишется в «Расходы» как «Зарплата», прибыль её учтёт.</li>}
       </ol>
       <p className="hint">Пример: 30% + оклад 10 000 сом, выручка за месяц 200 000 сом → к выплате 10 000 + 60 000 = 70 000 сом.</p>

@@ -85,6 +85,21 @@ test('расходы: список по статьям, прибыль, доба
   expect(await screen.findByLabelText('Расходы за месяц')).toHaveTextContent('7 000')
 })
 
+test('прибыль: аренда кресла, полученная от врача, — доход клиники', async () => {
+  server.use(
+    http.get('*/api/expenses', () => HttpResponse.json([])),
+    http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: [], own: [] } satisfies Schemas['ExpenseControllerCategories'])),
+    // Врач забрал всю выручку (5 000), аренда 20 000 больше — он принёс клинике 15 000
+    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 5000, purchasedSom: 0, expensesSom: 0, rentSom: 15000 } satisfies Schemas['SpendingView'])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
+  const profit = await screen.findByLabelText('Прибыль за месяц')
+  expect(within(profit).getByText('Аренда от врачей').parentElement).toHaveTextContent('15 000')
+  expect(within(profit).getByText('Прибыль').parentElement).toHaveTextContent('20 000')
+})
+
 test('расходы: пустой месяц — без диаграммы', async () => {
   server.use(
     http.get('*/api/expenses', () => HttpResponse.json([])),

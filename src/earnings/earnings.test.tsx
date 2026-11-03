@@ -154,3 +154,35 @@ test('карточка своего оплаченного приёма: «+3 00
   expect(await within(other).findByText(/8\s000 сом · наличные/)).toBeInTheDocument()
   expect(within(other).queryByText(/к вашему дню/)).not.toBeInTheDocument()
 })
+
+test('«Мой заработок» с арендой кресла: месяц — на руки после аренды, сегодня — без неё', async () => {
+  window.location.hash = '/cash'
+  // Частный врач: 100% выручки, аренда 30 000 в месяц
+  backend(doctorOnly, {
+    ...NOVEMBER, percent: 100, baseSom: 0, todaySom: 8000, todayRevenueSom: 8000, monthRevenueSom: 120000, monthSom: 90000,
+    rentSom: 30000, goalSom: undefined, goalLeftSom: undefined, perDayNeededSom: undefined,
+  })
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Мой заработок' }))
+  const block = await screen.findByRole('region', { name: 'Мой заработок' })
+  expect(within(block).getByLabelText('Сегодня')).toHaveTextContent(/8\s000 сом/)
+  expect(within(block).getByText('За ноябрь, на руки после аренды')).toBeInTheDocument()
+  expect(within(block).getByLabelText('За месяц')).toHaveTextContent(/90\s000 сом/)
+  expect(within(block).getByLabelText('Аренда')).toHaveTextContent(/Аренда 30\s000 сом за месяц вычтена/)
+  expect(block).toHaveTextContent(/100% от 120\s000 сом − аренда кресла 30\s000 сом/)
+})
+
+test('«Мой заработок»: аренда больше заработка — минус и «вы должны клинике»', async () => {
+  window.location.hash = '/cash'
+  backend(doctorOnly, {
+    ...NOVEMBER, percent: 100, baseSom: 0, todaySom: 2000, todayRevenueSom: 2000, monthRevenueSom: 18000, monthSom: -12000,
+    rentSom: 30000, goalSom: undefined, goalLeftSom: undefined, perDayNeededSom: undefined,
+  })
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Мой заработок' }))
+  const block = await screen.findByRole('region', { name: 'Мой заработок' })
+  expect(within(block).getByLabelText('За месяц')).toHaveTextContent(/−12\s000 сом/)
+  expect(within(block).getByLabelText('Аренда')).toHaveTextContent(/вы должны клинике 12\s000 сом/)
+})

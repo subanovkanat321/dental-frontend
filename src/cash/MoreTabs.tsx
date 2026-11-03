@@ -26,9 +26,14 @@ function errorText(e: ApiError | null): string | null {
 
 const scope = (doctorId: number | null) => (doctorId == null ? {} : { doctorId })
 
+/** Прибыль клиники: выручка + аренда кресла, полученная от врачей, − склад − расходы. */
+const profitOf = (s: Schemas['SpendingView']) => (s.revenueSom ?? 0) + (s.rentSom ?? 0) - (s.purchasedSom ?? 0) - (s.expensesSom ?? 0)
+
 /**
  * «Расходы»: аренда, зарплаты, техник, свои статьи — за месяц, по статьям; добавить и удалить.
- * Админу (видит всю клинику) — «прибыль»: получено минус покупки склада и расходы (как в приложении).
+ * Админу (видит всю клинику) — «прибыль»: получено плюс аренда кресла от врачей минус покупки склада и
+ * расходы (как в приложении). Аренда частного врача обычно уже вычтена из его выплаты («Зарплата» меньше);
+ * отдельно она приходит, только когда врач должен клинике и принёс разницу.
  */
 export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: number | null; seesAll: boolean }) {
   const client = useQueryClient()
@@ -85,7 +90,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
     .sort((a, b) => b[1] - a[1])
   const cats = [...(categories.data?.standard ?? []), ...(categories.data?.own ?? [])]
   const sp = spending.data
-  const profit = sp ? (sp.revenueSom ?? 0) - (sp.purchasedSom ?? 0) - (sp.expensesSom ?? 0) : null
+  const profit = sp ? profitOf(sp) : null
   const submit = (e: FormEvent) => {
     e.preventDefault()
     add.mutate()
@@ -112,6 +117,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
         {profit != null && sp && (
           <div className="methods profit" aria-label="Прибыль за месяц">
             <div>Получено<b>{somText(sp.revenueSom ?? 0)}</b></div>
+            {(sp.rentSom ?? 0) > 0 && <div>Аренда от врачей<b>{somText(sp.rentSom ?? 0)}</b></div>}
             <div>Склад<b>{somText(sp.purchasedSom ?? 0)}</b></div>
             <div>Расходы<b>{somText(sp.expensesSom ?? 0)}</b></div>
             <div className={profit < 0 ? 'tone-bad' : 'tone-ok'}>Прибыль<b>{somText(profit)}</b></div>
@@ -119,7 +125,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
         )}
         {profit != null && spendingBefore.data && (() => {
           const b = spendingBefore.data
-          const was = (b.revenueSom ?? 0) - (b.purchasedSom ?? 0) - (b.expensesSom ?? 0)
+          const was = profitOf(b)
           const c = changeOf(profit, was)
           return (
             <p className="compare" aria-label="Сравнение прибыли">

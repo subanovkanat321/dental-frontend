@@ -73,7 +73,7 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   expect(within(card).getByLabelText('Сумма выплаты, сом')).toHaveValue('25000')
   await user.click(within(card).getByRole('button', { name: 'Выплачено' }))
   expect(await within(card).findByText('✅ Выплачено')).toBeInTheDocument()
-  expect(sent).toEqual([{ percent: 30, baseSom: 10000 }, { month: expect.stringMatching(/^\d{4}-\d{2}$/), amountSom: 25000 }])
+  expect(sent).toEqual([{ percent: 30, baseSom: 10000, rentSom: 0, rentPercent: 0 }, { month: expect.stringMatching(/^\d{4}-\d{2}$/), amountSom: 25000 }])
 })
 
 test('бывший сотрудник: выплата месяца осталась в истории, без «Условий» и «Выплатить»', async () => {
@@ -154,5 +154,76 @@ test('условия у каждого свои: «Вся выручка — в�
   expect(within(card).getByLabelText('Пример расчёта')).toHaveTextContent(/= 50\s000 сом/)
   await user.click(within(card).getByRole('button', { name: 'Сохранить' }))
   expect(await within(card).findByText('Условия: вся выручка — врачу (100%)')).toBeInTheDocument()
-  expect(sent).toEqual([{ percent: 100, baseSom: 0 }])
+  expect(sent).toEqual([{ percent: 100, baseSom: 0, rentSom: 0, rentPercent: 0 }])
+})
+
+test('аренда кресла: пресет «частный врач», сумма в месяц — «к выплате» за вычетом аренды', async () => {
+  let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0 }
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/salaries', () => HttpResponse.json([dastan])),
+    http.put('*/api/salaries/2', async ({ request }) => {
+      sent.push(await request.json())
+      dastan = { ...dastan, percent: 100, earnedSom: 50000, rentFixedSom: 20000, rentPercent: 0, rentSom: 20000, dueSom: 30000, owesSom: 0 }
+      return HttpResponse.json(dastan)
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  const card = await screen.findByRole('region', { name: 'Зарплата: Дастан Т.' })
+  await user.click(within(card).getByRole('button', { name: '⚙️ Задать процент и оклад' }))
+  const preset = within(card).getByRole('button', { name: 'Частный врач: вся выручка — врачу, минус аренда' })
+  await user.click(preset)
+  expect(preset).toHaveAttribute('aria-pressed', 'true')
+  expect(within(card).getByLabelText('Процент от выручки, %')).toHaveValue('100')
+  await user.type(within(card).getByLabelText('Аренда в месяц, сом'), '20000')
+  expect(within(card).getByLabelText('Пример расчёта')).toHaveTextContent(/100% от 50\s000 сом − аренда 20\s000 сом = 30\s000 сом/)
+  await user.click(within(card).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(card).findByText('Условия: вся выручка — врачу (100%), минус аренда кресла 20 000 сом в месяц')).toBeInTheDocument()
+  expect(card).toHaveTextContent(/Аренда кресла−20\s000 сом/)
+  expect(card).toHaveTextContent(/К выплате30\s000 сом/)
+  expect(sent).toEqual([{ percent: 100, baseSom: 0, rentSom: 20000, rentPercent: 0 }])
+})
+
+test('аренда процентом в форме; аренда больше заработка — «врач должен клинике», получено от врача', async () => {
+  let dastan: Row = {
+    doctorId: 2, doctor: 'Дастан Т.', percent: 50, baseSom: 0, revenueSom: 50000, earnedSom: 25000,
+    rentFixedSom: 40000, rentPercent: 0, rentSom: 40000, dueSom: 0, owesSom: 15000, rentReceivedSom: 0, paidSom: 0,
+  }
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/salaries', () => HttpResponse.json([dastan])),
+    http.post('*/api/salaries/2/rent', async ({ request }) => {
+      sent.push(await request.json())
+      dastan = { ...dastan, rentReceivedSom: 15000 }
+      return HttpResponse.json(dastan)
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  const card = await screen.findByRole('region', { name: 'Зарплата: Дастан Т.' })
+  // Отрицательной выплаты нет: «врач должен клинике», и «Выплатить» не предлагаем
+  expect(within(card).getByLabelText('Врач должен клинике')).toHaveTextContent(/15\s000 сом/)
+  expect(card).toHaveTextContent(/Аренда кресла \(40\s000 сом\) больше заработка врача за месяц \(25\s000 сом\)/)
+  expect(within(card).queryByRole('button', { name: /Выплатить/ })).not.toBeInTheDocument()
+
+  await user.click(within(card).getByRole('button', { name: 'Получено от врача…' }))
+  expect(within(card).getByLabelText('Сколько врач принёс, сом')).toHaveValue('15000')
+  await user.click(within(card).getByRole('button', { name: 'Получено' }))
+  expect(await within(card).findByText('✅ Аренда получена')).toBeInTheDocument()
+  expect(sent).toEqual([{ month: expect.stringMatching(/^\d{4}-\d{2}$/), amountSom: 15000 }])
+
+  // Форма условий: аренда процентом — подсказка считает от той же выручки, минус — «должен клинике»
+  await user.click(within(card).getByRole('button', { name: '⚙️ Изменить условия' }))
+  expect(within(card).getByLabelText('Аренда в месяц, сом')).toHaveValue('40000')
+  expect(within(card).getByLabelText('Пример расчёта')).toHaveTextContent(/= врач должен клинике 15\s000 сом/)
+  await choose(within(card).getByRole('combobox', { name: 'Аренда кресла' }), 'Процент от выручки врача')
+  await user.type(within(card).getByLabelText('Аренда, % от выручки'), '10')
+  expect(within(card).getByLabelText('Пример расчёта')).toHaveTextContent(/− аренда 5\s000 сом = 20\s000 сом/)
 })

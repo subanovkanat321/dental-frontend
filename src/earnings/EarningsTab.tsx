@@ -26,7 +26,8 @@ function workDays(n: number): string {
 
 /**
  * «Касса → Мой заработок» — только своё: сегодня, за месяц (как «к выплате» в «Зарплате»), сравнение
- * с прошлым месяцем на ту же дату и личная цель на месяц. Цель и галочку «итог дня» видит и меняет
+ * с прошлым месяцем на ту же дату и личная цель на месяц. Аренда кресла (частный врач) — только в
+ * месячной сумме, «на руки после аренды»; «сегодня» её не делим по дням. Цель и галочку «итог дня» видит и меняет
  * только сам врач. Все суммы считает сервер (GET /api/me/earnings).
  */
 export function EarningsTab({ me }: { me: Me }) {
@@ -39,6 +40,8 @@ export function EarningsTab({ me }: { me: Me }) {
 function EarningsView({ e }: { e: Earnings }) {
   const percent = Number(e.percent ?? 0)
   const month = monthName(e.month)
+  const rent = e.rentSom ?? 0
+  const monthSom = e.monthSom ?? 0
   return (
     <>
       <section className="card-block earnings" aria-label="Мой заработок">
@@ -49,8 +52,8 @@ function EarningsView({ e }: { e: Earnings }) {
             <dd className="num strong" aria-label="Сегодня">{somText(todayOf(e))}</dd>
           </div>
           <div>
-            <dt>За {month}</dt>
-            <dd className="num strong" aria-label="За месяц">{somText(e.monthSom ?? 0)}</dd>
+            <dt>{rent > 0 ? `За ${month}, на руки после аренды` : `За ${month}`}</dt>
+            <dd className={`num strong${monthSom < 0 ? ' tone-bad' : ''}`} aria-label="За месяц">{monthSom < 0 ? `−${somText(-monthSom)}` : somText(monthSom)}</dd>
           </div>
         </dl>
         {!e.hasTerms ? (
@@ -62,7 +65,13 @@ function EarningsView({ e }: { e: Earnings }) {
           <p className="hint">
             {percent > 0 ? `Сегодня — ${percentText(e.percent)} от принятых ${somText(e.todayRevenueSom ?? 0)}. ` : 'Оклад — в итоге месяца, по дням его не делим. '}
             За {month} — {[e.baseSom ? `оклад ${somText(e.baseSom)}` : '', percent > 0 ? `${percentText(e.percent)} от ${somText(e.monthRevenueSom ?? 0)}` : '']
-              .filter(Boolean).join(' + ')}, как «к выплате» в «Зарплате».
+              .filter(Boolean).join(' + ')}{rent > 0 ? ` − аренда кресла ${somText(rent)}` : ''}, как «к выплате» в «Зарплате».
+          </p>
+        )}
+        {rent > 0 && (
+          <p className="hint small" aria-label="Аренда">
+            Аренда {somText(rent)} за месяц вычтена из суммы за {month}; в «сегодня» её нет — по дням не делим.
+            {monthSom < 0 && ` Пока аренда больше заработка: вы должны клинике ${somText(-monthSom)}.`}
           </p>
         )}
         {e.changePercent != null && (
