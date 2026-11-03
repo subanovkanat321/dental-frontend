@@ -186,7 +186,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .appt-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .appt-state { display: flex; align-items: center; gap: 5px; font-size: .86rem; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.panel { position: sticky; top: 16px; align-self: start; display: grid; gap: 12px; padding: 18px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); box-shadow: var(--panel-shadow); }
+/* z-index: панель справа выше липких шапок таблиц и шапки раздела — широкая таблица уходит под неё, а не поверх */
+.panel { position: sticky; top: 16px; z-index: 14; align-self: start; display: grid; gap: 12px; padding: 18px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); box-shadow: var(--panel-shadow); }
 .panel-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; }
 .panel section { display: grid; gap: 2px; }
 .patient-name { font-size: 1.1rem; }
