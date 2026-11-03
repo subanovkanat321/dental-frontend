@@ -42,3 +42,5 @@
 .week-grid .appt { line-height: 1.2; }
 
 .week-caption { margin: 0; font-size: .92rem; }
+
+.week-undo { margin-left: 10px; font-weight: 600; white-space: nowrap; }

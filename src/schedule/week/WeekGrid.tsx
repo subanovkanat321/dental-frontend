@@ -6,7 +6,7 @@ import { dateOf, dayTitle, minutesOf, minutesOfTime, timeOf } from '../../lib/ti
 import { hhmm, PAD, PX, useNowMinutes } from '../gridScale'
 import { statusOf } from '../status'
 import { useDrag } from './useDrag'
-import { useMove } from './useMove'
+import { useMove, type Move } from './useMove'
 import { useWeekAppointments, useWeekSlots } from './useWeek'
 import { canDrag, dayLabel, durationOf, SNAP, weekDays, weekHours } from './weekModel'
 import './week.css'
@@ -15,8 +15,11 @@ type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 type Slots = Schemas['SlotsView']
 
-/** Что сказать после переноса: удачно — тихо (status), отказ сервера — заметно (alert). */
-type Notice = { tone: 'ok' | 'error'; text: string }
+/**
+ * Что сказать после переноса: удачно — тихо (status), отказ сервера — заметно (alert).
+ * @param undo перенести обратно — на прежние день и время (перетащили случайно)
+ */
+type Notice = { tone: 'ok' | 'error'; text: string; undo?: Move }
 
 /**
  * «Неделя» на компьютере: семь дней одного врача колонками (пн–вс) по его рабочим часам. Нажать на
@@ -53,8 +56,14 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
     days, from, to, columns, scroller: grid,
     onDrop: (m) => {
       setNotice(null)
+      // Откуда тащили — чтобы «Вернуть как было» одним нажатием, если перетащили случайно
+      const was = m.appointment.startAt!
       move.mutate(m, {
-        onSuccess: (a) => setNotice({ tone: 'ok', text: `Перенесено: ${dayTitle(m.date)}, ${timeOf(a.startAt!)} — напомните пациенту заново` }),
+        onSuccess: (a) => setNotice({
+          tone: 'ok',
+          text: `Перенесено: ${dayTitle(m.date)}, ${timeOf(a.startAt!)} (было: ${dayTitle(dateOf(was))}, ${timeOf(was)}) — напомните пациенту заново`,
+          undo: { appointment: a, date: dateOf(was), minutes: minutesOf(was) },
+        }),
         onError: (e) => setNotice({ tone: 'error', text: `Не перенесли: ${e.message}` }),
       })
     },
@@ -90,7 +99,21 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
       <p className="week-caption hint">
         Неделя одного врача. Нажмите на день — откроется весь день{editable ? '; на свободное время — новая запись; приём можно перетащить мышью на другое время' : ' (только просмотр)'}
       </p>
-      {notice && <p className={`week-notice ${notice.tone}`} role={notice.tone === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
+      {notice && (
+        <p className={`week-notice ${notice.tone}`} role={notice.tone === 'error' ? 'alert' : 'status'}>
+          {notice.text}
+          {notice.undo && (
+            <button type="button" className="link week-undo" disabled={move.isPending} onClick={() => {
+              const back = notice.undo!
+              setNotice(null)
+              move.mutate(back, {
+                onSuccess: (a) => setNotice({ tone: 'ok', text: `Вернули как было: ${dayTitle(back.date)}, ${timeOf(a.startAt!)}` }),
+                onError: (e) => setNotice({ tone: 'error', text: `Не вернули: ${e.message}` }),
+              })
+            }}>↩ Вернуть как было</button>
+          )}
+        </p>
+      )}
       {week.error && <p className="error" role="alert">{week.error.message}</p>}
       <div ref={grid} className={`grid week-grid${ghost ? ' dragging' : ''}`}
         style={{ gridTemplateColumns: '56px repeat(7, minmax(104px, 1fr))' } as CSSProperties}>

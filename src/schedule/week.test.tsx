@@ -132,7 +132,19 @@ test('перетащить приём на другой день: блок ср�
   expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument()
   await vi.waitFor(() => expect(moves).toEqual([{ version: 4, startAt: slotInstant(thursday, 660), durationMinutes: 30 }]))
   release()
-  expect(await screen.findByRole('status')).toHaveTextContent('Перенесено')
+  const notice = await screen.findByRole('status')
+  expect(notice).toHaveTextContent('Перенесено')
+  // Видно, откуда перенесли, и можно вернуть одним нажатием (перетащили случайно)
+  expect(notice).toHaveTextContent(`было: ${dayTitle(tuesday)}, 10:00`)
+  server.use(http.post('*/api/appointments/10/reschedule', async ({ request }) => {
+    const body = (await request.json()) as Schemas['AppointmentRequestsReschedule']
+    moves.push(body)
+    return HttpResponse.json(visit(10, tuesday, 600, 'Бакыт М.', { version: 6 }))
+  }))
+  await userEvent.click(within(notice).getByRole('button', { name: '↩ Вернуть как было' }))
+  expect(await screen.findByText(/Вернули как было/)).toBeInTheDocument()
+  // Обратно — с новой версией приёма (после первого переноса она 5)
+  expect(moves[1]).toEqual({ version: 5, startAt: slotInstant(tuesday, 600), durationMinutes: 30 })
 })
 
 test('сервер отказал (409 «Время занято») — приём возвращается на место и видно почему', async () => {
