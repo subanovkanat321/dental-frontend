@@ -346,12 +346,12 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
       {canRemind && (
         <div className="actions">
           {a.patient?.telegram && (
-            <button type="button" className="btn primary" disabled={action.isPending} onClick={() => action.mutate({ kind: 'remindTelegram' })}>
+            <button type="button" className="btn" disabled={action.isPending} onClick={() => action.mutate({ kind: 'remindTelegram' })}>
               Напомнить в Telegram
             </button>
           )}
           {a.patient?.phone && (
-            <button type="button" className={a.patient?.telegram ? 'btn' : 'btn primary'} disabled={!settings.data || opened.isPending}
+            <button type="button" className="btn" disabled={!settings.data || opened.isPending}
               onClick={whatsapp}>Напомнить в WhatsApp</button>
           )}
           {/* Ссылкой, а не из скрипта: так «Сообщения» открываются надёжнее; на компьютере SMS не отправить */}
