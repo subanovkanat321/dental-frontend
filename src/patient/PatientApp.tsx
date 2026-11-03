@@ -19,13 +19,16 @@ type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorView']
 type Service = Schemas['ServiceTypeView']
 type Slots = Schemas['BookingViewsSlots']
+type Booking = Schemas['BookingViewsBooking']
+type Relation = NonNullable<Schemas['RelativesRelative']['relation']>
 
 type Screen =
   | { name: 'clinics'; back: Screen | null }
   | { name: 'doctors' }
   | { name: 'book'; doctorId: number }
-  | { name: 'booking' }
-  | { name: 'reschedule' }
+  /** Без id: одна запись — она, несколько — список «Мои записи» */
+  | { name: 'booking'; id?: number }
+  | { name: 'reschedule'; id: number }
   | { name: 'news'; back: Screen }
   | { name: 'privacy'; back: Screen }
 
@@ -34,21 +37,37 @@ type Ctx = { me: Me; t: T; lang: Lang; go: (s: Screen, notice?: string) => void;
 
 const dateOf = (instant: string) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
 
+/** «Мои записи»: свои и родственников, ближайшие первыми (старый сервер присылал только booking). */
+function bookingsOf(me: Me): Booking[] {
+  return me.bookings?.length ? me.bookings : me.booking ? [me.booking] : []
+}
+
+/** Записаться (ещё раз): один врач — сразу запись к нему, иначе — выбор врача. */
+function bookStart(me: Me): Screen {
+  const doctors = me.doctors ?? []
+  return doctors.length === 1 ? { name: 'book', doctorId: doctors[0]!.id! } : { name: 'doctors' }
+}
+
 /**
- * С какого экрана начать: клиник несколько и не выбрана — выбор клиники; есть запись — «Ваша
- * запись» (кнопка бота «Перенести» — ?screen=reschedule); «Записаться снова» — ?doctor=ID; один врач —
- * сразу запись к нему; иначе — выбор врача.
+ * С какого экрана начать: клиник несколько и не выбрана — выбор клиники; есть записи — «Ваша
+ * запись» или «Мои записи» (кнопка бота «Перенести» — ?screen=reschedule, ближайшая); «Записаться
+ * снова» — ?doctor=ID; иначе — запись.
  */
 function firstScreen(me: Me): Screen {
   if (me.clinicChoices?.length) return { name: 'clinics', back: null }
   const params = new URLSearchParams(launchSearch())
-  const doctors = me.doctors ?? []
-  const again = doctors.find((d) => d.id === Number(params.get('doctor')))
-  if (me.booking && params.get('screen') === 'reschedule') return { name: 'reschedule' }
-  if (me.booking) return { name: 'booking' }
+  const again = (me.doctors ?? []).find((d) => d.id === Number(params.get('doctor')))
+  const nearest = bookingsOf(me)[0]
+  if (nearest && params.get('screen') === 'reschedule') return { name: 'reschedule', id: nearest.id! }
+  if (nearest) return { name: 'booking' }
   if (again) return { name: 'book', doctorId: again.id! }
-  if (doctors.length === 1) return { name: 'book', doctorId: doctors[0]!.id! }
-  return { name: 'doctors' }
+  return bookStart(me)
+}
+
+/** Запись поменялась (перенос, предоплата, лист ожидания) — та же правка в booking и в bookings. */
+function patchBooking(me: Me, id: number, patch: (b: Booking) => Booking): Me {
+  const own = (b?: Booking) => (b && b.id === id ? patch(b) : b)
+  return { ...me, booking: own(me.booking), bookings: me.bookings?.map((b) => own(b)!) }
 }
 
 /** Известные коды ошибок сервера → текст на языке пациента; к «запись закрыта» — как связаться с клиникой. */
@@ -60,6 +79,8 @@ const ERRORS: Record<string, [key: string, call: boolean]> = {
   stale: ['errStale', false],
   'booking-off': ['errBookingOff', true],
   'already-booked': ['errAlreadyBooked', false],
+  'too-many-bookings': ['errTooMany', false],
+  'relatives-limit': ['errRelativesLimit', true],
   'no-booking': ['errNoBooking', false],
   'already-waiting': ['errAlreadyWaiting', false],
   'deposit-closed': ['errDepositClosed', false],
@@ -127,7 +148,8 @@ export default function PatientApp({ me }: { me: Me }) {
     )
   }
   // Новая клиника ещё настраивается (пришёл по прямой ссылке): записи пока нет
-  if (me.clinic?.settingUp && !me.booking) {
+  const bookings = bookingsOf(me)
+  if (me.clinic?.settingUp && !bookings.length) {
     return (
       <div className="patient center">
         <LangSwitch lang={lang} onChange={setLang} />
@@ -153,6 +175,10 @@ export default function PatientApp({ me }: { me: Me }) {
     },
   }
   const doctor = current.name === 'book' ? (me.doctors ?? []).find((d) => d.id === current.doctorId) : undefined
+  // Какая запись открыта: id с экрана, а без него — единственная
+  const opened = current.name === 'booking' || current.name === 'reschedule'
+    ? current.id == null ? (bookings.length === 1 ? bookings[0] : undefined) : bookings.find((b) => b.id === current.id)
+    : undefined
 
   return (
     <div className="patient">
@@ -163,8 +189,9 @@ export default function PatientApp({ me }: { me: Me }) {
       {current.name === 'doctors' && <DoctorsScreen ctx={ctx} />}
       {current.name === 'book' && doctor && <BookScreen key={doctor.id} ctx={ctx} doctor={doctor} />}
       {current.name === 'book' && !doctor && <DoctorsScreen ctx={ctx} />}
-      {current.name === 'booking' && me.booking && <BookingScreen ctx={ctx} />}
-      {current.name === 'reschedule' && me.booking && <RescheduleScreen ctx={ctx} />}
+      {current.name === 'booking' && (opened ? <BookingScreen key={opened.id} ctx={ctx} b={opened} />
+        : bookings.length > 0 && <MyBookingsScreen ctx={ctx} bookings={bookings} />)}
+      {current.name === 'reschedule' && opened && <RescheduleScreen ctx={ctx} b={opened} />}
       {current.name === 'news' && <NewsScreen ctx={ctx} back={current.back} />}
       {current.name === 'privacy' && <PrivacyScreen ctx={ctx} back={current.back} />}
     </div>
@@ -367,10 +394,33 @@ function DayStrip({ ctx, date, onPick }: { ctx: Ctx; date: string; onPick: (d: s
   )
 }
 
-/** Запись: услуга → день → время → имя, телефон из Telegram, согласие → «Записаться». */
+/** Кого записываем: себя, родственника из списка (его id) или нового. */
+type Who = 'self' | 'new' | number
+
+/** Новый родственник — поля формы; телефон пустой — номер записывающего. */
+type NewRelative = { fullName: string; birthDate: string; relation: Relation; phone: string }
+
+const RELATIONS: Relation[] = ['CHILD', 'SPOUSE', 'PARENT', 'SIBLING', 'OTHER']
+
+/**
+ * Кого записать по умолчанию: себя, если у себя записи нет; иначе — первого незаписанного
+ * родственника или нового (мама с записью пришла записать ребёнка).
+ */
+function defaultWho(me: Me): Who {
+  const booked = new Set(bookingsOf(me).map((b) => b.patientId))
+  if (!bookingsOf(me).some((b) => b.self !== false)) return 'self'
+  return (me.relatives ?? []).find((r) => !booked.has(r.id))?.id ?? 'new'
+}
+
+/** Запись: услуга → день → время → кого записываем, имя, телефон из Telegram, согласие → «Записаться». */
 function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   const { me, t, lang } = ctx
   const client = useQueryClient()
+  const [who, setWho] = useState<Who>(() => defaultWho(me))
+  const [relative, setRelative] = useState<NewRelative>({ fullName: '', birthDate: '', relation: 'CHILD', phone: '' })
+  const relativeName = who === 'new' ? relative.fullName.trim() : (me.relatives ?? []).find((r) => r.id === who)?.fullName ?? ''
+  // Своё имя нужно для себя и для первой записи ребёнка, когда своей карточки ещё нет
+  const askOwnName = who === 'self' || (who === 'new' && !me.hasCard)
   // У врача выбраны услуги — только они; не выбраны — все услуги клиники
   const services = servicesOfDoctor(me.services ?? [], me.doctorServices, doctor.id)
   const many = (me.doctors ?? []).length > 1
@@ -418,7 +468,8 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   })
   const shownDate = dateTouched ? date : slots.data?.date ?? date
 
-  const missing = !service ? 'service' : !chosen ? 'time' : !name.trim() || !phone || !consent ? 'data' : null
+  const dataMissing = (askOwnName && !name.trim()) || (who === 'new' && !relativeName) || !phone || !consent
+  const missing = !service ? 'service' : !chosen ? 'time' : dataMissing ? 'data' : null
   const scrollTo = (step: 'service' | 'time' | 'data', attention = false) => {
     const el = (step === 'service' ? serviceRef : step === 'time' ? timeRef : dataRef).current
     if (!el) return
@@ -435,12 +486,16 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   const book = useMutation<Schemas['BookingViewsBooking'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/patient/booking', {
       body: { doctorId: doctor.id!, serviceTypeId: service!.id!, startAt: slotInstant(shownDate, minutesOf(chosen)), fullName: name, consent: true, comment, sourceId: sourceId ?? undefined,
-        promoCode: promo.trim() || undefined },
+        promoCode: promo.trim() || undefined,
+        patientId: typeof who === 'number' ? who : undefined,
+        relative: who === 'new' ? { fullName: relative.fullName, birthDate: relative.birthDate || undefined, relation: relative.relation, phone: relative.phone.trim() || undefined } : undefined },
     })),
     onSuccess: (booking) => {
       haptic('success')
-      client.setQueryData<Me>(['me'], (old) => (old ? { ...old, booking, phone } : old))
-      ctx.go({ name: 'booking' })
+      // Сразу «Ваша запись» (ближайшая остаётся в booking); новый родственник и порядок — со свежим me
+      client.setQueryData<Me>(['me'], (old) => (old ? { ...old, booking: old.booking ?? booking, bookings: [...(old.bookings ?? []), booking], phone } : old))
+      void client.invalidateQueries({ queryKey: ['me'] })
+      ctx.go({ name: 'booking', id: booking.id })
     },
     onError: (e) => {
       haptic('error')
@@ -455,7 +510,9 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
         const f = e.fieldErrors
         const own = (key: string, fallback: string) => (f[key] ? (lang === 'ru' ? f[key] : t(fallback)) : '')
         const next = { name: own('fullName', 'nameRequired'), phone: own('phone', 'phoneRequired'), consent: own('consent', 'consentRequired'),
-          promo: own('promoCode', 'promoInvalid') }
+          promo: own('promoCode', 'promoInvalid'), relName: own('relative.fullName', 'relativeNameRequired'),
+          relBirth: own('relative.birthDate', 'relativeBirthInvalid'), relPhone: own('relative.phone', 'relativePhoneInvalid'),
+          relRelation: own('relative.relation', 'relativeRelationRequired') }
         if (next.promo) setPromoOpen(true)
         setErrors(Object.values(next).some(Boolean) ? next : { form: errorText(t, e, me.clinicContact) })
       }
@@ -472,7 +529,8 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
     scrollTo(missing, true)
     if (missing === 'service') setErrors({ form: t('pickService') })
     else if (missing === 'time') setErrors({ time: t('pickTime') })
-    else if (!name.trim()) setErrors({ name: t('nameRequired') })
+    else if (who === 'new' && !relativeName) setErrors({ relName: t('relativeNameRequired') })
+    else if (askOwnName && !name.trim()) setErrors({ name: t('nameRequired') })
     else if (!phone) setErrors({ phone: t('phoneRequired') })
     else setErrors({ consent: t('consentRequired') })
   }
@@ -574,11 +632,16 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
 
       <section ref={dataRef} className="step">
         <h2 className="step-title">{t('stepData')}</h2>
-        <label className="field"><span>{t('patientName')}</span>
-          <input value={name} maxLength={200} autoComplete="name" enterKeyHint="done"
-            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }} onChange={(e) => { setName(e.target.value); setErrors({}) }} /></label>
+        <WhoField ctx={ctx} who={who} onChange={(w) => { setWho(w); setErrors({}) }} />
+        {who === 'new' && <RelativeFields ctx={ctx} value={relative} errors={errors}
+          onChange={(r) => { setRelative(r); setErrors({}) }} />}
+        {askOwnName && (
+          <label className="field"><span>{who === 'self' ? t('patientName') : t('yourName')}</span>
+            <input value={name} maxLength={200} autoComplete="name" enterKeyHint="done"
+              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }} onChange={(e) => { setName(e.target.value); setErrors({}) }} /></label>
+        )}
         {errors.name && <p className="error">{errors.name}</p>}
-        <div className="field"><span>{t('phone')}</span>
+        <div className="field"><span>{who === 'self' ? t('phone') : t('yourPhone')}</span>
           {phone ? (
             <div className="picked">{formatPhone(phone)}<br /><span className="hint">{t('phoneFromTelegram')}</span></div>
           ) : <button type="button" className="btn" disabled={sharing} onClick={sharePhone}>{sharing ? t('gettingPhone') : t('sharePhone')}</button>}
@@ -603,7 +666,8 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
           </div>
         )}
         <label className="consent"><input type="checkbox" checked={consent} onChange={(e) => { setConsent(e.target.checked); setErrors({}) }} />
-          {' '}{t('consent', { holder: me.clinic?.legalName || t('holderDefault') })}</label>
+          {' '}{who === 'self' ? t('consent', { holder: me.clinic?.legalName || t('holderDefault') })
+            : t('consentFor', { name: relativeName || t('relativeDefault'), holder: me.clinic?.legalName || t('holderDefault') })}</label>
         <button type="button" className="link privacy-link" onClick={() => ctx.go({ name: 'privacy', back: ctx.screen })}>{t('privacy')}</button>
         {errors.consent && <p className="error">{errors.consent}</p>}
       </section>
@@ -612,6 +676,63 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
       <MainButton busy={book.isPending} onClick={next}
         text={missing === 'service' ? t('nextService') : missing === 'time' ? t('nextTime') : missing === 'data' ? t('nextData') : t('book')} />
     </section>
+  )
+}
+
+/**
+ * «Кого записываем?» — «Себя», родственники этого Telegram (дети и др. из семьи в клинике) и
+ * «＋ Ребёнка или родственника». У кого уже есть запись — не выбрать: одна запись на человека.
+ */
+function WhoField({ ctx, who, onChange }: { ctx: Ctx; who: Who; onChange: (w: Who) => void }) {
+  const { me, t } = ctx
+  const booked = new Set(bookingsOf(me).map((b) => b.patientId))
+  const selfBooked = bookingsOf(me).some((b) => b.self !== false)
+  const relatives = me.relatives ?? []
+  const chip = (key: Who, label: string, isBooked: boolean) => (
+    <button key={String(key)} type="button" className="source-chip who-chip" aria-pressed={who === key} disabled={isBooked}
+      onClick={() => onChange(key)}>{label}{isBooked && <small> · {t('whoBooked')}</small>}</button>
+  )
+  return (
+    <div className="field">
+      <span id="who-title">{t('whoTitle')}</span>
+      <div className="source-chips" role="group" aria-labelledby="who-title">
+        {chip('self', t('whoSelf'), selfBooked)}
+        {relatives.map((r) => chip(r.id!, r.fullName ?? '', booked.has(r.id)))}
+        {relatives.length < (me.maxRelatives ?? 6) && chip('new', t('whoAdd'), false)}
+      </div>
+    </div>
+  )
+}
+
+/** Новый родственник: имя, дата рождения (необязательно), кем приходится, телефон (необязательно). */
+function RelativeFields({ ctx, value, errors, onChange }: {
+  ctx: Ctx; value: NewRelative; errors: Record<string, string>; onChange: (v: NewRelative) => void
+}) {
+  const { t } = ctx
+  return (
+    <div className="relative-fields">
+      <label className="field"><span>{t('relativeName')}</span>
+        <input value={value.fullName} maxLength={200} autoComplete="off" onChange={(e) => onChange({ ...value, fullName: e.target.value })} /></label>
+      {errors.relName && <p className="error">{errors.relName}</p>}
+      <div className="field">
+        <span id="relation-title">{t('relativeRelation')}</span>
+        <div className="source-chips" role="group" aria-labelledby="relation-title">
+          {RELATIONS.map((r) => (
+            <button key={r} type="button" className="source-chip" aria-pressed={value.relation === r}
+              onClick={() => onChange({ ...value, relation: r })}>{t(`rel${r}`)}</button>
+          ))}
+        </div>
+      </div>
+      {errors.relRelation && <p className="error">{errors.relRelation}</p>}
+      <label className="field"><span>{t('relativeBirth')}</span>
+        <input type="date" value={value.birthDate} max={todayIn()} onChange={(e) => onChange({ ...value, birthDate: e.target.value })} /></label>
+      {errors.relBirth && <p className="error">{errors.relBirth}</p>}
+      <label className="field"><span>{t('relativePhone')}</span>
+        <input type="tel" inputMode="tel" value={value.phone} maxLength={30} autoComplete="off"
+          onChange={(e) => onChange({ ...value, phone: e.target.value })} />
+        <span className="hint">{t('relativePhoneHint')}</span></label>
+      {errors.relPhone && <p className="error">{errors.relPhone}</p>}
+    </div>
   )
 }
 
@@ -667,12 +788,51 @@ const WEEK = 7
 
 const STATUS: Record<string, string> = { REQUESTED: 'requested', SCHEDULED: 'scheduled' }
 
-/** «Ваша запись»: когда, что, подтверждена ли; предоплата, «хочу раньше», перенести, отменить. */
-function BookingScreen({ ctx }: { ctx: Ctx }) {
+/** «Аружан» в «Моих записях»; своя запись — «Вы». Старый сервер не присылал self — значит, своя. */
+function whose(t: T, b: Booking): string {
+  return b.self === false ? b.patientName ?? '' : t('forMe')
+}
+
+/** «Мои записи»: несколько записей — свои и детей; нажать — открыть запись. */
+function MyBookingsScreen({ ctx, bookings }: { ctx: Ctx; bookings: Booking[] }) {
+  const { me, t, lang } = ctx
+  return (
+    <section className="screen">
+      <BackButton onBack={null} />
+      <Hero t={t} title={t('myBookings')} subtitle={t('waitingYou')} />
+      <ul className="my-bookings">
+        {bookings.map((b) => (
+          <li key={b.id}>
+            <button type="button" className="doctor-card my-booking" onClick={() => ctx.go({ name: 'booking', id: b.id })}>
+              <span className="doctor-initials" aria-hidden="true">{b.self === false ? initials(b.patientName) : '🙂'}</span>
+              <span className="doctor-card-text">
+                <strong>{whose(t, b)}</strong>
+                <span>📅 {whenAt(lang, b.startAt!)}</span>
+                <span className="hint">{serviceEmoji(b.serviceName)} {b.serviceName || t('defaultService')} · {b.doctorName}</span>
+                <span className={b.status === 'SCHEDULED' ? 'status tone-ok' : 'status tone-wait'}>{STATUS[b.status ?? ''] ? t(STATUS[b.status!]!) : b.status}</span>
+              </span>
+              <span className="chevron" aria-hidden="true">›</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button type="button" className="btn" onClick={() => ctx.go(bookStart(me))}>{t('bookAnother')}</button>
+      <ClinicCard ctx={ctx} />
+      <ClinicContacts ctx={ctx} />
+      <Footer ctx={ctx} />
+    </section>
+  )
+}
+
+/** Одна запись (своя или ребёнка): когда, что, подтверждена ли; предоплата, «хочу раньше», перенести, отменить. */
+function BookingScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
   const { me, t, lang } = ctx
   const client = useQueryClient()
-  const b = me.booking!
   const doctor = (me.doctors ?? []).find((d) => d.id === b.doctorId)
+  const many = bookingsOf(me).length > 1
+  const query = { params: { query: { appointmentId: b.id! } } }
+  // Старый сервер: «в листе ожидания» — общий флаг me.waiting
+  const waiting = b.waiting ?? me.waiting
   const [sure, setSure] = useState(false)
   // «Точно отменить?» — ненадолго: через 5 секунд кнопка снова обычная, случайное второе нажатие позже не отменит
   useEffect(() => {
@@ -681,26 +841,33 @@ function BookingScreen({ ctx }: { ctx: Ctx }) {
     return () => clearTimeout(timer)
   }, [sure])
   const cancel = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/patient/booking/cancel')),
+    mutationFn: () => unwrap(api.POST('/api/patient/booking/cancel', query)),
     onSuccess: () => {
       haptic('success')
-      // Сразу без записи (а не «Ваша запись» с «Запись отменена», пока me не пришёл заново)
-      client.setQueryData<Me>(['me'], (old) => (old ? { ...old, booking: undefined, waiting: false } : old))
+      // Сразу без этой записи (а не «Ваша запись» с «Запись отменена», пока me не пришёл заново)
+      client.setQueryData<Me>(['me'], (old) => {
+        if (!old) return old
+        const rest = bookingsOf(old).filter((x) => x.id !== b.id)
+        return { ...old, booking: rest[0], bookings: rest, waiting: rest[0]?.waiting ?? false }
+      })
       ctx.reload(t('cancelled'))
     },
   })
   const waitlist = useMutation<unknown, ApiError, boolean>({
-    mutationFn: (join) => unwrap(join ? api.POST('/api/patient/waitlist') : api.DELETE('/api/patient/waitlist')),
+    mutationFn: (join) => unwrap(join ? api.POST('/api/patient/waitlist', query) : api.DELETE('/api/patient/waitlist', query)),
     onSuccess: (_r, join) => {
       haptic('success')
-      client.setQueryData<Me>(['me'], (old) => (old ? { ...old, waiting: join } : old))
+      client.setQueryData<Me>(['me'], (old) => (old ? { ...patchBooking(old, b.id!, (x) => ({ ...x, waiting: join })),
+        waiting: old.booking?.id === b.id ? join : old.waiting } : old))
     },
   })
   const error = cancel.error ?? waitlist.error
   return (
     <section className="screen">
-      <BackButton onBack={null} />
-      <Hero t={t} title={t('yourBooking')} subtitle={t('waitingYou')} doctor={doctor ?? { fullName: b.doctorName }} />
+      <BackButton onBack={many ? () => ctx.go({ name: 'booking' }) : null} />
+      {many && <button type="button" className="link" onClick={() => ctx.go({ name: 'booking' })}>{t('allBookings')}</button>}
+      <Hero t={t} title={b.self === false ? t('bookingOf', { name: b.patientName ?? '' }) : t('yourBooking')} subtitle={t('waitingYou')}
+        doctor={doctor ?? { fullName: b.doctorName }} />
       <div className="booking-card">
         <p className="big">📅 {whenAt(lang, b.startAt!)}</p>
         <div>{serviceEmoji(b.serviceName)} {b.serviceName || t('defaultService')}</div>
@@ -708,14 +875,15 @@ function BookingScreen({ ctx }: { ctx: Ctx }) {
         {b.promoCode && <p className="hint">🎟 {t('promoBooking', { code: b.promoCode })}</p>}
         <p><span className={b.status === 'SCHEDULED' ? 'status tone-ok' : 'status tone-wait'}>{STATUS[b.status ?? ''] ? t(STATUS[b.status!]!) : b.status}</span></p>
       </div>
-      {b.depositStatus && <PatientDeposit ctx={ctx} />}
-      <button type="button" className="btn" onClick={() => ctx.go({ name: 'reschedule' })}><span aria-hidden="true">🗓️ </span>{t('moveOther')}</button>
-      {me.waiting ? (
+      {b.depositStatus && <PatientDeposit ctx={ctx} b={b} />}
+      <button type="button" className="btn" onClick={() => ctx.go({ name: 'reschedule', id: b.id! })}><span aria-hidden="true">🗓️ </span>{t('moveOther')}</button>
+      {waiting ? (
         <div className="waitlist-on">
           <p className="hint">{t('waitlistOn')}</p>
           <button type="button" className="link" disabled={waitlist.isPending} onClick={() => waitlist.mutate(false)}>{t('waitlistLeave')}</button>
         </div>
       ) : <button type="button" className="btn" disabled={waitlist.isPending} onClick={() => waitlist.mutate(true)}><span aria-hidden="true">🔔 </span>{t('waitlistJoin')}</button>}
+      <button type="button" className="btn" onClick={() => ctx.go(bookStart(me))}>{t('bookAnother')}</button>
       <ClinicCard ctx={ctx} />
       <ClinicContacts ctx={ctx} />
       {error && <p className="error" role="alert">{errorText(t, error, ctx.me.clinicContact)}</p>}
@@ -730,24 +898,27 @@ function BookingScreen({ ctx }: { ctx: Ctx }) {
 }
 
 /** Предоплата, которую просит клиника: сумма, QR и «как перевести», «Я оплатил(а)» с чеком по желанию. */
-function PatientDeposit({ ctx }: { ctx: Ctx }) {
-  const { me, t } = ctx
+function PatientDeposit({ ctx, b }: { ctx: Ctx; b: Booking }) {
+  const { t } = ctx
   const client = useQueryClient()
-  const b = me.booking!
   const sum = new Intl.NumberFormat('ru-RU').format(b.depositSom ?? 0)
   const asked = b.depositStatus !== 'RECEIVED' && b.depositStatus !== 'REPORTED'
-  const info = useQuery({ queryKey: ['patient-deposit'], queryFn: () => unwrap(api.GET('/api/patient/deposit')), enabled: asked })
+  const info = useQuery({
+    queryKey: ['patient-deposit', b.id],
+    queryFn: () => unwrap(api.GET('/api/patient/deposit', { params: { query: { appointmentId: b.id! } } })),
+    enabled: asked,
+  })
   const qr = useBlobUrl(asked && info.data?.hasQr ? '/api/patient/deposit/qr' : null)
   const [file, setFile] = useState<File | null>(null)
   const paid = useMutation<unknown, ApiError>({
     mutationFn: () => {
       const body = new FormData()
       if (file) body.append('file', file)
-      return upload('/api/patient/deposit/report', body)
+      return upload(`/api/patient/deposit/report?appointmentId=${b.id}`, body)
     },
     onSuccess: () => {
       haptic('success')
-      client.setQueryData<Me>(['me'], (old) => (old?.booking ? { ...old, booking: { ...old.booking, depositStatus: 'REPORTED' } } : old))
+      client.setQueryData<Me>(['me'], (old) => (old ? patchBooking(old, b.id!, (x) => ({ ...x, depositStatus: 'REPORTED' })) : old))
     },
   })
   if (b.depositStatus === 'RECEIVED') return <div className="deposit-card tone-ok">✅ {t('depositReceived', { sum })}</div>
@@ -766,11 +937,10 @@ function PatientDeposit({ ctx }: { ctx: Ctx }) {
   )
 }
 
-/** Перенос своей записи: другой день и время у того же врача; новое время врач подтвердит. */
-function RescheduleScreen({ ctx }: { ctx: Ctx }) {
+/** Перенос записи (своей или ребёнка): другой день и время у того же врача; новое время врач подтвердит. */
+function RescheduleScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
   const { me, t, lang } = ctx
   const client = useQueryClient()
-  const b = me.booking!
   // День записи — если он есть в ленте; запись дальше ленты (или в прошлом) — первый день ленты
   const [date, setDate] = useState(() => {
     const days = bookingDays(lang, todayIn(), stripLength(me)).map((d) => d.date)
@@ -780,15 +950,15 @@ function RescheduleScreen({ ctx }: { ctx: Ctx }) {
   const [chosen, setChosen] = useState('')
   const [error, setError] = useState('')
   const slots = useQuery({
-    queryKey: ['patient-reschedule-slots', date],
-    queryFn: () => unwrap(api.GET('/api/patient/booking/slots', { params: { query: { date } } })),
+    queryKey: ['patient-reschedule-slots', b.id, date],
+    queryFn: () => unwrap(api.GET('/api/patient/booking/slots', { params: { query: { date, appointmentId: b.id! } } })),
   })
-  const move = useMutation<Schemas['BookingViewsBooking'], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/patient/booking/reschedule', { body: { startAt: slotInstant(date, minutesOf(chosen)) } })),
-    onSuccess: (booking) => {
+  const move = useMutation<Booking, ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/patient/booking/reschedule', { body: { startAt: slotInstant(date, minutesOf(chosen)), appointmentId: b.id! } })),
+    onSuccess: (moved) => {
       haptic('success')
-      client.setQueryData<Me>(['me'], (old) => (old ? { ...old, booking } : old))
-      ctx.go({ name: 'booking' }, t('moved'))
+      client.setQueryData<Me>(['me'], (old) => (old ? patchBooking(old, b.id!, () => moved) : old))
+      ctx.go({ name: 'booking', id: b.id! }, t('moved'))
     },
     onError: (e) => {
       haptic('error')
@@ -801,8 +971,9 @@ function RescheduleScreen({ ctx }: { ctx: Ctx }) {
   })
   return (
     <section className="screen">
-      <BackButton onBack={() => ctx.go({ name: 'booking' })} />
+      <BackButton onBack={() => ctx.go({ name: 'booking', id: b.id! })} />
       <h1>{t('moveTitle')}</h1>
+      {b.self === false && <p className="who-line">👤 {b.patientName}</p>}
       <p className="hint">{t('moveNow', { when: whenAt(lang, b.startAt!) })}</p>
       <div className="field"><span>{t('day')}</span>
         <DayStrip ctx={ctx} date={date} onPick={(d) => { setDate(d); setChosen(''); setError('') }} /></div>

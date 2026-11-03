@@ -4155,6 +4155,15 @@
       "post" : {
         "tags" : [ "patient-booking-controller" ],
         "operationId" : "joinWaitlist",
+        "parameters" : [ {
+          "name" : "appointmentId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -4164,6 +4173,15 @@
       "delete" : {
         "tags" : [ "patient-booking-controller" ],
         "operationId" : "leaveWaitlist",
+        "parameters" : [ {
+          "name" : "appointmentId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -4175,6 +4193,15 @@
       "post" : {
         "tags" : [ "patient-booking-controller" ],
         "operationId" : "reportDeposit",
+        "parameters" : [ {
+          "name" : "appointmentId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4257,6 +4284,15 @@
       "post" : {
         "tags" : [ "patient-booking-controller" ],
         "operationId" : "cancel",
+        "parameters" : [ {
+          "name" : "appointmentId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -6988,6 +7024,15 @@
       "get" : {
         "tags" : [ "patient-booking-controller" ],
         "operationId" : "deposit",
+        "parameters" : [ {
+          "name" : "appointmentId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -7053,6 +7098,14 @@
           "schema" : {
             "type" : "string",
             "format" : "date"
+          }
+        }, {
+          "name" : "appointmentId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         } ],
         "responses" : {
@@ -9471,6 +9524,10 @@
           },
           "fullName" : {
             "type" : "string"
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
           }
         }
       },
@@ -9997,6 +10054,20 @@
           },
           "promoCode" : {
             "type" : "string"
+          },
+          "bookedBy" : {
+            "$ref" : "#/components/schemas/FamiliesBooker"
+          }
+        }
+      },
+      "FamiliesBooker" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
           }
         }
       },
@@ -10876,9 +10947,34 @@
           },
           "promoCode" : {
             "type" : "string"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "relative" : {
+            "$ref" : "#/components/schemas/RelativesNewRelative"
           }
         },
         "required" : [ "doctorId", "serviceTypeId", "startAt" ]
+      },
+      "RelativesNewRelative" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        }
       },
       "BookingViewsBooking" : {
         "properties" : {
@@ -10920,6 +11016,19 @@
           },
           "promoCode" : {
             "type" : "string"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientName" : {
+            "type" : "string"
+          },
+          "self" : {
+            "type" : "boolean"
+          },
+          "waiting" : {
+            "type" : "boolean"
           }
         }
       },
@@ -10928,6 +11037,10 @@
           "startAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "startAt" ]
@@ -12452,6 +12565,25 @@
           },
           "promoCode" : {
             "type" : "string"
+          },
+          "bookings" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BookingViewsBooking"
+            }
+          },
+          "relatives" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RelativesRelative"
+            }
+          },
+          "hasCard" : {
+            "type" : "boolean"
+          },
+          "maxRelatives" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -12486,6 +12618,25 @@
           },
           "titleKy" : {
             "type" : "string"
+          }
+        }
+      },
+      "RelativesRelative" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
           }
         }
       },
