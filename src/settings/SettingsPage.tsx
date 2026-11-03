@@ -18,13 +18,14 @@ const ClinicPage = lazy(() => import('../clinic/ClinicPage').then((m) => ({ defa
 const TeamPage = lazy(() => import('../team/TeamPage').then((m) => ({ default: m.TeamPage })))
 const HoursPage = lazy(() => import('./HoursPage').then((m) => ({ default: m.HoursPage })))
 const GuidePage = lazy(() => import('./GuidePage').then((m) => ({ default: m.GuidePage })))
+const CalendarPage = lazy(() => import('./CalendarPage').then((m) => ({ default: m.CalendarPage })))
 const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
 const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝' }
 
 type Item = {
   key: string
@@ -77,6 +78,9 @@ const GROUPS: [string, Item[]][] = [
   ['Профиль и помощь', [
     item('profile', 'Мой профиль', 'Имя, фото и «о себе» для пациентов', (me) => me.doctorId != null,
       () => (me, back) => <ProfilePage me={me} onBack={back} />),
+    // Лента — приёмы своего кресла: у кого его нет (админ, регистратура, ассистент), пункта нет
+    item('calendar', 'Календарь в телефоне', 'Приёмы в Google или Apple Календаре', (me) => me.doctorId != null,
+      () => (_me, back) => <CalendarPage onBack={back} />),
     item('guide', 'Памятка', 'Как записать, напомнить, принять оплату', all,
       () => (me, back) => <GuidePage me={me} onBack={back} />),
     item('help', 'Помощь', 'Спросить помощника о Tish — ответит сразу', all,

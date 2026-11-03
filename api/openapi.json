@@ -1634,6 +1634,34 @@
         }
       }
     },
+    "/api/calendar-feed/names" : {
+      "put" : {
+        "tags" : [ "calendar-feed-controller" ],
+        "operationId" : "names",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CalendarFeedControllerNames"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CalendarFeedControllerFeedView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/service" : {
       "put" : {
         "tags" : [ "appointment-controller" ],
@@ -5116,6 +5144,49 @@
         }
       }
     },
+    "/api/calendar-feed" : {
+      "get" : {
+        "tags" : [ "calendar-feed-controller" ],
+        "operationId" : "get_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CalendarFeedControllerFeedView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "calendar-feed-controller" ],
+        "operationId" : "rotate",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CalendarFeedControllerFeedView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "calendar-feed-controller" ],
+        "operationId" : "delete_7",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/appointments" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -6310,7 +6381,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6337,7 +6408,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6576,7 +6647,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -6723,7 +6794,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_7",
+        "operationId" : "delete_8",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -7384,7 +7455,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_4",
+        "operationId" : "get_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7409,7 +7480,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_8",
+        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7816,6 +7887,53 @@
         }
       }
     },
+    "/api/appointments/range" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "range",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "days",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 7
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AppointmentView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/promo-codes" : {
       "get" : {
         "tags" : [ "promo-report-controller" ],
@@ -7994,7 +8112,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_9",
+        "operationId" : "delete_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8054,7 +8172,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8111,7 +8229,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8151,7 +8269,7 @@
     "/api/expenses/{id}" : {
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9753,6 +9871,34 @@
           "memoId" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "CalendarFeedControllerNames" : {
+        "properties" : {
+          "showPatientNames" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "showPatientNames" ]
+      },
+      "CalendarFeedControllerFeedView" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "showPatientNames" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "httpsUrl" : {
+            "type" : "string"
+          },
+          "webcalUrl" : {
+            "type" : "string"
           }
         }
       },
