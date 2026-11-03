@@ -1,3 +1,4 @@
+import { DateInput } from '../layout/DateInput'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
@@ -58,7 +59,7 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
       {err('phone') && <p className="error">{err('phone')}</p>}
       <div className="row">
         <label className="field"><span>Дата рождения</span>
-          <input type="date" min="1900-01-01" max={todayIn()} value={f.birthDate} onChange={(e) => set('birthDate')(e.target.value)} /></label>
+          <DateInput birth min="1900-01-01" max={todayIn()} value={f.birthDate} placeholder="Не указана" onChange={(e) => set('birthDate')(e.target.value)} /></label>
         <label className="field"><span>Место работы</span>
           <input value={f.workplace} maxLength={200} autoComplete="off" placeholder="Например: школа №5" onChange={(e) => set('workplace')(e.target.value)} /></label>
       </div>

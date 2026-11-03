@@ -253,7 +253,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
               <PhoneInput label="Телефон" value={phone} onChange={(v) => { setPhone(v); setDuplicate(null) }} />
               {fieldError('phone') && <p className="error">{fieldError('phone')}</p>}
               <label className="field"><span>Дата рождения (необязательно)</span>
-                <input type="date" min="1900-01-01" max={todayIn()} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} /></label>
+                <DateInput birth min="1900-01-01" max={todayIn()} value={birthDate} placeholder="Не указана" onChange={(e) => setBirthDate(e.target.value)} /></label>
               {fieldError('birthDate') && <p className="error">{fieldError('birthDate')}</p>}
               <label className="field"><span>Откуда узнал о клинике (необязательно)</span>
                 <Select value={source} onChange={(e) => setSource(e.target.value)}>

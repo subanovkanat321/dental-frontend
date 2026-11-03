@@ -53,3 +53,20 @@ test('дата: min/max — дни вне диапазона не выбрать
   expect(dialog.querySelector('[data-date="2026-11-09"]')).toBeDisabled()
   expect(dialog.querySelector('[data-date="2026-11-15"]')).toBeEnabled()
 })
+
+test('дата рождения: пустое поле открывается на выборе года, без «Сегодня»; год → месяц → день', async () => {
+  function Birth() {
+    const [day, setDay] = useState('')
+    return <label className="field"><span>Дата рождения</span><DateInput birth min="1900-01-01" max="2026-11-03" value={day} onChange={(e) => setDay(e.target.value)} /></label>
+  }
+  render(<Birth />)
+  const field = screen.getByLabelText('Дата рождения')
+  await userEvent.click(field)
+  const dialog = screen.getByRole('dialog')
+  // Сразу годы вокруг 1990, «Сегодня» для даты рождения не нужна
+  expect(within(dialog).getByRole('button', { name: '1990' })).toBeInTheDocument()
+  expect(within(dialog).queryByRole('button', { name: 'Сегодня' })).not.toBeInTheDocument()
+  await userEvent.keyboard('{Escape}')
+  await pickDate(field, '1978-07-21')
+  expect(field).toHaveTextContent('21 июля 1978')
+})

@@ -1,3 +1,4 @@
+import { DateInput } from '../layout/DateInput'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
@@ -688,7 +689,7 @@ function RelativeFields({ ctx, value, errors, onChange }: {
       </div>
       {errors.relRelation && <p className="error">{errors.relRelation}</p>}
       <label className="field"><span>{t('relativeBirth')}</span>
-        <input type="date" value={value.birthDate} max={todayIn()} onChange={(e) => onChange({ ...value, birthDate: e.target.value })} /></label>
+        <DateInput birth locale={ctx.lang} min="1900-01-01" max={todayIn()} value={value.birthDate} onChange={(e) => onChange({ ...value, birthDate: e.target.value })} /></label>
       {errors.relBirth && <p className="error">{errors.relBirth}</p>}
       <label className="field"><span>{t('relativePhone')}</span>
         <input type="tel" inputMode="tel" value={value.phone} maxLength={30} autoComplete="off"

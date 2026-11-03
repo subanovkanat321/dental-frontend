@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { slotInstant, todayIn, addDays } from '../lib/time'
 import { renderApp } from '../test/fixtures'
+import { pickDate } from '../test/date'
 import { server } from '../test/server'
 
 /**
@@ -85,7 +86,7 @@ test('у мамы своя запись: «Записать ещё» → «Ко�
   await user.type(screen.getByRole('textbox', { name: 'Имя и фамилия' }), 'Бекзат Асанов')
   expect(within(screen.getByRole('group', { name: 'Кем приходится вам' })).getByRole('button', { name: 'Ребёнок' }))
     .toHaveAttribute('aria-pressed', 'true')
-  await user.type(screen.getByLabelText('Дата рождения (необязательно)'), '2020-03-15')
+  await pickDate(screen.getByLabelText('Дата рождения (необязательно)'), '2020-03-15')
   await user.click(screen.getByRole('checkbox', { name: /Я законный представитель: Бекзат Асанов/ }))
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
 

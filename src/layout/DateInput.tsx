@@ -8,12 +8,17 @@ export type DateChange = { target: { value: string } }
 type Locale = 'ru' | 'ky'
 
 const LOCALE: Record<Locale, string> = { ru: 'ru-RU', ky: 'ky-KG' }
-const TEXT: Record<Locale, { pick: string; today: string; clear: string; prev: string; next: string; prevYear: string; nextYear: string; months: string }> = {
+const TEXT: Record<Locale, { pick: string; today: string; clear: string; prev: string; next: string; prevYear: string; nextYear: string;
+  months: string; years: string; prevYears: string; nextYears: string }> = {
   ru: { pick: 'Выберите дату', today: 'Сегодня', clear: 'Очистить', prev: 'Предыдущий месяц', next: 'Следующий месяц',
-    prevYear: 'Предыдущий год', nextYear: 'Следующий год', months: 'Выбрать месяц и год' },
+    prevYear: 'Предыдущий год', nextYear: 'Следующий год', months: 'Выбрать месяц и год', years: 'Выбрать год',
+    prevYears: 'Раньше', nextYears: 'Позже' },
   ky: { pick: 'Күндү тандаңыз', today: 'Бүгүн', clear: 'Тазалоо', prev: 'Мурунку ай', next: 'Кийинки ай',
-    prevYear: 'Мурунку жыл', nextYear: 'Кийинки жыл', months: 'Ай жана жылды тандоо' },
+    prevYear: 'Мурунку жыл', nextYear: 'Кийинки жыл', months: 'Ай жана жылды тандоо', years: 'Жылды тандоо',
+    prevYears: 'Мурда', nextYears: 'Кийин' },
 }
+/** Лет на одной странице выбора года: 4 ряда по 4. */
+const YEARS = 16
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const iso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`
@@ -48,7 +53,7 @@ const isPhone = () => typeof window.matchMedia === 'function' && window.matchMed
  * без сотни нажатий). Клавиатура: стрелки по дням, Enter — выбрать, Esc — закрыть.
  */
 export function DateInput({ value, onChange, min, max, required, name, disabled, id, className, weekday = false, iconOnly = false,
-  placeholder, locale = 'ru', ...aria }: {
+  placeholder, locale = 'ru', birth = false, ...aria }: {
   value: string
   onChange?: (e: DateChange) => void
   min?: string
@@ -64,13 +69,18 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
   iconOnly?: boolean
   placeholder?: string
   locale?: Locale
+  /**
+   * Дата рождения: пустое поле открывается сразу на выборе года (около 1990), дальше месяц и
+   * день — без листания десятилетий; «Сегодня» не нужна.
+   */
+  birth?: boolean
   'aria-label'?: string
 }) {
   const t = TEXT[locale]
   const [open, setOpen] = useState(false)
   const [sheet, setSheet] = useState(false)
-  const [mode, setMode] = useState<'days' | 'months'>('days')
-  const base = value || (max && today() > max ? max : min && today() < min ? min : today())
+  const [mode, setMode] = useState<'days' | 'months' | 'years'>('days')
+  const base = value || (birth ? '1990-01-01' : max && today() > max ? max : min && today() < min ? min : today())
   const [view, setView] = useState({ y: utc(base).getUTCFullYear(), m: utc(base).getUTCMonth() })
   const [focus, setFocus] = useState(base)
   const [place, setPlace] = useState<{ left: number; top?: number; bottom?: number } | null>(null)
@@ -90,7 +100,7 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
     const start = value || base
     setView({ y: utc(start).getUTCFullYear(), m: utc(start).getUTCMonth() })
     setFocus(start)
-    setMode('days')
+    setMode(birth && !value ? 'years' : 'days')
     setSheet(isPhone())
     setOpen(true)
   }
@@ -130,9 +140,11 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
     return () => document.removeEventListener('pointerdown', outside)
   })
 
-  // Клавиатурный фокус — на выбранный день
+  // Клавиатурный фокус — на выбранный день; в выборе года и месяца — на выбранный (или первый) пункт
   useEffect(() => {
-    if (open && mode === 'days') pop.current?.querySelector<HTMLButtonElement>(`[data-date="${focus}"]`)?.focus()
+    if (!open) return
+    if (mode === 'days') pop.current?.querySelector<HTMLButtonElement>(`[data-date="${focus}"]`)?.focus()
+    else (pop.current?.querySelector<HTMLButtonElement>('.date-month[aria-pressed=true]') ?? pop.current?.querySelector<HTMLButtonElement>('.date-month'))?.focus()
   }, [open, mode, focus])
 
   const shiftMonth = (by: number) => setView(({ y, m }) => {
@@ -164,6 +176,8 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
   const days = new Date(Date.UTC(view.y, view.m + 1, 0)).getUTCDate()
   const now = today()
   const label = aria['aria-label']
+  // Страница лет, на которой текущий год просмотра — в третьем ряду (видно и раньше, и позже)
+  const yearFrom = view.y - 9
 
   const calendar = (
     <div ref={pop} id={dialogId} role="dialog" aria-modal={sheet || undefined} aria-label={label ?? t.pick}
@@ -192,15 +206,31 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
             })}
           </div>
           <div className="date-pop-foot">
-            {allowed(now) && <button type="button" className="link" onClick={() => pick(now)}>{t.today}</button>}
+            {allowed(now) && !birth && <button type="button" className="link" onClick={() => pick(now)}>{t.today}</button>}
             {!required && value && <button type="button" className="link" onClick={() => { onChange?.({ target: { value: '' } }); close() }}>{t.clear}</button>}
+          </div>
+        </>
+      ) : mode === 'years' ? (
+        <>
+          <div className="date-pop-head">
+            <button type="button" className="date-nav" aria-label={t.prevYears} onClick={() => setView((v) => ({ ...v, y: v.y - YEARS }))}>‹</button>
+            <span className="date-title static">{yearFrom}–{yearFrom + YEARS - 1}</span>
+            <button type="button" className="date-nav" aria-label={t.nextYears} onClick={() => setView((v) => ({ ...v, y: v.y + YEARS }))}>›</button>
+          </div>
+          <div className="date-months date-years">
+            {Array.from({ length: YEARS }, (_, i) => yearFrom + i).map((y) => (
+              <button key={y} type="button" aria-pressed={!!value && y === utc(value).getUTCFullYear()} className="date-month"
+                disabled={(min != null && y < Number(min.slice(0, 4))) || (max != null && y > Number(max.slice(0, 4)))}
+                onClick={() => { setView((v) => ({ ...v, y })); setMode('months') }}>{y}</button>
+            ))}
           </div>
         </>
       ) : (
         <>
           <div className="date-pop-head">
             <button type="button" className="date-nav" aria-label={t.prevYear} onClick={() => setView((v) => ({ ...v, y: v.y - 1 }))}>‹</button>
-            <span className="date-title static">{view.y}</span>
+            <button type="button" className="date-title" aria-label={`${view.y} — ${t.years}`} onClick={() => setMode('years')}>
+              {view.y} <span aria-hidden="true">▾</span></button>
             <button type="button" className="date-nav" aria-label={t.nextYear} onClick={() => setView((v) => ({ ...v, y: v.y + 1 }))}>›</button>
           </div>
           <div className="date-months">
@@ -221,7 +251,16 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
         aria-label={label ?? (iconOnly ? t.pick : undefined)} title={iconOnly ? t.pick : undefined}
         className={['date-input', iconOnly ? 'icon-only' : '', value ? '' : 'empty', className].filter(Boolean).join(' ')}
         onClick={() => (open ? close() : show())}
-        onKeyDown={(e) => { if (!open && (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); show() } }}>
+        onKeyDown={(e) => {
+          if (open && e.key === 'Escape') {
+            e.preventDefault()
+            e.stopPropagation()
+            close()
+          } else if (!open && (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault()
+            show()
+          }
+        }}>
         <svg className="date-ico" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="4.5" width="14" height="12.5" rx="2" /><path d="M3 8.5h14M7 2.5v4M13 2.5v4" /></svg>
         {!iconOnly && <span className={value ? 'date-text' : 'date-text hint'}>{value ? dateText(value, weekday, locale) : placeholder ?? t.pick}</span>}
       </button>
