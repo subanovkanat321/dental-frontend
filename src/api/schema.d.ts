@@ -3076,6 +3076,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/members/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["invites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/families": {
         parameters: {
             query?: never;
@@ -3759,6 +3775,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["remove_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/members/invites/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["cancelInvite"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5573,6 +5605,15 @@ export interface components {
             me?: boolean;
             doctor?: boolean;
             doctorIds?: number[];
+        };
+        StaffMembersInviteView: {
+            id?: string;
+            fullName?: string;
+            /** @enum {string} */
+            role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
+            /** Format: date-time */
+            expiresAt?: string;
+            expired?: boolean;
         };
         PaymentQueryDebt: {
             /** Format: int64 */
@@ -11660,6 +11701,26 @@ export interface operations {
             };
         };
     };
+    invites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMembersInviteView"][];
+                };
+            };
+        };
+    };
     all_7: {
         parameters: {
             query?: never;
@@ -12588,6 +12649,26 @@ export interface operations {
             header?: never;
             path: {
                 telegramId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    cancelInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
             };
             cookie?: never;
         };

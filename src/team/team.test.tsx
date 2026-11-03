@@ -96,6 +96,37 @@ test('сотрудники: пригласить регистратора ссы
   expect(invited).toEqual({ role: 'RECEPTION', fullName: 'Айпери', alsoDoctor: false })
 })
 
+test('сотрудники: кто вошёл — «Telegram привязан», кто нет — «Ждём входа» с отменой', async () => {
+  let invites: Schemas['StaffMembersInviteView'][] = [
+    { id: 'aa', fullName: 'Айпери', role: 'RECEPTION', expiresAt: '2099-01-01T06:00:00Z', expired: false },
+    { id: 'bb', fullName: 'Опоздавшая', role: 'ADMIN', expiresAt: '2020-01-01T06:00:00Z', expired: true },
+  ]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
+    http.get('*/api/members', () => HttpResponse.json([
+      { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true },
+    ] satisfies Schemas['StaffMembersMemberView'][])),
+    http.get('*/api/members/invites', () => HttpResponse.json(invites)),
+    http.delete('*/api/members/invites/bb', () => {
+      invites = invites.filter((i) => i.id !== 'bb')
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  const user = userEvent.setup()
+  renderApp()
+  openItem('members')
+  expect(await screen.findByRole('table', { name: 'Сотрудники' })).toHaveTextContent('✓ Telegram привязан')
+  const pending = await screen.findByRole('table', { name: 'Приглашения без входа' })
+  expect(pending).toHaveTextContent('Айпери')
+  expect(pending).toHaveTextContent('ссылка действует до 1 янв, 12:00')
+  expect(pending).toHaveTextContent('ссылка истекла — нужна новая')
+  await user.click(within(pending).getAllByRole('button', { name: 'Отменить' })[1]!)
+  await vi.waitFor(() => expect(pending).not.toHaveTextContent('Опоздавшая'))
+  vi.restoreAllMocks()
+})
+
 test('сотрудники: ассистент — выбрать врача, потом поменять врачей', async () => {
   const sent: unknown[] = []
   server.use(

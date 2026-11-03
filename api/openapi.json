@@ -7143,6 +7143,27 @@
         }
       }
     },
+    "/api/members/invites" : {
+      "get" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "invites",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/StaffMembersInviteView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/families" : {
       "get" : {
         "tags" : [ "family-controller" ],
@@ -8310,6 +8331,25 @@
           "schema" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/members/invites/{id}" : {
+      "delete" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "cancelInvite",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
           }
         } ],
         "responses" : {
@@ -12707,6 +12747,27 @@
               "type" : "integer",
               "format" : "int64"
             }
+          }
+        }
+      },
+      "StaffMembersInviteView" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "RECEPTION", "ASSISTANT" ]
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "expired" : {
+            "type" : "boolean"
           }
         }
       },

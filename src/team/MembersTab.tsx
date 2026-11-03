@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
+import { shortDate } from '../lib/time'
 import { useUnsaved } from '../lib/unsaved'
 import { InviteLink } from './InviteLink'
 import { ROLE_TEXT } from './texts'
@@ -65,6 +66,47 @@ function AssistantDoctors({ me, member }: { me: Me; member: Member }) {
   )
 }
 
+type Pending = Schemas['StaffMembersInviteView']
+
+/**
+ * «Ждём входа»: пригласили, а человек ещё не нажал «Начать» по ссылке — его Telegram не привязан,
+ * в списке сотрудников его нет. Ссылку заново не показать (код не хранится) — только отменить или создать новую.
+ */
+function PendingInvites() {
+  const client = useQueryClient()
+  const list = useQuery({ queryKey: ['member-invites'], queryFn: () => unwrap(api.GET('/api/members/invites')) })
+  const cancel = useMutation<unknown, ApiError, Pending>({
+    mutationFn: (i) => unwrap(api.DELETE('/api/members/invites/{id}', { params: { path: { id: i.id! } } })),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['member-invites'] }),
+  })
+  if (!list.data?.length) return null
+  return (
+    <section className="card-block" aria-label="Ждём входа">
+      <h2>Ждём входа</h2>
+      <p className="hint">Ссылку отправили, но человек ещё не нажал «Начать» в боте — Telegram не привязан. Как только войдёт, он появится
+        в списке выше. Ссылка действует 24 часа; не успел — отмените и создайте новую ниже.</p>
+      <table className="table" aria-label="Приглашения без входа">
+        <tbody>
+          {list.data.map((i) => (
+            <tr key={i.id}>
+              <td className="strong">{i.fullName}</td>
+              <td className="hint">{ROLE_TEXT[i.role ?? '']} · {i.expired
+                ? <span className="tone-wait">ссылка истекла — нужна новая</span>
+                : <>ссылка действует до {shortDate(i.expiresAt!, true)}</>}</td>
+              <td className="r">
+                <button type="button" className="btn small ghost" disabled={cancel.isPending}
+                  onClick={() => window.confirm(`Отменить приглашение «${i.fullName}»? Ссылка перестанет работать.`) && cancel.mutate(i)}>
+                  Отменить</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {cancel.error && <p className="error" role="alert">{cancel.error.message}</p>}
+    </section>
+  )
+}
+
 /**
  * «Сотрудники»: администраторы, регистратура и ассистенты клиники; пригласить ссылкой на бота,
  * убрать. Врачи — во вкладке «Врачи». Только админ.
@@ -81,7 +123,10 @@ export function MembersTab({ me }: { me: Me }) {
     mutationFn: () => unwrap(api.POST('/api/members/invite', {
       body: role === 'ASSISTANT' ? { role, fullName: name, doctorIds } : { role, fullName: name, alsoDoctor },
     })),
-    onSuccess: (i) => setInvite({ token: i.token ?? '', name: name.trim(), role }),
+    onSuccess: (i) => {
+      setInvite({ token: i.token ?? '', name: name.trim(), role })
+      void client.invalidateQueries({ queryKey: ['member-invites'] })
+    },
   })
   const remove = useMutation<unknown, ApiError, Schemas['StaffMembersMemberView']>({
     mutationFn: (m) => unwrap(api.DELETE('/api/members/{telegramId}', { params: { path: { telegramId: m.telegramId! } } })),
@@ -112,7 +157,9 @@ export function MembersTab({ me }: { me: Me }) {
                 <tr key={m.telegramId}>
                   <td className="strong">{m.fullName || `Telegram ${m.telegramId}`}
                     {m.role === 'ASSISTANT' && <AssistantDoctors me={me} member={m} />}</td>
-                  <td className="hint">{[ROLE_TEXT[m.role ?? ''], m.doctor ? 'врач' : null, m.me ? 'это вы' : null].filter(Boolean).join(' · ')}</td>
+                  <td className="hint"><span>{[ROLE_TEXT[m.role ?? ''], m.doctor ? 'врач' : null, m.me ? 'это вы' : null].filter(Boolean).join(' · ')}</span>
+                    {/* В списке только вошедшие по ссылке: без входа человек — в «Ждём входа» ниже */}
+                    <div className="tone-ok small">✓ Telegram привязан</div></td>
                   <td className="r">
                     <button type="button" className="btn small ghost" disabled={remove.isPending}
                       onClick={() => window.confirm(m.me ? 'Выйти из администраторов клиники?' : `Убрать «${m.fullName ?? m.telegramId}» из клиники?${m.role === 'ASSISTANT' ? ' Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.' : ''}`) && remove.mutate(m)}>
@@ -125,6 +172,8 @@ export function MembersTab({ me }: { me: Me }) {
         ) : <EmptyState compact icon="👥" title="Сотрудников пока нет." />}
         {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
       </section>
+
+      <PendingInvites />
 
       <section className="card-block">
         <h2>Пригласить</h2>
