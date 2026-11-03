@@ -5613,12 +5613,20 @@ export interface components {
         };
         VisitReportControllerSend: {
             text?: string;
+            care?: string;
             ai?: boolean;
             /** @enum {string} */
             via?: "TELEGRAM" | "WHATSAPP" | "PRINT";
         };
+        VisitReportsCare: {
+            /** Format: int64 */
+            memoId?: number;
+            title?: string;
+            text?: string;
+        };
         VisitReportsDraft: {
             text?: string;
+            care?: components["schemas"]["VisitReportsCare"];
             ai?: boolean;
             aiAvailable?: boolean;
             /** @enum {string} */
@@ -11276,7 +11284,9 @@ export interface operations {
     };
     draft_2: {
         parameters: {
-            query?: never;
+            query?: {
+                memoId?: number;
+            };
             header?: never;
             path: {
                 id: number;

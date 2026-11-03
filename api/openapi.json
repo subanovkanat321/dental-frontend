@@ -5851,6 +5851,14 @@
             "type" : "integer",
             "format" : "int64"
           }
+        }, {
+          "name" : "memoId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -12592,6 +12600,9 @@
           "text" : {
             "type" : "string"
           },
+          "care" : {
+            "type" : "string"
+          },
           "ai" : {
             "type" : "boolean"
           },
@@ -12601,10 +12612,27 @@
           }
         }
       },
+      "VisitReportsCare" : {
+        "properties" : {
+          "memoId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
       "VisitReportsDraft" : {
         "properties" : {
           "text" : {
             "type" : "string"
+          },
+          "care" : {
+            "$ref" : "#/components/schemas/VisitReportsCare"
           },
           "ai" : {
             "type" : "boolean"

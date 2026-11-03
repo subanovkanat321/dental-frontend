@@ -20,7 +20,7 @@ import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
 import { VisitDocs } from '../print/VisitDocs'
-import { VisitReport } from '../print/VisitReport'
+import { AfterVisit } from '../print/VisitReport'
 import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
@@ -218,10 +218,11 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
               {/* Расход по пациенту (техник, лаборатория) — рядом с оплатой; регистратуре и ассистенту нет (у них нет своих расходов) */}
               {seesMoney && a.patient && (me.admin || me.doctorId != null) && <PatientExpenses patient={a.patient} me={me} doctorId={a.doctorId} />}
               <ContactButtons phone={a.patient?.phone} />
-              {/* Памятка после процедуры и квитанция: печать и «Отправить пациенту» — только по нажатию */}
-              <VisitDocs appointment={a} me={me} />
-              {/* Отчёт пациенту: что сделали, уход, следующий визит — врач приёма и админ (сервер; иначе 403 — блока нет) */}
-              {!isAssistant(me) && <VisitReport appointment={a} me={me} />}
+              {/* Квитанция: печать и «Отправить пациенту» — только по нажатию */}
+              <VisitDocs appointment={a} me={me} memo={false} />
+              {/* «Сообщение после приёма»: личная часть и уход дома из памятки — врач приёма и админ;
+                  регистратуре и ассистенту — одна памятка, как раньше */}
+              <AfterVisit appointment={a} me={me} />
               {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
             </>
           )}
