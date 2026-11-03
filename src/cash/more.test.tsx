@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { todayIn, weekLabel } from '../lib/time'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { pickDate } from '../test/date'
 import { choose } from '../test/select'
 
 beforeEach(() => {
@@ -153,7 +154,7 @@ test('отчёт: дни внутри месяца — «с … по …» и б
   renderApp()
   await user.click(await screen.findByRole('tab', { name: 'Отчёт' }))
   expect(await screen.findByRole('cell', { name: 'Нурлан К.' })).toBeInTheDocument()
-  fireEvent.change(screen.getByLabelText('По день'), { target: { value: `${m}-03` } })
+  await pickDate(screen.getByLabelText('По день'), `${m}-03`)
   expect(screen.queryByRole('cell', { name: 'Нурлан К.' })).not.toBeInTheDocument()
   expect(screen.getByText(/Оплачено:/)).toHaveTextContent('3 000 сом')
   await user.click(screen.getByRole('button', { name: 'Весь месяц' }))

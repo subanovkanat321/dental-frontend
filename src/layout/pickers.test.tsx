@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 
 import { DateInput } from './DateInput'
 import { MonthPicker } from './MonthPicker'
+import { pickDate } from '../test/date'
 
 function Month({ initial, max }: { initial: string; max?: string }) {
   const [month, setMonth] = useState(initial)
@@ -26,14 +27,29 @@ test('месяц: «‹ Ноябрь 2026 ›», стрелки через го�
   expect(within(picker).getByRole('button', { name: 'Следующий месяц' })).toBeDisabled()
 })
 
-test('дата: по-русски, поле браузера — под подписью, меняется как обычное', () => {
+test('дата: по-русски, свой календарь вместо системного — месяц, год, день; «Сегодня» и «Очистить»', async () => {
   function Day() {
     const [day, setDay] = useState('2026-11-02')
     return <label className="field"><span>День</span><DateInput weekday value={day} onChange={(e) => setDay(e.target.value)} /></label>
   }
-  const { container } = render(<Day />)
-  const input = screen.getByLabelText('День')
-  expect(container.querySelector('.date-text')).toHaveAttribute('data-text', 'пн, 2 ноября 2026')
-  fireEvent.change(input, { target: { value: '2026-12-31' } })
-  expect(container.querySelector('.date-text')).toHaveAttribute('data-text', 'чт, 31 декабря 2026')
+  render(<Day />)
+  const field = screen.getByLabelText('День')
+  expect(field).toHaveTextContent('пн, 2 ноября 2026')
+  await pickDate(field, '1985-03-14')
+  expect(field).toHaveTextContent('чт, 14 марта 1985')
+  // Открыть ещё раз — календарь на выбранном месяце, Esc закрывает
+  await userEvent.click(field)
+  const dialog = screen.getByRole('dialog')
+  expect(within(dialog).getByRole('button', { name: /Март 1985/ })).toBeInTheDocument()
+  expect(within(dialog).getByRole('button', { name: 'чт, 14 марта 1985' })).toHaveAttribute('aria-pressed', 'true')
+  await userEvent.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+})
+
+test('дата: min/max — дни вне диапазона не выбрать', async () => {
+  render(<label className="field"><span>Доплатит до</span><DateInput value="" min="2026-11-10" max="2026-11-20" onChange={() => {}} /></label>)
+  await userEvent.click(screen.getByLabelText('Доплатит до'))
+  const dialog = screen.getByRole('dialog')
+  expect(dialog.querySelector('[data-date="2026-11-09"]')).toBeDisabled()
+  expect(dialog.querySelector('[data-date="2026-11-15"]')).toBeEnabled()
 })

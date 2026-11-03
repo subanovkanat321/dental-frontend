@@ -1070,27 +1070,50 @@ tr.clickable .row-link:not(.open-link)::after { content: " ›"; content: " ›"
 .shell select:not([multiple]):focus-visible, .shell .ui-select:focus-visible { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .toolbar select, .filters select, .toolbar .ui-select, .filters .ui-select { padding-left: 12px; }
 
-/* Поле даты: «2 ноября 2026» по-русски, под ним прозрачное поле браузера (layout/DateInput.tsx) */
+/* Поле даты: «2 ноября 2026» и свой календарь вместо системного (layout/DateInput.tsx) */
 .date-input {
-  position: relative; display: inline-flex; align-items: center; min-width: 0; min-height: 36px; padding: 0 12px 0 10px;
+  position: relative; display: inline-flex; align-items: center; gap: 8px; min-width: 0; min-height: 36px; padding: 0 12px 0 10px;
   border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); cursor: pointer;
-  transition: border-color .15s;
+  font: inherit; text-align: left; white-space: nowrap; overflow: hidden; transition: border-color .15s;
 }
-.date-input:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
-.date-input:focus-within { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-.date-face { display: inline-flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.date-input:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
+.date-input:focus-visible, .date-input[aria-expanded=true] { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.date-input:disabled { opacity: .6; cursor: default; }
 .date-ico { flex: none; width: 16px; height: 16px; color: var(--link); }
-.date-input > input, .field .date-input > input, .expense-form .date-input > input {
-  position: absolute; inset: 0; width: 100%; height: 100%; min-width: 0; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer;
-}
-.date-input > input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; opacity: 0; cursor: pointer; }
+.date-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .field .date-input { width: 100%; min-height: 38px; }
 .expense-form .date-input { height: 36px; }
 @media (max-width: 760px) { .date-input { min-height: 44px; } }
-.date-text::before { content: attr(data-text); }
+/* Календарь: компьютер — карточка под полем, телефон — лист снизу (как у выпадающих списков) */
+.date-pop { position: fixed; z-index: 1000; width: 304px; display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: 16px;
+  background: var(--card); color: var(--text); box-shadow: 0 12px 32px rgba(15, 42, 48, .18); animation: pick-in .12s ease-out; }
+.date-pop.sheet { position: static; width: 100%; padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0; animation: sheet-up .2s ease-out; }
+.date-pop.sheet::before { content: ""; justify-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); }
+.date-pop-head { display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; gap: 4px; }
+.date-nav { width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--link); font-size: 1.4rem; line-height: 1; cursor: pointer; }
+.date-nav:hover { background: var(--sunken); }
+.date-title { justify-self: center; padding: 6px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--text); font: 600 1rem var(--display, inherit); cursor: pointer; }
+.date-title:hover { background: var(--sunken); }
+.date-title span { color: var(--hint); font-size: .8em; }
+.date-title.static { cursor: default; }
+.date-title.static:hover { background: transparent; }
+.date-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.date-wd { padding: 4px 0; text-align: center; color: var(--hint); font-size: .75rem; text-transform: capitalize; }
+.date-day { aspect-ratio: 1; min-height: 36px; border: 0; border-radius: 10px; background: transparent; color: var(--text); font: inherit; font-size: .95rem; cursor: pointer; }
+.date-day:hover:not(:disabled) { background: var(--sunken); }
+.date-day:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.date-day.today { box-shadow: inset 0 0 0 1.5px var(--accent); font-weight: 600; }
+.date-day.chosen { background: var(--accent); color: #fff; font-weight: 700; }
+.date-day:disabled { color: var(--faint, var(--hint)); opacity: .45; cursor: default; }
+.date-pop.sheet .date-day { min-height: 44px; font-size: 1.05rem; }
+.date-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.date-month { min-height: 44px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; text-transform: capitalize; cursor: pointer; }
+.date-month[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.date-pop-foot { display: flex; justify-content: space-between; gap: 10px; min-height: 0; }
+.date-pop-foot:empty { display: none; }
 .date-input.icon-only { width: 36px; padding: 0; justify-content: center; }
 /* Поле даты внутри подписи .field — не мелким серым, как текст подписи */
-.field > span.date-input { padding: 0 12px 0 10px; font-size: inherit; color: var(--text); }
+.field > button.date-input, .field .date-input .date-text:not(.hint) { font-size: inherit; color: var(--text); }
 
 /* Месяц: «‹ Ноябрь 2026 ›» и окошко с месяцами (layout/MonthPicker.tsx) */
 .month-picker { position: relative; display: inline-flex; align-items: stretch; height: 36px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); }

@@ -4,6 +4,8 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
+import { addDays, todayIn } from '../lib/time'
+import { pickDate } from '../test/date'
 import { server } from '../test/server'
 
 type Appointment = Schemas['AppointmentView']
@@ -58,7 +60,8 @@ test('оплата по шагам: стоимость из цен услуг, �
   await userEvent.click(within(form).getByRole('button', { name: 'Часть, остальное потом' }))
   await userEvent.type(within(form).getByLabelText('Заплатил сейчас, сом'), '2500')
   expect(within(form).getByText(/Остальное потом:/)).toHaveTextContent(/2\s500 сом/)
-  await userEvent.type(within(form).getByLabelText(/Доплатит до/), '2099-01-15')
+  const due = addDays(todayIn(), 40)
+  await pickDate(within(form).getByLabelText(/Доплатит до/), due)
 
   // 3. Разными способами — сумма по каждому, пока не сойдётся
   await userEvent.click(within(form).getByRole('button', { name: 'Разными способами' }))
@@ -72,7 +75,7 @@ test('оплата по шагам: стоимость из цен услуг, �
 
   expect(await within(panel).findByText(/Долг 2\s500 сом · доплатит до/)).toBeInTheDocument()
   expect(sent).toEqual([{ path: 'payment', body: {
-    amountSom: 2500, method: 'CASH', chargeSom: 5000, dueOn: '2099-01-15',
+    amountSom: 2500, method: 'CASH', chargeSom: 5000, dueOn: due,
     parts: [{ amountSom: 1000, method: 'CASH' }, { amountSom: 1500, method: 'TRANSFER' }],
   } }])
   expect(within(panel).getByRole('button', { name: 'Принять доплату' })).toBeInTheDocument()

@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { addDays, dayTitle, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
+import { pickDate } from '../test/date'
 import { server } from '../test/server'
 
 type Appointment = Schemas['AppointmentView']
@@ -36,8 +37,7 @@ test('перенос на другой день: карточка остаётс
   await userEvent.click(within(panel).getByRole('button', { name: 'Перенести или передать врачу' }))
   const form = within(panel).getByRole('form', { name: 'Перенос записи' })
   const day = within(form).getByLabelText('День')
-  await userEvent.clear(day)
-  await userEvent.type(day, tomorrow)
+  await pickDate(day, tomorrow)
   // Сетки свободного времени у завтра нет (нет /api/slots) — время руками
   if (!within(form).queryByLabelText('Время')) await userEvent.click(within(form).getByRole('button', { name: 'Другое время' }))
   await userEvent.clear(await within(form).findByLabelText('Время'))
