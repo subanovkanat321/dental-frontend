@@ -404,6 +404,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/earnings/goal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["goal"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/earnings/evening": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["evening"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/families/{id}": {
         parameters: {
             query?: never;
@@ -3156,6 +3188,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/earnings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/families": {
         parameters: {
             query?: never;
@@ -3435,7 +3483,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
         delete: operations["delete_9"];
@@ -4361,6 +4409,43 @@ export interface components {
         };
         StaffMembersControllerAssistantDoctors: {
             doctorIds?: number[];
+        };
+        EarningsControllerGoal: {
+            /** Format: int64 */
+            goalSom?: number;
+        };
+        EarningsView: {
+            /** Format: date */
+            date?: string;
+            month?: string;
+            hasTerms?: boolean;
+            percent?: number;
+            /** Format: int64 */
+            baseSom?: number;
+            /** Format: int64 */
+            todaySom?: number;
+            /** Format: int64 */
+            todayRevenueSom?: number;
+            /** Format: int64 */
+            monthSom?: number;
+            /** Format: int64 */
+            monthRevenueSom?: number;
+            /** Format: int64 */
+            previousMonthSom?: number;
+            /** Format: int32 */
+            changePercent?: number;
+            /** Format: int64 */
+            goalSom?: number;
+            /** Format: int64 */
+            goalLeftSom?: number;
+            /** Format: int32 */
+            workDaysLeft?: number;
+            /** Format: int64 */
+            perDayNeededSom?: number;
+            eveningSummary?: boolean;
+        };
+        EarningsControllerEvening: {
+            eveningSummary?: boolean;
         };
         FamilyControllerRename: {
             name?: string;
@@ -6927,6 +7012,54 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    goal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EarningsControllerGoal"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EarningsView"];
+                };
+            };
+        };
+    };
+    evening: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EarningsControllerEvening"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EarningsView"];
+                };
             };
         };
     };
@@ -11960,6 +12093,26 @@ export interface operations {
             };
         };
     };
+    get_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EarningsView"];
+                };
+            };
+        };
+    };
     all_7: {
         parameters: {
             query?: never;
@@ -12307,7 +12460,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;

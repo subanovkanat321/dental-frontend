@@ -1498,3 +1498,13 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 .continue > div { display: grid; gap: 2px; }
 .continue ul { margin: 0; padding-left: 18px; }
 .continue-note { margin: 0; white-space: pre-line; }
+
+/* «Мой заработок» врача: полоса пути к цели — бирюзовая на `sunken`, без «тревожных» цветов */
+.earn-bar { display: block; height: 6px; margin: 6px 0 2px; border-radius: 3px; background: var(--sunken); overflow: hidden; }
+.earn-bar > span { display: block; height: 100%; border-radius: 3px; background: var(--accent); transition: width .25s ease-out; }
+.earn-month { display: block; margin-top: 4px; font-size: .9rem; }
+.earn-goal-line { margin: 0; }
+.earn-goal-line b { font: 600 1.4rem/1.2 var(--display); }
+.earnings-goal form.row { align-items: flex-end; flex-wrap: wrap; gap: 8px; }
+.earnings-goal .check { margin-top: 12px; }
+.earn-gain { margin: 4px 0 0; color: var(--ok-ink); font-weight: 500; }

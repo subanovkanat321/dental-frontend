@@ -108,7 +108,8 @@ export function App() {
       case 'platform': return me.data.platform ? <PlatformPage me={me.data} initialTab={l?.tab} /> : null
       case 'schedule': return l?.appointmentId || l?.bookPatientId
         ? <LinkedSchedule link={l} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
-        : <SchedulePage me={me.data} initialDate={l?.date} initialDoctor={l?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go} onOpenPatient={openPatient} />
+        : <SchedulePage me={me.data} initialDate={l?.date} initialDoctor={l?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go}
+          onOpenEarnings={() => linkTo({ page: 'cash', tab: 'earnings' })} onOpenPatient={openPatient} />
       default: return null
     }
   }

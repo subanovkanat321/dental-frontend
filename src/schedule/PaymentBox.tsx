@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { api, unwrap, type Schemas } from '../api/client'
 import { debtLine } from '../lib/debt'
 import { serviceEmoji } from '../lib/serviceEmoji'
-import { shortDate, somText, todayIn } from '../lib/time'
+import { dateOf, shortDate, somText, todayIn } from '../lib/time'
 import { useAppointmentAction } from './useAppointmentAction'
 import { DateInput } from '../layout/DateInput'
+import { useEarnings } from '../earnings/earnings'
+import { seesOwnEarnings } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -77,6 +79,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
           : split ? somText(a.paidSom ?? 0) : `${somText(a.paidSom ?? 0)} · ${methodName(a.paymentMethod)}`}</span>
         {!installments && <button type="button" className="link" onClick={() => setView('edit')}>Изменить</button>}
       </p>
+      <EarningsGain a={a} me={me} />
       {installments && <p className="hint small">Есть доплаты — сумму меняют доплатой; ошиблись в платеже — напишите в техподдержку.</p>}
       {debt ? <p className={`tone-${debt.tone} payment-debt`}>{debt.text}</p>
         : a.chargeSom != null ? <p className="tone-ok">✅ Оплачено полностью</p> : null}
@@ -92,6 +95,24 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
       {debt && <button type="button" className="btn primary" onClick={() => setView('extra')}>Принять доплату</button>}
     </div>
   )
+}
+
+/**
+ * «+1 200 сом к вашему дню» — врачу в карточке своего оплаченного приёма: спокойно, одной строкой, без
+ * конфетти. Сумма — его процент от оплаты (условия из GET /api/me/earnings, как считает сервер);
+ * без условий — сама оплата (так же «Мой заработок» показывает выручку). Только оклад — строки нет.
+ */
+function EarningsGain({ a, me }: { a: Appointment; me: Me }) {
+  const own = seesOwnEarnings(me) && a.doctorId === me.doctorId && (a.paidSom ?? 0) > 0
+  const earnings = useEarnings(me, own)
+  const e = earnings.data
+  if (!own || !e) return null
+  const percent = Number(e.percent ?? 0)
+  if (e.hasTerms && percent <= 0) return null
+  const gain = e.hasTerms ? Math.round((a.paidSom ?? 0) * percent / 100) : a.paidSom ?? 0
+  if (gain <= 0) return null
+  const today = a.startAt != null && dateOf(a.startAt) === todayIn()
+  return <p className="earn-gain">+{somText(gain)} {today ? 'к вашему дню' : 'к вашему заработку'}</p>
 }
 
 function MethodButtons({ value, onChange, label = 'Как заплатили' }: { value: Method; onChange: (m: Method) => void; label?: string }) {

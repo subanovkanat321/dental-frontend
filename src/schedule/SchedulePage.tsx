@@ -20,6 +20,8 @@ import { statusOf } from './status'
 import { PAD, PX, SHORT, useNowMinutes } from './gridScale'
 import { useWeekAppointments } from './week/useWeek'
 import { WeekGrid } from './week/WeekGrid'
+import { useEarnings } from '../earnings/earnings'
+import { EarningsChip } from '../earnings/EarningsWidgets'
 import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
@@ -77,7 +79,7 @@ function useNarrow(): boolean {
 /** Сводка дня справа открыта или скрыта — на этом устройстве (не персональные данные). */
 const SUMMARY_KEY = 'crm.daySummary'
 
-export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
+export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate, onOpenEarnings, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
   /** Кнопка бота «приёмы коллеги» (?doctor=ID): сразу этот врач. */
   initialDoctor?: number
   me: Me
@@ -88,6 +90,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   openAppointment?: Appointment
   /** Переход в другой раздел из полосы «Сегодня» (касса, склад). */
   onNavigate?: (page: Page) => void
+  /** «Мой заработок» врача → «Касса → Мой заработок». */
+  onOpenEarnings?: () => void
   /** Пришли из «Пациентов» по «Записать»: сразу «Новая запись» на этого пациента. */
   bookPatient?: Schemas['PatientView'] | null
   onBookingShown?: () => void
@@ -242,6 +246,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: date, to: date, ...moneyScope } } })),
     enabled: seesMoney,
   })
+  // «Мой заработок» врача: компактно — чипом в полосе «Сегодня» или блоком в «Сводке дня»
+  const earnings = useEarnings(me)
+  const openEarnings = onOpenEarnings ?? (() => onNavigate?.('cash'))
   const requests = all.filter((a) => a.status === 'REQUESTED')
   const waiting = all.filter((a) => a.status === 'SCHEDULED' && statusOf(a).kind === 'wait')
   const low = (supplies.data ?? []).filter((x) => x.low).length
@@ -384,6 +391,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 <b>{somText(revenue.data.totalSom ?? 0).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
               </button>
             )}
+            {earnings.data && <EarningsChip e={earnings.data} onOpen={openEarnings} />}
             {low > 0 && (
               <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}>
                 <b>{low}</b> на складе заканчивается
@@ -395,9 +403,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
 
-        {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе. «Ждём ответа» видно в строках
+        {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках
             дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
-        {dayList && (requests.length > 0 || (toPay.data?.length ?? 0) > 0) && (
+        {dayList && (requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data) && (
           <div className="today-strip compact" role="group" aria-label="Требует внимания">
             {requests.length > 0 && (
               <button type="button" className="stat s-request" onClick={firstOf(requests)}>
@@ -407,6 +415,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             {(toPay.data?.length ?? 0) > 0 && (
               <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}><b>{toPay.data!.length}</b> к оплате</button>
             )}
+            {earnings.data && <EarningsChip compact e={earnings.data} onOpen={openEarnings} />}
           </div>
         )}
 
@@ -530,7 +539,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       </section>
       {summary && (
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}
-          revenueSom={revenue.data ? revenue.data.totalSom ?? 0 : null} low={low} free={shown.length > 0 && date >= today ? free : []}
+          revenueSom={revenue.data ? revenue.data.totalSom ?? 0 : null} earnings={earnings.data ?? null} onOpenEarnings={openEarnings} low={low} free={shown.length > 0 && date >= today ? free : []}
           doctorName={(id) => doctors.find((d) => d.id === id)?.fullName ?? ''}
           onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} onBook={bookAt} onNavigate={onNavigate} onClose={toggleSummary} />
       )}

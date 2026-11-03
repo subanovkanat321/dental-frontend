@@ -48,3 +48,11 @@ export function seesToPay(me: Me): boolean {
 export function canEditServices(me: Me): boolean {
   return Boolean(me.admin || me.doctorId != null)
 }
+
+/**
+ * «Мой заработок»: врач со своим креслом (в том числе админ, который сам ведёт приём). Админ без
+ * кресла, регистратура и ассистент его не видят — сервер им отвечает 403 (EarningsController).
+ */
+export function seesOwnEarnings(me: Me): boolean {
+  return me.doctorId != null && !isAssistant(me)
+}

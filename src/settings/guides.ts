@@ -45,6 +45,15 @@ const PAY: Topic = {
   ],
 }
 
+const EARNINGS: Topic = {
+  title: 'Мой заработок',
+  steps: [
+    '«… сом мой день» в «Расписании» → «Касса → Мой заработок»: сегодня, за месяц и к прошлому месяцу.',
+    'Поставьте себе цель на месяц — покажем, сколько нужно в день. Цель видите только вы.',
+    'Вечером бот присылает итог дня; выключается там же, галочкой «Присылать итог дня».',
+  ],
+}
+
 const MOVE: Topic = {
   title: 'Перенести или отменить',
   steps: [
@@ -102,7 +111,7 @@ export const GUIDES: Record<Role, { label: string; intro: string; topics: Topic[
   doctor: {
     label: 'Врач',
     intro: 'Ваше расписание, пациенты и оплата за приём.',
-    topics: [BOOK, REQUESTS, REMIND, PAY, MOVE, CARD],
+    topics: [BOOK, REQUESTS, REMIND, PAY, EARNINGS, MOVE, CARD],
   },
   reception: {
     label: 'Регистратура',
