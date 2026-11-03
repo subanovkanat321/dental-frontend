@@ -51,7 +51,7 @@ export function FamilyBox({ patient, me, onOpenPatient }: { patient: Patient; me
 
   return (
     <section className="family-box" aria-label="Семья">
-      <h3>👨‍👩‍👧 {f ? f.name : 'Семья'}</h3>
+      <h3>{f ? f.name : 'Семья'}</h3>
       {f ? (
         <>
           <div className="family-members">

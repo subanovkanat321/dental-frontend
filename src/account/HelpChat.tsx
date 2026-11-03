@@ -57,7 +57,7 @@ export function HelpChatPanel({ ticketId, onClose }: {
   return (
     <aside className="panel help-chat" aria-label="Помощь">
       <header className="panel-head">
-        <h2>💬 Помощь</h2>
+        <h2>Помощь</h2>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
       {info.data && !info.data.ai && (

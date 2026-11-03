@@ -128,7 +128,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
 
   return (
     <div className="settings">
-      <header className="toolbar"><h1>⚙️ Настройки</h1></header>
+      <header className="toolbar"><h1>Настройки</h1></header>
       <Profile me={me} />
       <div className="settings-groups">
       {GROUPS.map(([group, items], index) => {
@@ -181,7 +181,7 @@ function Appearance() {
   const [size, setSize] = useState(textSize)
   return (
     <section className="settings-group" aria-label="Оформление">
-      <h2>🎨 Оформление</h2>
+      <h2>Оформление</h2>
       <div className="card-block appearance">
         <div className="field"><span>Тема</span>
           <div className="segments wrap" role="group" aria-label="Тема">

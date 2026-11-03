@@ -193,7 +193,7 @@ function PayForm({ row: r, month, left, onDone, onCancel }: { row: Row; month: s
 function SalaryHowTo({ seesAll, noTerms }: { seesAll: boolean; noTerms: boolean }) {
   return (
     <details className="card-block salary-howto" open={seesAll && noTerms}>
-      <summary>❓ Как работает зарплата</summary>
+      <summary>Как работает зарплата</summary>
       <ol>
         {seesAll && <li><b>Условия</b> — у каждого врача и ассистента кнопка «⚙️ Задать процент и оклад»: процент от выручки, оклад в месяц или оба. Задаются один раз.</li>}
         <li><b>Расчёт сам</b> — «К выплате» = оклад + процент от выручки за месяц. Выручка врача — оплаты пациентов за его приёмы; ассистента — оплаты за приёмы врачей, которым он помогает.</li>
@@ -238,7 +238,7 @@ function SalaryCalc({ rows }: { rows: Row[] }) {
   const of = m ? `(${somText(rev)} − ${somText(m)})` : somText(rev)
   return (
     <details className="card-block salary-calc">
-      <summary>🧮 Калькулятор зарплаты</summary>
+      <summary>Калькулятор зарплаты</summary>
       <p className="hint">Посчитать «а сколько выйдет, если…». Ничего не сохраняется.</p>
       {rows.length > 0 && (
         <label className="field"><span>Взять выручку и условия</span>

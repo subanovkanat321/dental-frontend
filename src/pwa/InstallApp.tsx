@@ -53,7 +53,7 @@ function loginUrl(): string {
 export function InstallApp() {
   return (
     <section className="settings-group" aria-label="Установить приложение">
-      <h2>📲 Установить приложение</h2>
+      <h2>Установить приложение</h2>
       <div className="card-block pwa-install"><InstallBody /></div>
     </section>
   )

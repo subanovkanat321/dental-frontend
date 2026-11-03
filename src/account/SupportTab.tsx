@@ -56,7 +56,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
         {header}
         <section className="card-block" aria-label="Помощь">
           <div className="block-head">
-            <h2>💬 Помощь</h2>
+            <h2>Помощь</h2>
             <span className="actions"><button type="button" className="btn primary" onClick={() => setOpened(HELP)}>Спросить помощника</button></span>
           </div>
           <p className="hint">Помощник сразу подскажет, как что-то сделать в Tish. Не знает ответа — передаст вопрос команде Tish.</p>

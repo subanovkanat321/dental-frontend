@@ -27,7 +27,7 @@ export function DownloadPage() {
         </div>
       </header>
       <section className="card-block download-install" aria-label="Установить приложение">
-        <h2>📲 Установить</h2>
+        <h2>Установить</h2>
         <InstallBody />
       </section>
       <ul className="download-points">

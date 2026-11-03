@@ -36,7 +36,7 @@ export function SetupChecklist({ me }: { me: Me }) {
   const error = open.error ? Object.values(open.error.fieldErrors)[0] ?? open.error.message : null
   return (
     <section className="card-block setup-checklist" aria-label="Настройка клиники">
-      <h2>🛠 Клиника пока не видна пациентам</h2>
+      <h2>Клиника пока не видна пациентам</h2>
       <p className="hint">Настройте главное и нажмите «Показать пациентам» — тогда клиника появится в каталоге и в боте, по ссылке клиники можно будет записаться.</p>
       <ol className="setup-steps">
         {steps.map((s) => (

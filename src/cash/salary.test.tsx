@@ -48,7 +48,7 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   const card = screen.getByRole('region', { name: 'Зарплата: Дастан Т.' })
   expect(card).toHaveTextContent('Условия не заданы')
   // Условий нет — подсказка «Как работает зарплата» открыта, кнопка заметная
-  expect(screen.getByText('❓ Как работает зарплата').closest('details')).toHaveAttribute('open')
+  expect(screen.getByText('Как работает зарплата').closest('details')).toHaveAttribute('open')
   await user.click(within(card).getByRole('button', { name: '⚙️ Задать процент и оклад' }))
   await user.click(within(card).getByRole('button', { name: '30%' }))
   await user.type(within(card).getByLabelText('Оклад в месяц, сом'), '10000')
@@ -102,9 +102,9 @@ test('калькулятор зарплаты: свои цифры, минус �
   await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
   await screen.findByRole('region', { name: 'Зарплата: Айгерим Садыкова' })
 
-  const calc = screen.getByText('🧮 Калькулятор зарплаты').closest('details')!
+  const calc = screen.getByText('Калькулятор зарплаты').closest('details')!
   expect(calc).not.toHaveAttribute('open')
-  await user.click(screen.getByText('🧮 Калькулятор зарплаты'))
+  await user.click(screen.getByText('Калькулятор зарплаты'))
   const c = within(calc)
   await user.type(c.getByLabelText('Выручка, сом'), '200000')
   await user.type(c.getByLabelText('Процент, %'), '30')

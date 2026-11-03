@@ -58,7 +58,7 @@ export function TicketPanel({ id, platform = false, onClose }: { id: number; pla
     <aside className="panel" aria-label="Обращение">
       <header className="panel-head">
         <div>
-          <h2>{t?.viaBot ? '💬 Помощь' : TICKET_KINDS[t?.kind ?? 'QUESTION']?.title ?? 'Обращение'}</h2>
+          <h2>{t?.viaBot ? 'Помощь' : TICKET_KINDS[t?.kind ?? 'QUESTION']?.title ?? 'Обращение'}</h2>
           {t && <span className={`chip small ${cls}`}>{status}</span>}
           {platform && t && <span className="hint"> {t.clinicName} · {t.author}</span>}
         </div>

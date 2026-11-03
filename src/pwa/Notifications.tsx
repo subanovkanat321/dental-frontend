@@ -28,7 +28,7 @@ export function Notifications() {
 function Section({ children }: { children: React.ReactNode }) {
   return (
     <section className="settings-group" aria-label="Уведомления">
-      <h2>🔔 Уведомления</h2>
+      <h2>Уведомления</h2>
       <div className="card-block pwa-install">{children}</div>
     </section>
   )
@@ -106,7 +106,7 @@ function NotificationsBody() {
   let status
   if (support === 'ios-install') {
     status = <p>На iPhone уведомления приходят только в установленное приложение (iOS 16.4 и новее): добавьте Tish
-      на экран «Домой» — выше «📲 Установить приложение», — откройте его с иконки и включите здесь.</p>
+      на экран «Домой» — выше «Установить приложение», — откройте его с иконки и включите здесь.</p>
   } else if (support === 'unsupported') {
     status = <p>Этот браузер не умеет уведомления — они приходят в Telegram. Подойдут Chrome, Edge, Firefox,
       Safari на Mac, а на iPhone — приложение с экрана «Домой».</p>
