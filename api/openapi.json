@@ -1708,6 +1708,50 @@
         }
       }
     },
+    "/api/clinic/dictation-ai" : {
+      "get" : {
+        "tags" : [ "visit-dictation-controller" ],
+        "operationId" : "dictationAi",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportControllerAiSetting"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "visit-dictation-controller" ],
+        "operationId" : "setDictationAi",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitReportControllerAiChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportControllerAiSetting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/deposit" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
