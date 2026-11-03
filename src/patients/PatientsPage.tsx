@@ -10,6 +10,8 @@ import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
 import { ComebackTab } from './ComebackTab'
+import { QuestionPanel, QuestionsTab } from './QuestionsTab'
+import { useNewQuestions } from '../api/questions'
 import { canEditServices, isAssistant } from '../lib/roles'
 import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
@@ -41,10 +43,12 @@ function phoneDigits(text: string): string {
  * дате визита (/api/patients/recent, как в приложении); не нашли среди них — ищем на сервере
  * по всей клинике (/api/patients/search).
  */
-export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: {
+export function PatientsPage({ me, onBook, initialPatient, initialQuestion, onOpenAppointment }: {
   me: Me
   onBook: (p: Patient) => void
   initialPatient?: number
+  /** Кнопка уведомления «Открыть вопрос» — вкладка «Вопросы» с этим вопросом */
+  initialQuestion?: number
   onOpenAppointment?: (appointmentId: number) => void
 }) {
   const [query, setQuery] = useState('')
@@ -53,9 +57,13 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
   // Вкладки: все пациенты, лист ожидания, «позвать на профосмотр» — как в «Пациентах» приложения
-  const [tab, setTab] = useState<'all' | 'waitlist' | 'recall' | 'comeback'>('all')
+  const [tab, setTab] = useState<'all' | 'waitlist' | 'recall' | 'comeback' | 'questions'>(initialQuestion ? 'questions' : 'all')
   const waitlist = useWaitlist()
   const close = useCallback(() => setSelected(null), [])
+  // Вопрос пациента справа (вкладка «Вопросы»); открыли карточку пациента — вопрос закрываем, и наоборот
+  const [question, setQuestion] = useState<number | null>(initialQuestion ?? null)
+  const closeQuestion = useCallback(() => setQuestion(null), [])
+  const newQuestions = useNewQuestions().data?.count ?? 0
 
   // Чьи пациенты: все или одного врача (у кого был или будет приём у него)
   // Ассистенту — только его врачи
@@ -114,14 +122,15 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
   }
 
   return (
-    <div className={selected ? 'schedule with-panel' : 'schedule'}>
+    <div className={selected || (tab === 'questions' && question) ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
         <header ref={stickyHead} className="toolbar sticky-head patients-head">
           <h1>Пациенты</h1>
           <div className="segments tabs" role="tablist" aria-label="Списки пациентов">
             {/* «Вернуть» — деньги на столе и приглашения; ассистенту (денег не видит) — прежний «Профосмотр» */}
             {([['all', 'Все'], ['waitlist', `Лист ожидания${waitlist.data?.length ? ` · ${waitlist.data.length}` : ''}`],
-              isAssistant(me) ? ['recall', 'Профосмотр'] : ['comeback', 'Вернуть']] satisfies [typeof tab, string][])
+              isAssistant(me) ? ['recall', 'Профосмотр'] : ['comeback', 'Вернуть'],
+              ['questions', `Вопросы${newQuestions ? ` · ${newQuestions}` : ''}`]] satisfies [typeof tab, string][])
               .map(([key, title]) => (
                 <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>
               ))}
@@ -148,6 +157,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
         </header>
         {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} />}
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
+        {tab === 'questions' && <QuestionsTab selected={question} onOpen={(id) => { setSelected(null); setQuestion(id) }} />}
         {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
@@ -181,6 +191,9 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
           </table>
         )}
       </section>
+      {tab === 'questions' && question != null && selected == null && (
+        <QuestionPanel key={question} questionId={question} onClose={closeQuestion} onOpenPatient={(id) => { setQuestion(null); setSelected(id) }} />
+      )}
       {selected === 'new' && <NewPatientPanel onClose={close} onCreated={setSelected} />}
       {typeof selected === 'number' && <PatientPanel key={selected} patientId={selected} me={me} onClose={close} onBook={onBook} onOpenAppointment={onOpenAppointment}
         onOpenPatient={setSelected} onMedical={(p) => { setSelected(null); setMedical(p) }} />}

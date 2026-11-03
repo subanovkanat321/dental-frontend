@@ -1892,6 +1892,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patient-questions/{id}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient-questions/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["close_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient-questions/{id}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["answer_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/news": {
         parameters: {
             query?: never;
@@ -2045,7 +2093,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["draft"];
+        post: operations["draft_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2285,7 +2333,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["draft_1"];
+        post: operations["draft_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3252,7 +3300,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/members": {
+    "/api/patient-questions": {
         parameters: {
             query?: never;
             header?: never;
@@ -3260,6 +3308,54 @@ export interface paths {
             cookie?: never;
         };
         get: operations["list_8"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient-questions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient-questions/new-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["count"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3291,7 +3387,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3579,7 +3675,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete: operations["delete_9"];
@@ -5300,6 +5396,30 @@ export interface components {
             /** Format: int32 */
             direction?: number;
         };
+        QuestionControllerDraft: {
+            text?: string;
+        };
+        PatientQuestionsQuestionView: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int64 */
+            patientId?: number;
+            patientName?: string;
+            patientPhone?: string;
+            text?: string;
+            /** @enum {string} */
+            status?: "NEW" | "ANSWERED" | "CLOSED";
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+            answer?: string;
+            /** Format: date-time */
+            answeredAt?: string;
+        };
+        QuestionControllerAnswer: {
+            text?: string;
+        };
         NewsControllerCreate: {
             text?: string;
         };
@@ -5986,6 +6106,15 @@ export interface components {
             status?: string;
             details?: string;
             hasQr?: boolean;
+        };
+        QuestionControllerQuestionList: {
+            questions?: components["schemas"]["PatientQuestionsQuestionView"][];
+            ai?: boolean;
+            aiAvailable?: boolean;
+        };
+        QuestionControllerNewCount: {
+            /** Format: int32 */
+            count?: number;
         };
         NewsControllerStaffNews: {
             news?: components["schemas"]["NewsServiceNews"][];
@@ -10158,6 +10287,76 @@ export interface operations {
             };
         };
     };
+    draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionControllerDraft"];
+                };
+            };
+        };
+    };
+    close_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientQuestionsQuestionView"];
+                };
+            };
+        };
+    };
+    answer_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionControllerAnswer"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientQuestionsQuestionView"];
+                };
+            };
+        };
+    };
     list_4: {
         parameters: {
             query?: never;
@@ -10467,7 +10666,7 @@ export interface operations {
             };
         };
     };
-    draft: {
+    draft_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -10991,7 +11190,7 @@ export interface operations {
             };
         };
     };
-    draft_1: {
+    draft_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -12467,6 +12666,70 @@ export interface operations {
     };
     list_8: {
         parameters: {
+            query?: {
+                done?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionControllerQuestionList"];
+                };
+            };
+        };
+    };
+    get_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientQuestionsQuestionView"];
+                };
+            };
+        };
+    };
+    count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionControllerNewCount"];
+                };
+            };
+        };
+    };
+    list_9: {
+        parameters: {
             query?: never;
             header?: never;
             path?: never;
@@ -12505,7 +12768,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -12872,7 +13135,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
