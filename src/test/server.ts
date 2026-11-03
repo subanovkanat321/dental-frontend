@@ -43,6 +43,7 @@ export const server = setupServer(
   http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [], free: [], breaks: [] })),
   http.get('*/api/appointments/:id/note', () => HttpResponse.json({ note: '' })),
   http.get('*/api/patients/:id/notes', () => HttpResponse.json([])),
+  http.get('*/api/patients/:id/plan', () => HttpResponse.json([] satisfies Schemas['TreatmentStepView'][])),
   http.get('*/api/patients/:id/expenses', () => HttpResponse.json([])),
   http.get('*/api/patients/:id/anamnesis', () => HttpResponse.json({ items: [] })),
   // Опрос команды Tish (src/survey): по умолчанию ответа никто не ждёт — приглашения нет

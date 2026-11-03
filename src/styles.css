@@ -1474,3 +1474,9 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .role-chip.role-reception { background: var(--ok-bg); color: var(--ok-ink); }
 .role-chip.role-assistant { background: var(--quiet-bg); color: var(--text); }
 .staff-table td { vertical-align: middle; }
+/* «Продолжение лечения» в карточке приёма: что сделали в прошлый раз и что осталось по плану */
+.continue { display: grid; gap: 8px; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
+.continue h3 { margin: 0; font-size: .95rem; }
+.continue > div { display: grid; gap: 2px; }
+.continue ul { margin: 0; padding-left: 18px; }
+.continue-note { margin: 0; white-space: pre-line; }
