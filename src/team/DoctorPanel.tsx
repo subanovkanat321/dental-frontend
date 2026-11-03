@@ -177,6 +177,15 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
         </section>
       )}
 
+      {/* Права дают тому, кто вошёл: администратор — это Telegram врача. Не вошёл — объясняем, что сделать */}
+      {me.admin && d.telegramId == null && (
+        <section className="form">
+          <h3>Права</h3>
+          <p className="hint">Сделать врача администратором можно, когда он войдёт: нажмите выше «Пригласить по ссылке»,
+            отправьте ему — он откроет ссылку и нажмёт «Начать» в Telegram. После этого здесь появится кнопка
+            «Сделать администратором клиники».</p>
+        </section>
+      )}
       {me.admin && d.telegramId != null && (
         <section className="form">
           <h3>Права</h3>

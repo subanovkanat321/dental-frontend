@@ -65,6 +65,8 @@ test('админ: врачи таблицей; карточка — сохран
   expect(await within(panel).findByText('Часы работы сохранены')).toBeInTheDocument()
   expect(saved.hours).toEqual({ days: [{ weekday: 'MONDAY', start: '09:00', end: '18:00' }] })
 
+  // Врач ещё не вошёл — вместо «Сделать администратором» подсказка, как пригласить
+  expect(within(panel).getByText(/Сделать врача администратором можно, когда он войдёт/)).toBeInTheDocument()
   await user.click(within(panel).getByRole('button', { name: 'Пригласить по ссылке' }))
   expect(await within(panel).findByRole('link', { name: 'https://t.me/tish_test_bot?start=join_abc123' })).toBeInTheDocument()
 })
