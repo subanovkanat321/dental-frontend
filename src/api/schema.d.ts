@@ -628,6 +628,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/post-ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["postAi"];
+        put: operations["setPostAi"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/dictation-ai": {
         parameters: {
             query?: never;
@@ -1710,6 +1726,38 @@ export interface paths {
         get: operations["files"];
         put?: never;
         post: operations["upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{patientId}/before-after/ai-text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["beforeAfterText"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{patientId}/before-after/ai-frame": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["beforeAfterFrame"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5326,6 +5374,43 @@ export interface components {
             createdBy?: string;
             canDelete?: boolean;
         };
+        BeforeAfterAiTextRequest: {
+            procedure?: string;
+            duration?: string;
+            /** @enum {string} */
+            style?: "SHORT" | "FULL" | "EMOJI";
+            /** @enum {string} */
+            lang?: "RU" | "KY";
+            doctor?: string;
+            clinic?: string;
+            address?: string;
+            phone?: string;
+            bookingUrl?: string;
+            previous?: string;
+        };
+        BeforeAfterAiPostText: {
+            text?: string;
+        };
+        BeforeAfterAiFrameRequest: {
+            /** Format: int64 */
+            beforeFileId?: number;
+            /** Format: int64 */
+            afterFileId?: number;
+        };
+        BeforeAfterAiFrames: {
+            before?: components["schemas"]["BeforeAfterAiRect"];
+            after?: components["schemas"]["BeforeAfterAiRect"];
+        };
+        BeforeAfterAiRect: {
+            /** Format: double */
+            x?: number;
+            /** Format: double */
+            y?: number;
+            /** Format: double */
+            w?: number;
+            /** Format: double */
+            h?: number;
+        };
         FamilyControllerJoin: {
             /** Format: int64 */
             relativeId?: number;
@@ -7838,6 +7923,50 @@ export interface operations {
             };
         };
     };
+    postAi: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitReportControllerAiSetting"];
+                };
+            };
+        };
+    };
+    setPostAi: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitReportControllerAiChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitReportControllerAiSetting"];
+                };
+            };
+        };
+    };
     dictationAi: {
         parameters: {
             query?: never;
@@ -10006,6 +10135,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PatientFilesView"];
+                };
+            };
+        };
+    };
+    beforeAfterText: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BeforeAfterAiTextRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BeforeAfterAiPostText"];
+                };
+            };
+        };
+    };
+    beforeAfterFrame: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BeforeAfterAiFrameRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BeforeAfterAiFrames"];
                 };
             };
         };

@@ -9,7 +9,7 @@ import { formatPhone } from '../lib/phone'
 import { useClose } from '../lib/useClose'
 import { shortDate, todayIn } from '../lib/time'
 import {
-  boxFrom, clampCrop, drawBeforeAfter, FIT, FORMATS, frames, inside, placement, toImage,
+  boxFrom, clampCrop, drawBeforeAfter, FIT, fitSmiles, FORMATS, frames, inside, placement, toImage,
   type Box, type Design, type Format, type Picture, type Shot,
 } from './beforeAfterDraw'
 import { buildPost, durationBetween, POST_STYLES, type PostStyle } from './postText'
@@ -19,6 +19,15 @@ import './beforeAfter.css'
 type FileView = Schemas['PatientFilesView']
 type Consent = Schemas['PublicationConsentsView']
 type Scope = NonNullable<Consent['scope']>
+type AiStyle = NonNullable<Schemas['BeforeAfterAiTextRequest']['style']>
+type AiLang = NonNullable<Schemas['BeforeAfterAiTextRequest']['lang']>
+
+const AI_STYLE: Record<PostStyle, AiStyle> = { short: 'SHORT', full: 'FULL', emoji: 'EMOJI' }
+
+/** «ИИ для постов» клиники (Настройки → ИИ-помощник): on — и ключ на сервере, и клиника включила. */
+function usePostAi() {
+  return useQuery({ queryKey: ['post-ai'], queryFn: () => unwrap(api.GET('/api/clinic/post-ai')), staleTime: 60_000 }).data?.on === true
+}
 
 /**
  * Согласие на публикацию фото и кнопка «Собрать картинку «до / после»» — в блоке снимков медкарты. Согласие
@@ -56,7 +65,7 @@ export function PublicationBlock({ patientId, files, readOnly }: { patientId: nu
         <li className={scope ? 'done' : undefined}>Отметьте согласие пациента на публикацию{scope ? ' ✓' : ''}</li>
         <li>«Собрать картинку»: выберите фото, пост или сторис, при необходимости закройте глаза — скачайте картинку и скопируйте готовый текст поста</li>
       </ol>
-      <p className="hint small">Это не ИИ: картинка собирается из ваших фото прямо на телефоне и никуда не отправляется.</p>
+      <p className="hint small">ИИ не меняет фото — только подбирает кадр и пишет текст. Картинка собирается из ваших фото прямо на телефоне.</p>
       <label className="check">
         <input type="checkbox" checked={Boolean(scope)} disabled={readOnly || busy}
           onChange={(e) => (e.target.checked ? give.mutate('NO_FACE') : revoke.mutate())} />
@@ -108,6 +117,8 @@ type Drag = { side: Side; mode: 'move' | 'hide'; x: number; y: number; cx: numbe
  * Конструктор «До / после»: два фото, раскладка и формат, подписи; кадр — перетаскиванием и
  * ползунком; «Скрыть глаза» — врач сам рисует прямоугольник (никакого распознавания лиц).
  * Готовая картинка — только в браузере: скачать PNG или «Поделиться»; на сервер не уходит.
+ * Если клиника включила «ИИ для постов» — «✨ Подогнать кадр»: сервер отправляет в ИИ уменьшенные
+ * копии двух выбранных фото и получает, где на них улыбка; фото ИИ не меняет, только кадр.
  */
 function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; files: FileView[]; scope: Scope; onClose: () => void }) {
   const close = useClose(onClose)
@@ -133,6 +144,27 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
   const drag = useRef<Drag | null>(null)
   const [draft, setDraft] = useState<{ side: Side; box: Box } | null>(null)
   const set = (patch: Partial<Design>) => setDesign((d) => ({ ...d, ...patch }))
+  const aiOn = usePostAi()
+  const fit = useMutation<Schemas['BeforeAfterAiFrames'], ApiError, void>({
+    mutationFn: () => unwrap(api.POST('/api/patients/{patientId}/before-after/ai-frame', {
+      params: { path: { patientId } }, body: { beforeFileId: ids.before, afterFileId: ids.after },
+    })),
+    onMutate: () => setStatus(''),
+    onSuccess: (found) => {
+      const b = images[ids.before]
+      const a = images[ids.after]
+      if (!b || !a || !found.before || !found.after) return
+      const f = frames(design)
+      const box = (r: Schemas['BeforeAfterAiRect']): Box => ({ x: r.x ?? 0, y: r.y ?? 0, w: r.w ?? 0, h: r.h ?? 0 })
+      const [cb, ca] = fitSmiles([
+        { frame: f.before, image: b, smile: box(found.before) },
+        { frame: f.after, image: a, smile: box(found.after) },
+      ])
+      setShots((all) => ({ before: { ...all.before, crop: cb }, after: { ...all.after, crop: ca } }))
+      setStatus('Кадр подогнан — при необходимости подвиньте фото пальцем')
+    },
+    onError: (e) => setStatus(e.message || 'Не удалось подогнать кадр — подвиньте его вручную'),
+  })
 
   // Загрузить выбранные снимки целиком (миниатюры для картинки мало)
   useEffect(() => {
@@ -278,6 +310,11 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
               <button type="button" aria-pressed={mode === 'move'} onClick={() => setMode('move')}>Двигать фото</button>
               <button type="button" aria-pressed={mode === 'hide'} onClick={() => setMode('hide')}>Скрыть глаза</button>
             </div>
+            {aiOn && (
+              <button type="button" className="btn" disabled={!ready || fit.isPending} onClick={() => fit.mutate()}>
+                {fit.isPending ? 'Ищем улыбку…' : '✨ Подогнать кадр'}
+              </button>
+            )}
           </div>
           <div className="ba-tools">
             {(['before', 'after'] as Side[]).map((side) => (
@@ -338,7 +375,8 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
             <label className="check"><input type="checkbox" checked={design.watermark} onChange={(e) => set({ watermark: e.target.checked })} /> <span>Подпись «сделано в Tish»</span></label>
           </div>
         </div>
-        <PostText procedure={design.procedure} duration={duration} onDuration={setDuration} doctor={design.doctor} clinic={design.clinic} />
+        <PostText patientId={patientId} aiOn={aiOn} procedure={design.procedure} duration={duration} onDuration={setDuration}
+          doctor={design.doctor} clinic={design.clinic} />
         <footer className="actions">
           <button type="button" className="btn primary" disabled={!ready} onClick={() => void download()}>Скачать PNG</button>
           {canShare && <button type="button" className="btn" disabled={!ready} onClick={() => void share()}>Поделиться</button>}
@@ -352,11 +390,13 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
 }
 
 /**
- * Готовый текст для описания поста — по шаблону (три варианта), без ИИ. Пациента в нём нет:
- * на входе только работа, сроки, врач и клиника. Текст можно поправить и скопировать.
+ * Готовый текст для описания поста — по шаблону (три варианта); если клиника включила ИИ — ещё
+ * «✨ Написать с ИИ» в том же варианте и на выбранном языке. Пациента в нём нет: на входе только
+ * работа, сроки, врач и клиника (адрес, телефон и ссылку сервер дописывает сам, ИИ их не видит).
+ * Текст можно поправить и скопировать.
  */
-function PostText({ procedure, duration, onDuration, doctor, clinic }: {
-  procedure: string; duration: string; onDuration: (v: string) => void; doctor: string; clinic: string
+function PostText({ patientId, aiOn, procedure, duration, onDuration, doctor, clinic }: {
+  patientId: number; aiOn: boolean; procedure: string; duration: string; onDuration: (v: string) => void; doctor: string; clinic: string
 }) {
   const me = useMe().data
   const c = me?.clinic
@@ -365,9 +405,28 @@ function PostText({ procedure, duration, onDuration, doctor, clinic }: {
   // Своя правка держится, пока не выбрали другой вариант или «Собрать заново»
   const [own, setOwn] = useState<string | null>(null)
   const [copied, setCopied] = useState('')
-  const text = own ?? buildPost(style, {
+  const [lang, setLang] = useState<AiLang>('RU')
+  // Текст в поле — от ИИ: тогда «Другой вариант» просит написать иначе
+  const [fromAi, setFromAi] = useState(false)
+  const facts = {
     procedure, duration, doctor, clinic, address: c?.address, phone: phone ? formatPhone(phone) : null,
     bookingUrl: c?.code ? `${window.location.origin}/c/${c.code}` : null,
+  }
+  const text = own ?? buildPost(style, facts)
+  const write = useMutation<Schemas['BeforeAfterAiPostText'], ApiError, string | undefined>({
+    mutationFn: (previous) => unwrap(api.POST('/api/patients/{patientId}/before-after/ai-text', {
+      params: { path: { patientId } },
+      body: {
+        procedure: procedure.trim(), duration: duration.trim(), style: AI_STYLE[style], lang, doctor: doctor.trim(), clinic: clinic.trim(),
+        address: facts.address ?? undefined, phone: facts.phone ?? undefined, bookingUrl: facts.bookingUrl ?? undefined, previous,
+      },
+    })),
+    onMutate: () => setCopied(''),
+    onSuccess: (r) => {
+      if (!r.text) return
+      setOwn(r.text)
+      setFromAi(true)
+    },
   })
   const copy = async () => {
     try {
@@ -384,17 +443,33 @@ function PostText({ procedure, duration, onDuration, doctor, clinic }: {
       <div className="ba-post-row">
         <div className="segments" role="group" aria-label="Вариант текста">
           {POST_STYLES.map(([k, name]) => (
-            <button key={k} type="button" aria-pressed={style === k} onClick={() => { setStyle(k); setOwn(null) }}>{name}</button>
+            <button key={k} type="button" aria-pressed={style === k} onClick={() => { setStyle(k); setOwn(null); setFromAi(false) }}>{name}</button>
           ))}
         </div>
         <label className="field"><span>Сколько заняло</span>
           <input value={duration} maxLength={40} placeholder="Например, 2 визита" onChange={(e) => onDuration(e.target.value)} />
         </label>
       </div>
+      {aiOn && (
+        <div className="ba-post-row">
+          <div className="segments" role="group" aria-label="Язык текста ИИ">
+            <button type="button" aria-pressed={lang === 'RU'} onClick={() => setLang('RU')}>Русский</button>
+            <button type="button" aria-pressed={lang === 'KY'} onClick={() => setLang('KY')}>Кыргызча</button>
+          </div>
+          <button type="button" className="btn" disabled={write.isPending || !procedure.trim()}
+            title={procedure.trim() ? undefined : 'Сначала укажите процедуру'}
+            onClick={() => write.mutate(fromAi ? text : undefined)}>
+            {write.isPending ? 'ИИ пишет…' : fromAi ? '✨ Другой вариант' : '✨ Написать с ИИ'}
+          </button>
+          {!procedure.trim() && <span className="hint small">Укажите процедуру — ИИ пишет о ней.</span>}
+        </div>
+      )}
+      {write.error && <p className="error small" role="alert">{write.error.message}</p>}
       <textarea aria-label="Текст поста" rows={10} maxLength={2200} value={text} onChange={(e) => setOwn(e.target.value)} />
+      {fromAi && own != null && <p className="hint small">Текст написал ИИ — проверьте перед публикацией: без обещаний и с верными фактами.</p>}
       <div className="actions">
         <button type="button" className="btn" onClick={() => void copy()}>Скопировать текст</button>
-        {own != null && <button type="button" className="link" onClick={() => setOwn(null)}>Собрать заново</button>}
+        {own != null && <button type="button" className="link" onClick={() => { setOwn(null); setFromAi(false) }}>Собрать заново</button>}
         {copied && <span role="status" className="hint">{copied}</span>}
       </div>
     </section>

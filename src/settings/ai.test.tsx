@@ -9,10 +9,10 @@ import { server } from '../test/server'
 type Setting = Schemas['VisitReportControllerAiSetting']
 type Change = Schemas['VisitReportControllerAiChange']
 
-/** Два согласия клиники на сервере — каждое меняется только своим адресом. */
-function backend(reports: Setting, dictation: Setting, who: Schemas['BookingViewsMe'] = me) {
+/** Три согласия клиники на сервере — каждое меняется только своим адресом. */
+function backend(reports: Setting, dictation: Setting, who: Schemas['BookingViewsMe'] = me, post: Setting = { available: reports.available, on: false }) {
   const puts: [string, Change][] = []
-  const state = { 'visit-report-ai': reports, 'dictation-ai': dictation }
+  const state = { 'visit-report-ai': reports, 'dictation-ai': dictation, 'post-ai': post }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(who)),
     http.get('*/api/clinic/:what', ({ params }) => HttpResponse.json(state[params.what as keyof typeof state])),
@@ -51,6 +51,22 @@ test('«ИИ-помощник»: диктовка включается отде�
   await vi.waitFor(() => expect(reportBox).not.toBeChecked())
   expect(box).toBeChecked()
   expect(puts).toEqual([['dictation-ai', { on: true }], ['visit-report-ai', { on: false }]])
+})
+
+test('«ИИ для постов «до / после»» — отдельный переключатель: подпись про фото, остальные не трогает', async () => {
+  const puts = backend({ available: true, on: true }, { available: true, on: false })
+  renderApp()
+  openItem('ai')
+  const post = await screen.findByRole('region', { name: 'ИИ для постов «до / после»' })
+  expect(post).toHaveTextContent('ИИ не меняет фото — только подбирает кадр и пишет текст')
+  expect(post).toHaveTextContent('В ИИ уходят уменьшенные копии двух выбранных фото')
+  const box = within(post).getByRole('checkbox')
+  await vi.waitFor(() => expect(box).toBeEnabled())
+  expect(box).not.toBeChecked()
+  await userEvent.click(box)
+  await vi.waitFor(() => expect(box).toBeChecked())
+  expect(puts).toEqual([['post-ai', { on: true }]])
+  expect(within(screen.getByRole('region', { name: 'ИИ разбирает голосовую диктовку' })).getByRole('checkbox')).not.toBeChecked()
 })
 
 test('ИИ на сервере не подключён — переключатели не нажать', async () => {
