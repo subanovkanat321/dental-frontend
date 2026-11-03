@@ -472,6 +472,8 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
     },
   })
 
+  const [commentOpen, setCommentOpen] = useState(false)
+  const [sourceOpen, setSourceOpen] = useState(false)
   const bookLabel = missing === 'service' ? t('nextService') : missing === 'time' ? t('nextTime') : missing === 'data' ? t('nextData') : t('book')
   const next = () => {
     if (!missing) {
@@ -601,11 +603,17 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
           ) : <button type="button" className="btn" disabled={sharing} onClick={sharePhone}>{sharing ? t('gettingPhone') : t('sharePhone')}</button>}
         </div>
         {errors.phone && <p className="error">{errors.phone}</p>}
-        <label className="field"><span>{t('comment')}</span>
-          <textarea rows={2} maxLength={500} placeholder={t('commentHint')} value={comment} onChange={(e) => setComment(e.target.value)} /></label>
+        {/* Необязательное — свёрнуто: запись короче, кто хочет — раскроет */}
+        {commentOpen ? (
+          <label className="field"><span>{t('comment')}</span>
+            <textarea rows={2} maxLength={500} autoFocus placeholder={t('commentHint')} value={comment} onChange={(e) => setComment(e.target.value)} /></label>
+        ) : <button type="button" className="link promo-open" onClick={() => setCommentOpen(true)}>＋ {t('comment')}</button>}
         <PromoField ctx={ctx} value={promo} open={promoOpen} error={errors.promo}
           onOpen={() => setPromoOpen(true)} onChange={(v) => { setPromo(v); setErrors({}) }} />
-        {(me.sourceChoices ?? []).length > 0 && (
+        {(me.sourceChoices ?? []).length > 0 && !sourceOpen && (
+          <button type="button" className="link promo-open" onClick={() => setSourceOpen(true)}>＋ {t('sourceQuestion')}</button>
+        )}
+        {(me.sourceChoices ?? []).length > 0 && sourceOpen && (
           <div className="field">
             <span>{t('sourceQuestion')}</span>
             <div className="source-chips" role="group" aria-label={t('sourceQuestion')}>
@@ -626,13 +634,6 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
         {errors.consent && <p className="error">{errors.consent}</p>}
       </section>
       {errors.form && <p className="error" role="alert">{errors.form}</p>}
-      {/* В Telegram главная кнопка — его MainButton внизу окна, но её рисует сам Telegram, и в части
-          приложений она не появляется. Своя кнопка в конце формы — запись можно отправить всегда.
-          Вне Telegram своя кнопка уже прилипла к низу экрана (MainButton) — вторая не нужна */}
-      {telegram()?.MainButton && (
-        <button type="button" className="btn primary book-submit" disabled={book.isPending} onClick={next}>
-          {book.isPending ? t('loading') : bookLabel}</button>
-      )}
       <Footer ctx={ctx} />
       <MainButton busy={book.isPending} onClick={next} text={bookLabel} />
     </section>

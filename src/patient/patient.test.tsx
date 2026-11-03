@@ -83,8 +83,8 @@ test('запись: врач → услуга → первый день со с�
   expect(screen.queryByText('Откуда вы о нас узнали?')).toBeNull()
 })
 
-/** В Telegram его MainButton рисует сам Telegram — своя «Записаться» в конце формы есть всегда и отправляет запись. */
-test('в Telegram — своя кнопка «Записаться» в конце формы, вдобавок к MainButton Telegram', async () => {
+/** В Telegram его MainButton не везде виден — кнопка внизу всегда своя, а MainButton Telegram спрятан. */
+test('в Telegram — своя кнопка «Записаться» внизу, MainButton Telegram спрятан', async () => {
   const native = { setText: vi.fn(), show: vi.fn(), hide: vi.fn(), enable: vi.fn(), disable: vi.fn(), showProgress: vi.fn(), hideProgress: vi.fn(), onClick: vi.fn(), offClick: vi.fn() }
   fakeTelegram({ MainButton: native })
   const tomorrow = addDays(todayIn(), 1)
@@ -102,8 +102,8 @@ test('в Telegram — своя кнопка «Записаться» в конц
   const grid = await screen.findByRole('group', { name: 'Свободное время' })
   await user.click(await within(grid).findByRole('button', { name: '10:00' }))
   await user.click(screen.getByRole('checkbox', { name: /ИП Тест обрабатывает мои данные/ }))
-  expect(native.show).toHaveBeenCalled()
-  expect(native.setText).toHaveBeenLastCalledWith('Записаться')
+  expect(native.hide).toHaveBeenCalled()
+  expect(native.show).not.toHaveBeenCalled()
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
   await vi.waitFor(() => expect(booked).not.toBeNull())
 })
@@ -139,6 +139,8 @@ async function bookAsNewPatient(lang: 'ru' | 'ky', pick: (user: ReturnType<typeo
 
 test('новый пациент: «Откуда вы о нас узнали?» по-кыргызски — выбрать, передумать, выбрать другое', async () => {
   const booked = await bookAsNewPatient('ky', async (user) => {
+    // Свёрнуто — запись короче; раскрыть ссылкой
+    await user.click(screen.getByRole('button', { name: '＋ Биз жөнүндө кайдан билдиңиз?' }))
     const chips = screen.getByRole('group', { name: 'Биз жөнүндө кайдан билдиңиз?' })
     expect(screen.getByText('Милдеттүү эмес — өткөрүп жиберсеңиз болот')).toBeInTheDocument()
     // Нет перевода — название как есть
@@ -155,7 +157,9 @@ test('новый пациент: «Откуда вы о нас узнали?» �
 
 test('новый пациент: вопрос необязательный — без ответа запись уходит без sourceId', async () => {
   const booked = await bookAsNewPatient('ru', async () => {
-    expect(screen.getByRole('group', { name: 'Откуда вы о нас узнали?' })).toBeInTheDocument()
+    // Вопрос свёрнут ссылкой — не мешает записаться
+    expect(screen.getByRole('button', { name: '＋ Откуда вы о нас узнали?' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Откуда вы о нас узнали?' })).not.toBeInTheDocument()
   })
   expect(booked).not.toHaveProperty('sourceId')
 })

@@ -72,6 +72,8 @@ test('запись на сайте: врач, услуга, время, данн
   })
   const user = userEvent.setup()
   await fillForm(user)
+  // Необязательное свёрнуто — раскрыть «Откуда вы о нас узнали?»
+  await user.click(screen.getByRole('button', { name: '＋ Откуда вы о нас узнали?' }))
   await user.click(screen.getByRole('button', { name: /Instagram/ }))
   // Без согласия — не отправляем
   await user.click(screen.getByRole('button', { name: 'Записаться' }))

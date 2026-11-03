@@ -139,7 +139,7 @@ test('по-кыргызски: «Кимди жаздырабыз?» — бала
   expect(within(who).getByRole('button', { name: 'Өзүмдү' })).toHaveAttribute('aria-pressed', 'true')
   await user.click(within(who).getByRole('button', { name: 'Аружан Асанова' }))
   // Своё имя для ребёнка из списка не нужно
-  expect(screen.getAllByRole('textbox')).toHaveLength(1) // только комментарий
+  expect(screen.queryAllByRole('textbox')).toHaveLength(0) // ни имени, ни комментария (он свёрнут)
   await user.click(screen.getByRole('checkbox', { name: /Мен мыйзамдуу өкүлмүн: Аружан Асанова/ }))
   await user.click(screen.getByRole('button', { name: 'Жазылуу' }))
   await vi.waitFor(() => expect(booked).not.toBeNull())

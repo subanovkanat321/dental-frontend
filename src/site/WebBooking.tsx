@@ -55,6 +55,8 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
   const [booked, setBooked] = useState<WebBooked | null>(null)
   const nameRef = useRef<HTMLInputElement>(null)
   const commentRef = useRef<HTMLTextAreaElement>(null)
+  const [commentOpen, setCommentOpen] = useState(false)
+  const [sourceOpen, setSourceOpen] = useState(false)
   const websiteRef = useRef<HTMLInputElement>(null)
   const timeRef = useRef<HTMLElement>(null)
   const dataRef = useRef<HTMLElement>(null)
@@ -245,10 +247,16 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
             <label className="field"><span>{t('phone')}</span><PhoneInput label={t('phone')} value={phone} onChange={(v) => { setPhone(v); setErrors({}) }} />
               <span className="hint">{t('webPhoneHint')}</span></label>
             {err('phone')}
-            <label className="field"><span>{t('comment')}</span>
-              <textarea ref={commentRef} name="comment" rows={2} maxLength={500} placeholder={t('commentHint')} /></label>
+            {/* Необязательное — свёрнуто: запись короче, кто хочет — раскроет */}
+            {commentOpen ? (
+              <label className="field"><span>{t('comment')}</span>
+                <textarea ref={commentRef} name="comment" rows={2} maxLength={500} autoFocus placeholder={t('commentHint')} /></label>
+            ) : <button type="button" className="link" onClick={() => setCommentOpen(true)}>＋ {t('comment')}</button>}
             {err('comment')}
-            {(info.sources ?? []).length > 0 && (
+            {(info.sources ?? []).length > 0 && !sourceOpen && (
+              <button type="button" className="link" onClick={() => setSourceOpen(true)}>＋ {t('sourceQuestion')}</button>
+            )}
+            {(info.sources ?? []).length > 0 && sourceOpen && (
               <div className="field">
                 <span>{t('sourceQuestion')}</span>
                 <div className="source-chips" role="group" aria-label={t('sourceQuestion')}>
