@@ -63,7 +63,7 @@ export function VisitReport({ appointment: a, me }: { appointment: Appointment; 
   return (
     <section className="visit-report" aria-label="Отчёт пациенту">
       <div className="block-head">
-        <h3>📝 Отчёт пациенту</h3>
+        <h3>Отчёт пациенту</h3>
         {last.data && !draft && (
           <span className="hint small">Отправлен {shortDate(last.data.sentAt!)} {VIA_TEXT[last.data.via!]}</span>
         )}

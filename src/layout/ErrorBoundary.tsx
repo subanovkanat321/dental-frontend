@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: u
     if (this.state.error == null) return this.props.children
     return (
       <div className="card-block crash" role="alert">
-        <h2>😕 Что-то пошло не так</h2>
+        <h2>Что-то пошло не так</h2>
         <p className="hint">Этот экран не открылся. Данные не потеряны — обновите приложение. Если повторится, напишите в «Настройки → Техподдержка».</p>
         <div className="actions">
           <button type="button" className="btn primary" onClick={() => window.location.reload()}>Обновить</button>

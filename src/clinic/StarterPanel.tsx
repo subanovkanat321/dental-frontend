@@ -32,7 +32,7 @@ export function StarterCard({ onOpen }: { onOpen: () => void }) {
   return (
     <section className="card-block starter-card" aria-label="Стартовая настройка">
       <div>
-        <h2>🧰 Заполнить по умолчанию</h2>
+        <h2>Заполнить по умолчанию</h2>
         <p className="hint">Можно сразу поставить: {parts.join(', ')}. Только пустое — что вы уже настроили, не меняется.</p>
       </div>
       <button type="button" className="btn primary" onClick={onOpen}>Посмотреть и заполнить</button>
@@ -79,7 +79,7 @@ export function StarterPanel({ onClose }: { onClose: () => void }) {
     <aside className="panel" aria-label="Заполнить по умолчанию">
       <header className="panel-head">
         <div>
-          <h2>🧰 Заполнить по умолчанию</h2>
+          <h2>Заполнить по умолчанию</h2>
           <span className="hint">Ставим только туда, где пусто. Всё можно поменять потом в карточке услуги.</span>
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>

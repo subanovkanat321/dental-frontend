@@ -68,7 +68,7 @@ function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
   }
   return (
     <form className="card-block tariffs-form" aria-label="Тарифы" onSubmit={submit}>
-      <h2>🏷️ Тарифы</h2>
+      <h2>Тарифы</h2>
       <p className="hint">Сохраните — новые цены сразу у всех клиник в «Тариф и оплата», на странице для клиник и в счетах. Уже оплаченные сроки не меняются.</p>
       {rows.map((r, i) => {
         const last = i === rows.length - 1

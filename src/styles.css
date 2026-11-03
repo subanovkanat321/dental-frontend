@@ -21,15 +21,16 @@
   --status-ok: #11683A;
   --status-wait: #8A5200;
   --now: #E8573F;
-  --rail: #0F2A30;
-  --rail-text: #B9CFCC;
+  /* Меню — светлое, как сайт: та же поверхность, что у карточек (2026-11-03) */
+  --rail: #FFFFFF;
+  --rail-text: #4C6268;
   /* Статусы приёма: заливка + текст (DESIGN.md → Colors) */
-  --req-bg: #D3E2FF; --req-ink: #1642A6;
-  --ok-bg: #C9EED7; --ok-ink: #11683A;
-  --wait-bg: #FFE3A8; --wait-ink: #7A4600;
-  --bad-bg: #FFD0D0; --bad-ink: #A11F1F;
-  --done-bg: #E6ECED; --done-ink: #4D6268;
-  --cash-bg: #FFD7B5; --cash-ink: #8A3605;
+  --req-bg: #DCE7FF; --req-ink: #1642A6;
+  --ok-bg: #D3F0DE; --ok-ink: #11683A;
+  --wait-bg: #FFEAC0; --wait-ink: #7A4600;
+  --bad-bg: #FFDCDC; --bad-ink: #A11F1F;
+  --done-bg: #E9EEEF; --done-ink: #4D6268;
+  --cash-bg: #FFE3CC; --cash-ink: #8A3605;
   /* «Не напомнили» и прочее тихое: заливка светлее/темнее поля, чтобы блок не сливался с сеткой */
   --quiet-bg: #E9EFEF;
   --shadow: 0 1px 2px rgba(15, 42, 48, .06), 0 2px 8px rgba(15, 42, 48, .05);
@@ -51,7 +52,7 @@
   --page: #0D1A1D; --card: #13252A; --sunken: #0F1F23; --text: #E4EFEF; --hint: #93AAB0; --faint: #6C858B;
   --separator: #21383E; --line-strong: #2C4850; --link: #2BB5A8; --destructive: #FF9C9C;
   --accent: #2BB5A8; --accent-hover: #3CC6B9; --accent-text: #06201E; --accent-soft: #133B39;
-  --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #081215; --rail-text: #93AAB0;
+  --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #13252A; --rail-text: #93AAB0;
   --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
   --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
   --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A; --quiet-bg: #1F343A;
@@ -63,7 +64,7 @@
     --page: #0D1A1D; --card: #13252A; --sunken: #0F1F23; --text: #E4EFEF; --hint: #93AAB0; --faint: #6C858B;
     --separator: #21383E; --line-strong: #2C4850; --link: #2BB5A8; --destructive: #FF9C9C;
     --accent: #2BB5A8; --accent-hover: #3CC6B9; --accent-text: #06201E; --accent-soft: #133B39;
-    --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #081215; --rail-text: #93AAB0;
+    --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #13252A; --rail-text: #93AAB0;
     --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
     --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
     --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A; --quiet-bg: #1F343A;
@@ -119,16 +120,16 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 
 /* Раскладка: меню слева, рабочая область */
 .shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
-.sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 2px; padding: 16px 10px; background: var(--rail); color: var(--rail-text); }
-.brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px; font: 700 1.3rem var(--display); color: #fff; border: 0; background: none; cursor: pointer; text-align: left; }
+.sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 2px; padding: 16px 12px; background: var(--rail); color: var(--rail-text); border-right: 1px solid var(--separator); }
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px; font: 600 1.3rem var(--display); color: var(--text); border: 0; background: none; cursor: pointer; text-align: left; }
 .brand:hover span { text-decoration: underline; text-underline-offset: 4px; }
-.clinic { display: grid; gap: 2px; margin: 0 2px 14px; padding: 10px; border-radius: var(--r-md); background: rgba(255, 255, 255, .06); font-size: .9rem; }
-.clinic strong { color: #fff; font-weight: 600; }
+.clinic { display: grid; gap: 2px; margin: 0 0 12px; padding: 0 8px 14px; border-bottom: 1px solid var(--separator); font-size: .88rem; }
+.clinic strong { color: var(--text); font-weight: 600; }
 .nav { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 0; border-radius: var(--r-md); background: none; color: var(--rail-text); font: inherit; font-weight: 500; text-align: left; cursor: pointer; text-decoration: none; }
-.nav:hover:not(:disabled) { background: rgba(255, 255, 255, .06); color: #fff; }
-.nav.active { background: rgba(43, 181, 168, .28); color: #fff; box-shadow: inset 3px 0 0 var(--accent); }
+.nav:hover:not(:disabled) { background: var(--sunken); color: var(--text); }
+.nav.active { background: var(--accent-soft); color: var(--link); font-weight: 600; }
 .nav:disabled { opacity: .5; cursor: default; }
-.nav .soon { margin-left: auto; font-size: .7rem; padding: 1px 6px; border-radius: 99px; background: rgba(255, 255, 255, .1); }
+.nav .soon { margin-left: auto; font-size: .7rem; padding: 1px 6px; border-radius: 99px; background: var(--sunken); }
 .icon { width: 18px; height: 18px; flex: none; }
 .link-out { margin-top: auto; font-size: .9rem; }
 .workspace { min-width: 0; padding: 16px 20px; }
@@ -175,7 +176,6 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
   position: absolute; left: 4px; right: 4px; z-index: 2; display: flex; flex-direction: column; gap: 1px; padding: 4px 8px; overflow: hidden;
   border: 0; border-radius: var(--r-sm); font: inherit; font-size: .93rem; line-height: 1.25; text-align: left; cursor: pointer;
   transition: background-color .15s ease-out;
-  border-left: 4px solid currentColor;
 }
 .appt.short { flex-direction: row; align-items: baseline; gap: 6px; padding-top: 3px; }
 .appt.short .appt-name { flex: 0 1 auto; min-width: 0; }
@@ -207,7 +207,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
   }
 }
 .payment { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
-.payment-done { font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.payment-done { font-weight: 600; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .payment-done .link { font-weight: 500; }
 .payment-debt { font-weight: 600; }
 .payment-history { margin: 0; font-size: .88rem; }
@@ -249,10 +249,10 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .emoji-picker .btn { min-width: 2.5rem; font-size: 1.1rem; }
 .emoji-picker .btn[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); }
 .check { display: flex; gap: 8px; align-items: center; font-size: .9rem; }
-.segments { display: flex; border: 1px solid var(--separator); border-radius: 10px; overflow: hidden; }
+.segments { display: flex; border: 1px solid var(--line-strong); border-radius: var(--r-md); overflow: hidden; }
 .segments button { flex: 1; padding: 7px 4px; border: 0; background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
 .segments button + button { border-left: 1px solid var(--separator); }
-.segments button[aria-pressed=true] { background: var(--accent-soft); color: var(--link); font-weight: 700; }
+.segments button[aria-pressed=true] { background: var(--accent-soft); color: var(--link); font-weight: 600; }
 /* Телефон: страна (флаг и код) слева, номер справа — одной рамкой. Номер в разметке первый (PhoneInput.tsx) */
 .phone { display: flex; align-items: stretch; padding: 0; }
 .phone:focus-within { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
@@ -305,18 +305,19 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .block-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
 .block-head .segments { min-width: 340px; }
 .dates { max-width: 360px; }
-.total { margin: 0; font-size: 2rem; font-weight: 800; }
+.total { margin: 0; font: 600 2rem var(--display); letter-spacing: -.01em; }
 .strong { font-weight: 700; }
-.bars { display: flex; align-items: flex-end; gap: 3px; height: 90px; padding-top: 6px; }
+.bars { display: flex; align-items: flex-end; gap: 4px; height: 72px; padding-top: 6px; }
 .bar { flex: 1; height: 100%; display: flex; align-items: flex-end; }
-.bar span { width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
+.bar span { width: 100%; min-height: 2px; border-radius: 3px 3px 0 0; background: color-mix(in srgb, var(--accent) 70%, var(--card)); }
+.bar:hover span { background: var(--accent); }
 
 /* Склад */
 .toolbar .check { white-space: nowrap; }
 .toolbar select, .toolbar .ui-select { font: inherit; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .empty { display: grid; gap: 10px; justify-items: start; padding: 20px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .empty p { margin: 0; }
-.stock-big { font-size: 1.15rem; font-weight: 800; }
+.stock-big { font-size: 1.15rem; font-weight: 600; }
 .danger-zone { padding-top: 10px; border-top: 1px solid var(--separator); }
 
 /*
@@ -407,7 +408,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 }
 
 /* Подписи без эмодзи: метка Telegram в таблице, комментарий к записи */
-.tg { margin-left: 8px; padding: 1px 6px; border-radius: var(--r-sm); background: var(--req-bg); color: var(--req-ink); font-size: .8rem; font-weight: 500; vertical-align: 1px; }
+.tg { margin-left: 8px; color: var(--faint); font-size: .8rem; font-weight: 500; }
 .comment { padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .93rem; }
 
 /* Карточка приёма: строки с «изменить», вложенные формы, материалы */
@@ -588,13 +589,13 @@ details.agreement-box { max-height: none; }
 /* «День» одного врача на телефоне — как в прежнем приложении */
 .day-list { display: grid; gap: 10px; }
 .date-bar { display: flex; align-items: center; gap: 6px; padding: 10px 0 8px; }
-.date-step { flex: none; width: 44px; height: 52px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: 600 1.6rem/1 var(--display); cursor: pointer; }
-.date-pick { position: relative; flex: 1; min-width: 0; display: grid; justify-items: center; padding: 6px 8px; border-radius: 12px; background: var(--accent-soft); color: var(--link); cursor: pointer; }
+.date-step { flex: none; width: 44px; height: 52px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--card); color: var(--text); font: 600 1.6rem/1 var(--display); cursor: pointer; }
+.date-pick { position: relative; flex: 1; min-width: 0; display: grid; justify-items: center; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--card); color: var(--text); cursor: pointer; }
 .date-pick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-.date-main { font: 700 1.2rem var(--display); }
+.date-main { font: 600 1.2rem var(--display); }
 .date-sub { font-size: .9rem; color: var(--hint); }
 .btn.date-today { flex: none; min-height: 52px; padding: 0 12px; border-radius: 12px; font-size: .95rem; }
-.date-caret { font-size: .8em; opacity: .7; }
+.date-caret { font-size: .8em; color: var(--link); }
 /* «📅 другой день»: прозрачное поле даты поверх — нажатие открывает календарь */
 .day-actions { display: flex; gap: 8px; }
 .day-actions .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
@@ -603,12 +604,8 @@ details.agreement-box { max-height: none; }
 .day-note { margin: 0; }
 .day-empty { padding: 24px 0; text-align: center; }
 .day-list .rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.day-list .row { display: flex; align-items: stretch; gap: 6px; border-radius: 12px; background: var(--card); border: 1px solid var(--separator); border-left: 4px solid var(--line-strong); }
-.day-list .row.s-request { border-left-color: var(--req-ink); }
+.day-list .row { display: flex; align-items: stretch; gap: 6px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--separator); }
 .day-list .row.s-request .state { color: var(--req-ink); }
-.day-list .row.s-ok, .day-list .row.s-done { border-left-color: var(--ok-ink); }
-.day-list .row.s-wait, .day-list .row.s-cashier { border-left-color: var(--wait-ink); }
-.day-list .row.s-bad { border-left-color: var(--bad-ink); }
 .day-list .row.next { box-shadow: 0 0 0 2px var(--accent-soft); }
 .day-list .row.active { border-color: var(--accent); }
 .day-list .row.struck .name { text-decoration: line-through; color: var(--hint); }
@@ -619,12 +616,12 @@ details.agreement-box { max-height: none; }
 .day-list .row .end { font-size: .85rem; }
 .day-list .row .state, .day-list .row .row-note { grid-column: 2 / -1; font-size: .85rem; }
 .day-list .row-note { color: var(--hint); }
-.day-list .row.free { border-style: dashed; border-left-width: 1px; background: none; }
+.day-list .row.free { border-style: dashed; background: none; }
 .day-list .row.free .row-button { grid-template-columns: 52px 1fr auto; }
 .day-list .row.free .plus { color: var(--accent); font-weight: 700; }
 .day-list .row.free.readonly { padding: 10px; gap: 8px; }
 .day-list .row .waiting { color: var(--wait-ink); font-weight: 600; }
-.day-list .row.pause { padding: 10px; gap: 8px; background: var(--sunken); border-left-color: var(--separator); color: var(--hint); }
+.day-list .row.pause { padding: 10px; gap: 8px; background: var(--sunken); color: var(--hint); }
 .remind-quick { flex: none; align-self: center; width: 44px; height: 44px; margin-right: 6px; border: 1px solid var(--line-strong); border-radius: 50%;
   background: var(--card); color: var(--ok-ink); font: 700 .78rem var(--display); cursor: pointer; }
 .remind-quick.tg { color: #2AABEE; }
@@ -663,6 +660,8 @@ fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
 /* Эмодзи у кнопок (lib/buttonIcons.ts): «/ ""» — скринридер читает только подпись */
 .btn[data-ico]::before, .segments button[data-ico]::before { content: attr(data-ico); content: attr(data-ico) / ""; font-size: 1.05em; line-height: 1; margin-right: 6px; }
 .btn[data-ico]::before { margin-right: 0; }
+/* Вкладки и переключатели — без эмодзи: выбор читается словом и заливкой (DESIGN.md → эмодзи) */
+.segments button[data-ico]::before { content: none; }
 .ico { font-style: normal; }
 .settings-link { justify-content: flex-start; }
 .settings-emoji { flex: none; width: 1.8em; font-size: 1.25rem; text-align: center; }
@@ -830,23 +829,10 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .heat-legend .heat-cell { width: 16px; height: 16px; }
 
 /*
- * Цвет кнопок по смыслу (data-tone ставит lib/buttonIcons.ts по подписи): мягкая заливка и
- * тёмный текст того же цвета. Главная кнопка экрана (.primary) — бирюзовая, как была.
+ * Кнопки — нейтральные (2026-11-03, минимализм): цвет у одной главной кнопки экрана (.primary),
+ * значок-эмодзи остаётся. data-tone (lib/buttonIcons.ts) красит только опасное — красным текстом.
  */
-:root { --wa-bg: #D3F5DF; --wa-ink: #0A7034; --tg-bg: #D6EEFC; --tg-ink: #0F6AA6; }
-:root[data-theme=dark] { --wa-bg: #17432C; --wa-ink: #7FE0A3; --tg-bg: #173A52; --tg-ink: #8FD0FF; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --wa-bg: #17432C; --wa-ink: #7FE0A3; --tg-bg: #173A52; --tg-ink: #8FD0FF; } }
-.btn[data-tone]:not(.primary) { border-color: transparent; font-weight: 600; }
-.btn[data-tone=ok]:not(.primary) { background: var(--ok-bg); color: var(--ok-ink); }
-.btn[data-tone=info]:not(.primary) { background: var(--req-bg); color: var(--req-ink); }
-.btn[data-tone=warn]:not(.primary) { background: var(--wait-bg); color: var(--wait-ink); }
-.btn[data-tone=cash]:not(.primary) { background: var(--cash-bg); color: var(--cash-ink); }
-.btn[data-tone=bad]:not(.primary) { background: var(--bad-bg); color: var(--bad-ink); }
-.btn[data-tone=wa]:not(.primary) { background: var(--wa-bg); color: var(--wa-ink); }
-.btn[data-tone=tg]:not(.primary) { background: var(--tg-bg); color: var(--tg-ink); }
-.btn[data-tone=now]:not(.primary) { background: var(--accent-soft); color: var(--link); }
-.btn[data-tone]:not(.primary):hover:not(:disabled) { filter: brightness(.95); }
-:root[data-theme=dark] .btn[data-tone]:not(.primary):hover:not(:disabled) { filter: brightness(1.15); }
+.btn[data-tone=bad]:not(.primary) { color: var(--destructive); }
 
 /* Приёмы списком (телефон): лёгкая заливка цветом статуса — день читается по цвету */
 .day-list .row.s-request { background: color-mix(in srgb, var(--req-bg) 45%, var(--card)); }
@@ -856,27 +842,14 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .day-list .row.s-bad { background: color-mix(in srgb, var(--bad-bg) 45%, var(--card)); }
 .day-list .row.s-done { background: var(--card); }
 .day-list .row.s-done .name { color: var(--hint); }
-.remind-quick { background: var(--wa-bg); border-color: transparent; color: var(--wa-ink); }
-.remind-quick.tg { background: var(--tg-bg); color: var(--tg-ink); }
 
-/* Меню: у каждого раздела свой цвет значка — раздел узнаётся сразу */
-.nav[data-section=schedule] .icon { color: #3CCFC0; }
-.nav[data-section=patients] .icon { color: #7FB2FF; }
-.nav[data-section=cash] .icon { color: #F5C451; }
-.nav[data-section=stock] .icon { color: #C9A2FF; }
-.nav[data-section=settings] .icon { color: #FF9F80; }
-.nav[data-section=platform] .icon { color: #9FD8E8; }
-
-/* «Настройки»: значок пункта — на цветной плашке, у каждой группы свой цвет */
-.settings-emoji { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: color-mix(in srgb, #3CCFC0 30%, var(--card)); font-size: 1.3rem; }
-.settings-group[data-group="1"] .settings-emoji { background: var(--req-bg); }
-.settings-group[data-group="2"] .settings-emoji { background: var(--wait-bg); }
-.settings-group[data-group="3"] .settings-emoji { background: color-mix(in srgb, #C9A2FF 35%, var(--card)); }
+/* «Настройки»: значок пункта — на одной спокойной плашке (цвет групп убран 2026-11-03) */
+.settings-emoji { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-md); background: var(--sunken); font-size: 1.15rem; }
 
 /* Чьё расписание — свой список (телефон, много врачей): schedule/DoctorPicker.tsx */
 .doctor-picker { position: relative; margin-bottom: 4px; }
-.pick-current { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 14px 8px 10px; border: 1px solid var(--line-strong); border-radius: 14px;
-  background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; box-shadow: var(--shadow); }
+.pick-current { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 14px 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .pick-current[aria-expanded=true] { border-color: var(--accent); }
 .pick-avatar { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; object-fit: cover; color: #fff; font: 600 1rem var(--display); }
 .pick-avatar.all { background: var(--accent-soft); font-size: 1.3rem; }
@@ -1006,9 +979,9 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
   .table { display: block; white-space: normal; border: 0; }
   .table thead { display: none; }
   .table tbody { display: grid; gap: 8px; }
-  .table tr { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--separator); border-radius: 12px; background: var(--card); }
+  .table tr { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); }
   .table td, .table tbody th { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 2px 0; border: 0; text-align: right; min-height: 0; }
-  .table td::before { content: attr(data-label); color: var(--hint); font-size: .88rem; text-align: left; flex: none; max-width: 45%; }
+  .table td::before { content: attr(data-label); color: var(--faint); font-size: .85rem; text-align: left; flex: none; max-width: 45%; }
   .table td:not([data-label])::before, .table td[data-label=""]::before { content: none; }
   .table td:not([data-label]), .table td:first-child { justify-content: flex-start; text-align: left; }
   .table td:first-child::before { content: none; }
@@ -1016,11 +989,15 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
   .table td:empty { display: none; }
   .table tr.group-row { padding: 12px 2px 0; border: 0; background: none; }
   .table tr.clickable { cursor: pointer; }
+  /* Таблица внутри секции — строки разделены линией, без карточки в карточке */
+  .card-block .table tbody { gap: 0; }
+  .card-block .table tr { padding: 10px 0; border: 0; border-radius: 0; border-top: 1px solid var(--separator); background: none; }
+  .card-block .table tbody tr:first-child { border-top: 0; }
 }
 
 /* Карточка пациента: «Откуда узнал о клинике» — заметной строкой, не указано — подсвечено */
 .source-line { display: grid; gap: 8px; margin: 4px 0 10px; }
-.source-line.empty { padding: 8px 10px; border-radius: var(--r-md); background: color-mix(in srgb, var(--wait-bg) 35%, var(--card)); }
+.source-line.empty { padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
 .source-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .source-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .source-chip { min-height: 34px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .85rem; cursor: pointer; }
@@ -1327,7 +1304,7 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .salary-howto summary { cursor: pointer; font-weight: 600; }
 .salary-howto ol { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 6px; }
 .salary-preview { margin: 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); }
-/* «🧮 Калькулятор зарплаты»: свёрнут, четыре поля — две колонки, на узком телефоне — одна */
+/* «Калькулятор зарплаты»: свёрнут, четыре поля — две колонки, на узком телефоне — одна */
 .salary-calc summary { cursor: pointer; font-weight: 600; }
 .salary-calc[open] { gap: 10px; }
 .salary-calc .field { max-width: 420px; }
@@ -1367,7 +1344,7 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .debtor-visits .chip { font: inherit; font-size: .85rem; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); cursor: pointer; }
 @media (max-width: 420px) { .debtors-sum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 
-/* «📝 Отчёт пациенту» (print/VisitReport.tsx) */
+/* «Отчёт пациенту» (print/VisitReport.tsx) */
 .visit-report { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); background: var(--card); }
 .visit-report h3 { margin: 0; }
 .visit-report p { margin: 0; }

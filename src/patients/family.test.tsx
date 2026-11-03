@@ -46,7 +46,7 @@ test('семья: добавить родственника поиском — �
   await userEvent.type(within(box).getByRole('searchbox', { name: 'Найти родственника' }), 'Эрлан')
   await userEvent.click(await within(box).findByRole('button', { name: 'Эрлан Т.' }))
   expect(joined).toEqual({ relativeId: 4 })
-  expect(await within(box).findByRole('heading', { name: '👨‍👩‍👧 Семья Садыкова' })).toBeInTheDocument()
+  expect(await within(box).findByRole('heading', { name: 'Семья Садыкова' })).toBeInTheDocument()
   // Нажать на родственника — его карточка
   await userEvent.click(within(box).getByRole('button', { name: 'Эрлан Т.' }))
   expect(await screen.findByRole('heading', { name: 'Эрлан Т.' })).toBeInTheDocument()

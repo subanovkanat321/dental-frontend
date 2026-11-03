@@ -104,7 +104,7 @@ test('«Часы работы»: часы клиники с субботой, о
   expect(await screen.findByRole('group', { name: 'Часы работы' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Дастан Т\./ })).toHaveAttribute('aria-expanded', 'false')
   await user.click(screen.getByRole('button', { name: '‹ Настройки' }))
-  expect(await screen.findByRole('heading', { name: '⚙️ Настройки' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
 })
 
 test('«О клинике»: несколько телефонов (до трёх, по порядку) и WhatsApp другим номером; ошибка номера — под полем', async () => {
@@ -191,7 +191,7 @@ test('«О клинике»: «Сохранить» видно только с �
   expect(within(form).queryByRole('button', { name: 'Сохранить' })).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: '‹ Настройки' }))
   expect(confirm).not.toHaveBeenCalled()
-  expect(await screen.findByRole('heading', { name: '⚙️ Настройки' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: /О клинике/ }))
   const again = await screen.findByRole('form', { name: 'О клинике' })
@@ -216,7 +216,7 @@ test('«О клинике»: «Сохранить» видно только с �
   confirm.mockClear()
   await user.click(screen.getByRole('button', { name: '‹ Настройки' }))
   expect(confirm).not.toHaveBeenCalled()
-  expect(await screen.findByRole('heading', { name: '⚙️ Настройки' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
   confirm.mockRestore()
 })
 
@@ -248,7 +248,7 @@ test('«Часы работы» в Telegram: стрелка «назад» с н
     expect(screen.getByRole('form', { name: 'Часы клиники' })).toBeInTheDocument()
 
     act(() => back?.())
-    expect(await screen.findByRole('heading', { name: '⚙️ Настройки' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
     expect(closing.off).toHaveBeenCalled()
   } finally {
     confirm.mockRestore()
