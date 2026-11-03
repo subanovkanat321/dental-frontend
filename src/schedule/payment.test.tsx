@@ -41,25 +41,34 @@ async function card() {
   return screen.getByRole('complementary', { name: 'Карточка приёма' })
 }
 
-test('оплата частями: цены услуг складываются, «Не всё сразу» — стоимость и срок, второй способ', async () => {
+test('оплата по шагам: стоимость из цен услуг, «часть, остальное потом» — долг и срок, «разными способами»', async () => {
   const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 }),
     (_, b) => ({ paidSom: b.amountSom as number, chargeSom: b.chargeSom as number, debtSom: (b.chargeSom as number) - (b.amountSom as number), dueOn: b.dueOn as string }))
   renderApp()
   const panel = await card()
   const form = within(panel).getByRole('form', { name: 'Оплата' })
+  // 1. Стоимость: цены услуг складываются
   await userEvent.click(await within(form).findByRole('button', { name: /Пломба/ }))
   await userEvent.click(within(form).getByRole('button', { name: /Чистка/ }))
   expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(5000)
   expect(within(form).queryByRole('button', { name: /Старое/ })).not.toBeInTheDocument()
+  expect(within(form).getByRole('button', { name: /Всё сразу · 5\s000 сом/ })).toHaveAttribute('aria-pressed', 'true')
 
-  await userEvent.click(within(form).getByLabelText(/Не всё сразу/))
-  expect(within(form).getByLabelText('Стоимость приёма, сом')).toHaveValue(5000)
-  await userEvent.clear(within(form).getByLabelText('Сумма, сом'))
-  await userEvent.type(within(form).getByLabelText('Сумма, сом'), '1000')
+  // 2. Часть сейчас — остальное видно сразу, срок по желанию
+  await userEvent.click(within(form).getByRole('button', { name: 'Часть, остальное потом' }))
+  await userEvent.type(within(form).getByLabelText('Заплатил сейчас, сом'), '2500')
+  expect(within(form).getByText(/Остальное потом:/)).toHaveTextContent(/2\s500 сом/)
   await userEvent.type(within(form).getByLabelText(/Доплатит до/), '2099-01-15')
-  await userEvent.click(within(form).getByRole('button', { name: '＋ Ещё способ оплаты' }))
-  await userEvent.type(within(form).getByLabelText('Ещё оплачено, сом (2)'), '1500')
-  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить оплату' }))
+
+  // 3. Разными способами — сумма по каждому, пока не сойдётся
+  await userEvent.click(within(form).getByRole('button', { name: 'Разными способами' }))
+  await userEvent.type(within(form).getByLabelText('Наличными, сом'), '1000')
+  expect(within(form).getByText(/Распределено 1\s000 сом из 2\s500 сом/)).toBeInTheDocument()
+  await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату/ }))
+  expect(within(form).getByRole('alert')).toHaveTextContent('поправьте суммы')
+  await userEvent.type(within(form).getByLabelText('Переводом, сом'), '1500')
+  expect(within(form).getByText(/Сходится/)).toBeInTheDocument()
+  await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату · 2\s500 сом/ }))
 
   expect(await within(panel).findByText(/Долг 2\s500 сом · доплатит до/)).toBeInTheDocument()
   expect(sent).toEqual([{ path: 'payment', body: {
@@ -69,17 +78,18 @@ test('оплата частями: цены услуг складываются,
   expect(within(panel).getByRole('button', { name: 'Принять доплату' })).toBeInTheDocument()
 })
 
-test('стоимость не больше оплаченного — подсказка, запрос не уходит', async () => {
+test('«часть»: заплатил не меньше стоимости — подсказка «выберите Всё сразу», запрос не уходит', async () => {
   const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', servicePriceSom: 2000, version: 1 }), () => ({}))
   renderApp()
   const form = within(await card()).getByRole('form', { name: 'Оплата' })
-  await userEvent.click(within(form).getByLabelText(/Не всё сразу/))
-  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить оплату' }))
-  expect(within(form).getByRole('alert')).toHaveTextContent('Стоимость должна быть больше')
+  await userEvent.click(within(form).getByRole('button', { name: 'Часть, остальное потом' }))
+  await userEvent.type(within(form).getByLabelText('Заплатил сейчас, сом'), '2000')
+  await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату/ }))
+  expect(within(form).getByRole('alert')).toHaveTextContent('выберите «Всё сразу»')
   expect(sent).toEqual([])
 })
 
-test('оплачено частями: история способов, «Изменить» открывает форму с частями', async () => {
+test('оплачено разными способами: история, «Изменить» открывает форму с суммами по способам', async () => {
   backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', paidSom: 5000, paymentMethod: 'CASH', version: 2 }), () => ({}), {
     payments: [{ id: 1, amountSom: 3000, method: 'CASH' }, { id: 2, amountSom: 2000, method: 'TRANSFER' }],
   })
@@ -88,8 +98,10 @@ test('оплачено частями: история способов, «Изм
   expect(await within(panel).findByText(/^наличные 3\s000 сом \+ перевод 2\s000 сом$/)).toBeInTheDocument()
   await userEvent.click(within(panel).getByRole('button', { name: 'Изменить' }))
   const form = await within(panel).findByRole('form', { name: 'Оплата' })
-  expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(3000)
-  expect(within(form).getByLabelText('Ещё оплачено, сом (2)')).toHaveValue(2000)
+  expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(5000)
+  expect(within(form).getByRole('button', { name: 'Разными способами' })).toHaveAttribute('aria-pressed', 'true')
+  expect(within(form).getByLabelText('Наличными, сом')).toHaveValue(3000)
+  expect(within(form).getByLabelText('Переводом, сом')).toHaveValue(2000)
   await userEvent.click(within(form).getByRole('button', { name: 'Отмена' }))
   expect(within(panel).queryByRole('form', { name: 'Оплата' })).not.toBeInTheDocument()
 })
@@ -127,7 +139,7 @@ test('на кассе: врач меняет сумму счёта', async () =>
   expect(sent).toEqual([{ path: 'bill', body: { chargeSom: 4500 } }])
 })
 
-test('стёрли сумму у оплаченного приёма — сначала вопрос: «Снять отметку оплаты 1 500 сом?»', async () => {
+test('«Снять отметку оплаты» — отдельной кнопкой и только после вопроса', async () => {
   const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1, paidSom: 1500, paymentMethod: 'CASH' }),
     (_, b) => ({ paidSom: b.amountSom as number | undefined }))
   const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
@@ -135,12 +147,11 @@ test('стёрли сумму у оплаченного приёма — сна�
   const panel = await card()
   await userEvent.click(within(panel).getByRole('button', { name: 'Изменить' }))
   const form = await within(panel).findByRole('form', { name: 'Оплата' })
-  await userEvent.clear(within(form).getByLabelText('Сумма, сом'))
-  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить оплату' }))
+  await userEvent.click(within(form).getByRole('button', { name: 'Снять отметку оплаты' }))
   expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/Снять отметку оплаты 1\s500 сом/))
   expect(sent).toEqual([])
-  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить оплату' }))
-  await vi.waitFor(() => expect(sent).toHaveLength(1))
+  await userEvent.click(within(form).getByRole('button', { name: 'Снять отметку оплаты' }))
+  await vi.waitFor(() => expect(sent).toEqual([{ path: 'payment', body: { method: 'CASH' } }]))
   confirm.mockRestore()
 })
 

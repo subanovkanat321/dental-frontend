@@ -103,7 +103,7 @@ test('регистратура: «К оплате на кассе» — нажа
   await userEvent.click(within(table).getByRole('button', { name: 'Айгуль Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
   expect(within(panel).getByLabelText('Сумма, сом')).toHaveValue(4000)
-  await userEvent.click(within(panel).getByRole('button', { name: 'Принять оплату' }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Принять оплату/ }))
 
   expect(await screen.findByText('Никто не ждёт оплаты')).toBeInTheDocument()
   expect(paid).toEqual({ amountSom: 4000, method: 'CASH' })

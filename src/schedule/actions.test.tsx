@@ -66,7 +66,7 @@ test('приём состоялся — оплата: сумма из цены �
   expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(2500)
 
   await userEvent.click(within(form).getByRole('button', { name: 'Карта' }))
-  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить оплату' }))
+  await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату/ }))
   expect(await within(panel).findByText(/^2\s500 сом/)).toHaveTextContent('карта')
   expect(sent).toEqual([{ path: 'payment', body: { amountSom: 2500, method: 'CARD' } }])
 })
@@ -79,7 +79,7 @@ test('в клинике есть регистратура — врач отпр�
   await userEvent.click(within(panel).getByRole('button', { name: /На кассу/ }))
 
   expect(await within(panel).findByText(/К оплате на кассе: 4\s000 сом/)).toBeInTheDocument()
-  expect(within(panel).getByRole('button', { name: 'Принять оплату' })).toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: /^Принять оплату/ })).toBeInTheDocument()
   expect(sent).toEqual([{ path: 'bill', body: { chargeSom: 4000 } }])
 })
 

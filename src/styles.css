@@ -214,7 +214,13 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .payment-history { margin: 0; font-size: .88rem; }
 .price-hints { display: flex; flex-wrap: wrap; gap: 6px; }
 .price-hints .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
-.payment-part, .payment-extra-row { display: grid; gap: 8px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--sunken); }
+.payment-part, .payment-extra-row, .payment-split { display: grid; gap: 8px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--sunken); }
+/* Оплата по шагам (PaymentBox): номер шага слева — «сколько стоит → сколько заплатил → чем» */
+.pay-step { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; }
+.pay-step-n { width: 24px; height: 24px; margin-top: 2px; display: grid; place-items: center; border-radius: 50%; background: var(--accent-soft); color: var(--link); font-size: .8rem; font-weight: 700; }
+.pay-step-body { display: grid; gap: 8px; min-width: 0; }
+.pay-step-title { font-size: .9rem; font-weight: 600; }
+.pay-rest { margin: 0; font-size: .92rem; }
 .pay-form > .link { justify-self: start; }
 .price-hints .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
 .price-hints .chip.more { color: var(--link); }

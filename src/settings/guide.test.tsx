@@ -25,7 +25,7 @@ test('«Памятка» открывается на роли сотрудник
 
   await userEvent.click(within(roles).getByRole('button', { name: 'Регистратура' }))
   expect(screen.queryByRole('region', { name: 'Что видит ассистент' })).not.toBeInTheDocument()
-  expect(screen.getByRole('region', { name: 'Принять оплату' })).toHaveTextContent('Приём состоялся')
+  expect(screen.getByRole('region', { name: /^Принять оплату/ })).toHaveTextContent('Приём состоялся')
 
   await userEvent.click(screen.getByRole('button', { name: '‹ Настройки' }))
   expect(back).toHaveBeenCalled()

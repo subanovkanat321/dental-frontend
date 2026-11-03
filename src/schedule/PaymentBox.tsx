@@ -24,8 +24,8 @@ type View = 'show' | 'edit' | 'bill' | 'extra' | 'rest' | 'billed'
  * - оплачен: сумма, «Изменить», долг со сроком или «Оплачено полностью», история платежей;
  *   была только предоплата — «Указать стоимость и принять остаток»; есть долг — «Принять доплату»;
  * - «На кассу» (в клинике есть регистратура, а я врач): «К оплате на кассе», врачу — «Изменить сумму»;
- * - форма: сумма, цены услуг кнопками (ещё раз — прибавить), «Не всё сразу» со стоимостью и сроком,
- *   «＋ Ещё способ оплаты» — часть наличными, часть переводом. Пустая сумма — снять отметку оплаты.
+ * - форма по шагам: стоимость → «всё сразу» или «часть, остальное потом» → чем заплатил (или
+ *   «разными способами»); «Снять отметку оплаты» — отдельной кнопкой.
  * После ответа сервера карточка пересоздаёт блок (ключ — версия приёма), он открывается в нужном виде.
  */
 export function PaymentBox({ appointment: a, me }: { appointment: Appointment; me: Me }) {
@@ -129,8 +129,20 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
   )
 }
 
-type Part = { key: number; amount: string; method: Method }
+/** Как заплатил: один способ или «разными» — тогда сумма по каждому. */
+type How = Method | 'SPLIT'
+const HOW: [How, string][] = [...METHODS, ['SPLIT', 'Разными способами']]
+type Split = Record<Method, string>
+const NO_SPLIT: Split = { CASH: '', TRANSFER: '', CARD: '' }
+const SPLIT_LABEL: Record<Method, string> = { CASH: 'Наличными, сом', TRANSFER: 'Переводом, сом', CARD: 'Картой, сом' }
 
+/**
+ * Оплата приёма по шагам — как говорят на кассе:
+ * 1) сколько стоит приём (цены услуг кнопками, ещё раз — прибавить);
+ * 2) заплатил всё сразу или часть — тогда сколько сейчас, остальное долгом (и до какого числа);
+ * 3) чем заплатил: наличные, перевод, карта или «разными способами» — сумма по каждому.
+ * Одна сумма вводится один раз: «всё сразу» — оплачено = стоимость; части считаются от «заплатил».
+ */
 function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   a: Appointment
   me: Me
@@ -139,65 +151,78 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   onCancel?: () => void
 }) {
   const action = useAppointmentAction(a)
-  const first = initialParts.length > 1 ? initialParts[0] : undefined
-  const [amount, setAmount] = useState(String(first?.amountSom ?? a.paidSom ?? a.chargeSom ?? a.servicePriceSom ?? ''))
-  const [method, setMethod] = useState<Method>(first?.method ?? a.paymentMethod ?? 'CASH')
-  const [partial, setPartial] = useState((a.debtSom ?? 0) > 0)
-  const [charge, setCharge] = useState(String(a.chargeSom ?? a.servicePriceSom ?? ''))
+  const hadDebt = (a.debtSom ?? 0) > 0
+  const [cost, setCost] = useState(String(a.chargeSom ?? a.paidSom ?? a.servicePriceSom ?? ''))
+  const [whole, setWhole] = useState(!hadDebt)
+  const [paidNow, setPaidNow] = useState(hadDebt ? String(a.paidSom ?? '') : '')
   const [due, setDue] = useState(a.dueOn ?? '')
-  const [parts, setParts] = useState<Part[]>(initialParts.length > 1
-    ? initialParts.slice(1).map((e, i) => ({ key: i, amount: String(e.amountSom ?? ''), method: e.method ?? 'TRANSFER' }))
-    : [])
+  const startSplit = initialParts.length > 1
+  const [how, setHow] = useState<How>(startSplit ? 'SPLIT' : a.paymentMethod ?? 'CASH')
+  const [split, setSplit] = useState<Split>(() => {
+    if (!startSplit) return NO_SPLIT
+    const sums = { ...NO_SPLIT }
+    for (const e of initialParts) if (e.method) sums[e.method] = String((Number(sums[e.method]) || 0) + (e.amountSom ?? 0))
+    return sums
+  })
   const [problem, setProblem] = useState('')
   const toCashier = me.hasReception && !me.reception
 
-  const pick = (price: number, add: boolean) => {
-    const [value, set] = partial ? [charge, setCharge] : [amount, setAmount]
-    set(String(add ? (Number(value) || 0) + price : price))
-  }
-  const togglePartial = (on: boolean) => {
-    // Включили — стоимость из того, что было в «Оплате»; пусть впишут взнос
-    if (on && charge === '' && amount !== '') setCharge(amount)
-    setPartial(on)
-  }
+  const costNum = cost === '' ? null : Number(cost)
+  const paid = whole ? costNum : paidNow === '' ? null : Number(paidNow)
+  const rest = costNum != null && paid != null ? costNum - paid : null
+  const splitSum = METHODS.reduce((sum, [m]) => sum + (Number(split[m]) || 0), 0)
+
+  const pick = (price: number, add: boolean) => setCost(String(add ? (Number(cost) || 0) + price : price))
 
   const save = () => {
     setProblem('')
-    const main = amount === '' ? null : Number(amount)
-    const extra = parts.filter((p) => p.amount !== '').map((p) => ({ amountSom: Number(p.amount), method: p.method }))
-    if (extra.length && main == null) {
-      setProblem('Впишите сумму первой части')
+    if (costNum == null || costNum < 1) {
+      setProblem('Впишите, сколько стоит приём')
       return
     }
-    const paid = main == null ? null : main + extra.reduce((s, p) => s + p.amountSom, 0)
-    // Стёрли сумму у оплаченного приёма — это снятие оплаты: деньги пропадут из «Кассы», переспросить
-    if (paid == null && a.paidSom != null
-      && !window.confirm(`Снять отметку оплаты ${somText(a.paidSom)}? Сумма пропадёт из «Кассы» и отчёта.`)) return
-    let cost = partial && charge !== '' ? Number(charge) : null
-    if (partial && paid != null && cost != null && cost <= paid) {
-      setProblem('Стоимость должна быть больше, чем оплачено сейчас — иначе это полная оплата')
-      return
+    if (!whole) {
+      if (paid == null || paid < 1) {
+        setProblem('Впишите, сколько заплатил сейчас')
+        return
+      }
+      if (paid >= costNum) {
+        setProblem('Заплатил всё — выберите «Всё сразу»')
+        return
+      }
     }
-    // Счёт с кассы, а заплатил меньше — остаток долгом, стоимость — сумма счёта
-    if (!partial && paid != null && a.paidSom == null && a.chargeSom != null && paid < a.chargeSom) cost = a.chargeSom
+    const amount = paid!
+    let parts: { amountSom: number; method: Method }[] | undefined
+    let method: Method = how === 'SPLIT' ? 'CASH' : how
+    if (how === 'SPLIT') {
+      parts = METHODS.filter(([m]) => Number(split[m]) > 0).map(([m]) => ({ amountSom: Number(split[m]), method: m }))
+      if (splitSum !== amount) {
+        setProblem(`По способам вышло ${somText(splitSum)}, а заплатил ${somText(amount)} — поправьте суммы`)
+        return
+      }
+      if (parts.length < 2) {
+        // Одним способом — не «разными»
+        method = parts[0]?.method ?? 'CASH'
+        parts = undefined
+      } else method = parts[0]!.method
+    }
+    // Счёт с кассы, а пришло меньше — остаток долгом (стоимость = сумма счёта)
+    const charge = !whole || (a.chargeSom != null && amount < a.chargeSom) ? costNum : undefined
     action.mutate({
       kind: 'payment',
-      body: {
-        amountSom: paid ?? undefined,
-        method,
-        chargeSom: cost ?? undefined,
-        dueOn: partial && due ? due : undefined,
-        parts: extra.length && main != null ? [{ amountSom: main, method }, ...extra] : undefined,
-      },
+      body: { amountSom: amount, method, chargeSom: charge, dueOn: !whole && due ? due : undefined, parts },
     })
+  }
+  const unmark = () => {
+    if (!window.confirm(`Снять отметку оплаты ${somText(a.paidSom ?? 0)}? Сумма пропадёт из «Кассы» и отчёта.`)) return
+    action.mutate({ kind: 'payment', body: { method: a.paymentMethod ?? 'CASH' } })
   }
   const bill = () => {
     setProblem('')
-    if (amount === '' || Number(amount) < 1) {
+    if (costNum == null || costNum < 1) {
       setProblem('Впишите, сколько вышло за приём')
       return
     }
-    action.mutate({ kind: 'bill', body: { chargeSom: Number(amount) } })
+    action.mutate({ kind: 'bill', body: { chargeSom: costNum } })
   }
 
   const error = problem || fieldError(action.error)
@@ -207,18 +232,18 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
     </button>
   )
   const cancel = onCancel && <button type="button" className="link" onClick={onCancel}>Отмена</button>
-  const amountField = (title: string) => (
+  const costField = (title: string) => (
     <label className="field"><span>{title}</span>
       <input type="number" min={0} inputMode="numeric" placeholder="Сумма, сом" aria-label="Сумма, сом"
-        value={amount} onChange={(e) => setAmount(e.target.value)} />
+        value={cost} onChange={(e) => setCost(e.target.value)} />
     </label>
   )
 
   if (billOnly) {
     return (
       <form className="pay-form" aria-label="Сумма на кассу" onSubmit={(e) => { e.preventDefault(); bill() }}>
-        {amountField('Сколько вышло за приём, сом')}
-        <PriceChips onPick={(p, add) => setAmount(String(add ? (Number(amount) || 0) + p : p))} />
+        {costField('Сколько вышло за приём, сом')}
+        <PriceChips onPick={pick} />
         {error && <p className="error" role="alert">{error}</p>}
         {cashierButton}
         {cancel}
@@ -229,37 +254,66 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   return (
     <form className="pay-form" aria-label="Оплата" onSubmit={(e) => { e.preventDefault(); save() }}>
       {waiting && <p className="payment-done">К оплате на кассе: {somText(a.chargeSom!)}</p>}
-      {amountField(partial ? 'Оплачено сейчас, сом' : 'Оплата, сом')}
-      <PriceChips onPick={pick} />
-      <label className="check">
-        <input type="checkbox" checked={partial} onChange={(e) => togglePartial(e.target.checked)} />
-        Не всё сразу — остальное доплатит позже
-      </label>
-      {partial && (
-        <div className="payment-part">
-          <label className="field"><span>Стоимость приёма, сом</span>
-            <input type="number" min={0} inputMode="numeric" value={charge} onChange={(e) => setCharge(e.target.value)} /></label>
-          <label className="field"><span>Доплатит до (можно не указывать)</span>
-            <DateInput min={todayIn()} value={due} onChange={(e) => setDue(e.target.value)} /></label>
+      <div className="pay-step">
+        <span className="pay-step-n" aria-hidden="true">1</span>
+        <div className="pay-step-body">
+          {costField('Стоимость приёма, сом')}
+          <PriceChips onPick={pick} />
         </div>
-      )}
-      <MethodButtons value={method} onChange={setMethod} />
-      {parts.map((p, i) => (
-        <div key={p.key} className="payment-extra-row">
-          <label className="field"><span>＋ Ещё</span>
-            <input type="number" min={1} inputMode="numeric" placeholder="Сумма, сом" aria-label={`Ещё оплачено, сом (${i + 2})`}
-              value={p.amount} onChange={(e) => setParts(parts.map((x) => x.key === p.key ? { ...x, amount: e.target.value } : x))} /></label>
-          <MethodButtons label={`Как заплатили (${i + 2})`} value={p.method}
-            onChange={(m) => setParts(parts.map((x) => x.key === p.key ? { ...x, method: m } : x))} />
-          <button type="button" className="link" onClick={() => setParts(parts.filter((x) => x.key !== p.key))}>Убрать</button>
+      </div>
+
+      <div className="pay-step">
+        <span className="pay-step-n" aria-hidden="true">2</span>
+        <div className="pay-step-body">
+          <span className="pay-step-title">Сколько заплатил</span>
+          <div className="segments" role="group" aria-label="Сколько заплатил">
+            <button type="button" aria-pressed={whole} onClick={() => setWhole(true)}>
+              Всё сразу{costNum ? ` · ${somText(costNum)}` : ''}</button>
+            <button type="button" aria-pressed={!whole} onClick={() => setWhole(false)}>Часть, остальное потом</button>
+          </div>
+          {!whole && (
+            <div className="payment-part">
+              <label className="field"><span>Заплатил сейчас, сом</span>
+                <input type="number" min={1} inputMode="numeric" value={paidNow} onChange={(e) => setPaidNow(e.target.value)} /></label>
+              {rest != null && rest > 0 && <p className="pay-rest">Остальное потом: <b className="num">{somText(rest)}</b> — станет долгом пациента</p>}
+              <label className="field"><span>Доплатит до (можно не указывать)</span>
+                <DateInput min={todayIn()} value={due} onChange={(e) => setDue(e.target.value)} /></label>
+            </div>
+          )}
         </div>
-      ))}
-      <button type="button" className="link" onClick={() => setParts([...parts, { key: Date.now(), amount: '', method: 'TRANSFER' }])}>＋ Ещё способ оплаты</button>
+      </div>
+
+      <div className="pay-step">
+        <span className="pay-step-n" aria-hidden="true">3</span>
+        <div className="pay-step-body">
+          <span className="pay-step-title">Чем заплатил</span>
+          <div className="segments wrap" role="group" aria-label="Как заплатили">
+            {HOW.map(([code, name]) => (
+              <button key={code} type="button" aria-pressed={how === code} onClick={() => setHow(code)}>{name}</button>
+            ))}
+          </div>
+          {how === 'SPLIT' && (
+            <div className="payment-split">
+              {METHODS.map(([m]) => (
+                <label key={m} className="field"><span>{SPLIT_LABEL[m]}</span>
+                  <input type="number" min={0} inputMode="numeric" placeholder="0" value={split[m]}
+                    onChange={(e) => setSplit({ ...split, [m]: e.target.value })} /></label>
+              ))}
+              {paid != null && (
+                <p className={splitSum === paid ? 'tone-ok' : 'hint'}>
+                  {splitSum === paid ? `✓ Сходится: ${somText(paid)}` : `Распределено ${somText(splitSum)} из ${somText(paid)}`}</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       {error && <p className="error" role="alert">{error}</p>}
-      <button type="submit" className="btn primary" disabled={action.isPending}>{waiting ? 'Принять оплату' : 'Сохранить оплату'}</button>
-      {a.paidSom != null && <p className="hint small">Сотрите сумму и сохраните — отметка оплаты снимется.</p>}
-      {cashierButton && <p className="hint small">Пациент платит в регистратуре? Впишите сумму и передайте на кассу:</p>}
+      <button type="submit" className="btn primary" disabled={action.isPending}>
+        {waiting ? 'Принять оплату' : 'Сохранить оплату'}{paid ? ` · ${somText(paid)}` : ''}</button>
+      {cashierButton && <p className="hint small">Пациент платит в регистратуре? Впишите стоимость и передайте на кассу:</p>}
       {cashierButton}
+      {a.paidSom != null && <button type="button" className="link danger-link" disabled={action.isPending} onClick={unmark}>Снять отметку оплаты</button>}
       {cancel}
     </form>
   )
