@@ -1708,6 +1708,50 @@
         }
       }
     },
+    "/api/clinic/post-ai" : {
+      "get" : {
+        "tags" : [ "before-after-ai-controller" ],
+        "operationId" : "postAi",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportControllerAiSetting"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "before-after-ai-controller" ],
+        "operationId" : "setPostAi",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitReportControllerAiChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportControllerAiSetting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/dictation-ai" : {
       "get" : {
         "tags" : [ "visit-dictation-controller" ],
@@ -4383,6 +4427,80 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PatientFilesView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/before-after/ai-text" : {
+      "post" : {
+        "tags" : [ "before-after-ai-controller" ],
+        "operationId" : "beforeAfterText",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BeforeAfterAiTextRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BeforeAfterAiPostText"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/before-after/ai-frame" : {
+      "post" : {
+        "tags" : [ "before-after-ai-controller" ],
+        "operationId" : "beforeAfterFrame",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BeforeAfterAiFrameRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BeforeAfterAiFrames"
                 }
               }
             }
@@ -11906,6 +12024,91 @@
           },
           "canDelete" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "BeforeAfterAiTextRequest" : {
+        "properties" : {
+          "procedure" : {
+            "type" : "string"
+          },
+          "duration" : {
+            "type" : "string"
+          },
+          "style" : {
+            "type" : "string",
+            "enum" : [ "SHORT", "FULL", "EMOJI" ]
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "clinic" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "bookingUrl" : {
+            "type" : "string"
+          },
+          "previous" : {
+            "type" : "string"
+          }
+        }
+      },
+      "BeforeAfterAiPostText" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "BeforeAfterAiFrameRequest" : {
+        "properties" : {
+          "beforeFileId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "afterFileId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "BeforeAfterAiFrames" : {
+        "properties" : {
+          "before" : {
+            "$ref" : "#/components/schemas/BeforeAfterAiRect"
+          },
+          "after" : {
+            "$ref" : "#/components/schemas/BeforeAfterAiRect"
+          }
+        }
+      },
+      "BeforeAfterAiRect" : {
+        "properties" : {
+          "x" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "y" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "w" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "h" : {
+            "type" : "number",
+            "format" : "double"
           }
         }
       },

@@ -84,6 +84,33 @@ export function clampCrop(frame: Box, image: { width: number; height: number }, 
   return { zoom, cx: clamp(crop.cx, hx, 1 - hx), cy: clamp(crop.cy, hy, 1 - hy) }
 }
 
+/** Фото и где на нём улыбка (доли снимка — так отвечает «✨ Подогнать кадр»). */
+export type SmileShot = { frame: Box; image: { width: number; height: number }; smile: Box }
+
+/**
+ * Кадр «до» и «после» так, чтобы улыбки были одного размера и в одном месте рамки: ширина улыбки — около
+ * 70 % рамки (но по высоте не больше 80 %), центр улыбки — в центре рамки. Одна общая доля на оба фото:
+ * если одну улыбку крупнее не сделать (масштаб упёрся в 1 или maxZoom) — вторую подстраиваем под неё.
+ * Сами фото не меняются — только кадр, его можно поправить руками.
+ */
+export function fitSmiles(shots: [SmileShot, SmileShot], maxZoom = 3): [Crop, Crop] {
+  // Размер улыбки в долях рамки при zoom = 1
+  const at1 = shots.map(({ frame, image, smile }) => {
+    const base = Math.max(frame.w / image.width, frame.h / image.height)
+    return { w: (smile.w * image.width * base) / frame.w, h: (smile.h * image.height * base) / frame.h }
+  })
+  let t = 0.7
+  for (const a of at1) t = Math.min(t, (0.8 * a.w) / a.h)
+  for (const a of at1) t = Math.max(t, a.w)
+  for (const a of at1) t = Math.min(t, a.w * maxZoom)
+  const crop = (i: 0 | 1): Crop => {
+    const { frame, image, smile } = shots[i]
+    const zoom = clamp(t / at1[i]!.w, 1, maxZoom)
+    return clampCrop(frame, image, { zoom, cx: smile.x + smile.w / 2, cy: smile.y + smile.h / 2 })
+  }
+  return [crop(0), crop(1)]
+}
+
 /** Точка холста → доли снимка (для закрытых областей). */
 export function toImage(p: Box, x: number, y: number): { u: number; v: number } {
   return { u: (x - p.x) / p.w, v: (y - p.y) / p.h }
