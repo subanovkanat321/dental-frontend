@@ -10,11 +10,13 @@ type Setting = Schemas['VisitReportControllerAiSetting']
 type Change = Schemas['VisitReportControllerAiChange']
 
 /** Три согласия клиники на сервере — каждое меняется только своим адресом. */
-function backend(reports: Setting, dictation: Setting, who: Schemas['BookingViewsMe'] = me, post: Setting = { available: reports.available, on: false }) {
+function backend(reports: Setting, dictation: Setting, who: Schemas['BookingViewsMe'] = me,
+  usage: Schemas['AiUsageStoreCounter'] = { month: '2026-11', used: 120, limit: 600 }, post: Setting = { available: reports.available, on: false }) {
   const puts: [string, Change][] = []
   const state = { 'visit-report-ai': reports, 'dictation-ai': dictation, 'post-ai': post }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(who)),
+    http.get('*/api/clinic/ai-usage', () => HttpResponse.json(usage)),
     http.get('*/api/clinic/:what', ({ params }) => HttpResponse.json(state[params.what as keyof typeof state])),
     http.put('*/api/clinic/:what', async ({ params, request }) => {
       const key = params.what as keyof typeof state
@@ -84,4 +86,22 @@ test('пункт «ИИ-помощник» — только у админист�
   openItem('')
   expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /ИИ-помощник/ })).not.toBeInTheDocument()
+})
+
+test('админ клиники видит только «N из M действий» — без токенов и денег', async () => {
+  backend({ available: true, on: true }, { available: true, on: false })
+  renderApp()
+  openItem('ai')
+  const counter = await screen.findByRole('region', { name: 'ИИ в этом месяце' })
+  expect(counter).toHaveTextContent('ИИ в этом месяце: использовано 120 из 600 действий')
+  expect(counter).not.toHaveTextContent(/\$|сом|токен/)
+})
+
+test('лимит исчерпан — понятно, что делать', async () => {
+  backend({ available: true, on: true }, { available: true, on: false }, me, { month: '2026-11', used: 600, limit: 600 })
+  renderApp()
+  openItem('ai')
+  const counter = await screen.findByRole('region', { name: 'ИИ в этом месяце' })
+  expect(counter).toHaveTextContent('использовано 600 из 600 действий')
+  expect(counter).toHaveTextContent('напишите в поддержку Tish')
 })

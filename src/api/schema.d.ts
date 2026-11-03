@@ -244,6 +244,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/ai-usage/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["settings_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/ai-usage/clinics/{id}/limit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["limit"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/agreements/{id}": {
         parameters: {
             query?: never;
@@ -667,7 +699,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_1"];
+        get: operations["settings_2"];
         put: operations["setSettings_1"];
         post?: never;
         delete?: never;
@@ -2827,7 +2859,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_2"];
+        get: operations["settings_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3084,6 +3116,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["analytics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/ai-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["report_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3700,6 +3748,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/ai-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["counter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/agreement": {
         parameters: {
             query?: never;
@@ -3979,7 +4043,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_1"];
+        get: operations["report_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4560,6 +4624,22 @@ export interface components {
             contactTelegram?: string;
             listed?: boolean;
             settingUp?: boolean;
+        };
+        AiUsageControllerSettingsRequest: {
+            /** Format: int32 */
+            perDoctor?: number;
+            somPerUsd?: number;
+            vatPercent?: number;
+        };
+        AiUsageStoreSettings: {
+            /** Format: int32 */
+            perDoctor?: number;
+            somPerUsd?: number;
+            vatPercent?: number;
+        };
+        AiUsageControllerLimitRequest: {
+            /** Format: int32 */
+            monthly?: number;
         };
         AgreementControllerDraft: {
             title?: string;
@@ -6278,6 +6358,75 @@ export interface components {
             /** Format: int64 */
             appointmentsBefore?: number;
         };
+        AiUsageStoreClinicRow: {
+            /** Format: int64 */
+            clinicId?: number;
+            name?: string;
+            /** Format: int64 */
+            actions?: number;
+            /** Format: int64 */
+            errors?: number;
+            /** Format: int64 */
+            inputTokens?: number;
+            /** Format: int64 */
+            outputTokens?: number;
+            /** Format: int64 */
+            cacheReadTokens?: number;
+            /** Format: int64 */
+            cacheWriteTokens?: number;
+            usd?: number;
+            /** Format: int64 */
+            som?: number;
+            /** Format: int64 */
+            used?: number;
+            /** Format: int64 */
+            limit?: number;
+            /** Format: int32 */
+            customLimit?: number;
+            /** Format: int64 */
+            doctors?: number;
+            /** Format: int64 */
+            tariffSom?: number;
+            free?: boolean;
+        };
+        AiUsageStoreDayRow: {
+            /** Format: date */
+            date?: string;
+            /** Format: int64 */
+            actions?: number;
+            usd?: number;
+            /** Format: int64 */
+            som?: number;
+        };
+        AiUsageStoreKindRow: {
+            /** @enum {string} */
+            kind?: "VISIT_REPORT" | "DICTATION" | "QUESTION_DRAFT" | "POST_TEXT" | "PHOTO_FRAME" | "COMEBACK" | "SUPPORT" | "OTHER";
+            label?: string;
+            /** Format: int64 */
+            actions?: number;
+            /** Format: int64 */
+            errors?: number;
+            /** Format: int64 */
+            inputTokens?: number;
+            /** Format: int64 */
+            outputTokens?: number;
+            usd?: number;
+            /** Format: int64 */
+            som?: number;
+        };
+        AiUsageStoreReport: {
+            month?: string;
+            settings?: components["schemas"]["AiUsageStoreSettings"];
+            /** Format: int64 */
+            actions?: number;
+            usd?: number;
+            /** Format: int64 */
+            som?: number;
+            platformUsd?: number;
+            clinics?: components["schemas"]["AiUsageStoreClinicRow"][];
+            kinds?: components["schemas"]["AiUsageStoreKindRow"][];
+            days?: components["schemas"]["AiUsageStoreDayRow"][];
+        };
         AgreementControllerTemplate: {
             title?: string;
             body?: string;
@@ -6550,6 +6699,13 @@ export interface components {
             text?: string;
             /** Format: date-time */
             at?: string;
+        };
+        AiUsageStoreCounter: {
+            month?: string;
+            /** Format: int64 */
+            used?: number;
+            /** Format: int64 */
+            limit?: number;
         };
         CareMemosSuggested: {
             /** Format: int64 */
@@ -7314,6 +7470,54 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PlatformServiceClinicRow"];
                 };
+            };
+        };
+    };
+    settings_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiUsageControllerSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiUsageStoreSettings"];
+                };
+            };
+        };
+    };
+    limit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AiUsageControllerLimitRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -8192,7 +8396,7 @@ export interface operations {
             };
         };
     };
-    settings_1: {
+    settings_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -12362,7 +12566,7 @@ export interface operations {
             };
         };
     };
-    settings_2: {
+    settings_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -12722,6 +12926,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformAnalyticsAnalytics"];
+                };
+            };
+        };
+    };
+    report_1: {
+        parameters: {
+            query?: {
+                month?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiUsageStoreReport"];
                 };
             };
         };
@@ -13546,6 +13772,26 @@ export interface operations {
             };
         };
     };
+    counter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiUsageStoreCounter"];
+                };
+            };
+        };
+    };
     clinic_2: {
         parameters: {
             query?: never;
@@ -13940,7 +14186,7 @@ export interface operations {
             };
         };
     };
-    report_1: {
+    report_2: {
         parameters: {
             query: {
                 from: string;
