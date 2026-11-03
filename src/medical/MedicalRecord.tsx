@@ -249,9 +249,15 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
   const total = steps.reduce((s, x) => s + (x.priceSom ?? 0), 0)
   const left = steps.filter((x) => !x.doneAt).reduce((s, x) => s + (x.priceSom ?? 0), 0)
   const error = add.error ?? toggle.error ?? remove.error
+  // Пустое «Что сделать» — не молча выключенная кнопка, а подсказка, что вписать
+  const [missing, setMissing] = useState(false)
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (form.title.trim()) add.mutate()
+    else {
+      setMissing(true)
+      title.current?.focus()
+    }
   }
 
   return (
@@ -290,7 +296,8 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
       {/* Печать и отправка — и ассистенту (без цен): он отдаёт план пациенту */}
       <PlanDocs patient={patient} steps={steps} />
       {plan.isSuccess && steps.length === 0 && <p className="hint">{readOnly ? 'Плана пока нет.' : 'Плана пока нет — добавьте первый этап.'}</p>}
-      {!readOnly && <form className="plan-add" aria-label="Новый этап" onSubmit={submit}>
+      {!readOnly && <form className="plan-add" aria-label="Новый этап" onSubmit={submit} data-advance
+        onChange={() => { setMissing(false); if (add.isSuccess) add.reset() }}>
         {priced.length > 0 && (
           <Select aria-label="Услуга из прайса" className="plan-service" value={form.service} onChange={(e) => {
             const picked = priced.find((x) => String(x.id) === e.target.value)
@@ -308,7 +315,9 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
         <Select aria-label="Этап лечения" value={form.stage} onChange={(e) => setForm({ ...form, stage: e.target.value })}>
           {STAGES.map((n) => <option key={n} value={String(n)}>Этап {n}</option>)}
         </Select>
-        <button type="submit" className="btn" disabled={add.isPending || !form.title.trim()}>＋ Этап</button>
+        <button type="submit" className="btn primary plan-submit" disabled={add.isPending}>＋ Добавить в план</button>
+        {missing && <p className="error plan-hint" role="alert">Впишите, что сделать, — или выберите услугу из прайса</p>}
+        {add.isSuccess && <p className="tone-ok small plan-hint" role="status">Добавлено в план — сохранено</p>}
       </form>}
       {error && <p className="error" role="alert">{Object.values(error.fieldErrors)[0] ?? error.message}</p>}
     </section>

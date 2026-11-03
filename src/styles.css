@@ -408,7 +408,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .plan li.done span { text-decoration: line-through; color: var(--hint); }
 .plan li.plan-stage { display: block; border-bottom: 0; padding-top: 10px; font-weight: 600; }
 .plan-add { display: grid; grid-template-columns: 70px 1fr 110px 110px auto; gap: 8px; }
-.plan-add .plan-service { grid-column: 1 / -1; }
+.plan-add .plan-service, .plan-add .plan-hint { grid-column: 1 / -1; }
+.plan-hint { margin: 0; }
 /* «Отправить план пациенту» (V140): поля, предпросмотр документа и кнопки отправки */
 .plan-offer { display: grid; gap: 8px; }
 .plan-offer p { margin: 0; }
@@ -441,7 +442,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 @media (max-width: 760px) {
   .jaw { grid-template-columns: 1fr; }
   .quadrant + .quadrant { padding-left: 0; border-left: 0; }
-  .plan-add { grid-template-columns: 60px 1fr; }
+  .plan-add { grid-template-columns: 72px 1fr; }
+  .plan-add .plan-submit { grid-column: 1 / -1; }
 }
 
 /* Подписи без эмодзи: метка Telegram в таблице, комментарий к записи */

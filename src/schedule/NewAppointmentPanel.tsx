@@ -1,3 +1,4 @@
+import { advanceOnEnter } from '../lib/advance'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState, type FormEvent } from 'react'
 
@@ -237,7 +238,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
-      <form className="form" onSubmit={(e) => void submit(e)}>
+      <form className="form" onSubmit={(e) => void submit(e)} data-advance onKeyDown={advanceOnEnter}>
         <fieldset className="field">
           <legend>Пациент</legend>
           {patient ? (
@@ -247,7 +248,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
             </div>
           ) : adding ? (
             <>
-              <input aria-label="Имя и фамилия" placeholder="Имя и фамилия" value={name} required autoFocus
+              <input aria-label="Имя и фамилия" placeholder="Имя и фамилия" value={name} required autoFocus enterKeyHint="next"
                 onChange={(e) => setName(e.target.value)} />
               {fieldError('fullName') && <p className="error">{fieldError('fullName')}</p>}
               <PhoneInput label="Телефон" value={phone} onChange={(v) => { setPhone(v); setDuplicate(null) }} />

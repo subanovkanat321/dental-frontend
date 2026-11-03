@@ -9,6 +9,7 @@ import { sourceChoices, useSources } from '../lib/sources'
 import { formatPhone, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { Select } from '../layout/Select'
+import { advanceOnEnter } from '../lib/advance'
 
 type Patient = Schemas['PatientView']
 
@@ -50,9 +51,9 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
   }
 
   return (
-    <form className="form" aria-label={p ? 'Данные пациента' : 'Новый пациент'} onSubmit={submit}>
+    <form className="form" aria-label={p ? 'Данные пациента' : 'Новый пациент'} onSubmit={submit} data-advance onKeyDown={advanceOnEnter}>
       <label className="field"><span>Имя пациента</span>
-        <input value={f.fullName} required maxLength={200} autoComplete="off" autoFocus onChange={(e) => set('fullName')(e.target.value)} /></label>
+        <input value={f.fullName} required maxLength={200} autoComplete="off" autoFocus enterKeyHint="next" onChange={(e) => set('fullName')(e.target.value)} /></label>
       {err('fullName') && <p className="error">{err('fullName')}</p>}
       <label className="field"><span>Телефон</span>
         <PhoneInput label="Телефон" value={f.phone} onChange={set('phone')} /></label>

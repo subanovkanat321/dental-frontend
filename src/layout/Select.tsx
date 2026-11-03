@@ -1,6 +1,7 @@
 import { Children, Fragment, isValidElement, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
+import { focusNext } from '../lib/advance'
 import { useBack } from '../lib/back'
 
 /** Пункт списка: как `<option>` — значение, текст, можно выключить. */
@@ -110,6 +111,8 @@ export function Select({ value, defaultValue, onChange, children, name, required
     if (value == null) setOwn(item.value)
     if (item.value !== current) onChange?.({ target: { value: item.value } })
     close()
+    // В форме с data-advance — сразу к следующему полю
+    focusNext(button.current)
   }
 
   // Компьютер: список под полем (не влез — над ним); прокрутили страницу — едет за полем

@@ -21,7 +21,7 @@ type Consent = Schemas['PublicationConsentsView']
 type Scope = NonNullable<Consent['scope']>
 
 /**
- * Согласие на публикацию фото и кнопка «✨ До / после» — в блоке снимков медкарты. Согласие
+ * Согласие на публикацию фото и кнопка «Собрать картинку «до / после»» — в блоке снимков медкарты. Согласие
  * отдельное от согласия на обработку данных; ставит и снимает врач (и админ), ассистент только
  * видит. Без согласия собрать картинку нельзя.
  */
@@ -49,6 +49,14 @@ export function PublicationBlock({ patientId, files, readOnly }: { patientId: nu
   if (consent.isPending || consent.isError) return null
   return (
     <div className="publication">
+      <h3>Картинка «до / после» для Instagram</h3>
+      {/* Как это работает — по шагам, с отметкой сделанного: без ИИ, из ваших же фото */}
+      <ol className="ba-steps">
+        <li className={files.length >= 2 ? 'done' : undefined}>Загрузите выше фото «до» (перед лечением) и «после» (в конце){files.length >= 2 ? ' ✓' : ''}</li>
+        <li className={scope ? 'done' : undefined}>Отметьте согласие пациента на публикацию{scope ? ' ✓' : ''}</li>
+        <li>«Собрать картинку»: выберите фото, пост или сторис, при необходимости закройте глаза — скачайте картинку и скопируйте готовый текст поста</li>
+      </ol>
+      <p className="hint small">Это не ИИ: картинка собирается из ваших фото прямо на телефоне и никуда не отправляется.</p>
       <label className="check">
         <input type="checkbox" checked={Boolean(scope)} disabled={readOnly || busy}
           onChange={(e) => (e.target.checked ? give.mutate('NO_FACE') : revoke.mutate())} />
@@ -69,7 +77,7 @@ export function PublicationBlock({ patientId, files, readOnly }: { patientId: nu
       {error && <p className="error" role="alert">{error.message}</p>}
       <div className="publication-action">
         <button type="button" className="btn" disabled={Boolean(why)} aria-describedby={why ? `ba-why-${patientId}` : undefined}
-          onClick={() => setOpen(true)}>✨ До / после</button>
+          onClick={() => setOpen(true)}>Собрать картинку «до / после»</button>
         {why && <span id={`ba-why-${patientId}`} className="hint small">{why}</span>}
       </div>
       {open && scope && <BeforeAfter patientId={patientId} files={files} scope={scope} onClose={() => setOpen(false)} />}

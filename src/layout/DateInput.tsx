@@ -1,3 +1,4 @@
+import { focusNext } from '../lib/advance'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -108,6 +109,8 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
     if (!allowed(d)) return
     if (d !== value) onChange?.({ target: { value: d } })
     close()
+    // В форме с data-advance — сразу к следующему полю
+    focusNext(button.current)
   }
 
   // Компьютер: под полем (не влезает — над ним); прокрутили — едет за полем

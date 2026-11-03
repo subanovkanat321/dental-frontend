@@ -57,3 +57,6 @@
 .ba-post-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
 .ba-post textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
 .ba-post .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.publication h3 { margin: 0; font-size: 1rem; }
+.ba-steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.ba-steps li.done { color: var(--ok-ink); }

@@ -91,13 +91,13 @@ async function openMedical() {
 test('без согласия «До / после» выключена с объяснением; галочка ставит согласие «без лица», снимается обратно', async () => {
   const sent = backend()
   await openMedical()
-  const button = await screen.findByRole('button', { name: '✨ До / после' })
+  const button = await screen.findByRole('button', { name: 'Собрать картинку «до / после»' })
   expect(button).toBeDisabled()
   expect(button).toHaveAccessibleDescription('Сначала отметьте согласие пациента на публикацию.')
 
   const box = screen.getByRole('checkbox', { name: /согласен\(на\) на публикацию фото/ })
   await userEvent.click(box)
-  await waitFor(() => expect(screen.getByRole('button', { name: '✨ До / после' })).toBeEnabled())
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Собрать картинку «до / после»' })).toBeEnabled())
   expect(sent).toContainEqual({ consent: 'NO_FACE' })
   expect(screen.getByText(/Отметил\(а\) Айгерим Садыкова/)).toBeInTheDocument()
 
@@ -105,21 +105,21 @@ test('без согласия «До / после» выключена с объ
   expect(sent).toContainEqual({ consent: 'WITH_FACE' })
 
   await userEvent.click(screen.getByRole('checkbox', { name: /согласен\(на\) на публикацию фото/ }))
-  await waitFor(() => expect(screen.getByRole('button', { name: '✨ До / после' })).toBeDisabled())
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Собрать картинку «до / после»' })).toBeDisabled())
   expect(sent).toContainEqual({ consent: null })
 })
 
 test('одно фото — кнопка выключена: нужно два', async () => {
   backend({ scope: 'WITH_FACE', givenAt: '2026-11-03T05:00:00Z' }, [FILES[0]!])
   await openMedical()
-  expect(await screen.findByRole('button', { name: '✨ До / после' })).toHaveAccessibleDescription('Нужно хотя бы два фото: «до» и «после».')
+  expect(await screen.findByRole('button', { name: 'Собрать картинку «до / после»' })).toHaveAccessibleDescription('Нужно хотя бы два фото: «до» и «после».')
 })
 
 test('конструктор: два фото загружены целиком, холст рисуется, процедура из услуг, «Скачать PNG» без имени пациента', async () => {
   const { ctx, toBlob } = fakeCanvas()
   const sent = backend({ scope: 'NO_FACE', givenAt: '2026-11-03T05:00:00Z', givenBy: 'Айгерим Садыкова' })
   await openMedical()
-  await userEvent.click(await screen.findByRole('button', { name: '✨ До / после' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Собрать картинку «до / после»' }))
   const dialog = await screen.findByRole('dialog', { name: 'До / после' })
   // Согласие только без лица — напоминание и режим «Скрыть глаза» сразу
   expect(within(dialog).getByRole('note')).toHaveTextContent(/только без лица/)

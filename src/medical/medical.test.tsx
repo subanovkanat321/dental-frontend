@@ -87,11 +87,16 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   expect(await within(plan).findByLabelText('Сделано: Пломба')).toBeChecked()
 
   const add = screen.getByRole('form', { name: 'Новый этап' })
+  // Не вписали «Что сделать» — кнопка не молчит, а подсказывает
+  await userEvent.click(within(add).getByRole('button', { name: '＋ Добавить в план' }))
+  expect(within(add).getByRole('alert')).toHaveTextContent('Впишите, что сделать')
+  expect(within(add).getByLabelText('Что сделать')).toHaveFocus()
   await userEvent.type(within(add).getByLabelText('Зуб'), '26')
   await userEvent.type(within(add).getByLabelText('Что сделать'), 'Коронка')
   await userEvent.type(within(add).getByLabelText('Цена, сом'), '12000')
-  await userEvent.click(within(add).getByRole('button', { name: '＋ Этап' }))
+  await userEvent.click(within(add).getByRole('button', { name: '＋ Добавить в план' }))
   expect(await within(plan).findByText('Коронка')).toBeInTheDocument()
+  expect(within(add).getByRole('status')).toHaveTextContent('Добавлено в план — сохранено')
   expect(sent).toContainEqual({ plan: { title: 'Коронка', tooth: 26, priceSom: 12000, stage: 1 } })
 
   await userEvent.click(screen.getByRole('button', { name: '← К списку' }))

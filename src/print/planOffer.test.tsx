@@ -101,7 +101,7 @@ test('план по этапам: заголовки «Этап 1 · 10 500 со
   await userEvent.type(within(form).getByRole('textbox', { name: 'Зуб' }), '46')
   await userEvent.click(within(form).getByRole('combobox', { name: 'Этап лечения' }))
   await userEvent.click(screen.getByRole('option', { name: 'Этап 3' }))
-  await userEvent.click(within(form).getByRole('button', { name: '＋ Этап' }))
+  await userEvent.click(within(form).getByRole('button', { name: '＋ Добавить в план' }))
   await vi.waitFor(() => expect(calls).toContainEqual({ add: { title: 'Имплант', tooth: 46, priceSom: 30000, stage: 3, serviceTypeId: 7 } }))
 })
 

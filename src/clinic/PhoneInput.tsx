@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { Select } from '../layout/Select'
+import { focusNext, phoneDigits } from '../lib/advance'
 import { OTHER_COUNTRY, PHONE_COUNTRIES } from '../lib/phone'
 import { joinPhone, phoneCountry, splitPhone } from './phone'
 
@@ -17,12 +18,17 @@ export function PhoneInput({ label, value, onChange }: { label: string; value: s
   const [picked, setPicked] = useState(() => splitPhone(value, 'KG').country)
   const { country, local } = splitPhone(value, picked)
   const c = phoneCountry(country)
+  const input = useRef<HTMLInputElement>(null)
 
   const type = (text: string) => {
     // Набрали или вставили номер с «+» — он сам говорит, какая страна
     const next = splitPhone(/^\s*(\+|00)/.test(text) ? text : joinPhone(country, text) || '', country)
     setPicked(next.country)
     onChange(joinPhone(next.country, next.local))
+    // Набрали номер целиком — в форме с data-advance сразу к следующему полю
+    const need = phoneDigits(phoneCountry(next.country).example)
+    const digits = next.local.replace(/\D/g, '').length
+    if (need > 0 && digits === need && local.replace(/\D/g, '').length < need) focusNext(input.current)
   }
 
   const pick = (id: string) => {
@@ -32,7 +38,7 @@ export function PhoneInput({ label, value, onChange }: { label: string; value: s
 
   return (
     <div className="phone">
-      <input aria-label={label} type="tel" inputMode="tel" autoComplete="off" maxLength={24} placeholder={c.example}
+      <input ref={input} aria-label={label} type="tel" enterKeyHint="next" inputMode="tel" autoComplete="off" maxLength={24} placeholder={c.example}
         value={local} onChange={(e) => type(e.target.value)} />
       <Select aria-label="Код страны" value={country} onChange={(e) => pick(e.target.value)}>
         {[...PHONE_COUNTRIES, OTHER_COUNTRY].map((o) => (
