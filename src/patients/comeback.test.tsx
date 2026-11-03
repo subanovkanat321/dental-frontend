@@ -87,6 +87,8 @@ test('«Вернуть»: «пора на осмотр» — последний 
   await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
   await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(screen.queryByRole('link', { name: 'Настройки → Услуги' })).not.toBeInTheDocument()
+})
+
 test('«Вернуть»: отправили план с ценами, а пациент не записался — строка статуса и фильтр', async () => {
   const sentPlan: Schemas['ComebacksBoard'] = {
     ...board,
