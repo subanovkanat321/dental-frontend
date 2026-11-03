@@ -98,6 +98,6 @@ test('без своего кресла (админ, регистратура) п
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined })))
   renderApp()
   openItem('calendar')
-  expect(await screen.findByRole('heading', { name: '⚙️ Настройки' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
   expect(screen.queryByText('Календарь в телефоне')).not.toBeInTheDocument()
 })
