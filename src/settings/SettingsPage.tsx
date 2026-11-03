@@ -27,7 +27,7 @@ const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ defa
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'members': '🗂️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'doctors': '👩‍⚕️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝' }
 
 type Item = {
   key: string
@@ -63,8 +63,8 @@ const GROUPS: [string, Item[]][] = [
     item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),
   ]],
   ['Клиника', [
-    item('doctors', 'Врачи', 'Профиль, фото, приглашение, права', all, team('doctors')),
-    item('members', 'Сотрудники', 'Админы, регистратура, ассистенты', admin, team('members')),
+    // Врачи и сотрудники — одним списком с ролями; адрес «doctors» прежний (#/settings/members ведёт сюда же)
+    item('doctors', 'Персонал', 'Врачи, админы, регистратура, ассистенты — роли и вход', all, team('doctors')),
     item('about', 'О клинике', 'Адрес, контакты, предоплата, склад', all, clinic('about')),
     item('questions', 'Анкета пациента', 'Вопросы перед первым приёмом', (me) => Boolean(me.admin || me.doctorId != null), clinic('questions')),
     item('sources', 'Откуда узнают о клинике', 'Варианты в карточке и вопрос в боте', all, clinic('sources')),

@@ -44,8 +44,8 @@ test('админ: врачи таблицей; карточка — сохран
   const user = userEvent.setup()
   renderApp()
 
-  const table = await screen.findByRole('table', { name: 'Врачи' })
-  expect(within(table).getByText('не привязан')).toBeInTheDocument()
+  const table = await screen.findByRole('table', { name: 'Персонал' })
+  expect(within(table).getByText(/не привязан — пригласите в карточке/)).toBeInTheDocument()
   await user.click(within(table).getByRole('button', { name: 'Дастан Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Врач' })
 
@@ -87,7 +87,9 @@ test('сотрудники: пригласить регистратора ссы
   const user = userEvent.setup()
   renderApp()
   openItem('members')
-  expect(await screen.findByText('Администратор · врач · это вы')).toBeInTheDocument()
+  // Админ, который и лечит, — строкой врача с двумя ролями рядом
+  const staff = await screen.findByRole('table', { name: 'Персонал' })
+  expect(staff).toHaveTextContent('ВрачАдминистратор')
   const form = screen.getByRole('form', { name: 'Пригласить сотрудника' })
   await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Айпери')
   await user.click(within(form).getByRole('button', { name: 'Создать ссылку' }))
@@ -96,7 +98,7 @@ test('сотрудники: пригласить регистратора ссы
   expect(invited).toEqual({ role: 'RECEPTION', fullName: 'Айпери', alsoDoctor: false })
 })
 
-test('сотрудники: кто вошёл — «Telegram привязан», кто нет — «Ждём входа» с отменой', async () => {
+test('персонал: роли рядом, кто вошёл — «Telegram привязан», кто нет — «ждём входа» с отменой, фильтр по роли', async () => {
   let invites: Schemas['StaffMembersInviteView'][] = [
     { id: 'aa', fullName: 'Айпери', role: 'RECEPTION', expiresAt: '2099-01-01T06:00:00Z', expired: false },
     { id: 'bb', fullName: 'Опоздавшая', role: 'ADMIN', expiresAt: '2020-01-01T06:00:00Z', expired: true },
@@ -117,13 +119,17 @@ test('сотрудники: кто вошёл — «Telegram привязан»,
   const user = userEvent.setup()
   renderApp()
   openItem('members')
-  expect(await screen.findByRole('table', { name: 'Сотрудники' })).toHaveTextContent('✓ Telegram привязан')
-  const pending = await screen.findByRole('table', { name: 'Приглашения без входа' })
+  const pending = await screen.findByRole('table', { name: 'Персонал' })
+  expect(pending).toHaveTextContent('✓ Telegram привязан')
   expect(pending).toHaveTextContent('Айпери')
-  expect(pending).toHaveTextContent('ссылка действует до 1 янв, 12:00')
+  expect(pending).toHaveTextContent('ждём входа · ссылка до 1 янв, 12:00')
   expect(pending).toHaveTextContent('ссылка истекла — нужна новая')
   await user.click(within(pending).getAllByRole('button', { name: 'Отменить' })[1]!)
   await vi.waitFor(() => expect(pending).not.toHaveTextContent('Опоздавшая'))
+  // Фильтр «Регистратура» — только Айпери (приглашена регистратором)
+  await user.click(within(screen.getByRole('group', { name: 'Показать роль' })).getByRole('button', { name: /^Регистратура/ }))
+  expect(pending).toHaveTextContent('Айпери')
+  expect(pending).not.toHaveTextContent('Айгерим')
   vi.restoreAllMocks()
 })
 
@@ -206,7 +212,7 @@ test('перерывы: список, добавить еженедельный,
   await vi.waitFor(() => expect(screen.queryByText('Джума-намаз')).not.toBeInTheDocument())
 })
 
-test('врач (не админ): без «Сотрудников», открывает только себя и правит профиль', async () => {
+test('врач (не админ): в «Персонале» только врачи, открывает только себя и правит профиль', async () => {
   let profile: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false })),
@@ -218,7 +224,7 @@ test('врач (не админ): без «Сотрудников», откры�
   )
   const user = userEvent.setup()
   renderApp()
-  const table = await screen.findByRole('table', { name: 'Врачи' })
+  const table = await screen.findByRole('table', { name: 'Персонал' })
   expect(within(table).queryByRole('button', { name: 'Дастан Т.' })).not.toBeInTheDocument()
   await user.click(within(table).getByRole('button', { name: 'Айгерим Садыкова' }))
   const panel = await screen.findByRole('complementary', { name: 'Врач' })
@@ -268,7 +274,7 @@ test('карточка врача: «Услуги врача» — все или
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(within(await screen.findByRole('table', { name: 'Врачи' })).getByRole('button', { name: 'Дастан Т.' }))
+  await user.click(within(await screen.findByRole('table', { name: 'Персонал' })).getByRole('button', { name: 'Дастан Т.' }))
   const box = within(await screen.findByRole('complementary', { name: 'Врач' })).getByRole('region', { name: 'Услуги врача' })
   expect(within(box).getByRole('button', { name: 'Все услуги клиники' })).toHaveAttribute('aria-pressed', 'true')
 
@@ -294,7 +300,7 @@ test('регистратура открывает врача ради часов
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(within(await screen.findByRole('table', { name: 'Врачи' })).getByRole('button', { name: 'Дастан Т.' }))
+  await user.click(within(await screen.findByRole('table', { name: 'Персонал' })).getByRole('button', { name: 'Дастан Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Врач' })
   expect(within(panel).getByText('Часы работы')).toBeInTheDocument()
   expect(within(panel).queryByRole('region', { name: 'Услуги врача' })).not.toBeInTheDocument()

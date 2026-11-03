@@ -1419,3 +1419,12 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .survey-bars li { grid-template-columns: minmax(60px, 120px) 1fr auto; }
   .survey-stars button { width: 44px; height: 44px; }
 }
+
+/* «Персонал»: роли рядом с именем — короткие метки, у врача-администратора их две */
+.role-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.role-chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .82rem; font-weight: 600; background: var(--sunken); color: var(--text); white-space: nowrap; }
+.role-chip.role-doctor { background: var(--accent-soft); color: var(--link); }
+.role-chip.role-admin { background: var(--wait-bg); color: var(--wait-ink); }
+.role-chip.role-reception { background: var(--ok-bg); color: var(--ok-ink); }
+.role-chip.role-assistant { background: var(--quiet-bg); color: var(--text); }
+.staff-table td { vertical-align: middle; }

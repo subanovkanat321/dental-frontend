@@ -29,7 +29,7 @@ export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
         <div className="card-block">
           <p>Профиль для пациентов есть у врачей: фото, имя и «о себе» видны при записи в боте.</p>
           <p className="hint">Вы и принимаете пациентов? Добавьте себя врачом в «Врачах» — «Я тоже веду приём».</p>
-          <button type="button" className="btn" onClick={() => openSettings('doctors')}>Врачи</button>
+          <button type="button" className="btn" onClick={() => openSettings('doctors')}>Персонал</button>
         </div>
       ) : me.admin && admin.isPending ? <p className="hint">Загрузка…</p>
         : admin.error ? <p className="error">{admin.error.message}</p>

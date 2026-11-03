@@ -4,18 +4,18 @@ import { useCallback, useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SubHeader } from '../settings/SubHeader'
 import { DoctorPanel, NewDoctorPanel } from './DoctorPanel'
-import { MembersTab } from './MembersTab'
-import { ROLE_TEXT } from './texts'
+import { StaffTab } from './StaffTab'
 import { TimeOffTab } from './TimeOffTab'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
-export type TeamTab = 'doctors' | 'members' | 'timeoff'
+/** doctors — «Персонал» (врачи и сотрудники вместе; адрес прежний, закладки работают). */
+export type TeamTab = 'doctors' | 'timeoff'
 type Tab = TeamTab
 
 /**
- * «Команда»: врачи (профиль, фото, часы работы, приглашение, права), сотрудники (админы и
- * регистратура) и перерывы с выходными. Врачей и сотрудников ведёт админ; врач правит себя,
+ * «Команда»: персонал — врачи (профиль, фото, часы работы, приглашение, права) и сотрудники (админы,
+ * регистратура, ассистенты) одним списком с ролями — и перерывы с выходными. Врачей и сотрудников ведёт админ; врач правит себя,
  * регистратура — часы врачей. Проверяет и сервер.
  */
 export function TeamPage({ me, only, title, onBack, initialOpened = null }: {
@@ -26,7 +26,7 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null }: {
   /** «Мой профиль»: сразу карточка этого врача. */
   initialOpened?: number | null
 }) {
-  const tabs: [Tab, string][] = [['doctors', 'Врачи'], ...(me.admin ? [['members', 'Сотрудники'] as [Tab, string]] : []), ['timeoff', 'Перерывы']]
+  const tabs: [Tab, string][] = [['doctors', 'Персонал'], ['timeoff', 'Перерывы']]
   const [chosen, setTab] = useState<Tab>('doctors')
   const tab = only ?? chosen
   const [opened, setOpened] = useState<number | 'new' | null>(initialOpened)
@@ -39,14 +39,19 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null }: {
   // Не админу — врачи из me (без Telegram и ролей: их видит только админ)
   const doctors: Doctor[] = me.admin ? admin.data ?? [] : (me.doctors ?? []).filter((d) => d.active !== false)
   const openedDoctor = typeof opened === 'number' ? doctors.find((d) => d.id === opened) : undefined
-  const canOpen = (d: Doctor) => Boolean(me.admin || me.reception || d.id === me.doctorId)
+  const addButtons = me.admin && (
+    <>
+      <button type="button" className="btn" onClick={() => document.getElementById('invite-member')?.scrollIntoView({ behavior: 'smooth' })}>+ Пригласить сотрудника</button>
+      <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить врача</button>
+    </>
+  )
 
   return (
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
         {only && onBack ? (
           <SubHeader title={title ?? ''} onBack={onBack}>
-            {tab === 'doctors' && me.admin && <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить врача</button>}
+            {tab === 'doctors' && addButtons}
           </SubHeader>
         ) : (
           <header className="toolbar">
@@ -57,41 +62,16 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null }: {
                   onClick={() => { setTab(key); setOpened(null) }}>{name}</button>
               ))}
             </div>
-            {tab === 'doctors' && me.admin && <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить врача</button>}
+            {tab === 'doctors' && addButtons}
           </header>
         )}
 
         {tab === 'doctors' && (
-          <section className="card-block">
-            <p className="hint">У каждого врача своё расписание. Врач с привязанным Telegram входит в CRM и получает уведомления о своих приёмах.</p>
-            {admin.error && <p className="error">{admin.error.message}</p>}
-            {me.admin && admin.isPending ? <p className="hint">Загрузка…</p> : doctors.length ? (
-              <table className="table" aria-label="Врачи">
-                <thead><tr><th>Врач</th><th>Кратко</th>{me.admin && <th>Telegram</th>}<th /></tr></thead>
-                <tbody>
-                  {doctors.map((d) => (
-                    <tr key={d.id} className={[d.id === opened ? 'active' : '', d.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
-                      <td>
-                        <span className="who">
-                          {d.photoUrl ? <img className="avatar" src={d.photoUrl} alt="" /> : <span className="avatar" aria-hidden="true">{(d.fullName ?? '?').slice(0, 1)}</span>}
-                          {canOpen(d)
-                            ? <button type="button" className="row-link" onClick={() => setOpened(d.id!)}>{d.fullName}</button>
-                            : <span>{d.fullName}</span>}
-                        </span>
-                      </td>
-                      <td className="hint">{d.about || '—'}</td>
-                      {me.admin && <td className={d.telegramId ? undefined : 'tone-wait'}>{d.telegramId ? 'привязан' : 'не привязан'}</td>}
-                      <td className="hint">{[d.id === me.doctorId ? 'это вы' : null, d.role ? `ещё и ${ROLE_TEXT[d.role]?.toLowerCase()}` : null,
-                        d.active === false ? 'скрыт' : null].filter(Boolean).join(' · ')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : <p className="hint">Врачей пока нет.</p>}
-            {me.doctorId == null && (me.admin || me.reception) && <AddSelf />}
-          </section>
+          <>
+            <StaffTab me={me} doctors={doctors} loading={Boolean(me.admin) && admin.isPending} error={admin.error} opened={opened} onOpen={setOpened} />
+            {me.doctorId == null && (me.admin || me.reception) && <section className="card-block"><AddSelf /></section>}
+          </>
         )}
-        {tab === 'members' && me.admin && <MembersTab me={me} />}
         {tab === 'timeoff' && <TimeOffTab me={me} />}
       </section>
       {opened === 'new' && <NewDoctorPanel onClose={close} onCreated={(d) => setOpened(d.id!)} />}

@@ -441,7 +441,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             onNew={(day, minutes) => setSide({ kind: 'new', slot: { doctorId: weekDoctor, date: day, minutes } })}
             onOpenDay={(day) => { setDate(day); setMode('day') }} />
         ) : doctors.length === 0 ? (
-          <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => openSettings('doctors')}>добавьте их в «Настройки → Врачи»</button>.</p>
+          <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => openSettings('doctors')}>добавьте их в «Настройки → Персонал»</button>.</p>
         ) : (
           <div ref={grid} className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
             <div className="grid-corner" />

@@ -71,7 +71,7 @@ export function Login() {
       <div className="login-card">
       <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
       <h1>Вход для клиники</h1>
-      <p className="hint">Врачи, регистратура и администраторы. Входите тем же Telegram, что привязан в «Настройки → Врачи» или «Сотрудники».</p>
+      <p className="hint">Врачи, регистратура и администраторы. Входите тем же Telegram, что привязан в «Настройки → Персонал».</p>
       {bot.isPending && <p className="hint">Загрузка…</p>}
       {bot.isSuccess && !bot.data?.id && <p className="error">Вход сейчас недоступен: бот не настроен или не отвечает. Обновите страницу через минуту.</p>}
       {bot.data?.id != null && (

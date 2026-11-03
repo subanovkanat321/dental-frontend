@@ -220,7 +220,7 @@ function EnterBox({ id }: { id: number }) {
   return (
     <section className="form">
       <h3>Войти в клинику</h3>
-      <p className="hint">Откроется CRM этой клиники — как у её админа. Вас будет видно в её «Сотрудниках».</p>
+      <p className="hint">Откроется CRM этой клиники — как у её админа. Вас будет видно в её «Персонале».</p>
       <div className="actions">
         <button type="button" className="btn primary" disabled={enter.isPending} onClick={() => go(false)}>Войти как админ</button>
         <button type="button" className="btn" disabled={enter.isPending} onClick={() => go(true)}>Войти как регистратор</button>

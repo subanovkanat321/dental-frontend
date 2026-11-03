@@ -104,7 +104,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
         <div><dt>Выплачено</dt><dd className="num">{somText(r.paidSom ?? 0)}</dd></div>
       </dl>
       {r.former
-        ? <p className="hint">Убран из «Сотрудников» — выплата за этот месяц сохранена в истории. Вернёте в «Сотрудники» — она снова будет в его строке.</p>
+        ? <p className="hint">Убран из «Персонала» — выплата за этот месяц сохранена в истории. Вернёте в клинику — она снова будет в его строке.</p>
         : noTerms && !editing
           ? <p className="tone-wait">Условия не заданы — «К выплате» считается как 0. Нажмите «Задать процент и оклад».</p>
           : !noTerms && <p className="hint">Условия: {termsText(r)}</p>}

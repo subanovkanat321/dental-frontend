@@ -17,6 +17,8 @@ function current(): Page {
 export function settingsItem(): string | null {
   const [name = '', item] = window.location.hash.replace(/^#\/?/, '').split('/')
   if (OLD[name]) return OLD[name]!
+  // «Сотрудники» стали частью «Персонала» (вместе с врачами) — старые ссылки ведут туда
+  if (name === 'settings' && item === 'members') return 'doctors'
   return name === 'settings' && item ? item : null
 }
 
