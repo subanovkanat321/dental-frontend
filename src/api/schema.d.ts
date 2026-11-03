@@ -2404,6 +2404,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/dictation/parse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["parse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/dictation/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["apply_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/deposit": {
         parameters: {
             query?: never;
@@ -5250,6 +5282,44 @@ export interface components {
         AppointmentControllerBill: {
             /** Format: int32 */
             chargeSom?: number;
+        };
+        VisitDictationControllerText: {
+            text?: string;
+        };
+        VisitDictationNextVisit: {
+            /** Format: int32 */
+            inDays?: number;
+            text?: string;
+        };
+        VisitDictationPlanStep: {
+            /** Format: int32 */
+            tooth?: number;
+            title?: string;
+        };
+        VisitDictationProposal: {
+            teeth?: components["schemas"]["VisitDictationToothChange"][];
+            plan?: components["schemas"]["VisitDictationPlanStep"][];
+            note?: string;
+            next?: components["schemas"]["VisitDictationNextVisit"];
+        };
+        VisitDictationToothChange: {
+            /** Format: int32 */
+            tooth?: number;
+            /** @enum {string} */
+            state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            note?: string;
+            /** @enum {string} */
+            was?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+        };
+        VisitDictationApply: {
+            teeth?: components["schemas"]["VisitDictationToothChange"][];
+            plan?: components["schemas"]["VisitDictationPlanStep"][];
+            note?: string;
+        };
+        VisitDictationApplied: {
+            teeth?: components["schemas"]["ToothView"][];
+            plan?: components["schemas"]["TreatmentStepView"][];
+            note?: string;
         };
         DepositControllerAction: {
             action?: string;
@@ -10785,6 +10855,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    parse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitDictationControllerText"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitDictationProposal"];
+                };
+            };
+        };
+    };
+    apply_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitDictationApply"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitDictationApplied"];
                 };
             };
         };

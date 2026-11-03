@@ -7,6 +7,7 @@ import { smsUrl, whatsappUrl } from '../lib/texts'
 import { isMobile } from '../pwa/pwa'
 import { openLink, telegram } from '../lib/telegram'
 import { minutesOf, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
+import { Dictation } from './Dictation'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { useAppointmentAction } from './useAppointmentAction'
@@ -399,11 +400,14 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
       setText(null)
     },
   })
+  // Пока идёт диктовка, поле заметки прячем: заметка — в экране «Проверьте», чтобы не было двух полей
+  const [dictating, setDictating] = useState(false)
   if (note.isPending || note.error) return null
   const value = text ?? note.data.note ?? ''
   const changed = text != null && text.trim() !== (note.data.note ?? '')
   return (
-    <form className="form" aria-label="Заметка о приёме" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
+    <>
+    {!dictating && <form className="form" aria-label="Заметка о приёме" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
       <label className="field"><span>Заметка о приёме — видят врач и администратор</span>
         <textarea rows={3} maxLength={2000} value={value} placeholder="Что сделали, что дальше"
           onChange={(e) => setText(e.target.value)} />
@@ -411,6 +415,9 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
       {changed && <button type="submit" className="btn" disabled={save.isPending}>Сохранить заметку</button>}
       {save.isSuccess && !changed && <p className="tone-ok small" role="status">Сохранено</p>}
       {save.error && <p className="error" role="alert">{errorText(save.error)}</p>}
-    </form>
+    </form>}
+    {/* Врач приёма и админ (заметка открылась — права есть): голос → карта зубов, план, заметка */}
+    {a.patient?.id != null && <Dictation appointment={a} note={value} onActive={setDictating} />}
+    </>
   )
 }

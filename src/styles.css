@@ -1480,6 +1480,18 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .role-chip.role-reception { background: var(--ok-bg); color: var(--ok-ink); }
 .role-chip.role-assistant { background: var(--quiet-bg); color: var(--text); }
 .staff-table td { vertical-align: middle; }
+
+/* «Надиктовать» у заметки о приёме: диктовка и «Проверьте» */
+.dictation { display: grid; gap: 8px; }
+section.dictation { padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); background: var(--card); }
+.dictation h3, .dictation p { margin: 0; }
+.dictation > .btn { justify-self: start; }
+.dictation-group { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+.dictation-group legend { padding: 0; margin-bottom: 4px; font-weight: 600; }
+.dictation-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dictation-row > input:not([type]), .dictation-row > input[aria-label^="Шаг"], .dictation-row > input[aria-label^="Пометка"] { flex: 1 1 140px; min-width: 0; }
+.dictation-row .dictation-tooth { flex: 0 0 3.5em; width: 3.5em; text-align: center; }
+
 /* «Продолжение лечения» в карточке приёма: что сделали в прошлый раз и что осталось по плану */
 .continue { display: grid; gap: 8px; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
 .continue h3 { margin: 0; font-size: .95rem; }
