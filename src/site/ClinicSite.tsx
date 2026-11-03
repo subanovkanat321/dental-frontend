@@ -1,12 +1,44 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 
 import { ContactLinks } from '../lib/ContactLinks'
 import { SiteHeader } from './SiteHeader'
 import { clinicCode, getJson, inAppBrowser, initials, promoCode, tgLink, useSiteLang, withPromo, type ClinicPage } from './web'
 
+// Форма записи на сайте — отдельным чанком: страницу клиники открывают с телефона, а форма нужна не всем
+const WebBooking = lazy(() => import('./WebBooking'))
+
+/** Открыта форма записи на сайте: адрес /c/<код>#book — можно дать ссылкой, «Назад» в браузере её закрывает. */
+function useBookHash(): [boolean, () => void, () => void] {
+  const [open, setOpen] = useState(() => window.location.hash === '#book')
+  useEffect(() => {
+    const sync = () => setOpen(window.location.hash === '#book')
+    window.addEventListener('popstate', sync)
+    window.addEventListener('hashchange', sync)
+    return () => {
+      window.removeEventListener('popstate', sync)
+      window.removeEventListener('hashchange', sync)
+    }
+  }, [])
+  const show = () => {
+    window.history.pushState({ fromPage: true }, '', '#book')
+    setOpen(true)
+    window.scrollTo?.({ top: 0 })
+  }
+  const hide = () => {
+    // Открыли кнопкой на этой странице — шаг назад в истории; пришли сразу по ссылке с #book — убрать #book
+    if ((window.history.state as { fromPage?: boolean } | null)?.fromPage) window.history.back()
+    else {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      setOpen(false)
+    }
+  }
+  return [open, show, hide]
+}
+
 const TEXTS = {
   ru: {
     title: 'Стоматология', tagline: 'Запишитесь онлайн за минуту — бот напомнит о приёме 😊', book: 'Записаться онлайн в Telegram',
+    bookWeb: 'Записаться на сайте — без Telegram',
     settingUp: '🛠 Клиника ещё настраивается — запись скоро.',
     whatsapp: 'Написать в WhatsApp', call: 'Позвонить', back: 'Назад', map: 'Как добраться (2ГИС)', doctors: 'Наши врачи', services: 'Услуги и цены',
     min: 'мин', waText: 'Здравствуйте! Хочу записаться на приём 🦷', howTitle: 'Как записаться',
@@ -17,6 +49,7 @@ const TEXTS = {
   },
   ky: {
     title: 'Стоматология', tagline: 'Бир мүнөттө онлайн жазылыңыз — бот кабыл алуу тууралуу эскертет 😊', book: 'Telegram аркылуу онлайн жазылуу',
+    bookWeb: 'Сайтта жазылуу — Telegram’сыз',
     settingUp: '🛠 Клиника азыр даярдалып жатат — жазылуу жакында ачылат.',
     whatsapp: 'WhatsApp’ка жазуу', call: 'Чалуу', back: 'Артка', map: 'Кантип жетүү керек (2ГИС)', doctors: 'Биздин дарыгерлер', services: 'Кызматтар жана баалар',
     min: 'мүн.', waText: 'Саламатсызбы! Кабыл алууга жазылгым келет 🦷', howTitle: 'Кантип жазылуу керек',
@@ -44,6 +77,7 @@ export function ClinicSite() {
   const [lang, setLang] = useSiteLang()
   const t = TEXTS[lang]
   const [state, setState] = useState<{ data: ClinicPage | null; failed: boolean }>({ data: null, failed: false })
+  const [booking, showBooking, hideBooking] = useBookHash()
   useEffect(() => {
     const code = clinicCode()
     void getJson<ClinicPage>(code ? `/web/clinic?code=${encodeURIComponent(code)}` : '/web/clinic').then(({ status, data }) => {
@@ -66,6 +100,17 @@ export function ClinicSite() {
     const n = new Intl.NumberFormat('ru-RU').format(som)
     return lang === 'ky' ? `${n} сомдон баштап` : `от ${n} сом`
   }
+  if (booking && d.bookingUrl) {
+    return (
+      <main className="site-page">
+        <SiteHeader back={t.back}><LangSwitch lang={lang} onChange={setLang} /></SiteHeader>
+        <h1>{name}</h1>
+        <Suspense fallback={<p className="site-message hint">{t.loading}</p>}>
+          <WebBooking code={clinicCode()} lang={lang} onClose={hideBooking} />
+        </Suspense>
+      </main>
+    )
+  }
   return (
     <main className="site-page">
       <SiteHeader back={t.back}><LangSwitch lang={lang} onChange={setLang} /></SiteHeader>
@@ -75,6 +120,8 @@ export function ClinicSite() {
       </div>
       <div className="site-actions">
         {telegramUrl && <a className="btn primary" href={telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
+        {/* Без Telegram (у многих пожилых его нет) — форма здесь же, клиника подтверждает звонком */}
+        {d.bookingUrl && <button type="button" className={telegramUrl ? 'btn' : 'btn primary'} onClick={showBooking}>🌐 {t.bookWeb}</button>}
         <ContactLinks className={null} phones={d.phones} whatsapp={d.whatsapp} waText={t.waText} texts={t} />
       </div>
       {telegramUrl && promo && <p className="hint">🎟 {t.promo.replace('{code}', promo)}</p>}

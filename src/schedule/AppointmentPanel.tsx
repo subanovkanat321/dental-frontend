@@ -134,7 +134,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
       <span className={`chip s-${s.kind}`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
       {/* Ребёнка записала мама из своего Telegram — кто и кем приходится; иначе — просто «через бота» */}
-      {a.bookedBy ? <p className="hint">{bookedByText(a.bookedBy)}</p> : a.source === 'PATIENT' && <p className="hint">Запись через бота</p>}
+      {a.bookedBy ? <p className="hint">{bookedByText(a.bookedBy)}</p> : a.source === 'PATIENT' ? <p className="hint">Запись через бота</p>
+        : a.source === 'WEB' && <p className="hint">{a.status === 'REQUESTED' ? '🌐 Заявка с сайта: у пациента нет Telegram, бот ему не напишет — позвоните, чтобы подтвердить'
+          : '🌐 Записался на сайте, без Telegram: напоминания бот не шлёт — при необходимости позвоните'}</p>}
       {a.reminderOpenedAt && a.status === 'SCHEDULED' && <p className="hint">Напоминание отправлено {agoText(a.reminderOpenedAt)}, в {timeOf(a.reminderOpenedAt)}</p>}
       {a.rating != null && (
         <p className="rating" aria-label={`Оценка пациента: ${a.rating} из 5`}>{'★'.repeat(a.rating)}{'☆'.repeat(5 - a.rating)} <span className="hint">оценка пациента</span></p>

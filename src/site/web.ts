@@ -16,12 +16,40 @@ export type ClinicPage = {
   services: { name: string; durationMinutes: number; priceSom?: number | null }[]
   /** Новая клиника ещё настраивается (V95): записи нет, telegramUrl пуст */
   settingUp?: boolean
+  /** Запись на сайте без Telegram (/c/<код>#book); null — самозапись выключена или клиника настраивается */
+  bookingUrl?: string | null
 }
 
 /** city — город из списка (V121), по нему фильтр «по городам»; null — не указан. */
 export type DirectoryClinic = {
   name?: string | null; address?: string | null; city?: string | null; mapUrl?: string | null; pageUrl: string; telegramUrl?: string | null; doctors: SiteDoctor[]
+  /** Запись на сайте без Telegram (/c/<код>#book); null — самозапись выключена */
+  bookingUrl?: string | null
 }
+
+/**
+ * Запись на сайте без Telegram — WebBookingService.Info бэкенда (GET /web/booking?code=). available —
+ * можно записаться; нет — unavailable: off, setting-up или paused (тогда «позвоните»).
+ */
+export type WebBookingInfo = {
+  clinicName?: string | null; legalName?: string | null; address?: string | null; mapUrl?: string | null; phones?: string[] | null
+  available: boolean; unavailable?: 'off' | 'setting-up' | 'paused' | null; daysAhead: number
+  doctors: { id: number; fullName: string; about?: string | null; photoUrl?: string | null }[]
+  services: Schemas['ServiceTypeView'][]
+  doctorServices?: Schemas['DoctorServicesView'][] | null
+  sources?: Schemas['PatientSourcesChoice'][] | null
+  /** Запись в боте — мягкая подсказка «там бот напомнит» */
+  telegramUrl?: string | null
+}
+
+/** Заявка принята (WebBookingService.Booked): что показать на экране «Заявка отправлена». */
+export type WebBooked = {
+  startAt: string; endAt: string; doctorName: string; serviceName: string; clinicName?: string | null
+  address?: string | null; mapUrl?: string | null; phones?: string[] | null; telegramUrl?: string | null
+}
+
+/** Ответ-ошибка открытого адреса (Problem Details): code — для своих слов, errors — под полями. */
+export type SiteProblem = { code?: string; detail?: string; errors?: { field: string; message: string }[] }
 
 /** Контакты платформы: supportPhones — телефоны по порядку, supportWhatsapp — свой номер или null. */
 export type Links = {
@@ -37,6 +65,17 @@ export async function getJson<T>(path: string): Promise<{ status: number; data: 
     return { status: response.status, data: response.ok ? (await response.json()) as T : null }
   } catch {
     return { status: 0, data: null }
+  }
+}
+
+/** POST JSON на открытый адрес: ответ или ошибка (Problem Details); status 0 — нет связи. */
+export async function postJson<T>(path: string, body: unknown): Promise<{ status: number; data: T | null; problem: SiteProblem | null }> {
+  try {
+    const response = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    if (response.ok) return { status: response.status, data: (await response.json()) as T, problem: null }
+    return { status: response.status, data: null, problem: (await response.json().catch(() => ({}))) as SiteProblem }
+  } catch {
+    return { status: 0, data: null, problem: null }
   }
 }
 

@@ -10049,7 +10049,7 @@
           },
           "source" : {
             "type" : "string",
-            "enum" : [ "DOCTOR", "PATIENT" ]
+            "enum" : [ "DOCTOR", "PATIENT", "WEB" ]
           },
           "serviceName" : {
             "type" : "string"

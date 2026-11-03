@@ -9,7 +9,7 @@ import { getJson, inAppBrowser, initials, tgLink, useSiteLang, type DirectoryCli
 const TEXTS = {
   ru: {
     title: 'Запись к стоматологу', tagline: 'Выберите клинику или врача и запишитесь в Telegram за минуту — бот напомнит о приёме 😊',
-    search: 'Клиника, врач или адрес', cities: 'Город', allCities: 'Все города', showAll: 'Показать все клиники', book: 'Записаться в Telegram', more: 'Врачи, услуги и цены', map: 'На карте', doctors: 'Врачи',
+    search: 'Клиника, врач или адрес', cities: 'Город', allCities: 'Все города', showAll: 'Показать все клиники', book: 'Записаться в Telegram', bookWeb: 'Без Telegram — записаться на сайте', more: 'Врачи, услуги и цены', map: 'На карте', doctors: 'Врачи',
     clinic: 'Стоматология', nothing: 'Ничего не нашлось — попробуйте другое слово.', empty: 'Клиники скоро появятся здесь.',
     forClinics: 'Для клиник', back: 'Назад', login: 'Вход для клиники', join: 'Подключить клинику',
     staff: 'Вы врач или администратор клиники?', staffLogin: 'Войти в CRM',
@@ -18,7 +18,7 @@ const TEXTS = {
   },
   ky: {
     title: 'Тиш дарыгерине жазылуу', tagline: 'Клиниканы же дарыгерди тандап, Telegram аркылуу бир мүнөттө жазылыңыз — бот эскертет 😊',
-    search: 'Клиника, дарыгер же дарек', cities: 'Шаар', allCities: 'Бардык шаарлар', showAll: 'Бардык клиникаларды көрсөтүү', book: 'Telegram аркылуу жазылуу', more: 'Дарыгерлер, кызматтар жана баалар', map: 'Картада', doctors: 'Дарыгерлер',
+    search: 'Клиника, дарыгер же дарек', cities: 'Шаар', allCities: 'Бардык шаарлар', showAll: 'Бардык клиникаларды көрсөтүү', book: 'Telegram аркылуу жазылуу', bookWeb: 'Telegram’сыз — сайтта жазылуу', more: 'Дарыгерлер, кызматтар жана баалар', map: 'Картада', doctors: 'Дарыгерлер',
     clinic: 'Стоматология', nothing: 'Эч нерсе табылган жок — башка сөз менен издеңиз.', empty: 'Клиникалар жакында ушул жерде болот.',
     forClinics: 'Клиникалар үчүн', back: 'Артка', login: 'Клиника үчүн кирүү', join: 'Клиниканы туташтыруу',
     staff: 'Сиз клиниканын дарыгерисизби же администраторусузбу?', staffLogin: 'CRMге кирүү',
@@ -74,6 +74,7 @@ export function Directory() {
               )}
               <div className="site-actions">
                 {c.telegramUrl && <a className="btn primary" href={c.telegramUrl} target="_blank" rel="noopener noreferrer">📲 {t.book}</a>}
+                {c.bookingUrl && <a className={c.telegramUrl ? 'btn' : 'btn primary'} href={c.bookingUrl}>🌐 {t.bookWeb}</a>}
                 <a className="btn" href={c.pageUrl}>🦷 {t.more}</a>
               </div>
               {c.telegramUrl && inAppBrowser() && tgLink(c.telegramUrl) && <a className="site-inapp-link" href={tgLink(c.telegramUrl)!}>📲 {t.openTg}</a>}

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { groupByCategory } from '../clinic/services'
 import { servicesOfDoctor } from '../lib/doctorServices'
-import { formatPhone, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
+import { formatPhone, slotInstant, todayIn, ZONE } from '../lib/time'
 import { haptic, openLink, telegram } from '../lib/telegram'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { launchSearch } from '../lib/deepLink'
@@ -12,13 +12,14 @@ import { ClinicFilters } from '../lib/ClinicFilters'
 import { ContactLinks } from '../lib/ContactLinks'
 import { useClinicFilter, withCity } from '../lib/clinicSearch'
 import { BackButton, MainButton } from '../lib/MainButton'
-import { bookingDays, breakNote, initials, normalizeLang, priceText, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
+import { bookingDays, initials, normalizeLang, priceText, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
+import { DayStrip, SlotGrid } from './SlotPicker'
+import { firstFree, minutesOf, stripLength } from './slots'
 import './patient.css'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorView']
 type Service = Schemas['ServiceTypeView']
-type Slots = Schemas['BookingViewsSlots']
 type Booking = Schemas['BookingViewsBooking']
 type Relation = NonNullable<Schemas['RelativesRelative']['relation']>
 
@@ -105,10 +106,8 @@ function errorText(t: T, e: unknown, phone?: string | null): string {
   return e.message
 }
 
-/** Сколько дней в ленте: столько, на сколько вперёд сервер даёт записаться (daysAhead и сегодня); нет — две недели. */
-function stripLength(me: Me): number {
-  return me.daysAhead ? Math.min(me.daysAhead + 1, 62) : 14
-}
+/** Сколько дней в ленте: столько, на сколько вперёд сервер даёт записаться. */
+const daysOf = (me: Me) => stripLength(me.daysAhead)
 
 /**
  * Самозапись пациента в Telegram (этап 3 ADR 0002): всё, что видит не-сотрудник. Язык — русский
@@ -357,43 +356,6 @@ function DoctorsScreen({ ctx }: { ctx: Ctx }) {
   )
 }
 
-/**
- * Свободное и занятое время одной сеткой по порядку: занятое — серым «занято», его не нажать.
- * Перерывы и выходной — подписью над сеткой, чтобы было понятно, куда делось время.
- */
-function SlotGrid({ ctx, slots, chosen, onPick, empty }: { ctx: Ctx; slots: Slots; chosen: string; onPick: (time: string) => void; empty: string }) {
-  const { t, lang } = ctx
-  const notes = [...(slots.breaks ?? []), ...(slots.dayOff ? [slots.dayOff] : [])]
-  const cells = [
-    ...(slots.starts ?? []).map((s) => ({ at: s, free: true })),
-    ...(slots.taken ?? []).map((s) => ({ at: s, free: false })),
-  ].sort((a, b) => a.at.localeCompare(b.at))
-  return (
-    <div className="slots" role="group" aria-label={t('freeTime')}>
-      {notes.map((b, i) => <div key={i} className="break-note">{breakNote(lang, b)}</div>)}
-      {slots.starts?.length ? cells.map(({ at, free }) => free ? (
-        <button key={at} type="button" className="slot time" aria-pressed={timeOf(at) === chosen} onClick={() => onPick(timeOf(at))}>{timeOf(at)}</button>
-      ) : (
-        <button key={at} type="button" className="slot time taken" disabled aria-label={`${timeOf(at)} — ${t('busySlot')}`}>{timeOf(at)}<small>{t('busySlot')}</small></button>
-      )) : <div className="hint">{empty}</div>}
-    </div>
-  )
-}
-
-function DayStrip({ ctx, date, onPick }: { ctx: Ctx; date: string; onPick: (d: string) => void }) {
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    ref.current?.querySelector('[aria-pressed=true]')?.scrollIntoView?.({ inline: 'center', block: 'nearest' })
-  }, [date])
-  return (
-    <div ref={ref} className="days" role="group" aria-label={ctx.t('day')}>
-      {bookingDays(ctx.lang, todayIn(), stripLength(ctx.me)).map((d) => (
-        <button key={d.date} type="button" className="day" aria-pressed={d.date === date} onClick={() => onPick(d.date)}>{d.label}</button>
-      ))}
-    </div>
-  )
-}
-
 /** Кого записываем: себя, родственника из списка (его id) или нового. */
 type Who = 'self' | 'new' | number
 
@@ -443,7 +405,7 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   const serviceRef = useRef<HTMLElement>(null)
   const timeRef = useRef<HTMLElement>(null)
   const dataRef = useRef<HTMLElement>(null)
-  const days = bookingDays(lang, todayIn(), stripLength(me)).map((d) => d.date)
+  const days = bookingDays(lang, todayIn(), daysOf(me)).map((d) => d.date)
 
   // Пока день не выбран сам — первый день со свободным временем (сегодня мест нет — завтра и т. д.);
   // две недели пусто — сказать, что делать. Перебор — в одном запросе, без мигания пустых сеток
@@ -452,17 +414,8 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
     queryFn: async () => {
       const load = (d: string) => unwrap(api.GET('/api/patient/slots', { params: { query: { date: d, doctorId: doctor.id!, serviceTypeId: service!.id! } } }))
       if (dateTouched) return { date, slots: await load(date), noneSoon: false }
-      // По неделе за раз, параллельно (а не 14–30 запросов друг за другом); первый день со
-      // свободным временем — по порядку дней, а не какой ответ пришёл раньше
-      let first: Slots | undefined
-      for (let i = 0; i < days.length; i += WEEK) {
-        const batch = days.slice(i, i + WEEK)
-        const found = await Promise.all(batch.map(load))
-        first ??= found[0]
-        const free = found.findIndex((x) => x.starts?.length)
-        if (free >= 0) return { date: batch[free]!, slots: found[free]!, noneSoon: false }
-      }
-      return { date: days[0]!, slots: first ?? await load(days[0]!), noneSoon: true }
+      // По неделе за раз, параллельно (а не 14–30 запросов друг за другом)
+      return firstFree(days, load)
     },
     enabled: service != null,
   })
@@ -613,7 +566,7 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
       <section ref={timeRef} className="step">
         <h2 className="step-title">{t('stepTime')}</h2>
         <div className="field"><span>{t('day')}</span>
-          <DayStrip ctx={ctx} date={shownDate} onPick={(d) => { setDate(d); setDateTouched(true); setChosen(''); setErrors({}) }} />
+          <DayStrip t={t} lang={lang} length={daysOf(me)} date={shownDate} onPick={(d) => { setDate(d); setDateTouched(true); setChosen(''); setErrors({}) }} />
         </div>
         <div className="field"><span>{t('time')}</span>
           {errors.time && <p className="error" role="alert">{errors.time}</p>}
@@ -621,7 +574,7 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
             : slots.isPending ? <p className="hint">{t('loading')}</p>
               : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
                 : slots.data.noneSoon ? <p className="hint">{t('noFreeSoon')} {callText(t, me.clinicContact)}</p>
-                  : <SlotGrid ctx={ctx} slots={slots.data.slots} chosen={chosen}
+                  : <SlotGrid t={t} lang={lang} slots={slots.data.slots} chosen={chosen}
                     onPick={(time) => { setChosen(time); setErrors({}); scrollTo('data') }}
                     empty={slots.data.slots.dayOff ? t('otherDay') : slots.data.slots.workingDay ? t('noFree') : t('dayOff')} />}
           {/* Сам выбрал день без свободного времени — одним нажатием к ближайшему свободному, а не листать ленту */}
@@ -785,14 +738,6 @@ function PromoField({ ctx, value, open, error, onOpen, onChange }: {
   )
 }
 
-function minutesOf(time: string): number {
-  const [h, m] = time.split(':').map(Number)
-  return h! * 60 + m!
-}
-
-/** Сколько дней спрашивать за раз при поиске первого свободного дня. */
-const WEEK = 7
-
 const STATUS: Record<string, string> = { REQUESTED: 'requested', SCHEDULED: 'scheduled' }
 
 /** «Аружан» в «Моих записях»; своя запись — «Вы». Старый сервер не присылал self — значит, своя. */
@@ -950,7 +895,7 @@ function RescheduleScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
   const client = useQueryClient()
   // День записи — если он есть в ленте; запись дальше ленты (или в прошлом) — первый день ленты
   const [date, setDate] = useState(() => {
-    const days = bookingDays(lang, todayIn(), stripLength(me)).map((d) => d.date)
+    const days = bookingDays(lang, todayIn(), daysOf(me)).map((d) => d.date)
     const day = dateOf(b.startAt!)
     return days.includes(day) ? day : days[0]!
   })
@@ -983,11 +928,11 @@ function RescheduleScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
       {b.self === false && <p className="who-line">👤 {b.patientName}</p>}
       <p className="hint">{t('moveNow', { when: whenAt(lang, b.startAt!) })}</p>
       <div className="field"><span>{t('day')}</span>
-        <DayStrip ctx={ctx} date={date} onPick={(d) => { setDate(d); setChosen(''); setError('') }} /></div>
+        <DayStrip t={t} lang={lang} length={daysOf(me)} date={date} onPick={(d) => { setDate(d); setChosen(''); setError('') }} /></div>
       <div className="field"><span>{t('time')}</span>
         {error && <p className="error" role="alert">{error}</p>}
         {slots.isPending ? <p className="hint">{t('loading')}</p> : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
-          : <SlotGrid ctx={ctx} slots={slots.data} chosen={chosen} onPick={(time) => { setChosen(time); setError('') }}
+          : <SlotGrid t={t} lang={lang} slots={slots.data} chosen={chosen} onPick={(time) => { setChosen(time); setError('') }}
             empty={slots.data.dayOff ? t('otherDay') : slots.data.workingDay ? t('noFree') : t('dayOff')} />}
       </div>
       <MainButton text={t('move')} busy={move.isPending} onClick={() => (chosen ? move.mutate() : setError(t('pickTime')))} />

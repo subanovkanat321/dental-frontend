@@ -4493,7 +4493,7 @@ export interface components {
             /** Format: int64 */
             version?: number;
             /** @enum {string} */
-            source?: "DOCTOR" | "PATIENT";
+            source?: "DOCTOR" | "PATIENT" | "WEB";
             serviceName?: string;
             /** Format: int32 */
             servicePriceSom?: number;

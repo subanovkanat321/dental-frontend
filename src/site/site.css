@@ -94,3 +94,21 @@ body.site {
   .site-page h1 { font-size: 2rem; }
 }
 @media (prefers-reduced-motion: reduce) { .go-link { transition: none; } .go-link:active { transform: none; } }
+
+/* Запись на сайте без Telegram (/c/<код>#book): шаги — карточки .step из записи в Telegram (patient.css) */
+.web-book { display: grid; gap: 14px; }
+.web-book .web-book-back { justify-self: start; min-height: 44px; }
+.web-book .step { gap: 12px; }
+.web-book .step-title { font: 600 1rem var(--display); }
+.web-book-doctors { display: grid; gap: 8px; }
+.web-book-doctor { justify-content: flex-start !important; gap: 12px; padding: 10px 12px; text-align: left; white-space: normal; }
+.web-book-doctor[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); }
+.web-book-doctor img, .web-book-doctor .initials { flex: none; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--link); font: 600 .9rem var(--display); }
+.web-book-doctor > span { display: grid; gap: 2px; }
+.web-book-summary { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; padding: 14px; border-radius: 14px; background: var(--card); border: 1px solid var(--separator); }
+.web-book-summary dt { color: var(--hint); }
+.web-book-summary dd { margin: 0; font-weight: 600; }
+.web-book-privacy { font-size: .9rem; }
+.web-book-privacy summary { min-height: 32px; color: var(--link); cursor: pointer; }
+.web-book-privacy h4 { margin: 10px 0 2px; font-size: .9rem; }
