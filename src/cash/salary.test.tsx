@@ -20,12 +20,13 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   // Вымышленные врачи; сервер считает сам, тест только отвечает тем, что сервер бы вернул
   let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0 }
   const aigerim: Row = { doctorId: 1, doctor: 'Айгерим Садыкова', percent: 40, baseSom: 0, revenueSom: 20000, dueSom: 8000, paidSom: 8000 }
-  const asel: Row = { assistantId: 7201, doctor: 'Асель', percent: 10, baseSom: 5000, revenueSom: 70000, dueSom: 12000, paidSom: 0 }
+  const asel: Row = { assistantId: 7201, doctor: 'Асель', position: 'ассистент', percent: 10, baseSom: 5000, revenueSom: 70000, dueSom: 12000, paidSom: 0 }
+  const zhamila: Row = { assistantId: 7203, doctor: 'Жамиля', position: 'регистратура', percent: 0, baseSom: 20000, revenueSom: 90000, dueSom: 20000, paidSom: 20000 }
   const sent: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments/debts', () => HttpResponse.json([])),
-    http.get('*/api/salaries', () => HttpResponse.json([aigerim, dastan, asel])),
+    http.get('*/api/salaries', () => HttpResponse.json([aigerim, dastan, asel, zhamila])),
     http.put('*/api/salaries/2', async ({ request }) => {
       sent.push(await request.json())
       dastan = { ...dastan, percent: 30, baseSom: 10000, dueSom: 25000 }
@@ -62,6 +63,11 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   expect(aselCard).toHaveTextContent('· ассистент')
   expect(aselCard).toHaveTextContent('10% от выручки его врачей + оклад 5 000 сом')
   expect(aselCard).toHaveTextContent('Выручка врачей')
+  // Регистратура — своя строка: обычно только оклад, процент — от выручки всей клиники
+  const zhamilaCard = screen.getByRole('region', { name: 'Зарплата: Жамиля' })
+  expect(zhamilaCard).toHaveTextContent('· регистратура')
+  expect(zhamilaCard).toHaveTextContent('Условия: оклад 20 000 сом')
+  expect(zhamilaCard).toHaveTextContent('Выручка клиники')
 
   await user.click(within(card).getByRole('button', { name: /Выплатить 25\s000 сом/ }))
   expect(within(card).getByLabelText('Сумма выплаты, сом')).toHaveValue('25000')
@@ -70,7 +76,7 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   expect(sent).toEqual([{ percent: 30, baseSom: 10000 }, { month: expect.stringMatching(/^\d{4}-\d{2}$/), amountSom: 25000 }])
 })
 
-test('бывший ассистент: выплата месяца осталась в истории, без «Условий» и «Выплатить»', async () => {
+test('бывший сотрудник: выплата месяца осталась в истории, без «Условий» и «Выплатить»', async () => {
   const former: Row = { assistantId: 7202, doctor: 'Бермет (больше не работает)', percent: 0, baseSom: 0, revenueSom: 0, dueSom: 0, paidSom: 8000, former: true }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -81,7 +87,8 @@ test('бывший ассистент: выплата месяца остала�
   renderApp()
   await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
   const card = await screen.findByRole('region', { name: 'Зарплата: Бермет (больше не работает)' })
-  expect(card).toHaveTextContent('· бывший ассистент')
+  // Кем работал — уже не пишем: имя и так говорит «больше не работает»
+  expect(card).not.toHaveTextContent('· ассистент')
   expect(card).toHaveTextContent(/Выплачено8\s000 сом/)
   expect(card).toHaveTextContent('выплата за этот месяц сохранена в истории')
   expect(within(card).queryByRole('button', { name: /условия|процент и оклад/ })).not.toBeInTheDocument()

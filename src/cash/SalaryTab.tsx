@@ -19,9 +19,18 @@ function previousMonth(today = todayIn()): string {
   return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, '0')}`
 }
 
+/** Сотрудник, а не врач: ассистент, регистратура или админ без своего кресла. */
+const isEmployee = (r: Row) => r.assistantId != null
+const isAssistantRow = (r: Row) => r.position === 'ассистент'
+
+/** От чьей выручки процент: врач — своей, ассистент — его врачей, регистратура и админ — всей клиники. */
+function revenueOf(r: Row): string {
+  return !isEmployee(r) ? 'выручки' : isAssistantRow(r) ? 'выручки его врачей' : 'выручки клиники'
+}
+
 function termsText(r: Row): string {
   const percent = Number(r.percent ?? 0)
-  const of = r.assistantId != null ? 'от выручки его врачей' : 'от выручки'
+  const of = `от ${revenueOf(r)}`
   const parts = [percent ? `${String(percent).replace('.', ',')}% ${of}` : '', r.baseSom ? `оклад ${somText(r.baseSom)}` : '']
   return parts.filter(Boolean).join(' + ') || 'Условия не заданы'
 }
@@ -31,8 +40,8 @@ function errorText(e: ApiError | null): string | null {
 }
 
 /**
- * «Касса → Зарплата»: к выплате врачу за месяц = оклад + процент от его выручки, ассистенту — от
- * выручки его врачей. Админ задаёт
+ * «Касса → Зарплата»: к выплате врачу за месяц = оклад + процент от его выручки; регистратуре и админу
+ * без кресла — от выручки клиники; ассистенту — от выручки его врачей. Админ задаёт
  * условия и отмечает выплату (она же расход «Зарплата» — прибыль её учтёт); врач видит свою строку.
  * Считает сервер — здесь только показываем и отправляем.
  */
@@ -86,16 +95,16 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   return (
     <section className="card-block salary" aria-label={`Зарплата: ${r.doctor}`}>
       <div className="salary-head">
-        <h2>{r.doctor}{r.assistantId != null && <span className="hint"> · {r.former ? 'бывший ассистент' : 'ассистент'}</span>}</h2>
+        <h2>{r.doctor}{isEmployee(r) && !r.former && r.position && <span className="hint"> · {r.position}</span>}</h2>
         {left === 0 && (r.dueSom ?? 0) > 0 && <span className="badge-ok">✅ Выплачено</span>}
       </div>
       <dl className="salary-sums">
-        <div><dt>{r.assistantId != null ? 'Выручка врачей' : 'Выручка'}</dt><dd className="num">{somText(r.revenueSom ?? 0)}</dd></div>
+        <div><dt>{!isEmployee(r) ? 'Выручка' : isAssistantRow(r) ? 'Выручка врачей' : 'Выручка клиники'}</dt><dd className="num">{somText(r.revenueSom ?? 0)}</dd></div>
         <div><dt>К выплате</dt><dd className="num strong">{somText(r.dueSom ?? 0)}</dd></div>
         <div><dt>Выплачено</dt><dd className="num">{somText(r.paidSom ?? 0)}</dd></div>
       </dl>
       {r.former
-        ? <p className="hint">Убран из «Сотрудников» — выплата за этот месяц сохранена в истории. Вернёте ассистентом — она снова будет в его строке.</p>
+        ? <p className="hint">Убран из «Сотрудников» — выплата за этот месяц сохранена в истории. Вернёте в «Сотрудники» — она снова будет в его строке.</p>
         : noTerms && !editing
           ? <p className="tone-wait">Условия не заданы — «К выплате» считается как 0. Нажмите «Задать процент и оклад».</p>
           : !noTerms && <p className="hint">Условия: {termsText(r)}</p>}
@@ -121,7 +130,7 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
   const p = Number(percent.replace(',', '.') || 0)
   const revenue = r.revenueSom ?? 0
   const preview = Number(base || 0) + Math.round(revenue * p / 100)
-  const of = r.assistantId != null ? 'выручки его врачей' : 'выручки'
+  const of = revenueOf(r)
   const save = useMutation<Row, ApiError>({
     mutationFn: () => {
       const body = { percent: Number(percent.replace(',', '.') || 0), baseSom: Number(base || 0) }
@@ -145,7 +154,7 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
           <input inputMode="numeric" value={base} placeholder="0 — без оклада" onChange={(e) => setBase(e.target.value.replace(/\D/g, ''))} /></label>
       </div>
       <div className="day-quick wrap" role="group" aria-label="Быстро: процент">
-        {(r.assistantId != null ? [5, 10, 15] : [20, 25, 30, 35, 40]).map((x) => (
+        {(!isEmployee(r) ? [20, 25, 30, 35, 40] : isAssistantRow(r) ? [5, 10, 15] : [1, 2, 3]).map((x) => (
           <button key={x} type="button" className="chip" aria-pressed={p === x} onClick={() => setPercent(String(x))}>{x}%</button>
         ))}
       </div>
@@ -195,8 +204,8 @@ function SalaryHowTo({ seesAll, noTerms }: { seesAll: boolean; noTerms: boolean 
     <details className="card-block salary-howto" open={seesAll && noTerms}>
       <summary>Как работает зарплата</summary>
       <ol>
-        {seesAll && <li><b>Условия</b> — у каждого врача и ассистента кнопка «⚙️ Задать процент и оклад»: процент от выручки, оклад в месяц или оба. Задаются один раз.</li>}
-        <li><b>Расчёт сам</b> — «К выплате» = оклад + процент от выручки за месяц. Выручка врача — оплаты пациентов за его приёмы; ассистента — оплаты за приёмы врачей, которым он помогает.</li>
+        {seesAll && <li><b>Условия</b> — у каждого врача и сотрудника (ассистента, регистратуры, администратора) своя кнопка «⚙️ Задать процент и оклад»: процент от выручки, оклад в месяц или оба. Задаются один раз; настраивает и выплачивает только администратор.</li>}
+        <li><b>Расчёт сам</b> — «К выплате» = оклад + процент от выручки за месяц. Выручка врача — оплаты пациентов за его приёмы; ассистента — оплаты за приёмы врачей, которым он помогает; регистратуры и администратора — всей клиники (им обычно ставят только оклад).</li>
         {seesAll && <li><b>Выплата</b> — в начале месяца выберите прошлый месяц и нажмите «Выплатить». Выплата сама запишется в «Расходы» как «Зарплата», прибыль её учтёт.</li>}
       </ol>
       <p className="hint">Пример: 30% + оклад 10 000 сом, выручка за месяц 200 000 сом → к выплате 10 000 + 60 000 = 70 000 сом.</p>

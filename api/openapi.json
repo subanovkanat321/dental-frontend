@@ -8565,6 +8565,9 @@
           "doctor" : {
             "type" : "string"
           },
+          "position" : {
+            "type" : "string"
+          },
           "percent" : {
             "type" : "number"
           },

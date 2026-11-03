@@ -3892,6 +3892,7 @@ export interface components {
             /** Format: int64 */
             assistantId?: number;
             doctor?: string;
+            position?: string;
             percent?: number;
             /** Format: int64 */
             baseSom?: number;
