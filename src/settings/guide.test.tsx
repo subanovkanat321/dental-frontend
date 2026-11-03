@@ -42,3 +42,8 @@ test('в «Памятке» — видео, как установить Tish н�
   expect(video).toHaveAttribute('preload', 'none')
   expect(video.getAttribute('src')).toMatch(/kak-ustanovit.*\.mp4/)
 })
+
+test('в «Памятке» — ссылка на Instagram Tish', () => {
+  render(<GuidePage me={me({ admin: true })} onBack={vi.fn()} />)
+  expect(screen.getByRole('link', { name: '@tish.app.kg' })).toHaveAttribute('href', 'https://www.instagram.com/tish.app.kg/')
+})

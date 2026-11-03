@@ -3,8 +3,9 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type Reac
 import type { AccountTab } from '../account/AccountPage'
 import { logout, type Schemas } from '../api/client'
 import type { ClinicTab } from '../clinic/ClinicPage'
+import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { openSettings, settingsItem } from '../lib/route'
-import { telegram } from '../lib/telegram'
+import { openLink, telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
 import type { TeamTab } from '../team/TeamPage'
 import { isAssistant, seesAllMoney } from '../lib/roles'
@@ -151,6 +152,16 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
                   </button>
                 </li>
               ))}
+              {/* Не пункт настроек, а ссылка наружу: в Telegram откроется его браузером, Mini App остаётся */}
+              {group === 'Профиль и помощь' && (
+                <li>
+                  <button type="button" className="settings-link" onClick={() => openLink(TISH_INSTAGRAM)}>
+                    <span className="settings-emoji" aria-hidden="true">📸</span>
+                    <span className="settings-text"><strong>Tish в Instagram</strong><span className="hint">{TISH_INSTAGRAM_NAME} — видео-инструкции и новости</span></span>
+                    <span aria-hidden="true" className="chev">↗</span>
+                  </button>
+                </li>
+              )}
             </ul>
           </section>
         )

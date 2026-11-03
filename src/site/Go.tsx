@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { ContactLinks } from '../lib/ContactLinks'
 import { getJson, type Links, type Tariffs } from './web'
 
@@ -55,15 +56,15 @@ export function Go() {
         <p className="hint go-note">Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
       </section>
 
-      {contacts && (
-        <section className="site-section" aria-labelledby="go-contacts">
-          <h2 id="go-contacts">Связаться</h2>
-          <div className="site-actions">
-            {c.supportUrl && <a className="btn" data-tone="tg" href={c.supportUrl} target="_blank" rel="noopener noreferrer">Написать в Telegram</a>}
-            <ContactLinks className={null} phones={c.supportPhones} whatsapp={c.supportWhatsapp} />
-          </div>
-        </section>
-      )}
+      {/* Instagram есть всегда — «Связаться» не пропадает, даже если контакты поддержки не заполнены */}
+      <section className="site-section" aria-labelledby="go-contacts">
+        <h2 id="go-contacts">{contacts ? 'Связаться' : 'Мы в Instagram'}</h2>
+        <div className="site-actions">
+          {c.supportUrl && <a className="btn" data-tone="tg" href={c.supportUrl} target="_blank" rel="noopener noreferrer">Написать в Telegram</a>}
+          <ContactLinks className={null} phones={c.supportPhones} whatsapp={c.supportWhatsapp} />
+          <a className="btn" href={TISH_INSTAGRAM} target="_blank" rel="noopener noreferrer">Instagram {TISH_INSTAGRAM_NAME}</a>
+        </div>
+      </section>
       <footer className="site-footer">© {new Date().getFullYear()} Tish</footer>
     </main>
   )

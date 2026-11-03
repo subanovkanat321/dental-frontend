@@ -155,6 +155,7 @@ test('/go: одно действие пациенту, акция ведёт к 
   const contacts = screen.getByRole('region', { name: 'Связаться' })
   expect(within(contacts).getByRole('link', { name: 'Написать в WhatsApp' })).toHaveAttribute('href', 'https://wa.me/996770444555')
   expect(within(contacts).getAllByRole('link', { name: /^Позвонить/ }).map((a) => a.getAttribute('href'))).toEqual(['tel:+996555000111', 'tel:+996700222333'])
+  expect(within(contacts).getByRole('link', { name: 'Instagram @tish.app.kg' })).toHaveAttribute('href', 'https://www.instagram.com/tish.app.kg/')
 })
 
 test('/go и страница клиники: нет WhatsApp — нет и кнопки WhatsApp', async () => {

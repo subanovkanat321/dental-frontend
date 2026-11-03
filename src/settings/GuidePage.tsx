@@ -1,7 +1,9 @@
 import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
+import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { openSettings } from '../lib/route'
+import { openLink } from '../lib/telegram'
 import { GUIDES, ORDER, ownRole, type Role } from './guides'
 import { SubHeader } from './SubHeader'
 import installPoster from './media/kak-ustanovit.jpg'
@@ -23,6 +25,8 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
           <div>
             <h2>Видео: Tish на телефоне за 20 секунд</h2>
             <p className="hint">iPhone и Android: значок Tish на экране — открывается как приложение. И как включить уведомления. Видео можно развернуть на весь экран.</p>
+            <p className="hint">Другие видео и советы — в Instagram{' '}
+              <a href={TISH_INSTAGRAM} target="_blank" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openLink(TISH_INSTAGRAM) }}>{TISH_INSTAGRAM_NAME}</a></p>
           </div>
         </div>
       </section>
