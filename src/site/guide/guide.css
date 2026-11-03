@@ -1,0 +1,56 @@
+/*
+ * «Руководство Tish» (/guide): те же токены и спокойствие, что у страниц сайта (DESIGN.md → Site),
+ * но шире — это длинный текст с картинками: колонка текста до ~760px, на компьютере слева липкое
+ * оглавление. Картинки — со скруглением и тонкой рамкой; телефонные — узкие, по центру.
+ */
+.site-page.manual { max-width: 1120px; }
+.manual .manual-hero p { max-width: 640px; }
+
+.manual .manual-roles { display: flex; flex-wrap: wrap; gap: 8px; }
+.manual .manual-roles button { min-height: 40px; padding: 6px 14px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card);
+  color: var(--text); font: inherit; font-size: .95rem; cursor: pointer; }
+.manual .manual-roles button:hover { border-color: var(--accent); }
+.manual .manual-roles button[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.manual .manual-roles button:focus-visible, .manual .manual-toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.manual .manual-role-note { margin-top: -8px; font-size: .9rem; }
+
+.manual .manual-layout { display: grid; gap: 24px; }
+.manual .manual-toc { padding: 14px 16px; border-radius: 14px; background: var(--card); border: 1px solid var(--separator); }
+.manual .manual-toc h2 { font-size: 1rem; margin-bottom: 6px; }
+.manual .manual-toc ol { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+.manual .manual-toc a { color: var(--link); text-decoration: none; }
+.manual .manual-toc a:hover { text-decoration: underline; }
+
+.manual .manual-chapters { display: grid; gap: 40px; min-width: 0; }
+.manual .manual-chapter { display: grid; gap: 18px; scroll-margin-top: 12px; }
+.manual .manual-chapter > h2 { font-size: 1.45rem; padding-top: 8px; border-top: 1px solid var(--separator); }
+.manual .manual-num { color: var(--faint); }
+.manual .manual-intro { color: var(--hint); max-width: 760px; }
+.manual .manual-section { display: grid; gap: 10px; max-width: 760px; }
+.manual .manual-section h3 { margin: 0; font: 600 1.08rem/1.3 var(--display); }
+.manual .manual-steps { margin: 0; padding-left: 26px; display: grid; gap: 6px; }
+.manual .manual-steps li::marker { color: var(--link); font-weight: 600; }
+
+.manual .manual-figure { margin: 4px 0 0; display: grid; gap: 6px; width: 100%; }
+.manual .manual-figure img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--separator); background: var(--card);
+  box-shadow: 0 1px 2px rgba(15, 40, 45, .05), 0 2px 8px rgba(15, 40, 45, .05); }
+.manual .manual-figure.phone { width: 100%; }
+.manual .manual-figure a { display: block; border-radius: 12px; }
+.manual .manual-figure a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.manual .manual-figure figcaption { color: var(--hint); font-size: .875rem; }
+.manual .manual-tip { padding: 10px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--hero-ink); }
+.manual .manual-footer { line-height: 1.6; }
+
+@media (min-width: 1024px) {
+  .manual .manual-layout { grid-template-columns: 240px minmax(0, 1fr); align-items: start; gap: 40px; }
+  .manual .manual-toc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+}
+
+@media print {
+  .site-top, .manual .manual-roles, .manual .manual-role-note, .manual .manual-toc, .manual .manual-footer { display: none; }
+  .site-page.manual { max-width: none; padding: 0; }
+  .manual .manual-layout { display: block; }
+  .manual .manual-chapter { break-before: page; }
+  .manual .manual-figure { break-inside: avoid; }
+  .manual .manual-figure img { box-shadow: none; }
+}

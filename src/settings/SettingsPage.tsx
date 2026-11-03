@@ -11,6 +11,7 @@ import type { TeamTab } from '../team/TeamPage'
 import { isAssistant, seesAllMoney } from '../lib/roles'
 import { InstallApp } from '../pwa/InstallApp'
 import { Notifications } from '../pwa/Notifications'
+import { guideRole, guideUrl } from './guides'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
 // код «Договора» или «Услуг» скачивается, только когда пункт открыли
@@ -152,7 +153,16 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
                   </button>
                 </li>
               ))}
-              {/* Не пункт настроек, а ссылка наружу: в Telegram откроется его браузером, Mini App остаётся */}
+              {/* Не пункты настроек, а ссылки наружу: в Telegram откроются его браузером, Mini App остаётся */}
+              {group === 'Профиль и помощь' && (
+                <li>
+                  <button type="button" className="settings-link" onClick={() => openLink(guideUrl(guideRole(me)))}>
+                    <span className="settings-emoji" aria-hidden="true">📖</span>
+                    <span className="settings-text"><strong>Руководство</strong><span className="hint">Подробно, с картинками — для вашей роли</span></span>
+                    <span aria-hidden="true" className="chev">↗</span>
+                  </button>
+                </li>
+              )}
               {group === 'Профиль и помощь' && (
                 <li>
                   <button type="button" className="settings-link" onClick={() => openLink(TISH_INSTAGRAM)}>

@@ -130,3 +130,16 @@ export function ownRole(me: Me): Role {
   if (me.admin) return 'admin'
   return 'reception'
 }
+
+/**
+ * Роль для «Руководства Tish» (/guide?role=…): админу — его глава «Настройки клиники» и всё
+ * остальное, даже если он и врач; иначе — как в «Памятке».
+ */
+export function guideRole(me: Me): Role {
+  return me.admin ? 'admin' : ownRole(me)
+}
+
+/** Адрес полного руководства с картинками — страница сайта, открывается без входа. */
+export function guideUrl(role: Role): string {
+  return `${window.location.origin}/guide?role=${role}`
+}

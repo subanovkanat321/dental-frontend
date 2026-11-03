@@ -297,6 +297,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .card-block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .card-block.guide { gap: 6px; margin-top: 12px; }
 .guide-video { gap: 6px; margin-bottom: 12px; max-width: 860px; }
+.guide-full { margin: 0; font-weight: 600; }
+.guide-full a { color: var(--link); text-underline-offset: 3px; }
 .guide-video > div { display: flex; gap: 14px; align-items: flex-start; }
 .guide-video h2 { margin: 0; font-size: 1rem; }
 .guide-video video { width: 100%; flex: none; width: 150px; height: auto; aspect-ratio: 9 / 16; border-radius: var(--r-md); background: var(--sunken); }

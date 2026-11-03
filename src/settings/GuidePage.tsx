@@ -4,7 +4,7 @@ import type { Schemas } from '../api/client'
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { openSettings } from '../lib/route'
 import { openLink } from '../lib/telegram'
-import { GUIDES, ORDER, ownRole, type Role } from './guides'
+import { GUIDES, guideUrl, ORDER, ownRole, type Role } from './guides'
 import { SubHeader } from './SubHeader'
 import installPoster from './media/kak-ustanovit.jpg'
 import installVideo from './media/kak-ustanovit.mp4'
@@ -36,6 +36,11 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
         ))}
       </div>
       <p className="hint">{guide.intro}</p>
+      {/* Полное руководство (/guide) — для выбранной роли: там каждый раздел по шагам и со скриншотами */}
+      <p className="guide-full">
+        <a href={guideUrl(role)} target="_blank" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openLink(guideUrl(role)) }}>
+          Полное руководство с картинками ›</a>
+      </p>
       {guide.topics.map((t) => (
         <section key={t.title} className="card-block guide" aria-label={t.title}>
           <h2>{t.title}</h2>
