@@ -22,12 +22,13 @@ const GuidePage = lazy(() => import('./GuidePage').then((m) => ({ default: m.Gui
 const CalendarPage = lazy(() => import('./CalendarPage').then((m) => ({ default: m.CalendarPage })))
 const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
 const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ default: m.ReminderTextPage })))
+const AiPage = lazy(() => import('./AiPage').then((m) => ({ default: m.AiPage })))
 const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'reminder': '🔔', 'doctors': '👩‍⚕️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'reminder': '🔔', 'doctors': '👩‍⚕️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝', 'ai': '✨' }
 
 type Item = {
   key: string
@@ -74,6 +75,8 @@ const GROUPS: [string, Item[]][] = [
     // Ассистенту — нет: записи с кодом ставят врач и регистратура, отчёт ему не нужен
     item('promo', 'Промокоды', 'Код для рекламы и работает ли он', (me) => !isAssistant(me), clinic('promo')),
     item('patient-news', 'Новости для пациентов', 'Акции и объявления в боте', admin, clinic('news')),
+    // Согласие клиники на ИИ — решает админ (сервер: 403 остальным); отчёты и диктовка — отдельно
+    item('ai', 'ИИ-помощник', 'Отчёты пациенту и разбор диктовки', admin, () => (_me, back) => <AiPage onBack={back} />),
   ]],
   ['Аккаунт клиники', [
     item('plan', 'Тариф и оплата', 'Сколько осталось и как продлить', admin, account('plan')),
