@@ -1,14 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
 import { useBack } from '../lib/back'
 import { shortDate, somText, todayIn } from '../lib/time'
 import { AnamnesisBlock } from './Anamnesis'
 import { PlanDocs } from '../print/PlanDocs'
+import { stagesOf } from '../lib/planStages'
 import { resizePhoto } from './thumb'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
+import { Select } from '../layout/Select'
 
 type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
@@ -201,7 +203,11 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
     queryKey: ['plan', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan', { params: { path: { patientId } } })),
   })
-  const [form, setForm] = useState({ tooth: '', title: '', price: '' })
+  const empty = { tooth: '', title: '', price: '', stage: '1', service: '' }
+  const [form, setForm] = useState(empty)
+  // Услуги прайса: выбрал — название и цена подставились, врач может поправить (V140)
+  const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), enabled: !readOnly })
+  const priced = (services.data ?? []).filter((x) => x.active)
   const [editing, setEditing] = useState<number | null>(null)
   const title = useRef<HTMLInputElement>(null)
   // Пришёл зуб из карты — подставить в новый этап (состояние меняем при отрисовке, без эффекта)
@@ -221,16 +227,20 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
   const add = useMutation<Schemas['TreatmentStepView'][], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/patients/{patientId}/plan', {
       params: { path: { patientId } },
-      body: { title: form.title.trim(), tooth: form.tooth ? Number(form.tooth) : undefined, priceSom: form.price ? Number(form.price) : undefined },
+      body: {
+        title: form.title.trim(), tooth: form.tooth ? Number(form.tooth) : undefined, priceSom: form.price ? Number(form.price) : undefined,
+        stage: Number(form.stage), serviceTypeId: form.service ? Number(form.service) : undefined,
+      },
     })),
     onSuccess: (steps) => {
       saved(steps)
-      setForm({ tooth: '', title: '', price: '' })
+      // Этап оставляем: врач обычно добавляет подряд несколько процедур одного этапа
+      setForm({ ...empty, stage: form.stage })
     },
   })
   const toggle = useMutation<Schemas['TreatmentStepView'][], ApiError, Schemas['TreatmentStepView']>({
     mutationFn: (s) => unwrap(api.PUT('/api/patients/{patientId}/plan/{stepId}', {
-      params: { path: { patientId, stepId: s.id! } }, body: { tooth: s.tooth, title: s.title, priceSom: s.priceSom, done: !s.doneAt },
+      params: { path: { patientId, stepId: s.id! } }, body: { tooth: s.tooth, title: s.title, priceSom: s.priceSom, stage: s.stage, done: !s.doneAt },
     })),
     onSuccess: saved,
   })
@@ -240,6 +250,9 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
   })
 
   const steps = plan.data ?? []
+  // Этапы показываем, только когда их больше одного: «сначала — потом»
+  const stages = stagesOf(steps.filter((x) => !x.doneAt))
+  const staged = stages.length > 1
   const total = steps.reduce((s, x) => s + (x.priceSom ?? 0), 0)
   const left = steps.filter((x) => !x.doneAt).reduce((s, x) => s + (x.priceSom ?? 0), 0)
   const error = add.error ?? toggle.error ?? remove.error
@@ -253,8 +266,12 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
       <h2>План лечения{total ? <span className="hint"> · {somText(total)}{left && left !== total ? `, осталось ${somText(left)}` : ''}</span> : null}</h2>
       {steps.length > 0 && (
         <ul className="plan" aria-label="Этапы лечения">
-          {steps.map((s) => (
-            <li key={s.id} className={s.doneAt ? 'done' : undefined}>
+          {steps.map((s, i) => (
+            <Fragment key={s.id}>
+            {staged && !s.doneAt && steps[i - 1]?.stage !== s.stage && (
+              <li className="plan-stage">Этап {s.stage}{stageTotal(stages, s.stage) ? <span className="hint"> · {somText(stageTotal(stages, s.stage))}</span> : null}</li>
+            )}
+            <li className={s.doneAt ? 'done' : undefined}>
               {editing === s.id ? (
                 <StepEdit patientId={patientId} step={s} onDone={(steps) => { if (steps) saved(steps); setEditing(null) }} />
               ) : (
@@ -273,6 +290,7 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
                   onClick={() => window.confirm(`Удалить этап «${s.title}»?`) && remove.mutate(s.id!)}>✕</button>
               )}
             </li>
+            </Fragment>
           ))}
         </ul>
       )}
@@ -280,10 +298,23 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
       <PlanDocs patient={patient} steps={steps} />
       {plan.isSuccess && steps.length === 0 && <p className="hint">{readOnly ? 'Плана пока нет.' : 'Плана пока нет — добавьте первый этап.'}</p>}
       {!readOnly && <form className="plan-add" aria-label="Новый этап" onSubmit={submit}>
+        {priced.length > 0 && (
+          <Select aria-label="Услуга из прайса" className="plan-service" value={form.service} onChange={(e) => {
+            const picked = priced.find((x) => String(x.id) === e.target.value)
+            setForm({ ...form, service: e.target.value, title: picked?.name ?? form.title,
+              price: picked?.priceSom != null ? String(picked.priceSom) : form.price })
+          }}>
+            <option value="">Из прайса — или впишите сами</option>
+            {priced.map((x) => <option key={x.id} value={String(x.id)}>{x.name}{x.priceSom != null ? ` · ${somText(x.priceSom)}` : ''}</option>)}
+          </Select>
+        )}
         <input aria-label="Зуб" placeholder="Зуб" inputMode="numeric" value={form.tooth} onChange={(e) => setForm({ ...form, tooth: e.target.value })} />
         <input ref={title} aria-label="Что сделать" placeholder="Что сделать: пломба, чистка…" value={form.title} maxLength={200}
           onChange={(e) => setForm({ ...form, title: e.target.value })} />
         <input aria-label="Цена, сом" placeholder="Цена" type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+        <Select aria-label="Этап лечения" value={form.stage} onChange={(e) => setForm({ ...form, stage: e.target.value })}>
+          {STAGES.map((n) => <option key={n} value={String(n)}>Этап {n}</option>)}
+        </Select>
         <button type="submit" className="btn" disabled={add.isPending || !form.title.trim()}>＋ Этап</button>
       </form>}
       {error && <p className="error" role="alert">{Object.values(error.fieldErrors)[0] ?? error.message}</p>}
@@ -291,13 +322,22 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
   )
 }
 
-/** Правка этапа: зуб, что сделать и цена; отметка «сделано» остаётся как была. */
+/** Этапы лечения: 1 — сначала, 2 — потом… (сервер принимает 1–9; больше пяти не бывает). */
+const STAGES = [1, 2, 3, 4, 5]
+
+function stageTotal(stages: ReturnType<typeof stagesOf<Step>>, stage?: number): number {
+  return stages.find((x) => x.stage === stage)?.total ?? 0
+}
+
+/** Правка этапа: зуб, что сделать, цена и этап; отметка «сделано» остаётся как была. */
 function StepEdit({ patientId, step, onDone }: { patientId: number; step: Step; onDone: (steps?: Step[]) => void }) {
-  const [f, setF] = useState({ tooth: step.tooth != null ? String(step.tooth) : '', title: step.title ?? '', price: step.priceSom != null ? String(step.priceSom) : '' })
+  const [f, setF] = useState({ tooth: step.tooth != null ? String(step.tooth) : '', title: step.title ?? '', price: step.priceSom != null ? String(step.priceSom) : '',
+    stage: String(step.stage ?? 1) })
   const save = useMutation<Step[], ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/patients/{patientId}/plan/{stepId}', {
       params: { path: { patientId, stepId: step.id! } },
-      body: { tooth: f.tooth ? Number(f.tooth) : undefined, title: f.title.trim(), priceSom: f.price ? Number(f.price) : undefined, done: Boolean(step.doneAt) },
+      body: { tooth: f.tooth ? Number(f.tooth) : undefined, title: f.title.trim(), priceSom: f.price ? Number(f.price) : undefined,
+        stage: Number(f.stage), done: Boolean(step.doneAt) },
     })),
     onSuccess: (steps) => onDone(steps),
   })
@@ -306,6 +346,9 @@ function StepEdit({ patientId, step, onDone }: { patientId: number; step: Step; 
       <input aria-label="Зуб этапа" placeholder="Зуб" inputMode="numeric" value={f.tooth} onChange={(e) => setF({ ...f, tooth: e.target.value })} />
       <input aria-label="Что сделать на этапе" value={f.title} maxLength={200} autoFocus onChange={(e) => setF({ ...f, title: e.target.value })} />
       <input aria-label="Цена этапа, сом" placeholder="Цена" type="number" min={0} value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} />
+      <Select aria-label="Этап лечения этого шага" value={f.stage} onChange={(e) => setF({ ...f, stage: e.target.value })}>
+        {STAGES.map((n) => <option key={n} value={String(n)}>Этап {n}</option>)}
+      </Select>
       <button type="submit" className="btn primary" disabled={save.isPending || !f.title.trim()}>Сохранить</button>
       <button type="button" className="btn ghost" onClick={() => onDone()}>Отмена</button>
       {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}

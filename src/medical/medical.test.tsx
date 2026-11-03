@@ -92,7 +92,7 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   await userEvent.type(within(add).getByLabelText('Цена, сом'), '12000')
   await userEvent.click(within(add).getByRole('button', { name: '＋ Этап' }))
   expect(await within(plan).findByText('Коронка')).toBeInTheDocument()
-  expect(sent).toContainEqual({ plan: { title: 'Коронка', tooth: 26, priceSom: 12000 } })
+  expect(sent).toContainEqual({ plan: { title: 'Коронка', tooth: 26, priceSom: 12000, stage: 1 } })
 
   await userEvent.click(screen.getByRole('button', { name: '← К списку' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка пациента' })).toBeInTheDocument()
@@ -126,5 +126,5 @@ test('отмеченные зубы списком; зуб → «В план л�
   await userEvent.type(within(edit).getByLabelText('Цена этапа, сом'), '3500')
   await userEvent.click(within(edit).getByRole('button', { name: 'Сохранить' }))
   expect(await within(plan).findByText('Пломба композит')).toBeInTheDocument()
-  expect(sent).toContainEqual({ step: 1, tooth: 16, title: 'Пломба композит', priceSom: 3500, done: false })
+  expect(sent).toContainEqual({ step: 1, tooth: 16, title: 'Пломба композит', priceSom: 3500, stage: 1, done: false })
 })

@@ -406,7 +406,26 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .plan li { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--separator); }
 .plan li.done span { text-decoration: line-through; color: var(--hint); }
-.plan-add { display: grid; grid-template-columns: 70px 1fr 110px auto; gap: 8px; }
+.plan li.plan-stage { display: block; border-bottom: 0; padding-top: 10px; font-weight: 600; }
+.plan-add { display: grid; grid-template-columns: 70px 1fr 110px 110px auto; gap: 8px; }
+.plan-add .plan-service { grid-column: 1 / -1; }
+/* «Отправить план пациенту» (V140): поля, предпросмотр документа и кнопки отправки */
+.plan-offer { display: grid; gap: 8px; }
+.plan-offer p { margin: 0; }
+.plan-offer-panel { display: grid; gap: 12px; padding: 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md); }
+.plan-offer-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.plan-offer-fields input { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.plan-offer-preview { padding: 12px 14px; border-radius: var(--r-md); background: var(--sunken); }
+.offer-doc { display: grid; gap: 6px; }
+.offer-doc h3, .offer-doc h4, .offer-doc p { margin: 0; }
+.offer-doc h4 { margin-top: 6px; }
+.offer-doc table { width: 100%; border-collapse: collapse; }
+.offer-doc td { padding: 3px 6px 3px 0; border-bottom: 1px solid var(--separator); vertical-align: top; }
+.offer-doc td:first-child { white-space: nowrap; color: var(--hint); width: 70px; }
+.offer-doc .r { text-align: right; white-space: nowrap; }
+.offer-doc .total { font-weight: 600; }
+.plan-offer-done { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.plan-offer-done p { margin: 0; }
 .plan-add input, .upload input:not([type=file]) { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); min-width: 0; }
 .notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .notes p { margin: 2px 0 0; white-space: pre-wrap; }

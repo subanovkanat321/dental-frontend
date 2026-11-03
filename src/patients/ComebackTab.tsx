@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { EmptyState } from '../layout/EmptyState'
 import { haptic, openLink } from '../lib/telegram'
 import { agoText, whatsappUrl } from '../lib/texts'
-import { addDays, somText, todayIn } from '../lib/time'
+import { addDays, shortDate, somText, todayIn } from '../lib/time'
 import './comeback.css'
 
 type Candidate = Schemas['ComebacksCandidate']
@@ -34,13 +34,15 @@ export function ComebackTab({ onOpen, onBook }: { onOpen: (patientId: number) =>
     queryKey: ['comebacks', 'result', today],
     queryFn: () => unwrap(api.GET('/api/comebacks/result', { params: { query: { from: addDays(today, -29), to: today } } })),
   })
-  const [filter, setFilter] = useState<Reason | 'ALL'>('ALL')
+  // SENT — отправили план с ценами (V140), а пациент так и не записался
+  const [filter, setFilter] = useState<Reason | 'ALL' | 'SENT'>('ALL')
   const [inviting, setInviting] = useState<number | null>(null)
 
   if (board.isPending) return <p className="hint">Загрузка…</p>
   if (board.error) return <p className="error">{board.error.message}</p>
   const all = board.data.patients ?? []
-  const shown = filter === 'ALL' ? all : all.filter((c) => c.reason === filter)
+  const sentPlan = all.filter((c) => c.planSentAt)
+  const shown = filter === 'ALL' ? all : filter === 'SENT' ? sentPlan : all.filter((c) => c.reason === filter)
   const r = result.data
 
   return (
@@ -58,6 +60,12 @@ export function ComebackTab({ onOpen, onBook }: { onOpen: (patientId: number) =>
           <span className="hint">Пора на осмотр</span><b className="num">{board.data.recalls ?? 0}</b>
         </button>
       </section>
+      {sentPlan.length > 0 && (
+        <button type="button" className="chip comeback-sent-filter" aria-pressed={filter === 'SENT'}
+          onClick={() => setFilter(filter === 'SENT' ? 'ALL' : 'SENT')}>
+          Отправили план, не записались: {sentPlan.length}{sentPlan.some((c) => c.planAgreedAt) ? ` · согласились: ${sentPlan.filter((c) => c.planAgreedAt).length}` : ''}
+        </button>
+      )}
       {r && (r.invited ?? 0) > 0 && (
         <p className="comeback-result" aria-label="Tish вернул">
           ✅ За 30 дней вернулись <b>{r.returned} из {r.invited}</b> приглашённых
@@ -77,6 +85,11 @@ export function ComebackTab({ onOpen, onBook }: { onOpen: (patientId: number) =>
                 {(c.planSom ?? 0) > 0 && <b className="num comeback-sum">{somText(c.planSom!)}</b>}
               </div>
               {(c.plan ?? []).length > 0 && <p className="comeback-plan">{c.plan!.join(' · ')}</p>}
+              {c.planSentAt && (
+                <p className={c.planAgreedAt ? 'tone-ok small' : 'hint small'}>
+                  план отправлен {shortDate(c.planSentAt)}{c.planAgreedAt ? ` · согласован ${shortDate(c.planAgreedAt)} — запишите на первый этап` : ' · ещё не согласован'}
+                </p>
+              )}
               <p className="hint small">
                 {c.lastVisit ? `был ${agoText(c.lastVisit)}` : 'ещё не был'} · {c.invitedAt ? `звали ${agoText(c.invitedAt)}` : 'ещё не звали'}
               </p>

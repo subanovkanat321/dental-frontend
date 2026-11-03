@@ -58,3 +58,26 @@ test('«Вернуть»: деньги на столе, «Tish вернул», �
   expect(await screen.findByRole('status')).toHaveTextContent('Приглашение отправлено в Telegram')
   expect(sent).toEqual([{ text: 'Здравствуйте, Айгуль Т.!\n\nОсталась коронка. Ждём вас!', channel: 'TELEGRAM' }])
 })
+
+test('«Вернуть»: отправили план с ценами, а пациент не записался — строка статуса и фильтр', async () => {
+  const sentPlan: Schemas['ComebacksBoard'] = {
+    ...board,
+    patients: [
+      { ...board.patients![0]!, planSentAt: '2026-11-03T05:00:00Z', planAgreedAt: '2026-11-04T05:00:00Z' },
+      board.patients![1]!,
+    ],
+  }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/comebacks', () => HttpResponse.json(sentPlan)),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  const list = await screen.findByRole('list', { name: 'Кого вернуть' })
+  expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent(/план отправлен 3 нояб?\.? 2026 · согласован 4 нояб?\.? 2026 — запишите на первый этап/)
+  const filter = screen.getByRole('button', { name: /Отправили план, не записались: 1 · согласились: 1/ })
+  await userEvent.click(filter)
+  expect(within(list).getAllByRole('listitem')).toHaveLength(1)
+  expect(filter).toHaveAttribute('aria-pressed', 'true')
+})

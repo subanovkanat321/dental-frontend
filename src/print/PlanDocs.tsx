@@ -5,18 +5,39 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { useMe } from '../api/me'
 import { isAssistant } from '../lib/roles'
 import { somText } from '../lib/time'
-import { docDate } from './paper'
+import { canPrint, docDate } from './paper'
 import { PrintSheet } from './PrintSheet'
 import { DocActions } from './SendToPatient'
+import { PlanOffer } from './PlanOffer'
 
 type Step = Schemas['TreatmentStepView']
 type Patient = Schemas['PatientView']
 
 /**
- * «🖨 Печать» и «📤 Отправить пациенту» у плана лечения. Цены — только тем, кто видит деньги:
- * ассистенту сервер присылает план без цен, и на листе колонки «Цена» нет.
+ * Документы плана лечения. Врач и админ — «Отправить план пациенту» с ценами, этапами и кнопкой
+ * «Согласен» (PlanOffer, V140). Ассистенту денег не показываем: у него прежние «🖨 Печать» и
+ * «📤 Отправить пациенту» — план без цен.
  */
 export function PlanDocs({ patient, steps }: { patient: Patient; steps: Step[] }) {
+  const me = useMe().data
+  const [printing, setPrinting] = useState(false)
+  if (!me || !steps.length) return null
+  if (isAssistant(me)) return <PlainPlanDocs patient={patient} steps={steps} />
+  // Печать всего плана (со сделанным) — как была; отправка — предложение с ценами и сроком
+  return (
+    <>
+      {canPrint() && (
+        <div className="actions">
+          <button type="button" className="btn" onClick={() => setPrinting(true)} aria-label="Печать: план лечения">🖨 Печать</button>
+        </div>
+      )}
+      <PlanOffer patient={patient} steps={steps} />
+      {printing && <PlanPrint patient={patient} steps={steps} onClose={() => setPrinting(false)} />}
+    </>
+  )
+}
+
+function PlainPlanDocs({ patient, steps }: { patient: Patient; steps: Step[] }) {
   const patientId = patient.id!
   const [printing, setPrinting] = useState(false)
   // Текст для WhatsApp — заранее: окно WhatsApp браузер откроет только сразу по нажатию

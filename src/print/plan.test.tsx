@@ -74,8 +74,9 @@ test('план лечения на печать: пациент, врач, эт�
   await vi.waitFor(() => expect(window.print).toHaveBeenCalled())
 })
 
-test('план — «📤 Отправить пациенту» в Telegram', async () => {
-  const sent = backend(me, true)
+// Врач и админ отправляют план с ценами и «Согласен» (planOffer.test.tsx); у ассистента — прежний текст без цен
+test('ассистент — «📤 Отправить пациенту» в Telegram', async () => {
+  const sent = backend({ ...me, admin: false, doctorId: undefined, fullName: 'Асель', assistantOf: [1] }, true)
   await openMedical()
   await userEvent.click(await screen.findByRole('button', { name: 'Отправить пациенту в Telegram: план лечения' }))
   expect(await screen.findByText('Отправлено в Telegram')).toBeInTheDocument()

@@ -15,6 +15,7 @@ import { useClinicFilter, withCity } from '../lib/clinicSearch'
 import { BackButton, MainButton } from '../lib/MainButton'
 import { bookingDays, initials, normalizeLang, priceText, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
 import { DayStrip, SlotGrid } from './SlotPicker'
+import { PlanView } from './PlanView'
 import { firstFree, minutesOf, stripLength } from './slots'
 import './patient.css'
 
@@ -33,6 +34,8 @@ type Screen =
   | { name: 'reschedule'; id: number }
   | { name: 'news'; back: Screen }
   | { name: 'privacy'; back: Screen }
+  /** План лечения с ценами от врача (V140): кнопка бота «📋 Открыть план» — ?screen=plan */
+  | { name: 'plan'; back: Screen }
 
 /** go и reload — с подтверждением что вышло («Запись отменена»): без него экран просто сменился, и непонятно, получилось ли. */
 type Ctx = { me: Me; t: T; lang: Lang; go: (s: Screen, notice?: string) => void; reload: (notice?: string) => void; screen: Screen }
@@ -60,6 +63,10 @@ function firstScreen(me: Me): Screen {
   const params = new URLSearchParams(launchSearch())
   const again = (me.doctors ?? []).find((d) => d.id === Number(params.get('doctor')))
   const nearest = bookingsOf(me)[0]
+  const home: Screen = nearest ? { name: 'booking' } : again ? { name: 'book', doctorId: again.id! } : bookStart(me)
+  if (params.get('screen') === 'plan') return { name: 'plan', back: home }
+  // «📅 Записаться на 1-й этап» под планом — сразу запись, даже если уже есть другая
+  if (params.get('screen') === 'book') return bookStart(me)
   if (nearest && params.get('screen') === 'reschedule') return { name: 'reschedule', id: nearest.id! }
   if (nearest) return { name: 'booking' }
   if (again) return { name: 'book', doctorId: again.id! }
@@ -194,6 +201,7 @@ export default function PatientApp({ me }: { me: Me }) {
       {current.name === 'reschedule' && opened && <RescheduleScreen ctx={ctx} b={opened} />}
       {current.name === 'news' && <NewsScreen ctx={ctx} back={current.back} />}
       {current.name === 'privacy' && <PrivacyScreen ctx={ctx} back={current.back} />}
+      {current.name === 'plan' && <PlanScreen ctx={ctx} back={current.back} />}
     </div>
   )
 }
@@ -275,8 +283,13 @@ function ClinicContacts({ ctx }: { ctx: Ctx }) {
 function Footer({ ctx }: { ctx: Ctx }) {
   const { me, t } = ctx
   const c = me.clinic
+  // Врач прислал план с ценами — он здесь же, одной кнопкой
+  const plans = useQuery({ queryKey: ['patient-plans'], queryFn: () => unwrap(api.GET('/api/patient/plans')) })
   return (
     <>
+      {(plans.data?.length ?? 0) > 0 && (
+        <button type="button" className="btn" onClick={() => ctx.go({ name: 'plan', back: ctx.screen })}><span aria-hidden="true">📋 </span>{t('planMy')}</button>
+      )}
       <button type="button" className="btn" onClick={() => ctx.go({ name: 'news', back: ctx.screen })}><span aria-hidden="true">📰 </span>{t('news')}</button>
       {me.canChangeClinic && (
         <button type="button" className="link other-clinic" onClick={() => ctx.go({ name: 'clinics', back: ctx.screen })}>
@@ -940,6 +953,40 @@ function RescheduleScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
             empty={slots.data.dayOff ? t('otherDay') : slots.data.workingDay ? t('noFree') : t('dayOff')} />}
       </div>
       <MainButton text={t('move')} busy={move.isPending} onClick={() => (chosen ? move.mutate() : setError(t('pickTime')))} />
+    </section>
+  )
+}
+
+/**
+ * «План лечения» (V140): последний действующий план, который врач отправил в этот чат, — этапы и
+ * цены, «Согласен», «Есть вопрос», «Записаться на 1-й этап». Согласие и вопрос — врачу уведомлением.
+ */
+function PlanScreen({ ctx, back }: { ctx: Ctx; back: Screen }) {
+  const { t } = ctx
+  const client = useQueryClient()
+  const plans = useQuery({ queryKey: ['patient-plans'], queryFn: () => unwrap(api.GET('/api/patient/plans')) })
+  const plan = plans.data?.[0]
+  const answer = useMutation<Schemas['PlanOffersPatientPlan'], ApiError, 'agree' | 'question'>({
+    mutationFn: (kind) => unwrap(kind === 'agree'
+      ? api.POST('/api/patient/plans/{id}/agree', { params: { path: { id: plan!.id! } } })
+      : api.POST('/api/patient/plans/{id}/question', { params: { path: { id: plan!.id! } } })),
+    onSuccess: (fresh) => {
+      haptic('success')
+      client.setQueryData(['patient-plans'], (old?: Schemas['PlanOffersPatientPlan'][]) => (old ?? []).map((p) => (p.id === fresh.id ? fresh : p)))
+    },
+    onError: () => haptic('error'),
+  })
+  return (
+    <section className="screen">
+      <BackButton onBack={() => ctx.go(back)} />
+      {plans.isPending && <p className="hint">…</p>}
+      {plans.error && <p className="error">{errorText(t, plans.error, ctx.me.clinicContact)}</p>}
+      {plans.isSuccess && !plan && <><h1>{t('planTitle')}</h1><p className="hint">{t('planNone')}</p></>}
+      {plan && (
+        <PlanView plan={plan} t={t} busy={answer.isPending} onAgree={() => answer.mutate('agree')} onAsk={() => answer.mutate('question')}
+          onBook={() => ctx.go(bookStart(ctx.me))}
+          error={answer.error ? (answer.error.status === 404 ? t('planGone') : errorText(t, answer.error, ctx.me.clinicContact)) : null} />
+      )}
     </section>
   )
 }

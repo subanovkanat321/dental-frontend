@@ -62,6 +62,14 @@ const CARD: Topic = {
   ],
 }
 
+const PLAN_OFFER: Topic = {
+  title: 'План лечения с ценами',
+  steps: [
+    'Медкарта → «План лечения»: этапы с ценами (можно «Из прайса») и номером этапа.',
+    '«Отправить план пациенту» → в Telegram или WhatsApp. Пациент жмёт «Согласен» — вам придёт уведомление.',
+  ],
+}
+
 const ASSIST: Topic = {
   title: 'Что видит ассистент',
   steps: [
@@ -102,7 +110,7 @@ export const GUIDES: Record<Role, { label: string; intro: string; topics: Topic[
   doctor: {
     label: 'Врач',
     intro: 'Ваше расписание, пациенты и оплата за приём.',
-    topics: [BOOK, REQUESTS, REMIND, PAY, MOVE, CARD],
+    topics: [BOOK, REQUESTS, REMIND, PAY, MOVE, CARD, PLAN_OFFER],
   },
   reception: {
     label: 'Регистратура',
