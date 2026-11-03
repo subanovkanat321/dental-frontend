@@ -86,6 +86,10 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
 
   return (
     <div className="week">
+      {/* Что здесь можно делать — словами (чья неделя и сколько записей — в шапке над чипами) */}
+      <p className="week-caption hint">
+        Неделя одного врача. Нажмите на день — откроется весь день{editable ? '; на свободное время — новая запись; приём можно перетащить мышью на другое время' : ' (только просмотр)'}
+      </p>
       {notice && <p className={`week-notice ${notice.tone}`} role={notice.tone === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
       {week.error && <p className="error" role="alert">{week.error.message}</p>}
       <div ref={grid} className={`grid week-grid${ghost ? ' dragging' : ''}`}
@@ -98,7 +102,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
             <button key={date} type="button" className={`grid-head week-head${date === today ? ' today' : ''}${isOff(slots[i]) ? ' off' : ''}`}
               aria-label={`${dayTitle(date)}: открыть день`} onClick={() => onOpenDay(date)}>
               <span className="week-head-day">{weekday} <b className="num">{day}</b></span>
-              <span className="week-head-count hint">{count ? `${count} зап.` : isOff(slots[i]) ? 'выходной' : '—'}</span>
+              <span className="week-head-count hint">{count ? `${count} зап.` : isOff(slots[i]) ? 'выходной' : 'нет записей'}</span>
             </button>
           )
         })}
@@ -127,7 +131,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
                 return (
                   <button key={w.start} type="button" className="grid-free week-free" style={{ top: y(start) + 2, height: (end - start) * PX - 4 }}
                     aria-label={`${dayTitle(date)}: свободно с ${text.replace('–', ' до ')}, записать`} onClick={() => onNew(date, Math.ceil(start / 5) * 5)}>
-                    <span className="grid-free-text">＋ <span className="num">{text}</span></span>
+                    <span className="grid-free-text">Свободно <span className="num">{text}</span></span>
                   </button>
                 )
               })}

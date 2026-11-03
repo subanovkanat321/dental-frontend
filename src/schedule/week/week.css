@@ -40,3 +40,5 @@
 
 .view-mode button { padding: 7px 14px; }
 .week-grid .appt { line-height: 1.2; }
+
+.week-caption { margin: 0; font-size: .92rem; }
