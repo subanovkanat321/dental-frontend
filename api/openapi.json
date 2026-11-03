@@ -2734,6 +2734,75 @@
         }
       }
     },
+    "/api/salaries/{doctorId}/rent" : {
+      "post" : {
+        "tags" : [ "salary-controller" ],
+        "operationId" : "receiveRent",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SalaryControllerPayout"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalaryControllerSalaryRow"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "salary-controller" ],
+        "operationId" : "cancelRent",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "month",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalaryControllerSalaryRow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/salaries/{doctorId}/pay" : {
       "post" : {
         "tags" : [ "salary-controller" ],
@@ -9220,6 +9289,13 @@
           "baseSom" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "rentSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rentPercent" : {
+            "type" : "number"
           }
         }
       },
@@ -9260,6 +9336,29 @@
           },
           "former" : {
             "type" : "boolean"
+          },
+          "earnedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rentFixedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rentPercent" : {
+            "type" : "number"
+          },
+          "rentSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "owesSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rentReceivedSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -10274,6 +10373,10 @@
           },
           "eveningSummary" : {
             "type" : "boolean"
+          },
+          "rentSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -13033,6 +13136,10 @@
             "format" : "int64"
           },
           "expensesSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rentSom" : {
             "type" : "integer",
             "format" : "int64"
           }

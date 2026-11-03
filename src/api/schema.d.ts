@@ -1012,6 +1012,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/salaries/{doctorId}/rent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["receiveRent"];
+        delete: operations["cancelRent"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/salaries/{doctorId}/pay": {
         parameters: {
             query?: never;
@@ -4225,6 +4241,9 @@ export interface components {
             percent?: number;
             /** Format: int64 */
             baseSom?: number;
+            /** Format: int64 */
+            rentSom?: number;
+            rentPercent?: number;
         };
         SalaryControllerSalaryRow: {
             /** Format: int64 */
@@ -4243,6 +4262,17 @@ export interface components {
             /** Format: int64 */
             paidSom?: number;
             former?: boolean;
+            /** Format: int64 */
+            earnedSom?: number;
+            /** Format: int64 */
+            rentFixedSom?: number;
+            rentPercent?: number;
+            /** Format: int64 */
+            rentSom?: number;
+            /** Format: int64 */
+            owesSom?: number;
+            /** Format: int64 */
+            rentReceivedSom?: number;
         };
         PushControllerChannelForm: {
             channel?: string;
@@ -4654,6 +4684,8 @@ export interface components {
             /** Format: int64 */
             perDayNeededSom?: number;
             eveningSummary?: boolean;
+            /** Format: int64 */
+            rentSom?: number;
         };
         EarningsControllerEvening: {
             eveningSummary?: boolean;
@@ -5807,6 +5839,8 @@ export interface components {
             revenueSom?: number;
             /** Format: int64 */
             expensesSom?: number;
+            /** Format: int64 */
+            rentSom?: number;
         };
         SpendingViewItem: {
             /** Format: int64 */
@@ -8644,6 +8678,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ServiceTypeControllerAdded"];
+                };
+            };
+        };
+    };
+    receiveRent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                doctorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalaryControllerPayout"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalaryControllerSalaryRow"];
+                };
+            };
+        };
+    };
+    cancelRent: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path: {
+                doctorId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalaryControllerSalaryRow"];
                 };
             };
         };
