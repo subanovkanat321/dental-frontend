@@ -39,13 +39,17 @@
 .step-attention { animation: attention 1.2s ease; }
 @keyframes attention { 0%, 100% { box-shadow: none; } 30% { box-shadow: 0 0 0 3px var(--accent); } }
 
-.services { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
-.services-group { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
-.services-group h3 { grid-column: 1 / -1; margin: 8px 0 0; font-size: .95rem; font-weight: 600; color: var(--hint); }
-.btn.service { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 6px; min-height: 92px; padding: 12px; text-align: left; font-weight: 600; white-space: normal; overflow-wrap: anywhere; hyphens: auto; }
-.btn.service[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); }
-.btn.service .dur { font-size: .82rem; font-weight: 500; color: var(--hint); }
-.btn.service .price { font-size: .85rem; font-weight: 700; color: var(--accent); }
+.services { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.services-group { display: grid; gap: 6px; }
+.services-group h3 { margin: 8px 0 0; font-size: .85rem; font-weight: 600; color: var(--hint); text-transform: uppercase; letter-spacing: .03em; }
+/* Услуга — строка: значок · название и длительность · цена справа. Нажал — подсветилась и галочка */
+.btn.service { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 56px; padding: 8px 12px;
+  text-align: left; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+.btn.service .svc-emoji { font-size: 1.3rem; text-align: center; }
+.btn.service .svc-main { display: grid; gap: 1px; min-width: 0; }
+.btn.service[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); box-shadow: inset 0 0 0 1px var(--accent); }
+.btn.service .dur { font-size: .8rem; font-weight: 500; color: var(--hint); }
+.btn.service .price { font-size: .85rem; font-weight: 700; color: var(--accent); white-space: nowrap; text-align: right; }
 
 .days { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
 .days::-webkit-scrollbar { display: none; }

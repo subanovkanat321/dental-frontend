@@ -182,9 +182,11 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
   const serviceButton = (s: Service) => (
     <button key={s.id} type="button" className="btn service" aria-pressed={service?.id === s.id}
       onClick={() => { setService(s); setChosen(''); setDateTouched(false); setErrors({}) }}>
-      <span aria-hidden="true">{serviceEmoji(s.name)} </span>{s.name}
-      <span className="sr-only"> · {s.durationMinutes} {t('min')}</span>
-      <span className="dur" aria-hidden="true">⏱ {s.durationMinutes} {t('min')}</span>
+      {/* Одна строка: значок, название с длительностью, цена справа — список короче, чем карточки */}
+      <span className="svc-emoji" aria-hidden="true">{serviceEmoji(s.name)}</span>
+      <span className="svc-main"><span className="svc-name">{s.name}</span>
+        <span className="sr-only"> · {s.durationMinutes} {t('min')}</span>
+        <span className="dur" aria-hidden="true">⏱ {s.durationMinutes} {t('min')}</span></span>
       {priceText(lang, s.priceSom) && <span className="price">{priceText(lang, s.priceSom)}</span>}
     </button>
   )
