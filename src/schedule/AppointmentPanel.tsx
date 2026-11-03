@@ -12,6 +12,7 @@ import { useClose } from '../lib/useClose'
 import { addDays, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { ContactButtons } from './Contact'
+import { ContinueTreatment } from './ContinueTreatment'
 import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
 import { PatientExpenses } from '../patients/PatientExpenses'
@@ -129,6 +130,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         {a.patient?.id != null && <SourceLine patient={a.patient} canEdit={canEditDoctor(me, a.doctorId)} compact />}
       </section>
       <MedAlerts an={anamnesis.data} compact />
+      {/* Пришёл продолжить лечение — что сделали в прошлый раз и что осталось по плану */}
+      {clinical && <ContinueTreatment appointment={a} onMedical={onMedical && a.patient ? () => onMedical(a.patient!) : undefined} />}
       {clinical && onMedical && a.patient && a.status !== 'CANCELLED' && (
         <button type="button" className="btn" onClick={() => onMedical(a.patient!)}>Карта зубов и план лечения</button>
       )}

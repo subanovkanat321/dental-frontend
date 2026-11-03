@@ -130,3 +130,29 @@ test('калькулятор зарплаты: свои цифры, минус �
   expect(c.getByLabelText('Результат калькулятора')).toHaveTextContent(/= 13\s000 сом/)
   expect(sent).toEqual([])
 })
+
+test('условия у каждого свои: «Вся выручка — врачу (100%)» и «Только оклад» одной кнопкой', async () => {
+  let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0 }
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/salaries', () => HttpResponse.json([dastan])),
+    http.put('*/api/salaries/2', async ({ request }) => {
+      const body = (await request.json()) as { percent: number; baseSom: number }
+      sent.push(body)
+      dastan = { ...dastan, percent: body.percent, baseSom: body.baseSom, dueSom: body.baseSom + Math.round(50000 * body.percent / 100) }
+      return HttpResponse.json(dastan)
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  const card = await screen.findByRole('region', { name: 'Зарплата: Дастан Т.' })
+  await user.click(within(card).getByRole('button', { name: '⚙️ Задать процент и оклад' }))
+  await user.click(within(card).getByRole('button', { name: 'Вся выручка — врачу (100%)' }))
+  expect(within(card).getByLabelText('Пример расчёта')).toHaveTextContent(/= 50\s000 сом/)
+  await user.click(within(card).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(card).findByText('Условия: вся выручка — врачу (100%)')).toBeInTheDocument()
+  expect(sent).toEqual([{ percent: 100, baseSom: 0 }])
+})

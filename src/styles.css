@@ -1485,3 +1485,10 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 .dictation-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .dictation-row > input:not([type]), .dictation-row > input[aria-label^="Шаг"], .dictation-row > input[aria-label^="Пометка"] { flex: 1 1 140px; min-width: 0; }
 .dictation-row .dictation-tooth { flex: 0 0 3.5em; width: 3.5em; text-align: center; }
+
+/* «Продолжение лечения» в карточке приёма: что сделали в прошлый раз и что осталось по плану */
+.continue { display: grid; gap: 8px; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
+.continue h3 { margin: 0; font-size: .95rem; }
+.continue > div { display: grid; gap: 2px; }
+.continue ul { margin: 0; padding-left: 18px; }
+.continue-note { margin: 0; white-space: pre-line; }
