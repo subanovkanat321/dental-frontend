@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { Schemas } from '../api/client'
 import { ClinicsTab } from './ClinicsTab'
 import { ContentTab } from './ContentTab'
+import { AiUsageTab } from './AiUsageTab'
 import { AgreementsTab, BroadcastTab, TicketsTab } from './OwnerTabs'
 import { useBack } from '../lib/back'
 import { openSettings } from '../lib/route'
@@ -12,15 +13,15 @@ import { TariffsTab } from './TariffsTab'
 import { stickyHead } from '../layout/stickyHead'
 
 type Me = Schemas['BookingViewsMe']
-type Tab = 'clinics' | 'surveys' | 'tickets' | 'broadcast' | 'agreements' | 'tariffs' | 'content' | 'settings'
+type Tab = 'clinics' | 'surveys' | 'tickets' | 'broadcast' | 'agreements' | 'tariffs' | 'content' | 'ai' | 'settings'
 
 /**
  * «Платформа» — команда Tish: клиники и опросы сотрудников (менеджеры и владелец); обращения, рассылка, договор,
- * контент-план Instagram и настройки — только владелец. Права проверяет сервер (/api/platform/*).
+ * контент-план Instagram, расход ИИ (токены и деньги) и настройки — только владелец. Права проверяет сервер (/api/platform/*).
  */
 export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }) {
   const tabs: [Tab, string][] = [['clinics', 'Клиники'], ['surveys', 'Опросы'],
-    ...(me.owner ? [['tickets', 'Обращения'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['tariffs', 'Тарифы'], ['content', 'Контент'], ['settings', 'Настройки']] as [Tab, string][] : [])]
+    ...(me.owner ? [['tickets', 'Обращения'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['tariffs', 'Тарифы'], ['content', 'Контент'], ['ai', 'Расход ИИ'], ['settings', 'Настройки']] as [Tab, string][] : [])]
   const [tab, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? 'clinics')
   const [panel, setPanel] = useState(false)
   // Сотрудник клиники на телефоне попадает сюда из «Настроек» — стрелка Telegram ведёт обратно
@@ -43,7 +44,7 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
       {tab === 'clinics' && <ClinicsTab me={me} header={header} onPanel={setPanel} />}
       {tab === 'tickets' && <TicketsTab header={header} onPanel={setPanel} />}
       {tab === 'agreements' && <AgreementsTab header={header} onPanel={setPanel} />}
-      {(tab === 'surveys' || tab === 'broadcast' || tab === 'settings' || tab === 'tariffs' || tab === 'content') && (
+      {(tab === 'surveys' || tab === 'broadcast' || tab === 'settings' || tab === 'tariffs' || tab === 'content' || tab === 'ai') && (
         <section className="schedule-main">
           {header}
           {tab === 'surveys' && <SurveysTab />}
@@ -51,6 +52,7 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
           {tab === 'settings' && <SettingsTab />}
           {tab === 'tariffs' && <TariffsTab />}
           {tab === 'content' && <ContentTab />}
+          {tab === 'ai' && <AiUsageTab />}
         </section>
       )}
     </div>

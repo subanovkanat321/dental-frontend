@@ -716,6 +716,64 @@
         }
       }
     },
+    "/api/platform/ai-usage/settings" : {
+      "put" : {
+        "tags" : [ "ai-usage-controller" ],
+        "operationId" : "settings_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AiUsageControllerSettingsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiUsageStoreSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/ai-usage/clinics/{id}/limit" : {
+      "put" : {
+        "tags" : [ "ai-usage-controller" ],
+        "operationId" : "limit",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AiUsageControllerLimitRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
@@ -1755,7 +1813,7 @@
     "/api/clinic/deposit" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
-        "operationId" : "settings_1",
+        "operationId" : "settings_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -6831,7 +6889,7 @@
     "/api/settings" : {
       "get" : {
         "tags" : [ "settings-controller" ],
-        "operationId" : "settings_2",
+        "operationId" : "settings_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -7223,6 +7281,32 @@
                   "items" : {
                     "$ref" : "#/components/schemas/ClinicApplicationsApplicationView"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/ai-usage" : {
+      "get" : {
+        "tags" : [ "ai-usage-controller" ],
+        "operationId" : "report_1",
+        "parameters" : [ {
+          "name" : "month",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiUsageStoreReport"
                 }
               }
             }
@@ -8168,6 +8252,24 @@
         }
       }
     },
+    "/api/clinic/ai-usage" : {
+      "get" : {
+        "tags" : [ "ai-usage-controller" ],
+        "operationId" : "counter",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiUsageStoreCounter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/agreement" : {
       "get" : {
         "tags" : [ "agreement-controller" ],
@@ -8701,7 +8803,7 @@
     "/api/appointments/promo-codes" : {
       "get" : {
         "tags" : [ "promo-report-controller" ],
-        "operationId" : "report_1",
+        "operationId" : "report_2",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -9931,6 +10033,42 @@
           },
           "settingUp" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "AiUsageControllerSettingsRequest" : {
+        "properties" : {
+          "perDoctor" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "somPerUsd" : {
+            "type" : "number"
+          },
+          "vatPercent" : {
+            "type" : "number"
+          }
+        }
+      },
+      "AiUsageStoreSettings" : {
+        "properties" : {
+          "perDoctor" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "somPerUsd" : {
+            "type" : "number"
+          },
+          "vatPercent" : {
+            "type" : "number"
+          }
+        }
+      },
+      "AiUsageControllerLimitRequest" : {
+        "properties" : {
+          "monthly" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -13589,6 +13727,166 @@
           }
         }
       },
+      "AiUsageStoreClinicRow" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "actions" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "errors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "inputTokens" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "outputTokens" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "cacheReadTokens" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "cacheWriteTokens" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "usd" : {
+            "type" : "number"
+          },
+          "som" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "used" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "limit" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "customLimit" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "doctors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tariffSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "free" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "AiUsageStoreDayRow" : {
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "actions" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "usd" : {
+            "type" : "number"
+          },
+          "som" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AiUsageStoreKindRow" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "VISIT_REPORT", "DICTATION", "QUESTION_DRAFT", "POST_TEXT", "PHOTO_FRAME", "COMEBACK", "SUPPORT", "OTHER" ]
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "actions" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "errors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "inputTokens" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "outputTokens" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "usd" : {
+            "type" : "number"
+          },
+          "som" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AiUsageStoreReport" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "settings" : {
+            "$ref" : "#/components/schemas/AiUsageStoreSettings"
+          },
+          "actions" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "usd" : {
+            "type" : "number"
+          },
+          "som" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "platformUsd" : {
+            "type" : "number"
+          },
+          "clinics" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AiUsageStoreClinicRow"
+            }
+          },
+          "kinds" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AiUsageStoreKindRow"
+            }
+          },
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AiUsageStoreDayRow"
+            }
+          }
+        }
+      },
       "AgreementControllerTemplate" : {
         "properties" : {
           "title" : {
@@ -14288,6 +14586,21 @@
           "at" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "AiUsageStoreCounter" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "used" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "limit" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },

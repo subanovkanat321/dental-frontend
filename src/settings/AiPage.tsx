@@ -4,6 +4,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SubHeader } from './SubHeader'
 
 type Setting = Schemas['VisitReportControllerAiSetting']
+type Counter = Schemas['AiUsageStoreCounter']
 
 /** Что клиника доверяет ИИ: у каждого своё согласие и свой адрес на сервере. */
 const SWITCHES = [
@@ -33,7 +34,32 @@ export function AiPage({ onBack }: { onBack: () => void }) {
     <section className="schedule-main">
       <SubHeader title="ИИ-помощник" onBack={onBack} />
       <p className="hint">Что клиника доверяет ИИ (Claude). Каждое — отдельно; включает и выключает администратор клиники.</p>
+      <AiCounter />
       {SWITCHES.map((s) => <AiSwitch key={s.key} s={s} />)}
+    </section>
+  )
+}
+
+/**
+ * «ИИ в этом месяце: использовано N из M действий» — месячный лимит клиники (по умолчанию 300 на врача).
+ * Только число действий: токены и деньги видит лишь владелец платформы.
+ */
+function AiCounter() {
+  const counter = useQuery<Counter, ApiError>({
+    queryKey: ['clinic-ai-usage'],
+    queryFn: () => unwrap(api.GET('/api/clinic/ai-usage')),
+  })
+  const c = counter.data
+  if (!c) return null
+  const used = c.used ?? 0
+  const limit = c.limit ?? 0
+  const over = used >= limit
+  return (
+    <section className="card-block" aria-label="ИИ в этом месяце">
+      <p className={over ? 'tone-wait strong' : 'strong'}>ИИ в этом месяце: использовано {used} из {limit} действий</p>
+      <p className="hint small">{over
+        ? 'Лимит на этот месяц исчерпан: ИИ-кнопки не работают до 1-го числа, всё остальное — как обычно. Нужно больше — напишите в поддержку Tish.'
+        : 'Действие — один ответ ИИ: отчёт пациенту, разбор диктовки, черновик ответа, приглашение вернуться. Лимит — на календарный месяц.'}</p>
     </section>
   )
 }
