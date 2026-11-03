@@ -13,6 +13,7 @@ import { freeMinutes } from './free'
 import { DateInput } from '../layout/DateInput'
 import { useMedia } from '../lib/useMedia'
 import { DoctorPicker } from './DoctorPicker'
+import './doctorChips.css'
 import { AVATARS, initials } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
@@ -73,6 +74,9 @@ function useNarrow(): boolean {
  * «Расписание»: день всех врачей колонками, как настольный календарь. Нажать на приём — карточка
  * справа с действиями; на пустое место — «Новая запись» на это время. Расписание остаётся на экране.
  */
+/** Сводка дня справа открыта или скрыта — на этом устройстве (не персональные данные). */
+const SUMMARY_KEY = 'crm.daySummary'
+
 export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
   /** Кнопка бота «приёмы коллеги» (?doctor=ID): сразу этот врач. */
   initialDoctor?: number
@@ -272,7 +276,21 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   // Широкий экран: справа от сетки — сводка дня (кто следующий, что требует внимания, свободное время).
   // Открыли карточку приёма — она встаёт на это место; ноутбук поуже — сводка рядом над сеткой, как была
   const wide = useMedia('(min-width: 1280px)')
-  const summary = wide && !dayList && !weekMode && !side && doctors.length > 0
+  // Сводка — по кнопке: при 4+ врачах по умолчанию скрыта, чтобы колонки врачей поместились; выбор помним
+  const [summaryOpen, setSummaryOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(SUMMARY_KEY)
+      if (saved != null) return saved === '1'
+    } catch { /* нет хранилища */ }
+    return (me.doctors ?? []).filter((d) => d.active !== false).length <= 3
+  })
+  const toggleSummary = () => {
+    const next = !summaryOpen
+    setSummaryOpen(next)
+    try { localStorage.setItem(SUMMARY_KEY, next ? '1' : '0') } catch { /* нет хранилища */ }
+  }
+  const canSummary = wide && !dayList && !weekMode && doctors.length > 0
+  const summary = canSummary && !side && summaryOpen
   const nowOrNull = date === today ? nowMinutes : null
   const free = shown.map((d) => {
     const sl = slots[doctors.indexOf(d)]?.data
@@ -335,6 +353,11 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             {bookable.length > 0 && date === today && (
               <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
             )}
+            {canSummary && (
+              <button type="button" className="btn ghost" aria-pressed={summaryOpen} onClick={toggleSummary}
+                title={summaryOpen ? 'Скрыть сводку — больше места врачам' : 'Кто следующий, что требует внимания, свободное время'}>
+                {summaryOpen ? 'Скрыть сводку' : 'Сводка дня'}</button>
+            )}
           </header>
         )}
 
@@ -387,14 +410,20 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
 
-        {doctors.length > 1 && (narrow || doctors.length > 4 ? (
-          // Телефон (и много врачей на компьютере): один выпадающий список вместо ряда кнопок
+        {doctors.length > 1 && (narrow || doctors.length > 8 ? (
+          // Телефон (и очень много врачей на компьютере): один выпадающий список вместо ряда
           <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView} />
         ) : (
-          <div className="segments tabs doctor-switch" role="group" aria-label="Чьё расписание">
-            {!weekMode && <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все врачи</button>}
-            {doctors.map((d) => (
-              <button key={d.id} type="button" aria-pressed={(weekMode ? weekDoctor : view) === d.id} onClick={() => setView(d.id!)}>
+          // Компьютер: чипы с тем же цветным кружком, что у колонки врача, — видно, кто где
+          <div className="doctor-chips" role="group" aria-label="Чьё расписание">
+            {!weekMode && (
+              <button type="button" className="doctor-chip" aria-pressed={view === 'all'} onClick={() => setView('all')}>
+                <span className="avatar all" aria-hidden="true">👥</span>Все врачи
+              </button>
+            )}
+            {doctors.map((d, i) => (
+              <button key={d.id} type="button" className="doctor-chip" aria-pressed={(weekMode ? weekDoctor : view) === d.id} onClick={() => setView(d.id!)}>
+                <span className="avatar" style={{ background: AVATARS[i % AVATARS.length] }} aria-hidden="true">{initials(d.fullName)}</span>
                 {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
               </button>
             ))}
@@ -414,7 +443,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         ) : doctors.length === 0 ? (
           <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => openSettings('doctors')}>добавьте их в «Настройки → Врачи»</button>.</p>
         ) : (
-          <div ref={grid} className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(180px, 1fr))`, '--cols': shown.length } as CSSProperties}>
+          <div ref={grid} className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
             <div className="grid-corner" />
             {shown.map((d) => (
               <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}

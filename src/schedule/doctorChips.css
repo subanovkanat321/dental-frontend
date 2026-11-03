@@ -1,0 +1,10 @@
+/* Чьё расписание на компьютере (schedule/SchedulePage.tsx): чипы с кружком врача, как в шапке колонки */
+.doctor-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.doctor-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 3px 14px 3px 4px; border: 1px solid var(--separator);
+  border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .92rem; cursor: pointer; white-space: nowrap;
+  transition: border-color .12s, background-color .12s; }
+.doctor-chip:hover { border-color: var(--line-strong); }
+.doctor-chip:focus-visible { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.doctor-chip[aria-pressed=true] { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 70%, var(--card)); color: var(--link); font-weight: 600; }
+.doctor-chip .avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; font-size: .72rem; font-weight: 600; flex: none; }
+.doctor-chip .avatar.all { background: var(--sunken); color: var(--text); font-size: .9rem; }
