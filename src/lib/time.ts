@@ -17,6 +17,11 @@ export function timeOf(instant: string): string {
   return new Intl.DateTimeFormat('ru-RU', { timeZone: ZONE, hour: '2-digit', minute: '2-digit' }).format(new Date(instant))
 }
 
+/** День по Бишкеку: '2026-10-31T20:30:00Z' → '2026-11-01'. */
+export function dateOf(instant: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
+}
+
 /** Минуты от полуночи по Бишкеку: для места приёма в сетке дня. */
 export function minutesOf(instant: string): number {
   const [h, m] = timeOf(instant).split(':').map(Number)
@@ -73,8 +78,13 @@ export function shortDate(instant: string, withTime = false): string {
 export function periodOf(kind: 'day' | 'week' | 'month', today = todayIn()): { from: string; to: string } {
   if (kind === 'day') return { from: today, to: today }
   if (kind === 'month') return { from: `${today.slice(0, 8)}01`, to: today }
-  const weekday = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7 // пн = 0
-  return { from: addDays(today, -weekday), to: today }
+  return { from: weekStart(today), to: today }
+}
+
+/** Понедельник недели этого дня: '2026-11-05' (чт) → '2026-11-02'. */
+export function weekStart(date: string): string {
+  const weekday = (new Date(`${date}T00:00:00Z`).getUTCDay() + 6) % 7 // пн = 0
+  return addDays(date, -weekday)
 }
 
 /** 'YYYY-MM' → с 1-го по последнее число месяца. */

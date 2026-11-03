@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import { api, unwrap, type Schemas } from '../api/client'
 import { SetupChecklist } from '../clinic/SetupChecklist'
 import { openSettings, type Page } from '../lib/route'
-import { addDays, dayTitle, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, ZONE } from '../lib/time'
+import { addDays, dayTitle, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
 import { DayList } from './DayList'
@@ -16,30 +16,13 @@ import { DoctorPicker } from './DoctorPicker'
 import { AVATARS, initials } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
+import { PAD, PX, SHORT, useNowMinutes } from './gridScale'
+import { useWeekAppointments } from './week/useWeek'
+import { WeekGrid } from './week/WeekGrid'
 import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
-
-/** Сколько пикселей на минуту: час — 90 px; приём на 30 минут вмещает время и имя, на 45 — ещё статус. */
-const PX = 1.5
-
-/** Ниже этой высоты блок — одной строкой: время начала и имя. */
-const SHORT = 46
-
-
-/** Минуты от полуночи «сейчас» по Бишкеку; обновляются раз в минуту — линия «сейчас» ползёт сама. */
-function useNowMinutes(): number {
-  const [now, setNow] = useState(() => minutesOf(new Date().toISOString()))
-  useEffect(() => {
-    const t = setInterval(() => setNow(minutesOf(new Date().toISOString())), 60_000)
-    return () => clearInterval(t)
-  }, [])
-  return now
-}
-
-/** Отступ сверху и снизу сетки: подпись первого часа («09:00») не обрезается. */
-const PAD = 14
 
 /** Расписание само перечитывается раз в минуту: кто-то записал с телефона — видно без F5. */
 const REFRESH_MS = 60_000
@@ -49,6 +32,28 @@ type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind
 /** Узкий экран (телефон): там «День» списком, а не сетка колонок. */
 function isNarrow(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
+}
+
+type Mode = 'day' | 'week'
+
+/** «День» или «Неделя» — запоминается на устройстве (только слово, не личные данные). */
+function useMode(): [Mode, (mode: Mode) => void] {
+  const [mode, setMode] = useState<Mode>(() => {
+    try {
+      return localStorage.getItem('crm.schedule.mode') === 'week' ? 'week' : 'day'
+    } catch {
+      return 'day'
+    }
+  })
+  const change = (next: Mode) => {
+    setMode(next)
+    try {
+      localStorage.setItem('crm.schedule.mode', next)
+    } catch {
+      // приватный режим
+    }
+  }
+  return [mode, change]
 }
 
 /** Ширина экрана меняется (повернули телефон, сузили окно) — перерисовать. */
@@ -135,12 +140,23 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   // Один врач на телефоне — «День» списком (лента дней, свободные окна, «Принять сейчас»)
   // Телефон — всегда «День» списком (как в прежнем приложении): один врач или «Все врачи» вместе
   const dayList = narrow && shown.length > 0 ? shown : null
+  // «Неделя» — только на компьютере (от 1024px) и всегда один врач: семь дней × несколько врачей
+  // не читаются, а перетаскивание между врачами и днями сразу легко промахнуться. «Все врачи» → свой врач или первый
+  const [mode, setMode] = useMode()
+  const desktop = useMedia('(min-width: 1024px)')
+  const weekMode = mode === 'week' && desktop && !dayList && doctors.length > 0
+  const weekDoctor = typeof view === 'number' && doctors.some((d) => d.id === view) ? view
+    : (doctors.find((d) => d.id === me.doctorId) ?? doctors[0])?.id ?? null
+  const monday = weekStart(date)
+  const week = useWeekAppointments(monday, weekDoctor, weekMode)
 
   const days = useQueries({
     queries: doctors.map((d) => ({
       queryKey: ['appointments', date, d.id],
       queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: { date, doctorId: d.id! } } })),
       refetchInterval: REFRESH_MS,
+      // В «Неделе» дни не нужны: у неё свой запрос на семь дней
+      enabled: !weekMode,
     })),
   })
 
@@ -152,7 +168,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       staleTime: 60_000,
       // Свободные окна в сетке меняются вместе с приёмами — обновлять так же
       refetchInterval: REFRESH_MS,
-      enabled: !dayList,
+      enabled: !dayList && !weekMode,
     })),
   })
 
@@ -167,7 +183,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     enabled: false,
   })
   const selected = side?.kind === 'appointment'
-    ? loaded.find((a) => a.id === side.id) ?? lastAction.data ?? side.fallback ?? null : null
+    ? loaded.find((a) => a.id === side.id) ?? week.data?.find((a) => a.id === side.id) ?? lastAction.data ?? side.fallback ?? null : null
   // Сетка — рабочие часы врачей на экране (а пока не загружены или все выходные — часы клиники), по
   // целым часам: без длинных пустых «хвостов» до полуночи. Приём раньше или позже — сетка растягивается до него
   const hoursOf = shown.map((d) => slots[doctors.indexOf(d)]?.data).filter((x) => x?.workingDay && x.workStart && x.workEnd)
@@ -256,7 +272,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   // Широкий экран: справа от сетки — сводка дня (кто следующий, что требует внимания, свободное время).
   // Открыли карточку приёма — она встаёт на это место; ноутбук поуже — сводка рядом над сеткой, как была
   const wide = useMedia('(min-width: 1280px)')
-  const summary = wide && !dayList && !side && doctors.length > 0
+  const summary = wide && !dayList && !weekMode && !side && doctors.length > 0
   const nowOrNull = date === today ? nowMinutes : null
   const free = shown.map((d) => {
     const sl = slots[doctors.indexOf(d)]?.data
@@ -281,19 +297,39 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         {!dayList && (
           <header className="toolbar">
             <div className="day-switch">
-              <button type="button" className="btn ghost" aria-label="Предыдущий день" onClick={() => setDate(addDays(date, -1))}>‹</button>
-              <button type="button" className="btn ghost" aria-label="Следующий день" onClick={() => setDate(addDays(date, 1))}>›</button>
+              <button type="button" className="btn ghost" aria-label={weekMode ? 'Предыдущая неделя' : 'Предыдущий день'}
+                onClick={() => setDate(addDays(date, weekMode ? -7 : -1))}>‹</button>
+              <button type="button" className="btn ghost" aria-label={weekMode ? 'Следующая неделя' : 'Следующий день'}
+                onClick={() => setDate(addDays(date, weekMode ? 7 : 1))}>›</button>
               {/* Календарь — значком рядом со стрелками: дата и так крупно в заголовке */}
               <DateInput iconOnly aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
             </div>
-            <div className="day-title">
-              <h1>{dayTitle(date)}</h1>
-              <span className="hint">
-                {date === today ? 'сегодня · ' : ''}{all.length ? `Записей: ${all.length}` : 'Записей нет'}
-                {doctors.length > 1 ? ` · врачей ${doctors.length}` : ''}
-              </span>
-            </div>
-            {date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
+            {weekMode ? (
+              <div className="day-title">
+                <h1>Неделя {weekLabel(monday)} {monday.slice(0, 4)}</h1>
+                <span className="hint">
+                  {monday === weekStart(today) ? 'эта неделя · ' : ''}{doctors.find((d) => d.id === weekDoctor)?.fullName}
+                  {week.data ? ` · записей ${week.data.filter((a) => a.status !== 'CANCELLED').length}` : ''}
+                </span>
+              </div>
+            ) : (
+              <div className="day-title">
+                <h1>{dayTitle(date)}</h1>
+                <span className="hint">
+                  {date === today ? 'сегодня · ' : ''}{all.length ? `Записей: ${all.length}` : 'Записей нет'}
+                  {doctors.length > 1 ? ` · врачей ${doctors.length}` : ''}
+                </span>
+              </div>
+            )}
+            {weekMode
+              ? monday !== weekStart(today) && <button type="button" className="btn" onClick={() => setDate(today)}>Эта неделя</button>
+              : date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
+            {desktop && (
+              <div className="segments view-mode" role="group" aria-label="Вид расписания">
+                <button type="button" aria-pressed={!weekMode} onClick={() => setMode('day')}>День</button>
+                <button type="button" aria-pressed={weekMode} onClick={() => setMode('week')}>Неделя</button>
+              </div>
+            )}
 
             {bookable.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
             {bookable.length > 0 && date === today && (
@@ -303,7 +339,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         )}
 
         <SetupChecklist me={me} />
-        {!dayList && !summary && (
+        {!dayList && !summary && !weekMode && (
           <div className="today-strip" role="group" aria-label="Требует внимания">
             {requests.length > 0 && (
               <button type="button" className="stat s-request" onClick={firstOf(requests)}>
@@ -353,12 +389,12 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
 
         {doctors.length > 1 && (narrow || doctors.length > 4 ? (
           // Телефон (и много врачей на компьютере): один выпадающий список вместо ряда кнопок
-          <DoctorPicker me={me} doctors={doctors} view={view} date={date} onChange={setView} />
+          <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView} />
         ) : (
           <div className="segments tabs doctor-switch" role="group" aria-label="Чьё расписание">
-            <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все врачи</button>
+            {!weekMode && <button type="button" aria-pressed={view === 'all'} onClick={() => setView('all')}>Все врачи</button>}
             {doctors.map((d) => (
-              <button key={d.id} type="button" aria-pressed={view === d.id} onClick={() => setView(d.id!)}>
+              <button key={d.id} type="button" aria-pressed={(weekMode ? weekDoctor : view) === d.id} onClick={() => setView(d.id!)}>
                 {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
               </button>
             ))}
@@ -370,6 +406,11 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             onNewHere={bookable.length > 0 ? newHere : undefined}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />
+        ) : weekMode && weekDoctor != null ? (
+          <WeekGrid me={me} doctorId={weekDoctor} monday={monday} today={today} selectedId={selected?.id}
+            onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
+            onNew={(day, minutes) => setSide({ kind: 'new', slot: { doctorId: weekDoctor, date: day, minutes } })}
+            onOpenDay={(day) => { setDate(day); setMode('day') }} />
         ) : doctors.length === 0 ? (
           <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => openSettings('doctors')}>добавьте их в «Настройки → Врачи»</button>.</p>
         ) : (

@@ -21,7 +21,8 @@ type Action =
   | { kind: 'deposit'; body: Schemas['DepositControllerAction'] }
   | { kind: 'undo'; body: Schemas['AppointmentRequestsUndo'] }
 
-function send(id: number, action: Action): Promise<Appointment> {
+/** Отправить действие над приёмом — ответ сервера: свежий приём. */
+export function sendAppointmentAction(id: number, action: Action): Promise<Appointment> {
   const path = { params: { path: { id } } }
   switch (action.kind) {
     case 'status':
@@ -74,20 +75,28 @@ export function refreshAppointmentData(client: QueryClient, extra: string[] = []
 export function useAppointmentAction(a: Appointment) {
   const client = useQueryClient()
   return useMutation<Appointment, ApiError, Action>({
-    mutationFn: (action) => send(a.id!, action),
-    onSuccess: (updated) => {
-      client.setQueriesData<Appointment[]>({ queryKey: ['appointments'] }, (day) =>
-        day?.map((x) => (x.id === updated.id ? updated : x)))
-      client.setQueryData(['appointment', updated.id], updated)
-      // Оплата и статус меняют и «Кассу» с отчётом, и карточку пациента — перечитать всё, что на экране;
-      // перенос и отмена освобождают и занимают время — свободные окна и счётчики дней тоже
-      refreshAppointmentData(client)
-    },
-    onError: (error) => {
-      if (error.status === 409) {
-        void client.invalidateQueries({ queryKey: ['appointments'] })
-        void client.invalidateQueries({ queryKey: ['slots'] })
-      }
-    },
+    mutationFn: (action) => sendAppointmentAction(a.id!, action),
+    onSuccess: (updated) => applyUpdatedAppointment(client, updated),
+    onError: (error) => rereadOnConflict(client, error),
   })
+}
+
+/**
+ * Свежий приём из ответа — в кэш дней и недель (карточка и колонка сразу показывают новое) и в
+ * ['appointment', id]. Оплата и статус меняют и «Кассу» с отчётом, и карточку пациента — перечитать
+ * всё, что на экране; перенос и отмена освобождают и занимают время — свободные окна и счётчики тоже.
+ */
+export function applyUpdatedAppointment(client: QueryClient, updated: Appointment): void {
+  client.setQueriesData<Appointment[]>({ queryKey: ['appointments'] }, (day) =>
+    day?.map((x) => (x.id === updated.id ? updated : x)))
+  client.setQueryData(['appointment', updated.id], updated)
+  refreshAppointmentData(client)
+}
+
+/** 409: время заняли или приём успели изменить с другого устройства — перечитать расписание. */
+export function rereadOnConflict(client: QueryClient, error: ApiError): void {
+  if (error.status === 409) {
+    void client.invalidateQueries({ queryKey: ['appointments'] })
+    void client.invalidateQueries({ queryKey: ['slots'] })
+  }
 }
