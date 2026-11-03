@@ -7,6 +7,7 @@ import { AdminNotices } from './AdminNotices'
 import { Icon } from './Icon'
 import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
+import { useNewQuestions } from '../api/questions'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -38,6 +39,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const role = !me.doctor ? (me.owner ? 'владелец платформы' : 'менеджер платформы')
     : me.admin ? 'администратор' : me.reception ? 'регистратура' : isAssistant(me) ? 'ассистент' : 'врач'
   const sections = sectionsOf(me)
+  // Вопросы пациентов ждут ответа — число у «Пациентов» (видно из любого раздела)
+  const questions = useNewQuestions(Boolean(me.doctor)).data?.count ?? 0
   // «Платформа» у сотрудника клиники на телефоне — в «Настройках»: внизу пять кнопок без «Ещё»
   const extra = me.doctor ? sections.filter((x) => x.key === 'platform')
     : sections.length > MOBILE_MAIN + 1 ? sections.slice(MOBILE_MAIN) : []
@@ -64,6 +67,9 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
             <button key={s.key} type="button" className={['nav', s.key === page ? 'active' : '', extra.includes(s) ? 'extra' : ''].join(' ').trim()} data-section={s.key}
               aria-current={s.key === page ? 'page' : undefined} onClick={() => go(s.key)}>
               <Icon name={s.key} /> <span>{s.title}</span>
+              {s.key === 'patients' && questions > 0 && (
+                <span className="nav-badge" aria-label={`Вопросов ждут ответа: ${questions}`}>{questions}</span>
+              )}
             </button>
           ))}
           {moreButton && (

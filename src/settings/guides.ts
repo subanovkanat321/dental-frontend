@@ -26,6 +26,14 @@ const REQUESTS: Topic = {
   ],
 }
 
+const QUESTIONS: Topic = {
+  title: 'Вопросы из бота',
+  steps: [
+    'Пациент написал боту вопрос — придёт «💬 Новый вопрос от пациента», число — у «Пациентов».',
+    '«Пациенты → Вопросы»: откройте, «✨ Черновик ответа» (если включён ИИ) или напишите сами, проверьте и «Отправить» — ответ уйдёт пациенту в Telegram.',
+  ],
+}
+
 const REMIND: Topic = {
   title: 'Напомнить о приёме',
   steps: [
@@ -125,7 +133,7 @@ export const GUIDES: Record<Role, { label: string; intro: string; topics: Topic[
   reception: {
     label: 'Регистратура',
     intro: 'Записи всех врачей, напоминания и касса.',
-    topics: [BOOK, REQUESTS, REMIND, PAY, MOVE],
+    topics: [BOOK, REQUESTS, QUESTIONS, REMIND, PAY, MOVE],
   },
   assistant: {
     label: 'Ассистент',

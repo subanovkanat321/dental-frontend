@@ -1527,3 +1527,13 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 .earnings-goal form.row { align-items: flex-end; flex-wrap: wrap; gap: 8px; }
 .earnings-goal .check { margin-top: 12px; }
 .earn-gain { margin: 4px 0 0; color: var(--ok-ink); font-weight: 500; }
+
+/* Вопросы пациентов (Пациенты → Вопросы): число новых у раздела, текст вопроса, поле ответа */
+.nav .nav-badge { margin-left: auto; min-width: 18px; padding: 0 6px; border-radius: 99px; background: var(--accent); color: #fff; font-size: .72rem; font-weight: 600; line-height: 18px; text-align: center; }
+@media (max-width: 760px) {
+  .nav { position: relative; }
+  .nav .nav-badge { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; }
+}
+.question-preview { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.question-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.question-answer { width: 100%; font: inherit; line-height: 1.5; padding: 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }

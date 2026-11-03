@@ -4701,6 +4701,97 @@
         }
       }
     },
+    "/api/patient-questions/{id}/draft" : {
+      "post" : {
+        "tags" : [ "question-controller" ],
+        "operationId" : "draft",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QuestionControllerDraft"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patient-questions/{id}/close" : {
+      "post" : {
+        "tags" : [ "question-controller" ],
+        "operationId" : "close_2",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientQuestionsQuestionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patient-questions/{id}/answer" : {
+      "post" : {
+        "tags" : [ "question-controller" ],
+        "operationId" : "answer_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/QuestionControllerAnswer"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientQuestionsQuestionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/news" : {
       "get" : {
         "tags" : [ "news-controller" ],
@@ -5092,7 +5183,7 @@
     "/api/comebacks/{patientId}/draft" : {
       "post" : {
         "tags" : [ "comeback-controller" ],
-        "operationId" : "draft",
+        "operationId" : "draft_1",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -5638,7 +5729,7 @@
     "/api/appointments/{id}/visit-report/draft" : {
       "post" : {
         "tags" : [ "visit-report-controller" ],
-        "operationId" : "draft_1",
+        "operationId" : "draft_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7528,10 +7619,82 @@
         }
       }
     },
+    "/api/patient-questions" : {
+      "get" : {
+        "tags" : [ "question-controller" ],
+        "operationId" : "list_8",
+        "parameters" : [ {
+          "name" : "done",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QuestionControllerQuestionList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patient-questions/{id}" : {
+      "get" : {
+        "tags" : [ "question-controller" ],
+        "operationId" : "get_5",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientQuestionsQuestionView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patient-questions/new-count" : {
+      "get" : {
+        "tags" : [ "question-controller" ],
+        "operationId" : "count",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/QuestionControllerNewCount"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_8",
+        "operationId" : "list_9",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -7573,7 +7736,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -7953,7 +8116,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11842,6 +12005,60 @@
           }
         }
       },
+      "QuestionControllerDraft" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PatientQuestionsQuestionView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientName" : {
+            "type" : "string"
+          },
+          "patientPhone" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "NEW", "ANSWERED", "CLOSED" ]
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "updatedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "answer" : {
+            "type" : "string"
+          },
+          "answeredAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "QuestionControllerAnswer" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
       "NewsControllerCreate" : {
         "properties" : {
           "text" : {
@@ -13570,6 +13787,30 @@
           },
           "hasQr" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "QuestionControllerQuestionList" : {
+        "properties" : {
+          "questions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PatientQuestionsQuestionView"
+            }
+          },
+          "ai" : {
+            "type" : "boolean"
+          },
+          "aiAvailable" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "QuestionControllerNewCount" : {
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },

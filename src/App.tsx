@@ -101,7 +101,7 @@ export function App() {
   const section = (p: Page) => {
     const l = linkOf(p)
     switch (p) {
-      case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} onOpenAppointment={openAppointment} onBook={(x) => linkTo({ page: 'schedule', bookPatientId: x.id! })} />
+      case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} onOpenAppointment={openAppointment} onBook={(x) => linkTo({ page: 'schedule', bookPatientId: x.id! })} />
       case 'cash': return <CashPage me={me.data} initialTab={l?.tab} onOpenPatient={openPatient} />
       case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} />
       case 'settings': return <SettingsPage me={me.data} initialTicket={l?.ticketId} />
