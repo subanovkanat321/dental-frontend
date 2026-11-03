@@ -10,6 +10,8 @@ import { resizePhoto } from './thumb'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
 import { TOOTH_STATES, type ToothState } from './toothStates'
+import { PublicationBlock } from './BeforeAfter'
+import { Thumb } from './Thumb'
 
 type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
@@ -66,7 +68,7 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
             onPlan={(tooth) => setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 })} />
           <Plan patient={patient} prefill={planTooth} readOnly={readOnly} />
           <Notes patientId={id} />
-          <Files patientId={id} />
+          <Files patientId={id} readOnly={readOnly} />
         </>
       )}
     </section>
@@ -325,26 +327,7 @@ function Notes({ patientId }: { patientId: number }) {
   )
 }
 
-/** Миниатюра с сервера — через blob (нужен заголовок сайта), ссылка освобождается при уходе. */
-function Thumb({ path, alt }: { path: string; alt: string }) {
-  const [src, setSrc] = useState<string>()
-  useEffect(() => {
-    let url: string | undefined
-    let alive = true
-    fetchBlob(path).then((blob) => {
-      if (!alive) return
-      url = URL.createObjectURL(blob)
-      setSrc(url)
-    }).catch(() => {})
-    return () => {
-      alive = false
-      if (url) URL.revokeObjectURL(url)
-    }
-  }, [path])
-  return src ? <img src={src} alt={alt} /> : <span className="thumb-wait" aria-hidden="true">🩻</span>
-}
-
-function Files({ patientId }: { patientId: number }) {
+function Files({ patientId, readOnly }: { patientId: number; readOnly: boolean }) {
   const client = useQueryClient()
   const files = useQuery({
     queryKey: ['files', patientId],
@@ -430,6 +413,7 @@ function Files({ patientId }: { patientId: number }) {
       </div>
       {status && <p role="status" className={status.startsWith('Загружено') ? 'tone-ok' : 'hint'}>{status}</p>}
       {remove.error && <p className="error">{remove.error.message}</p>}
+      {files.data && <PublicationBlock patientId={patientId} files={files.data} readOnly={readOnly} />}
     </section>
   )
 }

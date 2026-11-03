@@ -48,6 +48,8 @@ export const server = setupServer(
   http.get('*/api/patients/:id/plan', () => HttpResponse.json([] satisfies Schemas['TreatmentStepView'][])),
   http.get('*/api/patients/:id/expenses', () => HttpResponse.json([])),
   http.get('*/api/patients/:id/anamnesis', () => HttpResponse.json({ items: [] })),
+  // Согласие на публикацию фото (V139): по умолчанию его нет — «До / после» выключена
+  http.get('*/api/patients/:id/publication-consent', () => HttpResponse.json({} satisfies Schemas['PublicationConsentsView'])),
   // Опрос команды Tish (src/survey): по умолчанию ответа никто не ждёт — приглашения нет
   http.get('*/api/surveys/current', () => HttpResponse.json({} satisfies Schemas['SurveyAnswersCurrent'])),
   // Напоминания админу (AdminNotices): по умолчанию всё в порядке — напоминаний нет

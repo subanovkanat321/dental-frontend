@@ -276,6 +276,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/publication-consent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["publicationConsent"];
+        put: operations["givePublicationConsent"];
+        post?: never;
+        delete: operations["revokePublicationConsent"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/plan/{stepId}": {
         parameters: {
             query?: never;
@@ -4309,6 +4325,17 @@ export interface components {
             updatedAt?: string;
             doctorName?: string;
         };
+        PublicationConsentsRequest: {
+            /** @enum {string} */
+            scope?: "NO_FACE" | "WITH_FACE";
+        };
+        PublicationConsentsView: {
+            /** @enum {string} */
+            scope?: "NO_FACE" | "WITH_FACE";
+            /** Format: date-time */
+            givenAt?: string;
+            givenBy?: string;
+        };
         ChartControllerStep: {
             /** Format: int32 */
             tooth?: number;
@@ -6770,6 +6797,74 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ToothView"][];
                 };
+            };
+        };
+    };
+    publicationConsent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationConsentsView"];
+                };
+            };
+        };
+    };
+    givePublicationConsent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicationConsentsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationConsentsView"];
+                };
+            };
+        };
+    };
+    revokePublicationConsent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

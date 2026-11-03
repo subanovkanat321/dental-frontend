@@ -819,6 +819,86 @@
         }
       }
     },
+    "/api/patients/{patientId}/publication-consent" : {
+      "get" : {
+        "tags" : [ "publication-consent-controller" ],
+        "operationId" : "publicationConsent",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicationConsentsView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "publication-consent-controller" ],
+        "operationId" : "givePublicationConsent",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PublicationConsentsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PublicationConsentsView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "publication-consent-controller" ],
+        "operationId" : "revokePublicationConsent",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/plan/{stepId}" : {
       "put" : {
         "tags" : [ "chart-controller" ],
@@ -9480,6 +9560,29 @@
             "format" : "date-time"
           },
           "doctorName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PublicationConsentsRequest" : {
+        "properties" : {
+          "scope" : {
+            "type" : "string",
+            "enum" : [ "NO_FACE", "WITH_FACE" ]
+          }
+        }
+      },
+      "PublicationConsentsView" : {
+        "properties" : {
+          "scope" : {
+            "type" : "string",
+            "enum" : [ "NO_FACE", "WITH_FACE" ]
+          },
+          "givenAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "givenBy" : {
             "type" : "string"
           }
         }
