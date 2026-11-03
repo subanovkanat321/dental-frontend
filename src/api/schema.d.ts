@@ -3076,6 +3076,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["analytics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/agreements/template": {
         parameters: {
             query?: never;
@@ -6104,6 +6120,163 @@ export interface components {
             createdAt?: string;
             solo?: boolean;
             telegram?: string;
+        };
+        PlatformAnalyticsAnalytics: {
+            /** Format: int32 */
+            days?: number;
+            city?: string;
+            cities?: string[];
+            summary?: components["schemas"]["PlatformAnalyticsSummary"];
+            funnel?: components["schemas"]["PlatformAnalyticsFunnel"];
+            geography?: components["schemas"]["PlatformAnalyticsCityRow"][];
+            money?: components["schemas"]["PlatformAnalyticsMoney"];
+            risks?: components["schemas"]["PlatformAnalyticsRiskRow"][];
+            cohorts?: components["schemas"]["PlatformAnalyticsCohort"][];
+            features?: components["schemas"]["PlatformAnalyticsFeatures"];
+            patients?: components["schemas"]["PlatformAnalyticsPatients"];
+        };
+        PlatformAnalyticsApplications: {
+            /** Format: int64 */
+            total?: number;
+            /** Format: int64 */
+            approved?: number;
+            /** Format: int64 */
+            rejected?: number;
+            /** Format: int64 */
+            waiting?: number;
+        };
+        PlatformAnalyticsCell: {
+            /** Format: int64 */
+            eligible?: number;
+            /** Format: int64 */
+            active?: number;
+        };
+        PlatformAnalyticsCityRow: {
+            city?: string;
+            /** Format: int64 */
+            clinics?: number;
+            /** Format: int64 */
+            working?: number;
+            /** Format: int64 */
+            paying?: number;
+            /** Format: int64 */
+            patients?: number;
+            /** Format: int64 */
+            applications?: number;
+        };
+        PlatformAnalyticsCohort: {
+            month?: string;
+            /** Format: int64 */
+            clinics?: number;
+            after?: components["schemas"]["PlatformAnalyticsCell"][];
+        };
+        PlatformAnalyticsDue: {
+            /** Format: int64 */
+            clinicId?: number;
+            name?: string;
+            city?: string;
+            /** Format: date */
+            date?: string;
+            kind?: string;
+            /** Format: int64 */
+            daysLeft?: number;
+            tariff?: string;
+            /** Format: int64 */
+            monthSom?: number;
+            /** Format: int64 */
+            appointments?: number;
+            /** Format: date-time */
+            staffSeenAt?: string;
+            payPending?: boolean;
+        };
+        PlatformAnalyticsFeature: {
+            key?: string;
+            /** Format: int64 */
+            clinics?: number;
+        };
+        PlatformAnalyticsFeatures: {
+            /** Format: int64 */
+            activeClinics?: number;
+            items?: components["schemas"]["PlatformAnalyticsFeature"][];
+            /** Format: int64 */
+            appointments?: number;
+            /** Format: int64 */
+            selfBooked?: number;
+        };
+        PlatformAnalyticsFunnel: {
+            applications?: components["schemas"]["PlatformAnalyticsApplications"];
+            steps?: components["schemas"]["PlatformAnalyticsStep"][];
+        };
+        PlatformAnalyticsMoney: {
+            months?: components["schemas"]["PlatformAnalyticsMonthMoney"][];
+            due?: components["schemas"]["PlatformAnalyticsDue"][];
+        };
+        PlatformAnalyticsMonthCount: {
+            month?: string;
+            /** Format: int64 */
+            count?: number;
+        };
+        PlatformAnalyticsMonthMoney: {
+            month?: string;
+            /** Format: int64 */
+            paidSom?: number;
+            /** Format: int64 */
+            payments?: number;
+            /** Format: int64 */
+            mrrSom?: number;
+        };
+        PlatformAnalyticsPatients: {
+            /** Format: int64 */
+            total?: number;
+            /** Format: int64 */
+            withBot?: number;
+            newByMonth?: components["schemas"]["PlatformAnalyticsMonthCount"][];
+            /** Format: int64 */
+            done?: number;
+            /** Format: int64 */
+            noShow?: number;
+        };
+        PlatformAnalyticsReason: {
+            code?: string;
+            text?: string;
+        };
+        PlatformAnalyticsRiskRow: {
+            /** Format: int64 */
+            clinicId?: number;
+            name?: string;
+            city?: string;
+            /** @enum {string} */
+            plan?: "PILOT" | "PAYING" | "OVERDUE";
+            /** Format: int64 */
+            last14?: number;
+            /** Format: int64 */
+            prev14?: number;
+            /** Format: date-time */
+            staffSeenAt?: string;
+            reasons?: components["schemas"]["PlatformAnalyticsReason"][];
+        };
+        PlatformAnalyticsStep: {
+            key?: string;
+            /** Format: int64 */
+            clinics?: number;
+        };
+        PlatformAnalyticsSummary: {
+            /** Format: int64 */
+            clinics?: number;
+            /** Format: int64 */
+            working?: number;
+            /** Format: int64 */
+            pilot?: number;
+            /** Format: int64 */
+            paying?: number;
+            /** Format: int64 */
+            overdue?: number;
+            /** Format: int64 */
+            mrrSom?: number;
+            /** Format: int64 */
+            appointments?: number;
+            /** Format: int64 */
+            appointmentsBefore?: number;
         };
         AgreementControllerTemplate: {
             title?: string;
@@ -12526,6 +12699,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClinicApplicationsApplicationView"][];
+                };
+            };
+        };
+    };
+    analytics: {
+        parameters: {
+            query?: {
+                days?: number;
+                city?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformAnalyticsAnalytics"];
                 };
             };
         };
