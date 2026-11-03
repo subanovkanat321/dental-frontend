@@ -21,7 +21,7 @@ function duration(minutes: number): string {
  * сеткой на ноутбуке поуже, — только столбиком; нажатие ведёт туда же. Когда открыта карточка
  * приёма, она занимает это место.
  */
-export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, low, free, onOpen, onBook, onNavigate }: {
+export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, low, free, onOpen, onBook, onNavigate, onClose }: {
   date: string
   today: string
   /** Приёмы дня без отменённых */
@@ -36,6 +36,8 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
   onOpen: (a: Appointment) => void
   onBook: (doctorId: number, minutes: number) => void
   onNavigate?: (page: Page) => void
+  /** «×» вверху: скрыть сводку — колонки врачей на весь экран */
+  onClose?: () => void
 }) {
   const now = new Date().toISOString()
   const sorted = [...all].sort((a, b) => a.startAt!.localeCompare(b.startAt!))
@@ -52,6 +54,9 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
 
   return (
     <aside className="day-summary" aria-label="Сводка дня">
+      {onClose && (
+        <button type="button" className="ds-close" aria-label="Скрыть сводку" title="Скрыть сводку — больше места врачам" onClick={onClose}>×</button>
+      )}
       <section className="ds-block">
         <h2 className="ds-title">{isToday ? 'Следующий пациент' : 'Первый приём'}</h2>
         {current.map((a) => (

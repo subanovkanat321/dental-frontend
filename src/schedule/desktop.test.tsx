@@ -68,3 +68,15 @@ test('компьютер: сводка дня справа — первый пр
   expect(await screen.findByRole('complementary', { name: 'Новая запись' })).toBeInTheDocument()
   expect(screen.queryByRole('complementary', { name: 'Сводка дня' })).not.toBeInTheDocument()
 })
+
+test('компьютер: «×» в сводке скрывает её, «Сводка дня» в шапке возвращает', async () => {
+  localStorage.removeItem('crm.daySummary')
+  backend()
+  renderApp()
+  const summary = await screen.findByRole('complementary', { name: 'Сводка дня' })
+  await userEvent.click(within(summary).getByRole('button', { name: 'Скрыть сводку' }))
+  expect(screen.queryByRole('complementary', { name: 'Сводка дня' })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Сводка дня' }))
+  expect(await screen.findByRole('complementary', { name: 'Сводка дня' })).toBeInTheDocument()
+  localStorage.removeItem('crm.daySummary')
+})

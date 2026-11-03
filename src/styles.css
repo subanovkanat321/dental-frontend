@@ -1135,6 +1135,8 @@ tr.clickable .row-link:not(.open-link)::after { content: " ›"; content: " ›"
 
 /* Расписание на компьютере: сводка дня справа (schedule/DaySummary.tsx) */
 .schedule.with-summary { grid-template-columns: minmax(0, 1fr) 300px; }
+.ds-close { position: absolute; top: 8px; right: 8px; z-index: 1; width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: var(--hint); font-size: 22px; line-height: 1; cursor: pointer; }
+.ds-close:hover { background: var(--sunken); color: var(--text); }
 .day-summary { position: sticky; top: 16px; align-self: start; display: grid; gap: 12px; max-height: calc(100vh - 32px); overflow: auto; padding: 1px; }
 .ds-block { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
 .ds-title { margin: 0; font: 600 .9rem var(--ui); color: var(--hint); letter-spacing: 0; }

@@ -353,10 +353,10 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             {bookable.length > 0 && date === today && (
               <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
             )}
-            {canSummary && (
-              <button type="button" className="btn ghost" aria-pressed={summaryOpen} onClick={toggleSummary}
-                title={summaryOpen ? 'Скрыть сводку — больше места врачам' : 'Кто следующий, что требует внимания, свободное время'}>
-                {summaryOpen ? 'Скрыть сводку' : 'Сводка дня'}</button>
+            {/* Открытую сводку закрывает «×» в ней самой — в шапке кнопка только чтобы вернуть */}
+            {canSummary && !summary && (
+              <button type="button" className="btn" onClick={toggleSummary}
+                title="Кто следующий, что требует внимания, свободное время">Сводка дня</button>
             )}
           </header>
         )}
@@ -532,7 +532,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}
           revenueSom={revenue.data ? revenue.data.totalSom ?? 0 : null} low={low} free={shown.length > 0 && date >= today ? free : []}
           doctorName={(id) => doctors.find((d) => d.id === id)?.fullName ?? ''}
-          onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} onBook={bookAt} onNavigate={onNavigate} />
+          onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} onBook={bookAt} onNavigate={onNavigate} onClose={toggleSummary} />
       )}
       {/* key: другой приём — новая карточка, формы и «Вернуть» прежнего не переносятся */}
       {selected && <AppointmentPanel key={selected.id} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
