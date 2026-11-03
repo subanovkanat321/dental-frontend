@@ -18,13 +18,16 @@ const METHODS: Record<string, string> = { CASH: 'наличные', TRANSFER: '�
 /**
  * Документы приёма, который состоялся: памятка после процедуры и квитанция об оплате (ей — кто
  * видит деньги этого приёма). На карточке приёма и в истории визитов пациента.
+ *
+ * @param memo показывать памятку; на карточке приёма она — в «Сообщении после приёма» (AfterVisit)
  */
-export function VisitDocs({ appointment: a, me }: { appointment: Appointment; me: Me }) {
+export function VisitDocs({ appointment: a, me, memo = true }: { appointment: Appointment; me: Me; memo?: boolean }) {
   if (a.status !== 'DONE') return null
   const money = seesMoneyOf(me, a.doctorId) && (a.paidSom != null || a.chargeSom != null)
+  if (!memo && !money) return null
   return (
     <section className="visit-docs" aria-label="Документы приёма">
-      <MemoDocs appointment={a} />
+      {memo && <MemoDocs appointment={a} />}
       {money && <ReceiptDocs appointment={a} />}
     </section>
   )
@@ -32,9 +35,10 @@ export function VisitDocs({ appointment: a, me }: { appointment: Appointment; me
 
 /**
  * «Памятка: После удаления зуба» — по услуге приёма (её ставят в «Настройки → Услуги»), можно
- * выбрать другую. Нет памятки у услуги — выбрать из списка.
+ * выбрать другую. Нет памятки у услуги — выбрать из списка. На карточке приёма — тем, кому личное
+ * «Сообщение после приёма» не положено (регистратура, ассистент): памятку они отправляют, как раньше.
  */
-function MemoDocs({ appointment: a }: { appointment: Appointment }) {
+export function MemoDocs({ appointment: a }: { appointment: Appointment }) {
   const id = a.id!
   const [chosen, setChosen] = useState<number | null>(null)
   const [printing, setPrinting] = useState(false)
@@ -76,21 +80,26 @@ function MemoDocs({ appointment: a }: { appointment: Appointment }) {
       <DocActions label={`памятка «${m.title}»`} phone={a.patient?.phone} message={m}
         send={() => unwrap(api.POST('/api/appointments/{id}/care-memo/send', { params: { path: { id } }, body: { memoId: m.memoId } }))}
         onPrint={() => setPrinting(true)} />
-      {printing && (
-        <PrintSheet title="Памятка пациенту" onClose={() => setPrinting(false)}>
-          {() => (
-            <>
-              <h1>{m.title}</h1>
-              <dl>
-                <dt>Пациент</dt><dd>{a.patient?.fullName}</dd>
-                <dt>Приём</dt><dd>{docDate(a.startAt!)}</dd>
-              </dl>
-              <div className="memo-body">{m.body}</div>
-            </>
-          )}
-        </PrintSheet>
-      )}
+      {printing && <MemoSheet appointment={a} title={m.title!} body={m.body!} onClose={() => setPrinting(false)} />}
     </div>
+  )
+}
+
+/** Лист памятки пациенту на руки: название, пациент, дата приёма, текст. */
+export function MemoSheet({ appointment: a, title, body, onClose }: { appointment: Appointment; title: string; body: string; onClose: () => void }) {
+  return (
+    <PrintSheet title="Памятка пациенту" onClose={onClose}>
+      {() => (
+        <>
+          <h1>{title}</h1>
+          <dl>
+            <dt>Пациент</dt><dd>{a.patient?.fullName}</dd>
+            <dt>Приём</dt><dd>{docDate(a.startAt!)}</dd>
+          </dl>
+          <div className="memo-body">{body}</div>
+        </>
+      )}
+    </PrintSheet>
   )
 }
 

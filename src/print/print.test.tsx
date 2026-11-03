@@ -26,6 +26,9 @@ const MEMO = {
   text: '📋 Памятка после приёма\n\nПосле удаления зуба', telegram: true,
 } satisfies Schemas['CareMemosAppointmentMemo']
 
+/** Регистратура: личного «Сообщения после приёма» нет (сервер — 403), памятка на карточке — как раньше. */
+const reception: Me = { ...me, admin: false, reception: true, doctorId: undefined, fullName: 'Жылдыз' }
+
 function backend(a: Appointment, who: Me = me, memo: Schemas['CareMemosAppointmentMemo'] = MEMO) {
   const sent: string[] = []
   server.use(
@@ -39,6 +42,8 @@ function backend(a: Appointment, who: Me = me, memo: Schemas['CareMemosAppointme
     http.get('*/api/care-memos', () => HttpResponse.json([
       { id: 3, title: 'После удаления зуба', active: true }, { id: 4, title: 'После чистки', active: true },
     ] satisfies Schemas['CareMemosCareMemoView'][])),
+    http.get('*/api/appointments/:id/visit-report', () => who === me ? new HttpResponse(null, { status: 204 })
+      : HttpResponse.json({ status: 403, detail: 'Нет доступа' }, { status: 403 })),
     http.get('*/api/appointments/:id/receipt', () => {
       sent.push('receipt')
       return HttpResponse.json(RECEIPT)
@@ -67,8 +72,8 @@ afterEach(() => {
   delete window.Telegram
 })
 
-test('приём состоялся: памятка по услуге — «📤 Отправить пациенту» шлёт бот только по нажатию', async () => {
-  const sent = backend(done())
+test('регистратура: памятка по услуге — «📤 Отправить пациенту» шлёт бот только по нажатию, личного сообщения нет', async () => {
+  const sent = backend(done(), reception)
   renderApp()
   const panel = await card(/Бакыт М\./)
   expect(await within(panel).findByText('После удаления зуба')).toBeInTheDocument()
@@ -77,6 +82,7 @@ test('приём состоялся: памятка по услуге — «📤
   await userEvent.click(within(panel).getByRole('button', { name: 'Отправить пациенту в Telegram: памятка «После удаления зуба»' }))
   expect(await within(panel).findByText('Отправлено в Telegram')).toBeInTheDocument()
   expect(sent).toContain('memo:{"memoId":3}')
+  expect(within(panel).queryByRole('region', { name: 'Сообщение после приёма' })).not.toBeInTheDocument()
 
   // Другая памятка — выбрать из списка
   await userEvent.click(within(panel).getByRole('button', { name: 'другая' }))
@@ -85,7 +91,7 @@ test('приём состоялся: памятка по услуге — «📤
 })
 
 test('печать памятки: лист с клиникой, текстом и пациентом, окно печати браузера', async () => {
-  backend(done())
+  backend(done(), reception)
   renderApp()
   const panel = await card(/Бакыт М\./)
   await userEvent.click(await within(panel).findByRole('button', { name: 'Печать: памятка «После удаления зуба»' }))
@@ -139,7 +145,7 @@ test('ассистент: памятка есть, квитанции нет —
 
 test('в Telegram печати нет — подсказка «печать — с компьютера»', async () => {
   window.Telegram = { WebApp: { initData: 'test', ready() {}, expand() {} } }
-  backend(done())
+  backend(done(), reception)
   renderApp()
   const panel = await card(/Бакыт М\./)
   expect(await within(panel).findByText('После удаления зуба')).toBeInTheDocument()
@@ -149,7 +155,7 @@ test('в Telegram печати нет — подсказка «печать — 
 
 test('бот не доставил — ошибка и «Отправить в WhatsApp»', async () => {
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
-  backend(done())
+  backend(done(), reception)
   server.use(http.post('*/api/appointments/:id/care-memo/send', () => HttpResponse.json(
     { status: 409, code: 'not-delivered', detail: 'Не доставлено: пациент мог удалить чат с ботом. Отправьте в WhatsApp' }, { status: 409 })))
   renderApp()
@@ -161,7 +167,7 @@ test('бот не доставил — ошибка и «Отправить в W
 })
 
 test('у услуги нет памятки — выбрать из списка', async () => {
-  backend(done(), me, { telegram: false })
+  backend(done(), reception, { telegram: false })
   renderApp()
   const panel = await card(/Бакыт М\./)
   expect(await within(panel).findByText(/У услуги нет памятки/)).toBeInTheDocument()
