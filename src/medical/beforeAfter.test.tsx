@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
-import { boxFrom, clampCrop, FIT, frames, placement } from './beforeAfterDraw'
+import { boxFrom, clampCrop, FIT, fitSmiles, frames, placement } from './beforeAfterDraw'
 import { buildPost, durationBetween, hashtags } from './postText'
 
 /** Вымышленный пациент и два «фото» — байты-заглушки, картинку подменяет createImageBitmap. */
@@ -14,10 +14,11 @@ const FILES: Schemas['PatientFilesView'][] = [
   { id: 7, kind: 'PHOTO', caption: 'До', takenOn: '2026-10-01', canDelete: true },
 ]
 
-function backend(consent: Schemas['PublicationConsentsView'] = {}, files = FILES) {
+function backend(consent: Schemas['PublicationConsentsView'] = {}, files = FILES, postAi = false) {
   let current = consent
   const sent: unknown[] = []
   server.use(
+    http.get('*/api/clinic/post-ai', () => HttpResponse.json({ available: true, on: postAi })),
     http.get('*/api/patient/me', () => HttpResponse.json({
       ...me, services: [{ id: 3, name: 'Отбеливание', durationMinutes: 60 }],
       clinic: { ...me.clinic, code: 'test', address: 'Бишкек, ул. Вымышленная, 1', phones: ['996555000000'] },
@@ -213,4 +214,115 @@ test('текст поста: три варианта, польза и хэште
   expect(durationBetween('2026-10-01', '2026-10-04')).toBe('3 дня')
   expect(durationBetween('2026-01-01', '2026-06-01')).toBe('5 месяцев')
   expect(durationBetween(null, '2026-06-01')).toBe('')
+})
+
+test('без «ИИ для постов» кнопок ИИ нет — шаблоны как раньше; подпись «ИИ не меняет фото»', async () => {
+  fakeCanvas()
+  backend({ scope: 'WITH_FACE', givenAt: '2026-11-03T05:00:00Z' })
+  await openMedical()
+  expect(await screen.findByText(/ИИ не меняет фото — только подбирает кадр и пишет текст/)).toBeInTheDocument()
+  await userEvent.click(await screen.findByRole('button', { name: 'Собрать картинку «до / после»' }))
+  const dialog = await screen.findByRole('dialog', { name: 'До / после' })
+  await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Скачать PNG' })).toBeEnabled())
+  expect(within(dialog).queryByRole('button', { name: /Написать с ИИ/ })).not.toBeInTheDocument()
+  expect(within(dialog).queryByRole('button', { name: /Подогнать кадр/ })).not.toBeInTheDocument()
+  expect(within(dialog).getByLabelText<HTMLTextAreaElement>('Текст поста').value).toContain('результат до и после')
+})
+
+test('ИИ: «Написать с ИИ» ставит текст в поле, «Другой вариант» шлёт прошлый; ошибка — понятным текстом', async () => {
+  fakeCanvas()
+  const sent = backend({ scope: 'WITH_FACE', givenAt: '2026-11-03T05:00:00Z' }, FILES, true)
+  const bodies: Schemas['BeforeAfterAiTextRequest'][] = []
+  let fail = false
+  server.use(http.post('*/api/patients/2/before-after/ai-text', async ({ request }) => {
+    const body = (await request.json()) as Schemas['BeforeAfterAiTextRequest']
+    bodies.push(body)
+    if (fail) {
+      return HttpResponse.json({ status: 409, code: 'ai-unavailable', detail: 'ИИ не написал текст — возьмите шаблон или попробуйте ещё раз' },
+        { status: 409, headers: { 'Content-Type': 'application/problem+json' } })
+    }
+    return HttpResponse.json({ text: `Вариант ${bodies.length} от ИИ\n\n#доипосле` } satisfies Schemas['BeforeAfterAiPostText'])
+  }))
+  await openMedical()
+  await userEvent.click(await screen.findByRole('button', { name: 'Собрать картинку «до / после»' }))
+  const dialog = await screen.findByRole('dialog', { name: 'До / после' })
+  const post = within(dialog).getByRole('region', { name: 'Текст для поста' })
+  // Без процедуры ИИ писать не о чем
+  expect(await within(post).findByRole('button', { name: '✨ Написать с ИИ' })).toBeDisabled()
+  await userEvent.type(within(dialog).getByLabelText('Процедура'), 'Отбеливание')
+  await userEvent.click(within(post).getByRole('button', { name: 'Кыргызча' }))
+  await userEvent.click(within(post).getByRole('button', { name: 'С эмодзи' }))
+  await userEvent.click(within(post).getByRole('button', { name: '✨ Написать с ИИ' }))
+  const text = within(post).getByLabelText<HTMLTextAreaElement>('Текст поста')
+  await waitFor(() => expect(text.value).toBe('Вариант 1 от ИИ\n\n#доипосле'))
+  expect(bodies[0]).toMatchObject({ procedure: 'Отбеливание', duration: '4 недели', style: 'EMOJI', lang: 'KY', bookingUrl: expect.stringMatching(/\/c\/test$/) })
+  expect(bodies[0]!.previous).toBeUndefined()
+  // Ни имени, ни телефона пациента в запросе
+  expect(JSON.stringify(bodies[0])).not.toMatch(/Вымышленная П|996700333444/)
+  expect(within(post).getByText(/Текст написал ИИ — проверьте/)).toBeInTheDocument()
+
+  await userEvent.click(within(post).getByRole('button', { name: '✨ Другой вариант' }))
+  await waitFor(() => expect(text.value).toBe('Вариант 2 от ИИ\n\n#доипосле'))
+  expect(bodies[1]!.previous).toBe('Вариант 1 от ИИ\n\n#доипосле')
+
+  fail = true
+  await userEvent.click(within(post).getByRole('button', { name: '✨ Другой вариант' }))
+  expect(await within(post).findByRole('alert')).toHaveTextContent('ИИ не написал текст — возьмите шаблон')
+  // Текст в поле не пропал
+  expect(text.value).toBe('Вариант 2 от ИИ\n\n#доипосле')
+  expect(sent).toContainEqual({ file: 7 })
+})
+
+test('ИИ: «Подогнать кадр» шлёт номера фото и меняет кадр; не вышло — понятный текст', async () => {
+  const { ctx } = fakeCanvas()
+  backend({ scope: 'NO_FACE', givenAt: '2026-11-03T05:00:00Z' }, FILES, true)
+  const asked: Schemas['BeforeAfterAiFrameRequest'][] = []
+  let ok = true
+  server.use(http.post('*/api/patients/2/before-after/ai-frame', async ({ request }) => {
+    asked.push((await request.json()) as Schemas['BeforeAfterAiFrameRequest'])
+    if (!ok) {
+      return HttpResponse.json({ status: 409, code: 'ai-unavailable', detail: 'Не удалось подогнать кадр — подвиньте его вручную' },
+        { status: 409, headers: { 'Content-Type': 'application/problem+json' } })
+    }
+    return HttpResponse.json({ before: { x: 0.4, y: 0.6, w: 0.2, h: 0.1 }, after: { x: 0.3, y: 0.5, w: 0.3, h: 0.15 } } satisfies Schemas['BeforeAfterAiFrames'])
+  }))
+  await openMedical()
+  await userEvent.click(await screen.findByRole('button', { name: 'Собрать картинку «до / после»' }))
+  const dialog = await screen.findByRole('dialog', { name: 'До / после' })
+  await waitFor(() => expect(within(dialog).getByRole('button', { name: '✨ Подогнать кадр' })).toBeEnabled())
+  const zoomBefore = within(dialog).getByRole('slider', { name: 'Масштаб фото до' })
+  expect(zoomBefore).toHaveValue('1')
+  ;(ctx.drawImage as ReturnType<typeof vi.fn>).mockClear()
+  await userEvent.click(within(dialog).getByRole('button', { name: '✨ Подогнать кадр' }))
+  await waitFor(() => expect(Number((zoomBefore as HTMLInputElement).value)).toBeGreaterThan(1))
+  expect(asked).toEqual([{ beforeFileId: 7, afterFileId: 8 }])
+  // Улыбка «до» меньше — её увеличили сильнее
+  const zoomAfter = within(dialog).getByRole('slider', { name: 'Масштаб фото после' })
+  expect(Number((zoomBefore as HTMLInputElement).value)).toBeGreaterThan(Number((zoomAfter as HTMLInputElement).value))
+  expect(within(dialog).getByRole('status')).toHaveTextContent('Кадр подогнан')
+  expect(ctx.drawImage).toHaveBeenCalled()
+
+  ok = false
+  await userEvent.click(within(dialog).getByRole('button', { name: '✨ Подогнать кадр' }))
+  await waitFor(() => expect(within(dialog).getByRole('status')).toHaveTextContent('Не удалось подогнать кадр — подвиньте его вручную'))
+})
+
+test('подгонка: улыбки разного размера — одного размера и в центре рамки', () => {
+  const f = frames({ format: 'post', layout: 'side', procedure: '' })
+  const before = { frame: f.before, image: { width: 800, height: 600 }, smile: { x: 0.4, y: 0.45, w: 0.2, h: 0.1 } }
+  const after = { frame: f.after, image: { width: 600, height: 800 }, smile: { x: 0.3, y: 0.5, w: 0.4, h: 0.12 } }
+  const [cb, ca] = fitSmiles([before, after])
+  const width = (s: typeof before, c: typeof cb) => s.smile.w * placement(s.frame, s.image, c).w
+  expect(width(before, cb)).toBeCloseTo(width(after, ca), 0)
+  expect(width(before, cb) / f.before.w).toBeCloseTo(0.7, 1)
+  // Центр улыбки — в центре рамки
+  const center = (s: typeof before, c: typeof cb) => {
+    const p = placement(s.frame, s.image, c)
+    return [p.x + (s.smile.x + s.smile.w / 2) * p.w - s.frame.x, p.y + (s.smile.y + s.smile.h / 2) * p.h - s.frame.y]
+  }
+  expect(center(before, cb)[0]).toBeCloseTo(f.before.w / 2, 0)
+  expect(center(after, ca)[1]).toBeCloseTo(f.after.h / 2, 0)
+  // Улыбка во весь снимок — масштаб 1, не меньше
+  const [whole] = fitSmiles([{ ...before, smile: { x: 0, y: 0, w: 1, h: 1 } }, after])
+  expect(whole.zoom).toBe(1)
 })
