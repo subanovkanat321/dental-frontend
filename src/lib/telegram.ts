@@ -37,6 +37,8 @@ type WebApp = {
   isVersionAtLeast?(version: string): boolean
   ready(): void
   expand(): void
+  /** Bot API 7.7: свайп по окну больше не сворачивает Mini App */
+  disableVerticalSwipes?(): void
   colorScheme?: string
   onEvent?(event: string, cb: () => void): void
   setHeaderColor?(color: string): void
@@ -96,6 +98,9 @@ export function startTelegram(): void {
   if (!app) return
   app.ready()
   app.expand()
+  // Свайп вниз/вверх в Telegram сворачивает Mini App и тянет всё окно: при прокрутке «плыло» нижнее
+  // меню. Свайпы окна выключаем (Bot API 7.7) — прокрутка остаётся обычной; старый Telegram — пропустит
+  app.disableVerticalSwipes?.()
   app.setHeaderColor?.('#0F2A30')
   document.body.classList.add('in-telegram')
 }

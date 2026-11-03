@@ -11,7 +11,6 @@ import type { TeamTab } from '../team/TeamPage'
 import { isAssistant, seesAllMoney } from '../lib/roles'
 import { InstallApp } from '../pwa/InstallApp'
 import { Notifications } from '../pwa/Notifications'
-import { guideRole, guideUrl } from './guides'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
 // код «Договора» или «Услуг» скачивается, только когда пункт открыли
@@ -87,7 +86,8 @@ const GROUPS: [string, Item[]][] = [
     // Лента — приёмы своего кресла: у кого его нет (админ, регистратура, ассистент), пункта нет
     item('calendar', 'Календарь в телефоне', 'Приёмы в Google или Apple Календаре', (me) => me.doctorId != null,
       () => (_me, back) => <CalendarPage onBack={back} />),
-    item('guide', 'Памятка', 'Как записать, напомнить, принять оплату', all,
+    // Одно место для обучения: видео, коротко по роли и ссылка на полное руководство с картинками
+    item('guide', 'Руководство', 'Видео, коротко по вашей роли и подробно с картинками', all,
       () => (me, back) => <GuidePage me={me} onBack={back} />),
     item('help', 'Помощь', 'Спросить помощника о Tish — ответит сразу', all,
       (title) => (me, back) => <AccountPage me={me} only="support" title={title} onBack={back} initialHelp />),
@@ -157,16 +157,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
                   </button>
                 </li>
               ))}
-              {/* Не пункты настроек, а ссылки наружу: в Telegram откроются его браузером, Mini App остаётся */}
-              {group === 'Профиль и помощь' && (
-                <li>
-                  <button type="button" className="settings-link" onClick={() => openLink(guideUrl(guideRole(me)))}>
-                    <span className="settings-emoji" aria-hidden="true">📖</span>
-                    <span className="settings-text"><strong>Руководство</strong><span className="hint">Подробно, с картинками — для вашей роли</span></span>
-                    <span aria-hidden="true" className="chev">↗</span>
-                  </button>
-                </li>
-              )}
+              {/* Не пункт настроек, а ссылка наружу: в Telegram откроется его браузером, Mini App остаётся */}
               {group === 'Профиль и помощь' && (
                 <li>
                   <button type="button" className="settings-link" onClick={() => openLink(TISH_INSTAGRAM)}>

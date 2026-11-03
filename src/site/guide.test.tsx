@@ -96,25 +96,35 @@ test('ссылка из CRM — на роль сотрудника; админ, 
   expect(guideRole({ assistantOf: [1] } as Me)).toBe('assistant')
 })
 
-test('«Памятка»: «Полное руководство с картинками» — для выбранной роли', async () => {
+test('«Руководство» в CRM: «Открыть полное руководство» — для выбранной роли, с from=app (кнопка «Вернуться в Tish»)', async () => {
   const open = vi.spyOn(window, 'open').mockImplementation(() => null)
   render(<GuidePage me={{ assistantOf: [1], doctors: [] } as Me} onBack={vi.fn()} />)
-  const link = screen.getByRole('link', { name: /Полное руководство с картинками/ })
-  expect(link).toHaveAttribute('href', `${window.location.origin}/guide?role=assistant`)
+  expect(screen.getByRole('heading', { name: 'Руководство' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: /Открыть полное руководство/ }))
+  expect(open).toHaveBeenLastCalledWith(`${window.location.origin}/guide?role=assistant&from=app`, '_blank', 'noopener')
   await userEvent.click(within(screen.getByRole('group', { name: 'Роль' })).getByRole('button', { name: 'Врач' }))
-  await userEvent.click(screen.getByRole('link', { name: /Полное руководство с картинками/ }))
-  expect(open).toHaveBeenCalledWith(`${window.location.origin}/guide?role=doctor`, '_blank', 'noopener')
+  await userEvent.click(screen.getByRole('button', { name: /Открыть полное руководство/ }))
+  expect(open).toHaveBeenLastCalledWith(`${window.location.origin}/guide?role=doctor&from=app`, '_blank', 'noopener')
 })
 
-test('«Настройки → Профиль и помощь»: «Руководство» открывает /guide для своей роли', async () => {
-  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+test('«Настройки»: один пункт «Руководство» (бывшая «Памятка») — открывается в CRM, на роли сотрудника', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
   )
   window.location.hash = '/settings'
   renderApp()
-  await userEvent.click(await screen.findByRole('button', { name: /Руководство/ }))
-  expect(open).toHaveBeenCalledWith(`${window.location.origin}/guide?role=admin`, '_blank', 'noopener')
+  expect(await screen.findAllByRole('button', { name: /Руководство/ })).toHaveLength(1)
+  expect(screen.queryByRole('button', { name: /Памятка/ })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: /Руководство/ }))
+  expect(await screen.findByRole('button', { name: /Открыть полное руководство/ })).toBeInTheDocument()
   window.location.hash = ''
+})
+
+test('руководство, открытое из CRM: «Вернуться в Tish» и «Закрыть» вместо «Назад» сайта', () => {
+  window.history.replaceState(null, '', '/guide?role=admin&from=app')
+  render(<Guide />)
+  expect(screen.getByRole('link', { name: /Вернуться в Tish/ })).toHaveAttribute('href', '/')
+  expect(screen.getByRole('button', { name: 'Закрыть руководство' })).toBeInTheDocument()
+  window.history.replaceState(null, '', '/')
 })

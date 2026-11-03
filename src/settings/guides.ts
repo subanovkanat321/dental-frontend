@@ -142,5 +142,6 @@ export function guideRole(me: Me): Role {
 
 /** Адрес полного руководства с картинками — страница сайта, открывается без входа. */
 export function guideUrl(role: Role): string {
-  return `${window.location.origin}/guide?role=${role}`
+  // from=app — открыли из CRM: на странице кнопка «Вернуться в Tish» вместо «Назад» сайта
+  return `${window.location.origin}/guide?role=${role}&from=app`
 }

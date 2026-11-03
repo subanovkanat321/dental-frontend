@@ -4,6 +4,24 @@ import { ROLES, chaptersFor, imageSize, type GuideImage, type GuideRole } from '
 import { SiteHeader } from './SiteHeader'
 import './guide/guide.css'
 
+/**
+ * Открыли из CRM (from=app): вернуться — в приложение, а не на страницу сайта; открылось новой
+ * вкладкой — её можно закрыть. В Telegram это его встроенный браузер: «✕ Закрыть» тоже работает.
+ */
+function AppReturn() {
+  const close = () => {
+    window.close()
+    // Вкладку открыли не скриптом — браузер не закроет её: тогда просто в приложение
+    setTimeout(() => { window.location.href = '/' }, 150)
+  }
+  return (
+    <nav className="site-top" aria-label="Навигация">
+      <a className="site-back" href="/"><span aria-hidden="true">‹</span> Вернуться в Tish</a>
+      <button type="button" className="site-close" aria-label="Закрыть руководство" onClick={close}>✕ Закрыть</button>
+    </nav>
+  )
+}
+
 /** Роль из адреса: /guide?role=doctor; нет или «all» — все главы. */
 function roleFromUrl(): GuideRole | null {
   const value = new URLSearchParams(window.location.search).get('role')
@@ -32,12 +50,13 @@ export function Guide() {
     url.hash = ''
     window.history.replaceState(null, '', url)
   }
+  const fromApp = new URLSearchParams(window.location.search).get('from') === 'app'
   const chapters = chaptersFor(role)
   const roleTitle = ROLES.find(([key]) => key === role)?.[1]
 
   return (
     <main className="site-page manual">
-      <SiteHeader />
+      {fromApp ? <AppReturn /> : <SiteHeader />}
       <header className="site-hero manual-hero">
         <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} />
         <div>

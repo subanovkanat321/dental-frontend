@@ -4,20 +4,20 @@ import type { Schemas } from '../api/client'
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { openSettings } from '../lib/route'
 import { openLink } from '../lib/telegram'
-import { GUIDES, guideUrl, ORDER, ownRole, type Role } from './guides'
+import { GUIDES, guideRole, guideUrl, ORDER, type Role } from './guides'
 import { SubHeader } from './SubHeader'
 import installPoster from './media/kak-ustanovit.jpg'
 import installVideo from './media/kak-ustanovit.mp4'
 
 type Me = Schemas['BookingViewsMe']
 
-/** «Памятка»: коротко, как записать, напомнить и принять оплату — для каждой роли. */
+/** «Руководство» в CRM: видео, ссылка на полное руководство с картинками (/guide) и коротко — по роли. */
 export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
-  const [role, setRole] = useState<Role>(() => ownRole(me))
+  const [role, setRole] = useState<Role>(() => guideRole(me))
   const guide = GUIDES[role]
   return (
     <div className="schedule-main">
-      <SubHeader title="Памятка" onBack={onBack} />
+      <SubHeader title="Руководство" onBack={onBack} />
       <section className="card-block guide-video" aria-label="Видео: как установить Tish на телефон">
         <div>
           {/* preload="none": 4 МБ качаются, только когда нажали «смотреть», а не при каждом открытии «Памятки» */}
@@ -37,10 +37,11 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
       </div>
       <p className="hint">{guide.intro}</p>
       {/* Полное руководство (/guide) — для выбранной роли: там каждый раздел по шагам и со скриншотами */}
-      <p className="guide-full">
-        <a href={guideUrl(role)} target="_blank" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openLink(guideUrl(role)) }}>
-          Полное руководство с картинками ›</a>
-      </p>
+      <section className="card-block guide-full" aria-label="Полное руководство">
+        <p>Подробно, по шагам и со скриншотами — все разделы для вашей роли.</p>
+        <div className="actions"><button type="button" className="btn primary" onClick={() => openLink(guideUrl(role))}>📖 Открыть полное руководство ↗</button></div>
+      </section>
+      <h2 className="guide-short-title">Коротко</h2>
       {guide.topics.map((t) => (
         <section key={t.title} className="card-block guide" aria-label={t.title}>
           <h2>{t.title}</h2>

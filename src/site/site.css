@@ -112,3 +112,6 @@ body.site {
 .web-book-privacy { font-size: .9rem; }
 .web-book-privacy summary { min-height: 32px; color: var(--link); cursor: pointer; }
 .web-book-privacy h4 { margin: 10px 0 2px; font-size: .9rem; }
+
+/* Руководство из CRM: «✕ Закрыть» справа в шапке */
+.site-close { border: 1px solid var(--line-strong, #cfd8da); border-radius: 999px; background: var(--card, #fff); color: inherit; font: inherit; font-size: .9rem; padding: 6px 14px; cursor: pointer; }
