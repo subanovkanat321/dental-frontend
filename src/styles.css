@@ -404,7 +404,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .segments.wrap { flex-wrap: wrap; }
 .segments.wrap button { flex: 1 0 auto; }
 .plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
-.plan li { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--separator); }
+.plan li { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--separator); }
 .plan li.done span { text-decoration: line-through; color: var(--hint); }
 .plan li.plan-stage { display: block; border-bottom: 0; padding-top: 10px; font-weight: 600; }
 .plan-add { display: grid; grid-template-columns: 70px 1fr 110px 110px auto; gap: 8px; }
