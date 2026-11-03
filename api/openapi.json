@@ -7230,6 +7230,41 @@
         }
       }
     },
+    "/api/platform/analytics" : {
+      "get" : {
+        "tags" : [ "platform-analytics-controller" ],
+        "operationId" : "analytics",
+        "parameters" : [ {
+          "name" : "days",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 30
+          }
+        }, {
+          "name" : "city",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlatformAnalyticsAnalytics"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/agreements/template" : {
       "get" : {
         "tags" : [ "agreement-controller" ],
@@ -13586,6 +13621,386 @@
           },
           "telegram" : {
             "type" : "string"
+          }
+        }
+      },
+      "PlatformAnalyticsAnalytics" : {
+        "properties" : {
+          "days" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "cities" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "summary" : {
+            "$ref" : "#/components/schemas/PlatformAnalyticsSummary"
+          },
+          "funnel" : {
+            "$ref" : "#/components/schemas/PlatformAnalyticsFunnel"
+          },
+          "geography" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsCityRow"
+            }
+          },
+          "money" : {
+            "$ref" : "#/components/schemas/PlatformAnalyticsMoney"
+          },
+          "risks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsRiskRow"
+            }
+          },
+          "cohorts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsCohort"
+            }
+          },
+          "features" : {
+            "$ref" : "#/components/schemas/PlatformAnalyticsFeatures"
+          },
+          "patients" : {
+            "$ref" : "#/components/schemas/PlatformAnalyticsPatients"
+          }
+        }
+      },
+      "PlatformAnalyticsApplications" : {
+        "properties" : {
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "approved" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rejected" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "waiting" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformAnalyticsCell" : {
+        "properties" : {
+          "eligible" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "active" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformAnalyticsCityRow" : {
+        "properties" : {
+          "city" : {
+            "type" : "string"
+          },
+          "clinics" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "working" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "paying" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patients" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "applications" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformAnalyticsCohort" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "clinics" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "after" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsCell"
+            }
+          }
+        }
+      },
+      "PlatformAnalyticsDue" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "daysLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "tariff" : {
+            "type" : "string"
+          },
+          "monthSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "appointments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "staffSeenAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "payPending" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PlatformAnalyticsFeature" : {
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "clinics" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformAnalyticsFeatures" : {
+        "properties" : {
+          "activeClinics" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsFeature"
+            }
+          },
+          "appointments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "selfBooked" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformAnalyticsFunnel" : {
+        "properties" : {
+          "applications" : {
+            "$ref" : "#/components/schemas/PlatformAnalyticsApplications"
+          },
+          "steps" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsStep"
+            }
+          }
+        }
+      },
+      "PlatformAnalyticsMoney" : {
+        "properties" : {
+          "months" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsMonthMoney"
+            }
+          },
+          "due" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsDue"
+            }
+          }
+        }
+      },
+      "PlatformAnalyticsMonthCount" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformAnalyticsMonthMoney" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "payments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "mrrSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformAnalyticsPatients" : {
+        "properties" : {
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "withBot" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "newByMonth" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsMonthCount"
+            }
+          },
+          "done" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "noShow" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformAnalyticsReason" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PlatformAnalyticsRiskRow" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "plan" : {
+            "type" : "string",
+            "enum" : [ "PILOT", "PAYING", "OVERDUE" ]
+          },
+          "last14" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "prev14" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "staffSeenAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "reasons" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformAnalyticsReason"
+            }
+          }
+        }
+      },
+      "PlatformAnalyticsStep" : {
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "clinics" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformAnalyticsSummary" : {
+        "properties" : {
+          "clinics" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "working" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "pilot" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "paying" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "overdue" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "mrrSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "appointments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "appointmentsBefore" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },

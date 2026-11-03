@@ -1478,6 +1478,10 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .survey-tile { display: grid; gap: 2px; min-width: 110px; padding: 8px 12px; border-radius: var(--r-md); background: var(--sunken); }
 .survey-tile b { font: 600 1.25rem var(--display); font-variant-numeric: tabular-nums; }
 .survey-tile.hero b { font-size: 1.75rem; }
+/* «Платформа → Аналитика»: заголовок блока и CSV справа; широкие таблицы на телефоне — прокруткой внутри блока */
+.stats-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.table-scroll { overflow-x: auto; }
+.survey-tile .small { font-size: .8rem; }
 .survey-q-result h3 { margin: 0; font-size: 1rem; }
 .survey-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .survey-bars li { display: grid; grid-template-columns: minmax(80px, 220px) 1fr auto; gap: 10px; align-items: center; font-size: .9rem; }
