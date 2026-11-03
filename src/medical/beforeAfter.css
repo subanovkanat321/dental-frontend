@@ -1,0 +1,59 @@
+/*
+ * «До / после» для соцсетей: согласие в блоке снимков и конструктор поверх CRM. Предпросмотр —
+ * сам холст готовой картинки (1080 px по ширине), уменьшенный стилями.
+ */
+.publication { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--separator); }
+.publication .segments { justify-self: start; }
+.publication-action { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.ba-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: auto;
+  padding: 16px;
+  background: var(--page, #f3f6f6);
+}
+.ba-panel { display: grid; gap: 12px; max-width: 1100px; margin: 0 auto; }
+.ba-panel .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ba-panel h2 { margin: 0; }
+.ba-warning { margin: 0; padding: 10px 12px; border-radius: var(--r-md, 8px); background: var(--wait-bg); color: var(--wait-ink); }
+.ba-body { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) {
+  .ba-body { grid-template-columns: minmax(0, 440px) minmax(0, 1fr); align-items: start; }
+}
+.ba-preview { display: grid; gap: 8px; justify-items: center; }
+.ba-preview canvas {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 42, 48, .15);
+  background: #fff;
+  cursor: grab;
+  touch-action: none;
+}
+.ba-preview canvas.hiding { cursor: crosshair; }
+.ba-tools { display: grid; gap: 12px; align-content: start; }
+.ba-pick { display: grid; gap: 8px; margin: 0; padding: 10px 12px; border: 1px solid var(--separator); border-radius: 10px; }
+.ba-pick legend { font-size: .85rem; color: var(--hint); padding: 0 4px; }
+.ba-pick > .link { justify-self: start; }
+.ba-thumbs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.ba-thumbs button {
+  flex: 0 0 64px;
+  height: 64px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--separator);
+  cursor: pointer;
+}
+.ba-thumbs button[aria-pressed='true'] { border-color: var(--accent); }
+.ba-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ba-panel > .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ba-post { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: 10px; }
+.ba-post h3 { margin: 0; font-size: 1rem; }
+.ba-post-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.ba-post textarea { width: 100%; font: inherit; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
+.ba-post .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
