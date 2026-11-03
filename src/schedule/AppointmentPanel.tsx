@@ -14,6 +14,7 @@ import { CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, Visi
 import { ContactButtons } from './Contact'
 import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
+import { PatientExpenses } from '../patients/PatientExpenses'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
@@ -209,6 +210,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
                   сохранения должен открыться заново («оплачено», а не форма) */}
               {/* Ассистенту деньги не показываем: оплату принимает врач или регистратура */}
               {seesMoney && <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />}
+              {/* Расход по пациенту (техник, лаборатория) — рядом с оплатой; регистратуре и ассистенту нет (у них нет своих расходов) */}
+              {seesMoney && a.patient && (me.admin || me.doctorId != null) && <PatientExpenses patient={a.patient} me={me} doctorId={a.doctorId} />}
               <ContactButtons phone={a.patient?.phone} />
               {/* Памятка после процедуры и квитанция: печать и «Отправить пациенту» — только по нажатию */}
               <VisitDocs appointment={a} me={me} />

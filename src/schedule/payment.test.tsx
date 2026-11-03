@@ -143,3 +143,24 @@ test('стёрли сумму у оплаченного приёма — сна�
   await vi.waitFor(() => expect(sent).toHaveLength(1))
   confirm.mockRestore()
 })
+
+test('карточка приёма: «Расход по пациенту (техник)» — расход на врача приёма', async () => {
+  backend(appointment(10, 2, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 }), () => ({}))
+  let expense: Record<string, unknown> | null = null
+  server.use(
+    http.get('*/api/patients/:id/expenses', () => HttpResponse.json(expense ? [{ id: 1, ...expense }] : [])),
+    http.post('*/api/expenses', async ({ request }) => {
+      expense = (await request.json()) as Record<string, unknown>
+      return HttpResponse.json({ id: 1, ...expense }, { status: 201 })
+    }),
+  )
+  renderApp()
+  const panel = await card()
+  await userEvent.click(await within(panel).findByRole('button', { name: '💸 Расход по пациенту (техник)' }))
+  const form = within(panel).getByRole('form', { name: 'Расход по пациенту' })
+  await userEvent.type(within(form).getByLabelText('Сумма, сом'), '4500')
+  await userEvent.type(within(form).getByLabelText(/Комментарий/), 'коронка')
+  await userEvent.click(within(form).getByRole('button', { name: 'Добавить расход' }))
+  expect(await within(panel).findByText(/Расходы по пациенту:/)).toHaveTextContent(/4\s500 сом/)
+  expect(expense).toMatchObject({ amountSom: 4500, category: 'Зуботехническая лаборатория', comment: 'коронка', doctorId: 2 })
+})
