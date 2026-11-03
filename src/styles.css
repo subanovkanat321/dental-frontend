@@ -989,6 +989,10 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
   .table td:empty { display: none; }
   .table tr.group-row { padding: 12px 2px 0; border: 0; background: none; }
   .table tr.clickable { cursor: pointer; }
+  /* Таблица внутри секции — строки разделены линией, без карточки в карточке */
+  .card-block .table tbody { gap: 0; }
+  .card-block .table tr { padding: 10px 0; border: 0; border-radius: 0; border-top: 1px solid var(--separator); background: none; }
+  .card-block .table tbody tr:first-child { border-top: 0; }
 }
 
 /* Карточка пациента: «Откуда узнал о клинике» — заметной строкой, не указано — подсвечено */
