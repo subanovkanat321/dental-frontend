@@ -7,6 +7,7 @@ import { useAnamnesis } from '../api/anamnesis'
 import { MedAlerts } from '../medical/Anamnesis'
 import { WaitlistBox } from '../patients/WaitlistTab'
 import { agoText } from '../lib/texts'
+import { bookedByText } from '../lib/relations'
 import { useClose } from '../lib/useClose'
 import { addDays, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
@@ -131,7 +132,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <button type="button" className="btn" onClick={() => onMedical(a.patient!)}>Карта зубов и план лечения</button>
       )}
       <span className={`chip s-${s.kind}`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
-      {a.source === 'PATIENT' && <p className="hint">Запись через бота</p>}
+      {/* Ребёнка записала мама из своего Telegram — кто и кем приходится; иначе — просто «через бота» */}
+      {a.bookedBy ? <p className="hint">{bookedByText(a.bookedBy)}</p> : a.source === 'PATIENT' && <p className="hint">Запись через бота</p>}
       {a.reminderOpenedAt && a.status === 'SCHEDULED' && <p className="hint">Напоминание отправлено {agoText(a.reminderOpenedAt)}, в {timeOf(a.reminderOpenedAt)}</p>}
       {a.rating != null && (
         <p className="rating" aria-label={`Оценка пациента: ${a.rating} из 5`}>{'★'.repeat(a.rating)}{'☆'.repeat(5 - a.rating)} <span className="hint">оценка пациента</span></p>

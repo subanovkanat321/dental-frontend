@@ -109,3 +109,11 @@ test('имя пациента в карточке — его карточка в
   expect(await within(card).findByRole('heading', { name: 'Бакыт М.' })).toBeInTheDocument()
   expect(window.location.hash).toBe('#/patients')
 })
+
+test('ребёнка записала мама из бота — в карточке приёма кто и кем приходится', async () => {
+  backend(appointment(10, 1, '10:00', 'Аружан А.', { version: 1, source: 'PATIENT', bookedBy: { fullName: 'Асанова Жылдыз', relation: 'CHILD' } }))
+  renderApp()
+  const panel = await open(/Аружан А\./)
+  expect(within(panel).getByText('Записал(а) через бота: Асанова Жылдыз, родитель')).toBeInTheDocument()
+  expect(within(panel).queryByText('Запись через бота')).toBeNull()
+})

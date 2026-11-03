@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { RELATION } from '../lib/relations'
 import { isAssistant, seesAllMoney } from '../lib/roles'
 import { somText } from '../lib/time'
 
@@ -55,9 +56,13 @@ export function FamilyBox({ patient, me, onOpenPatient }: { patient: Patient; me
       {f ? (
         <>
           <div className="family-members">
-            {others.map((m) => onOpenPatient
-              ? <button key={m.id} type="button" className="chip" onClick={() => onOpenPatient(m.id!)}>{m.fullName}</button>
-              : <span key={m.id} className="chip">{m.fullName}</span>)}
+            {others.map((m) => {
+              // Добавлен родителем из бота — кем приходится: «Аружан · ребёнок»
+              const label = m.relation ? `${m.fullName} · ${RELATION[m.relation]}` : m.fullName
+              return onOpenPatient
+                ? <button key={m.id} type="button" className="chip" onClick={() => onOpenPatient(m.id!)}>{label}</button>
+                : <span key={m.id} className="chip">{label}</span>
+            })}
           </div>
           {money && total > 0 && (
             <p className="tone-wait">Долг семьи: <b className="num">{somText(total)}</b>

@@ -92,3 +92,12 @@
 .promo-open { justify-self: start; }
 .promo-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .promo-row input { flex: 1 1 140px; min-width: 0; text-transform: uppercase; }
+
+/* «Кого записываем?» и «Мои записи» — запись детей и родственников с Telegram мамы */
+.who-chip:disabled { opacity: .55; cursor: default; }
+.who-chip small { font-weight: 400; color: var(--hint); }
+.relative-fields { display: grid; gap: 10px; padding: 12px; border: 1px dashed var(--line-strong); border-radius: 16px; }
+.relative-fields input[type=date] { min-height: 44px; }
+.my-bookings { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.my-booking .doctor-initials { width: 48px; height: 48px; font-size: 1.05rem; }
+.who-line { font-weight: 600; margin: 0; }

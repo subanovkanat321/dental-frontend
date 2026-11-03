@@ -4162,6 +4162,8 @@ export interface components {
             /** Format: int64 */
             id?: number;
             fullName?: string;
+            /** @enum {string} */
+            relation?: "CHILD" | "SPOUSE" | "PARENT" | "SIBLING" | "OTHER";
         };
         DoctorControllerAdminRequest: {
             fullName?: string;
@@ -4357,6 +4359,12 @@ export interface components {
             reviewComment?: string;
             comment?: string;
             promoCode?: string;
+            bookedBy?: components["schemas"]["FamiliesBooker"];
+        };
+        FamiliesBooker: {
+            fullName?: string;
+            /** @enum {string} */
+            relation?: "CHILD" | "SPOUSE" | "PARENT" | "SIBLING" | "OTHER";
         };
         AppointmentRequestsPromoCode: {
             promoCode?: string;
@@ -4735,6 +4743,17 @@ export interface components {
             /** Format: int64 */
             sourceId?: number;
             promoCode?: string;
+            /** Format: int64 */
+            patientId?: number;
+            relative?: components["schemas"]["RelativesNewRelative"];
+        };
+        RelativesNewRelative: {
+            fullName?: string;
+            /** Format: date */
+            birthDate?: string;
+            /** @enum {string} */
+            relation?: "CHILD" | "SPOUSE" | "PARENT" | "SIBLING" | "OTHER";
+            phone?: string;
         };
         BookingViewsBooking: {
             /** Format: int64 */
@@ -4754,10 +4773,17 @@ export interface components {
             depositSom?: number;
             depositStatus?: string;
             promoCode?: string;
+            /** Format: int64 */
+            patientId?: number;
+            patientName?: string;
+            self?: boolean;
+            waiting?: boolean;
         };
         PatientBookingControllerReschedule: {
             /** Format: date-time */
             startAt: string;
+            /** Format: int64 */
+            appointmentId?: number;
         };
         PatientSourcesControllerMove: {
             /** Format: int32 */
@@ -5357,6 +5383,11 @@ export interface components {
             doctorServices?: components["schemas"]["DoctorServicesView"][];
             sourceChoices?: components["schemas"]["PatientSourcesChoice"][];
             promoCode?: string;
+            bookings?: components["schemas"]["BookingViewsBooking"][];
+            relatives?: components["schemas"]["RelativesRelative"][];
+            hasCard?: boolean;
+            /** Format: int32 */
+            maxRelatives?: number;
         };
         ClinicLinksChoice: {
             /** Format: int64 */
@@ -5371,6 +5402,15 @@ export interface components {
             emoji?: string;
             title?: string;
             titleKy?: string;
+        };
+        RelativesRelative: {
+            /** Format: int64 */
+            id?: number;
+            fullName?: string;
+            /** Format: date */
+            birthDate?: string;
+            /** @enum {string} */
+            relation?: "CHILD" | "SPOUSE" | "PARENT" | "SIBLING" | "OTHER";
         };
         DepositsForPatient: {
             /** Format: int64 */
@@ -8963,7 +9003,9 @@ export interface operations {
     };
     joinWaitlist: {
         parameters: {
-            query?: never;
+            query?: {
+                appointmentId?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -8981,7 +9023,9 @@ export interface operations {
     };
     leaveWaitlist: {
         parameters: {
-            query?: never;
+            query?: {
+                appointmentId?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -8999,7 +9043,9 @@ export interface operations {
     };
     reportDeposit: {
         parameters: {
-            query?: never;
+            query?: {
+                appointmentId?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -9072,7 +9118,9 @@ export interface operations {
     };
     cancel: {
         parameters: {
-            query?: never;
+            query?: {
+                appointmentId?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -11204,7 +11252,9 @@ export interface operations {
     };
     deposit: {
         parameters: {
-            query?: never;
+            query?: {
+                appointmentId?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -11266,6 +11316,7 @@ export interface operations {
         parameters: {
             query: {
                 date: string;
+                appointmentId?: number;
             };
             header?: never;
             path?: never;

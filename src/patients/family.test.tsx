@@ -7,7 +7,7 @@ import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 /** Вымышленная семья: мама Айгуль и сын Эрлан. */
-const family: Schemas['FamiliesFamily'] = { id: 9, name: 'Семья Садыкова', members: [{ id: 2, fullName: 'Айгуль Т.' }, { id: 4, fullName: 'Эрлан Т.' }] }
+const family: Schemas['FamiliesFamily'] = { id: 9, name: 'Семья Садыкова', members: [{ id: 2, fullName: 'Айгуль Т.' }, { id: 4, fullName: 'Эрлан Т.', relation: 'CHILD' }] }
 
 function backend(extra: Parameters<typeof server.use> = []) {
   server.use(
@@ -47,8 +47,8 @@ test('семья: добавить родственника поиском — �
   await userEvent.click(await within(box).findByRole('button', { name: 'Эрлан Т.' }))
   expect(joined).toEqual({ relativeId: 4 })
   expect(await within(box).findByRole('heading', { name: '👨‍👩‍👧 Семья Садыкова' })).toBeInTheDocument()
-  // Нажать на родственника — его карточка
-  await userEvent.click(within(box).getByRole('button', { name: 'Эрлан Т.' }))
+  // Мама добавила сына из бота — видно, кем приходится; нажать — его карточка
+  await userEvent.click(within(box).getByRole('button', { name: 'Эрлан Т. · ребёнок' }))
   expect(await screen.findByRole('heading', { name: 'Эрлан Т.' })).toBeInTheDocument()
 })
 
