@@ -1142,6 +1142,62 @@
         }
       }
     },
+    "/api/me/earnings/goal" : {
+      "put" : {
+        "tags" : [ "earnings-controller" ],
+        "operationId" : "goal",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EarningsControllerGoal"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EarningsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/earnings/evening" : {
+      "put" : {
+        "tags" : [ "earnings-controller" ],
+        "operationId" : "evening",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EarningsControllerEvening"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EarningsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/families/{id}" : {
       "put" : {
         "tags" : [ "family-controller" ],
@@ -7192,6 +7248,24 @@
         }
       }
     },
+    "/api/me/earnings" : {
+      "get" : {
+        "tags" : [ "earnings-controller" ],
+        "operationId" : "get_5",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EarningsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/families" : {
       "get" : {
         "tags" : [ "family-controller" ],
@@ -7557,7 +7631,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9560,6 +9634,85 @@
               "type" : "integer",
               "format" : "int64"
             }
+          }
+        }
+      },
+      "EarningsControllerGoal" : {
+        "properties" : {
+          "goalSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "EarningsView" : {
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "month" : {
+            "type" : "string"
+          },
+          "hasTerms" : {
+            "type" : "boolean"
+          },
+          "percent" : {
+            "type" : "number"
+          },
+          "baseSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "todaySom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "todayRevenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "monthSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "monthRevenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "previousMonthSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "changePercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "goalSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "goalLeftSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "workDaysLeft" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "perDayNeededSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "eveningSummary" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "EarningsControllerEvening" : {
+        "properties" : {
+          "eveningSummary" : {
+            "type" : "boolean"
           }
         }
       },

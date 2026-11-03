@@ -1,7 +1,8 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
-import { seesToPay, seesAllMoney } from '../lib/roles'
+import { seesOwnEarnings, seesToPay, seesAllMoney } from '../lib/roles'
+import { EarningsTab } from '../earnings/EarningsTab'
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf, datesText, periodText, previousRange } from '../lib/compare'
 import { addDays, periodOf, shortDate, somText, todayIn, ZONE } from '../lib/time'
@@ -41,9 +42,9 @@ function dayOf(instant: string): string {
 const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
 
 type Period = 'day' | 'week' | 'month' | 'custom'
-type Tab = 'money' | 'analytics' | 'expenses' | 'debtors' | 'salary' | 'stats' | 'report'
+type Tab = 'money' | 'earnings' | 'analytics' | 'expenses' | 'debtors' | 'salary' | 'stats' | 'report'
 
-const TABS: [Tab, string][] = [['money', 'Деньги'], ['analytics', 'Аналитика'], ['expenses', 'Расходы'], ['debtors', 'Должники'], ['salary', 'Зарплата'], ['stats', 'Статистика'], ['report', 'Отчёт']]
+const ALL_TABS: [Tab, string][] = [['money', 'Деньги'], ['earnings', 'Мой заработок'], ['analytics', 'Аналитика'], ['expenses', 'Расходы'], ['debtors', 'Должники'], ['salary', 'Зарплата'], ['stats', 'Статистика'], ['report', 'Отчёт']]
 
 /**
  * «Касса»: за период рядом две суммы — касса (деньги, полученные в эти дни, по дате платежа) и
@@ -61,7 +62,9 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
   // «Ждут оплаты на кассе»: «независимому» админу без своего кресла сервер его не отдаст (403)
   const toPayShown = seesToPay(me)
 
-  const [tab, setTab] = useState<Tab>(TABS.some(([key]) => key === initialTab) ? initialTab as Tab : 'money')
+  // «Мой заработок» — только у врача со своим креслом (админ без кресла, регистратура — нет)
+  const tabs = ALL_TABS.filter(([key]) => key !== 'earnings' || seesOwnEarnings(me))
+  const [tab, setTab] = useState<Tab>(tabs.some(([key]) => key === initialTab) ? initialTab as Tab : 'money')
   const [period, setPeriod] = useState<Period>('month')
   const [custom, setCustom] = useState(periodOf('month'))
   // «День» — любой день: по умолчанию сегодня, можно выбрать вчера или любую дату
@@ -123,13 +126,14 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
           )}
           {money && (
             <div className="segments tabs" role="tablist" aria-label="Разделы кассы">
-              {TABS.map(([key, title]) => (
+              {tabs.map(([key, title]) => (
                 <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>
               ))}
             </div>
           )}
         </header>
 
+        {tab === 'earnings' && <EarningsTab me={me} />}
         {tab === 'analytics' && <AnalyticsTab me={me} doctorId={doctorId} seesAll={seesAll} />}
         {tab === 'expenses' && <ExpensesTab me={me} doctorId={doctorId} seesAll={seesAll} />}
         {tab === 'debtors' && <DebtorsTab rows={debts.data} pending={debts.isPending} error={debts.error?.message} onOpen={setOpened}

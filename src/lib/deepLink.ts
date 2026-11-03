@@ -5,7 +5,7 @@ import type { Page } from './route'
  * Куда открыть CRM по кнопке бота. Бот шлёт адреса Mini App с параметрами (AssetVersion.miniApp
  * бэкенда): ?appointment=ID — карточка приёма, ?day=tomorrow — завтра, ?patient=ID — новая запись
  * на этого пациента, ?patientCard=ID — карточка пациента, ?supply=ID — материал на складе,
- * ?screen=cash|stats|dental-news|support|support-tickets|pay-requests|survey — раздел; ?doctor=ID — «День»
+ * ?screen=cash|stats|earnings|dental-news|support|support-tickets|pay-requests|survey — раздел; ?doctor=ID — «День»
  * этого врача (уведомление о приёмах коллеги), можно вместе с ?day=tomorrow.
  */
 
@@ -49,6 +49,7 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (num('supply')) return { page: 'stock', supplyId: num('supply') }
   if (screen === 'cash') return { page: 'cash', tab: 'money' }
   if (screen === 'stats') return { page: 'cash', tab: 'stats' }
+  if (screen === 'earnings') return { page: 'cash', tab: 'earnings' }
   if (screen === 'dental-news') return { page: 'settings', tab: 'dental-news' }
   if (screen === 'support') return { page: 'settings', tab: 'support', ticketId: num('ticket') }
   if (screen === 'survey') return { page: 'settings', tab: 'survey' }

@@ -3,6 +3,8 @@ import type { Page } from '../lib/route'
 import { somText, timeOf } from '../lib/time'
 import { initials } from '../lib/avatars'
 import { statusOf } from './status'
+import type { Earnings } from '../earnings/earnings'
+import { EarningsSummary } from '../earnings/EarningsWidgets'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -21,7 +23,7 @@ function duration(minutes: number): string {
  * сеткой на ноутбуке поуже, — только столбиком; нажатие ведёт туда же. Когда открыта карточка
  * приёма, она занимает это место.
  */
-export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, low, free, onOpen, onBook, onNavigate, onClose }: {
+export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, earnings, onOpenEarnings, low, free, onOpen, onBook, onNavigate, onClose }: {
   date: string
   today: string
   /** Приёмы дня без отменённых */
@@ -31,6 +33,9 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
   waiting: Appointment[]
   toPay: number
   revenueSom: number | null
+  /** «Мой заработок» врача (только у врача со своим креслом), null — не показываем */
+  earnings?: Earnings | null
+  onOpenEarnings?: () => void
   low: number
   free: FreeOf[]
   onOpen: (a: Appointment) => void
@@ -132,6 +137,9 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
           </ul>
         </section>
       )}
+
+      {/* Сегодняшний день, а не выбранный: заработок — «сегодня» и «за месяц» */}
+      {earnings && <EarningsSummary e={earnings} onOpen={onOpenEarnings} />}
 
       {revenueSom != null && (
         <button type="button" className="ds-block ds-money" onClick={() => onNavigate?.('cash')}>
