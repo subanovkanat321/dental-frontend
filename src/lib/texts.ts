@@ -106,15 +106,20 @@ export function reminderText(a: ReminderAppointment, settings?: ReminderSettings
   const botUrl = settings?.botUrl
   const signature = settings?.clinicSignature
   const invite = (text: string) => (botUrl && !a.patient.telegram ? `${text}\n\n${BOT_LINE} ${botUrl}` : text)
+  // Адрес — как в Telegram: отдельной строкой, если клиника не вставила {адрес} в свой текст сама
+  const address = settings?.clinicAddress?.trim() ? `📍 Адрес: ${settings.clinicAddress.trim()}` : null
   if (!template) {
-    return invite(signed(`Здравствуйте, ${a.patient.fullName}! 👋 Напоминаем: ${whenText(a.startAt, now)} в ${timeOf(a.startAt)} `
-      + `приём у стоматолога 🦷 ${REPLY_LINE}`, signature))
+    const text = `Здравствуйте, ${a.patient.fullName}! 👋 Напоминаем: ${whenText(a.startAt, now)} в ${timeOf(a.startAt)} `
+      + `приём у стоматолога 🦷 ${REPLY_LINE}`
+    // Без адреса — как раньше (подпись через пробел); с адресом — строками: текст, адрес, подпись
+    return invite(address ? [text, address, signature].filter(Boolean).join('\n') : signed(text, signature))
   }
   const body = applyTemplate(template, {
     имя: a.patient.fullName, когда: whenAt(a.startAt, now), врач: doctor, услуга: a.serviceName,
     клиника: settings?.clinicName, адрес: settings?.clinicAddress, телефон: settings?.clinicPhone, бот: botUrl,
   })
   const lines = [body, REPLY_LINE]
+  if (address && !usesVariable(template, 'адрес')) lines.push(address)
   if (signature && !usesVariable(template, 'клиника')) lines.push(signature)
   const text = lines.join('\n')
   return usesVariable(template, 'бот') ? text : invite(text)
