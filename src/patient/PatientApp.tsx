@@ -519,6 +519,7 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
     },
   })
 
+  const bookLabel = missing === 'service' ? t('nextService') : missing === 'time' ? t('nextTime') : missing === 'data' ? t('nextData') : t('book')
   const next = () => {
     if (!missing) {
       setErrors({})
@@ -672,9 +673,15 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
         {errors.consent && <p className="error">{errors.consent}</p>}
       </section>
       {errors.form && <p className="error" role="alert">{errors.form}</p>}
+      {/* В Telegram главная кнопка — его MainButton внизу окна, но её рисует сам Telegram, и в части
+          приложений она не появляется. Своя кнопка в конце формы — запись можно отправить всегда.
+          Вне Telegram своя кнопка уже прилипла к низу экрана (MainButton) — вторая не нужна */}
+      {telegram()?.MainButton && (
+        <button type="button" className="btn primary book-submit" disabled={book.isPending} onClick={next}>
+          {book.isPending ? t('loading') : bookLabel}</button>
+      )}
       <Footer ctx={ctx} />
-      <MainButton busy={book.isPending} onClick={next}
-        text={missing === 'service' ? t('nextService') : missing === 'time' ? t('nextTime') : missing === 'data' ? t('nextData') : t('book')} />
+      <MainButton busy={book.isPending} onClick={next} text={bookLabel} />
     </section>
   )
 }
