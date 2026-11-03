@@ -31,6 +31,7 @@ function revenueOf(r: Row): string {
 function termsText(r: Row): string {
   const percent = Number(r.percent ?? 0)
   const of = `от ${revenueOf(r)}`
+  if (!isEmployee(r) && percent === 100 && !r.baseSom) return 'вся выручка — врачу (100%)'
   const parts = [percent ? `${String(percent).replace('.', ',')}% ${of}` : '', r.baseSom ? `оклад ${somText(r.baseSom)}` : '']
   return parts.filter(Boolean).join(' + ') || 'Условия не заданы'
 }
@@ -146,7 +147,18 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
   }
   return (
     <form className="form" aria-label={`Условия: ${r.doctor}`} onSubmit={submit}>
-      <p className="hint">Можно только процент, только оклад или оба. Пусто — значит 0.</p>
+      <p className="hint">Условия у каждого свои: только процент, только оклад или оба. Пусто — значит 0.</p>
+      {/* Частые схемы одной кнопкой: частный врач (в том числе в клинике с другими врачами) забирает всё */}
+      {!isEmployee(r) && (
+        <div className="day-quick wrap" role="group" aria-label="Как платить">
+          <button type="button" className="chip" aria-pressed={p === 100 && !Number(base || 0)}
+            onClick={() => { setPercent('100'); setBase('') }}>Вся выручка — врачу (100%)</button>
+          <button type="button" className="chip" aria-pressed={p === 0 && Number(base || 0) > 0}
+            onClick={() => setPercent('')}>Только оклад</button>
+          <button type="button" className="chip" aria-pressed={p > 0 && p < 100 && Number(base || 0) > 0}
+            onClick={() => { if (!p || p === 100) setPercent('30') }}>Оклад + процент</button>
+        </div>
+      )}
       <div className="row">
         <label className="field"><span>Процент от {of}, %</span>
           <input inputMode="decimal" value={percent} placeholder="например, 30" onChange={(e) => setPercent(e.target.value.replace(/[^\d.,]/g, ''))} /></label>
@@ -154,7 +166,7 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
           <input inputMode="numeric" value={base} placeholder="0 — без оклада" onChange={(e) => setBase(e.target.value.replace(/\D/g, ''))} /></label>
       </div>
       <div className="day-quick wrap" role="group" aria-label="Быстро: процент">
-        {(!isEmployee(r) ? [20, 25, 30, 35, 40] : isAssistantRow(r) ? [5, 10, 15] : [1, 2, 3]).map((x) => (
+        {(!isEmployee(r) ? [20, 25, 30, 35, 40, 50] : isAssistantRow(r) ? [5, 10, 15] : [1, 2, 3]).map((x) => (
           <button key={x} type="button" className="chip" aria-pressed={p === x} onClick={() => setPercent(String(x))}>{x}%</button>
         ))}
       </div>
