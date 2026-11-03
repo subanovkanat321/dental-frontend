@@ -75,7 +75,13 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
   const invite = (p: Patient, months?: number) => {
     // Отметка «позвали» — не ждём ответа: WhatsApp открывается сразу, как в приложении
     void api.POST('/api/patients/{id}/recall-invited', { params: { path: { id: p.id! } } })
-      .then(() => client.invalidateQueries({ queryKey: ['recall'] }))
+      // Только эта строка — «позвали сейчас»: весь список (у большой клиники — тысячи) заново не качаем
+      .then(({ response }) => {
+        if (!response.ok) return
+        const now = new Date().toISOString()
+        client.setQueryData<Schemas['RecallView'][]>(['recall'], (list) =>
+          list?.map((r) => (r.patient?.id === p.id ? { ...r, invitedAt: now } : r)))
+      })
     openLink(whatsappUrl(p.phone!, recallText(p.fullName ?? '', settings.data?.clinicSignature, months)))
   }
 
