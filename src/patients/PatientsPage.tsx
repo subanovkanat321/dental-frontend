@@ -10,7 +10,7 @@ import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
 import { ComebackTab } from './ComebackTab'
-import { isAssistant } from '../lib/roles'
+import { canEditServices, isAssistant } from '../lib/roles'
 import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
@@ -148,7 +148,7 @@ export function PatientsPage({ me, onBook, initialPatient, onOpenAppointment }: 
         </header>
         {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} />}
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
-        {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} />}
+        {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
           <EmptyState icon={text ? '🔍' : '🧑‍🤝‍🧑'} title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}».`) : doctorId != null ? 'У этого врача пока не было пациентов.' : 'Пациентов пока нет — они появятся с первой записью.'}>

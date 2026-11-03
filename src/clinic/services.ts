@@ -1,4 +1,5 @@
 import type { Schemas } from '../api/client'
+import { todayIn } from '../lib/time'
 
 type Service = Schemas['ServiceTypeView']
 
@@ -33,4 +34,24 @@ export function groupByCategory(services: Service[]): { category: string | null;
       return ra - rb || ka.localeCompare(kb, 'ru')
     })
     .map(([category, items]) => ({ category, items }))
+}
+
+/** «Профосмотр через»: варианты срока в месяцах — в карточке услуги и сроке клиники. */
+export const RECALL_CHOICES = [1, 2, 3, 4, 6, 9, 12, 18, 24]
+
+/** Варианты с текущим значением: срок, заданный не из списка (через API), не пропадёт. */
+export function recallChoices(current?: number | null): number[] {
+  return current == null || RECALL_CHOICES.includes(current) ? RECALL_CHOICES : [...RECALL_CHOICES, current].sort((a, b) => a - b)
+}
+
+/** 6 → «6 мес.» */
+export function monthsText(months: number): string {
+  return `${months} мес.`
+}
+
+/** «2026-10-03» → «3 октября» (год — если не текущий). Дата уже по Бишкеку — считает сервер. */
+export function dueText(date: string, today = todayIn()): string {
+  const sameYear = date.slice(0, 4) === today.slice(0, 4)
+  return new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', day: 'numeric', month: 'long', year: sameYear ? undefined : 'numeric' })
+    .format(new Date(`${date}T00:00:00Z`)).replace(/ г\.?$/, '')
 }

@@ -110,7 +110,8 @@ test('ассистент — «Профосмотр»: WhatsApp — отметк
   const opened: string[] = []
   vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
   server.use(
-    http.get('*/api/appointments/recall', () => HttpResponse.json([{ patient: aigul, lastVisit: '2026-01-10T04:00:00Z', invitedAt: invited ? new Date().toISOString() : undefined }])),
+    http.get('*/api/appointments/recall', () => HttpResponse.json([{ patient: aigul, lastVisit: '2026-01-10T04:00:00Z',
+      invitedAt: invited ? new Date().toISOString() : undefined, serviceName: 'Коррекция брекетов', months: 1, dueOn: '2026-02-10' }])),
     http.post('*/api/patients/2/recall-invited', () => {
       invited++
       return new HttpResponse(null, { status: 204 })
@@ -120,8 +121,12 @@ test('ассистент — «Профосмотр»: WhatsApp — отметк
   await userEvent.click(await screen.findByRole('tab', { name: 'Профосмотр' }))
   const table = await screen.findByRole('table', { name: 'Позвать на профосмотр' })
   expect(table).toHaveTextContent('ещё не звали')
+  // Строка: последний визит · услуга, с какого дня пора и какой срок применён (считает сервер)
+  expect(table).toHaveTextContent('10 янв 2026 · Коррекция брекетов')
+  expect(table).toHaveTextContent(/10 февраля( 2026)? · через 1 мес\./)
   await userEvent.click(within(table).getByRole('button', { name: 'WhatsApp' }))
   expect(opened[0]).toContain('https://wa.me/996700333444?text=')
+  expect(decodeURIComponent(opened[0]!)).toContain('Прошло больше месяца с вашего визита')
   expect(decodeURIComponent(opened[0]!)).toContain('пора на профилактический осмотр')
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
   expect(await within(table).findByText('сегодня')).toBeInTheDocument()

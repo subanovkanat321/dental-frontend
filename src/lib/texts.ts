@@ -52,9 +52,18 @@ function signed(text: string, signature?: string | null): string {
   return signature ? `${text} ${signature}` : text
 }
 
-/** «Пора на профосмотр» — тем, кто был больше полугода назад. */
-export function recallText(fullName: string, signature?: string | null): string {
-  return signed(`Здравствуйте, ${fullName}! 😊 Прошло больше полугода с вашего визита к стоматологу — `
+/** «больше полугода»: срок профосмотра словами (после «больше» — родительный падеж). */
+function periodText(months?: number | null): string {
+  if (months == null || months === 6) return 'полугода'
+  if (months === 1) return 'месяца'
+  if (months === 12) return 'года'
+  if (months === 24) return 'двух лет'
+  return `${months} месяцев`
+}
+
+/** «Пора на профосмотр»: срок — у услуги последнего визита или у клиники (по умолчанию полгода). */
+export function recallText(fullName: string, signature?: string | null, months?: number | null): string {
+  return signed(`Здравствуйте, ${fullName}! 😊 Прошло больше ${periodText(months)} с вашего визита к стоматологу — `
     + 'пора на профилактический осмотр 🦷 Ответьте, когда вам удобно, — запишем.', signature)
 }
 

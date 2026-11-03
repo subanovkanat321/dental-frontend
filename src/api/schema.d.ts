@@ -564,6 +564,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/recall-months": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["recallMonths"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/deposit": {
         parameters: {
             query?: never;
@@ -3895,6 +3911,8 @@ export interface components {
             /** Format: int32 */
             priceSom?: number;
             category?: string;
+            /** Format: int32 */
+            recallMonths?: number;
         };
         ServiceTypeView: {
             /** Format: int64 */
@@ -3906,6 +3924,8 @@ export interface components {
             /** Format: int32 */
             priceSom?: number;
             category?: string;
+            /** Format: int32 */
+            recallMonths?: number;
         };
         ServiceSuppliesLine: {
             /** Format: int64 */
@@ -4428,6 +4448,8 @@ export interface components {
             ownHours?: boolean;
             city?: string;
             phones?: string[];
+            /** Format: int32 */
+            recallMonths?: number;
         };
         VisitReportControllerAiChange: {
             on?: boolean;
@@ -4443,6 +4465,14 @@ export interface components {
         ClinicServiceReminderTemplates: {
             ru?: string;
             ky?: string;
+        };
+        ClinicControllerRecallRequest: {
+            /** Format: int32 */
+            recallMonths?: number;
+        };
+        ClinicControllerRecallMonths: {
+            /** Format: int32 */
+            recallMonths?: number;
         };
         DepositControllerSettingsRequest: {
             /** @enum {string} */
@@ -5710,6 +5740,11 @@ export interface components {
             invitedAt?: string;
             /** Format: int64 */
             doctorId?: number;
+            /** Format: int32 */
+            recallMonths?: number;
+            recallService?: string;
+            /** Format: date */
+            recallDueOn?: string;
         };
         ComebacksResult: {
             /** Format: int32 */
@@ -5893,6 +5928,11 @@ export interface components {
             lastVisit?: string;
             /** Format: date-time */
             invitedAt?: string;
+            serviceName?: string;
+            /** Format: int32 */
+            months?: number;
+            /** Format: date */
+            dueOn?: string;
         };
         RatingSummary: {
             /** Format: int64 */
@@ -7148,6 +7188,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClinicServiceReminderTemplates"];
+                };
+            };
+        };
+    };
+    recallMonths: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicControllerRecallRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicControllerRecallMonths"];
                 };
             };
         };
@@ -12390,9 +12454,7 @@ export interface operations {
     };
     recall: {
         parameters: {
-            query?: {
-                months?: number;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;

@@ -179,3 +179,79 @@ test('«Заполнить по умолчанию»: что поставим, �
   // Заполнили — плашки больше нет
   await vi.waitFor(() => expect(screen.queryByRole('region', { name: 'Стартовая настройка' })).not.toBeInTheDocument())
 })
+
+test('«Профосмотр через»: свой срок услуги сохраняется, «Как в клинике» — поле не шлём', async () => {
+  let list: Schemas['ServiceTypeView'][] = [
+    { id: 1, name: 'Коррекция брекетов', durationMinutes: 30, category: 'Ортодонтия', active: true },
+    { id: 2, name: 'Профессиональная чистка', durationMinutes: 60, category: 'Гигиена и отбеливание', active: true, recallMonths: 6 },
+  ]
+  const bodies: Schemas['ServiceTypeControllerRequest'][] = []
+  server.use(
+    http.get('*/api/clinic', () => HttpResponse.json({ recallMonths: 12 })),
+    http.get('*/api/service-types', () => HttpResponse.json(list)),
+    http.put('*/api/service-types/:id', async ({ request, params }) => {
+      const body = await request.json() as Schemas['ServiceTypeControllerRequest']
+      bodies.push(body)
+      list = list.map((s) => (String(s.id) === params.id ? { ...s, ...body, recallMonths: body.recallMonths } : s))
+      return HttpResponse.json(list.find((s) => String(s.id) === params.id))
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Услуги' })
+  expect(within(table).getByText('через 6 мес.')).toBeInTheDocument()
+  expect(within(table).getByText('как в клинике')).toBeInTheDocument()
+
+  await user.click(within(table).getByRole('button', { name: 'Коррекция брекетов' }))
+  const panel = await screen.findByRole('complementary', { name: 'Услуга' })
+  const field = within(panel).getByRole('combobox', { name: 'Профосмотр через' })
+  expect(await within(panel).findByText('Как в клинике (12 мес.)')).toBeInTheDocument()
+  expect(within(panel).getByText('Через сколько месяцев после этой услуги позвать пациента снова')).toBeInTheDocument()
+  await choose(field, '1 мес.')
+  await user.click(within(panel).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(panel).findByText('Услуга сохранена')).toBeInTheDocument()
+  expect(bodies[0]).toMatchObject({ name: 'Коррекция брекетов', recallMonths: 1 })
+  expect(await within(table).findByText('через 1 мес.')).toBeInTheDocument()
+
+  // Обратно «Как в клинике» — recallMonths не шлём, сервер ставит null
+  await choose(field, 'Как в клинике (12 мес.)')
+  await user.click(within(panel).getByRole('button', { name: 'Сохранить' }))
+  await vi.waitFor(() => expect(bodies).toHaveLength(2))
+  expect(bodies[1]).not.toHaveProperty('recallMonths')
+})
+
+test('«Профосмотр по умолчанию»: админ меняет срок клиники', async () => {
+  let months = 6
+  const saved: unknown[] = []
+  server.use(
+    http.get('*/api/clinic', () => HttpResponse.json({ recallMonths: months })),
+    http.get('*/api/service-types', () => HttpResponse.json([{ id: 1, name: 'Осмотр', durationMinutes: 30, active: true }])),
+    http.put('*/api/clinic/recall-months', async ({ request }) => {
+      const body = await request.json() as Schemas['ClinicControllerRecallRequest']
+      saved.push(body)
+      months = body.recallMonths!
+      return HttpResponse.json({ recallMonths: months })
+    }),
+  )
+  renderApp()
+  const box = await screen.findByLabelText('Профосмотр по умолчанию', { selector: 'div' })
+  expect(box).toHaveTextContent('Для приёмов без услуги и услуг без своего срока')
+  const field = within(box).getByRole('combobox', { name: 'Профосмотр по умолчанию' })
+  await vi.waitFor(() => expect(field).toHaveTextContent('6 мес.'))
+  await choose(field, '9 мес.')
+  expect(await within(box).findByText('Срок сохранён')).toBeInTheDocument()
+  expect(saved).toEqual([{ recallMonths: 9 }])
+  await vi.waitFor(() => expect(field).toHaveTextContent('9 мес.'))
+})
+
+test('«Профосмотр по умолчанию»: не админ только видит срок', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false })),
+    http.get('*/api/clinic', () => HttpResponse.json({ recallMonths: 4 })),
+    http.get('*/api/service-types', () => HttpResponse.json([])),
+  )
+  renderApp()
+  const box = await screen.findByLabelText('Профосмотр по умолчанию', { selector: 'div' })
+  await vi.waitFor(() => expect(box).toHaveTextContent('Профосмотр по умолчанию: через 4 мес.'))
+  expect(within(box).queryByRole('combobox')).not.toBeInTheDocument()
+})

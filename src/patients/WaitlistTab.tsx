@@ -10,6 +10,7 @@ import { openLink } from '../lib/telegram'
 import { isAssistant } from '../lib/roles'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
+import { dueText, monthsText } from '../clinic/services'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -60,8 +61,9 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
 }
 
 /**
- * «Позвать на профосмотр»: были больше полугода назад и никуда не записаны; сначала — кого ещё не
- * звали. WhatsApp — отметка «позвали» и готовый текст; «Записать» — «Новая запись» на пациента.
+ * «Позвать на профосмотр»: срок после последнего визита прошёл (срок — у услуги визита, нет — у
+ * клиники; считает сервер), и никуда не записаны; сначала — кого ещё не звали.
+ * Выбора месяцев здесь нет: срок задаётся в «Настройки → Услуги», чтобы список у всех был один. WhatsApp — отметка «позвали» и готовый текст; «Записать» — «Новая запись» на пациента.
  */
 export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => void; onBook: (p: Patient) => void }) {
   const client = useQueryClient()
@@ -70,11 +72,11 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
     queryKey: ['recall'],
     queryFn: () => unwrap(api.GET('/api/appointments/recall')),
   })
-  const invite = (p: Patient) => {
+  const invite = (p: Patient, months?: number) => {
     // Отметка «позвали» — не ждём ответа: WhatsApp открывается сразу, как в приложении
     void api.POST('/api/patients/{id}/recall-invited', { params: { path: { id: p.id! } } })
       .then(() => client.invalidateQueries({ queryKey: ['recall'] }))
-    openLink(whatsappUrl(p.phone!, recallText(p.fullName ?? '', settings.data?.clinicSignature)))
+    openLink(whatsappUrl(p.phone!, recallText(p.fullName ?? '', settings.data?.clinicSignature, months)))
   }
 
   if (due.isPending) return <p className="hint">Загрузка…</p>
@@ -82,16 +84,17 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
   if (!due.data.length) return <EmptyState icon="🦷" title="Звать некого — все записаны или были недавно." />
   return (
     <table className="table" aria-label="Позвать на профосмотр">
-      <thead><tr><th>Пациент</th><th>Телефон</th><th>Был</th><th>Позвали</th><th /></tr></thead>
+      <thead><tr><th>Пациент</th><th>Телефон</th><th>Последний визит</th><th>Пора с</th><th>Позвали</th><th /></tr></thead>
       <tbody>
         {due.data.map((r) => (
           <tr key={r.patient?.id} className="clickable" onClick={rowClick(() => onOpen(r.patient!.id!))}>
             <td><button type="button" className="row-link" onClick={() => onOpen(r.patient!.id!)}>{r.patient?.fullName}</button></td>
             <td className="nowrap num">{r.patient?.phone ? formatPhone(r.patient.phone) : '—'}</td>
-            <td className="nowrap">{r.lastVisit ? agoText(r.lastVisit) : '—'}</td>
+            <td>{r.lastVisit ? shortDate(r.lastVisit) : '—'}{r.serviceName && <span className="hint"> · {r.serviceName}</span>}</td>
+            <td className="nowrap">{r.dueOn ? dueText(r.dueOn) : '—'}{r.months != null && <span className="hint small"> · через {monthsText(r.months)}</span>}</td>
             <td className="nowrap hint">{r.invitedAt ? agoText(r.invitedAt) : 'ещё не звали'}</td>
             <td className="r nowrap">
-              <button type="button" className="btn small" onClick={() => invite(r.patient!)}>WhatsApp</button>{' '}
+              <button type="button" className="btn small" onClick={() => invite(r.patient!, r.months)}>WhatsApp</button>{' '}
               <button type="button" className="btn small primary" onClick={() => onBook(r.patient!)}>Записать</button>
             </td>
           </tr>

@@ -1544,6 +1544,34 @@
         }
       }
     },
+    "/api/clinic/recall-months" : {
+      "put" : {
+        "tags" : [ "clinic-controller" ],
+        "operationId" : "recallMonths",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicControllerRecallRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicControllerRecallMonths"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/deposit" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
@@ -7926,16 +7954,6 @@
       "get" : {
         "tags" : [ "appointment-controller" ],
         "operationId" : "recall",
-        "parameters" : [ {
-          "name" : "months",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 6
-          }
-        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -8529,6 +8547,12 @@
             "type" : "string",
             "maxLength" : 40,
             "minLength" : 0
+          },
+          "recallMonths" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 36,
+            "minimum" : 1
           }
         },
         "required" : [ "durationMinutes", "name" ]
@@ -8555,6 +8579,10 @@
           },
           "category" : {
             "type" : "string"
+          },
+          "recallMonths" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -9889,6 +9917,10 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "recallMonths" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -9926,6 +9958,22 @@
           },
           "ky" : {
             "type" : "string"
+          }
+        }
+      },
+      "ClinicControllerRecallRequest" : {
+        "properties" : {
+          "recallMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "ClinicControllerRecallMonths" : {
+        "properties" : {
+          "recallMonths" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -12995,6 +13043,17 @@
           "doctorId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "recallMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "recallService" : {
+            "type" : "string"
+          },
+          "recallDueOn" : {
+            "type" : "string",
+            "format" : "date"
           }
         }
       },
@@ -13413,6 +13472,17 @@
           "invitedAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "serviceName" : {
+            "type" : "string"
+          },
+          "months" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "dueOn" : {
+            "type" : "string",
+            "format" : "date"
           }
         }
       },

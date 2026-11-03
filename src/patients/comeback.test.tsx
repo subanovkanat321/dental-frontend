@@ -58,3 +58,33 @@ test('«Вернуть»: деньги на столе, «Tish вернул», �
   expect(await screen.findByRole('status')).toHaveTextContent('Приглашение отправлено в Telegram')
   expect(sent).toEqual([{ text: 'Здравствуйте, Айгуль Т.!\n\nОсталась коронка. Ждём вас!', channel: 'TELEGRAM' }])
 })
+
+test('«Вернуть»: «пора на осмотр» — последний визит, услуга, с какого дня пора; нет сроков у услуг — подсказка', async () => {
+  const recallBoard: Schemas['ComebacksBoard'] = {
+    patients: [{ patientId: 4, fullName: 'Нурлан К.', phone: '996555000283', telegram: false, reason: 'RECALL', planSom: 0, plan: [],
+      lastVisit: '2026-04-03T04:00:00Z', recallMonths: 6, recallService: 'Профессиональная чистка', recallDueOn: '2026-10-03' }],
+    planSom: 0, planPatients: 0, noShows: 0, recalls: 1,
+  }
+  let services: Schemas['ServiceTypeView'][] = [{ id: 1, name: 'Профессиональная чистка', durationMinutes: 60, active: true }]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/comebacks', () => HttpResponse.json(recallBoard)),
+    http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
+    http.get('*/api/service-types', () => HttpResponse.json(services)),
+  )
+  const { unmount } = renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  const list = await screen.findByRole('list', { name: 'Кого вернуть' })
+  expect(list).toHaveTextContent(/последний визит: 3 апр 2026 · Профессиональная чистка · пора с 3 октября( 2026)? \(через 6 мес\.\)/)
+  const link = await screen.findByRole('link', { name: 'Настройки → Услуги' })
+  expect(link).toHaveAttribute('href', '#/settings/services')
+  unmount()
+
+  // У услуги есть свой срок — подсказки нет
+  services = [{ ...services[0]!, recallMonths: 6 }]
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  await screen.findByRole('list', { name: 'Кого вернуть' })
+  expect(screen.queryByRole('link', { name: 'Настройки → Услуги' })).not.toBeInTheDocument()
+})

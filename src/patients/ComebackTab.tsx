@@ -5,7 +5,8 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { EmptyState } from '../layout/EmptyState'
 import { haptic, openLink } from '../lib/telegram'
 import { agoText, whatsappUrl } from '../lib/texts'
-import { addDays, somText, todayIn } from '../lib/time'
+import { addDays, shortDate, somText, todayIn } from '../lib/time'
+import { dueText, monthsText } from '../clinic/services'
 import './comeback.css'
 
 type Candidate = Schemas['ComebacksCandidate']
@@ -27,8 +28,13 @@ function errorText(e: ApiError | null): string | null {
  * на осмотр — и приглашение в один тап (в Telegram с кнопкой «Записаться» или в WhatsApp). Сверху —
  * «Tish вернул»: кто записался после приглашения за 30 дней. Считает сервер; здесь только показываем.
  */
-export function ComebackTab({ onOpen, onBook }: { onOpen: (patientId: number) => void; onBook: (p: Patient) => void }) {
+export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
+  onOpen: (patientId: number) => void; onBook: (p: Patient) => void; canEditServices?: boolean
+}) {
   const board = useQuery({ queryKey: ['comebacks'], queryFn: () => unwrap(api.GET('/api/comebacks')) })
+  // Ни у одной услуги нет своего срока профосмотра — подсказать, где он задаётся
+  const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), enabled: canEditServices })
+  const noServiceTerms = services.isSuccess && services.data.length > 0 && !services.data.some((s) => s.recallMonths != null)
   const today = todayIn()
   const result = useQuery({
     queryKey: ['comebacks', 'result', today],
@@ -65,6 +71,10 @@ export function ComebackTab({ onOpen, onBook }: { onOpen: (patientId: number) =>
           {(r.paidSom ?? 0) > 0 && <> · уже оплачено <b className="num">{somText(r.paidSom!)}</b></>}
         </p>
       )}
+      {noServiceTerms && (board.data.recalls ?? 0) > 0 && (filter === 'ALL' || filter === 'RECALL') && (
+        <p className="hint small">Пора на осмотр — по сроку клиники. Сроки по услугам — в{' '}
+          <a href="#/settings/services">Настройки → Услуги</a>.</p>
+      )}
       {!all.length ? (
         <EmptyState icon="🦷" title="Звать некого">Все с планом лечения записаны, неявок нет, осмотры — вовремя.</EmptyState>
       ) : (
@@ -77,9 +87,17 @@ export function ComebackTab({ onOpen, onBook }: { onOpen: (patientId: number) =>
                 {(c.planSom ?? 0) > 0 && <b className="num comeback-sum">{somText(c.planSom!)}</b>}
               </div>
               {(c.plan ?? []).length > 0 && <p className="comeback-plan">{c.plan!.join(' · ')}</p>}
-              <p className="hint small">
-                {c.lastVisit ? `был ${agoText(c.lastVisit)}` : 'ещё не был'} · {c.invitedAt ? `звали ${agoText(c.invitedAt)}` : 'ещё не звали'}
-              </p>
+              {c.reason === 'RECALL' && c.recallDueOn ? (
+                <p className="hint small">
+                  последний визит: {c.lastVisit ? shortDate(c.lastVisit) : '—'}{c.recallService ? ` · ${c.recallService}` : ''}
+                  {' '}· пора с {dueText(c.recallDueOn)}{c.recallMonths ? ` (через ${monthsText(c.recallMonths)})` : ''}
+                  {' '}· {c.invitedAt ? `звали ${agoText(c.invitedAt)}` : 'ещё не звали'}
+                </p>
+              ) : (
+                <p className="hint small">
+                  {c.lastVisit ? `был ${agoText(c.lastVisit)}` : 'ещё не был'} · {c.invitedAt ? `звали ${agoText(c.invitedAt)}` : 'ещё не звали'}
+                </p>
+              )}
               {inviting === c.patientId ? (
                 <InviteForm candidate={c} onDone={() => setInviting(null)} />
               ) : (

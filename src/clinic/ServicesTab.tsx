@@ -9,12 +9,19 @@ import { canEditServices } from '../lib/roles'
 import { ServiceMemo } from './MemosTab'
 import { ServiceSupplies } from './ServiceSupplies'
 import { StarterCard, StarterPanel } from './StarterPanel'
-import { groupByCategory, priceText, SERVICE_CATEGORIES } from './services'
+import { groupByCategory, monthsText, priceText, recallChoices, SERVICE_CATEGORIES } from './services'
+import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
 import { clearServiceToOpen, serviceToOpen } from '../lib/openService'
 
 type Me = Schemas['BookingViewsMe']
 type Service = Schemas['ServiceTypeView']
+
+/** Срок профосмотра клиники по умолчанию (V136); undefined — ещё загружается. */
+function useClinicRecall(): number | undefined {
+  const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
+  return clinic.data ? clinic.data.recallMonths ?? 6 : undefined
+}
 
 function useRefreshServices() {
   const client = useQueryClient()
@@ -27,6 +34,9 @@ function useRefreshServices() {
     void client.invalidateQueries({ queryKey: ['starter'] })
     // Услуги приходят и в me (новая запись, выбор услуги)
     void client.invalidateQueries({ queryKey: ['me'] })
+    // Срок профосмотра услуги меняет списки «Профосмотр» и «Вернуть»
+    void client.invalidateQueries({ queryKey: ['recall'] })
+    void client.invalidateQueries({ queryKey: ['comebacks'] })
   }
 }
 
@@ -69,19 +79,21 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
             </span>
           )}
         </div>
+        <RecallDefault admin={Boolean(me.admin)} />
         {list.error && <p className="error">{list.error.message}</p>}
         {list.isPending ? <p className="hint">Загрузка…</p> : services.length ? (
           <table className="table" aria-label="Услуги">
-            <thead><tr><th>Услуга</th><th className="r">Длительность</th><th className="r">Цена</th><th /></tr></thead>
+            <thead><tr><th>Услуга</th><th className="r">Длительность</th><th className="r">Цена</th><th className="r">Профосмотр</th><th /></tr></thead>
             <tbody>
               {groupByCategory(services).map(({ category, items }) => (
                 <Fragment key={category ?? '—'}>
-                  <tr className="group-row"><th colSpan={4} scope="colgroup">{category || 'Другое'}</th></tr>
+                  <tr className="group-row"><th colSpan={5} scope="colgroup">{category || 'Другое'}</th></tr>
                   {items.map((s) => (
                     <tr key={s.id} className={[s.id === opened ? 'active' : '', s.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
                       <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(s.id!)}>{s.name}</button> : s.name}</td>
                       <td className="r num nowrap">{s.durationMinutes} мин</td>
                       <td className="r num nowrap">{priceText(s.priceSom) ?? '—'}</td>
+                      <td className="r num nowrap">{s.recallMonths ? `через ${monthsText(s.recallMonths)}` : <span className="hint">как в клинике</span>}</td>
                       <td className="hint">{s.active === false ? 'скрыта' : ''}</td>
                     </tr>
                   ))}
@@ -107,7 +119,9 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
   const [form, setForm] = useState({
     name: s?.name ?? '', category: s?.category ?? '', duration: String(s?.durationMinutes ?? 30),
     price: s?.priceSom == null ? '' : String(s.priceSom), active: s ? s.active !== false : true,
+    recall: s?.recallMonths == null ? '' : String(s.recallMonths),
   })
+  const clinicRecall = useClinicRecall() ?? 6
   const [done, setDone] = useState('')
   const { dirty, commit } = useDirty(form)
   const known = [...new Set([...SERVICE_CATEGORIES, ...all.map((x) => x.category).filter((c): c is string => Boolean(c))])]
@@ -116,6 +130,8 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
       const body = {
         name: form.name, category: form.category, durationMinutes: Number(form.duration), active: form.active,
         priceSom: form.price === '' ? undefined : Number(form.price),
+        // Пусто — срок клиники: поле не шлём, сервер ставит null
+        recallMonths: form.recall === '' ? undefined : Number(form.recall),
       }
       return unwrap(s
         ? api.PUT('/api/service-types/{id}', { params: { path: { id: s.id! } }, body })
@@ -137,7 +153,7 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
     },
   })
   const error = (key: string) => save.error?.fieldErrors[key]
-  const set = (key: 'name' | 'category' | 'duration' | 'price') => (e: { target: { value: string } }) => {
+  const set = (key: 'name' | 'category' | 'duration' | 'price' | 'recall') => (e: { target: { value: string } }) => {
     setDone('')
     save.reset()
     setForm({ ...form, [key]: e.target.value })
@@ -178,10 +194,18 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
           </label>
         </div>
         {(error('durationMinutes') || error('priceSom')) && <p className="error">{error('durationMinutes') ?? error('priceSom')}</p>}
+        <div className="field"><span>Профосмотр через</span>
+          <Select aria-label="Профосмотр через" value={form.recall} onChange={set('recall')}>
+            <option value="">{`Как в клинике (${monthsText(clinicRecall)})`}</option>
+            {recallChoices(s?.recallMonths).map((m) => <option key={m} value={m}>{monthsText(m)}</option>)}
+          </Select>
+          <span className="hint small">Через сколько месяцев после этой услуги позвать пациента снова</span>
+        </div>
+        {error('recallMonths') && <p className="error">{error('recallMonths')}</p>}
         {s && <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { setDone(''); save.reset(); setForm({ ...form, active: e.target.checked }) }} /> Показывать пациентам</label>}
         {done && <p className="tone-ok" role="status">{done}</p>}
         <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label={s ? 'Сохранить' : 'Добавить'} savedText="Услуга сохранена"
-          error={save.error && (['name', 'category', 'durationMinutes', 'priceSom'].map((k) => error(k)).find(Boolean) ?? save.error.message)} />
+          error={save.error && (['name', 'category', 'durationMinutes', 'priceSom', 'recallMonths'].map((k) => error(k)).find(Boolean) ?? save.error.message)} />
       </form>
       {s && <ServiceSupplies serviceId={s.id!} />}
       {s && <ServiceMemo serviceId={s.id!} />}
@@ -193,6 +217,39 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
         </div>
       )}
     </aside>
+  )
+}
+
+/**
+ * «Профосмотр по умолчанию»: через сколько месяцев звать после приёма без услуги или услуги без
+ * своего срока. Меняет админ (сервер ответит 403 остальным) — остальным только текст.
+ */
+function RecallDefault({ admin }: { admin: boolean }) {
+  const client = useQueryClient()
+  const months = useClinicRecall()
+  const save = useMutation<Schemas['ClinicControllerRecallMonths'], ApiError, number>({
+    mutationFn: (recallMonths) => unwrap(api.PUT('/api/clinic/recall-months', { body: { recallMonths } })),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['clinic'] })
+      void client.invalidateQueries({ queryKey: ['recall'] })
+      void client.invalidateQueries({ queryKey: ['comebacks'] })
+    },
+  })
+  if (months == null) return null
+  return (
+    <div className="recall-default" aria-label="Профосмотр по умолчанию">
+      {admin ? (
+        <label className="field inline"><span>Профосмотр по умолчанию: через</span>
+          <Select aria-label="Профосмотр по умолчанию" value={String(months)} disabled={save.isPending}
+            onChange={(e) => save.mutate(Number(e.target.value))}>
+            {recallChoices(months).map((m) => <option key={m} value={m}>{monthsText(m)}</option>)}
+          </Select>
+        </label>
+      ) : <p>Профосмотр по умолчанию: через {monthsText(months)}</p>}
+      <p className="hint small">Для приёмов без услуги и услуг без своего срока. Свой срок — в карточке услуги.</p>
+      {save.isSuccess && <p className="tone-ok small" role="status">Срок сохранён</p>}
+      {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}
+    </div>
   )
 }
 
