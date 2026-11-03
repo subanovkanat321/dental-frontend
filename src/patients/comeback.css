@@ -23,3 +23,6 @@
 .chip.comeback-noshow { background: var(--sunken); color: var(--text); }
 .chip.comeback-recall { background: var(--sunken); color: var(--hint); }
 @media (max-width: 640px) { .comeback-summary { grid-template-columns: 1fr 1fr; } .comeback-money { grid-column: 1 / -1; } }
+/* «Отправили план, не записались» (V140): фильтр под суммой на столе */
+.comeback-sent-filter { justify-self: start; cursor: pointer; font: inherit; border: 1px solid var(--separator); background: var(--card); color: var(--text); }
+.comeback-sent-filter[aria-pressed=true] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }

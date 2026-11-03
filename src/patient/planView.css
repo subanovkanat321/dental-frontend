@@ -1,0 +1,9 @@
+/* План лечения для пациента (PlanView): Mini App и страница по ссылке /plan */
+.plan-view { display: grid; gap: 10px; }
+.plan-view h1, .plan-view h2, .plan-view p { margin: 0; }
+.plan-view h2 { font-size: 1.05rem; margin-top: 6px; }
+.plan-view ul { list-style: none; margin: 0; padding: 0; display: grid; }
+.plan-view li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--separator); }
+.plan-view-sub { text-align: right; }
+.plan-view-total { font-size: 1.15rem; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
+.plan-view-actions { display: grid; gap: 8px; }

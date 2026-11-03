@@ -1652,6 +1652,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/plan/offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["offers"];
+        put?: never;
+        post: operations["send_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/files": {
         parameters: {
             query?: never;
@@ -1727,6 +1743,38 @@ export interface paths {
         put?: never;
         post: operations["joinWaitlist"];
         delete: operations["leaveWaitlist"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient/plans/{id}/question": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["question"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient/plans/{id}/agree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["agree"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2205,7 +2253,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_1"];
+        post: operations["send_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2381,7 +2429,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_2"];
+        post: operations["send_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2509,7 +2557,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_3"];
+        post: operations["send_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3068,6 +3116,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["promoCode_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patient/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["plans"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4343,6 +4407,10 @@ export interface components {
             /** Format: int32 */
             priceSom?: number;
             done?: boolean;
+            /** Format: int32 */
+            stage?: number;
+            /** Format: int64 */
+            serviceTypeId?: number;
         };
         TreatmentStepView: {
             /** Format: int64 */
@@ -4354,6 +4422,10 @@ export interface components {
             priceSom?: number;
             /** Format: date-time */
             doneAt?: string;
+            /** Format: int32 */
+            stage?: number;
+            /** Format: int64 */
+            serviceTypeId?: number;
         };
         AnamnesisAnswer: {
             /** Format: int64 */
@@ -5062,6 +5134,39 @@ export interface components {
             telegram?: string;
             solo?: boolean;
         };
+        PlanOffersSendRequest: {
+            /** @enum {string} */
+            channel?: "TELEGRAM" | "WHATSAPP";
+            /** Format: date */
+            validUntil?: string;
+            duration?: string;
+        };
+        PlanOffersOfferView: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: date-time */
+            sentAt?: string;
+            /** @enum {string} */
+            channel?: "TELEGRAM" | "WHATSAPP";
+            /** Format: int32 */
+            totalSom?: number;
+            /** Format: date */
+            validUntil?: string;
+            duration?: string;
+            /** Format: date-time */
+            agreedAt?: string;
+            /** @enum {string} */
+            agreedVia?: "BOT" | "APP" | "PAGE";
+            /** Format: date-time */
+            questionAt?: string;
+            doctorName?: string;
+            active?: boolean;
+        };
+        PlanOffersSent: {
+            offer?: components["schemas"]["PlanOffersOfferView"];
+            text?: string;
+            url?: string;
+        };
         PatientFilesView: {
             /** Format: int64 */
             id?: number;
@@ -5083,6 +5188,42 @@ export interface components {
         };
         SearchPatientsRequest: {
             query?: string;
+        };
+        PlanOffersItem: {
+            /** Format: int32 */
+            tooth?: number;
+            title?: string;
+            /** Format: int32 */
+            priceSom?: number;
+        };
+        PlanOffersPatientPlan: {
+            /** Format: int64 */
+            id?: number;
+            clinicName?: string;
+            doctorName?: string;
+            /** Format: date-time */
+            sentAt?: string;
+            /** Format: date */
+            validUntil?: string;
+            duration?: string;
+            stages?: components["schemas"]["PlanOffersStage"][];
+            /** Format: int32 */
+            totalSom?: number;
+            /** Format: date-time */
+            agreedAt?: string;
+            /** Format: date-time */
+            questionAt?: string;
+            forName?: string;
+            phones?: string[];
+            whatsappPhone?: string;
+            address?: string;
+        };
+        PlanOffersStage: {
+            /** Format: int32 */
+            stage?: number;
+            items?: components["schemas"]["PlanOffersItem"][];
+            /** Format: int32 */
+            totalSom?: number;
         };
         PatientBookingControllerBook: {
             /** Format: int64 */
@@ -5927,6 +6068,10 @@ export interface components {
             recallService?: string;
             /** Format: date */
             recallDueOn?: string;
+            /** Format: date-time */
+            planSentAt?: string;
+            /** Format: date-time */
+            planAgreedAt?: string;
         };
         ComebacksResult: {
             /** Format: int32 */
@@ -9487,6 +9632,54 @@ export interface operations {
             };
         };
     };
+    offers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOffersOfferView"][];
+                };
+            };
+        };
+    };
+    send_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanOffersSendRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOffersSent"];
+                };
+            };
+        };
+    };
     files: {
         parameters: {
             query?: never;
@@ -9693,6 +9886,50 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    question: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOffersPatientPlan"];
+                };
+            };
+        };
+    };
+    agree: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOffersPatientPlan"];
+                };
             };
         };
     };
@@ -10668,7 +10905,7 @@ export interface operations {
             };
         };
     };
-    send_1: {
+    send_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -10963,7 +11200,7 @@ export interface operations {
             };
         };
     };
-    send_2: {
+    send_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -11165,7 +11402,7 @@ export interface operations {
             };
         };
     };
-    send_3: {
+    send_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -12019,6 +12256,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookingViewsPromo"];
+                };
+            };
+        };
+    };
+    plans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOffersPatientPlan"][];
                 };
             };
         };

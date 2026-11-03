@@ -62,5 +62,8 @@ export const server = setupServer(
   http.get('*/api/care-memos', () => HttpResponse.json([] satisfies Schemas['CareMemosCareMemoView'][])),
   http.get('*/api/care-memos/links', () => HttpResponse.json([] satisfies Schemas['CareMemosLink'][])),
   http.get('*/api/appointments/:id/receipt', () => HttpResponse.json({ payments: [], text: '', telegram: false } satisfies Schemas['ReceiptsReceiptView'])),
+  // План с ценами (V140): по умолчанию не отправляли, у пациента в Mini App плана нет
+  http.get('*/api/patients/:id/plan/offers', () => HttpResponse.json([] satisfies Schemas['PlanOffersOfferView'][])),
+  http.get('*/api/patient/plans', () => HttpResponse.json([] satisfies Schemas['PlanOffersPatientPlan'][])),
   http.get('*/api/patients/:id/plan/message', () => HttpResponse.json({ text: '', telegram: false } satisfies Schemas['PatientMessage'])),
 )
