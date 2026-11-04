@@ -7,6 +7,7 @@ import { openSettings, type Page } from '../lib/route'
 import { addDays, dayTitle, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
+import { ApptBadges, BadgesLegend } from './ApptBadges'
 import { DayList } from './DayList'
 import { DaySummary } from './DaySummary'
 import { freeMinutes } from './free'
@@ -454,13 +455,23 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         ) : (
           <div ref={grid} className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
             <div className="grid-corner" />
-            {shown.map((d) => (
-              <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}
-                onClick={() => setView(d.id!)}>
-                <span className="avatar" style={{ background: AVATARS[doctors.indexOf(d) % AVATARS.length] }} aria-hidden="true">{initials(d.fullName)}</span>
-                <span className="grid-head-name">{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</span>
-              </button>
-            ))}
+            {shown.map((d) => {
+              // Свой цвет врача — полоса над колонкой и слева на карточках; часы работы — под именем
+              const color = AVATARS[doctors.indexOf(d) % AVATARS.length]
+              const sl = slots[doctors.indexOf(d)]?.data
+              const hoursText = !sl ? '' : sl.workingDay && sl.workStart && sl.workEnd
+                ? `${sl.workStart.slice(0, 5)}–${sl.workEnd.slice(0, 5)}` : 'выходной'
+              return (
+                <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}
+                  style={{ '--doc': color } as CSSProperties} onClick={() => setView(d.id!)}>
+                  <span className="avatar" style={{ background: color }} aria-hidden="true">{initials(d.fullName)}</span>
+                  <span className="grid-head-text">
+                    <span className="grid-head-name">{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</span>
+                    {hoursText && <span className="grid-head-hours num">{hoursText}</span>}
+                  </span>
+                </button>
+              )
+            })}
             <div className="grid-times" style={{ height }}>
               {/* Час рядом с меткой «сейчас» прячем — иначе «11:00» и «11:10» наезжают друг на друга */}
               {hours.filter((m) => nowTop == null || Math.abs(m - nowMinutes) > 15).map((m) => (
@@ -517,10 +528,12 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                     const short = h < SHORT
                     return (
                       <button key={a.id} type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${selected?.id === a.id ? ' active' : ''}`}
-                        style={{ top, height: h }} onClick={() => setSide({ kind: 'appointment', id: a.id! })}
+                        style={{ top, height: h, '--doc': AVATARS[doctors.indexOf(d) % AVATARS.length] } as CSSProperties}
+                        onClick={() => setSide({ kind: 'appointment', id: a.id! })}
                         aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
                         <span className="appt-time num">{short ? timeOf(a.startAt!) : `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`}</span>
                         <span className="appt-name">{a.patient?.fullName}</span>
+                        <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} />
                         {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
                         {(short || h > 56) && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
                         {h > 66 && a.serviceName && <span className="appt-note">{a.serviceName}</span>}
@@ -536,6 +549,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             })}
           </div>
         )}
+        {!dayList && doctors.length > 0 && <BadgesLegend />}
       </section>
       {summary && (
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}

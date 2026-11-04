@@ -5095,6 +5095,7 @@ export interface components {
             comment?: string;
             promoCode?: string;
             bookedBy?: components["schemas"]["FamiliesBooker"];
+            firstVisit?: boolean;
         };
         FamiliesBooker: {
             fullName?: string;

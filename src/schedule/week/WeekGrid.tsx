@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import type { Schemas } from '../../api/client'
-import { canEditDoctor } from '../../lib/roles'
+import { canEditDoctor, seesMoneyOf } from '../../lib/roles'
+import { ApptBadges } from '../ApptBadges'
 import { dateOf, dayTitle, minutesOf, minutesOfTime, timeOf } from '../../lib/time'
 import { hhmm, PAD, PX, useNowMinutes } from '../gridScale'
 import { statusOf } from '../status'
@@ -227,6 +228,7 @@ function Block({ a, me, y, selected, moving, drag, onClick }: {
       title={drag ? 'Перетащите мышью на другое время или день' : canEditPast(a, me) ? 'Прошедший приём не переносят' : undefined}>
       <span className="appt-time num">{short ? timeOf(a.startAt!) : range}</span>
       <span className="appt-name">{a.patient?.fullName}</span>
+      <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} />
       {short && <span className="ico" aria-hidden="true">{s.icon}</span>}
       {h > 56 && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
     </button>

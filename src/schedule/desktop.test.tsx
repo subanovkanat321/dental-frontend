@@ -80,3 +80,29 @@ test('компьютер: «×» в сводке скрывает её, «Сво
   expect(await screen.findByRole('complementary', { name: 'Сводка дня' })).toBeInTheDocument()
   localStorage.removeItem('crm.daySummary')
 })
+
+test('компьютер: часы врача в шапке колонки, значки ⭐ 💬 🧾 на карточке и легенда', async () => {
+  const today = todayIn()
+  // Пациенты вымышленные
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', ({ request }) => {
+      const doctorId = Number(new URL(request.url).searchParams.get('doctorId'))
+      if (doctorId !== 1) return HttpResponse.json([])
+      return HttpResponse.json([
+        appointment(11, 1, '10:00', 'Айбек Т.', { startAt: slotInstant(today, 600), endAt: slotInstant(today, 660), firstVisit: true, comment: 'Болит справа' }),
+        appointment(12, 1, '12:00', 'Мээрим П.', { startAt: slotInstant(today, 720), endAt: slotInstant(today, 780), status: 'DONE', chargeSom: 5000, paidSom: 2000, paymentMethod: 'CASH', debtSom: 3000 }),
+      ])
+    }),
+    http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, workStart: '09:00:00', workEnd: '18:00:00', breaks: [], free: [] })),
+  )
+  renderApp()
+  const first = await screen.findByRole('button', { name: /^10:00–11:00, Айбек Т\./ })
+  expect(within(first).getByRole('img', { name: 'Первый визит' })).toBeInTheDocument()
+  expect(within(first).getByRole('img', { name: 'Комментарий: Болит справа' })).toBeInTheDocument()
+  const debt = screen.getByRole('button', { name: /^12:00–13:00, Мээрим П\./ })
+  expect(within(debt).getByRole('img', { name: /Долг 3\s000 сом/ })).toBeInTheDocument()
+  expect(within(debt).queryByRole('img', { name: 'Первый визит' })).not.toBeInTheDocument()
+  expect(screen.getAllByText('09:00–18:00').length).toBeGreaterThan(0)
+  expect(screen.getByText(/⭐ первый визит · 💬 комментарий · 🧾 долг/)).toBeInTheDocument()
+})

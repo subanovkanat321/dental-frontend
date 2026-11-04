@@ -1,3 +1,4 @@
+import { ApptBadges } from './ApptBadges'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type CSSProperties } from 'react'
 
@@ -245,7 +246,7 @@ function Row({ a, next, active, canEdit, money, onOpen }: {
       <button type="button" className="row-button" onClick={() => onOpen(a)}
         aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
         <span className="time num">{timeOf(a.startAt!)}</span>
-        <span className="name">{a.patient?.fullName}</span>
+        <span className="name">{a.patient?.fullName} <ApptBadges appointment={a} money={money} /></span>
         <span className="end num hint">{timeOf(a.endAt!)}</span>
         <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {a.serviceName}</span> : null}</span>
         {a.comment && <span className="row-note">{a.comment}</span>}

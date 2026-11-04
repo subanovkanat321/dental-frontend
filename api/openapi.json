@@ -11336,6 +11336,9 @@
           },
           "bookedBy" : {
             "$ref" : "#/components/schemas/FamiliesBooker"
+          },
+          "firstVisit" : {
+            "type" : "boolean"
           }
         }
       },
