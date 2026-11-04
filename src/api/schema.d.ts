@@ -2148,6 +2148,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/members/invite-phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["inviteByPhone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/families/{id}/pay": {
         parameters: {
             query?: never;
@@ -2207,6 +2223,22 @@ export interface paths {
         put?: never;
         post: operations["upload_1"];
         delete: operations["deletePhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/doctors/{id}/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["bindPhone"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -5011,6 +5043,7 @@ export interface components {
             /** Format: int64 */
             telegramId?: number;
             role?: string;
+            phone?: string;
         };
         DoctorServicesControllerRequest: {
             serviceTypeIds: number[];
@@ -5797,6 +5830,18 @@ export interface components {
             alsoDoctor?: boolean;
             doctorIds?: number[];
         };
+        StaffMembersControllerPhoneInviteRequest: {
+            phone?: string;
+            /** @enum {string} */
+            role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
+            fullName?: string;
+            alsoDoctor?: boolean;
+            doctorIds?: number[];
+        };
+        StaffMembersControllerPhoneInvited: {
+            /** Format: int64 */
+            telegramId?: number;
+        };
         FamilyMoneyControllerPay: {
             /** Format: int32 */
             amountSom?: number;
@@ -5842,6 +5887,9 @@ export interface components {
             /** Format: int64 */
             patientId?: number;
             patient?: string;
+        };
+        DoctorControllerPhoneRequest: {
+            phone?: string;
         };
         DoctorControllerSelfRequest: {
             fullName?: string;
@@ -6756,6 +6804,7 @@ export interface components {
             me?: boolean;
             doctor?: boolean;
             doctorIds?: number[];
+            phone?: string;
         };
         StaffMembersInviteView: {
             id?: string;
@@ -11441,6 +11490,30 @@ export interface operations {
             };
         };
     };
+    inviteByPhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffMembersControllerPhoneInviteRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMembersControllerPhoneInvited"];
+                };
+            };
+        };
+    };
     pay_2: {
         parameters: {
             query?: never;
@@ -11607,6 +11680,30 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DoctorView"];
                 };
+            };
+        };
+    };
+    bindPhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DoctorControllerPhoneRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -5379,6 +5379,34 @@
         }
       }
     },
+    "/api/members/invite-phone" : {
+      "post" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "inviteByPhone",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffMembersControllerPhoneInviteRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffMembersControllerPhoneInvited"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/families/{id}/pay" : {
       "post" : {
         "tags" : [ "family-money-controller" ],
@@ -5599,6 +5627,36 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/doctors/{id}/phone" : {
+      "post" : {
+        "tags" : [ "doctor-controller" ],
+        "operationId" : "bindPhone",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DoctorControllerPhoneRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
           }
         }
       }
@@ -11189,6 +11247,9 @@
           },
           "role" : {
             "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
           }
         }
       },
@@ -13061,6 +13122,38 @@
           }
         }
       },
+      "StaffMembersControllerPhoneInviteRequest" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "RECEPTION", "ASSISTANT" ]
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "alsoDoctor" : {
+            "type" : "boolean"
+          },
+          "doctorIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        }
+      },
+      "StaffMembersControllerPhoneInvited" : {
+        "properties" : {
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "FamilyMoneyControllerPay" : {
         "properties" : {
           "amountSom" : {
@@ -13160,6 +13253,13 @@
             "format" : "int64"
           },
           "patient" : {
+            "type" : "string"
+          }
+        }
+      },
+      "DoctorControllerPhoneRequest" : {
+        "properties" : {
+          "phone" : {
             "type" : "string"
           }
         }
@@ -15453,6 +15553,9 @@
               "type" : "integer",
               "format" : "int64"
             }
+          },
+          "phone" : {
+            "type" : "string"
           }
         }
       },

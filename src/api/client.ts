@@ -109,13 +109,40 @@ export async function fetchBlob(path: string): Promise<Blob> {
  * Имя бота клиники — для ссылок-приглашений (t.me/<бот>?start=…). /web/config — не часть
  * REST-контракта /api (его отдаёт вход сайта), поэтому тип — здесь, а не из schema.d.ts.
  */
-/** Бот для входа на сайт: имя и числовой id (окно входа Telegram.Login.auth); null — вход не настроен. */
-export async function botConfig(): Promise<{ username: string; id: number | null } | null> {
+/**
+ * Вход на сайт: бот (имя и числовой id — окно входа Telegram.Login.auth) и включён ли вход по SMS
+ * (smsLogin). null — не настроено ни то, ни другое.
+ */
+export async function botConfig(): Promise<{ username: string; id: number | null; smsLogin: boolean } | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
   if (!response.ok) return null
-  const body = await response.json().catch(() => null) as { botUsername?: string | null; botId?: number | null } | null
+  const body = await response.json().catch(() => null) as { botUsername?: string | null; botId?: number | null; smsLogin?: boolean } | null
   // Для окна входа хватит id: имя бота (getMe) может временно не прийти, если Telegram не ответил
-  return body?.botUsername || body?.botId ? { username: body.botUsername ?? '', id: body.botId ?? null } : null
+  return body?.botUsername || body?.botId || body?.smsLogin
+    ? { username: body.botUsername ?? '', id: body.botId ?? null, smsLogin: body.smsLogin === true }
+    : null
+}
+
+/** POST на адрес входа /web/… (вне контракта /api): с заголовком сайта; ошибка — {@link ApiError}. */
+async function webPost(path: string, body: unknown): Promise<void> {
+  const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), {
+    method: 'POST', credentials: 'same-origin', headers: { 'X-Dental-Web': '1', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }))
+  if (!response.ok) throw toApiError(response.status, await response.json().catch(() => null))
+}
+
+/**
+ * Вход без Telegram, шаг 1: прислать SMS-код. Сервер всегда отвечает «ок» — не говорит, есть ли
+ * такой сотрудник; 503 — SMS не подключены, 422 — номер не похож на номер. Номер — только в теле.
+ */
+export function requestSmsCode(phone: string): Promise<void> {
+  return webPost('/web/login/phone/code', { phone })
+}
+
+/** Шаг 2: номер и код → cookie-сессия, как после входа через Telegram. Неверный код — 401. */
+export function phoneLogin(phone: string, code: string): Promise<void> {
+  return webPost('/web/login/phone', { phone, code })
 }
 
 export async function botUsername(): Promise<string | null> {
