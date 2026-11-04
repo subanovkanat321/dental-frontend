@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { lazy, Suspense, useState, type ReactNode } from 'react'
 
 import { logout, type Schemas } from '../api/client'
 import type { Page } from '../lib/route'
@@ -11,6 +11,12 @@ import { useNewQuestions } from '../api/questions'
 import { useFullView } from '../lib/fullView'
 
 type Me = Schemas['BookingViewsMe']
+
+// Чат «Помощь» — отдельным кусочком: грузится, только когда его открыли
+const HelpChatPanel = lazy(() => import('../account/HelpChat').then((m) => ({ default: m.HelpChatPanel })))
+
+/** Где видна кнопка «💬 Помощь»: главные экраны клиники (в «Настройках» помощь — свой пункт). */
+const HELP_PAGES: Page[] = ['schedule', 'patients', 'cash', 'stock']
 
 /** Разделы клиники — сотрудникам; «Платформа» — команде Tish (владелец и менеджеры). */
 const CLINIC_SECTIONS = [
@@ -47,6 +53,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     : sections.length > MOBILE_MAIN + 1 ? sections.slice(MOBILE_MAIN) : []
   const moreButton = extra.length > 0 && !me.doctor
   const [more, setMore] = useState(false)
+  const [help, setHelp] = useState(false)
   // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается)
   const [narrow, toggleNarrow] = useFullView('sidebar-narrow')
   const go = (key: Page) => {
@@ -105,6 +112,17 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       )}
       {/* Напоминания админу и приглашение в опрос — на главном экране, чтобы не занимать место в каждом разделе */}
       <main className="workspace">{page === 'schedule' && <><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</main>
+      {/* «💬 Помощь» — спросить помощника Tish, не уходя с экрана (ИИ по базе знаний; не знает — команде Tish) */}
+      {me.doctor && HELP_PAGES.includes(page) && !help && (
+        <button type="button" className="help-fab" onClick={() => setHelp(true)} aria-label="Помощь: спросить помощника Tish">
+          <span aria-hidden="true">💬</span> <span className="help-fab-text">Помощь</span>
+        </button>
+      )}
+      {help && (
+        <div className="help-float">
+          <Suspense fallback={null}><HelpChatPanel onClose={() => setHelp(false)} /></Suspense>
+        </div>
+      )}
     </div>
   )
 }

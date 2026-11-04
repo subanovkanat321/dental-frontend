@@ -1586,3 +1586,14 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .more-link { justify-self: start; color: var(--hint); }
 .rare { display: grid; gap: 8px; padding-top: 4px; border-top: 1px dashed var(--separator); }
 .rare > .link { justify-self: start; }
+/* «💬 Помощь» на главных экранах: кнопка внизу справа и чат поверх (панель приёма её перекрывает — так и задумано) */
+.help-fab { position: fixed; right: 20px; bottom: 20px; z-index: 12; display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
+  padding: 0 16px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--text);
+  font: inherit; font-weight: 600; box-shadow: var(--panel-shadow); cursor: pointer; }
+.help-fab:hover { border-color: var(--accent); color: var(--link); }
+.help-float { position: fixed; right: 16px; bottom: 16px; z-index: 50; width: min(420px, calc(100vw - 32px)); }
+.help-float .panel { position: static; max-height: min(80vh, 720px); overflow: auto; }
+@media (max-width: 760px) {
+  .help-fab { right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); min-height: 40px; padding: 0 12px; }
+  .help-fab-text { display: none; }
+}
