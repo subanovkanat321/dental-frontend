@@ -159,7 +159,10 @@ test('новый пациент с номером, который уже ест�
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  // Поле поиска было в фокусе — после «＋ Новый пациент» курсор сразу в имени (на телефоне — клавиатура)
+  expect(within(panel).getByRole('searchbox', { name: 'Найти пациента' })).toHaveFocus()
   await userEvent.click(within(panel).getByRole('button', { name: '＋ Новый пациент' }))
+  expect(within(panel).getByLabelText('Имя и фамилия')).toHaveFocus()
   await userEvent.type(within(panel).getByLabelText('Имя и фамилия'), 'Айжан')
   await userEvent.type(within(panel).getByLabelText('Телефон'), '555 000 111')
   // Время не подставлено — выбрать в сетке свободного

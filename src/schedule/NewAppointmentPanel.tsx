@@ -266,7 +266,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
             </div>
           ) : adding ? (
             <>
-              <input aria-label="Имя и фамилия" placeholder="Имя и фамилия" value={name} required autoFocus enterKeyHint="next"
+              {/* key: иначе React взял бы <input> поиска и поменял ему свойства — autoFocus срабатывает только
+                  у нового поля, и на телефоне после «＋ Новый пациент» курсора в имени не было */}
+              <input key="name" aria-label="Имя и фамилия" placeholder="Имя и фамилия" value={name} required autoFocus enterKeyHint="next"
                 onChange={(e) => setName(e.target.value)} />
               {fieldError('fullName') && <p className="error">{fieldError('fullName')}</p>}
               <PhoneInput label="Телефон" value={phone} onChange={(v) => { setPhone(v); setDuplicate(null) }} />
@@ -293,7 +295,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
             </>
           ) : (
             <>
-              <input type="search" aria-label="Найти пациента" placeholder="Имя или номер" value={query} autoFocus
+              <input key="search" type="search" aria-label="Найти пациента" placeholder="Имя или номер" value={query} autoFocus
                 onChange={(e) => setQuery(e.target.value)} />
               {!search && <p className="hint small">Пациент уже был в клинике — начните вводить имя или номер. Впервые — «＋ Новый пациент».</p>}
               {found.data && found.data.length > 0 && (
