@@ -1250,6 +1250,36 @@
         }
       }
     },
+    "/api/members/{telegramId}/role" : {
+      "put" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "changeRole",
+        "parameters" : [ {
+          "name" : "telegramId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffMembersControllerRoleChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/members/{telegramId}/doctors" : {
       "put" : {
         "tags" : [ "staff-members-controller" ],
@@ -10589,6 +10619,21 @@
           "patients" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "StaffMembersControllerRoleChange" : {
+        "properties" : {
+          "role" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "RECEPTION", "ASSISTANT" ]
+          },
+          "doctorIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         }
       },

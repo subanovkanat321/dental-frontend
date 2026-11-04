@@ -305,3 +305,36 @@ test('регистратура открывает врача ради часов
   expect(within(panel).getByText('Часы работы')).toBeInTheDocument()
   expect(within(panel).queryByRole('region', { name: 'Услуги врача' })).not.toBeInTheDocument()
 })
+
+test('«Сменить роль»: регистратор → ассистент (с врачами), без новой ссылки', async () => {
+  // Сотрудники вымышленные
+  let members: Schemas['StaffMembersMemberView'][] = [
+    { telegramId: 501, fullName: 'Айпери', role: 'RECEPTION', me: false, doctor: false, doctorIds: [] },
+  ]
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
+    http.get('*/api/members', () => HttpResponse.json(members)),
+    http.get('*/api/members/invites', () => HttpResponse.json([])),
+    http.put('*/api/members/:id/role', async ({ request }) => {
+      const body = await request.json() as Schemas['StaffMembersControllerRoleChange']
+      sent.push(body)
+      members = [{ ...members[0]!, role: body.role, doctorIds: body.doctorIds ?? [] }]
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Персонал' })
+  await user.click(await within(table).findByRole('button', { name: 'Сменить роль' }))
+  const form = within(table).getByRole('form', { name: 'Роль: Айпери' })
+  await user.click(within(form).getByRole('button', { name: 'Ассистент' }))
+  // Ассистенту — хотя бы один врач
+  expect(within(form).getByRole('button', { name: 'Сохранить' })).toBeDisabled()
+  await user.click(within(form).getByRole('checkbox', { name: /Дастан Т\./ }))
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  expect(sent).toEqual([{ role: 'ASSISTANT', doctorIds: [2] }])
+  expect(await within(table).findByText('Ассистент')).toBeInTheDocument()
+  expect(within(table).getByText(/Помогает: Дастан Т\./)).toBeInTheDocument()
+})

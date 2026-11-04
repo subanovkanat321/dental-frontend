@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
-import { AssistantDoctors, InviteMember } from './MemberParts'
+import { AssistantDoctors, ChangeRole, InviteMember } from './MemberParts'
 import { ROLE_TEXT } from './texts'
 
 type Me = Schemas['BookingViewsMe']
@@ -127,6 +127,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                     </td>
                   )}
                   <td className="r">
+                    {r.kind === 'member' && <ChangeRole me={me} member={r.member} />}
                     {r.kind === 'member' && (
                       <button type="button" className="btn small ghost" disabled={remove.isPending}
                         onClick={() => window.confirm(r.member.me ? 'Выйти из администраторов клиники?' : `Убрать «${r.name}» из клиники? Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.`) && remove.mutate(r.member)}>

@@ -436,6 +436,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/members/{telegramId}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changeRole"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/members/{telegramId}/doctors": {
         parameters: {
             query?: never;
@@ -4792,6 +4808,11 @@ export interface components {
             /** Format: int64 */
             patients?: number;
         };
+        StaffMembersControllerRoleChange: {
+            /** @enum {string} */
+            role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
+            doctorIds?: number[];
+        };
         StaffMembersControllerAssistantDoctors: {
             doctorIds?: number[];
         };
@@ -7877,6 +7898,30 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PatientSourcesOption"][];
                 };
+            };
+        };
+    };
+    changeRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                telegramId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffMembersControllerRoleChange"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

@@ -65,6 +65,55 @@ export function AssistantDoctors({ me, member }: { me: Me; member: Member }) {
 }
 
 /**
+ * «Сменить роль» в строке сотрудника: администратор, регистратор или ассистент — без новой ссылки,
+ * права меняются сразу. Ассистенту — его врачи. Себя из администраторов — с подтверждением, потом
+ * приложение перезагрузится: доступы станут другими.
+ */
+export function ChangeRole({ me, member }: { me: Me; member: Member }) {
+  const client = useQueryClient()
+  const current = member.role as Role
+  const [open, setOpen] = useState(false)
+  const [role, setRole] = useState<Role>(current)
+  const [ids, setIds] = useState<number[]>(member.doctorIds ?? [])
+  const save = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/members/{telegramId}/role', {
+      params: { path: { telegramId: member.telegramId! } },
+      body: role === 'ASSISTANT' ? { role, doctorIds: ids } : { role },
+    })),
+    onSuccess: () => {
+      if (member.me) window.location.reload()
+      setOpen(false)
+      void client.invalidateQueries({ queryKey: ['members'] })
+    },
+  })
+  const submit = () => {
+    if (member.me && current === 'ADMIN' && role !== 'ADMIN'
+      && !window.confirm('Вы перестанете быть администратором: «Персонал», деньги и настройки станут недоступны. Продолжить?')) return
+    save.mutate()
+  }
+  if (!open) {
+    return <button type="button" className="btn small ghost" onClick={() => { save.reset(); setRole(current); setIds(member.doctorIds ?? []); setOpen(true) }}>
+      Сменить роль</button>
+  }
+  return (
+    <form className="role-change" aria-label={`Роль: ${member.fullName ?? ''}`} onSubmit={(e) => { e.preventDefault(); submit() }}>
+      <div className="segments" role="group" aria-label="Новая роль">
+        {(['RECEPTION', 'ASSISTANT', 'ADMIN'] as const).map((r) => (
+          <button key={r} type="button" aria-pressed={role === r} onClick={() => setRole(r)}>{ROLE_TEXT[r]}</button>
+        ))}
+      </div>
+      {role === 'ASSISTANT' && <DoctorChecks me={me} value={ids} onChange={setIds} />}
+      {save.error && <p className="error" role="alert">{save.error.fieldErrors.role ?? save.error.fieldErrors.doctorIds ?? save.error.message}</p>}
+      <div className="actions">
+        <button type="submit" className="btn small primary" disabled={save.isPending || role === current && role !== 'ASSISTANT'
+          || role === 'ASSISTANT' && !ids.length}>Сохранить</button>
+        <button type="button" className="btn small ghost" onClick={() => setOpen(false)}>Отмена</button>
+      </div>
+    </form>
+  )
+}
+
+/**
  * «Пригласить сотрудника» в «Персонале»: администратора, регистратора или ассистента — ссылкой на бота.
  * Человек нажмёт «Начать» — его Telegram привяжется, и он появится в общем списке. Врачей добавляют
  * кнопкой «+ Добавить врача», приглашение врача — в его карточке.
