@@ -1,3 +1,5 @@
+import { Select } from '../layout/Select'
+import { CITIES } from '../lib/clinicSearch'
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { PhoneInput } from '../clinic/PhoneInput'
@@ -135,7 +137,13 @@ export function Join() {
         <label className="field"><span>Telegram — по желанию</span>
           <input name="telegram" maxLength={60} autoComplete="off" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="@username" /></label>
         {err('telegram')}
-        <label className="field"><span>Город</span><input name="city" maxLength={60} autoComplete="off" placeholder="Бишкек" /></label>
+        {/* Город — из справочника (тот же, что в «О клинике» и фильтре каталога): без «г. Бишкек» и «бишкек» */}
+        <label className="field"><span>Город</span>
+          <Select name="city" defaultValue="">
+            <option value="">Выберите город</option>
+            {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            <option value="Другой">Другой город — напишите в комментарии</option>
+          </Select></label>
         {err('city')}
         {!solo && <label className="field"><span>Сколько врачей</span><input name="doctors" type="number" min={1} max={100} inputMode="numeric" placeholder="2" /></label>}
         {err('doctors')}

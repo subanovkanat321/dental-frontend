@@ -127,12 +127,15 @@ test('заявка клиники: ошибки полей с сервера, п
   await user.type(within(form).getByRole('textbox', { name: /Кабинет/ }), 'Стоматолог Айгерим')
   await user.type(within(form).getByRole('textbox', { name: 'Телефон или WhatsApp' }), '555 000 111')
   await user.type(within(form).getByRole('textbox', { name: 'Telegram — по желанию' }), '@aigerim_dent ')
+  // Город — из справочника, а не вписать руками
+  await user.click(within(form).getByRole('combobox', { name: /Город/ }))
+  await user.click(await screen.findByRole('option', { name: 'Ош' }))
   await user.click(within(form).getByRole('button', { name: 'Оставить заявку' }))
   expect(await within(form).findByText('Нужно согласие')).toBeInTheDocument()
   await user.click(within(form).getByRole('checkbox'))
   await user.click(within(form).getByRole('button', { name: 'Оставить заявку' }))
   expect(await screen.findByRole('heading', { name: 'Заявка отправлена' })).toBeInTheDocument()
-  expect(bodies[1]).toMatchObject({ clinicName: 'Стоматолог Айгерим', phone: '+996 555 000 111', telegram: '@aigerim_dent', solo: true, consent: true, website: '', doctors: null })
+  expect(bodies[1]).toMatchObject({ clinicName: 'Стоматолог Айгерим', phone: '+996 555 000 111', telegram: '@aigerim_dent', city: 'Ош', solo: true, consent: true, website: '', doctors: null })
 })
 
 test('/go: одно действие пациенту, акция ведёт к форме, без «Скачать», контакты из «Сведений о платформе»', async () => {
