@@ -7,12 +7,13 @@ import { useMe } from '../api/me'
 import { Select } from '../layout/Select'
 import { formatPhone } from '../lib/phone'
 import { useClose } from '../lib/useClose'
+import { openLink } from '../lib/telegram'
 import { shortDate, todayIn } from '../lib/time'
 import {
   boxFrom, clampCrop, drawBeforeAfter, FIT, fitSmiles, FORMATS, frames, inside, placement, toImage,
   type Box, type Design, type Format, type Picture, type Shot,
 } from './beforeAfterDraw'
-import { buildPost, durationBetween, POST_STYLES, type PostStyle } from './postText'
+import { buildPost, chatGptUrl, durationBetween, POST_STYLES, type PostStyle } from './postText'
 import { Thumb } from './Thumb'
 import { resizePhoto } from './thumb'
 import './beforeAfter.css'
@@ -526,6 +527,9 @@ function PostText({ patientId, aiOn, procedure, duration, onDuration, doctor, cl
       {fromAi && own != null && <p className="hint small">Текст написал ИИ — проверьте перед публикацией: без обещаний и с верными фактами.</p>}
       <div className="actions">
         <button type="button" className="btn" onClick={() => void copy()}>Скопировать текст</button>
+        {/* Бесплатная альтернатива нашему ИИ: ChatGPT в браузере с готовой просьбой и этим текстом */}
+        <button type="button" className="btn" onClick={() => openLink(chatGptUrl(text))}
+          title="Откроется ChatGPT с готовой просьбой улучшить этот текст — потом скопируйте ответ сюда">💬 Улучшить в ChatGPT</button>
         {own != null && <button type="button" className="link" onClick={() => { setOwn(null); setFromAi(false) }}>Собрать заново</button>}
         {copied && <span role="status" className="hint">{copied}</span>}
       </div>
