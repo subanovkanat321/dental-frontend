@@ -1647,3 +1647,20 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .visit-formula .teeth { grid-template-columns: repeat(8, minmax(36px, 1fr)); }
 .visit-formula .tooth { min-height: 44px; }
 .dictation-start { width: 100%; }
+
+/* «Пациенты → Записаны»: будущие записи по дням */
+.booked { display: grid; gap: 14px; }
+.booked-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.booked-filters .segments button { padding-inline: 12px; white-space: nowrap; }
+.booked-day h3 { margin: 6px 0 6px; font-size: 1rem; }
+.booked-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.booked-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.booked-row:hover { border-color: var(--line-strong); }
+.booked-time { font-weight: 600; min-width: 3.2em; }
+.booked-main { display: grid; gap: 2px; min-width: 0; }
+.booked-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 640px) {
+  .booked-row { grid-template-columns: auto 1fr; }
+  .booked-row .chip { grid-column: 2; justify-self: start; }
+}
+@media (max-width: 640px) { .booked-filters .segments { width: 100%; flex-wrap: nowrap; } .booked-filters .segments button { flex: 1; } }
