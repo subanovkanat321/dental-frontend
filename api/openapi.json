@@ -8395,6 +8395,33 @@
       "get" : {
         "tags" : [ "comeback-controller" ],
         "operationId" : "board",
+        "parameters" : [ {
+          "name" : "filter",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "ALL",
+            "enum" : [ "ALL", "PLAN", "NO_SHOW", "RECALL", "SENT" ]
+          }
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9035,6 +9062,24 @@
       "get" : {
         "tags" : [ "appointment-controller" ],
         "operationId" : "recall",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15396,6 +15441,18 @@
             "format" : "int32"
           },
           "recalls" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "agreed" : {
             "type" : "integer",
             "format" : "int32"
           }

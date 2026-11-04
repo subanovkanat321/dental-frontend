@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 import { rowClick } from '../lib/rowClick'
@@ -60,6 +60,9 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
   )
 }
 
+/** Сколько пациентов «Профосмотра» за раз. */
+const RECALL_PAGE = 50
+
 /**
  * «Позвать на профосмотр»: срок после последнего визита прошёл (срок — у услуги визита, нет — у
  * клиники; считает сервер), и никуда не записаны; сначала — кого ещё не звали.
@@ -68,9 +71,12 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
 export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => void; onBook: (p: Patient) => void }) {
   const client = useQueryClient()
   const settings = useSettings()
+  // По 50 за раз; просим на одного больше — так видно, есть ли ещё («Показать ещё»)
+  const [limit, setLimit] = useState(RECALL_PAGE)
   const due = useQuery({
-    queryKey: ['recall'],
-    queryFn: () => unwrap(api.GET('/api/appointments/recall')),
+    queryKey: ['recall', limit],
+    queryFn: () => unwrap(api.GET('/api/appointments/recall', { params: { query: { limit: limit + 1 } } })),
+    placeholderData: keepPreviousData,
   })
   const invite = (p: Patient, months?: number) => {
     // Отметка «позвали» — не ждём ответа: WhatsApp открывается сразу, как в приложении
@@ -79,7 +85,7 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
       .then(({ response }) => {
         if (!response.ok) return
         const now = new Date().toISOString()
-        client.setQueryData<Schemas['RecallView'][]>(['recall'], (list) =>
+        client.setQueriesData<Schemas['RecallView'][]>({ queryKey: ['recall'] }, (list) =>
           list?.map((r) => (r.patient?.id === p.id ? { ...r, invitedAt: now } : r)))
       })
     openLink(whatsappUrl(p.phone!, recallText(p.fullName ?? '', settings.data?.clinicSignature, months)))
@@ -88,11 +94,14 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
   if (due.isPending) return <p className="hint">Загрузка…</p>
   if (due.error) return <p className="error">{due.error.message}</p>
   if (!due.data.length) return <EmptyState icon="🦷" title="Звать некого — все записаны или были недавно." />
+  const rows = due.data.slice(0, limit)
+  const more = due.data.length > limit
   return (
+    <>
     <table className="table" aria-label="Позвать на профосмотр">
       <thead><tr><th>Пациент</th><th>Телефон</th><th>Последний визит</th><th>Пора с</th><th>Позвали</th><th /></tr></thead>
       <tbody>
-        {due.data.map((r) => (
+        {rows.map((r) => (
           <tr key={r.patient?.id} className="clickable" onClick={rowClick(() => onOpen(r.patient!.id!))}>
             <td><button type="button" className="row-link" onClick={() => onOpen(r.patient!.id!)}>{r.patient?.fullName}</button></td>
             <td className="nowrap num">{r.patient?.phone ? formatPhone(r.patient.phone) : '—'}</td>
@@ -107,6 +116,11 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
         ))}
       </tbody>
     </table>
+    {more && (
+      <button type="button" className="btn" disabled={due.isFetching} onClick={() => setLimit(limit + RECALL_PAGE)}>
+        {due.isFetching ? 'Загрузка…' : 'Показать ещё'}</button>
+    )}
+    </>
   )
 }
 

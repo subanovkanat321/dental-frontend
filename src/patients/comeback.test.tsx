@@ -7,6 +7,21 @@ import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 /** Вымышленные пациенты: у Айгуль незаконченный план, Бакыт не пришёл. */
+/** Как сервер: фильтр и страница — по запросу, счётчики — по всему списку. */
+function serve(b: Schemas['ComebacksBoard']) {
+  return ({ request }: { request: Request }) => {
+    const q = new URL(request.url).searchParams
+    const filter = q.get('filter') ?? 'ALL'
+    const all = b.patients ?? []
+    const shown = all.filter((c) => filter === 'ALL' || (filter === 'SENT' ? c.planSentAt : c.reason === filter))
+    const sent = all.filter((c) => c.planSentAt)
+    return HttpResponse.json({
+      ...b, patients: shown.slice(0, Number(q.get('limit') ?? shown.length)), total: shown.length,
+      sent: sent.length, agreed: sent.filter((c) => c.planAgreedAt).length,
+    } satisfies Schemas['ComebacksBoard'])
+  }
+}
+
 const board: Schemas['ComebacksBoard'] = {
   patients: [
     { patientId: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: true, reason: 'PLAN', planSom: 18000,
@@ -30,7 +45,7 @@ test('«Вернуть»: деньги на столе, «Tish вернул», �
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/patients/recent', () => HttpResponse.json([])),
-    http.get('*/api/comebacks', () => HttpResponse.json(board)),
+    http.get('*/api/comebacks', serve(board)),
     http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 5, returned: 2, returnedPlanSom: 40000, paidSom: 12000 })),
     http.post('*/api/comebacks/2/draft', () => HttpResponse.json({ text: 'Здравствуйте, Айгуль Т.!\n\nОсталась коронка.', ai: false, lang: 'RU', telegram: true })),
     http.post('*/api/comebacks/2/invite', async ({ request }) => {
@@ -69,7 +84,7 @@ test('«Вернуть»: «пора на осмотр» — последний 
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/patients/recent', () => HttpResponse.json([])),
-    http.get('*/api/comebacks', () => HttpResponse.json(recallBoard)),
+    http.get('*/api/comebacks', serve(recallBoard)),
     http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
     http.get('*/api/service-types', () => HttpResponse.json(services)),
   )
@@ -100,7 +115,7 @@ test('«Вернуть»: отправили план с ценами, а пац
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/patients/recent', () => HttpResponse.json([])),
-    http.get('*/api/comebacks', () => HttpResponse.json(sentPlan)),
+    http.get('*/api/comebacks', serve(sentPlan)),
   )
   renderApp()
   await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
@@ -110,4 +125,26 @@ test('«Вернуть»: отправили план с ценами, а пац
   await userEvent.click(filter)
   expect(within(list).getAllByRole('listitem')).toHaveLength(1)
   expect(filter).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('«Вернуть»: по 50 за раз — «Показать ещё» догружает остальных', async () => {
+  // 60 вымышленных пациентов «пора на осмотр»
+  const many: Schemas['ComebacksBoard'] = {
+    patients: Array.from({ length: 60 }, (_, i) => ({ patientId: 100 + i, fullName: `Пациент ${i + 1}`, phone: '996555000000',
+      telegram: false, reason: 'RECALL' as const, planSom: 0, plan: [] })),
+    planSom: 0, planPatients: 0, noShows: 0, recalls: 60,
+  }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/comebacks', serve(many)),
+    http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  const list = await screen.findByRole('list', { name: 'Кого вернуть' })
+  expect(within(list).getAllByRole('listitem')).toHaveLength(50)
+  await userEvent.click(screen.getByRole('button', { name: 'Показать ещё (10 из 10)' }))
+  await vi.waitFor(() => expect(within(screen.getByRole('list', { name: 'Кого вернуть' })).getAllByRole('listitem')).toHaveLength(60))
+  expect(screen.queryByRole('button', { name: /Показать ещё/ })).not.toBeInTheDocument()
 })

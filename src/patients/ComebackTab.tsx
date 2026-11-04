@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -23,6 +23,9 @@ function errorText(e: ApiError | null): string | null {
   return e ? Object.values(e.fieldErrors)[0] ?? e.message : null
 }
 
+/** Сколько пациентов «Вернуть» и «Профосмотра» за раз. */
+const PAGE = 50
+
 /**
  * «Вернуть пациентов»: сколько денег лежит в незаконченных планах лечения, кто не пришёл и кому пора
  * на осмотр — и приглашение в один тап (в Telegram с кнопкой «Записаться» или в WhatsApp). Сверху —
@@ -31,7 +34,6 @@ function errorText(e: ApiError | null): string | null {
 export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
   onOpen: (patientId: number) => void; onBook: (p: Patient) => void; canEditServices?: boolean
 }) {
-  const board = useQuery({ queryKey: ['comebacks'], queryFn: () => unwrap(api.GET('/api/comebacks')) })
   // Ни у одной услуги нет своего срока профосмотра — подсказать, где он задаётся
   const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), enabled: canEditServices })
   const noServiceTerms = services.isSuccess && services.data.length > 0 && !services.data.some((s) => s.recallMonths != null)
@@ -41,14 +43,28 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
     queryFn: () => unwrap(api.GET('/api/comebacks/result', { params: { query: { from: addDays(today, -29), to: today } } })),
   })
   // SENT — отправили план с ценами (V140), а пациент так и не записался
-  const [filter, setFilter] = useState<Reason | 'ALL' | 'SENT'>('ALL')
+  const [filter, choose] = useState<Reason | 'ALL' | 'SENT'>('ALL')
   const [inviting, setInviting] = useState<number | null>(null)
+  // По 50 за раз: у большой клиники «на столе» тысячи пациентов; счётчики сверху — по всему списку
+  const [limit, setLimit] = useState(PAGE)
+  const setFilter = (f: typeof filter) => {
+    choose(f)
+    setLimit(PAGE)
+  }
+  const board = useQuery({
+    queryKey: ['comebacks', 'board', filter, limit],
+    queryFn: () => unwrap(api.GET('/api/comebacks', { params: { query: { filter, limit } } })),
+    // Сменили фильтр или «Показать ещё» — прежний список на экране, пока грузится новый
+    placeholderData: keepPreviousData,
+  })
 
   if (board.isPending) return <p className="hint">Загрузка…</p>
   if (board.error) return <p className="error">{board.error.message}</p>
-  const all = board.data.patients ?? []
-  const sentPlan = all.filter((c) => c.planSentAt)
-  const shown = filter === 'ALL' ? all : filter === 'SENT' ? sentPlan : all.filter((c) => c.reason === filter)
+  const shown = board.data.patients ?? []
+  const everyone = (board.data.planPatients ?? 0) + (board.data.noShows ?? 0) + (board.data.recalls ?? 0)
+  const total = board.data.total ?? shown.length
+  const sent = board.data.sent ?? 0
+  const agreed = board.data.agreed ?? 0
   const r = result.data
 
   return (
@@ -66,10 +82,10 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
           <span className="hint">Пора на осмотр</span><b className="num">{board.data.recalls ?? 0}</b>
         </button>
       </section>
-      {sentPlan.length > 0 && (
+      {sent > 0 && (
         <button type="button" className="chip comeback-sent-filter" aria-pressed={filter === 'SENT'}
           onClick={() => setFilter(filter === 'SENT' ? 'ALL' : 'SENT')}>
-          Отправили план, не записались: {sentPlan.length}{sentPlan.some((c) => c.planAgreedAt) ? ` · согласились: ${sentPlan.filter((c) => c.planAgreedAt).length}` : ''}
+          Отправили план, не записались: {sent}{agreed > 0 ? ` · согласились: ${agreed}` : ''}
         </button>
       )}
       {r && (r.invited ?? 0) > 0 && (
@@ -83,9 +99,9 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
         <p className="hint small">Пора на осмотр — по сроку клиники. Сроки по услугам — в{' '}
           <a href="#/settings/services">Настройки → Услуги</a>.</p>
       )}
-      {!all.length ? (
+      {!everyone ? (
         <EmptyState icon="🦷" title="Звать некого">Все с планом лечения записаны, неявок нет, осмотры — вовремя.</EmptyState>
-      ) : (
+      ) : !shown.length ? <p className="hint">С этим отбором никого нет.</p> : (
         <ul className="comeback-list" aria-label="Кого вернуть">
           {shown.map((c) => (
             <li key={c.patientId}>
@@ -124,6 +140,10 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
             </li>
           ))}
         </ul>
+      )}
+      {shown.length < total && (
+        <button type="button" className="btn" disabled={board.isFetching} onClick={() => setLimit(limit + PAGE)}>
+          {board.isFetching ? 'Загрузка…' : `Показать ещё (${Math.min(PAGE, total - shown.length)} из ${total - shown.length})`}</button>
       )}
     </div>
   )

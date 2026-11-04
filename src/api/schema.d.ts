@@ -6759,6 +6759,12 @@ export interface components {
             noShows?: number;
             /** Format: int32 */
             recalls?: number;
+            /** Format: int32 */
+            total?: number;
+            /** Format: int32 */
+            sent?: number;
+            /** Format: int32 */
+            agreed?: number;
         };
         ComebacksCandidate: {
             /** Format: int64 */
@@ -13850,7 +13856,11 @@ export interface operations {
     };
     board: {
         parameters: {
-            query?: never;
+            query?: {
+                filter?: "ALL" | "PLAN" | "NO_SHOW" | "RECALL" | "SENT";
+                offset?: number;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -14382,7 +14392,10 @@ export interface operations {
     };
     recall: {
         parameters: {
-            query?: never;
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
