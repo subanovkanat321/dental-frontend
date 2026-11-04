@@ -87,7 +87,6 @@ test('«Хочет раньше»: запись создана, а в лист �
     http.post('*/api/appointments', () => HttpResponse.json(appointment(55, 1, '23:00', 'Айгуль Т.'), { status: 201 })),
     http.post('*/api/waitlist', () => HttpResponse.json({ title: 'Conflict', status: 409, detail: 'Уже в листе ожидания' }, { status: 409 })),
   )
-  const alert = vi.spyOn(window, 'alert').mockImplementation(() => undefined)
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
@@ -97,8 +96,11 @@ test('«Хочет раньше»: запись создана, а в лист �
   await userEvent.click(within(panel).getByLabelText(/Хочет раньше/))
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toBeInTheDocument()
-  expect(alert).toHaveBeenCalledWith(expect.stringMatching(/Запись создана, но в лист ожидания пациент не попал: Уже в листе ожидания/))
-  vi.restoreAllMocks()
+  // Своё окно (lib/confirm notify), не системный alert
+  const message = await screen.findByRole('alertdialog')
+  expect(message).toHaveTextContent(/Запись создана, но в лист ожидания пациент не попал: Уже в листе ожидания/)
+  await userEvent.click(within(message).getByRole('button', { name: 'Понятно' }))
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
 })
 
 test('ассистент — «Профосмотр»: WhatsApp — отметка «позвали» и готовый текст; «Записать» — «Новая запись» на пациента', async () => {
