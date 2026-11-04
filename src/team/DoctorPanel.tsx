@@ -9,6 +9,8 @@ import { useClose } from '../lib/useClose'
 import { HoursEditor } from './HoursEditor'
 import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
+import { DoctorPhone } from './PhoneParts'
+import { isPhoneLogin } from './texts'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
@@ -48,7 +50,9 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
   const { dirty, commit } = useDirty(me.admin ? form : { fullName: form.fullName, about: form.about })
   const [invite, setInvite] = useState<string | null>(null)
   const [photoError, setPhotoError] = useState('')
-  const tgInvalid = form.telegramId.trim() !== '' && !/^\d{3,15}$/.test(form.telegramId.trim())
+  // Вход по SMS: вместо Telegram id — синтетический (отрицательный); его не правят руками, а отправляют как есть
+  const byPhone = isPhoneLogin(d.telegramId)
+  const tgInvalid = !byPhone && form.telegramId.trim() !== '' && !/^\d{3,15}$/.test(form.telegramId.trim())
 
   const save = useMutation<unknown, ApiError>({
     mutationFn: () => (me.admin
@@ -143,9 +147,11 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
         </label>
         {me.admin && (
           <>
-            <label className="field"><span>Telegram id врача</span>
-              <input value={form.telegramId} inputMode="numeric" placeholder="Например: 512345678" onChange={set('telegramId')} />
-            </label>
+            {!byPhone && (
+              <label className="field"><span>Telegram id врача</span>
+                <input value={form.telegramId} inputMode="numeric" placeholder="Например: 512345678" onChange={set('telegramId')} />
+              </label>
+            )}
             {tgInvalid && <p className="error">Только цифры, как пишет @userinfobot</p>}
             <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { save.reset(); setForm({ ...form, active: e.target.checked }) }} /> Работает (показывать пациентам)</label>
           </>
@@ -166,7 +172,9 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
       {me.admin && (
         <section className="form">
           <h3>Вход врача</h3>
-          <p className="hint">{d.telegramId
+          <p className="hint">{byPhone
+            ? 'Врач входит без Telegram. Появился Telegram — пришлите ссылку: после «Начать» в боте он будет входить через Telegram.'
+            : d.telegramId
             ? `Telegram привязан (${d.telegramId}). Если врач сменил аккаунт — пришлите новую ссылку.`
             : 'Telegram не привязан — уведомления о приёмах приходят вам. Пришлите врачу ссылку: он нажмёт «Начать» в боте, и всё готово.'}</p>
           {invite
@@ -174,6 +182,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
             : <button type="button" className="btn" disabled={makeInvite.isPending} onClick={() => makeInvite.mutate()}>
               {d.telegramId ? 'Новая ссылка-приглашение' : 'Пригласить по ссылке'}</button>}
           {makeInvite.error && <p className="error">{makeInvite.error.message}</p>}
+          <DoctorPhone doctor={d} onDone={refresh} />
         </section>
       )}
 

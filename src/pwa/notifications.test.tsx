@@ -160,3 +160,28 @@ test('вернуться в Telegram — сохраняет канал TELEGRAM'
   await waitFor(() => expect(screen.getByRole('button', { name: 'Telegram' })).toHaveAttribute('aria-pressed', 'true'))
   expect(saved).toEqual({ channel: 'TELEGRAM' })
 })
+
+test('вход без Telegram: канала Telegram нет; не включил — «иначе получит администратор», включил — «Работает ✓»', async () => {
+  pushBrowser()
+  const bodies: unknown[] = []
+  server.use(
+    http.get('*/api/push', () => HttpResponse.json(view({ channel: 'APP', noTelegram: true }))),
+    http.post('*/api/push/subscribe', async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(view({ channel: 'APP', noTelegram: true, devices: ['Chrome · Android'] }))
+    }),
+    http.put('*/api/push/channel', async ({ request }) => {
+      bodies.push(await request.json())
+      return HttpResponse.json(view({ channel: 'APP', noTelegram: true, devices: ['Chrome · Android'] }))
+    }),
+  )
+  renderBlock()
+  const block = await screen.findByRole('region', { name: 'Уведомления' })
+  await waitFor(() => expect(block).toHaveTextContent('Включите уведомления приложения, иначе сообщения о записях получит администратор.'))
+  expect(screen.queryByRole('group', { name: 'Куда присылать уведомления' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Telegram' })).not.toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole('button', { name: 'Включить уведомления' }))
+  expect(await screen.findByText('Работает ✓ Уведомления приходят в приложение.')).toBeInTheDocument()
+  expect(bodies).toEqual([{ endpoint: ENDPOINT, p256dh: 'BPd-key', auth: 'auth-secret' }, { channel: 'APP' }])
+})

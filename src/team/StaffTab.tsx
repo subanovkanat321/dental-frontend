@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { AssistantDoctors, ChangeRole, InviteMember } from './MemberParts'
-import { ROLE_TEXT } from './texts'
+import { InviteByPhone } from './PhoneParts'
+import { phoneText, ROLE_TEXT } from './texts'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
@@ -65,7 +66,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
     })),
     // Админ или регистратор, который сам ведёт приём, — уже строкой врача
     ...(members.data ?? []).filter((m) => !m.doctor).map((m): Row => ({
-      kind: 'member', key: `m${m.telegramId}`, name: m.fullName || `Telegram ${m.telegramId}`, member: m, roles: [m.role as Filter],
+      kind: 'member', key: `m${m.telegramId}`, name: m.fullName || (m.phone ? phoneText(m.phone) : `Telegram ${m.telegramId}`), member: m, roles: [m.role as Filter],
     })),
     ...(invites.data ?? []).map((i): Row => ({
       kind: 'invite', key: `i${i.id}`, name: i.fullName ?? '', invite: i, roles: [i.role as Filter],
@@ -123,7 +124,9 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                           : <span className="tone-wait">ждём входа · ссылка до {shortDate(r.invite.expiresAt!, true)}</span>
                         : r.kind === 'doctor' && !r.doctor.telegramId
                           ? <span className="tone-wait">не привязан — пригласите в карточке</span>
-                          : <span className="tone-ok">✓ Telegram привязан</span>}
+                          : (r.kind === 'doctor' ? r.doctor.phone : r.member.phone)
+                            ? <span className="tone-ok">✓ по SMS · {phoneText(r.kind === 'doctor' ? r.doctor.phone : r.member.phone)}</span>
+                            : <span className="tone-ok">✓ Telegram привязан</span>}
                     </td>
                   )}
                   <td className="r">
@@ -148,6 +151,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
         {(remove.error ?? cancel.error) && <p className="error" role="alert">{(remove.error ?? cancel.error)!.message}</p>}
       </section>
       {admin && <InviteMember me={me} />}
+      {admin && <InviteByPhone me={me} />}
     </>
   )
 }

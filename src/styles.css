@@ -919,6 +919,9 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 /* «Войти через Telegram» — своя кнопка (layout/Login.tsx), цветом Telegram */
 .btn.tg-login { min-height: 48px; padding: 0 26px; gap: 10px; border: 0; border-radius: 12px; background: #2AABEE; color: #fff; font-size: 1.05rem; font-weight: 600; }
 .btn.tg-login:hover:not(:disabled) { background: #229ED9; }
+/* Вход по номеру и SMS (без Telegram): форма в карточке входа — по ширине кнопки, слева направо */
+.phone-login { width: 100%; max-width: 360px; justify-self: center; text-align: left; }
+.phone-login .actions { display: flex; justify-content: space-between; gap: 12px; }
 
 /* Настройка новой клиники (V95): чек-лист до «Показать пациентам» */
 .setup-steps { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
