@@ -67,7 +67,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
     <>
       <section className="schedule-main">
       {header}
-      {editable && services.length > 0 && <StarterCard onOpen={() => setOpened('starter')} />}
+      {editable && (services.length > 0 || Boolean(me.admin)) && <StarterCard admin={Boolean(me.admin)} onOpen={() => setOpened('starter')} />}
       <section className="card-block">
         <div className="block-head">
           <p className="hint">Их видят пациенты, когда записываются сами в боте. Длительность — сколько времени займёт приём.</p>
@@ -107,7 +107,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
       {opened === 'new' && <ServicePanel me={me} all={services} onClose={close} />}
       {openedService && <ServicePanel key={openedService.id} me={me} service={openedService} all={services} onClose={close} />}
       {opened === 'catalog' && <CatalogPanel onClose={close} />}
-      {opened === 'starter' && <StarterPanel onClose={close} />}
+      {opened === 'starter' && <StarterPanel admin={Boolean(me.admin)} onClose={close} />}
     </>
   )
 }
@@ -274,10 +274,11 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
     },
   })
   const count = Object.keys(picked).length
-  const toggle = (name: string, on: boolean) => {
+  const toggle = (name: string, on: boolean, typical?: number | null) => {
     setDone('')
     const next = { ...picked }
-    if (on) next[name] = ''
+    // Обычная цена «от» по Бишкеку — сразу в поле: поправить проще, чем вписать
+    if (on) next[name] = typical == null ? '' : String(typical)
     else delete next[name]
     setPicked(next)
   }
@@ -287,7 +288,7 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
       <header className="panel-head">
         <div>
           <h2>Справочник услуг</h2>
-          <span className="hint">Отметьте услуги клиники и впишите цену «от» — можно и потом.</span>
+          <span className="hint">Отметьте услуги клиники и проверьте цену «от»: где знаем, подставили обычную по Бишкеку.</span>
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
@@ -302,7 +303,7 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
               <div key={item.name} className="catalog-row"><span>{item.name} <span className="hint">· {item.durationMinutes} мин</span></span><span className="hint tone-ok">есть</span></div>
             ) : (
               <div key={item.name} className="catalog-row">
-                <label className="check"><input type="checkbox" checked={item.name! in picked} onChange={(e) => toggle(item.name!, e.target.checked)} />
+                <label className="check"><input type="checkbox" checked={item.name! in picked} onChange={(e) => toggle(item.name!, e.target.checked, item.typicalPriceSom)} />
                   {item.name} <span className="hint">· {item.durationMinutes} мин</span></label>
                 {item.name! in picked && (
                   <input type="number" min={0} inputMode="numeric" placeholder="цена" aria-label={`Цена: ${item.name}`}

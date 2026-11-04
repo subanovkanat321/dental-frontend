@@ -76,7 +76,7 @@ test('справочник: отметить типовые с ценой и д�
   server.use(
     http.get('*/api/service-types', () => HttpResponse.json([])),
     http.get('*/api/service-types/catalog', () => HttpResponse.json([
-      { category: 'Терапия', items: [{ name: 'Лечение кариеса', durationMinutes: 60, added: false }, { name: 'Пломба', durationMinutes: 45, added: true }] },
+      { category: 'Терапия', items: [{ name: 'Лечение кариеса', durationMinutes: 60, added: false, typicalPriceSom: 2500 }, { name: 'Пломба', durationMinutes: 45, added: true }] },
     ] satisfies Schemas['ServiceTypeServiceCatalogSection'][])),
     http.post('*/api/service-types/catalog', async ({ request }) => {
       picked = await request.json()
@@ -90,6 +90,9 @@ test('справочник: отметить типовые с ценой и д�
   await user.click(await within(panel).findByText('Терапия'))
   expect(within(panel).getByText('есть')).toBeInTheDocument()
   await user.click(within(panel).getByRole('checkbox', { name: /Лечение кариеса/ }))
+  // Обычная цена по Бишкеку уже в поле — поправляем
+  expect(within(panel).getByRole('spinbutton', { name: 'Цена: Лечение кариеса' })).toHaveValue(2500)
+  await user.clear(within(panel).getByRole('spinbutton', { name: 'Цена: Лечение кариеса' }))
   await user.type(within(panel).getByRole('spinbutton', { name: 'Цена: Лечение кариеса' }), '2000')
   await user.click(within(panel).getByRole('button', { name: 'Добавить выбранные (1)' }))
   expect(await within(panel).findByText('Добавлено услуг: 1')).toBeInTheDocument()
@@ -178,6 +181,67 @@ test('«Заполнить по умолчанию»: что поставим, �
   await userEvent.click(await within(panel).findByText('Закрыть', { selector: 'button' }))
   // Заполнили — плашки больше нет
   await vi.waitFor(() => expect(screen.queryByRole('region', { name: 'Стартовая настройка' })).not.toBeInTheDocument())
+})
+
+test('«Заполнить по умолчанию»: админ видит недостающее из стандартного набора, снимает лишнее и добавляет', async () => {
+  let kit: Schemas['ClinicStarterPreview'] = {
+    services: [
+      { name: 'Установка импланта', category: 'Имплантация', durationMinutes: 90, priceSom: 45000 },
+      { name: 'Профессиональная чистка', category: 'Гигиена и отбеливание', durationMinutes: 60, priceSom: 3000, recallMonths: 6 },
+      { name: 'Панорамный снимок (ОПТГ)', category: 'Диагностика', durationMinutes: 15 },
+    ],
+    memos: ['После установки или коррекции брекетов'],
+    questions: ['Кормит грудью'],
+    sources: ['WhatsApp'],
+  }
+  let sent: Schemas['StarterControllerRequest'] | null = null
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json([])),
+    http.get('*/api/clinic/starter', () => HttpResponse.json(kit)),
+    http.post('*/api/clinic/starter', async ({ request }) => {
+      sent = await request.json() as Schemas['StarterControllerRequest']
+      kit = { services: [], memos: [], questions: [], sources: [] }
+      return HttpResponse.json({ services: 2, memos: 0, questions: 1, sources: 1 } satisfies Schemas['ClinicStarterApplied'])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  // Услуг ещё нет — плашка всё равно есть: набор можно добавить сразу
+  const card = await screen.findByRole('region', { name: 'Стартовая настройка' })
+  expect(card).toHaveTextContent('типовые услуги (3), памятки, вопросы анкеты и «откуда узнали» (3)')
+  await user.click(within(card).getByRole('button', { name: 'Посмотреть и заполнить' }))
+  const panel = screen.getByRole('complementary', { name: 'Заполнить по умолчанию' })
+  const services = within(panel).getByRole('region', { name: 'Типовые услуги' })
+  expect(services).toHaveTextContent('Установка импланта · Имплантация · 90 мин · от 45 000 сом')
+  expect(services).toHaveTextContent('Профессиональная чистка · Гигиена и отбеливание · 60 мин · от 3 000 сом · профосмотр через 6 мес.')
+  expect(services).toHaveTextContent('Панорамный снимок (ОПТГ) · Диагностика · 15 мин · без цены')
+  await user.click(within(services).getByRole('checkbox', { name: /Панорамный снимок/ }))
+  expect(services).toHaveTextContent('Типовые услуги · 2 из 3')
+  await user.click(within(panel).getByRole('checkbox', { name: /Новые памятки/ }))
+  expect(within(panel).getByRole('region', { name: 'Вопросы анкеты' })).toHaveTextContent('Кормит грудью')
+  expect(within(panel).getByRole('region', { name: 'Откуда узнали' })).toHaveTextContent('WhatsApp')
+
+  await user.click(within(panel).getByRole('button', { name: 'Заполнить' }))
+  expect(await within(panel).findByRole('status')).toHaveTextContent('Готово: услуг добавлено: 2, вопросов анкеты: 1, вариантов «откуда узнали»: 1')
+  expect(sent).toEqual({ services: ['Установка импланта', 'Профессиональная чистка'], memos: false, questions: true, sources: true })
+})
+
+test('«Заполнить по умолчанию»: стандартный набор — только админу, врач его не запрашивает', async () => {
+  let asked = false
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false })),
+    http.get('*/api/service-types', () => HttpResponse.json([{ id: 7, name: 'Удаление зуба мудрости', durationMinutes: 60, active: true }])),
+    http.get('*/api/care-memos/starter', () => HttpResponse.json([{ serviceId: 7, service: 'Удаление зуба мудрости', memoId: 1, memo: 'После удаления зуба' }])),
+    http.get('*/api/clinic/starter', () => {
+      asked = true
+      return HttpResponse.json({ services: [], memos: [], questions: [], sources: [] })
+    }),
+  )
+  renderApp()
+  const card = await screen.findByRole('region', { name: 'Стартовая настройка' })
+  expect(card).toHaveTextContent('памятки (услуг: 1)')
+  expect(card).not.toHaveTextContent('типовые услуги')
+  expect(asked).toBe(false)
 })
 
 test('«Профосмотр через»: свой срок услуги сохраняется, «Как в клинике» — поле не шлём', async () => {

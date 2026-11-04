@@ -5775,6 +5775,50 @@
         }
       }
     },
+    "/api/clinic/starter" : {
+      "get" : {
+        "tags" : [ "starter-controller" ],
+        "operationId" : "preview_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicStarterPreview"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "starter-controller" ],
+        "operationId" : "apply_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StarterControllerRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicStarterApplied"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/pay/requests" : {
       "post" : {
         "tags" : [ "pay-controller" ],
@@ -6829,7 +6873,7 @@
     "/api/appointments/{id}/dictation/apply" : {
       "post" : {
         "tags" : [ "visit-dictation-controller" ],
-        "operationId" : "apply_1",
+        "operationId" : "apply_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -13181,6 +13225,45 @@
           }
         }
       },
+      "StarterControllerRequest" : {
+        "properties" : {
+          "services" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "memos" : {
+            "type" : "boolean"
+          },
+          "questions" : {
+            "type" : "boolean"
+          },
+          "sources" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ClinicStarterApplied" : {
+        "properties" : {
+          "services" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "memos" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "questions" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sources" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "AgreementsScan" : {
         "properties" : {
           "id" : {
@@ -14119,6 +14202,10 @@
           },
           "added" : {
             "type" : "boolean"
+          },
+          "typicalPriceSom" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -15597,6 +15684,56 @@
             "format" : "int32"
           },
           "paidSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "ClinicStarterPreview" : {
+        "properties" : {
+          "services" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ServiceTypeServiceStarterService"
+            }
+          },
+          "memos" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "questions" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "sources" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "ServiceTypeServiceStarterService" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "recallMonths" : {
             "type" : "integer",
             "format" : "int32"
           }

@@ -34,6 +34,7 @@ export const server = setupServer(
   http.get('*/api/service-types/:id/supplies', () => HttpResponse.json([])),
   http.get('*/api/supplies/starter', () => HttpResponse.json({ missing: [], services: [] })),
   http.get('*/api/care-memos/starter', () => HttpResponse.json([])),
+  http.get('*/api/clinic/starter', () => HttpResponse.json({ services: [], memos: [], questions: [], sources: [] })),
   http.get('*/api/families', () => HttpResponse.json([])),
   http.get('*/api/comebacks', () => HttpResponse.json({ patients: [], planSom: 0, planPatients: 0, noShows: 0, recalls: 0 })),
   http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),

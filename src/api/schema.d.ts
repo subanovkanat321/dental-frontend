@@ -2292,6 +2292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/starter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["preview_1"];
+        put?: never;
+        post: operations["apply_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/pay/requests": {
         parameters: {
             query?: never;
@@ -2765,7 +2781,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["apply_1"];
+        post: operations["apply_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5854,6 +5870,22 @@ export interface components {
             /** Format: date-time */
             grantedUntil?: string;
         };
+        StarterControllerRequest: {
+            services?: string[];
+            memos?: boolean;
+            questions?: boolean;
+            sources?: boolean;
+        };
+        ClinicStarterApplied: {
+            /** Format: int32 */
+            services?: number;
+            /** Format: int32 */
+            memos?: number;
+            /** Format: int32 */
+            questions?: number;
+            /** Format: int32 */
+            sources?: number;
+        };
         AgreementsScan: {
             /** Format: int64 */
             id?: number;
@@ -6234,6 +6266,8 @@ export interface components {
             /** Format: int32 */
             durationMinutes?: number;
             added?: boolean;
+            /** Format: int32 */
+            typicalPriceSom?: number;
         };
         ServiceTypeServiceCatalogSection: {
             category?: string;
@@ -6822,6 +6856,22 @@ export interface components {
             returnedPlanSom?: number;
             /** Format: int32 */
             paidSom?: number;
+        };
+        ClinicStarterPreview: {
+            services?: components["schemas"]["ServiceTypeServiceStarterService"][];
+            memos?: string[];
+            questions?: string[];
+            sources?: string[];
+        };
+        ServiceTypeServiceStarterService: {
+            name?: string;
+            category?: string;
+            /** Format: int32 */
+            durationMinutes?: number;
+            /** Format: int32 */
+            priceSom?: number;
+            /** Format: int32 */
+            recallMonths?: number;
         };
         PlatformAccessLogEntry: {
             role?: string;
@@ -11715,6 +11765,50 @@ export interface operations {
             };
         };
     };
+    preview_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicStarterPreview"];
+                };
+            };
+        };
+    };
+    apply_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StarterControllerRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicStarterApplied"];
+                };
+            };
+        };
+    };
     create_11: {
         parameters: {
             query?: {
@@ -12576,7 +12670,7 @@ export interface operations {
             };
         };
     };
-    apply_1: {
+    apply_2: {
         parameters: {
             query?: never;
             header?: never;
