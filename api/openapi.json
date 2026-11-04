@@ -2130,6 +2130,90 @@
         }
       }
     },
+    "/api/appointments/{id}/teeth/{number}" : {
+      "put" : {
+        "tags" : [ "visit-teeth-controller" ],
+        "operationId" : "mark",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "number",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitTeethControllerMark"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/VisitToothView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "visit-teeth-controller" ],
+        "operationId" : "unmark",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "number",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/VisitToothView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/service" : {
       "put" : {
         "tags" : [ "appointment-controller" ],
@@ -7890,6 +7974,36 @@
         }
       }
     },
+    "/api/patients/{patientId}/teeth/history" : {
+      "get" : {
+        "tags" : [ "visit-teeth-controller" ],
+        "operationId" : "history_1",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/VisitTeethView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/plan/message" : {
       "get" : {
         "tags" : [ "plan-message-controller" ],
@@ -8953,6 +9067,36 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/VisitReportsSent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/teeth" : {
+      "get" : {
+        "tags" : [ "visit-teeth-controller" ],
+        "operationId" : "list_11",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/VisitToothView"
+                  }
                 }
               }
             }
@@ -11720,6 +11864,39 @@
             "type" : "string"
           },
           "webcalUrl" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisitTeethControllerMark" : {
+        "properties" : {
+          "state" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "note" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisitToothView" : {
+        "properties" : {
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctorName" : {
             "type" : "string"
           }
         }
@@ -15204,6 +15381,27 @@
           "scans" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "VisitTeethView" : {
+        "properties" : {
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisitToothView"
+            }
           }
         }
       },

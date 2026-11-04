@@ -804,6 +804,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/teeth/{number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["mark"];
+        post?: never;
+        delete: operations["unmark"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/service": {
         parameters: {
             query?: never;
@@ -3332,6 +3348,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/teeth/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["history_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/plan/message": {
         parameters: {
             query?: never;
@@ -3996,6 +4028,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["last"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/teeth": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5237,6 +5285,21 @@ export interface components {
             createdAt?: string;
             httpsUrl?: string;
             webcalUrl?: string;
+        };
+        VisitTeethControllerMark: {
+            /** @enum {string} */
+            state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            note?: string;
+        };
+        VisitToothView: {
+            /** Format: int32 */
+            number?: number;
+            /** @enum {string} */
+            state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            note?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            doctorName?: string;
         };
         AppointmentRequestsService: {
             /** Format: int64 */
@@ -6694,6 +6757,14 @@ export interface components {
             acceptedAt?: string;
             /** Format: int32 */
             scans?: number;
+        };
+        VisitTeethView: {
+            /** Format: int64 */
+            appointmentId?: number;
+            /** Format: date-time */
+            startAt?: string;
+            doctorName?: string;
+            teeth?: components["schemas"]["VisitToothView"][];
         };
         VisitNoteView: {
             /** Format: int64 */
@@ -8953,6 +9024,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CalendarFeedControllerFeedView"];
+                };
+            };
+        };
+    };
+    mark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitTeethControllerMark"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitToothView"][];
+                };
+            };
+        };
+    };
+    unmark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitToothView"][];
                 };
             };
         };
@@ -13641,6 +13762,28 @@ export interface operations {
             };
         };
     };
+    history_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitTeethView"][];
+                };
+            };
+        };
+    };
     message: {
         parameters: {
             query?: never;
@@ -14563,6 +14706,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VisitReportsSent"];
+                };
+            };
+        };
+    };
+    list_11: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitToothView"][];
                 };
             };
         };

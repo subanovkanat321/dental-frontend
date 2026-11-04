@@ -17,6 +17,7 @@ import { addDays, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf
 import { CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { ContactButtons } from './Contact'
 import { ContinueTreatment } from './ContinueTreatment'
+import { VisitTeeth } from './VisitTeeth'
 import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
 import { PatientExpenses } from '../patients/PatientExpenses'
@@ -276,6 +277,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             </>
           )}
 
+          {/* Зубы этого приёма: какой зуб лечили и что сделали — врач приёма и админ отмечают, ассистент видит */}
+          {visitTools && clinical && a.patient?.id != null && (
+            <VisitTeeth appointment={a} readOnly={!(seesAllMoney(me) || (a.doctorId != null && a.doctorId === me.doctorId))} />
+          )}
           {/* Материалы и заметка — у приёма, который идёт или был (как в приложении) */}
           {visitTools && <Supplies appointment={a} me={me} />}
           {(visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} />}

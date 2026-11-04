@@ -53,6 +53,9 @@ export const server = setupServer(
   http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [], free: [], breaks: [] })),
   http.get('*/api/appointments/:id/note', () => HttpResponse.json({ note: '' })),
   http.get('*/api/patients/:id/notes', () => HttpResponse.json([])),
+  // «Зубы этого приёма» и история зубов по визитам (V155): по умолчанию ничего не отмечено
+  http.get('*/api/appointments/:id/teeth', () => HttpResponse.json([] satisfies Schemas['VisitToothView'][])),
+  http.get('*/api/patients/:id/teeth/history', () => HttpResponse.json([] satisfies Schemas['VisitTeethView'][])),
   http.get('*/api/patients/:id/plan', () => HttpResponse.json([] satisfies Schemas['TreatmentStepView'][])),
   http.get('*/api/patients/:id/expenses', () => HttpResponse.json([])),
   http.get('*/api/patients/:id/anamnesis', () => HttpResponse.json({ items: [] })),

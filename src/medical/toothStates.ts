@@ -12,3 +12,8 @@ export const TOOTH_STATES: Record<ToothState, [string, string]> = {
   IMPLANT: ['Имплант', '🔩'],
   MISSING: ['Удалён', '✖️'],
 }
+
+/** Что сделали с зубом на приёме: «36 · Пломба · светоотверждаемая» — в карточке приёма, истории и «Продолжении лечения». */
+export function visitToothText(t: Schemas['VisitToothView'], withNote = true): string {
+  return [t.number, TOOTH_STATES[t.state ?? 'HEALTHY'][0], withNote ? t.note : null].filter(Boolean).join(' · ')
+}

@@ -1635,3 +1635,14 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 }
 .patient-mode { margin-bottom: 8px; }
 .patient-mode button { padding-inline: 10px; white-space: nowrap; }
+/* «Зубы этого приёма» в карточке приёма: формула не мельче 36 px под палец; на узком экране — прокрутка вбок */
+.visit-teeth { display: grid; gap: 8px; }
+.visit-teeth h3 { margin: 0; font-size: .95rem; }
+.visit-teeth .marked-teeth { margin: 0; }
+.visit-teeth .marked-teeth li { gap: 12px; }
+.visit-formula { display: grid; gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; }
+/* Карточка приёма узкая — четверти друг под другом, по 8 зубов в ряд */
+.visit-formula .jaw { grid-template-columns: 1fr; min-width: 316px; }
+.visit-formula .quadrant + .quadrant { padding-left: 0; border-left: 0; }
+.visit-formula .teeth { grid-template-columns: repeat(8, minmax(36px, 1fr)); }
+.visit-formula .tooth { min-height: 44px; }

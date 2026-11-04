@@ -174,6 +174,9 @@ export function Dictation({ appointment: a, note, onActive }: {
         void client.invalidateQueries({ queryKey: ['plan', patientId] })
       }
       void client.invalidateQueries({ queryKey: ['notes'] })
+      // Зубы из диктовки ложатся и за этим приёмом — «Зубы этого приёма» и история по визитам
+      void client.invalidateQueries({ queryKey: ['visit-teeth', a.id] })
+      void client.invalidateQueries({ queryKey: ['teeth-history'] })
       const r = review!
       const teeth = r.teeth.filter((t) => t.on).length
       const steps = r.plan.filter((s) => s.on).length

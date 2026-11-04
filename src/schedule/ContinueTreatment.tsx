@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
+import { visitToothText } from '../medical/toothStates'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -31,6 +32,13 @@ export function ContinueTreatment({ appointment: a, onMedical }: { appointment: 
     enabled,
     retry: false,
   })
+  // Зубы прошлого визита («Зубы этого приёма») — тот же ключ, что у истории в медкарте
+  const history = useQuery({
+    queryKey: ['teeth-history', patientId],
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth/history', { params: { path: { patientId: patientId! } } })),
+    enabled,
+    retry: false,
+  })
   if (!enabled) return null
 
   // Последняя заметка до этого приёма — «что сделали в прошлый раз»
@@ -38,8 +46,11 @@ export function ContinueTreatment({ appointment: a, onMedical }: { appointment: 
   const last = (notes.data ?? [])
     .filter((n) => n.appointmentId !== a.id && n.note?.trim() && n.startAt && Date.parse(n.startAt) < before)
     .sort((x, y) => Date.parse(y.startAt!) - Date.parse(x.startAt!))[0]
+  const lastTeeth = (history.data ?? [])
+    .filter((v) => v.appointmentId !== a.id && v.startAt && Date.parse(v.startAt) < before && v.teeth?.length)
+    .sort((x, y) => Date.parse(y.startAt!) - Date.parse(x.startAt!))[0]
   const left = (plan.data ?? []).filter((s) => !s.doneAt)
-  if (!last && left.length === 0) return null
+  if (!last && !lastTeeth && left.length === 0) return null
 
   return (
     <section className="continue" aria-label="Продолжение лечения">
@@ -48,6 +59,12 @@ export function ContinueTreatment({ appointment: a, onMedical }: { appointment: 
         <div>
           <span className="hint">В прошлый раз — {shortDate(last.startAt!)}{last.doctorName ? `, ${last.doctorName}` : ''}</span>
           <p className="continue-note">{last.note}</p>
+        </div>
+      )}
+      {lastTeeth && (
+        <div>
+          <span className="hint">Зубы в прошлый раз{lastTeeth.appointmentId !== last?.appointmentId ? ` — ${shortDate(lastTeeth.startAt!)}` : ''}</span>
+          <p className="continue-note">{lastTeeth.teeth!.map((t) => visitToothText(t)).join('; ')}</p>
         </div>
       )}
       {left.length > 0 && (

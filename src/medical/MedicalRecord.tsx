@@ -10,18 +10,13 @@ import { PlanDocs } from '../print/PlanDocs'
 import { stagesOf } from '../lib/planStages'
 import { TOOTH_STATES, type ToothState } from './toothStates'
 import { PatientFiles } from './PatientFiles'
+import { ToothFormula } from './ToothFormula'
+import { TeethHistory } from './TeethHistory'
 import { Select } from '../layout/Select'
 
 type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
 type State = ToothState
-
-/**
- * Зубы по FDI так, как врач смотрит на пациента: сверху верхняя челюсть (правая сторона
- * пациента — 18…11, левая — 21…28), снизу нижняя (48…41 и 31…38). На большом экране — по 16 в ряд.
- */
-const UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28]
-const LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]
 
 /** 403 — не «нет доступа к CRM», а «не ваш пациент»: медкарту видят врач его приёмов и админ. */
 function denied(error: unknown): string | null {
@@ -61,6 +56,7 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
           <AnamnesisBlock patientId={id} readOnly={readOnly} />
           <ToothChart patientId={id} teeth={teeth.data} error={teeth.error?.message} readOnly={readOnly}
             onPlan={(tooth) => setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 })} />
+          <TeethHistory patientId={id} />
           <Plan patient={patient} prefill={planTooth} readOnly={readOnly} />
           <Notes patientId={id} />
           <PatientFiles patientId={id} readOnly={readOnly} />
@@ -103,14 +99,7 @@ function ToothChart({ patientId, teeth, error, onPlan, readOnly }: {
         Международная нумерация (FDI). Первая цифра — где: 1 верх справа, 2 верх слева, 3 низ слева, 4 низ справа (у пациента).
         Вторая — какой по счёту от центра: 1 — передний, 8 — зуб мудрости. Карта — как смотрит врач: правая сторона пациента слева.
       </details>
-      <div className="jaw" role="group" aria-label="Верхняя челюсть">
-        <Quadrant label="Верх · правая сторона" teeth={UPPER.slice(0, 8)} render={tooth} />
-        <Quadrant label="Верх · левая сторона" teeth={UPPER.slice(8)} render={tooth} />
-      </div>
-      <div className="jaw" role="group" aria-label="Нижняя челюсть">
-        <Quadrant label="Низ · правая сторона" teeth={LOWER.slice(0, 8)} render={tooth} />
-        <Quadrant label="Низ · левая сторона" teeth={LOWER.slice(8)} render={tooth} />
-      </div>
+      <ToothFormula render={tooth} />
       <p className="hint legend">
         {Object.entries(TOOTH_STATES).filter(([k]) => k !== 'HEALTHY')
           .map(([k, [label, icon]]) => `${icon} ${label}${counts[k] ? ` · ${counts[k]}` : ''}`).join('   ')}
@@ -369,15 +358,5 @@ function Notes({ patientId }: { patientId: number }) {
         ))}
       </ul>
     </section>
-  )
-}
-
-/** Четверть челюсти с подписью: на телефоне челюсть — в две строки, и без подписи номера казались вразнобой. */
-function Quadrant({ label, teeth, render }: { label: string; teeth: number[]; render: (n: number) => React.ReactNode }) {
-  return (
-    <div className="quadrant">
-      <span className="quadrant-label" aria-hidden="true">{label} <span className="num">{teeth[0]}–{teeth[teeth.length - 1]}</span></span>
-      <div className="teeth">{teeth.map(render)}</div>
-    </div>
   )
 }
