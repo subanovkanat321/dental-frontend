@@ -57,6 +57,9 @@ function NotificationsBody() {
   const publicKey = view.data.publicKey
   const app = data.channel === 'APP'
   const devices = data.devices ?? []
+  // Вход по SMS: Telegram нет — только приложение; не включил — о записях узнает администратор
+  const noTelegram = data.noTelegram === true
+  const fallback = 'Включите уведомления приложения, иначе сообщения о записях получит администратор.'
 
   const save = (next: View) => client.setQueryData(['push'], next)
 
@@ -108,7 +111,8 @@ function NotificationsBody() {
     status = <p>На iPhone уведомления приходят только в установленное приложение (iOS 16.4 и новее): добавьте Tish
       на экран «Домой» — выше «Установить приложение», — откройте его с иконки и включите здесь.</p>
   } else if (support === 'unsupported') {
-    status = <p>Этот браузер не умеет уведомления — они приходят в Telegram. Подойдут Chrome, Edge, Firefox,
+    status = <p>{noTelegram ? 'Этот браузер не умеет уведомления — сообщения о записях получит администратор.'
+      : 'Этот браузер не умеет уведомления — они приходят в Telegram.'} Подойдут Chrome, Edge, Firefox,
       Safari на Mac, а на iPhone — приложение с экрана «Домой».</p>
   } else if (allowed === 'denied') {
     status = <p className="pwa-warn">🚫 Уведомления для Tish запрещены в браузере. Разрешите: значок слева от адреса
@@ -117,7 +121,8 @@ function NotificationsBody() {
   } else if (app && here && allowed === 'granted') {
     status = (
       <>
-        <p className="pwa-ok">Работает ✓ Уведомления приходят в приложение, в Telegram их больше не будет.</p>
+        <p className="pwa-ok">{noTelegram ? 'Работает ✓ Уведомления приходят в приложение.'
+          : 'Работает ✓ Уведомления приходят в приложение, в Telegram их больше не будет.'}</p>
         {devices.length > 1 && <p className="hint">Устройства: {devices.join(', ')}.</p>}
         <div className="actions">
           <button type="button" className="btn" disabled={busy} onClick={() => void sendTest()}>🔔 Отправить проверочное</button>
@@ -130,9 +135,10 @@ function NotificationsBody() {
       <>
         {devices.length > 0
           ? <p>Уведомления приходят на: {devices.join(', ')}. Это устройство не подключено.</p>
-          : <p className="pwa-warn">⚠️ Ни одно устройство не подключено — пока уведомления идут в Telegram.</p>}
+          : <p className="pwa-warn">{noTelegram ? `⚠️ ${fallback}` : '⚠️ Ни одно устройство не подключено — пока уведомления идут в Telegram.'}</p>}
         <div className="actions">
-          <button type="button" className="btn primary" disabled={busy} onClick={() => void toApp()}>Подключить это устройство</button>
+          <button type="button" className="btn primary" disabled={busy} onClick={() => void toApp()}>
+            {noTelegram && !devices.length ? 'Включить уведомления' : 'Подключить это устройство'}</button>
         </div>
       </>
     )
@@ -140,15 +146,17 @@ function NotificationsBody() {
 
   return (
     <Section>
-      <div className="field"><span>Куда присылать</span>
-        <div className="segments" role="group" aria-label="Куда присылать уведомления">
-          <button type="button" aria-pressed={!app} disabled={busy} onClick={() => void toTelegram()}>Telegram</button>
-          <button type="button" aria-pressed={app} disabled={busy || support !== 'ok'} onClick={() => { if (!(app && here)) void toApp() }}>В приложение</button>
+      {noTelegram ? <p className="hint">Вы входите без Telegram — уведомления приходят только в приложение. {fallback}</p> : (
+        <div className="field"><span>Куда присылать</span>
+          <div className="segments" role="group" aria-label="Куда присылать уведомления">
+            <button type="button" aria-pressed={!app} disabled={busy} onClick={() => void toTelegram()}>Telegram</button>
+            <button type="button" aria-pressed={app} disabled={busy || support !== 'ok'} onClick={() => { if (!(app && here)) void toApp() }}>В приложение</button>
+          </div>
         </div>
-      </div>
+      )}
       {status}
       {error && <p className="error" role="alert">{error}</p>}
-      <p className="hint">Каждое уведомление приходит в одно место — туда, что выбрано здесь. Не дошло в приложение — придёт в Telegram.</p>
+      {!noTelegram && <p className="hint">Каждое уведомление приходит в одно место — туда, что выбрано здесь. Не дошло в приложение — придёт в Telegram.</p>}
     </Section>
   )
 }

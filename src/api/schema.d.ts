@@ -4562,6 +4562,7 @@ export interface components {
             publicKey?: string;
             channel?: string;
             devices?: string[];
+            noTelegram?: boolean;
         };
         PromoCodesRequest: {
             code?: string;
