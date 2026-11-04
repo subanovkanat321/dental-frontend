@@ -13,6 +13,13 @@ import { cleanPhone, joinPhone, phoneCountry, splitPhone } from './phone'
  * Поле ввода в разметке — первым: так подпись `<label>` вокруг ведёт в номер, а не открывает список
  * стран; слева страну ставит CSS (`order`).
  */
+/** Сколько цифр самого номера: у кыргызского без «0» и «996», набранных в начале. */
+function numberDigits(country: string, local: string): number {
+  const d = local.replace(/\D/g, '')
+  if (country !== 'KG') return d.length
+  return d.startsWith('996') ? d.length - 3 : d.startsWith('0') ? d.length - 1 : d.length
+}
+
 export function PhoneInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   // Выбранная страна нужна, пока номер пуст: в самом значении её ещё нет
   const [picked, setPicked] = useState(() => splitPhone(value, 'KG').country)
@@ -27,9 +34,11 @@ export function PhoneInput({ label, value, onChange }: { label: string; value: s
     setPicked(next.country)
     onChange(joinPhone(next.country, next.local))
     // Набрали номер целиком — в форме с data-advance сразу к следующему полю
+    // Номер считаем без «0» и «996» в начале: «0772 666 666» — это 9 цифр номера, а не «полный» на
+    // девятой цифре (иначе фокус уходил дальше, последняя цифра терялась, сервер номер отклонял)
     const need = phoneDigits(phoneCountry(next.country).example)
-    const digits = next.local.replace(/\D/g, '').length
-    if (need > 0 && digits === need && local.replace(/\D/g, '').length < need) focusNext(input.current)
+    const digits = numberDigits(next.country, next.local)
+    if (need > 0 && digits === need && numberDigits(country, local) < need) focusNext(input.current)
   }
 
   const pick = (id: string) => {

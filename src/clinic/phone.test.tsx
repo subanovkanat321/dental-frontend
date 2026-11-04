@@ -110,3 +110,38 @@ test('номер с телефона: невидимые метки iPhone, не
   expect(phoneFromInput('0772–666–666')).toBe('0772-666-666')
   expect(phoneFromInput('772666666')).toBe('+996 772666666')
 })
+
+/** Форма с автопереходом: после полного номера фокус — в следующее поле. */
+function AdvanceForm() {
+  const [v, setV] = useState('')
+  return (
+    <form data-advance>
+      <PhoneInput label="Телефон" value={v} onChange={setV} />
+      <input aria-label="Дальше" />
+      <output aria-label="В запрос">{phoneFromInput(v)}</output>
+    </form>
+  )
+}
+
+test('номер с нулём «0772 666 666» набирается целиком: фокус уходит после 10-й цифры, а не теряет последнюю', async () => {
+  render(<AdvanceForm />)
+  await userEvent.type(number(), '077266666')
+  expect(number()).toHaveFocus()
+  await userEvent.type(number(), '6')
+  expect(sent()).toBe('0772666666')
+  expect(screen.getByRole('textbox', { name: 'Дальше' })).toHaveFocus()
+})
+
+test('без нуля «772666666» — фокус дальше после 9-й цифры; с «996» — после 12-й', async () => {
+  const { unmount } = render(<AdvanceForm />)
+  await userEvent.type(number(), '772666666')
+  expect(sent()).toBe('+996 772666666')
+  expect(screen.getByRole('textbox', { name: 'Дальше' })).toHaveFocus()
+  unmount()
+  render(<AdvanceForm />)
+  await userEvent.type(number(), '99677266666')
+  expect(number()).toHaveFocus()
+  await userEvent.type(number(), '6')
+  expect(sent()).toBe('996772666666')
+  expect(screen.getByRole('textbox', { name: 'Дальше' })).toHaveFocus()
+})
