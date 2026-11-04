@@ -5,6 +5,15 @@ import { countryOf, formatPhone, OTHER_COUNTRY, PHONE_COUNTRIES, type PhoneCount
  * «996…»), номер другой страны — с кодом («+7 701 123 45 67»). Нормализует и проверяет сервер.
  */
 
+/**
+ * Невидимое и «экзотические» пробелы — прочь: iPhone вставляет номер из контактов в метках
+ * направления текста (U+202A…U+202C), клавиатуры ставят неразрывный пробел и длинное тире. Глазом
+ * номер верный, а «+996» дописывался второй раз и сервер номер отклонял.
+ */
+export function cleanPhone(v: string): string {
+  return v.replace(/\p{Cf}/gu, '').replace(/[\p{Zs}]/gu, ' ').replace(/[\u2010-\u2015\u2212]/g, '-')
+}
+
 /** Номер набран целиком (с кодом страны или с 0) — тогда «+996» не добавляем. */
 function isFullPhone(v: string): boolean {
   return /^(\+|00|996|0)/.test(v.replace(/[\s()-]/g, ''))
@@ -12,7 +21,7 @@ function isFullPhone(v: string): boolean {
 
 /** Из поля в запрос: «555 123 456» → «+996 555 123 456»; пусто — пусто. */
 export function phoneFromInput(v: string): string {
-  const t = v.trim()
+  const t = cleanPhone(v).trim()
   return !t || isFullPhone(t) ? t : `+996 ${t}`
 }
 

@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import { Select } from '../layout/Select'
 import { focusNext, phoneDigits } from '../lib/advance'
 import { OTHER_COUNTRY, PHONE_COUNTRIES } from '../lib/phone'
-import { joinPhone, phoneCountry, splitPhone } from './phone'
+import { cleanPhone, joinPhone, phoneCountry, splitPhone } from './phone'
 
 /**
  * Телефон: страна (флаг и код) и номер. По умолчанию Кыргызстан — местный «555 123 456» или «0555…»
@@ -20,7 +20,8 @@ export function PhoneInput({ label, value, onChange }: { label: string; value: s
   const c = phoneCountry(country)
   const input = useRef<HTMLInputElement>(null)
 
-  const type = (text: string) => {
+  const type = (raw: string) => {
+    const text = cleanPhone(raw)
     // Набрали или вставили номер с «+» — он сам говорит, какая страна
     const next = splitPhone(/^\s*(\+|00)/.test(text) ? text : joinPhone(country, text) || '', country)
     setPicked(next.country)

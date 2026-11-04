@@ -102,3 +102,11 @@ test('номер для людей — группами своей страны'
   expect(phoneToInput('77012345678')).toBe('+7 701 234 56 78')
   expect(phoneToInput(null)).toBe('')
 })
+
+test('номер с телефона: невидимые метки iPhone, неразрывные пробелы и длинное тире не ломают номер', async () => {
+  expect(phoneFromInput('‪+996 772 666 666‬')).toBe('+996 772 666 666')
+  expect(phoneFromInput('772 666 666')).toBe('+996 772 666 666')
+  expect(phoneFromInput('‎772666666')).toBe('+996 772666666')
+  expect(phoneFromInput('0772–666–666')).toBe('0772-666-666')
+  expect(phoneFromInput('772666666')).toBe('+996 772666666')
+})
