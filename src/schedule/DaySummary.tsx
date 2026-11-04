@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
 import { somText, timeOf } from '../lib/time'
@@ -24,7 +26,7 @@ function duration(minutes: number): string {
  * сеткой на ноутбуке поуже, — только столбиком; нажатие ведёт туда же. Когда открыта карточка
  * приёма, она занимает это место.
  */
-export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, earnings, onOpenEarnings, low, free, onOpen, onBook, onNavigate, onClose }: {
+export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, earnings, onOpenEarnings, low, free, onOpen: openProp, onBook: bookProp, onNavigate: navigateProp, onClose }: {
   date: string
   today: string
   /** Приёмы дня без отменённых */
@@ -45,6 +47,11 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
   /** «×» вверху: скрыть сводку — колонки врачей на весь экран */
   onClose?: () => void
 }) {
+  // «На весь экран» — пока смотрят; открыли приём, запись или раздел — сводка снова сбоку
+  const [full, setFull] = useState(false)
+  const onOpen = (a: Appointment) => { setFull(false); openProp(a) }
+  const onBook = (doctorId: number, minutes: number) => { setFull(false); bookProp(doctorId, minutes) }
+  const onNavigate = navigateProp && ((page: Page) => { setFull(false); navigateProp(page) })
   const now = new Date().toISOString()
   const sorted = [...all].sort((a, b) => a.startAt!.localeCompare(b.startAt!))
   const isToday = date === today
@@ -59,7 +66,11 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
   const calm = !requests.length && !waiting.length && !toPay && !low
 
   return (
-    <aside className="day-summary" aria-label="Сводка дня">
+    <>
+    {full && <div className="panel-backdrop" onClick={() => setFull(false)} aria-hidden="true" />}
+    <aside className={full ? 'day-summary ds-full' : 'day-summary'} aria-label="Сводка дня">
+      <button type="button" className="ds-expand" aria-pressed={full} onClick={() => setFull(!full)}
+        aria-label={full ? 'Свернуть сводку' : 'Сводка на весь экран'} title={full ? 'Свернуть' : 'На весь экран'}>{full ? '⤡' : '⤢'}</button>
       {onClose && (
         <button type="button" className="ds-close" aria-label="Скрыть сводку" title="Скрыть сводку — больше места врачам" onClick={onClose}>×</button>
       )}
@@ -151,5 +162,6 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
         </button>
       )}
     </aside>
+    </>
   )
 }

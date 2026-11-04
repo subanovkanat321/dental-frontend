@@ -1555,3 +1555,15 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .appt-badges { display: inline-flex; gap: 2px; font-size: .78rem; line-height: 1; white-space: nowrap; flex: none; }
 .appt:not(.short) .appt-badges { position: absolute; top: 4px; right: 6px; }
 .badges-legend { margin: 6px 0 0; }
+/* «На весь экран» — карточка приёма и «Сводка дня» на компьютере (на телефоне карточка и так во весь экран) */
+.panel-head-actions { display: flex; gap: 4px; }
+.panel-backdrop { position: fixed; inset: 0; z-index: 59; background: rgba(15, 30, 35, .35); }
+.panel.panel-full, .day-summary.ds-full { position: fixed; z-index: 60; top: 16px; bottom: 16px; left: 50%; transform: translateX(-50%);
+  width: min(980px, calc(100vw - 32px)); max-height: none; overflow: auto; }
+.day-summary.ds-full { padding: 48px 16px 16px; border-radius: var(--radius); background: var(--page); box-shadow: var(--panel-shadow); }
+.ds-expand { position: absolute; top: 8px; right: 44px; z-index: 1; width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: var(--hint); font-size: 18px; line-height: 1; cursor: pointer; }
+.ds-expand:hover { background: var(--sunken); color: var(--text); }
+@media (max-width: 760px) {
+  .panel-expand, .ds-expand { display: none; }
+  .panel.panel-full { inset: 0; transform: none; width: auto; top: 0; bottom: 0; left: 0; }
+}

@@ -9,6 +9,8 @@ import { WaitlistBox } from '../patients/WaitlistTab'
 import { agoText } from '../lib/texts'
 import { bookedByText } from '../lib/relations'
 import { useClose } from '../lib/useClose'
+import { useFullView } from '../lib/fullView'
+import { useNowMinutes } from './gridScale'
 import { addDays, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn, ZONE } from '../lib/time'
 import { CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { ContactButtons } from './Contact'
@@ -67,6 +69,13 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const date = a.startAt ? dateOf(a.startAt) : todayIn()
   // «Состоялся» сервер разрешает с дня приёма: будущий приём ещё не мог пройти
   const started = date <= todayIn()
+  const [full, toggleFull] = useFullView('appointment')
+  // Этап приёма: заметка, материалы и диктовка — когда приём начинается (за 15 минут) или прошёл;
+  // утром карточка дневного приёма короткая: напомнить, перенести, связаться. «Показать сейчас» — если начали раньше
+  const nowMinutes = useNowMinutes()
+  const inChair = date < todayIn() || (date === todayIn() && nowMinutes >= minutesOf(a.startAt!) - 15)
+  const [early, setEarly] = useState(false)
+  const visitTools = a.status === 'DONE' || (a.status === 'SCHEDULED' && started && (inChair || early))
   const future = a.startAt ? new Date(a.startAt) > new Date() : false
   const canEdit = canEditDoctor(me, a.doctorId)
   // Аллергия и важное из анкеты — перед лечением, тому, кто видит медкарту (врач приёма, админ)
@@ -119,13 +128,19 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   }
 
   return (
-    <aside className="panel" aria-label="Карточка приёма">
+    <>
+    {full && <div className="panel-backdrop" onClick={toggleFull} aria-hidden="true" />}
+    <aside className={full ? 'panel panel-full' : 'panel'} aria-label="Карточка приёма">
       <header className="panel-head">
         <div>
           <h2>{timeOf(a.startAt!)}–{timeOf(a.endAt!)}</h2>
           <span className="hint">{dayTitle(date)}{doctors.length > 1 && doctor ? ` · ${doctor.fullName}` : ''}</span>
         </div>
-        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        <div className="panel-head-actions">
+          <button type="button" className="btn ghost panel-expand" aria-pressed={full} onClick={toggleFull}
+            aria-label={full ? 'Свернуть карточку' : 'Карточка на весь экран'} title={full ? 'Свернуть' : 'На весь экран'}>{full ? '⤡' : '⤢'}</button>
+          <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        </div>
       </header>
       <section>
         {onOpenPatient && a.patient?.id
@@ -242,8 +257,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           )}
 
           {/* Материалы и заметка — у приёма, который идёт или был (как в приложении) */}
-          {(a.status === 'DONE' || (a.status === 'SCHEDULED' && started)) && <Supplies appointment={a} me={me} />}
-          {(a.status === 'DONE' || a.status === 'NO_SHOW' || (a.status === 'SCHEDULED' && started)) && <VisitNote appointment={a} />}
+          {visitTools && <Supplies appointment={a} me={me} />}
+          {(visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} />}
+          {a.status === 'SCHEDULED' && started && !visitTools && (
+            <p className="hint small">Заметка, материалы и диктовка появятся к началу приёма.{' '}
+              <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>
+          )}
 
           {/* Опасные — одной группой внизу; неявку и отмену можно «Вернуть» */}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED' || a.status === 'DONE' || me.admin) && (
@@ -283,5 +302,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
       {(action.error ?? remove.error) && <p className="error" role="alert">{(action.error ?? remove.error)!.message}</p>}
     </aside>
+    </>
   )
 }

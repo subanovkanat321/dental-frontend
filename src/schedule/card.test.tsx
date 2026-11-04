@@ -135,3 +135,27 @@ test('«Приём состоялся» по ошибке — «Вернуть �
   expect(within(paid).queryByRole('button', { name: 'Вернуть в запланированные' })).not.toBeInTheDocument()
   expect(within(paid).getByText(/сначала «Снять отметку оплаты»/)).toBeInTheDocument()
 })
+
+test('до начала приёма — без заметки и материалов («Показать сейчас»); карточка — на весь экран', async () => {
+  // 09:00 по Бишкеку: приём в 15:00 сегодня ещё не начался (подменяем только часы, таймеры настоящие)
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(`${new Date().toISOString().slice(0, 10)}T03:00:00Z`))
+  try {
+    backend(appointment(10, 1, '15:00', 'Бакыт М.', { version: 1 }))
+    renderApp()
+    const panel = await open(/Бакыт М\./)
+    expect(within(panel).queryByRole('form', { name: 'Заметка о приёме' })).not.toBeInTheDocument()
+    expect(within(panel).getByText(/появятся к началу приёма/)).toBeInTheDocument()
+    await userEvent.click(within(panel).getByRole('button', { name: 'Показать сейчас' }))
+    expect(await within(panel).findByRole('form', { name: 'Заметка о приёме' })).toBeInTheDocument()
+
+    await userEvent.click(within(panel).getByRole('button', { name: 'Карточка на весь экран' }))
+    expect(panel).toHaveClass('panel-full')
+    expect(localStorage.getItem('tish.full.appointment')).toBe('1')
+    await userEvent.click(within(panel).getByRole('button', { name: 'Свернуть карточку' }))
+    expect(panel).not.toHaveClass('panel-full')
+  }
+  finally {
+    vi.useRealTimers()
+  }
+})
