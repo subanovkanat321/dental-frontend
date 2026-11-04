@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -133,12 +134,12 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                     {r.kind === 'member' && <ChangeRole me={me} member={r.member} />}
                     {r.kind === 'member' && (
                       <button type="button" className="btn small ghost" disabled={remove.isPending}
-                        onClick={() => window.confirm(r.member.me ? 'Выйти из администраторов клиники?' : `Убрать «${r.name}» из клиники? Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.`) && remove.mutate(r.member)}>
+                        onClick={() => void ask(r.member.me ? 'Выйти из администраторов клиники?' : `Убрать «${r.name}» из клиники? Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.`).then((ok) => ok && remove.mutate(r.member))}>
                         {r.member.me ? 'Выйти из администраторов' : 'Убрать'}</button>
                     )}
                     {r.kind === 'invite' && (
                       <button type="button" className="btn small ghost" disabled={cancel.isPending}
-                        onClick={() => window.confirm(`Отменить приглашение «${r.name}»? Ссылка перестанет работать.`) && cancel.mutate(r.invite)}>
+                        onClick={() => void ask(`Отменить приглашение «${r.name}»? Ссылка перестанет работать.`).then((ok) => ok && cancel.mutate(r.invite))}>
                         Отменить</button>
                     )}
                     {r.kind === 'doctor' && admin && <button type="button" className="btn small ghost" onClick={() => onOpen(r.doctor.id!)}>Открыть</button>}

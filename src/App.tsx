@@ -1,4 +1,5 @@
 import { api, ApiError, unwrap } from './api/client'
+import { ConfirmHost } from './layout/Confirm'
 import { useMe } from './api/me'
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -31,6 +32,11 @@ const PatientApp = lazy(() => import('./patient/PatientApp'))
  * Telegram» на /login, в Telegram — подпись запуска. Пациенту вне Telegram — подсказка про бота.
  */
 export function App() {
+  // Подтверждения «Удалить …?» — своим окном, не системным (layout/Confirm)
+  return <><Screens /><ConfirmHost /></>
+}
+
+function Screens() {
   const me = useMe()
   // Кнопка бота (?appointment=…, ?screen=cash…): куда открыть — один раз; адрес чистим, чтобы
   // обновление страницы не открывало то же снова. Раздел — в #, как при обычном переходе

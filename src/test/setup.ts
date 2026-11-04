@@ -15,3 +15,16 @@ afterEach(() => {
   cleanup()
 })
 afterAll(() => server.close())
+
+// Подтверждения (lib/confirm → layout/ConfirmHost): тест подменил window.confirm — отвечаем через
+// подмену, как раньше системным окном (проверки текста вопроса работают). Не подменил — окно ждёт
+// нажатия в тесте (confirm.test.tsx).
+import { pending as pendingConfirm, subscribe as onConfirm } from '../lib/confirm'
+import { act } from '@testing-library/react'
+onConfirm(() => {
+  const p = pendingConfirm()
+  if (p && vi.isMockFunction(window.confirm)) {
+    const answer = window.confirm(p.text)
+    queueMicrotask(() => act(() => p.resolve(answer)))
+  }
+})

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useCallback, useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -85,7 +86,7 @@ export function BroadcastTab() {
       <section className="card-block">
         <h2>Сообщение клиникам</h2>
         <form className="form narrow" aria-label="Сообщение клиникам"
-          onSubmit={(e) => { e.preventDefault(); if (window.confirm(`Отправить админам клиник (${count})? Отменить нельзя.`)) send.mutate() }}>
+          onSubmit={(e) => { e.preventDefault(); void ask(`Отправить админам клиник (${count})? Отменить нельзя.`, { ok: 'Отправить' }).then((ok) => ok && send.mutate()) }}>
           <p className="hint">Придёт в бот администраторам клиник с подписью «Сообщение от команды Tish». Не пишите сюда данные пациентов.</p>
           <label className="field"><span>Текст · {text.length} / 2000</span>
             <textarea rows={6} maxLength={2000} required value={text} placeholder="Например: в субботу с 23:00 до 23:30 — плановые работы, приложение может не открываться"
@@ -244,7 +245,7 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
             error={save.error && (save.error.fieldErrors.title ?? save.error.fieldErrors.body ?? save.error.message)} onSave={() => save.mutate()} />
           <div className="actions">
             <button type="button" className="btn primary" disabled={publish.isPending}
-              onClick={() => window.confirm(`Опубликовать версию ${v.version}? Клиники увидят её и будут подписывать.`) && publish.mutate()}>Опубликовать — клиники увидят</button>
+              onClick={() => void ask(`Опубликовать версию ${v.version}? Клиники увидят её и будут подписывать.`).then((ok) => ok && publish.mutate())}>Опубликовать — клиники увидят</button>
           </div>
         </div>
       )}
@@ -255,7 +256,7 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
       <div className="danger-zone">
         {(v.acceptances ?? 0) > 0 && <p className="hint">Её подписали клиник: {v.acceptances} — отметки о подписи удалятся вместе с ней.</p>}
         <button type="button" className="btn danger" disabled={remove.isPending}
-          onClick={() => window.confirm(`Удалить версию ${v.version}?`) && remove.mutate()}>Удалить эту версию</button>
+          onClick={() => void ask(`Удалить версию ${v.version}?`).then((ok) => ok && remove.mutate())}>Удалить эту версию</button>
       </div>
     </aside>
   )

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useEffect, useState } from 'react'
 
 import { api, fetchBlob, unwrap, type Schemas } from '../api/client'
@@ -65,7 +66,7 @@ export function DepositBox({ appointment: a }: { appointment: Appointment }) {
         <button type="button" className="btn primary" disabled={action.isPending}
           onClick={() => action.mutate({ kind: 'deposit', body: { action: 'RECEIVED', method } })}>Получена</button>
         <button type="button" className="btn" disabled={action.isPending}
-          onClick={() => window.confirm('Снять предоплату с записи?') && action.mutate({ kind: 'deposit', body: { action: 'NONE' } })}>Не нужна</button>
+          onClick={() => void ask('Снять предоплату с записи?').then((ok) => ok && action.mutate({ kind: 'deposit', body: { action: 'NONE' } }))}>Не нужна</button>
       </div>
     </div>
   )

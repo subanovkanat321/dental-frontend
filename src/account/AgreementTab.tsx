@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
@@ -193,7 +194,7 @@ function Scans({ scans }: { scans: Schemas['AgreementsScan'][] }) {
                 <td className="r nowrap">
                   <button type="button" className="btn small" disabled={send.isPending} onClick={() => send.mutate(x.id!)}>В бот</button>{' '}
                   <button type="button" className="btn small ghost" disabled={remove.isPending}
-                    onClick={() => window.confirm(`Удалить скан «${x.fileName}»?`) && remove.mutate(x.id!)}>Удалить</button>
+                    onClick={() => void ask(`Удалить скан «${x.fileName}»?`).then((ok) => ok && remove.mutate(x.id!))}>Удалить</button>
                 </td>
               </tr>
             ))}

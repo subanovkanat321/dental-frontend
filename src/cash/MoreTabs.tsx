@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
 import { changeOf, previousRange } from '../lib/compare'
@@ -181,7 +182,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
                   {seesAll && (me.doctors?.length ?? 0) > 1 && <td>{x.doctor ?? 'клиника'}</td>}
                   <td className="r nowrap num strong">{somText(x.amountSom ?? 0)}</td>
                   <td className="r"><button type="button" className="btn small ghost" aria-label={`Удалить расход: ${x.category} ${x.amountSom}`}
-                    disabled={remove.isPending} onClick={() => window.confirm('Удалить расход?') && remove.mutate(x.id!)}>✕</button></td>
+                    disabled={remove.isPending} onClick={() => void ask('Удалить расход?').then((ok) => ok && remove.mutate(x.id!))}>✕</button></td>
                 </tr>
               ))}
             </tbody>

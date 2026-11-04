@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
@@ -84,7 +85,7 @@ export function TicketPanel({ id, platform = false, onClose }: { id: number; pla
           <div className="actions">
             <button type="submit" className="btn primary" disabled={send.isPending || !text.trim()}>{platform ? 'Ответить' : 'Отправить'}</button>
             <button type="button" className="btn" disabled={closeTicket.isPending}
-              onClick={() => window.confirm('Закрыть обращение — вопрос решён?') && closeTicket.mutate()}>Закрыть — вопрос решён</button>
+              onClick={() => void ask('Закрыть обращение — вопрос решён?').then((ok) => ok && closeTicket.mutate())}>Закрыть — вопрос решён</button>
           </div>
         </form>
       )}

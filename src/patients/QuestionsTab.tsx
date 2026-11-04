@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -151,7 +152,7 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
                 <button type="button" className="btn primary" disabled={answer.isPending || !text.trim()} onClick={() => answer.mutate()}>
                   {answer.isPending ? 'Отправляем…' : 'Отправить'}</button>
                 <button type="button" className="btn ghost" disabled={dismiss.isPending}
-                  onClick={() => window.confirm('Закрыть вопрос без ответа? Пациент ничего не получит.') && dismiss.mutate()}>
+                  onClick={() => void ask('Закрыть вопрос без ответа? Пациент ничего не получит.').then((ok) => ok && dismiss.mutate())}>
                   Закрыть без ответа</button>
               </div>
             </>

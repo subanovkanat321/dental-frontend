@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { SourceLine } from '../patients/SourceLine'
@@ -116,16 +117,16 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   ].filter(Boolean)
   const removeQuestion = 'Удалить запись насовсем? Для обычной отмены есть «Отменить запись».'
 
-  const setStatus = (status: Status, opts: { question?: string; undo?: string } = {}) => {
-    if (opts.question && !window.confirm(opts.question)) return
+  const setStatus = async (status: Status, opts: { question?: string; undo?: string } = {}) => {
+    if (opts.question && !await ask(opts.question)) return
     const previous = a.status as Status
     action.mutate({ kind: 'status', body: { version: a.version ?? 0, status } }, {
       onSuccess: () => setUndo(opts.undo ? { label: opts.undo, previous } : null),
     })
   }
   // «Приём состоялся» / «Неявка» по ошибке — приём снова запланирован (сервер не даст, если есть оплата)
-  const reopen = (current: Appointment) => {
-    if (!window.confirm(current.status === 'DONE' ? 'Вернуть приём в запланированные? Отметка «Приём состоялся» снимется.'
+  const reopen = async (current: Appointment) => {
+    if (!await ask(current.status === 'DONE' ? 'Вернуть приём в запланированные? Отметка «Приём состоялся» снимется.'
       : 'Вернуть приём в запланированные? Отметка «Неявка» снимется.')) return
     action.mutate({ kind: 'undo', body: { version: current.version ?? 0, previousStatus: 'SCHEDULED' } })
   }
@@ -317,7 +318,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
                 <p className="hint small">Удалить нельзя: у приёма есть {money.join(', ')}. Ошибочный приём — отмените или исправьте статус.</p>
               ) : (
                 <button type="button" className="btn danger" disabled={remove.isPending}
-                  onClick={() => window.confirm(removeQuestion) && remove.mutate()}>Удалить запись</button>
+                  onClick={() => void ask(removeQuestion).then((ok) => ok && remove.mutate())}>Удалить запись</button>
               ))}
             </div>
           )}

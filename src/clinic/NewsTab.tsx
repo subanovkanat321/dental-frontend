@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -27,7 +28,7 @@ export function NewsTab() {
   const subscribers = data.data?.subscribers ?? 0
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (window.confirm(`Опубликовать и разослать ${subscribers} подписчикам? Отменить рассылку нельзя.`)) publish.mutate()
+    void ask(`Опубликовать и разослать ${subscribers} подписчикам? Отменить рассылку нельзя.`).then((ok) => ok && publish.mutate())
   }
 
   return (
@@ -55,7 +56,7 @@ export function NewsTab() {
                 <p className="hint">{n.createdAt ? shortDate(n.createdAt, true) : ''} · в бот: {n.delivered ?? 0} из {n.recipients ?? 0}</p>
                 <p>{n.text}</p>
                 <button type="button" className="btn small ghost" disabled={remove.isPending}
-                  onClick={() => window.confirm('Убрать новость из приложения?') && remove.mutate(n.id!)}>Убрать из приложения</button>
+                  onClick={() => void ask('Убрать новость из приложения?').then((ok) => ok && remove.mutate(n.id!))}>Убрать из приложения</button>
               </li>
             ))}
           </ul>

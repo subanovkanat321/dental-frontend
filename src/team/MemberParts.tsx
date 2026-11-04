@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -86,9 +87,9 @@ export function ChangeRole({ me, member }: { me: Me; member: Member }) {
       void client.invalidateQueries({ queryKey: ['members'] })
     },
   })
-  const submit = () => {
+  const submit = async () => {
     if (member.me && current === 'ADMIN' && role !== 'ADMIN'
-      && !window.confirm('Вы перестанете быть администратором: «Персонал», деньги и настройки станут недоступны. Продолжить?')) return
+      && !await ask('Вы перестанете быть администратором: «Персонал», деньги и настройки станут недоступны. Продолжить?', { ok: 'Продолжить', danger: true })) return
     save.mutate()
   }
   if (!open) {

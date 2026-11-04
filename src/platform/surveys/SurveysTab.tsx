@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../../api/client'
@@ -124,15 +125,15 @@ function SurveyView({ id, onBack, onOpen }: { id: number; onBack: () => void; on
       <div className="actions">
         {s.active ? (
           <button type="button" className="btn" disabled={stop.isPending}
-            onClick={() => window.confirm('Остановить опрос? Приглашение пропадёт, ответы и итоги останутся.') && stop.mutate()}>Остановить</button>
+            onClick={() => void ask('Остановить опрос? Приглашение пропадёт, ответы и итоги останутся.').then((ok) => ok && stop.mutate())}>Остановить</button>
         ) : (
           <button type="button" className="btn primary" disabled={start.isPending}
-            onClick={() => window.confirm(`Запустить опрос? Его увидят: ${rolesText(s.roles)}${s.announce && !s.announcedAt ? '; в бот придёт приглашение' : ''}.`) && start.mutate()}>
+            onClick={() => void ask(`Запустить опрос? Его увидят: ${rolesText(s.roles)}${s.announce && !s.announcedAt ? '; в бот придёт приглашение' : ''}.`).then((ok) => ok && start.mutate())}>
             Запустить</button>
         )}
         <button type="button" className="btn" disabled={copy.isPending} onClick={() => copy.mutate()}>Копия</button>
         {!s.responses && (
-          <button type="button" className="btn danger" disabled={remove.isPending} onClick={() => window.confirm('Удалить опрос?') && remove.mutate()}>Удалить</button>
+          <button type="button" className="btn danger" disabled={remove.isPending} onClick={() => void ask('Удалить опрос?').then((ok) => ok && remove.mutate())}>Удалить</button>
         )}
       </div>
       {error && <p className="error" role="alert">{error.fieldErrors.questions ?? error.message}</p>}

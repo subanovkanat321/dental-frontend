@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -144,7 +145,7 @@ function BillingForm({ id, plan }: { id: number; plan: Plan }) {
             {plan.payments!.map((p) => <li key={p.id}><b className="num">{somText(p.amountSom ?? 0)}</b> · {p.months} мес <span className="hint">· {day(p.paidOn)} → до {day(p.paidUntil)}</span></li>)}
           </ul>
           <button type="button" className="btn small" disabled={undo.isPending}
-            onClick={() => window.confirm('Отменить последнюю оплату?') && undo.mutate()}>Отменить последнюю оплату</button>
+            onClick={() => void ask('Отменить последнюю оплату?').then((ok) => ok && undo.mutate())}>Отменить последнюю оплату</button>
         </>
       )}
       <details>
@@ -229,7 +230,7 @@ function EnterBox({ id }: { id: number }) {
         <div className="duplicate" role="alert">
           <p>{enter.error.message}</p>
           <button type="button" className="btn danger" disabled={enter.isPending}
-            onClick={() => window.confirm('Аварийный вход: клиника получит сообщение. Войти?') && enter.mutate({ reception: last, emergency: true })}>Аварийный вход — клиника узнает</button>
+            onClick={() => void ask('Аварийный вход: клиника получит сообщение. Войти?').then((ok) => ok && enter.mutate({ reception: last, emergency: true }))}>Аварийный вход — клиника узнает</button>
         </div>
       ) : enter.error && <p className="error" role="alert">{enter.error.message}</p>}
     </section>
@@ -315,7 +316,7 @@ function ExportBox({ id }: { id: number }) {
         <div className="duplicate" role="alert">
           <p>{run.error.message}</p>
           <button type="button" className="btn danger" disabled={run.isPending}
-            onClick={() => window.confirm('Аварийная выгрузка: клиника получит сообщение. Выгрузить?') && run.mutate({ emergency: true })}>Аварийная выгрузка — клиника узнает</button>
+            onClick={() => void ask('Аварийная выгрузка: клиника получит сообщение. Выгрузить?').then((ok) => ok && run.mutate({ emergency: true }))}>Аварийная выгрузка — клиника узнает</button>
         </div>
       ) : run.error && <p className="error" role="alert">{run.error.message}</p>}
       <button type="button" className="btn" disabled={run.isPending} onClick={() => run.mutate({})}>Выгрузить данные клиники — в бот</button>

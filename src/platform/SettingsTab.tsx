@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, upload, webTariffs, type Schemas } from '../api/client'
@@ -171,7 +172,7 @@ function PayForm({ st }: { st: PaySettings }) {
         <label className="btn">{st.hasQr ? 'Заменить QR' : 'Загрузить QR'}
           <input type="file" className="sr-only" accept="image/jpeg,image/png" aria-label="QR для оплаты"
             onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) addQr.mutate(file) }} /></label>
-        {st.hasQr && <button type="button" className="btn ghost" disabled={dropQr.isPending} onClick={() => window.confirm('Убрать QR?') && dropQr.mutate()}>Убрать QR</button>}
+        {st.hasQr && <button type="button" className="btn ghost" disabled={dropQr.isPending} onClick={() => void ask('Убрать QR?').then((ok) => ok && dropQr.mutate())}>Убрать QR</button>}
       </div>
       {error && <p className="error" role="alert">{error.fieldErrors.file ?? error.message}</p>}
     </div>
@@ -200,7 +201,7 @@ function Managers() {
             <tr key={m.telegramId}>
               <td className="strong">{m.fullName || `Telegram ${m.telegramId}`}</td>
               <td className="r"><button type="button" className="btn small ghost" disabled={remove.isPending}
-                onClick={() => window.confirm(`Убрать менеджера «${m.fullName ?? m.telegramId}»?`) && remove.mutate(m.telegramId!)}>Убрать</button></td>
+                onClick={() => void ask(`Убрать менеджера «${m.fullName ?? m.telegramId}»?`).then((ok) => ok && remove.mutate(m.telegramId!))}>Убрать</button></td>
             </tr>
           ))}</tbody>
         </table>

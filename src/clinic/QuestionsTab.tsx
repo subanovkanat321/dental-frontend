@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { Fragment, useCallback, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -157,7 +158,7 @@ function QuestionPanel({ question: q, onClose }: { question: Question; onClose: 
           <p className="hint">{q.answers ? `Пациенты уже ответили (${q.answers}) — вопрос можно только скрыть: снимите «Показывать в анкете».`
             : 'Вопрос ещё никто не заполнял — его можно удалить.'}</p>
           {!q.answers && <button type="button" className="btn danger" disabled={remove.isPending}
-            onClick={() => window.confirm(`Удалить вопрос «${q.title}»?`) && remove.mutate()}>Удалить вопрос</button>}
+            onClick={() => void ask(`Удалить вопрос «${q.title}»?`).then((ok) => ok && remove.mutate())}>Удалить вопрос</button>}
           {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
         </div>
       )}

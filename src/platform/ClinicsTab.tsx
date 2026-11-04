@@ -1,4 +1,5 @@
 import { CITIES } from '../lib/clinicSearch'
+import { ask } from '../lib/confirm'
 import { Select } from '../layout/Select'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState, type ReactNode } from 'react'
@@ -216,7 +217,7 @@ function Application({ a, onApproved }: { a: Schemas['ClinicApplicationsApplicat
       {a.message && <span className="hint">{a.message}</span>}
       <div className="actions">
         <button type="button" className="btn primary" disabled={approve.isPending} onClick={() => approve.mutate()}>Одобрить и завести клинику</button>
-        <button type="button" className="btn" disabled={reject.isPending} onClick={() => window.confirm(`Отклонить заявку «${a.clinicName}»?`) && reject.mutate()}>Отклонить</button>
+        <button type="button" className="btn" disabled={reject.isPending} onClick={() => void ask(`Отклонить заявку «${a.clinicName}»?`).then((ok) => ok && reject.mutate())}>Отклонить</button>
       </div>
       {error && <p className="error" role="alert">{error.message}</p>}
     </div>

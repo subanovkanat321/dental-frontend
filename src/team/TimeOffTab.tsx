@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -42,7 +43,7 @@ export function TimeOffTab({ me }: { me: Me }) {
                   {doctors.length > 1 && <td>{t.doctorId ? nameOf(t.doctorId) : 'Все врачи'}</td>}
                   <td className="r">{canDelete(t) && (
                     <button type="button" className="btn small ghost" aria-label={`Удалить: ${t.title}`} disabled={remove.isPending}
-                      onClick={() => window.confirm(`Удалить перерыв «${t.title}»?`) && remove.mutate(t.id!)}>Удалить</button>
+                      onClick={() => void ask(`Удалить перерыв «${t.title}»?`).then((ok) => ok && remove.mutate(t.id!))}>Удалить</button>
                   )}</td>
                 </tr>
               ))}

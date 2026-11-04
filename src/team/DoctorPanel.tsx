@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
@@ -202,7 +203,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
             ? 'Этот врач — и администратор: ведёт «О клинике», врачей, сотрудников, видит выручку клиники.'
             : 'Врач сможет вести клинику вместе с вами: «О клинике», врачи, сотрудники, выручка клиники. Лечить и вести своё расписание он продолжит.'}</p>
           <button type="button" className="btn" disabled={rights.isPending}
-            onClick={() => (!isAdmin || !self || window.confirm('Снять с себя права администратора?')) && rights.mutate()}>
+            onClick={() => void (!isAdmin || !self ? Promise.resolve(true) : ask('Снять с себя права администратора?')).then((ok) => ok && rights.mutate())}>
             {isAdmin ? 'Снять права администратора' : 'Сделать администратором клиники'}</button>
           {rights.error && <p className="error" role="alert">{rights.error.message}</p>}
         </section>
@@ -212,7 +213,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
         <div className="danger-zone">
           <p className="hint">Удалить можно врача без приёмов — например, заведённого для пробы. Ушедшего врача скройте: снимите «Работает».</p>
           <button type="button" className="btn danger" disabled={remove.isPending}
-            onClick={() => window.confirm(`Удалить врача «${d.fullName}»?`) && remove.mutate()}>Удалить врача</button>
+            onClick={() => void ask(`Удалить врача «${d.fullName}»?`).then((ok) => ok && remove.mutate())}>Удалить врача</button>
           {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
         </div>
       )}

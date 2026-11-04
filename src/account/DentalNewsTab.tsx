@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -75,7 +76,7 @@ function Feeds() {
               <td className="strong">{f.title}</td>
               <td className="hint">{f.url} · статей: {f.articles}{f.lastError ? <span className="tone-bad"> · {f.lastError}</span> : null}</td>
               <td className="r"><button type="button" className="btn small ghost" disabled={remove.isPending}
-                onClick={() => window.confirm(`Убрать источник «${f.title}»?`) && remove.mutate(f.id!)}>Убрать</button></td>
+                onClick={() => void ask(`Убрать источник «${f.title}»?`).then((ok) => ok && remove.mutate(f.id!))}>Убрать</button></td>
             </tr>
           ))}</tbody>
         </table>

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -155,7 +156,7 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
       {me.admin && (
         <div className="danger-zone">
           <button type="button" className="btn danger" disabled={remove.isPending}
-            onClick={() => window.confirm(`Удалить «${s.name}» со склада? История тоже пропадёт.`) && remove.mutate()}>Удалить материал</button>
+            onClick={() => void ask(`Удалить «${s.name}» со склада? История тоже пропадёт.`).then((ok) => ok && remove.mutate())}>Удалить материал</button>
           {remove.error && <p className="error">{remove.error.message}</p>}
         </div>
       )}

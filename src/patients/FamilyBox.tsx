@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -77,7 +78,7 @@ export function FamilyBox({ patient, me, onOpenPatient }: { patient: Patient; me
       <div className="actions">
         {!adding && <button type="button" className="link" onClick={() => setAdding(true)}>＋ Добавить родственника</button>}
         {f && <button type="button" className="link" disabled={leave.isPending}
-          onClick={() => window.confirm(`Убрать «${patient.fullName}» из семьи?`) && leave.mutate()}>Убрать из семьи</button>}
+          onClick={() => void ask(`Убрать «${patient.fullName}» из семьи?`).then((ok) => ok && leave.mutate())}>Убрать из семьи</button>}
       </div>
       {adding && <AddRelative patient={patient} onDone={() => { setAdding(false); refresh() }} />}
       {leave.error && <p className="error" role="alert">{errorText(leave.error)}</p>}

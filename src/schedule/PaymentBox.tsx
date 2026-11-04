@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
@@ -233,8 +234,8 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
       body: { amountSom: amount, method, chargeSom: charge, dueOn: !whole && due ? due : undefined, parts },
     })
   }
-  const unmark = () => {
-    if (!window.confirm(`Снять отметку оплаты ${somText(a.paidSom ?? 0)}? Сумма пропадёт из «Кассы» и отчёта.`)) return
+  const unmark = async () => {
+    if (!await ask(`Снять отметку оплаты ${somText(a.paidSom ?? 0)}? Сумма пропадёт из «Кассы» и отчёта.`)) return
     action.mutate({ kind: 'payment', body: { method: a.paymentMethod ?? 'CASH' } })
   }
   const bill = () => {

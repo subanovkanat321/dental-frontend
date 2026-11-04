@@ -215,6 +215,15 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     setPhone(tel.replace(/\D/g, '').slice(-9))
   }
 
+  // «＋ Новый пациент»: что ввели в поиск — подставим (номер — в телефон, иначе — в имя)
+  const startAdding = () => {
+    if (adding) return
+    setAdding(true)
+    const digits = query.replace(/\D/g, '')
+    if (digits.length >= 9) setPhone(digits.slice(-9))
+    else if (query.trim()) setName(query.trim())
+  }
+
   const fieldError = (field: string) =>
     create.error?.fieldErrors[field] ?? createPatient.error?.fieldErrors[field]
   const error = problem
@@ -243,6 +252,13 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
       <form className="form" onSubmit={(e) => void submit(e)} data-advance onKeyDown={advanceOnEnter}>
         <fieldset className="field">
           <legend>Пациент</legend>
+          {/* Два пути явно: уже есть в «Пациентах» — найти; впервые — завести с номером */}
+          {!patient && (
+            <div className="segments patient-mode" role="group" aria-label="Пациент">
+              <button type="button" aria-pressed={!adding} onClick={() => { setAdding(false); createPatient.reset() }}>🔍 Из пациентов</button>
+              <button type="button" aria-pressed={adding} onClick={startAdding}>＋ Новый пациент</button>
+            </div>
+          )}
           {patient ? (
             <div className="chosen">
               <span><strong>{patient.fullName}</strong>{patient.phone && <span className="hint"> · {formatPhone(patient.phone)}</span>}</span>
@@ -274,12 +290,12 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
                   <button type="button" className="btn small" onClick={(e) => void submit(e, true)}>Это другой человек</button>
                 </div>
               )}
-              <button type="button" className="link" onClick={() => { setAdding(false); createPatient.reset() }}>← Найти в списке</button>
             </>
           ) : (
             <>
               <input type="search" aria-label="Найти пациента" placeholder="Имя или номер" value={query} autoFocus
                 onChange={(e) => setQuery(e.target.value)} />
+              {!search && <p className="hint small">Пациент уже был в клинике — начните вводить имя или номер. Впервые — «＋ Новый пациент».</p>}
               {found.data && found.data.length > 0 && (
                 <ul className="found" aria-label="Найденные пациенты">
                   {found.data.map((p) => (
@@ -291,14 +307,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
                   ))}
                 </ul>
               )}
-              {found.data?.length === 0 && <p className="hint small">Не нашли «{search}»</p>}
-              <button type="button" className="link" onClick={() => {
-                setAdding(true)
-                // Ввели номер в поиск — подставим его; имя — в имя
-                const digits = query.replace(/\D/g, '')
-                if (digits.length >= 9) setPhone(digits.slice(-9))
-                else if (query.trim()) setName(query.trim())
-              }}>＋ Новый пациент</button>
+              {found.data?.length === 0 && <p className="hint small">Не нашли «{search}» — значит, пациент новый: «＋ Новый пациент» выше</p>}
               {contactsSupported() && <button type="button" className="link" onClick={() => void pickContact()}>📇 Из контактов телефона</button>}
             </>
           )}

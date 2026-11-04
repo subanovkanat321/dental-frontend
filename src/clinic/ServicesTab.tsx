@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { Fragment, useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -212,7 +213,7 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
       {s && me.admin && (
         <div className="danger-zone">
           <button type="button" className="btn danger" disabled={remove.isPending}
-            onClick={() => window.confirm(`Удалить услугу «${s.name}»?`) && remove.mutate()}>Удалить услугу</button>
+            onClick={() => void ask(`Удалить услугу «${s.name}»?`).then((ok) => ok && remove.mutate())}>Удалить услугу</button>
           {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
         </div>
       )}

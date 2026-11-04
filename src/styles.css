@@ -1612,3 +1612,19 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .files-compact { padding: 12px; }
 .files-compact h2 { display: flex; align-items: baseline; gap: 8px; font-size: 1rem; }
 .files-hide { margin-left: auto; font-size: .85rem; font-weight: 400; }
+
+/* Подтверждение (layout/Confirm): компьютер — окно по центру, телефон — лист снизу */
+.confirm-backdrop { align-items: center; justify-content: center; }
+.confirm { display: grid; gap: 18px; width: min(440px, calc(100vw - 32px)); padding: 22px; border-radius: var(--radius); background: var(--card); color: var(--text); box-shadow: var(--panel-shadow); }
+.confirm p { margin: 0; font-size: 1.02rem; line-height: 1.5; white-space: pre-line; }
+.confirm-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.confirm .btn.danger { background: var(--destructive); border-color: var(--destructive); color: #fff; }
+@media (max-width: 640px) {
+  .confirm-backdrop { align-items: flex-end; }
+  .confirm.sheet { width: 100%; padding: 12px 16px calc(18px + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; animation: sheet-up .2s ease-out; }
+  .confirm.sheet::before { content: ""; justify-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); }
+  .confirm.sheet .confirm-actions { flex-direction: column-reverse; }
+  .confirm.sheet .confirm-actions .btn { width: 100%; min-height: 46px; }
+}
+.patient-mode { margin-bottom: 8px; }
+.patient-mode button { padding-inline: 10px; white-space: nowrap; }

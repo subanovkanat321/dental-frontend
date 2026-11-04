@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, staticJson, unwrap, type Schemas } from '../api/client'
@@ -166,7 +167,7 @@ function PostCard({ post, today, onEdit, onChanged }: { post: Post; today: strin
         ) : <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('plan')}>Вернуть в план</button>}
         <button type="button" className="btn small" onClick={onEdit}>Изменить</button>
         <button type="button" className="btn small danger" disabled={action.isPending}
-          onClick={() => window.confirm(`Удалить «${post.title}» из плана?`) && action.mutate('delete')}>Удалить</button>
+          onClick={() => void ask(`Удалить «${post.title}» из плана?`).then((ok) => ok && action.mutate('delete'))}>Удалить</button>
       </div>
       {action.error && <p className="error" role="alert">{action.error.message}</p>}
     </article>

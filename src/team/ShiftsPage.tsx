@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -247,7 +248,7 @@ function ShiftForm({ editing, people, onDone }: { editing: Editing; people: Pers
           <button type="button" className="btn ghost" onClick={onDone}>Отмена</button>
           {id != null && (
             <button type="button" className="btn danger" disabled={remove.isPending}
-              onClick={() => window.confirm('Удалить эту смену?') && remove.mutate()}>Удалить</button>
+              onClick={() => void ask('Удалить эту смену?').then((ok) => ok && remove.mutate())}>Удалить</button>
           )}
         </div>
       </form>
@@ -274,7 +275,7 @@ function CopyWeek({ monday }: { monday: string }) {
           </Select>
         </label>
         <button type="button" className="btn" disabled={copy.isPending}
-          onClick={() => window.confirm(`Повторить смены недели ${weekLabel(monday)} на ${weeksText(weeks)} вперёд?`) && copy.mutate()}>
+          onClick={() => void ask(`Повторить смены недели ${weekLabel(monday)} на ${weeksText(weeks)} вперёд?`).then((ok) => ok && copy.mutate())}>
           Повторить эту неделю на {weeksText(weeks)}
         </button>
       </div>

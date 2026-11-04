@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
@@ -114,7 +115,7 @@ function PayBox({ pay }: { pay: Pay }) {
         <p className="hint">Разработчики сверят перевод с банком — срок продлится сам, бот пришлёт «оплата получена». Пока проверяем, новые записи работают.</p>
         {cancel.error && <p className="error" role="alert">{cancel.error.message}</p>}
         <button type="button" className="btn" disabled={cancel.isPending}
-          onClick={() => window.confirm('Отменить отправленную оплату?') && cancel.mutate(r.id!)}>Отменить — нажал(а) по ошибке</button>
+          onClick={() => void ask('Отменить отправленную оплату?').then((ok) => ok && cancel.mutate(r.id!))}>Отменить — нажал(а) по ошибке</button>
       </div>
     )
   }

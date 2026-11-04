@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ask } from '../lib/confirm'
 import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -278,7 +279,7 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
               )}
               {!readOnly && (
                 <button type="button" className="btn ghost small" aria-label={`Удалить этап: ${s.title}`}
-                  onClick={() => window.confirm(`Удалить этап «${s.title}»?`) && remove.mutate(s.id!)}>✕</button>
+                  onClick={() => void ask(`Удалить этап «${s.title}»?`).then((ok) => ok && remove.mutate(s.id!))}>✕</button>
               )}
             </li>
             </Fragment>
