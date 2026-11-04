@@ -8,6 +8,7 @@ import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { addDays, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
+import { DateInput } from '../layout/DateInput'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
 import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
@@ -125,11 +126,12 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
       {/* Один день крупно: стрелки — на день назад и вперёд, нажать на дату — календарь, «Сегодня» — назад */}
       <div className="date-bar" role="group" aria-label="День">
         <button type="button" className="date-step" aria-label="Предыдущий день" onClick={() => onDate(addDays(date, -1))}>‹</button>
-        <label className="date-pick">
+        {/* Наш календарь, не системный: невидимая кнопка поверх даты — нажатие по дате открывает его */}
+        <div className="date-pick">
           <span className="date-main">{title.main} <span className="date-caret" aria-hidden="true">▾</span></span>
           <span className="date-sub">{title.sub}</span>
-          <input type="date" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && onDate(e.target.value)} />
-        </label>
+          <DateInput iconOnly required className="date-pick-input" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && onDate(e.target.value)} />
+        </div>
         <button type="button" className="date-step" aria-label="Следующий день" onClick={() => onDate(addDays(date, 1))}>›</button>
         {date !== today && <button type="button" className="btn small date-today" onClick={() => onDate(today)}>Сегодня</button>}
       </div>

@@ -638,7 +638,8 @@ details.agreement-box { max-height: none; }
 .date-bar { display: flex; align-items: center; gap: 6px; padding: 10px 0 8px; }
 .date-step { flex: none; width: 44px; height: 52px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--card); color: var(--text); font: 600 1.6rem/1 var(--display); cursor: pointer; }
 .date-pick { position: relative; flex: 1; min-width: 0; display: grid; justify-items: center; padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--card); color: var(--text); cursor: pointer; }
-.date-pick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.date-pick .date-pick-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.date-pick:has(.date-pick-input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .date-main { font: 600 1.2rem var(--display); }
 .date-sub { font-size: .9rem; color: var(--hint); }
 .btn.date-today { flex: none; min-height: 52px; padding: 0 12px; border-radius: 12px; font-size: .95rem; }

@@ -56,7 +56,11 @@ test('телефон, «Все врачи» — список: приёмы об�
   expect(screen.getAllByRole('button', { name: 'Предыдущий день' })).toHaveLength(1)
   expect(screen.getAllByRole('button', { name: '＋ Новая запись' })).toHaveLength(1)
   expect(screen.getByRole('button', { name: 'Принять сейчас (без записи)' })).toBeInTheDocument()
-  expect(screen.getByLabelText('Выбрать дату')).toBeInTheDocument()
+  // Дата — наш календарь, не системный
+  expect(document.querySelector('input[type=date]')).toBeNull()
+  await userEvent.click(screen.getByRole('button', { name: 'Выбрать дату' }))
+  expect(screen.getByRole('dialog', { name: 'Выбрать дату' })).toBeInTheDocument()
+  await userEvent.keyboard('{Escape}')
   // У каждого врача свой блок: приём Нурлана — в блоке Дастана, не в общем списке
   const dastan = screen.getByRole('region', { name: 'Дастан Т.' })
   expect(within(dastan).getByRole('button', { name: /12:00–12:30, Нурлан К\./ })).toBeInTheDocument()
