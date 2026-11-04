@@ -164,6 +164,11 @@ test('новый пациент с номером, который уже ест�
   await userEvent.type(within(panel).getByLabelText('Телефон'), '555 000 111')
   // Время не подставлено — выбрать в сетке свободного
   await userEvent.click(await within(panel).findByRole('button', { name: '23:00' }))
+  // Выбрали время — фокус на «Записать» (с телефона дальше сам прокрутит к ней)
+  expect(within(panel).getByRole('button', { name: 'Записать' })).toHaveFocus()
+  // Услуга — до времени: от неё длительность, а от длительности — свободное время
+  const service = within(panel).queryByRole('group', { name: 'Услуга' })
+  if (service) expect(service.compareDocumentPosition(within(panel).getByRole('button', { name: '23:00' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
 
   expect(await within(panel).findByText(/Пациент с этим номером уже есть: Айжан Б\./)).toBeInTheDocument()

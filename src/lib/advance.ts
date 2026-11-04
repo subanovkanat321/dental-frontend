@@ -48,3 +48,18 @@ export function advanceOnEnter(e: { key: string; target: EventTarget; preventDef
 export function phoneDigits(example: string): number {
   return example.replace(/\D/g, '').length
 }
+
+/**
+ * Шаг формы без поля ввода (кнопки услуг, сетка времени): выбрали — показать следующий шаг.
+ * Прокручиваем к нему плавно; `focus` — ещё и фокус (кнопке «Записать»: Enter сразу отправит).
+ * Клавиатура телефона при этом не открывается — фокус только на кнопках.
+ */
+export function reveal(el: HTMLElement | null, focus = false) {
+  if (!el) return
+  if (focus) el.focus({ preventScroll: true })
+  // Через кадр: выбор ещё дорисует форму («Приём: 09:00–10:30», новая сетка времени) — иначе
+  // прокрутка считает по старой высоте и не доезжает
+  const go = () => el.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => requestAnimationFrame(go))
+  else go()
+}

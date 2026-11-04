@@ -1,6 +1,6 @@
-import { advanceOnEnter } from '../lib/advance'
+import { advanceOnEnter, reveal } from '../lib/advance'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
@@ -84,6 +84,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const [allServices, setAllServices] = useState(false)
   const [duration, setDuration] = useState(slot.duration ?? 30)
   const [serviceId, setServiceId] = useState<number | ''>('')
+  const timeRef = useRef<HTMLDivElement>(null)
+  const submitRef = useRef<HTMLButtonElement>(null)
   const [comment, setComment] = useState('')
   const [promoCode, setPromoCode] = useState('')
   const promoCodes = usePromoCodes()
@@ -302,6 +304,24 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           )}
         </fieldset>
 
+        {activeServices.length > 0 && (
+          <div className="field"><span>Услуга (необязательно) — длительность подставится сама</span>
+            <div className="price-hints" role="group" aria-label="Услуга">
+              {shownServices.map((sv) => (
+                <button key={sv.id} type="button" className="chip" aria-pressed={sv.id === serviceId} onClick={() => {
+                  const next = sv.id === serviceId ? '' : sv.id!
+                  setServiceId(next)
+                  if (next !== '' && sv.durationMinutes) setDuration(sv.durationMinutes)
+                  // Выбрали услугу — дальше время (на телефоне сам прокрутим к нему)
+                  if (next !== '') reveal(walkIn ? submitRef.current : timeRef.current, walkIn)
+                }}><span aria-hidden="true">{serviceEmoji(sv.name)} </span>{sv.name}<span className="hint"> · {sv.durationMinutes} мин</span></button>
+              ))}
+              {shownServices.length < activeServices.length && (
+                <button type="button" className="chip more" onClick={() => setAllServices(true)}>Ещё {activeServices.length - shownServices.length}…</button>
+              )}
+            </div>
+          </div>
+        )}
         {walkIn ? (
           <div className="row">
             <label className="field"><span>Время</span>
@@ -323,30 +343,14 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
         </label>
 
         {!walkIn && (
-          <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} value={time}
-            onChange={setTime} error={fieldError('startAt') ?? (create.error?.code === 'time-taken' ? create.error.message : null)} />
+          <div ref={timeRef}><TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} value={time}
+            onChange={(t) => { setTime(t); if (t) reveal(submitRef.current, true) }} error={fieldError('startAt') ?? (create.error?.code === 'time-taken' ? create.error.message : null)} /></div>
         )}
         {walkIn && fieldError('startAt') && <p className="error">{fieldError('startAt')}</p>}
 
         <WaitlistCandidates doctorId={doctorId} duration={duration} startAt={startAt} onBooked={onCreated} />
 
 
-        {activeServices.length > 0 && (
-          <div className="field"><span>Услуга (необязательно) — длительность подставится сама</span>
-            <div className="price-hints" role="group" aria-label="Услуга">
-              {shownServices.map((sv) => (
-                <button key={sv.id} type="button" className="chip" aria-pressed={sv.id === serviceId} onClick={() => {
-                  const next = sv.id === serviceId ? '' : sv.id!
-                  setServiceId(next)
-                  if (next !== '' && sv.durationMinutes) setDuration(sv.durationMinutes)
-                }}><span aria-hidden="true">{serviceEmoji(sv.name)} </span>{sv.name}<span className="hint"> · {sv.durationMinutes} мин</span></button>
-              ))}
-              {shownServices.length < activeServices.length && (
-                <button type="button" className="chip more" onClick={() => setAllServices(true)}>Ещё {activeServices.length - shownServices.length}…</button>
-              )}
-            </div>
-          </div>
-        )}
         <label className="field">
           <span>Комментарий (необязательно)</span>
           <textarea rows={2} maxLength={500} placeholder="Например: болит справа внизу, придёт с ребёнком" value={comment} onChange={(e) => setComment(e.target.value)} />
@@ -367,7 +371,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           </label>
         )}
         {error && <p className="error" role="alert">{error}</p>}
-        <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Записываем…' : walkIn ? 'Начать приём' : 'Записать'}</button>
+        <button ref={submitRef} type="submit" className="btn primary" disabled={busy}>{busy ? 'Записываем…' : walkIn ? 'Начать приём' : 'Записать'}</button>
       </form>
     </aside>
   )
