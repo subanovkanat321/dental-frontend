@@ -32,6 +32,11 @@ function backend(consent: Schemas['PublicationConsentsView'] = {}, files = FILES
     http.get('*/api/patients/2/teeth', () => HttpResponse.json([])),
     http.get('*/api/patients/2/plan', () => HttpResponse.json([])),
     http.get('*/api/patients/2/files', () => HttpResponse.json(files)),
+    http.post('*/api/patients/2/files', async ({ request }) => {
+      const form = await request.formData()
+      sent.push({ saved: form.get('caption'), kind: form.get('kind') })
+      return HttpResponse.json({ id: 99, kind: 'OTHER', caption: form.get('caption') }, { status: 201 })
+    }),
     http.get('*/api/patients/2/files/:id', ({ params }) => {
       sent.push({ file: Number(params.id) })
       return new HttpResponse(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/jpeg' } })
@@ -156,6 +161,12 @@ test('конструктор: два фото загружены целиком,
   const a = click.mock.contexts[0] as HTMLAnchorElement
   expect(a.download).toMatch(/^do-posle-\d{4}-\d{2}-\d{2}\.png$/)
   expect(within(dialog).getByRole('status')).toHaveTextContent('Картинка скачана')
+  // Копия — в «Снимки и фото» пациента: вышли из приложения и вернулись — собирать заново не нужно
+  await waitFor(() => expect(sent).toContainEqual({ saved: 'До / после · Instagram', kind: 'OTHER' }))
+  await waitFor(() => expect(within(dialog).getByRole('status')).toHaveTextContent('сохранено в «Снимки и фото»'))
+  // Та же картинка второй раз не сохраняется
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Скачать PNG' }))
+  expect(sent.filter((x) => typeof x === 'object' && x !== null && 'saved' in x)).toHaveLength(1)
 
   // Текст для поста: услуга, срок по датам фото, клиника с адресом и телефоном, ссылка на запись, хэштеги — без пациента
   const post = within(dialog).getByRole('region', { name: 'Текст для поста' })
@@ -325,4 +336,13 @@ test('подгонка: улыбки разного размера — одно�
   // Улыбка во весь снимок — масштаб 1, не меньше
   const [whole] = fitSmiles([{ ...before, smile: { x: 0, y: 0, w: 1, h: 1 } }, after])
   expect(whole.zoom).toBe(1)
+})
+
+test('готовая «до / после» в «Снимках и фото»: шаг 3 отмечен, исходными фото она не считается', async () => {
+  const made: Schemas['PatientFilesView'] = { id: 9, kind: 'OTHER', caption: 'До / после · Instagram', takenOn: '2026-11-04', canDelete: true }
+  backend({ scope: 'WITH_FACE', givenAt: '2026-11-03T05:00:00Z' }, [FILES[0]!, made])
+  await openMedical()
+  // Одно настоящее фото + готовая картинка — для новой картинки фото всё ещё мало
+  expect(await screen.findByRole('button', { name: 'Собрать картинку «до / после»' })).toHaveAccessibleDescription('Нужно хотя бы два фото: «до» и «после».')
+  expect(screen.getByText(/готово: 1 — в «Снимках и фото»/)).toBeInTheDocument()
 })

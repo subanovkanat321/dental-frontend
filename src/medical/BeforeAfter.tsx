@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 
-import { api, ApiError, fetchBlob, unwrap, type Schemas } from '../api/client'
+import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
 import { useMe } from '../api/me'
 import { Select } from '../layout/Select'
 import { formatPhone } from '../lib/phone'
@@ -14,6 +14,7 @@ import {
 } from './beforeAfterDraw'
 import { buildPost, durationBetween, POST_STYLES, type PostStyle } from './postText'
 import { Thumb } from './Thumb'
+import { resizePhoto } from './thumb'
 import './beforeAfter.css'
 
 type FileView = Schemas['PatientFilesView']
@@ -34,8 +35,11 @@ function usePostAi() {
  * отдельное от согласия на обработку данных; ставит и снимает врач (и админ), ассистент только
  * видит. Без согласия собрать картинку нельзя.
  */
-export function PublicationBlock({ patientId, files, readOnly }: { patientId: number; files: FileView[]; readOnly: boolean }) {
+export function PublicationBlock({ patientId, files: all, readOnly }: { patientId: number; files: FileView[]; readOnly: boolean }) {
   const client = useQueryClient()
+  // Готовые «до / после» — сами в «Снимках и фото»: исходными фото для новой картинки они не считаются
+  const files = all.filter((f) => !isComposite(f))
+  const made = all.length - files.length
   const consent = useQuery({
     queryKey: ['publication-consent', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/publication-consent', { params: { path: { patientId } } })),
@@ -63,7 +67,7 @@ export function PublicationBlock({ patientId, files, readOnly }: { patientId: nu
       <ol className="ba-steps">
         <li className={files.length >= 2 ? 'done' : undefined}>Загрузите выше фото «до» (перед лечением) и «после» (в конце){files.length >= 2 ? ' ✓' : ''}</li>
         <li className={scope ? 'done' : undefined}>Отметьте согласие пациента на публикацию{scope ? ' ✓' : ''}</li>
-        <li>«Собрать картинку»: выберите фото, пост или сторис, при необходимости закройте глаза — скачайте картинку и скопируйте готовый текст поста</li>
+        <li className={made ? 'done' : undefined}>«Собрать картинку»: выберите фото, пост или сторис, при необходимости закройте глаза — скачайте картинку и скопируйте готовый текст поста{made ? ` ✓ готово: ${made} — в «Снимках и фото» с подписью «${COMPOSITE}»` : ''}</li>
       </ol>
       <p className="hint small">ИИ не меняет фото — только подбирает кадр и пишет текст. Картинка собирается из ваших фото прямо на телефоне.</p>
       <label className="check">
@@ -92,6 +96,12 @@ export function PublicationBlock({ patientId, files, readOnly }: { patientId: nu
       {open && scope && <BeforeAfter patientId={patientId} files={files} scope={scope} onClose={() => setOpen(false)} />}
     </div>
   )
+}
+
+/** Подпись готовой картинки в «Снимках и фото» — по ней её узнаём и не берём исходным фото. */
+const COMPOSITE = 'До / после · Instagram'
+function isComposite(f: FileView): boolean {
+  return f.caption === COMPOSITE
 }
 
 /** Снимок «до» — самое раннее фото, «после» — самое позднее (список с сервера — от новых к старым). */
@@ -258,9 +268,35 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
   })
   // В имени файла — ни имени пациента, ни номера карточки
   const fileName = `do-posle-${todayIn()}.png`
+  // Скачали или поделились — картинка сама сохраняется в «Снимки и фото» пациента: вышли из
+  // приложения и вернулись — она там, собирать заново не нужно. Одна копия на каждую версию картинки
+  const client = useQueryClient()
+  const version = JSON.stringify([ids, shots, design])
+  const savedVersion = useRef<string | null>(null)
+  const keep = async (png: Blob) => {
+    if (savedVersion.current === version) return
+    savedVersion.current = version
+    try {
+      const file = new File([png], fileName, { type: 'image/png' })
+      const form = new FormData()
+      form.append('file', file, fileName)
+      form.append('thumb', await resizePhoto(file, 400, 0.8), 'thumb.jpg')
+      form.append('kind', 'OTHER')
+      form.append('caption', COMPOSITE)
+      form.append('takenOn', todayIn())
+      await upload(`/api/patients/${patientId}/files`, form)
+      void client.invalidateQueries({ queryKey: ['files', patientId] })
+      setStatus((s) => `${s ? `${s} · ` : ''}сохранено в «Снимки и фото»`)
+    }
+    catch {
+      savedVersion.current = null
+      setStatus((s) => `${s ? `${s} · ` : ''}в медкарту не сохранилось — попробуйте ещё раз`)
+    }
+  }
   const download = async () => {
     try {
-      const url = URL.createObjectURL(await blob())
+      const png = await blob()
+      const url = URL.createObjectURL(png)
       const a = document.createElement('a')
       a.href = url
       a.download = fileName
@@ -269,6 +305,7 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
       a.remove()
       setTimeout(() => URL.revokeObjectURL(url), 10_000)
       setStatus('Картинка скачана')
+      void keep(png)
     }
     catch {
       setStatus('Не получилось собрать картинку')
@@ -277,8 +314,10 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
   const canShare = typeof navigator.canShare === 'function'
   const share = async () => {
     try {
-      const file = new File([await blob()], fileName, { type: 'image/png' })
+      const png = await blob()
+      const file = new File([png], fileName, { type: 'image/png' })
       if (!navigator.canShare?.({ files: [file] })) return void download()
+      void keep(png)
       await navigator.share({ files: [file] })
     }
     catch (e) {
@@ -382,7 +421,7 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
           {canShare && <button type="button" className="btn" disabled={!ready} onClick={() => void share()}>Поделиться</button>}
           {status && <span role="status" className="hint">{status}</span>}
         </footer>
-        <p className="hint small">Картинка собирается на этом устройстве и на сервер не сохраняется.</p>
+        <p className="hint small">Картинка собирается на этом устройстве. Скачали или поделились — копия сохранится в «Снимки и фото» пациента (подпись «{COMPOSITE}»), собирать заново не придётся.</p>
       </div>
     </div>,
     document.body,
