@@ -70,7 +70,7 @@ test('«Памятки после процедур»: у какой услуги
 
   await userEvent.click(screen.getByRole('button', { name: '＋ Своя памятка' }))
   const fresh = screen.getByRole('complementary', { name: 'Новая памятка' })
-  expect((within(fresh).getByLabelText('Текст для пациента') as HTMLTextAreaElement).value).toContain('звоните в клинику: {телефон}')
+  expect((within(fresh).getByLabelText('Текст для пациента') as HTMLTextAreaElement).value).toContain('Телефон клиники: {телефон}')
   await userEvent.type(within(fresh).getByLabelText('Название'), 'После брекетов')
   await userEvent.click(within(fresh).getByRole('button', { name: 'Добавить' }))
   expect(await within(list).findByText('📋 После брекетов')).toBeInTheDocument()

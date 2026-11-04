@@ -53,3 +53,16 @@ test('без работающего врача «Показать пациент
   await screen.findByRole('group', { name: 'Требует внимания' })
   expect(screen.queryByRole('region', { name: 'Настройка клиники' })).not.toBeInTheDocument()
 })
+
+test('часы новой клиники уже стоят (пн–сб) — чек-лист показывает какие, чтобы проверили', async () => {
+  const set = { ...clinic, ownHours: true, workStart: '09:00:00', workEnd: '18:00:00',
+    workDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'] } satisfies Schemas['ClinicView']
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, clinic: set })),
+    http.get('*/api/clinic', () => HttpResponse.json(set)),
+    http.get('*/api/service-types', () => HttpResponse.json([])),
+  )
+  renderApp()
+  const card = await screen.findByRole('region', { name: 'Настройка клиники' })
+  await vi.waitFor(() => expect(within(card).getAllByRole('listitem')[0]).toHaveTextContent('✓Часы работы — Пн–Сб, 09:00–18:00 — поменяйте, если работаете иначе'))
+})

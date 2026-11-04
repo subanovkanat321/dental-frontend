@@ -3,8 +3,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { openSettings } from '../lib/route'
 import { clinicRequest } from '../settings/clinicUpdate'
+import { WEEK } from '../team/texts'
 
 type Me = Schemas['BookingViewsMe']
+
+/** «Пн–Сб, 09:00–18:00»: новой клинике часы ставятся сами (пн–сб) — показать, какие, чтобы проверили. */
+function hoursText(c?: Schemas['ClinicView']): string {
+  if (!c?.workDays?.length || !c.workStart || !c.workEnd) return 'Заданы'
+  const on = WEEK.filter(([code]) => c.workDays!.includes(code))
+  const run = on.length > 1 && WEEK.findIndex(([code]) => code === on.at(-1)![0]) - WEEK.findIndex(([code]) => code === on[0]![0]) === on.length - 1
+  const days = on.length === 7 ? 'Без выходных' : run ? `${on[0]![2]}–${on.at(-1)![2]}` : on.map(([, , short]) => short).join(', ')
+  return `${days}, ${c.workStart.slice(0, 5)}–${c.workEnd.slice(0, 5)}`
+}
 
 /**
  * Новая клиника ещё не видна пациентам (V95 бэкенда): админу — что настроить и кнопка «Показать
@@ -29,7 +39,7 @@ export function SetupChecklist({ me }: { me: Me }) {
   const prices = active.some((s) => s.priceSom != null)
   const doctors = (me.doctors ?? []).some((d) => d.active !== false)
   const steps: { done: boolean; title: string; hint: string; item: string }[] = [
-    { done: hours, title: 'Часы работы', hint: hours ? 'Заданы' : 'Сейчас — часы по умолчанию: проверьте дни и время', item: 'hours' },
+    { done: hours, title: 'Часы работы', hint: hours ? `${hoursText(clinic.data)} — поменяйте, если работаете иначе` : 'Сейчас — часы по умолчанию: проверьте дни и время', item: 'hours' },
     { done: prices, title: 'Услуги с ценами', hint: prices ? `Услуг: ${active.length}` : 'Типовой список без цен: уберите лишнее, поставьте цены', item: 'services' },
     { done: doctors, title: 'Врачи', hint: doctors ? 'Есть кому записывать' : 'Добавьте хотя бы одного врача', item: 'doctors' },
   ]

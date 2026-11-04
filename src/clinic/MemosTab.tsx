@@ -67,7 +67,7 @@ function MemoPanel({ memo: m, editable, onClose }: { memo?: Memo; editable: bool
   const client = useQueryClient()
   const [form, setForm] = useState({
     title: m?.title ?? '',
-    body: m?.body ?? `• \n\nЕсли боль, отёк или кровотечение усиливаются — звоните в клинику: ${PHONE}. Это общие рекомендации — следуйте указаниям вашего врача.`,
+    body: m?.body ?? `Сегодня:\n• \n\nЭто нормально:\n• \n\nПозвоните, если:\n• \n\nТелефон клиники: ${PHONE}. Это общие советы — если врач сказал иначе, делайте, как сказал врач.`,
     active: m ? m.active !== false : true,
   })
   const { dirty, commit } = useDirty(form)
