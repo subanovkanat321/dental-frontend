@@ -118,8 +118,9 @@ test('заявка клиники: ошибки полей с сервера, п
   )
   const user = userEvent.setup()
   render(<Join />)
-  // Цены пока не показываем — только «первые 3 месяца бесплатно»
-  expect(await screen.findByText(/Первые 3 месяца — бесплатно/)).toBeInTheDocument()
+  // Цены и срок пилота не показываем — только «попробовать бесплатно»
+  expect(await screen.findByText(/Попробовать — бесплатно/)).toBeInTheDocument()
+  expect(screen.queryByText(/месяц[а-я]* — бесплатно/)).not.toBeInTheDocument()
   expect(screen.queryByText('Кабинет')).not.toBeInTheDocument()
   expect(screen.queryByText(/1 490 сом/)).not.toBeInTheDocument()
   const form = screen.getByRole('form', { name: 'Заявка клиники' })
@@ -144,11 +145,11 @@ test('/go: одно действие пациенту, акция ведёт к 
       supportUrl: 'https://t.me/tish_support', supportTelegram: 'tish_support', supportPhones: ['996555000111', '996700222333'],
       supportWhatsapp: '996770444555', botUrl: 'https://t.me/tish_bot',
     } satisfies Links)),
-    http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [], promo: { title: 'Акция запуска: 3 месяца бесплатно', text: '', points: [] } })),
+    http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [], promo: { title: 'Попробуйте бесплатно', text: '', points: [] } })),
   )
   render(<Go />)
   // Акция — часть главной кнопки «Подключить», ведёт сразу к форме заявки
-  expect(await screen.findByRole('link', { name: /Акция запуска: 3 месяца бесплатно/ })).toHaveAttribute('href', '/join#form')
+  expect(await screen.findByRole('link', { name: /Попробуйте бесплатно/ })).toHaveAttribute('href', '/join#form')
   const patients = screen.getByRole('region', { name: 'Пациентам' })
   expect(within(patients).getAllByRole('link')).toHaveLength(1)
   expect(within(patients).getByRole('link', { name: /Записаться к стоматологу/ })).toHaveAttribute('href', '/clinics')

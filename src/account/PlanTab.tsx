@@ -31,7 +31,6 @@ export function PlanTab() {
 
       <section className="card-block">
         <h2>Тарифы</h2>
-        {t?.promo && <p className="tone-ok">{t.promo.title}</p>}
         <div className="tariffs">
           {(t?.tariffs ?? []).map((x) => (
             <div key={x.code} className={x.code === p.tariff?.code ? 'tariff current' : 'tariff'}>
