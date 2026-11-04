@@ -97,6 +97,7 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
               </button>
               <span>{f.caption ?? KINDS.find(([k]) => k === f.kind)?.[1]}</span>
               <span className="hint">{f.takenOn ? shortDate(`${f.takenOn}T12:00:00Z`) : ''}{f.createdBy ? ` · ${f.createdBy}` : ''}</span>
+              {f.postText && <PostTextCopy text={f.postText} />}
               {f.canDelete && (
                 <button type="button" className="link danger-link" onClick={() => window.confirm('Удалить снимок?') && remove.mutate(f.id!)}>Удалить</button>
               )}
@@ -125,5 +126,25 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
       {remove.error && <p className="error">{remove.error.message}</p>}
       {files.data && <PublicationBlock patientId={patientId} files={files.data} readOnly={readOnly} />}
     </section>
+  )
+}
+
+/** Текст поста у готовой «до / после»: скопировать и вставить в Instagram — собирать заново не нужно. */
+function PostTextCopy({ text }: { text: string }) {
+  const [done, setDone] = useState('')
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setDone('скопирован')
+    }
+    catch {
+      setDone('не скопировался — откройте и выделите')
+    }
+  }
+  return (
+    <span className="post-copy">
+      <button type="button" className="link" title={text} onClick={() => void copy()}>📋 Текст поста</button>
+      {done && <span className="hint small" role="status"> {done}</span>}
+    </span>
   )
 }

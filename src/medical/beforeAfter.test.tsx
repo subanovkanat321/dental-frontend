@@ -32,9 +32,13 @@ function backend(consent: Schemas['PublicationConsentsView'] = {}, files = FILES
     http.get('*/api/patients/2/teeth', () => HttpResponse.json([])),
     http.get('*/api/patients/2/plan', () => HttpResponse.json([])),
     http.get('*/api/patients/2/files', () => HttpResponse.json(files)),
+    http.put('*/api/patients/2/files/:id/post-text', async ({ request, params }) => {
+      sent.push({ postText: Number(params.id), text: ((await request.json()) as { text: string }).text })
+      return HttpResponse.json({ id: Number(params.id) })
+    }),
     http.post('*/api/patients/2/files', async ({ request }) => {
       const form = await request.formData()
-      sent.push({ saved: form.get('caption'), kind: form.get('kind') })
+      sent.push({ saved: form.get('caption'), kind: form.get('kind'), hasText: Boolean(form.get('postText')) })
       return HttpResponse.json({ id: 99, kind: 'OTHER', caption: form.get('caption') }, { status: 201 })
     }),
     http.get('*/api/patients/2/files/:id', ({ params }) => {
@@ -162,7 +166,7 @@ test('конструктор: два фото загружены целиком,
   expect(a.download).toMatch(/^do-posle-\d{4}-\d{2}-\d{2}\.png$/)
   expect(within(dialog).getByRole('status')).toHaveTextContent('Картинка скачана')
   // Копия — в «Снимки и фото» пациента: вышли из приложения и вернулись — собирать заново не нужно
-  await waitFor(() => expect(sent).toContainEqual({ saved: 'До / после · Instagram', kind: 'OTHER' }))
+  await waitFor(() => expect(sent).toContainEqual({ saved: 'До / после · Instagram', kind: 'OTHER', hasText: true }))
   await waitFor(() => expect(within(dialog).getByRole('status')).toHaveTextContent('сохранено в «Снимки и фото»'))
   // Та же картинка второй раз не сохраняется
   await userEvent.click(within(dialog).getByRole('button', { name: 'Скачать PNG' }))
@@ -188,6 +192,8 @@ test('конструктор: два фото загружены целиком,
   await userEvent.click(within(post).getByRole('button', { name: 'Скопировать текст' }))
   expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/^✨ Отбеливание[\s\S]*Ждём вас!$/))
   expect(within(post).getByRole('status')).toHaveTextContent('Текст скопирован')
+  // Поправленный текст — и у сохранённой картинки (её id вернул сервер при сохранении)
+  await waitFor(() => expect(sent).toContainEqual({ postText: 99, text: expect.stringMatching(/Ждём вас!$/) }))
 
   await userEvent.click(within(dialog).getByRole('button', { name: 'Закрыть' }))
   expect(screen.queryByRole('dialog', { name: 'До / после' })).not.toBeInTheDocument()
@@ -339,10 +345,17 @@ test('подгонка: улыбки разного размера — одно�
 })
 
 test('готовая «до / после» в «Снимках и фото»: шаг 3 отмечен, исходными фото она не считается', async () => {
-  const made: Schemas['PatientFilesView'] = { id: 9, kind: 'OTHER', caption: 'До / после · Instagram', takenOn: '2026-11-04', canDelete: true }
+  const made: Schemas['PatientFilesView'] = { id: 9, kind: 'OTHER', caption: 'До / после · Instagram', takenOn: '2026-11-04', canDelete: true,
+    postText: 'Отбеливание — до и после. #бишкек' }
   backend({ scope: 'WITH_FACE', givenAt: '2026-11-03T05:00:00Z' }, [FILES[0]!, made])
   await openMedical()
   // Одно настоящее фото + готовая картинка — для новой картинки фото всё ещё мало
   expect(await screen.findByRole('button', { name: 'Собрать картинку «до / после»' })).toHaveAccessibleDescription('Нужно хотя бы два фото: «до» и «после».')
   expect(screen.getByText(/готово: 1 — в «Снимках и фото»/)).toBeInTheDocument()
+  // Текст поста сохранён вместе с картинкой — скопировать одной кнопкой
+  const writeText = vi.fn(async () => {})
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+  await userEvent.click(screen.getByRole('button', { name: '📋 Текст поста' }))
+  expect(writeText).toHaveBeenCalledWith('Отбеливание — до и после. #бишкек')
+  expect(await screen.findByText('скопирован')).toBeInTheDocument()
 })

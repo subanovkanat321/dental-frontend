@@ -1096,6 +1096,51 @@
         }
       }
     },
+    "/api/patients/{patientId}/files/{fileId}/post-text" : {
+      "put" : {
+        "tags" : [ "medical-record-controller" ],
+        "operationId" : "postText",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "fileId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MedicalRecordControllerPostText"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientFilesView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/anamnesis" : {
       "get" : {
         "tags" : [ "medical-record-controller" ],
@@ -4631,6 +4676,13 @@
           "schema" : {
             "type" : "string",
             "format" : "date"
+          }
+        }, {
+          "name" : "postText",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
           }
         } ],
         "requestBody" : {
@@ -10658,6 +10710,49 @@
           }
         }
       },
+      "MedicalRecordControllerPostText" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PatientFilesView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "XRAY", "PHOTO", "OTHER" ]
+          },
+          "caption" : {
+            "type" : "string"
+          },
+          "takenOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "sizeBytes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "createdBy" : {
+            "type" : "string"
+          },
+          "canDelete" : {
+            "type" : "boolean"
+          },
+          "postText" : {
+            "type" : "string"
+          }
+        }
+      },
       "AnamnesisAnswer" : {
         "properties" : {
           "questionId" : {
@@ -12483,39 +12578,6 @@
           },
           "url" : {
             "type" : "string"
-          }
-        }
-      },
-      "PatientFilesView" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "kind" : {
-            "type" : "string",
-            "enum" : [ "XRAY", "PHOTO", "OTHER" ]
-          },
-          "caption" : {
-            "type" : "string"
-          },
-          "takenOn" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "sizeBytes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "createdBy" : {
-            "type" : "string"
-          },
-          "canDelete" : {
-            "type" : "boolean"
           }
         }
       },

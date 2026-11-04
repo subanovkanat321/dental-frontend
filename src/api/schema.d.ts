@@ -356,6 +356,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/files/{fileId}/post-text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["postText"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/anamnesis": {
         parameters: {
             query?: never;
@@ -4801,6 +4817,25 @@ export interface components {
             /** Format: int64 */
             serviceTypeId?: number;
         };
+        MedicalRecordControllerPostText: {
+            text?: string;
+        };
+        PatientFilesView: {
+            /** Format: int64 */
+            id?: number;
+            /** @enum {string} */
+            kind?: "XRAY" | "PHOTO" | "OTHER";
+            caption?: string;
+            /** Format: date */
+            takenOn?: string;
+            /** Format: int32 */
+            sizeBytes?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            createdBy?: string;
+            canDelete?: boolean;
+            postText?: string;
+        };
         AnamnesisAnswer: {
             /** Format: int64 */
             questionId?: number;
@@ -5560,21 +5595,6 @@ export interface components {
             offer?: components["schemas"]["PlanOffersOfferView"];
             text?: string;
             url?: string;
-        };
-        PatientFilesView: {
-            /** Format: int64 */
-            id?: number;
-            /** @enum {string} */
-            kind?: "XRAY" | "PHOTO" | "OTHER";
-            caption?: string;
-            /** Format: date */
-            takenOn?: string;
-            /** Format: int32 */
-            sizeBytes?: number;
-            /** Format: date-time */
-            createdAt?: string;
-            createdBy?: string;
-            canDelete?: boolean;
         };
         BeforeAfterAiTextRequest: {
             procedure?: string;
@@ -7880,6 +7900,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TreatmentStepView"][];
+                };
+            };
+        };
+    };
+    postText: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+                fileId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalRecordControllerPostText"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientFilesView"];
                 };
             };
         };
@@ -10762,6 +10809,7 @@ export interface operations {
                 kind?: "XRAY" | "PHOTO" | "OTHER";
                 caption?: string;
                 takenOn?: string;
+                postText?: string;
             };
             header?: never;
             path: {

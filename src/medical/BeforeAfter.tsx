@@ -273,6 +273,15 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
   const client = useQueryClient()
   const version = JSON.stringify([ids, shots, design])
   const savedVersion = useRef<string | null>(null)
+  // Текст поста — вместе с картинкой (V153); поправили и «Скопировать» — обновляем сохранённый
+  const postText = useRef('')
+  const savedFile = useRef<number | null>(null)
+  const updatePost = (text: string) => {
+    if (savedFile.current == null) return
+    void api.PUT('/api/patients/{patientId}/files/{fileId}/post-text', {
+      params: { path: { patientId, fileId: savedFile.current } }, body: { text },
+    }).then(() => client.invalidateQueries({ queryKey: ['files', patientId] }))
+  }
   const keep = async (png: Blob) => {
     if (savedVersion.current === version) return
     savedVersion.current = version
@@ -284,7 +293,9 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
       form.append('kind', 'OTHER')
       form.append('caption', COMPOSITE)
       form.append('takenOn', todayIn())
-      await upload(`/api/patients/${patientId}/files`, form)
+      if (postText.current.trim()) form.append('postText', postText.current.trim())
+      const saved = await upload<FileView>(`/api/patients/${patientId}/files`, form)
+      savedFile.current = saved.id ?? null
       void client.invalidateQueries({ queryKey: ['files', patientId] })
       setStatus((s) => `${s ? `${s} · ` : ''}сохранено в «Снимки и фото»`)
     }
@@ -415,6 +426,7 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
           </div>
         </div>
         <PostText patientId={patientId} aiOn={aiOn} procedure={design.procedure} duration={duration} onDuration={setDuration}
+          onText={(t) => { postText.current = t }} onCopied={updatePost}
           doctor={design.doctor} clinic={design.clinic} />
         <footer className="actions">
           <button type="button" className="btn primary" disabled={!ready} onClick={() => void download()}>Скачать PNG</button>
@@ -434,8 +446,12 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
  * работа, сроки, врач и клиника (адрес, телефон и ссылку сервер дописывает сам, ИИ их не видит).
  * Текст можно поправить и скопировать.
  */
-function PostText({ patientId, aiOn, procedure, duration, onDuration, doctor, clinic }: {
+function PostText({ patientId, aiOn, procedure, duration, onDuration, doctor, clinic, onText, onCopied }: {
   patientId: number; aiOn: boolean; procedure: string; duration: string; onDuration: (v: string) => void; doctor: string; clinic: string
+  /** Текущий текст — его сохранят вместе с картинкой */
+  onText?: (text: string) => void
+  /** Скопировали — обновить текст у уже сохранённой картинки */
+  onCopied?: (text: string) => void
 }) {
   const me = useMe().data
   const c = me?.clinic
@@ -452,6 +468,7 @@ function PostText({ patientId, aiOn, procedure, duration, onDuration, doctor, cl
     bookingUrl: c?.code ? `${window.location.origin}/c/${c.code}` : null,
   }
   const text = own ?? buildPost(style, facts)
+  useEffect(() => { onText?.(text) }, [text, onText])
   const write = useMutation<Schemas['BeforeAfterAiPostText'], ApiError, string | undefined>({
     mutationFn: (previous) => unwrap(api.POST('/api/patients/{patientId}/before-after/ai-text', {
       params: { path: { patientId } },
@@ -471,6 +488,7 @@ function PostText({ patientId, aiOn, procedure, duration, onDuration, doctor, cl
     try {
       await navigator.clipboard.writeText(text)
       setCopied('Текст скопирован')
+      onCopied?.(text)
     }
     catch {
       setCopied('Не получилось скопировать — выделите текст и скопируйте вручную')
