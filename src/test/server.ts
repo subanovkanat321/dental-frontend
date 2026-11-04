@@ -28,6 +28,9 @@ export const server = setupServer(
   http.get('*/api/appointments/to-pay', () => HttpResponse.json([])),
   // «Мой заработок» — по умолчанию нет (как у админа без кресла): тесты своих экранов не видят лишний чип
   http.get('*/api/me/earnings', () => HttpResponse.json({ status: 403, title: 'Forbidden' }, { status: 403 })),
+  // «Чистыми за месяц»: по умолчанию врач работает за клинику (блока нет), итога по врачам нет
+  http.get('*/api/me/net-month', () => HttpResponse.json({ month: '2026-11' } satisfies Schemas['NetMonthMine'])),
+  http.get('*/api/finance/net-month', () => HttpResponse.json({ status: 403, title: 'Forbidden' }, { status: 403 })),
   http.get('*/api/appointments/report', () => HttpResponse.json([])),
   http.get('*/api/appointments/:id/supplies', () => HttpResponse.json([])),
   http.get('*/api/appointments/:id/supplies/suggested', () => HttpResponse.json([])),

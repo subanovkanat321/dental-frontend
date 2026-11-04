@@ -8419,6 +8419,24 @@
         }
       }
     },
+    "/api/me/net-month" : {
+      "get" : {
+        "tags" : [ "net-month-controller" ],
+        "operationId" : "mine",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NetMonthMine"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
@@ -8430,6 +8448,32 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/EarningsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/finance/net-month" : {
+      "get" : {
+        "tags" : [ "net-month-controller" ],
+        "operationId" : "clinic_2",
+        "parameters" : [ {
+          "name" : "month",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NetMonthReport"
                 }
               }
             }
@@ -8789,7 +8833,7 @@
     "/api/clinic/agreement" : {
       "get" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "clinic_2",
+        "operationId" : "clinic_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15580,6 +15624,146 @@
           },
           "expired" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "NetMonthMine" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "row" : {
+            "$ref" : "#/components/schemas/NetMonthRow"
+          }
+        }
+      },
+      "NetMonthRow" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "selfEmployed" : {
+            "type" : "boolean"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "earnedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rentSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "materialsSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "unpricedMaterials" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "expensesSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorNetSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "sharedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicAfterSharedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "NetMonthReport" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NetMonthRow"
+            }
+          },
+          "total" : {
+            "$ref" : "#/components/schemas/NetMonthRow"
+          },
+          "generalExpensesSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "purchasedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicMaterialsSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "supplySom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "selfEmployedExpensesSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "accruedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rentReceivedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "payoutsSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "otherSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "profitSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },

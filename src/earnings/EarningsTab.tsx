@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { somText } from '../lib/time'
 import { monthName, todayOf, useEarnings, type Earnings } from './earnings'
 import { GoalBar } from './EarningsWidgets'
+import { NetMonthBlock } from './NetMonthBlock'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -34,7 +35,12 @@ export function EarningsTab({ me }: { me: Me }) {
   const q = useEarnings(me)
   if (q.isPending) return <p className="hint">Загрузка…</p>
   if (q.error) return <p className="error">{q.error.message}</p>
-  return <EarningsView e={q.data} />
+  return (
+    <>
+      <EarningsView e={q.data} />
+      <NetMonthBlock me={me} />
+    </>
+  )
 }
 
 function EarningsView({ e }: { e: Earnings }) {

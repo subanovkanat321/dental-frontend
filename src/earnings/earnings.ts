@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { seesOwnEarnings } from '../lib/roles'
+import { somText } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
 export type Earnings = Schemas['EarningsView']
@@ -43,4 +44,12 @@ export function todayOf(e: Earnings): number {
 export function goalShare(e: Earnings): number | null {
   if (!e.goalSom) return null
   return Math.min(1, Math.max(0, (e.monthSom ?? 0) / e.goalSom))
+}
+
+/** «−1 200 сом» / «1 200 сом» — минус, когда сумма ниже нуля. */
+export const signedSom = (som: number) => (som < 0 ? `−${somText(-som)}` : somText(som))
+
+/** Родительный падеж — «у 1 материала», «у 3 материалов», «у 21 материала». */
+export function materialsWord(n: number): string {
+  return n % 10 === 1 && n % 100 !== 11 ? `${n} материала` : `${n} материалов`
 }

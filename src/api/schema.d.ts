@@ -3636,6 +3636,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/net-month": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["mine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/earnings": {
         parameters: {
             query?: never;
@@ -3644,6 +3660,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_6"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/finance/net-month": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["clinic_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3899,7 +3931,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["clinic_2"];
+        get: operations["clinic_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6815,6 +6847,71 @@ export interface components {
             /** Format: date-time */
             expiresAt?: string;
             expired?: boolean;
+        };
+        NetMonthMine: {
+            month?: string;
+            /** Format: date */
+            from?: string;
+            /** Format: date */
+            to?: string;
+            row?: components["schemas"]["NetMonthRow"];
+        };
+        NetMonthRow: {
+            /** Format: int64 */
+            doctorId?: number;
+            doctor?: string;
+            selfEmployed?: boolean;
+            /** Format: int64 */
+            revenueSom?: number;
+            /** Format: int64 */
+            earnedSom?: number;
+            /** Format: int64 */
+            rentSom?: number;
+            /** Format: int64 */
+            materialsSom?: number;
+            /** Format: int32 */
+            unpricedMaterials?: number;
+            /** Format: int64 */
+            expensesSom?: number;
+            /** Format: int64 */
+            doctorNetSom?: number;
+            /** Format: int64 */
+            clinicSom?: number;
+            /** Format: int64 */
+            sharedSom?: number;
+            /** Format: int64 */
+            clinicAfterSharedSom?: number;
+        };
+        NetMonthReport: {
+            month?: string;
+            /** Format: date */
+            from?: string;
+            /** Format: date */
+            to?: string;
+            rows?: components["schemas"]["NetMonthRow"][];
+            total?: components["schemas"]["NetMonthRow"];
+            /** Format: int64 */
+            generalExpensesSom?: number;
+            /** Format: int64 */
+            purchasedSom?: number;
+            /** Format: int64 */
+            clinicMaterialsSom?: number;
+            /** Format: int64 */
+            supplySom?: number;
+            /** Format: int64 */
+            selfEmployedExpensesSom?: number;
+            /** Format: int64 */
+            accruedSom?: number;
+            /** Format: int64 */
+            paidSom?: number;
+            /** Format: int64 */
+            rentReceivedSom?: number;
+            /** Format: int64 */
+            payoutsSom?: number;
+            /** Format: int64 */
+            otherSom?: number;
+            /** Format: int64 */
+            profitSom?: number;
         };
         PaymentQueryDebt: {
             /** Format: int64 */
@@ -13973,6 +14070,26 @@ export interface operations {
             };
         };
     };
+    mine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetMonthMine"];
+                };
+            };
+        };
+    };
     get_6: {
         parameters: {
             query?: never;
@@ -13989,6 +14106,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EarningsView"];
+                };
+            };
+        };
+    };
+    clinic_2: {
+        parameters: {
+            query: {
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetMonthReport"];
                 };
             };
         };
@@ -14304,7 +14443,7 @@ export interface operations {
             };
         };
     };
-    clinic_2: {
+    clinic_3: {
         parameters: {
             query?: never;
             header?: never;

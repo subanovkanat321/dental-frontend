@@ -12,6 +12,7 @@ import { MonthPicker } from '../layout/MonthPicker'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { HBars } from './HBars'
+import { NetMonthTable } from './NetMonthTable'
 
 type Me = Schemas['BookingViewsMe']
 type Expense = Schemas['ExpensesExpense']
@@ -137,6 +138,8 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
         })()}
         {(sp?.unpricedDeliveries ?? 0) > 0 && <p className="tone-wait small">Поставок без суммы: {sp!.unpricedDeliveries} — расходы на склад занижены.</p>}
       </section>
+
+      {seesAll && doctorId == null && <NetMonthTable month={month} />}
 
       <section className="card-block">
         <h2>Добавить расход</h2>
