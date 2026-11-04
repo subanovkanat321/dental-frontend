@@ -7,6 +7,9 @@
 `subanovkanat321/dental` (Spring Boot, REST `/api`), решение — его `docs/adr/0001-web-crm.md`.
 Владелец — Java-разработчик, учится фронтенду; код пишет Claude, объясняя решения. Общение на русском.
 
+Черновик новой задачи «на разбор» (или перед крупной фичей) — сначала скилл `task-review`
+(`.claude/skills/task-review/SKILL.md`, копия из бэкенда `dental`): сверка требований с кодом.
+
 ## Команды
 
 - `npm ci`, `npm run dev` (http://localhost:5173/, нужен бэкенд на :8080 в профиле `local` — тогда
