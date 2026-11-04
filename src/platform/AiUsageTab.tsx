@@ -78,7 +78,7 @@ function ClinicsTable({ rows }: { rows: ClinicRow[] }) {
       <h2>По клиникам</h2>
       <p className="hint small">Действия — удачные запросы к ИИ клиники (без помощника техподдержки); они идут в месячный лимит.
         Тариф — сколько клиника платит в месяц, чтобы видеть маржу.</p>
-      <div style={{ overflowX: 'auto' }}>
+      <div className="table-scroll">
         <table className="table" aria-label="Расход ИИ по клиникам">
           <thead><tr><th>Клиника</th><th className="r">Действий / лимит</th><th className="r">Токены (вход / выход)</th>
             <th className="r">$</th><th className="r">Сом</th><th className="r">Тариф в месяц</th><th /></tr></thead>

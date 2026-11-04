@@ -470,7 +470,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .add-supply select, .add-supply .ui-select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 
 /* Лист ожидания: вкладки «Пациентов», блок в карточке */
-.segments.tabs { min-width: 0; }
+.segments.tabs { min-width: 0; overflow-x: auto; scrollbar-width: thin; } /* много вкладок на узком ноутбуке — прокрутка, а не обрезка */
 .segments.tabs button { padding: 7px 14px; white-space: nowrap; }
 .waitlist-box { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .waitlist-box select, .waitlist-box .ui-select { font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
@@ -771,6 +771,7 @@ tr.clickable:hover td { background: var(--sunken); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme]) { --chart-1: #23A99A; --chart-bad: #D9534F; } }
 .analytics-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 4px; }
 .analytics-filter .segments { min-width: 200px; }
+.analytics-filter .segments button { padding-inline: 12px; white-space: nowrap; }
 .chart h2 { margin-bottom: 4px; }
 .chart-headline { margin: 0 0 10px; font-size: 1.05rem; }
 .chart-headline b { font-size: 1.5rem; }
@@ -1271,6 +1272,9 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .schedule:not(.with-panel) .toolbar.sticky-head { margin-right: -20px; padding-right: 20px; }
   .toolbar.sticky-head.stuck { box-shadow: 0 1px 0 var(--separator), 0 8px 16px -10px rgba(15, 42, 48, .22); }
   .schedule-main .table th { top: var(--head-h, 0px); }
+  /* Таблица в своём блоке прокрутки (.table-scroll): шапка липнет к нему, а не к окну — отступ под
+     шапку раздела сдвинул бы её на строки и закрыл их */
+  .schedule-main .table-scroll .table th { top: 0; }
   /* «Пациенты»: заголовок, вкладки и «Новый пациент» в первой строке, поиск и фильтры — во второй */
   .patients-head .head-action { order: 1; margin-left: auto; }
   .head-filters { order: 2; flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

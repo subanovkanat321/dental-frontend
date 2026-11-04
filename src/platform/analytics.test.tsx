@@ -85,3 +85,21 @@ test('менеджер платформы аналитику не видит', a
 test('CSV для Excel: BOM, «;», кавычки', () => {
   expect(toCsv([['Клиника', 'Сом'], ['«Зуб; и ко»', 990]])).toBe('\uFEFFКлиника;Сом\r\n"«Зуб; и ко»";990')
 })
+
+test('пусто: оплат за год не было — текст вместо пустых столбиков; в воронке после нуля нет «—»', async () => {
+  const empty = report(30)
+  empty.money!.months = empty.money!.months!.map((m) => ({ ...m, paidSom: 0, payments: 0 }))
+  empty.funnel!.steps = [{ key: 'CREATED', clinics: 1 }, { key: 'CONFIGURED', clinics: 0 }, { key: 'FIRST_VISIT', clinics: 1 }]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: true, platform: true })),
+    http.get('*/api/platform/analytics', () => HttpResponse.json(empty)),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  const money = await screen.findByRole('region', { name: 'Оплаты по месяцам' })
+  expect(money).toHaveTextContent('Оплат за год ещё не было.')
+  expect(within(money).queryByRole('img')).not.toBeInTheDocument()
+  expect(screen.getByRole('list', { name: 'Шаги воронки' })).toHaveTextContent('Первый приём1')
+  expect(screen.getByRole('list', { name: 'Шаги воронки' })).not.toHaveTextContent('—')
+})

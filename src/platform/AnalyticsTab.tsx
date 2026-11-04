@@ -228,7 +228,7 @@ function FunnelBlock({ a, period }: { a: Analytics; period: string }) {
               <li key={step.key} title={`${STEPS[step.key ?? '']}: ${n}`}>
                 <span className="hbar-name">{STEPS[step.key ?? '']}</span>
                 <span className="hbar-track" aria-hidden="true"><span className="hbar-fill" style={{ width: `${(n / first) * 100}%` }} /></span>
-                <span className="hbar-value num">{n}{i > 0 && <span className="hint"> · {pct(n, prev)}</span>}</span>
+                <span className="hbar-value num">{n}{i > 0 && prev > 0 && <span className="hint"> · {pct(n, prev)}</span>}</span>
               </li>
             )
           })}
@@ -273,6 +273,7 @@ function MoneyBlock({ a }: { a: Analytics }) {
   return (
     <Block title="Деньги по месяцам" label="Оплаты по месяцам" csv={csv}
       hint="Столбик — сколько клиники заплатили в месяце. MRR — сколько в месяц приносят оплаты, срок которых идёт: годовая оплата — 1/12 в каждый месяц.">
+      {!months.some((x) => x.paidSom) ? <p className="hint">Оплат за год ещё не было.</p> : <>
       <div className="vbars" role="img" aria-label={months.map((x) => `${longMonth(x.month ?? '')}: ${somText(x.paidSom ?? 0)}`).join('; ')}>
         {months.map((x, k) => (
           <button key={x.month} type="button" className={k === picked ? 'vbar picked' : 'vbar'} onClick={() => setPicked(k)}
@@ -285,6 +286,7 @@ function MoneyBlock({ a }: { a: Analytics }) {
       </div>
       {m && <p className="hint small">{longMonth(m.month ?? '')}: оплачено <b className="num">{somText(m.paidSom ?? 0)}</b>
         {m.payments ? ` · оплат ${m.payments}` : ''} · MRR <b className="num">{somText(m.mrrSom ?? 0)}</b> · подписи столбиков — тыс. сом</p>}
+      </>}
     </Block>
   )
 }
