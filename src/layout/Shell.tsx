@@ -8,6 +8,7 @@ import { Icon } from './Icon'
 import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
+import { useFullView } from '../lib/fullView'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -46,12 +47,14 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     : sections.length > MOBILE_MAIN + 1 ? sections.slice(MOBILE_MAIN) : []
   const moreButton = extra.length > 0 && !me.doctor
   const [more, setMore] = useState(false)
+  // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается)
+  const [narrow, toggleNarrow] = useFullView('sidebar-narrow')
   const go = (key: Page) => {
     setMore(false)
     onNavigate(key)
   }
   return (
-    <div className="shell">
+    <div className={narrow ? 'shell narrow' : 'shell'}>
       <aside className="sidebar">
         {/* Логотип — на главную (расписание), как на любом сайте */}
         <button type="button" className="brand" aria-label="На главную — расписание" onClick={() => go('schedule')}>
@@ -65,7 +68,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         <nav aria-label="Разделы">
           {sections.map((s) => (
             <button key={s.key} type="button" className={['nav', s.key === page ? 'active' : '', extra.includes(s) ? 'extra' : ''].join(' ').trim()} data-section={s.key}
-              aria-current={s.key === page ? 'page' : undefined} onClick={() => go(s.key)}>
+              aria-current={s.key === page ? 'page' : undefined} title={narrow ? s.title : undefined} onClick={() => go(s.key)}>
               <Icon name={s.key} /> <span>{s.title}</span>
               {s.key === 'patients' && questions > 0 && (
                 <span className="nav-badge" aria-label={`Вопросов ждут ответа: ${questions}`}>{questions}</span>
@@ -79,8 +82,12 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
             </button>
           )}
         </nav>
+        <button type="button" className="nav sidebar-toggle" aria-expanded={!narrow} onClick={toggleNarrow}
+          title={narrow ? 'Развернуть меню' : 'Свернуть меню'} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}>
+          <span className="sidebar-toggle-ico" aria-hidden="true">{narrow ? '»' : '«'}</span> <span>Свернуть меню</span>
+        </button>
         {!telegram() && (
-          <button type="button" className="nav link-out" onClick={() => void logout()}><Icon name="external" /> <span>Выйти</span></button>
+          <button type="button" className="nav link-out" title={narrow ? 'Выйти' : undefined} onClick={() => void logout()}><Icon name="external" /> <span>Выйти</span></button>
         )}
       </aside>
       {more && (
