@@ -46,3 +46,14 @@ test('вопрос не с глагола — кнопка «Да», обычн�
   const ok = within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Да' })
   expect(ok).toHaveClass('primary')
 })
+
+test('notify — сообщение своим окном с одной кнопкой «Понятно»', async () => {
+  const { notify } = await import('../lib/confirm')
+  let done = false
+  render(<><ConfirmHost /><button type="button" onClick={() => void notify('Запись создана, но в лист ожидания пациент не попал.').then(() => { done = true })}>Действие</button></>)
+  await userEvent.click(screen.getByRole('button', { name: 'Действие' }))
+  const dialog = screen.getByRole('alertdialog')
+  expect(within(dialog).queryByRole('button', { name: 'Отмена' })).toBeNull()
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Понятно' }))
+  await vi.waitFor(() => expect(done).toBe(true))
+})

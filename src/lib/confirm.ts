@@ -7,9 +7,10 @@
  * Кнопка подтверждения — по первому слову вопроса («Удалить …?» → «Удалить»), опасные действия
  * (удалить, убрать, отменить, снять…) — красной.
  */
-export type AskOptions = { ok?: string; danger?: boolean }
+/** single — одна кнопка (сообщение, а не вопрос): «Понятно» */
+export type AskOptions = { ok?: string; danger?: boolean; single?: boolean }
 
-export type Pending = { text: string; ok: string; danger: boolean; resolve: (ok: boolean) => void }
+export type Pending = { text: string; ok: string; danger: boolean; single: boolean; resolve: (ok: boolean) => void }
 
 let current: Pending | null = null
 const listeners = new Set<() => void>()
@@ -25,13 +26,20 @@ function okLabel(text: string): string {
 
 export function ask(text: string, options: AskOptions = {}): Promise<boolean> {
   // Окна нет (отдельная страница, тест одного компонента) — по-старому, системным
-  if (!listeners.size) return Promise.resolve(window.confirm(text))
+  if (!listeners.size) {
+    if (options.single) {
+      window.alert(text)
+      return Promise.resolve(true)
+    }
+    return Promise.resolve(window.confirm(text))
+  }
   current?.resolve(false)
   return new Promise((resolve) => {
     current = {
       text,
       ok: options.ok ?? okLabel(text),
-      danger: options.danger ?? DANGER.test(text.trim()),
+      danger: options.danger ?? (!options.single && DANGER.test(text.trim())),
+      single: options.single ?? false,
       resolve: (ok) => {
         current = null
         emit()
@@ -49,3 +57,8 @@ export const subscribe = (l: () => void) => {
 
 /** Что спрашиваем сейчас (для ConfirmHost). */
 export const pending = () => current
+
+/** Сообщение своим окном вместо системного `window.alert`: одна кнопка «Понятно». */
+export function notify(text: string): Promise<void> {
+  return ask(text, { ok: 'Понятно', single: true }).then(() => undefined)
+}

@@ -242,12 +242,14 @@ function WebVersion() {
   const app = telegram()
   const phone = /^(ios|android)/.test(app?.platform ?? '')
   const [copied, setCopied] = useState(false)
+  const [copyFailed, setCopyFailed] = useState(false)
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
     } catch {
-      window.prompt('Скопируйте ссылку', url)
+      // Буфер обмена закрыт (старый Telegram, нет разрешения) — без системного окна: подсказка у ссылки
+      setCopyFailed(true)
     }
   }
   return (
@@ -262,6 +264,7 @@ function WebVersion() {
         {app && !phone && <button type="button" className="btn" onClick={() => openLink(url)}>Открыть в браузере</button>}
       </div>
       {copied && <p className="tone-ok" role="status">Ссылка скопирована — откройте её в браузере на компьютере</p>}
+      {copyFailed && !copied && <p className="hint" role="status">Скопировать не получилось — нажмите на ссылку выше и удерживайте, затем «Копировать»</p>}
     </div>
   )
 }

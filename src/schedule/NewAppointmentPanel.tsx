@@ -1,4 +1,5 @@
 import { advanceOnEnter, reveal } from '../lib/advance'
+import { notify } from '../lib/confirm'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
@@ -147,7 +148,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
       // Запись уже создана — не проваливаем её, но и не молчим: скажем, что в лист не попал
       if (wantsEarlier) {
         await unwrap(api.POST('/api/waitlist', { body: { patientId: p.id!, doctorId, durationMinutes: duration } })).catch((error: unknown) => {
-          window.alert(`Запись создана, но в лист ожидания пациент не попал${error instanceof Error && error.message ? `: ${error.message}` : ''}.`
+          void notify(`Запись создана, но в лист ожидания пациент не попал${error instanceof Error && error.message ? `: ${error.message}` : ''}.`
             + ' Добавьте его из карточки приёма — «В лист ожидания».')
         })
       }

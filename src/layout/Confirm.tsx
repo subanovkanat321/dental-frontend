@@ -29,7 +29,7 @@ export function ConfirmHost() {
         <p id="confirm-text">{pending.text}</p>
         <div className="confirm-actions">
           {/* «Отменить» рядом с «Отмена» путают — тогда «Не отменять» */}
-          <button type="button" className="btn" onClick={() => pending.resolve(false)}>{/^отмен/i.test(pending.ok) ? 'Не отменять' : 'Отмена'}</button>
+          {!pending.single && <button type="button" className="btn" onClick={() => pending.resolve(false)}>{/^отмен/i.test(pending.ok) ? 'Не отменять' : 'Отмена'}</button>}
           <button ref={okRef} type="button" className={pending.danger ? 'btn danger' : 'btn primary'}
             onClick={() => pending.resolve(true)}>{pending.ok}</button>
         </div>
