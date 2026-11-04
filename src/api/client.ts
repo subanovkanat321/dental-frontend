@@ -200,3 +200,31 @@ export async function staticJson(path: string): Promise<unknown> {
     throw new ApiError(response.status, `Файл ${path} — не JSON`)
   }
 }
+
+/** Отчёт об ошибке в приложении — без данных пациентов: текст, стек, раздел, где открыто. */
+export type ClientErrorReport = {
+  message: string
+  stack: string
+  section: string
+  appVersion: string
+  platform: string
+  userAgent: string
+}
+
+/**
+ * Ошибка в приложении → сервер → владельцу в бот (POST /web/client-error, бэкенд чистит текст от
+ * номеров и имён). Не sendBeacon: он не умеет заголовки, а без X-Dental-Web сервер ответит 403.
+ * keepalive — запрос доживёт, даже если страницу сейчас закроют или перезагрузят. Без входа (ошибка
+ * бывает и до него) и без ответа: не дошло — и ладно, ошибка об ошибке никому не нужна.
+ */
+export function reportClientError(report: ClientErrorReport): void {
+  try {
+    void globalThis.fetch(new Request(new URL('/web/client-error', window.location.origin), {
+      method: 'POST', credentials: 'omit', keepalive: true,
+      headers: { 'X-Dental-Web': '1', 'Content-Type': 'application/json' },
+      body: JSON.stringify(report),
+    })).catch(() => null)
+  } catch {
+    // нет fetch или Request — молчим
+  }
+}

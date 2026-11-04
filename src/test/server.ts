@@ -17,6 +17,8 @@ export const SOURCES: Schemas['PatientSourcesOption'][] = [
  * фоновые запросы полосы «Сегодня» (склад, выручка, касса) и карточки приёма (материалы, услуги): пусто, если тест не задал своё.
  */
 export const server = setupServer(
+  // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
+  http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
   // Уведомления в приложение: по умолчанию на сервере не включены — блок в «Настройках» скрыт
   http.get('*/api/push', () => HttpResponse.json({ enabled: false, channel: 'TELEGRAM', devices: [] })),
