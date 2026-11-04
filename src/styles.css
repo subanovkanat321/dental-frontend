@@ -350,7 +350,9 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
   /* iPhone: «резинка» в конце страницы тянула всю страницу — нижнее меню уезжало вверх, а под ним
      просвечивал список. Резинку у страницы выключаем (у прокручиваемых блоков она своя), а фон меню
      продлеваем вниз — даже если старый iOS всё же потянет, под меню будет его фон, а не контент */
-  html, body { overscroll-behavior-y: none; }
+  /* Только на html: на body (и на html, и на body вместе) iPhone в установленном на экран приложении
+     «заклинивал» прокрутку длинных списков — страница переставала листаться вниз */
+  html { overscroll-behavior-y: none; }
   .sidebar::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 120px; background: inherit; }
   .sidebar .brand, .sidebar .clinic, .sidebar .link-out, .nav .soon { display: none; }
   .sidebar nav { display: flex; width: 100%; }
