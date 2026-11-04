@@ -178,3 +178,15 @@ test('промокод уже задан — виден сразу, не под 
   expect(within(panel).getByText('🎟 OSEN5')).toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: /^Ещё:/ })).not.toHaveAccessibleName(/промокод/)
 })
+
+test('снимки и фото — прямо из карточки приёма: свёрнуто, раскрыть — загрузка и «до / после»', async () => {
+  backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1, status: 'DONE' }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  await userEvent.click(await within(panel).findByRole('button', { name: /Снимки и фото — загрузить/ }))
+  const files = within(panel).getByRole('region', { name: 'Снимки и фото' })
+  expect(within(files).getByLabelText('Файлы снимков')).toBeInTheDocument()
+  // В приёме по умолчанию — «Фото»
+  expect(within(files).getByRole('button', { name: 'Фото' })).toHaveAttribute('aria-pressed', 'true')
+  expect(await within(files).findByText('Картинка «до / после» для Instagram')).toBeInTheDocument()
+})

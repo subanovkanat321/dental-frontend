@@ -5,6 +5,7 @@ import { SourceLine } from '../patients/SourceLine'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlerts } from '../medical/Anamnesis'
+import { PatientFiles } from '../medical/PatientFiles'
 import { WaitlistBox } from '../patients/WaitlistTab'
 import { agoText } from '../lib/texts'
 import { bookedByText } from '../lib/relations'
@@ -277,6 +278,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {/* Материалы и заметка — у приёма, который идёт или был (как в приложении) */}
           {visitTools && <Supplies appointment={a} me={me} />}
           {(visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} />}
+          {/* Снимки и фото — прямо из приёма (свёрнуто): сфотографировать, загрузить, «до / после» */}
+          {visitTools && clinical && a.patient?.id != null && (
+            <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
+          )}
           {a.status === 'SCHEDULED' && started && !visitTools && (
             <p className="hint small">Заметка, материалы и диктовка появятся к началу приёма.{' '}
               <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>

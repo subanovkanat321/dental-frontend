@@ -1597,3 +1597,8 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .help-fab { right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); min-height: 40px; padding: 0 12px; }
   .help-fab-text { display: none; }
 }
+/* «Снимки и фото» в карточке приёма: свёрнуто под кнопкой, раскрытое — компактнее, чем в медкарте */
+.files-toggle { justify-self: stretch; }
+.files-compact { padding: 12px; }
+.files-compact h2 { display: flex; align-items: baseline; gap: 8px; font-size: 1rem; }
+.files-hide { margin-left: auto; font-size: .85rem; font-weight: 400; }

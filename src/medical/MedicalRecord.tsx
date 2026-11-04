@@ -1,25 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react'
 
-import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
+import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useBack } from '../lib/back'
-import { shortDate, somText, todayIn } from '../lib/time'
+import { shortDate, somText } from '../lib/time'
 import { AnamnesisBlock } from './Anamnesis'
 import { PlanDocs } from '../print/PlanDocs'
 import { stagesOf } from '../lib/planStages'
-import { resizePhoto } from './thumb'
-import { EmptyState } from '../layout/EmptyState'
-import { DateInput } from '../layout/DateInput'
 import { TOOTH_STATES, type ToothState } from './toothStates'
-import { PublicationBlock } from './BeforeAfter'
-import { Thumb } from './Thumb'
+import { PatientFiles } from './PatientFiles'
 import { Select } from '../layout/Select'
 
 type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
 type State = ToothState
-type FileView = Schemas['PatientFilesView']
-type Kind = NonNullable<FileView['kind']>
 
 /**
  * Зубы по FDI так, как врач смотрит на пациента: сверху верхняя челюсть (правая сторона
@@ -27,8 +21,6 @@ type Kind = NonNullable<FileView['kind']>
  */
 const UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28]
 const LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]
-
-const KINDS: [Kind, string][] = [['XRAY', 'Снимок'], ['PHOTO', 'Фото'], ['OTHER', 'Другое']]
 
 /** 403 — не «нет доступа к CRM», а «не ваш пациент»: медкарту видят врач его приёмов и админ. */
 function denied(error: unknown): string | null {
@@ -70,7 +62,7 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
             onPlan={(tooth) => setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 })} />
           <Plan patient={patient} prefill={planTooth} readOnly={readOnly} />
           <Notes patientId={id} />
-          <Files patientId={id} readOnly={readOnly} />
+          <PatientFiles patientId={id} readOnly={readOnly} />
         </>
       )}
     </section>
@@ -375,97 +367,6 @@ function Notes({ patientId }: { patientId: number }) {
           </li>
         ))}
       </ul>
-    </section>
-  )
-}
-
-function Files({ patientId, readOnly }: { patientId: number; readOnly: boolean }) {
-  const client = useQueryClient()
-  const files = useQuery({
-    queryKey: ['files', patientId],
-    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/files', { params: { path: { patientId } } })),
-  })
-  const [kind, setKind] = useState<Kind>('XRAY')
-  const [caption, setCaption] = useState('')
-  const [takenOn, setTakenOn] = useState(todayIn())
-  const [status, setStatus] = useState('')
-  const input = useRef<HTMLInputElement>(null)
-
-  const send = async (picked: File[]) => {
-    let done = 0
-    for (const file of picked) {
-      setStatus(`Загружаем ${done + 1} из ${picked.length}…`)
-      try {
-        const form = new FormData()
-        form.append('file', await resizePhoto(file, 2560, 0.9), 'image.jpg')
-        form.append('thumb', await resizePhoto(file, 400, 0.8), 'thumb.jpg')
-        form.append('kind', kind)
-        if (caption.trim()) form.append('caption', caption.trim())
-        if (takenOn) form.append('takenOn', takenOn)
-        await upload(`/api/patients/${patientId}/files`, form)
-        done++
-      }
-      catch (e) {
-        setStatus(e instanceof ApiError ? Object.values(e.fieldErrors)[0] ?? e.message : `«${file.name}» — не картинка или не открылась`)
-        break
-      }
-    }
-    if (done === picked.length) {
-      setStatus(`Загружено: ${done}`)
-      setCaption('')
-    }
-    if (input.current) input.current.value = ''
-    void client.invalidateQueries({ queryKey: ['files', patientId] })
-  }
-
-  const remove = useMutation<unknown, ApiError, number>({
-    mutationFn: (fileId) => unwrap(api.DELETE('/api/patients/{patientId}/files/{fileId}', { params: { path: { patientId, fileId } } })),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['files', patientId] }),
-  })
-  const open = async (f: FileView) => {
-    const blob = await fetchBlob(`/api/patients/${patientId}/files/${f.id}`)
-    window.open(URL.createObjectURL(blob), '_blank', 'noopener')
-  }
-
-  return (
-    <section className="card-block">
-      <h2>Снимки и фото{files.data?.length ? <span className="hint"> · {files.data.length}</span> : null}</h2>
-      {files.data?.length ? (
-        <ul className="files">
-          {files.data.map((f) => (
-            <li key={f.id}>
-              <button type="button" className="file" onClick={() => void open(f)} aria-label={`Открыть: ${f.caption ?? KINDS.find(([k]) => k === f.kind)?.[1]}`}>
-                <Thumb path={`/api/patients/${patientId}/files/${f.id}?thumb=true`} alt="" />
-              </button>
-              <span>{f.caption ?? KINDS.find(([k]) => k === f.kind)?.[1]}</span>
-              <span className="hint">{f.takenOn ? shortDate(`${f.takenOn}T12:00:00Z`) : ''}{f.createdBy ? ` · ${f.createdBy}` : ''}</span>
-              {f.canDelete && (
-                <button type="button" className="link danger-link" onClick={() => window.confirm('Удалить снимок?') && remove.mutate(f.id!)}>Удалить</button>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : files.isSuccess ? <EmptyState compact icon="🩻" title="Снимков пока нет." /> : null}
-      <div className="upload">
-        <div className="segments" role="group" aria-label="Что загружаем">
-          {KINDS.map(([k, name]) => <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)}>{name}</button>)}
-        </div>
-        <input aria-label="Подпись" placeholder="Подпись — необязательно" maxLength={200} value={caption} onChange={(e) => setCaption(e.target.value)} />
-        <DateInput aria-label="Дата снимка" value={takenOn} max={todayIn()} onChange={(e) => setTakenOn(e.target.value)} />
-        <label className="btn primary">
-          📷 Сфотографировать
-          <input type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Сфотографировать снимок"
-            onChange={(e) => e.target.files?.length && void send([...e.target.files])} />
-        </label>
-        <label className="btn">
-          ＋ Выбрать файлы
-          <input ref={input} type="file" accept="image/*" multiple className="sr-only" aria-label="Файлы снимков"
-            onChange={(e) => e.target.files?.length && void send([...e.target.files])} />
-        </label>
-      </div>
-      {status && <p role="status" className={status.startsWith('Загружено') ? 'tone-ok' : 'hint'}>{status}</p>}
-      {remove.error && <p className="error">{remove.error.message}</p>}
-      {files.data && <PublicationBlock patientId={patientId} files={files.data} readOnly={readOnly} />}
     </section>
   )
 }
