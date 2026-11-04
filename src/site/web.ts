@@ -40,12 +40,16 @@ export type WebBookingInfo = {
   sources?: Schemas['PatientSourcesChoice'][] | null
   /** Запись в боте — мягкая подсказка «там бот напомнит» */
   telegramUrl?: string | null
+  /** WhatsApp клиники цифрами — «Удобнее в WhatsApp?»; null — не задан */
+  whatsapp?: string | null
 }
 
 /** Заявка принята (WebBookingService.Booked): что показать на экране «Заявка отправлена». */
 export type WebBooked = {
   startAt: string; endAt: string; doctorName: string; serviceName: string; clinicName?: string | null
   address?: string | null; mapUrl?: string | null; phones?: string[] | null; telegramUrl?: string | null
+  /** WhatsApp клиники — «Отправить запись в WhatsApp клиники» с готовым текстом (без имени и телефона) */
+  whatsapp?: string | null
 }
 
 /** Ответ-ошибка открытого адреса (Problem Details): code — для своих слов, errors — под полями. */

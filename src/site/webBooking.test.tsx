@@ -140,3 +140,24 @@ test('каталог: рядом с «Записаться в Telegram» — «�
   expect(await screen.findByRole('link', { name: /Без Telegram — записаться на сайте/ })).toHaveAttribute('href', '/c/abc123#book')
   expect(screen.getAllByRole('link', { name: /записаться на сайте/ })).toHaveLength(1)
 })
+
+test('WhatsApp клиники: в форме «Удобнее в WhatsApp?», после заявки — «Отправить запись в WhatsApp клиники» с готовым текстом без имени и телефона', async () => {
+  window.history.replaceState(null, '', '/c/abc123')
+  backend((body) => HttpResponse.json({
+    startAt: body.startAt as string, endAt: body.startAt as string, doctorName: 'Бакыт Маматов', serviceName: 'Осмотр и консультация',
+    clinicName: 'Улыбка', phones: ['996555000111'], whatsapp: '996700000222',
+  } satisfies WebBooked, { status: 201 }), { ...INFO, whatsapp: '996700000222' })
+  const user = userEvent.setup()
+  await fillForm(user)
+  expect(screen.getByRole('link', { name: 'Написать клинике' }).getAttribute('href')).toMatch(/^https:\/\/wa\.me\/996700000222\?text=/)
+  await user.click(screen.getByRole('checkbox', { name: /ИП Садыкова/ }))
+  await user.click(screen.getByRole('button', { name: 'Записаться' }))
+
+  const done = await screen.findByRole('region', { name: 'Заявка отправлена' })
+  const wa = within(done).getByRole('link', { name: /Отправить запись в WhatsApp клиники/ })
+  const href = wa.getAttribute('href')!
+  expect(href).toMatch(/^https:\/\/wa\.me\/996700000222\?text=/)
+  const text = decodeURIComponent(href.split('text=')[1]!)
+  expect(text).toMatch(/Записался\(-ась\) на сайте: .*в 10:00, врач Бакыт Маматов, Осмотр и консультация/)
+  expect(text).not.toMatch(/Айгуль|700/)
+})

@@ -24,6 +24,11 @@ function url(path: string, code: string | null, params: Record<string, string | 
   return q ? `${path}?${q}` : path
 }
 
+/** Чат WhatsApp клиники с готовым текстом. */
+function waLink(phone: string, text: string): string {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
+}
+
 /** «Позвоните в клинику: …» на языке страницы. */
 function callText(t: T, phones?: string[] | null): string {
   return phones?.length ? t('callClinic', { phone: phones.map((p) => `+${p}`).join(', ') }) : t('contactClinic')
@@ -100,7 +105,8 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
       <section className="web-book" aria-label={t('webTitle')}>
         {back}
         <p role="status">{info.unavailable === 'setting-up' ? t('settingUp') : t('webOff')} {callText(t, info.phones)}</p>
-        <div className="site-actions"><ContactLinks className={null} phones={info.phones} texts={{ call: t('call'), whatsapp: t('writeWhatsapp') }} /></div>
+        <div className="site-actions"><ContactLinks className={null} phones={info.phones} whatsapp={info.whatsapp} waText={t('webWaAsk')}
+          texts={{ call: t('call'), whatsapp: t('writeWhatsapp') }} /></div>
       </section>
     )
   }
@@ -116,7 +122,10 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
           <dt>{t('service')}</dt><dd>{booked.serviceName}</dd>
           {booked.address && <><dt>{t('webAddress')}</dt><dd>{booked.address}{booked.mapUrl && <> · <a href={booked.mapUrl} target="_blank" rel="noopener noreferrer">2ГИС</a></>}</dd></>}
         </dl>
-        <div className="site-actions"><ContactLinks className={null} phones={booked.phones} texts={{ call: t('call'), whatsapp: t('writeWhatsapp') }} /></div>
+        {booked.whatsapp && <p className="hint">{t('webWaSendHint')}</p>}
+        <div className="site-actions"><ContactLinks className={null} phones={booked.phones} whatsapp={booked.whatsapp}
+          waText={t('webWaText', { when: whenAt(lang, booked.startAt), doctor: booked.doctorName, service: booked.serviceName })}
+          texts={{ call: t('call'), whatsapp: t('webWaSend') }} /></div>
         {booked.telegramUrl && <p className="hint">{t('webTgHint')} <a href={booked.telegramUrl} target="_blank" rel="noopener noreferrer">{t('webTgLink')}</a></p>}
         {back}
       </section>
@@ -195,7 +204,8 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
   return (
     <form className="web-book" aria-label={t('webTitle')} noValidate onSubmit={(e) => { e.preventDefault(); void submit() }}>
       {back}
-      <div><h2>{t('webTitle')}</h2><p className="hint">{t('webSub')}</p></div>
+      <div><h2>{t('webTitle')}</h2><p className="hint">{t('webSub')}</p>
+        {info.whatsapp && <p className="hint">{t('webWaPrefer')} <a href={waLink(info.whatsapp, t('webWaAsk'))} target="_blank" rel="noopener noreferrer">{t('webWaPreferLink')}</a></p>}</div>
       {info.doctors.length > 1 && (
         <section className="step">
           <h3 className="step-title">{t('webStepDoctor')}</h3>
