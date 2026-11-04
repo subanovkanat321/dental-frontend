@@ -88,20 +88,11 @@ test('пункт «ИИ-помощник» — только у админист�
   expect(screen.queryByRole('button', { name: /ИИ-помощник/ })).not.toBeInTheDocument()
 })
 
-test('админ клиники видит только «N из M действий» — без токенов и денег', async () => {
+test('лимит ИИ клинике пока не показываем: счётчика «N из M» нет', async () => {
   backend({ available: true, on: true }, { available: true, on: false })
   renderApp()
   openItem('ai')
-  const counter = await screen.findByRole('region', { name: 'ИИ в этом месяце' })
-  expect(counter).toHaveTextContent('ИИ в этом месяце: использовано 120 из 600 действий')
-  expect(counter).not.toHaveTextContent(/\$|сом|токен/)
-})
-
-test('лимит исчерпан — понятно, что делать', async () => {
-  backend({ available: true, on: true }, { available: true, on: false }, me, { month: '2026-11', used: 600, limit: 600 })
-  renderApp()
-  openItem('ai')
-  const counter = await screen.findByRole('region', { name: 'ИИ в этом месяце' })
-  expect(counter).toHaveTextContent('использовано 600 из 600 действий')
-  expect(counter).toHaveTextContent('напишите в поддержку Tish')
+  await screen.findByRole('region', { name: 'ИИ пишет отчёты пациенту' })
+  expect(screen.queryByRole('region', { name: 'ИИ в этом месяце' })).not.toBeInTheDocument()
+  expect(screen.queryByText(/использовано/)).not.toBeInTheDocument()
 })
