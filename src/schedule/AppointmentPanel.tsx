@@ -102,6 +102,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       onSuccess: () => setUndo(opts.undo ? { label: opts.undo, previous } : null),
     })
   }
+  // «Приём состоялся» / «Неявка» по ошибке — приём снова запланирован (сервер не даст, если есть оплата)
+  const reopen = (current: Appointment) => {
+    if (!window.confirm(current.status === 'DONE' ? 'Вернуть приём в запланированные? Отметка «Приём состоялся» снимется.'
+      : 'Вернуть приём в запланированные? Отметка «Неявка» снимется.')) return
+    action.mutate({ kind: 'undo', body: { version: current.version ?? 0, previousStatus: 'SCHEDULED' } })
+  }
   const back = (updated: Appointment) => action.mutate({ kind: 'undo', body: { version: updated.version ?? 0, previousStatus: undo!.previous } },
     { onSuccess: () => setUndo(null) })
   // То же время, что у этого приёма, — если оно ещё не прошло; иначе форма откроется без времени (сетка свободного)
@@ -256,6 +262,14 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
               {a.status === 'DONE' && (
                 <button type="button" className="btn danger" disabled={action.isPending} onClick={() => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' })}>Исправить: неявка</button>
               )}
+              {/* Отметили «состоялся» или «неявку» по ошибке — обратно в запланированные. С оплатой нельзя:
+                  сначала снять её («Оплата» → «Снять отметку оплаты»), иначе разойдутся касса и зарплата */}
+              {(a.status === 'DONE' || a.status === 'NO_SHOW') && (a.status === 'DONE' && seesMoney && (a.paidSom != null || a.chargeSom != null) ? (
+                <p className="hint small">Вернуть в запланированные: сначала «Снять отметку оплаты» в блоке оплаты.</p>
+              ) : (
+                <button type="button" className="btn danger" disabled={action.isPending} onClick={() => reopen(a)}>
+                  Вернуть в запланированные</button>
+              ))}
               {/* Удалить насовсем (ошибочная или тестовая запись) — только админ; для отмены есть «Отменить» */}
               {me.admin && (money.length ? (
                 <p className="hint small">Удалить нельзя: у приёма есть {money.join(', ')}. Ошибочный приём — отмените или исправьте статус.</p>

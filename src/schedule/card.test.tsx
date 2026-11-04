@@ -117,3 +117,21 @@ test('ребёнка записала мама из бота — в карточ
   expect(within(panel).getByText('Записал(а) через бота: Асанова Жылдыз, родитель')).toBeInTheDocument()
   expect(within(panel).queryByText('Запись через бота')).toBeNull()
 })
+
+test('«Приём состоялся» по ошибке — «Вернуть в запланированные»; с оплатой — сначала снять оплату', async () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  const sent = backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1, status: 'DONE' }))
+  const { unmount } = renderApp()
+  const panel = await open(/Бакыт М\./)
+  await userEvent.click(within(panel).getByRole('button', { name: 'Вернуть в запланированные' }))
+  expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
+  expect(sent).toEqual([{ undo: 'SCHEDULED' }])
+  unmount()
+
+  // Оплата уже внесена — кнопки нет, подсказка, что сделать сначала
+  backend(appointment(11, 1, '00:05', 'Айгуль С.', { version: 1, status: 'DONE', paidSom: 3000, paymentMethod: 'CASH' }))
+  renderApp()
+  const paid = await open(/Айгуль С\./)
+  expect(within(paid).queryByRole('button', { name: 'Вернуть в запланированные' })).not.toBeInTheDocument()
+  expect(within(paid).getByText(/сначала «Снять отметку оплаты»/)).toBeInTheDocument()
+})
