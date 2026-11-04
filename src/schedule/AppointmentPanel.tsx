@@ -42,7 +42,7 @@ function dateOf(instant: string): string {
  * напомнить, ответ пациента, перенести, «Приём состоялся», неявка или отмена (с «Вернуть»).
  * Состоялся: оплата, связаться, «Записать на следующий визит», «Исправить: неявка». Неявка:
  * связаться, «Записать снова», «Исправить: приём состоялся». Отменён: «Восстановить». Приём
- * коллеги — только посмотреть и позвонить. Удалить запись — админ. Esc — закрыть.
+ * коллеги — только посмотреть и позвонить. Удалить запись — только владелец Tish. Esc — закрыть.
  */
 type Rare = 'promo' | 'deposit' | 'waitlist'
 const RARE_TEXT: Record<Rare, string> = { promo: 'промокод', deposit: 'предоплата', waitlist: 'лист ожидания' }
@@ -313,8 +313,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
                 <button type="button" className="btn danger" disabled={action.isPending} onClick={() => reopen(a)}>
                   Вернуть в запланированные</button>
               ))}
-              {/* Удалить насовсем (ошибочная или тестовая запись) — только админ; для отмены есть «Отменить» */}
-              {me.admin && (money.length ? (
+              {/* Удалить насовсем (ошибочная или тестовая запись) — только владелец Tish; клиники отменяют */}
+              {me.owner && (money.length ? (
                 <p className="hint small">Удалить нельзя: у приёма есть {money.join(', ')}. Ошибочный приём — отмените или исправьте статус.</p>
               ) : (
                 <button type="button" className="btn danger" disabled={remove.isPending}

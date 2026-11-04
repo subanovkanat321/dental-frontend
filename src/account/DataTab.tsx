@@ -40,7 +40,8 @@ export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
           </div>
         </section>
       )}
-      {me.admin && <ClearAll />}
+      {/* Удалить все приёмы — только владелец Tish (сервер тоже: остальным 403) */}
+      {me.owner && <ClearAll />}
       {me.admin && (
         <section className="card-block">
           <h2>Журнал действий</h2>

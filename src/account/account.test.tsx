@@ -115,10 +115,10 @@ test('врач: только поддержка и конфиденциальн�
   expect(sent!.get('text')).toBe('Сделайте тёмную тему')
 })
 
-test('«Данные» (админ): под выгрузкой — «Удалить все записи»; у работающей клиники — текст сервера (has-records)', async () => {
+test('«Данные» (владелец Tish): под выгрузкой — «Удалить все записи»; у работающей клиники — текст сервера (has-records)', async () => {
   let cleared: unknown = null
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: true })),
     http.get('*/api/clinic/audit', () => HttpResponse.json([])),
     http.post('*/api/appointments/delete-all', async ({ request }) => {
       cleared = await request.json()

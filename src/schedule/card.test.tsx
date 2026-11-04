@@ -58,10 +58,10 @@ test('неявка — «Вернуть» возвращает как было',
   expect(sent).toEqual([{ status: 'NO_SHOW' }, { undo: 'SCHEDULED' }])
 })
 
-test('отменённую запись — «Восстановить»; админ может удалить запись', async () => {
+test('отменённую запись — «Восстановить»; удалить запись может только владелец Tish', async () => {
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   const cancelled = appointment(10, 1, '10:00', 'Бакыт М.', { status: 'CANCELLED', version: 1 })
-  const sent = backend(cancelled)
+  const sent = backend(cancelled, { ...me, owner: true })
   server.use(http.get('*/api/appointments/10', () => HttpResponse.json(cancelled)))
   // Отменённых в сетке нет — открываем кнопкой бота «Открыть приём»
   window.history.replaceState(null, '', '/?appointment=10')
@@ -73,6 +73,14 @@ test('отменённую запись — «Восстановить»; адм
   await vi.waitFor(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
   expect(sent).toEqual([{ status: 'SCHEDULED' }, 'delete'])
   window.history.replaceState(null, '', '/')
+})
+
+test('админ клиники запись не удаляет — только отменяет', async () => {
+  backend(appointment(10, 1, '10:00', 'Бакыт М.'), { ...me, admin: true, owner: false })
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  expect(within(panel).getByRole('button', { name: 'Отменить запись' })).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Удалить запись' })).not.toBeInTheDocument()
 })
 
 test('состоялся: «Записать на следующий визит» — «Новая запись» на того же пациента через неделю', async () => {

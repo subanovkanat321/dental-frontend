@@ -61,7 +61,7 @@ test('удалить приём с оплатой нельзя — подска�
   day([
     appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1, paidSom: 2000, paymentMethod: 'CASH' }),
     appointment(11, 1, '12:00', 'Нурлан К.', { status: 'DONE', version: 1 }),
-  ])
+  ], { ...me, owner: true })
   server.use(http.delete('*/api/appointments/11', () => HttpResponse.json({
     status: 409, code: 'has-records', detail: 'У приёма есть заметка или оплата — отмените его вместо удаления',
   }, { status: 409 })))
