@@ -144,6 +144,7 @@ test('карточка приёма: промокод, который пацие
   renderApp()
   await user.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  await user.click(within(panel).getByRole('button', { name: /^Ещё:.*промокод/ }))
   await user.click(within(panel).getByRole('button', { name: '＋ Промокод' }))
   const form = within(panel).getByRole('form', { name: 'Промокод записи' })
   const field = within(form).getByLabelText('Промокод')

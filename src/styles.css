@@ -1582,3 +1582,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 @media (max-width: 760px) {
   .sidebar-toggle { display: none; }
 }
+/* «Ещё» в карточке приёма: редкое (промокод, предоплата, лист ожидания) — по нажатию */
+.more-link { justify-self: start; color: var(--hint); }
+.rare { display: grid; gap: 8px; padding-top: 4px; border-top: 1px dashed var(--separator); }
+.rare > .link { justify-self: start; }

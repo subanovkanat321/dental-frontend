@@ -159,3 +159,22 @@ test('до начала приёма — без заметки и материа
     vi.useRealTimers()
   }
 })
+
+test('редкое — под «Ещё»: промокод, предоплата, лист ожидания; уже заданный промокод — на виду', async () => {
+  backend(appointment(11, 1, '23:59', 'Айгуль С.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Айгуль С\./)
+  expect(within(panel).queryByRole('button', { name: '＋ Промокод' })).not.toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Попросить предоплату' })).not.toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: /^Ещё:/ }))
+  expect(within(panel).getByRole('button', { name: '＋ Промокод' })).toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: 'Попросить предоплату' })).toBeInTheDocument()
+})
+
+test('промокод уже задан — виден сразу, не под «Ещё»', async () => {
+  backend(appointment(12, 1, '23:59', 'Нурлан К.', { version: 1, promoCode: 'OSEN5' }))
+  renderApp()
+  const panel = await open(/Нурлан К\./)
+  expect(within(panel).getByText('🎟 OSEN5')).toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: /^Ещё:/ })).not.toHaveAccessibleName(/промокод/)
+})

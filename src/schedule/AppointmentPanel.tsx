@@ -42,6 +42,9 @@ function dateOf(instant: string): string {
  * связаться, «Записать снова», «Исправить: приём состоялся». Отменён: «Восстановить». Приём
  * коллеги — только посмотреть и позвонить. Удалить запись — админ. Esc — закрыть.
  */
+type Rare = 'promo' | 'deposit' | 'waitlist'
+const RARE_TEXT: Record<Rare, string> = { promo: 'промокод', deposit: 'предоплата', waitlist: 'лист ожидания' }
+
 export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, onBook, onMedical }: {
   appointment: Appointment
   me: Me
@@ -78,6 +81,14 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const visitTools = a.status === 'DONE' || (a.status === 'SCHEDULED' && started && (inChair || early))
   const future = a.startAt ? new Date(a.startAt) > new Date() : false
   const canEdit = canEditDoctor(me, a.doctorId)
+  // Редкие пункты — под «Ещё», пока их не открыли
+  const [showRare, setShowRare] = useState(false)
+  const active = a.status === 'REQUESTED' || a.status === 'SCHEDULED'
+  const rare = ([
+    canEditDoctor(me, a.doctorId) && a.status !== 'CANCELLED' && !a.promoCode && editing !== 'promo' ? 'promo' : null,
+    active && seesMoneyOf(me, a.doctorId) && !a.depositStatus ? 'deposit' : null,
+    active && future && a.patient ? 'waitlist' : null,
+  ] as const).filter((x): x is Rare => x != null)
   // Аллергия и важное из анкеты — перед лечением, тому, кто видит медкарту (врач приёма, админ)
   // …и ассистенту этого врача (смотрит медкарту, как сервер — ChartService)
   const clinical = seesAllMoney(me) || a.doctorId === me.doctorId
@@ -180,11 +191,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
       )}
       {/* Промокод рекламы: пациент ввёл в боте или назвал по телефону — для отчёта «работает ли промокод» */}
-      {editing === 'promo' ? <PromoEdit appointment={a} onDone={close} /> : a.promoCode ? (
+      {/* Пустой — «＋ Промокод» под «Ещё»: нужен редко */}
+      {editing === 'promo' ? <PromoEdit appointment={a} onDone={close} /> : a.promoCode && (
         <p className="line-edit"><span><span className="hint">Промокод:</span> <b>{`🎟 ${a.promoCode}`}</b></span>
           {canEdit && <button type="button" className="link" onClick={() => setEditing('promo')}>изменить</button>}</p>
-      ) : canEdit && a.status !== 'CANCELLED' && (
-        <button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button>
       )}
 
       {undo && (
@@ -213,10 +223,18 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             ? <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />
             : <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>)}
           {/* Ассистенту деньги не показываем: попросить и отметить предоплату — врач, регистратура, админ */}
-          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && seesMoney && <DepositBox key={a.depositStatus ?? 'none'} appointment={a} />}
-          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && future && a.patient && (
-            <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>
-          )}
+          {/* Предоплату уже попросили — на виду; ещё не просили — под «Ещё» */}
+          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && seesMoney && a.depositStatus && <DepositBox key={a.depositStatus} appointment={a} />}
+          {/* Редкое — под одной ссылкой «Ещё»: промокод, предоплата, лист ожидания */}
+          {rare.length > 0 && (showRare ? (
+            <div className="rare">
+              {rare.includes('promo') && <button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button>}
+              {rare.includes('deposit') && <DepositBox key="none" appointment={a} />}
+              {rare.includes('waitlist') && a.patient && <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>}
+            </div>
+          ) : (
+            <button type="button" className="link more-link" aria-expanded={false} onClick={() => setShowRare(true)}>Ещё: {rare.map((r) => RARE_TEXT[r]).join(', ')} ▾</button>
+          ))}
           {a.status === 'SCHEDULED' && !future && <ContactButtons phone={a.patient?.phone} />}
           {a.status === 'SCHEDULED' && started && (
             <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('DONE')}>Приём состоялся</button>
