@@ -61,7 +61,7 @@ class FakeRecognition {
 async function openPanel() {
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
-  return screen.findByRole('button', { name: '🎤 Надиктовать' })
+  return screen.findByRole('button', { name: '🎤 Надиктовать приём' })
 }
 
 afterEach(() => {
@@ -137,5 +137,5 @@ test('регистратуре кнопки нет: заметка о приём
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   await vi.waitFor(() => expect(screen.queryByText('Заметка о приёме — видят врач и администратор')).not.toBeInTheDocument())
-  expect(screen.queryByRole('button', { name: '🎤 Надиктовать' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '🎤 Надиктовать приём' })).not.toBeInTheDocument()
 })

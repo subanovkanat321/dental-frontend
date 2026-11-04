@@ -201,7 +201,9 @@ export function Dictation({ appointment: a, note, onActive }: {
   if (step === 'idle') {
     return (
       <div className="dictation">
-        <button type="button" className="btn" onClick={start}>🎤 Надиктовать</button>
+        <button type="button" className="btn dictation-start" onClick={start}>🎤 Надиктовать приём</button>
+        <p className="hint small">Скажите своими словами, что сделали и что дальше: «36 — поставили пломбу, 47 — начали лечить каналы,
+          через неделю продолжим». Текст разложится по карте зубов, плану и заметке — проверите и сохраните.</p>
         {saved && <p className="tone-ok small" role="status">{saved}</p>}
       </div>
     )

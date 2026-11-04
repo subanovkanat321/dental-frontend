@@ -407,6 +407,8 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
   const changed = text != null && text.trim() !== (note.data.note ?? '')
   return (
     <>
+    {/* Диктовка — первой: врач говорит, ИИ раскладывает по зубам, плану и заметке */}
+    {a.patient?.id != null && <Dictation appointment={a} note={value} onActive={setDictating} />}
     {!dictating && <form className="form" aria-label="Заметка о приёме" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
       <label className="field"><span>Заметка о приёме — видят врач и администратор</span>
         <textarea rows={3} maxLength={2000} value={value} placeholder="Что сделали, что дальше"
@@ -416,8 +418,6 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
       {save.isSuccess && !changed && <p className="tone-ok small" role="status">Сохранено</p>}
       {save.error && <p className="error" role="alert">{errorText(save.error)}</p>}
     </form>}
-    {/* Врач приёма и админ (заметка открылась — права есть): голос → карта зубов, план, заметка */}
-    {a.patient?.id != null && <Dictation appointment={a} note={value} onActive={setDictating} />}
     </>
   )
 }

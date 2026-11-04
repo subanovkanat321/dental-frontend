@@ -14670,7 +14670,9 @@ export interface operations {
     };
     delete_10: {
         parameters: {
-            query?: never;
+            query?: {
+                force?: boolean;
+            };
             header?: never;
             path: {
                 id: number;

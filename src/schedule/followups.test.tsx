@@ -57,22 +57,34 @@ test('свой приём у врача — форма оплаты есть; у
   expect(within(other).queryByRole('button', { name: 'Попросить предоплату' })).not.toBeInTheDocument()
 })
 
-test('удалить приём с оплатой нельзя — подсказка вместо кнопки; без денег — 409 has-records показывает текст сервера', async () => {
+test('владелец удаляет и приём с оплатой или заметкой — после второго вопроса, что пропадёт (force)', async () => {
   day([
     appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1, paidSom: 2000, paymentMethod: 'CASH' }),
     appointment(11, 1, '12:00', 'Нурлан К.', { status: 'DONE', version: 1 }),
   ], { ...me, owner: true })
-  server.use(http.delete('*/api/appointments/11', () => HttpResponse.json({
-    status: 409, code: 'has-records', detail: 'У приёма есть заметка или оплата — отмените его вместо удаления',
-  }, { status: 409 })))
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  const deleted: string[] = []
+  server.use(http.delete('*/api/appointments/:id', ({ params, request }) => {
+    const force = new URL(request.url).searchParams.get('force') === 'true'
+    deleted.push(`${String(params.id)}:${force}`)
+    // У 11-го есть заметка: без force — 409 has-records
+    if (params.id === '11' && !force) {
+      return HttpResponse.json({ status: 409, code: 'has-records', detail: 'У приёма есть заметка или оплата — отмените его вместо удаления' }, { status: 409 })
+    }
+    return new HttpResponse(null, { status: 204 })
+  }))
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
   renderApp()
+  // С оплатой — сразу вопрос, что пропадёт, и удаление с force
   const paid = await card(/Бакыт М\./)
-  expect(within(paid).queryByRole('button', { name: 'Удалить запись' })).not.toBeInTheDocument()
-  expect(paid).toHaveTextContent(/Удалить нельзя: у приёма есть оплата 2\s000 сом/)
-  const empty = await card(/Нурлан К\./)
-  await userEvent.click(within(empty).getByRole('button', { name: 'Удалить запись' }))
-  expect(await within(empty).findByRole('alert')).toHaveTextContent('отмените его вместо удаления')
+  await userEvent.click(within(paid).getByRole('button', { name: 'Удалить запись' }))
+  expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/У записи есть оплата 2\s000 сом\. Удалить всё вместе с ней\?.*Вернуть нельзя/))
+  await vi.waitFor(() => expect(deleted).toContain('10:true'))
+  // Без денег, но с заметкой: обычный вопрос → 409 → второй вопрос → force
+  const noted = await card(/Нурлан К\./)
+  await userEvent.click(within(noted).getByRole('button', { name: 'Удалить запись' }))
+  await vi.waitFor(() => expect(deleted).toEqual(['10:true', '11:false', '11:true']))
+  expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/заметка о приёме или отметки зубов/))
+  confirm.mockRestore()
 })
 
 test('есть доплаты — «Изменить» оплату не предлагаем', async () => {

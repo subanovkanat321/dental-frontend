@@ -98,8 +98,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     || Boolean(a.doctorId != null && me.assistantOf?.includes(a.doctorId))
   const anamnesis = useAnamnesis(a.patient?.id, clinical && a.status !== 'CANCELLED')
   const length = a.startAt && a.endAt ? (Date.parse(a.endAt) - Date.parse(a.startAt)) / 60_000 : 30
-  const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/appointments/{id}', { params: { path: { id: a.id! } } })),
+  // force — вместе с заметкой и оплатой (только владелец Tish; спрашиваем отдельно, что пропадёт)
+  const remove = useMutation<unknown, ApiError, boolean>({
+    mutationFn: (force) => unwrap(api.DELETE('/api/appointments/{id}', { params: { path: { id: a.id! }, query: { force } } })),
     onSuccess: () => {
       // С записью удаляются её оплата и долг — «Касса» и отчёт тоже перечитываются
       refreshAppointmentData(client)
@@ -117,6 +118,23 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     a.depositStatus === 'RECEIVED' && a.depositSom && !a.paidSom ? `предоплата ${somText(a.depositSom)}` : null,
   ].filter(Boolean)
   const removeQuestion = 'Удалить запись насовсем? Для обычной отмены есть «Отменить запись».'
+  const forceQuestion = (what: string) => `У записи есть ${what}. Удалить всё вместе с ней? Оплаты пропадут из «Кассы» и отчётов, заметка — из медкарты. Вернуть нельзя.`
+  // Владелец Tish: пустую запись — после обычного вопроса; с деньгами или заметкой — после второго,
+  // где сказано, что пропадёт (сервер без force отвечает 409 has-records)
+  const removeAppointment = async () => {
+    if (money.length) {
+      if (await ask(forceQuestion(money.join(', ')), { ok: 'Удалить всё', danger: true })) remove.mutate(true)
+      return
+    }
+    if (!await ask(removeQuestion)) return
+    remove.mutate(false, {
+      onError: (e) => {
+        if (e.code !== 'has-records') return
+        void ask(forceQuestion('заметка о приёме или отметки зубов'), { ok: 'Удалить всё', danger: true })
+          .then((ok) => { if (ok) { remove.reset(); remove.mutate(true) } })
+      },
+    })
+  }
 
   const setStatus = async (status: Status, opts: { question?: string; undo?: string } = {}) => {
     if (opts.question && !await ask(opts.question)) return
@@ -243,6 +261,24 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('DONE')}>Приём состоялся</button>
           )}
 
+          {/* Работа врача — сразу под «Приём состоялся»: диктовка (голос → зубы, план, заметка) и заметка,
+              зубы этого приёма, материалы, снимки. Деньги и «после приёма» — ниже */}
+          {(visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} />}
+          {/* Зубы этого приёма: какой зуб лечили и что сделали — врач приёма и админ отмечают, ассистент видит */}
+          {visitTools && clinical && a.patient?.id != null && (
+            <VisitTeeth appointment={a} readOnly={!(seesAllMoney(me) || (a.doctorId != null && a.doctorId === me.doctorId))} />
+          )}
+          {/* Материалы — у приёма, который идёт или был (как в приложении) */}
+          {visitTools && <Supplies appointment={a} me={me} />}
+          {/* Снимки и фото — прямо из приёма (свёрнуто): сфотографировать, загрузить, «до / после» */}
+          {visitTools && clinical && a.patient?.id != null && (
+            <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
+          )}
+          {a.status === 'SCHEDULED' && started && !visitTools && (
+            <p className="hint small">Заметка, материалы и диктовка появятся к началу приёма.{' '}
+              <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>
+          )}
+
           {a.status === 'CANCELLED' && (
             <>
               {a.depositStatus === 'RECEIVED' && seesMoney && <p className="tone-wait">Предоплата {somText(a.depositSom ?? 0)} получена — верните пациенту или запишите его снова.</p>}
@@ -277,21 +313,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             </>
           )}
 
-          {/* Зубы этого приёма: какой зуб лечили и что сделали — врач приёма и админ отмечают, ассистент видит */}
-          {visitTools && clinical && a.patient?.id != null && (
-            <VisitTeeth appointment={a} readOnly={!(seesAllMoney(me) || (a.doctorId != null && a.doctorId === me.doctorId))} />
-          )}
-          {/* Материалы и заметка — у приёма, который идёт или был (как в приложении) */}
-          {visitTools && <Supplies appointment={a} me={me} />}
-          {(visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} />}
-          {/* Снимки и фото — прямо из приёма (свёрнуто): сфотографировать, загрузить, «до / после» */}
-          {visitTools && clinical && a.patient?.id != null && (
-            <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
-          )}
-          {a.status === 'SCHEDULED' && started && !visitTools && (
-            <p className="hint small">Заметка, материалы и диктовка появятся к началу приёма.{' '}
-              <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>
-          )}
 
           {/* Опасные — одной группой внизу; неявку и отмену можно «Вернуть» */}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED' || a.status === 'DONE' || me.admin) && (
@@ -319,17 +340,14 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
                   Вернуть в запланированные</button>
               ))}
               {/* Удалить насовсем (ошибочная или тестовая запись) — только владелец Tish; клиники отменяют */}
-              {me.owner && (money.length ? (
-                <p className="hint small">Удалить нельзя: у приёма есть {money.join(', ')}. Ошибочный приём — отмените или исправьте статус.</p>
-              ) : (
-                <button type="button" className="btn danger" disabled={remove.isPending}
-                  onClick={() => void ask(removeQuestion).then((ok) => ok && remove.mutate())}>Удалить запись</button>
-              ))}
+              {me.owner && (
+                <button type="button" className="btn danger" disabled={remove.isPending} onClick={() => void removeAppointment()}>Удалить запись</button>
+              )}
             </div>
           )}
         </>
       )}
-      {(action.error ?? remove.error) && <p className="error" role="alert">{(action.error ?? remove.error)!.message}</p>}
+      {(action.error ?? (remove.error?.code === 'has-records' ? null : remove.error)) && <p className="error" role="alert">{(action.error ?? remove.error)!.message}</p>}
     </aside>
     </>
   )

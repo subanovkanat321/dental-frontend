@@ -1646,3 +1646,4 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .visit-formula .quadrant + .quadrant { padding-left: 0; border-left: 0; }
 .visit-formula .teeth { grid-template-columns: repeat(8, minmax(36px, 1fr)); }
 .visit-formula .tooth { min-height: 44px; }
+.dictation-start { width: 100%; }
