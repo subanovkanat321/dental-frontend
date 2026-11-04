@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import type { Declaration } from 'postcss'
 import { defineConfig, type Plugin } from 'vite'
 
 // Бэкенд (subanovkanat321/dental) на ноутбуке: ./mvnw spring-boot:run
@@ -25,11 +26,35 @@ function serviceWorker(): Plugin {
   }
 }
 
+/**
+ * Запасной цвет для старых браузеров: color-mix() — с Chrome 111, а на Windows 7/8.1 последний Chrome —
+ * 109 (у клиник такие компьютеры есть). Без запаса браузер выбрасывает правило целиком: пропадают
+ * цветные фоны строк дня, подсветка выбранного врача, фон предупреждений. Перед каждым правилом с
+ * color-mix(in srgb, A N%, B) ставим то же правило с A (или transparent, если смешивали с прозрачным:
+ * полупрозрачный слой лучше не показать, чем закрыть им расписание). Новый браузер берёт второе
+ * правило — с color-mix, старый — первое.
+ */
+const MIX = /color-mix\(in srgb,\s*([^,()]+(?:\([^()]*\))?)\s+\d+%,\s*([^,()]+(?:\([^()]*\))?)\s*\)/g
+export function colorMixFallback(value: string): string | null {
+  if (!value.includes('color-mix(')) return null
+  const plain = value.replace(MIX, (_m, a: string, b: string) => (b.trim() === 'transparent' ? 'transparent' : a.trim()))
+  return plain.includes('color-mix(') ? null : plain
+}
+const colorMixPostcss = {
+  postcssPlugin: 'tish-color-mix-fallback',
+  Declaration(decl: Declaration) {
+    if (decl.prop.startsWith('--')) return
+    const fallback = colorMixFallback(decl.value)
+    if (fallback != null) decl.cloneBefore({ value: fallback })
+  },
+}
+
 export default defineConfig({
   // Весь фронт — с корня домена (ADR 0002 бэкенда, этап 5): CRM и Mini App — index.html, страницы
   // сайта — site/*.html; nginx раскладывает адреса (deploy/nginx/default.conf.template бэкенда)
   base: '/',
   plugins: [react(), serviceWorker()],
+  css: { postcss: { plugins: [colorMixPostcss] } },
   build: {
     rollupOptions: {
       // CRM и Mini App — index.html; страницы сайта — свои HTML с og:-тегами и лёгкими скриптами
