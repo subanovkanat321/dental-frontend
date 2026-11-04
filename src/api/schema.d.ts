@@ -5509,6 +5509,7 @@ export interface components {
         };
         PlatformControllerName: {
             name?: string;
+            city?: string;
         };
         BillingControllerPaymentRequest: {
             /** Format: date */

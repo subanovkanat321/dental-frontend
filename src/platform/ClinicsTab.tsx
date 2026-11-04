@@ -1,3 +1,5 @@
+import { CITIES } from '../lib/clinicSearch'
+import { Select } from '../layout/Select'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState, type ReactNode } from 'react'
 
@@ -116,10 +118,12 @@ function NewClinic({ onCreated }: { onCreated: (id: number, solo: boolean) => vo
   const client = useQueryClient()
   const [name, setName] = useState('')
   const [solo, setSolo] = useState(false)
+  const [city, setCity] = useState('')
   const create = useMutation<Row, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/clinics', { body: { name } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/clinics', { body: { name, city: city || undefined } })),
     onSuccess: (c) => {
       setName('')
+      setCity('')
       void client.invalidateQueries({ queryKey: ['platform-clinics'] }).then(() => onCreated(c.id!, solo))
     },
   })
@@ -128,6 +132,12 @@ function NewClinic({ onCreated }: { onCreated: (id: number, solo: boolean) => vo
       <h2>Новая клиника или кабинет</h2>
       <form className="form narrow" aria-label="Новая клиника" onSubmit={(e) => { e.preventDefault(); create.mutate() }}>
         <label className="field"><span>Название</span><input value={name} required maxLength={100} placeholder="Стоматология «Улыбка»" onChange={(e) => setName(e.target.value)} /></label>
+        {/* Город — из справочника: клиника сразу видна в каталоге своего города */}
+        <label className="field"><span>Город</span>
+          <Select value={city} onChange={(e) => setCity(e.target.value)}>
+            <option value="">Не указан — клиника выберет в «О клинике»</option>
+            {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </Select></label>
         <label className="check"><input type="checkbox" checked={solo} onChange={(e) => setSolo(e.target.checked)} /> Частный врач — работает один (он и врач, и админ)</label>
         {create.error && <p className="error" role="alert">{create.error.fieldErrors.name ?? create.error.message}</p>}
         <button type="submit" className="btn primary" disabled={create.isPending}>Создать клинику</button>

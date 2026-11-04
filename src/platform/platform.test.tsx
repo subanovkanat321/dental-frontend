@@ -289,3 +289,23 @@ test('«Сведения о платформе»: несколько телеф�
   expect(await within(form).findByRole('status')).toHaveTextContent('Сведения о платформе сохранены')
   expect(saved).toMatchObject({ supportPhones: ['+996 555 000 111', '+996 700 222 333'], supportWhatsapp: '+996 770 444 555' })
 })
+
+test('новая клиника: название и город из справочника', async () => {
+  const sent: unknown[] = []
+  backend([])
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.post('*/api/platform/clinics', async ({ request }) => {
+      sent.push(await request.json())
+      return HttpResponse.json(clinic(5, 'Стоматология Тест'), { status: 201 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const form = await screen.findByRole('form', { name: 'Новая клиника' })
+  await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Стоматология Тест')
+  await user.click(within(form).getByRole('combobox', { name: /Город/ }))
+  await user.click(await screen.findByRole('option', { name: 'Ош' }))
+  await user.click(within(form).getByRole('button', { name: 'Создать клинику' }))
+  await vi.waitFor(() => expect(sent).toEqual([{ name: 'Стоматология Тест', city: 'Ош' }]))
+})
