@@ -17,6 +17,7 @@ import { Notifications } from '../pwa/Notifications'
 const AccountPage = lazy(() => import('../account/AccountPage').then((m) => ({ default: m.AccountPage })))
 const ClinicPage = lazy(() => import('../clinic/ClinicPage').then((m) => ({ default: m.ClinicPage })))
 const TeamPage = lazy(() => import('../team/TeamPage').then((m) => ({ default: m.TeamPage })))
+const ShiftsPage = lazy(() => import('../team/ShiftsPage').then((m) => ({ default: m.ShiftsPage })))
 const HoursPage = lazy(() => import('./HoursPage').then((m) => ({ default: m.HoursPage })))
 const GuidePage = lazy(() => import('./GuidePage').then((m) => ({ default: m.GuidePage })))
 const CalendarPage = lazy(() => import('./CalendarPage').then((m) => ({ default: m.CalendarPage })))
@@ -28,7 +29,7 @@ const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ defa
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'services': '🦷', 'memos': '📋', 'reminder': '🔔', 'doctors': '👩‍⚕️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝', 'ai': '✨' }
+const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'shifts': '🗓', 'services': '🦷', 'memos': '📋', 'reminder': '🔔', 'doctors': '👩‍⚕️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝', 'ai': '✨' }
 
 type Item = {
   key: string
@@ -59,6 +60,8 @@ const GROUPS: [string, Item[]][] = [
   ['Расписание', [
     item('hours', 'Часы работы', 'Часы клиники и каждого врача', all, () => (me, back) => <HoursPage me={me} onBack={back} />),
     item('timeoff', 'Перерывы и выходные', 'Обед, намаз, отпуск, праздники', all, team('timeoff')),
+    // Смены персонала без кресла (админы, регистратура, ассистенты): ставит админ, видят все
+    item('shifts', 'График смен', 'Кто из персонала в какой день на смене', all, () => (_me, back) => <ShiftsPage onBack={back} />),
     // Ассистенту цены не показываем — и пункта «Услуги» у него нет
     item('services', 'Услуги', 'Цены и длительность приёмов', (me) => !isAssistant(me), clinic('services')),
     item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),

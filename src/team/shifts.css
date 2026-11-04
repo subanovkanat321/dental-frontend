@@ -1,0 +1,29 @@
+/* «График смен» (ShiftsPage): неделя персонала — строки сотрудники, колонки дни; телефон — список
+   по дням. Своя строка — мягкая бирюзовая заливка (DESIGN.md: один цвет действия, статус заливкой) */
+.shifts-page { display: grid; gap: 12px; }
+.shifts-page > .hint { margin: 0; }
+.shifts-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.shifts-scroll { overflow-x: auto; }
+.shifts-week { min-width: 760px; table-layout: fixed; }
+.shifts-week th:first-child { width: 180px; }
+.shifts-week td { vertical-align: top; }
+.shifts-week th.today, .shifts-week td.today { background: var(--sunken); }
+.shifts-week tr.mine th, .shifts-week tr.mine td { background: var(--accent-soft); }
+.shift-person { display: grid; gap: 2px; font-weight: 400; }
+.shift-chip { display: block; width: 100%; margin: 0 0 4px; padding: 3px 6px; border: 1px solid var(--separator); border-radius: var(--r-sm);
+  background: var(--card); color: var(--text); font: inherit; font-size: .88rem; text-align: center; white-space: nowrap; }
+button.shift-chip { cursor: pointer; }
+button.shift-chip:hover { border-color: var(--accent); }
+.shift-add { display: block; width: 100%; padding: 2px 0; border: 1px dashed var(--separator); border-radius: var(--r-sm);
+  background: transparent; color: var(--hint); font: inherit; cursor: pointer; opacity: .55; }
+.shift-add:hover, .shift-add:focus-visible { opacity: 1; color: var(--accent); border-color: var(--accent); }
+.shifts-days { display: grid; gap: 10px; }
+.shifts-day h2 { margin: 0; font-size: 1rem; }
+.shifts-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.shifts-day li.mine .shift-line { background: var(--accent-soft); }
+.shift-line { display: grid; gap: 2px; width: 100%; padding: 8px 10px; border: 1px solid var(--separator); border-radius: var(--r-sm);
+  background: var(--card); color: var(--text); font: inherit; text-align: left; }
+button.shift-line { cursor: pointer; }
+.shifts-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.shifts-copy { align-items: end; }
+.on-duty { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; font-size: .9rem; }

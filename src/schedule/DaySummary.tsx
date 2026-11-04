@@ -5,6 +5,7 @@ import { initials } from '../lib/avatars'
 import { statusOf } from './status'
 import type { Earnings } from '../earnings/earnings'
 import { EarningsSummary } from '../earnings/EarningsWidgets'
+import { OnDuty } from '../team/OnDuty'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -87,6 +88,7 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
           <div><dt>Впереди</dt><dd className="num">{isToday ? open.filter((a) => a.startAt! > now).length : open.length}</dd></div>
         </dl>
       </section>
+      <OnDuty date={date} />
 
       <section className="ds-block">
         <h2 className="ds-title">Требует внимания</h2>
