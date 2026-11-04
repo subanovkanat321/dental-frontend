@@ -23,6 +23,7 @@ import { App } from './App'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { startDevLogin, startTelegram, telegram } from './lib/telegram'
 import { startButtonIcons } from './lib/buttonIcons'
+import { startErrorReports } from './lib/clientErrors'
 import { startTableLabels } from './lib/tableLabels'
 import { applyLook } from './lib/theme'
 import { listenInstallPrompt } from './pwa/pwa'
@@ -31,6 +32,8 @@ import './styles.css'
 // Регистратура держит вкладку открытой весь день: вернулись на вкладку — свежие данные
 const queryClient = createQueryClient({ queries: { staleTime: 30_000, refetchOnWindowFocus: true, retry: 1 } })
 
+// Ошибки с устройств врачей — владельцу в бот (без данных пациентов); первым делом, до отрисовки
+startErrorReports()
 startTelegram()
 // «Можно установить» (PWA) браузер присылает один раз и рано — ловим до первой отрисовки
 listenInstallPrompt()

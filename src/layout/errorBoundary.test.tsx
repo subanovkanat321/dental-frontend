@@ -28,3 +28,25 @@ test('после обновления сервера старый кусок к�
   vi.unstubAllGlobals()
   quiet.mockRestore()
 })
+
+test('упал экран — отчёт владельцу: текст ошибки и имя компонента, без props', async () => {
+  const { http, HttpResponse } = await import('msw')
+  const { server } = await import('../test/server')
+  const { resetErrorReports } = await import('../lib/clientErrors')
+  resetErrorReports()
+  const bodies: Record<string, string>[] = []
+  server.use(http.post('*/web/client-error', async ({ request }) => {
+    bodies.push(await request.json() as Record<string, string>)
+    return new HttpResponse(null, { status: 204 })
+  }))
+  const quiet = vi.spyOn(console, 'error').mockImplementation(() => {})
+  function Card({ phone }: { phone: string }): never {
+    throw new Error(phone ? 'карточка сломалась' : 'нет номера')
+  }
+  render(<ErrorBoundary><Card phone="0555 000 111" /></ErrorBoundary>)
+  await vi.waitFor(() => expect(bodies).toHaveLength(1))
+  expect(bodies[0]!.message).toBe('Error: карточка сломалась')
+  expect(bodies[0]!.stack).toContain('in Card')
+  expect(JSON.stringify(bodies)).not.toContain('0555')
+  quiet.mockRestore()
+})

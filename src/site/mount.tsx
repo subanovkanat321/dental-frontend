@@ -11,6 +11,7 @@ import '@fontsource/golos-text/cyrillic-500.css'
 import '@fontsource/golos-text/latin-500.css'
 import '@fontsource/golos-text/cyrillic-600.css'
 import '@fontsource/golos-text/latin-600.css'
+import { startErrorReports } from '../lib/clientErrors'
 import '../styles.css'
 import './site.css'
 
@@ -22,5 +23,7 @@ export function mount(page: ReactNode): void {
   // Всегда светлые, как посты Instagram: в тёмной теме телефона (и во встроенном браузере
   // Instagram) страница была тёмной. data-theme=light отключает тёмные цвета из styles.css
   document.documentElement.dataset.theme = 'light'
+  // Ошибки страницы — владельцу в бот, как у CRM (lib/clientErrors)
+  startErrorReports()
   createRoot(document.getElementById('root')!).render(<StrictMode>{page}</StrictMode>)
 }

@@ -1,5 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
+import { reportError } from '../lib/clientErrors'
+
 const RELOADED = 'crm.reloadedForUpdate'
 
 /** Куска кода старой версии больше нет на сервере (обновили, пока вкладка была открыта). */
@@ -34,7 +36,10 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: u
       return
     }
     // Без данных пациентов: только текст ошибки и где она случилась
-    console.error('Экран упал:', error instanceof Error ? error.message : error, info.componentStack?.split('\n')[1]?.trim())
+    const component = info.componentStack?.split('\n')[1]?.trim()
+    console.error('Экран упал:', error instanceof Error ? error.message : error, component)
+    // Владельцу в бот (lib/clientErrors): только имя компонента, без props
+    reportError(error, { component: component?.replace(/^(in|at)\s+/, '').split(/[\s(@]/)[0] })
   }
 
   render() {
