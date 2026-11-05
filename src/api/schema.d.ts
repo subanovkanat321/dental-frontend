@@ -804,6 +804,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/audit/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["settings_3"];
+        put: operations["saveSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/care-memos/{id}": {
         parameters: {
             query?: never;
@@ -3083,7 +3099,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_3"];
+        get: operations["settings_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4028,6 +4044,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["audit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinic/audit/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["people"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5368,6 +5400,20 @@ export interface components {
             amountSom?: number;
             details?: string;
             hasQr?: boolean;
+        };
+        AuditControllerSettingsChange: {
+            disabled: string[];
+        };
+        AuditControllerSettings: {
+            actions?: components["schemas"]["AuditControllerSettingsItem"][];
+        };
+        AuditControllerSettingsItem: {
+            code?: string;
+            /** @enum {string} */
+            category?: "APPOINTMENTS" | "MONEY" | "STAFF" | "PATIENTS" | "CATALOG" | "SETTINGS" | "OTHER";
+            title?: string;
+            mandatory?: boolean;
+            enabled?: boolean;
         };
         CareMemoControllerMemo: {
             title?: string;
@@ -7217,10 +7263,28 @@ export interface components {
             amountSom?: number;
         };
         AuditLogEntry: {
+            /** Format: int64 */
+            id?: number;
             who?: string;
+            /** Format: int64 */
+            telegramId?: number;
             text?: string;
             /** Format: date-time */
             at?: string;
+            /** @enum {string} */
+            category?: "APPOINTMENTS" | "MONEY" | "STAFF" | "PATIENTS" | "CATALOG" | "SETTINGS" | "OTHER";
+            action?: string;
+        };
+        AuditLogPage: {
+            items?: components["schemas"]["AuditLogEntry"][];
+            next?: string;
+            /** Format: int64 */
+            total?: number;
+        };
+        AuditLogPerson: {
+            /** Format: int64 */
+            telegramId?: number;
+            name?: string;
         };
         AiUsageStoreCounter: {
             month?: string;
@@ -9167,6 +9231,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepositsSettings"];
+                };
+            };
+        };
+    };
+    settings_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditControllerSettings"];
+                };
+            };
+        };
+    };
+    saveSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuditControllerSettingsChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditControllerSettings"];
                 };
             };
         };
@@ -13571,7 +13679,7 @@ export interface operations {
             };
         };
     };
-    settings_3: {
+    settings_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -14847,6 +14955,33 @@ export interface operations {
     };
     audit: {
         parameters: {
+            query?: {
+                who?: number;
+                category?: "APPOINTMENTS" | "MONEY" | "STAFF" | "PATIENTS" | "CATALOG" | "SETTINGS" | "OTHER";
+                from?: string;
+                to?: string;
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogPage"];
+                };
+            };
+        };
+    };
+    people: {
+        parameters: {
             query?: never;
             header?: never;
             path?: never;
@@ -14860,7 +14995,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuditLogEntry"][];
+                    "application/json": components["schemas"]["AuditLogPerson"][];
                 };
             };
         };
