@@ -13,6 +13,7 @@ import {
   boxFrom, clampCrop, drawBeforeAfter, FIT, fitSmiles, FORMATS, frames, inside, placement, toImage,
   type Box, type Design, type Format, type Picture, type Shot,
 } from './beforeAfterDraw'
+import { COMPOSITE, isComposite } from './composite'
 import { buildPost, chatGptUrl, durationBetween, POST_STYLES, type PostStyle } from './postText'
 import { Thumb } from './Thumb'
 import { resizePhoto } from './thumb'
@@ -63,7 +64,7 @@ export function PublicationBlock({ patientId, files: all, readOnly }: { patientI
   if (consent.isPending || consent.isError) return null
   return (
     <div className="publication">
-      <h3>Картинка «до / после» для Instagram</h3>
+      <h4>Собрать картинку «до / после»</h4>
       {/* Как это работает — по шагам, с отметкой сделанного: без ИИ, из ваших же фото */}
       <ol className="ba-steps">
         <li className={files.length >= 2 ? 'done' : undefined}>Загрузите выше фото «до» (перед лечением) и «после» (в конце){files.length >= 2 ? ' ✓' : ''}</li>
@@ -99,11 +100,6 @@ export function PublicationBlock({ patientId, files: all, readOnly }: { patientI
   )
 }
 
-/** Подпись готовой картинки в «Снимках и фото» — по ней её узнаём и не берём исходным фото. */
-const COMPOSITE = 'До / после · Instagram'
-function isComposite(f: FileView): boolean {
-  return f.caption === COMPOSITE
-}
 
 /** Снимок «до» — самое раннее фото, «после» — самое позднее (список с сервера — от новых к старым). */
 function defaults(files: FileView[]): [number, number] {

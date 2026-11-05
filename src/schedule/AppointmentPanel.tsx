@@ -47,8 +47,8 @@ function dateOf(instant: string): string {
  * связаться, «Записать снова», «Исправить: приём состоялся». Отменён: «Восстановить». Приём
  * коллеги — только посмотреть и позвонить. Удалить запись — только владелец Tish. Esc — закрыть.
  */
-type Rare = 'promo' | 'deposit' | 'waitlist'
-const RARE_TEXT: Record<Rare, string> = { promo: 'промокод', deposit: 'предоплата', waitlist: 'лист ожидания' }
+type Rare = 'promo' | 'deposit' | 'waitlist' | 'source'
+const RARE_TEXT: Record<Rare, string> = { promo: 'промокод', deposit: 'предоплата', waitlist: 'лист ожидания', source: 'откуда узнал' }
 
 export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, onBook, onMedical }: {
   appointment: Appointment
@@ -93,6 +93,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     canEditDoctor(me, a.doctorId) && a.status !== 'CANCELLED' && !a.promoCode && editing !== 'promo' ? 'promo' : null,
     active && seesMoneyOf(me, a.doctorId) && !a.depositStatus ? 'deposit' : null,
     active && future && a.patient ? 'waitlist' : null,
+    // Откуда узнал о клинике — тоже под «Ещё»: в шапке занимал много места
+    a.patient?.id != null ? 'source' : null,
   ] as const).filter((x): x is Rare => x != null)
   // Аллергия и важное из анкеты — перед лечением, тому, кто видит медкарту (врач приёма, админ)
   // …и ассистенту этого врача (смотрит медкарту, как сервер — ChartService)
@@ -181,8 +183,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient!.id!)}>{a.patient.fullName} ›</button>
           : <strong className="patient-name">{a.patient?.fullName}</strong>}
         {a.patient?.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
-        {/* Откуда узнал — у врача и регистратуры прямо в приёме: пациент не ответил в боте — отметят здесь */}
-        {a.patient?.id != null && <SourceLine patient={a.patient} canEdit={canEditDoctor(me, a.doctorId)} compact />}
       </section>
       <MedAlerts an={anamnesis.data} compact />
       {/* Пришёл продолжить лечение — что сделали в прошлый раз и что осталось по плану */}
@@ -256,6 +256,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
               {rare.includes('promo') && <button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button>}
               {rare.includes('deposit') && <DepositBox key="none" appointment={a} />}
               {rare.includes('waitlist') && a.patient && <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>}
+              {/* Откуда узнал — пациент не ответил в боте, отметят здесь */}
+              {rare.includes('source') && a.patient?.id != null && <SourceLine patient={a.patient} canEdit={canEdit} compact />}
             </div>
           ) : (
             <button type="button" className="link more-link" aria-expanded={false} onClick={() => setShowRare(true)}>Ещё: {rare.map((r) => RARE_TEXT[r]).join(', ')} ▾</button>

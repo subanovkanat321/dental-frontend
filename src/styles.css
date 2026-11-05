@@ -1678,3 +1678,9 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 @media (max-width: 640px) { .booked-filters .segments { width: 100%; flex-wrap: nowrap; } .booked-filters .segments button { flex: 1; } }
 .patient-expense-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
 .patient-expense-list li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; }
+
+/* Снимки медкарты и «Для Instagram» — два разных блока */
+.insta-block { display: grid; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line-strong); }
+.insta-block h3 { margin: 0; font-size: 1rem; }
+.publication h4 { margin: 0; font-size: .95rem; }
+.kind-hint { margin: 0; }

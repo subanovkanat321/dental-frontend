@@ -41,9 +41,33 @@ test('контент-план: все картинки лежат в public/cont
   }
 })
 
-test('контент-план: у постов, каруселей и рилсов есть подпись, у сторис — заметка со стикером', () => {
+test('контент-план: у постов и каруселей есть подпись, у сторис — заметка', () => {
   for (const p of plan) {
     if (p.kind === 'STORIES') expect(p.note, `${p.date} «${p.title}»`).not.toBe('')
     else expect(p.caption?.length, `${p.date} «${p.title}»`).toBeGreaterThan(0)
+  }
+})
+
+// С 06.11 всё публикуется кнопкой «Опубликовать в Instagram» целиком: без Reels и без того, что
+// нужно доделывать руками в приложении (опросы, стикеры, ссылки, музыка)
+const AUTO_FROM = '2026-11-06'
+// «(?<![а-яё])опрос» — слово «опрос», а не «вопрос»
+const MANUAL = /(?<![а-яё])опрос|стикер|голосуй|викторин[уа] в сторис|слайдер|ссылк[аеуи] в сторис|музык/iu
+
+test('контент-план с 06.11: только пост, карусель и сторис — всё публикуется кнопкой само', () => {
+  const auto = plan.filter((p) => p.date! >= AUTO_FROM)
+  expect(auto.length).toBeGreaterThanOrEqual(25)
+  expect((auto.at(-1)?.date ?? '') >= '2026-12-06').toBe(true)
+  for (const p of auto) {
+    const where = `${p.date} «${p.title}»`
+    expect(['POST', 'CAROUSEL', 'STORIES'], where).toContain(p.kind)
+    const images = p.images?.length ?? 0
+    if (p.kind === 'POST') expect(images, where).toBe(1)
+    if (p.kind === 'CAROUSEL') expect(images >= 2 && images <= 10, where).toBe(true)
+    if (p.kind === 'STORIES') expect(images, where).toBeGreaterThan(0)
+    // Instagram: подпись до 2200 символов и до 30 хештегов; держим до 10
+    expect(p.caption!.length, where).toBeLessThanOrEqual(2200)
+    expect((p.caption!.match(/#[\p{L}\d_]+/gu) ?? []).length, where).toBeLessThanOrEqual(10)
+    expect(`${p.title} ${p.caption} ${p.note}`, where).not.toMatch(MANUAL)
   }
 })

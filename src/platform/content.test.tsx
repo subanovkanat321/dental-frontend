@@ -91,13 +91,13 @@ test('«Загрузить готовый план»: файл из /content/pla
     http.get('*/content/plan.json', () => (file ? HttpResponse.json(file) : new HttpResponse(null, { status: 404 }))),
     http.post('*/api/platform/content/import', async ({ request }) => {
       imported = await request.json()
-      return HttpResponse.json({ added: plan.length, updated: 0, unchanged: 0 } satisfies Schemas['ContentPostsImported'])
+      return HttpResponse.json({ added: plan.length, updated: 0, unchanged: 0, removed: 3 } satisfies Schemas['ContentPostsImported'])
     }),
   )
   const user = await openTab()
   expect(await screen.findByText(/В этом месяце постов нет/)).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Загрузить готовый план' }))
-  expect(await screen.findByText(`План загружен: добавлено ${plan.length}, обновлено 0, без изменений 0`)).toBeInTheDocument()
+  expect(await screen.findByText(`План загружен: добавлено ${plan.length}, обновлено 0, без изменений 0, убрано из старого плана 3`)).toBeInTheDocument()
   expect(imported).toEqual(plan)
 
   file = null

@@ -5753,6 +5753,8 @@ export interface components {
             updated?: number;
             /** Format: int32 */
             unchanged?: number;
+            /** Format: int32 */
+            removed?: number;
         };
         PlatformControllerName: {
             name?: string;
