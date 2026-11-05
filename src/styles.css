@@ -455,6 +455,10 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 /* Карточка приёма: строки с «изменить», вложенные формы, материалы */
 .line-edit { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .line-edit .link { font-size: .86rem; flex: none; }
+/* «📖 Показать пациенту» (src/learn): кнопка темы и выбор другой темы одной строкой */
+.lesson-line { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.lesson-line .btn { flex: 1 1 auto; justify-content: flex-start; }
+.lesson-line .lesson-topic { flex: 0 1 12rem; min-width: 0; }
 .sub-form { padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
 .supplies-box { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--separator); }
 .supplies-box .spent { display: flex; justify-content: space-between; align-items: center; gap: 8px; }

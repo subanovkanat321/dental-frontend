@@ -27,6 +27,7 @@ import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
 import { VisitDocs } from '../print/VisitDocs'
+import { LessonButton } from '../learn/LessonButton'
 import { AfterVisit } from '../print/VisitReport'
 import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
 
@@ -208,6 +209,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
           {canEdit && a.status !== 'CANCELLED' && <button type="button" className="link" onClick={() => setEditing('service')}>изменить</button>}
         </p>
+      )}
+      {/* Презентация по услуге приёма: показать пациенту на экране и отправить ссылку */}
+      {a.patient && a.status !== 'CANCELLED' && editing !== 'service' && (
+        <LessonButton key={`${a.id}-${a.serviceName ?? ''}`} serviceName={a.serviceName} me={me} patientId={a.patient.id} phone={a.patient.phone} />
       )}
       {editing === 'comment' ? <CommentEdit appointment={a} onDone={close} /> : a.comment ? (
         <p className="comment line-edit"><span>{a.comment}</span>

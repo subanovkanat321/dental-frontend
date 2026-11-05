@@ -1,0 +1,125 @@
+/* Презентации для пациента: во весь экран, тёплый пастельный фон темы, крупный текст. Всегда светлые
+   (как посты Instagram и страницы сайта) — и в тёмной теме CRM. */
+.lsn {
+  --lsn-ink: #1b3a40;
+  --lsn-muted: #4c6268;
+  --lsn-teal: #0e8a80;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--lsn-bg, #e0f2ef);
+  color: var(--lsn-ink);
+  font-family: 'Golos Text', system-ui, sans-serif;
+  color-scheme: light;
+  outline: none;
+}
+.lsn-overlay { position: fixed; inset: 0; z-index: 2000; height: 100dvh; }
+.lsn button { font: inherit; color: inherit; cursor: pointer; }
+
+.lsn-top {
+  display: flex; align-items: center; gap: 12px;
+  padding: max(10px, env(safe-area-inset-top)) clamp(12px, 3vw, 28px) 6px;
+}
+.lsn-kicker { font-weight: 600; font-size: clamp(13px, 1.6vw, 17px); color: var(--lsn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+.lsn-dots { flex: 1; display: flex; gap: 6px; min-width: 60px; }
+.lsn-dots button { flex: 1; height: 6px; padding: 0; border: 0; border-radius: 3px; background: rgb(27 58 64 / 0.14); }
+.lsn-dots button.on { background: var(--lsn-teal); }
+.lsn-lang { display: flex; background: #fff; border-radius: 999px; padding: 3px; box-shadow: 0 1px 3px rgb(15 42 48 / 0.1); }
+.lsn .lsn-lang button { border: 0; background: none; border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: 14px; min-height: 36px; }
+.lsn-lang button[aria-pressed='true'] { background: var(--lsn-teal); color: #fff; }
+.lsn .lsn-close { width: 44px; height: 44px; border-radius: 50%; border: 0; background: #fff; font-size: 20px; box-shadow: 0 1px 3px rgb(15 42 48 / 0.12); flex: none; }
+
+.lsn-stage { flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; }
+.lsn-slide {
+  flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(16px, 4vw, 56px);
+  align-items: center; padding: 8px clamp(16px, 5vw, 72px) 12px; animation: lsn-in 0.28s ease-out;
+}
+@keyframes lsn-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .lsn-slide { animation: none; } }
+
+.lsn-art { display: flex; align-items: center; justify-content: center; min-height: 0; height: 100%; max-height: 66vh; }
+.lsn-art .art { width: 100%; height: 100%; max-height: 62vh; filter: drop-shadow(0 10px 18px rgb(15 42 48 / 0.1)); }
+.lsn-art .art.tishka { max-width: 360px; }
+.lsn-body { min-width: 0; }
+.lsn-topic { margin: 0 0 6px; display: inline-block; background: #fff; color: var(--lsn-teal); font-weight: 600; font-size: clamp(14px, 1.8vw, 20px); padding: 4px 14px; border-radius: 999px; }
+.lsn-title { font-family: Geologica, 'Golos Text', sans-serif; font-weight: 600; font-size: clamp(26px, 4.2vw, 52px); line-height: 1.12; letter-spacing: -0.01em; margin: 0 0 12px; text-wrap: balance; }
+.lsn-text { font-size: clamp(18px, 2.4vw, 28px); line-height: 1.4; margin: 0; color: var(--lsn-ink); text-wrap: pretty; }
+
+.lsn-points { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: clamp(8px, 1.4vw, 14px); }
+.lsn-points li { display: flex; align-items: center; gap: 14px; background: #fff; border-radius: 18px; padding: clamp(10px, 1.4vw, 16px) clamp(12px, 1.8vw, 20px);
+  font-size: clamp(17px, 2.1vw, 25px); line-height: 1.3; box-shadow: 0 2px 4px rgb(15 42 48 / 0.04), 0 8px 20px rgb(15 42 48 / 0.06); }
+.lsn-icon { flex: none; width: clamp(38px, 4.4vw, 52px); height: clamp(38px, 4.4vw, 52px); border-radius: 50%; display: grid; place-items: center;
+  background: var(--lsn-bg); font-size: clamp(20px, 2.4vw, 28px); }
+.lsn-points.numbered .lsn-icon { background: var(--lsn-teal); color: #fff; font-family: Geologica, sans-serif; font-weight: 600; }
+
+/* Стадии и «Цена ожидания»: карточки в ряд */
+.lsn-stages { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; align-content: center; }
+.lsn-stages .lsn-title { text-align: center; }
+.lsn-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: clamp(10px, 1.8vw, 22px); min-height: 0; }
+.lsn-cards[data-n='3'] { --n: 3; }
+.lsn-cards[data-n='2'] { --n: 2; }
+.lsn-card { background: #fff; border-radius: 22px; padding: clamp(10px, 1.6vw, 18px); display: flex; flex-direction: column; gap: 8px; min-height: 0;
+  box-shadow: 0 2px 4px rgb(15 42 48 / 0.04), 0 12px 28px rgb(15 42 48 / 0.08); position: relative; }
+.lsn-card-art { flex: none; height: min(30vh, 250px); display: flex; align-items: center; justify-content: center; background: var(--lsn-bg); border-radius: 16px; padding: 8px; }
+.lsn-card-art .art { width: 100%; height: 100%; }
+.lsn-card p { margin: 0; font-size: clamp(15px, 1.8vw, 22px); line-height: 1.3; font-weight: 500; }
+.lsn-num { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--lsn-teal); color: #fff; font-family: Geologica, sans-serif; font-weight: 600; margin-right: 4px; font-size: 0.9em; }
+.lsn-wait .lsn-card:not(:last-child)::after { content: '→'; position: absolute; right: calc(-1 * clamp(10px, 1.8vw, 22px) / 2 - 0.4em); top: 38%; font-size: clamp(22px, 3vw, 34px); color: var(--lsn-teal); font-weight: 600; z-index: 1; }
+.lsn-wait .lsn-card.now { outline: 3px solid var(--lsn-teal); }
+.lsn-price { font-family: Geologica, sans-serif; font-weight: 600 !important; font-size: clamp(18px, 2.4vw, 30px) !important; color: var(--lsn-teal); }
+.lsn-wait .lsn-card:not(.now) .lsn-price { color: #b4441f; }
+.lsn-sooner { margin: 4px 0 0; text-align: center; font-weight: 600; font-size: clamp(17px, 2.2vw, 26px); }
+.lsn-note { margin: 0; text-align: center; color: var(--lsn-muted); font-size: clamp(12px, 1.3vw, 15px); }
+
+.lsn-end { padding: 0 clamp(16px, 5vw, 72px) 8px; display: grid; gap: 8px; justify-items: center; }
+.lsn-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.lsn-actions .btn, .lsn-actions a.btn { min-height: 44px; font-size: 16px; }
+.lsn-disclaimer { margin: 0; font-size: 13px; color: var(--lsn-muted); text-align: center; }
+
+.lsn-nav { display: flex; align-items: center; justify-content: space-between; padding: 6px clamp(12px, 3vw, 28px) max(10px, env(safe-area-inset-bottom)); }
+.lsn .lsn-arrow { width: 56px; height: 56px; border-radius: 50%; border: 0; background: #fff; font-size: 32px; line-height: 1; box-shadow: 0 2px 6px rgb(15 42 48 / 0.12); }
+.lsn .lsn-arrow.next { background: var(--lsn-teal); color: #fff !important; }
+.lsn-arrow:disabled { opacity: 0.35; cursor: default; }
+.lsn-count { font-weight: 600; color: var(--lsn-muted); font-size: 15px; }
+.lsn button:focus-visible { outline: 3px solid var(--lsn-teal); outline-offset: 2px; }
+
+/* Телефон и узкий экран стоя: рисунок сверху, текст под ним; стадии — по две в ряд */
+@media (max-width: 760px), (orientation: portrait) and (max-width: 1000px) {
+  .lsn-slide { grid-template-columns: 1fr; grid-template-rows: minmax(0, auto) auto; align-content: start; gap: 12px; }
+  .lsn-what .lsn-art, .lsn-list .lsn-art { height: auto; }
+  .lsn-what .lsn-art .art { max-height: 36vh; }
+  .lsn-list .lsn-art .art { max-height: 22vh; }
+  .lsn-stages { grid-template-rows: auto auto auto; }
+  .lsn-cards { --n: 2 !important; }
+  .lsn-cards[data-n='3'] .lsn-card:last-child { grid-column: 1 / -1; flex-direction: row; align-items: center; }
+  .lsn-cards[data-n='3'] .lsn-card:last-child .lsn-card-art { flex: 0 0 44%; }
+  .lsn-card-art { height: 19vh; }
+  .lsn-wait .lsn-card:not(:last-child)::after { display: none; }
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .lsn-kicker { max-width: 46%; }
+  .lsn-wait .lsn-cards { --n: 1 !important; }
+  .lsn-wait .lsn-card, .lsn-wait .lsn-cards[data-n='3'] .lsn-card:last-child { flex-direction: row; align-items: center; }
+  .lsn-wait .lsn-card .lsn-card-art { height: 96px; }
+  .lsn-wait .lsn-card p { font-size: 17px; }
+  .lsn-brand { display: none; }
+  .lsn-wait .lsn-card > p { flex: 1; }
+  .lsn-wait .lsn-card { display: grid; grid-template-columns: 34% 1fr; grid-template-rows: auto auto; column-gap: 12px; }
+  .lsn-wait .lsn-card .lsn-card-art { grid-row: 1 / 3; }
+}
+
+/* Список тем (в CRM и на /learn) */
+.learn-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.learn-tile { width: 100%; border: 1px solid rgb(27 58 64 / 0.08); border-radius: 18px; padding: 12px; display: grid; gap: 8px; text-align: left; cursor: pointer;
+  color: #1b3a40; font: inherit; box-shadow: 0 2px 6px rgb(15 42 48 / 0.06); text-decoration: none; }
+.learn-tile:hover { box-shadow: 0 6px 18px rgb(15 42 48 / 0.12); }
+.learn-tile .learn-art { height: 140px; display: flex; justify-content: center; }
+.learn-tile .learn-art .art { height: 100%; width: auto; max-width: 100%; }
+.learn-tile strong { font-family: Geologica, sans-serif; font-weight: 600; font-size: 18px; line-height: 1.2; }
+.learn-tile span { color: #4c6268; font-size: 14px; }
+
+/* Кнопки CRM внутри презентации — всегда светлые, как сама презентация */
+.lsn .btn { background: #fff; color: #1b3a40; border: 1px solid #c8d3d5; }
+.lsn .btn.primary { background: #0e8a80; border-color: #0e8a80; color: #fff; }
+.lsn-sent { align-self: center; font-weight: 600; color: #11683a; background: #d3f0de; border-radius: 999px; padding: 10px 16px; }
+.lsn-error { flex-basis: 100%; text-align: center; margin: 0; color: #a11f1f; font-weight: 500; }

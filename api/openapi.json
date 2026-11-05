@@ -4847,6 +4847,33 @@
         }
       }
     },
+    "/api/patients/{patientId}/lessons/{topic}/send" : {
+      "post" : {
+        "tags" : [ "lesson-controller" ],
+        "operationId" : "send_2",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "topic",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/files" : {
       "get" : {
         "tags" : [ "medical-record-controller" ],
@@ -6553,7 +6580,7 @@
     "/api/appointments/{id}/visit-report/send" : {
       "post" : {
         "tags" : [ "visit-report-controller" ],
-        "operationId" : "send_2",
+        "operationId" : "send_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6988,7 +7015,7 @@
     "/api/appointments/{id}/receipt/send" : {
       "post" : {
         "tags" : [ "receipt-controller" ],
-        "operationId" : "send_3",
+        "operationId" : "send_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7267,7 +7294,7 @@
     "/api/appointments/{id}/care-memo/send" : {
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "send_4",
+        "operationId" : "send_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8250,6 +8277,33 @@
                   "items" : {
                     "$ref" : "#/components/schemas/VisitNoteView"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/lessons" : {
+      "get" : {
+        "tags" : [ "lesson-controller" ],
+        "operationId" : "target",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LessonsTarget"
                 }
               }
             }
@@ -15653,6 +15707,17 @@
           },
           "doctorName" : {
             "type" : "string"
+          }
+        }
+      },
+      "LessonsTarget" : {
+        "properties" : {
+          "telegram" : {
+            "type" : "boolean"
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
           }
         }
       },

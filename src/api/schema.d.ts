@@ -1908,6 +1908,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/lessons/{topic}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["send_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/files": {
         parameters: {
             query?: never;
@@ -2637,7 +2653,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_2"];
+        post: operations["send_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2813,7 +2829,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_3"];
+        post: operations["send_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2941,7 +2957,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_4"];
+        post: operations["send_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3484,6 +3500,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["patientNotes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{patientId}/lessons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["target"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6874,6 +6906,11 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
             doctorName?: string;
+        };
+        LessonsTarget: {
+            telegram?: boolean;
+            /** @enum {string} */
+            lang?: "RU" | "KY";
         };
         PatientListControllerPatientRow: {
             /** Format: int64 */
@@ -11341,6 +11378,27 @@ export interface operations {
             };
         };
     };
+    send_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+                topic: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     files: {
         parameters: {
             query?: never;
@@ -12799,7 +12857,7 @@ export interface operations {
             };
         };
     };
-    send_2: {
+    send_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -13116,7 +13174,7 @@ export interface operations {
             };
         };
     };
-    send_3: {
+    send_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -13318,7 +13376,7 @@ export interface operations {
             };
         };
     };
-    send_4: {
+    send_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -14123,6 +14181,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VisitNoteView"][];
+                };
+            };
+        };
+    };
+    target: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonsTarget"];
                 };
             };
         };
