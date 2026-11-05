@@ -7,13 +7,21 @@ import { DateInput } from '../layout/DateInput'
 import { EmptyState } from '../layout/EmptyState'
 import { shortDate, todayIn } from '../lib/time'
 import { PublicationBlock } from './BeforeAfter'
+import { isComposite } from './composite'
 import { resizePhoto } from './thumb'
 import { Thumb } from './Thumb'
 
 type FileView = Schemas['PatientFilesView']
 type Kind = NonNullable<FileView['kind']>
 
-const KINDS: [Kind, string][] = [['XRAY', 'Снимок'], ['PHOTO', 'Фото'], ['OTHER', 'Другое']]
+const KINDS: [Kind, string][] = [['XRAY', '🩻 Рентген'], ['PHOTO', '📷 Фото зубов'], ['OTHER', '📄 Документ']]
+/** Что именно загружать под каждым видом — чтобы не гадать, «снимок» это или «фото». */
+const KIND_HINT: Record<Kind, string> = {
+  XRAY: 'Прицельный снимок, панорама, КТ — для лечения.',
+  PHOTO: 'Фото зубов и улыбки во рту — для медкарты. Из них же собирается «до / после» для Instagram.',
+  OTHER: 'Анализы, заключения, направления, согласия — фото или скан.',
+}
+const kindName = (k?: Kind) => KINDS.find(([x]) => x === k)?.[1].replace(/^\S+ /, '')
 
 /**
  * «Снимки и фото» пациента: список с миниатюрами, загрузка (сфотографировать или выбрать файлы) и
@@ -76,27 +84,31 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
     window.open(URL.createObjectURL(blob), '_blank', 'noopener')
   }
 
-  const count = files.data?.length ?? 0
+  // Медкарта — снимки, фото, документы; готовые «до / после» для Instagram — отдельно, внизу
+  const medical = (files.data ?? []).filter((f) => !isComposite(f))
+  const insta = (files.data ?? []).filter(isComposite)
+  const count = medical.length
   if (compact && !open) {
     return (
       <button type="button" className="btn files-toggle" aria-expanded={false} onClick={() => setOpen(true)}>
-        📷 Снимки и фото{count ? ` · ${count}` : ''} — загрузить, «до / после»</button>
+        📷 Снимки и фото{count ? ` · ${count}` : ''} — загрузить{insta.length ? ` · Instagram: ${insta.length}` : ''}</button>
     )
   }
-  const shown = compact ? (files.data ?? []).slice(0, 4) : files.data ?? []
+  const shown = compact ? medical.slice(0, 4) : medical
   return (
     <section className={compact ? 'card-block files-compact' : 'card-block'} aria-label="Снимки и фото">
-      <h2>Снимки и фото{count ? <span className="hint"> · {count}</span> : null}
+      <h2>Снимки и фото — медкарта{count ? <span className="hint"> · {count}</span> : null}
         {compact && <button type="button" className="link files-hide" onClick={() => setOpen(false)}>свернуть</button>}</h2>
       {compact && count > 4 && <p className="hint small">Последние 4 — все снимки в медкарте пациента.</p>}
-      {files.data?.length ? (
+      <p className="hint small">Для лечения — видит только клиника. В соцсети отсюда ничего не уходит.</p>
+      {medical.length ? (
         <ul className="files">
           {shown.map((f) => (
             <li key={f.id}>
-              <button type="button" className="file" onClick={() => void view(f)} aria-label={`Открыть: ${f.caption ?? KINDS.find(([k]) => k === f.kind)?.[1]}`}>
+              <button type="button" className="file" onClick={() => void view(f)} aria-label={`Открыть: ${f.caption ?? kindName(f.kind)}`}>
                 <Thumb path={`/api/patients/${patientId}/files/${f.id}?thumb=true`} alt="" />
               </button>
-              <span>{f.caption ?? KINDS.find(([k]) => k === f.kind)?.[1]}</span>
+              <span>{f.caption ?? kindName(f.kind)}</span>
               <span className="hint">{f.takenOn ? shortDate(`${f.takenOn}T12:00:00Z`) : ''}{f.createdBy ? ` · ${f.createdBy}` : ''}</span>
               {f.postText && <PostTextCopy text={f.postText} />}
               {f.canDelete && (
@@ -110,6 +122,7 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
         <div className="segments" role="group" aria-label="Что загружаем">
           {KINDS.map(([k, name]) => <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)}>{name}</button>)}
         </div>
+        <p className="hint small kind-hint">{KIND_HINT[kind]}</p>
         <input aria-label="Подпись" placeholder="Подпись — необязательно" maxLength={200} value={caption} onChange={(e) => setCaption(e.target.value)} />
         <DateInput aria-label="Дата снимка" value={takenOn} max={todayIn()} onChange={(e) => setTakenOn(e.target.value)} />
         <label className="btn primary">
@@ -125,7 +138,30 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
       </div>
       {status && <p role="status" className={status.startsWith('Загружено') ? 'tone-ok' : 'hint'}>{status}</p>}
       {remove.error && <p className="error">{remove.error.message}</p>}
-      {files.data && <PublicationBlock patientId={patientId} files={files.data} readOnly={readOnly} />}
+      {files.data && (
+        <section className="insta-block" aria-label="Для Instagram">
+          <h3>📣 Для Instagram</h3>
+          <p className="hint small">Только с согласием пациента. Готовые картинки «до / после» — здесь, отдельно от медкарты.</p>
+          {insta.length > 0 && (
+            <ul className="files">
+              {insta.map((f) => (
+                <li key={f.id}>
+                  <button type="button" className="file" onClick={() => void view(f)} aria-label="Открыть: до / после">
+                    <Thumb path={`/api/patients/${patientId}/files/${f.id}?thumb=true`} alt="" />
+                  </button>
+                  <span>До / после</span>
+                  <span className="hint">{f.takenOn ? shortDate(`${f.takenOn}T12:00:00Z`) : ''}{f.createdBy ? ` · ${f.createdBy}` : ''}</span>
+                  {f.postText && <PostTextCopy text={f.postText} />}
+                  {f.canDelete && (
+                    <button type="button" className="link danger-link" onClick={() => void ask('Удалить картинку «до / после»?').then((ok) => ok && remove.mutate(f.id!))}>Удалить</button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          <PublicationBlock patientId={patientId} files={files.data} readOnly={readOnly} />
+        </section>
+      )}
     </section>
   )
 }

@@ -83,7 +83,7 @@ test('заметка о приёме у прошедшего приёма — с
   expect(saved).toEqual({ note: 'Пломба 36, контроль через полгода' })
 })
 
-test('карточка приёма: «Откуда узнал» — пациент не ответил в боте, врач отмечает прямо в приёме', async () => {
+test('карточка приёма: «Откуда узнал» — под «Ещё», врач отмечает прямо в приёме', async () => {
   backend(appointment(10, 1, '23:30', 'Бакыт М.'))
   let saved: Record<string, unknown> | null = null
   server.use(http.put('*/api/patients/:id', async ({ request }) => {
@@ -93,6 +93,9 @@ test('карточка приёма: «Откуда узнал» — пацие�
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  // Свёрнуто под «Ещё», чтобы не занимать место в шапке
+  expect(within(panel).queryByRole('group', { name: 'Откуда узнал о клинике' })).not.toBeInTheDocument()
+  await userEvent.click(await within(panel).findByRole('button', { name: /Ещё:.*откуда узнал/ }))
   const source = await within(panel).findByRole('group', { name: 'Откуда узнал о клинике' })
   // В приёме варианты свёрнуты, чтобы не сдвигать кнопки приёма: «выбрать» — раскрыть
   await userEvent.click(within(source).getByRole('button', { name: 'выбрать' }))
