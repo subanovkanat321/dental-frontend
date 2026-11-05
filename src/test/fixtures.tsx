@@ -42,6 +42,11 @@ export async function openMedicalTab() {
   await userEvent.click(screen.getByRole('button', { name: 'Открыть медкарту' }))
 }
 
+/** Медкарта → вкладка («Зубы», «План лечения», «Анкета», «Снимки и фото», «Заметки»). */
+export async function medTab(name: string) {
+  await userEvent.click(await screen.findByRole('tab', { name: new RegExp(name) }))
+}
+
 /** Карточка приёма → «Ещё» (редкое: промокод, предоплата, лист ожидания, откуда узнал, квитанция, исправить, удалить). */
 export async function openMore(panel: HTMLElement) {
   await userEvent.click(await within(panel).findByRole('button', { name: /^Ещё/ }))

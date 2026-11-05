@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, openMedicalTab } from '../test/fixtures'
+import { me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
 
 beforeEach(() => {
@@ -70,8 +70,6 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   const sent = backend()
   await openMedical()
   expect(await screen.findByRole('button', { name: 'Зуб 16: Кариес, есть заметка' })).toBeInTheDocument()
-  expect(screen.getByText('Жалобы на холодное')).toBeInTheDocument()
-  expect(await screen.findByText('Прицельный 16')).toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('button', { name: 'Зуб 26: Здоров' }))
   const editor = screen.getByRole('form', { name: 'Зуб 26' })
@@ -81,7 +79,9 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   expect(await screen.findByRole('button', { name: 'Зуб 26: Пломба, есть заметка' })).toBeInTheDocument()
   expect(sent).toContainEqual({ tooth: 26, state: 'FILLING', surfaces: [], note: 'композит' })
 
-  const plan = screen.getByRole('list', { name: 'Этапы лечения' })
+  // Зубы и план — разные вкладки медкарты
+  await medTab('План лечения')
+  const plan = await screen.findByRole('list', { name: 'Этапы лечения' })
   expect(await screen.findByRole('heading', { name: /План лечения/ })).toHaveTextContent(/3\s000 сом/)
   await userEvent.click(within(plan).getByLabelText('Сделано: Пломба'))
   expect(await within(plan).findByLabelText('Сделано: Пломба')).toBeChecked()
@@ -98,6 +98,11 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   expect(await within(plan).findByText('Коронка')).toBeInTheDocument()
   expect(within(add).getByRole('status')).toHaveTextContent('Добавлено в план — сохранено')
   expect(sent).toContainEqual({ plan: { title: 'Коронка', tooth: 26, priceSom: 12000, stage: 1 } })
+
+  await medTab('Снимки')
+  expect(await screen.findByText('Прицельный 16')).toBeInTheDocument()
+  await medTab('Заметки')
+  expect(await screen.findByText('Жалобы на холодное')).toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('button', { name: '← К списку' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка пациента' })).toBeInTheDocument()

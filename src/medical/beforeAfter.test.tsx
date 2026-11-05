@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, openMedicalTab } from '../test/fixtures'
+import { me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
 import { boxFrom, clampCrop, FIT, fitSmiles, frames, placement } from './beforeAfterDraw'
 import { buildPost, durationBetween, hashtags } from './postText'
@@ -96,6 +96,7 @@ async function openMedical() {
   await userEvent.click(await screen.findByRole('button', { name: 'Вымышленная П.' }))
   await openMedicalTab()
   expect(await screen.findByRole('heading', { name: 'Медкарта · Вымышленная П.' })).toBeInTheDocument()
+  await medTab('Снимки')
 }
 
 test('без согласия «До / после» выключена с объяснением; галочка ставит согласие «без лица», снимается обратно', async () => {

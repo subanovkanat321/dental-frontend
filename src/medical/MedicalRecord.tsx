@@ -5,7 +5,8 @@ import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useBack } from '../lib/back'
 import { shortDate, somText } from '../lib/time'
-import { AnamnesisBlock } from './Anamnesis'
+import { AnamnesisBlock, MedAlerts } from './Anamnesis'
+import { useAnamnesis } from '../api/anamnesis'
 import { PlanDocs } from '../print/PlanDocs'
 import { stagesOf } from '../lib/planStages'
 import { TOOTH_STATES, hasSurfaces, stateText, type Surface, type ToothState } from './toothStates'
@@ -46,6 +47,24 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
   const forbidden = denied(teeth.error)
   // «В план лечения» из зуба: номер подставится в новый этап; счётчик — чтобы тот же зуб можно было ещё раз
   const [planTooth, setPlanTooth] = useState<{ tooth: number; n: number } | null>(null)
+  // Медкарта — вкладками, а не простынёй: зубы (что есть) отдельно от плана (что сделать)
+  const [tab, setTab] = useState<MedTab>('teeth')
+  const plan = useQuery({
+    queryKey: ['plan', id],
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan', { params: { path: { patientId: id } } })),
+    enabled: !forbidden,
+    retry: false,
+  })
+  const anamnesis = useAnamnesis(id, !forbidden)
+  const marked = (teeth.data ?? []).filter((t) => t.state && t.state !== 'HEALTHY').length
+  const left = (plan.data ?? []).filter((s) => !s.doneAt).length
+  const tabs: [MedTab, string][] = [
+    ['teeth', `🦷 Зубы${marked ? ` · ${marked}` : ''}`],
+    ['plan', `🗂 План лечения${left ? ` · ${left}` : ''}`],
+    ['anamnesis', '📋 Анкета'],
+    ['files', '📷 Снимки и фото'],
+    ['notes', '📝 Заметки'],
+  ]
 
   return (
     <section className="schedule-main medical">
@@ -58,18 +77,31 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
       ) : (
         <>
           {readOnly && <p className="hint">Вы ассистент: медкарту смотрите и загружаете снимки, записи о лечении ведёт врач.</p>}
-          <AnamnesisBlock patientId={id} readOnly={readOnly} />
-          <ToothChart patientId={id} patientName={patient.fullName} teeth={teeth.data} error={teeth.error?.message} readOnly={readOnly}
-            onPlan={(tooth) => setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 })} />
-          <TeethHistory patientId={id} />
-          <Plan patient={patient} prefill={planTooth} readOnly={readOnly} />
-          <Notes patientId={id} />
-          <PatientFiles patientId={id} readOnly={readOnly} />
+          {/* Аллергии и важное из анкеты — на виду на любой вкладке */}
+          <MedAlerts an={anamnesis.data} compact />
+          <div className="segments tabs med-tabs" role="tablist" aria-label="Разделы медкарты">
+            {tabs.map(([key, title]) => (
+              <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>
+            ))}
+          </div>
+          {tab === 'teeth' && (
+            <>
+              <ToothChart patientId={id} patientName={patient.fullName} teeth={teeth.data} error={teeth.error?.message} readOnly={readOnly}
+                onPlan={(tooth) => { setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 }); setTab('plan') }} />
+              <TeethHistory patientId={id} />
+            </>
+          )}
+          {tab === 'plan' && <Plan patient={patient} prefill={planTooth} readOnly={readOnly} />}
+          {tab === 'anamnesis' && <AnamnesisBlock patientId={id} readOnly={readOnly} />}
+          {tab === 'files' && <PatientFiles patientId={id} readOnly={readOnly} />}
+          {tab === 'notes' && <Notes patientId={id} />}
         </>
       )}
     </section>
   )
 }
+
+type MedTab = 'teeth' | 'plan' | 'anamnesis' | 'files' | 'notes'
 
 /** Все состояния для «Выбрать несколько» — как в редакторе одного зуба. */
 const ALL_STATES = Object.keys(TOOTH_STATES) as State[]
@@ -229,7 +261,8 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan', { params: { path: { patientId } } })),
   })
   const empty = { tooth: '', title: '', price: '', stage: '1', service: '' }
-  const [form, setForm] = useState(empty)
+  // Вкладка «План» открывается уже с зубом из карты — сразу подставить его
+  const [form, setForm] = useState(() => (prefill ? { ...empty, tooth: String(prefill.tooth) } : empty))
   // Услуги прайса: выбрал — название и цена подставились, врач может поправить (V140)
   const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), enabled: !readOnly })
   const priced = (services.data ?? []).filter((x) => x.active)

@@ -1885,3 +1885,4 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .patient-card .patient-medical, .patient-card .patient-money, .patient-card .patient-more { gap: 10px; }
 .patient-medical .btn, .patient-more > .link { justify-self: start; }
 .price-pick { display: grid; gap: 4px; margin-top: 6px; }
+.med-tabs { margin: 12px 0 4px; }

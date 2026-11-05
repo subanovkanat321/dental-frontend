@@ -7,6 +7,7 @@ import type { Schemas } from '../api/client'
 import { createQueryClient } from '../api/queryClient'
 import { MedicalRecord } from './MedicalRecord'
 import { stateText, surfacesText, visitToothText } from './toothStates'
+import { medTab } from '../test/fixtures'
 import { server } from '../test/server'
 
 // Поверхности зуба (V161), «Несколько» и «На весь экран» в медкарте. Пациент вымышленный
@@ -126,7 +127,11 @@ test('«Несколько»: отметить зубы галочками → �
   await userEvent.type(within(form).getByLabelText('Цена за зуб, сом'), '2500')
   await userEvent.click(within(form).getByRole('button', { name: 'Добавить 3 в план' }))
   await waitFor(() => expect(calls.plan).toEqual([{ teeth: [16, 26, 36], title: 'Пломба', priceSom: 2500, stage: 1 }]))
+  await medTab('План лечения')
   expect(await screen.findByRole('list', { name: 'Этапы лечения' })).toHaveTextContent('16 · Пломба')
+  await medTab('Зубы')
+  // Вернулись на «Зубы» — режим «Несколько» включаем заново
+  await userEvent.click(await screen.findByRole('button', { name: /Несколько/ }))
 
   // Снова выбрать и поставить «Кариес» с поверхностью О всем
   for (const n of [16, 26]) await userEvent.click(screen.getByRole('button', { name: `Зуб ${n}: Здоров` }))

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, openMedicalTab } from '../test/fixtures'
+import { me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Me = Schemas['BookingViewsMe']
@@ -44,6 +44,7 @@ async function openMedical() {
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   await openMedicalTab()
   await screen.findByRole('heading', { name: 'Медкарта · Айгуль Т.' })
+  await medTab('План лечения')
 }
 
 beforeEach(() => {
