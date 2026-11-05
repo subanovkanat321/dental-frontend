@@ -17,8 +17,7 @@ import { Notifications } from '../pwa/Notifications'
 const AccountPage = lazy(() => import('../account/AccountPage').then((m) => ({ default: m.AccountPage })))
 const ClinicPage = lazy(() => import('../clinic/ClinicPage').then((m) => ({ default: m.ClinicPage })))
 const TeamPage = lazy(() => import('../team/TeamPage').then((m) => ({ default: m.TeamPage })))
-const ShiftsPage = lazy(() => import('../team/ShiftsPage').then((m) => ({ default: m.ShiftsPage })))
-const HoursPage = lazy(() => import('./HoursPage').then((m) => ({ default: m.HoursPage })))
+const WorkTimePage = lazy(() => import('./WorkTimePage').then((m) => ({ default: m.WorkTimePage })))
 const GuidePage = lazy(() => import('./GuidePage').then((m) => ({ default: m.GuidePage })))
 const CalendarPage = lazy(() => import('./CalendarPage').then((m) => ({ default: m.CalendarPage })))
 const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
@@ -37,6 +36,8 @@ type Item = {
   hint: string
   show: (me: Me) => boolean
   render: (me: Me, back: () => void, extra: { ticketId?: number }) => ReactNode
+  /** Не в списке, но открывается по адресу (старые ссылки, кнопки бота) */
+  hidden?: boolean
 }
 
 const team = (only: TeamTab) => (title: string) => (me: Me, back: () => void) => <TeamPage me={me} only={only} title={title} onBack={back} />
@@ -58,10 +59,11 @@ function item(key: string, title: string, hint: string, show: Item['show'], rend
  */
 const GROUPS: [string, Item[]][] = [
   ['Расписание', [
-    item('hours', 'Часы работы', 'Часы клиники и каждого врача', all, () => (me, back) => <HoursPage me={me} onBack={back} />),
+    // Часы врачей и смены персонала — один пункт с двумя вкладками: «кто и когда работает»
+    item('hours', 'Часы и смены', 'Часы клиники и врачей, смены персонала', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="doctors" />),
     item('timeoff', 'Перерывы и выходные', 'Обед, намаз, отпуск, праздники', all, team('timeoff')),
-    // Смены персонала без кресла (админы, регистратура, ассистенты): ставит админ, видят все
-    item('shifts', 'График смен', 'Кто из персонала в какой день на смене', all, () => (_me, back) => <ShiftsPage onBack={back} />),
+    // Старый адрес «График смен» (#/settings/shifts, кнопка бота «Кто на смене») — та же страница, вкладка «Смены»
+    { ...item('shifts', 'Часы и смены', '', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="shifts" />), hidden: true },
     // Ассистенту цены не показываем — и пункта «Услуги» у него нет
     item('services', 'Услуги', 'Цены и длительность приёмов', (me) => !isAssistant(me), clinic('services')),
     item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),
@@ -148,7 +150,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
       <Profile me={me} />
       <div className="settings-groups">
       {GROUPS.map(([group, items], index) => {
-        const shown = items.filter((i) => i.show(me))
+        const shown = items.filter((i) => !i.hidden && i.show(me))
         if (!shown.length) return null
         return (
           <section key={group} className="settings-group" data-group={index}>

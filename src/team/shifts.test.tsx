@@ -163,3 +163,18 @@ test('одни врачи — график пуст: объяснение и к�
   await userEvent.click(screen.getByRole('button', { name: 'Часы работы врачей' }))
   expect(window.location.hash).toBe('#/settings/hours')
 })
+
+test('«Часы и смены» — один пункт: вкладка «Врачи» и «Смены персонала»; старый адрес «График смен» открывает смены', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/shifts', () => HttpResponse.json(schedule(true, 111))),
+  )
+  window.location.hash = '/settings'
+  renderApp()
+  expect(await screen.findByRole('button', { name: /Часы и смены/ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /График смен/ })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: /Часы и смены/ }))
+  expect(await screen.findByRole('tab', { name: 'Врачи' })).toHaveAttribute('aria-selected', 'true')
+  await userEvent.click(screen.getByRole('tab', { name: 'Смены персонала' }))
+  expect(await screen.findByRole('table', { name: 'График смен на неделю' })).toBeInTheDocument()
+})

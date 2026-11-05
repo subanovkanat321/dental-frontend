@@ -44,11 +44,11 @@ type Editing = { shift?: Shift; telegramId: number; day: string }
 
 /**
  * «Настройки → График смен»: неделя персонала без кресла (админы, регистратура, ассистенты) —
- * кто в какой день и с какого по какое время. Врачей здесь нет: у них «Часы работы». Ставит и
+ * кто в какой день и с какого по какое время. Врачей здесь нет: у них вкладка «Врачи» в «Часах и сменах». Ставит и
  * меняет админ; остальные видят график только для чтения, своя строка подсвечена. Телефон —
  * список по дням вместо таблицы.
  */
-export function ShiftsPage({ onBack }: { onBack: () => void }) {
+export function ShiftsPage({ onBack, title = 'График смен', tabs }: { onBack: () => void; title?: string; tabs?: React.ReactNode }) {
   const [monday, setMonday] = useState(() => weekStart(todayIn()))
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
   const loaded = useShifts(monday, days[6]!)
@@ -60,7 +60,8 @@ export function ShiftsPage({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="shifts-page">
-      <SubHeader title="График смен" onBack={onBack}>
+      <SubHeader title={title} onBack={onBack}>
+        {tabs}
         <div className="shifts-nav" role="group" aria-label="Неделя">
           <button type="button" className="btn ghost" aria-label="Прошлая неделя" onClick={() => { setMonday(addDays(monday, -7)); setEditing(null) }}>‹</button>
           <strong className="num">{weekLabel(monday)}</strong>
@@ -72,7 +73,7 @@ export function ShiftsPage({ onBack }: { onBack: () => void }) {
       </SubHeader>
       <p className="hint">
         {canEdit
-          ? 'Смены администраторов, регистратуры и ассистентов. Нажмите на ячейку, чтобы добавить или изменить смену. У врачей — «Часы работы».'
+          ? 'Смены администраторов, регистратуры и ассистентов. Нажмите на ячейку, чтобы добавить или изменить смену. У врачей — вкладка «Врачи».'
           : 'График смен ведёт администратор клиники. Ваша строка подсвечена.'}
       </p>
       {loaded.error && <p className="error" role="alert">{loaded.error.message}</p>}

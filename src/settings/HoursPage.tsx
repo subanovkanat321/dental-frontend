@@ -16,14 +16,14 @@ type Clinic = Schemas['ClinicView']
  * «Часы работы» одним экраном: часы клиники (по ним работают врачи без своих часов) и часы
  * каждого врача — раскрыть и поменять. Врач видит свои, админ и регистратура — всех.
  */
-export function HoursPage({ me, onBack }: { me: Me; onBack: () => void }) {
+export function HoursPage({ me, onBack, title = 'Часы работы', tabs }: { me: Me; onBack: () => void; title?: string; tabs?: React.ReactNode }) {
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
     .filter((d) => me.admin || me.reception || d.id === me.doctorId)
   const [open, setOpen] = useState<number | null>(doctors.length === 1 ? doctors[0]!.id! : me.doctorId ?? null)
   return (
     <section className="schedule-main">
-      <SubHeader title="Часы работы" onBack={onBack} />
+      <SubHeader title={title} onBack={onBack}>{tabs}</SubHeader>
       <section className="card-block">
         <h2>Часы клиники</h2>
         {clinic.isPending ? <p className="hint">Загрузка…</p> : clinic.error ? <p className="error">{clinic.error.message}</p>
