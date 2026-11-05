@@ -15,14 +15,12 @@ export type LessonDialogProps = {
 }
 
 /**
- * «Показать пациенту» в CRM: презентация во весь экран на языке пациента, с ценами клиники. Только
+ * «Показать пациенту» в CRM: презентация во весь экран на языке пациента, без цен. Только
  * показ — из CRM ничего не отправляем: после приёма пациент и так получает «Сообщение после приёма».
  * Отдельный чанк (React.lazy): слайды и рисунки скачиваются, только когда их открыли.
  */
 export default function LessonDialog({ topic: slug, onClose, patientId }: LessonDialogProps) {
   const topic = topicBySlug(slug)!
-  // Прайс — тот же запрос, что у «Услуг»; ассистенту сервер присылает цены пустыми — слайд без чисел
-  const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')) })
   // Язык пациента в боте; нет прав на медкарту (регистратура) — 403: по-русски, язык переключат на слайде
   const target = useQuery({
     queryKey: ['lessons-target', patientId],
@@ -35,7 +33,7 @@ export default function LessonDialog({ topic: slug, onClose, patientId }: Lesson
 
   // Поверх всего окна: карточка приёма — панель со своей прокруткой, внутри неё fixed мог бы обрезаться
   return createPortal(
-    <Presentation topic={topic} lang={lang} onLang={setChosen} services={services.data ?? []} onClose={onClose} />,
+    <Presentation topic={topic} lang={lang} onLang={setChosen} onClose={onClose} />,
     document.body,
   )
 }

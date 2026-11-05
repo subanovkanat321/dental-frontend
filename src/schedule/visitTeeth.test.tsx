@@ -65,7 +65,7 @@ test('врач отмечает зуб приёма: формула → сост
 
   const list = await within(block).findByRole('list', { name: 'Отмеченные зубы приёма' })
   expect(within(list).getByText('36 · Пломба · светоотверждаемая')).toBeInTheDocument()
-  expect(calls.put).toEqual([{ number: 36, state: 'FILLING', note: 'светоотверждаемая' }])
+  expect(calls.put).toEqual([{ number: 36, state: 'FILLING', surfaces: [], note: 'светоотверждаемая' }])
 
   await userEvent.click(within(list).getByRole('button', { name: 'Убрать зуб 36 из приёма' }))
   await waitFor(() => expect(calls.del).toEqual(['36']))
@@ -83,7 +83,7 @@ test('«изменить»: в редакторе — то, что уже отм
   expect(within(editor).getByRole('textbox')).toHaveValue('каналы')
   await userEvent.click(within(editor).getByRole('button', { name: /Коронка/ }))
   await userEvent.click(within(editor).getByRole('button', { name: 'Сохранить' }))
-  await waitFor(() => expect(calls.put).toEqual([{ number: 46, state: 'CROWN', note: 'каналы' }]))
+  await waitFor(() => expect(calls.put).toEqual([{ number: 46, state: 'CROWN', surfaces: [], note: 'каналы' }]))
 })
 
 test('ассистент видит отмеченные зубы, но не отмечает', async () => {
@@ -132,4 +132,55 @@ test('медкарта: «История по визитам» — дата · �
   const items = within(block).getAllByRole('listitem')
   expect(items[0]).toHaveTextContent(/Айгерим.*46 · Коронка/)
   expect(items[1]).toHaveTextContent(/Дастан.*36 · Пломба · светоотверждаемая/)
+})
+
+test('«Несколько» в приёме: галочки → «Пломба МО» всем одним запросом; история — с поверхностями', async () => {
+  backend(appointment(10, 1, '00:05', 'Бакыт М.', { status: 'DONE', version: 1 }))
+  const batch: unknown[] = []
+  server.use(
+    http.post('*/api/appointments/:id/teeth/batch', async ({ request }) => {
+      const body = (await request.json()) as Schemas['VisitTeethControllerMany']
+      batch.push(body)
+      return HttpResponse.json((body.numbers ?? []).map((n) => ({ number: n, state: body.state, surfaces: body.surfaces as Schemas['VisitToothView']['surfaces'] })))
+    }),
+    http.get('*/api/patients/:id/teeth', () => HttpResponse.json([])),
+  )
+  const block = await expand(await within(await card()).findByRole('region', { name: 'Зубы этого приёма' }))
+  await userEvent.click(within(block).getByRole('button', { name: /Отметить зуб/ }))
+  await userEvent.click(within(block).getByRole('button', { name: /Несколько/ }))
+  await userEvent.click(within(block).getByRole('button', { name: 'Зуб 36: не отмечен' }))
+  await userEvent.click(within(block).getByRole('button', { name: 'Зуб 37: не отмечен' }))
+  const panel = within(block).getByRole('region', { name: 'Действия с выбранными зубами' })
+  await userEvent.click(within(panel).getByRole('button', { name: /Пломба/ }))
+  const ring = within(panel).getByRole('group', { name: 'Поверхности выбранных зубов' })
+  await userEvent.click(within(ring).getByRole('button', { name: 'мезиальная (М)' }))
+  await userEvent.click(within(ring).getByRole('button', { name: 'окклюзионная (режущий край) (О)' }))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Поставить всем: пломба' }))
+  await waitFor(() => expect(batch).toEqual([{ numbers: [36, 37], state: 'FILLING', surfaces: ['M', 'O'] }]))
+  const list = await within(block).findByRole('list', { name: 'Отмеченные зубы приёма' })
+  expect(list).toHaveTextContent('36 · Пломба (МО)')
+  expect(list).toHaveTextContent('37 · Пломба (МО)')
+})
+
+test('«На весь экран» из карточки приёма: Esc закрывает слой, а не карточку', async () => {
+  backend(appointment(10, 1, '00:05', 'Бакыт М.', { status: 'DONE', version: 1 }), me, [{ number: 36, state: 'CARIES', surfaces: ['O'] }])
+  server.use(http.get('*/api/patients/:id/teeth', () => HttpResponse.json([{ number: 36, state: 'CARIES', surfaces: ['O'] }, { number: 11, state: 'CROWN' }])))
+  const panel = await card()
+  const block = await expand(await within(panel).findByRole('region', { name: 'Зубы этого приёма' }))
+  await userEvent.click(await within(block).findByRole('button', { name: '⛶ На весь экран' }))
+  const full = screen.getByRole('dialog', { name: 'Карта зубов на весь экран' })
+  expect(await within(full).findByRole('button', { name: 'Зуб 11 — коронка' })).toBeInTheDocument()
+  expect(within(full).getByText('Отмечены в этом приёме: 36')).toBeInTheDocument()
+  expect(full).not.toHaveTextContent('Бакыт')
+  await userEvent.keyboard('{Escape}')
+  expect(screen.queryByRole('dialog', { name: 'Карта зубов на весь экран' })).not.toBeInTheDocument()
+  expect(screen.getByRole('complementary', { name: 'Карточка приёма' })).toBeInTheDocument()
+})
+
+test('история по визитам и «Продолжение лечения» — с поверхностями', async () => {
+  server.use(http.get('*/api/patients/:id/teeth/history', () => HttpResponse.json([
+    { appointmentId: 9, startAt: '2026-10-27T04:00:00Z', doctorName: 'Айгерим', teeth: [{ number: 46, state: 'FILLING', surfaces: ['M', 'O', 'D'] }] },
+  ] satisfies Schemas['VisitTeethView'][])))
+  render(<QueryClientProvider client={createQueryClient({ queries: { retry: false } })}><TeethHistory patientId={5} /></QueryClientProvider>)
+  expect(await screen.findByText('46 · Пломба (МОД)')).toBeInTheDocument()
 })

@@ -16,8 +16,8 @@ export function LearnPage({ onBack }: { onBack: () => void }) {
   return (
     <div className="schedule-main learn-page">
       <SubHeader title="Показать пациенту" onBack={onBack} />
-      <p className="hint">Короткие презентации с картинками: что это, что будет без лечения, как лечим, больно ли и что делать после.
-        «Цена ожидания» — на ценах из «Услуг». В карточке приёма — значок 📖 в шапке: тема подбирается по услуге.</p>
+      <p className="hint">Короткие презентации с иллюстрациями: что это, почему лучше не откладывать, как проходит лечение, больно ли
+        и что делать после. Без цен — только общая информация. В карточке приёма — значок 📖 в шапке: тема подбирается по услуге.</p>
       <TopicTiles lang="ru" onOpen={(t) => setOpen(t.slug)} />
       {open && (
         <Suspense fallback={<p className="hint" role="status">Загрузка…</p>}>

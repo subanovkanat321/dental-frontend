@@ -8,11 +8,15 @@ import { shortDate, somText } from '../lib/time'
 import { AnamnesisBlock } from './Anamnesis'
 import { PlanDocs } from '../print/PlanDocs'
 import { stagesOf } from '../lib/planStages'
-import { TOOTH_STATES, type ToothState } from './toothStates'
+import { TOOTH_STATES, hasSurfaces, stateText, type Surface, type ToothState } from './toothStates'
 import { PatientFiles } from './PatientFiles'
 import { ToothFormula } from './ToothFormula'
 import { ToothFigure, ToothLegendItem } from './ToothGlyph'
 import { TeethHistory } from './TeethHistory'
+import { SurfacePicker } from './SurfaceDiagram'
+import { MultiToothPanel } from './MultiTeeth'
+import { ToothFullscreen } from './ToothFullscreen'
+import './toothChart.css'
 import { Select } from '../layout/Select'
 
 type Patient = Schemas['PatientView']
@@ -55,7 +59,7 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
         <>
           {readOnly && <p className="hint">Вы ассистент: медкарту смотрите и загружаете снимки, записи о лечении ведёт врач.</p>}
           <AnamnesisBlock patientId={id} readOnly={readOnly} />
-          <ToothChart patientId={id} teeth={teeth.data} error={teeth.error?.message} readOnly={readOnly}
+          <ToothChart patientId={id} patientName={patient.fullName} teeth={teeth.data} error={teeth.error?.message} readOnly={readOnly}
             onPlan={(tooth) => setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 })} />
           <TeethHistory patientId={id} />
           <Plan patient={patient} prefill={planTooth} readOnly={readOnly} />
@@ -67,24 +71,51 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
   )
 }
 
-function ToothChart({ patientId, teeth, error, onPlan, readOnly }: {
-  patientId: number; teeth?: Tooth[]; error?: string; onPlan: (tooth: number) => void; readOnly: boolean
+/** Все состояния для «Выбрать несколько» — как в редакторе одного зуба. */
+const ALL_STATES = Object.keys(TOOTH_STATES) as State[]
+
+function ToothChart({ patientId, patientName, teeth, error, onPlan, readOnly }: {
+  patientId: number; patientName?: string; teeth?: Tooth[]; error?: string; onPlan: (tooth: number) => void; readOnly: boolean
 }) {
   const client = useQueryClient()
   const [open, setOpen] = useState<number | null>(null)
+  // «Выбрать несколько»: явный переключатель — на телефоне нет Shift и долгое нажатие неочевидно
+  const [multi, setMulti] = useState(false)
+  const [picked, setPicked] = useState<number[]>([])
+  const [full, setFull] = useState(false)
   const byNumber = new Map((teeth ?? []).map((t) => [t.number, t]))
   // Отмеченные зубы списком — заметки видно сразу, без нажатия на каждый (на телефоне подсказки нет)
   const marked = (teeth ?? []).filter((t) => t.state !== 'HEALTHY' || t.note).sort((x, y) => (x.number ?? 0) - (y.number ?? 0))
   const counts = (teeth ?? []).reduce<Record<string, number>>((acc, t) => ({ ...acc, [t.state!]: (acc[t.state!] ?? 0) + 1 }), {})
+  const many = useMutation<Tooth[], ApiError, { state: State; surfaces: Surface[] }>({
+    mutationFn: ({ state, surfaces }) => unwrap(api.POST('/api/patients/{patientId}/teeth/batch', {
+      params: { path: { patientId } }, body: { numbers: picked, state, surfaces },
+    })),
+    onSuccess: (fresh) => {
+      client.setQueryData(['teeth', patientId], fresh)
+      setPicked([])
+      setMulti(false)
+    },
+  })
+  const toggleMulti = () => {
+    setMulti(!multi)
+    setPicked([])
+    setOpen(null)
+    many.reset()
+  }
 
   const tooth = (n: number) => {
     const t = byNumber.get(n)
     const state = t?.state ?? 'HEALTHY'
-    const [label] = TOOTH_STATES[state]
+    const label = stateText(n, state, t?.surfaces)
+    const isPicked = picked.includes(n)
     return (
-      <button key={n} type="button" className={`tooth${open === n ? ' active' : ''}`} data-state={state}
-        aria-label={`Зуб ${n}: ${label}${t?.note ? ', есть заметка' : ''}`} title={t?.note ? `${label}: ${t.note}` : label} onClick={() => setOpen(open === n ? null : n)}>
-        <ToothFigure number={n} state={state} />
+      <button key={n} type="button" className={`tooth${open === n ? ' active' : ''}${isPicked ? ' picked' : ''}`} data-state={state}
+        aria-label={`Зуб ${n}: ${label}${t?.note ? ', есть заметка' : ''}`} title={t?.note ? `${label}: ${t.note}` : label}
+        aria-pressed={multi ? isPicked : undefined}
+        onClick={() => (multi ? setPicked(isPicked ? picked.filter((x) => x !== n) : [...picked, n]) : setOpen(open === n ? null : n))}>
+        {isPicked && <span aria-hidden="true" className="tooth-check">✓</span>}
+        <ToothFigure number={n} state={state} surfaces={t?.surfaces} ring />
         {t?.note && <span aria-hidden="true" className="tooth-dot">•</span>}
       </button>
     )
@@ -92,12 +123,20 @@ function ToothChart({ patientId, teeth, error, onPlan, readOnly }: {
 
   return (
     <section className="card-block">
-      <h2>Карта зубов</h2>
+      <div className="chart-head">
+        <h2>Карта зубов</h2>
+        {!readOnly && (
+          <button type="button" className="btn" aria-pressed={multi} onClick={toggleMulti}>{multi ? '☑' : '☐'} Несколько</button>
+        )}
+        <button type="button" className="btn" onClick={() => setFull(true)} disabled={!teeth}>⛶ На весь экран</button>
+      </div>
       {error && <p className="error">{error}</p>}
       <details className="hint small tooth-help">
         <summary>Как читать номера зубов?</summary>
         Международная нумерация (FDI). Первая цифра — где: 1 верх справа, 2 верх слева, 3 низ слева, 4 низ справа (у пациента).
         Вторая — какой по счёту от центра: 1 — передний, 8 — зуб мудрости. Карта — как смотрит врач: правая сторона пациента слева.
+        Кружок под зубом — поверхности: центр — жевательная (у передних — режущий край), по краям — мезиальная, дистальная,
+        вестибулярная и язычная/нёбная.
       </details>
       <ToothFormula render={tooth} />
       <p className="hint legend tooth-legend">
@@ -105,27 +144,32 @@ function ToothChart({ patientId, teeth, error, onPlan, readOnly }: {
           <ToothLegendItem key={k} state={k} label={`${TOOTH_STATES[k][0]}${counts[k] ? ` · ${counts[k]}` : ''}`} />
         ))}
       </p>
-      {open != null && !readOnly && (
+      {multi && !readOnly && (
+        <MultiToothPanel key={picked.length === 0 ? 'empty' : 'picked'} numbers={picked} states={ALL_STATES} patientId={patientId}
+          onApply={(state, surfaces) => many.mutate({ state, surfaces })} applying={many.isPending} error={many.error}
+          onClear={() => { setPicked([]); many.reset() }} />
+      )}
+      {open != null && !readOnly && !multi && (
         <ToothEditor key={open} patientId={patientId} number={open} tooth={byNumber.get(open)}
           onSaved={(fresh) => { client.setQueryData(['teeth', patientId], fresh); setOpen(null) }} onCancel={() => setOpen(null)}
           onPlan={() => { onPlan(open); setOpen(null) }} />
       )}
       {marked.length > 0 && (
         <ul className="marked-teeth" aria-label="Отмеченные зубы">
-          {marked.map((t) => (
-            <li key={t.number}>
-              {readOnly ? (
-                <span><b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {TOOTH_STATES[t.state ?? 'HEALTHY'][0]}</span>
-              ) : (
-                <button type="button" className="row-link" onClick={() => setOpen(t.number!)}>
-                  <b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {TOOTH_STATES[t.state ?? 'HEALTHY'][0]}
-                </button>
-              )}
-              {t.note && <span className="hint"> — {t.note}</span>}
-            </li>
-          ))}
+          {marked.map((t) => {
+            const text = <><b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {stateText(t.number ?? 0, t.state ?? 'HEALTHY', t.surfaces)}</>
+            return (
+              <li key={t.number}>
+                {readOnly ? <span>{text}</span> : (
+                  <button type="button" className="row-link" onClick={() => { setMulti(false); setPicked([]); setOpen(t.number!) }}>{text}</button>
+                )}
+                {t.note && <span className="hint"> — {t.note}</span>}
+              </li>
+            )
+          })}
         </ul>
       )}
+      {full && teeth && <ToothFullscreen teeth={teeth} patientName={patientName} onClose={() => setFull(false)} />}
     </section>
   )
 }
@@ -140,10 +184,14 @@ function ToothEditor({ patientId, number, tooth, onSaved, onCancel, onPlan }: {
 }) {
   const [state, setState] = useState<State>(tooth?.state ?? 'HEALTHY')
   const [note, setNote] = useState(tooth?.note ?? '')
+  const [surfaces, setSurfaces] = useState<Surface[]>(tooth?.surfaces ?? [])
+  // Поверхности — только у кариеса, лечения и пломбы; у коронки и прочих сервер их всё равно очистит
+  const sent = hasSurfaces(state) ? surfaces : []
   const changed = state !== (tooth?.state ?? 'HEALTHY') || note.trim() !== (tooth?.note ?? '')
+    || sent.join('') !== (hasSurfaces(tooth?.state) ? (tooth?.surfaces ?? []).join('') : '')
   const save = useMutation<Tooth[], ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/patients/{patientId}/teeth/{number}', {
-      params: { path: { patientId, number } }, body: { state, note: note.trim() || undefined },
+      params: { path: { patientId, number } }, body: { state, surfaces: sent, note: note.trim() || undefined },
     })),
     onSuccess: onSaved,
   })
@@ -155,10 +203,11 @@ function ToothEditor({ patientId, number, tooth, onSaved, onCancel, onPlan }: {
           <button key={k} type="button" aria-pressed={state === k} onClick={() => setState(k as State)}>{icon} {label}</button>
         ))}
       </div>
+      {hasSurfaces(state) && <SurfacePicker number={number} value={surfaces} onChange={setSurfaces} state={state} />}
       <label className="field"><span>Заметка</span>
         <textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
       </label>
-      {save.error && <p className="error" role="alert">{save.error.message}</p>}
+      {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить</button>
         {/* Изменили зуб — сначала сохраняем, потом в план: правка не теряется */}

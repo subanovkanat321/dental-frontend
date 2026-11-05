@@ -11,7 +11,7 @@ const visit: Schemas['AppointmentView'] = appointment(10, 1, '00:05', 'Бакы�
 
 const proposal: Schemas['VisitDictationProposal'] = {
   teeth: [
-    { tooth: 36, state: 'FILLING', note: 'светоотверждаемая', was: 'CARIES' },
+    { tooth: 36, state: 'FILLING', surfaces: ['O', 'D'], note: 'светоотверждаемая', was: 'CARIES' },
     { tooth: 18, state: 'MISSING', was: 'HEALTHY' },
   ],
   plan: [{ tooth: 46, title: 'Лечение каналов' }, { tooth: 21, title: 'Коронка' }],
@@ -98,12 +98,14 @@ test('диктовка голосом: текст по мере речи, раз
   const mark = within(review).getByRole('textbox', { name: 'Пометка к зубу 36' })
   await userEvent.clear(mark)
   await userEvent.type(mark, 'композит')
+  // Поверхности, которые назвал врач, — стандартной записью
+  expect(within(review).getByRole('button', { name: 'Убрать поверхности зуба 36: ОД' })).toHaveTextContent('ОД ✕')
   expect(calls.apply).toEqual([])
   await userEvent.click(within(review).getByRole('button', { name: 'Сохранить' }))
 
   expect(await screen.findByRole('status')).toHaveTextContent('Сохранено в медкарту · зубов: 1 · шагов плана: 1')
   expect(calls.apply).toEqual([{
-    teeth: [{ tooth: 36, state: 'FILLING', note: 'композит' }],
+    teeth: [{ tooth: 36, state: 'FILLING', surfaces: ['O', 'D'], note: 'композит' }],
     plan: [{ tooth: 46, title: 'Лечение каналов' }],
     note: 'Анестезия без реакции\nКариес 36 — пломба. Удалён 18.',
   }])

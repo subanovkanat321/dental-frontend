@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 
 import type { Lang } from './catalog'
-import { fromSom, stepPrice, type PricedService } from './prices'
-import { UI, type Slide, type Topic } from './topics'
+import { ICONS, type IconName } from './icons.gen'
+import { UI, type ArtFn, type Photo, type Slide, type Topic } from './topics'
 import './learn.css'
 
 type Props = {
   topic: Topic
   lang: Lang
   onLang?: (lang: Lang) => void
-  /** Прайс клиники для «Цены ожидания»; пусто — слайд без чисел */
-  services?: PricedService[]
   onClose?: () => void
   /** Под последним слайдом: «Отправить в Telegram», «Ссылка для WhatsApp», «Записаться» */
   endActions?: ReactNode
@@ -22,9 +20,10 @@ type Props = {
 
 /**
  * Презентация темы: слайды во весь экран, листание стрелками, свайпом и клавиатурой (← → Home End,
- * Esc — закрыть). Крупный текст, на телефоне рисунок сверху, на планшете и компьютере — рядом с текстом.
+ * Esc — закрыть). Строгий «атласный» вид: белый фон, крупный текст, на телефоне рисунок сверху,
+ * на планшете и компьютере — рядом с текстом.
  */
-export function Presentation({ topic, lang, onLang, services = [], onClose, endActions, brand, overlay = true }: Props) {
+export function Presentation({ topic, lang, onLang, onClose, endActions, brand, overlay = true }: Props) {
   const [index, setIndex] = useState(0)
   const slides = topic.slides
   const last = slides.length - 1
@@ -66,10 +65,10 @@ export function Presentation({ topic, lang, onLang, services = [], onClose, endA
 
   const slide = slides[index]!
   return (
-    <div ref={root} className={overlay ? 'lsn lsn-overlay' : 'lsn'} style={{ '--lsn-bg': topic.bg } as React.CSSProperties}
+    <div ref={root} className={overlay ? 'lsn lsn-overlay' : 'lsn'}
       role="dialog" aria-modal={overlay || undefined} aria-label={topic.title[lang]} tabIndex={-1} lang={lang}>
       <header className="lsn-top">
-        <span className="lsn-kicker"><span aria-hidden="true">{topic.emoji}</span> {brand && <span className="lsn-brand">{brand} · </span>}{topic.title[lang]}</span>
+        <span className="lsn-kicker">{brand && <span className="lsn-brand">{brand}</span>}<span>{topic.title[lang]}</span></span>
         <div className="lsn-dots" aria-hidden="true">
           {slides.map((s, i) => <button type="button" tabIndex={-1} key={i} className={i <= index ? 'on' : ''} onClick={() => go(i)} aria-label={`${UI.slide[lang]} ${i + 1}`} data-kind={s.kind} />)}
         </div>
@@ -82,7 +81,7 @@ export function Presentation({ topic, lang, onLang, services = [], onClose, endA
         {onClose && <button type="button" className="lsn-close" onClick={onClose} aria-label={UI.close[lang]}>✕</button>}
       </header>
       <div className="lsn-stage" onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
-        <SlideView key={`${topic.slug}-${index}`} slide={slide} lang={lang} services={services} first={index === 0} topicTitle={topic.title[lang]} />
+        <SlideView key={`${topic.slug}-${index}`} slide={slide} lang={lang} step={index + 1} first={index === 0} topicTitle={topic.title[lang]} />
         {index === last && (
           <div className="lsn-end">
             {endActions && <div className="lsn-actions">{endActions}</div>}
@@ -99,13 +98,41 @@ export function Presentation({ topic, lang, onLang, services = [], onClose, endA
   )
 }
 
-function SlideView({ slide, lang, services, first, topicTitle }: { slide: Slide; lang: Lang; services: PricedService[]; first: boolean; topicTitle: string }) {
+/** Пиктограмма Health Icons (контурная, цвета текста). */
+export function Icon({ name }: { name: IconName }) {
+  return <svg className="lsn-ico" viewBox="0 0 48 48" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">{ICONS[name]}</svg>
+}
+
+/** Атрибуция фото: «Фото: Автор, CC BY-SA 4.0, Wikimedia Commons» — со ссылкой на источник, если есть. */
+function creditText(photo: Photo, lang: Lang): string {
+  const c = photo.credit
+  return `${UI.photo[lang]}: ${c.author}, ${c.license}, ${c.source}`
+}
+
+/** Рисунок слайда или настоящее фото с подписью-атрибуцией (тогда рисунок не показываем). */
+function Visual({ art, photo, lang }: { art?: ArtFn; photo?: Photo; lang: Lang }) {
+  if (photo) {
+    return (
+      <figure className="lsn-art lsn-photo">
+        <img src={photo.src} alt={photo.alt[lang]} loading="lazy" decoding="async" />
+        <figcaption>
+          <span className="lsn-cap" aria-hidden="true">{photo.alt[lang]}</span>
+          <span className="lsn-credit">{photo.credit.url ? <a href={photo.credit.url} target="_blank" rel="noreferrer noopener">{creditText(photo, lang)}</a> : creditText(photo, lang)}</span>
+        </figcaption>
+      </figure>
+    )
+  }
+  return art ? <div className="lsn-art">{art(lang)}</div> : null
+}
+
+function SlideView({ slide, lang, step, first, topicTitle }: { slide: Slide; lang: Lang; step: number; first: boolean; topicTitle: string }) {
+  const eyebrow = <p className="lsn-topic">{first ? topicTitle : String(step).padStart(2, '0')}</p>
   if (slide.kind === 'what') {
     return (
       <section className="lsn-slide lsn-what">
-        <div className="lsn-art">{slide.art(lang)}</div>
+        <Visual art={slide.art} photo={slide.photo} lang={lang} />
         <div className="lsn-body">
-          {first && <p className="lsn-topic">{topicTitle}</p>}
+          {eyebrow}
           <h2 className="lsn-title">{slide.title[lang]}</h2>
           <p className="lsn-text">{slide.text[lang]}</p>
         </div>
@@ -115,48 +142,41 @@ function SlideView({ slide, lang, services, first, topicTitle }: { slide: Slide;
   if (slide.kind === 'stages') {
     return (
       <section className="lsn-slide lsn-stages">
-        <h2 className="lsn-title">{slide.title[lang]}</h2>
+        <header className="lsn-head">
+          {eyebrow}
+          <h2 className="lsn-title">{slide.title[lang]}</h2>
+          {slide.text && <p className="lsn-lead">{slide.text[lang]}</p>}
+        </header>
+        {slide.photo && <Visual photo={slide.photo} lang={lang} />}
         <ol className="lsn-cards" data-n={slide.points.length}>
           {slide.points.map((p, i) => (
             <li key={i} className="lsn-card">
               <div className="lsn-card-art">{p.art?.(lang)}</div>
-              <p><b className="lsn-num">{i + 1}</b> {p.text[lang]}</p>
+              <p><span className="lsn-num">{i + 1}</span><span>{p.text[lang]}</span></p>
             </li>
           ))}
         </ol>
+        {slide.note && <p className="lsn-note">{slide.note[lang]}</p>}
       </section>
     )
   }
-  if (slide.kind === 'wait') {
-    const priced = slide.steps.map((s) => stepPrice(services, s.prices))
-    const anyPrice = priced.some((p) => p != null)
-    return (
-      <section className="lsn-slide lsn-stages lsn-wait">
-        <h2 className="lsn-title">{slide.title[lang]}</h2>
-        <ol className="lsn-cards" data-n={slide.steps.length}>
-          {slide.steps.map((s, i) => (
-            <li key={i} className={i === 0 ? 'lsn-card now' : 'lsn-card'}>
-              <div className="lsn-card-art">{s.art(lang)}</div>
-              <p>{s.label[lang]}</p>
-              {anyPrice && <p className="lsn-price">{priced[i] != null ? fromSom(priced[i]!, lang) : UI.pricier[lang]}</p>}
-            </li>
-          ))}
-        </ol>
-        <p className="lsn-sooner">{anyPrice ? UI.sooner[lang] : UI.noPrices[lang]}</p>
-        {anyPrice && <p className="lsn-note">{UI.pricesNote[lang]}</p>}
-      </section>
-    )
-  }
+  const visual = slide.art || slide.photo
   return (
-    <section className="lsn-slide lsn-list">
-      {slide.art && <div className="lsn-art">{slide.art(lang)}</div>}
+    <section className={visual ? 'lsn-slide lsn-list' : 'lsn-slide lsn-list lsn-facts'}>
+      {visual && <Visual art={slide.art} photo={slide.photo} lang={lang} />}
       <div className="lsn-body">
+        {eyebrow}
         <h2 className="lsn-title">{slide.title[lang]}</h2>
         {slide.text && <p className="lsn-text">{slide.text[lang]}</p>}
         <ul className={slide.numbered ? 'lsn-points numbered' : 'lsn-points'}>
           {slide.points.map((p, i) => (
-            <li key={i}><span className="lsn-icon" aria-hidden="true">{slide.numbered ? i + 1 : p.icon}</span>
-              <span>{slide.numbered && p.icon ? <span aria-hidden="true">{p.icon} </span> : null}{p.text[lang]}</span></li>
+            <li key={i}>
+              <span className="lsn-icon">
+                {p.icon && <Icon name={p.icon} />}
+                {slide.numbered && <b className="lsn-step" aria-label={`${i + 1}.`}>{i + 1}</b>}
+              </span>
+              <span>{p.text[lang]}</span>
+            </li>
           ))}
         </ul>
       </div>

@@ -1,6 +1,7 @@
 import { memo, useId } from 'react'
 
-import type { ToothState } from './toothStates'
+import { SurfaceDiagram } from './SurfaceDiagram'
+import { hasSurfaces, type Surface, type ToothState } from './toothStates'
 
 /**
  * Зуб рисунком: коронка по группе (резец, клык, премоляр, моляр), корни по числу, пульпа и каналы
@@ -87,9 +88,31 @@ const SCREW = 'M15.5 46L15.5 15Q15.5 9 20 7Q24.5 9 24.5 15L24.5 46Z'
 const THREADS = [14, 19, 24, 29, 34, 39].map((y) => `M15.5 ${y + 2}L24.5 ${y}`).join('')
 const ABUTMENT = 'M16.5 40L23.5 40L23 46L17 46Z'
 
-export const ToothGlyph = memo(function ToothGlyph({ number, state = 'HEALTHY', className }: {
+/**
+ * Поверхности (V161) на рисунке, который виден сбоку: окклюзионная (режущий край) — полоса по краю коронки,
+ * мезиальная и дистальная — края коронки (мезиальная — к середине ряда), вестибулярная — пятно посередине
+ * (эту сторону и видно), оральная — кольцо вокруг него (она с обратной стороны).
+ */
+function SurfaceMarks({ number, surfaces, clip }: { number: number; surfaces: readonly Surface[]; clip: string }) {
+  const q = Math.floor(number / 10)
+  // Правая сторона пациента (четверти 1 и 4) — на экране слева: мезиальная у неё справа
+  const mesialRight = q === 1 || q === 4 || q === 5 || q === 8
+  const side = (right: boolean) => (right ? <rect x="27" y="40" width="14" height="32" /> : <rect x="-1" y="40" width="14" height="32" />)
+  return (
+    <g className="tg-surf" clipPath={`url(#${clip})`} data-part="surfaces">
+      {surfaces.includes('O') && <rect data-surface="O" x="-1" y="62.5" width="42" height="10" />}
+      {surfaces.includes('M') && <g data-surface="M">{side(mesialRight)}</g>}
+      {surfaces.includes('D') && <g data-surface="D">{side(!mesialRight)}</g>}
+      {surfaces.includes('B') && <ellipse data-surface="B" cx="20" cy="54" rx="5.5" ry="5" />}
+      {surfaces.includes('L') && <circle data-surface="L" className="tg-surf-ring" cx="20" cy="54" r="7.5" />}
+    </g>
+  )
+}
+
+export const ToothGlyph = memo(function ToothGlyph({ number, state = 'HEALTHY', surfaces, className }: {
   number: number
   state?: ToothState
+  surfaces?: readonly Surface[]
   className?: string
 }) {
   const clip = `tc${useId().replace(/[^a-zA-Z0-9]/g, '')}`
@@ -101,12 +124,14 @@ export const ToothGlyph = memo(function ToothGlyph({ number, state = 'HEALTHY', 
   const transform = `translate(${W / 2} ${upper ? 0 : H}) scale(${scale} ${upper ? 1 : -1}) translate(${-W / 2} 0)`
   const missing = state === 'MISSING'
   const implant = state === 'IMPLANT'
+  // Отмечены поверхности — рисуем их вместо общего пятна кариеса, пломбы или метки «лечится»
+  const parts = hasSurfaces(state) && surfaces?.length ? surfaces : null
 
   return (
     <svg className={`tooth-glyph${className ? ` ${className}` : ''}`} viewBox={`0 0 ${W} ${H}`} data-state={state}
       data-shape={shape} aria-hidden="true" focusable="false">
       <g transform={transform}>
-        {(state === 'CARIES' || state === 'FILLING') && (
+        {(state === 'CARIES' || state === 'FILLING' || parts) && (
           <clipPath id={clip}><path d={s.crown} /></clipPath>
         )}
         {implant ? (
@@ -125,17 +150,18 @@ export const ToothGlyph = memo(function ToothGlyph({ number, state = 'HEALTHY', 
             {s.roots.map((r, i) => <path key={i} className="tg-canal" d={r.canal} />)}
           </g>
         )}
-        {state === 'CARIES' && (
+        {parts && <SurfaceMarks number={number} surfaces={parts} clip={clip} />}
+        {state === 'CARIES' && !parts && (
           <g clipPath={`url(#${clip})`} data-part="caries">
             <path className="tg-caries" d="M21 58.5C23.5 56 28.5 56.5 29 60C29.5 63.5 26 65.5 23 64.5C20.5 63.7 19.5 60.5 21 58.5Z" />
             <circle className="tg-caries" cx="14.5" cy="63.5" r="1.6" />
           </g>
         )}
-        {state === 'FILLING' && (
+        {state === 'FILLING' && !parts && (
           <ellipse className="tg-filling" data-part="filling" cx="20" cy="66" rx="9.5" ry="6" clipPath={`url(#${clip})`} />
         )}
         {state === 'CROWN' && <path className="tg-crown-margin" d="M10 46.5Q20 49.5 30 46.5" />}
-        {state === 'TREATING' && <circle className="tg-mark" data-part="treating" cx="20" cy="56" r="3.2" />}
+        {state === 'TREATING' && !parts && <circle className="tg-mark" data-part="treating" cx="20" cy="56" r="3.2" />}
       </g>
     </svg>
   )
@@ -145,10 +171,20 @@ export const ToothGlyph = memo(function ToothGlyph({ number, state = 'HEALTHY', 
  * Содержимое кнопки зуба в формуле: рисунок и номер FDI. Номера смотрят к линии смыкания —
  * у верхних зубов подпись под рисунком, у нижних над ним, как в бумажной формуле.
  */
-export function ToothFigure({ number, state }: { number: number; state?: ToothState }) {
-  const glyph = <ToothGlyph number={number} state={state} />
+/**
+ * @param ring кружок поверхностей под рисунком (медкарта, «На весь экран»): у каждого зуба, чтобы ряды
+ *   стояли ровно; закрашен — где отмечены поверхности
+ */
+export function ToothFigure({ number, state, surfaces, ring = false }: {
+  number: number; state?: ToothState; surfaces?: readonly Surface[]; ring?: boolean
+}) {
+  const glyph = <ToothGlyph number={number} state={state} surfaces={surfaces} />
   const label = <span className="tooth-number">{number}</span>
-  return isUpperTooth(number) ? <>{glyph}{label}</> : <>{label}{glyph}</>
+  const circle = ring && (
+    <SurfaceDiagram className="tooth-ring" number={number} value={hasSurfaces(state) ? (surfaces ?? []) : []} state={state} />
+  )
+  // Кружок — у линии смыкания, рядом с номером: верхние — под номером, нижние — над ним
+  return isUpperTooth(number) ? <>{glyph}{label}{circle}</> : <>{circle}{label}{glyph}</>
 }
 
 /** Легенда карты: тот же рисунок зуба (первый моляр), что и в формуле. */

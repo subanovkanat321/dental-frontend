@@ -3,9 +3,12 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Fold } from '../layout/Fold'
+import { MultiToothPanel } from '../medical/MultiTeeth'
+import { SurfacePicker } from '../medical/SurfaceDiagram'
 import { ToothFormula } from '../medical/ToothFormula'
+import { ToothFullscreen } from '../medical/ToothFullscreen'
 import { ToothFigure } from '../medical/ToothGlyph'
-import { TOOTH_STATES, visitToothText, type ToothState } from '../medical/toothStates'
+import { TOOTH_STATES, hasSurfaces, stateText, visitToothText, type Surface, type ToothState } from '../medical/toothStates'
 
 type Appointment = Schemas['AppointmentView']
 type VisitTooth = Schemas['VisitToothView']
@@ -32,12 +35,22 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
   })
   const [picking, setPicking] = useState(false)
   const [open, setOpen] = useState<number | null>(null)
-  // Что сейчас на карте пациента — подсказка в редакторе («На карте: кариес»); тот же ключ, что у медкарты
+  // «Несколько»: отметить сразу несколько зубов одним действием
+  const [multi, setMulti] = useState(false)
+  const [picked, setPicked] = useState<number[]>([])
+  const [full, setFull] = useState(false)
+  // Что сейчас на карте пациента — подсказка в редакторе («На карте: кариес») и «На весь экран»; тот же ключ, что у медкарты
   const chart = useQuery({
     queryKey: ['teeth', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth', { params: { path: { patientId: patientId! } } })),
-    enabled: patientId != null && open != null,
+    enabled: patientId != null && (open != null || full),
     retry: false,
+  })
+  const many = useMutation<VisitTooth[], ApiError, { state: ToothState; surfaces: Surface[] }>({
+    mutationFn: ({ state, surfaces }) => unwrap(api.POST('/api/appointments/{id}/teeth/batch', {
+      params: { path: { id: a.id! } }, body: { numbers: picked, state, surfaces },
+    })),
+    onSuccess: (fresh) => saved(fresh),
   })
   // «убрать» прямо из списка — отметили не тот зуб
   const unmark = useMutation<VisitTooth[], ApiError, number>({
@@ -56,16 +69,27 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
     void client.invalidateQueries({ queryKey: ['teeth-history', patientId] })
     setOpen(null)
     setPicking(false)
+    setMulti(false)
+    setPicked([])
+  }
+  const cancelPicking = () => {
+    setPicking(false)
+    setMulti(false)
+    setPicked([])
+    many.reset()
   }
 
   const tooth = (n: number) => {
     const t = byNumber.get(n)
     const state = t?.state
-    const label = state ? TOOTH_STATES[state][0] : 'не отмечен'
+    const label = state ? stateText(n, state, t?.surfaces) : 'не отмечен'
+    const isPicked = picked.includes(n)
     return (
-      <button key={n} type="button" className={`tooth${open === n ? ' active' : ''}`} data-state={state ?? 'HEALTHY'}
-        aria-label={`Зуб ${n}: ${label}`} aria-pressed={open === n} onClick={() => setOpen(open === n ? null : n)}>
-        <ToothFigure number={n} state={state} />
+      <button key={n} type="button" className={`tooth${open === n ? ' active' : ''}${isPicked ? ' picked' : ''}`} data-state={state ?? 'HEALTHY'}
+        aria-label={`Зуб ${n}: ${label}`} aria-pressed={multi ? isPicked : open === n}
+        onClick={() => (multi ? setPicked(isPicked ? picked.filter((x) => x !== n) : [...picked, n]) : setOpen(open === n ? null : n))}>
+        {isPicked && <span aria-hidden="true" className="tooth-check">✓</span>}
+        <ToothFigure number={n} state={state} surfaces={t?.surfaces} />
       </button>
     )
   }
@@ -73,6 +97,11 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
   return (
     <Fold title="Зубы" label="Зубы этого приёма" meta={marked.length ? marked.map((t) => t.number).join(', ') : 'не отмечены'}>
     <div className="visit-teeth">
+      {patientId != null && (
+        <div className="chart-head">
+          <button type="button" className="btn small" onClick={() => setFull(true)}>⛶ На весь экран</button>
+        </div>
+      )}
       {marked.length > 0 && (
         <ul className="marked-teeth" aria-label="Отмеченные зубы приёма">
           {marked.map((t) => (
@@ -96,9 +125,18 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
       )}
       {!readOnly && picking && open == null && (
         <>
-          <p className="hint small">Нажмите зуб, который лечили. Номера — FDI, как на карте зубов.</p>
+          <div className="chart-head">
+            <p className="hint small">{multi ? 'Отметьте галочками зубы, которые лечили.' : 'Нажмите зуб, который лечили. Номера — FDI, как на карте зубов.'}</p>
+            <button type="button" className="btn small" aria-pressed={multi}
+              onClick={() => { setMulti(!multi); setPicked([]); many.reset() }}>{multi ? '☑' : '☐'} Несколько</button>
+          </div>
           <ToothFormula className="visit-formula" render={tooth} />
-          <button type="button" className="btn ghost" onClick={() => setPicking(false)}>Отмена</button>
+          {multi && (
+            <MultiToothPanel key={picked.length === 0 ? 'empty' : 'picked'} numbers={picked} states={STATES} patientId={patientId}
+              onApply={(state, surfaces) => many.mutate({ state, surfaces })} applying={many.isPending} error={many.error}
+              onClear={() => { setPicked([]); many.reset() }} />
+          )}
+          <button type="button" className="btn ghost" onClick={cancelPicking}>Отмена</button>
         </>
       )}
       {!readOnly && open != null && (
@@ -107,6 +145,10 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
           onSaved={saved} onCancel={() => { setOpen(null); setPicking(false) }} />
       )}
       {onMedical && <button type="button" className="link" onClick={onMedical}>Карта зубов и план лечения ›</button>}
+      {full && (
+        <ToothFullscreen teeth={chart.data ?? marked} highlight={marked.map((t) => t.number!)} patientName={a.patient?.fullName}
+          onClose={() => setFull(false)} />
+      )}
     </div>
     </Fold>
   )
@@ -122,9 +164,12 @@ function VisitToothEditor({ appointmentId, number, marked, onChart, onSaved, onC
 }) {
   const [state, setState] = useState<ToothState | null>(marked?.state ?? null)
   const [note, setNote] = useState(marked?.note ?? '')
+  const [surfaces, setSurfaces] = useState<Surface[]>(marked?.surfaces ?? [])
   const path = { params: { path: { id: appointmentId, number } } }
   const save = useMutation<VisitTooth[], ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/appointments/{id}/teeth/{number}', { ...path, body: { state: state!, note: note.trim() || undefined } })),
+    mutationFn: () => unwrap(api.PUT('/api/appointments/{id}/teeth/{number}', {
+      ...path, body: { state: state!, surfaces: hasSurfaces(state) ? surfaces : [], note: note.trim() || undefined },
+    })),
     onSuccess: onSaved,
   })
   const remove = useMutation<VisitTooth[], ApiError>({
@@ -141,8 +186,9 @@ function VisitToothEditor({ appointmentId, number, marked, onChart, onSaved, onC
           <button key={k} type="button" aria-pressed={state === k} onClick={() => setState(k)}>{TOOTH_STATES[k][1]} {TOOTH_STATES[k][0]}</button>
         ))}
       </div>
+      {hasSurfaces(state) && <SurfacePicker number={number} value={surfaces} onChange={setSurfaces} state={state} />}
       <label className="field"><span>Заметка — необязательно</span>
-        <input maxLength={500} value={note} placeholder="Материал, поверхность" onChange={(e) => setNote(e.target.value)} />
+        <input maxLength={500} value={note} placeholder="Материал" onChange={(e) => setNote(e.target.value)} />
       </label>
       {error && <p className="error" role="alert">{Object.values(error.fieldErrors)[0] ?? error.message}</p>}
       <div className="actions">
