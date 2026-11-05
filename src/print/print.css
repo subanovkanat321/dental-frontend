@@ -122,7 +122,10 @@
 }
 
 .print-sheet .total {
-  font-weight: 600;
+  /* Общий .total CRM (крупный заголовок 2rem) на бумагу не переносим: итог — чуть крупнее текста */
+  margin: 4px 0;
+  font: 600 1.15em/1.35 Geologica, 'Golos Text', sans-serif;
+  letter-spacing: 0;
   text-align: right;
 }
 
@@ -156,6 +159,16 @@
   font-size: 0.8em;
   color: #555;
   border-top: 1px solid #bbb;
+}
+
+/* Узкий экран (телефон): лист A4 не вылезает — меньше поля, таблица мельче, переносится только имя */
+@media screen and (max-width: 600px) {
+  .print-root { padding: 8px; }
+  .print-sheet { padding: 6mm 4mm; overflow-wrap: break-word; }
+  .print-sheet table { font-size: 0.88em; }
+  .print-sheet th,
+  .print-sheet td { padding: 3px 3px; white-space: nowrap; }
+  .print-sheet td:nth-child(3) { white-space: normal; }
 }
 
 @media print {
