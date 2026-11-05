@@ -1,0 +1,94 @@
+/*
+ * Карта зубов: поверхности (кружок из пяти частей), «Выбрать несколько» и «На весь экран».
+ * Отдельным файлом рядом с компонентами — общий styles.css не трогаем.
+ */
+
+/* Кружок поверхностей. Цвет отмеченных — как у состояния на рисунке зуба */
+.surface-diagram { --sd-on: var(--accent); display: block; overflow: visible; }
+.surface-diagram[data-state=CARIES] { --sd-on: var(--tooth-caries); }
+.surface-diagram[data-state=FILLING] { --sd-on: var(--tooth-filling); }
+.surface-diagram[data-state=TREATING] { --sd-on: var(--tooth-treat); }
+.sd-seg { fill: var(--card); stroke: var(--line-strong); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+[data-on] > .sd-seg { fill: var(--sd-on); }
+.sd-letter { font: 600 15px/1 var(--font, inherit); fill: var(--text); pointer-events: none; user-select: none; }
+[data-on] > .sd-letter { fill: #FFFFFF; }
+.surface-diagram[data-state=TREATING] [data-on] > .sd-letter { fill: #2A1A00; }
+.surface-diagram.interactive { width: 132px; height: 132px; flex: none; }
+.surface-diagram.interactive [role=button] { cursor: pointer; outline: none; }
+.surface-diagram.interactive [role=button]:hover > .sd-seg { stroke: var(--accent); }
+.surface-diagram.interactive [role=button]:focus-visible > .sd-seg { stroke: var(--accent); stroke-width: 3; }
+.surface-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.surface-picker-text { display: grid; gap: 4px; justify-items: start; min-width: 0; }
+.surface-picker-text .field-label { font-weight: 600; font-size: .9rem; }
+
+/* Маленький кружок под каждым зубом карты */
+.tooth-ring { width: 16px; height: 16px; }
+.tooth-ring .sd-seg { stroke-width: 1; stroke: var(--line-strong); }
+.tooth[data-state=MISSING] .tooth-ring { opacity: .35; }
+
+/* Поверхности на рисунке зуба */
+.tg-surf { fill: var(--tooth-caries); }
+.tooth-glyph[data-state=FILLING] .tg-surf { fill: var(--tooth-filling); }
+.tooth-glyph[data-state=TREATING] .tg-surf { fill: var(--tooth-treat); }
+.tg-surf .tg-surf-ring { fill: none; stroke: currentColor; stroke-width: 2.2; }
+.tooth-glyph[data-state=CARIES] .tg-surf-ring { stroke: var(--tooth-caries); }
+.tooth-glyph[data-state=FILLING] .tg-surf-ring { stroke: var(--tooth-filling); }
+.tooth-glyph[data-state=TREATING] .tg-surf-ring { stroke: var(--tooth-treat); }
+
+/* Шапка карты: заголовок и кнопки «Несколько», «На весь экран» */
+.chart-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.chart-head h2, .chart-head h3 { margin: 0; margin-right: auto; }
+.chart-head .btn { min-height: 36px; }
+.btn[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+
+/* «Выбрать несколько»: галочка у выбранного зуба */
+.tooth.picked { border-color: var(--accent); background: var(--accent-soft); }
+.tooth-check {
+  position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent); color: #FFFFFF; font-size: 10px; font-weight: 600; line-height: 14px; text-align: center;
+}
+.multi-panel { display: grid; gap: 10px; padding: 12px; border-radius: 12px; background: var(--accent-soft); }
+.multi-panel h3 { margin: 0; font-size: 1rem; }
+.multi-panel .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.multi-plan { display: grid; grid-template-columns: 1fr 110px 110px; gap: 8px; }
+.multi-plan .plan-service, .multi-plan .multi-plan-title { grid-column: 1 / -1; }
+.multi-plan input { font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); min-width: 0; }
+@media (max-width: 760px) {
+  .multi-plan { grid-template-columns: 1fr 1fr; }
+  .multi-panel .actions .btn { flex: 1 1 auto; min-height: 44px; }
+}
+
+/* «На весь экран» — показать пациенту на ТВ, мониторе или планшете: только зубы и легенда */
+.tooth-fullscreen {
+  position: fixed; inset: 0; z-index: 1000; display: grid; grid-template-rows: auto 1fr auto; gap: clamp(8px, 2vh, 24px);
+  padding: clamp(12px, 3vh, 40px) clamp(12px, 3vw, 56px); overflow: auto; background: var(--page); color: var(--text);
+}
+.tooth-fullscreen:focus { outline: none; }
+.fs-head { display: flex; align-items: center; gap: 12px; }
+.fs-head h2 { margin: 0; margin-right: auto; font-family: var(--display); font-weight: 600; font-size: clamp(1.2rem, 2.4vw, 2.2rem); }
+.fs-close { min-width: 48px; min-height: 48px; font-size: 1.4rem; }
+.fs-chart { align-self: center; display: grid; gap: clamp(8px, 2vh, 24px); width: 100%; max-width: 1800px; margin: 0 auto; }
+.fs-chart .jaw { grid-template-columns: 1fr 1fr; gap: 0 clamp(8px, 1.6vw, 28px); }
+.fs-chart .quadrant + .quadrant { padding-left: clamp(8px, 1.6vw, 28px); border-left: 2px dashed var(--separator); }
+.fs-chart .jaw + .jaw { padding-top: clamp(8px, 2vh, 24px); }
+.fs-chart .teeth { gap: clamp(2px, .6vw, 10px); grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.fs-chart .quadrant-label { font-size: clamp(.8rem, 1.1vw, 1.1rem); }
+.fs-chart .tooth { padding: clamp(2px, .6vh, 8px) 0; gap: clamp(2px, .5vh, 6px); }
+.fs-chart .tooth-glyph { max-width: min(7.5vw, 13vh, 104px); }
+.fs-chart .tooth-number { font-size: clamp(.8rem, 1.3vw, 1.4rem); }
+.fs-chart .tooth-ring { width: clamp(14px, 2.2vw, 40px); height: clamp(14px, 2.2vw, 40px); }
+.fs-chart .tooth.lit { border-color: var(--accent); border-width: 2px; background: var(--accent-soft); }
+.fs-chart .tooth.visit:not(.lit) { background: color-mix(in srgb, var(--accent-soft) 60%, transparent); }
+.fs-foot { display: grid; gap: 10px; justify-items: center; text-align: center; }
+.fs-caption { margin: 0; min-height: 1.5em; font-size: clamp(1rem, 2vw, 1.8rem); font-weight: 600; }
+.fs-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px clamp(14px, 2vw, 32px); margin: 0; font-size: clamp(.9rem, 1.4vw, 1.4rem); }
+.fs-legend .tooth-glyph.mini { width: clamp(16px, 2vw, 30px); }
+.fs-name { font-size: clamp(.9rem, 1.4vw, 1.3rem); color: var(--hint); }
+/* Портрет (планшет стоя, телефон): четверти друг под другом — зубы вдвое крупнее, без прокрутки вбок */
+@media (orientation: portrait) {
+  .fs-chart .jaw { grid-template-columns: 1fr; gap: clamp(6px, 1.4vh, 18px) 0; }
+  .fs-chart .quadrant + .quadrant { padding-left: 0; border-left: 0; }
+  .fs-chart .tooth-glyph { max-width: min(10vw, 5.5vh, 104px); }
+  .fs-chart .tooth-number { font-size: clamp(.8rem, 2.4vw, 1.4rem); }
+  .fs-chart .tooth-ring { width: clamp(14px, 3.6vw, 40px); height: clamp(14px, 3.6vw, 40px); }
+}

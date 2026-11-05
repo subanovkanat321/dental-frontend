@@ -4842,6 +4842,46 @@
         }
       }
     },
+    "/api/patients/{patientId}/teeth/batch" : {
+      "post" : {
+        "tags" : [ "chart-controller" ],
+        "operationId" : "updateMany",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChartControllerMany"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ToothView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/plan" : {
       "get" : {
         "tags" : [ "chart-controller" ],
@@ -4988,6 +5028,46 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PlanOffersSent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/plan/batch" : {
+      "post" : {
+        "tags" : [ "chart-controller" ],
+        "operationId" : "addSteps",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChartControllerSteps"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TreatmentStepView"
+                  }
                 }
               }
             }
@@ -6864,6 +6944,46 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/{id}/teeth/batch" : {
+      "post" : {
+        "tags" : [ "visit-teeth-controller" ],
+        "operationId" : "markMany",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitTeethControllerMany"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/VisitToothView"
+                  }
                 }
               }
             }
@@ -11454,6 +11574,12 @@
             "type" : "string",
             "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
           },
+          "surfaces" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "note" : {
             "type" : "string"
           }
@@ -11468,6 +11594,13 @@
           "state" : {
             "type" : "string",
             "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "surfaces" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "M", "O", "D", "B", "L" ]
+            }
           },
           "note" : {
             "type" : "string"
@@ -12555,6 +12688,12 @@
             "type" : "string",
             "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
           },
+          "surfaces" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "note" : {
             "type" : "string"
           }
@@ -12569,6 +12708,13 @@
           "state" : {
             "type" : "string",
             "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "surfaces" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "M", "O", "D", "B", "L" ]
+            }
           },
           "note" : {
             "type" : "string"
@@ -13532,6 +13678,27 @@
           }
         }
       },
+      "ChartControllerMany" : {
+        "properties" : {
+          "numbers" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "surfaces" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
       "PlanOffersSendRequest" : {
         "properties" : {
           "channel" : {
@@ -13602,6 +13769,32 @@
           },
           "url" : {
             "type" : "string"
+          }
+        }
+      },
+      "ChartControllerSteps" : {
+        "properties" : {
+          "teeth" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "stage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -14474,6 +14667,27 @@
         },
         "required" : [ "doctorId", "durationMinutes", "startAt", "version" ]
       },
+      "VisitTeethControllerMany" : {
+        "properties" : {
+          "numbers" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "surfaces" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
       "SupplyQueryUsed" : {
         "properties" : {
           "supplyId" : {
@@ -14676,6 +14890,13 @@
           "state" : {
             "type" : "string",
             "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
+          },
+          "surfaces" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "M", "O", "D", "B", "L" ]
+            }
           },
           "note" : {
             "type" : "string"

@@ -79,7 +79,7 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   await userEvent.type(within(editor).getByLabelText('Заметка'), 'композит')
   await userEvent.click(within(editor).getByRole('button', { name: 'Сохранить' }))
   expect(await screen.findByRole('button', { name: 'Зуб 26: Пломба, есть заметка' })).toBeInTheDocument()
-  expect(sent).toContainEqual({ tooth: 26, state: 'FILLING', note: 'композит' })
+  expect(sent).toContainEqual({ tooth: 26, state: 'FILLING', surfaces: [], note: 'композит' })
 
   const plan = screen.getByRole('list', { name: 'Этапы лечения' })
   expect(await screen.findByRole('heading', { name: /План лечения/ })).toHaveTextContent(/3\s000 сом/)
