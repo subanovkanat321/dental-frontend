@@ -66,3 +66,32 @@ test('регистратура медкарту не видит — ни зап�
   expect(within(panel).queryByRole('region', { name: 'Продолжение лечения' })).not.toBeInTheDocument()
   expect(asked).not.toContain('notes')
 })
+
+function cardOf(past: Schemas['AppointmentView'][]) {
+  server.use(http.get('*/api/appointments/by-patient/:id', () => HttpResponse.json({ done: past.length, noShow: 0, cancelled: 0, upcoming: [], past })))
+}
+
+test('история пациента: врач ничего не записал — всё равно видно, когда и с чем был в последний раз', async () => {
+  setup([], [])
+  cardOf([
+    appointment(7, 1, '10:00', 'Бакыт М.', { startAt: ago(40), endAt: ago(40), status: 'DONE', serviceName: 'Осмотр и консультация' }),
+    appointment(8, 1, '10:00', 'Бакыт М.', { startAt: ago(12), endAt: ago(12), status: 'DONE', serviceName: 'Лечение кариеса' }),
+    appointment(9, 1, '10:00', 'Бакыт М.', { startAt: ago(5), endAt: ago(5), status: 'NO_SHOW' }),
+  ])
+  renderApp()
+  const block = await within(await card()).findByRole('region', { name: 'История пациента' })
+  expect(block).toHaveTextContent('Визитов: 2')
+  expect(block).toHaveTextContent('12 дней назад')
+  expect(block).toHaveTextContent('Лечение кариеса')
+  expect(block).toHaveTextContent('Не пришёл без предупреждения: 1 раз')
+  // Заметок нет — «Продолжения лечения» нет, а история есть
+  expect(screen.queryByRole('region', { name: 'Продолжение лечения' })).not.toBeInTheDocument()
+})
+
+test('история пациента: первый визит и видна регистратуре', async () => {
+  setup([], [], { ...me, admin: false, doctorId: undefined, reception: true })
+  cardOf([])
+  renderApp()
+  const block = await within(await card()).findByRole('region', { name: 'История пациента' })
+  expect(block).toHaveTextContent('Впервые в клинике')
+})

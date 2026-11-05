@@ -195,6 +195,6 @@ test('снимки и фото — прямо из карточки приёма
   const files = within(panel).getByRole('region', { name: 'Снимки и фото' })
   expect(within(files).getByLabelText('Файлы снимков')).toBeInTheDocument()
   // В приёме по умолчанию — «Фото»
-  expect(within(files).getByRole('button', { name: 'Фото' })).toHaveAttribute('aria-pressed', 'true')
-  expect(await within(files).findByText('Картинка «до / после» для Instagram')).toBeInTheDocument()
+  expect(within(files).getByRole('button', { name: '📷 Фото зубов' })).toHaveAttribute('aria-pressed', 'true')
+  expect(await within(files).findByRole('region', { name: 'Для Instagram' })).toBeInTheDocument()
 })
