@@ -93,7 +93,7 @@
 .lsn-cards[data-n='3'] { --n: 3; }
 .lsn-cards[data-n='2'] { --n: 2; }
 .lsn-card { border: 1px solid var(--lsn-line); border-radius: 12px; padding: clamp(8px, 1vw, 12px); display: flex; flex-direction: column; gap: 10px; min-height: 0; background: #fff; }
-.lsn-card-art { flex: none; height: min(30vh, 250px); display: flex; align-items: center; justify-content: center; background: var(--lsn-plate); border-radius: 8px; padding: 10px; }
+.lsn-card-art { flex: none; height: min(26vh, 240px); display: flex; align-items: center; justify-content: center; background: var(--lsn-plate); border-radius: 8px; padding: 10px; }
 .lsn-card-art .art { width: 100%; height: 100%; }
 .lsn-card p { margin: 0; display: flex; gap: 10px; align-items: flex-start; font-size: clamp(15px, 1.55vw, 19px); line-height: 1.35; padding: 0 2px 4px; }
 .lsn-num { flex: none; display: grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; border: 1.5px solid var(--lsn-teal); color: var(--lsn-teal);

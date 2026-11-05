@@ -358,7 +358,7 @@ export function Implant({ stage = 'full', labels, lang = 'ru', title }: { stage?
     [214, 296, 296, names.bone[lang]],
   ]
   return (
-    <svg viewBox={`0 ${top} ${labels ? 445 : 240} ${320 - top}`} role="img" aria-label={title} className="art" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox={`0 ${top} ${labels ? 495 : 240} ${320 - top}`} role="img" aria-label={title} className="art" xmlns="http://www.w3.org/2000/svg">
       <Kit p={p} />
       <Jaw u={u} gum="ok" gumTop={stage === 'screw' ? 150 : 158} />
       {exploded && <path d="M120,-110 V300" stroke={LEADER} strokeWidth={1} strokeDasharray="5 5" />}

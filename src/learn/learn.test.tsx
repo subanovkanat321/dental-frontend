@@ -112,6 +112,17 @@ test('листание: кнопки, стрелки, Home/End, свайп; Esc 
   expect(onClose).toHaveBeenCalled()
 })
 
+test('фото в темах — только со свободной лицензией, автором и ссылкой на источник', () => {
+  const photos = TOPIC_LIST.flatMap((t) => t.slides.flatMap((s) => (s.photo ? [s.photo] : [])))
+  expect(photos.length).toBeGreaterThanOrEqual(5)
+  for (const p of photos) {
+    expect(p.credit.license).toMatch(/^(CC0|Public domain|CC BY(-SA)? \d\.\d)$/)
+    expect(p.credit.author).toBeTruthy()
+    expect(p.credit.url).toMatch(/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/)
+    expect(p.alt.ru && p.alt.ky).toBeTruthy()
+  }
+})
+
 test('фото к слайду: вместо рисунка, с подписью «автор, лицензия, источник» и ссылкой; без фото — рисунок', () => {
   const caries = topicBySlug('caries')!
   const [what, ...rest] = caries.slides

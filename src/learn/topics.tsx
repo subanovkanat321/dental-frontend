@@ -5,6 +5,10 @@ import { TOPICS, type L, type Lang, type TopicInfo, type TopicSlug } from './cat
 import type { IconName } from './icons.gen'
 import canalsXray from './photos/canals-xray.jpg'
 import crownZirconia from './photos/crown-zirconia.jpg'
+import wisdomXray from './photos/extraction-wisdom-xray.jpg'
+import gumsScaler from './photos/gums-scaler.jpg'
+import hygieneTip from './photos/hygiene-ultrasonic.jpg'
+import implantJaw from './photos/implant-jaw.jpg'
 import kidsFissures from './photos/kids-fissures.jpg'
 import whiteningShades from './photos/whitening-shades.jpg'
 
@@ -124,7 +128,9 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
     { kind: 'what', title: { ru: 'Когда зуб приходится удалить', ky: 'Тишти качан жулууга туура келет' },
       text: { ru: 'Удаляем, только когда зуб уже не сохранить: он сильно разрушен, шатается или мешает соседним зубам. Чаще всего — зубы мудрости.',
         ky: 'Тишти сактап калуу мүмкүн болбогондо гана жулабыз: ал катуу бузулган, кыймылдайт же коңшу тиштерге тоскоол. Көбүнчө — акыл тиштер.' },
-      art: () => <Wisdom state="tilt" title="Зуб мудрости растёт под углом" /> },
+      art: () => <Wisdom state="tilt" title="Зуб мудрости растёт под углом" />,
+      photo: { src: wisdomXray, alt: { ru: 'Рентген: зуб мудрости (слева) лежит под углом и упирается в соседний зуб', ky: 'Рентген: акыл тиш (сол жакта) кыйшык жатып, коңшу тишке тирелет' },
+        credit: commons('Third molar impacted mesioangular.jpg', 'Nizil Shah', 'CC BY-SA 4.0') } },
     { kind: 'stages', title: { ru: 'Почему зуб мудрости бывает лучше удалить', ky: 'Акыл тишти эмне үчүн жулган жакшы' }, points: [
       { art: () => <Wisdom state="tilt" />, text: { ru: 'Растёт под углом и давит на соседний зуб', ky: 'Кыйшык өсүп, коңшу тишти кысат' } },
       { art: () => <Wisdom state="half" />, text: { ru: 'Наполовину под десной — там застревает еда, десна воспаляется', ky: 'Жарымы бүйлөнүн астында — тамак кептелип, бүйлө сезгенет' } },
@@ -162,7 +168,9 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { art: () => <Tooth tartar="below" bone="low" gum="red" />, text: { ru: 'Кость вокруг зуба убывает — зуб начинает шататься', ky: 'Тиштин айланасындагы сөөк азаят — тиш кыймылдай баштайт' } },
     ], note: { ru: 'Регулярная чистка — короткая и простая процедура; она помогает обойтись без лечения дёсен.',
       ky: 'Үзгүлтүксүз тазалоо — кыска жана жөнөкөй; ал бүйлөнү дарылабай эле коюуга жардам берет.' } },
-    { kind: 'list', title: { ru: 'Как проходит чистка', ky: 'Тазалоо кантип өтөт' }, numbered: true, art: (lang) => <Tooth lang={lang} labels={{ enamel: true, gum: true, bone: true }} title="Чистый здоровый зуб" />, points: [
+    { kind: 'list', title: { ru: 'Как проходит чистка', ky: 'Тазалоо кантип өтөт' }, numbered: true, art: (lang) => <Tooth lang={lang} labels={{ enamel: true, gum: true, bone: true }} title="Чистый здоровый зуб" />,
+      photo: { src: hygieneTip, alt: { ru: 'Наконечник для снятия зубного камня на стоматологической установке', ky: 'Тиш ташын алуучу учтук стоматологиялык орнотмодо' },
+        credit: commons('Dental instrument to remove Calculus 1.JPG', 'RosarioVanTulpe', 'CC BY-SA 3.0') }, points: [
       { icon: 'treat', text: { ru: 'Ультразвуком снимаем камень — и над десной, и под ней', ky: 'Ультраүн менен ташты алабыз — бүйлөнүн үстүнөн да, астынан да' } },
       { icon: 'spray', text: { ru: 'Воздухом с мелким порошком убираем налёт и пятна от чая и кофе', ky: 'Майда порошок кошулган аба менен чай-кофенин тагын тазалайбыз' } },
       { icon: 'check', text: { ru: 'Полируем — на гладких зубах налёт держится хуже', ky: 'Жылмалайбыз — жылма тишке кир аз жабышат' } },
@@ -254,7 +262,9 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { art: () => <Gap stage={3} />, text: { ru: 'Зуб сверху опускается — меняется прикус', ky: 'Үстүңкү тиш ылдый түшөт — тиштешүү өзгөрөт' } },
     ], note: { ru: 'Чем раньше восполнить пустое место, тем больше своей кости и тем проще поставить имплант.',
       ky: 'Бош орунду канчалык эрте толтурсаңыз, өз сөөгүңүз ошончолук көп сакталып, имплант коюу жеңилирээк болот.' } },
-    { kind: 'list', title: T.how, numbered: true, art: (lang) => <Implant stage="full" labels lang={lang} title="Имплант с опорой и коронкой" />, points: [
+    { kind: 'list', title: T.how, numbered: true, art: (lang) => <Implant stage="full" labels lang={lang} title="Имплант с опорой и коронкой" />,
+      photo: { src: implantJaw, alt: { ru: 'Имплант с коронкой в кости среди своих зубов (медицинская иллюстрация)', ky: 'Коронкасы бар имплант сөөктө, өз тиштердин арасында (медициналык сүрөт)' },
+        credit: commons('Dental-implant-illustration.jpg', 'Alexmit art', 'CC BY-SA 4.0') }, points: [
       { icon: 'scan', text: { ru: 'Осмотр и снимок (КТ) — оцениваем кость', ky: 'Текшерүү жана сүрөт (КТ) — сөөктү карайбыз' } },
       { icon: 'syringe', text: { ru: 'Под анестезией ставим имплант в кость', ky: 'Анестезия менен имплантты сөөккө коёбуз' } },
       { icon: 'calendar', text: { ru: '2–6 месяцев имплант срастается с костью', ky: '2–6 ай имплант сөөк менен бүтөт' } },
@@ -314,7 +324,9 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { art: () => <Gap stage={2} />, text: { ru: 'Зубы шатаются и могут выпасть', ky: 'Тиштер кыймылдап, түшүп калышы мүмкүн' } },
     ], note: { ru: 'На стадии гингивита дёсны восстанавливаются полностью — поэтому лечить лучше сразу.',
       ky: 'Гингивит баскычында бүйлө толук калыбына келет — ошондуктан дароо дарылаган жакшы.' } },
-    { kind: 'list', title: T.how, numbered: true, art: (lang) => <Tooth lang={lang} labels={{ gum: true, bone: true }} title="Здоровая десна" />, points: [
+    { kind: 'list', title: T.how, numbered: true, art: (lang) => <Tooth lang={lang} labels={{ gum: true, bone: true }} title="Здоровая десна" />,
+      photo: { src: gumsScaler, alt: { ru: 'Ручной инструмент (скалер): им бережно снимают камень у корней зуба', ky: 'Кол аспап (скалер): аны менен тиштин тамырындагы ташты этият алышат' },
+        credit: commons('Dental scaler.JPG', 'Haragayato', 'CC BY-SA 2.5') }, points: [
       { icon: 'treat', text: { ru: 'Снимаем камень над и под десной', ky: 'Бүйлөнүн үстүндөгү жана астындагы ташты алабыз' } },
       { icon: 'spray', text: { ru: 'Чистим карманы у корней и полируем', ky: 'Тамырдын жанындагы чөнтөктөрдү тазалап, жылмалайбыз' } },
       { icon: 'pills', text: { ru: 'Лечение воспаления — по назначению врача', ky: 'Сезгенүүнү дарылоо — дарыгердин көрсөтмөсү боюнча' } },
