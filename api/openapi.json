@@ -12841,6 +12841,10 @@
           "unchanged" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "removed" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },

@@ -85,7 +85,7 @@ export function ContentTab() {
         </div>
         {load.isSuccess && (load.data == null
           ? <p className="hint" role="status">Плана пока нет</p>
-          : <p className="tone-ok" role="status">План загружен: добавлено {load.data.added}, обновлено {load.data.updated}, без изменений {load.data.unchanged}</p>)}
+          : <p className="tone-ok" role="status">План загружен: добавлено {load.data.added}, обновлено {load.data.updated}, без изменений {load.data.unchanged}{load.data.removed ? `, убрано из старого плана ${load.data.removed}` : ''}</p>)}
         {load.error && <p className="error" role="alert">{load.error.message}</p>}
       </section>
       {editing && <PostForm key={editing === 'new' ? 'new' : editing.id} post={editing === 'new' ? null : editing}
