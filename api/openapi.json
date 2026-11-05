@@ -6833,6 +6833,24 @@
             "description" : "No Content"
           }
         }
+      },
+      "delete" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "reminderNotSent",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
       }
     },
     "/api/appointments/{id}/remind-telegram" : {

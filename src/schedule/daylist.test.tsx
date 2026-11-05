@@ -125,6 +125,11 @@ function remindBackend(start: ReturnType<typeof appointment>, fail = false) {
       a = { ...a, reminderOpenedAt: new Date().toISOString() }
       return new HttpResponse(null, { status: 204 })
     }),
+    http.delete('*/api/appointments/:id/reminder-opened', () => {
+      calls.push('not-sent')
+      a = { ...a, reminderOpenedAt: undefined }
+      return new HttpResponse(null, { status: 204 })
+    }),
   )
   return calls
 }
@@ -133,7 +138,7 @@ test('телефон: быстрое «TG» — «✓ отправлено» в�
   const calls = remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { patient: { id: 10, fullName: 'Бакыт М.', telegram: true } }))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Напомнить в Telegram: Бакыт М\./ }))
-  expect(await screen.findByRole('status', { name: /Напоминание отправлено: Бакыт М\./ })).toHaveTextContent('✓ отправлено')
+  expect(await screen.findByRole('button', { name: /Напоминание отправлено: Бакыт М\./ })).toHaveTextContent('✓ отправлено')
   expect(screen.queryByRole('button', { name: /Напомнить в Telegram/ })).not.toBeInTheDocument()
   expect(calls).toEqual(['telegram'])
 })
@@ -155,8 +160,19 @@ test('телефон: «WA» — WhatsApp с подписью клиники, з
   await vi.waitFor(() => expect(wa).toBeEnabled()) // ждёт настройки: без них в тексте нет подписи
   await userEvent.click(wa)
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
-  expect(await screen.findByRole('status', { name: /Напоминание отправлено: Бакыт М\./ })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /Напоминание отправлено: Бакыт М\./ })).toBeInTheDocument()
   expect(calls).toEqual(['opened'])
+  vi.restoreAllMocks()
+})
+
+test('телефон: «✓ отправлено», а сообщение не ушло — спросить и снять отметку, снова кнопка «WA»', async () => {
+  const calls = remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { reminderOpenedAt: new Date().toISOString() }))
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Напоминание отправлено: Бакыт М\..*Не ушло/ }))
+  expect(confirm.mock.calls[0]![0]).toContain('не ушло')
+  expect(await screen.findByRole('button', { name: /Напомнить в WhatsApp: Бакыт М\./ })).toBeInTheDocument()
+  expect(calls).toEqual(['not-sent'])
   vi.restoreAllMocks()
 })
 

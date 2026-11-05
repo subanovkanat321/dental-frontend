@@ -683,6 +683,7 @@ details.agreement-box { max-height: none; }
 .remind-quick:disabled { opacity: .5; cursor: default; }
 /* Напоминание ушло — вместо кнопки отметка; ошибка — отдельной строкой под приёмом */
 .remind-sent { flex: none; align-self: center; margin-right: 8px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
+button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
 .day-list .row:has(.row-error) { flex-wrap: wrap; }
 .day-list .row:has(.row-error) .row-button { flex-basis: 0; }
 .row-error { flex-basis: 100%; margin: 0 10px 8px; font-size: .85rem; }

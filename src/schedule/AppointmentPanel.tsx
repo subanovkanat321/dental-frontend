@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
+import { useReminderNotSent } from './useReminderNotSent'
 import { useState } from 'react'
 
 import { SourceLine } from '../patients/SourceLine'
@@ -193,7 +194,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {a.bookedBy ? <p className="hint">{bookedByText(a.bookedBy)}</p> : a.source === 'PATIENT' ? <p className="hint">Запись через бота</p>
         : a.source === 'WEB' && <p className="hint">{a.status === 'REQUESTED' ? '🌐 Заявка с сайта: у пациента нет Telegram, бот ему не напишет — позвоните, чтобы подтвердить'
           : '🌐 Записался на сайте, без Telegram: напоминания бот не шлёт — при необходимости позвоните'}</p>}
-      {a.reminderOpenedAt && a.status === 'SCHEDULED' && <p className="hint">Напоминание отправлено {agoText(a.reminderOpenedAt)}, в {timeOf(a.reminderOpenedAt)}</p>}
+      {a.reminderOpenedAt && a.status === 'SCHEDULED' && <ReminderSent a={a} canEdit={canEdit} />}
       {a.rating != null && (
         <p className="rating" aria-label={`Оценка пациента: ${a.rating} из 5`}>{'★'.repeat(a.rating)}{'☆'.repeat(5 - a.rating)} <span className="hint">оценка пациента</span></p>
       )}
@@ -349,6 +350,18 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
       {(action.error ?? (remove.error?.code === 'has-records' ? null : remove.error)) && <p className="error" role="alert">{(action.error ?? remove.error)!.message}</p>}
     </aside>
+    </>
+  )
+}
+
+/** «Напоминание отправлено …» и «не ушло?» — снять отметку, если сообщение так и не отправили. */
+function ReminderSent({ a, canEdit }: { a: Appointment; canEdit: boolean }) {
+  const { run, undo } = useReminderNotSent(a)
+  return (
+    <>
+      <p className="hint">Напоминание отправлено {agoText(a.reminderOpenedAt!)}, в {timeOf(a.reminderOpenedAt!)}
+        {canEdit && <> · <button type="button" className="link" disabled={undo.isPending} onClick={run}>не ушло?</button></>}</p>
+      {undo.error && <p className="error" role="alert">{undo.error.message}</p>}
     </>
   )
 }

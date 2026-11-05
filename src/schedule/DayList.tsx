@@ -3,6 +3,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { type CSSProperties } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { useReminderNotSent } from './useReminderNotSent'
 import { useReminderText, useWaitlist } from '../api/settings'
 import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
@@ -231,10 +232,13 @@ function Row({ a, next, active, canEdit, money, onOpen }: {
   const s = statusOf(a)
   const canRemind = canEdit && a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
   const viaBot = Boolean(a.patient?.telegram)
-  const sent = Boolean(a.reminderOpenedAt) || action.isSuccess || opened.isSuccess
+  const notSent = useReminderNotSent(a)
+  // После «не ушло» — снова кнопка, даже если успех нажатия ещё в памяти
+  const sent = !notSent.undo.isSuccess && (Boolean(a.reminderOpenedAt) || action.isSuccess || opened.isSuccess)
   const busy = action.isPending || opened.isPending || (!viaBot && !text)
   const remind = () => {
     if (busy || sent) return
+    notSent.undo.reset()
     if (viaBot) {
       action.mutate({ kind: 'remindTelegram' })
       return
@@ -242,7 +246,7 @@ function Row({ a, next, active, canEdit, money, onOpen }: {
     opened.mutate()
     openLink(whatsappUrl(a.patient?.phone ?? '', text?.(a) ?? ''))
   }
-  const error = action.error ?? opened.error
+  const error = action.error ?? opened.error ?? notSent.undo.error
   return (
     <li className={['row', `s-${s.kind}`, next ? 'next' : '', active ? 'active' : '', a.status === 'NO_SHOW' ? 'struck' : ''].join(' ').trim()}>
       <button type="button" className="row-button" onClick={() => onOpen(a)}
@@ -259,7 +263,8 @@ function Row({ a, next, active, canEdit, money, onOpen }: {
         )}
       </button>
       {canRemind && (sent ? (
-        <span className="remind-sent tone-ok" role="status" aria-label={`Напоминание отправлено: ${a.patient?.fullName}`}>✓ отправлено</span>
+        <button type="button" className="remind-sent tone-ok" disabled={notSent.undo.isPending} onClick={notSent.run}
+          aria-label={`Напоминание отправлено: ${a.patient?.fullName}. Не ушло? Снять отметку`}>✓ отправлено</button>
       ) : (
         <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={busy}
           aria-label={`${viaBot ? 'Напомнить в Telegram' : 'Напомнить в WhatsApp'}: ${a.patient?.fullName}, ${timeOf(a.startAt!)}`}

@@ -2718,7 +2718,7 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["reminderOpened"];
-        delete?: never;
+        delete: operations["reminderNotSent"];
         options?: never;
         head?: never;
         patch?: never;
@@ -12842,6 +12842,26 @@ export interface operations {
         };
     };
     reminderOpened: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reminderNotSent: {
         parameters: {
             query?: never;
             header?: never;
