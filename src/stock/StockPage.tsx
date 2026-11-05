@@ -98,8 +98,11 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
             Только заканчивается{low ? ` (${low})` : ''}
           </label>
           {me.admin && <button type="button" className="btn push" aria-pressed={spending} onClick={() => setSpending(!spending)}>Расходы на склад</button>}
-          <button type="button" className={me.admin ? 'btn primary' : 'btn primary push'} onClick={() => setSide({ kind: 'new' })}>＋ Материал</button>
+          <button type="button" className={me.admin ? 'btn primary' : 'btn primary push'} onClick={() => setSide({ kind: 'new' })}
+            title="Новая позиция на складе: материал или инструмент, которого ещё нет в списке">＋ Новый материал</button>
         </header>
+        {/* «＋ Новый материал» — новая позиция; пришла поставка уже имеющегося — через сам материал */}
+        {all.length > 0 && <p className="hint small stock-how">Пришла поставка — нажмите на материал в списке → «＋ Пришла поставка». «＋ Новый материал» — только если его ещё нет в списке.</p>}
         {me.admin && <SeparateSupplies />}
         {spending && <SpendingBlock />}
 
