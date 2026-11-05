@@ -92,7 +92,8 @@ test('карточка пациента: визиты, неявки, долг; �
   expect(await within(panel).findByRole('button', { name: /Долг 1\s500 сом — приём/ })).toBeInTheDocument()
   expect(panel).toHaveTextContent('Пломба')
   expect(await within(panel).findByText(/Пломба 36, контроль через год/)).toBeInTheDocument()
-  expect(await within(panel).findByText(/Расходы по пациенту/)).toHaveTextContent(/зуботехническая лаборатория 2\s000 сом/)
+  expect(await within(panel).findByText(/Расходы по пациенту/)).toHaveTextContent(/2\s000 сом/)
+  expect(within(panel).getByRole('list', { name: 'Расходы по пациенту' })).toHaveTextContent(/Зуботехническая лаборатория · 2\s000 сом/)
   expect(within(panel).getByRole('button', { name: 'WhatsApp' })).toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: 'Медкарта и снимки' })).toBeInTheDocument()
 
