@@ -105,7 +105,7 @@ test('новый материал: «свой склад у каждого вр�
     }),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('button', { name: '＋ Материал' }))
+  await userEvent.click(await screen.findByRole('button', { name: '＋ Новый материал' }))
   const panel = screen.getByRole('complementary', { name: 'Новый материал' })
   await userEvent.type(within(panel).getByLabelText('Название'), 'Композит')
   await userEvent.clear(within(panel).getByLabelText('Единица'))
