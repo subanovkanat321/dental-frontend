@@ -642,10 +642,86 @@
         }
       }
     },
+    "/api/platform/finance/settings" : {
+      "put" : {
+        "tags" : [ "platform-finance-controller" ],
+        "operationId" : "settings_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlatformFinanceControllerSettingsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/platform/finance/expenses/{id}" : {
+      "put" : {
+        "tags" : [ "platform-finance-controller" ],
+        "operationId" : "update_5",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlatformFinanceExpenseForm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlatformExpensesExpense"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "platform-finance-controller" ],
+        "operationId" : "delete_5",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/platform/content/{id}" : {
       "put" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "update_5",
+        "operationId" : "update_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -680,7 +756,7 @@
       },
       "delete" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "delete_5",
+        "operationId" : "delete_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -774,7 +850,7 @@
     "/api/platform/ai-usage/settings" : {
       "put" : {
         "tags" : [ "ai-usage-controller" ],
-        "operationId" : "settings_1",
+        "operationId" : "settings_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -832,7 +908,7 @@
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "update_6",
+        "operationId" : "update_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -867,7 +943,7 @@
       },
       "delete" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "delete_6",
+        "operationId" : "delete_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -887,7 +963,7 @@
     "/api/patients/{patientId}/teeth/{number}" : {
       "put" : {
         "tags" : [ "chart-controller" ],
-        "operationId" : "update_7",
+        "operationId" : "update_8",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -1206,7 +1282,7 @@
     "/api/patients/{id}" : {
       "put" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "update_8",
+        "operationId" : "update_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1313,7 +1389,7 @@
     "/api/patient-sources/{id}" : {
       "put" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "update_9",
+        "operationId" : "update_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1573,7 +1649,7 @@
     "/api/expenses/{id}" : {
       "put" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "update_10",
+        "operationId" : "update_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1608,7 +1684,7 @@
       },
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_7",
+        "operationId" : "delete_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1628,7 +1704,7 @@
     "/api/doctors/{id}" : {
       "put" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "update_11",
+        "operationId" : "update_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1663,7 +1739,7 @@
       },
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_8",
+        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1782,7 +1858,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_12",
+        "operationId" : "update_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1893,7 +1969,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_13",
+        "operationId" : "update_14",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2109,7 +2185,7 @@
     "/api/clinic/deposit" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
-        "operationId" : "settings_2",
+        "operationId" : "settings_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -2150,10 +2226,54 @@
         }
       }
     },
+    "/api/clinic/audit/settings" : {
+      "get" : {
+        "tags" : [ "audit-controller" ],
+        "operationId" : "settings_4",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuditControllerSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "audit-controller" ],
+        "operationId" : "saveSettings",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AuditControllerSettingsChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuditControllerSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_14",
+        "operationId" : "update_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4013,6 +4133,34 @@
         }
       }
     },
+    "/api/platform/finance/expenses" : {
+      "post" : {
+        "tags" : [ "platform-finance-controller" ],
+        "operationId" : "create_6",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlatformFinanceExpenseForm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlatformExpensesExpense"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/content" : {
       "get" : {
         "tags" : [ "content-controller" ],
@@ -4052,7 +4200,7 @@
       },
       "post" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "create_6",
+        "operationId" : "create_7",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4265,7 +4413,7 @@
       },
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "create_7",
+        "operationId" : "create_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4594,7 +4742,7 @@
       },
       "post" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "create_8",
+        "operationId" : "create_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4669,7 +4817,7 @@
     "/api/patients" : {
       "post" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "create_9",
+        "operationId" : "create_10",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5782,7 +5930,7 @@
       },
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "create_10",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6124,7 +6272,7 @@
     "/api/clinic/pay/requests" : {
       "post" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "create_11",
+        "operationId" : "create_12",
         "parameters" : [ {
           "name" : "months",
           "in" : "query",
@@ -6381,7 +6529,7 @@
       },
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "create_12",
+        "operationId" : "create_13",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6478,7 +6626,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_9",
+        "operationId" : "delete_10",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -6525,7 +6673,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_13",
+        "operationId" : "create_14",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7605,7 +7753,7 @@
     "/api/settings" : {
       "get" : {
         "tags" : [ "settings-controller" ],
-        "operationId" : "settings_3",
+        "operationId" : "settings_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -7922,6 +8070,32 @@
                   "items" : {
                     "$ref" : "#/components/schemas/PlatformMembersManagerView"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/finance" : {
+      "get" : {
+        "tags" : [ "platform-finance-controller" ],
+        "operationId" : "month",
+        "parameters" : [ {
+          "name" : "month",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlatformFinanceFinance"
                 }
               }
             }
@@ -8302,7 +8476,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -9105,6 +9279,73 @@
       "get" : {
         "tags" : [ "audit-controller" ],
         "operationId" : "audit",
+        "parameters" : [ {
+          "name" : "who",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "category",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "APPOINTMENTS", "MONEY", "STAFF", "PATIENTS", "CATALOG", "SETTINGS", "OTHER" ]
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "cursor",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 50
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AuditLogPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/audit/people" : {
+      "get" : {
+        "tags" : [ "audit-controller" ],
+        "operationId" : "people",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9113,7 +9354,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/AuditLogEntry"
+                    "$ref" : "#/components/schemas/AuditLogPerson"
                   }
                 }
               }
@@ -9226,7 +9467,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9904,7 +10145,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9964,7 +10205,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10021,7 +10262,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_14",
+        "operationId" : "delete_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10802,6 +11043,79 @@
           },
           "grant" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "PlatformFinanceControllerSettingsRequest" : {
+        "properties" : {
+          "smsPriceSom" : {
+            "type" : "number"
+          }
+        }
+      },
+      "PlatformFinanceExpenseForm" : {
+        "properties" : {
+          "category" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "amountUsd" : {
+            "type" : "number"
+          },
+          "usdRate" : {
+            "type" : "number"
+          },
+          "spentOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "monthly" : {
+            "type" : "boolean"
+          },
+          "endedOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "comment" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PlatformExpensesExpense" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "amountUsd" : {
+            "type" : "number"
+          },
+          "usdRate" : {
+            "type" : "number"
+          },
+          "spentOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "monthly" : {
+            "type" : "boolean"
+          },
+          "endedOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "comment" : {
+            "type" : "string"
           }
         }
       },
@@ -12048,6 +12362,47 @@
             "type" : "string"
           },
           "hasQr" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "AuditControllerSettingsChange" : {
+        "properties" : {
+          "disabled" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "disabled" ]
+      },
+      "AuditControllerSettings" : {
+        "properties" : {
+          "actions" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AuditControllerSettingsItem"
+            }
+          }
+        }
+      },
+      "AuditControllerSettingsItem" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "category" : {
+            "type" : "string",
+            "enum" : [ "APPOINTMENTS", "MONEY", "STAFF", "PATIENTS", "CATALOG", "SETTINGS", "OTHER" ]
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "mandatory" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
             "type" : "boolean"
           }
         }
@@ -14988,6 +15343,130 @@
           }
         }
       },
+      "PlatformExpensesClinicIncome" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "som" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "payments" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PlatformFinanceFinance" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "incomeSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "expenseSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "profitSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "expenses" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformFinanceLine"
+            }
+          },
+          "income" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformExpensesClinicIncome"
+            }
+          },
+          "entries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformExpensesExpense"
+            }
+          },
+          "history" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformFinanceMonthTotal"
+            }
+          },
+          "settings" : {
+            "$ref" : "#/components/schemas/PlatformFinanceSettings"
+          },
+          "categories" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "PlatformFinanceLine" : {
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "som" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "auto" : {
+            "type" : "boolean"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "needsPrice" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PlatformFinanceMonthTotal" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "incomeSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "expenseSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "profitSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "PlatformFinanceSettings" : {
+        "properties" : {
+          "smsPriceSom" : {
+            "type" : "number"
+          },
+          "lastUsdRate" : {
+            "type" : "number"
+          }
+        }
+      },
       "InstagramTokensState" : {
         "properties" : {
           "enabled" : {
@@ -16523,8 +17002,16 @@
       },
       "AuditLogEntry" : {
         "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "who" : {
             "type" : "string"
+          },
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "text" : {
             "type" : "string"
@@ -16532,6 +17019,41 @@
           "at" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "category" : {
+            "type" : "string",
+            "enum" : [ "APPOINTMENTS", "MONEY", "STAFF", "PATIENTS", "CATALOG", "SETTINGS", "OTHER" ]
+          },
+          "action" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AuditLogPage" : {
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AuditLogEntry"
+            }
+          },
+          "next" : {
+            "type" : "string"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AuditLogPerson" : {
+        "properties" : {
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
           }
         }
       },

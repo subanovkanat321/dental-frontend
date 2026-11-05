@@ -1699,3 +1699,77 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .insta-block h3 { margin: 0; font-size: 1rem; }
 .publication h4 { margin: 0; font-size: .95rem; }
 .kind-hint { margin: 0; }
+
+/* «Журнал действий»: фильтры в строку (на телефоне — в столбик), «Что записывать» — группы галочек */
+.audit-filters { margin-top: 12px; }
+.audit-filters .ui-select { flex: 0 1 220px; min-width: 0; }
+.audit-period { flex: 1 1 360px; }
+.audit-period button { padding: 7px 10px; white-space: nowrap; }
+.audit-dates { max-width: 360px; margin-bottom: 8px; }
+.audit-count { margin: 8px 0 0; }
+.audit-who { white-space: nowrap; }
+.audit-more { margin-top: 12px; }
+.audit-settings { display: grid; gap: 10px; margin: 12px 0 4px; padding: 14px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-lg); background: var(--sunken, var(--page)); }
+.audit-settings h3 { margin: 0; font-size: 1rem; }
+.audit-settings .hint { margin: 0; }
+.audit-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px 20px; }
+.audit-group { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; min-width: 0; align-content: start; }
+.audit-group legend { padding: 0 0 4px; font-weight: 600; font-size: .9rem; }
+.audit-opt { align-items: flex-start; flex-wrap: wrap; column-gap: 8px; row-gap: 0; }
+.audit-opt input { margin-top: 3px; }
+.audit-opt.locked { color: var(--hint); }
+.audit-opt > span:nth-of-type(1) { flex: 1 1 auto; min-width: 0; }
+.audit-lock { display: inline-flex; align-items: center; gap: 4px; flex-basis: 100%; padding-left: 24px; font-size: .8rem; color: var(--faint); }
+.audit-lock .icon { width: 13px; height: 13px; }
+.audit-settings-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 760px) {
+  .audit-filters { flex-direction: column; align-items: stretch; }
+  .audit-filters .ui-select, .audit-period { flex: none; width: 100%; }
+  .audit-dates { max-width: none; }
+  /* Период — одной строкой с прокруткой, а не 3 + 2 */
+  .audit-period { display: grid; grid-template-columns: 1.2fr 1.1fr 1fr 1fr 1.2fr; flex-wrap: nowrap; overflow: hidden; }
+  .audit-period button { min-width: 0; }
+  .audit-period button { padding: 7px 2px; font-size: .82rem; white-space: normal; line-height: 1.2; }
+  /* Строка журнала: «время · кто» одной строкой, под ними — что сделал */
+  .card-block .audit-table tr:not(.group-row) { grid-template-columns: auto 1fr; column-gap: 10px; }
+  .audit-table td:first-child { font-size: .9rem; font-weight: 500; }
+  .audit-table td.audit-who { font-size: .9rem; white-space: normal; }
+  .audit-table td:last-child { grid-column: 1 / -1; }
+}
+/* «Платформа → Финансы»: доход — бирюзовый, расход — нейтральный, прибыль — зелёным вверх, убыток — красным вниз */
+:root { --chart-exp: #9AABB0; }
+:root[data-theme=dark] { --chart-exp: #5E757B; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --chart-exp: #5E757B; } }
+.fin-tiles .survey-tile { flex: 1 1 140px; }
+.fin-lines { max-width: 720px; }
+.fin-lines dt .chip { margin-left: 8px; }
+.fin-entries { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.fin-entry { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--separator); }
+.fin-entry .chip { margin-left: 8px; }
+.fin-form { margin: 10px 0; max-width: 560px; }
+.fin-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.fin-cats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.fin-cats .btn[aria-pressed=true] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft, var(--sunken)); }
+.fin-bars { display: flex; align-items: stretch; gap: 2px; height: 230px; padding-top: 8px; }
+.fin-month { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0;
+  border-radius: var(--r-sm); background: none; font: inherit; color: inherit; cursor: pointer; }
+.fin-month.picked { background: var(--sunken); }
+.fin-month:focus-visible { outline: 2px solid var(--accent); }
+.fin-pair { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 2px; width: 80%; }
+.fin-pair > span { flex: 1; max-width: 14px; min-height: 2px; border-radius: 3px 3px 0 0; }
+.fin-profit { position: relative; width: 60%; height: 48px; background: linear-gradient(var(--line-strong), var(--line-strong)) center / 100% 1px no-repeat; }
+.fin-profit > span { position: absolute; left: 0; right: 0; }
+.fin-profit > .fin-up { bottom: 50%; border-radius: 3px 3px 0 0; }
+.fin-profit > .fin-down { top: 50%; border-radius: 0 0 3px 3px; }
+.fin-in, .key.fin-in { background: var(--chart-1); }
+.fin-out, .key.fin-out { background: var(--chart-exp); }
+.fin-up, .key.fin-up { background: var(--status-ok); }
+.fin-down, .key.fin-down { background: var(--chart-bad); }
+.legend .key.fin-out, .legend .key.fin-up, .legend .key.fin-down { margin-left: 8px; }
+@media (max-width: 760px) {
+  .fin-entry { grid-template-columns: 1fr auto; }
+  .fin-entry .btn { grid-column: 1 / -1; justify-self: start; }
+  .fin-bars { height: 200px; }
+  .fin-pair > span { max-width: 8px; }
+  .fin-month .fin-odd { visibility: hidden; }
+}
