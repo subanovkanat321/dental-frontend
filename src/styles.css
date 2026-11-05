@@ -391,15 +391,63 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .teeth { display: grid; grid-template-columns: repeat(8, minmax(30px, 1fr)); gap: 4px; }
 .tooth-help { margin: 0 0 6px; }
 .tooth {
-  position: relative; display: grid; justify-items: center; gap: 2px; padding: 6px 0; border: 1px solid var(--separator);
-  border-radius: 10px; background: var(--card); color: var(--text); font: inherit; cursor: pointer;
+  position: relative; display: grid; justify-items: center; align-content: center; gap: 1px; padding: 4px 0; border: 1px solid transparent;
+  border-radius: var(--r-md); background: transparent; color: var(--text); font: inherit; cursor: pointer; min-width: 0;
+  transition: background-color 150ms ease-out, border-color 150ms ease-out;
 }
-.tooth:hover, .tooth.active { border-color: var(--accent); background: var(--accent-soft); }
-.tooth-icon { height: 1.2em; }
-.tooth-number { font-size: .8rem; font-weight: 700; color: var(--hint); }
-.tooth-dot { position: absolute; top: 0; right: 4px; color: var(--status-wait); font-weight: 800; }
-.tooth[data-state=CARIES], .tooth[data-state=TREATING] { border-color: color-mix(in srgb, var(--status-wait) 50%, transparent); }
-.tooth[data-state=MISSING] { opacity: .55; }
+.tooth:hover { background: var(--sunken); }
+.tooth.active { border-color: var(--accent); background: var(--accent-soft); }
+.tooth:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tooth.active .tooth-number { color: var(--link); }
+.tooth-number { font-size: .8rem; font-weight: 600; line-height: 1.2; color: var(--hint); font-variant-numeric: tabular-nums; }
+/* Точка «есть заметка» — у самого зуба, а не в углу широкой ячейки */
+.tooth-dot { position: absolute; top: 2px; right: max(3px, calc(50% - 24px)); color: var(--status-wait); font-weight: 600; line-height: 1; }
+.tooth[data-state=MISSING] .tooth-number { color: var(--faint); }
+
+/* Зуб рисунком (ToothGlyph): эмаль, корень, пульпа; состояние — цветом на самом рисунке */
+:root {
+  --tooth-enamel: #FFFFFF; --tooth-root: #F3F0E9; --tooth-line: #8A9DA2;
+  --tooth-pulp: #F6D3CF; --tooth-canal: #D08A84;
+  --tooth-caries: #5E3714; --tooth-filling: #3D6FD6; --tooth-filling-line: #1642A6;
+  --tooth-crown: #F3D9A4; --tooth-crown-line: #9A6A12;
+  --tooth-metal: #C5D0D3; --tooth-metal-line: #5F7378; --tooth-treat: #C77700;
+}
+:root[data-theme=dark] {
+  --tooth-enamel: #DDE7E6; --tooth-root: #A9BABB; --tooth-line: #DDE7E6;
+  --tooth-pulp: #E7AFA9; --tooth-canal: #B5524B;
+  --tooth-caries: #3D2208; --tooth-filling: #5C8BF0; --tooth-filling-line: #2552B8;
+  --tooth-crown: #E9C47A; --tooth-crown-line: #FFD58A;
+  --tooth-metal: #8FA2A7; --tooth-metal-line: #C9D6D8; --tooth-treat: #F2C46D;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --tooth-enamel: #DDE7E6; --tooth-root: #A9BABB; --tooth-line: #DDE7E6;
+    --tooth-pulp: #E7AFA9; --tooth-canal: #B5524B;
+    --tooth-caries: #3D2208; --tooth-filling: #5C8BF0; --tooth-filling-line: #2552B8;
+    --tooth-crown: #E9C47A; --tooth-crown-line: #FFD58A;
+    --tooth-metal: #8FA2A7; --tooth-metal-line: #C9D6D8; --tooth-treat: #F2C46D;
+  }
+}
+.tooth-glyph { display: block; width: 100%; max-width: 36px; height: auto; overflow: visible; }
+.tooth-glyph * { vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.tg-crown { fill: var(--tooth-enamel); stroke: var(--tooth-line); stroke-width: 1; }
+.tg-root { fill: var(--tooth-root); stroke: var(--tooth-line); stroke-width: 1; }
+.tg-pulp path { fill: var(--tooth-pulp); stroke: none; }
+.tg-pulp .tg-canal { fill: none; stroke: var(--tooth-canal); stroke-width: 1.1; }
+.tg-caries { fill: var(--tooth-caries); }
+.tg-filling { fill: var(--tooth-filling); stroke: var(--tooth-filling-line); stroke-width: 1; }
+.tg-screw { fill: var(--tooth-metal); stroke: var(--tooth-metal-line); stroke-width: 1; }
+.tg-thread { fill: none; stroke: var(--tooth-metal-line); stroke-width: 1; }
+.tg-crown-margin { fill: none; stroke: var(--tooth-crown-line); stroke-width: 1.2; }
+.tg-mark { fill: var(--tooth-treat); }
+.tooth-glyph[data-state=CROWN] .tg-crown { fill: var(--tooth-crown); stroke: var(--tooth-crown-line); stroke-width: 1.6; }
+.tooth-glyph[data-state=TREATING] .tg-crown, .tooth-glyph[data-state=TREATING] .tg-root { stroke: var(--tooth-treat); stroke-width: 1.4; stroke-dasharray: 3 2; }
+.tooth-glyph[data-state=MISSING] .tg-crown, .tooth-glyph[data-state=MISSING] .tg-root {
+  fill: none; stroke: var(--faint); stroke-width: 1; stroke-dasharray: 2.5 2.5; opacity: .8;
+}
+.tooth-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.tooth-legend-item { display: inline-flex; align-items: center; gap: 4px; }
+.tooth-glyph.mini { width: 16px; max-width: none; }
 .legend { margin: 0; white-space: pre-wrap; }
 .tooth-editor { padding: 12px; border-radius: 12px; background: var(--accent-soft); }
 .tooth-editor h3 { margin: 0; }
@@ -1674,6 +1722,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .visit-formula .quadrant + .quadrant { padding-left: 0; border-left: 0; }
 .visit-formula .teeth { grid-template-columns: repeat(8, minmax(36px, 1fr)); }
 .visit-formula .tooth { min-height: 44px; }
+.visit-formula .tooth-glyph { max-width: 28px; }
 .dictation-start { width: 100%; }
 
 /* «Пациенты → Записаны»: будущие записи по дням */

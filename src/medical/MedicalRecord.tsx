@@ -11,6 +11,7 @@ import { stagesOf } from '../lib/planStages'
 import { TOOTH_STATES, type ToothState } from './toothStates'
 import { PatientFiles } from './PatientFiles'
 import { ToothFormula } from './ToothFormula'
+import { ToothFigure, ToothLegendItem } from './ToothGlyph'
 import { TeethHistory } from './TeethHistory'
 import { Select } from '../layout/Select'
 
@@ -79,12 +80,11 @@ function ToothChart({ patientId, teeth, error, onPlan, readOnly }: {
   const tooth = (n: number) => {
     const t = byNumber.get(n)
     const state = t?.state ?? 'HEALTHY'
-    const [label, icon] = TOOTH_STATES[state]
+    const [label] = TOOTH_STATES[state]
     return (
       <button key={n} type="button" className={`tooth${open === n ? ' active' : ''}`} data-state={state}
         aria-label={`Зуб ${n}: ${label}${t?.note ? ', есть заметка' : ''}`} title={t?.note ? `${label}: ${t.note}` : label} onClick={() => setOpen(open === n ? null : n)}>
-        <span aria-hidden="true" className="tooth-icon">{state === 'HEALTHY' ? '' : icon}</span>
-        <span className="tooth-number">{n}</span>
+        <ToothFigure number={n} state={state} />
         {t?.note && <span aria-hidden="true" className="tooth-dot">•</span>}
       </button>
     )
@@ -100,9 +100,10 @@ function ToothChart({ patientId, teeth, error, onPlan, readOnly }: {
         Вторая — какой по счёту от центра: 1 — передний, 8 — зуб мудрости. Карта — как смотрит врач: правая сторона пациента слева.
       </details>
       <ToothFormula render={tooth} />
-      <p className="hint legend">
-        {Object.entries(TOOTH_STATES).filter(([k]) => k !== 'HEALTHY')
-          .map(([k, [label, icon]]) => `${icon} ${label}${counts[k] ? ` · ${counts[k]}` : ''}`).join('   ')}
+      <p className="hint legend tooth-legend">
+        {(Object.keys(TOOTH_STATES) as State[]).filter((k) => k !== 'HEALTHY').map((k) => (
+          <ToothLegendItem key={k} state={k} label={`${TOOTH_STATES[k][0]}${counts[k] ? ` · ${counts[k]}` : ''}`} />
+        ))}
       </p>
       {open != null && !readOnly && (
         <ToothEditor key={open} patientId={patientId} number={open} tooth={byNumber.get(open)}
