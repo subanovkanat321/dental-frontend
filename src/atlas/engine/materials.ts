@@ -31,7 +31,8 @@ export function createMaterials() {
     nerve: phys({ color: '#f4d35e', roughness: 0.4, clearcoat: 0.4 }),
     toothJaw: phys({ color: '#ffffff', vertexColors: true, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.2 }),
     gumJaw: phys({ color: '#de7c84', roughness: 0.4, clearcoat: 0.45, clearcoatRoughness: 0.3, sheen: 0.5, sheenColor: new THREE.Color('#ffd0d4'), side: THREE.DoubleSide }),
-    boneGlass: phys({ color: '#f4e2bf', roughness: 0.6, transparent: true, opacity: 0.62, depthWrite: false }),
+    // Кость «как на снимке»: полупрозрачная, со своим тёплым свечением — иначе на тёмном фоне она серая
+    boneGlass: phys({ color: '#fff3dc', emissive: new THREE.Color('#e9d5ad'), emissiveIntensity: 0.7, roughness: 0.85, transparent: true, opacity: 0.72, depthWrite: false }),
   }
   return {
     ...m,

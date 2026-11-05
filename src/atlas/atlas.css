@@ -10,7 +10,7 @@
   --a-muted: #a9b7c0;
   --a-accent: #12a99b;
   --a-accent-ink: #ffffff;
-  position: relative; display: grid; grid-template-rows: auto 1fr auto; width: 100%; height: 100%; min-height: 420px;
+  position: relative; display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr); width: 100%; height: 100%; min-height: 420px;
   background: radial-gradient(ellipse at 50% 42%, #33414f 0%, #1f2a35 45%, #10161d 100%);
   color: var(--a-text); font-family: 'Golos Text', system-ui, sans-serif; font-size: 16px; overflow: hidden;
   user-select: none; -webkit-user-select: none;
@@ -104,7 +104,10 @@
   .atlas-info p { font-size: .98rem; }
 }
 @media (max-width: 700px) {
-  .atlas-top { padding: 8px 10px; gap: 8px; }
+  .atlas-top { padding: 8px 10px; gap: 8px; flex-wrap: nowrap; }
+  .atlas-tabs { min-width: 0; overflow-x: auto; }
+  .atlas-tabs button { padding: 6px 10px; font-size: .92rem; }
+  .atlas-tools { flex-shrink: 0; }
   .atlas-title { display: none; }
   .atlas-tools button span, .atlas-tools button:not(.atlas-close):not(:first-child) { display: none; }
   .atlas-legend { display: none; }
