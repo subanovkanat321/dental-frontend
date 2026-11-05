@@ -6,6 +6,8 @@ import { changeOf, datesText, periodText } from '../lib/compare'
 import { sourceLabel } from '../lib/sources'
 import { addDays, monthRange, somText, todayIn, weekLabel, ZONE } from '../lib/time'
 import { MonthPicker } from '../layout/MonthPicker'
+import { Donut, type DonutPart } from '../lib/Donut'
+import { percents } from '../lib/parts'
 import { HBars } from './HBars'
 
 type Me = Schemas['BookingViewsMe']
@@ -72,7 +74,10 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
         <OutcomesChart period={period} scope={scope} />
       </div>
       <LoadHeatmap period={period} scope={scope} />
-      <SourcesChart period={period} scope={scope} />
+      <div className="chart-pair">
+        <SourcesChart period={period} scope={scope} />
+        <VisitsChart period={period} scope={scope} />
+      </div>
       <PromoChart period={period} scope={scope} />
       <NoShowChart scope={scope} />
     </>
@@ -221,13 +226,17 @@ function DoctorsChart({ me, period }: { me: Me; period: Period }) {
   })
   const rows = doctors.map((d, k) => ({ name: d.fullName ?? '', value: data[k]?.data?.totalSom ?? 0, note: `оплат ${data[k]?.data?.paidCount ?? 0}` }))
     .sort((a, b) => b.value - a.value)
+  // 2–6 врачей — бублик (доли клиники с одного взгляда); больше — столбики: семь цветов уже не различить
+  const parts: DonutPart[] = doctors.map((d, k) => ({ key: String(d.id), name: d.fullName ?? '', value: data[k]?.data?.totalSom ?? 0, note: `оплат ${data[k]?.data?.paidCount ?? 0}` }))
+  const total = rows.reduce((s, r) => s + r.value, 0)
   return (
     <section className="card-block chart" aria-label="Выручка по врачам">
       <h2>Кто сколько приносит {period.label}</h2>
       {data.some((q) => q.isPending) ? <p className="hint">Загрузка…</p>
         : failed(data) ? <p className="error">{failed(data)}</p>
           : rows.every((r) => !r.value) ? <p className="hint">Оплат за этот период нет.</p>
-            : <HBars rows={rows} label="Выручка по врачам" />}
+            : doctors.length <= 6 ? <Donut parts={parts} label="Выручка по врачам" format={somText} caption="выручка" center={somText(total)} />
+              : <HBars rows={rows} label="Выручка по врачам" />}
     </section>
   )
 }
@@ -278,41 +287,6 @@ function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: 
 
 const people = (n: number) => `${n} чел.`
 
-type Part = { key: string; name: string; value: number; color: string; icon?: string }
-
-/**
- * Одно целое на части, с одного взгляда (dataviz: «tall segmented bar», вместо пирога): у каждой
- * части свой блок с долей на нём, если влезает, и легенда с суммой. Цвет — по сущности, не по месту.
- */
-function SegmentedBar({ parts, label, format }: { parts: Part[]; label: string; format: (v: number) => string }) {
-  const total = parts.reduce((s, p) => s + p.value, 0)
-  const shown = parts.filter((p) => p.value > 0)
-  // Доли так, чтобы в сумме было ровно 100% (метод наибольших остатков), а не 101%
-  const exact = parts.map((p) => (total ? (p.value / total) * 100 : 0))
-  const shares = exact.map(Math.floor)
-  const left = total ? 100 - shares.reduce((a, b) => a + b, 0) : 0
-  exact.map((x, i) => [x - Math.floor(x), i] as const).sort((a, b) => b[0] - a[0]).slice(0, left).forEach(([, i]) => { shares[i]! += 1 })
-  const share = (p: Part) => shares[parts.indexOf(p)] ?? 0
-  return (
-    <>
-      <div className="segbar" role="img" aria-label={`${label}: ${shown.map((p) => `${p.name} ${format(p.value)} (${share(p)}%)`).join(', ')}`}>
-        {shown.map((p) => (
-          <span key={p.key} className="segbar-part" style={{ flexGrow: p.value, background: p.color }} title={`${p.name}: ${format(p.value)} · ${share(p)}%`}>
-            {share(p) >= 12 && <span className="segbar-share">{share(p)}%</span>}
-          </span>
-        ))}
-      </div>
-      <ul className="segbar-legend">
-        {parts.map((p) => (
-          <li key={p.key}><span className="swatch" style={{ background: p.color }} aria-hidden="true" />
-            {p.icon && <span aria-hidden="true">{p.icon} </span>}{p.name}
-            <b className="num">{format(p.value)}</b><span className="hint">{share(p)}%</span></li>
-        ))}
-      </ul>
-    </>
-  )
-}
-
 /** Как платят пациенты: наличные, перевод, карта — касса за период по способам. */
 function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
   const data = useQuery({
@@ -321,7 +295,7 @@ function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: n
   })
   // Касса по способам: деньги, полученные за период (доплаты и предоплаты — тоже), а не оплаты приёмов периода
   const by = data.data?.cash?.byMethod ?? {}
-  const parts: Part[] = [
+  const parts: DonutPart[] = [
     { key: 'CASH', name: 'Наличные', value: by.CASH ?? 0, color: 'var(--series-1)', icon: '💵' },
     { key: 'TRANSFER', name: 'Перевод', value: by.TRANSFER ?? 0, color: 'var(--series-2)', icon: '📲' },
     { key: 'CARD', name: 'Карта', value: by.CARD ?? 0, color: 'var(--series-3)', icon: '💳' },
@@ -332,8 +306,7 @@ function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: n
       <p className="hint small">Касса — деньги, полученные за период</p>
       {data.isPending ? <p className="hint">Загрузка…</p>
         : data.error ? <p className="error">{data.error.message}</p>
-        : !parts.some((p) => p.value) ? <p className="hint">Оплат за этот период нет.</p>
-          : <SegmentedBar parts={parts} label="Способы оплаты" format={somText} />}
+          : <Donut parts={parts} label="Способы оплаты" format={somText} caption="касса" empty="Оплат за этот период нет." />}
     </section>
   )
 }
@@ -342,18 +315,18 @@ function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: n
 function OutcomesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
   const { rows, pending, error } = usePeriodRows(period, scope)
   const count = (status: string) => rows.filter((r) => r.status === status).length
-  const parts: Part[] = [
-    { key: 'DONE', name: 'Состоялись', value: count('DONE'), color: 'var(--chart-1)', icon: '✅' },
+  const parts: DonutPart[] = [
+    { key: 'DONE', name: 'Пришли', value: count('DONE'), color: 'var(--chart-1)', icon: '✅' },
     { key: 'NO_SHOW', name: 'Не пришли', value: count('NO_SHOW'), color: 'var(--chart-bad)', icon: '❌' },
-    { key: 'CANCELLED', name: 'Отменены', value: count('CANCELLED'), color: 'var(--faint)', icon: '↩️' },
+    { key: 'CANCELLED', name: 'Отменили', value: count('CANCELLED'), color: 'var(--faint)', icon: '↩️' },
   ]
   return (
     <section className="card-block chart" aria-label="Чем закончились приёмы">
       <h2>Чем закончились приёмы {period.label}</h2>
       {pending ? <p className="hint">Загрузка…</p>
         : error ? <p className="error">{error}</p>
-        : !parts.some((p) => p.value) ? <p className="hint">Прошедших приёмов за этот период нет.</p>
-          : <SegmentedBar parts={parts} label="Чем закончились приёмы" format={(n) => String(n)} />}
+          : <Donut parts={parts} label="Чем закончились приёмы" center={`${percents(parts.map((p) => p.value))[0]}%`} caption="пришли"
+            empty="Прошедших приёмов за этот период нет." />}
     </section>
   )
 }
@@ -416,21 +389,26 @@ function LoadHeatmap({ period, scope }: { period: Period; scope: { doctorId?: nu
   )
 }
 
-/**
- * Откуда приходят новые пациенты (первый приём в клинике — в этом периоде) и сколько визитов
- * первичных, а сколько повторных: работает ли реклама и возвращаются ли пациенты.
- */
-function SourcesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
-  const data = useQuery({
+/** Запрос «источники и визиты» периода: общий кэш для «Откуда новые пациенты» и «Возвращаются ли». */
+function useSources(period: Period, scope: { doctorId?: number }) {
+  return useQuery({
     queryKey: ['sources', period.from, period.to, scope.doctorId ?? null],
     queryFn: () => unwrap(api.GET('/api/appointments/sources', { params: { query: { from: period.from, to: period.to, ...scope } } })),
   })
+}
+
+/**
+ * Откуда приходят новые пациенты (первый приём в клинике — в этом периоде): работает ли реклама.
+ * Бублик — до 6 источников, мелкие сверх того — в «Другое»; в центре — сколько новых.
+ */
+function SourcesChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const data = useSources(period, scope)
   // Названия — с сервера, из списка клиники; скрытый вариант тоже: история не пропадает
-  const rows = (data.data?.newPatients ?? []).map((s) => ({ name: `${sourceLabel(s)}${s.active === false ? ' (скрыт)' : ''}`, value: s.patients ?? 0 }))
-  const total = rows.reduce((sum, r) => sum + r.value, 0)
-  const first = data.data?.firstVisits ?? 0
-  const repeat = data.data?.repeatVisits ?? 0
-  const unknown = rows.find((r) => r.name === 'Не указано')?.value ?? 0
+  const parts: DonutPart[] = (data.data?.newPatients ?? []).map((s, k) => ({
+    key: s.sourceId == null ? `none-${k}` : String(s.sourceId), name: `${sourceLabel(s)}${s.active === false ? ' (скрыт)' : ''}`, value: s.patients ?? 0,
+  }))
+  const total = parts.reduce((sum, r) => sum + r.value, 0)
+  const unknown = parts.find((r) => r.name === 'Не указано')?.value ?? 0
   return (
     <section className="card-block chart" aria-label="Откуда новые пациенты">
       <h2>Откуда новые пациенты {period.label}</h2>
@@ -438,14 +416,38 @@ function SourcesChart({ period, scope }: { period: Period; scope: { doctorId?: n
         : data.error ? <p className="error">{data.error.message}</p>
           : (
             <>
-              <p className="chart-headline"><b className="num">{total}</b> {total === 1 ? 'новый пациент' : 'новых пациентов'}</p>
-              {rows.length ? <HBars rows={rows} label="Новые пациенты по источникам" format={people} />
-                : <p className="hint">Новых пациентов за этот период нет.</p>}
+              <Donut parts={parts} label="Новые пациенты по источникам" format={people} center={String(total)}
+                caption={total === 1 ? 'новый пациент' : 'новых пациентов'} empty="Новых пациентов за этот период нет." />
               {unknown > 0 && <p className="hint">«Не указано» — в карточке пациента не выбрано «Откуда узнал о клинике». Спрашивайте при первой записи — так видно, какая реклама работает.</p>}
-              <p className="visits-split" aria-label="Первичные и повторные визиты">
-                Состоялось визитов: <b className="num">{first + repeat}</b> — первичных <b className="num">{first}</b>, повторных <b className="num">{repeat}</b>
-                {first + repeat > 0 && <span className="hint"> · возвращаются {Math.round((repeat / (first + repeat)) * 100)}%</span>}
-              </p>
+            </>
+          )}
+    </section>
+  )
+}
+
+/** Первичные и повторные визиты периода: возвращаются ли пациенты. В центре — доля повторных. */
+function VisitsChart({ period, scope }: { period: Period; scope: { doctorId?: number } }) {
+  const data = useSources(period, scope)
+  const first = data.data?.firstVisits ?? 0
+  const repeat = data.data?.repeatVisits ?? 0
+  const parts: DonutPart[] = [
+    { key: 'FIRST', name: 'Первичные', value: first },
+    { key: 'REPEAT', name: 'Повторные', value: repeat },
+  ]
+  return (
+    <section className="card-block chart" aria-label="Первичные и повторные визиты">
+      <h2>Возвращаются ли пациенты {period.label}</h2>
+      {data.isPending ? <p className="hint">Загрузка…</p>
+        : data.error ? <p className="error">{data.error.message}</p>
+          : (
+            <>
+              <Donut parts={parts} label="Первичные и повторные визиты" center={`${percents([first, repeat])[1]}%`} caption="повторных"
+                empty="Состоявшихся визитов за этот период нет." />
+              {first + repeat > 0 && (
+                <p className="visits-split hint small" aria-label="Визиты за период">
+                  Состоялось визитов: <b className="num">{first + repeat}</b> — первичных <b className="num">{first}</b>, повторных <b className="num">{repeat}</b>
+                </p>
+              )}
             </>
           )}
     </section>

@@ -12,8 +12,8 @@ import { monthRange, shortDate, somText, todayIn, weekLabel } from '../lib/time'
 import { MonthPicker } from '../layout/MonthPicker'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
-import { HBars } from './HBars'
 import { NetMonthTable } from './NetMonthTable'
+import { Donut } from '../lib/Donut'
 
 type Me = Schemas['BookingViewsMe']
 type Expense = Schemas['ExpensesExpense']
@@ -109,13 +109,13 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
           <MonthPicker label="Месяц" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
         </div>
         <p className="total" aria-label="Расходы за месяц">{somText(total)}</p>
-        {/* По статьям — ранжированные горизонтальные столбики, а не пирог (dataviz): статей бывает
-            больше 6 (стандартные + свои), близкие суммы на столбиках с одной базой сравниваются
-            точнее, длинные названия читаются, на 360px помещается. Нажатие — фильтр списка ниже. */}
+        {/* Структура расходов месяца — бублик: целое (итог месяца) на статьи с одного взгляда. До 6
+            статей — каждая своим цветом, больше — мелкие в «Другое» (их список — в подсказке строки
+            и в фильтре «Статья расходов» ниже). Нажатие на статью — фильтр списка, ещё раз — все. */}
         {byCategory.length > 0 && (
           <div className="expense-chart">
-            <HBars rows={byCategory.map(([name, value]) => ({ name, value }))} label="Расходы по статьям"
-              picked={category} onPick={(c) => setCategory(category === c ? '' : c)} />
+            <Donut parts={byCategory.map(([name, value]) => ({ key: name, name, value }))} label="Расходы по статьям" format={somText}
+              center={somText(total)} caption="итог месяца" picked={category || undefined} onPick={(c) => setCategory(category === c ? '' : c)} />
             {byCategory.length > 1 && <p className="hint small">{category ? `В списке — только «${category}». Нажмите ещё раз — все статьи.` : 'Нажмите статью — в списке останется только она.'}</p>}
           </div>
         )}

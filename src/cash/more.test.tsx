@@ -54,10 +54,13 @@ test('расходы: список по статьям, прибыль, доба
 
   await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
   expect(await screen.findByLabelText('Расходы за месяц')).toHaveTextContent('35 000')
-  // Диаграмма по статьям: по убыванию, сумма и доля текстом
+  // Структура расходов — бублик: доли в описании, легенда с суммой и процентом, в центре — итог месяца
+  expect(screen.getByRole('img', { name: /^Расходы по статьям:/ }).getAttribute('aria-label')?.replace(/\s/g, ' '))
+    .toBe('Расходы по статьям: Аренда 30 000 сом (86%), Техник 5 000 сом (14%)')
+  expect(screen.getByText('итог месяца').previousSibling).toHaveTextContent(/35\s000 сом/)
   const chart = screen.getByRole('list', { name: 'Расходы по статьям' })
   const bars = within(chart).getAllByRole('button')
-  expect(bars.map((b) => b.textContent?.replace(/\s/g, ' '))).toEqual(['Аренда30 000 сом · 86%', 'Техник5 000 сом · 14%'])
+  expect(bars.map((b) => b.textContent?.replace(/\s/g, ' '))).toEqual(['Аренда30 000 сом86%', 'Техник5 000 сом14%'])
   // Нажатие на статью — фильтр списка; ещё раз — все статьи
   await user.click(bars[1]!)
   expect(bars[1]).toHaveAttribute('aria-pressed', 'true')
