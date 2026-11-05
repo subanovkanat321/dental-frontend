@@ -1,39 +1,60 @@
-import { useQueries } from '@tanstack/react-query'
+import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { api, unwrap, type Schemas } from '../api/client'
+import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { useReminderText } from '../api/settings'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
-import { isAssistant } from '../lib/roles'
+import { canEditDoctor, isAssistant } from '../lib/roles'
 import { serviceEmoji } from '../lib/serviceEmoji'
-import { dateOf, dayTitle, timeOf, todayIn } from '../lib/time'
+import { openLink } from '../lib/telegram'
+import { whatsappUrl } from '../lib/texts'
+import { addDays, dateOf, dayTitle, timeOf, todayIn } from '../lib/time'
 import { statusOf } from '../schedule/status'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 
-/** Период списка: дни вперёд, считая сегодня (сервер отдаёт до 31 дня одним запросом на врача). */
-const PERIODS = [[7, 'Неделя'], [14, '2 недели'], [31, 'Месяц']] as const
+/**
+ * Период списка: с какого дня (0 — сегодня) и сколько дней (сервер отдаёт до 31 дня одним запросом
+ * на врача). «Сегодня» и «Завтра» — для обзвона: туда ведёт кнопка сводки «📲 Напомнить (N)».
+ */
+const PERIODS = [['today', 'Сегодня', 0, 1], ['tomorrow', 'Завтра', 1, 1], ['7', 'Неделя', 0, 7], ['14', '2 недели', 0, 14],
+  ['31', 'Месяц', 0, 31]] as const
+
+type Period = (typeof PERIODS)[number][0]
+
+/** Фильтры из ссылки бота (?screen=booked&day=…&unconfirmed=1&doctor=…). */
+export type BookedFilter = { date?: string; unconfirmed?: boolean; doctorId?: number }
 
 /**
  * «Пациенты → Записаны»: все будущие записи одним списком по дням — обзвонить, увидеть, кто не
  * подтвердил, загрузку на неделю (на телефоне «Недели» нет). Те же приёмы, что в «Расписании»
  * (/api/appointments/range по каждому видимому врачу), без отменённых и прошедших. Нажали строку —
- * карточка приёма в «Расписании».
+ * карточка приёма в «Расписании»; у неподтверждённых — «WhatsApp» с готовым текстом напоминания.
  */
-export function BookedTab({ me, onOpenAppointment }: { me: Me; onOpenAppointment?: (id: number) => void }) {
+export function BookedTab({ me, initial, onOpenAppointment }: {
+  me: Me
+  initial?: BookedFilter
+  onOpenAppointment?: (id: number) => void
+}) {
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
-  const [doctorId, setDoctorId] = useState<number | null>(null)
-  const [days, setDays] = useState<number>(7)
-  const [onlyUnconfirmed, setOnlyUnconfirmed] = useState(false)
+  const today = todayIn()
+  // Врач из ссылки — если он в списке (скрытого врача или чужого ассистенту не выбираем)
+  const [doctorId, setDoctorId] = useState<number | null>(() =>
+    initial?.doctorId != null && doctors.some((d) => d.id === initial.doctorId) ? initial.doctorId : null)
+  const [period, setPeriod] = useState<Period>(() =>
+    initial?.date === today ? 'today' : initial?.date === addDays(today, 1) ? 'tomorrow' : '7')
+  const [onlyUnconfirmed, setOnlyUnconfirmed] = useState(Boolean(initial?.unconfirmed))
   // «Сейчас» — на момент открытия вкладки: закончившиеся сегодня приёмы в список не идут
   const [now] = useState(() => Date.now())
   const shown = doctorId == null ? doctors : doctors.filter((d) => d.id === doctorId)
-  const today = todayIn()
+  const [, , offset, days] = PERIODS.find(([key]) => key === period)!
+  const from = addDays(today, offset)
   const lists = useQueries({
     queries: shown.map((d) => ({
-      queryKey: ['appointments', 'range', today, days, d.id],
-      queryFn: () => unwrap(api.GET('/api/appointments/range', { params: { query: { from: today, days, doctorId: d.id! } } })),
+      queryKey: ['appointments', 'range', from, days, d.id],
+      queryFn: () => unwrap(api.GET('/api/appointments/range', { params: { query: { from, days, doctorId: d.id! } } })),
     })),
   })
   const nameOf = new Map(doctors.map((d) => [d.id, d.fullName ?? '']))
@@ -53,9 +74,9 @@ export function BookedTab({ me, onOpenAppointment }: { me: Me; onOpenAppointment
   return (
     <section className="booked" aria-label="Записанные пациенты">
       <div className="booked-filters">
-        <div className="segments" role="group" aria-label="Период">
-          {PERIODS.map(([d, title]) => (
-            <button key={d} type="button" aria-pressed={days === d} onClick={() => setDays(d)}>{title}</button>
+        <div className="segments tabs" role="group" aria-label="Период">
+          {PERIODS.map(([key, title]) => (
+            <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
           ))}
         </div>
         {doctors.length > 1 && (
@@ -79,29 +100,62 @@ export function BookedTab({ me, onOpenAppointment }: { me: Me; onOpenAppointment
             <div key={day} className="booked-day">
               <h3>{day === today ? `Сегодня, ${dayTitle(day).toLowerCase()}` : dayTitle(day)} <span className="hint">· {list.length}</span></h3>
               <ul aria-label={dayTitle(day)}>
-                {list.map((a) => {
-                  const s = statusOf(a)
-                  return (
-                    <li key={a.id}>
-                      <button type="button" className="booked-row" onClick={() => onOpenAppointment?.(a.id!)}>
-                        <span className="num booked-time">{timeOf(a.startAt!)}</span>
-                        <span className="booked-main">
-                          <strong>{a.patient?.fullName}</strong>
-                          <span className="hint small">
-                            {a.serviceName ? `${serviceEmoji(a.serviceName)} ${a.serviceName}` : 'Услуга не выбрана'}
-                            {doctors.length > 1 && doctorId == null && a.doctorId != null ? ` · ${nameOf.get(a.doctorId)}` : ''}
-                          </span>
-                        </span>
-                        <span className={`chip small s-${s.kind}`}><span aria-hidden="true">{s.icon}</span> {s.label}</span>
-                      </button>
-                    </li>
-                  )
-                })}
+                {list.map((a) => (
+                  <BookedRow key={a.id} a={a} canEdit={canEditDoctor(me, a.doctorId)} onOpen={onOpenAppointment}
+                    doctor={doctors.length > 1 && doctorId == null && a.doctorId != null ? nameOf.get(a.doctorId) : undefined} />
+                ))}
               </ul>
             </div>
           ))}
         </>
       )}
     </section>
+  )
+}
+
+/**
+ * Строка записи. Не подтвердил (запланирован, без «приду») — рядом «WhatsApp»: тот же готовый текст,
+ * что «Напомнить в WhatsApp» в карточке приёма, и та же отметка «напомнили» (reminder-opened). Пациенту
+ * с Telegram, который молчит после бота, — тоже: бот уже писал, WhatsApp — второй шанс.
+ */
+function BookedRow({ a, doctor, canEdit, onOpen }: {
+  a: Appointment
+  doctor?: string
+  canEdit: boolean
+  onOpen?: (id: number) => void
+}) {
+  const client = useQueryClient()
+  const text = useReminderText()
+  const opened = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
+  })
+  const s = statusOf(a)
+  const canRemind = canEdit && a.status === 'SCHEDULED' && a.reply !== 'CONFIRMED' && Boolean(a.patient?.phone)
+  const whatsapp = () => {
+    if (!text) return
+    opened.mutate()
+    // openLink: в Telegram ссылка откроется в WhatsApp, а не внутри Mini App
+    openLink(whatsappUrl(a.patient?.phone ?? '', text(a)))
+  }
+  return (
+    <li className={canRemind ? 'booked-item with-action' : 'booked-item'}>
+      <button type="button" className="booked-row" onClick={() => onOpen?.(a.id!)}>
+        <span className="num booked-time">{timeOf(a.startAt!)}</span>
+        <span className="booked-main">
+          <strong>{a.patient?.fullName}</strong>
+          <span className="hint small">
+            {a.serviceName ? `${serviceEmoji(a.serviceName)} ${a.serviceName}` : 'Услуга не выбрана'}
+            {doctor ? ` · ${doctor}` : ''}
+          </span>
+        </span>
+        <span className={`chip small s-${s.kind}`}><span aria-hidden="true">{s.icon}</span> {s.label}</span>
+      </button>
+      {canRemind && (
+        <button type="button" className="btn booked-wa" disabled={!text || opened.isPending} onClick={whatsapp}
+          aria-label={`Напомнить в WhatsApp: ${a.patient?.fullName}, ${timeOf(a.startAt!)}`}>WhatsApp</button>
+      )}
+      {opened.error && <p className="error" role="alert">{opened.error.message}</p>}
+    </li>
   )
 }
