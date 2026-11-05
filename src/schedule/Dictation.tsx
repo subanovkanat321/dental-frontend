@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
 import { haptic } from '../lib/telegram'
-import { TOOTH_STATES, type ToothState } from '../medical/toothStates'
+import { TOOTH_STATES, hasSurfaces, surfacesText, type Surface, type ToothState } from '../medical/toothStates'
 
 type Appointment = Schemas['AppointmentView']
 type Proposal = Schemas['VisitDictationProposal']
@@ -28,7 +28,7 @@ function speechRecognition(): RecognitionClass | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
 }
 
-type ToothRow = { on: boolean; tooth: string; state: ToothState; note: string; was?: ToothState }
+type ToothRow = { on: boolean; tooth: string; state: ToothState; surfaces: Surface[]; note: string; was?: ToothState }
 type StepRow = { on: boolean; tooth: string; title: string }
 type Review = { teeth: ToothRow[]; plan: StepRow[]; note: string; next: string | null; ai: boolean; problem?: string }
 
@@ -132,7 +132,7 @@ export function Dictation({ appointment: a, note, onActive }: {
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/dictation/parse', { params: { path: { id: a.id! } }, body: { text: text.trim() } })),
     onSuccess: (p) => {
       setReview({
-        teeth: (p.teeth ?? []).map((t) => ({ on: true, tooth: String(t.tooth ?? ''), state: t.state ?? 'HEALTHY', note: t.note ?? '', was: t.was })),
+        teeth: (p.teeth ?? []).map((t) => ({ on: true, tooth: String(t.tooth ?? ''), state: t.state ?? 'HEALTHY', surfaces: t.surfaces ?? [], note: t.note ?? '', was: t.was })),
         plan: (p.plan ?? []).map((s) => ({ on: true, tooth: s.tooth != null ? String(s.tooth) : '', title: s.title ?? '' })),
         note: joinNote(note, p.note ?? ''),
         next: nextText(p.next),
@@ -159,7 +159,9 @@ export function Dictation({ appointment: a, note, onActive }: {
       return unwrap(api.POST('/api/appointments/{id}/dictation/apply', {
         params: { path: { id: a.id! } },
         body: {
-          teeth: r.teeth.filter((t) => t.on).map((t) => ({ tooth: Number(t.tooth), state: t.state, note: t.note.trim() || undefined })),
+          teeth: r.teeth.filter((t) => t.on).map((t) => ({
+            tooth: Number(t.tooth), state: t.state, surfaces: hasSurfaces(t.state) ? t.surfaces : [], note: t.note.trim() || undefined,
+          })),
           plan: r.plan.filter((s) => s.on).map((s) => ({ tooth: s.tooth.trim() ? Number(s.tooth) : undefined, title: s.title.trim() })),
           note: r.note.trim(),
         },
@@ -252,6 +254,11 @@ export function Dictation({ appointment: a, note, onActive }: {
                 onChange={(e) => setTooth(i, { state: e.target.value as ToothState })}>
                 {Object.entries(TOOTH_STATES).map(([k, [label, icon]]) => <option key={k} value={k}>{`${icon} ${label}`}</option>)}
               </Select>
+              {/* Поверхности, которые назвал врач («36 МО пломба»): видно и можно убрать, если ИИ ошибся */}
+              {hasSurfaces(t.state) && t.surfaces.length > 0 && (
+                <button type="button" className="chip" disabled={!t.on} aria-label={`Убрать поверхности зуба ${t.tooth}: ${surfacesText(Number(t.tooth), t.surfaces)}`}
+                  onClick={() => setTooth(i, { surfaces: [] })}>{surfacesText(Number(t.tooth), t.surfaces)} ✕</button>
+              )}
               <input aria-label={`Пометка к зубу ${t.tooth}`} maxLength={500} value={t.note} placeholder="пометка" disabled={!t.on}
                 onChange={(e) => setTooth(i, { note: e.target.value })} />
               {t.was && t.was !== 'HEALTHY' && t.was !== t.state && <span className="hint small">было: {TOOTH_STATES[t.was][0].toLowerCase()}</span>}

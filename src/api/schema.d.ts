@@ -1924,6 +1924,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/teeth/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["updateMany"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/plan": {
         parameters: {
             query?: never;
@@ -1966,6 +1982,22 @@ export interface paths {
         get: operations["offers"];
         put?: never;
         post: operations["send_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{patientId}/plan/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addSteps"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2766,6 +2798,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["transfer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/{id}/teeth/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["markMany"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5137,6 +5185,7 @@ export interface components {
         ChartControllerUpdate: {
             /** @enum {string} */
             state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            surfaces?: string[];
             note?: string;
         };
         ToothView: {
@@ -5144,6 +5193,7 @@ export interface components {
             number?: number;
             /** @enum {string} */
             state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            surfaces?: ("M" | "O" | "D" | "B" | "L")[];
             note?: string;
             /** Format: date-time */
             updatedAt?: string;
@@ -5580,6 +5630,7 @@ export interface components {
         VisitTeethControllerMark: {
             /** @enum {string} */
             state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            surfaces?: string[];
             note?: string;
         };
         VisitToothView: {
@@ -5587,6 +5638,7 @@ export interface components {
             number?: number;
             /** @enum {string} */
             state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            surfaces?: ("M" | "O" | "D" | "B" | "L")[];
             note?: string;
             /** Format: date-time */
             createdAt?: string;
@@ -6005,6 +6057,12 @@ export interface components {
             telegram?: string;
             solo?: boolean;
         };
+        ChartControllerMany: {
+            numbers?: number[];
+            /** @enum {string} */
+            state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            surfaces?: string[];
+        };
         PlanOffersSendRequest: {
             /** @enum {string} */
             channel?: "TELEGRAM" | "WHATSAPP";
@@ -6037,6 +6095,16 @@ export interface components {
             offer?: components["schemas"]["PlanOffersOfferView"];
             text?: string;
             url?: string;
+        };
+        ChartControllerSteps: {
+            teeth?: number[];
+            title?: string;
+            /** Format: int32 */
+            priceSom?: number;
+            /** Format: int32 */
+            stage?: number;
+            /** Format: int64 */
+            serviceTypeId?: number;
         };
         BeforeAfterAiTextRequest: {
             procedure?: string;
@@ -6401,6 +6469,12 @@ export interface components {
             /** Format: int32 */
             durationMinutes: number;
         };
+        VisitTeethControllerMany: {
+            numbers?: number[];
+            /** @enum {string} */
+            state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            surfaces?: string[];
+        };
         SupplyQueryUsed: {
             /** Format: int64 */
             supplyId?: number;
@@ -6488,6 +6562,7 @@ export interface components {
             tooth?: number;
             /** @enum {string} */
             state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
+            surfaces?: ("M" | "O" | "D" | "B" | "L")[];
             note?: string;
             /** @enum {string} */
             was?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
@@ -11607,6 +11682,32 @@ export interface operations {
             };
         };
     };
+    updateMany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChartControllerMany"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ToothView"][];
+                };
+            };
+        };
+    };
     plan_1: {
         parameters: {
             query?: never;
@@ -11719,6 +11820,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlanOffersSent"];
+                };
+            };
+        };
+    };
+    addSteps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChartControllerSteps"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentStepView"][];
                 };
             };
         };
@@ -13300,6 +13427,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    markMany: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitTeethControllerMany"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitToothView"][];
                 };
             };
         };
