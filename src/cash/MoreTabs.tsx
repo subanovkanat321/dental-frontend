@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ExpenseEdit } from '../lib/ExpenseEdit'
 import { ask } from '../lib/confirm'
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 
@@ -84,6 +85,8 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
     onSuccess: refresh,
   })
   const [category, setCategory] = useState('')
+  // Ошиблись суммой или статьёй — «✎»: форма исправления под строкой
+  const [editing, setEditing] = useState<number | null>(null)
   const expenseValue = useCallback((x: Expense, key: ExpenseKey) => ({ when: x.spentOn, category: x.category, sum: x.amountSom })[key], [])
   const visible = (list.data ?? []).filter((x) => !category || x.category === category)
   const { sorted, sort, toggle } = useSort<Expense, ExpenseKey>(visible, expenseValue, { key: 'when', desc: true })
@@ -184,10 +187,20 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
                   <td className="hint">{[x.comment, x.patient ? `пациент: ${x.patient}` : null].filter(Boolean).join(' · ') || '—'}</td>
                   {seesAll && (me.doctors?.length ?? 0) > 1 && <td>{x.doctor ?? 'клиника'}</td>}
                   <td className="r nowrap num strong">{somText(x.amountSom ?? 0)}</td>
-                  <td className="r"><button type="button" className="btn small ghost" aria-label={`Удалить расход: ${x.category} ${x.amountSom}`}
-                    disabled={remove.isPending} onClick={() => void ask('Удалить расход?').then((ok) => ok && remove.mutate(x.id!))}>✕</button></td>
+                  <td className="r nowrap">
+                    <button type="button" className="btn small ghost" aria-label={`Исправить расход: ${x.category} ${x.amountSom}`}
+                      onClick={() => setEditing(editing === x.id ? null : x.id!)}>✎</button>
+                    <button type="button" className="btn small ghost" aria-label={`Удалить расход: ${x.category} ${x.amountSom}`}
+                      disabled={remove.isPending} onClick={() => void ask('Удалить расход?').then((ok) => ok && remove.mutate(x.id!))}>✕</button></td>
                 </tr>
-              ))}
+              )).flatMap((row, i) => {
+                const x = sorted[i]!
+                return editing === x.id ? [row, (
+                  <tr key={`edit-${x.id}`}><td colSpan={seesAll && (me.doctors?.length ?? 0) > 1 ? 6 : 5}>
+                    <ExpenseEdit expense={x} onDone={() => setEditing(null)} />
+                  </td></tr>
+                )] : [row]
+              })}
             </tbody>
           </table>
         ) : <p className="hint">За {monthTitle(month)} расходов нет.</p>}

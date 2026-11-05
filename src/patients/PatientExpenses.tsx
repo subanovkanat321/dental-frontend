@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { somText, todayIn } from '../lib/time'
+import { ExpenseEdit } from '../lib/ExpenseEdit'
+import { shortDate, somText, todayIn } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -27,6 +28,8 @@ export function PatientExpenses({ patient, me, doctorId }: {
     retry: false,
   })
   const [open, setOpen] = useState(false)
+  // Ошиблись — «изменить» у строки: сумма, статья, дата, комментарий или удалить
+  const [editing, setEditing] = useState<number | null>(null)
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState(LAB)
   const [comment, setComment] = useState('')
@@ -53,7 +56,22 @@ export function PatientExpenses({ patient, me, doctorId }: {
   return (
     <div className="patient-expenses">
       {items.length > 0 && (
-        <p className="hint">💸 Расходы по пациенту: <b className="num">{somText(total)}</b> — {items.map((x) => `${(x.category ?? '').toLowerCase()} ${somText(x.amountSom ?? 0)}`).join(', ')}</p>
+        <>
+          <p className="hint">💸 Расходы по пациенту: <b className="num">{somText(total)}</b></p>
+          <ul className="patient-expense-list" aria-label="Расходы по пациенту">
+            {items.map((x) => (
+              <li key={x.id}>
+                {editing === x.id ? <ExpenseEdit expense={x} onDone={() => setEditing(null)} /> : (
+                  <>
+                    <span>{x.category} · <b className="num">{somText(x.amountSom ?? 0)}</b>
+                      <span className="hint"> · {x.spentOn ? shortDate(`${x.spentOn}T12:00:00Z`) : ''}{x.comment ? ` · ${x.comment}` : ''}</span></span>
+                    <button type="button" className="link" onClick={() => setEditing(x.id!)}>изменить</button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
       )}
       {open ? (
         <form className="form sub-form" aria-label="Расход по пациенту" onSubmit={submit}>

@@ -1503,10 +1503,65 @@
         }
       }
     },
+    "/api/expenses/{id}" : {
+      "put" : {
+        "tags" : [ "expense-controller" ],
+        "operationId" : "update_10",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExpensesDraft"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExpensesExpense"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "expense-controller" ],
+        "operationId" : "delete_7",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/doctors/{id}" : {
       "put" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "update_10",
+        "operationId" : "update_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1541,7 +1596,7 @@
       },
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_7",
+        "operationId" : "delete_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1660,7 +1715,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_11",
+        "operationId" : "update_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1771,7 +1826,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_12",
+        "operationId" : "update_13",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2031,7 +2086,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_13",
+        "operationId" : "update_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6318,7 +6373,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_8",
+        "operationId" : "delete_9",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -8106,7 +8161,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_9",
+        "operationId" : "delete_10",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -9030,7 +9085,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9708,7 +9763,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9768,7 +9823,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9825,7 +9880,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9872,26 +9927,6 @@
           "required" : true,
           "schema" : {
             "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
-      }
-    },
-    "/api/expenses/{id}" : {
-      "delete" : {
-        "tags" : [ "expense-controller" ],
-        "operationId" : "delete_14",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
           }
         } ],
         "responses" : {
@@ -11402,6 +11437,68 @@
           "relation" : {
             "type" : "string",
             "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
+          }
+        }
+      },
+      "ExpensesDraft" : {
+        "properties" : {
+          "spentOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "ExpensesExpense" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "spentOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "type" : "string"
           }
         }
       },
@@ -13424,68 +13521,6 @@
           "leftDebtSom" : {
             "type" : "integer",
             "format" : "int32"
-          }
-        }
-      },
-      "ExpensesDraft" : {
-        "properties" : {
-          "spentOn" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "amountSom" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "category" : {
-            "type" : "string"
-          },
-          "comment" : {
-            "type" : "string"
-          },
-          "doctorId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "patientId" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }
-      },
-      "ExpensesExpense" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "spentOn" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "amountSom" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "category" : {
-            "type" : "string"
-          },
-          "comment" : {
-            "type" : "string"
-          },
-          "doctorId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "doctor" : {
-            "type" : "string"
-          },
-          "patientId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "patient" : {
-            "type" : "string"
           }
         }
       },

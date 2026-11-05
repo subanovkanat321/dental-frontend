@@ -178,3 +178,40 @@ test('карточка приёма: «Расход по пациенту (те�
   expect(await within(panel).findByText(/Расходы по пациенту:/)).toHaveTextContent(/4\s500 сом/)
   expect(expense).toMatchObject({ amountSom: 4500, category: 'Зуботехническая лаборатория', comment: 'коронка', doctorId: 2 })
 })
+
+test('карточка приёма: расход техника отметили ошибочно — «изменить»: сумма и статья; «Удалить расход»', async () => {
+  backend(appointment(10, 2, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 }), () => ({}))
+  let list = [{ id: 7, spentOn: '2026-11-04', amountSom: 45000, category: 'Зуботехническая лаборатория', comment: 'коронка', doctorId: 2, patientId: 10 }]
+  let sent: Record<string, unknown> | null = null
+  server.use(
+    http.get('*/api/patients/:id/expenses', () => HttpResponse.json(list)),
+    http.put('*/api/expenses/:id', async ({ request }) => {
+      sent = (await request.json()) as Record<string, unknown>
+      list = [{ ...list[0]!, ...(sent as object) }]
+      return HttpResponse.json(list[0])
+    }),
+    http.delete('*/api/expenses/:id', () => {
+      list = []
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  const panel = await card()
+  const expenses = await within(panel).findByRole('list', { name: 'Расходы по пациенту' })
+  expect(expenses).toHaveTextContent(/45\s000 сом/)
+  await userEvent.click(within(expenses).getByRole('button', { name: 'изменить' }))
+  const form = within(panel).getByRole('form', { name: 'Исправить расход' })
+  await userEvent.clear(within(form).getByLabelText('Сумма, сом'))
+  await userEvent.type(within(form).getByLabelText('Сумма, сом'), '4500')
+  await userEvent.clear(within(form).getByLabelText('Статья'))
+  await userEvent.type(within(form).getByLabelText('Статья'), 'Техник')
+  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(panel).findByText(/Расходы по пациенту:/)).toHaveTextContent(/4\s500 сом/)
+  expect(sent).toMatchObject({ amountSom: 4500, category: 'Техник', comment: 'коронка' })
+
+  await userEvent.click(within(within(panel).getByRole('list', { name: 'Расходы по пациенту' })).getByRole('button', { name: 'изменить' }))
+  await userEvent.click(within(within(panel).getByRole('form', { name: 'Исправить расход' })).getByRole('button', { name: 'Удалить расход' }))
+  await vi.waitFor(() => expect(within(panel).queryByText(/Расходы по пациенту:/)).not.toBeInTheDocument())
+  vi.restoreAllMocks()
+})
