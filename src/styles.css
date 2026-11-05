@@ -1536,6 +1536,11 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 .dictation-row .dictation-tooth { flex: 0 0 3.5em; width: 3.5em; text-align: center; }
 
 /* «Продолжение лечения» в карточке приёма: что сделали в прошлый раз и что осталось по плану */
+.patient-history { display: grid; gap: 6px; padding: 10px 12px; border-radius: var(--r-md); border: 1px solid var(--line-strong); }
+.patient-history h3 { margin: 0; font-size: .95rem; }
+.patient-history .history-line { margin: 0; }
+.patient-history .history-visits { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .9rem; }
+.patient-history .link { justify-self: start; }
 .continue { display: grid; gap: 8px; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
 .continue h3 { margin: 0; font-size: .95rem; }
 .continue > div { display: grid; gap: 2px; }

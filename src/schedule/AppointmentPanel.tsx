@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
+import { PatientHistory } from './PatientHistory'
 import { useReminderNotSent } from './useReminderNotSent'
 import { useState } from 'react'
 
@@ -185,6 +186,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       </section>
       <MedAlerts an={anamnesis.data} compact />
       {/* Пришёл продолжить лечение — что сделали в прошлый раз и что осталось по плану */}
+      {/* Пришёл снова — когда и с чем был в последний раз, даже если врач ничего не записал */}
+      <PatientHistory appointment={a} me={me} onOpenPatient={onOpenPatient} />
       {clinical && <ContinueTreatment appointment={a} onMedical={onMedical && a.patient ? () => onMedical(a.patient!) : undefined} />}
       {clinical && onMedical && a.patient && a.status !== 'CANCELLED' && (
         <button type="button" className="btn" onClick={() => onMedical(a.patient!)}>Карта зубов и план лечения</button>
