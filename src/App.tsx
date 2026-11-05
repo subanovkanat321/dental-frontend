@@ -15,6 +15,7 @@ import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
 import { launchedAsApp } from './pwa/pwa'
 import { UpdateToast } from './pwa/UpdateToast'
+import { closeAtlas, useAtlasRoute } from './atlas/route'
 
 // Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
 const CashPage = lazy(() => import('./cash/CashPage').then((m) => ({ default: m.CashPage })))
@@ -25,6 +26,8 @@ const StockPage = lazy(() => import('./stock/StockPage').then((m) => ({ default:
 const SettingsPage = lazy(() => import('./settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 // Самозапись пациента — тоже отдельный чанк: персонал его не скачивает
 const PatientApp = lazy(() => import('./patient/PatientApp'))
+// 3D-атлас для показа пациенту — свой чанк с three.js (около 0,5 МБ): грузится, только когда его открыли
+const AtlasPage = lazy(() => import('./atlas/AtlasPage'))
 
 /**
  * Одно приложение на всех (ADR 0001 и 0002 бэкенда): сотрудник видит CRM, команда платформы —
@@ -50,6 +53,7 @@ function Screens() {
     return found
   })
   const [page, goPage] = usePage()
+  const atlas = useAtlasRoute()
   // Разделы, где уже были, остаются открытыми (скрыты): вернулись — та же карточка, поиск, вкладка
   // и прокрутка. Ссылка на конкретное (пациент, приём, материал) открывает раздел заново — ключом.
   const [visited, setVisited] = useState<Page[]>([])
@@ -69,6 +73,8 @@ function Screens() {
 
   // tish.kg/app — «Скачать Tish»: без входа, до проверки сессии
   if (isDownloadPath()) return <DownloadPage />
+  // 3D-атлас (#/atlas, /atlas) — без входа: на экране нет данных пациентов, его можно открыть на ТВ
+  if (atlas) return <ErrorBoundary><Suspense fallback={<div className="center hint">Загрузка…</div>}><AtlasPage route={atlas} onClose={closeAtlas} /></Suspense></ErrorBoundary>
   if (me.isPending) {
     return <div className="center hint">Загрузка…</div>
   }

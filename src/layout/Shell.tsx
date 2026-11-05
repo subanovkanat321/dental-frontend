@@ -9,6 +9,7 @@ import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
 import { useFullView } from '../lib/fullView'
+import { openAtlas } from '../atlas/route'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -89,6 +90,10 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
             </button>
           )}
         </nav>
+        {/* 3D-атлас для пациента — временно здесь; потом его откроют из презентаций и зубной формулы */}
+        {me.doctor && (
+          <button type="button" className="nav extra" title={narrow ? '3D-атлас' : undefined} onClick={openAtlas}><Icon name="atlas" /> <span>3D-атлас</span></button>
+        )}
         <button type="button" className="nav sidebar-toggle" aria-expanded={!narrow} onClick={toggleNarrow}
           title={narrow ? 'Развернуть меню' : 'Свернуть меню'} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}>
           <span className="sidebar-toggle-ico" aria-hidden="true">{narrow ? '»' : '«'}</span> <span>Свернуть меню</span>

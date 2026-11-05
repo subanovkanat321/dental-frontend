@@ -1,0 +1,113 @@
+/* 3D-атлас: тёмный «экран телевизора» (как у демонстраций в клинике), крупные кнопки и подписи.
+   Цвет действия — тот же бирюзовый, что в CRM (DESIGN.md); тёмный фон — только здесь: на ТВ модель
+   на тёмном читается лучше, а светлый экран в полутёмном кабинете слепит. */
+.atlas-page { position: fixed; inset: 0; z-index: 1000; }
+.atlas {
+  --a-bg: #121a22;
+  --a-panel: rgba(22, 31, 41, .78);
+  --a-line: rgba(255, 255, 255, .12);
+  --a-text: #eef3f6;
+  --a-muted: #a9b7c0;
+  --a-accent: #12a99b;
+  --a-accent-ink: #ffffff;
+  position: relative; display: grid; grid-template-rows: auto 1fr auto; width: 100%; height: 100%; min-height: 420px;
+  background: radial-gradient(ellipse at 50% 42%, #33414f 0%, #1f2a35 45%, #10161d 100%);
+  color: var(--a-text); font-family: 'Golos Text', system-ui, sans-serif; font-size: 16px; overflow: hidden;
+  user-select: none; -webkit-user-select: none;
+}
+.atlas button { font: inherit; color: inherit; cursor: pointer; }
+.atlas button:focus-visible { outline: 3px solid var(--a-accent); outline-offset: 2px; }
+
+.atlas-top { display: flex; align-items: center; gap: 16px; padding: 14px 20px; flex-wrap: wrap; }
+.atlas-title { font-family: Geologica, 'Golos Text', sans-serif; font-weight: 600; font-size: 1.35rem; letter-spacing: -.01em; }
+.atlas-tabs { display: flex; gap: 6px; padding: 4px; border-radius: 12px; background: rgba(255, 255, 255, .06); }
+.atlas-tabs button, .atlas-tools button, .atlas-modes button, .atlas-stages button, .atlas-steps button, .atlas-fdi button {
+  min-height: 44px; padding: 8px 16px; border: 1px solid var(--a-line); border-radius: 10px; background: rgba(255, 255, 255, .05);
+  font-weight: 500; white-space: nowrap; transition: background .15s, border-color .15s;
+}
+.atlas-tabs button { border-color: transparent; background: none; font-size: 1.05rem; }
+.atlas button:hover { background: rgba(255, 255, 255, .12); }
+.atlas button.active, .atlas button[aria-pressed='true'] { background: var(--a-accent); border-color: var(--a-accent); color: var(--a-accent-ink); }
+.atlas-tools { display: flex; gap: 8px; margin-left: auto; }
+.atlas-close span { margin-left: 4px; }
+
+.atlas-stage { position: relative; min-height: 0; }
+.atlas-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.atlas-canvas:active { cursor: grabbing; }
+.atlas-labels { position: absolute; inset: 0; pointer-events: none; }
+
+/* Номер части — кружок как в анатомическом атласе: белый с тёмной цифрой, выбранный — бирюзовый */
+.atlas-dot {
+  position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: auto;
+  display: grid; place-items: center; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 999px;
+  border: 2px solid #0f2a30; background: #ffffff; color: #0f2a30 !important; font-weight: 700; font-size: 1rem; line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+}
+.atlas-dot.wide { padding: 0 10px; font-size: .9rem; font-weight: 600; }
+.atlas .atlas-dot:hover { background: #e0f2ef; }
+.atlas .atlas-dot.active { background: var(--a-accent); color: #fff !important; border-color: #fff; }
+
+.atlas-num {
+  display: inline-grid; place-items: center; min-width: 26px; height: 26px; border-radius: 999px; margin-right: 8px;
+  background: #fff; color: #0f2a30; font-weight: 700; font-size: .85rem;
+}
+.atlas button.active .atlas-num { background: #fff; color: var(--a-accent); }
+
+.atlas-legend {
+  position: absolute; left: 20px; top: 12px; margin: 0; padding: 10px; list-style: none; display: grid; gap: 2px;
+  background: var(--a-panel); border: 1px solid var(--a-line); border-radius: 12px; backdrop-filter: blur(6px);
+}
+.atlas-legend button { display: flex; align-items: center; width: 100%; min-height: 40px; padding: 4px 12px 4px 6px; border: 0; border-radius: 8px; background: none; text-align: left; font-size: 1.02rem; }
+
+.atlas-info {
+  position: absolute; right: 20px; top: 12px; width: min(380px, 40vw); padding: 18px 20px;
+  background: var(--a-panel); border: 1px solid var(--a-line); border-radius: 12px; backdrop-filter: blur(6px);
+}
+.atlas-info h2 { margin: 0 0 8px; font-family: Geologica, 'Golos Text', sans-serif; font-weight: 600; font-size: 1.5rem; letter-spacing: -.01em; }
+.atlas-info p { margin: 0; color: var(--a-muted); font-size: 1.1rem; line-height: 1.5; }
+
+.atlas-loading {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 14px 22px; border-radius: 12px;
+  background: var(--a-panel); color: var(--a-text); font-size: 1.1rem;
+}
+.atlas-loading.error { color: #ffb4b4; max-width: 80%; }
+
+.atlas-bottom { display: grid; justify-items: center; gap: 10px; padding: 10px 20px 18px; }
+.atlas-modes, .atlas-stages, .atlas-steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; align-items: center; }
+.atlas-modes button { min-height: 52px; padding: 10px 22px; font-size: 1.1rem; }
+.atlas-stage-title { color: var(--a-muted); margin-right: 4px; }
+.atlas-stages input[type='range'] { width: 220px; accent-color: var(--a-accent); }
+.atlas-steps span { font-size: 1.15rem; font-weight: 500; padding: 6px 14px; border-radius: 10px; background: rgba(255, 255, 255, .06); }
+
+.atlas-fdi { display: grid; gap: 6px; justify-items: center; }
+.atlas-fdi-row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.atlas-fdi button { min-width: 46px; min-height: 40px; padding: 4px 6px; font-weight: 600; }
+.atlas-fdi button.mid { margin-left: 14px; }
+.atlas-check { display: flex; gap: 8px; align-items: center; color: var(--a-muted); font-size: 1rem; cursor: pointer; }
+.atlas-check input { width: 20px; height: 20px; accent-color: var(--a-accent); }
+
+.atlas-fallback { position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr; justify-items: center; padding: 12px; }
+.atlas-note { margin: 0 0 8px; color: var(--a-muted); }
+.atlas-schematic { width: 100%; height: 100%; max-width: 560px; }
+.atlas-svg-dot { cursor: pointer; }
+.atlas-svg-dot circle { fill: #fff; stroke: #0f2a30; stroke-width: 2; }
+.atlas-svg-dot text { fill: #0f2a30; font: 700 14px 'Golos Text', sans-serif; pointer-events: none; }
+.atlas-svg-dot.active circle { fill: #12a99b; stroke: #fff; }
+.atlas-svg-dot.active text { fill: #fff; }
+
+/* Планшет и телефон: легенда — компактнее, описание — внизу над кнопками */
+@media (max-width: 1100px) {
+  .atlas-legend { left: 10px; top: 8px; padding: 6px; }
+  .atlas-legend button { min-height: 34px; font-size: .92rem; }
+  .atlas-info { left: auto; right: 10px; top: 8px; width: min(320px, 42vw); padding: 12px 14px; }
+  .atlas-info h2 { font-size: 1.2rem; }
+  .atlas-info p { font-size: .98rem; }
+}
+@media (max-width: 700px) {
+  .atlas-top { padding: 8px 10px; gap: 8px; }
+  .atlas-title { display: none; }
+  .atlas-tools button span, .atlas-tools button:not(.atlas-close):not(:first-child) { display: none; }
+  .atlas-legend { display: none; }
+  .atlas-info { left: 10px; right: 10px; top: auto; bottom: 8px; width: auto; }
+  .atlas-modes button { min-height: 44px; padding: 8px 14px; font-size: 1rem; }
+}
