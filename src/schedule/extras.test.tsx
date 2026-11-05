@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, expand, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -121,7 +121,7 @@ test('материалы на приёме: списать со склада, е
     }),
   )
   const panel = await openCard(/Бакыт М\./)
-  const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
+  const box = await expand(within(panel).getByRole('region', { name: 'Материалы на приёме' }))
   await choose(await within(box).findByLabelText('Материал со склада'), 'Анестетик · осталось 5 карп.')
   await userEvent.click(within(box).getByRole('button', { name: 'Списать 1' }))
   expect(await within(box).findByText(/Анестетик — /)).toHaveTextContent('Анестетик — 1 карп.')
@@ -148,7 +148,7 @@ test('материалы услуги: «Обычно уходит» — поп�
     }),
   )
   const panel = await openCard(/Бакыт М\./)
-  const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
+  const box = await expand(within(panel).getByRole('region', { name: 'Материалы на приёме' }))
   expect(await within(box).findByText('Обычно уходит: Анестетик 1 карп., Композит 1 шт, Бонд 1 шт')).toBeInTheDocument()
   // Склад ничего не списал сам — только предложение
   expect(sent).toBeNull()
@@ -169,7 +169,7 @@ test('материалы услуги: уже что-то списали — н�
   const suggested = [{ supplyId: 3, name: 'Анестетик', unit: 'карп.', quantity: 1, inStock: 5 }] satisfies Schemas['ServiceSuppliesItem'][]
   server.use(http.get('*/api/appointments/:id/supplies/suggested', () => HttpResponse.json(suggested)))
   const panel = await openCard(/Бакыт М\./)
-  const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
+  const box = await expand(within(panel).getByRole('region', { name: 'Материалы на приёме' }))
   await userEvent.click(await within(box).findByRole('button', { name: 'Не нужно' }))
   expect(within(box).queryByText(/Обычно уходит/)).not.toBeInTheDocument()
 })
@@ -185,16 +185,16 @@ test('материалы услуги: на приёме уже списан м�
     ] satisfies Schemas['SupplyQueryUsed'][])),
   )
   const panel = await openCard(/Бакыт М\./)
-  const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
+  const box = await expand(within(panel).getByRole('region', { name: 'Материалы на приёме' }))
   expect(await within(box).findByText(/Анестетик — /)).toBeInTheDocument()
   expect(within(box).queryByText(/Обычно уходит/)).not.toBeInTheDocument()
 })
 
-test('у услуги нет «Обычно уходит» — ссылка «Настроить материалы услуги» открывает эту услугу в настройках', async () => {
+test('у услуги нет «Обычно уходит» — ссылка «настроить материалы услуги» открывает эту услугу в настройках', async () => {
   backend(appointment(10, 1, '09:00', 'Бакыт М.', { status: 'DONE', serviceName: 'Чистка' }))
   const panel = await openCard(/Бакыт М\./)
-  const box = within(panel).getByRole('region', { name: 'Материалы на приёме' })
-  await userEvent.click(await within(box).findByRole('link', { name: 'Настроить материалы услуги' }))
+  const box = await expand(within(panel).getByRole('region', { name: 'Материалы на приёме' }))
+  await userEvent.click(await within(box).findByRole('link', { name: 'настроить материалы услуги' }))
   window.dispatchEvent(new HashChangeEvent('hashchange'))
   const service = await screen.findByRole('complementary', { name: 'Услуга' })
   expect(within(service).getByRole('region', { name: 'Материалы по умолчанию' })).toBeInTheDocument()

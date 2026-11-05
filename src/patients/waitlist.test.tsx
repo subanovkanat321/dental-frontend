@@ -46,6 +46,7 @@ test('карточка пациента: «В лист ожидания» на 4
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
+  await userEvent.click(within(panel).getByRole('tab', { name: 'Прочее' }))
   const form = await within(panel).findByRole('form', { name: 'В лист ожидания' })
   await choose(within(form).getByLabelText('Сколько нужно времени'), '45 мин')
   await choose(within(form).getByLabelText('К какому врачу'), 'Дастан Т.')

@@ -102,7 +102,7 @@ test('врач: только поддержка и конфиденциальн�
   const user = userEvent.setup()
   renderApp()
   openItem('support')
-  expect(await screen.findByRole('heading', { name: 'Техподдержка' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Помощь и техподдержка' })).toBeInTheDocument()
   expect(await screen.findByRole('link', { name: 'Позвонить: +996 555 000 111' })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Предложить идею' }))
   const panel = screen.getByRole('complementary', { name: 'Предложить идею' })

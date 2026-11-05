@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, expand } from '../test/fixtures'
 import { server } from '../test/server'
 
 // Пациенты и заметки вымышленные
@@ -37,7 +37,7 @@ test('следующий визит: что сделали в прошлый р�
     { id: 3, tooth: 36, title: 'Постоянная пломба' },
   ])
   renderApp()
-  const block = await within(await card()).findByRole('region', { name: 'Продолжение лечения' })
+  const block = await expand(await within(await card()).findByRole('region', { name: 'Продолжение лечения' }))
   expect(within(block).getByText(/Удалили нерв 36/)).toBeInTheDocument()
   expect(within(block).queryByText('Старая заметка')).not.toBeInTheDocument()
   expect(within(block).getByText(/Пломбировать каналы/)).toBeInTheDocument()
@@ -79,11 +79,12 @@ test('история пациента: врач ничего не записал
     appointment(9, 1, '10:00', 'Бакыт М.', { startAt: ago(5), endAt: ago(5), status: 'NO_SHOW' }),
   ])
   renderApp()
-  const block = await within(await card()).findByRole('region', { name: 'История пациента' })
+  // Одной строкой: сколько раз был, когда и с чем последний раз, неявки
+  const block = await within(await card()).findByLabelText('История пациента')
   expect(block).toHaveTextContent('Визитов: 2')
   expect(block).toHaveTextContent('12 дней назад')
   expect(block).toHaveTextContent('Лечение кариеса')
-  expect(block).toHaveTextContent('Не пришёл без предупреждения: 1 раз')
+  expect(block).toHaveTextContent('не пришёл 1 раз')
   // Заметок нет — «Продолжения лечения» нет, а история есть
   expect(screen.queryByRole('region', { name: 'Продолжение лечения' })).not.toBeInTheDocument()
 })
@@ -92,6 +93,6 @@ test('история пациента: первый визит и видна р�
   setup([], [], { ...me, admin: false, doctorId: undefined, reception: true })
   cardOf([])
   renderApp()
-  const block = await within(await card()).findByRole('region', { name: 'История пациента' })
+  const block = await within(await card()).findByLabelText('История пациента')
   expect(block).toHaveTextContent('Впервые в клинике')
 })

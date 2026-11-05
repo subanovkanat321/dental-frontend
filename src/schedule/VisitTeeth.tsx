@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { Fold } from '../layout/Fold'
 import { ToothFormula } from '../medical/ToothFormula'
 import { ToothFigure } from '../medical/ToothGlyph'
 import { TOOTH_STATES, visitToothText, type ToothState } from '../medical/toothStates'
@@ -13,14 +14,15 @@ type VisitTooth = Schemas['VisitToothView']
 const STATES: ToothState[] = ['TREATING', 'FILLING', 'CROWN', 'MISSING', 'IMPLANT', 'CARIES']
 
 /**
- * «Зубы этого приёма»: врач прямо в карточке отмечает, какие зубы лечил и что сделал. Сервер в одной
+ * «Зубы» в карточке приёма — одна строка-раскрывашка «Зубы · 14, 36»: врач прямо в карточке отмечает, какие зубы лечил и что сделал. Сервер в одной
  * транзакции обновляет карту зубов пациента и запоминает отметку за приёмом — из этого «История по
  * визитам» в медкарте. Ассистент видит список, отмечает врач приёма или админ (проверяет сервер).
  *
  * Формула — та же, что карта зубов в медкарте (ToothFormula), но открывается по кнопке: в карточке
- * приёма много всего, а зубы отмечают раз-другой за визит.
+ * приёма много всего, а зубы отмечают раз-другой за визит. Здесь же — «Карта зубов и план лечения ›»
+ * (вся медкарта): одна точка входа к зубам из приёма.
  */
-export function VisitTeeth({ appointment: a, readOnly }: { appointment: Appointment; readOnly: boolean }) {
+export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointment: Appointment; readOnly: boolean; onMedical?: () => void }) {
   const client = useQueryClient()
   const patientId = a.patient?.id
   const teeth = useQuery({
@@ -69,8 +71,8 @@ export function VisitTeeth({ appointment: a, readOnly }: { appointment: Appointm
   }
 
   return (
-    <section className="visit-teeth" aria-label="Зубы этого приёма">
-      <h3>Зубы этого приёма</h3>
+    <Fold title="Зубы" label="Зубы этого приёма" meta={marked.length ? marked.map((t) => t.number).join(', ') : 'не отмечены'}>
+    <div className="visit-teeth">
       {marked.length > 0 && (
         <ul className="marked-teeth" aria-label="Отмеченные зубы приёма">
           {marked.map((t) => (
@@ -90,7 +92,7 @@ export function VisitTeeth({ appointment: a, readOnly }: { appointment: Appointm
       )}
       {unmark.error && <p className="error" role="alert">{unmark.error.message}</p>}
       {!readOnly && !picking && open == null && (
-        <button type="button" className="btn" onClick={() => setPicking(true)}>{marked.length ? '＋ Ещё зуб' : 'Отметить зуб'}</button>
+        <button type="button" className="btn" onClick={() => setPicking(true)}>{marked.length ? '＋ Ещё зуб' : '＋ Отметить зуб'}</button>
       )}
       {!readOnly && picking && open == null && (
         <>
@@ -104,7 +106,9 @@ export function VisitTeeth({ appointment: a, readOnly }: { appointment: Appointm
           onChart={chart.data?.find((t) => t.number === open)?.state}
           onSaved={saved} onCancel={() => { setOpen(null); setPicking(false) }} />
       )}
-    </section>
+      {onMedical && <button type="button" className="link" onClick={onMedical}>Карта зубов и план лечения ›</button>}
+    </div>
+    </Fold>
   )
 }
 

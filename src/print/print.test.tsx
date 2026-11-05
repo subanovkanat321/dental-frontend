@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, openMore } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -115,6 +115,7 @@ test('квитанция: платежи, кто принял, долг, «Не 
   backend(done())
   renderApp()
   const panel = await card(/Бакыт М\./)
+  await openMore(panel)
   await userEvent.click(await within(panel).findByRole('button', { name: 'Печать: квитанция' }))
   const sheet = await screen.findByRole('dialog', { name: 'Печать: Квитанция об оплате' })
   const rows = within(within(sheet).getByRole('table', { name: 'Платежи' })).getAllByRole('row')

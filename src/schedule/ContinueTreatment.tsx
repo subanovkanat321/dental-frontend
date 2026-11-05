@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { api, unwrap, type Schemas } from '../api/client'
+import { Fold } from '../layout/Fold'
 import { shortDate } from '../lib/time'
 import { visitToothText } from '../medical/toothStates'
 
@@ -14,10 +15,13 @@ const STEPS = 4
  * прошлый раз (заметка о визите) и что осталось по плану лечения. Медданные: только тому, кто
  * видит медкарту (врач приёма, его ассистент, админ) — сервер другим и не отдаст.
  *
+ * Строка-раскрывашка «Продолжение лечения · осталось по плану: 3»: открыта сама, когда пациент уже
+ * в кресле (open), иначе — по нажатию.
+ *
  * Запросы — с теми же ключами, что у медкарты (['notes', id], ['plan', id]): сохранили заметку
  * или отметили этап — блок обновится сам.
  */
-export function ContinueTreatment({ appointment: a, onMedical }: { appointment: Appointment; onMedical?: () => void }) {
+export function ContinueTreatment({ appointment: a, onMedical, open = false }: { appointment: Appointment; onMedical?: () => void; open?: boolean }) {
   const patientId = a.patient?.id
   const enabled = patientId != null && a.status !== 'CANCELLED'
   const notes = useQuery({
@@ -53,8 +57,9 @@ export function ContinueTreatment({ appointment: a, onMedical }: { appointment: 
   if (!last && !lastTeeth && left.length === 0) return null
 
   return (
-    <section className="continue" aria-label="Продолжение лечения">
-      <h3>Продолжение лечения</h3>
+    <Fold title="Продолжение лечения" defaultOpen={open}
+      meta={left.length ? `по плану ещё ${left.length}` : last ? `были ${shortDate(last.startAt!)}` : undefined}>
+    <div className="continue">
       {last && (
         <div>
           <span className="hint">В прошлый раз — {shortDate(last.startAt!)}{last.doctorName ? `, ${last.doctorName}` : ''}</span>
@@ -75,11 +80,11 @@ export function ContinueTreatment({ appointment: a, onMedical }: { appointment: 
               <li key={s.id}>{s.tooth ? <span className="num">{s.tooth} — </span> : null}{s.title}</li>
             ))}
           </ul>
-          {left.length > STEPS && (onMedical
-            ? <button type="button" className="link" onClick={onMedical}>Ещё {left.length - STEPS} — в плане лечения ›</button>
-            : <span className="hint">и ещё {left.length - STEPS}</span>)}
+          {left.length > STEPS && <span className="hint">и ещё {left.length - STEPS}</span>}
         </div>
       )}
-    </section>
+      {onMedical && <button type="button" className="link" onClick={onMedical}>Карта зубов и план лечения ›</button>}
+    </div>
+    </Fold>
   )
 }

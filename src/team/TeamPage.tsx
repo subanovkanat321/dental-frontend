@@ -18,8 +18,10 @@ type Tab = TeamTab
  * регистратура, ассистенты) одним списком с ролями — и перерывы с выходными. Врачей и сотрудников ведёт админ; врач правит себя,
  * регистратура — часы врачей. Проверяет и сервер.
  */
-export function TeamPage({ me, only, title, onBack, initialOpened = null }: {
+export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: itemTabs }: {
   me: Me
+  /** Вкладки пункта «Настроек» («Рабочее время»: врачи, смены, перерывы) */
+  tabs?: React.ReactNode
   only?: Tab
   title?: string
   onBack?: () => void
@@ -51,6 +53,7 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null }: {
       <section className="schedule-main">
         {only && onBack ? (
           <SubHeader title={title ?? ''} onBack={onBack}>
+            {itemTabs}
             {tab === 'doctors' && addButtons}
           </SubHeader>
         ) : (

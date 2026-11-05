@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, openMore } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Appointment = Schemas['AppointmentView']
@@ -76,11 +76,13 @@ test('владелец удаляет и приём с оплатой или з�
   renderApp()
   // С оплатой — сразу вопрос, что пропадёт, и удаление с force
   const paid = await card(/Бакыт М\./)
+  await openMore(paid)
   await userEvent.click(within(paid).getByRole('button', { name: 'Удалить запись' }))
   expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/У записи есть оплата 2\s000 сом\. Удалить всё вместе с ней\?.*Вернуть нельзя/))
   await vi.waitFor(() => expect(deleted).toContain('10:true'))
   // Без денег, но с заметкой: обычный вопрос → 409 → второй вопрос → force
   const noted = await card(/Нурлан К\./)
+  await openMore(noted)
   await userEvent.click(within(noted).getByRole('button', { name: 'Удалить запись' }))
   await vi.waitFor(() => expect(deleted).toEqual(['10:true', '11:false', '11:true']))
   expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/заметка о приёме или отметки зубов/))
@@ -141,6 +143,7 @@ test('ассистент: пациент чужого врача — без «И
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
   expect(await within(panel).findByRole('button', { name: '＋ Записать' })).toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('tab', { name: 'Прочее' }))
   expect(within(panel).queryByRole('button', { name: 'Изменить данные пациента' })).not.toBeInTheDocument()
   expect(within(panel).queryByRole('form', { name: 'В лист ожидания' })).not.toBeInTheDocument()
 })

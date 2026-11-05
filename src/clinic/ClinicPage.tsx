@@ -18,13 +18,17 @@ type Tab = ClinicTab
  * «Клиника»: настройки, которые видят пациенты, — услуги (для самозаписи в боте), «О клинике»,
  * анкета пациента и новости (админ). Вкладка сама рисует рабочую область и карточку справа.
  */
-export function ClinicPage({ me, only, title, onBack }: { me: Me; only?: Tab; title?: string; onBack?: () => void }) {
+export function ClinicPage({ me, only, title, onBack, tabs: itemTabs }: {
+  me: Me; only?: Tab; title?: string; onBack?: () => void
+  /** Вкладки пункта «Настроек», где вместе две вкладки (Откуда узнают + Промокоды) */
+  tabs?: React.ReactNode
+}) {
   const tabs: [Tab, string][] = [['services', 'Услуги'], ['memos', 'Памятки'], ['about', 'О клинике'], ['questions', 'Анкета'], ['sources', 'Откуда узнают'], ['promo', 'Промокоды'],
     ...(me.admin ? [['news', 'Новости'] as [Tab, string]] : [])]
   const [chosen, setTab] = useState<Tab>('services')
   const tab = only ?? chosen
   const [panel, setPanel] = useState(false)
-  const header = only && onBack ? <SubHeader title={title ?? ''} onBack={onBack} /> : (
+  const header = only && onBack ? <SubHeader title={title ?? ''} onBack={onBack}>{itemTabs}</SubHeader> : (
     <header className="toolbar">
       <h1>Клиника</h1>
       <div className="segments tabs" role="tablist" aria-label="Разделы клиники">

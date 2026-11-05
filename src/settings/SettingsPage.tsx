@@ -24,13 +24,14 @@ const CalendarPage = lazy(() => import('./CalendarPage').then((m) => ({ default:
 const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
 const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ default: m.ReminderTextPage })))
 const AiPage = lazy(() => import('./AiPage').then((m) => ({ default: m.AiPage })))
+const SourcesPage = lazy(() => import('./SourcesPage').then((m) => ({ default: m.SourcesPage })))
 const LearnPage = lazy(() => import('../learn/LearnPage').then((m) => ({ default: m.LearnPage })))
 const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'hours': '🕘', 'timeoff': '☕', 'shifts': '🗓', 'services': '🦷', 'memos': '📋', 'learn': '📖', 'reminder': '🔔', 'doctors': '👩‍⚕️', 'about': '🏥', 'questions': '🩺', 'sources': '📣', 'promo': '🎟', 'patient-news': '📰', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'profile': '🧑‍⚕️', 'calendar': '📅', 'support': '🛟', 'dental-news': '📚', 'privacy': '🔒', 'guide': '📘', 'help': '💬', 'survey': '📝', 'ai': '✨' }
+const EMOJI: Record<string, string> = { 'about': '🏥', 'doctors': '👩‍⚕️', 'services': '🦷', 'hours': '🕘', 'reminder': '🔔', 'questions': '🩺', 'memos': '📋', 'learn': '📖', 'patient-news': '📰', 'sources': '📣', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'ai': '✨', 'profile': '🧑‍⚕️', 'calendar': '📅', 'guide': '📘', 'support': '🛟', 'survey': '📝', 'dental-news': '📚', 'privacy': '🔒' }
 
 type Item = {
   key: string
@@ -56,58 +57,69 @@ function item(key: string, title: string, hint: string, show: Item['show'], rend
 }
 
 /**
- * Пункты «Настроек» группами — как меню прежнего приложения (шестерёнка): расписание, клиника,
- * аккаунт, профиль и помощь. Каждый пункт — свой экран с «‹ Настройки» назад.
+ * Пункты «Настроек» группами — в порядке «от клиники к себе»: клиника (о ней, персонал, услуги,
+ * рабочее время) → что получают пациенты (напоминание, анкета, памятки, презентации, новости,
+ * откуда приходят) → аккаунт клиники (тариф, договор, данные, ИИ) → моё (профиль, календарь) →
+ * помощь. Каждый пункт — свой экран с «‹ Настройки» назад.
+ *
+ * Объединены (2026-11-05): «Часы и смены» + «Перерывы и выходные» → «Рабочее время» (вкладки);
+ * «Откуда узнают» + «Промокоды» → «Откуда приходят пациенты»; «Помощь» + «Техподдержка» →
+ * «Помощь и техподдержка». Старые адреса (#/settings/timeoff, /shifts, /promo, /help — закладки,
+ * кнопки бота, напоминания) — скрытые пункты: открывают нужную вкладку.
  */
 const GROUPS: [string, Item[]][] = [
-  ['Расписание', [
-    // Часы врачей и смены персонала — один пункт с двумя вкладками: «кто и когда работает»
-    item('hours', 'Часы и смены', 'Часы клиники и врачей, смены персонала', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="doctors" />),
-    item('timeoff', 'Перерывы и выходные', 'Обед, намаз, отпуск, праздники', all, team('timeoff')),
-    // Старый адрес «График смен» (#/settings/shifts, кнопка бота «Кто на смене») — та же страница, вкладка «Смены»
-    { ...item('shifts', 'Часы и смены', '', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="shifts" />), hidden: true },
+  ['Клиника', [
+    item('about', 'О клинике', 'Адрес, контакты, предоплата, склад', all, clinic('about')),
+    // Врачи и сотрудники — одним списком с ролями; адрес «doctors» прежний (#/settings/members ведёт сюда же)
+    item('doctors', 'Персонал', 'Врачи, админы, регистратура, ассистенты — роли и вход', all, team('doctors')),
     // Ассистенту цены не показываем — и пункта «Услуги» у него нет
-    item('services', 'Услуги', 'Цены и длительность приёмов', (me) => !isAssistant(me), clinic('services')),
-    item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),
-    // Презентации для пациента по услугам — всем: показывают врачи, ассистенты и регистратура
-    item('learn', 'Показать пациенту', 'Презентации: кариес, каналы, имплант…', all,
-      () => (me, back) => <LearnPage me={me} onBack={back} />),
+    item('services', 'Услуги и цены', 'Цены, длительность, материалы и памятки', (me) => !isAssistant(me), clinic('services')),
+    // Кто и когда работает — один пункт с вкладками: часы врачей, смены персонала, перерывы
+    item('hours', 'Рабочее время', 'Часы врачей, смены, перерывы и выходные', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="doctors" />),
+    // Старые адреса: «График смен» (кнопка бота «Кто на смене») и «Перерывы и выходные» — та же страница
+    { ...item('shifts', 'Рабочее время', '', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="shifts" />), hidden: true },
+    { ...item('timeoff', 'Рабочее время', '', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="timeoff" />), hidden: true },
+  ]],
+  ['Пациентам', [
     // От имени клиники всем пациентам — меняет только админ (сервер: 403 остальным)
     item('reminder', 'Текст напоминания', 'Что пациент получит перед приёмом', admin,
       () => (me, back) => <ReminderTextPage me={me} onBack={back} />),
-  ]],
-  ['Клиника', [
-    // Врачи и сотрудники — одним списком с ролями; адрес «doctors» прежний (#/settings/members ведёт сюда же)
-    item('doctors', 'Персонал', 'Врачи, админы, регистратура, ассистенты — роли и вход', all, team('doctors')),
-    item('about', 'О клинике', 'Адрес, контакты, предоплата, склад', all, clinic('about')),
     item('questions', 'Анкета пациента', 'Вопросы перед первым приёмом', (me) => Boolean(me.admin || me.doctorId != null), clinic('questions')),
-    item('sources', 'Откуда узнают о клинике', 'Варианты в карточке и вопрос в боте', all, clinic('sources')),
-    // Ассистенту — нет: записи с кодом ставят врач и регистратура, отчёт ему не нужен
-    item('promo', 'Промокоды', 'Код для рекламы и работает ли он', (me) => !isAssistant(me), clinic('promo')),
+    item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),
+    // Презентации для пациента по услугам — всем: показывают врачи, ассистенты и регистратура
+    item('learn', 'Показать пациенту', 'Презентации: кариес, каналы, имплант…', all, () => (_me, back) => <LearnPage onBack={back} />),
     item('patient-news', 'Новости для пациентов', 'Акции и объявления в боте', admin, clinic('news')),
-    // Согласие клиники на ИИ — решает админ (сервер: 403 остальным); отчёты и диктовка — отдельно
-    item('ai', 'ИИ-помощник', 'Отчёты пациенту и разбор диктовки', admin, () => (_me, back) => <AiPage onBack={back} />),
+    // «Откуда узнал» и промокоды — оба про то, какая реклама работает
+    item('sources', 'Откуда приходят пациенты', 'Варианты «откуда узнал» и промокоды рекламы', all,
+      () => (me, back) => <SourcesPage me={me} onBack={back} initial="sources" />),
+    { ...item('promo', 'Откуда приходят пациенты', '', (me) => !isAssistant(me), () => (me, back) => <SourcesPage me={me} onBack={back} initial="promo" />), hidden: true },
   ]],
   ['Аккаунт клиники', [
     item('plan', 'Тариф и оплата', 'Сколько осталось и как продлить', admin, account('plan')),
     item('agreement', 'Договор', 'Договор с платформой Tish', admin, account('agreement')),
     item('data', 'Данные', 'Выгрузка и журнал действий', (me) => admin(me) || seesAll(me), account('data')),
+    // Согласие клиники на ИИ — решает админ (сервер: 403 остальным); отчёты и диктовка — отдельно
+    item('ai', 'ИИ-помощник', 'Отчёты пациенту и разбор диктовки', admin, () => (_me, back) => <AiPage onBack={back} />),
   ]],
-  ['Профиль и помощь', [
+  ['Мои настройки', [
     item('profile', 'Мой профиль', 'Имя, фото и «о себе» для пациентов', (me) => me.doctorId != null,
       () => (me, back) => <ProfilePage me={me} onBack={back} />),
     // Лента — приёмы своего кресла: у кого его нет (админ, регистратура, ассистент), пункта нет
     item('calendar', 'Календарь в телефоне', 'Приёмы в Google или Apple Календаре', (me) => me.doctorId != null,
       () => (_me, back) => <CalendarPage onBack={back} />),
+  ]],
+  ['Помощь', [
     // Одно место для обучения: видео, коротко по роли и ссылка на полное руководство с картинками
     item('guide', 'Руководство', 'Видео, коротко по вашей роли и подробно с картинками', all,
       () => (me, back) => <GuidePage me={me} onBack={back} />),
-    item('help', 'Помощь', 'Спросить помощника о Tish — ответит сразу', all,
-      (title) => (me, back) => <AccountPage me={me} only="support" title={title} onBack={back} initialHelp />),
+    // Помощник (ответит сразу) и обращения к команде Tish — одна страница
+    item('support', 'Помощь и техподдержка', 'Спросить помощника или написать команде Tish', all, account('support')),
+    // «Спросить помощника» (руководство, старые ссылки) — та же страница, сразу чат
+    { ...item('help', 'Помощь и техподдержка', '', all,
+      (title) => (me, back) => <AccountPage me={me} only="support" title={title} onBack={back} initialHelp />), hidden: true },
     // Опросы команды Tish проходят сотрудники клиник; команда платформы их составляет
     item('survey', 'Отзыв о Tish', 'Опрос команды Tish — 2–3 минуты', (me) => !me.platform,
       () => (_me, back) => <SurveyPage onBack={back} />),
-    item('support', 'Техподдержка', 'Написать команде Tish, частые вопросы', all, account('support')),
     item('dental-news', 'Новости стоматологии', 'Подборка профессиональных изданий', all, account('news')),
     item('privacy', 'Конфиденциальность', 'Как мы обращаемся с данными пациентов', all, account('privacy')),
   ]],
@@ -171,7 +183,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
                 </li>
               ))}
               {/* Не пункт настроек, а ссылка наружу: в Telegram откроется его браузером, Mini App остаётся */}
-              {group === 'Профиль и помощь' && (
+              {group === 'Помощь' && (
                 <li>
                   <button type="button" className="settings-link" onClick={() => openLink(TISH_INSTAGRAM)}>
                     <span className="settings-emoji" aria-hidden="true">📸</span>

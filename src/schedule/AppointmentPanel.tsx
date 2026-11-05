@@ -27,7 +27,8 @@ import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
 import { VisitDocs } from '../print/VisitDocs'
-import { LessonButton } from '../learn/LessonButton'
+import { LessonPicker } from '../learn/LessonButton'
+import { Fold } from '../layout/Fold'
 import { AfterVisit } from '../print/VisitReport'
 import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { cancelledWhen } from './cancelled'
@@ -43,11 +44,13 @@ function dateOf(instant: string): string {
 }
 
 /**
- * Карточка приёма — как в прежнем приложении. Заявка: подтвердить, перенести, отклонить. Запись:
- * напомнить, ответ пациента, перенести, «Приём состоялся», неявка или отмена (с «Вернуть»).
- * Состоялся: оплата, связаться, «Записать на следующий визит», «Исправить: неявка». Неявка:
- * связаться, «Записать снова», «Исправить: приём состоялся». Отменён: «Восстановить». Приём
- * коллеги — только посмотреть и позвонить. Удалить запись — только владелец Tish. Esc — закрыть.
+ * Карточка приёма — сверху вниз: шапка (время, врач, статус; 📖 «Показать пациенту») → пациент
+ * (история одной строкой, аллергии) → услуга и комментарий → главное действие статуса (одна залитая
+ * кнопка: «Подтвердить», «Приём состоялся», «Принять оплату», «Восстановить», «Записать снова») →
+ * «Приём» для врача (продолжение лечения, диктовка и заметка, «Зубы», «Материалы», «Снимки» —
+ * раскрывашками) → «Сообщение после приёма» → перенести / неявка / отменить → «Ещё» (редкое:
+ * промокод, предоплата, лист ожидания, откуда узнал, квитанция, исправить статус, удалить).
+ * Приём коллеги — только посмотреть и позвонить. Esc — закрыть.
  */
 type Rare = 'promo' | 'deposit' | 'waitlist' | 'source'
 const RARE_TEXT: Record<Rare, string> = { promo: 'промокод', deposit: 'предоплата', waitlist: 'лист ожидания', source: 'откуда узнал' }
@@ -60,7 +63,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   onOpenPatient?: (patientId: number) => void
   /** «Записать снова» / «на следующий визит» — «Новая запись» на этого пациента. */
   onBook?: (slot: Slot, patient: Patient) => void
-  /** «Медкарта и снимки» прямо с приёма — карта зубов, план, анкета, снимки; «Назад» — к приёму. */
+  /** «Карта зубов и план лечения ›» прямо с приёма — вся медкарта: зубы, план, анкета, снимки; «Назад» — к приёму. */
   onMedical?: (patient: Patient) => void
 }) {
   useClose(onClose)
@@ -88,8 +91,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const visitTools = a.status === 'DONE' || (a.status === 'SCHEDULED' && started && (inChair || early))
   const future = a.startAt ? new Date(a.startAt) > new Date() : false
   const canEdit = canEditDoctor(me, a.doctorId)
-  // Редкие пункты — под «Ещё», пока их не открыли
-  const [showRare, setShowRare] = useState(false)
+  // «📖 Показать пациенту» — строка выбора темы под шапкой, по значку
+  const [lesson, setLesson] = useState(false)
   const active = a.status === 'REQUESTED' || a.status === 'SCHEDULED'
   const rare = ([
     canEditDoctor(me, a.doctorId) && a.status !== 'CANCELLED' && !a.promoCode && editing !== 'promo' ? 'promo' : null,
@@ -98,11 +101,21 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     // Откуда узнал о клинике — тоже под «Ещё»: в шапке занимал много места
     a.patient?.id != null ? 'source' : null,
   ] as const).filter((x): x is Rare => x != null)
+  // Подпись «Ещё»: что внутри, кратко
+  const more = [
+    ...rare.map((r) => RARE_TEXT[r]),
+    canEdit && a.status === 'DONE' ? 'квитанция' : null,
+    canEdit && (a.status === 'DONE' || a.status === 'NO_SHOW') ? 'исправить' : null,
+    me.owner ? 'удалить' : null,
+  ].filter(Boolean)
+  const moreMeta = more.join(', ')
   // Аллергия и важное из анкеты — перед лечением, тому, кто видит медкарту (врач приёма, админ)
   // …и ассистенту этого врача (смотрит медкарту, как сервер — ChartService)
   const clinical = seesAllMoney(me) || a.doctorId === me.doctorId
     || Boolean(a.doctorId != null && me.assistantOf?.includes(a.doctorId))
   const anamnesis = useAnamnesis(a.patient?.id, clinical && a.status !== 'CANCELLED')
+  // «Карта зубов и план лечения ›» — вся медкарта пациента; «Назад» — к приёму
+  const medical = clinical && onMedical && a.patient ? () => onMedical(a.patient!) : undefined
   const length = a.startAt && a.endAt ? (Date.parse(a.endAt) - Date.parse(a.startAt)) / 60_000 : 30
   // force — вместе с заметкой и оплатой (только владелец Tish; спрашиваем отдельно, что пропадёт)
   const remove = useMutation<unknown, ApiError, boolean>({
@@ -165,68 +178,76 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     onBook?.({ doctorId: a.doctorId!, date: day, minutes: past ? null : minutes, duration: length }, a.patient)
   }
 
+  // Главная кнопка — одна на карточку (DESIGN.md): после приёма, пока не оплачено, это «Принять оплату»
+  const payPending = a.status === 'DONE' && seesMoney && a.paidSom == null
+  const sourceHint = a.bookedBy ? bookedByText(a.bookedBy) : a.source === 'PATIENT' ? 'Запись через бота'
+    : a.source === 'WEB' ? (a.status === 'REQUESTED' ? '🌐 Заявка с сайта, без Telegram — подтвердите звонком' : '🌐 С сайта, без Telegram — бот не напомнит')
+      : null
+
   return (
     <>
     {full && <div className="panel-backdrop" onClick={toggleFull} aria-hidden="true" />}
-    <aside className={full ? 'panel panel-full' : 'panel'} aria-label="Карточка приёма">
+    <aside className={full ? 'panel panel-full appt-card' : 'panel appt-card'} aria-label="Карточка приёма">
+      {/* Шапка: когда, у кого и статус; справа — показать пациенту, на весь экран, закрыть */}
       <header className="panel-head">
-        <div>
+        <div className="appt-when">
           <h2>{timeOf(a.startAt!)}–{timeOf(a.endAt!)}</h2>
           <span className="hint">{dayTitle(date)}{doctors.length > 1 && doctor ? ` · ${doctor.fullName}` : ''}</span>
         </div>
         <div className="panel-head-actions">
+          {/* Презентация по услуге — показать на экране; отправлять не нужно: после приёма уходит отчёт */}
+          {a.patient && a.status !== 'CANCELLED' && (
+            <button type="button" className="btn ghost" aria-pressed={lesson} aria-label="Показать пациенту" title="Показать пациенту"
+              onClick={() => setLesson(!lesson)}>📖</button>
+          )}
           <button type="button" className="btn ghost panel-expand" aria-pressed={full} onClick={toggleFull}
             aria-label={full ? 'Свернуть карточку' : 'Карточка на весь экран'} title={full ? 'Свернуть' : 'На весь экран'}>{full ? '⤡' : '⤢'}</button>
           <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
         </div>
       </header>
-      <section>
-        {onOpenPatient && a.patient?.id
-          ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient!.id!)}>{a.patient.fullName} ›</button>
-          : <strong className="patient-name">{a.patient?.fullName}</strong>}
-        {a.patient?.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
+      {lesson && a.patient && (
+        <LessonPicker key={`${a.id}-${a.serviceName ?? ''}`} serviceName={a.serviceName} patientId={a.patient.id} onClose={() => setLesson(false)} />
+      )}
+      <span className={`chip s-${s.kind} appt-status`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
+
+      {/* Пациент: имя (→ его карточка), телефон, история одной строкой и важное из анкеты */}
+      <section className="appt-patient" aria-label="Пациент">
+        <div className="appt-who">
+          {onOpenPatient && a.patient?.id
+            ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient!.id!)}>{a.patient.fullName} ›</button>
+            : <strong className="patient-name">{a.patient?.fullName}</strong>}
+          {a.patient?.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
+        </div>
+        <PatientHistory appointment={a} me={me} />
+        {sourceHint && <p className="hint small">{sourceHint}</p>}
+        {a.reminderOpenedAt && a.status === 'SCHEDULED' && <ReminderSent a={a} canEdit={canEdit} />}
+        {a.rating != null && (
+          <p className="rating" aria-label={`Оценка пациента: ${a.rating} из 5`}>{'★'.repeat(a.rating)}{'☆'.repeat(5 - a.rating)} <span className="hint">оценка пациента</span></p>
+        )}
+        {a.reviewComment && <blockquote className="review-comment"><span className="hint">Пациент написал:</span><br />{a.reviewComment}</blockquote>}
       </section>
       <MedAlerts an={anamnesis.data} compact />
-      {/* Пришёл продолжить лечение — что сделали в прошлый раз и что осталось по плану */}
-      {/* Пришёл снова — когда и с чем был в последний раз, даже если врач ничего не записал */}
-      <PatientHistory appointment={a} me={me} onOpenPatient={onOpenPatient} />
-      {clinical && <ContinueTreatment appointment={a} onMedical={onMedical && a.patient ? () => onMedical(a.patient!) : undefined} />}
-      {clinical && onMedical && a.patient && a.status !== 'CANCELLED' && (
-        <button type="button" className="btn" onClick={() => onMedical(a.patient!)}>Карта зубов и план лечения</button>
-      )}
-      <span className={`chip s-${s.kind}`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
-      {/* Ребёнка записала мама из своего Telegram — кто и кем приходится; иначе — просто «через бота» */}
-      {a.bookedBy ? <p className="hint">{bookedByText(a.bookedBy)}</p> : a.source === 'PATIENT' ? <p className="hint">Запись через бота</p>
-        : a.source === 'WEB' && <p className="hint">{a.status === 'REQUESTED' ? '🌐 Заявка с сайта: у пациента нет Telegram, бот ему не напишет — позвоните, чтобы подтвердить'
-          : '🌐 Записался на сайте, без Telegram: напоминания бот не шлёт — при необходимости позвоните'}</p>}
-      {a.reminderOpenedAt && a.status === 'SCHEDULED' && <ReminderSent a={a} canEdit={canEdit} />}
-      {a.rating != null && (
-        <p className="rating" aria-label={`Оценка пациента: ${a.rating} из 5`}>{'★'.repeat(a.rating)}{'☆'.repeat(5 - a.rating)} <span className="hint">оценка пациента</span></p>
-      )}
-      {a.reviewComment && <blockquote className="review-comment"><span className="hint">Пациент написал:</span><br />{a.reviewComment}</blockquote>}
 
-      {editing === 'service' ? <ServiceEdit appointment={a} me={me} onDone={close} prices={!isAssistant(me)} /> : (
-        <p className="line-edit">
-          <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
-          {canEdit && a.status !== 'CANCELLED' && <button type="button" className="link" onClick={() => setEditing('service')}>изменить</button>}
-        </p>
-      )}
-      {/* Презентация по услуге приёма: показать пациенту на экране и отправить ссылку */}
-      {a.patient && a.status !== 'CANCELLED' && editing !== 'service' && (
-        <LessonButton key={`${a.id}-${a.serviceName ?? ''}`} serviceName={a.serviceName} me={me} patientId={a.patient.id} phone={a.patient.phone} />
-      )}
-      {editing === 'comment' ? <CommentEdit appointment={a} onDone={close} /> : a.comment ? (
-        <p className="comment line-edit"><span>{a.comment}</span>
-          {canEdit && <button type="button" className="link" onClick={() => setEditing('comment')}>изменить</button>}</p>
-      ) : canEdit && a.status !== 'CANCELLED' && (
-        <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
-      )}
-      {/* Промокод рекламы: пациент ввёл в боте или назвал по телефону — для отчёта «работает ли промокод» */}
-      {/* Пустой — «＋ Промокод» под «Ещё»: нужен редко */}
-      {editing === 'promo' ? <PromoEdit appointment={a} onDone={close} /> : a.promoCode && (
-        <p className="line-edit"><span><span className="hint">Промокод:</span> <b>{`🎟 ${a.promoCode}`}</b></span>
-          {canEdit && <button type="button" className="link" onClick={() => setEditing('promo')}>изменить</button>}</p>
-      )}
+      {/* Что за приём: услуга, комментарий, промокод — строками «… изменить» */}
+      <section className="appt-what">
+        {editing === 'service' ? <ServiceEdit appointment={a} me={me} onDone={close} prices={!isAssistant(me)} /> : (
+          <p className="line-edit">
+            <span><span className="hint">Услуга:</span> {a.serviceName ?? '—'}</span>
+            {canEdit && a.status !== 'CANCELLED' && <button type="button" className="link" onClick={() => setEditing('service')}>изменить</button>}
+          </p>
+        )}
+        {editing === 'comment' ? <CommentEdit appointment={a} onDone={close} /> : a.comment ? (
+          <p className="comment line-edit"><span>{a.comment}</span>
+            {canEdit && <button type="button" className="link" onClick={() => setEditing('comment')}>изменить</button>}</p>
+        ) : canEdit && a.status !== 'CANCELLED' && (
+          <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
+        )}
+        {/* Промокод рекламы: пациент ввёл в боте или назвал по телефону; пустой — «＋ Промокод» под «Ещё» */}
+        {editing === 'promo' ? <PromoEdit appointment={a} onDone={close} /> : a.promoCode && (
+          <p className="line-edit"><span><span className="hint">Промокод:</span> <b>{`🎟 ${a.promoCode}`}</b></span>
+            {canEdit && <button type="button" className="link" onClick={() => setEditing('promo')}>изменить</button>}</p>
+        )}
+      </section>
 
       {undo && (
         <div className="undo" role="status">
@@ -237,11 +258,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
       {!canEdit ? (
         <>
-          <p className="readonly-note">Это приём коллеги — менять его может врач{doctor?.fullName ? ` (${doctor.fullName})` : ''}, его ассистент, регистратура или администратор.</p>
+          <p className="readonly-note">Приём коллеги — менять может его врач{doctor?.fullName ? ` (${doctor.fullName})` : ''}, ассистент, регистратура или администратор.</p>
           <ContactButtons phone={a.patient?.phone} whatsapp={false} />
         </>
       ) : (
         <>
+          {/* Главное действие для статуса — одна залитая кнопка, рядом — связаться */}
           {a.status === 'REQUESTED' && (
             <div className="actions">
               <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>Подтвердить</button>
@@ -250,46 +272,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           )}
           {moved && <p className="tone-ok" role="status">{moved}</p>}
           {a.status === 'SCHEDULED' && <Remind appointment={a} />}
-          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && (editing === 'move'
-            ? <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />
-            : <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>)}
-          {/* Ассистенту деньги не показываем: попросить и отметить предоплату — врач, регистратура, админ */}
-          {/* Предоплату уже попросили — на виду; ещё не просили — под «Ещё» */}
-          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && seesMoney && a.depositStatus && <DepositBox key={a.depositStatus} appointment={a} />}
-          {/* Редкое — под одной ссылкой «Ещё»: промокод, предоплата, лист ожидания */}
-          {rare.length > 0 && (showRare ? (
-            <div className="rare">
-              {rare.includes('promo') && <button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button>}
-              {rare.includes('deposit') && <DepositBox key="none" appointment={a} />}
-              {rare.includes('waitlist') && a.patient && <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>}
-              {/* Откуда узнал — пациент не ответил в боте, отметят здесь */}
-              {rare.includes('source') && a.patient?.id != null && <SourceLine patient={a.patient} canEdit={canEdit} compact />}
-            </div>
-          ) : (
-            <button type="button" className="link more-link" aria-expanded={false} onClick={() => setShowRare(true)}>Ещё: {rare.map((r) => RARE_TEXT[r]).join(', ')} ▾</button>
-          ))}
-          {a.status === 'SCHEDULED' && !future && <ContactButtons phone={a.patient?.phone} />}
           {a.status === 'SCHEDULED' && started && (
             <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('DONE')}>Приём состоялся</button>
           )}
-
-          {/* Работа врача — сразу под «Приём состоялся»: диктовка (голос → зубы, план, заметка) и заметка,
-              зубы этого приёма, материалы, снимки. Деньги и «после приёма» — ниже */}
-          {(visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} />}
-          {/* Зубы этого приёма: какой зуб лечили и что сделали — врач приёма и админ отмечают, ассистент видит */}
-          {visitTools && clinical && a.patient?.id != null && (
-            <VisitTeeth appointment={a} readOnly={!(seesAllMoney(me) || (a.doctorId != null && a.doctorId === me.doctorId))} />
-          )}
-          {/* Материалы — у приёма, который идёт или был (как в приложении) */}
-          {visitTools && <Supplies appointment={a} me={me} />}
-          {/* Снимки и фото — прямо из приёма (свёрнуто): сфотографировать, загрузить, «до / после» */}
-          {visitTools && clinical && a.patient?.id != null && (
-            <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
-          )}
-          {a.status === 'SCHEDULED' && started && !visitTools && (
-            <p className="hint small">Заметка, материалы и диктовка появятся к началу приёма.{' '}
-              <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>
-          )}
+          {a.status === 'SCHEDULED' && !future && <ContactButtons phone={a.patient?.phone} />}
+          {/* Предоплату уже попросили — на виду; ещё не просили — под «Ещё». Ассистенту деньги не показываем */}
+          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && seesMoney && a.depositStatus && <DepositBox key={a.depositStatus} appointment={a} />}
 
           {a.status === 'CANCELLED' && (
             <>
@@ -298,70 +286,111 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
                 <p className="cancelled-by">Отменён: {[a.cancelledBy ?? 'кто — не записано', a.cancelledAt ? cancelledWhen(a.cancelledAt, { sayToday: true }) : null].filter(Boolean).join(', ')}</p>
               )}
               {a.depositStatus === 'RECEIVED' && seesMoney && <p className="tone-wait">Предоплата {somText(a.depositSom ?? 0)} получена — верните пациенту или запишите его снова.</p>}
-              <p className="hint">Восстановленный приём попросит напомнить пациенту заново.</p>
               <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>Восстановить</button>
-            </>
-          )}
-
-          {a.status === 'DONE' && (
-            <>
-              {/* Ключ — по самим деньгам: оплата на сервере версию приёма не меняет, а блок после
-                  сохранения должен открыться заново («оплачено», а не форма) */}
-              {/* Ассистенту деньги не показываем: оплату принимает врач или регистратура */}
-              {seesMoney && <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />}
-              {/* Расход по пациенту (техник, лаборатория) — рядом с оплатой; регистратуре и ассистенту нет (у них нет своих расходов) */}
-              {seesMoney && a.patient && (me.admin || me.doctorId != null) && <PatientExpenses patient={a.patient} me={me} doctorId={a.doctorId} />}
-              <ContactButtons phone={a.patient?.phone} />
-              {/* Квитанция: печать и «Отправить пациенту» — только по нажатию */}
-              <VisitDocs appointment={a} me={me} memo={false} />
-              {/* «Сообщение после приёма»: личная часть и уход дома из памятки — врач приёма и админ;
-                  регистратуре и ассистенту — одна памятка, как раньше */}
-              <AfterVisit appointment={a} me={me} />
-              {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
+              <p className="hint small">Восстановленный приём попросит напомнить пациенту заново.</p>
             </>
           )}
 
           {a.status === 'NO_SHOW' && (
             <>
-              <ContactButtons phone={a.patient?.phone} />
               {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(todayIn())}>Записать снова</button>}
-              <button type="button" className="btn" disabled={action.isPending} onClick={() => setStatus('DONE')}>Исправить: приём состоялся</button>
+              <ContactButtons phone={a.patient?.phone} />
             </>
           )}
 
-
-          {/* Опасные — одной группой внизу; неявку и отмену можно «Вернуть» */}
-          {(a.status === 'REQUESTED' || a.status === 'SCHEDULED' || a.status === 'DONE' || me.admin) && (
-            <div className="danger-zone actions">
-              {a.status === 'REQUESTED' && (
-                <button type="button" className="btn danger" disabled={action.isPending}
-                  onClick={() => setStatus('CANCELLED', { question: 'Отклонить заявку? Пациенту придёт сообщение.', undo: 'Заявка отклонена' })}>Отклонить заявку</button>
-              )}
-              {a.status === 'SCHEDULED' && started && (
-                <button type="button" className="btn danger" disabled={action.isPending} onClick={() => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' })}>Неявка</button>
-              )}
-              {a.status === 'SCHEDULED' && (
-                <button type="button" className="btn danger" disabled={action.isPending}
-                  onClick={() => setStatus('CANCELLED', { question: `Отменить запись ${a.patient?.fullName ?? ''}? Время освободится.`, undo: 'Запись отменена' })}>Отменить запись</button>
-              )}
-              {a.status === 'DONE' && (
-                <button type="button" className="btn danger" disabled={action.isPending} onClick={() => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' })}>Исправить: неявка</button>
-              )}
-              {/* Отметили «состоялся» или «неявку» по ошибке — обратно в запланированные. С оплатой нельзя:
-                  сначала снять её («Оплата» → «Снять отметку оплаты»), иначе разойдутся касса и зарплата */}
-              {(a.status === 'DONE' || a.status === 'NO_SHOW') && (a.status === 'DONE' && seesMoney && (a.paidSom != null || a.chargeSom != null) ? (
-                <p className="hint small">Вернуть в запланированные: сначала «Снять отметку оплаты» в блоке оплаты.</p>
-              ) : (
-                <button type="button" className="btn danger" disabled={action.isPending} onClick={() => reopen(a)}>
-                  Вернуть в запланированные</button>
-              ))}
-              {/* Удалить насовсем (ошибочная или тестовая запись) — только владелец Tish; клиники отменяют */}
-              {me.owner && (
-                <button type="button" className="btn danger" disabled={remove.isPending} onClick={() => void removeAppointment()}>Удалить запись</button>
-              )}
-            </div>
+          {/* Оплата — сразу после приёма. Ключ — по самим деньгам: оплата на сервере версию приёма не
+              меняет, а блок после сохранения должен открыться заново («оплачено», а не форма) */}
+          {a.status === 'DONE' && seesMoney && (
+            <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />
+          )}
+          {a.status === 'DONE' && (
+            <>
+              {onBook && <button type="button" className={payPending ? 'btn' : 'btn primary'} onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
+              <ContactButtons phone={a.patient?.phone} />
+            </>
           )}
         </>
+      )}
+
+      {/* «Приём» — работа врача: продолжение лечения, диктовка и заметка, зубы, материалы, снимки.
+          Зубы, материалы и снимки — строками-раскрывашками со счётчиками */}
+      {(clinical || (canEdit && (visitTools || a.status === 'NO_SHOW'))) && a.status !== 'CANCELLED' && (
+        <section className="appt-visit" aria-label="Приём">
+          {clinical && <ContinueTreatment appointment={a} open={visitTools && a.status === 'SCHEDULED'} onMedical={medical} />}
+          {canEdit && (visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} />}
+          {/* Зубы этого приёма: врач приёма и админ отмечают, ассистент видит; «Карта зубов и план лечения ›» — вся медкарта */}
+          {canEdit && visitTools && clinical && a.patient?.id != null && (
+            <VisitTeeth appointment={a} onMedical={medical}
+              readOnly={!(seesAllMoney(me) || (a.doctorId != null && a.doctorId === me.doctorId))} />
+          )}
+          {canEdit && visitTools && <Supplies appointment={a} me={me} />}
+          {canEdit && visitTools && clinical && a.patient?.id != null && (
+            <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
+          )}
+          {canEdit && a.status === 'SCHEDULED' && started && !visitTools && (
+            <p className="hint small">Заметка, зубы и материалы — к началу приёма.{' '}
+              <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>
+          )}
+        </section>
+      )}
+
+      {/* «Сообщение после приёма» — отчёт пациенту: личная часть и уход дома из памятки */}
+      {canEdit && a.status === 'DONE' && <AfterVisit appointment={a} me={me} />}
+
+      {/* Частые опасные действия — на виду внизу; неявку и отмену можно «Вернуть» */}
+      {canEdit && (a.status === 'REQUESTED' || a.status === 'SCHEDULED') && (
+        <div className="danger-zone actions">
+          {editing !== 'move' && (
+            <button type="button" className="btn" onClick={() => { setMoved(''); setEditing('move') }}>{editableDoctors(me, doctors).length > 1 ? 'Перенести или передать врачу' : 'Перенести'}</button>
+          )}
+          {a.status === 'REQUESTED' && (
+            <button type="button" className="btn danger" disabled={action.isPending}
+              onClick={() => setStatus('CANCELLED', { question: 'Отклонить заявку? Пациенту придёт сообщение.', undo: 'Заявка отклонена' })}>Отклонить заявку</button>
+          )}
+          {a.status === 'SCHEDULED' && started && (
+            <button type="button" className="btn danger" disabled={action.isPending} onClick={() => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' })}>Неявка</button>
+          )}
+          {a.status === 'SCHEDULED' && (
+            <button type="button" className="btn danger" disabled={action.isPending}
+              onClick={() => setStatus('CANCELLED', { question: `Отменить запись ${a.patient?.fullName ?? ''}? Время освободится.`, undo: 'Запись отменена' })}>Отменить запись</button>
+          )}
+        </div>
+      )}
+      {editing === 'move' && <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />}
+
+      {/* «Ещё» — редкое одной строкой: промокод, предоплата, лист ожидания, откуда узнал, расход,
+          квитанция, исправить статус, удалить */}
+      {canEdit && more.length > 0 && (
+        <Fold title="Ещё" label="Ещё" meta={moreMeta}>
+          <div className="rare">
+            {rare.includes('promo') && <button type="button" className="link" onClick={() => setEditing('promo')}>＋ Промокод</button>}
+            {rare.includes('deposit') && <DepositBox key="none" appointment={a} />}
+            {rare.includes('waitlist') && a.patient && <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>}
+            {/* Откуда узнал — пациент не ответил в боте, отметят здесь */}
+            {rare.includes('source') && a.patient?.id != null && <SourceLine patient={a.patient} canEdit compact />}
+            {/* Расход по пациенту (техник, лаборатория); регистратуре и ассистенту нет (у них нет своих расходов) */}
+            {a.status === 'DONE' && seesMoney && a.patient && (me.admin || me.doctorId != null) && <PatientExpenses patient={a.patient} me={me} doctorId={a.doctorId} />}
+            {/* Квитанция: печать и «Отправить пациенту» — только по нажатию */}
+            {a.status === 'DONE' && <VisitDocs appointment={a} me={me} memo={false} />}
+            {a.status === 'NO_SHOW' && (
+              <button type="button" className="btn" disabled={action.isPending} onClick={() => setStatus('DONE')}>Исправить: приём состоялся</button>
+            )}
+            {a.status === 'DONE' && (
+              <button type="button" className="btn danger" disabled={action.isPending} onClick={() => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' })}>Исправить: неявка</button>
+            )}
+            {/* Отметили «состоялся» или «неявку» по ошибке — обратно в запланированные. С оплатой нельзя:
+                сначала снять её («Оплата» → «Снять отметку оплаты»), иначе разойдутся касса и зарплата */}
+            {(a.status === 'DONE' || a.status === 'NO_SHOW') && (a.status === 'DONE' && seesMoney && (a.paidSom != null || a.chargeSom != null) ? (
+              <p className="hint small">Вернуть в запланированные: сначала «Снять отметку оплаты» в оплате.</p>
+            ) : (
+              <button type="button" className="btn danger" disabled={action.isPending} onClick={() => reopen(a)}>Вернуть в запланированные</button>
+            ))}
+            {/* Удалить насовсем (ошибочная или тестовая запись) — только владелец Tish; клиники отменяют */}
+            {me.owner && (
+              <button type="button" className="btn danger" disabled={remove.isPending} onClick={() => void removeAppointment()}>Удалить запись</button>
+            )}
+          </div>
+        </Fold>
       )}
       {(action.error ?? (remove.error?.code === 'has-records' ? null : remove.error)) && <p className="error" role="alert">{(action.error ?? remove.error)!.message}</p>}
     </aside>

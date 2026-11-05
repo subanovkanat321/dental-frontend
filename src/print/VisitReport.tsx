@@ -97,8 +97,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
       </div>
       {!draft ? (
         <>
-          <p className="hint">Что сделали простыми словами, что дальше и когда следующий визит
-            {m?.memoId != null ? <> — и уход дома из памятки «{m.title}»</> : null}. Вы проверите текст перед отправкой.</p>
+          <p className="hint small">Что сделали и что дальше{m?.memoId != null ? <>, уход дома — из памятки «{m.title}»</> : null}. Проверите перед отправкой.</p>
           {m && m.memoId == null && <NoMemo />}
           <button type="button" className="btn" disabled={make.isPending} onClick={() => make.mutate()}>
             {make.isPending ? 'Пишем сообщение…' : last ? 'Составить новое' : 'Составить сообщение'}</button>
@@ -174,8 +173,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
 /** У услуги нет памятки — блока «Уход дома» нет; где её поставить. */
 function NoMemo() {
   return (
-    <p className="hint small">У услуги нет памятки — добавьте её в <a href="#/settings/services">«Настройки → Услуги»</a> (тексты —
-      в «Настройки → Памятки после процедур»).</p>
+    <p className="hint small">У услуги нет памятки — <a href="#/settings/services">выбрать в «Услугах и ценах»</a>.</p>
   )
 }
 

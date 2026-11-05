@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
 
 afterEach(() => {
@@ -43,7 +43,7 @@ test('медкарта: анкета с плашкой — отметить бо
   await user.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   // Плашка — уже в карточке пациента
   expect(await screen.findByRole('note', { name: 'Важно перед лечением' })).toHaveTextContent('Аллергия: лидокаин')
-  await user.click(screen.getByRole('button', { name: 'Медкарта и снимки' }))
+  await openMedicalTab()
   const form = await screen.findByRole('form', { name: 'Анкета пациента' })
   expect(within(form).getByRole('textbox', { name: 'Есть аллергия? — что именно' })).toHaveValue('лидокаин')
   await user.click(within(form).getByRole('checkbox', { name: 'Диабет' }))

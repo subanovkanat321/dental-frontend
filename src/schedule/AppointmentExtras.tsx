@@ -15,6 +15,7 @@ import { canEditServices, editableDoctors } from '../lib/roles'
 import { openServiceLater } from '../lib/openService'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { DateInput } from '../layout/DateInput'
+import { Fold } from '../layout/Fold'
 import { Select } from '../layout/Select'
 import { expired, usePromoCodes } from '../lib/promo'
 
@@ -167,7 +168,7 @@ export function PromoEdit({ appointment: a, onDone }: { appointment: Appointment
           {offered.map((p) => <option key={p.id} value={p.code}>{`🎟 ${p.code}${p.description ? ` · ${p.description}` : ''}`}</option>)}
         </Select>
       </label>
-      {codes.data?.length === 0 && <p className="hint small">Промокодов нет — их заводят в «Настройки → Промокоды».</p>}
+      {codes.data?.length === 0 && <p className="hint small">Промокодов нет — их заводят в «Настройки → Откуда приходят пациенты → Промокоды».</p>}
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={action.isPending}>Сохранить</button>
@@ -216,13 +217,13 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
   })
   const list = used.data ?? []
   return (
-    <section className="supplies-box" aria-label="Материалы на приёме">
-      <h3>Материалы</h3>
+    <Fold title="Материалы" label="Материалы на приёме" meta={list.length ? String(list.length) : 'не списаны'}>
+    <div className="supplies-box">
       {/* Ничего ещё не списали — предложить материалы услуги; списывает врач сам, кнопкой */}
       {used.isSuccess && list.length === 0 && <SuggestedSupplies appointment={a} />}
       {used.isSuccess && list.length === 0 && suggested.isSuccess && suggested.data.length === 0 && serviceId != null && (
-        <p className="hint supplies-setup">💡 Для «{a.serviceName}» можно задать, что обычно уходит, — тогда здесь будет готовый список и «Списать всё».{' '}
-          <a href="#/settings/services" onClick={() => openServiceLater(serviceId)}>Настроить материалы услуги</a></p>
+        <p className="hint small supplies-setup">Готового списка у услуги нет —{' '}
+          <a href="#/settings/services" onClick={() => openServiceLater(serviceId)}>настроить материалы услуги</a></p>
       )}
       {list.length > 0 && (
         <ul className="visits">
@@ -250,7 +251,8 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
           onClick={() => pick !== '' && move.mutate({ supplyId: pick, delta: -1 }, { onSuccess: () => setPick('') })}>Списать 1</button>
       </div>
       {move.error && <p className="error" role="alert">{errorText(move.error)}</p>}
-    </section>
+    </div>
+    </Fold>
   )
 }
 
@@ -410,8 +412,8 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
     {/* Диктовка — первой: врач говорит, ИИ раскладывает по зубам, плану и заметке */}
     {a.patient?.id != null && <Dictation appointment={a} note={value} onActive={setDictating} />}
     {!dictating && <form className="form" aria-label="Заметка о приёме" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
-      <label className="field"><span>Заметка о приёме — видят врач и администратор</span>
-        <textarea rows={3} maxLength={2000} value={value} placeholder="Что сделали, что дальше"
+      <label className="field"><span>Заметка о приёме</span>
+        <textarea rows={3} maxLength={2000} value={value} placeholder="Что сделали, что дальше — видят врач и админ"
           onChange={(e) => setText(e.target.value)} />
       </label>
       {changed && <button type="submit" className="btn" disabled={save.isPending}>Сохранить заметку</button>}

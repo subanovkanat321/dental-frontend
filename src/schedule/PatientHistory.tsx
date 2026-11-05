@@ -3,25 +3,17 @@ import { useQuery } from '@tanstack/react-query'
 import { api, unwrap, type Schemas } from '../api/client'
 import { agoText } from '../lib/texts'
 import { shortDate } from '../lib/time'
-import { statusOf } from './status'
 
 type Appointment = Schemas['AppointmentView']
 type Me = Schemas['BookingViewsMe']
 
-/** Сколько прошлых визитов показать в карточке приёма: остальные — в карточке пациента. */
-const SHOWN = 3
-
 /**
- * «История пациента» в карточке приёма: впервые ли он у вас, сколько раз приходил, когда и с чем
- * был в последний раз, у какого врача, сколько раз не пришёл — даже если врач ничего не записал.
- * Без медданных (заметки, зубы, план — в «Продолжении лечения» для тех, кто видит медкарту),
- * поэтому видно и регистратуре. Те же данные и ключ, что у карточки пациента (['patient-card', id]).
+ * «История пациента» в карточке приёма — одной строкой: «Впервые в клинике» или «Визитов: 3 ·
+ * последний 22 окт, Лечение каналов» и, если был, «не пришёл 1 раз». Список визитов — в карточке
+ * пациента («Карточка пациента ›» рядом с именем). Без медданных — видно и регистратуре. Те же
+ * данные и ключ, что у карточки пациента (['patient-card', id]).
  */
-export function PatientHistory({ appointment: a, me, onOpenPatient }: {
-  appointment: Appointment
-  me: Me
-  onOpenPatient?: (patientId: number) => void
-}) {
+export function PatientHistory({ appointment: a, me }: { appointment: Appointment; me: Me }) {
   const patientId = a.patient?.id
   const card = useQuery({
     queryKey: ['patient-card', patientId],
@@ -39,46 +31,20 @@ export function PatientHistory({ appointment: a, me, onOpenPatient }: {
   const noShows = earlier.filter((v) => v.status === 'NO_SHOW').length
   const last = visits[0]
   const doctors = me.doctors ?? []
-  const doctorName = (id?: number) => doctors.find((d) => d.id === id)?.fullName
-  const many = doctors.length > 1
+  const lastDoctor = doctors.length > 1 ? doctors.find((d) => d.id === last?.doctorId)?.fullName : undefined
 
   return (
-    <section className="patient-history" aria-label="История пациента">
-      <h3>История пациента</h3>
-      {!last ? (
-        <p className="history-line"><span aria-hidden="true">🆕</span> Впервые в клинике</p>
-      ) : (
-        <p className="history-line">
-          Визитов: <b className="num">{visits.length}</b> · последний — <b>{shortDate(last.startAt!)}</b>
+    <p className="history-line" aria-label="История пациента">
+      {!last ? <>Впервые в клинике</> : (
+        <>
+          Визитов: <b className="num">{visits.length}</b> · последний <span className="nowrap">{shortDate(last.startAt!)}</span>
           <span className="hint"> ({agoText(last.startAt!)})</span>
           {last.serviceName && <>, {last.serviceName}</>}
-          {many && doctorName(last.doctorId) && <span className="hint"> · {doctorName(last.doctorId)}</span>}
-        </p>
+          {lastDoctor && <span className="hint"> · {lastDoctor}</span>}
+        </>
       )}
-      {noShows > 0 && (
-        <p className="history-line tone-wait"><span aria-hidden="true">⚠️</span> Не пришёл без предупреждения: <b className="num">{noShows}</b> {timesWord(noShows)} — лучше напомнить</p>
-      )}
-      {earlier.length > 0 && (
-        <ul className="history-visits">
-          {earlier.slice(0, SHOWN).map((v) => {
-            const s = statusOf(v)
-            return (
-              <li key={v.id}>
-                <span className="num nowrap">{shortDate(v.startAt!)}</span>
-                {' '}<span className={`chip small s-${s.kind}`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
-                {v.serviceName && <span className="hint"> · {v.serviceName}</span>}
-                {many && doctorName(v.doctorId) && <span className="hint"> · {doctorName(v.doctorId)}</span>}
-              </li>
-            )
-          })}
-        </ul>
-      )}
-      {onOpenPatient && earlier.length > 0 && (
-        <button type="button" className="link" onClick={() => onOpenPatient(patientId)}>
-          {earlier.length > SHOWN ? `Вся история (${earlier.length}) ›` : 'Карточка пациента ›'}
-        </button>
-      )}
-    </section>
+      {noShows > 0 && <span className="tone-wait"> · не пришёл <b className="num">{noShows}</b> {timesWord(noShows)}</span>}
+    </p>
   )
 }
 

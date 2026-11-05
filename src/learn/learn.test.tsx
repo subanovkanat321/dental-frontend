@@ -128,8 +128,8 @@ test('«Цена ожидания»: с ценами клиники — «от»
   expect(within(empty).getByText('Ар бир кийинки кадам — кымбатыраак жана узагыраак')).toBeInTheDocument()
 })
 
-/** Карточка приёма у врача; сервер презентаций: язык пациента, отправка в бот. */
-function backend(a: Appointment, target: Schemas['LessonsTarget'] | 403, send: 204 | 409 = 204) {
+/** Карточка приёма у врача; сервер презентаций: язык пациента. Отправку из CRM не зовём — проверяем. */
+function backend(a: Appointment, target: Schemas['LessonsTarget'] | 403) {
   const sent: string[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, clinic: { ...me.clinic, code: 'abc123' } })),
@@ -140,8 +140,7 @@ function backend(a: Appointment, target: Schemas['LessonsTarget'] | 403, send: 2
       : HttpResponse.json(target))),
     http.post('*/api/patients/:id/lessons/:topic/send', ({ params }) => {
       sent.push(`${params.id}:${params.topic}`)
-      return send === 204 ? new HttpResponse(null, { status: 204 })
-        : HttpResponse.json({ status: 409, code: 'not-delivered', detail: 'Не доставлено: пациент мог удалить чат с ботом. Отправьте в WhatsApp' }, { status: 409 })
+      return new HttpResponse(null, { status: 204 })
     }),
   )
   return sent
@@ -152,54 +151,52 @@ async function openCard(name: RegExp) {
   return screen.getByRole('complementary', { name: 'Карточка приёма' })
 }
 
-test('карточка приёма: тема по услуге, на языке пациента; «Отправить в Telegram» шлёт тему', async () => {
+test('карточка приёма: 📖 в шапке — тема по услуге, на языке пациента; только показ, без отправки', async () => {
   const sent = backend(appointment(31, 1, '10:00', 'Нурлан Т.', { serviceName: 'Лечение каналов' }), { telegram: true, lang: 'KY' })
   renderApp()
   const panel = await openCard(/Нурлан Т\./)
-  await userEvent.click(within(panel).getByRole('button', { name: '📖 Показать пациенту: Пульпит и лечение каналов' }))
+  // В ленте карточки презентации нет — только значок в шапке
+  expect(within(panel).queryByRole('group', { name: 'Показать пациенту' })).toBeNull()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Показать пациенту' }))
+  const line = within(panel).getByRole('group', { name: 'Показать пациенту' })
+  expect(within(line).getByRole('combobox', { name: 'Тема презентации' })).toHaveTextContent('Пульпит и лечение каналов')
+  await userEvent.click(within(line).getByRole('button', { name: 'Показать' }))
   const dialog = await screen.findByRole('dialog', { name: 'Пульпит жана каналдарды дарылоо' })
   expect(within(dialog).getByRole('heading', { name: 'Пульпит — тиштин нервинин сезгениши' })).toBeInTheDocument()
   fireEvent.keyDown(window, { key: 'End' })
   // Цены клиники — на кыргызском
   expect(within(dialog).getByText('6 000 сомдон баштап')).toBeInTheDocument()
-  await userEvent.click(within(dialog).getByRole('button', { name: '✈️ Отправить в Telegram' }))
-  expect(await within(dialog).findByText('✓ Отправлено в Telegram')).toBeInTheDocument()
-  expect(sent).toEqual(['31:canals'])
+  // Отправлять из CRM нечего: отчёт о приёме и так уходит пациенту
+  expect(within(dialog).queryByRole('button', { name: /Отправить|Скопировать|WhatsApp|Telegram/ })).toBeNull()
+  expect(sent).toEqual([])
   // Имени пациента в презентации нет
   expect(within(dialog).queryByText(/Нурлан/)).toBeNull()
   await userEvent.click(within(dialog).getByRole('button', { name: 'Жабуу' }))
   expect(screen.queryByRole('dialog')).toBeNull()
 })
 
-test('другая тема из списка; не доставлено — ошибка; регистратуре без медкарты — только ссылка', async () => {
-  backend(appointment(32, 1, '11:00', 'Айжан К.', { serviceName: 'Консультация' }), { telegram: true, lang: 'RU' }, 409)
+test('другая тема из списка: услуга не подсказала — «Показать» ждёт выбора; ✕ — закрыть строку', async () => {
+  backend(appointment(32, 1, '11:00', 'Айжан К.', { serviceName: 'Консультация' }), { telegram: true, lang: 'RU' })
   renderApp()
   const panel = await openCard(/Айжан К\./)
-  // Услуга не подсказала тему — кнопка ждёт выбора
-  expect(within(panel).getByRole('button', { name: '📖 Показать пациенту' })).toBeDisabled()
-  await choose(within(panel).getByRole('combobox', { name: 'Тема презентации' }), 'Имплант')
-  await userEvent.click(within(panel).getByRole('button', { name: '📖 Показать пациенту: Имплант' }))
-  const dialog = await screen.findByRole('dialog', { name: 'Имплант' })
-  fireEvent.keyDown(window, { key: 'End' })
-  await userEvent.click(await within(dialog).findByRole('button', { name: '✈️ Отправить в Telegram' }))
-  expect(await within(dialog).findByRole('alert')).toHaveTextContent('Отправьте в WhatsApp')
-  expect(within(dialog).getByRole('button', { name: '💬 Отправить в WhatsApp' })).toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Показать пациенту' }))
+  const line = within(panel).getByRole('group', { name: 'Показать пациенту' })
+  expect(within(line).getByRole('button', { name: 'Показать' })).toBeDisabled()
+  await choose(within(line).getByRole('combobox', { name: 'Тема презентации' }), 'Имплант')
+  await userEvent.click(within(line).getByRole('button', { name: 'Показать' }))
+  expect(await screen.findByRole('dialog', { name: 'Имплант' })).toBeInTheDocument()
+  await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Закрыть' }))
+  await userEvent.click(within(line).getByRole('button', { name: 'Закрыть выбор темы' }))
+  expect(within(panel).queryByRole('group', { name: 'Показать пациенту' })).toBeNull()
 })
 
-test('без доступа к медкарте (403) — по-русски, без Telegram, ссылка копируется', async () => {
+test('без доступа к медкарте (403) — презентация по-русски', async () => {
   backend(appointment(33, 1, '12:00', 'Бакыт С.', { serviceName: 'Удаление зуба' }), 403)
-  const writeText = vi.fn().mockResolvedValue(undefined)
-  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
   renderApp()
   const panel = await openCard(/Бакыт С\./)
-  await userEvent.click(within(panel).getByRole('button', { name: '📖 Показать пациенту: Удаление зуба и зуб мудрости' }))
-  const dialog = await screen.findByRole('dialog', { name: 'Удаление зуба и зуб мудрости' })
-  fireEvent.keyDown(window, { key: 'End' })
-  await userEvent.click(await within(dialog).findByRole('button', { name: '🔗 Скопировать ссылку' }))
-  expect(within(dialog).queryByRole('button', { name: /Telegram/ })).toBeNull()
-  expect(writeText).toHaveBeenCalledWith(expect.stringContaining('/learn/extraction?c=abc123'))
-  expect(writeText.mock.calls[0]![0]).not.toContain('Бакыт')
-  expect(await within(dialog).findByRole('button', { name: '✓ Ссылка скопирована' })).toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Показать пациенту' }))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Показать' }))
+  expect(await screen.findByRole('dialog', { name: 'Удаление зуба и зуб мудрости' })).toBeInTheDocument()
 })
 
 test('«Настройки → Показать пациенту»: все темы обложками, открывается презентация', async () => {

@@ -95,7 +95,7 @@ test('карточка приёма: «Откуда узнал» — под «Е
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
   // Свёрнуто под «Ещё», чтобы не занимать место в шапке
   expect(within(panel).queryByRole('group', { name: 'Откуда узнал о клинике' })).not.toBeInTheDocument()
-  await userEvent.click(await within(panel).findByRole('button', { name: /Ещё:.*откуда узнал/ }))
+  await userEvent.click(await within(panel).findByRole('button', { name: /Ещё.*откуда узнал/ }))
   const source = await within(panel).findByRole('group', { name: 'Откуда узнал о клинике' })
   // В приёме варианты свёрнуты, чтобы не сдвигать кнопки приёма: «выбрать» — раскрыть
   await userEvent.click(within(source).getByRole('button', { name: 'выбрать' }))

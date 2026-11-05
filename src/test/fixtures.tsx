@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 
 import type { Schemas } from '../api/client'
@@ -33,4 +34,22 @@ export function openItem(item: string) {
     window.location.hash = `/settings/${item}`
     window.dispatchEvent(new HashChangeEvent('hashchange'))
   })
+}
+
+/** Карточка пациента → вкладка «Медкарта» → «Открыть медкарту» (карта зубов и план лечения, анкета, снимки). */
+export async function openMedicalTab() {
+  await userEvent.click(await screen.findByRole('tab', { name: 'Медкарта' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Открыть медкарту' }))
+}
+
+/** Карточка приёма → «Ещё» (редкое: промокод, предоплата, лист ожидания, откуда узнал, квитанция, исправить, удалить). */
+export async function openMore(panel: HTMLElement) {
+  await userEvent.click(await within(panel).findByRole('button', { name: /^Ещё/ }))
+}
+
+/** Строка-раскрывашка (layout/Fold: «Зубы», «Материалы», «Продолжение лечения») — раскрыть, если свёрнута. */
+export async function expand(region: HTMLElement) {
+  const head = region.querySelector<HTMLButtonElement>(':scope > .fold-head')
+  if (head?.getAttribute('aria-expanded') === 'false') await userEvent.click(head)
+  return region
 }

@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, expand } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -194,7 +194,7 @@ test('открыли «Перенести» у одного приёма и на
   expect(within(second).queryByRole('form', { name: 'Перенос записи' })).not.toBeInTheDocument()
 })
 
-test('из карточки приёма — медкарта пациента и обратно к этому приёму', async () => {
+test('из карточки приёма — «Зубы» → «Карта зубов и план лечения ›» (одна точка входа) и обратно к этому приёму', async () => {
   backend([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 })])
   server.use(
     http.get('*/api/patients/:id/teeth', () => HttpResponse.json([])),
@@ -203,7 +203,12 @@ test('из карточки приёма — медкарта пациента �
   )
   renderApp()
   const panel = await open(/Бакыт М\./)
-  await userEvent.click(within(panel).getByRole('button', { name: 'Карта зубов и план лечения' }))
+  // Отдельной большой кнопки «Карта зубов» больше нет: вход — из строки «Зубы»
+  const teeth = await within(panel).findByRole('region', { name: 'Зубы этого приёма' })
+  expect(within(panel).queryByRole('button', { name: /Карта зубов и план лечения/ })).not.toBeInTheDocument()
+  await expand(teeth)
+  expect(within(panel).getAllByRole('button', { name: /Карта зубов и план лечения/ })).toHaveLength(1)
+  await userEvent.click(within(teeth).getByRole('button', { name: 'Карта зубов и план лечения ›' }))
   expect(await screen.findByRole('heading', { name: /Медкарта · Бакыт М\./ })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: '← К приёму' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Бакыт М.')

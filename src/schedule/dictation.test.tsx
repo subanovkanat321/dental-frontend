@@ -136,6 +136,6 @@ test('регистратуре кнопки нет: заметка о приём
     { status: 403, headers: { 'Content-Type': 'application/problem+json' } })))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
-  await vi.waitFor(() => expect(screen.queryByText('Заметка о приёме — видят врач и администратор')).not.toBeInTheDocument())
+  await vi.waitFor(() => expect(screen.queryByText('Заметка о приёме')).not.toBeInTheDocument())
   expect(screen.queryByRole('button', { name: '🎤 Надиктовать приём' })).not.toBeInTheDocument()
 })
