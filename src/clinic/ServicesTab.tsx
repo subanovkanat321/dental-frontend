@@ -35,7 +35,7 @@ function useRefreshServices() {
     void client.invalidateQueries({ queryKey: ['starter'] })
     // Услуги приходят и в me (новая запись, выбор услуги)
     void client.invalidateQueries({ queryKey: ['me'] })
-    // Срок профосмотра услуги меняет списки «Профосмотр» и «Вернуть»
+    // Срок профосмотра услуги меняет списки «Профосмотр» и «Позвать снова»
     void client.invalidateQueries({ queryKey: ['recall'] })
     void client.invalidateQueries({ queryKey: ['comebacks'] })
   }

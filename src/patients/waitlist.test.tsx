@@ -106,7 +106,7 @@ test('«Хочет раньше»: запись создана, а в лист �
 test('ассистент — «Профосмотр»: WhatsApp — отметка «позвали» и готовый текст; «Записать» — «Новая запись» на пациента', async () => {
   window.location.hash = '/patients'
   backend()
-  // У ассистента нет денег — вместо «Вернуть» прежний «Профосмотр»
+  // У ассистента нет денег — вместо «Позвать снова» прежний «Профосмотр»
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [1] })))
   let invited = 0
   const opened: string[] = []

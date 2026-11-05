@@ -128,9 +128,9 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, onOp
         <header ref={stickyHead} className="toolbar sticky-head patients-head">
           <h1>Пациенты</h1>
           <div className="segments tabs" role="tablist" aria-label="Списки пациентов">
-            {/* «Вернуть» — деньги на столе и приглашения; ассистенту (денег не видит) — прежний «Профосмотр» */}
+            {/* «Позвать снова» (бывшее «Вернуть») — деньги на столе и приглашения; ассистенту (денег не видит) — прежний «Профосмотр» */}
             {([['all', 'Все'], ['booked', 'Записаны'], ['waitlist', `Лист ожидания${waitlist.data?.length ? ` · ${waitlist.data.length}` : ''}`],
-              isAssistant(me) ? ['recall', 'Профосмотр'] : ['comeback', 'Вернуть'],
+              isAssistant(me) ? ['recall', 'Профосмотр'] : ['comeback', 'Позвать снова'],
               ['questions', `Вопросы${newQuestions ? ` · ${newQuestions}` : ''}`]] satisfies [typeof tab, string][])
               .map(([key, title]) => (
                 <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>

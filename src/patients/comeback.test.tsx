@@ -40,7 +40,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-test('«Вернуть»: деньги на столе, «Tish вернул», приглашение в Telegram с правкой текста', async () => {
+test('«Позвать снова»: деньги на столе, «Tish вернул», приглашение в Telegram с правкой текста', async () => {
   const sent: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -54,7 +54,7 @@ test('«Вернуть»: деньги на столе, «Tish вернул», �
     }),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
   const summary = await screen.findByRole('region', { name: 'Деньги на столе' })
   expect(summary).toHaveTextContent(/Незаконченные планы лечения18\s000 сом/)
   expect(screen.getByLabelText('Tish вернул')).toHaveTextContent(/вернулись 2 из 5 приглашённых · в их планах 40\s000 сом · уже оплачено 12\s000 сом/)
@@ -74,7 +74,7 @@ test('«Вернуть»: деньги на столе, «Tish вернул», �
   expect(sent).toEqual([{ text: 'Здравствуйте, Айгуль Т.!\n\nОсталась коронка. Ждём вас!', channel: 'TELEGRAM' }])
 })
 
-test('«Вернуть»: «пора на осмотр» — последний визит, услуга, с какого дня пора; нет сроков у услуг — подсказка', async () => {
+test('«Позвать снова»: «пора на осмотр» — последний визит, услуга, с какого дня пора; нет сроков у услуг — подсказка', async () => {
   const recallBoard: Schemas['ComebacksBoard'] = {
     patients: [{ patientId: 4, fullName: 'Нурлан К.', phone: '996555000283', telegram: false, reason: 'RECALL', planSom: 0, plan: [],
       lastVisit: '2026-04-03T04:00:00Z', recallMonths: 6, recallService: 'Профессиональная чистка', recallDueOn: '2026-10-03' }],
@@ -89,7 +89,7 @@ test('«Вернуть»: «пора на осмотр» — последний 
     http.get('*/api/service-types', () => HttpResponse.json(services)),
   )
   const { unmount } = renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(list).toHaveTextContent(/последний визит: 3 апр 2026 · Профессиональная чистка · пора с 3 октября( 2026)? \(через 6 мес\.\)/)
   const link = await screen.findByRole('link', { name: 'Настройки → Услуги' })
@@ -99,12 +99,12 @@ test('«Вернуть»: «пора на осмотр» — последний 
   // У услуги есть свой срок — подсказки нет
   services = [{ ...services[0]!, recallMonths: 6 }]
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
   await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(screen.queryByRole('link', { name: 'Настройки → Услуги' })).not.toBeInTheDocument()
 })
 
-test('«Вернуть»: отправили план с ценами, а пациент не записался — строка статуса и фильтр', async () => {
+test('«Позвать снова»: отправили план с ценами, а пациент не записался — строка статуса и фильтр', async () => {
   const sentPlan: Schemas['ComebacksBoard'] = {
     ...board,
     patients: [
@@ -118,7 +118,7 @@ test('«Вернуть»: отправили план с ценами, а пац
     http.get('*/api/comebacks', serve(sentPlan)),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent(/план отправлен 3 нояб?\.? 2026 · согласован 4 нояб?\.? 2026 — запишите на первый этап/)
   const filter = screen.getByRole('button', { name: /Отправили план, не записались: 1 · согласились: 1/ })
@@ -127,7 +127,7 @@ test('«Вернуть»: отправили план с ценами, а пац
   expect(filter).toHaveAttribute('aria-pressed', 'true')
 })
 
-test('«Вернуть»: по 50 за раз — «Показать ещё» догружает остальных', async () => {
+test('«Позвать снова»: по 50 за раз — «Показать ещё» догружает остальных', async () => {
   // 60 вымышленных пациентов «пора на осмотр»
   const many: Schemas['ComebacksBoard'] = {
     patients: Array.from({ length: 60 }, (_, i) => ({ patientId: 100 + i, fullName: `Пациент ${i + 1}`, phone: '996555000000',
@@ -141,7 +141,7 @@ test('«Вернуть»: по 50 за раз — «Показать ещё» д
     http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Вернуть' }))
+  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(within(list).getAllByRole('listitem')).toHaveLength(50)
   await userEvent.click(screen.getByRole('button', { name: 'Показать ещё (10 из 10)' }))
