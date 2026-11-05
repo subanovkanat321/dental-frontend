@@ -3,6 +3,10 @@ import type { ReactNode } from 'react'
 import { Extraction, Gap, Implant, Kids, Tooth, Whiten, Wisdom } from './art'
 import { TOPICS, type L, type Lang, type TopicInfo, type TopicSlug } from './catalog'
 import type { IconName } from './icons.gen'
+import canalsXray from './photos/canals-xray.jpg'
+import crownZirconia from './photos/crown-zirconia.jpg'
+import kidsFissures from './photos/kids-fissures.jpg'
+import whiteningShades from './photos/whitening-shades.jpg'
 
 /**
  * Тексты и рисунки презентаций. Правила: коротко (слайд читается за 10 секунд), простыми словами,
@@ -30,6 +34,11 @@ export type Slide =
   | { kind: 'list'; title: L; text?: L; points: Point[]; art?: ArtFn; numbered?: boolean; photo?: Photo }
 /** cover — рисунок обложки в списке тем: как на первом слайде, но без подписей */
 export type Topic = TopicInfo & { slides: Slide[]; cover: ArtFn }
+
+/** Wikimedia Commons: подпись «Фото: автор, лицензия, Wikimedia Commons» со ссылкой на страницу файла */
+const commons = (file: string, author: string, license: string): Photo['credit'] => (
+  { author, license, source: 'Wikimedia Commons', url: `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}` }
+)
 
 const T = {
   later: { ru: 'Почему лучше не откладывать', ky: 'Эмне үчүн кечиктирбеген жакшы' },
@@ -101,7 +110,9 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { icon: 'time', text: { ru: '1–3 визита по 1–1,5 часа — зависит от зуба', ky: '1–3 келүү, ар бири 1–1,5 саат — тишке жараша' } },
       { icon: 'tooth', text: { ru: 'Пару дней зуб может ныть при накусывании — это проходит', ky: 'Бир-эки күн тиштегенде сыздашы мүмкүн — бул өтүп кетет' } },
     ] },
-    { kind: 'list', title: T.care, art: (lang) => <Tooth pulp="filled" filling="big" lang={lang} labels={{ filling: true, canals: true }} title="Запломбированные каналы" />, points: [
+    { kind: 'list', title: T.care, art: (lang) => <Tooth pulp="filled" filling="big" lang={lang} labels={{ filling: true, canals: true }} title="Запломбированные каналы" />,
+      photo: { src: canalsXray, alt: { ru: 'Рентгеновский снимок: каналы зуба запломбированы до кончиков корней', ky: 'Рентген сүрөтү: тиштин каналдары тамырдын учуна чейин пломбаланган' },
+        credit: commons('Röntgenbild Zahn 46 nach erfolgter Revision.jpg', 'Svonf', 'CC BY-SA 3.0') }, points: [
       { icon: 'no', text: { ru: 'Не жевать твёрдое этим зубом до постоянной пломбы или коронки', ky: 'Туруктуу пломба же коронка коюлганча бул тиш менен катуу нерсе чайнабаңыз' } },
       { icon: 'shield', text: { ru: 'После каналов зуб становится хрупче — часто нужна коронка, врач подскажет', ky: 'Каналдан кийин тиш морт болот — көбүнчө коронка керек, дарыгер айтат' } },
       CALL,
@@ -222,7 +233,9 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { icon: 'calendar', text: { ru: 'Обычно 2–3 визита за 1–2 недели', ky: 'Көбүнчө 1–2 жумада 2–3 келүү' } },
       { icon: 'tooth', text: { ru: 'Первые дни коронка непривычна — это быстро проходит', ky: 'Алгачкы күндөрү коронка адаттан тыш — бат көнөсүз' } },
     ] },
-    { kind: 'list', title: T.care, art: () => <Tooth crown="on" pulp="filled" title="Коронка на зубе" />, points: [
+    { kind: 'list', title: T.care, art: () => <Tooth crown="on" pulp="filled" title="Коронка на зубе" />,
+      photo: { src: crownZirconia, alt: { ru: 'Готовая коронка из циркония на модели зуба', ky: 'Цирконийден жасалган даяр коронка тиштин моделинде' },
+        credit: commons('Single Unit Zirconia Anterior Dental Crown.jpg', 'James Roback, UticaDentalLab', 'CC BY-SA 4.0') }, points: [
       { icon: 'no', text: { ru: 'С временной коронкой — без жвачки, ирисок и твёрдого', ky: 'Убактылуу коронка менен — сагыз, ирис жана катуу нерсе жок' } },
       { icon: 'brush', text: { ru: 'Чистить как свой зуб, особенно у десны; нить или ершик', ky: 'Өз тишиңиздей тазалаңыз, өзгөчө бүйлөнүн жанын; жип же щетка' } },
       { icon: 'alert', text: { ru: 'Не открывать зубами бутылки, не грызть твёрдое', ky: 'Тиш менен бөтөлкө ачпаңыз, катуу нерсе чайнабаңыз' } },
@@ -265,7 +278,9 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       text: { ru: 'Специальный гель осветляет пигменты внутри эмали — от чая, кофе, курения и с возрастом. Эмаль при этом не стачивается.',
         ky: 'Атайын гель эмалдын ичиндеги боёкторду агартат — чайдан, кофеден, тамекиден жана жаш өткөн сайын. Эмаль жонулбайт.' },
       art: (lang) => <Whiten labels lang={lang} title="Зуб до и после отбеливания" /> },
-    { kind: 'list', title: { ru: 'Важно знать заранее', ky: 'Алдын ала билүү маанилүү' }, points: [
+    { kind: 'list', title: { ru: 'Важно знать заранее', ky: 'Алдын ала билүү маанилүү' },
+      photo: { src: whiteningShades, alt: { ru: 'Шкала оттенков зубов: от светлых к тёмным', ky: 'Тиштин түс шкаласы: ачыктан коюуга чейин' },
+        credit: commons('VITA shade guide.jpg', 'Matthew Ferguson 57', 'CC BY-SA 4.0') }, points: [
       { icon: 'tooth', text: { ru: 'Сначала лечение и чистка: отбеливают только здоровые зубы', ky: 'Алгач дарылоо жана тазалоо: ден соолугу жакшы тиштер гана агартылат' } },
       { icon: 'alert', text: { ru: 'Пломбы и коронки не светлеют — их, возможно, придётся обновить', ky: 'Пломба жана коронка агарбайт — аларды жаңыртуу керек болушу мүмкүн' } },
       { icon: 'search', text: { ru: 'Результат у всех разный — врач покажет оттенок по шкале', ky: 'Натыйжа ар кимде ар башка — дарыгер түсүн шкала боюнча көрсөтөт' } },
@@ -322,7 +337,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
     { kind: 'what', title: { ru: 'Молочные зубы тоже нужно лечить', ky: 'Сүт тиштерди да дарылоо керек' },
       text: { ru: 'Под каждым молочным зубом формируется постоянный. Больной молочный зуб — это боль у ребёнка и инфекция рядом с зачатком постоянного. Бороздки новых коренных зубов защищает герметик.',
         ky: 'Ар бир сүт тиштин астында туруктуу тиш калыптанат. Ооруган сүт тиш — баланын оорусу жана туруктуу тиштин жанында инфекция. Жаңы азуу тиштердин оюктарын герметик коргойт.' },
-      art: () => <Kids title="Молочный зуб и постоянный под ним" /> },
+      art: (lang) => <Kids labels lang={lang} title="Молочный зуб и постоянный под ним" /> },
     { kind: 'stages', title: T.later, text: T.stagesLead, points: [
       { art: () => <Kids state="caries" />, text: { ru: 'У детей кариес развивается быстро — эмаль тоньше', ky: 'Балдарда кариес тез өрчүйт — эмаль жукараак' } },
       { art: () => <Kids state="deep" />, text: { ru: 'Доходит до нерва — боль, воспаление у корня', ky: 'Нервге жетет — оору, тамырдын жанында сезгенүү' } },
@@ -330,7 +345,9 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
     ], note: { ru: 'Небольшой кариес у ребёнка лечится быстро и спокойно — визит короче, ребёнку легче.',
       ky: 'Баладагы кичине кариес тез жана тынч дарыланат — келүү кыскараак, балага жеңилирээк.' } },
     { kind: 'list', title: { ru: 'Герметизация: защита бороздок', ky: 'Герметизация: оюктарды коргоо' }, numbered: true,
-      art: (lang) => <Tooth sealant lang={lang} labels={{ sealant: true, enamel: true }} title="Герметик в бороздке зуба" />, points: [
+      art: (lang) => <Tooth sealant lang={lang} labels={{ sealant: true, enamel: true }} title="Герметик в бороздке зуба" />,
+      photo: { src: kidsFissures, alt: { ru: 'Жевательный зуб крупно: глубокие бороздки, которые закрывает герметик', ky: 'Азуу тиш жакындан: герметик жабуучу терең оюктар' },
+        credit: commons('Versiegelungfissur.jpg', 'Dr. Henning Storbeck', 'Public domain') }, points: [
         { icon: 'search', text: { ru: 'Осмотр — без сверления', ky: 'Текшерүү — бургулоосуз' } },
         { icon: 'spray', text: { ru: 'Очищаем и подсушиваем бороздки зуба', ky: 'Тиштин оюктарын тазалап кургатабыз' } },
         { icon: 'shield', text: { ru: 'Заполняем бороздки жидким герметиком', ky: 'Оюктарды суюк герметик менен толтурабыз' } },

@@ -115,8 +115,9 @@ function Visual({ art, photo, lang }: { art?: ArtFn; photo?: Photo; lang: Lang }
     return (
       <figure className="lsn-art lsn-photo">
         <img src={photo.src} alt={photo.alt[lang]} loading="lazy" decoding="async" />
-        <figcaption className="lsn-credit">
-          {photo.credit.url ? <a href={photo.credit.url} target="_blank" rel="noreferrer noopener">{creditText(photo, lang)}</a> : creditText(photo, lang)}
+        <figcaption>
+          <span className="lsn-cap" aria-hidden="true">{photo.alt[lang]}</span>
+          <span className="lsn-credit">{photo.credit.url ? <a href={photo.credit.url} target="_blank" rel="noreferrer noopener">{creditText(photo, lang)}</a> : creditText(photo, lang)}</span>
         </figcaption>
       </figure>
     )

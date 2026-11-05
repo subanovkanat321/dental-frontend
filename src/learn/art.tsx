@@ -86,7 +86,7 @@ function Kit({ p }: { p: string }) {
       {v('shade', [[0, '#FFFFFF', 0.5], [0.32, '#FFFFFF', 0], [0.7, '#1E323C', 0], [1, '#1E323C', 0.18]], true)}
       {v('tartar', [[0, '#E3C681'], [1, '#B08646']])}
       {v('tartarDeep', [[0, '#A8865A'], [1, '#7C5E36']])}
-      {v('clot', [[0, '#A2555E'], [1, '#7E3B46']])}
+      {v('clot', [[0, '#C99A94'], [1, '#B07F7A']])}
       {r('caries', [[0, '#3E2316'], [0.6, '#6B3F25'], [1, '#9A6A40']])}
       {r('lesion', [[0, '#B0645E', 0.75], [0.7, '#C98B76', 0.35], [1, '#D9A27F', 0]])}
       {r('glow', [[0, '#E8384F', 0.45], [1, '#E8384F', 0]])}
@@ -201,12 +201,12 @@ export function Tooth(p: ToothProps) {
   const boneTop = p.bone === 'low' ? 236 : 196
   const gum = p.gum ?? (p.bone === 'low' ? 'low' : 'ok')
   const pulpFill = pulp === 'hot' ? u('pulpHot') : pulp === 'dead' ? u('pulpDead') : pulp === 'filled' ? u('material') : u('pulp')
-  const canalColor = pulp === 'hot' ? '#C43A48' : pulp === 'dead' ? '#9C8E88' : pulp === 'filled' ? u('gp') : '#DE8592'
+  const canalColor = p.instrument ? '#E9B4B2' : pulp === 'hot' ? '#C43A48' : pulp === 'dead' ? '#9C8E88' : pulp === 'filled' ? u('gp') : '#DE8592'
   const crowned = p.crown != null
   const float = p.crown === 'float'
   const top = float ? -40 : p.instrument ? -64 : 0
   const height = (float ? 360 : 320) - (p.instrument ? top : 0)
-  const caries = !crowned && p.caries ? p.caries : 0
+  const caries = !crowned && !p.instrument && p.caries ? p.caries : 0
   const callouts: [number, number, number, string][] = hasLabels
     ? (Object.keys(LABEL_AT) as LabelKey[]).filter((k) => p.labels![k]).map((k) => {
       const [x, y, ty] = LABEL_AT[k]
@@ -229,7 +229,7 @@ export function Tooth(p: ToothProps) {
       {!p.bare && <Jaw u={u} boneTop={boneTop} gum={gum} />}
       {/* Связка вокруг корня — тонкая тёмная щель между корнем и костью */}
       {!p.bare && <path d={OUTER} fill="none" stroke="#B89466" strokeOpacity={0.55} strokeWidth={6} clipPath={`url(#${id}r)`} />}
-      {pulp === 'hot' && <ellipse cx={120} cy={150} rx={62} ry={70} fill={u('glow')} />}
+      {pulp === 'hot' && !p.instrument && <ellipse cx={120} cy={150} rx={62} ry={70} fill={u('glow')} />}
       <g mask={`url(#${id}m)`}>
         {crowned ? (
           <>
@@ -310,13 +310,13 @@ export function Tooth(p: ToothProps) {
       )}
       {crowned && (
         <g transform={float ? 'translate(0,-34)' : undefined}>
-          <path d={`${CAP} ${STUMP}`} fillRule="evenodd" fill={u('porcelain')} stroke={LINE} strokeWidth={1.7} strokeLinejoin="round" />
+          <path d={CAP} fill={u('porcelain')} stroke={LINE} strokeWidth={1.7} strokeLinejoin="round" />
           <path d={CAP} fill={u('shade')} />
           <ellipse cx={84} cy={62} rx={10} ry={6} fill="#FFFFFF" opacity={0.9} filter={u('soft')} transform="rotate(-30 84 62)" />
           {!float && <path d="M78,168 L65,166 M162,168 L175,166" stroke={TEAL} strokeWidth={1.4} />}
         </g>
       )}
-      {float && <path d="M212,-14 V36 M205,28 L212,38 L219,28" stroke={LEADER} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />}
+      {float && <path d="M28,-14 V36 M21,28 L28,38 L35,28" stroke={LEADER} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />}
       {hasLabels && <Callouts items={callouts} />}
     </svg>
   )
@@ -358,7 +358,7 @@ export function Implant({ stage = 'full', labels, lang = 'ru', title }: { stage?
     [214, 296, 296, names.bone[lang]],
   ]
   return (
-    <svg viewBox={`0 ${top} ${labels ? 500 : 240} ${320 - top}`} role="img" aria-label={title} className="art" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox={`0 ${top} ${labels ? 445 : 240} ${320 - top}`} role="img" aria-label={title} className="art" xmlns="http://www.w3.org/2000/svg">
       <Kit p={p} />
       <Jaw u={u} gum="ok" gumTop={stage === 'screw' ? 150 : 158} />
       {exploded && <path d="M120,-110 V300" stroke={LEADER} strokeWidth={1} strokeDasharray="5 5" />}
@@ -439,10 +439,11 @@ export function Wisdom({ state = 'tilt', title }: { state?: 'tilt' | 'half' | 'd
     <svg viewBox="0 0 320 270" role="img" aria-label={title} className="art" xmlns="http://www.w3.org/2000/svg">
       <Kit p={p} />
       <rect x={0} y={126} width={320} height={150} rx={14} fill={u('bone')} />
-      <path d={`${gumTop} L320,148 L0,148 Z`} fill={u(state === 'half' ? 'gumRed' : 'gum')} />
+      {/* Зуб мудрости — в кости под десной: десна рисуется поверх его коронки */}
+      <Mini u={u} x={236} y={state === 'half' ? 160 : 178} s={0.6} rotate={-38} />
+      <path d={`${gumTop} L320,148 L0,148 Z`} fill={u(state === 'half' ? 'gumRed' : 'gum')} opacity={0.92} />
       <path d={gumTop} fill="none" stroke={state === 'half' ? '#B23C4E' : '#C97C88'} strokeWidth={1.4} />
       <Mini u={u} x={110} y={128} s={0.62} caries={state === 'decay'} />
-      <Mini u={u} x={232} y={state === 'half' ? 146 : 156} s={0.6} rotate={-38} />
       {state === 'tilt' && <Move d="M196,92 L166,104 M176,96 L165,104 L174,112" />}
       {state === 'half' && <g fill="#B6874B" opacity={0.8}>{[[204, 92], [214, 86], [220, 96]].map(([x, y]) => <circle key={x} cx={x} cy={y} r={3} />)}</g>}
     </svg>
@@ -479,10 +480,10 @@ export function Gap({ stage = 1, title }: { stage?: 0 | 1 | 2 | 3; title?: strin
 }
 
 /** Молочный зуб и постоянный под ним: здоров, кариес, до нерва, удалён рано — постоянный растёт криво. */
-export function Kids({ state = 'ok', title }: { state?: 'ok' | 'caries' | 'deep' | 'lost'; title?: string }) {
+export function Kids({ state = 'ok', title, labels, lang = 'ru' }: { state?: 'ok' | 'caries' | 'deep' | 'lost'; title?: string; labels?: boolean; lang?: Lang }) {
   const { p, u } = useKit()
   return (
-    <svg viewBox="0 0 240 320" role="img" aria-label={title} className="art" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox={`0 0 ${labels ? 410 : 240} 320`} role="img" aria-label={title} className="art" xmlns="http://www.w3.org/2000/svg">
       <Kit p={p} />
       <defs><clipPath id={`${p}c`}><rect x={0} y={-60} width={240} height={226} /></clipPath></defs>
       <Jaw u={u} boneTop={150} gumTop={120} />
@@ -495,7 +496,7 @@ export function Kids({ state = 'ok', title }: { state?: 'ok' | 'caries' | 'deep'
       </g>
       {/* Молочный зуб — тот же разрез, меньше */}
       {state !== 'lost' && (
-        <g transform="translate(120,96) scale(0.5) translate(-120,-120)">
+        <g transform="translate(120,92) scale(0.58) translate(-120,-120)">
           <path d={OUTER} fill={u('root')} />
           <path d={OUTER} fill={u('enamel')} clipPath={`url(#${p}c)`} />
           <path d={INNER} fill={u('dentin')} />
@@ -509,6 +510,7 @@ export function Kids({ state = 'ok', title }: { state?: 'ok' | 'caries' | 'deep'
         </g>
       )}
       {state === 'deep' && <ellipse cx={120} cy={196} rx={30} ry={18} fill={u('lesion')} />}
+      {labels && <Callouts items={[[150, 70, 60, lang === 'ky' ? 'Сүт тиш' : 'Молочный зуб'], [160, 250, 250, lang === 'ky' ? 'Туруктуу тиш' : 'Постоянный зуб']]} />}
       {state === 'lost' && <path d="M90,126 C110,120 130,120 150,126" stroke="#C97C88" strokeWidth={1.4} fill="none" strokeLinecap="round" />}
     </svg>
   )
