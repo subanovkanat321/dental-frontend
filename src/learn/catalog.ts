@@ -1,6 +1,7 @@
 /**
  * Темы презентаций «📖 Показать пациенту» — лёгкий список для основного бандла: адрес темы,
- * название, значок и слова, по которым тема подбирается к услуге приёма. Сами слайды и рисунки —
+ * название, значок (только в списке тем CRM — на слайдах его нет) и слова, по которым тема
+ * подбирается к услуге приёма. Сами слайды и рисунки —
  * в отдельном чанке (topics.tsx, Presentation.tsx). slug и порядок — как LessonTopic бэкенда.
  */
 export type Lang = 'ru' | 'ky'
@@ -8,19 +9,19 @@ export type L = Record<Lang, string>
 
 export type TopicSlug = 'caries' | 'canals' | 'extraction' | 'hygiene' | 'filling' | 'crown' | 'implant' | 'whitening' | 'gums' | 'kids'
 
-export type TopicInfo = { slug: TopicSlug; emoji: string; title: L; bg: string }
+export type TopicInfo = { slug: TopicSlug; emoji: string; title: L }
 
 export const TOPICS: TopicInfo[] = [
-  { slug: 'caries', emoji: '🦷', title: { ru: 'Кариес', ky: 'Кариес' }, bg: '#DDF3EC' },
-  { slug: 'canals', emoji: '🔬', title: { ru: 'Пульпит и лечение каналов', ky: 'Пульпит жана каналдарды дарылоо' }, bg: '#FFE6D5' },
-  { slug: 'extraction', emoji: '🩹', title: { ru: 'Удаление зуба и зуб мудрости', ky: 'Тиш жулуу жана акыл тиш' }, bg: '#E9E3FB' },
-  { slug: 'hygiene', emoji: '✨', title: { ru: 'Профессиональная чистка', ky: 'Кесипкөй тазалоо' }, bg: '#DCEFF4' },
-  { slug: 'filling', emoji: '🧩', title: { ru: 'Пломба и вкладка', ky: 'Пломба жана вкладка' }, bg: '#FFF3CC' },
-  { slug: 'crown', emoji: '👑', title: { ru: 'Коронка', ky: 'Коронка' }, bg: '#FFE1E7' },
-  { slug: 'implant', emoji: '🔩', title: { ru: 'Имплант', ky: 'Имплант' }, bg: '#E0F2EF' },
-  { slug: 'whitening', emoji: '💎', title: { ru: 'Отбеливание', ky: 'Агартуу' }, bg: '#E6EEFF' },
-  { slug: 'gums', emoji: '🌸', title: { ru: 'Дёсны: гингивит и пародонтит', ky: 'Бүйлө: гингивит жана пародонтит' }, bg: '#FFE4DC' },
-  { slug: 'kids', emoji: '🧸', title: { ru: 'Детские зубы и герметизация', ky: 'Балдардын тиштери жана герметизация' }, bg: '#EEF5D6' },
+  { slug: 'caries', emoji: '🦷', title: { ru: 'Кариес', ky: 'Кариес' } },
+  { slug: 'canals', emoji: '🔬', title: { ru: 'Пульпит и лечение каналов', ky: 'Пульпит жана каналдарды дарылоо' } },
+  { slug: 'extraction', emoji: '🩹', title: { ru: 'Удаление зуба и зуб мудрости', ky: 'Тиш жулуу жана акыл тиш' } },
+  { slug: 'hygiene', emoji: '✨', title: { ru: 'Профессиональная чистка', ky: 'Кесипкөй тазалоо' } },
+  { slug: 'filling', emoji: '🧩', title: { ru: 'Пломба и вкладка', ky: 'Пломба жана вкладка' } },
+  { slug: 'crown', emoji: '👑', title: { ru: 'Коронка', ky: 'Коронка' } },
+  { slug: 'implant', emoji: '🔩', title: { ru: 'Имплант', ky: 'Имплант' } },
+  { slug: 'whitening', emoji: '💎', title: { ru: 'Отбеливание', ky: 'Агартуу' } },
+  { slug: 'gums', emoji: '🌸', title: { ru: 'Дёсны: гингивит и пародонтит', ky: 'Бүйлө: гингивит жана пародонтит' } },
+  { slug: 'kids', emoji: '🧸', title: { ru: 'Детские зубы и герметизация', ky: 'Балдардын тиштери жана герметизация' } },
 ]
 
 /**
@@ -51,7 +52,7 @@ export function topicInfo(slug: string | null | undefined): TopicInfo | undefine
   return TOPICS.find((t) => t.slug === slug)
 }
 
-/** Ссылка на тему без входа: цены этой клиники по её коду, язык пациента. Без имени и диагноза. */
+/** Ссылка на тему без входа: название клиники и «Записаться» по её коду, язык пациента. Без имени и диагноза. */
 export function lessonUrl(origin: string, slug: TopicSlug, clinicCode?: string | null, lang: Lang = 'ru'): string {
   const params = new URLSearchParams()
   if (clinicCode) params.set('c', clinicCode)

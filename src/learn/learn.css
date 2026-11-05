@@ -1,13 +1,20 @@
-/* Презентации для пациента: во весь экран, тёплый пастельный фон темы, крупный текст. Всегда светлые
-   (как посты Instagram и страницы сайта) — и в тёмной теме CRM. */
+/* Презентации для пациента — строгий «атласный» вид: белый фон, графитовый текст, один бирюзовый акцент,
+   тонкие линии, иллюстрации на светло-серой подложке. Всегда светлые (как страницы сайта) — и в тёмной
+   теме CRM. Токены — как в DESIGN.md. */
 .lsn {
-  --lsn-ink: #1b3a40;
+  --lsn-ink: #0f2a30;
   --lsn-muted: #4c6268;
+  --lsn-faint: #75898e;
+  --lsn-line: #dce4e5;
+  --lsn-line-strong: #c8d3d5;
+  --lsn-plate: #f4f7f7;
   --lsn-teal: #0e8a80;
+  --lsn-teal-dark: #0b5f58;
+  --lsn-teal-soft: #e0f2ef;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--lsn-bg, #e0f2ef);
+  background: #fff;
   color: var(--lsn-ink);
   font-family: 'Golos Text', system-ui, sans-serif;
   color-scheme: light;
@@ -17,109 +24,128 @@
 .lsn button { font: inherit; color: inherit; cursor: pointer; }
 
 .lsn-top {
-  display: flex; align-items: center; gap: 12px;
-  padding: max(10px, env(safe-area-inset-top)) clamp(12px, 3vw, 28px) 6px;
+  display: flex; align-items: center; gap: 14px;
+  padding: max(10px, env(safe-area-inset-top)) clamp(14px, 3vw, 32px) 10px;
+  border-bottom: 1px solid var(--lsn-line);
 }
-.lsn-kicker { font-weight: 600; font-size: clamp(13px, 1.6vw, 17px); color: var(--lsn-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
-.lsn-dots { flex: 1; display: flex; gap: 6px; min-width: 60px; }
-.lsn-dots button { flex: 1; height: 6px; padding: 0; border: 0; border-radius: 3px; background: rgb(27 58 64 / 0.14); }
+.lsn-kicker { display: flex; flex-direction: column; min-width: 0; max-width: 42%; line-height: 1.25; }
+.lsn-kicker > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lsn-kicker > span:last-child { font-weight: 600; font-size: clamp(14px, 1.5vw, 16px); }
+.lsn-brand { font-size: 12px; color: var(--lsn-muted); }
+.lsn-dots { flex: 1; display: flex; gap: 4px; min-width: 60px; }
+.lsn-dots button { flex: 1; height: 3px; padding: 0; border: 0; border-radius: 2px; background: var(--lsn-line); }
 .lsn-dots button.on { background: var(--lsn-teal); }
-.lsn-lang { display: flex; background: #fff; border-radius: 999px; padding: 3px; box-shadow: 0 1px 3px rgb(15 42 48 / 0.1); }
-.lsn .lsn-lang button { border: 0; background: none; border-radius: 999px; padding: 6px 12px; font-weight: 600; font-size: 14px; min-height: 36px; }
-.lsn-lang button[aria-pressed='true'] { background: var(--lsn-teal); color: #fff; }
-.lsn .lsn-close { width: 44px; height: 44px; border-radius: 50%; border: 0; background: #fff; font-size: 20px; box-shadow: 0 1px 3px rgb(15 42 48 / 0.12); flex: none; }
+.lsn-lang { display: flex; border: 1px solid var(--lsn-line-strong); border-radius: 8px; overflow: hidden; }
+.lsn .lsn-lang button { border: 0; background: #fff; padding: 0 12px; font-weight: 500; font-size: 14px; min-height: 36px; color: var(--lsn-muted); }
+.lsn .lsn-lang button + button { border-left: 1px solid var(--lsn-line-strong); }
+.lsn .lsn-lang button[aria-pressed='true'] { background: var(--lsn-teal-soft); color: var(--lsn-teal); font-weight: 600; }
+.lsn .lsn-close { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--lsn-line-strong); background: #fff; font-size: 17px; flex: none; color: var(--lsn-muted); }
 
 .lsn-stage { flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; }
 .lsn-slide {
-  flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(16px, 4vw, 56px);
-  align-items: center; padding: 8px clamp(16px, 5vw, 72px) 12px; animation: lsn-in 0.28s ease-out;
+  flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(20px, 4vw, 64px);
+  align-items: center; padding: clamp(14px, 2.4vw, 32px) clamp(16px, 5vw, 80px); animation: lsn-in 0.2s ease-out;
+  width: 100%; max-width: 1360px; margin: 0 auto; box-sizing: border-box;
 }
-@keyframes lsn-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@keyframes lsn-in { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .lsn-slide { animation: none; } }
 
-.lsn-art { display: flex; align-items: center; justify-content: center; min-height: 0; height: 100%; max-height: 66vh; }
-.lsn-art .art { width: 100%; height: 100%; max-height: 62vh; filter: drop-shadow(0 10px 18px rgb(15 42 48 / 0.1)); }
-.lsn-art .art.tishka { max-width: 360px; }
+/* Иллюстрация — на светлой «пластине», как в атласе */
+.lsn-art { display: flex; align-items: center; justify-content: center; min-height: 0; height: 100%; max-height: 68vh; margin: 0;
+  background: var(--lsn-plate); border: 1px solid var(--lsn-line); border-radius: 12px; padding: clamp(12px, 2vw, 28px); box-sizing: border-box; }
+.lsn-art .art { width: 100%; height: 100%; max-height: 60vh; }
+.lsn-photo { flex-direction: column; gap: 8px; padding: 8px; }
+.lsn-photo img { width: 100%; min-height: 0; flex: 1; object-fit: contain; border-radius: 8px; max-height: 58vh; }
+.lsn-credit { align-self: stretch; font-size: 12px; line-height: 1.35; color: var(--lsn-faint); padding: 0 4px 2px; }
+.lsn-credit a { color: inherit; }
 .lsn-body { min-width: 0; }
-.lsn-topic { margin: 0 0 6px; display: inline-block; background: #fff; color: var(--lsn-teal); font-weight: 600; font-size: clamp(14px, 1.8vw, 20px); padding: 4px 14px; border-radius: 999px; }
-.lsn-title { font-family: Geologica, 'Golos Text', sans-serif; font-weight: 600; font-size: clamp(26px, 4.2vw, 52px); line-height: 1.12; letter-spacing: -0.01em; margin: 0 0 12px; text-wrap: balance; }
-.lsn-text { font-size: clamp(18px, 2.4vw, 28px); line-height: 1.4; margin: 0; color: var(--lsn-ink); text-wrap: pretty; }
+.lsn-topic { margin: 0 0 10px; display: flex; align-items: center; gap: 10px; color: var(--lsn-teal); font-weight: 600; font-size: clamp(14px, 1.4vw, 16px); }
+.lsn-topic::before { content: ''; width: 24px; height: 2px; background: var(--lsn-teal); }
+.lsn-title { font-family: Geologica, 'Golos Text', sans-serif; font-weight: 600; font-size: clamp(24px, 3.3vw, 44px); line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 14px; text-wrap: balance; }
+.lsn-text { font-size: clamp(17px, 1.9vw, 23px); line-height: 1.5; margin: 0; color: var(--lsn-ink); text-wrap: pretty; max-width: 40em; }
 
-.lsn-points { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: clamp(8px, 1.4vw, 14px); }
-.lsn-points li { display: flex; align-items: center; gap: 14px; background: #fff; border-radius: 18px; padding: clamp(10px, 1.4vw, 16px) clamp(12px, 1.8vw, 20px);
-  font-size: clamp(17px, 2.1vw, 25px); line-height: 1.3; box-shadow: 0 2px 4px rgb(15 42 48 / 0.04), 0 8px 20px rgb(15 42 48 / 0.06); }
-.lsn-icon { flex: none; width: clamp(38px, 4.4vw, 52px); height: clamp(38px, 4.4vw, 52px); border-radius: 50%; display: grid; place-items: center;
-  background: var(--lsn-bg); font-size: clamp(20px, 2.4vw, 28px); }
-.lsn-points.numbered .lsn-icon { background: var(--lsn-teal); color: #fff; font-family: Geologica, sans-serif; font-weight: 600; }
+/* Пункты: строки через тонкую линию, слева пиктограмма; у шагов — номер на пиктограмме */
+.lsn-points { list-style: none; margin: 14px 0 0; padding: 0; display: grid; }
+.lsn-points li { display: flex; align-items: center; gap: clamp(12px, 1.6vw, 18px); padding: clamp(10px, 1.3vw, 15px) 0;
+  font-size: clamp(16px, 1.75vw, 21px); line-height: 1.4; border-top: 1px solid var(--lsn-line); }
+.lsn-points li:last-child { border-bottom: 1px solid var(--lsn-line); }
+.lsn-icon { position: relative; flex: none; width: clamp(40px, 4vw, 52px); height: clamp(40px, 4vw, 52px); border-radius: 50%; display: grid; place-items: center;
+  background: var(--lsn-teal-soft); color: var(--lsn-teal); }
+.lsn-ico { width: 64%; height: 64%; }
+.lsn-step { position: absolute; top: -4px; left: -4px; min-width: 20px; height: 20px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--lsn-teal); color: #fff; font: 600 12px/1 Geologica, sans-serif; box-shadow: 0 0 0 2px #fff; }
 
-/* Стадии и «Цена ожидания»: карточки в ряд */
-.lsn-stages { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; align-content: center; }
-.lsn-stages .lsn-title { text-align: center; }
-.lsn-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: clamp(10px, 1.8vw, 22px); min-height: 0; }
+/* Слайд без рисунка — пункты карточками-фактами */
+.lsn-facts { grid-template-columns: 1fr; align-content: center; }
+.lsn-facts .lsn-body { width: 100%; max-width: 1100px; margin: 0 auto; }
+.lsn-facts .lsn-points { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: clamp(10px, 1.6vw, 20px); margin-top: clamp(14px, 2vw, 28px); }
+.lsn-facts .lsn-points li, .lsn-facts .lsn-points li:last-child { flex-direction: column; align-items: flex-start; border: 1px solid var(--lsn-line); border-radius: 12px;
+  padding: clamp(14px, 2vw, 24px); font-size: clamp(17px, 1.9vw, 22px); }
+.lsn-facts .lsn-icon { width: clamp(46px, 4.6vw, 60px); height: clamp(46px, 4.6vw, 60px); }
+
+/* Стадии: карточки в ряд, номер стадии, вывод снизу */
+.lsn-stages { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; align-content: center; gap: clamp(12px, 2vw, 22px); }
+.lsn-head .lsn-title { margin-bottom: 6px; }
+.lsn-lead { margin: 0; color: var(--lsn-muted); font-size: clamp(15px, 1.6vw, 19px); }
+.lsn-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: clamp(10px, 1.6vw, 20px); min-height: 0; }
 .lsn-cards[data-n='3'] { --n: 3; }
 .lsn-cards[data-n='2'] { --n: 2; }
-.lsn-card { background: #fff; border-radius: 22px; padding: clamp(10px, 1.6vw, 18px); display: flex; flex-direction: column; gap: 8px; min-height: 0;
-  box-shadow: 0 2px 4px rgb(15 42 48 / 0.04), 0 12px 28px rgb(15 42 48 / 0.08); position: relative; }
-.lsn-card-art { flex: none; height: min(30vh, 250px); display: flex; align-items: center; justify-content: center; background: var(--lsn-bg); border-radius: 16px; padding: 8px; }
+.lsn-card { border: 1px solid var(--lsn-line); border-radius: 12px; padding: clamp(8px, 1vw, 12px); display: flex; flex-direction: column; gap: 10px; min-height: 0; background: #fff; }
+.lsn-card-art { flex: none; height: min(30vh, 250px); display: flex; align-items: center; justify-content: center; background: var(--lsn-plate); border-radius: 8px; padding: 10px; }
 .lsn-card-art .art { width: 100%; height: 100%; }
-.lsn-card p { margin: 0; font-size: clamp(15px, 1.8vw, 22px); line-height: 1.3; font-weight: 500; }
-.lsn-num { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--lsn-teal); color: #fff; font-family: Geologica, sans-serif; font-weight: 600; margin-right: 4px; font-size: 0.9em; }
-.lsn-wait .lsn-card:not(:last-child)::after { content: '→'; position: absolute; right: calc(-1 * clamp(10px, 1.8vw, 22px) / 2 - 0.4em); top: 38%; font-size: clamp(22px, 3vw, 34px); color: var(--lsn-teal); font-weight: 600; z-index: 1; }
-.lsn-wait .lsn-card.now { outline: 3px solid var(--lsn-teal); }
-.lsn-price { font-family: Geologica, sans-serif; font-weight: 600 !important; font-size: clamp(18px, 2.4vw, 30px) !important; color: var(--lsn-teal); }
-.lsn-wait .lsn-card:not(.now) .lsn-price { color: #b4441f; }
-.lsn-sooner { margin: 4px 0 0; text-align: center; font-weight: 600; font-size: clamp(17px, 2.2vw, 26px); }
-.lsn-note { margin: 0; text-align: center; color: var(--lsn-muted); font-size: clamp(12px, 1.3vw, 15px); }
+.lsn-card p { margin: 0; display: flex; gap: 10px; align-items: flex-start; font-size: clamp(15px, 1.55vw, 19px); line-height: 1.35; padding: 0 2px 4px; }
+.lsn-num { flex: none; display: grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; border: 1.5px solid var(--lsn-teal); color: var(--lsn-teal);
+  font-family: Geologica, sans-serif; font-weight: 600; font-size: 0.85em; margin-top: 0.05em; box-sizing: border-box; }
+.lsn-note { margin: 0; background: var(--lsn-teal-soft); color: var(--lsn-teal-dark); border-radius: 10px; padding: clamp(10px, 1.4vw, 16px) clamp(14px, 1.8vw, 22px);
+  font-weight: 500; font-size: clamp(15px, 1.7vw, 20px); line-height: 1.4; }
 
-.lsn-end { padding: 0 clamp(16px, 5vw, 72px) 8px; display: grid; gap: 8px; justify-items: center; }
+.lsn-end { padding: 0 clamp(16px, 5vw, 80px) 10px; display: grid; gap: 10px; justify-items: center; }
 .lsn-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .lsn-actions .btn, .lsn-actions a.btn { min-height: 44px; font-size: 16px; }
 .lsn-disclaimer { margin: 0; font-size: 13px; color: var(--lsn-muted); text-align: center; }
 
-.lsn-nav { display: flex; align-items: center; justify-content: space-between; padding: 6px clamp(12px, 3vw, 28px) max(10px, env(safe-area-inset-bottom)); }
-.lsn .lsn-arrow { width: 56px; height: 56px; border-radius: 50%; border: 0; background: #fff; font-size: 32px; line-height: 1; box-shadow: 0 2px 6px rgb(15 42 48 / 0.12); }
-.lsn .lsn-arrow.next { background: var(--lsn-teal); color: #fff !important; }
+.lsn-nav { display: flex; align-items: center; justify-content: space-between; padding: 8px clamp(14px, 3vw, 32px) max(10px, env(safe-area-inset-bottom)); border-top: 1px solid var(--lsn-line); }
+.lsn .lsn-arrow { width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--lsn-line-strong); background: #fff; font-size: 28px; line-height: 1; color: var(--lsn-ink); }
+.lsn .lsn-arrow.next { background: var(--lsn-teal); border-color: var(--lsn-teal); color: #fff !important; }
 .lsn-arrow:disabled { opacity: 0.35; cursor: default; }
-.lsn-count { font-weight: 600; color: var(--lsn-muted); font-size: 15px; }
-.lsn button:focus-visible { outline: 3px solid var(--lsn-teal); outline-offset: 2px; }
+.lsn-count { font-weight: 500; color: var(--lsn-muted); font-size: 15px; font-variant-numeric: tabular-nums; }
+.lsn button:focus-visible, .lsn a:focus-visible { outline: 2px solid var(--lsn-teal); outline-offset: 2px; }
 
 /* Телефон и узкий экран стоя: рисунок сверху, текст под ним; стадии — по две в ряд */
 @media (max-width: 760px), (orientation: portrait) and (max-width: 1000px) {
-  .lsn-slide { grid-template-columns: 1fr; grid-template-rows: minmax(0, auto) auto; align-content: start; gap: 12px; }
+  .lsn-slide { grid-template-columns: 1fr; grid-template-rows: minmax(0, auto) auto; align-content: start; gap: 14px; }
   .lsn-what .lsn-art, .lsn-list .lsn-art { height: auto; }
-  .lsn-what .lsn-art .art { max-height: 36vh; }
-  .lsn-list .lsn-art .art { max-height: 22vh; }
-  .lsn-stages { grid-template-rows: auto auto auto; }
+  .lsn-what .lsn-art .art { max-height: 34vh; }
+  .lsn-list .lsn-art .art { max-height: 25vh; }
+  .lsn-photo img { max-height: 32vh; }
+  .lsn-stages { grid-template-rows: auto auto auto auto; }
   .lsn-cards { --n: 2 !important; }
   .lsn-cards[data-n='3'] .lsn-card:last-child { grid-column: 1 / -1; flex-direction: row; align-items: center; }
   .lsn-cards[data-n='3'] .lsn-card:last-child .lsn-card-art { flex: 0 0 44%; }
-  .lsn-card-art { height: 19vh; }
-  .lsn-wait .lsn-card:not(:last-child)::after { display: none; }
+  .lsn-card-art { height: 17vh; }
+  .lsn-facts { align-content: start; }
 }
 @media (max-width: 760px) and (orientation: portrait) {
-  .lsn-kicker { max-width: 46%; }
-  .lsn-wait .lsn-cards { --n: 1 !important; }
-  .lsn-wait .lsn-card, .lsn-wait .lsn-cards[data-n='3'] .lsn-card:last-child { flex-direction: row; align-items: center; }
-  .lsn-wait .lsn-card .lsn-card-art { height: 96px; }
-  .lsn-wait .lsn-card p { font-size: 17px; }
-  .lsn-brand { display: none; }
-  .lsn-wait .lsn-card > p { flex: 1; }
-  .lsn-wait .lsn-card { display: grid; grid-template-columns: 34% 1fr; grid-template-rows: auto auto; column-gap: 12px; }
-  .lsn-wait .lsn-card .lsn-card-art { grid-row: 1 / 3; }
+  .lsn-top { gap: 10px; }
+  .lsn-kicker { max-width: 40%; }
+  .lsn-kicker > span:last-child { font-size: 13px; }
+  .lsn-card p { gap: 8px; }
+  .lsn-facts .lsn-points li, .lsn-facts .lsn-points li:last-child { flex-direction: row; align-items: center; }
 }
 
-/* Список тем (в CRM и на /learn) */
+/* Список тем (в CRM и на /learn): обложка на светлой пластине, название, сколько слайдов */
 .learn-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-.learn-tile { width: 100%; border: 1px solid rgb(27 58 64 / 0.08); border-radius: 18px; padding: 12px; display: grid; gap: 8px; text-align: left; cursor: pointer;
-  color: #1b3a40; font: inherit; box-shadow: 0 2px 6px rgb(15 42 48 / 0.06); text-decoration: none; }
-.learn-tile:hover { box-shadow: 0 6px 18px rgb(15 42 48 / 0.12); }
-.learn-tile .learn-art { height: 140px; display: flex; justify-content: center; }
+.learn-tile { width: 100%; height: 100%; box-sizing: border-box; background: #fff; border: 1px solid #dce4e5; border-radius: 12px; padding: 10px 10px 14px; display: grid; grid-template-rows: auto auto 1fr; gap: 6px; text-align: left; cursor: pointer;
+  color: #0f2a30; font: inherit; box-shadow: 0 1px 2px rgb(15 42 48 / 0.05); text-decoration: none; transition: box-shadow 0.15s ease-out, border-color 0.15s ease-out; }
+.learn-tile:hover { border-color: #c8d3d5; box-shadow: 0 1px 2px rgb(15 42 48 / 0.05), 0 4px 14px rgb(15 42 48 / 0.08); }
+.learn-tile .learn-art { height: 150px; display: flex; justify-content: center; background: #f4f7f7; border-radius: 8px; padding: 10px; margin-bottom: 4px; }
 .learn-tile .learn-art .art { height: 100%; width: auto; max-width: 100%; }
-.learn-tile strong { font-family: Geologica, sans-serif; font-weight: 600; font-size: 18px; line-height: 1.2; }
-.learn-tile span { color: #4c6268; font-size: 14px; }
+.learn-tile strong { font-family: Geologica, sans-serif; font-weight: 600; font-size: 17px; line-height: 1.25; padding: 0 4px; }
+.learn-tile span { color: #4c6268; font-size: 14px; padding: 0 4px; }
 
 /* Кнопки CRM внутри презентации — всегда светлые, как сама презентация */
-.lsn .btn { background: #fff; color: #1b3a40; border: 1px solid #c8d3d5; }
+.lsn .btn { background: #fff; color: #0f2a30; border: 1px solid #c8d3d5; }
 .lsn .btn.primary { background: #0e8a80; border-color: #0e8a80; color: #fff; }
 .lsn-sent { align-self: center; font-weight: 600; color: #11683a; background: #d3f0de; border-radius: 999px; padding: 10px 16px; }
 .lsn-error { flex-basis: 100%; text-align: center; margin: 0; color: #a11f1f; font-weight: 500; }
+.site-page.learn-site { max-width: 1080px; }
