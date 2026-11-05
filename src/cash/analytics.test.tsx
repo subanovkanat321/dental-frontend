@@ -56,32 +56,44 @@ test('аналитика: выручка по месяцам, по врачам,
   // Рядом — касса того же месяца: деньги, полученные за период
   expect(within(months).getByLabelText('Касса за месяц')).toHaveTextContent(/45\s000 сом — деньги, полученные за период/)
 
+  // Врачей двое (2–6) — бублик: доли в описании и в легенде, в центре — выручка всех
   const doctors = await screen.findByRole('region', { name: 'Выручка по врачам' })
   const rows = await within(doctors).findAllByRole('listitem')
   expect(rows[0]).toHaveTextContent(/Айгерим Садыкова.*30\s000 сом.*60%/)
+  expect(within(doctors).getByRole('img').getAttribute('aria-label')).toMatch(/^Выручка по врачам: Айгерим Садыкова 30\s000 сом \(60%\), .+ 20\s000 сом \(40%\)$/)
+  expect(within(doctors).getByText('выручка').previousSibling).toHaveTextContent(/50\s000 сом/)
 
   const services = screen.getByRole('region', { name: 'Выручка по услугам' })
   expect((await within(services).findAllByRole('listitem'))[0]).toHaveTextContent(/Пломба.*6\s000 сом.*75%/)
 
-  // Как платят: наличные 60%, перевод 40% — на полосе и в легенде с суммами (сумма — от даты)
+  // Как платят: бублик — наличные 60%, перевод 40% (карты нет — сегмента нет), в центре касса за период
   const methods = screen.getByRole('region', { name: 'Способы оплаты' })
-  expect(within(methods).getByRole('img').getAttribute('aria-label')).toMatch(/Наличные [\d\s]+ сом \(60%\), Перевод [\d\s]+ сом \(40%\)/)
-  // Чем закончились приёмы: все три состоялись
+  expect(within(methods).getByRole('img').getAttribute('aria-label')).toMatch(/^Способы оплаты: Наличные [\d\s]+ сом \(60%\), Перевод [\d\s]+ сом \(40%\)$/)
+  expect(within(within(methods).getByRole('list', { name: 'Способы оплаты' })).getAllByRole('button')).toHaveLength(2)
+  expect(within(methods).getByText('касса').previousSibling).toHaveTextContent(/[\d\s]+ сом/)
+  // Чем закончились приёмы: все три пришли — в центре 100% «пришли»
   const outcomes = screen.getByRole('region', { name: 'Чем закончились приёмы' })
-  expect(within(outcomes).getByRole('img').getAttribute('aria-label')).toMatch(/Состоялись 3 \(100%\)/)
+  expect(within(outcomes).getByRole('img').getAttribute('aria-label')).toBe('Чем закончились приёмы: Пришли 3 (100%)')
+  expect(within(outcomes).getByText('пришли').previousSibling).toHaveTextContent('100%')
   // Загрузка: три приёма сегодня — пик в одном из часов, таблица дней × часов
   const load = screen.getByRole('region', { name: 'Загрузка по дням и часам' })
   expect(within(load).getByText(/Пик —/)).toBeInTheDocument()
   expect(within(load).getByRole('table', { name: 'Приёмы по дням недели и часам' })).toBeInTheDocument()
 
   const sources = screen.getByRole('region', { name: 'Откуда новые пациенты' })
-  expect(await within(sources).findByText('новых пациентов')).toBeInTheDocument()
+  // В центре бублика — сколько новых (3 + 2 + 1)
+  expect((await within(sources).findByText('новых пациентов')).previousSibling).toHaveTextContent('6')
+  expect(within(sources).getByRole('img').getAttribute('aria-label')).toBe('Новые пациенты по источникам: 📱 Instagram 3 чел. (50%), 📣 Реклама (скрыт) 2 чел. (33%), Не указано 1 чел. (17%)')
   expect(within(sources).getAllByRole('listitem')[0]).toHaveTextContent(/📱 Instagram.*3 чел\..*50%/)
   // Скрытый вариант — в истории, с пометкой; без варианта — «Не указано»
   expect(within(sources).getAllByRole('listitem')[1]).toHaveTextContent(/📣 Реклама \(скрыт\).*2 чел\./)
   expect(within(sources).getAllByRole('listitem')[2]).toHaveTextContent(/Не указано/)
   expect(within(sources).getByText(/Не указано» — в карточке/)).toBeInTheDocument()
-  expect(within(sources).getByLabelText('Первичные и повторные визиты')).toHaveTextContent(/16.*первичных 4, повторных 12.*возвращаются 75%/)
+  // Первичные и повторные: бублик, в центре — доля повторных; цифры — строкой под ним
+  const visits = screen.getByRole('region', { name: 'Первичные и повторные визиты' })
+  expect(within(visits).getByRole('img').getAttribute('aria-label')).toBe('Первичные и повторные визиты: Первичные 4 (25%), Повторные 12 (75%)')
+  expect(within(visits).getByText('повторных').previousSibling).toHaveTextContent('75%')
+  expect(within(visits).getByLabelText('Визиты за период')).toHaveTextContent(/16.*первичных 4, повторных 12/)
 
   const noShow = screen.getByRole('region', { name: 'Неявки по неделям' })
   expect(await within(noShow).findByText('20%')).toBeInTheDocument() // 4 неявки из 20

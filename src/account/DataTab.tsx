@@ -1,27 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Fragment, useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { dayTitle, timeOf, ZONE } from '../lib/time'
+import { AuditJournal } from './AuditJournal'
 
 type Me = Schemas['BookingViewsMe']
 
-const dateOf = (instant: string) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
-
 /**
  * «Данные»: выгрузка всей клиники одним архивом в бот (кто видит всех врачей) и журнал важных
- * действий сотрудников (админ) — без имён и телефонов пациентов, последние 200.
+ * действий сотрудников (админ, AuditJournal) — без имён и телефонов пациентов.
  */
 export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
-  const audit = useQuery({ queryKey: ['clinic-audit'], queryFn: () => unwrap(api.GET('/api/clinic/audit')), enabled: Boolean(me.admin) })
   const exportAll = useMutation<Schemas['ExportControllerResult'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/clinic/export')),
   })
-  const days = new Map<string, Schemas['AuditLogEntry'][]>()
-  for (const x of audit.data ?? []) {
-    const day = x.at ? dateOf(x.at) : ''
-    days.set(day, [...(days.get(day) ?? []), x])
-  }
   const r = exportAll.data
 
   return (
@@ -42,28 +34,7 @@ export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
       )}
       {/* Удалить все приёмы — только владелец Tish (сервер тоже: остальным 403) */}
       {me.owner && <ClearAll />}
-      {me.admin && (
-        <section className="card-block">
-          <h2>Журнал действий</h2>
-          <p className="hint">Важные действия сотрудников: удаление записей, оплаты, врачи и сотрудники, «О клинике», новости, склад,
-            выгрузка. Без имён и телефонов пациентов — только номера. Последние 200.</p>
-          {audit.error && <p className="error">{audit.error.message}</p>}
-          {audit.isPending ? <p className="hint">Загрузка…</p> : days.size ? (
-            <table className="table" aria-label="Журнал действий">
-              <tbody>
-                {[...days.entries()].map(([day, items]) => (
-                  <Fragment key={day}>
-                    <tr className="group-row"><th colSpan={3} scope="colgroup">{day ? dayTitle(day) : ''}</th></tr>
-                    {items.map((x, i) => (
-                      <tr key={i}><td className="nowrap num hint">{x.at ? timeOf(x.at) : ''}</td><td className="strong nowrap">{x.who}</td><td>{x.text}</td></tr>
-                    ))}
-                  </Fragment>
-                ))}
-              </tbody>
-            </table>
-          ) : <p className="hint">Пока пусто.</p>}
-        </section>
-      )}
+      {me.admin && <AuditJournal />}
     </>
   )
 }

@@ -119,7 +119,7 @@ test('«Данные» (владелец Tish): под выгрузкой — «
   let cleared: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: true })),
-    http.get('*/api/clinic/audit', () => HttpResponse.json([])),
+    http.get('*/api/clinic/audit', () => HttpResponse.json({ items: [], total: 0 } satisfies Schemas['AuditLogPage'])),
     http.post('*/api/appointments/delete-all', async ({ request }) => {
       cleared = await request.json()
       return HttpResponse.json({ deleted: 3 } satisfies Schemas['AppointmentControllerDeleted'])

@@ -212,7 +212,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/platform/content/{id}": {
+    "/api/platform/finance/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["settings_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/finance/expenses/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -223,6 +239,22 @@ export interface paths {
         put: operations["update_5"];
         post?: never;
         delete: operations["delete_5"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/content/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_6"];
+        post?: never;
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
         patch?: never;
@@ -268,7 +300,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["settings_1"];
+        put: operations["settings_2"];
         post?: never;
         delete?: never;
         options?: never;
@@ -300,9 +332,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_6"];
+        put: operations["update_7"];
         post?: never;
-        delete: operations["delete_6"];
+        delete: operations["delete_7"];
         options?: never;
         head?: never;
         patch?: never;
@@ -316,7 +348,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_7"];
+        put: operations["update_8"];
         post?: never;
         delete?: never;
         options?: never;
@@ -396,7 +428,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_8"];
+        put: operations["update_9"];
         post?: never;
         delete?: never;
         options?: never;
@@ -460,7 +492,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_9"];
+        put: operations["update_10"];
         post?: never;
         delete?: never;
         options?: never;
@@ -588,9 +620,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_10"];
+        put: operations["update_11"];
         post?: never;
-        delete: operations["delete_7"];
+        delete: operations["delete_8"];
         options?: never;
         head?: never;
         patch?: never;
@@ -604,9 +636,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_11"];
+        put: operations["update_12"];
         post?: never;
-        delete: operations["delete_8"];
+        delete: operations["delete_9"];
         options?: never;
         head?: never;
         patch?: never;
@@ -652,7 +684,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view"];
-        put: operations["update_12"];
+        put: operations["update_13"];
         post?: never;
         delete?: never;
         options?: never;
@@ -700,7 +732,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_1"];
-        put: operations["update_13"];
+        put: operations["update_14"];
         post?: never;
         delete?: never;
         options?: never;
@@ -795,8 +827,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_2"];
+        get: operations["settings_3"];
         put: operations["setSettings_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinic/audit/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["settings_4"];
+        put: operations["saveSettings"];
         post?: never;
         delete?: never;
         options?: never;
@@ -812,7 +860,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_14"];
+        put: operations["update_15"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1524,6 +1572,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/finance/expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create_6"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/content": {
         parameters: {
             query?: never;
@@ -1533,7 +1597,7 @@ export interface paths {
         };
         get: operations["list_4"];
         put?: never;
-        post: operations["create_6"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1645,7 +1709,7 @@ export interface paths {
         };
         get: operations["clinics"];
         put?: never;
-        post: operations["create_7"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1805,7 +1869,7 @@ export interface paths {
         };
         get: operations["versions"];
         put?: never;
-        post: operations["create_8"];
+        post: operations["create_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1853,7 +1917,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_9"];
+        post: operations["create_10"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2317,7 +2381,7 @@ export interface paths {
         };
         get: operations["all_5"];
         put?: never;
-        post: operations["create_10"];
+        post: operations["create_11"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2461,7 +2525,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_11"];
+        post: operations["create_12"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2589,7 +2653,7 @@ export interface paths {
         };
         get: operations["list_7"];
         put?: never;
-        post: operations["create_12"];
+        post: operations["create_13"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2622,7 +2686,7 @@ export interface paths {
         get: operations["get_1"];
         put?: never;
         post: operations["rotate"];
-        delete: operations["delete_9"];
+        delete: operations["delete_10"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2637,7 +2701,7 @@ export interface paths {
         };
         get: operations["day"];
         put?: never;
-        post: operations["create_13"];
+        post: operations["create_14"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3099,7 +3163,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["settings_3"];
+        get: operations["settings_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3292,6 +3356,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["managers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/finance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["month"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3534,7 +3614,7 @@ export interface paths {
         get: operations["content"];
         put?: never;
         post?: never;
-        delete: operations["delete_10"];
+        delete: operations["delete_11"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4068,6 +4148,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/audit/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["people"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/ai-usage": {
         parameters: {
             query?: never;
@@ -4142,7 +4238,7 @@ export interface paths {
         get: operations["get_7"];
         put?: never;
         post?: never;
-        delete: operations["delete_11"];
+        delete: operations["delete_12"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4462,7 +4558,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_12"];
+        delete: operations["delete_13"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4510,7 +4606,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_13"];
+        delete: operations["delete_14"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4542,7 +4638,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_14"];
+        delete: operations["delete_15"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4887,6 +4983,37 @@ export interface components {
             log?: boolean;
             alert?: boolean;
             grant?: boolean;
+        };
+        PlatformFinanceControllerSettingsRequest: {
+            smsPriceSom?: number;
+        };
+        PlatformFinanceExpenseForm: {
+            category?: string;
+            /** Format: int64 */
+            amountSom?: number;
+            amountUsd?: number;
+            usdRate?: number;
+            /** Format: date */
+            spentOn?: string;
+            monthly?: boolean;
+            /** Format: date */
+            endedOn?: string;
+            comment?: string;
+        };
+        PlatformExpensesExpense: {
+            /** Format: int64 */
+            id?: number;
+            category?: string;
+            /** Format: int64 */
+            amountSom?: number;
+            amountUsd?: number;
+            usdRate?: number;
+            /** Format: date */
+            spentOn?: string;
+            monthly?: boolean;
+            /** Format: date */
+            endedOn?: string;
+            comment?: string;
         };
         ContentPostsDraft: {
             /** Format: date */
@@ -5400,6 +5527,20 @@ export interface components {
             amountSom?: number;
             details?: string;
             hasQr?: boolean;
+        };
+        AuditControllerSettingsChange: {
+            disabled: string[];
+        };
+        AuditControllerSettings: {
+            actions?: components["schemas"]["AuditControllerSettingsItem"][];
+        };
+        AuditControllerSettingsItem: {
+            code?: string;
+            /** @enum {string} */
+            category?: "APPOINTMENTS" | "MONEY" | "STAFF" | "PATIENTS" | "CATALOG" | "SETTINGS" | "OTHER";
+            title?: string;
+            mandatory?: boolean;
+            enabled?: boolean;
         };
         CareMemoControllerMemo: {
             title?: string;
@@ -6626,6 +6767,53 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        PlatformExpensesClinicIncome: {
+            /** Format: int64 */
+            clinicId?: number;
+            name?: string;
+            /** Format: int64 */
+            som?: number;
+            /** Format: int32 */
+            payments?: number;
+        };
+        PlatformFinanceFinance: {
+            month?: string;
+            /** Format: int64 */
+            incomeSom?: number;
+            /** Format: int64 */
+            expenseSom?: number;
+            /** Format: int64 */
+            profitSom?: number;
+            expenses?: components["schemas"]["PlatformFinanceLine"][];
+            income?: components["schemas"]["PlatformExpensesClinicIncome"][];
+            entries?: components["schemas"]["PlatformExpensesExpense"][];
+            history?: components["schemas"]["PlatformFinanceMonthTotal"][];
+            settings?: components["schemas"]["PlatformFinanceSettings"];
+            categories?: string[];
+        };
+        PlatformFinanceLine: {
+            key?: string;
+            label?: string;
+            /** Format: int64 */
+            som?: number;
+            auto?: boolean;
+            /** Format: int64 */
+            count?: number;
+            needsPrice?: boolean;
+        };
+        PlatformFinanceMonthTotal: {
+            month?: string;
+            /** Format: int64 */
+            incomeSom?: number;
+            /** Format: int64 */
+            expenseSom?: number;
+            /** Format: int64 */
+            profitSom?: number;
+        };
+        PlatformFinanceSettings: {
+            smsPriceSom?: number;
+            lastUsdRate?: number;
+        };
         InstagramTokensState: {
             enabled?: boolean;
             /** Format: date-time */
@@ -7254,10 +7442,28 @@ export interface components {
             amountSom?: number;
         };
         AuditLogEntry: {
+            /** Format: int64 */
+            id?: number;
             who?: string;
+            /** Format: int64 */
+            telegramId?: number;
             text?: string;
             /** Format: date-time */
             at?: string;
+            /** @enum {string} */
+            category?: "APPOINTMENTS" | "MONEY" | "STAFF" | "PATIENTS" | "CATALOG" | "SETTINGS" | "OTHER";
+            action?: string;
+        };
+        AuditLogPage: {
+            items?: components["schemas"]["AuditLogEntry"][];
+            next?: string;
+            /** Format: int64 */
+            total?: number;
+        };
+        AuditLogPerson: {
+            /** Format: int64 */
+            telegramId?: number;
+            name?: string;
         };
         AiUsageStoreCounter: {
             month?: string;
@@ -7980,7 +8186,75 @@ export interface operations {
             };
         };
     };
+    settings_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformFinanceControllerSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     update_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformFinanceExpenseForm"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformExpensesExpense"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -8006,7 +8280,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -8078,7 +8352,7 @@ export interface operations {
             };
         };
     };
-    settings_1: {
+    settings_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -8126,7 +8400,7 @@ export interface operations {
             };
         };
     };
-    update_6: {
+    update_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -8152,7 +8426,7 @@ export interface operations {
             };
         };
     };
-    delete_6: {
+    delete_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -8172,7 +8446,7 @@ export interface operations {
             };
         };
     };
-    update_7: {
+    update_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -8392,7 +8666,7 @@ export interface operations {
             };
         };
     };
-    update_8: {
+    update_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -8486,7 +8760,7 @@ export interface operations {
             };
         };
     };
-    update_9: {
+    update_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -8700,7 +8974,7 @@ export interface operations {
             };
         };
     };
-    update_10: {
+    update_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -8726,7 +9000,7 @@ export interface operations {
             };
         };
     };
-    delete_7: {
+    delete_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -8746,7 +9020,7 @@ export interface operations {
             };
         };
     };
-    update_11: {
+    update_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -8772,7 +9046,7 @@ export interface operations {
             };
         };
     };
-    delete_8: {
+    delete_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -8866,7 +9140,7 @@ export interface operations {
             };
         };
     };
-    update_12: {
+    update_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -8960,7 +9234,7 @@ export interface operations {
             };
         };
     };
-    update_13: {
+    update_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -9164,7 +9438,7 @@ export interface operations {
             };
         };
     };
-    settings_2: {
+    settings_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -9208,7 +9482,51 @@ export interface operations {
             };
         };
     };
-    update_14: {
+    settings_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditControllerSettings"];
+                };
+            };
+        };
+    };
+    saveSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuditControllerSettingsChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditControllerSettings"];
+                };
+            };
+        };
+    };
+    update_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -10698,6 +11016,30 @@ export interface operations {
             };
         };
     };
+    create_6: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformFinanceExpenseForm"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformExpensesExpense"];
+                };
+            };
+        };
+    };
     list_4: {
         parameters: {
             query?: {
@@ -10721,7 +11063,7 @@ export interface operations {
             };
         };
     };
-    create_6: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -10899,7 +11241,7 @@ export interface operations {
             };
         };
     };
-    create_7: {
+    create_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -11172,7 +11514,7 @@ export interface operations {
             };
         };
     };
-    create_8: {
+    create_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -11238,7 +11580,7 @@ export interface operations {
             };
         };
     };
-    create_9: {
+    create_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -12144,7 +12486,7 @@ export interface operations {
             };
         };
     };
-    create_10: {
+    create_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -12443,7 +12785,7 @@ export interface operations {
             };
         };
     };
-    create_11: {
+    create_12: {
         parameters: {
             query?: {
                 months?: number;
@@ -12688,7 +13030,7 @@ export interface operations {
             };
         };
     };
-    create_12: {
+    create_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -12792,7 +13134,7 @@ export interface operations {
             };
         };
     };
-    delete_9: {
+    delete_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -12833,7 +13175,7 @@ export interface operations {
             };
         };
     };
-    create_13: {
+    create_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -13629,7 +13971,7 @@ export interface operations {
             };
         };
     };
-    settings_3: {
+    settings_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -13902,6 +14244,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformMembersManagerView"][];
+                };
+            };
+        };
+    };
+    month: {
+        parameters: {
+            query?: {
+                month?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformFinanceFinance"];
                 };
             };
         };
@@ -14232,7 +14596,7 @@ export interface operations {
             };
         };
     };
-    delete_10: {
+    delete_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -14927,6 +15291,33 @@ export interface operations {
     };
     audit: {
         parameters: {
+            query?: {
+                who?: number;
+                category?: "APPOINTMENTS" | "MONEY" | "STAFF" | "PATIENTS" | "CATALOG" | "SETTINGS" | "OTHER";
+                from?: string;
+                to?: string;
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditLogPage"];
+                };
+            };
+        };
+    };
+    people: {
+        parameters: {
             query?: never;
             header?: never;
             path?: never;
@@ -14940,7 +15331,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuditLogEntry"][];
+                    "application/json": components["schemas"]["AuditLogPerson"][];
                 };
             };
         };
@@ -15047,7 +15438,7 @@ export interface operations {
             };
         };
     };
-    delete_11: {
+    delete_12: {
         parameters: {
             query?: {
                 force?: boolean;
@@ -15499,7 +15890,7 @@ export interface operations {
             };
         };
     };
-    delete_12: {
+    delete_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -15559,7 +15950,7 @@ export interface operations {
             };
         };
     };
-    delete_13: {
+    delete_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -15605,7 +15996,7 @@ export interface operations {
             };
         };
     };
-    delete_14: {
+    delete_15: {
         parameters: {
             query?: never;
             header?: never;
