@@ -1,4 +1,5 @@
 import { ApptBadges } from './ApptBadges'
+import { CancelledList } from './CancelledList'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type CSSProperties } from 'react'
 
@@ -89,7 +90,10 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   const single = many ? null : doctors[0]
   const seesAllMoney = seesAllMoneyOf(me)
   const seesMoney = single ? seesAllMoney || single.id === me.doctorId : seesAllMoney
-  const list = appointments.flatMap((q) => q.data ?? []).filter((a) => a.status !== 'CANCELLED')
+  const loaded = appointments.flatMap((q) => q.data ?? [])
+  const list = loaded.filter((a) => a.status !== 'CANCELLED')
+  // Отменённые не занимают строки дня, но и не пропадают молча — «Отменено: N ›» внизу дня врача
+  const cancelled = loaded.filter((a) => a.status === 'CANCELLED')
   const revenue = useQuery({
     queryKey: ['revenue', date, date, single?.id ?? 'all'],
     queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: date, to: date, ...(single ? { doctorId: single.id } : {}) } } })),
@@ -147,27 +151,35 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
       {note && <p className="hint day-note">{note}</p>}
       {pending ? <p className="hint">Загрузка…</p>
         : failed ? <p className="error">{failed.message}</p>
-          : items.length === 0 ? <p className="day-empty hint">{offText ? `${offText} — записей нет` : 'На этот день записей нет'}</p> : (() => {
+          : items.length === 0 ? (
+            <>
+              <p className="day-empty hint">{offText ? `${offText} — записей нет` : 'На этот день записей нет'}</p>
+              <CancelledList items={cancelled} onOpen={onOpen} selectedId={selectedId} doctorName={many ? (id) => nameOf.get(id) ?? '' : undefined} />
+            </>
+          ) : (() => {
             const blocks = groups.map((g) => {
               const rows = (
-                <ul className="rows">
-                  {g.items.map((item) => item.kind === 'appointment'
-                    ? <Row key={`a${item.a.id}`} a={item.a} next={item.a === next} active={item.a.id === selectedId}
-                        canEdit={canEditDoctor(item.a.doctorId!)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} />
-                    : item.kind === 'pause' ? (
-                      <li key={`p${item.at}`} className="row pause">
-                        <span className="time num">{timeOf(item.at)}</span>
-                        <span className="name"><span aria-hidden="true">{item.emoji} </span>{item.title}</span>
-                        <span className="end num hint">{timeOf(item.end)}</span>
-                      </li>
-                    ) : (
-                      <FreeRow key={`f${item.at}`} start={item.at} end={item.end} canEdit={canEditDoctor(item.doctorId)}
-                        doctor={many ? g.doctor.name : undefined}
-                        waiting={(waitlist.data ?? []).filter((w) => fits(w, item.at, item.end, item.doctorId)).length}
-                        onPick={() => onNew(item.doctorId, minutesOf(item.at))} />
-                    ))}
-                  {g.items.length === 0 && <li className="hint day-empty">Нет записей</li>}
-                </ul>
+                <>
+                  <ul className="rows">
+                    {g.items.map((item) => item.kind === 'appointment'
+                      ? <Row key={`a${item.a.id}`} a={item.a} next={item.a === next} active={item.a.id === selectedId}
+                          canEdit={canEditDoctor(item.a.doctorId!)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} />
+                      : item.kind === 'pause' ? (
+                        <li key={`p${item.at}`} className="row pause">
+                          <span className="time num">{timeOf(item.at)}</span>
+                          <span className="name"><span aria-hidden="true">{item.emoji} </span>{item.title}</span>
+                          <span className="end num hint">{timeOf(item.end)}</span>
+                        </li>
+                      ) : (
+                        <FreeRow key={`f${item.at}`} start={item.at} end={item.end} canEdit={canEditDoctor(item.doctorId)}
+                          doctor={many ? g.doctor.name : undefined}
+                          waiting={(waitlist.data ?? []).filter((w) => fits(w, item.at, item.end, item.doctorId)).length}
+                          onPick={() => onNew(item.doctorId, minutesOf(item.at))} />
+                      ))}
+                    {g.items.length === 0 && <li className="hint day-empty">Нет записей</li>}
+                  </ul>
+                  <CancelledList items={cancelled.filter((a) => a.doctorId === g.doctor.id)} onOpen={onOpen} selectedId={selectedId} />
+                </>
               )
               // «Все врачи» — у каждого врача свой блок; имя прилипает сверху при прокрутке
               return many ? (

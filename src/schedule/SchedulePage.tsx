@@ -9,6 +9,7 @@ import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
 import { ApptBadges, BadgesLegend } from './ApptBadges'
 import { DayList } from './DayList'
+import { CancelledList } from './CancelledList'
 import { DaySummary } from './DaySummary'
 import { freeMinutes } from './free'
 import { DateInput } from '../layout/DateInput'
@@ -548,6 +549,12 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               )
             })}
           </div>
+        )}
+        {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» под днём */}
+        {!dayList && !weekMode && shown.length > 0 && (
+          <CancelledList items={loaded.filter((a) => a.status === 'CANCELLED' && shown.some((d) => d.id === a.doctorId))}
+            selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
+            doctorName={shown.length > 1 ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
         )}
         {!dayList && doctors.length > 0 && <BadgesLegend />}
       </section>

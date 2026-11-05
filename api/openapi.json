@@ -12683,6 +12683,13 @@
           },
           "firstVisit" : {
             "type" : "boolean"
+          },
+          "cancelledAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "cancelledBy" : {
+            "type" : "string"
           }
         }
       },

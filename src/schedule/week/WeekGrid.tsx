@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from
 import type { Schemas } from '../../api/client'
 import { canEditDoctor, seesMoneyOf } from '../../lib/roles'
 import { ApptBadges } from '../ApptBadges'
+import { CancelledList } from '../CancelledList'
 import { dateOf, dayTitle, minutesOf, minutesOfTime, timeOf } from '../../lib/time'
 import { hhmm, PAD, PX, useNowMinutes } from '../gridScale'
 import { statusOf } from '../status'
@@ -171,6 +172,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
           )
         })}
       </div>
+      <CancelledList items={(week.data ?? []).filter((a) => a.status === 'CANCELLED')} onOpen={onOpen} selectedId={selectedId} withDate />
       {week.isPending && <p className="hint">Загрузка недели…</p>}
     </div>
   )

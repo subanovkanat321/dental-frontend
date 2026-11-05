@@ -5639,6 +5639,9 @@ export interface components {
             promoCode?: string;
             bookedBy?: components["schemas"]["FamiliesBooker"];
             firstVisit?: boolean;
+            /** Format: date-time */
+            cancelledAt?: string;
+            cancelledBy?: string;
         };
         FamiliesBooker: {
             fullName?: string;

@@ -1777,3 +1777,20 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .fin-pair > span { max-width: 8px; }
   .fin-month .fin-odd { visibility: hidden; }
 }
+
+/* Отменённые внизу дня (CancelledList): свёрнуто «Отменено: N ›», раскрыть — кто и когда отменил */
+.cancelled { display: grid; gap: 6px; margin-top: 8px; }
+.cancelled-toggle { justify-self: start; min-height: 36px; padding: 4px 10px; border: 1px dashed var(--line-strong); border-radius: var(--r-md);
+  background: none; color: var(--hint); font: inherit; font-size: .9rem; cursor: pointer; }
+.cancelled-toggle[aria-expanded="true"] { color: var(--text); }
+.cancelled-caret { color: var(--link); }
+.cancelled-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.cancelled-row { width: 100%; display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: baseline; padding: 8px 10px;
+  border: 1px solid var(--separator); border-radius: var(--radius); background: var(--sunken); color: var(--hint); font: inherit;
+  text-align: left; cursor: pointer; }
+.cancelled-row.active { border-color: var(--accent); }
+.cancelled-row .time { font: 600 .9rem var(--mono); }
+.cancelled-row .name { color: var(--text); text-decoration: line-through; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cancelled-row .name .hint { text-decoration: none; }
+.cancelled-who { grid-column: 2; font-size: .85rem; }
+.cancelled-by { margin: 0; color: var(--hint); }

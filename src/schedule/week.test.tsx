@@ -192,3 +192,14 @@ test('не тащатся: прошедший и состоявшийся при
   expect(screen.queryByRole('button', { name: /свободно с/ })).not.toBeInTheDocument()
   expect(posted).toBe(false)
 })
+
+test('«Неделя»: отменённые не в сетке, но под неделей «Отменено: 1 ›» — с днём и кто отменил', async () => {
+  backend([visit(1, tuesday, 600, 'Бакыт М.'),
+    visit(2, thursday, 660, 'Асель Т.', { status: 'CANCELLED', cancelledBy: 'пациент в боте', cancelledAt: slotInstant(addDays(todayIn(), -1), 14 * 60 + 20) })])
+  await openWeek()
+  expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Асель Т\./ })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: /Отменено: 1/ }))
+  expect(within(screen.getByRole('list', { name: 'Отменённые записи' })).getByRole('button'))
+    .toHaveTextContent(`${dayTitle(thursday)}, 11:00Асель Т.отменил пациент в боте · вчера 14:20`)
+})

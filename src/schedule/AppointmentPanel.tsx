@@ -30,6 +30,7 @@ import { VisitDocs } from '../print/VisitDocs'
 import { LessonButton } from '../learn/LessonButton'
 import { AfterVisit } from '../print/VisitReport'
 import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
+import { cancelledWhen } from './cancelled'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -292,6 +293,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
           {a.status === 'CANCELLED' && (
             <>
+              {/* Кто и когда отменил (V160): «Отменён: пациент в боте, сегодня 14:20»; старые отмены — без этой строки */}
+              {(a.cancelledBy || a.cancelledAt) && (
+                <p className="cancelled-by">Отменён: {[a.cancelledBy ?? 'кто — не записано', a.cancelledAt ? cancelledWhen(a.cancelledAt, { sayToday: true }) : null].filter(Boolean).join(', ')}</p>
+              )}
               {a.depositStatus === 'RECEIVED' && seesMoney && <p className="tone-wait">Предоплата {somText(a.depositSom ?? 0)} получена — верните пациенту или запишите его снова.</p>}
               <p className="hint">Восстановленный приём попросит напомнить пациенту заново.</p>
               <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>Восстановить</button>
