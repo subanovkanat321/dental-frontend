@@ -140,6 +140,67 @@ test('«＋ Добавить пост»: картинки по строкам, �
   expect(sent).toEqual({ date: today, kind: 'REELS', title: 'Утро в клинике', caption: '', note: 'Кофе и улыбки', images: ['/content/a.png', '/content/b.png'] })
 })
 
+test('Instagram подключён: «Опубликовать в Instagram» после подтверждения, бейдж со ссылкой; ошибка — текстом', async () => {
+  let posts = [
+    post(1, { kind: 'POST', title: 'Тишка', images: ['/content/a.png'] }),
+    post(2, { kind: 'REELS', title: 'Видео', images: ['/content/v.png'] }),
+    post(3, { kind: 'STORIES', title: 'Опрос', images: ['/content/s.png'] }),
+  ]
+  const published: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json(posts)),
+    http.get('*/api/platform/content/instagram', () =>
+      HttpResponse.json({ enabled: true, expiresAt: '2027-01-04T06:00:00Z' } satisfies Schemas['InstagramTokensState'])),
+    http.post('*/api/platform/content/:id/publish', ({ params }) => {
+      published.push(String(params.id))
+      if (params.id === '3') {
+        return HttpResponse.json({ status: 409, title: 'Conflict', code: 'instagram-failed',
+          detail: 'Токен Instagram истёк или отозван — получите новый и пропишите INSTAGRAM_TOKEN в .env' }, { status: 409 })
+      }
+      posts = posts.map((p) => (p.id === 1 ? { ...p, status: 'DONE', instagramMediaId: 'm1', instagramUrl: 'https://www.instagram.com/p/T1/' } : p))
+      return HttpResponse.json(posts[0]!)
+    }),
+  )
+  const user = await openTab()
+  expect(await screen.findByText(/Instagram подключён · токен до 4 янв 2027/)).toBeInTheDocument()
+  const card = await screen.findByRole('article', { name: 'Тишка' })
+  // У Reels видео нет — публиковать вручную
+  expect(within(screen.getByRole('article', { name: 'Видео' })).queryByRole('button', { name: 'Опубликовать в Instagram' })).not.toBeInTheDocument()
+
+  // Отмена в окне — запроса нет
+  await user.click(within(card).getByRole('button', { name: 'Опубликовать в Instagram' }))
+  const dialog = await screen.findByRole('alertdialog')
+  expect(dialog).toHaveTextContent('Опубликовать «Тишка» в Instagram? Пост выйдет сразу.')
+  await user.click(within(dialog).getByRole('button', { name: 'Отмена' }))
+  expect(published).toEqual([])
+
+  await user.click(within(card).getByRole('button', { name: 'Опубликовать в Instagram' }))
+  await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Опубликовать' }))
+  const badge = await within(card).findByRole('link', { name: 'В Instagram ↗' })
+  expect(badge).toHaveAttribute('href', 'https://www.instagram.com/p/T1/')
+  expect(within(card).getByText('Опубликован')).toBeInTheDocument()
+  expect(within(card).queryByRole('button', { name: 'Опубликовать в Instagram' })).not.toBeInTheDocument()
+
+  const story = screen.getByRole('article', { name: 'Опрос' })
+  await user.click(within(story).getByRole('button', { name: 'Опубликовать в Instagram' }))
+  await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Опубликовать' }))
+  expect(await within(story).findByRole('alert')).toHaveTextContent('Токен Instagram истёк')
+  expect(within(story).getByRole('button', { name: 'Опубликовать в Instagram' })).toBeEnabled()
+  expect(published).toEqual(['1', '3'])
+})
+
+test('Instagram не подключён: кнопок публикации нет, подсказка про переменные окружения', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json([post(1, { kind: 'POST', title: 'Тишка', images: ['/content/a.png'] })])),
+  )
+  await openTab()
+  const card = await screen.findByRole('article', { name: 'Тишка' })
+  expect(await screen.findByRole('note')).toHaveTextContent('INSTAGRAM_USER_ID и INSTAGRAM_TOKEN')
+  expect(within(card).queryByRole('button', { name: 'Опубликовать в Instagram' })).not.toBeInTheDocument()
+})
+
 test('менеджеру вкладки «Контент» нет', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: false, fullName: 'Мира' })))
   renderApp()

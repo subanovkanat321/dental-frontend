@@ -20,6 +20,8 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // «Контент»: Instagram на сервере не подключён — кнопок публикации нет
+  http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false } satisfies Schemas['InstagramTokensState'])),
   // Уведомления в приложение: по умолчанию на сервере не включены — блок в «Настройках» скрыт
   http.get('*/api/push', () => HttpResponse.json({ enabled: false, channel: 'TELEGRAM', devices: [] })),
   http.get('*/api/patient-sources', () => HttpResponse.json(SOURCES)),

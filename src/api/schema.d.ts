@@ -1524,6 +1524,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/content/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/content/{id}/postpone": {
         parameters: {
             query?: never;
@@ -1773,7 +1789,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["publish"];
+        post: operations["publish_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2157,7 +2173,7 @@ export interface paths {
         };
         get: operations["list_5"];
         put?: never;
-        post: operations["publish_1"];
+        post: operations["publish_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3212,6 +3228,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["managers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/content/instagram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["instagram"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4802,6 +4834,8 @@ export interface components {
             doneAt?: string;
             /** Format: date-time */
             createdAt?: string;
+            instagramMediaId?: string;
+            instagramUrl?: string;
         };
         BillingControllerPaidUntil: {
             /** Format: date */
@@ -6501,6 +6535,13 @@ export interface components {
             fullName?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        InstagramTokensState: {
+            enabled?: boolean;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: date-time */
+            refreshedAt?: string;
         };
         ClinicApplicationsApplicationView: {
             /** Format: int64 */
@@ -10557,6 +10598,28 @@ export interface operations {
             };
         };
     };
+    publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentPostsPost"];
+                };
+            };
+        };
+    };
     postpone: {
         parameters: {
             query?: never;
@@ -10964,7 +11027,7 @@ export interface operations {
             };
         };
     };
-    publish: {
+    publish_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -11707,7 +11770,7 @@ export interface operations {
             };
         };
     };
-    publish_1: {
+    publish_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -13631,6 +13694,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformMembersManagerView"][];
+                };
+            };
+        };
+    };
+    instagram: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstagramTokensState"];
                 };
             };
         };

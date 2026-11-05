@@ -4037,6 +4037,33 @@
         }
       }
     },
+    "/api/platform/content/{id}/publish" : {
+      "post" : {
+        "tags" : [ "content-controller" ],
+        "operationId" : "publish",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentPostsPost"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/content/{id}/postpone" : {
       "post" : {
         "tags" : [ "content-controller" ],
@@ -4528,7 +4555,7 @@
     "/api/platform/agreements/{id}/publish" : {
       "post" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "publish",
+        "operationId" : "publish_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5465,7 +5492,7 @@
       },
       "post" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "publish_1",
+        "operationId" : "publish_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7817,6 +7844,24 @@
                   "items" : {
                     "$ref" : "#/components/schemas/PlatformMembersManagerView"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/content/instagram" : {
+      "get" : {
+        "tags" : [ "content-controller" ],
+        "operationId" : "instagram",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InstagramTokensState"
                 }
               }
             }
@@ -10748,6 +10793,12 @@
           "createdAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "instagramMediaId" : {
+            "type" : "string"
+          },
+          "instagramUrl" : {
+            "type" : "string"
           }
         }
       },
@@ -14830,6 +14881,21 @@
             "type" : "string"
           },
           "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "InstagramTokensState" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "refreshedAt" : {
             "type" : "string",
             "format" : "date-time"
           }

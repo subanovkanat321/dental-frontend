@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, staticJson, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
-import { addDays, dayTitle, monthRange, todayIn, weekLabel } from '../lib/time'
+import { addDays, dayTitle, monthRange, shortDate, todayIn, weekLabel } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
@@ -14,6 +14,7 @@ import { Select } from '../layout/Select'
 type Post = Schemas['ContentPostsPost']
 type Draft = Schemas['ContentPostsDraft']
 type Kind = NonNullable<Post['kind']>
+type Instagram = Schemas['InstagramTokensState']
 
 const KINDS: Record<Kind, string> = { POST: 'Пост', CAROUSEL: 'Карусель', REELS: 'Reels', STORIES: 'Сторис' }
 const STATUS: Record<NonNullable<Post['status']>, [string, string]> = {
@@ -29,7 +30,8 @@ function weekStart(date: string): string {
 
 /**
  * «Платформа → Контент» (только владелец): контент-план Instagram на месяц, по неделям. Картинки —
- * файлы сайта /content/…; пост дня бот присылает в 10:00, кнопки там те же, что здесь.
+ * файлы сайта /content/…; пост дня бот присылает в 10:00, кнопки там те же, что здесь. Instagram
+ * подключён на сервере — пост, карусель и сторис публикуются кнопкой (сервер сам выкладывает).
  */
 export function ContentTab() {
   const client = useQueryClient()
@@ -42,6 +44,10 @@ export function ContentTab() {
   const list = useQuery({
     queryKey: ['platform-content', month],
     queryFn: () => unwrap(api.GET('/api/platform/content', { params: { query: range } })),
+  })
+  const instagram = useQuery({
+    queryKey: ['platform-content-instagram'],
+    queryFn: () => unwrap(api.GET('/api/platform/content/instagram')),
   })
   const refresh = () => client.invalidateQueries({ queryKey: ['platform-content'] })
   const load = useMutation<Schemas['ContentPostsImported'] | null, ApiError>({
@@ -72,6 +78,7 @@ export function ContentTab() {
           </span>
         </div>
         <p className="hint">Пост дня бот пришлёт вам в 10:00: картинки, текст для копирования и что снять. В 19:00 напомнит, если не отмечен.</p>
+        {instagram.data && <InstagramStatus state={instagram.data} />}
         <div className="actions">
           <button type="button" className="btn primary" onClick={() => { setPostSaved(false); setEditing('new') }}>＋ Добавить пост</button>
           <button type="button" className="btn" disabled={load.isPending} onClick={() => load.mutate()}>Загрузить готовый план</button>
@@ -94,7 +101,7 @@ export function ContentTab() {
             {[...weeks.entries()].map(([start, items]) => (
               <section key={start} className="content-week" aria-label={`Неделя ${weekLabel(start)}`}>
                 <h3>{weekLabel(start)}</h3>
-                {items.map((p) => <PostCard key={p.id} post={p} today={today} onEdit={() => { setPostSaved(false); setEditing(p) }} onChanged={() => void refresh()} />)}
+                {items.map((p) => <PostCard key={p.id} post={p} today={today} instagram={instagram.data?.enabled === true} onEdit={() => { setPostSaved(false); setEditing(p) }} onChanged={() => void refresh()} />)}
               </section>
             ))}
           </>
@@ -104,8 +111,31 @@ export function ContentTab() {
   )
 }
 
-function PostCard({ post, today, onEdit, onChanged }: { post: Post; today: string; onEdit: () => void; onChanged: () => void }) {
+/** Подключён ли Instagram (переменные окружения сервера) и до когда токен — его сервер продлевает сам. */
+function InstagramStatus({ state }: { state: Instagram }) {
+  if (!state.enabled) {
+    return (
+      <p className="hint" role="note">
+        Публиковать в Instagram кнопкой (здесь и в боте): пропишите <code>INSTAGRAM_USER_ID</code> и <code>INSTAGRAM_TOKEN</code> в .env на сервере и перезапустите приложение.
+      </p>
+    )
+  }
+  return (
+    <p className="hint" role="note">
+      📤 Instagram подключён{state.expiresAt ? ` · токен до ${shortDate(state.expiresAt)}, продлевается сам` : ''}
+    </p>
+  )
+}
+
+function PostCard({ post, today, instagram, onEdit, onChanged }: {
+  post: Post; today: string; instagram: boolean; onEdit: () => void; onChanged: () => void
+}) {
   const [copied, setCopied] = useState(false)
+  // Публикация — секунды: Instagram скачивает картинки. Повторное нажатие сервер второй раз не выложит
+  const publish = useMutation<Post, ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/publish', { params: { path: { id: post.id! } } })),
+    onSuccess: onChanged,
+  })
   const action = useMutation<unknown, ApiError, 'done' | 'skip' | 'postpone' | 'plan' | 'delete'>({
     mutationFn: (what) => {
       const params = { params: { path: { id: post.id! } } }
@@ -131,6 +161,7 @@ function PostCard({ post, today, onEdit, onChanged }: { post: Post; today: strin
   const date = post.publishOn!
   const late = post.status === 'PLANNED' && date < today
   const images = post.images ?? []
+  const canPublish = instagram && post.kind !== 'REELS' && images.length > 0 && !post.instagramMediaId
   return (
     <article className={date === today ? 'content-post today' : 'content-post'} aria-label={post.title}>
       <header className="content-head">
@@ -138,6 +169,9 @@ function PostCard({ post, today, onEdit, onChanged }: { post: Post; today: strin
         <span className="chip small s-request">{KINDS[post.kind ?? 'POST']}</span>
         <span className={`chip small ${cls}`}>{status}</span>
         {late && <span className="tone-bad">не опубликован</span>}
+        {post.instagramUrl
+          ? <a className="chip small s-ok" href={post.instagramUrl} target="_blank" rel="noreferrer">В Instagram ↗</a>
+          : post.instagramMediaId && <span className="chip small s-ok">В Instagram</span>}
       </header>
       <h4>{post.title}</h4>
       {images.length > 0 && (
@@ -158,6 +192,12 @@ function PostCard({ post, today, onEdit, onChanged }: { post: Post; today: strin
       )}
       {post.note && <p className="hint"><b>{post.kind === 'REELS' ? 'Что снять: ' : 'Заметка: '}</b>{post.note}</p>}
       <div className="actions">
+        {canPublish && (
+          <button type="button" className="btn small primary" disabled={publish.isPending}
+            onClick={() => void ask(`Опубликовать «${post.title}» в Instagram? Пост выйдет сразу.`).then((ok) => ok && publish.mutate())}>
+            {publish.isPending ? 'Публикую…' : 'Опубликовать в Instagram'}
+          </button>
+        )}
         {post.status === 'PLANNED' ? (
           <>
             <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('done')}>Опубликовал</button>
@@ -170,6 +210,7 @@ function PostCard({ post, today, onEdit, onChanged }: { post: Post; today: strin
           onClick={() => void ask(`Удалить «${post.title}» из плана?`).then((ok) => ok && action.mutate('delete'))}>Удалить</button>
       </div>
       {action.error && <p className="error" role="alert">{action.error.message}</p>}
+      {publish.error && <p className="error" role="alert">{publish.error.message}</p>}
     </article>
   )
 }
