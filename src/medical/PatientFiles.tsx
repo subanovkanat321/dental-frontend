@@ -125,7 +125,7 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
           {KINDS.map(([k, name]) => <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)}>{name}</button>)}
         </div>
         <p className="hint small kind-hint">{KIND_HINT[kind]}</p>
-        <input aria-label="Подпись" placeholder="Подпись — необязательно" maxLength={200} value={caption} onChange={(e) => setCaption(e.target.value)} />
+        <input aria-label="Что на снимке" placeholder="Что на снимке, например «36 до лечения» — необязательно" maxLength={200} value={caption} onChange={(e) => setCaption(e.target.value)} />
         <DateInput aria-label="Дата снимка" value={takenOn} max={todayIn()} onChange={(e) => setTakenOn(e.target.value)} />
         <label className="btn primary">
           📷 Сфотографировать

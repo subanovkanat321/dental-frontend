@@ -8,6 +8,7 @@ import { serviceEmoji } from '../lib/serviceEmoji'
 import { dateOf, shortDate, somText, todayIn } from '../lib/time'
 import { useAppointmentAction } from './useAppointmentAction'
 import { DateInput } from '../layout/DateInput'
+import { Select } from '../layout/Select'
 import { useEarnings } from '../earnings/earnings'
 import { seesOwnEarnings } from '../lib/roles'
 
@@ -132,21 +133,27 @@ function fieldError(e: { fieldErrors: Record<string, string>; message: string } 
   return f.amountSom ?? f.method ?? f.chargeSom ?? f.dueOn ?? e.message
 }
 
-/** Цены услуг клиники кнопками: нажать — сумма в поле, ещё раз (или другую) — прибавить. */
+/**
+ * Цена из прайса — одним списком, а не кнопками на полэкрана. Выбрали — сумма в поле; выбрали ещё
+ * одну — прибавится (лечение + пломба). Сумму в поле можно поправить руками.
+ */
 function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void }) {
   const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), staleTime: 10 * 60_000 })
-  const [used, setUsed] = useState(false)
+  const [picked, setPicked] = useState<string[]>([])
   const list = (services.data ?? []).filter((s) => s.active && s.priceSom != null)
   if (!list.length) return null
   return (
-    <div className="price-hints" role="group" aria-label="Цены услуг">
-      {list.map((s) => (
-        <button key={s.id} type="button" className="chip" title="Нажмите ещё раз — прибавится"
-          onClick={() => {
-            onPick(s.priceSom!, used)
-            setUsed(true)
-          }}><span aria-hidden="true">{serviceEmoji(s.name)} </span>{s.name} · {somText(s.priceSom!)}</button>
-      ))}
+    <div className="price-pick">
+      <Select aria-label="Цена из прайса" value="" onChange={(e) => {
+        const s = list.find((x) => String(x.id) === e.target.value)
+        if (!s) return
+        onPick(s.priceSom!, picked.length > 0)
+        setPicked([...picked, s.name ?? ''])
+      }}>
+        <option value="">{picked.length ? '＋ Прибавить ещё услугу…' : 'Выбрать из прайса…'}</option>
+        {list.map((s) => <option key={s.id} value={s.id}>{serviceEmoji(s.name)} {s.name} · {somText(s.priceSom!)}</option>)}
+      </Select>
+      {picked.length > 0 && <p className="hint small">Из прайса: {picked.join(' + ')}</p>}
     </div>
   )
 }

@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { appointment, me, renderApp, openMore } from '../test/fixtures'
 import { addDays, todayIn } from '../lib/time'
 import { pickDate } from '../test/date'
+import { choose } from '../test/select'
 import { server } from '../test/server'
 
 type Appointment = Schemas['AppointmentView']
@@ -50,10 +51,12 @@ test('оплата по шагам: стоимость из цен услуг, �
   const panel = await card()
   const form = within(panel).getByRole('form', { name: 'Оплата' })
   // 1. Стоимость: цены услуг складываются
-  await userEvent.click(await within(form).findByRole('button', { name: /Пломба/ }))
-  await userEvent.click(within(form).getByRole('button', { name: /Чистка/ }))
+  // Прайс — одним списком, а не кнопками на полэкрана
+  const price = await within(form).findByRole('combobox', { name: 'Цена из прайса' })
+  await choose(price, 'Пломба · 3 000 сом')
+  await choose(within(form).getByRole('combobox', { name: 'Цена из прайса' }), 'Чистка · 2 000 сом')
   expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(5000)
-  expect(within(form).queryByRole('button', { name: /Старое/ })).not.toBeInTheDocument()
+  expect(within(form).getByText('Из прайса: Пломба + Чистка')).toBeInTheDocument()
   expect(within(form).getByRole('button', { name: /Всё сразу · 5\s000 сом/ })).toHaveAttribute('aria-pressed', 'true')
 
   // 2. Часть сейчас — остальное видно сразу, срок по желанию

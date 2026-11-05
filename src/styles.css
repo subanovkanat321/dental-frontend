@@ -1884,3 +1884,4 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .patient-card .segments.tabs button + button { border-left: 1px solid var(--separator) !important; }
 .patient-card .patient-medical, .patient-card .patient-money, .patient-card .patient-more { gap: 10px; }
 .patient-medical .btn, .patient-more > .link { justify-self: start; }
+.price-pick { display: grid; gap: 4px; margin-top: 6px; }
