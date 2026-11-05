@@ -1684,3 +1684,41 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .insta-block h3 { margin: 0; font-size: 1rem; }
 .publication h4 { margin: 0; font-size: .95rem; }
 .kind-hint { margin: 0; }
+
+/* «Платформа → Финансы»: доход — бирюзовый, расход — нейтральный, прибыль — зелёным вверх, убыток — красным вниз */
+:root { --chart-exp: #9AABB0; }
+:root[data-theme=dark] { --chart-exp: #5E757B; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --chart-exp: #5E757B; } }
+.fin-tiles .survey-tile { flex: 1 1 140px; }
+.fin-lines { max-width: 720px; }
+.fin-lines dt .chip { margin-left: 8px; }
+.fin-entries { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.fin-entry { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--separator); }
+.fin-entry .chip { margin-left: 8px; }
+.fin-form { margin: 10px 0; max-width: 560px; }
+.fin-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.fin-cats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.fin-cats .btn[aria-pressed=true] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft, var(--sunken)); }
+.fin-bars { display: flex; align-items: stretch; gap: 2px; height: 230px; padding-top: 8px; }
+.fin-month { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0;
+  border-radius: var(--r-sm); background: none; font: inherit; color: inherit; cursor: pointer; }
+.fin-month.picked { background: var(--sunken); }
+.fin-month:focus-visible { outline: 2px solid var(--accent); }
+.fin-pair { flex: 1; display: flex; align-items: flex-end; justify-content: center; gap: 2px; width: 80%; }
+.fin-pair > span { flex: 1; max-width: 14px; min-height: 2px; border-radius: 3px 3px 0 0; }
+.fin-profit { position: relative; width: 60%; height: 48px; background: linear-gradient(var(--line-strong), var(--line-strong)) center / 100% 1px no-repeat; }
+.fin-profit > span { position: absolute; left: 0; right: 0; }
+.fin-profit > .fin-up { bottom: 50%; border-radius: 3px 3px 0 0; }
+.fin-profit > .fin-down { top: 50%; border-radius: 0 0 3px 3px; }
+.fin-in, .key.fin-in { background: var(--chart-1); }
+.fin-out, .key.fin-out { background: var(--chart-exp); }
+.fin-up, .key.fin-up { background: var(--status-ok); }
+.fin-down, .key.fin-down { background: var(--chart-bad); }
+.legend .key.fin-out, .legend .key.fin-up, .legend .key.fin-down { margin-left: 8px; }
+@media (max-width: 760px) {
+  .fin-entry { grid-template-columns: 1fr auto; }
+  .fin-entry .btn { grid-column: 1 / -1; justify-self: start; }
+  .fin-bars { height: 200px; }
+  .fin-pair > span { max-width: 8px; }
+  .fin-month .fin-odd { visibility: hidden; }
+}
