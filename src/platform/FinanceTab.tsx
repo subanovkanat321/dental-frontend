@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
+import { Donut } from '../lib/Donut'
 import { shortDate, somText, todayIn } from '../lib/time'
 import { DateInput } from '../layout/DateInput'
 import { EmptyState } from '../layout/EmptyState'
@@ -85,6 +86,10 @@ function ExpensesBlock({ f }: { f: Finance }) {
         <h2>Расходы</h2>
         {!adding && <button type="button" className="btn primary small" onClick={() => { setAdding(true); setEditing(null) }}>Добавить расход</button>}
       </div>
+      {/* Структура расходов месяца — бублик; ниже те же статьи списком с пометками «считается само» */}
+      <Donut parts={lines.filter((l) => !l.needsPrice && (l.som ?? 0) > 0).map((l) => ({ key: l.key ?? l.label ?? '', name: l.label ?? '', value: l.som ?? 0 }))}
+        label="Структура расходов за месяц" format={somText} center={somText(f.expenseSom ?? 0)} caption="расходы месяца"
+        empty="Расходов за этот месяц нет." />
       <dl className="net-lines fin-lines" aria-label="Расходы по статьям">
         {lines.map((l) => (
           <div key={l.key}>
