@@ -88,19 +88,21 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
   const medical = (files.data ?? []).filter((f) => !isComposite(f))
   const insta = (files.data ?? []).filter(isComposite)
   const count = medical.length
-  if (compact && !open) {
-    return (
-      <button type="button" className="btn files-toggle" aria-expanded={false} onClick={() => setOpen(true)}>
-        📷 Снимки и фото{count ? ` · ${count}` : ''} — загрузить{insta.length ? ` · Instagram: ${insta.length}` : ''}</button>
-    )
-  }
+  // В карточке приёма — строка-раскрывашка «Снимки · 3», как «Зубы» и «Материалы»
+  const head = compact && (
+    <button type="button" className="fold-head" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <span className="fold-title">Снимки и фото</span>
+      <span className="fold-meta">{count ? count : 'нет'}{insta.length ? ` · Instagram: ${insta.length}` : ''}</span>
+      <span className="fold-chev" aria-hidden="true">›</span>
+    </button>
+  )
+  if (compact && !open) return <section className="fold" aria-label="Снимки и фото">{head}</section>
   const shown = compact ? medical.slice(0, 4) : medical
   return (
-    <section className={compact ? 'card-block files-compact' : 'card-block'} aria-label="Снимки и фото">
-      <h2>Снимки и фото — медкарта{count ? <span className="hint"> · {count}</span> : null}
-        {compact && <button type="button" className="link files-hide" onClick={() => setOpen(false)}>свернуть</button>}</h2>
-      {compact && count > 4 && <p className="hint small">Последние 4 — все снимки в медкарте пациента.</p>}
-      <p className="hint small">Для лечения — видит только клиника. В соцсети отсюда ничего не уходит.</p>
+    <section className={compact ? 'fold open files-compact' : 'card-block'} aria-label="Снимки и фото">
+      {compact ? head : <h2>Снимки и фото{count ? <span className="hint"> · {count}</span> : null}</h2>}
+      {compact && count > 4 && <p className="hint small">Последние 4 — все в медкарте.</p>}
+      {!compact && <p className="hint small">Для лечения — видит только клиника. В соцсети отсюда ничего не уходит.</p>}
       {medical.length ? (
         <ul className="files">
           {shown.map((f) => (

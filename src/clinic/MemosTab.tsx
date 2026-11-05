@@ -38,7 +38,7 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
         <section className="card-block">
           <div className="block-head">
             <p className="hint">Памятку отдают пациенту после приёма: «📤 Отправить пациенту» или «🖨 Печать» на карточке приёма.
-              Какая памятка у услуги — в «Настройки → Услуги».</p>
+              Какая памятка у услуги — в «Настройки → Услуги и цены».</p>
             {editable && <button type="button" className="btn primary" onClick={() => setOpened('new')}>＋ Своя памятка</button>}
           </div>
           {memos.error && <p className="error">{memos.error.message}</p>}

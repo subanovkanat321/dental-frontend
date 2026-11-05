@@ -53,7 +53,7 @@ test('ассистент: без предоплаты и цен услуг, пе
   expect(within(panel).queryByRole('group', { name: 'Врач' })).not.toBeInTheDocument()
 
   openItem('')
-  expect(await screen.findByRole('button', { name: /Перерывы и выходные/ })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /Рабочее время/ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /^Услуги/ })).not.toBeInTheDocument()
 })
 
@@ -69,7 +69,7 @@ test('перенос: другой врач или длительность — 
   expect(within(form).queryByText(/Приём: 23:30/)).not.toBeInTheDocument()
 })
 
-test('регистратура: в карточке пациента нет «Медкарта и снимки» — сервер её не откроет', async () => {
+test('регистратура: в карточке пациента нет вкладки «Медкарта» — сервер её не откроет', async () => {
   backend(reception)
   server.use(
     http.get('*/api/patients/recent', () => HttpResponse.json([{ id: 3, fullName: 'Нурлан К.', phone: '996777555666' }])),
@@ -82,5 +82,5 @@ test('регистратура: в карточке пациента нет «М
   await userEvent.click(await screen.findByRole('button', { name: 'Нурлан К.' }))
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
   expect(await within(panel).findByRole('button', { name: '＋ Записать' })).toBeInTheDocument()
-  expect(within(panel).queryByRole('button', { name: 'Медкарта и снимки' })).not.toBeInTheDocument()
+  expect(within(panel).queryByRole('tab', { name: 'Медкарта' })).not.toBeInTheDocument()
 })

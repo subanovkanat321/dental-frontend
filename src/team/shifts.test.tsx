@@ -7,7 +7,7 @@ import type { Schemas } from '../api/client'
 import { createQueryClient } from '../api/queryClient'
 import { readDeepLink } from '../lib/deepLink'
 import { addDays, todayIn, weekStart } from '../lib/time'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
 import { OnDuty } from './OnDuty'
 
@@ -164,17 +164,28 @@ test('одни врачи — график пуст: объяснение и к�
   expect(window.location.hash).toBe('#/settings/hours')
 })
 
-test('«Часы и смены» — один пункт: вкладка «Врачи» и «Смены персонала»; старый адрес «График смен» открывает смены', async () => {
+test('«Рабочее время» — один пункт: вкладки «Врачи», «Смены персонала», «Перерывы и выходные»; старые адреса открывают свою вкладку', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/shifts', () => HttpResponse.json(schedule(true, 111))),
   )
   window.location.hash = '/settings'
   renderApp()
-  expect(await screen.findByRole('button', { name: /Часы и смены/ })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /Рабочее время/ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /График смен/ })).not.toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: /Часы и смены/ }))
+  await userEvent.click(screen.getByRole('button', { name: /Рабочее время/ }))
   expect(await screen.findByRole('tab', { name: 'Врачи' })).toHaveAttribute('aria-selected', 'true')
+  // «Перерывы и выходные» — больше не отдельный пункт списка, а вкладка
+  expect(screen.queryByRole('button', { name: /Перерывы и выходные/ })).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('tab', { name: 'Смены персонала' }))
   expect(await screen.findByRole('table', { name: 'График смен на неделю' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('tab', { name: 'Перерывы и выходные' }))
+  expect(screen.getByRole('tab', { name: 'Перерывы и выходные' })).toHaveAttribute('aria-selected', 'true')
+  expect(screen.getByRole('heading', { name: 'Рабочее время' })).toBeInTheDocument()
+
+  // Старые адреса — закладки и кнопки бота: #/settings/timeoff и #/settings/shifts
+  openItem('timeoff')
+  expect(await screen.findByRole('tab', { name: 'Перерывы и выходные' })).toHaveAttribute('aria-selected', 'true')
+  openItem('shifts')
+  expect(await screen.findByRole('tab', { name: 'Смены персонала' })).toHaveAttribute('aria-selected', 'true')
 })

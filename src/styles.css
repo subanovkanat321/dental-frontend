@@ -505,8 +505,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .line-edit .link { font-size: .86rem; flex: none; }
 /* «📖 Показать пациенту» (src/learn): кнопка темы и выбор другой темы одной строкой */
 .lesson-line { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.lesson-line .btn { flex: 1 1 auto; justify-content: flex-start; }
-.lesson-line .lesson-topic { flex: 0 1 12rem; min-width: 0; }
+.lesson-line .btn { flex: none; }
+.lesson-line .lesson-topic { flex: 1 1 12rem; min-width: 0; }
 .sub-form { padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
 .supplies-box { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--separator); }
 .supplies-box .spent { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -1606,13 +1606,7 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 .dictation-row .dictation-tooth { flex: 0 0 3.5em; width: 3.5em; text-align: center; }
 
 /* «Продолжение лечения» в карточке приёма: что сделали в прошлый раз и что осталось по плану */
-.patient-history { display: grid; gap: 6px; padding: 10px 12px; border-radius: var(--r-md); border: 1px solid var(--line-strong); }
-.patient-history h3 { margin: 0; font-size: .95rem; }
-.patient-history .history-line { margin: 0; }
-.patient-history .history-visits { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .9rem; }
-.patient-history .link { justify-self: start; }
-.continue { display: grid; gap: 8px; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); }
-.continue h3 { margin: 0; font-size: .95rem; }
+.continue { display: grid; gap: 8px; }
 .continue > div { display: grid; gap: 2px; }
 .continue ul { margin: 0; padding-left: 18px; }
 .continue-note { margin: 0; white-space: pre-line; }
@@ -1676,8 +1670,6 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .sidebar-toggle { display: none; }
 }
 /* «Ещё» в карточке приёма: редкое (промокод, предоплата, лист ожидания) — по нажатию */
-.more-link { justify-self: start; color: var(--hint); }
-.rare { display: grid; gap: 8px; padding-top: 4px; border-top: 1px dashed var(--separator); }
 .rare > .link { justify-self: start; }
 /* «💬 Помощь» на главных экранах: кнопка внизу справа и чат поверх (панель приёма её перекрывает — так и задумано) */
 .help-fab { position: fixed; right: 20px; bottom: 20px; z-index: 12; display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
@@ -1691,10 +1683,6 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .help-fab-text { display: none; }
 }
 /* «Снимки и фото» в карточке приёма: свёрнуто под кнопкой, раскрытое — компактнее, чем в медкарте */
-.files-toggle { justify-self: stretch; }
-.files-compact { padding: 12px; }
-.files-compact h2 { display: flex; align-items: baseline; gap: 8px; font-size: 1rem; }
-.files-hide { margin-left: auto; font-size: .85rem; font-weight: 400; }
 
 /* Подтверждение (layout/Confirm): компьютер — окно по центру, телефон — лист снизу */
 .confirm-backdrop { align-items: center; justify-content: center; }
@@ -1713,7 +1701,6 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .patient-mode button { padding-inline: 10px; white-space: nowrap; }
 /* «Зубы этого приёма» в карточке приёма: формула не мельче 36 px под палец; на узком экране — прокрутка вбок */
 .visit-teeth { display: grid; gap: 8px; }
-.visit-teeth h3 { margin: 0; font-size: .95rem; }
 .visit-teeth .marked-teeth { margin: 0; }
 .visit-teeth .marked-teeth li { gap: 12px; }
 .visit-formula { display: grid; gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; }
@@ -1843,3 +1830,57 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .cancelled-row .name .hint { text-decoration: none; }
 .cancelled-who { grid-column: 2; font-size: .85rem; }
 .cancelled-by { margin: 0; color: var(--hint); }
+
+/* Карточка приёма (2026-11-05, «просто и понятно»): шапка → пациент → услуга → главное действие →
+   «Приём» строками-раскрывашками → перенести/отменить → «Ещё» */
+.appt-card { gap: 14px; grid-auto-rows: max-content; grid-template-columns: minmax(0, 1fr); }
+.appt-card .appt-status { justify-self: start; margin-top: -6px; }
+.appt-card .appt-patient { gap: 4px; }
+.appt-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.appt-card .appt-what { gap: 6px; }
+.appt-card .appt-what > .link { justify-self: start; }
+.history-line { margin: 0; }
+.appt-card .appt-visit:empty { display: none; }
+.appt-card .appt-visit { gap: 0; padding-top: 4px; border-top: 1px solid var(--line-strong); }
+.appt-visit > .dictation, .appt-visit > form { margin: 10px 0; }
+.appt-visit > .dictation + form { margin-top: 0; }
+.appt-card .danger-zone { border-top: 0; padding-top: 0; }
+.rare { display: grid; gap: 10px; }
+.rare > .link, .rare > .btn { justify-self: start; }
+
+/* Строка-раскрывашка (layout/Fold): «Зубы · 14, 36 ›», нажали — открылось */
+.fold { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; border-bottom: 1px solid var(--separator); }
+.panel .fold { gap: 0; }
+.fold-head { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 8px 2px; border: 0; background: none;
+  font: inherit; color: var(--text); text-align: left; cursor: pointer; }
+.fold-head:hover .fold-title { color: var(--link); }
+.fold-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+.fold-title { font-weight: 600; flex: none; }
+.fold-meta { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hint); font-size: .9rem; }
+.fold-chev { flex: none; color: var(--hint); font-size: 1.1rem; line-height: 1; transition: transform 150ms ease-in-out; }
+.fold-meta + .fold-chev, .fold-title + .fold-chev { margin-left: 0; }
+.fold-title + .fold-chev { margin-left: auto; }
+.fold.open > .fold-head .fold-chev { transform: rotate(90deg); }
+.fold-body { display: grid; gap: 10px; padding: 2px 0 14px; }
+.files-compact > .upload, .files-compact > .files { margin-bottom: 12px; }
+
+/* Карточка пациента: сводка плитками и вкладки */
+.patient-card { gap: 14px; grid-auto-rows: max-content; grid-template-columns: minmax(0, 1fr); }
+.patient-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.patient-actions .contact { display: contents; }
+.patient-actions .btn { flex: 1 1 0; }
+.patient-actions .btn.primary { flex-basis: 100%; }
+.patient-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 6px; margin: 0; }
+.patient-summary .summary-bad { display: block; color: var(--bad-ink); font-size: .85rem; font-weight: 400; }
+.patient-summary > div { display: grid; align-content: start; gap: 0; padding: 6px 10px; border-radius: var(--r-md); background: var(--sunken); min-width: 0; }
+.patient-summary dt { font-size: .8rem; color: var(--hint); }
+.patient-summary dd { margin: 0; font-weight: 500; font-size: .95rem; overflow-wrap: anywhere; }
+.patient-summary .tone-bad { background: var(--bad-bg); }
+.patient-summary .tone-bad dt, .patient-summary .tone-bad dd { color: var(--bad-ink); }
+.patient-summary .tone-wait { background: var(--wait-bg); }
+.patient-summary .tone-wait dt, .patient-summary .tone-wait dd { color: var(--wait-ink); }
+.patient-card .segments.tabs { justify-self: stretch; flex-wrap: nowrap; overflow: visible; }
+.patient-card .segments.tabs button { flex: 1 1 0; min-width: 0; padding-inline: 6px; }
+.patient-card .segments.tabs button + button { border-left: 1px solid var(--separator) !important; }
+.patient-card .patient-medical, .patient-card .patient-money, .patient-card .patient-more { gap: 10px; }
+.patient-medical .btn, .patient-more > .link { justify-self: start; }

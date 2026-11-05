@@ -74,7 +74,7 @@ test('одно сообщение вместо отчёта и памятки: �
   // Одна кнопка, второй памятки на карточке нет
   expect(within(panel).getAllByRole('button', { name: /Составить/ })).toHaveLength(1)
   expect(within(panel).queryByRole('button', { name: /памятка «После пломбы»/ })).not.toBeInTheDocument()
-  expect(await within(b).findByText(/уход дома из памятки «После пломбы»/)).toBeInTheDocument()
+  expect(await within(b).findByText(/уход дома — из памятки «После пломбы»/)).toBeInTheDocument()
 
   await userEvent.click(within(b).getByRole('button', { name: 'Составить сообщение' }))
   const text = await within(b).findByRole('textbox', { name: 'Текст сообщения' })
@@ -145,7 +145,7 @@ test('у услуги нет памятки — блока ухода нет, п
   renderApp()
   const b = await box()
   expect(await within(b).findByText(/У услуги нет памятки/)).toBeInTheDocument()
-  expect(within(b).getByRole('link', { name: '«Настройки → Услуги»' })).toHaveAttribute('href', '#/settings/services')
+  expect(within(b).getByRole('link', { name: 'выбрать в «Услугах и ценах»' })).toHaveAttribute('href', '#/settings/services')
   expect(within(b).queryByRole('button', { name: 'Распечатать только памятку' })).not.toBeInTheDocument()
 
   await userEvent.click(within(b).getByRole('button', { name: 'Составить сообщение' }))

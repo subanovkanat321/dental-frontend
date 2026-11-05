@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
 
 beforeEach(() => {
@@ -62,7 +62,7 @@ function backend(options: { forbidden?: boolean } = {}) {
 async function openMedical() {
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
-  await userEvent.click(await screen.findByRole('button', { name: 'Медкарта и снимки' }))
+  await openMedicalTab()
   expect(await screen.findByRole('heading', { name: 'Медкарта · Айгуль Т.' })).toBeInTheDocument()
 }
 
@@ -79,7 +79,7 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   await userEvent.type(within(editor).getByLabelText('Заметка'), 'композит')
   await userEvent.click(within(editor).getByRole('button', { name: 'Сохранить' }))
   expect(await screen.findByRole('button', { name: 'Зуб 26: Пломба, есть заметка' })).toBeInTheDocument()
-  expect(sent).toContainEqual({ tooth: 26, state: 'FILLING', note: 'композит' })
+  expect(sent).toContainEqual({ tooth: 26, state: 'FILLING', surfaces: [], note: 'композит' })
 
   const plan = screen.getByRole('list', { name: 'Этапы лечения' })
   expect(await screen.findByRole('heading', { name: /План лечения/ })).toHaveTextContent(/3\s000 сом/)

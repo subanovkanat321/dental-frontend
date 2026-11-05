@@ -63,6 +63,7 @@ test('карточка пациента: изменить место работ�
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   const panel = screen.getByRole('complementary', { name: 'Карточка пациента' })
+  await user.click(await within(panel).findByRole('tab', { name: 'Прочее' }))
   await user.click(await within(panel).findByRole('button', { name: 'Изменить данные пациента' }))
   const form = within(panel).getByRole('form', { name: 'Данные пациента' })
   expect(within(form).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700 333 444')
@@ -98,7 +99,9 @@ test('карточка пациента: «откуда узнал» не ука
   expect(source).toHaveTextContent('Откуда узнал о клинике?')
   await user.click(within(source).getByRole('button', { name: '📱 Instagram' }))
   await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', phone: '+996700555666', workplace: 'школа №5', sourceId: 11 }))
-  // Указано — коротко и «изменить», кнопки-варианты спрятаны
+  // Указано — уходит во вкладку «Прочее»: коротко и «изменить», кнопки-варианты спрятаны
+  await vi.waitFor(() => expect(within(panel).queryByRole('group', { name: 'Откуда узнал о клинике' })).not.toBeInTheDocument())
+  await user.click(within(panel).getByRole('tab', { name: 'Прочее' }))
   expect(await within(panel).findByRole('button', { name: 'изменить' })).toBeInTheDocument()
   expect(within(panel).getByRole('group', { name: 'Откуда узнал о клинике' })).toHaveTextContent('📱 Instagram')
 })

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, openMore } from '../test/fixtures'
 import { addDays, todayIn } from '../lib/time'
 import { pickDate } from '../test/date'
 import { server } from '../test/server'
@@ -170,6 +170,8 @@ test('карточка приёма: «Расход по пациенту (те�
   )
   renderApp()
   const panel = await card()
+  // Расход техника — редкое, под «Ещё»
+  await openMore(panel)
   await userEvent.click(await within(panel).findByRole('button', { name: '💸 Расход по пациенту (техник)' }))
   const form = within(panel).getByRole('form', { name: 'Расход по пациенту' })
   await userEvent.type(within(form).getByLabelText('Сумма, сом'), '4500')
@@ -198,6 +200,7 @@ test('карточка приёма: расход техника отметил�
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   renderApp()
   const panel = await card()
+  await openMore(panel)
   const expenses = await within(panel).findByRole('list', { name: 'Расходы по пациенту' })
   expect(expenses).toHaveTextContent(/45\s000 сом/)
   await userEvent.click(within(expenses).getByRole('button', { name: 'изменить' }))

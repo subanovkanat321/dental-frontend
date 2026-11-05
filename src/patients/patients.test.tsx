@@ -86,16 +86,24 @@ test('карточка пациента: визиты, неявки, долг; �
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Карточка пациента' })
-  expect(await within(panel).findByText(/Был:/)).toBeInTheDocument()
-  expect(panel).toHaveTextContent('Не пришёл: 1')
-  expect(panel).toHaveTextContent('Отмен: 0')
-  expect(await within(panel).findByRole('button', { name: /Долг 1\s500 сом — приём/ })).toBeInTheDocument()
+  // Сводка: визиты и неявки, следующий приём, долг — сразу, без вкладок
+  expect(await within(panel).findByText('Визитов')).toBeInTheDocument()
+  expect(panel).toHaveTextContent(/не пришёл 1/)
+  expect(panel).toHaveTextContent(/Долг\s*1\s500 сом/)
+  // «Визиты» — вкладка по умолчанию: история с заметкой врача
+  expect(within(panel).getByRole('tab', { name: 'Визиты' })).toHaveAttribute('aria-selected', 'true')
   expect(panel).toHaveTextContent('Пломба')
   expect(await within(panel).findByText(/Пломба 36, контроль через год/)).toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: 'WhatsApp' })).toBeInTheDocument()
+  // «Деньги»: долг по приёму и расходы по пациенту
+  await userEvent.click(within(panel).getByRole('tab', { name: 'Деньги' }))
+  expect(await within(panel).findByRole('button', { name: /Долг 1\s500 сом — приём/ })).toBeInTheDocument()
   expect(await within(panel).findByText(/Расходы по пациенту/)).toHaveTextContent(/2\s000 сом/)
   expect(within(panel).getByRole('list', { name: 'Расходы по пациенту' })).toHaveTextContent(/Зуботехническая лаборатория · 2\s000 сом/)
-  expect(within(panel).getByRole('button', { name: 'WhatsApp' })).toBeInTheDocument()
-  expect(within(panel).getByRole('button', { name: 'Медкарта и снимки' })).toBeInTheDocument()
+  // «Медкарта» — одна точка входа: карта зубов и план лечения, анкета, снимки
+  await userEvent.click(within(panel).getByRole('tab', { name: 'Медкарта' }))
+  expect(within(panel).getByRole('button', { name: 'Открыть медкарту' })).toBeInTheDocument()
+  expect(panel).toHaveTextContent('Карта зубов и план лечения')
 
   await userEvent.click(within(panel).getByRole('button', { name: '＋ Записать' }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })

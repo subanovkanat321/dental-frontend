@@ -2,26 +2,29 @@ import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
 import { ShiftsPage } from '../team/ShiftsPage'
+import { TeamPage } from '../team/TeamPage'
 import { HoursPage } from './HoursPage'
+import { ItemTabs } from './ItemTabs'
 
 type Me = Schemas['BookingViewsMe']
-type Tab = 'doctors' | 'shifts'
+export type WorkTimeTab = 'doctors' | 'shifts' | 'timeoff'
+
+const TITLE = 'Рабочее время'
 
 /**
- * «Настройки → Часы и смены»: кто и когда работает — одним пунктом. «Врачи» — часы клиники и каждого
+ * «Настройки → Рабочее время»: кто и когда работает — одним пунктом. «Врачи» — часы клиники и каждого
  * врача (по ним свободное время в записи), «Смены персонала» — регистратура, ассистенты и админы без
- * кресла. Старый адрес «График смен» открывает вторую вкладку.
+ * кресла, «Перерывы и выходные» — обед, намаз, отпуск, праздники. Старые адреса («График смен»,
+ * «Перерывы и выходные») открывают свою вкладку.
  */
-export function WorkTimePage({ me, onBack, initial }: { me: Me; onBack: () => void; initial: Tab }) {
-  const [tab, setTab] = useState<Tab>(initial)
+export function WorkTimePage({ me, onBack, initial }: { me: Me; onBack: () => void; initial: WorkTimeTab }) {
+  const [tab, setTab] = useState<WorkTimeTab>(initial)
   const tabs = (
-    <div className="segments tabs" role="tablist" aria-label="Часы и смены">
-      {([['doctors', 'Врачи'], ['shifts', 'Смены персонала']] satisfies [Tab, string][]).map(([key, title]) => (
-        <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>
-      ))}
-    </div>
+    <ItemTabs label={TITLE} value={tab} onChange={setTab}
+      tabs={[['doctors', 'Врачи'], ['shifts', 'Смены персонала'], ['timeoff', 'Перерывы и выходные']]} />
   )
+  if (tab === 'timeoff') return <TeamPage me={me} only="timeoff" title={TITLE} onBack={onBack} tabs={tabs} />
   return tab === 'doctors'
-    ? <HoursPage me={me} onBack={onBack} title="Часы и смены" tabs={tabs} />
-    : <ShiftsPage onBack={onBack} title="Часы и смены" tabs={tabs} />
+    ? <HoursPage me={me} onBack={onBack} title={TITLE} tabs={tabs} />
+    : <ShiftsPage onBack={onBack} title={TITLE} tabs={tabs} />
 }

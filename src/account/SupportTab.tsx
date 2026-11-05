@@ -37,7 +37,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
   onPanel: (open: boolean) => void
   /** Кнопка бота «Открыть ответ»: сразу переписка по обращению. */
   initialTicket?: number
-  /** «Настройки → Помощь» и «Памятка»: сразу чат с помощником. */
+  /** «Настройки → Помощь и техподдержка» и «Памятка»: сразу чат с помощником. */
   initialHelp?: boolean
 }) {
   const list = useQuery({ queryKey: ['support-tickets'], queryFn: () => unwrap(api.GET('/api/support/tickets')) })

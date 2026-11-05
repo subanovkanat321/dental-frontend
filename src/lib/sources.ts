@@ -6,7 +6,7 @@ export type SourceOption = Schemas['PatientSourcesOption']
 
 /**
  * «Откуда узнал о клинике» — список своей клиники (V110 бэкенда): эмодзи и название, порядок и
- * скрытые варианты задаёт админ в «Настройки → Откуда узнают о клинике». Один запрос на все экраны.
+ * скрытые варианты задаёт админ в «Настройки → Откуда приходят пациенты». Один запрос на все экраны.
  */
 export function useSources() {
   return useQuery({ queryKey: ['patient-sources'], queryFn: () => unwrap(api.GET('/api/patient-sources')), staleTime: 5 * 60_000 })

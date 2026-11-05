@@ -35,7 +35,7 @@ test('предоплата: попросить (сумма из настроек
   await user.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
   // Предоплату ещё не просили — пункт под «Ещё»
-  await user.click(within(panel).getByRole('button', { name: /^Ещё:.*предоплата/ }))
+  await user.click(within(panel).getByRole('button', { name: /^Ещё.*предоплата/ }))
   await user.click(within(panel).getByRole('button', { name: 'Попросить предоплату' }))
   const box = within(panel).getByRole('group', { name: 'Предоплата' })
   expect(await within(box).findByDisplayValue('1000')).toBeInTheDocument()

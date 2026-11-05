@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, openMore, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Appointment = Schemas['AppointmentView']
@@ -52,6 +52,8 @@ test('неявка — «Вернуть» возвращает как было',
   const panel = await open(/Бакыт М\./)
   await userEvent.click(within(panel).getByRole('button', { name: 'Неявка' }))
   expect(await within(panel).findByText('Отмечено: неявка')).toBeInTheDocument()
+  // Исправить статус — редкое, под «Ещё»; главная кнопка неявки — «Записать снова»
+  await openMore(panel)
   expect(within(panel).getByRole('button', { name: 'Исправить: приём состоялся' })).toBeInTheDocument()
   await userEvent.click(within(panel).getByRole('button', { name: 'Вернуть' }))
   expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
@@ -69,6 +71,7 @@ test('отменённую запись — «Восстановить»; уда
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
   await userEvent.click(within(panel).getByRole('button', { name: 'Восстановить' }))
   expect(await within(panel).findByRole('button', { name: 'Отменить запись' })).toBeInTheDocument()
+  await openMore(panel)
   await userEvent.click(within(panel).getByRole('button', { name: 'Удалить запись' }))
   await vi.waitFor(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
   expect(sent).toEqual([{ status: 'SCHEDULED' }, 'delete'])
@@ -80,6 +83,7 @@ test('админ клиники запись не удаляет — тольк�
   renderApp()
   const panel = await open(/Бакыт М\./)
   expect(within(panel).getByRole('button', { name: 'Отменить запись' })).toBeInTheDocument()
+  await openMore(panel)
   expect(within(panel).queryByRole('button', { name: 'Удалить запись' })).not.toBeInTheDocument()
 })
 
@@ -98,7 +102,7 @@ test('приём коллеги — только посмотреть и поз�
   backend(appointment(20, 2, '10:00', 'Айгуль Т.', { version: 1 }), { ...me, admin: false, doctorId: 1 })
   renderApp()
   const panel = await open(/Айгуль Т\./)
-  expect(within(panel).getByText(/Это приём коллеги/)).toBeInTheDocument()
+  expect(within(panel).getByText(/Приём коллеги/)).toBeInTheDocument()
   expect(within(panel).getByRole('link', { name: /Позвонить/ })).toHaveAttribute('href', 'tel:+996555123456')
   expect(within(panel).queryByRole('button', { name: 'Отменить запись' })).not.toBeInTheDocument()
 })
@@ -131,6 +135,7 @@ test('«Приём состоялся» по ошибке — «Вернуть �
   const sent = backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1, status: 'DONE' }))
   const { unmount } = renderApp()
   const panel = await open(/Бакыт М\./)
+  await openMore(panel)
   await userEvent.click(within(panel).getByRole('button', { name: 'Вернуть в запланированные' }))
   expect(await within(panel).findByRole('button', { name: 'Приём состоялся' })).toBeInTheDocument()
   expect(sent).toEqual([{ undo: 'SCHEDULED' }])
@@ -140,6 +145,7 @@ test('«Приём состоялся» по ошибке — «Вернуть �
   backend(appointment(11, 1, '00:05', 'Айгуль С.', { version: 1, status: 'DONE', paidSom: 3000, paymentMethod: 'CASH' }))
   renderApp()
   const paid = await open(/Айгуль С\./)
+  await openMore(paid)
   expect(within(paid).queryByRole('button', { name: 'Вернуть в запланированные' })).not.toBeInTheDocument()
   expect(within(paid).getByText(/сначала «Снять отметку оплаты»/)).toBeInTheDocument()
 })
@@ -153,7 +159,7 @@ test('до начала приёма — без заметки и материа
     renderApp()
     const panel = await open(/Бакыт М\./)
     expect(within(panel).queryByRole('form', { name: 'Заметка о приёме' })).not.toBeInTheDocument()
-    expect(within(panel).getByText(/появятся к началу приёма/)).toBeInTheDocument()
+    expect(within(panel).getByText(/к началу приёма/)).toBeInTheDocument()
     await userEvent.click(within(panel).getByRole('button', { name: 'Показать сейчас' }))
     expect(await within(panel).findByRole('form', { name: 'Заметка о приёме' })).toBeInTheDocument()
 
@@ -174,7 +180,7 @@ test('редкое — под «Ещё»: промокод, предоплата
   const panel = await open(/Айгуль С\./)
   expect(within(panel).queryByRole('button', { name: '＋ Промокод' })).not.toBeInTheDocument()
   expect(within(panel).queryByRole('button', { name: 'Попросить предоплату' })).not.toBeInTheDocument()
-  await userEvent.click(within(panel).getByRole('button', { name: /^Ещё:/ }))
+  await userEvent.click(within(panel).getByRole('button', { name: /^Ещё/ }))
   expect(within(panel).getByRole('button', { name: '＋ Промокод' })).toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: 'Попросить предоплату' })).toBeInTheDocument()
 })
@@ -184,14 +190,14 @@ test('промокод уже задан — виден сразу, не под 
   renderApp()
   const panel = await open(/Нурлан К\./)
   expect(within(panel).getByText('🎟 OSEN5')).toBeInTheDocument()
-  expect(within(panel).getByRole('button', { name: /^Ещё:/ })).not.toHaveAccessibleName(/промокод/)
+  expect(within(panel).getByRole('button', { name: /^Ещё/ })).not.toHaveAccessibleName(/промокод/)
 })
 
-test('снимки и фото — прямо из карточки приёма: свёрнуто, раскрыть — загрузка и «до / после»', async () => {
+test('снимки и фото — прямо из карточки приёма: свёрнутая строка, раскрыть — загрузка и «до / после»', async () => {
   backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1, status: 'DONE' }))
   renderApp()
   const panel = await open(/Бакыт М\./)
-  await userEvent.click(await within(panel).findByRole('button', { name: /Снимки и фото — загрузить/ }))
+  await userEvent.click(await within(panel).findByRole('button', { name: /^Снимки и фото/ }))
   const files = within(panel).getByRole('region', { name: 'Снимки и фото' })
   expect(within(files).getByLabelText('Файлы снимков')).toBeInTheDocument()
   // В приёме по умолчанию — «Фото»

@@ -97,7 +97,7 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
       )}
       {noServiceTerms && (board.data.recalls ?? 0) > 0 && (filter === 'ALL' || filter === 'RECALL') && (
         <p className="hint small">Пора на осмотр — по сроку клиники. Сроки по услугам — в{' '}
-          <a href="#/settings/services">Настройки → Услуги</a>.</p>
+          <a href="#/settings/services">Настройки → Услуги и цены</a>.</p>
       )}
       {!everyone ? (
         <EmptyState icon="🦷" title="Звать некого">Все с планом лечения записаны, неявок нет, осмотры — вовремя.</EmptyState>

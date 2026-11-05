@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Step = Schemas['TreatmentStepView']
@@ -68,7 +68,7 @@ async function openMedical() {
   window.location.hash = '/patients'
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Айгуль Т.' }))
-  await userEvent.click(await screen.findByRole('button', { name: 'Медкарта и снимки' }))
+  await openMedicalTab()
   await screen.findByRole('heading', { name: 'Медкарта · Айгуль Т.' })
 }
 
