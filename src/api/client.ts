@@ -110,39 +110,65 @@ export async function fetchBlob(path: string): Promise<Blob> {
  * REST-контракта /api (его отдаёт вход сайта), поэтому тип — здесь, а не из schema.d.ts.
  */
 /**
- * Вход на сайт: бот (имя и числовой id — окно входа Telegram.Login.auth) и включён ли вход по SMS
- * (smsLogin). null — не настроено ни то, ни другое.
+ * Вход на сайт: бот (имя и числовой id — окно входа Telegram.Login.auth), включён ли вход по SMS
+ * (smsLogin) и «номер + пароль» (passwordLogin — работает и без SMS). null — не настроено ничего.
  */
-export async function botConfig(): Promise<{ username: string; id: number | null; smsLogin: boolean } | null> {
+export async function botConfig(): Promise<{ username: string; id: number | null; smsLogin: boolean; passwordLogin: boolean } | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
   if (!response.ok) return null
-  const body = await response.json().catch(() => null) as { botUsername?: string | null; botId?: number | null; smsLogin?: boolean } | null
+  const body = await response.json().catch(() => null) as
+    { botUsername?: string | null; botId?: number | null; smsLogin?: boolean; passwordLogin?: boolean } | null
   // Для окна входа хватит id: имя бота (getMe) может временно не прийти, если Telegram не ответил
-  return body?.botUsername || body?.botId || body?.smsLogin
-    ? { username: body.botUsername ?? '', id: body.botId ?? null, smsLogin: body.smsLogin === true }
+  return body?.botUsername || body?.botId || body?.smsLogin || body?.passwordLogin
+    ? { username: body.botUsername ?? '', id: body.botId ?? null, smsLogin: body.smsLogin === true, passwordLogin: body.passwordLogin === true }
     : null
 }
 
-/** POST на адрес входа /web/… (вне контракта /api): с заголовком сайта; ошибка — {@link ApiError}. */
-async function webPost(path: string, body: unknown): Promise<void> {
+/**
+ * POST на адрес входа /web/… (вне контракта /api): с заголовком сайта; ошибка — {@link ApiError}.
+ * Ответ 204 — null, с телом — его JSON.
+ */
+async function webPost<T = void>(path: string, body: unknown): Promise<T | null> {
   const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), {
     method: 'POST', credentials: 'same-origin', headers: { 'X-Dental-Web': '1', 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   }))
   if (!response.ok) throw toApiError(response.status, await response.json().catch(() => null))
+  return response.status === 204 ? null : await response.json().catch(() => null) as T | null
 }
+
+/**
+ * Пропуск «код подтверждён»: одноразовый, 10 минут — с ним задают пароль. temporary — вошли
+ * временным паролем от админа. Пропуск держим только в памяти страницы, не в localStorage.
+ */
+export type SetupToken = { setupToken: string; temporary: boolean }
 
 /**
  * Вход без Telegram, шаг 1: прислать SMS-код. Сервер всегда отвечает «ок» — не говорит, есть ли
  * такой сотрудник; 503 — SMS не подключены, 422 — номер не похож на номер. Номер — только в теле.
  */
-export function requestSmsCode(phone: string): Promise<void> {
-  return webPost('/web/login/phone/code', { phone })
+export async function requestSmsCode(phone: string): Promise<void> {
+  await webPost('/web/login/phone/code', { phone })
 }
 
-/** Шаг 2: номер и код → cookie-сессия, как после входа через Telegram. Неверный код — 401. */
-export function phoneLogin(phone: string, code: string): Promise<void> {
-  return webPost('/web/login/phone', { phone, code })
+/** Шаг 2: номер и код → пропуск «Придумайте пароль» (ещё не вход). Неверный код — 401. */
+export async function phoneLogin(phone: string, code: string): Promise<SetupToken> {
+  const token = await webPost<SetupToken>('/web/login/phone', { phone, code })
+  if (!token?.setupToken) throw new ApiError(500, 'Вход не удался — попробуйте ещё раз')
+  return token
+}
+
+/**
+ * Вход «номер + пароль». null — вошли (cookie-сессия); пропуск — пароль был временный, придумать свой.
+ * Неверный номер/пароль или пароля нет — 401 (одинаково: сервер не говорит, есть ли номер); 429 — блок 15 минут.
+ */
+export function passwordLogin(phone: string, password: string): Promise<SetupToken | null> {
+  return webPost<SetupToken>('/web/login/phone/password', { phone, password })
+}
+
+/** «Придумайте пароль»: пропуск + пароль → вход. Слабый пароль — 422 (поле password), пропуск устарел — 401. */
+export async function setNewPassword(token: string, password: string): Promise<void> {
+  await webPost('/web/login/phone/password/new', { token, password })
 }
 
 export async function botUsername(): Promise<string | null> {

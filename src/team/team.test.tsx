@@ -363,7 +363,30 @@ test('«Пригласить по номеру»: без Telegram — сотру
   await user.click(within(form).getByRole('button', { name: 'Добавить' }))
   expect(await screen.findByText(/Нурия — в персонале/)).toBeInTheDocument()
   expect(invited).toEqual({ phone: '+996 700000011', role: 'RECEPTION', fullName: 'Нурия', alsoDoctor: false })
-  await vi.waitFor(() => expect(table).toHaveTextContent('✓ по SMS · +996 700 000 011'))
+  await vi.waitFor(() => expect(table).toHaveTextContent('✓ по номеру · +996 700 000 011'))
+
+  // SMS не доходят — админ задаёт временный пароль (себе — нет: у своей строки кнопки нет)
+  expect(within(table).getAllByRole('button', { name: 'Временный пароль' })).toHaveLength(1)
+  let temporary: { id: string; body: unknown } | null = null
+  server.use(http.put('*/api/members/:id/temporary-password', async ({ request, params }) => {
+    const body = await request.json() as Schemas['PasswordControllerTemporaryPassword']
+    if ((body.password ?? '').length < 8) {
+      return HttpResponse.json({ detail: 'Проверьте поля формы', errors: [{ field: 'password', message: 'Пароль — не короче 8 символов' }] }, { status: 422 })
+    }
+    temporary = { id: String(params.id), body }
+    return new HttpResponse(null, { status: 204 })
+  }))
+  // Окно notify — через подмену window.confirm (test/setup.ts): проверяем текст сообщения
+  const shown = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  await user.click(within(table).getByRole('button', { name: 'Временный пароль' }))
+  const tempForm = within(table).getByRole('form', { name: 'Временный пароль: Нурия' })
+  await user.type(within(tempForm).getByLabelText('Временный пароль'), 'коротк')
+  await user.click(within(tempForm).getByRole('button', { name: 'Задать' }))
+  expect(await within(tempForm).findByRole('alert')).toHaveTextContent('не короче 8 символов')
+  await user.type(within(tempForm).getByLabelText('Временный пароль'), 'ий-1')
+  await user.click(within(tempForm).getByRole('button', { name: 'Задать' }))
+  await vi.waitFor(() => expect(shown).toHaveBeenCalledWith(expect.stringContaining('Временный пароль для «Нурия» задан')))
+  expect(temporary).toEqual({ id: '-1000000000000001', body: { password: 'короткий-1' } })
 })
 
 test('карточка врача без Telegram: привязать номер для входа по SMS; уже по SMS — поле Telegram id скрыто', async () => {
@@ -390,5 +413,5 @@ test('карточка врача без Telegram: привязать номер
   expect(await within(panel).findByText(/Входит по номеру \+996 700 000 022/)).toBeInTheDocument()
   expect(bound).toEqual({ phone: '0700000022' })
   expect(within(panel).queryByRole('textbox', { name: 'Telegram id врача' })).not.toBeInTheDocument()
-  expect(table).toHaveTextContent('✓ по SMS · +996 700 000 022')
+  expect(table).toHaveTextContent('✓ по номеру · +996 700 000 022')
 })

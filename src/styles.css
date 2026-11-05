@@ -931,6 +931,9 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 /* Вход по номеру и SMS (без Telegram): форма в карточке входа — по ширине кнопки, слева направо */
 .phone-login { width: 100%; max-width: 360px; justify-self: center; text-align: left; }
 .phone-login .actions { display: flex; justify-content: space-between; gap: 12px; }
+/* Требования к паролю: отмечаются галочкой по мере ввода */
+.password-rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: .85rem; }
+.phone-login h2 { margin: 0; font-size: 1.05rem; }
 
 /* Настройка новой клиники (V95): чек-лист до «Показать пациентам» */
 .setup-steps { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }

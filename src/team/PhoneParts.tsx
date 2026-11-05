@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
+import { PasswordInput, ShowPassword } from '../layout/PasswordFields'
+import { notify } from '../lib/confirm'
 import { phoneText, ROLE_TEXT } from './texts'
 
 type Role = NonNullable<Schemas['StaffMembersControllerPhoneInviteRequest']['role']>
@@ -12,7 +14,7 @@ type Doctor = Schemas['DoctorAdminView']
 
 /**
  * «Пригласить по номеру (без Telegram)» в «Персонале»: номер, имя и роль — сотрудник сразу в списке.
- * Входит на сайте: «Войти по номеру телефона» → SMS-код. Ссылки и бота не нужно.
+ * Входит на сайте по номеру: первый раз — код из SMS и свой пароль, дальше — номер и пароль.
  */
 export function InviteByPhone({ me }: { me: Me }) {
   const client = useQueryClient()
@@ -42,7 +44,8 @@ export function InviteByPhone({ me }: { me: Me }) {
   return (
     <section className="card-block" id="invite-phone">
       <h2>Пригласить по номеру</h2>
-      <p className="hint">Для тех, у кого нет Telegram. Человек входит на сайте: «Войти по номеру телефона» — и код из SMS.
+      <p className="hint">Для тех, у кого нет Telegram. Человек входит на сайте по номеру: первый раз — код из SMS, потом придумывает пароль.
+        SMS не приходят — задайте ему «Временный пароль» в строке персонала.
         Уведомления ему приходят в приложение, если он их включит («Настройки → Уведомления»).</p>
       {done && !open && <p className="tone-ok" role="status">{done} — в персонале. Скажите ему открыть сайт и войти по номеру.</p>}
       {!open ? (
@@ -100,7 +103,7 @@ export function DoctorPhone({ doctor: d, onDone }: { doctor: Doctor; onDone: () 
     },
   })
   if (d.phone) {
-    return <p className="hint">Входит по номеру {phoneText(d.phone)} и коду из SMS. Уведомления — в приложение, если он их включит.</p>
+    return <p className="hint">Входит по номеру {phoneText(d.phone)} и паролю (первый раз — код из SMS). Уведомления — в приложение, если он их включит.</p>
   }
   if (d.telegramId != null) return null
   if (!open) {
@@ -114,6 +117,43 @@ export function DoctorPhone({ doctor: d, onDone }: { doctor: Doctor; onDone: () 
       {bind.error && <p className="error" role="alert">{bind.error.fieldErrors.phone ?? bind.error.message}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={bind.isPending || !phone.trim()}>Привязать номер</button>
+        <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Отмена</button>
+      </div>
+    </form>
+  )
+}
+
+/**
+ * «Временный пароль» сотруднику по номеру — когда SMS не подключены или не доходят. Админ задаёт
+ * пароль и говорит его лично; сотрудник входит им один раз и сразу придумывает свой (3 дня).
+ * Пароль сервер в ответе не возвращает и в журнал действий не пишет.
+ */
+export function TemporaryPassword({ telegramId, name }: { telegramId: number; name: string }) {
+  const [open, setOpen] = useState(false)
+  const [password, setPassword] = useState('')
+  const [shown, setShown] = useState(true)
+  const set = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/members/{telegramId}/temporary-password', {
+      params: { path: { telegramId } }, body: { password },
+    })),
+    onSuccess: () => {
+      setOpen(false)
+      setPassword('')
+      void notify(`Временный пароль для «${name}» задан. Скажите его лично (не пересылайте в общий чат): при входе `
+        + 'по номеру и этому паролю сотрудник сразу придумает свой. Действует 3 дня.')
+    },
+  })
+  if (!open) {
+    return <button type="button" className="btn small ghost" onClick={() => { set.reset(); setOpen(true) }}>Временный пароль</button>
+  }
+  return (
+    <form className="form" aria-label={`Временный пароль: ${name}`} onSubmit={(e) => { e.preventDefault(); set.mutate() }}>
+      <PasswordInput label="Временный пароль" value={password} onChange={setPassword} shown={shown} autoComplete="new-password" autoFocus />
+      <ShowPassword shown={shown} onToggle={() => setShown(!shown)} />
+      <p className="hint">Не короче 8 символов, не только цифры. Старые входы сотрудника закроются.</p>
+      {set.error && <p className="error" role="alert">{set.error.fieldErrors.password ?? set.error.message}</p>}
+      <div className="actions">
+        <button type="submit" className="btn primary" disabled={set.isPending || !password}>Задать</button>
         <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Отмена</button>
       </div>
     </form>

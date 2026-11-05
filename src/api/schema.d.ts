@@ -468,6 +468,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/members/{telegramId}/temporary-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["temporary"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/members/{telegramId}/role": {
         parameters: {
             query?: never;
@@ -493,6 +509,22 @@ export interface paths {
         };
         get?: never;
         put: operations["assistantDoctors"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["state"];
+        put: operations["change"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2206,6 +2238,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["inviteByPhone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/password/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["code"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5078,6 +5126,9 @@ export interface components {
             /** Format: int64 */
             patients?: number;
         };
+        PasswordControllerTemporaryPassword: {
+            password?: string;
+        };
         StaffMembersControllerRoleChange: {
             /** @enum {string} */
             role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
@@ -5085,6 +5136,11 @@ export interface components {
         };
         StaffMembersControllerAssistantDoctors: {
             doctorIds?: number[];
+        };
+        PasswordControllerPasswordChange: {
+            currentPassword?: string;
+            code?: string;
+            newPassword?: string;
         };
         EarningsControllerGoal: {
             /** Format: int64 */
@@ -6960,6 +7016,14 @@ export interface components {
             expiresAt?: string;
             expired?: boolean;
         };
+        PasswordControllerPasswordState: {
+            phoneLogin?: boolean;
+            passwordSet?: boolean;
+            temporary?: boolean;
+            /** Format: date-time */
+            setAt?: string;
+            sms?: boolean;
+        };
         NetMonthMine: {
             month?: string;
             /** Format: date */
@@ -8409,6 +8473,30 @@ export interface operations {
             };
         };
     };
+    temporary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                telegramId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordControllerTemporaryPassword"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     changeRole: {
         parameters: {
             query?: never;
@@ -8450,6 +8538,48 @@ export interface operations {
         responses: {
             /** @description No Content */
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    state: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordControllerPasswordState"];
+                };
+            };
+        };
+    };
+    change: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordControllerPasswordChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11839,6 +11969,24 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StaffMembersControllerPhoneInvited"];
                 };
+            };
+        };
+    };
+    code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

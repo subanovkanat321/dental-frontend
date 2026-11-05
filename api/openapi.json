@@ -1350,6 +1350,36 @@
         }
       }
     },
+    "/api/members/{telegramId}/temporary-password" : {
+      "put" : {
+        "tags" : [ "password-controller" ],
+        "operationId" : "temporary",
+        "parameters" : [ {
+          "name" : "telegramId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordControllerTemporaryPassword"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/members/{telegramId}/role" : {
       "put" : {
         "tags" : [ "staff-members-controller" ],
@@ -1406,6 +1436,43 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/me/password" : {
+      "get" : {
+        "tags" : [ "password-controller" ],
+        "operationId" : "state",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PasswordControllerPasswordState"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "password-controller" ],
+        "operationId" : "change",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordControllerPasswordChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
           }
         }
       }
@@ -5569,6 +5636,17 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/me/password/code" : {
+      "post" : {
+        "tags" : [ "password-controller" ],
+        "operationId" : "code",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
           }
         }
       }
@@ -11361,6 +11439,13 @@
           }
         }
       },
+      "PasswordControllerTemporaryPassword" : {
+        "properties" : {
+          "password" : {
+            "type" : "string"
+          }
+        }
+      },
       "StaffMembersControllerRoleChange" : {
         "properties" : {
           "role" : {
@@ -11384,6 +11469,19 @@
               "type" : "integer",
               "format" : "int64"
             }
+          }
+        }
+      },
+      "PasswordControllerPasswordChange" : {
+        "properties" : {
+          "currentPassword" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "newPassword" : {
+            "type" : "string"
           }
         }
       },
@@ -15948,6 +16046,26 @@
             "format" : "date-time"
           },
           "expired" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "PasswordControllerPasswordState" : {
+        "properties" : {
+          "phoneLogin" : {
+            "type" : "boolean"
+          },
+          "passwordSet" : {
+            "type" : "boolean"
+          },
+          "temporary" : {
+            "type" : "boolean"
+          },
+          "setAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "sms" : {
             "type" : "boolean"
           }
         }

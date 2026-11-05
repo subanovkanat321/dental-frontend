@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { AssistantDoctors, ChangeRole, InviteMember } from './MemberParts'
-import { InviteByPhone } from './PhoneParts'
+import { InviteByPhone, TemporaryPassword } from './PhoneParts'
 import { phoneText, ROLE_TEXT } from './texts'
 
 type Me = Schemas['BookingViewsMe']
@@ -126,7 +126,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                         : r.kind === 'doctor' && !r.doctor.telegramId
                           ? <span className="tone-wait">не привязан — пригласите в карточке</span>
                           : (r.kind === 'doctor' ? r.doctor.phone : r.member.phone)
-                            ? <span className="tone-ok">✓ по SMS · {phoneText(r.kind === 'doctor' ? r.doctor.phone : r.member.phone)}</span>
+                            ? <span className="tone-ok">✓ по номеру · {phoneText(r.kind === 'doctor' ? r.doctor.phone : r.member.phone)}</span>
                             : <span className="tone-ok">✓ Telegram привязан</span>}
                     </td>
                   )}
@@ -143,6 +143,9 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                         Отменить</button>
                     )}
                     {r.kind === 'doctor' && admin && <button type="button" className="btn small ghost" onClick={() => onOpen(r.doctor.id!)}>Открыть</button>}
+                    {/* Вход по номеру без SMS: админ даёт временный пароль (себе — нет: свой меняют в «Настройках») */}
+                    {admin && r.kind === 'member' && r.member.phone && !r.member.me && <TemporaryPassword telegramId={r.member.telegramId!} name={r.name} />}
+                    {admin && r.kind === 'doctor' && r.doctor.phone && r.doctor.id !== me.doctorId && <TemporaryPassword telegramId={r.doctor.telegramId!} name={r.name} />}
                   </td>
                 </tr>
               ))}
