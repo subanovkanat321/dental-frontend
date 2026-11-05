@@ -59,3 +59,60 @@ test('«Пациенты → Записаны»: будущие записи в�
   expect(within(list).queryByText('Бакыт М.')).toBeNull()
   expect(asked).toContain('2:31')
 })
+
+test('кнопка сводки «📲 Напомнить» (?screen=booked&day=tomorrow&unconfirmed=1&doctor=2): «Записаны» на завтра, только кто не подтвердил, этот врач', async () => {
+  const asked: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/range', ({ request }) => {
+      const q = new URL(request.url).searchParams
+      asked.push(`${q.get('doctorId')}:${q.get('from')}:${q.get('days')}`)
+      return HttpResponse.json([later(4, 2, 1, '11:00', 'Нурлан К.'), later(5, 2, 1, '12:00', 'Айгуль Т.', { reply: 'CONFIRMED' })])
+    }),
+  )
+  window.history.replaceState(null, '', '/?screen=booked&day=tomorrow&unconfirmed=1&doctor=2&v=abc')
+  renderApp()
+  const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
+  expect(await within(list).findByText('Нурлан К.')).toBeInTheDocument()
+  expect(within(list).queryByText('Айгуль Т.')).toBeNull()
+  expect(within(list).getByRole('button', { name: 'Завтра' })).toHaveAttribute('aria-pressed', 'true')
+  expect(within(list).getByRole('checkbox', { name: /не подтвердил/ })).toBeChecked()
+  expect(within(list).getByRole('combobox', { name: 'Врач' })).toHaveTextContent('Дастан Т.')
+  expect(asked).toEqual([`2:${addDays(todayIn(), 1)}:1`])
+  // Адрес чистый: ссылку не открыть повторно обновлением страницы
+  expect(window.location.search).toBe('')
+  expect(window.location.hash).toBe('#/patients')
+  window.history.replaceState(null, '', '/')
+})
+
+test('«WhatsApp» в строке неподтверждённого: готовый текст напоминания и отметка «напомнили»; у подтвердивших и заявок кнопки нет', async () => {
+  const calls: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/range', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1'
+      ? [later(1, 1, 1, '10:00', 'Бакыт М.', { patient: { id: 1, fullName: 'Бакыт М.', phone: '996700111222', telegram: true }, reminderOpenedAt: new Date().toISOString() }),
+          later(2, 1, 1, '11:00', 'Айгуль Т.', { reply: 'CONFIRMED' }),
+          later(3, 1, 1, '12:00', 'Нурлан К.', { status: 'REQUESTED' })]
+      : [])),
+    http.post('*/api/appointments/:id/reminder-opened', ({ params }) => {
+      calls.push(`opened:${String(params.id)}`)
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const opened: string[] = []
+  vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
+  window.location.hash = '/patients'
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: 'Записаны' }))
+  const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
+  // Telegram-пациент, бот уже писал, ответа нет — WhatsApp всё равно можно
+  const wa = await within(list).findByRole('button', { name: /Напомнить в WhatsApp: Бакыт М\., 10:00/ })
+  expect(within(list).queryByRole('button', { name: /WhatsApp: Айгуль/ })).toBeNull()
+  expect(within(list).queryByRole('button', { name: /WhatsApp: Нурлан/ })).toBeNull()
+  await vi.waitFor(() => expect(wa).toBeEnabled()) // ждёт настройки: без них в тексте нет подписи
+  await userEvent.click(wa)
+  expect(opened[0]).toContain('wa.me/996700111222')
+  expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
+  await vi.waitFor(() => expect(calls).toEqual(['opened:1']))
+  vi.restoreAllMocks()
+})

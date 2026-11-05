@@ -8,7 +8,7 @@ import { formatPhone, shortDate } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
-import { BookedTab } from './BookedTab'
+import { BookedTab, type BookedFilter } from './BookedTab'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
 import { ComebackTab } from './ComebackTab'
 import { QuestionPanel, QuestionsTab } from './QuestionsTab'
@@ -44,12 +44,14 @@ function phoneDigits(text: string): string {
  * дате визита (/api/patients/recent, как в приложении); не нашли среди них — ищем на сервере
  * по всей клинике (/api/patients/search).
  */
-export function PatientsPage({ me, onBook, initialPatient, initialQuestion, onOpenAppointment }: {
+export function PatientsPage({ me, onBook, initialPatient, initialQuestion, initialBooked, onOpenAppointment }: {
   me: Me
   onBook: (p: Patient) => void
   initialPatient?: number
   /** Кнопка уведомления «Открыть вопрос» — вкладка «Вопросы» с этим вопросом */
   initialQuestion?: number
+  /** Кнопка сводки «📲 Напомнить (N)» — вкладка «Записаны» на этот день, только кто не подтвердил */
+  initialBooked?: BookedFilter
   onOpenAppointment?: (appointmentId: number) => void
 }) {
   const [query, setQuery] = useState('')
@@ -58,7 +60,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, onOp
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
   // Вкладки: все пациенты, лист ожидания, «позвать на профосмотр» — как в «Пациентах» приложения
-  const [tab, setTab] = useState<'all' | 'booked' | 'waitlist' | 'recall' | 'comeback' | 'questions'>(initialQuestion ? 'questions' : 'all')
+  const [tab, setTab] = useState<'all' | 'booked' | 'waitlist' | 'recall' | 'comeback' | 'questions'>(initialQuestion ? 'questions' : initialBooked ? 'booked' : 'all')
   const waitlist = useWaitlist()
   const close = useCallback(() => setSelected(null), [])
   // Вопрос пациента справа (вкладка «Вопросы»); открыли карточку пациента — вопрос закрываем, и наоборот
@@ -156,7 +158,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, onOp
             </>
           )}
         </header>
-        {tab === 'booked' && <BookedTab me={me} onOpenAppointment={onOpenAppointment} />}
+        {tab === 'booked' && <BookedTab me={me} initial={initialBooked} onOpenAppointment={onOpenAppointment} />}
         {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} />}
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
         {tab === 'questions' && <QuestionsTab selected={question} onOpen={(id) => { setSelected(null); setQuestion(id) }} />}
