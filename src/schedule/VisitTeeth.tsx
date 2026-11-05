@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ToothFormula } from '../medical/ToothFormula'
+import { ToothFigure } from '../medical/ToothGlyph'
 import { TOOTH_STATES, visitToothText, type ToothState } from '../medical/toothStates'
 
 type Appointment = Schemas['AppointmentView']
@@ -62,8 +63,7 @@ export function VisitTeeth({ appointment: a, readOnly }: { appointment: Appointm
     return (
       <button key={n} type="button" className={`tooth${open === n ? ' active' : ''}`} data-state={state ?? 'HEALTHY'}
         aria-label={`Зуб ${n}: ${label}`} aria-pressed={open === n} onClick={() => setOpen(open === n ? null : n)}>
-        <span aria-hidden="true" className="tooth-icon">{state ? TOOTH_STATES[state][1] : ''}</span>
-        <span className="tooth-number">{n}</span>
+        <ToothFigure number={n} state={state} />
       </button>
     )
   }
