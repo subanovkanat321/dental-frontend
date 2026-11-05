@@ -150,3 +150,16 @@ test('«На смене» в сводке дня: имена и время ко�
 test('кнопка утренней сводки «Открыть график смен» (?screen=shifts) открывает пункт «Настроек»', () => {
   expect(readDeepLink('?screen=shifts')).toEqual({ page: 'settings', tab: 'shifts' })
 })
+
+test('одни врачи — график пуст: объяснение и кнопки «Часы работы врачей» и «Пригласить…»', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/shifts', () => HttpResponse.json({ people: [], shifts: [], canEdit: true, me: 111 } satisfies Schemas['ShiftControllerSchedule'])),
+  )
+  renderApp()
+  expect(await screen.findByRole('heading', { name: 'В графике пока никого' })).toBeInTheDocument()
+  expect(screen.getByText(/Врачи здесь не показываются/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Пригласить регистратуру или ассистента' })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Часы работы врачей' }))
+  expect(window.location.hash).toBe('#/settings/hours')
+})

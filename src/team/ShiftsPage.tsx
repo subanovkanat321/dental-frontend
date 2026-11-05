@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { openSettings } from '../lib/route'
 import { ask } from '../lib/confirm'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
@@ -77,7 +78,16 @@ export function ShiftsPage({ onBack }: { onBack: () => void }) {
       {loaded.error && <p className="error" role="alert">{loaded.error.message}</p>}
       {loaded.isPending ? <p className="hint">Загрузка…</p> : data && (
         (data.people ?? []).length === 0 ? (
-          <p className="hint">Смены ставят администраторам без своего кресла, регистратуре и ассистентам — пригласите их в «Персонале».</p>
+          // Одни врачи — графику некого показывать: объясняем и ведём туда, где настраивают
+          <div className="card-block shifts-empty">
+            <h2>В графике пока никого</h2>
+            <p>График смен — для персонала без своего кресла: регистратуры, ассистентов и администраторов, которые не лечат.
+              Врачи здесь не показываются — их дни и часы настраиваются в «Часах работы».</p>
+            <div className="actions">
+              <button type="button" className="btn primary" onClick={() => openSettings('hours')}>Часы работы врачей</button>
+              {canEdit && <button type="button" className="btn" onClick={() => openSettings('doctors')}>Пригласить регистратуру или ассистента</button>}
+            </div>
+          </div>
         ) : phone ? <DayList data={data} days={days} onOpen={open} /> : <WeekTable data={data} days={days} onOpen={open} />
       )}
       {editing && data && (
