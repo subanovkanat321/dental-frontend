@@ -115,7 +115,8 @@ export async function fetchBlob(path: string): Promise<Blob> {
  */
 /**
  * Настройки страницы входа (/web/config, вне контракта /api). Вход на сайт — только по номеру и паролю;
- * telegramCode — «Код в Telegram» для первого входа и «Забыли пароль?», smsLogin — «Код по SMS».
+ * telegramCode — код в Telegram (бот настроен), smsLogin — SMS подключены. Кнопка «Получить код» одна: канал
+ * выбирает сервер (сначала Telegram, иначе SMS); smsLogin — показать «Не пришло? Отправить по SMS».
  * null — вход на сайт не настроен (нет токена бота).
  */
 export type LoginConfig = { username: string; smsLogin: boolean; passwordLogin: boolean; telegramCode: boolean }
@@ -150,16 +151,19 @@ async function webPost<T = void>(path: string, body: unknown): Promise<T | null>
  */
 export type SetupToken = { setupToken: string; temporary: boolean }
 
-/** Куда прислать код: в Telegram (бот сотрудников, бесплатно) или по SMS. */
-export type CodeChannel = 'telegram' | 'sms'
+/**
+ * Как прислать код: «auto» — канал выбирает сервер (Telegram, если номер к нему привязан и бот доставил,
+ * иначе SMS); «sms» — сразу SMS («Не пришло? Отправить по SMS»).
+ */
+export type CodeChannel = 'auto' | 'sms'
 
 /**
  * «Забыли пароль? / Первый вход», шаг 1: прислать код. Сервер всегда отвечает «ок» — не говорит, есть
- * ли такой сотрудник и привязан ли номер к Telegram; 503 — SMS не подключены, 422 — номер не похож на
- * номер. Номер — только в теле.
+ * ли такой сотрудник, привязан ли номер к Telegram и куда ушёл код; 503 — явный SMS, а SMS не подключены;
+ * 422 — номер не похож на номер. Номер — только в теле.
  */
-export async function requestLoginCode(phone: string, channel: CodeChannel): Promise<void> {
-  await webPost('/web/login/phone/code', { phone, channel })
+export async function requestLoginCode(phone: string, channel: CodeChannel = 'auto'): Promise<void> {
+  await webPost('/web/login/phone/code', channel === 'sms' ? { phone, channel } : { phone })
 }
 
 /** Шаг 2: номер и код → пропуск «Придумайте пароль» (ещё не вход). Неверный код — 401. */

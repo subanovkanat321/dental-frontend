@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -66,7 +66,7 @@ test('страница входа — сразу «номер + пароль», 
   renderApp()
   await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '0700 000 031')
   expect(screen.queryByRole('button', { name: 'Войти через Telegram' })).not.toBeInTheDocument()
-  expect(screen.getByText(/Нет пароля\? Нажмите «Забыли пароль\? \/ Первый вход» — код придёт в Telegram/)).toBeInTheDocument()
+  expect(screen.getByText(/Нет пароля\? Нажмите «Забыли пароль\? \/ Первый вход» — пришлём код в Telegram или по SMS/)).toBeInTheDocument()
   const password = screen.getByLabelText('Пароль')
   expect(password).toHaveAttribute('type', 'password')
   expect(password).toHaveAttribute('autocomplete', 'current-password')
@@ -87,7 +87,7 @@ test('страница входа — сразу «номер + пароль», 
   expect(JSON.stringify({ ...localStorage })).not.toContain('700')
 })
 
-test('«Забыли пароль? / Первый вход» → выбор «Код в Telegram» → код → «Придумайте пароль» → вход', async () => {
+test('«Забыли пароль? / Первый вход» → одна кнопка «Получить код» → код → «Подтвердить» → только потом пароль → вход', async () => {
   const posts = backend()
   const user = userEvent.setup()
   renderApp()
@@ -98,23 +98,30 @@ test('«Забыли пароль? / Первый вход» → выбор «К
 
   await user.click(screen.getByRole('button', { name: 'Забыли пароль? / Первый вход' }))
   const form = screen.getByRole('form', { name: 'Код для входа' })
-  expect(form).toHaveTextContent('если этот номер привязан к вашему Telegram')
-  // Обе кнопки — всегда: сервер не говорит, привязан ли номер к Telegram
-  expect(screen.getByRole('button', { name: 'Код по SMS' })).toBeInTheDocument()
+  expect(form).toHaveTextContent('если номер привязан к вашему Telegram')
+  // Кнопка одна: канал выбирает сервер
+  expect(screen.queryByRole('button', { name: 'Код в Telegram' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Код по SMS' })).not.toBeInTheDocument()
   // Номер не набирать заново
   expect((screen.getByRole('textbox', { name: 'Номер телефона' }) as HTMLInputElement).value).toContain('700')
-  await user.click(screen.getByRole('button', { name: 'Код в Telegram' }))
+  await user.click(screen.getByRole('button', { name: 'Получить код' }))
 
-  const code = await screen.findByRole('textbox', { name: 'Код из Telegram' })
+  const step = await screen.findByRole('form', { name: 'Код подтверждения' })
+  expect(step).toHaveTextContent('Отправили код: в Telegram (от бота клиники), если номер привязан к вашему Telegram, иначе — SMS на этот номер.')
+  // Пароля на этом шаге нет — только после «Подтвердить»
+  expect(screen.queryByLabelText('Новый пароль')).not.toBeInTheDocument()
+  // «Отправить по SMS» — не сразу, а через минуту
+  expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
+  expect(step).toHaveTextContent(/Через \d+ с можно отправить по SMS/)
+  const code = screen.getByRole('textbox', { name: 'Код подтверждения' })
   expect(code).toHaveAttribute('autocomplete', 'one-time-code')
-  expect(screen.getByText(/через минуту выберите «Код по SMS»/)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Отправить ещё раз через \d+ с/ })).toBeDisabled()
   await user.type(code, '000000')
-  await user.click(screen.getByRole('button', { name: 'Дальше' }))
+  await user.click(screen.getByRole('button', { name: 'Подтвердить' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Код не подошёл')
+  expect(screen.queryByLabelText('Новый пароль')).not.toBeInTheDocument()
   await user.clear(code)
   await user.type(code, '123456')
-  await user.click(screen.getByRole('button', { name: 'Дальше' }))
+  await user.click(screen.getByRole('button', { name: 'Подтвердить' }))
 
   const fresh = await screen.findByRole('form', { name: 'Придумайте пароль' })
   expect(fresh).toHaveTextContent('Номер подтверждён')
@@ -137,24 +144,40 @@ test('«Забыли пароль? / Первый вход» → выбор «К
 
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
   expect(posts.map((p) => p.path)).toEqual(['password', 'code', 'verify', 'verify', 'new'])
-  expect(posts[1]!.body).toEqual({ phone: '+996 700000031', channel: 'telegram' })
+  // Канал не выбираем — сервер решает сам
+  expect(posts[1]!.body).toEqual({ phone: '+996 700000031' })
   expect(posts.at(-1)!.body).toEqual({ token: 'tok-1', password: 'Тишина2026' })
 })
 
-test('«Код по SMS» — тот же путь, канал sms; «Другой номер или способ» возвращает к выбору', async () => {
-  const posts = backend()
-  const user = userEvent.setup()
-  renderApp()
-  await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
-  expect(screen.queryByLabelText('Пароль')).not.toBeInTheDocument()
-  await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
-  await user.click(screen.getByRole('button', { name: 'Код по SMS' }))
-  expect(await screen.findByRole('textbox', { name: 'Код из SMS' })).toBeInTheDocument()
-  expect(posts.at(-1)!.body).toEqual({ phone: '+996 700000031', channel: 'sms' })
-  await user.click(screen.getByRole('button', { name: 'Другой номер или способ' }))
-  expect(screen.getByRole('button', { name: 'Код в Telegram' })).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Назад: вход по паролю' }))
-  expect(screen.getByLabelText('Пароль')).toBeInTheDocument()
+test('«Не пришло? Отправить по SMS» появляется через 60 секунд и явно просит SMS', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  try {
+    const posts = backend()
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderApp()
+    await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
+    expect(screen.queryByLabelText('Пароль')).not.toBeInTheDocument()
+    await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+    await user.click(screen.getByRole('button', { name: 'Получить код' }))
+    await screen.findByRole('form', { name: 'Код подтверждения' })
+
+    for (let i = 0; i < 59; i++) await act(async () => { vi.advanceTimersByTime(1000) })
+    expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
+    expect(screen.getByText('Не пришло? Через 1 с можно отправить по SMS.')).toBeInTheDocument()
+    await act(async () => { vi.advanceTimersByTime(1000) })
+    await user.click(screen.getByRole('button', { name: 'Не пришло? Отправить по SMS' }))
+
+    expect(await screen.findByText(/Отправили SMS с кодом на этот номер/)).toBeInTheDocument()
+    expect(posts.at(-1)!.body).toEqual({ phone: '+996 700000031', channel: 'sms' })
+    // Снова минута до следующей отправки
+    expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Другой номер' }))
+    expect(screen.getByRole('button', { name: 'Получить код' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Назад: вход по паролю' }))
+    expect(screen.getByLabelText('Пароль')).toBeInTheDocument()
+  } finally {
+    vi.useRealTimers()
+  }
 })
 
 test('429 — блок: текст сервера и заметная кнопка «Забыли пароль?»', async () => {
@@ -168,7 +191,7 @@ test('429 — блок: текст сервера и заметная кнопк
   expect(screen.getByRole('button', { name: 'Забыли пароль? / Первый вход' })).toHaveClass('btn')
 })
 
-test('временный пароль от админа → сразу «Придумайте пароль»; пропуск устарел — заново к выбору кода', async () => {
+test('временный пароль от админа → сразу «Придумайте пароль»; пропуск устарел — заново к «Получить код»', async () => {
   const posts = backend()
   server.use(http.post('*/web/login/phone/password/new', async ({ request }) => {
     posts.push({ path: 'new', body: await request.json() as Record<string, unknown>, header: null })
@@ -188,14 +211,23 @@ test('временный пароль от админа → сразу «При�
   expect(screen.getByRole('form', { name: 'Код для входа' })).toBeInTheDocument()
 })
 
-test('SMS не подключены — только «Код в Telegram», без кнопки SMS', async () => {
-  backend({ sms: false })
-  const user = userEvent.setup()
-  renderApp()
-  await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
-  expect(screen.getByRole('button', { name: 'Код в Telegram' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Код по SMS' })).not.toBeInTheDocument()
-  expect(screen.queryByText(/Нет Telegram — выберите SMS/)).not.toBeInTheDocument()
+test('SMS не подключены — «Получить код» (Telegram), без SMS в тексте и без «Отправить по SMS»', async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  try {
+    backend({ sms: false })
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+    renderApp()
+    await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
+    await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+    await user.click(screen.getByRole('button', { name: 'Получить код' }))
+    const step = await screen.findByRole('form', { name: 'Код подтверждения' })
+    expect(step).toHaveTextContent('Отправили код в Telegram (от бота клиники), если номер привязан к вашему Telegram.')
+    for (let i = 0; i < 60; i++) await act(async () => { vi.advanceTimersByTime(1000) })
+    expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Отправить код ещё раз' })).toBeInTheDocument()
+  } finally {
+    vi.useRealTimers()
+  }
 })
 
 test('ни Telegram-кодов, ни SMS — подсказка про временный пароль от админа', async () => {

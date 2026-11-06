@@ -23,7 +23,7 @@ test('не вошли (401) — вход по номеру и паролю, кн
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Вход для клиники' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Telegram/ })).not.toBeInTheDocument()
-  expect(await screen.findByText(/Нет пароля\? Нажмите «Забыли пароль\? \/ Первый вход» — код придёт в Telegram/)).toBeInTheDocument()
+  expect(await screen.findByText(/Нет пароля\? Нажмите «Забыли пароль\? \/ Первый вход» — пришлём код в Telegram/)).toBeInTheDocument()
   await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '0700 000 031')
   await user.type(screen.getByLabelText('Пароль'), 'Тишина2026')
   await user.click(screen.getByRole('button', { name: 'Войти' }))

@@ -11,6 +11,8 @@ import { PHONE_HINT } from '../team/PhoneParts'
 import { phoneText } from '../team/texts'
 import { SubHeader } from './SubHeader'
 import { Loading, Spinner } from '../layout/Loading'
+import { CodeInput, ResendLink } from '../layout/CodeStep'
+import { useCountdown } from '../lib/otp'
 import { NewPasswordFields } from '../layout/PasswordFields'
 import { passwordProblem } from '../lib/password'
 import { telegram } from '../lib/telegram'
@@ -62,7 +64,9 @@ type MyPhoneState = Schemas['MyPhoneControllerMyPhone']
  * Telegram, на сайте — бот по ссылке «?start=phone» с кнопкой «📱 Поделиться номером». Telegram отдаёт
  * номер своего аккаунта, поэтому это и есть подтверждение (код в свой же Telegram не доказал бы, что
  * номер ваш);</li>
- * <li>кодом из SMS на этот номер: номер → «Получить код» → код → «Подтвердить».</li>
+ * <li>запасной способ — кодом из SMS на этот номер: номер → «Получить код» → код → «Подтвердить» → только
+ * потом «Придумайте пароль для входа по номеру» (сервер выдал одноразовый пропуск; шаг можно пропустить и
+ * задать пароль позже в «Пароль и вход»).</li>
  * </ul>
  * Убрать (у кого есть Telegram) — без кода.
  */
@@ -83,7 +87,9 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
   const [value, setValue] = useState('')
   const [sentTo, setSentTo] = useState('')
   const [code, setCode] = useState('')
-  // Пароль для входа по номеру — сразу при подтверждении, тем же кодом (вторая SMS не нужна)
+  const [wait, restart] = useCountdown()
+  // Пропуск после «Подтвердить»: с ним — шаг «Придумайте пароль» (вторая SMS не нужна)
+  const [token, setToken] = useState('')
   const [fresh, setFresh] = useState({ password: '', repeat: '' })
   const [problem, setProblem] = useState('')
   const refresh = () => {
@@ -92,15 +98,32 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
   }
   const sendCode = useMutation<unknown, ApiError, string>({
     mutationFn: (p) => unwrap(api.POST('/api/me/phone/code', { body: { phone: p } })),
-    onSuccess: (_r, p) => { setSentTo(p); setCode('') },
+    onSuccess: (_r, p) => { setSentTo(p); setCode(''); restart() },
   })
-  const confirm = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/me/phone', { body: { phone: sentTo, code, password: fresh.password } })),
+  const confirm = useMutation<Schemas['MyPhoneControllerPhoneConfirmed'], ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/me/phone', { body: { phone: sentTo, code } })),
+    onSuccess: (r) => {
+      if (!r.setupToken) {
+        refresh()
+        void notify('Номер подтверждён.')
+        return
+      }
+      // Номер уже привязан; карточку не перерисовываем, пока не пройден шаг пароля
+      setToken(r.setupToken)
+      setFresh({ password: '', repeat: '' })
+    },
+  })
+  const savePassword = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/me/password', { body: { setupToken: token, newPassword: fresh.password } })),
     onSuccess: () => {
       refresh()
       void notify('Номер подтверждён, пароль задан. Теперь можно входить на сайте по номеру и паролю.')
     },
   })
+  const skipPassword = () => {
+    refresh()
+    void notify('Номер подтверждён. Пароль для входа по номеру можно задать позже — «Пароль и вход».')
+  }
   const remove = useMutation<unknown, ApiError>({ mutationFn: () => unwrap(api.DELETE('/api/me/phone')), onSuccess: refresh })
   const viaTelegram = useTelegramShare(state.phone ?? null, refresh)
   const close = () => {
@@ -111,6 +134,7 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
     confirm.reset()
   }
   const error = confirm.error ?? sendCode.error
+  const phoneDigits = sentTo.replace(/\D/g, '')
 
   return (
     <div className="card-block">
@@ -146,26 +170,35 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
             <button type="button" className="btn ghost" onClick={close}>Отмена</button>
           </div>
         </form>
-      ) : (
-        <form className="form narrow" aria-label="Подтвердить номер" onSubmit={(e) => {
-          e.preventDefault()
-          const p = passwordProblem(fresh.password, fresh.repeat, sentTo.replace(/\D/g, ''))
-          setProblem(p)
-          if (!p) confirm.mutate()
-        }}>
-          <p className="hint">Код отправлен на {phoneText(sentTo.replace(/\s/g, ''))}. Действует 5 минут.</p>
-          <label className="field"><span>Код из SMS</span>
-            <input value={code} autoComplete="one-time-code" inputMode="numeric" maxLength={6} placeholder="123456"
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
-          </label>
-          <p className="hint">И сразу придумайте пароль — им будете входить на сайте по номеру, без Telegram.</p>
-          <NewPasswordFields password={fresh.password} repeat={fresh.repeat} phone={sentTo.replace(/\D/g, '')} label="Пароль для входа по номеру"
-            onPassword={(v) => setFresh({ ...fresh, password: v })} onRepeat={(v) => setFresh({ ...fresh, repeat: v })} />
-          {(problem || error) && <p className="error" role="alert">{problem || (error && (error.fieldErrors.code ?? error.fieldErrors.password ?? error.fieldErrors.phone ?? error.message))}</p>}
+      ) : !token ? (
+        <form className="form narrow" aria-label="Подтвердить номер" onSubmit={(e) => { e.preventDefault(); confirm.mutate() }}>
+          <p className="hint" role="status">Отправили SMS с кодом на {phoneText(sentTo.replace(/\s/g, ''))}. Код действует 5 минут.</p>
+          <CodeInput value={code} onChange={setCode} />
+          {error && <p className="error" role="alert">{error.fieldErrors.code ?? error.fieldErrors.phone ?? error.message}</p>}
+          <ResendLink wait={wait} sms={false} busy={sendCode.isPending} onSms={() => sendCode.mutate(sentTo)} onAgain={() => sendCode.mutate(sentTo)} />
           <div className="actions">
             <button type="submit" className="btn primary" disabled={confirm.isPending || code.length !== 6}>
               {confirm.isPending ? <><Spinner />Проверяем…</> : 'Подтвердить'}</button>
             <button type="button" className="btn ghost" onClick={close}>Отмена</button>
+          </div>
+        </form>
+      ) : (
+        <form className="form narrow" aria-label="Придумайте пароль для входа по номеру" onSubmit={(e) => {
+          e.preventDefault()
+          const p = passwordProblem(fresh.password, fresh.repeat, phoneDigits)
+          setProblem(p)
+          if (!p) savePassword.mutate()
+        }}>
+          <h3>Придумайте пароль для входа по номеру</h3>
+          <p className="hint">Номер {phoneText(sentTo.replace(/\s/g, ''))} подтверждён. Паролем будете входить на сайте по номеру.</p>
+          <NewPasswordFields password={fresh.password} repeat={fresh.repeat} phone={phoneDigits} label="Пароль для входа по номеру"
+            onPassword={(v) => setFresh({ ...fresh, password: v })} onRepeat={(v) => setFresh({ ...fresh, repeat: v })} />
+          {(problem || savePassword.error) && <p className="error" role="alert">{problem
+            || (savePassword.error && (savePassword.error.fieldErrors.newPassword ?? savePassword.error.fieldErrors.setupToken ?? savePassword.error.message))}</p>}
+          <div className="actions">
+            <button type="submit" className="btn primary" disabled={savePassword.isPending}>
+              {savePassword.isPending ? <><Spinner />Сохраняем…</> : 'Сохранить пароль'}</button>
+            <button type="button" className="btn ghost" onClick={skipPassword}>Пропустить</button>
           </div>
         </form>
       )}

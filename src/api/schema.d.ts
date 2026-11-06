@@ -2436,6 +2436,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/password/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirm_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/password/code": {
         parameters: {
             query?: never;
@@ -5503,7 +5519,6 @@ export interface components {
         MyPhoneControllerPhoneConfirm: {
             phone?: string;
             code?: string;
-            password?: string;
         };
         MyPhoneControllerMyPhone: {
             phone?: string;
@@ -5511,9 +5526,13 @@ export interface components {
             sms?: boolean;
             telegram?: boolean;
         };
+        MyPhoneControllerPhoneConfirmed: {
+            state?: components["schemas"]["MyPhoneControllerMyPhone"];
+            setupToken?: string;
+        };
         PasswordControllerPasswordChange: {
             currentPassword?: string;
-            code?: string;
+            setupToken?: string;
             newPassword?: string;
         };
         EarningsControllerGoal: {
@@ -6478,6 +6497,12 @@ export interface components {
         };
         MyPhoneControllerCodeRequest: {
             phone?: string;
+        };
+        PasswordControllerCodeConfirm: {
+            code?: string;
+        };
+        PasswordControllerSetupToken: {
+            setupToken?: string;
         };
         PasswordControllerCodeRequest: {
             channel?: string;
@@ -9288,7 +9313,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MyPhoneControllerMyPhone"];
+                    "application/json": components["schemas"]["MyPhoneControllerPhoneConfirmed"];
                 };
             };
         };
@@ -12898,6 +12923,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    confirm_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordControllerCodeConfirm"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordControllerSetupToken"];
+                };
             };
         };
     };

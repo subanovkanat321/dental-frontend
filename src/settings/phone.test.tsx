@@ -13,6 +13,7 @@ function backend(initial: Phone) {
   let state = initial
   const codes: unknown[] = []
   const confirms: unknown[] = []
+  const passwords: unknown[] = []
   let removed = 0
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined, admin: false, reception: true })),
@@ -28,7 +29,11 @@ function backend(initial: Phone) {
         return HttpResponse.json({ detail: 'Проверьте поля формы', errors: [{ field: 'code', message: 'Код не подошёл или устарел. Запросите новый' }] }, { status: 422 })
       }
       state = { ...state, phone: '+996700000051' }
-      return HttpResponse.json(state)
+      return HttpResponse.json({ state, setupToken: 'tok-5' } satisfies Schemas['MyPhoneControllerPhoneConfirmed'])
+    }),
+    http.put('*/api/me/password', async ({ request }) => {
+      passwords.push(await request.json())
+      return new HttpResponse(null, { status: 204 })
     }),
     http.delete('*/api/me/phone', () => {
       removed++
@@ -38,20 +43,19 @@ function backend(initial: Phone) {
     http.get('*/api/appointments', () => HttpResponse.json([])),
   )
   window.location.hash = '/settings/profile'
-  return { codes, confirms, removed: () => removed }
+  return { codes, confirms, passwords, removed: () => removed }
 }
 
 afterEach(() => {
   window.location.hash = ''
 })
 
-test('«Мой профиль»: номер для входа — только с кодом из SMS: «Получить код» → код → «Подтвердить»; убрать — без кода', async () => {
-  const { codes, confirms, removed } = backend({ phoneOnly: false, sms: true })
+test('«Мой профиль»: номер по SMS — «Получить код» → код → «Подтвердить» → потом «Придумайте пароль»; убрать — без кода', async () => {
+  const { codes, confirms, passwords, removed } = backend({ phoneOnly: false, sms: true })
   const user = userEvent.setup()
   renderApp()
   const section = await screen.findByRole('region', { name: 'Телефон' })
   expect(await within(section).findByText('Телефон не указан.')).toBeInTheDocument()
-  expect(section).toHaveTextContent('По этому номеру вы входите на сайте: номер и пароль. Первый раз или забыли пароль — код в Telegram или по SMS.')
 
   await user.click(within(section).getByRole('button', { name: 'Указать телефон' }))
   const form = within(section).getByRole('form', { name: 'Мой телефон' })
@@ -59,28 +63,50 @@ test('«Мой профиль»: номер для входа — только �
   await user.click(within(form).getByRole('button', { name: 'Получить код' }))
   const confirm = await within(section).findByRole('form', { name: 'Подтвердить номер' })
   expect(codes).toEqual([{ phone: '+996 700000051' }])
-  expect(confirm).toHaveTextContent('Код отправлен на +996 700 000 051')
+  expect(confirm).toHaveTextContent('Отправили SMS с кодом на +996 700 000 051')
+  // Пароля на шаге кода нет
+  expect(within(section).queryByLabelText('Пароль для входа по номеру')).not.toBeInTheDocument()
 
-  // Пароль для входа по номеру задаётся тут же, тем же кодом
-  await user.type(within(confirm).getByLabelText('Пароль для входа по номеру'), 'Тишина2026')
-  await user.type(within(confirm).getByLabelText('Повторите пароль'), 'Тишина2026')
   // Неверный код — номер не привязан, ошибка под полем
-  await user.type(within(confirm).getByRole('textbox', { name: 'Код из SMS' }), '000000')
+  await user.type(within(confirm).getByRole('textbox', { name: 'Код подтверждения' }), '000000')
   await user.click(within(confirm).getByRole('button', { name: 'Подтвердить' }))
   expect(await within(confirm).findByRole('alert')).toHaveTextContent('Код не подошёл')
-  expect(within(section).queryByText('+996 700 000 051')).not.toBeInTheDocument()
-
-  await user.clear(within(confirm).getByRole('textbox', { name: 'Код из SMS' }))
-  await user.type(within(confirm).getByRole('textbox', { name: 'Код из SMS' }), '123456')
+  await user.clear(within(confirm).getByRole('textbox', { name: 'Код подтверждения' }))
+  await user.type(within(confirm).getByRole('textbox', { name: 'Код подтверждения' }), '123456')
   await user.click(within(confirm).getByRole('button', { name: 'Подтвердить' }))
+  expect(confirms).toEqual([{ phone: '+996 700000051', code: '000000' }, { phone: '+996 700000051', code: '123456' }])
+
+  // Номер подтверждён — теперь пароль, с пропуском из ответа
+  const step = await within(section).findByRole('form', { name: 'Придумайте пароль для входа по номеру' })
+  expect(step).toHaveTextContent('подтверждён')
+  await user.type(within(step).getByLabelText('Пароль для входа по номеру'), 'Тишина2026')
+  await user.type(within(step).getByLabelText('Повторите пароль'), 'Тишина2026')
+  await user.click(within(step).getByRole('button', { name: 'Сохранить пароль' }))
   expect(await within(section).findByText('+996 700 000 051')).toBeInTheDocument()
-  expect(confirms).toEqual([{ phone: '+996 700000051', code: '000000', password: 'Тишина2026' },
-    { phone: '+996 700000051', code: '123456', password: 'Тишина2026' }])
+  expect(passwords).toEqual([{ setupToken: 'tok-5', newPassword: 'Тишина2026' }])
 
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   await user.click(within(section).getByRole('button', { name: 'Убрать номер' }))
   await vi.waitFor(() => expect(removed()).toBe(1))
   expect(await within(section).findByText('Телефон не указан.')).toBeInTheDocument()
+})
+
+test('«Мой профиль»: шаг пароля после подтверждения номера можно пропустить', async () => {
+  const { passwords } = backend({ phoneOnly: false, sms: true })
+  // Сообщения (notify) отвечаются через подменённый window.confirm (test/setup.ts)
+  const asked = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  const user = userEvent.setup()
+  renderApp()
+  const section = await screen.findByRole('region', { name: 'Телефон' })
+  await user.click(await within(section).findByRole('button', { name: 'Указать телефон' }))
+  await user.type(within(section).getByRole('textbox', { name: 'Телефон' }), '700000051')
+  await user.click(within(section).getByRole('button', { name: 'Получить код' }))
+  await user.type(await within(section).findByRole('textbox', { name: 'Код подтверждения' }), '123456')
+  await user.click(within(section).getByRole('button', { name: 'Подтвердить' }))
+  await user.click(await within(section).findByRole('button', { name: 'Пропустить' }))
+  expect(await within(section).findByText('+996 700 000 051')).toBeInTheDocument()
+  expect(passwords).toEqual([])
+  await vi.waitFor(() => expect(asked).toHaveBeenCalledWith(expect.stringContaining('можно задать позже')))
 })
 
 test('«Мой профиль»: SMS не подключены — номер для входа не задать', async () => {

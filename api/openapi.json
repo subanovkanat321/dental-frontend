@@ -1688,7 +1688,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/MyPhoneControllerMyPhone"
+                  "$ref" : "#/components/schemas/MyPhoneControllerPhoneConfirmed"
                 }
               }
             }
@@ -6101,6 +6101,34 @@
         "responses" : {
           "200" : {
             "description" : "OK"
+          }
+        }
+      }
+    },
+    "/api/me/password/confirm" : {
+      "post" : {
+        "tags" : [ "password-controller" ],
+        "operationId" : "confirm_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordControllerCodeConfirm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PasswordControllerSetupToken"
+                }
+              }
+            }
           }
         }
       }
@@ -12344,9 +12372,6 @@
           },
           "code" : {
             "type" : "string"
-          },
-          "password" : {
-            "type" : "string"
           }
         }
       },
@@ -12366,12 +12391,22 @@
           }
         }
       },
+      "MyPhoneControllerPhoneConfirmed" : {
+        "properties" : {
+          "state" : {
+            "$ref" : "#/components/schemas/MyPhoneControllerMyPhone"
+          },
+          "setupToken" : {
+            "type" : "string"
+          }
+        }
+      },
       "PasswordControllerPasswordChange" : {
         "properties" : {
           "currentPassword" : {
             "type" : "string"
           },
-          "code" : {
+          "setupToken" : {
             "type" : "string"
           },
           "newPassword" : {
@@ -14682,6 +14717,20 @@
       "MyPhoneControllerCodeRequest" : {
         "properties" : {
           "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PasswordControllerCodeConfirm" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PasswordControllerSetupToken" : {
+        "properties" : {
+          "setupToken" : {
             "type" : "string"
           }
         }
