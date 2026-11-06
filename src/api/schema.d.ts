@@ -3636,6 +3636,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_5"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/health/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["logs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/finance": {
         parameters: {
             query?: never;
@@ -3787,7 +3819,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4091,7 +4123,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4171,7 +4203,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
+        get: operations["get_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4507,7 +4539,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_8"];
+        get: operations["get_9"];
         put?: never;
         post?: never;
         delete: operations["delete_11"];
@@ -7210,6 +7242,146 @@ export interface components {
             fullName?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        ErrorJournalTop: {
+            method?: string;
+            path?: string;
+            exception?: string;
+            /** Format: int64 */
+            count?: number;
+            /** Format: date-time */
+            lastAt?: string;
+            lastRequestId?: string;
+        };
+        HealthServiceAi: {
+            configured?: boolean;
+            /** Format: date-time */
+            lastOkAt?: string;
+            /** Format: date-time */
+            lastErrorAt?: string;
+            /** Format: int64 */
+            errors24h?: number;
+            lastError?: string;
+        };
+        HealthServiceApp: {
+            version?: string;
+            commit?: string;
+            /** Format: date-time */
+            builtAt?: string;
+            /** Format: date-time */
+            startedAt?: string;
+            /** Format: int64 */
+            uptimeSeconds?: number;
+            java?: string;
+            /** Format: int64 */
+            heapUsedMb?: number;
+            /** Format: int64 */
+            heapMaxMb?: number;
+            /** Format: int32 */
+            cpuPercent?: number;
+            /** Format: int32 */
+            processors?: number;
+            disk?: components["schemas"]["HealthServiceDisk"];
+        };
+        HealthServiceBackup: {
+            /** Format: date-time */
+            lastAt?: string;
+            /** Format: int64 */
+            sizeMb?: number;
+            offsite?: boolean;
+            /** Format: int64 */
+            ageHours?: number;
+            stale?: boolean;
+        };
+        HealthServiceDb: {
+            up?: boolean;
+            /** Format: int64 */
+            queryMs?: number;
+            /** Format: int64 */
+            sizeMb?: number;
+            /** Format: int32 */
+            connections?: number;
+            /** Format: int32 */
+            poolActive?: number;
+            /** Format: int32 */
+            poolMax?: number;
+            error?: string;
+        };
+        HealthServiceDisk: {
+            path?: string;
+            /** Format: int64 */
+            totalMb?: number;
+            /** Format: int64 */
+            freeMb?: number;
+            /** Format: int32 */
+            usedPercent?: number;
+        };
+        HealthServiceErrors: {
+            /** Format: int64 */
+            total24h?: number;
+            top?: components["schemas"]["ErrorJournalTop"][];
+        };
+        HealthServiceHealth: {
+            /** Format: date-time */
+            checkedAt?: string;
+            app?: components["schemas"]["HealthServiceApp"];
+            db?: components["schemas"]["HealthServiceDb"];
+            backup?: components["schemas"]["HealthServiceBackup"];
+            jobs?: components["schemas"]["HealthServiceJob"][];
+            telegram?: components["schemas"]["HealthServiceTelegram"];
+            sms?: components["schemas"]["HealthServiceSms"];
+            ai?: components["schemas"]["HealthServiceAi"];
+            errors?: components["schemas"]["HealthServiceErrors"];
+            problems?: components["schemas"]["HealthServiceProblem"][];
+        };
+        HealthServiceJob: {
+            name?: string;
+            code?: string;
+            schedule?: string;
+            /** Format: date-time */
+            lastRunAt?: string;
+            status?: string;
+            error?: string;
+            /** Format: date-time */
+            nextRunAt?: string;
+        };
+        HealthServiceProblem: {
+            code?: string;
+            text?: string;
+        };
+        HealthServiceSms: {
+            configured?: boolean;
+            /** Format: date-time */
+            lastSentAt?: string;
+            /** Format: date-time */
+            lastErrorAt?: string;
+            lastError?: string;
+        };
+        HealthServiceTelegram: {
+            mode?: string;
+            webhookSet?: boolean;
+            /** Format: int32 */
+            pendingUpdates?: number;
+            /** Format: date-time */
+            lastErrorAt?: string;
+            lastError?: string;
+            error?: string;
+        };
+        LogSearchLine: {
+            time?: string;
+            level?: string;
+            logger?: string;
+            thread?: string;
+            message?: string;
+            error?: string;
+            stack?: string;
+        };
+        LogSearchResult: {
+            available?: boolean;
+            requestId?: string;
+            lines?: components["schemas"]["LogSearchLine"][];
+            truncated?: boolean;
+            files?: string[];
         };
         PlatformExpensesClinicIncome: {
             /** Format: int64 */
@@ -15235,6 +15407,48 @@ export interface operations {
             };
         };
     };
+    get_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthServiceHealth"];
+                };
+            };
+        };
+    };
+    logs: {
+        parameters: {
+            query: {
+                requestId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogSearchResult"];
+                };
+            };
+        };
+    };
     finance: {
         parameters: {
             query?: {
@@ -15431,7 +15645,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -15864,7 +16078,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -15966,7 +16180,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -16406,7 +16620,7 @@ export interface operations {
             };
         };
     };
-    get_8: {
+    get_9: {
         parameters: {
             query?: never;
             header?: never;

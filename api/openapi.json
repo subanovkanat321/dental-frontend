@@ -8719,6 +8719,50 @@
         }
       }
     },
+    "/api/platform/health" : {
+      "get" : {
+        "tags" : [ "health-controller" ],
+        "operationId" : "get_5",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HealthServiceHealth"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/health/logs" : {
+      "get" : {
+        "tags" : [ "health-controller" ],
+        "operationId" : "logs",
+        "parameters" : [ {
+          "name" : "requestId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LogSearchResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/finance" : {
       "get" : {
         "tags" : [ "platform-finance-controller" ],
@@ -8962,7 +9006,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9509,7 +9553,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9614,7 +9658,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10132,7 +10176,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_8",
+        "operationId" : "get_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -16467,6 +16511,351 @@
           "createdAt" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "ErrorJournalTop" : {
+        "properties" : {
+          "method" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "exception" : {
+            "type" : "string"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastRequestId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HealthServiceAi" : {
+        "properties" : {
+          "configured" : {
+            "type" : "boolean"
+          },
+          "lastOkAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastErrorAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "errors24h" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastError" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HealthServiceApp" : {
+        "properties" : {
+          "version" : {
+            "type" : "string"
+          },
+          "commit" : {
+            "type" : "string"
+          },
+          "builtAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "uptimeSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "java" : {
+            "type" : "string"
+          },
+          "heapUsedMb" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "heapMaxMb" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "cpuPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "processors" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "disk" : {
+            "$ref" : "#/components/schemas/HealthServiceDisk"
+          }
+        }
+      },
+      "HealthServiceBackup" : {
+        "properties" : {
+          "lastAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "sizeMb" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "offsite" : {
+            "type" : "boolean"
+          },
+          "ageHours" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "stale" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "HealthServiceDb" : {
+        "properties" : {
+          "up" : {
+            "type" : "boolean"
+          },
+          "queryMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "sizeMb" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "connections" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "poolActive" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "poolMax" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "error" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HealthServiceDisk" : {
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "totalMb" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "freeMb" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "usedPercent" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "HealthServiceErrors" : {
+        "properties" : {
+          "total24h" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "top" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ErrorJournalTop"
+            }
+          }
+        }
+      },
+      "HealthServiceHealth" : {
+        "properties" : {
+          "checkedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "app" : {
+            "$ref" : "#/components/schemas/HealthServiceApp"
+          },
+          "db" : {
+            "$ref" : "#/components/schemas/HealthServiceDb"
+          },
+          "backup" : {
+            "$ref" : "#/components/schemas/HealthServiceBackup"
+          },
+          "jobs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HealthServiceJob"
+            }
+          },
+          "telegram" : {
+            "$ref" : "#/components/schemas/HealthServiceTelegram"
+          },
+          "sms" : {
+            "$ref" : "#/components/schemas/HealthServiceSms"
+          },
+          "ai" : {
+            "$ref" : "#/components/schemas/HealthServiceAi"
+          },
+          "errors" : {
+            "$ref" : "#/components/schemas/HealthServiceErrors"
+          },
+          "problems" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HealthServiceProblem"
+            }
+          }
+        }
+      },
+      "HealthServiceJob" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "schedule" : {
+            "type" : "string"
+          },
+          "lastRunAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "nextRunAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "HealthServiceProblem" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HealthServiceSms" : {
+        "properties" : {
+          "configured" : {
+            "type" : "boolean"
+          },
+          "lastSentAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastErrorAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastError" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HealthServiceTelegram" : {
+        "properties" : {
+          "mode" : {
+            "type" : "string"
+          },
+          "webhookSet" : {
+            "type" : "boolean"
+          },
+          "pendingUpdates" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lastErrorAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastError" : {
+            "type" : "string"
+          },
+          "error" : {
+            "type" : "string"
+          }
+        }
+      },
+      "LogSearchLine" : {
+        "properties" : {
+          "time" : {
+            "type" : "string"
+          },
+          "level" : {
+            "type" : "string"
+          },
+          "logger" : {
+            "type" : "string"
+          },
+          "thread" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "stack" : {
+            "type" : "string"
+          }
+        }
+      },
+      "LogSearchResult" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "requestId" : {
+            "type" : "string"
+          },
+          "lines" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/LogSearchLine"
+            }
+          },
+          "truncated" : {
+            "type" : "boolean"
+          },
+          "files" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },
