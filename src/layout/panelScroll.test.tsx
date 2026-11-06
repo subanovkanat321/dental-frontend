@@ -66,3 +66,7 @@ test('открытой карточке приёма ставится --panel-to
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
   await waitFor(() => expect(panel.style.getPropertyValue('--panel-top')).toBe('16px'))
 })
+
+test('телефон: открыта карточка — страница под ней не прокручивается (iPhone сдвигал карточку вместе со страницей)', () => {
+  expect(styles).toContain('html:has(.workspace .panel), html:has(.workspace .panel) body { overflow: hidden; overscroll-behavior: none; }')
+})

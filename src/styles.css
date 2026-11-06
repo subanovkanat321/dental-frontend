@@ -381,6 +381,10 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
     align-self: stretch; justify-self: stretch; align-content: start;
     padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); overflow-y: auto;
   }
+  /* Карточка на весь экран открыта — страница под ней не прокручивается. Иначе iPhone (Safari, Telegram)
+     прокручивал страницу вместе с «закреплённой» карточкой: снизу проглядывало расписание, а верх с ✕
+     уезжал за край, и долистать до него было нельзя */
+  html:has(.workspace .panel), html:has(.workspace .panel) body { overflow: hidden; overscroll-behavior: none; }
   .toolbar { gap: 8px; }
   .toolbar h1 { font-size: 1.1rem; flex-basis: 100%; }
   .search { min-width: 0; flex: 1; }
