@@ -9,7 +9,13 @@ import { sourceChoices, sourceText, useSources } from '../lib/sources'
  * (раньше только в «Изменить данные», и пустое в карточке не показывалось). По нему — «Касса →
  * Аналитика → Откуда пациенты».
  */
-export function SourceLine({ patient: p, canEdit, compact = false }: { patient: Schemas['PatientView']; canEdit: boolean; compact?: boolean }) {
+export function SourceLine({ patient: p, canEdit, compact = false, admin = false }: {
+  patient: Schemas['PatientView']
+  canEdit: boolean
+  compact?: boolean
+  /** Админ клиники — может сразу добавить свой вариант («＋ Свой вариант»), не уходя в «Настройки» */
+  admin?: boolean
+}) {
   const client = useQueryClient()
   const sources = useSources()
   const save = useMutation<Schemas['PatientView'], ApiError, string>({
@@ -20,6 +26,20 @@ export function SourceLine({ patient: p, canEdit, compact = false }: { patient: 
     onSuccess: () => { for (const key of ['patients', 'patient-card', 'appointments', 'appointment', 'sources']) void client.invalidateQueries({ queryKey: [key] }) },
   })
   const [open, setOpen] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [title, setTitle] = useState('')
+  // Новый вариант: создаём в списке клиники («Настройки → Откуда приходят пациенты») и сразу выбираем пациенту
+  const add = useMutation<Schemas['PatientSourcesOption'][], ApiError, string>({
+    mutationFn: (t) => unwrap(api.POST('/api/patient-sources', { body: { emoji: '', title: t } })),
+    // Ответ — весь список вариантов клиники: новый — с этим названием и самым большим id
+    onSuccess: (list, t) => {
+      client.setQueryData(['patient-sources'], list)
+      setAdding(false)
+      setTitle('')
+      const created = list.filter((o) => o.title === t).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0]
+      if (created?.id != null) pick(created.id)
+    },
+  })
   const choices = sourceChoices(sources.data, p.sourceId)
   const chosen = p.sourceId != null
   const pick = (id: number) => save.mutate(String(id), { onSuccess: () => setOpen(false) })
@@ -41,7 +61,18 @@ export function SourceLine({ patient: p, canEdit, compact = false }: { patient: 
             <button key={o.id} type="button" className="source-chip" aria-pressed={o.id === p.sourceId} disabled={save.isPending}
               onClick={() => pick(o.id)}>{o.label}</button>
           ))}
+          {admin && !adding && <button type="button" className="source-chip add" onClick={() => setAdding(true)}>＋ Свой вариант</button>}
         </div>
+      )}
+      {admin && adding && (
+        <form className="source-add" aria-label="Новый вариант «откуда узнал»"
+          onSubmit={(e) => { e.preventDefault(); if (title.trim()) add.mutate(title.trim()) }}>
+          <input aria-label="Название варианта" value={title} maxLength={60} autoFocus placeholder="Например: Ярмарка здоровья"
+            onChange={(e) => setTitle(e.target.value)} />
+          <button type="submit" className="btn small primary" disabled={add.isPending || !title.trim()}>Добавить</button>
+          <button type="button" className="btn small ghost" onClick={() => { setAdding(false); setTitle(''); add.reset() }}>Отмена</button>
+          {add.error && <p className="error" role="alert">{add.error.fieldErrors.title ?? add.error.message}</p>}
+        </form>
       )}
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </div>

@@ -230,7 +230,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
             </>
           )}
           {/* «Откуда узнал» — всегда в «Прочем»: в шапке карточки занимал полэкрана */}
-          {patient && <SourceLine patient={patient} canEdit={Boolean(mine)} />}
+          {patient && <SourceLine patient={patient} canEdit={Boolean(mine)} admin={Boolean(mine && me.admin)} />}
           {patient && mine && <WaitlistBox patient={patient} me={me} />}
           {patient && <GuardianBox patient={patient} canEdit={Boolean(mine)} />}
           {patient && mine && <FamilyBox patient={patient} me={me} onOpenPatient={onOpenPatient} />}

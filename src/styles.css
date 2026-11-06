@@ -1162,6 +1162,10 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .source-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .source-chip { min-height: 34px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .85rem; cursor: pointer; }
 .source-chip:hover:not(:disabled) { border-color: var(--accent); }
+.source-chip.add { border-style: dashed; color: var(--accent); }
+.source-add { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.source-add input { flex: 1 1 180px; min-width: 0; }
+.source-add .error { flex-basis: 100%; }
 .source-chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
 .tooth-help summary { cursor: pointer; color: var(--link); }
 

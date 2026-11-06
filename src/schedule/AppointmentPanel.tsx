@@ -370,7 +370,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             {rare.includes('deposit') && <DepositBox key="none" appointment={a} />}
             {rare.includes('waitlist') && a.patient && <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>}
             {/* Откуда узнал — пациент не ответил в боте, отметят здесь */}
-            {rare.includes('source') && a.patient?.id != null && <SourceLine patient={a.patient} canEdit compact />}
+            {rare.includes('source') && a.patient?.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
             {/* Расход по пациенту (техник, лаборатория); регистратуре и ассистенту нет (у них нет своих расходов) */}
             {a.status === 'DONE' && seesMoney && a.patient && (me.admin || me.doctorId != null) && <PatientExpenses patient={a.patient} me={me} doctorId={a.doctorId} />}
             {/* Квитанция: печать и «Отправить пациенту» — только по нажатию */}
