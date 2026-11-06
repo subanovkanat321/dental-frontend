@@ -283,6 +283,8 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   return (
     <form className="pay-form" aria-label="Оплата" onSubmit={(e) => { e.preventDefault(); save() }}>
       {waiting && <p className="payment-done">К оплате на кассе: {somText(a.chargeSom!)}</p>}
+      {/* Сумма и способ подставлены заранее — без этой строки казалось, что оплата уже отмечена */}
+      <p className="pay-unsaved" role="note">Оплата ещё не сохранена — проверьте сумму и нажмите «Сохранить оплату»</p>
       <div className="pay-step">
         <span className="pay-step-n" aria-hidden="true">1</span>
         <div className="pay-step-body">
