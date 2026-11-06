@@ -11,6 +11,8 @@ import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
+import { audienceText, type Audience } from './agreementTarget'
+import { AudiencePicker } from './AudiencePicker'
 
 type Version = Schemas['AgreementsVersion']
 
@@ -153,8 +155,9 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
       <section className="schedule-main">
         {header}
         <section className="card-block">
-          <p className="hint">Неопубликованную версию видите только вы. Опубликованную видят админы клиник и подписывают её в «Настройки → Договор»;
-            менять её нельзя — выпустите новую. Перед публикацией — показать юристу.</p>
+          <p className="hint">Неопубликованную версию видите только вы. Опубликованную видят админы клиник, которым она адресована (всем или выбранным),
+            и подписывают её в «Настройки → Договор»; менять текст нельзя — выпустите новую. Какую версию подписать конкретной клинике — в её карточке
+            («Клиники → клиника → Договор»). Перед публикацией — показать юристу.</p>
           {list.error && <p className="error">{list.error.message}</p>}
           {versions.length > 0 && (
             <table className="table" aria-label="Версии договора">
@@ -162,7 +165,7 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
                 {versions.map((v) => (
                   <tr key={v.id} className={v.id === opened ? 'active' : undefined}>
                     <td><button type="button" className="row-link" onClick={() => setOpened(v.id!)}>Версия {v.version} · {v.title}</button></td>
-                    <td className={v.publishedAt ? 'tone-ok' : 'tone-wait'}>{v.publishedAt ? `опубликована ${shortDate(v.publishedAt)} · подписали: ${v.acceptances}` : 'не опубликована — клиники не видят'}</td>
+                    <td className={v.publishedAt ? 'tone-ok' : 'tone-wait'}>{v.publishedAt ? `опубликована ${shortDate(v.publishedAt)} · ${audienceText(v)} · подписали: ${v.acceptances}` : 'не опубликована — клиники не видят'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -187,6 +190,8 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
   const [title, setTitle] = useState(v.title ?? '')
   const [body, setBody] = useState(v.body ?? '')
   const [done, setDone] = useState('')
+  const clinics = useQuery({ queryKey: ['platform-clinics'], queryFn: () => unwrap(api.GET('/api/platform/clinics')) })
+  const [audience, setAudience] = useState<Audience>({ all: v.forAll !== false, clinicIds: v.clinicIds ?? [] })
   const { dirty, commit } = useDirty({ title, body })
   const save = useMutation<Version, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/agreements/{id}', { params: { path: { id: v.id! } }, body: { title, body } })),
@@ -198,12 +203,20 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
   const publish = useMutation<Version, ApiError>({
     mutationFn: async () => {
       await unwrap(api.PUT('/api/platform/agreements/{id}', { params: { path: { id: v.id! } }, body: { title, body } }))
-      return unwrap(api.POST('/api/platform/agreements/{id}/publish', { params: { path: { id: v.id! } } }))
+      return unwrap(api.POST('/api/platform/agreements/{id}/publish', { params: { path: { id: v.id! } }, body: audience }))
     },
     onSuccess: () => {
       // Публикация сохранила и текст
       commit()
       void refresh()
+    },
+  })
+  const saveAudience = useMutation<Version, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/platform/agreements/{id}/audience', { params: { path: { id: v.id! } }, body: audience })),
+    onSuccess: () => {
+      setDone('Адресаты версии сохранены')
+      void refresh()
+      void client.invalidateQueries({ queryKey: ['platform-agreement-statuses'] })
     },
   })
   const pdf = useMutation<unknown, ApiError>({
@@ -217,21 +230,34 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
       onClose()
     },
   })
-  const error = publish.error ?? pdf.error ?? remove.error
+  const error = publish.error ?? saveAudience.error ?? pdf.error ?? remove.error
+  const picker = (
+    <section className="form">
+      <h3>Кому адресована</h3>
+      <AudiencePicker clinics={clinics.data ?? []} value={audience} onChange={(a) => { setDone(''); saveAudience.reset(); publish.reset(); setAudience(a) }} />
+    </section>
+  )
+  const audienceCount = audience.all ? 'всем клиникам' : `клиникам: ${audience.clinicIds.length}`
   return (
     <aside className="panel wide" aria-label="Версия договора">
       <header className="panel-head">
         <div>
           <h2>Версия {v.version}{v.publishedAt ? '' : ' · не опубликована'}</h2>
-          {v.publishedAt && <span className="hint">Опубликована {shortDate(v.publishedAt)} · подписали: {v.acceptances} · отпечаток {(v.sha256 ?? '').slice(0, 16)}…</span>}
+          {v.publishedAt && <span className="hint">Опубликована {shortDate(v.publishedAt)} · {audienceText(v)} · подписали: {v.acceptances} · отпечаток {(v.sha256 ?? '').slice(0, 16)}…</span>}
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>
       </header>
       {v.publishedAt ? (
-        <div className="agreement-text">
-          <h3>{v.title}</h3>
-          {agreementBlocks(v.body ?? '').map((b, i) => <p key={i} className={b.type === 'note' ? 'hint' : b.type === 'heading' ? 'strong' : undefined}>{b.type === 'item' ? `• ${b.text}` : b.text}</p>)}
-        </div>
+        <>
+          <div className="agreement-text">
+            <h3>{v.title}</h3>
+            {agreementBlocks(v.body ?? '').map((b, i) => <p key={i} className={b.type === 'note' ? 'hint' : b.type === 'heading' ? 'strong' : undefined}>{b.type === 'item' ? `• ${b.text}` : b.text}</p>)}
+          </div>
+          {picker}
+          <p className="hint">Убрали клинику — она перестанет видеть требование подписать эту версию; её подпись, если была, останется в истории.</p>
+          <button type="button" className="btn" disabled={saveAudience.isPending || (!audience.all && !audience.clinicIds.length)}
+            onClick={() => saveAudience.mutate()}>Сохранить адресатов</button>
+        </>
       ) : (
         <div className="form">
           <label className="field"><span>Название</span><input value={title} maxLength={200} onChange={(e) => { setDone(''); save.reset(); setTitle(e.target.value) }} /></label>
@@ -244,9 +270,10 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
             {' {{platform.name}}'}, {'{{platform.hosting}}'}, {'{{platform.support}}'} — из «Сведений о платформе».</p>
           <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="Черновик договора сохранён"
             error={save.error && (save.error.fieldErrors.title ?? save.error.fieldErrors.body ?? save.error.message)} onSave={() => save.mutate()} />
+          {picker}
           <div className="actions">
-            <button type="button" className="btn primary" disabled={publish.isPending}
-              onClick={() => void ask(`Опубликовать версию ${v.version}? Клиники увидят её и будут подписывать.`).then((ok) => ok && publish.mutate())}>Опубликовать — клиники увидят</button>
+            <button type="button" className="btn primary" disabled={publish.isPending || (!audience.all && !audience.clinicIds.length)}
+              onClick={() => void ask(`Опубликовать версию ${v.version} — ${audienceCount}? Они увидят её и будут подписывать.`).then((ok) => ok && publish.mutate())}>Опубликовать — {audienceCount}</button>
           </div>
         </div>
       )}

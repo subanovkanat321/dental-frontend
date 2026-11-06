@@ -14,6 +14,8 @@ import { extendPaid } from './health'
 import { DateInput } from '../layout/DateInput'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { Select } from '../layout/Select'
+import { adminsLine, remindedText } from './agreementTarget'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -165,10 +167,33 @@ function BillingForm({ id, plan }: { id: number; plan: Plan }) {
   )
 }
 
-/** Договор клиники: подписан ли, кем; PDF и сканы — владельцу в бот. */
+/**
+ * Договор клиники: какую версию ей подписать (владелец выбирает из адресованных ей, по умолчанию —
+ * последняя), подписан ли, кем; «Напомнить» — админам в Telegram или push; PDF и сканы — в бот.
+ */
 function AgreementBox({ id, owner }: { id: number; owner: boolean }) {
+  const client = useQueryClient()
   const a = useQuery({ queryKey: ['platform-clinic-agreement', id], queryFn: () => unwrap(api.GET('/api/platform/clinics/{id}/agreement', { params: { path: { id } } })) })
   const [done, setDone] = useState('')
+  const refresh = () => {
+    void client.invalidateQueries({ queryKey: ['platform-clinic-agreement', id] })
+    void client.invalidateQueries({ queryKey: ['platform-agreement-statuses'] })
+  }
+  const assign = useMutation<Schemas['AgreementsClinicAgreement'], ApiError, number | null>({
+    // null — снять назначение: снова последняя адресованная версия
+    mutationFn: (versionId) => unwrap(api.PUT('/api/platform/clinics/{id}/agreement/assignment', { params: { path: { id } }, body: { versionId: versionId ?? undefined } })),
+    onSuccess: () => {
+      setDone('Версия для подписи сохранена')
+      refresh()
+    },
+  })
+  const remind = useMutation<Schemas['AgreementRemindersReminded'], ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/platform/clinics/{id}/agreement/remind', { params: { path: { id } } })),
+    onSuccess: (r) => {
+      setDone(remindedText(r))
+      refresh()
+    },
+  })
   const pdf = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/platform/clinics/{id}/agreement/pdf/send', { params: { path: { id } } })),
     onSuccess: () => setDone('PDF отправлен в чат с ботом'),
@@ -179,6 +204,8 @@ function AgreementBox({ id, owner }: { id: number; owner: boolean }) {
   })
   const d = a.data
   const accepted = d?.accepted
+  const t = d?.targeting
+  const choices = t?.choices ?? []
   return (
     <section className="form">
       <h3>Договор</h3>
@@ -190,6 +217,19 @@ function AgreementBox({ id, owner }: { id: number; owner: boolean }) {
             {accepted ? 'Договор подписан' : d.current ? `Версия ${d.current.version} не подписана` : 'Договор ещё не опубликован'}</p>
           <p className="hint">{accepted ? `${accepted.acceptedAt ? shortDate(accepted.acceptedAt) : ''} · версия ${accepted.version} — ${accepted.signerName} · «${accepted.clinicLegalName}»`
             : d.last ? `Принята раньше: версия ${d.last.version}` : 'Клиника ещё не принимала договор'}</p>
+          {owner && choices.length > 0 && (
+            <label className="field"><span>Какую версию подписать</span>
+              <Select value={t?.assignedVersionId ? String(t.assignedVersionId) : ''} disabled={assign.isPending}
+                onChange={(e) => { setDone(''); assign.mutate(e.target.value ? Number(e.target.value) : null) }}>
+                <option value="">Последнюю адресованную{choices[0] ? ` (версия ${choices[0].version})` : ''}</option>
+                {choices.map((c) => <option key={c.id} value={c.id}>Версия {c.version} · {c.publishedAt ? shortDate(c.publishedAt) : ''}{c.forAll ? '' : ' · адресная'}{c.signed ? ' · подписана' : ''}</option>)}
+              </Select></label>
+          )}
+          {!choices.length && <p className="hint">Клинике не адресована ни одна версия — требования подписать у неё нет.</p>}
+          <p className="hint">Админы: {adminsLine(t?.admins)}{t?.remindedAt ? ` · напоминали ${shortDate(t.remindedAt, true)}` : ''}</p>
+          {owner && d.current && !accepted && (
+            <button type="button" className="btn small" disabled={remind.isPending} onClick={() => { setDone(''); remind.mutate() }}>Напомнить подписать</button>
+          )}
           {owner && d.current && <button type="button" className="btn small" disabled={pdf.isPending} onClick={() => pdf.mutate()}>
             {accepted ? 'Подписанный договор — PDF в бот' : 'PDF для подписи — в бот'}</button>}
           {owner ? (d.scans?.length ? (
@@ -197,7 +237,7 @@ function AgreementBox({ id, owner }: { id: number; owner: boolean }) {
               <li key={x.id}>{x.fileName} <button type="button" className="btn small ghost" disabled={scan.isPending} onClick={() => scan.mutate(x.id!)}>В бот</button></li>
             ))}</ul>
           ) : <EmptyState compact title="Сканов нет" />) : <p className="hint">Сканов: {d.scans?.length ?? 0}</p>}
-          {(pdf.error ?? scan.error) && <p className="error">{(pdf.error ?? scan.error)!.message}</p>}
+          {(pdf.error ?? scan.error ?? assign.error ?? remind.error) && <p className="error" role="alert">{(pdf.error ?? scan.error ?? assign.error ?? remind.error)!.message}</p>}
           {done && <p className="tone-ok" role="status">{done}</p>}
         </>
       )}

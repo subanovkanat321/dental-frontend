@@ -13,6 +13,7 @@ import { byHealth, CLINIC_HEALTH, noShowShare } from './health'
 import { Loading } from '../layout/Loading'
 import { DemoClinic } from './DemoClinic'
 import { SalesFunnel } from './SalesFunnel'
+import { adminsLine, remindedText, statusText } from './agreementTarget'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -34,21 +35,35 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
     onPanel(next != null)
   }, [onPanel])
   const close = useCallback(() => setOpened(null), [setOpened])
+  const [unsignedOnly, setUnsignedOnly] = useState(false)
+  const client = useQueryClient()
+  const remindAll = useMutation<Schemas['AgreementRemindersReminded'], ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/platform/agreements/remind')),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['platform-agreement-statuses'] }),
+  })
 
   const all = list.data ?? []
-  const shown = byHealth(all.filter((c) => !c.hidden))
-  const hidden = byHealth(all.filter((c) => c.hidden))
+  // «Не подписали»: клинике адресована версия, и она её не подписала
+  const unsigned = (c: Row) => {
+    const s = agreements.data?.[String(c.id)]
+    return Boolean(s?.requiredVersion && !s.signed)
+  }
+  const unsignedCount = all.filter((c) => !c.hidden && !c.demo && unsigned(c)).length
+  const visible = unsignedOnly ? all.filter(unsigned) : all
+  const shown = byHealth(visible.filter((c) => !c.hidden))
+  const hidden = byHealth(visible.filter((c) => c.hidden))
   const pending = (payRequests.data ?? []).filter((r) => r.status === 'PENDING')
   const openedRow = opened ? all.find((c) => c.id === opened.id) : undefined
 
   const table = (rows: Row[], label: string) => (
     <table className="table" aria-label={label}>
-      <thead><tr><th>Клиника</th><th>Заходили</th><th>Оплата</th><th>Договор</th><th className="r">Врачей</th><th className="r">Приёмов 30 дн</th><th className="r">Неявки</th></tr></thead>
+      <thead><tr><th>Клиника</th><th>Заходили</th><th>Оплата</th><th>Договор</th><th>Админы</th><th className="r">Врачей</th><th className="r">Приёмов 30 дн</th><th className="r">Неявки</th></tr></thead>
       <tbody>
         {rows.map((c) => {
           const hl = CLINIC_HEALTH[c.health ?? 'OK'] ?? CLINIC_HEALTH.OK!
           const line = billingLine(c.billing)
           const ag = agreements.data?.[String(c.id)]
+          const st = statusText(ag)
           const share = noShowShare(c.noShow30, c.done30)
           return (
             // Вся строка нажимается — карточка клиники (оплата, договор, «Войти в клинику»)
@@ -62,7 +77,8 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
               </td>
               <td className="hint nowrap">{c.staffSeenAt ? agoText(c.staffSeenAt) : 'ещё не заходили'}</td>
               <td className={`tone-${line.tone}`}>{line.text}</td>
-              <td className={ag?.acceptedVersion ? 'tone-ok' : 'hint'}>{ag?.acceptedVersion ? `v${ag.acceptedVersion}` : ag?.scans ? 'скан' : 'не подписан'}</td>
+              <td className={st.tone}>{st.text}{ag?.scans ? <span className="hint"> · скан</span> : null}</td>
+              <td className="hint nowrap" title="Кому дойдёт напоминание: Telegram — в бот, по номеру — push (если включён), иначе только баннер в CRM">{adminsLine(ag?.admins)}</td>
               <td className="r num">{c.doctors}</td>
               <td className="r num">{c.appointments}{c.selfBooked30 ? <span className="hint"> · бот {c.selfBooked30}</span> : null}</td>
               <td className="r num">{share == null ? '—' : `${share}%`}</td>
@@ -102,6 +118,17 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
                   return n ? <span key={code} className={`chip small ${hl.chip}`}>{hl.short}: <b className="num">{n}</b></span> : null
                 })}
               </p>
+              <div className="actions">
+                <button type="button" className="chip small" aria-pressed={unsignedOnly} onClick={() => setUnsignedOnly(!unsignedOnly)}>
+                  Не подписали договор: <b className="num">{unsignedCount}</b></button>
+                {owner && unsignedCount > 0 && (
+                  <button type="button" className="btn small" disabled={remindAll.isPending}
+                    onClick={() => void ask(`Напомнить подписать договор всем не подписавшим (${unsignedCount})? Кому уже напоминали за сутки — пропустим.`, { ok: 'Напомнить' })
+                      .then((ok) => ok && remindAll.mutate())}>Напомнить всем не подписавшим</button>
+                )}
+              </div>
+              {remindAll.isSuccess && <p className="tone-ok" role="status">{remindedText(remindAll.data)}</p>}
+              {remindAll.error && <p className="error" role="alert">{remindAll.error.message}</p>}
               {table(shown, 'Клиники')}
               {hidden.length > 0 && <details><summary>Скрытые ({hidden.length})</summary>{table(hidden, 'Скрытые клиники')}</details>}
             </>

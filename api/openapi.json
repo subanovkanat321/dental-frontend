@@ -953,6 +953,43 @@
         }
       }
     },
+    "/api/platform/clinics/{id}/agreement/assignment" : {
+      "put" : {
+        "tags" : [ "agreement-controller" ],
+        "operationId" : "assign",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AgreementControllerAssignment"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgreementsClinicAgreement"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/case" : {
       "put" : {
         "tags" : [ "join-case" ],
@@ -1090,6 +1127,43 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/platform/agreements/{id}/audience" : {
+      "put" : {
+        "tags" : [ "agreement-controller" ],
+        "operationId" : "audience",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AgreementsAudience"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgreementsVersion"
+                }
+              }
+            }
           }
         }
       }
@@ -5124,6 +5198,33 @@
         }
       }
     },
+    "/api/platform/clinics/{id}/agreement/remind" : {
+      "post" : {
+        "tags" : [ "agreement-controller" ],
+        "operationId" : "remind",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgreementRemindersReminded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/clinics/{id}/agreement/pdf/send" : {
       "post" : {
         "tags" : [ "agreement-controller" ],
@@ -5335,6 +5436,15 @@
             "format" : "int64"
           }
         } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AgreementsAudience"
+              }
+            }
+          }
+        },
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5365,6 +5475,24 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/platform/agreements/remind" : {
+      "post" : {
+        "tags" : [ "agreement-controller" ],
+        "operationId" : "remindAll",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AgreementRemindersReminded"
+                }
+              }
+            }
           }
         }
       }
@@ -7908,7 +8036,7 @@
     "/api/appointments/{id}/remind-telegram" : {
       "post" : {
         "tags" : [ "patient-reminder-controller" ],
-        "operationId" : "remind",
+        "operationId" : "remind_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12475,6 +12603,214 @@
           }
         }
       },
+      "AgreementControllerAssignment" : {
+        "properties" : {
+          "versionId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "AgreementsAcceptance" : {
+        "properties" : {
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "textSha256" : {
+            "type" : "string"
+          },
+          "clinicLegalName" : {
+            "type" : "string"
+          },
+          "clinicInn" : {
+            "type" : "string"
+          },
+          "clinicAddress" : {
+            "type" : "string"
+          },
+          "signerName" : {
+            "type" : "string"
+          },
+          "signerPosition" : {
+            "type" : "string"
+          },
+          "signerBasis" : {
+            "type" : "string"
+          },
+          "filledText" : {
+            "type" : "string"
+          },
+          "filledSha256" : {
+            "type" : "string"
+          },
+          "acceptedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "AgreementsAdminChannels" : {
+        "properties" : {
+          "telegram" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "phone" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "push" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "AgreementsChoice" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "forAll" : {
+            "type" : "boolean"
+          },
+          "signed" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "AgreementsClinicAgreement" : {
+        "properties" : {
+          "current" : {
+            "$ref" : "#/components/schemas/AgreementsVersion"
+          },
+          "accepted" : {
+            "$ref" : "#/components/schemas/AgreementsAcceptance"
+          },
+          "last" : {
+            "$ref" : "#/components/schemas/AgreementsAcceptance"
+          },
+          "legalName" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "platform" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "scans" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AgreementsScan"
+            }
+          },
+          "targeting" : {
+            "$ref" : "#/components/schemas/AgreementsTargeting"
+          }
+        }
+      },
+      "AgreementsScan" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fileName" : {
+            "type" : "string"
+          },
+          "contentType" : {
+            "type" : "string"
+          },
+          "sizeBytes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "AgreementsTargeting" : {
+        "properties" : {
+          "assignedVersionId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "choices" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AgreementsChoice"
+            }
+          },
+          "remindedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "admins" : {
+            "$ref" : "#/components/schemas/AgreementsAdminChannels"
+          }
+        }
+      },
+      "AgreementsVersion" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "sha256" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "publishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "acceptances" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "forAll" : {
+            "type" : "boolean"
+          },
+          "clinicIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        }
+      },
       "JoinCaseMetric" : {
         "properties" : {
           "value" : {
@@ -12566,36 +12902,17 @@
           }
         }
       },
-      "AgreementsVersion" : {
+      "AgreementsAudience" : {
         "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
+          "all" : {
+            "type" : "boolean"
           },
-          "version" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "body" : {
-            "type" : "string"
-          },
-          "sha256" : {
-            "type" : "string"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "publishedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "acceptances" : {
-            "type" : "integer",
-            "format" : "int32"
+          "clinicIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         }
       },
@@ -14856,6 +15173,30 @@
           }
         }
       },
+      "AgreementRemindersReminded" : {
+        "properties" : {
+          "clinics" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "skipped" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "telegram" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "push" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "bannerOnly" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "PlatformControllerBroadcastRequest" : {
         "properties" : {
           "text" : {
@@ -15701,28 +16042,6 @@
           }
         }
       },
-      "AgreementsScan" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "fileName" : {
-            "type" : "string"
-          },
-          "contentType" : {
-            "type" : "string"
-          },
-          "sizeBytes" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        }
-      },
       "AgreementControllerAccept" : {
         "properties" : {
           "sha256" : {
@@ -15748,76 +16067,6 @@
           },
           "confirm" : {
             "type" : "boolean"
-          }
-        }
-      },
-      "AgreementsAcceptance" : {
-        "properties" : {
-          "version" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "textSha256" : {
-            "type" : "string"
-          },
-          "clinicLegalName" : {
-            "type" : "string"
-          },
-          "clinicInn" : {
-            "type" : "string"
-          },
-          "clinicAddress" : {
-            "type" : "string"
-          },
-          "signerName" : {
-            "type" : "string"
-          },
-          "signerPosition" : {
-            "type" : "string"
-          },
-          "signerBasis" : {
-            "type" : "string"
-          },
-          "filledText" : {
-            "type" : "string"
-          },
-          "filledSha256" : {
-            "type" : "string"
-          },
-          "acceptedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        }
-      },
-      "AgreementsClinicAgreement" : {
-        "properties" : {
-          "current" : {
-            "$ref" : "#/components/schemas/AgreementsVersion"
-          },
-          "accepted" : {
-            "$ref" : "#/components/schemas/AgreementsAcceptance"
-          },
-          "last" : {
-            "$ref" : "#/components/schemas/AgreementsAcceptance"
-          },
-          "legalName" : {
-            "type" : "string"
-          },
-          "address" : {
-            "type" : "string"
-          },
-          "platform" : {
-            "type" : "object",
-            "additionalProperties" : {
-              "type" : "string"
-            }
-          },
-          "scans" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/AgreementsScan"
-            }
           }
         }
       },
@@ -18218,6 +18467,27 @@
           "scans" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "requiredVersion" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "assigned" : {
+            "type" : "boolean"
+          },
+          "signed" : {
+            "type" : "boolean"
+          },
+          "signedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "remindedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "admins" : {
+            "$ref" : "#/components/schemas/AgreementsAdminChannels"
           }
         }
       },
