@@ -7,7 +7,8 @@ import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
 import { canEditDoctor, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { debtLine } from '../lib/debt'
-import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
+import { formatPhone, shortDate, somText } from '../lib/time'
+import { ageYears, yearsText } from '../lib/age'
 import { ContactButtons } from '../schedule/Contact'
 import { statusOf } from '../schedule/status'
 import { PatientForm } from './PatientForm'
@@ -15,6 +16,9 @@ import { VisitDocs } from '../print/VisitDocs'
 import { WaitlistBox } from './WaitlistTab'
 import { SourceLine } from './SourceLine'
 import { FamilyBox } from './FamilyBox'
+import { GuardianBox } from './GuardianBox'
+import { KidInfo } from './KidInfo'
+import { contactPhone } from '../lib/guardian'
 import { PatientExpenses } from './PatientExpenses'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
@@ -29,19 +33,16 @@ const PAST = 5
 type Tab = 'visits' | 'medical' | 'money' | 'more'
 
 /** «34 года»: полных лет на сегодня по дате рождения 'YYYY-MM-DD'. */
-function ageText(birth: string, today = todayIn()): string {
-  const years = Number(today.slice(0, 4)) - Number(birth.slice(0, 4)) - (today.slice(5) < birth.slice(5) ? 1 : 0)
-  const n = years % 100
-  const word = n >= 11 && n <= 14 ? 'лет' : years % 10 === 1 ? 'год' : [2, 3, 4].includes(years % 10) ? 'года' : 'лет'
-  return `${years} ${word}`
+function ageText(birth: string): string {
+  return yearsText(ageYears(birth) ?? 0)
 }
 
 /**
  * Карточка пациента справа — сверху вниз: шапка (имя, телефон, возраст, бот или WhatsApp) → аллергии
  * → «＋ Записать» и связаться → сводка (визиты, неявки, следующий приём, долг) → вкладки: «Визиты»
  * (записан, история — первые 5 и «Показать все»), «Медкарта» (карта зубов и план лечения, анкета,
- * снимки — во всю ширину), «Деньги» (долги, расходы), «Прочее» (данные, откуда узнал, лист
- * ожидания, семья).
+ * снимки — во всю ширину), «Деньги» (долги, расходы), «Прочее» (данные, откуда узнал, представитель, лист
+ * ожидания, семья). Ребёнок — бейдж «Ребёнок, 7 лет» и строка представителя в шапке.
  */
 export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpenAppointment, onOpenPatient }: {
   patientId: number
@@ -159,13 +160,15 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
             {patient?.birthDate && ` · ${ageText(patient.birthDate)}`}
             {` · ${patient?.telegram ? 'пишет боту' : 'без бота — WhatsApp'}`}
           </span>
+          <KidInfo patient={patient} />
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
       <MedAlerts an={anamnesis.data} />
       <div className="patient-actions">
         <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>
-        <ContactButtons phone={patient?.phone} />
+        {/* Есть представитель — звоним и пишем ему */}
+        <ContactButtons phone={contactPhone(patient)} />
       </div>
 
       {/* Сводка: визиты (и неявки), ближайшая запись, долг */}
@@ -231,6 +234,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           )}
           {patient && patient.sourceId != null && <SourceLine patient={patient} canEdit={Boolean(mine)} />}
           {patient && mine && <WaitlistBox patient={patient} me={me} />}
+          {patient && <GuardianBox patient={patient} canEdit={Boolean(mine)} />}
           {patient && mine && <FamilyBox patient={patient} me={me} onOpenPatient={onOpenPatient} />}
         </section>
       )}

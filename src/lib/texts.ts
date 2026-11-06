@@ -83,7 +83,9 @@ export const REPLY_LINE = 'Ответьте 1 — приду, 2 — перене
 export type ReminderSettings = Partial<Pick<Schemas['SettingsControllerSettings'],
   'clinicSignature' | 'botUrl' | 'reminderTemplate' | 'clinicName' | 'clinicAddress' | 'clinicPhone'>>
 
-type ReminderAppointment = { startAt: string; serviceName?: string | null; patient: { fullName?: string; telegram?: boolean } }
+type ReminderAppointment = {
+  startAt: string; serviceName?: string | null; patient: { fullName?: string; telegram?: boolean; guardian?: { fullName?: string } | null }
+}
 
 /**
  * {когда} в своём тексте — как у бота (Lang.when бэкенда): «сегодня в 10:00», «завтра в 10:00»
@@ -108,6 +110,9 @@ export function whenAt(startAt: string, now = new Date()): string {
  * - ссылку на бота клиники отдельной строкой — пациенту, который ещё не в боте, если в шаблоне
  *   нет {бот} (иначе ссылка там, куда её поставила клиника).
  * Адрес отдельной строкой, как бот, не дописываем: в WhatsApp он только через {адрес}.
+ *
+ * У ребёнка с представителем (V164) пишем представителю (как PatientReminders бэкенда): «Здравствуйте, Айгуль!
+ * Запись ребёнка Аружан: …»; в своём тексте {имя} — имя представителя, первой строкой «👶 Запись ребёнка Аружан».
  */
 export function reminderText(a: ReminderAppointment, settings?: ReminderSettings | null, doctor?: string | null,
   now = new Date()): string {
@@ -117,16 +122,19 @@ export function reminderText(a: ReminderAppointment, settings?: ReminderSettings
   const invite = (text: string) => (botUrl && !a.patient.telegram ? `${text}\n\n${BOT_LINE} ${botUrl}` : text)
   // Адрес — как в Telegram: отдельной строкой, если клиника не вставила {адрес} в свой текст сама
   const address = settings?.clinicAddress?.trim() ? `📍 Адрес: ${settings.clinicAddress.trim()}` : null
+  const guardian = a.patient.guardian?.fullName
+  const greet = guardian ?? a.patient.fullName
   if (!template) {
-    const text = `Здравствуйте, ${a.patient.fullName}! 👋 Напоминаем: ${whenText(a.startAt, now)} в ${timeOf(a.startAt)} `
-      + `приём у стоматолога 🦷 ${REPLY_LINE}`
+    const text = `Здравствуйте, ${greet}! 👋 ${guardian ? `Запись ребёнка ${a.patient.fullName}:` : 'Напоминаем:'} `
+      + `${whenText(a.startAt, now)} в ${timeOf(a.startAt)} приём у стоматолога 🦷 ${REPLY_LINE}`
     // Без адреса — как раньше (подпись через пробел); с адресом — строками: текст, адрес, подпись
     return invite(address ? [text, address, signature].filter(Boolean).join('\n') : signed(text, signature))
   }
-  const body = applyTemplate(template, {
-    имя: a.patient.fullName, когда: whenAt(a.startAt, now), врач: doctor, услуга: a.serviceName,
+  const filled = applyTemplate(template, {
+    имя: greet, когда: whenAt(a.startAt, now), врач: doctor, услуга: a.serviceName,
     клиника: settings?.clinicName, адрес: settings?.clinicAddress, телефон: settings?.clinicPhone, бот: botUrl,
   })
+  const body = guardian ? `👶 Запись ребёнка ${a.patient.fullName}\n${filled}` : filled
   const lines = [body, REPLY_LINE]
   if (address && !usesVariable(template, 'адрес')) lines.push(address)
   if (signature && !usesVariable(template, 'клиника')) lines.push(signature)

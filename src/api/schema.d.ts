@@ -404,6 +404,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/dentition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["dentition"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/anamnesis": {
         parameters: {
             query?: never;
@@ -431,6 +447,22 @@ export interface paths {
         put: operations["update_9"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{id}/guardian": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["guardian"];
+        post?: never;
+        delete: operations["removeGuardian"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5288,6 +5320,31 @@ export interface components {
             canDelete?: boolean;
             postText?: string;
         };
+        ChartControllerDentitionRequest: {
+            /** @enum {string} */
+            dentition?: "PERMANENT" | "PRIMARY" | "MIXED";
+        };
+        Guardian: {
+            fullName?: string;
+            /** @enum {string} */
+            relation?: "MOTHER" | "FATHER" | "GRANDMOTHER" | "GRANDFATHER" | "GUARDIAN" | "OTHER";
+            phone?: string;
+        };
+        PatientView: {
+            /** Format: int64 */
+            id?: number;
+            fullName?: string;
+            phone?: string;
+            telegram?: boolean;
+            workplace?: string;
+            /** Format: date */
+            birthDate?: string;
+            /** Format: int64 */
+            sourceId?: number;
+            /** @enum {string} */
+            dentition?: "PERMANENT" | "PRIMARY" | "MIXED";
+            guardian?: components["schemas"]["Guardian"];
+        };
         AnamnesisAnswer: {
             /** Format: int64 */
             questionId?: number;
@@ -5326,17 +5383,11 @@ export interface components {
             /** Format: int64 */
             sourceId?: number;
         };
-        PatientView: {
-            /** Format: int64 */
-            id?: number;
+        PatientControllerGuardianRequest: {
             fullName?: string;
+            /** @enum {string} */
+            relation?: "MOTHER" | "FATHER" | "GRANDMOTHER" | "GRANDFATHER" | "GUARDIAN" | "OTHER";
             phone?: string;
-            telegram?: boolean;
-            workplace?: string;
-            /** Format: date */
-            birthDate?: string;
-            /** Format: int64 */
-            sourceId?: number;
         };
         NewsControllerSubscription: {
             subscribed?: boolean;
@@ -8745,6 +8796,32 @@ export interface operations {
             };
         };
     };
+    dentition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChartControllerDentitionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientView"];
+                };
+            };
+        };
+    };
     anamnesis: {
         parameters: {
             query?: never;
@@ -8807,6 +8884,54 @@ export interface operations {
                 "application/json": components["schemas"]["PatientRequest"];
             };
         };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientView"];
+                };
+            };
+        };
+    };
+    guardian: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatientControllerGuardianRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientView"];
+                };
+            };
+        };
+    };
+    removeGuardian: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { contactPhone } from '../lib/guardian'
 import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
@@ -51,7 +52,7 @@ function PlainPlanDocs({ patient, steps }: { patient: Patient; steps: Step[] }) 
   if (!steps.length) return null
   return (
     <>
-      <DocActions label="план лечения" phone={patient.phone} message={message.data}
+      <DocActions label="план лечения" phone={contactPhone(patient)} message={message.data}
         send={() => unwrap(api.POST('/api/patients/{patientId}/plan/send', { params: { path: { patientId } } }))}
         onPrint={() => setPrinting(true)} />
       {printing && <PlanPrint patient={patient} steps={steps} onClose={() => setPrinting(false)} />}

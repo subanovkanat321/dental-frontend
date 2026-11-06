@@ -1,4 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { KidInfo } from '../patients/KidInfo'
+import { contactPhone } from '../lib/guardian'
 import { ask } from '../lib/confirm'
 import { PatientHistory } from './PatientHistory'
 import { useReminderNotSent } from './useReminderNotSent'
@@ -218,6 +220,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             : <strong className="patient-name">{a.patient?.fullName}</strong>}
           {a.patient?.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
         </div>
+        <KidInfo patient={a.patient} />
         <PatientHistory appointment={a} me={me} />
         {sourceHint && <p className="hint small">{sourceHint}</p>}
         {a.reminderOpenedAt && a.status === 'SCHEDULED' && <ReminderSent a={a} canEdit={canEdit} />}
@@ -259,7 +262,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {!canEdit ? (
         <>
           <p className="readonly-note">Приём коллеги — менять может его врач{doctor?.fullName ? ` (${doctor.fullName})` : ''}, ассистент, регистратура или администратор.</p>
-          <ContactButtons phone={a.patient?.phone} whatsapp={false} />
+          <ContactButtons phone={contactPhone(a.patient)} whatsapp={false} />
         </>
       ) : (
         <>
@@ -267,7 +270,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'REQUESTED' && (
             <div className="actions">
               <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('SCHEDULED')}>Подтвердить</button>
-              <ContactButtons phone={a.patient?.phone} whatsapp={false} />
+              <ContactButtons phone={contactPhone(a.patient)} whatsapp={false} />
             </div>
           )}
           {moved && <p className="tone-ok" role="status">{moved}</p>}
@@ -275,7 +278,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'SCHEDULED' && started && (
             <button type="button" className="btn primary" disabled={action.isPending} onClick={() => setStatus('DONE')}>Приём состоялся</button>
           )}
-          {a.status === 'SCHEDULED' && !future && <ContactButtons phone={a.patient?.phone} />}
+          {a.status === 'SCHEDULED' && !future && <ContactButtons phone={contactPhone(a.patient)} />}
           {/* Предоплату уже попросили — на виду; ещё не просили — под «Ещё». Ассистенту деньги не показываем */}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && seesMoney && a.depositStatus && <DepositBox key={a.depositStatus} appointment={a} />}
 
@@ -294,7 +297,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'NO_SHOW' && (
             <>
               {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(todayIn())}>Записать снова</button>}
-              <ContactButtons phone={a.patient?.phone} />
+              <ContactButtons phone={contactPhone(a.patient)} />
             </>
           )}
 
@@ -306,7 +309,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'DONE' && (
             <>
               {onBook && <button type="button" className={payPending ? 'btn' : 'btn primary'} onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
-              <ContactButtons phone={a.patient?.phone} />
+              <ContactButtons phone={contactPhone(a.patient)} />
             </>
           )}
         </>

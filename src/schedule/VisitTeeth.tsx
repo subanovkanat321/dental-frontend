@@ -6,6 +6,7 @@ import { Fold } from '../layout/Fold'
 import { MultiToothPanel } from '../medical/MultiTeeth'
 import { SurfacePicker } from '../medical/SurfaceDiagram'
 import { ToothFormula } from '../medical/ToothFormula'
+import { dentitionOf } from '../medical/dentition'
 import { ToothFullscreen } from '../medical/ToothFullscreen'
 import { ToothFigure } from '../medical/ToothGlyph'
 import { TOOTH_STATES, hasSurfaces, stateText, visitToothText, type Surface, type ToothState } from '../medical/toothStates'
@@ -43,7 +44,8 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
   const chart = useQuery({
     queryKey: ['teeth', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth', { params: { path: { patientId: patientId! } } })),
-    enabled: patientId != null && (open != null || full),
+    // Сменный прикус: какие зубы ещё молочные — по карте, поэтому и при выборе зуба
+    enabled: patientId != null && (open != null || full || picking),
     retry: false,
   })
   const many = useMutation<VisitTooth[], ApiError, { state: ToothState; surfaces: Surface[] }>({
@@ -61,6 +63,8 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
   const marked = teeth.data
   if (readOnly && marked.length === 0) return null
   const byNumber = new Map(marked.map((t) => [t.number, t]))
+  // Прикус — как на карте зубов в медкарте: выбранный у пациента или по возрасту (V163)
+  const dentition = dentitionOf(a.patient)
 
   function saved(fresh: VisitTooth[]) {
     client.setQueryData(['visit-teeth', a.id], fresh)
@@ -130,7 +134,7 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
             <button type="button" className="btn small" aria-pressed={multi}
               onClick={() => { setMulti(!multi); setPicked([]); many.reset() }}>{multi ? '☑' : '☐'} Несколько</button>
           </div>
-          <ToothFormula className="visit-formula" render={tooth} />
+          <ToothFormula className="visit-formula" render={tooth} dentition={dentition} teeth={chart.data} />
           {multi && (
             <MultiToothPanel key={picked.length === 0 ? 'empty' : 'picked'} numbers={picked} states={STATES} patientId={patientId}
               onApply={(state, surfaces) => many.mutate({ state, surfaces })} applying={many.isPending} error={many.error}
@@ -146,7 +150,7 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
       )}
       {onMedical && <button type="button" className="link" onClick={onMedical}>Карта зубов и план лечения ›</button>}
       {full && (
-        <ToothFullscreen teeth={chart.data ?? marked} highlight={marked.map((t) => t.number!)} patientName={a.patient?.fullName}
+        <ToothFullscreen teeth={chart.data ?? marked} dentition={dentition} highlight={marked.map((t) => t.number!)} patientName={a.patient?.fullName}
           onClose={() => setFull(false)} />
       )}
     </div>

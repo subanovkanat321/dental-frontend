@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { contactPhone } from '../lib/guardian'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -342,7 +343,7 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
   const whatsapp = () => {
     opened.mutate()
     // openLink: в Telegram ссылка откроется во внешнем браузере / WhatsApp, а не внутри Mini App
-    openLink(whatsappUrl(a.patient?.phone ?? '', smsText))
+    openLink(whatsappUrl(contactPhone(a.patient) ?? '', smsText))
   }
   return (
     <section className="remind" aria-label="Напоминание">
@@ -353,18 +354,18 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
               Напомнить в Telegram
             </button>
           )}
-          {a.patient?.phone && (
+          {contactPhone(a.patient) && (
             <button type="button" className="btn" disabled={!text || opened.isPending}
               onClick={whatsapp}>Напомнить в WhatsApp</button>
           )}
           {/* Ссылкой, а не из скрипта: так «Сообщения» открываются надёжнее; на компьютере SMS не отправить */}
-          {a.patient?.phone && isMobile() && text && (
-            <a className="btn" href={smsUrl(a.patient.phone, smsText)} onClick={(e) => {
+          {contactPhone(a.patient) && isMobile() && text && (
+            <a className="btn" href={smsUrl(contactPhone(a.patient)!, smsText)} onClick={(e) => {
               opened.mutate()
               // В Telegram ссылка sms: молчит — своя страница в браузере телефона откроет «Сообщения»
               if (!telegram()) return
               e.preventDefault()
-              openLink(`${window.location.origin}/call.html#${new URLSearchParams({ sms: a.patient!.phone!, body: smsText })}`)
+              openLink(`${window.location.origin}/call.html#${new URLSearchParams({ sms: contactPhone(a.patient)!, body: smsText })}`)
             }}>Напомнить по SMS</a>
           )}
         </div>

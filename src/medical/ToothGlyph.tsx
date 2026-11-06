@@ -1,12 +1,14 @@
 import { memo, useId } from 'react'
 
+import { isPrimaryTooth } from './dentition'
 import { SurfaceDiagram } from './SurfaceDiagram'
 import { hasSurfaces, type Surface, type ToothState } from './toothStates'
 
 /**
  * Зуб рисунком: коронка по группе (резец, клык, премоляр, моляр), корни по числу, пульпа и каналы
  * тонкой линией, а состояние из карты — прямо на рисунке. Пути считаются один раз на тип зуба
- * (константы ниже); у каждого из 32 зубов — только выбор типа, масштаб по ширине и поворот для нижней челюсти.
+ * (константы ниже); у каждого из 32 постоянных и 20 молочных зубов — только выбор типа, масштаб по ширине (молочные
+ * мельче) и поворот для нижней челюсти.
  *
  * Рисуем «как верхний»: корни вверх, коронка внизу (шейка на y=42, режущий край на y=70).
  * Нижний зуб — тот же рисунок, отражённый по вертикали: корни вниз.
@@ -62,12 +64,17 @@ const SHAPES = {
 
 type ShapeKey = keyof typeof SHAPES
 
-/** Что за зуб по номеру FDI: форма и относительная ширина (центральный резец верхней челюсти шире бокового и т. д.). */
+/**
+ * Что за зуб по номеру FDI: форма и относительная ширина (центральный резец верхней челюсти шире бокового и т. д.).
+ * Молочные (51–85): 1–2 — резцы, 3 — клык, 4–5 — моляры (премоляров у молочного прикуса нет); второй молочный
+ * моляр шире первого — как постоянный первый моляр, который встанет за ним.
+ */
 function anatomy(n: number): { shape: ShapeKey; width: number } {
   const upper = isUpperTooth(n)
   const pos = n % 10
   if (pos <= 2) return { shape: 'incisor', width: upper ? (pos === 1 ? 1 : 0.84) : 0.74 }
   if (pos === 3) return { shape: 'canine', width: 0.92 }
+  if (isPrimaryTooth(n)) return { shape: upper ? 'molar3' : 'molar2', width: pos === 4 ? 0.86 : 1 }
   if (pos <= 5) return { shape: upper && pos === 4 ? 'premolar2' : 'premolar1', width: 0.86 }
   return { shape: upper ? 'molar3' : 'molar2', width: pos === 8 ? 0.9 : 1 }
 }
@@ -76,11 +83,6 @@ function anatomy(n: number): { shape: ShapeKey; width: number } {
 function isUpperTooth(n: number): boolean {
   const q = Math.floor(n / 10)
   return q === 1 || q === 2 || q === 5 || q === 6
-}
-
-/** Молочный зуб (четверти 5–8): рисуем мельче. В карте сейчас только постоянные, но формула готова. */
-function isPrimaryTooth(n: number): boolean {
-  return Math.floor(n / 10) >= 5
 }
 
 // Винт импланта вместо корня: тело с резьбой и абатмент под коронкой
@@ -119,7 +121,8 @@ export const ToothGlyph = memo(function ToothGlyph({ number, state = 'HEALTHY', 
   const { shape, width } = anatomy(number)
   const s = SHAPES[shape]
   const upper = isUpperTooth(number)
-  const scale = width * (isPrimaryTooth(number) ? 0.8 : 1)
+  // Молочный зуб мельче постоянного: та же форма, масштаб 0,78
+  const scale = width * (isPrimaryTooth(number) ? 0.78 : 1)
   // Ширина — масштабом вокруг середины; нижний зуб — отражение по вертикали
   const transform = `translate(${W / 2} ${upper ? 0 : H}) scale(${scale} ${upper ? 1 : -1}) translate(${-W / 2} 0)`
   const missing = state === 'MISSING'
@@ -129,7 +132,7 @@ export const ToothGlyph = memo(function ToothGlyph({ number, state = 'HEALTHY', 
 
   return (
     <svg className={`tooth-glyph${className ? ` ${className}` : ''}`} viewBox={`0 0 ${W} ${H}`} data-state={state}
-      data-shape={shape} aria-hidden="true" focusable="false">
+      data-shape={shape} data-primary={isPrimaryTooth(number) || undefined} aria-hidden="true" focusable="false">
       <g transform={transform}>
         {(state === 'CARIES' || state === 'FILLING' || parts) && (
           <clipPath id={clip}><path d={s.crown} /></clipPath>

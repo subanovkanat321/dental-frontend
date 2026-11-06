@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useBack } from '../lib/back'
 import { telegram } from '../lib/telegram'
 import { ToothFormula } from './ToothFormula'
+import type { Dentition } from './dentition'
 import { ToothFigure, ToothLegendItem } from './ToothGlyph'
 import { TOOTH_STATES, hasSurfaces, surfacesText, type Surface, type ToothState } from './toothStates'
 import './toothChart.css'
@@ -20,9 +21,11 @@ export type ChartTooth = { number?: number; state?: ToothState; surfaces?: Surfa
  *
  * @param highlight зубы, отмеченные в этом приёме, — чуть подсвечены
  */
-export function ToothFullscreen({ teeth, highlight, patientName, onClose }: {
+export function ToothFullscreen({ teeth, highlight, patientName, onClose, dentition }: {
   teeth: ChartTooth[]
   highlight?: number[]
+  /** Прикус, как на карте (молочные, сменный); по умолчанию постоянные */
+  dentition?: Dentition
   patientName?: string
   onClose: () => void
 }) {
@@ -105,7 +108,7 @@ export function ToothFullscreen({ teeth, highlight, patientName, onClose }: {
         )}
         <button ref={closeBtn} type="button" className="btn fs-close" aria-label="Закрыть «На весь экран»" onClick={onClose}>✕</button>
       </header>
-      <ToothFormula className="fs-chart" render={tooth} />
+      <ToothFormula className="fs-chart" render={tooth} dentition={dentition} teeth={teeth} />
       <footer className="fs-foot">
         <p className="fs-caption" aria-live="polite">
           {lit != null ? caption(lit) : visit.size ? `Отмечены в этом приёме: ${[...visit].sort((a, b) => a - b).join(', ')}` : ''}

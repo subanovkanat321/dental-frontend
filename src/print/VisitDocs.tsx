@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { contactPhone } from '../lib/guardian'
 import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
@@ -77,7 +78,7 @@ export function MemoDocs({ appointment: a }: { appointment: Appointment }) {
         {!picking && <button type="button" className="link" onClick={() => setPicking(true)}>другая</button>}
       </p>
       {picking && picker}
-      <DocActions label={`памятка «${m.title}»`} phone={a.patient?.phone} message={m}
+      <DocActions label={`памятка «${m.title}»`} phone={contactPhone(a.patient)} message={m}
         send={() => unwrap(api.POST('/api/appointments/{id}/care-memo/send', { params: { path: { id } }, body: { memoId: m.memoId } }))}
         onPrint={() => setPrinting(true)} />
       {printing && <MemoSheet appointment={a} title={m.title!} body={m.body!} onClose={() => setPrinting(false)} />}
@@ -117,7 +118,7 @@ function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
   return (
     <div className="doc-box">
       <p>🧾 Квитанция об оплате</p>
-      <DocActions label="квитанция" phone={a.patient?.phone} message={r}
+      <DocActions label="квитанция" phone={contactPhone(a.patient)} message={r}
         send={() => unwrap(api.POST('/api/appointments/{id}/receipt/send', { params: { path: { id } } }))}
         onPrint={() => setPrinting(true)} />
       {printing && (

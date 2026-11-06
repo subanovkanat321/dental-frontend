@@ -73,6 +73,7 @@
 .fs-chart .quadrant + .quadrant { padding-left: clamp(8px, 1.6vw, 28px); border-left: 2px dashed var(--separator); }
 .fs-chart .jaw + .jaw { padding-top: clamp(8px, 2vh, 24px); }
 .fs-chart .teeth { gap: clamp(2px, .6vw, 10px); grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.fs-chart .teeth[data-count="5"] { grid-template-columns: repeat(5, minmax(0, calc((100% - 7 * clamp(2px, .6vw, 10px)) / 8))); }
 .fs-chart .quadrant-label { font-size: clamp(.8rem, 1.1vw, 1.1rem); }
 .fs-chart .tooth { padding: clamp(2px, .6vh, 8px) 0; gap: clamp(2px, .5vh, 6px); }
 .fs-chart .tooth-glyph { max-width: min(7.5vw, 13vh, 104px); }
@@ -93,3 +94,7 @@
   .fs-chart .tooth-number { font-size: clamp(.8rem, 2.4vw, 1.4rem); }
   .fs-chart .tooth-ring { width: clamp(14px, 3.6vw, 40px); height: clamp(14px, 3.6vw, 40px); }
 }
+
+/* Прикус над картой зубов: «Постоянные / Молочные / Сменный» и «по возрасту» рядом */
+.dentition-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 8px; }
+.dentition-switch .segments { margin: 0; }

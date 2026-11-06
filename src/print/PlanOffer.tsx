@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { contactPhone } from '../lib/guardian'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -65,7 +66,7 @@ function OfferPanel({ patient, steps, onClose }: { patient: Patient; steps: Step
     })),
     onSuccess: (sent, channel) => {
       haptic('success')
-      if (channel === 'WHATSAPP' && patient.phone && sent.text) openLink(whatsappUrl(patient.phone, sent.text))
+      if (channel === 'WHATSAPP' && contactPhone(patient) && sent.text) openLink(whatsappUrl(contactPhone(patient)!, sent.text))
       setDone(channel === 'TELEGRAM' ? 'План отправлен в Telegram — с кнопками «Согласен» и «Есть вопрос»'
         : 'Открыли WhatsApp — в тексте ссылка на страницу плана с кнопкой «Согласен»')
       void client.invalidateQueries({ queryKey: ['plan-offers', patientId] })

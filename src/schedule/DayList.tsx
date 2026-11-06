@@ -1,4 +1,5 @@
 import { ApptBadges } from './ApptBadges'
+import { contactPhone } from '../lib/guardian'
 import { CancelledList } from './CancelledList'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type CSSProperties } from 'react'
@@ -262,7 +263,7 @@ function Row({ a, next, active, canEdit, money, onOpen }: {
       return
     }
     opened.mutate()
-    openLink(whatsappUrl(a.patient?.phone ?? '', text?.(a) ?? ''))
+    openLink(whatsappUrl(contactPhone(a.patient) ?? '', text?.(a) ?? ''))
   }
   const error = action.error ?? opened.error ?? notSent.undo.error
   return (

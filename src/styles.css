@@ -395,6 +395,9 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .quadrant + .quadrant { padding-left: 10px; border-left: 2px dashed var(--separator); }
 .quadrant-label { font-size: .8rem; color: var(--hint); }
 .teeth { display: grid; grid-template-columns: repeat(8, minmax(30px, 1fr)); gap: 4px; }
+/* Молочный прикус: 5 зубов в четверти — колонки как у постоянных, зубы у середины ряда (51 рядом с 61) */
+.teeth[data-count="5"] { grid-template-columns: repeat(5, minmax(30px, calc((100% - 28px) / 8))); }
+.teeth[data-count="5"][data-side="right"] { justify-content: end; }
 .tooth-help { margin: 0 0 6px; }
 .tooth {
   position: relative; display: grid; justify-items: center; align-content: center; gap: 1px; padding: 4px 0; border: 1px solid transparent;
@@ -1761,6 +1764,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .visit-formula .jaw { grid-template-columns: 1fr; min-width: 316px; }
 .visit-formula .quadrant + .quadrant { padding-left: 0; border-left: 0; }
 .visit-formula .teeth { grid-template-columns: repeat(8, minmax(36px, 1fr)); }
+.visit-formula .teeth[data-count="5"] { grid-template-columns: repeat(5, minmax(36px, calc((100% - 28px) / 8))); }
 .visit-formula .tooth { min-height: 44px; }
 .visit-formula .tooth-glyph { max-width: 28px; }
 .dictation-start { width: 100%; }
@@ -1943,3 +1947,8 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .payment-unpaid { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .payment-unpaid-text { font-weight: 600; }
 .payment-unpaid-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Ребёнок и представитель в шапке карточек пациента и приёма */
+.kid-info { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 4px 0 0; }
+.kid-badge { background: var(--sunken); color: var(--text); }
+.guardian-box h3 { margin-bottom: 4px; }

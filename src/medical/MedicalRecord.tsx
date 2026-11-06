@@ -12,6 +12,8 @@ import { stagesOf } from '../lib/planStages'
 import { TOOTH_STATES, hasSurfaces, stateText, type Surface, type ToothState } from './toothStates'
 import { PatientFiles } from './PatientFiles'
 import { ToothFormula } from './ToothFormula'
+import { DentitionSwitch } from './DentitionSwitch'
+import { dentitionByAge, type Dentition } from './dentition'
 import { ToothFigure, ToothLegendItem } from './ToothGlyph'
 import { TeethHistory } from './TeethHistory'
 import { SurfacePicker } from './SurfaceDiagram'
@@ -87,7 +89,7 @@ export function MedicalRecord({ patient, onBack, backLabel = '← К списк�
           </div>
           {tab === 'teeth' && (
             <>
-              <ToothChart patientId={id} patientName={patient.fullName} teeth={teeth.data} error={teeth.error?.message} readOnly={readOnly}
+              <ToothChart patient={patient} teeth={teeth.data} error={teeth.error?.message} readOnly={readOnly}
                 onPlan={(tooth) => { setPlanTooth({ tooth, n: (planTooth?.n ?? 0) + 1 }); setTab('plan') }} />
               <TeethHistory patientId={id} />
             </>
@@ -107,10 +109,29 @@ type MedTab = 'teeth' | 'plan' | 'anamnesis' | 'files' | 'notes'
 /** Все состояния для «Выбрать несколько» — как в редакторе одного зуба. */
 const ALL_STATES = Object.keys(TOOTH_STATES) as State[]
 
-function ToothChart({ patientId, patientName, teeth, error, onPlan, readOnly }: {
-  patientId: number; patientName?: string; teeth?: Tooth[]; error?: string; onPlan: (tooth: number) => void; readOnly: boolean
+function ToothChart({ patient, teeth, error, onPlan, readOnly }: {
+  patient: Patient; teeth?: Tooth[]; error?: string; onPlan: (tooth: number) => void; readOnly: boolean
 }) {
+  const patientId = patient.id!
+  const patientName = patient.fullName
   const client = useQueryClient()
+  // Прикус (V163): выбранный у пациента, иначе по возрасту. Ассистент переключает только у себя на экране
+  const [saved, setSaved] = useState<Dentition | null>(patient.dentition ?? null)
+  const dentition = saved ?? dentitionByAge(patient.birthDate)
+  const saveDentition = useMutation<Patient, ApiError, Dentition | null>({
+    mutationFn: (d) => unwrap(api.PUT('/api/patients/{patientId}/dentition', { params: { path: { patientId } }, body: d ? { dentition: d } : {} })),
+    onSuccess: (fresh) => {
+      setSaved(fresh.dentition ?? null)
+      // Карточки пациента и приёмов держат PatientView — там тоже новый прикус
+      void client.invalidateQueries({ queryKey: ['patient-card', patientId] })
+      void client.invalidateQueries({ queryKey: ['appointments'] })
+    },
+    onError: () => setSaved(patient.dentition ?? null),
+  })
+  const changeDentition = (d: Dentition | null) => {
+    setSaved(d)
+    if (!readOnly) saveDentition.mutate(d)
+  }
   const [open, setOpen] = useState<number | null>(null)
   // «Выбрать несколько»: явный переключатель — на телефоне нет Shift и долгое нажатие неочевидно
   const [multi, setMulti] = useState(false)
@@ -163,15 +184,21 @@ function ToothChart({ patientId, patientName, teeth, error, onPlan, readOnly }: 
         )}
         <button type="button" className="btn" onClick={() => setFull(true)} disabled={!teeth}>⛶ На весь экран</button>
       </div>
+      <DentitionSwitch value={dentition} saved={saved} birthDate={patient.birthDate} onChange={changeDentition}
+        disabled={saveDentition.isPending} />
+      {saveDentition.error && <p className="error" role="alert">{saveDentition.error.message}</p>}
       {error && <p className="error">{error}</p>}
       <details className="hint small tooth-help">
         <summary>Как читать номера зубов?</summary>
         Международная нумерация (FDI). Первая цифра — где: 1 верх справа, 2 верх слева, 3 низ слева, 4 низ справа (у пациента).
         Вторая — какой по счёту от центра: 1 — передний, 8 — зуб мудрости. Карта — как смотрит врач: правая сторона пациента слева.
+        Молочные зубы — четверти 5–8 (5 верх справа, 6 верх слева, 7 низ слева, 8 низ справа), зубы 1–5: 51 — на месте 11,
+        85 — на месте 45; нарисованы мельче. «Сменный» — молочные на местах 1–5, пока молочный не отмечен «удалён» и постоянный
+        на его месте не отмечен, и постоянные моляры 6–8.
         Кружок под зубом — поверхности: центр — жевательная (у передних — режущий край), по краям — мезиальная, дистальная,
         вестибулярная и язычная/нёбная.
       </details>
-      <ToothFormula render={tooth} />
+      <ToothFormula render={tooth} dentition={dentition} teeth={teeth} />
       <p className="hint legend tooth-legend">
         {(Object.keys(TOOTH_STATES) as State[]).filter((k) => k !== 'HEALTHY').map((k) => (
           <ToothLegendItem key={k} state={k} label={`${TOOTH_STATES[k][0]}${counts[k] ? ` · ${counts[k]}` : ''}`} />
@@ -202,7 +229,7 @@ function ToothChart({ patientId, patientName, teeth, error, onPlan, readOnly }: 
           })}
         </ul>
       )}
-      {full && teeth && <ToothFullscreen teeth={teeth} patientName={patientName} onClose={() => setFull(false)} />}
+      {full && teeth && <ToothFullscreen teeth={teeth} dentition={dentition} patientName={patientName} onClose={() => setFull(false)} />}
     </section>
   )
 }

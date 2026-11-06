@@ -1,4 +1,5 @@
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query'
+import { contactPhone } from '../lib/guardian'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -137,7 +138,7 @@ function BookedRow({ a, doctor, canEdit, onOpen }: {
     if (!text) return
     opened.mutate()
     // openLink: в Telegram ссылка откроется в WhatsApp, а не внутри Mini App
-    openLink(whatsappUrl(a.patient?.phone ?? '', text(a)))
+    openLink(whatsappUrl(contactPhone(a.patient) ?? '', text(a)))
   }
   return (
     <li className={canRemind ? 'booked-item with-action' : 'booked-item'}>

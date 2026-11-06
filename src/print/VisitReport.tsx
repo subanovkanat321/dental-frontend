@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { contactPhone } from '../lib/guardian'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -81,7 +82,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
     onSuccess: (message, via) => {
       haptic('success')
       setDone(`Сообщение отправлено ${VIA_TEXT[via]}`)
-      if (via === 'WHATSAPP' && a.patient?.phone && message?.text) openLink(whatsappUrl(a.patient.phone, message.text))
+      if (via === 'WHATSAPP' && contactPhone(a.patient) && message?.text) openLink(whatsappUrl(contactPhone(a.patient)!, message.text))
       if (via === 'PRINT') setPrinting(true)
       void client.invalidateQueries({ queryKey: ['visit-report', id] })
     },

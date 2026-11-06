@@ -1217,6 +1217,43 @@
         }
       }
     },
+    "/api/patients/{patientId}/dentition" : {
+      "put" : {
+        "tags" : [ "chart-controller" ],
+        "operationId" : "dentition",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChartControllerDentitionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/anamnesis" : {
       "get" : {
         "tags" : [ "medical-record-controller" ],
@@ -1302,6 +1339,68 @@
           },
           "required" : true
         },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{id}/guardian" : {
+      "put" : {
+        "tags" : [ "patient-controller" ],
+        "operationId" : "guardian",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientControllerGuardianRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "patient-controller" ],
+        "operationId" : "removeGuardian",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11790,6 +11889,63 @@
           }
         }
       },
+      "ChartControllerDentitionRequest" : {
+        "properties" : {
+          "dentition" : {
+            "type" : "string",
+            "enum" : [ "PERMANENT", "PRIMARY", "MIXED" ]
+          }
+        }
+      },
+      "Guardian" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "MOTHER", "FATHER", "GRANDMOTHER", "GRANDFATHER", "GUARDIAN", "OTHER" ]
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PatientView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          },
+          "workplace" : {
+            "type" : "string"
+          },
+          "birthDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "sourceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "dentition" : {
+            "type" : "string",
+            "enum" : [ "PERMANENT", "PRIMARY", "MIXED" ]
+          },
+          "guardian" : {
+            "$ref" : "#/components/schemas/Guardian"
+          }
+        }
+      },
       "AnamnesisAnswer" : {
         "properties" : {
           "questionId" : {
@@ -11896,31 +12052,17 @@
         },
         "required" : [ "fullName", "phone" ]
       },
-      "PatientView" : {
+      "PatientControllerGuardianRequest" : {
         "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "fullName" : {
             "type" : "string"
           },
+          "relation" : {
+            "type" : "string",
+            "enum" : [ "MOTHER", "FATHER", "GRANDMOTHER", "GRANDFATHER", "GUARDIAN", "OTHER" ]
+          },
           "phone" : {
             "type" : "string"
-          },
-          "telegram" : {
-            "type" : "boolean"
-          },
-          "workplace" : {
-            "type" : "string"
-          },
-          "birthDate" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "sourceId" : {
-            "type" : "integer",
-            "format" : "int64"
           }
         }
       },
