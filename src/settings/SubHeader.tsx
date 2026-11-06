@@ -8,7 +8,8 @@ import { stickyHead } from '../layout/stickyHead'
  */
 export function SubHeader({ title, onBack, children }: { title: string; onBack: () => void; children?: React.ReactNode }) {
   const back = guarded(onBack)
-  useBack(back)
+  // Пункт «Настроек» записан в адресе (#/settings/…): «назад» браузера ведёт в список и так
+  useBack(back, { url: true })
   return (
     <header ref={stickyHead} className="toolbar sticky-head">
       <button type="button" className="btn ghost back" onClick={back}>‹ Настройки</button>

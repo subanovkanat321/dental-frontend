@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { useBack } from '../lib/back'
+
 const MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 const SHORT = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
 
@@ -31,6 +33,7 @@ export function MonthPicker({ value, onChange, max, label }: {
   const [open, setOpen] = useState(false)
   const [year, setYear] = useState(() => Number(value.slice(0, 4)))
   const box = useRef<HTMLDivElement>(null)
+  useBack(open ? () => setOpen(false) : null)
   useEffect(() => {
     if (!open) return
     const onDown = (e: MouseEvent) => {

@@ -206,7 +206,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
         <section className="settings-group mobile-only">
           <h2>Платформа</h2>
           <ul className="settings-list">
-            <li><button type="button" className="settings-link" onClick={() => { window.location.hash = '/platform' }}>
+            <li><button type="button" className="settings-link" onClick={() => openSection('platform')}>
               <span className="settings-emoji" aria-hidden="true">🧭</span>
               <span className="settings-text"><strong>Платформа Tish</strong><span className="hint">Клиники, тарифы, обращения</span></span><span aria-hidden="true" className="chev">›</span>
             </button></li>

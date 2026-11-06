@@ -1,6 +1,7 @@
 import { lazy, Suspense, useRef, useState, type ReactNode } from 'react'
 
 import { logout, type Schemas } from '../api/client'
+import { useBack } from '../lib/back'
 import type { Page } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { AdminNotices } from './AdminNotices'
@@ -63,6 +64,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     : sections.length > MOBILE_MAIN + 1 ? sections.slice(MOBILE_MAIN) : []
   const moreButton = extra.length > 0 && !me.doctor
   const [more, setMore] = useState(false)
+  // «Ещё» снизу — тоже слой: «назад» телефона закрывает его, а не уводит из раздела
+  useBack(more ? () => setMore(false) : null)
   const [help, setHelp] = useState(false)
   // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается)
   const [narrow, toggleNarrow] = useFullView('sidebar-narrow')

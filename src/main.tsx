@@ -23,6 +23,7 @@ import { App } from './App'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { startDevLogin, startTelegram, telegram } from './lib/telegram'
 import { startButtonIcons } from './lib/buttonIcons'
+import { startEdgeSwipe } from './lib/edgeSwipe'
 import { startErrorReports } from './lib/clientErrors'
 import { startTableLabels } from './lib/tableLabels'
 import { applyLook } from './lib/theme'
@@ -61,6 +62,8 @@ else render()
 // Эмодзи у кнопок по подписи — как в прежнем приложении
 startButtonIcons()
 startTableLabels()
+// «Назад» свайпом от левого края — в PWA и Telegram на iPhone (lib/edgeSwipe.ts)
+startEdgeSwipe()
 
 // Перезагрузка «вышла новая версия» — одна; проработали минуту без сбоев — снова разрешена
 setTimeout(() => {
