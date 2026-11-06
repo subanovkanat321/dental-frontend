@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from
 import type { Schemas } from '../../api/client'
 import { canEditDoctor, seesMoneyOf } from '../../lib/roles'
 import { ApptBadges } from '../ApptBadges'
+import { useApptHover } from '../useApptHover'
 import { CancelledList } from '../CancelledList'
 import { dateOf, dayTitle, minutesOf, minutesOfTime, timeOf } from '../../lib/time'
 import { hhmm, PAD, PX, useNowMinutes } from '../gridScale'
@@ -50,6 +51,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
   const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
   const nowMinutes = useNowMinutes()
   const editable = canEditDoctor(me, doctorId)
+  const hover = useApptHover(me, (id) => (me.doctors ?? []).find((d) => d.id === id)?.fullName ?? '')
 
   const grid = useRef<HTMLDivElement>(null)
   const columns = useRef<(HTMLElement | null)[]>([])
@@ -163,7 +165,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
               })}
               {date === today && showNow && <div className="grid-now" style={{ top: y(nowMinutes) }} />}
               {own.map((a) => (
-                <Block key={a.id} a={a} me={me} y={y} selected={selectedId === a.id}
+                <Block key={a.id} a={a} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)}
                   moving={ghost?.appointment.id === a.id || (move.isPending && move.variables?.appointment.id === a.id)}
                   drag={canDrag(a, me) ? handlers(a) : undefined}
                   onClick={() => { if (!consumeDrag()) onOpen(a) }} />
@@ -173,6 +175,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
           )
         })}
       </div>
+      {!ghost && hover.card}
       <CancelledList items={(week.data ?? []).filter((a) => a.status === 'CANCELLED')} onOpen={onOpen} selectedId={selectedId} withDate />
       {week.isPending && <Loading text="Загрузка недели…" />}
     </div>
@@ -209,8 +212,10 @@ function Hours({ slots: sl, from, to, height, y }: { slots: Slots | undefined; f
 const WEEK_SHORT = 40
 
 /** Приём в колонке дня: заливка статуса, время и имя; можно тащить — курсор «рука». */
-function Block({ a, me, y, selected, moving, drag, onClick }: {
+function Block({ a, me, y, selected, moving, drag, hover, onClick }: {
   a: Appointment
+  /** Всплывающая карточка при наведении (useApptHover); нажатие прячет её и начинает перетаскивание. */
+  hover: ReturnType<ReturnType<typeof useApptHover>['bind']>
   me: Me
   y: (m: number) => number
   selected: boolean
@@ -225,7 +230,8 @@ function Block({ a, me, y, selected, moving, drag, onClick }: {
   const short = h < WEEK_SHORT
   const range = `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`
   return (
-    <button type="button" {...drag} onClick={onClick}
+    <button type="button" {...drag} {...hover} onClick={onClick}
+      onPointerDown={(e) => { hover.onPointerDown(); drag?.onPointerDown(e) }}
       className={`appt s-${s.kind}${short ? ' short' : ''}${selected ? ' active' : ''}${drag ? ' can-drag' : ''}${moving ? ' moving' : ''}`}
       style={{ top: y(start), height: h }} aria-label={`${range}, ${a.patient?.fullName}: ${s.label}`}
       title={drag ? 'Перетащите мышью на другое время или день' : canEditPast(a, me) ? 'Прошедший приём не переносят' : undefined}>

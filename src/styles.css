@@ -33,6 +33,9 @@
   --cash-bg: #FFE3CC; --cash-ink: #8A3605;
   /* «Не напомнили» и прочее тихое: заливка светлее/темнее поля, чтобы блок не сливался с сеткой */
   --quiet-bg: #E9EFEF;
+  /* Штриховка «записать нельзя» (нерабочее время, перерыв, выходной; «Месяц» — нерабочий день): тонкие
+     диагональные линии цвета рамок поля. Объявлена на :root — в тёмной теме берёт её --line-strong */
+  --hatch: repeating-linear-gradient(135deg, var(--line-strong) 0 1.5px, transparent 1.5px 8px);
   --shadow: 0 1px 2px rgba(15, 42, 48, .06), 0 2px 8px rgba(15, 42, 48, .05);
   --panel-shadow: -8px 0 24px rgba(15, 42, 48, .08);
   --radius: 10px;
@@ -242,9 +245,11 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .patient-expenses { display: grid; gap: 6px; }
 .bars.months .bar { flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 2px; text-align: center; }
 .bars.months { height: 110px; }
-.grid-off { position: absolute; left: 0; right: 0; background: repeating-linear-gradient(135deg, var(--sunken) 0 6px, transparent 6px 12px); pointer-events: none; display: flex; align-items: flex-start; justify-content: center; }
+.grid-off { position: absolute; left: 0; right: 0; background: var(--hatch), color-mix(in srgb, var(--sunken) 70%, transparent); pointer-events: none; display: flex; align-items: flex-start; justify-content: center; }
 .grid-off span { margin-top: 12px; padding: 2px 8px; border-radius: var(--r-sm); background: var(--card); color: var(--hint); font-size: .85rem; }
-.grid-break { position: absolute; left: 4px; right: 4px; border-radius: var(--r-sm); background: var(--sunken); border: 1px dashed var(--line-strong); color: var(--hint); font-size: .85rem; overflow: hidden; padding: 1px 6px; pointer-events: none; }
+/* Перерыв — та же штриховка, что нерабочее время, во всю ширину колонки; подпись — плашкой поверх */
+.grid-break { position: absolute; left: 0; right: 0; background: var(--hatch), color-mix(in srgb, var(--sunken) 70%, transparent); border-block: 1px solid var(--separator); color: var(--hint); font-size: .85rem; overflow: hidden; padding: 2px 6px; pointer-events: none; }
+.grid-break span { display: inline-block; max-width: 100%; padding: 0 6px; border-radius: var(--r-sm); background: var(--card); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: top; }
 .appt-note { display: block; font-size: .85rem; opacity: .9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pay-form, .form { display: grid; gap: 10px; }
 .field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
@@ -1757,11 +1762,45 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 /* «Сменить роль» в строке «Персонала» */
 .role-change { display: grid; gap: 8px; justify-items: end; margin-bottom: 6px; }
 .role-change .checks { justify-self: stretch; text-align: left; }
-/* Цвет врача (как его аватар): полоса над колонкой «Дня» и слева на карточке приёма; часы — под именем */
+/* Цвет врача (как его аватар) — полоса над колонкой «Дня»; под именем — специальность и часы */
 button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
-.grid-head-text { display: grid; min-width: 0; line-height: 1.2; }
-.grid-head-hours { font-size: .8rem; font-weight: 500; color: var(--hint); }
-.appt { box-shadow: inset 3px 0 0 var(--doc, transparent), 0 1px 2px rgba(15, 42, 48, .08); }
+.grid-head-text { display: grid; min-width: 0; gap: 1px; line-height: 1.2; }
+.grid-head-sub { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: .8rem; font-weight: 500; }
+/* Специальность — первая строка «Кратко о себе», мелко бирюзовым; не влезла — многоточие (часы остаются) */
+.grid-head-spec { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--link); }
+.grid-head-hours { flex: none; font-size: .8rem; font-weight: 500; color: var(--hint); }
+.grid-head-spec + .grid-head-hours::before { content: '·'; margin-right: 6px; color: var(--faint); }
+.grid-head .avatar { width: 34px; height: 34px; font-size: .85rem; }
+.avatar.photo { object-fit: cover; background: var(--sunken); border: 1px solid var(--separator); }
+/* Полоска слева у приёма — цвет статуса (его *-ink поверх *-bg заливки): статус узнаётся по краю даже
+   у короткого блока и в узкой колонке недели. Цвет врача — в шапке колонки (2026-11-06, просьба владельца) */
+.appt { --stripe: transparent; box-shadow: inset 4px 0 0 var(--stripe), 0 1px 2px rgba(15, 42, 48, .08); padding-left: 12px; }
+.appt.s-request { --stripe: var(--req-ink); }
+.appt.s-wait { --stripe: var(--wait-ink); }
+.appt.s-ok { --stripe: var(--ok-ink); }
+.appt.s-done { --stripe: color-mix(in srgb, var(--done-ink) 55%, transparent); }
+.appt.s-cashier { --stripe: var(--cash-ink); }
+.appt.s-bad { --stripe: var(--bad-ink); }
+.appt.s-quiet { --stripe: var(--line-strong); }
+
+/* Всплывающая карточка приёма при наведении мышью (ApptHover): над сеткой, без нажатий */
+.appt-hover {
+  position: fixed; z-index: 40; width: 280px; display: grid; gap: 8px; padding: 12px 14px; pointer-events: none;
+  border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); color: var(--text); box-shadow: var(--shadow), 0 8px 24px rgba(15, 42, 48, .12);
+  font-size: .9rem; line-height: 1.35;
+}
+.appt-hover-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.appt-hover-head .num { font: 600 1.05rem var(--display); }
+.appt-hover-head .hint { font-size: .8rem; white-space: nowrap; }
+.appt-hover-status { font-size: .85rem; padding: 2px 8px; }
+.appt-hover dl { display: grid; gap: 4px; margin: 0; }
+.appt-hover dl > div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; }
+.appt-hover dt { color: var(--hint); }
+.appt-hover dd { margin: 0; min-width: 0; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) {
+  .appt-hover { animation: appt-hover-in .15s ease-out; }
+  @keyframes appt-hover-in { from { opacity: 0; transform: translateY(2px); } }
+}
 /* Значки на карточке: ⭐ первый визит, 💬 комментарий, 🧾 долг */
 .appt-badges { display: inline-flex; gap: 2px; font-size: .78rem; line-height: 1; white-space: nowrap; flex: none; }
 .appt:not(.short) .appt-badges { position: absolute; top: 4px; right: 6px; }
@@ -2147,3 +2186,9 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .day-title-pick:hover { color: var(--accent); }
 .day-title-pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .day-title-pick .caret { font-size: .6em; color: var(--accent); vertical-align: middle; }
+
+/* «День | Месяц» на телефоне — строкой во всю ширину над днём */
+@media (max-width: 760px) {
+  .segments.view-mode.compact { width: 100%; margin-bottom: 8px; }
+  .toolbar .segments.view-mode.compact { margin-bottom: 0; }
+}

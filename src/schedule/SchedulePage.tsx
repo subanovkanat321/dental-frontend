@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import { api, unwrap, type Schemas } from '../api/client'
 import { SetupChecklist } from '../clinic/SetupChecklist'
 import { openSettings, type Page } from '../lib/route'
-import { addDays, dayTitle, emptyDayText, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
+import { addDays, dateOf, dayTitle, emptyDayText, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { MedicalRecord } from '../medical/MedicalRecord'
@@ -18,7 +18,7 @@ import { DateInput } from '../layout/DateInput'
 import { useMedia } from '../lib/useMedia'
 import { DoctorPicker } from './DoctorPicker'
 import './doctorChips.css'
-import { AVATARS, initials } from '../lib/avatars'
+import { AVATARS, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { PAD, PX, SHORT, useNowMinutes } from './gridScale'
@@ -28,6 +28,10 @@ import { useEarnings } from '../earnings/earnings'
 import { EarningsChip } from '../earnings/EarningsWidgets'
 import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
 import { HelpHint } from '../help/HelpHint'
+import { useApptHover } from './useApptHover'
+import { MonthGrid } from './month/MonthGrid'
+import { addMonths, monthTitle } from './month/monthModel'
+import { useMonthData } from './month/useMonth'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -42,13 +46,14 @@ function isNarrow(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
 }
 
-type Mode = 'day' | 'week'
+type Mode = 'day' | 'week' | 'month'
 
-/** «День» или «Неделя» — запоминается на устройстве (только слово, не личные данные). */
+/** «День», «Неделя» или «Месяц» — запоминается на устройстве (только слово, не личные данные). */
 function useMode(): [Mode, (mode: Mode) => void] {
   const [mode, setMode] = useState<Mode>(() => {
     try {
-      return localStorage.getItem('crm.schedule.mode') === 'week' ? 'week' : 'day'
+      const saved = localStorage.getItem('crm.schedule.mode')
+      return saved === 'week' || saved === 'month' ? saved : 'day'
     } catch {
       return 'day'
     }
@@ -152,24 +157,31 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const narrow = useNarrow()
   // Один врач на телефоне — «День» списком (лента дней, свободные окна, «Принять сейчас»)
   // Телефон — всегда «День» списком (как в прежнем приложении): один врач или «Все врачи» вместе
-  const dayList = narrow && shown.length > 0 ? shown : null
   // «Неделя» — только на компьютере (от 1024px) и всегда один врач: семь дней × несколько врачей
   // не читаются, а перетаскивание между врачами и днями сразу легко промахнуться. «Все врачи» → свой врач или первый
   const [mode, setMode] = useMode()
+  // «Месяц» — и на компьютере, и на телефоне (на телефоне ячейка — число дня и число записей); врач — выбранный или все
+  const monthMode = mode === 'month' && doctors.length > 0
+  const dayList = narrow && !monthMode && shown.length > 0 ? shown : null
   const desktop = useMedia('(min-width: 1024px)')
   const weekMode = mode === 'week' && desktop && !dayList && doctors.length > 0
   const weekDoctor = typeof view === 'number' && doctors.some((d) => d.id === view) ? view
     : (doctors.find((d) => d.id === me.doctorId) ?? doctors[0])?.id ?? null
   const monday = weekStart(date)
   const week = useWeekAppointments(monday, weekDoctor, weekMode)
+  const month = date.slice(0, 7)
+  const monthData = useMonthData(month, shown.map((d) => d.id!), monthMode)
+  const monthCount = monthData.appointments.filter((a) => a.status !== 'CANCELLED' && a.startAt && dateOf(a.startAt).startsWith(month)).length
+  /** Другой месяц: сегодняшний день, если он в этом месяце, иначе 1-е число. */
+  const goMonth = (m: string) => setDate(today.startsWith(m) ? today : `${m}-01`)
 
   const days = useQueries({
     queries: doctors.map((d) => ({
       queryKey: ['appointments', date, d.id],
       queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: { date, doctorId: d.id! } } })),
       refetchInterval: REFRESH_MS,
-      // В «Неделе» дни не нужны: у неё свой запрос на семь дней
-      enabled: !weekMode,
+      // В «Неделе» и «Месяце» дни не нужны: у них свой запрос на несколько дней
+      enabled: !weekMode && !monthMode,
     })),
   })
 
@@ -181,7 +193,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       staleTime: 60_000,
       // Свободные окна в сетке меняются вместе с приёмами — обновлять так же
       refetchInterval: REFRESH_MS,
-      enabled: !dayList && !weekMode,
+      enabled: !dayList && !weekMode && !monthMode,
     })),
   })
 
@@ -301,7 +313,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     setSummaryOpen(next)
     try { localStorage.setItem(SUMMARY_KEY, next ? '1' : '0') } catch { /* нет хранилища */ }
   }
-  const canSummary = wide && !dayList && !weekMode && doctors.length > 0
+  const canSummary = wide && !dayList && !weekMode && !monthMode && doctors.length > 0
   const summary = canSummary && !side && summaryOpen
   const nowOrNull = date === today ? nowMinutes : null
   const free = shown.map((d) => {
@@ -310,6 +322,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     return { doctorId: d.id!, name: d.fullName ?? '', color: AVATARS[doctors.indexOf(d) % AVATARS.length]!, canBook: canEditDoctor(me, d.id), ...f }
   })
   const bookAt = (doctorId: number, minutes: number) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })
+
+  // Всплывающая карточка приёма при наведении мышью (компьютер) — общая для «Дня»
+  const hover = useApptHover(me, (id) => doctors.find((d) => d.id === id)?.fullName ?? '')
 
   if (medical) {
     return (
@@ -327,14 +342,23 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         {!dayList && (
           <header className="toolbar">
             <div className="day-switch">
-              <button type="button" className="btn ghost" aria-label={weekMode ? 'Предыдущая неделя' : 'Предыдущий день'}
-                onClick={() => setDate(addDays(date, weekMode ? -7 : -1))}>‹</button>
-              <button type="button" className="btn ghost" aria-label={weekMode ? 'Следующая неделя' : 'Следующий день'}
-                onClick={() => setDate(addDays(date, weekMode ? 7 : 1))}>›</button>
+              <button type="button" className="btn ghost" aria-label={monthMode ? 'Предыдущий месяц' : weekMode ? 'Предыдущая неделя' : 'Предыдущий день'}
+                onClick={() => (monthMode ? goMonth(addMonths(month, -1)) : setDate(addDays(date, weekMode ? -7 : -1)))}>‹</button>
+              <button type="button" className="btn ghost" aria-label={monthMode ? 'Следующий месяц' : weekMode ? 'Следующая неделя' : 'Следующий день'}
+                onClick={() => (monthMode ? goMonth(addMonths(month, 1)) : setDate(addDays(date, weekMode ? 7 : 1)))}>›</button>
               {/* Календарь — значком рядом со стрелками: дата и так крупно в заголовке */}
               <DateInput id="schedule-date" iconOnly aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
             </div>
-            {weekMode ? (
+            {monthMode ? (
+              <div className="day-title">
+                <div className="with-hint"><h1><button type="button" className="day-title-pick" title="Выбрать дату"
+                  onClick={() => document.getElementById('schedule-date')?.click()}>{monthTitle(month)} <span className="caret" aria-hidden="true">▾</span></button></h1><HelpHint hint="schedule" /></div>
+                <span className="hint">
+                  {today.startsWith(month) ? 'этот месяц · ' : ''}{view === 'all' || shown.length !== 1 ? 'все врачи' : shown[0]!.fullName}
+                  {monthData.pending ? '' : ` · ${monthCount ? `записей ${monthCount}` : 'записей нет'}`}
+                </span>
+              </div>
+            ) : weekMode ? (
               <div className="day-title">
                 <div className="with-hint"><h1><button type="button" className="day-title-pick" title="Выбрать дату"
                   onClick={() => document.getElementById('schedule-date')?.click()}>Неделя {weekLabel(monday)} {monday.slice(0, 4)} <span className="caret" aria-hidden="true">▾</span></button></h1><HelpHint hint="schedule" /></div>
@@ -354,18 +378,15 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 </span>
               </div>
             )}
-            {weekMode
-              ? monday !== weekStart(today) && <button type="button" className="btn" onClick={() => setDate(today)}>Эта неделя</button>
-              : date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
-            {desktop && (
-              <div className="segments view-mode" role="group" aria-label="Вид расписания">
-                <button type="button" aria-pressed={!weekMode} onClick={() => setMode('day')}>День</button>
-                <button type="button" aria-pressed={weekMode} onClick={() => setMode('week')}>Неделя</button>
-              </div>
-            )}
+            {monthMode
+              ? !today.startsWith(month) && <button type="button" className="btn" onClick={() => setDate(today)}>Этот месяц</button>
+              : weekMode
+                ? monday !== weekStart(today) && <button type="button" className="btn" onClick={() => setDate(today)}>Эта неделя</button>
+                : date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
+            <ViewModes mode={monthMode ? 'month' : weekMode ? 'week' : 'day'} week={desktop} onChange={setMode} />
 
             {bookable.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
-            {bookable.length > 0 && date === today && (
+            {bookable.length > 0 && date === today && !monthMode && (
               <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
             )}
             {/* Открытую сводку закрывает «×» в ней самой — в шапке кнопка только чтобы вернуть */}
@@ -377,7 +398,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         )}
 
         <SetupChecklist me={me} />
-        {!dayList && !summary && !weekMode && (
+        {!dayList && !summary && !weekMode && !monthMode && (
           <div className="today-strip" role="group" aria-label="Требует внимания">
             {requests.length > 0 && (
               <button type="button" className="stat s-request" onClick={firstOf(requests)}>
@@ -427,6 +448,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
 
+        {/* Телефон, «День» списком: шапки раздела нет — «День | Месяц» отдельной строкой над днём */}
+        {dayList && doctors.length > 0 && <ViewModes mode="day" week={false} onChange={setMode} />}
         {doctors.length > 1 && (narrow || doctors.length > 8 ? (
           // Телефон (и очень много врачей на компьютере): один выпадающий список вместо ряда
           <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView} />
@@ -452,6 +475,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             onNewHere={bookable.length > 0 ? newHere : undefined}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />
+        ) : monthMode ? (
+          <MonthGrid month={month} today={today} selected={date} data={monthData} compact={narrow}
+            onOpenDay={(day) => { setDate(day); setMode('day') }} />
         ) : weekMode && weekDoctor != null ? (
           <WeekGrid me={me} doctorId={weekDoctor} monday={monday} today={today} selectedId={selected?.id}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
@@ -474,10 +500,17 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 return (
                   <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}
                     style={{ '--doc': color } as CSSProperties} onClick={() => setView(d.id!)}>
-                    <span className="avatar" style={{ background: color }} aria-hidden="true">{initials(d.fullName)}</span>
+                    {d.photoUrl
+                      ? <img className="avatar photo" src={d.photoUrl} alt="" />
+                      : <span className="avatar" style={{ background: color }} aria-hidden="true">{initials(d.fullName)}</span>}
                     <span className="grid-head-text">
                       <span className="grid-head-name">{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</span>
-                      {hoursText && <span className="grid-head-hours num">{hoursText}</span>}
+                      {(specialtyOf(d.about) || hoursText) && (
+                        <span className="grid-head-sub">
+                          {specialtyOf(d.about) && <span className="grid-head-spec" title={d.about}>{specialtyOf(d.about)}</span>}
+                          {hoursText && <span className="grid-head-hours num">{hoursText}</span>}
+                        </span>
+                      )}
                     </span>
                   </button>
                 )
@@ -538,7 +571,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                       const short = h < SHORT
                       return (
                         <button key={a.id} type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${selected?.id === a.id ? ' active' : ''}`}
-                          style={{ top, height: h, '--doc': AVATARS[doctors.indexOf(d) % AVATARS.length] } as CSSProperties}
+                          style={{ top, height: h }} {...hover.bind(a)}
                           onClick={() => setSide({ kind: 'appointment', id: a.id! })}
                           aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
                           {/* Обёртка — для широкого блока (один врач на экране): там она сеткой «время | имя и услуга | значки и статус»
@@ -568,6 +601,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 )
               })}
             </div>
+            {hover.card}
             {/* Ни одного приёма в дне — Тишка «водяным знаком» поверх видимой части сетки (вне прокрутки); нажатия проходят к свободным окнам */}
             {shown.length > 0 && shown.every((d) => days[doctors.indexOf(d)]?.isSuccess)
               && shown.every((d) => !(days[doctors.indexOf(d)]?.data ?? []).some((a) => a.status !== 'CANCELLED')) && (
@@ -578,12 +612,12 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
         {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» под днём */}
-        {!dayList && !weekMode && shown.length > 0 && (
+        {!dayList && !weekMode && !monthMode && shown.length > 0 && (
           <CancelledList items={loaded.filter((a) => a.status === 'CANCELLED' && shown.some((d) => d.id === a.doctorId))}
             selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             doctorName={shown.length > 1 ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
         )}
-        {!dayList && doctors.length > 0 && <BadgesLegend />}
+        {!dayList && !monthMode && doctors.length > 0 && <BadgesLegend />}
       </section>
       {summary && (
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}
@@ -599,6 +633,17 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} walkIn={side.walkIn} onClose={close}
           onCreated={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} />
       )}
+    </div>
+  )
+}
+
+/** «День | Неделя | Месяц»; «Неделя» — только на компьютере (семь колонок на телефоне не читаются). */
+function ViewModes({ mode, week, onChange }: { mode: Mode; week: boolean; onChange: (mode: Mode) => void }) {
+  return (
+    <div className={`segments view-mode${week ? '' : ' compact'}`} role="group" aria-label="Вид расписания">
+      <button type="button" aria-pressed={mode === 'day'} onClick={() => onChange('day')}>День</button>
+      {week && <button type="button" aria-pressed={mode === 'week'} onClick={() => onChange('week')}>Неделя</button>}
+      <button type="button" aria-pressed={mode === 'month'} onClick={() => onChange('month')}>Месяц</button>
     </div>
   )
 }
