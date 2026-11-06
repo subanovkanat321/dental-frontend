@@ -129,7 +129,7 @@ test('«В приложение»: разрешение, подписка клю
   expect(screen.getByRole('button', { name: 'В приложение' })).toHaveAttribute('aria-pressed', 'true')
 
   await userEvent.click(screen.getByRole('button', { name: '🔔 Отправить проверочное' }))
-  expect(await screen.findByText(/Отправили/)).toBeInTheDocument()
+  expect(await screen.findByText(/Отправили на 1 устройство: Chrome · Android/)).toBeInTheDocument()
 })
 
 test('выбрано приложение, но это устройство не подключено — на каких приходят и «Подключить»', async () => {

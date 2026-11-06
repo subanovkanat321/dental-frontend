@@ -98,7 +98,11 @@ function NotificationsBody() {
     setBusy(true)
     try {
       const result = await unwrap(api.POST('/api/push/test'))
-      setTest(result.sent ? 'Отправили — уведомление придёт через пару секунд.' : 'Не дошло ни на одно устройство. Подключите это устройство ещё раз.')
+      // Куда ушло — по именам устройств: сразу видно, подключён ли, например, ноутбук
+      const where = devices.length ? `: ${devices.join(', ')}` : ''
+      const count = result.sent ?? 0
+      setTest(count ? `Отправили на ${count} ${plural(count, 'устройство', 'устройства', 'устройств')}${where} — уведомление придёт через пару секунд. Нет на каком-то — подключите его в этом разделе на нём самом.`
+        : 'Не дошло ни на одно устройство. Подключите это устройство ещё раз.')
     } catch (e) {
       setTest(e instanceof ApiError ? e.message : 'Не отправилось — проверьте интернет')
     } finally {
@@ -159,4 +163,13 @@ function NotificationsBody() {
       {!noTelegram && <p className="hint">Каждое уведомление приходит в одно место — туда, что выбрано здесь. Не дошло в приложение — придёт в Telegram.</p>}
     </Section>
   )
+}
+
+/** 1 устройство, 2 устройства, 5 устройств */
+function plural(n: number, one: string, few: string, many: string): string {
+  const d = n % 10
+  const h = n % 100
+  if (d === 1 && h !== 11) return one
+  if (d >= 2 && d <= 4 && (h < 12 || h > 14)) return few
+  return many
 }

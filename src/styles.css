@@ -1700,6 +1700,61 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 /* Значки на карточке: ⭐ первый визит, 💬 комментарий, 🧾 долг */
 .appt-badges { display: inline-flex; gap: 2px; font-size: .78rem; line-height: 1; white-space: nowrap; flex: none; }
 .appt:not(.short) .appt-badges { position: absolute; top: 4px; right: 6px; }
+
+/* Блок приёма по своей ширине (container query, контейнер — сам .appt: ширина от left/right, высота задана).
+   Узкий (неделя, несколько врачей) — столбиком, как раньше: .appt-body не участвует (display: contents).
+   Средний (≥240px) — у ⭐ подпись «Новый». Широкий (≥420px: один-два врача на экране) — строкой
+   «время | имя, ниже услуга · комментарий | значки-чипы | статус-чип», по центру высоты, не шире 940px. */
+.appt { container: appt / size; }
+.appt-body { display: contents; }
+.appt .wide-only { display: none; }
+.appt-badge { display: inline-flex; align-items: center; gap: 3px; }
+@container appt (min-width: 240px) {
+  .appt .appt-badge[data-short] { padding: 1px 5px 1px 3px; border-radius: 4px; background: color-mix(in srgb, var(--card) 60%, transparent); }
+  .appt .appt-badge[data-short]::after { content: attr(data-short); font-weight: 600; }
+}
+@container appt (min-width: 420px) {
+  /* Широкий блок, средний вариант (два-три врача): справа статус, под ним значки; имя не уже 7rem */
+  .appt .appt-body {
+    display: grid; grid-template-columns: 5.5rem minmax(7rem, 1fr) minmax(0, max-content); grid-template-areas: "time name state" "time sub badges";
+    align-items: center; column-gap: 12px; row-gap: 2px; width: 100%; max-width: 940px; margin-block: auto;
+  }
+  .appt .appt-body > * { min-width: 0; }
+  .appt .appt-body > .appt-time { grid-area: time; display: grid; align-self: center; line-height: 1.15; opacity: 1; }
+  .appt .appt-from { font-size: 1.05rem; font-weight: 600; }
+  .appt .appt-until, .appt .appt-until.wide-only { display: block; font-size: .8rem; font-weight: 500; opacity: .75; }
+  .appt .appt-body > .appt-name { grid-area: name; align-self: end; font-size: 1.02rem; }
+  .appt .appt-body > .appt-sub { grid-area: sub; align-self: start; display: flex; overflow: hidden; white-space: nowrap; font-size: .86rem; opacity: .85; }
+  .appt .appt-body > .appt-sub:empty { display: none; }
+  .appt .appt-sub > .appt-note, .appt .appt-sub > .appt-note.wide-only { display: block; flex: 0 1 auto; min-width: 0; opacity: 1; font-size: inherit; }
+  .appt .appt-sub > .appt-note + .appt-note::before { content: '·'; margin: 0 6px; }
+  /* Услуга — целиком (обрезается, только если сама длиннее строки), сжимается комментарий */
+  .appt .appt-sub > .appt-note:first-child { flex-shrink: 0; max-width: 100%; }
+  .appt .appt-body > .appt-badges { grid-area: badges; position: static; justify-self: end; align-self: start; display: flex; gap: 6px; font-size: .8rem; line-height: 1.2; }
+  .appt .appt-body > .appt-state, .appt .appt-body > .appt-state.wide-only {
+    grid-area: state; display: block; justify-self: end; align-self: end; max-width: 100%; padding: 2px 9px; border-radius: var(--r-sm);
+    background: color-mix(in srgb, var(--card) 72%, transparent); font-size: .85rem; font-weight: 500; opacity: 1;
+  }
+  /* Короткий приём (30 минут) — одной строкой: время, имя, значки, статус */
+  .appt.short .appt-body { grid-template-columns: 5.5rem minmax(7rem, 1fr) auto minmax(0, max-content); grid-template-areas: "time name badges state"; }
+  .appt.short .appt-body > .appt-time { display: flex; align-items: baseline; }
+  .appt.short .appt-until { display: inline; }
+  .appt.short .appt-body > .appt-sub { display: none; }
+  .appt.short .appt-body > * { align-self: center; }
+}
+@container appt (min-width: 700px) {
+  /* Широкий блок (один врач на экране): всё в строку, значки — подписанными чипами */
+  .appt .appt-body { grid-template-columns: 5.75rem minmax(9rem, 1fr) auto minmax(0, max-content); grid-template-areas: "time name badges state" "time sub badges state"; }
+  .appt .appt-body > .appt-badges, .appt .appt-body > .appt-state { align-self: center; }
+  .appt .appt-body .appt-badge { gap: 4px; padding: 2px 8px; border-radius: var(--r-sm); background: color-mix(in srgb, var(--card) 55%, transparent); }
+  .appt .appt-body .appt-badge::after { content: attr(data-long); font-weight: 500; }
+  .appt.short .appt-body { grid-template-columns: 5.75rem minmax(0, max-content) minmax(0, 1fr) auto minmax(0, max-content); grid-template-areas: "time name sub badges state"; }
+  .appt.short .appt-body > .appt-sub { display: flex; }
+}
+/* Длинный приём (от 1,5 часа) в широком блоке — сверху, у времени начала, а не посередине */
+@container appt (min-width: 420px) and (min-height: 110px) {
+  .appt .appt-body { margin-block: 4px auto; }
+}
 .badges-legend { margin: 6px 0 0; }
 /* «На весь экран» — карточка приёма и «Сводка дня» на компьютере (на телефоне карточка и так во весь экран) */
 .panel-head-actions { display: flex; gap: 4px; }

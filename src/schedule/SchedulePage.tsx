@@ -537,16 +537,26 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                           style={{ top, height: h, '--doc': AVATARS[doctors.indexOf(d) % AVATARS.length] } as CSSProperties}
                           onClick={() => setSide({ kind: 'appointment', id: a.id! })}
                           aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
-                          <span className="appt-time num">{short ? timeOf(a.startAt!) : `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`}</span>
-                          <span className="appt-name">{a.patient?.fullName}</span>
-                          <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} />
-                          {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
-                          {(short || h > 56) && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
-                          {h > 66 && a.serviceName && <span className="appt-note">{a.serviceName}</span>}
-                          {h > 88 && a.comment && <span className="appt-note">{a.comment}</span>}
-                          {h > 80 && a.depositStatus && seesMoneyOf(me, a.doctorId) && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
-                            <span className="appt-note">Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>
-                          )}
+                          {/* Обёртка — для широкого блока (один врач на экране): там она сеткой «время | имя и услуга | значки и статус»
+                              (container query в styles.css). В узком блоке она display: contents — раскладка прежняя.
+                              «wide-only» — то, что узкому блоку по высоте не влезает, а широкому влезает в ту же строку. */}
+                          <span className="appt-body">
+                            <span className="appt-time num">
+                              <span className="appt-from">{timeOf(a.startAt!)}</span>
+                              <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt!)}</span>
+                            </span>
+                            <span className="appt-name">{a.patient?.fullName}</span>
+                            <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} />
+                            {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
+                            <span className={`appt-state${short || h > 56 ? '' : ' wide-only'}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>
+                            <span className="appt-sub">
+                              {a.serviceName && <span className={`appt-note${!short && h > 66 ? '' : ' wide-only'}`}>{a.serviceName}</span>}
+                              {a.comment && <span className={`appt-note${!short && h > 88 ? '' : ' wide-only'}`}>{a.comment}</span>}
+                              {a.depositStatus && seesMoneyOf(me, a.doctorId) && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
+                                <span className={`appt-note${!short && h > 80 ? '' : ' wide-only'}`}>Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>
+                              )}
+                            </span>
+                          </span>
                         </button>
                       )
                     })}
