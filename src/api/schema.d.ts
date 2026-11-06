@@ -3483,7 +3483,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["month"];
+        get: operations["finance"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6966,6 +6966,9 @@ export interface components {
             payments?: number;
         };
         PlatformFinanceFinance: {
+            period?: string;
+            from?: string;
+            to?: string;
             month?: string;
             /** Format: int64 */
             incomeSom?: number;
@@ -6976,6 +6979,7 @@ export interface components {
             expenses?: components["schemas"]["PlatformFinanceLine"][];
             income?: components["schemas"]["PlatformExpensesClinicIncome"][];
             entries?: components["schemas"]["PlatformExpensesExpense"][];
+            months?: components["schemas"]["PlatformFinanceMonthTotal"][];
             history?: components["schemas"]["PlatformFinanceMonthTotal"][];
             settings?: components["schemas"]["PlatformFinanceSettings"];
             categories?: string[];
@@ -14638,10 +14642,13 @@ export interface operations {
             };
         };
     };
-    month: {
+    finance: {
         parameters: {
             query?: {
+                period?: string;
                 month?: string;
+                from?: string;
+                to?: string;
             };
             header?: never;
             path?: never;

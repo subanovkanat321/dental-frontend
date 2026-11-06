@@ -27,42 +27,113 @@ const tone = (som: number) => (som < 0 ? 'tone-bad' : som > 0 ? 'tone-ok' : unde
 /** 1.5 → «1,5»: цена SMS и курс — как пишут у нас. */
 const decimal = (n: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(n)
 
+type Period = 'month' | 'quarter' | 'year' | 'all' | 'custom'
+
+const PERIODS: [Period, string][] = [['month', 'Месяц'], ['quarter', 'Квартал'], ['year', 'Год'], ['all', 'Всё время'], ['custom', 'Свой период']]
+const QUARTERS = ['I', 'II', 'III', 'IV']
+
+/** '2026-11' + 1 → '2026-12'. */
+function shiftMonth(month: string, by: number): string {
+  const [y, m] = month.split('-').map(Number)
+  const i = y! * 12 + m! - 1 + by
+  return `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`
+}
+
+/** Первый месяц квартала: '2026-11' → '2026-10'. */
+const quarterStart = (m: string) => `${m.slice(0, 4)}-${String(Math.floor((Number(m.slice(5, 7)) - 1) / 3) * 3 + 1).padStart(2, '0')}`
+
+/** «ноябрь 2026», «январь — март 2026», «декабрь 2025 — январь 2026». */
+function rangeText(from: string, to: string): string {
+  if (from === to) return longMonth(from)
+  if (from.slice(0, 4) === to.slice(0, 4)) return `${MONTH_NAME.format(new Date(`${from}-01T00:00:00Z`))} — ${longMonth(to)}`
+  return `${longMonth(from)} — ${longMonth(to)}`
+}
+const MONTH_NAME = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long' })
+
 /**
  * «Платформа → Финансы» (только владелец платформы, сервер отвечает 403 остальным): доходы — оплаты
  * клиник за подписку, расходы — ИИ и SMS сами (из учёта токенов и журнала SMS) плюс ручные статьи
- * (Claude, реклама, сервер…; разовые и «каждый месяц»), прибыль и 12 месяцев на графике. Считает
- * сервер (/api/platform/finance) — здесь только показываем и вводим ручные расходы.
+ * (Claude, реклама, сервер…; разовые и «каждый месяц»), прибыль. Период — месяц, квартал, год, всё
+ * время или свой (с — по); за период больше месяца — график и таблица по месяцам. Считает сервер
+ * (/api/platform/finance) — здесь только показываем и вводим ручные расходы.
  */
 export function FinanceTab() {
   const current = todayIn().slice(0, 7)
+  const [period, setPeriod] = useState<Period>('month')
   const [month, setMonth] = useState(current)
+  const [from, setFrom] = useState(shiftMonth(current, -2))
+  const [to, setTo] = useState(current)
+  const params = period === 'month' ? { month } : period === 'quarter' || period === 'year' ? { period, month }
+    : period === 'all' ? { period } : { period, from, to }
   const query = useQuery<Finance, ApiError>({
-    queryKey: ['platform-finance', month],
-    queryFn: () => unwrap(api.GET('/api/platform/finance', { params: { query: { month } } })),
+    queryKey: ['platform-finance', params],
+    queryFn: () => unwrap(api.GET('/api/platform/finance', { params: { query: params } })),
+    placeholderData: (previous) => previous,
   })
   const f = query.data
+  const single = period === 'month'
+  const scope = single ? 'за месяц' : 'за период'
+  const openMonth = (m: string) => { setMonth(m); setPeriod('month') }
   return (
     <>
-      <section className="card-block" aria-label="Итог месяца">
-        <div className="toolbar">
+      <section className="card-block" aria-label="Итог периода">
+        <div className="toolbar fin-toolbar">
           <h2>Финансы</h2>
-          <MonthPicker label="Месяц финансов" value={month} max={current} onChange={setMonth} />
+          <div className="segments fin-periods" role="group" aria-label="Период">
+            {PERIODS.map(([key, title]) => (
+              <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
+            ))}
+          </div>
+          {period === 'month' && <MonthPicker label="Месяц финансов" value={month} max={current} onChange={setMonth} />}
+          {period === 'quarter' && (
+            <Stepper label="Квартал" text={`${QUARTERS[Math.floor((Number(month.slice(5, 7)) - 1) / 3)]} квартал ${month.slice(0, 4)}`}
+              onPrev={() => setMonth(shiftMonth(quarterStart(month), -3))}
+              onNext={shiftMonth(quarterStart(month), 3) > current ? undefined : () => setMonth(shiftMonth(quarterStart(month), 3))} />
+          )}
+          {period === 'year' && (
+            <Stepper label="Год" text={`${month.slice(0, 4)} год`} onPrev={() => setMonth(`${Number(month.slice(0, 4)) - 1}-12`)}
+              onNext={Number(month.slice(0, 4)) >= Number(current.slice(0, 4)) ? undefined
+                : () => setMonth(Number(month.slice(0, 4)) + 1 === Number(current.slice(0, 4)) ? current : `${Number(month.slice(0, 4)) + 1}-12`)} />
+          )}
+          {period === 'custom' && (
+            <div className="fin-range">
+              <span className="hint">с</span>
+              <MonthPicker label="Первый месяц" value={from} max={current} onChange={(m) => { setFrom(m); if (m > to) setTo(m) }} />
+              <span className="hint">по</span>
+              <MonthPicker label="Последний месяц" value={to} max={current} onChange={(m) => { setTo(m); if (m < from) setFrom(m) }} />
+            </div>
+          )}
         </div>
         {query.error && <p className="error" role="alert">{query.error.message}</p>}
         {query.isPending ? <Loading /> : f && (
-          <div className="survey-tiles fin-tiles">
-            <div className="survey-tile"><span className="hint">Доходы</span><b className="num" aria-label="Доходы за месяц">{somText(f.incomeSom ?? 0)}</b></div>
-            <div className="survey-tile"><span className="hint">Расходы</span><b className="num" aria-label="Расходы за месяц">{somText(f.expenseSom ?? 0)}</b></div>
-            <div className="survey-tile hero"><span className="hint">{(f.profitSom ?? 0) < 0 ? 'Убыток' : 'Прибыль'}</span>
-              <b className={`num ${tone(f.profitSom ?? 0) ?? ''}`.trim()} aria-label="Прибыль за месяц">{signed(f.profitSom ?? 0)}</b></div>
-          </div>
+          <>
+            {!single && f.from && f.to && <p className="hint fin-scope" aria-live="polite">{rangeText(f.from, f.to)}{f.to === current ? ' (по текущий месяц)' : ''}</p>}
+            <div className="survey-tiles fin-tiles">
+              <div className="survey-tile"><span className="hint">Доход</span><b className="num" aria-label={`Доход ${scope}`}>{somText(f.incomeSom ?? 0)}</b></div>
+              <div className="survey-tile"><span className="hint">Расход</span><b className="num" aria-label={`Расход ${scope}`}>{somText(f.expenseSom ?? 0)}</b></div>
+              <div className="survey-tile hero"><span className="hint">{(f.profitSom ?? 0) < 0 ? 'Убыток' : 'Прибыль'}</span>
+                <b className={`num ${tone(f.profitSom ?? 0) ?? ''}`.trim()} aria-label={`Прибыль ${scope}`}>{signed(f.profitSom ?? 0)}</b></div>
+            </div>
+          </>
         )}
       </section>
-      {f && <ExpensesBlock f={f} />}
-      {f && <IncomeBlock f={f} />}
-      {f && <HistoryBlock history={f.history ?? []} month={month} onPick={setMonth} />}
+      {f && <ExpensesBlock f={f} single={single} />}
+      {f && !single && (f.months?.length ?? 0) > 1 && <MonthsBlock months={f.months ?? []} onPick={openMonth} />}
+      {f && <IncomeBlock f={f} single={single} />}
+      {f && single && <HistoryBlock history={f.history ?? []} month={month} onPick={setMonth} />}
       {f && <SmsPriceForm key={String(f.settings?.smsPriceSom ?? '')} price={f.settings?.smsPriceSom} />}
     </>
+  )
+}
+
+/** «‹ IV квартал 2026 ›» — тот же вид, что выбор месяца; onNext нет — дальше нельзя (будущее). */
+function Stepper({ label, text, onPrev, onNext }: { label: string; text: string; onPrev: () => void; onNext?: () => void }) {
+  return (
+    <div className="month-picker" role="group" aria-label={label}>
+      <button type="button" className="mp-step" aria-label={`Предыдущий: ${label.toLowerCase()}`} onClick={onPrev}>‹</button>
+      <span className="mp-current mp-static" aria-live="polite">{text}</span>
+      <button type="button" className="mp-step" aria-label={`Следующий: ${label.toLowerCase()}`} disabled={!onNext} onClick={onNext}>›</button>
+    </div>
   )
 }
 
@@ -76,7 +147,7 @@ function lineNote(l: Line, price?: number): string {
   return (l.count ?? 0) > 1 ? `записей: ${l.count}` : ''
 }
 
-function ExpensesBlock({ f }: { f: Finance }) {
+function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<number | null>(null)
   const lines = f.expenses ?? []
@@ -89,8 +160,8 @@ function ExpensesBlock({ f }: { f: Finance }) {
       </div>
       {/* Структура расходов месяца — бублик; ниже те же статьи списком с пометками «считается само» */}
       <Donut parts={lines.filter((l) => !l.needsPrice && (l.som ?? 0) > 0).map((l) => ({ key: l.key ?? l.label ?? '', name: l.label ?? '', value: l.som ?? 0 }))}
-        label="Структура расходов за месяц" format={somText} center={somText(f.expenseSom ?? 0)} caption="расходы месяца"
-        empty="Расходов за этот месяц нет." />
+        label={single ? 'Структура расходов за месяц' : 'Структура расходов за период'} format={somText} center={somText(f.expenseSom ?? 0)}
+        caption={single ? 'расходы месяца' : 'расходы за период'} empty={single ? 'Расходов за этот месяц нет.' : 'Расходов за этот период нет.'} />
       <dl className="net-lines fin-lines" aria-label="Расходы по статьям">
         {lines.map((l) => (
           <div key={l.key}>
@@ -106,19 +177,19 @@ function ExpensesBlock({ f }: { f: Finance }) {
         <div className="net-total"><dt>Всего расходов</dt><dd className="num">{somText(f.expenseSom ?? 0)}</dd></div>
       </dl>
       {adding && (
-        <ExpenseForm categories={f.categories ?? []} rate={f.settings?.lastUsdRate} month={f.month ?? ''} onDone={() => setAdding(false)} />
+        <ExpenseForm categories={f.categories ?? []} rate={f.settings?.lastUsdRate} month={f.to ?? f.month ?? ''} onDone={() => setAdding(false)} />
       )}
       <h3>Записи вручную</h3>
       {entries.length === 0 ? (
-        <EmptyState compact title="В этом месяце ручных расходов нет">
+        <EmptyState compact title={single ? 'В этом месяце ручных расходов нет' : 'За этот период ручных расходов нет'}>
           Claude, реклама, сервер и домен, пополнение SMS-провайдера — «Добавить расход». Подписку отметьте «каждый месяц»: она сама попадёт в следующие месяцы.
         </EmptyState>
       ) : (
-        <ul className="fin-entries" aria-label="Ручные расходы месяца">
+        <ul className="fin-entries" aria-label={single ? 'Ручные расходы месяца' : 'Ручные расходы периода'}>
           {entries.map((x) => (
             <li key={x.id}>
               {editing === x.id ? (
-                <ExpenseForm expense={x} categories={f.categories ?? []} rate={f.settings?.lastUsdRate} month={f.month ?? ''}
+                <ExpenseForm expense={x} categories={f.categories ?? []} rate={f.settings?.lastUsdRate} month={f.to ?? f.month ?? ''}
                   onDone={() => setEditing(null)} />
               ) : (
                 <div className="fin-entry">
@@ -127,7 +198,7 @@ function ExpensesBlock({ f }: { f: Finance }) {
                     {x.monthly && <span className="chip small s-quiet">каждый месяц</span>}
                     <div className="hint small">{entryNote(x)}</div>
                   </div>
-                  <span className="num strong nowrap">{somText(x.amountSom ?? 0)}</span>
+                  <span className="num strong nowrap">{somText(x.amountSom ?? 0)}{x.monthly && <span className="hint small"> / мес</span>}</span>
                   <button type="button" className="btn ghost small" aria-label={`Исправить: ${x.category}`}
                     onClick={() => { setEditing(x.id ?? null); setAdding(false) }}>Исправить</button>
                 </div>
@@ -275,17 +346,17 @@ function ExpenseForm({ expense: x, categories, rate, month, onDone }: {
   )
 }
 
-function IncomeBlock({ f }: { f: Finance }) {
+function IncomeBlock({ f, single }: { f: Finance; single: boolean }) {
   const rows = f.income ?? []
   return (
     <section className="card-block" aria-label="Доходы по клиникам">
       <h2>Доходы по клиникам</h2>
       <p className="hint small">Оплаты подписки, отмеченные в «Клиники» → клиника → «Оплата», — по дню оплаты. Считается само.</p>
       {rows.length === 0 ? (
-        <EmptyState compact title="В этом месяце оплат от клиник не было" />
+        <EmptyState compact title={single ? 'В этом месяце оплат от клиник не было' : 'За этот период оплат от клиник не было'} />
       ) : (
         <div className="table-scroll">
-          <table className="table" aria-label="Оплаты клиник за месяц">
+          <table className="table" aria-label={single ? 'Оплаты клиник за месяц' : 'Оплаты клиник за период'}>
             <thead><tr><th>Клиника</th><th className="r">Оплат</th><th className="r">Сумма</th></tr></thead>
             <tbody>
               {rows.map((r) => (
@@ -304,41 +375,57 @@ function IncomeBlock({ f }: { f: Finance }) {
   )
 }
 
+const monthText = (m: MonthTotal) => `${longMonth(m.month ?? '')}: доход ${somText(m.incomeSom ?? 0)}, расход ${somText(m.expenseSom ?? 0)}, прибыль ${signed(m.profitSom ?? 0)}`
+
 /**
- * 12 месяцев: доход и расход — парой столбиков от общей нулевой линии (dataviz: два ряда во времени,
+ * Столбики по месяцам: доход и расход — парой от общей нулевой линии (dataviz: два ряда во времени,
  * одна шкала), прибыль — отдельной полосой вверх (зелёным) и вниз (красным) от нуля, чтобы убыток был
- * виден сразу. Нажатие на месяц — открыть его.
+ * виден сразу. Нажатие на месяц — открыть его. Месяцев больше 12 («всё время») — подписи через
+ * несколько, январь — годом, чтобы было видно, где какой год.
  */
+function MonthBars({ rows, picked, onPick }: { rows: MonthTotal[]; picked?: string; onPick: (m: string) => void }) {
+  const max = Math.max(1, ...rows.flatMap((m) => [m.incomeSom ?? 0, m.expenseSom ?? 0]))
+  const maxProfit = Math.max(1, ...rows.map((m) => Math.abs(m.profitSom ?? 0)))
+  const step = Math.ceil(rows.length / 12)
+  const label = (m: string) => (rows.length > 12 && m.endsWith('-01') ? m.slice(0, 4) : shortMonth(m))
+  return (
+    <>
+      <div className="legend" aria-hidden="true"><span className="key fin-in" /> доход <span className="key fin-out" /> расход
+        <span className="key fin-up" /> прибыль <span className="key fin-down" /> убыток</div>
+      <div className="fin-bars" role="img" aria-label={rows.map(monthText).join('; ')}>
+        {rows.map((m, k) => {
+          const back = rows.length - 1 - k
+          return (
+            <button key={m.month} type="button" className={m.month === picked ? 'fin-month picked' : 'fin-month'} title={monthText(m)}
+              aria-label={longMonth(m.month ?? '')} onClick={() => m.month && onPick(m.month)}>
+              <span className="fin-pair">
+                <span className="fin-in" style={{ height: `${((m.incomeSom ?? 0) / max) * 100}%` }} />
+                <span className="fin-out" style={{ height: `${((m.expenseSom ?? 0) / max) * 100}%` }} />
+              </span>
+              <span className="fin-profit" aria-hidden="true">
+                <span className={(m.profitSom ?? 0) < 0 ? 'fin-down' : 'fin-up'}
+                  style={{ height: `${(Math.abs(m.profitSom ?? 0) / maxProfit) * 50}%` }} />
+              </span>
+              {/* Подписи через step месяцев; на телефоне — ещё через одну: в 360px иначе слипаются */}
+              <span className={back % step ? 'vbar-label fin-skip' : (back / step) % 2 ? 'vbar-label fin-odd' : 'vbar-label'}>{label(m.month ?? '')}</span>
+            </button>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+/** 12 месяцев по выбранный — в режиме «Месяц». */
 function HistoryBlock({ history, month, onPick }: { history: MonthTotal[]; month: string; onPick: (m: string) => void }) {
-  const max = Math.max(1, ...history.flatMap((m) => [m.incomeSom ?? 0, m.expenseSom ?? 0]))
-  const maxProfit = Math.max(1, ...history.map((m) => Math.abs(m.profitSom ?? 0)))
   const picked = history.find((m) => m.month === month)
   const empty = !history.some((m) => m.incomeSom || m.expenseSom)
-  const text = (m: MonthTotal) => `${longMonth(m.month ?? '')}: доход ${somText(m.incomeSom ?? 0)}, расход ${somText(m.expenseSom ?? 0)}, прибыль ${signed(m.profitSom ?? 0)}`
   return (
     <section className="card-block chart" aria-label="За 12 месяцев">
       <h2>За 12 месяцев</h2>
       {empty ? <p className="hint">За год ни доходов, ни расходов — график появится с первой оплатой или расходом.</p> : (
         <>
-          <div className="legend" aria-hidden="true"><span className="key fin-in" /> доход <span className="key fin-out" /> расход
-            <span className="key fin-up" /> прибыль <span className="key fin-down" /> убыток</div>
-          <div className="fin-bars" role="img" aria-label={history.map(text).join('; ')}>
-            {history.map((m, k) => (
-              <button key={m.month} type="button" className={m.month === month ? 'fin-month picked' : 'fin-month'} title={text(m)}
-                aria-label={longMonth(m.month ?? '')} onClick={() => onPick(m.month ?? month)}>
-                <span className="fin-pair">
-                  <span className="fin-in" style={{ height: `${((m.incomeSom ?? 0) / max) * 100}%` }} />
-                  <span className="fin-out" style={{ height: `${((m.expenseSom ?? 0) / max) * 100}%` }} />
-                </span>
-                <span className="fin-profit" aria-hidden="true">
-                  <span className={(m.profitSom ?? 0) < 0 ? 'fin-down' : 'fin-up'}
-                    style={{ height: `${(Math.abs(m.profitSom ?? 0) / maxProfit) * 50}%` }} />
-                </span>
-                {/* На телефоне подписи через одну: 12 месяцев в 360px иначе слипаются */}
-                <span className={(history.length - 1 - k) % 2 ? 'vbar-label fin-odd' : 'vbar-label'}>{shortMonth(m.month ?? '')}</span>
-              </button>
-            ))}
-          </div>
+          <MonthBars rows={history} picked={month} onPick={onPick} />
           {picked && (
             <p className="hint small">{longMonth(picked.month ?? '')}: доход <b className="num">{somText(picked.incomeSom ?? 0)}</b>,
               расход <b className="num">{somText(picked.expenseSom ?? 0)}</b>,
@@ -346,6 +433,39 @@ function HistoryBlock({ history, month, onPick }: { history: MonthTotal[]; month
           )}
         </>
       )}
+    </section>
+  )
+}
+
+/** Период больше месяца: график и таблица по месяцам (доход, расход, прибыль), внизу — итог. */
+function MonthsBlock({ months, onPick }: { months: MonthTotal[]; onPick: (m: string) => void }) {
+  const sum = (k: 'incomeSom' | 'expenseSom' | 'profitSom') => months.reduce((s, m) => s + (m[k] ?? 0), 0)
+  const empty = !months.some((m) => m.incomeSom || m.expenseSom)
+  return (
+    <section className="card-block chart" aria-label="По месяцам">
+      <h2>По месяцам</h2>
+      {empty ? <p className="hint">За период ни доходов, ни расходов.</p> : <MonthBars rows={months} onPick={onPick} />}
+      <div className="table-scroll">
+        <table className="table fin-months" aria-label="Итоги по месяцам">
+          <thead><tr><th>Месяц</th><th className="r">Доход</th><th className="r">Расход</th><th className="r">Прибыль</th></tr></thead>
+          <tbody>
+            {[...months].reverse().map((m) => (
+              <tr key={m.month}>
+                <td><button type="button" className="link" onClick={() => m.month && onPick(m.month)}>{longMonth(m.month ?? '')}</button></td>
+                <td className="r num nowrap">{somText(m.incomeSom ?? 0)}</td>
+                <td className="r num nowrap">{somText(m.expenseSom ?? 0)}</td>
+                <td className={`r num nowrap ${tone(m.profitSom ?? 0) ?? ''}`.trim()}>{signed(m.profitSom ?? 0)}</td>
+              </tr>
+            ))}
+            <tr className="strong">
+              <td>Итого</td>
+              <td className="r num nowrap">{somText(sum('incomeSom'))}</td>
+              <td className="r num nowrap">{somText(sum('expenseSom'))}</td>
+              <td className={`r num nowrap ${tone(sum('profitSom')) ?? ''}`.trim()}>{signed(sum('profitSom'))}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   )
 }

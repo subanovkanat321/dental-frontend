@@ -8379,9 +8379,30 @@
     "/api/platform/finance" : {
       "get" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "month",
+        "operationId" : "finance",
         "parameters" : [ {
+          "name" : "period",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "name" : "month",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "to",
           "in" : "query",
           "required" : false,
           "schema" : {
@@ -15916,6 +15937,15 @@
       },
       "PlatformFinanceFinance" : {
         "properties" : {
+          "period" : {
+            "type" : "string"
+          },
+          "from" : {
+            "type" : "string"
+          },
+          "to" : {
+            "type" : "string"
+          },
           "month" : {
             "type" : "string"
           },
@@ -15947,6 +15977,12 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/PlatformExpensesExpense"
+            }
+          },
+          "months" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformFinanceMonthTotal"
             }
           },
           "history" : {

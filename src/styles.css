@@ -549,7 +549,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 /* «Чистыми за месяц»: строки «название — сумма» столбиком, итог — чертой сверху */
 .net-lines { display: grid; gap: 4px; margin: 12px 0 8px; max-width: 560px; }
 .net-lines > div { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
-.net-lines dt { color: var(--text); }
+.net-lines dt { min-width: 0; overflow-wrap: anywhere; color: var(--text); }
 .net-lines dd { margin: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .net-lines .net-total { border-top: 1px solid var(--separator); padding-top: 6px; margin-top: 2px; font-weight: 600; }
 .net-month tr.strong td { font-weight: 600; border-top: 1px solid var(--separator); }
@@ -939,7 +939,7 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .donut-center b { font: 600 1.5rem var(--display); font-variant-numeric: tabular-nums; }
 .donut-center b.long { font-size: 1.05rem; }
 .donut-center span { margin-top: 2px; font-size: .8rem; color: var(--hint); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.donut-legend { flex: 1 1 240px; min-width: 0; max-width: 480px; list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.donut-legend { flex: 1 1 240px; min-width: 0; max-width: 480px; list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
 .donut-row { width: 100%; min-height: 36px; display: flex; align-items: center; gap: 8px; padding: 4px 6px; border: 0; border-radius: var(--r-sm);
   background: none; color: inherit; font: inherit; font-size: .9rem; text-align: left; cursor: pointer; }
 .donut-row:hover, .donut-row.on { background: var(--sunken); }
@@ -1490,7 +1490,9 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   padding: 6px 26px 6px 10px !important; background-color: transparent !important; background-position: right 8px center !important; color: var(--text); }
 .phone .ui-select:focus-visible, .phone .ui-select[aria-expanded=true] { outline: none; background-color: var(--sunken) !important; }
 .phone .ui-select-value .hint { display: none; }
-.ui-select-proxy { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+/* Скрытое поле значения для форм (Select, DateInput). Селектор с input — сильнее «.field input { width: 100% }»:
+   иначе у поля без позиционированного предка ширина 100% окна от левого края поля — и вся страница листается вбок */
+input.ui-select-proxy, .field input.ui-select-proxy { position: absolute; width: 1px; height: 1px; min-width: 0; margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; overflow: hidden; clip-path: inset(50%); }
 .ui-select-pop { position: fixed; z-index: 1000; display: flex; flex-direction: column; padding: 6px; border: 1px solid var(--separator); border-radius: 14px;
   background: var(--card); color: var(--text); box-shadow: 0 12px 32px rgba(15, 42, 48, .18); animation: pick-in .12s ease-out; }
 .ui-select-pop ul { margin: 0; padding: 0; list-style: none; overflow-y: auto; overscroll-behavior: contain; outline: none; }
@@ -1844,7 +1846,19 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .fin-lines { max-width: 720px; }
 .fin-lines dt .chip { margin-left: 8px; }
 .fin-entries { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
-.fin-entry { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--separator); }
+.fin-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--separator); }
+.fin-entry > div { min-width: 0; overflow-wrap: anywhere; } /* длинная ссылка в комментарии переносится, а не раздвигает страницу */
+.fin-toolbar { flex-wrap: wrap; gap: 10px 14px; }
+.fin-periods { min-width: 0; }
+.fin-periods button { padding-inline: 12px; white-space: nowrap; }
+.fin-range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mp-static { display: inline-flex; align-items: center; justify-content: center; cursor: default; }
+.mp-static:hover { background: none; color: var(--text); }
+.fin-scope { margin: 0; }
+.fin-scope::first-letter { text-transform: uppercase; }
+.fin-month .fin-skip { visibility: hidden; }
+.fin-months td .link { font-weight: 500; }
+.chart .table-scroll:has(.fin-months) { max-width: 760px; }
 .fin-entry .chip { margin-left: 8px; }
 .fin-form { margin: 10px 0; max-width: 560px; }
 .fin-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
@@ -1867,7 +1881,9 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .fin-down, .key.fin-down { background: var(--chart-bad); }
 .legend .key.fin-out, .legend .key.fin-up, .legend .key.fin-down { margin-left: 8px; }
 @media (max-width: 760px) {
-  .fin-entry { grid-template-columns: 1fr auto; }
+  .fin-entry { grid-template-columns: minmax(0, 1fr) auto; }
+  .fin-periods { width: 100%; }
+  .fin-periods button { flex: 1 1 auto; padding: 6px 4px; font-size: .88rem; white-space: normal; line-height: 1.15; }
   .fin-entry .btn { grid-column: 1 / -1; justify-self: start; }
   .fin-bars { height: 200px; }
   .fin-pair > span { max-width: 8px; }

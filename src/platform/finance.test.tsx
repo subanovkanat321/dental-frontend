@@ -84,8 +84,8 @@ test('владелец: «Финансы» — итог, авто-расходы
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
-  expect(await screen.findByLabelText('Доходы за месяц')).toHaveTextContent('10 470 сом')
-  expect(screen.getByLabelText('Расходы за месяц')).toHaveTextContent('3 055 сом')
+  expect(await screen.findByLabelText('Доход за месяц')).toHaveTextContent('10 470 сом')
+  expect(screen.getByLabelText('Расход за месяц')).toHaveTextContent('3 055 сом')
   expect(screen.getByLabelText('Прибыль за месяц')).toHaveTextContent('7 415 сом')
   expect(screen.getByLabelText('Прибыль за месяц')).toHaveClass('tone-ok')
 
@@ -193,6 +193,74 @@ test('ошибка сервера под полем: курс', async () => {
   await user.type(within(form).getByLabelText('Сумма, $'), '10')
   await user.click(within(form).getByRole('button', { name: 'Добавить' }))
   expect(await within(form).findByText('Курс — больше нуля, до двух знаков')).toBeInTheDocument()
+})
+
+test('период: квартал, год, всё время и свой — итоги, таблица по месяцам и запросы к серверу', async () => {
+  const queries: string[] = []
+  const months: Schemas['PlatformFinanceMonthTotal'][] = [
+    { month: '2026-01', incomeSom: 0, expenseSom: 1200, profitSom: -1200 },
+    { month: '2026-02', incomeSom: 2000, expenseSom: 1249, profitSom: 751 },
+    { month: '2026-03', incomeSom: 10470, expenseSom: 3047, profitSom: 7423 },
+  ]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/finance', ({ request }) => {
+      const q = new URL(request.url).searchParams
+      queries.push(q.toString())
+      const period = q.get('period')
+      if (!period) return HttpResponse.json(finance(current))
+      const body: Finance = { ...finance(current), period, from: '2026-01', to: '2026-03', month: q.get('month') ?? '2026-03',
+        incomeSom: 12470, expenseSom: 5496, profitSom: 6974, months }
+      return HttpResponse.json(body)
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await screen.findByLabelText('Доход за месяц')
+  // В режиме «Месяц» таблицы по месяцам нет, есть 12 месяцев
+  expect(screen.queryByRole('table', { name: 'Итоги по месяцам' })).not.toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'За 12 месяцев' })).toBeInTheDocument()
+
+  const periods = screen.getByRole('group', { name: 'Период' })
+  await user.click(within(periods).getByRole('button', { name: 'Квартал' }))
+  expect(await screen.findByLabelText('Доход за период')).toHaveTextContent('12 470 сом')
+  expect(screen.getByLabelText('Расход за период')).toHaveTextContent('5 496 сом')
+  expect(screen.getByLabelText('Прибыль за период')).toHaveTextContent('6 974 сом')
+  expect(screen.getByText(/^январь — март 2026/)).toBeInTheDocument()
+  expect(within(periods).getByRole('button', { name: 'Квартал' })).toHaveAttribute('aria-pressed', 'true')
+  const table = screen.getByRole('table', { name: 'Итоги по месяцам' })
+  expect(within(table).getByRole('row', { name: /январь 2026/ })).toHaveTextContent('−1 200 сом')
+  expect(within(table).getByRole('row', { name: /Итого/ })).toHaveTextContent('12 470 сом')
+  expect(screen.queryByRole('region', { name: 'За 12 месяцев' })).not.toBeInTheDocument()
+  expect(screen.getByRole('table', { name: 'Оплаты клиник за период' })).toBeInTheDocument()
+
+  // Предыдущий квартал — на 3 месяца назад от начала текущего
+  await user.click(screen.getByRole('button', { name: 'Предыдущий: квартал' }))
+  await user.click(within(periods).getByRole('button', { name: 'Год' }))
+  await user.click(within(periods).getByRole('button', { name: 'Всё время' }))
+  await user.click(within(periods).getByRole('button', { name: 'Свой период' }))
+  expect(await screen.findByRole('group', { name: 'Первый месяц' })).toBeInTheDocument()
+
+  // Нажатие на месяц в таблице — открыть этот месяц
+  await user.click(within(screen.getByRole('table', { name: 'Итоги по месяцам' })).getByRole('button', { name: 'март 2026' }))
+  expect(await screen.findByLabelText('Доход за месяц')).toBeInTheDocument()
+  expect(within(periods).getByRole('button', { name: 'Месяц' })).toHaveAttribute('aria-pressed', 'true')
+
+  const qs = (() => {
+    const [y, m] = current.split('-').map(Number)
+    const start = `${y}-${String(Math.floor((m! - 1) / 3) * 3 + 1).padStart(2, '0')}`
+    return { quarter: current, prev: shift(start, -3), from: shift(current, -2) }
+  })()
+  expect(queries).toEqual([
+    `month=${current}`,
+    `period=quarter&month=${qs.quarter}`,
+    `period=quarter&month=${qs.prev}`,
+    `period=year&month=${qs.prev}`,
+    'period=all',
+    `period=custom&from=${qs.from}&to=${current}`,
+    'month=2026-03',
+  ])
 })
 
 test('не владельцу вкладки «Финансы» нет', async () => {
