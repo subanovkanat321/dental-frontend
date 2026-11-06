@@ -324,6 +324,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/clinics/{id}/agreement/assignment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["assign"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/case": {
         parameters: {
             query?: never;
@@ -383,6 +399,22 @@ export interface paths {
         put: operations["update_7"];
         post?: never;
         delete: operations["delete_7"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/agreements/{id}/audience": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["audience"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1924,6 +1956,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/content/reels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addReels"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/content/import": {
         parameters: {
             query?: never;
@@ -2014,6 +2062,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["sendClinicScan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/clinics/{id}/agreement/remind": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["remind"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2142,6 +2206,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["sendVersionPdf"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/agreements/remind": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["remindAll"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3229,7 +3309,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["remind"];
+        post: operations["remind_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5547,6 +5627,8 @@ export interface components {
             caption?: string;
             images?: string[];
             note?: string;
+            /** Format: time-local */
+            time?: string;
         };
         ContentPostsPost: {
             /** Format: int64 */
@@ -5567,6 +5649,13 @@ export interface components {
             createdAt?: string;
             instagramMediaId?: string;
             instagramUrl?: string;
+            /** Format: time-local */
+            publishTime?: string;
+            video?: string;
+            cover?: string;
+            videoUrl?: string;
+            coverUrl?: string;
+            instagramPublishing?: boolean;
         };
         BillingControllerPaidUntil: {
             /** Format: date */
@@ -5624,6 +5713,91 @@ export interface components {
             settingUp?: boolean;
             demo?: boolean;
         };
+        AgreementControllerAssignment: {
+            /** Format: int64 */
+            versionId?: number;
+        };
+        AgreementsAcceptance: {
+            /** Format: int32 */
+            version?: number;
+            textSha256?: string;
+            clinicLegalName?: string;
+            clinicInn?: string;
+            clinicAddress?: string;
+            signerName?: string;
+            signerPosition?: string;
+            signerBasis?: string;
+            filledText?: string;
+            filledSha256?: string;
+            /** Format: date-time */
+            acceptedAt?: string;
+        };
+        AgreementsAdminChannels: {
+            /** Format: int32 */
+            telegram?: number;
+            /** Format: int32 */
+            phone?: number;
+            /** Format: int32 */
+            push?: number;
+        };
+        AgreementsChoice: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            version?: number;
+            title?: string;
+            /** Format: date-time */
+            publishedAt?: string;
+            forAll?: boolean;
+            signed?: boolean;
+        };
+        AgreementsClinicAgreement: {
+            current?: components["schemas"]["AgreementsVersion"];
+            accepted?: components["schemas"]["AgreementsAcceptance"];
+            last?: components["schemas"]["AgreementsAcceptance"];
+            legalName?: string;
+            address?: string;
+            platform?: {
+                [key: string]: string;
+            };
+            scans?: components["schemas"]["AgreementsScan"][];
+            targeting?: components["schemas"]["AgreementsTargeting"];
+        };
+        AgreementsScan: {
+            /** Format: int64 */
+            id?: number;
+            fileName?: string;
+            contentType?: string;
+            /** Format: int32 */
+            sizeBytes?: number;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        AgreementsTargeting: {
+            /** Format: int64 */
+            assignedVersionId?: number;
+            choices?: components["schemas"]["AgreementsChoice"][];
+            /** Format: date-time */
+            remindedAt?: string;
+            admins?: components["schemas"]["AgreementsAdminChannels"];
+        };
+        AgreementsVersion: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: int32 */
+            version?: number;
+            title?: string;
+            body?: string;
+            sha256?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            publishedAt?: string;
+            /** Format: int32 */
+            acceptances?: number;
+            forAll?: boolean;
+            clinicIds?: number[];
+        };
         JoinCaseMetric: {
             value?: string;
             label?: string;
@@ -5659,20 +5833,9 @@ export interface components {
             title?: string;
             body?: string;
         };
-        AgreementsVersion: {
-            /** Format: int64 */
-            id?: number;
-            /** Format: int32 */
-            version?: number;
-            title?: string;
-            body?: string;
-            sha256?: string;
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            publishedAt?: string;
-            /** Format: int32 */
-            acceptances?: number;
+        AgreementsAudience: {
+            all?: boolean;
+            clinicIds?: number[];
         };
         ChartControllerUpdate: {
             /** @enum {string} */
@@ -6550,6 +6713,17 @@ export interface components {
         DemoControllerGuest: {
             fullName?: string;
         };
+        ContentPostsReelsAdded: {
+            /** Format: int32 */
+            added?: number;
+            /** Format: int32 */
+            already?: number;
+            missing?: string[];
+            /** Format: date */
+            from?: string;
+            /** Format: time-local */
+            time?: string;
+        };
         ContentPostsImported: {
             /** Format: int32 */
             added?: number;
@@ -6608,6 +6782,18 @@ export interface components {
         PlatformControllerEnter: {
             reception?: boolean;
             emergency?: boolean;
+        };
+        AgreementRemindersReminded: {
+            /** Format: int32 */
+            clinics?: number;
+            /** Format: int32 */
+            skipped?: number;
+            /** Format: int32 */
+            telegram?: number;
+            /** Format: int32 */
+            push?: number;
+            /** Format: int32 */
+            bannerOnly?: number;
         };
         PlatformControllerBroadcastRequest: {
             text?: string;
@@ -6964,16 +7150,6 @@ export interface components {
             /** Format: int32 */
             sources?: number;
         };
-        AgreementsScan: {
-            /** Format: int64 */
-            id?: number;
-            fileName?: string;
-            contentType?: string;
-            /** Format: int32 */
-            sizeBytes?: number;
-            /** Format: date-time */
-            createdAt?: string;
-        };
         AgreementControllerAccept: {
             sha256?: string;
             clinicName?: string;
@@ -6983,32 +7159,6 @@ export interface components {
             signerPosition?: string;
             signerBasis?: string;
             confirm?: boolean;
-        };
-        AgreementsAcceptance: {
-            /** Format: int32 */
-            version?: number;
-            textSha256?: string;
-            clinicLegalName?: string;
-            clinicInn?: string;
-            clinicAddress?: string;
-            signerName?: string;
-            signerPosition?: string;
-            signerBasis?: string;
-            filledText?: string;
-            filledSha256?: string;
-            /** Format: date-time */
-            acceptedAt?: string;
-        };
-        AgreementsClinicAgreement: {
-            current?: components["schemas"]["AgreementsVersion"];
-            accepted?: components["schemas"]["AgreementsAcceptance"];
-            last?: components["schemas"]["AgreementsAcceptance"];
-            legalName?: string;
-            address?: string;
-            platform?: {
-                [key: string]: string;
-            };
-            scans?: components["schemas"]["AgreementsScan"][];
         };
         CareMemoControllerTranslateRequest: {
             title?: string;
@@ -7972,6 +8122,15 @@ export interface components {
             acceptedAt?: string;
             /** Format: int32 */
             scans?: number;
+            /** Format: int32 */
+            requiredVersion?: number;
+            assigned?: boolean;
+            signed?: boolean;
+            /** Format: date-time */
+            signedAt?: string;
+            /** Format: date-time */
+            remindedAt?: string;
+            admins?: components["schemas"]["AgreementsAdminChannels"];
         };
         VisitTeethView: {
             /** Format: int64 */
@@ -9337,6 +9496,32 @@ export interface operations {
             };
         };
     };
+    assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgreementControllerAssignment"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgreementsClinicAgreement"];
+                };
+            };
+        };
+    };
     set_2: {
         parameters: {
             query?: never;
@@ -9452,6 +9637,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    audience: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgreementsAudience"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgreementsVersion"];
+                };
             };
         };
     };
@@ -12604,6 +12815,26 @@ export interface operations {
             };
         };
     };
+    addReels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentPostsReelsAdded"];
+                };
+            };
+        };
+    };
     importPlan: {
         parameters: {
             query?: never;
@@ -12766,6 +12997,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    remind: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgreementRemindersReminded"];
+                };
             };
         };
     };
@@ -12954,7 +13207,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AgreementsAudience"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {
@@ -12984,6 +13241,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    remindAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgreementRemindersReminded"];
+                };
             };
         };
     };
@@ -15071,7 +15348,7 @@ export interface operations {
             };
         };
     };
-    remind: {
+    remind_1: {
         parameters: {
             query?: never;
             header?: never;
