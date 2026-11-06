@@ -7,6 +7,8 @@ import { useClose } from '../lib/useClose'
 import { shortDate, somText } from '../lib/time'
 import { isAssistant } from '../lib/roles'
 import { Select } from '../layout/Select'
+import { EmptyState } from '../layout/EmptyState'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -150,7 +152,7 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
               </li>
             ))}
           </ul>
-        ) : <p className="hint">{history.isPending ? 'Загрузка…' : 'Движений ещё не было'}</p>}
+        ) : history.isPending ? <Loading /> : <EmptyState compact title="Движений ещё не было" />}
       </section>
 
       {me.admin && (

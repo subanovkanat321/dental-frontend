@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
+import { Loading } from '../layout/Loading'
 
 /**
  * «Новости для пациентов»: видны всем пациентам в приложении; в бот приходят тем, кто подписался.
@@ -49,7 +50,7 @@ export function NewsTab() {
       <section className="card-block">
         <h2>Опубликованные</h2>
         {data.error && <p className="error">{data.error.message}</p>}
-        {data.isPending ? <p className="hint">Загрузка…</p> : data.data?.news?.length ? (
+        {data.isPending ? <Loading /> : data.data?.news?.length ? (
           <ul className="news-list">
             {data.data.news.map((n) => (
               <li key={n.id} className="news-item">
@@ -60,7 +61,7 @@ export function NewsTab() {
               </li>
             ))}
           </ul>
-        ) : <EmptyState compact icon="📰" title="Новостей пока нет." />}
+        ) : <EmptyState compact title="Новостей пока нет" />}
         {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
       </section>
     </>

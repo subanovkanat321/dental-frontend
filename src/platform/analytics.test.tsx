@@ -98,7 +98,7 @@ test('пусто: оплат за год не было — текст вмест
   renderApp()
   await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
   const money = await screen.findByRole('region', { name: 'Оплаты по месяцам' })
-  expect(money).toHaveTextContent('Оплат за год ещё не было.')
+  expect(money).toHaveTextContent('Оплат за год ещё не было')
   expect(within(money).queryByRole('img')).not.toBeInTheDocument()
   expect(screen.getByRole('list', { name: 'Шаги воронки' })).toHaveTextContent('Первый приём1')
   expect(screen.getByRole('list', { name: 'Шаги воронки' })).not.toHaveTextContent('—')

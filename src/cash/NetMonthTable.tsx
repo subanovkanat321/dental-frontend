@@ -4,6 +4,8 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { saveCsv } from '../lib/csv'
 import { somText } from '../lib/time'
 import { materialsWord, signedSom } from '../earnings/earnings'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Row = Schemas['NetMonthRow']
 
@@ -30,7 +32,7 @@ export function NetMonthTable({ month }: { month: string }) {
     queryKey: ['net-month', 'clinic', month],
     queryFn: () => unwrap(api.GET('/api/finance/net-month', { params: { query: { month } } })),
   })
-  if (q.isPending) return <section className="card-block"><h2>Итог месяца по врачам</h2><p className="hint">Загрузка…</p></section>
+  if (q.isPending) return <section className="card-block"><h2>Итог месяца по врачам</h2><Loading /></section>
   if (q.error) return <section className="card-block"><h2>Итог месяца по врачам</h2><p className="error">{q.error.message}</p></section>
   const d = q.data
   const rows = d.rows ?? []
@@ -58,7 +60,7 @@ export function NetMonthTable({ month }: { month: string }) {
         <h2>Итог месяца по врачам</h2>
         {rows.length > 0 && <button type="button" className="btn ghost small" onClick={csv}>CSV</button>}
       </div>
-      {rows.length === 0 ? <p className="hint">Врачей в этом месяце нет.</p> : (
+      {rows.length === 0 ? <EmptyState compact title="Врачей в этом месяце нет" /> : (
         <div className="table-scroll">
           <table className="table" aria-label="Итог месяца по врачам">
             <thead><tr>

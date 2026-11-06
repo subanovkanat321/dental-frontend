@@ -6,6 +6,7 @@ import { openLink, telegram } from '../lib/telegram'
 import { shortDate } from '../lib/time'
 import { SubHeader } from './SubHeader'
 import './calendar.css'
+import { Loading } from '../layout/Loading'
 
 type Feed = Schemas['CalendarFeedControllerFeedView']
 
@@ -40,7 +41,7 @@ export function CalendarFeed() {
     onSuccess: () => { setLink(null); client.setQueryData<Feed>(KEY, { enabled: false, showPatientNames: false }) },
   })
 
-  if (feed.isPending) return <p className="hint">Загрузка…</p>
+  if (feed.isPending) return <Loading />
   if (feed.error) return <p className="error">{feed.error.message}</p>
   const enabled = feed.data.enabled
   const error = rotate.error ?? off.error

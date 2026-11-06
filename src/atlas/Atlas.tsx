@@ -10,6 +10,7 @@ import { atlasLabels, infoText } from './labels'
 import { Schematic } from './Schematic'
 import { hasWebGL } from './webgl'
 import { telegram } from '../lib/telegram'
+import { Loading } from '../layout/Loading'
 import './atlas.css'
 
 export interface AtlasProps {
@@ -168,7 +169,8 @@ export function Atlas({ initialView, initialMode, initialTooth, lang: initialLan
                 </button>
               ))}
             </div>
-            {status === 'loading' && <div className="atlas-loading" role="status">{t.loading}</div>}
+            {/* Два этапа: сначала грузится движок (three.js — свой чанк), потом строится модель */}
+            {status === 'loading' && <Loading variant="overlay" tone="dark" text={engine ? t.loading : t.loadingEngine} />}
             {status === 'error' && <div className="atlas-loading error" role="alert">{error}</div>}
           </>
         )}

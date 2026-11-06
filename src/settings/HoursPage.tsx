@@ -8,6 +8,7 @@ import { HoursEditor } from '../team/HoursEditor'
 import { WEEK, type Weekday } from '../team/texts'
 import { clinicRequest } from './clinicUpdate'
 import { SubHeader } from './SubHeader'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Clinic = Schemas['ClinicView']
@@ -26,7 +27,7 @@ export function HoursPage({ me, onBack, title = 'Часы работы', tabs }:
       <SubHeader title={title} onBack={onBack}>{tabs}</SubHeader>
       <section className="card-block">
         <h2>Часы клиники</h2>
-        {clinic.isPending ? <p className="hint">Загрузка…</p> : clinic.error ? <p className="error">{clinic.error.message}</p>
+        {clinic.isPending ? <Loading /> : clinic.error ? <p className="error">{clinic.error.message}</p>
           : <ClinicHours clinic={clinic.data} canEdit={Boolean(me.admin || me.doctorId != null)} />}
       </section>
       <section className="card-block">

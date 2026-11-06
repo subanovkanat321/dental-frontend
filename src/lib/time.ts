@@ -51,6 +51,18 @@ export function dayTitle(date: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
+/**
+ * Пустой день для пустого состояния: «На сегодня записей нет», «На завтра…», «На 12 ноября…»;
+ * прошедший день — «Вчера записей не было», «3 ноября записей не было».
+ */
+export function emptyDayText(date: string, today = todayIn()): string {
+  if (date === today) return 'На сегодня записей нет'
+  if (date === addDays(today, 1)) return 'На завтра записей нет'
+  if (date === addDays(today, -1)) return 'Вчера записей не было'
+  const dayMonth = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', day: 'numeric', month: 'long' }).format(new Date(`${date}T00:00:00Z`))
+  return date < today ? `${dayMonth} записей не было` : `На ${dayMonth} записей нет`
+}
+
 /** 12500 → «12 500 сом». */
 export function somText(som: number): string {
   return `${new Intl.NumberFormat('ru-RU').format(som)} сом`

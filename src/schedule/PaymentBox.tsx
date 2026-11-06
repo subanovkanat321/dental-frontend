@@ -11,6 +11,7 @@ import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { useEarnings } from '../earnings/earnings'
 import { seesOwnEarnings } from '../lib/roles'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -47,7 +48,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   if (view === 'edit' || view === 'bill') {
     // «Изменить» оплату частями — подставить части; ждём историю, чтобы форма открылась уже заполненной
     const needParts = view === 'edit' && a.paidSom != null && a.chargeSom == null
-    if (needParts && history.isPending) return <div className="payment"><p className="hint">Загрузка…</p></div>
+    if (needParts && history.isPending) return <div className="payment"><Loading /></div>
     return (
       <div className="payment">
         <PayForm a={a} me={me} billOnly={view === 'bill'} parts={needParts ? history.data ?? [] : []}

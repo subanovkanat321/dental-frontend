@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 import { api, unwrap } from '../api/client'
 import { timeOf, timeStep } from '../lib/time'
+import { Loading } from '../layout/Loading'
 
 function endText(time: string, duration: number): string {
   const [h, m] = time.split(':').map(Number)
@@ -46,7 +47,7 @@ export function TimePicker({ date, doctorId, duration, exclude, value, onChange,
       <span>Время</span>
       {error && <p className="error" role="alert">{error}</p>}
       {!manual && (
-        slots.isPending ? <p className="hint">Загрузка…</p>
+        slots.isPending ? <Loading />
           : slots.error ? <p className="error">{slots.error.message}</p>
             : starts.length === 0 ? <p className="hint">{slots.data?.workingDay === false ? (slots.data.dayOff?.title ?? 'Выходной') : 'Свободного времени нет'}</p> : (
               <div className="slots" role="group" aria-label="Свободное время">

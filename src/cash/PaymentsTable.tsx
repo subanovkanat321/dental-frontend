@@ -6,6 +6,7 @@ import { addDays, shortDate, somText, todayIn, ZONE } from '../lib/time'
 import { useSort } from '../lib/useSort'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
+import { EmptyState } from '../layout/EmptyState'
 
 type Row = Schemas['AppointmentServiceReportRow']
 type Key = 'when' | 'patient' | 'doctor' | 'service' | 'status' | 'paid' | 'debt'
@@ -143,7 +144,7 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false,
             ))}
           </tbody>
         </table>
-      ) : <p className="hint">{rows.length ? 'По фильтрам ничего не нашлось.' : 'Приёмов за этот период нет.'}</p>}
+      ) : <EmptyState title={rows.length ? 'По фильтрам ничего не нашлось' : 'Приёмов за этот период нет'} />}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { SubHeader } from '../settings/SubHeader'
 import type { TopicSlug } from './catalog'
 import { TopicTiles } from './Tiles'
 import './learn.css'
+import { Loading } from '../layout/Loading'
 
 const LessonDialog = lazy(() => import('./LessonDialog'))
 
@@ -20,7 +21,7 @@ export function LearnPage({ onBack }: { onBack: () => void }) {
         и что делать после. Без цен — только общая информация. В карточке приёма — значок 📖 в шапке: тема подбирается по услуге.</p>
       <TopicTiles lang="ru" onOpen={(t) => setOpen(t.slug)} />
       {open && (
-        <Suspense fallback={<p className="hint" role="status">Загрузка…</p>}>
+        <Suspense fallback={<Loading />}>
           <LessonDialog topic={open} onClose={() => setOpen(null)} />
         </Suspense>
       )}

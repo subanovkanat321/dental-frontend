@@ -8,6 +8,7 @@ import { agoText, whatsappUrl } from '../lib/texts'
 import { addDays, shortDate, somText, todayIn } from '../lib/time'
 import { dueText, monthsText } from '../clinic/services'
 import './comeback.css'
+import { Loading, Spinner } from '../layout/Loading'
 
 type Candidate = Schemas['ComebacksCandidate']
 type Reason = NonNullable<Candidate['reason']>
@@ -58,7 +59,7 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
     placeholderData: keepPreviousData,
   })
 
-  if (board.isPending) return <p className="hint">Загрузка…</p>
+  if (board.isPending) return <Loading />
   if (board.error) return <p className="error">{board.error.message}</p>
   const shown = board.data.patients ?? []
   const everyone = (board.data.planPatients ?? 0) + (board.data.noShows ?? 0) + (board.data.recalls ?? 0)
@@ -100,8 +101,8 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
           <a href="#/settings/services">Настройки → Услуги и цены</a>.</p>
       )}
       {!everyone ? (
-        <EmptyState icon="🦷" title="Звать некого">Все с планом лечения записаны, неявок нет, осмотры — вовремя.</EmptyState>
-      ) : !shown.length ? <p className="hint">С этим отбором никого нет.</p> : (
+        <EmptyState title="Звать некого">Все с планом лечения записаны, неявок нет, осмотры — вовремя.</EmptyState>
+      ) : !shown.length ? <EmptyState title="По этому отбору никого" /> : (
         <ul className="comeback-list" aria-label="Кого вернуть">
           {shown.map((c) => (
             <li key={c.patientId}>
@@ -143,7 +144,7 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
       )}
       {shown.length < total && (
         <button type="button" className="btn" disabled={board.isFetching} onClick={() => setLimit(limit + PAGE)}>
-          {board.isFetching ? 'Загрузка…' : `Показать ещё (${Math.min(PAGE, total - shown.length)} из ${total - shown.length})`}</button>
+          {board.isFetching ? <><Spinner />Загрузка…</> : `Показать ещё (${Math.min(PAGE, total - shown.length)} из ${total - shown.length})`}</button>
       )}
     </div>
   )

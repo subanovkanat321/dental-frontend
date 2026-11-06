@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { AuditJournal } from './AuditJournal'
+import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -28,7 +29,7 @@ export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
             {exportAll.error && <p className="error" role="alert">{exportAll.error.message}</p>}
             {r && <p className="tone-ok" role="status">Архив в чате с ботом: пациентов {r.patients}, снимков {r.filesIncluded}{r.filesSkipped ? ` (не поместилось ${r.filesSkipped})` : ''}</p>}
             <button type="button" className="btn primary" disabled={exportAll.isPending} onClick={() => exportAll.mutate()}>
-              {exportAll.isPending ? 'Собираем архив…' : 'Прислать архив в бот'}</button>
+              {exportAll.isPending ? <><Spinner />Собираем архив…</> : 'Прислать архив в бот'}</button>
           </div>
         </section>
       )}

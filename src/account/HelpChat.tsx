@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate, timeOf } from '../lib/time'
 import { useClose } from '../lib/useClose'
+import { Spinner } from '../layout/Loading'
 
 type Thread = Schemas['SupportTicketsThread']
 
@@ -74,7 +75,7 @@ export function HelpChatPanel({ ticketId, onClose }: {
             <p>{m.text}</p>
           </div>
         ))}
-        {ask.isPending && <p className="hint">{info.data?.ai === false ? 'Отправляем…' : 'Помощник думает…'}</p>}
+        {ask.isPending && <p className="hint"><Spinner />{info.data?.ai === false ? 'Отправляем…' : 'Помощник думает…'}</p>}
         <div ref={end} />
       </div>
       {t?.escalated && !closed && (

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 
+import { AtlasBoot, Loading } from '../layout/Loading'
 import { Select } from '../layout/Select'
 import type { AtlasMode } from '../atlas/ids'
 import { topicForService, topicInfo, TOPICS, type TopicSlug } from './catalog'
@@ -33,12 +34,12 @@ export function LessonPicker({ serviceName, patientId, onClose }: { serviceName?
       <button type="button" className="btn" title="Интерактивный 3D-атлас: зуб в разрезе, челюсть, зуб мудрости" onClick={() => setAtlas(true)}>3D</button>
       <button type="button" className="btn ghost" aria-label="Закрыть выбор темы" onClick={onClose}>✕</button>
       {open && info && (
-        <Suspense fallback={<p className="hint" role="status">Загрузка…</p>}>
+        <Suspense fallback={<Loading variant="inline" />}>
           <LessonDialog topic={info.slug} patientId={patientId} onClose={() => setOpen(false)} />
         </Suspense>
       )}
       {atlas && (
-        <Suspense fallback={<p className="hint" role="status">Загрузка 3D…</p>}>
+        <Suspense fallback={<AtlasBoot />}>
           <AtlasPage route={{ mode: info ? ATLAS_MODE[info.slug] : undefined }} onClose={() => setAtlas(false)} />
         </Suspense>
       )}

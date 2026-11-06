@@ -10,6 +10,7 @@ import { ShotPicker, TicketPanel } from './TicketThread'
 import { ticketForm } from './tickets'
 import { TICKET_KINDS, TICKET_STATUS } from './texts'
 import { EmptyState } from '../layout/EmptyState'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Thread = Schemas['SupportTicketsThread']
@@ -69,7 +70,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
             </span>
           </div>
           {list.error && <p className="error">{list.error.message}</p>}
-          {list.isPending ? <p className="hint">Загрузка…</p> : list.data?.length ? (
+          {list.isPending ? <Loading /> : list.data?.length ? (
             <table className="table" aria-label="Ваши обращения">
               <thead><tr><th>Обращение</th><th>Статус</th><th>Обновлено</th></tr></thead>
               <tbody>
@@ -86,7 +87,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
                 })}
               </tbody>
             </table>
-          ) : <EmptyState compact icon="💬" title="Пока нет обращений." />}
+          ) : <EmptyState compact title="Пока нет обращений" />}
         </section>
         <section className="card-block">
           <h2>Поддержка клиники</h2>

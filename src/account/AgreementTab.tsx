@@ -6,6 +6,8 @@ import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { download } from '../lib/download'
 import { shortDate, todayIn } from '../lib/time'
 import { agreementBlocks, agreementValues, fillAgreement, type AgreementForm } from './texts'
+import { Loading, Spinner } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Agreement = Schemas['AgreementsClinicAgreement']
 type Acceptance = Schemas['AgreementsAcceptance']
@@ -31,7 +33,7 @@ function AgreementText({ body }: { body: string }) {
  */
 export function AgreementTab() {
   const a = useQuery({ queryKey: ['clinic-agreement'], queryFn: () => unwrap(api.GET('/api/clinic/agreement')) })
-  if (a.isPending) return <p className="hint">Загрузка…</p>
+  if (a.isPending) return <Loading />
   if (a.error) return <p className="error">{a.error.message}</p>
   return <AgreementView a={a.data} />
 }
@@ -200,10 +202,10 @@ function Scans({ scans }: { scans: Schemas['AgreementsScan'][] }) {
             ))}
           </tbody>
         </table>
-      ) : <p className="hint">Сканов пока нет.</p>}
+      ) : <EmptyState compact title="Сканов пока нет" />}
       {error && <p className="error" role="alert">{error.fieldErrors.file ?? error.message}</p>}
       {done && <p className="tone-ok" role="status">{done}</p>}
-      <label className="btn">{add.isPending ? 'Загружаем…' : 'Загрузить скан'}
+      <label className="btn">{add.isPending ? <><Spinner />Загружаем…</> : 'Загрузить скан'}
         <input type="file" className="sr-only" accept="application/pdf,image/jpeg,image/png" aria-label="Скан договора"
           onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; setDone(''); if (file) add.mutate(file) }} /></label>
     </section>

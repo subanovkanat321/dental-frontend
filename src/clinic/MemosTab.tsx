@@ -7,6 +7,7 @@ import { canEditServices } from '../lib/roles'
 import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { Select } from '../layout/Select'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Memo = Schemas['CareMemosCareMemoView']
@@ -42,7 +43,7 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
             {editable && <button type="button" className="btn primary" onClick={() => setOpened('new')}>＋ Своя памятка</button>}
           </div>
           {memos.error && <p className="error">{memos.error.message}</p>}
-          {memos.isPending ? <p className="hint">Загрузка…</p> : (
+          {memos.isPending ? <Loading /> : (
             <ul className="memo-list" aria-label="Памятки">
               {(memos.data ?? []).map((m) => (
                 <li key={m.id} className={m.active === false ? 'inactive' : undefined}>

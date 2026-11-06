@@ -103,8 +103,8 @@ test('владелец: «Финансы» — итог, авто-расходы
   expect(within(chart).getByRole('img').getAttribute('aria-label')).toMatch(/прибыль −1\s200\sсом/)
 
   await user.click(screen.getByRole('button', { name: 'Предыдущий месяц' }))
-  expect(await screen.findByText('В этом месяце оплат от клиник не было.')).toBeInTheDocument()
-  expect(screen.getByText('В этом месяце ручных расходов нет.')).toBeInTheDocument()
+  expect(await screen.findByText('В этом месяце оплат от клиник не было')).toBeInTheDocument()
+  expect(screen.getByText('В этом месяце ручных расходов нет')).toBeInTheDocument()
   expect(screen.getByText(/За год ни доходов, ни расходов/)).toBeInTheDocument()
   expect(months).toEqual([current, shift(current, -1)])
 })

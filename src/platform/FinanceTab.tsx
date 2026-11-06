@@ -8,6 +8,7 @@ import { shortDate, somText, todayIn } from '../lib/time'
 import { DateInput } from '../layout/DateInput'
 import { EmptyState } from '../layout/EmptyState'
 import { MonthPicker } from '../layout/MonthPicker'
+import { Loading } from '../layout/Loading'
 
 type Finance = Schemas['PlatformFinanceFinance']
 type Line = Schemas['PlatformFinanceLine']
@@ -48,7 +49,7 @@ export function FinanceTab() {
           <MonthPicker label="Месяц финансов" value={month} max={current} onChange={setMonth} />
         </div>
         {query.error && <p className="error" role="alert">{query.error.message}</p>}
-        {query.isPending ? <p className="hint">Загрузка…</p> : f && (
+        {query.isPending ? <Loading /> : f && (
           <div className="survey-tiles fin-tiles">
             <div className="survey-tile"><span className="hint">Доходы</span><b className="num" aria-label="Доходы за месяц">{somText(f.incomeSom ?? 0)}</b></div>
             <div className="survey-tile"><span className="hint">Расходы</span><b className="num" aria-label="Расходы за месяц">{somText(f.expenseSom ?? 0)}</b></div>
@@ -109,7 +110,7 @@ function ExpensesBlock({ f }: { f: Finance }) {
       )}
       <h3>Записи вручную</h3>
       {entries.length === 0 ? (
-        <EmptyState compact icon="🧾" title="В этом месяце ручных расходов нет.">
+        <EmptyState compact title="В этом месяце ручных расходов нет">
           Claude, реклама, сервер и домен, пополнение SMS-провайдера — «Добавить расход». Подписку отметьте «каждый месяц»: она сама попадёт в следующие месяцы.
         </EmptyState>
       ) : (
@@ -281,7 +282,7 @@ function IncomeBlock({ f }: { f: Finance }) {
       <h2>Доходы по клиникам</h2>
       <p className="hint small">Оплаты подписки, отмеченные в «Клиники» → клиника → «Оплата», — по дню оплаты. Считается само.</p>
       {rows.length === 0 ? (
-        <EmptyState compact icon="💳" title="В этом месяце оплат от клиник не было." />
+        <EmptyState compact title="В этом месяце оплат от клиник не было" />
       ) : (
         <div className="table-scroll">
           <table className="table" aria-label="Оплаты клиник за месяц">

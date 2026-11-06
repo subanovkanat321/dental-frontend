@@ -12,6 +12,7 @@ import { isAssistant, seesAllMoney } from '../lib/roles'
 import { InstallApp } from '../pwa/InstallApp'
 import { Notifications } from '../pwa/Notifications'
 import { PasswordSection } from './PasswordSection'
+import { Loading } from '../layout/Loading'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
 // код «Договора» или «Услуг» скачивается, только когда пункт открыли
@@ -156,7 +157,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
   if (found) {
     return (
       <div key={found.key} className="settings-item">
-        <Suspense fallback={<p className="hint">Загрузка…</p>}>{found.render(me, back, { ticketId: initialTicket })}</Suspense>
+        <Suspense fallback={<Loading />}>{found.render(me, back, { ticketId: initialTicket })}</Suspense>
       </div>
     )
   }

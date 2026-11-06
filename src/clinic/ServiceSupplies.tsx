@@ -5,6 +5,8 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { useUnsaved } from '../lib/unsaved'
 import { Select } from '../layout/Select'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Item = Schemas['ServiceSuppliesItem']
 type Row = { supplyId: number; name: string; unit: string; quantity: string; owner?: string | null }
@@ -56,7 +58,7 @@ export function ServiceSupplies({ serviceId }: { serviceId: number }) {
       <h3>Материалы по умолчанию</h3>
       <p className="hint">Что обычно уходит на приёме. Врач увидит этот список в карточке приёма и спишет его со склада одной кнопкой — сам, после проверки.</p>
       {saved.error && <p className="error">{saved.error.message}</p>}
-      {saved.isPending ? <p className="hint">Загрузка…</p> : rows.length > 0 ? (
+      {saved.isPending ? <Loading /> : rows.length > 0 ? (
         <ul className="supply-rows">
           {rows.map((r, i) => (
             <li key={r.supplyId}>
@@ -71,7 +73,7 @@ export function ServiceSupplies({ serviceId }: { serviceId: number }) {
             </li>
           ))}
         </ul>
-      ) : <p className="hint">Пока ничего — добавьте со склада.</p>}
+      ) : <EmptyState compact title="Материалов пока нет">Добавьте со склада — они спишутся после приёма.</EmptyState>}
       {stock.data && (free.length ? (
         <div className="row add-supply">
           <Select aria-label="Добавить материал" value={pick} onChange={(e) => setPick(e.target.value === '' ? '' : Number(e.target.value))}>

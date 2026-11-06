@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
 import { haptic } from '../lib/telegram'
 import { TOOTH_STATES, hasSurfaces, surfacesText, type Surface, type ToothState } from '../medical/toothStates'
+import { Spinner } from '../layout/Loading'
 
 type Appointment = Schemas['AppointmentView']
 type Proposal = Schemas['VisitDictationProposal']
@@ -223,7 +224,7 @@ export function Dictation({ appointment: a, note, onActive }: {
           readOnly={listening} placeholder="Вставьте или напишите текст" onChange={(e) => setText(e.target.value)} />
         <div className="actions">
           <button type="button" className="btn primary" disabled={!text.trim() || parse.isPending} onClick={toParse}>
-            {parse.isPending ? 'Разбираем…' : 'Разобрать'}</button>
+            {parse.isPending ? <><Spinner />Разбираем…</> : 'Разобрать'}</button>
           {canSpeak && (listening
             ? <button type="button" className="btn" onClick={stop}>Пауза</button>
             : <button type="button" className="btn" onClick={listen}>🎤 Продолжить</button>)}
@@ -287,7 +288,7 @@ export function Dictation({ appointment: a, note, onActive }: {
       {r.next && <p className="hint small">Следующий визит: {r.next} — запишите пациента, если нужно (сам не записывается).</p>}
       <div className="actions">
         <button type="button" className="btn primary" disabled={apply.isPending} onClick={() => apply.mutate()}>
-          {apply.isPending ? 'Сохраняем…' : 'Сохранить'}</button>
+          {apply.isPending ? <><Spinner />Сохраняем…</> : 'Сохранить'}</button>
         <button type="button" className="btn ghost" onClick={cancel}>Отмена</button>
       </div>
       {apply.error && <p className="error" role="alert">{errorText(apply.error)}</p>}

@@ -16,6 +16,7 @@ import { telegram } from './lib/telegram'
 import { launchedAsApp } from './pwa/pwa'
 import { UpdateToast } from './pwa/UpdateToast'
 import { closeAtlas, useAtlasRoute } from './atlas/route'
+import { AtlasBoot, Loading } from './layout/Loading'
 
 // Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
 const CashPage = lazy(() => import('./cash/CashPage').then((m) => ({ default: m.CashPage })))
@@ -74,9 +75,9 @@ function Screens() {
   // tish.kg/app — «Скачать Tish»: без входа, до проверки сессии
   if (isDownloadPath()) return <DownloadPage />
   // 3D-атлас (#/atlas, /atlas) — без входа: на экране нет данных пациентов, его можно открыть на ТВ
-  if (atlas) return <ErrorBoundary><Suspense fallback={<div className="center hint">Загрузка…</div>}><AtlasPage route={atlas} onClose={closeAtlas} /></Suspense></ErrorBoundary>
+  if (atlas) return <ErrorBoundary><Suspense fallback={<AtlasBoot />}><AtlasPage route={atlas} onClose={closeAtlas} /></Suspense></ErrorBoundary>
   if (me.isPending) {
-    return <div className="center hint">Загрузка…</div>
+    return <Loading className="screen" />
   }
   if (me.error) {
     if (me.error instanceof ApiError && me.error.status === 401) {
@@ -88,14 +89,14 @@ function Screens() {
       // Запуск с иконки приложения (PWA) — это сотрудник: сразу вход, а не каталог для пациентов
       if (!isLoginPath() && !launchedAsApp()) {
         window.location.replace('/clinics')
-        return <div className="center hint">Загрузка…</div>
+        return <Loading className="screen" />
       }
       return <><Login /><UpdateToast /></>
     }
     return <div className="center error">Нет связи с сервером: {me.error.message}</div>
   }
   if (!me.data.doctor && !me.data.platform && telegram()) {
-    return <ErrorBoundary><Suspense fallback={<div className="center hint">Загрузка…</div>}><PatientApp me={me.data} /></Suspense></ErrorBoundary>
+    return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><PatientApp me={me.data} /></Suspense></ErrorBoundary>
   }
   if (!me.data.doctor && !me.data.platform) {
     return (
@@ -131,7 +132,7 @@ function Screens() {
         {(p) => (
           // Предохранитель на раздел: упал один экран — остальное работает
           <ErrorBoundary key={`${p}:${keys[p] ?? 0}`}>
-            <Suspense fallback={<p className="hint">Загрузка…</p>}>{section(p)}</Suspense>
+            <Suspense fallback={<Loading />}>{section(p)}</Suspense>
           </ErrorBoundary>
         )}
       </Sections>
@@ -202,6 +203,6 @@ function LinkedSchedule({ link, me, onNavigate, onOpenPatient }: {
     enabled: link.bookPatientId != null,
     retry: false,
   })
-  if (appointment.isLoading || patient.isLoading) return <p className="hint">Загрузка…</p>
+  if (appointment.isLoading || patient.isLoading) return <Loading />
   return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null} onNavigate={onNavigate} onOpenPatient={onOpenPatient} />
 }

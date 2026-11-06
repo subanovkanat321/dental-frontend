@@ -12,6 +12,7 @@ import { useMove, type Move } from './useMove'
 import { useWeekAppointments, useWeekSlots } from './useWeek'
 import { canDrag, dayLabel, durationOf, SNAP, weekDays, weekHours } from './weekModel'
 import './week.css'
+import { Loading } from '../../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -173,7 +174,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
         })}
       </div>
       <CancelledList items={(week.data ?? []).filter((a) => a.status === 'CANCELLED')} onOpen={onOpen} selectedId={selectedId} withDate />
-      {week.isPending && <p className="hint">Загрузка недели…</p>}
+      {week.isPending && <Loading text="Загрузка недели…" />}
     </div>
   )
 }

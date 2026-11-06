@@ -6,6 +6,7 @@ import { notify } from '../lib/confirm'
 import { passwordProblem } from '../lib/password'
 import { shortDate } from '../lib/time'
 import { NewPasswordFields, PasswordInput, ShowPassword } from '../layout/PasswordFields'
+import { Spinner } from '../layout/Loading'
 
 type Mode = 'current' | 'sms'
 
@@ -95,7 +96,7 @@ export function PasswordSection() {
                 <p className="hint">{s.sms ? 'Пришлём код на ваш номер — им подтвердите смену пароля.'
                   : 'Вход по SMS пока не подключён. Попросите администратора клиники задать временный пароль.'}</p>
                 {s.sms && <button type="button" className="btn" disabled={sendCode.isPending} onClick={() => sendCode.mutate()}>
-                  {sendCode.isPending ? 'Отправляем…' : 'Получить код'}</button>}
+                  {sendCode.isPending ? <><Spinner />Отправляем…</> : 'Получить код'}</button>}
                 {canCurrent && <button type="button" className="link" onClick={() => { setMode('current'); setError('') }}>Помню текущий пароль</button>}
               </>
             ) : (
@@ -112,7 +113,7 @@ export function PasswordSection() {
             <div className="actions">
               {(mode === 'current' || sent) && (
                 <button type="submit" className="btn primary" disabled={save.isPending || (mode === 'current' ? !current : code.length !== 6)}>
-                  {save.isPending ? 'Сохраняем…' : 'Сохранить пароль'}</button>
+                  {save.isPending ? <><Spinner />Сохраняем…</> : 'Сохранить пароль'}</button>
               )}
               <button type="button" className="btn ghost" onClick={close}>Отмена</button>
             </div>

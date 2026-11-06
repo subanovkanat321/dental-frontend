@@ -10,6 +10,7 @@ import { billingLine, PAY_PERIOD_TEXT } from '../account/texts'
 import { formatPhone, shortDate, somText, timeOf } from '../lib/time'
 import { ClinicPanel } from './ClinicPanel'
 import { byHealth, CLINIC_HEALTH, noShowShare } from './health'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -89,7 +90,7 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
           <p className="hint">{owner ? 'Все клиники приложения. Нажмите на клинику: оплата, договор, пригласить её админа или войти в неё самому.'
             : 'Все клиники приложения — только цифры, без пациентов. Нажмите на клинику, чтобы пригласить её админа.'}</p>
           {list.error && <p className="error">{list.error.message}</p>}
-          {list.isPending ? <p className="hint">Загрузка…</p> : (
+          {list.isPending ? <Loading /> : (
             <>
               <p className="stats">
                 <span className="chip small s-quiet">Клиник: <b className="num">{shown.length}</b></span>

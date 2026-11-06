@@ -112,7 +112,7 @@ test('расходы: пустой месяц — без диаграммы', as
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
-  expect(await screen.findByText(/расходов нет/)).toBeInTheDocument()
+  expect(await screen.findByText(/^Расходов за .+ нет$/)).toBeInTheDocument()
   expect(screen.queryByRole('list', { name: 'Расходы по статьям' })).not.toBeInTheDocument()
 })
 

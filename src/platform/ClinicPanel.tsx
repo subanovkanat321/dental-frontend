@@ -12,6 +12,8 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { InviteLink } from '../team/InviteLink'
 import { extendPaid } from './health'
 import { DateInput } from '../layout/DateInput'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -77,7 +79,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
 /** Оплата (владелец): отметить оплату — срок продлевает сервер; история; поправить срок; бесплатно. */
 function BillingBox({ id }: { id: number }) {
   const plan = useQuery({ queryKey: ['platform-plan', id], queryFn: () => unwrap(api.GET('/api/platform/clinics/{id}/plan', { params: { path: { id } } })) })
-  if (plan.isPending) return <section className="form"><h3>Оплата</h3><p className="hint">Загрузка…</p></section>
+  if (plan.isPending) return <section className="form"><h3>Оплата</h3><Loading /></section>
   if (plan.error) return <section className="form"><h3>Оплата</h3><p className="error">{plan.error.message}</p></section>
   return <BillingForm id={id} plan={plan.data} />
 }
@@ -180,7 +182,7 @@ function AgreementBox({ id, owner }: { id: number; owner: boolean }) {
   return (
     <section className="form">
       <h3>Договор</h3>
-      {a.isPending && <p className="hint">Загрузка…</p>}
+      {a.isPending && <Loading />}
       {a.error && <p className="error">{a.error.message}</p>}
       {d && (
         <>
@@ -194,7 +196,7 @@ function AgreementBox({ id, owner }: { id: number; owner: boolean }) {
             <ul className="visits">{d.scans.map((x) => (
               <li key={x.id}>{x.fileName} <button type="button" className="btn small ghost" disabled={scan.isPending} onClick={() => scan.mutate(x.id!)}>В бот</button></li>
             ))}</ul>
-          ) : <p className="hint">Сканов нет</p>) : <p className="hint">Сканов: {d.scans?.length ?? 0}</p>}
+          ) : <EmptyState compact title="Сканов нет" />) : <p className="hint">Сканов: {d.scans?.length ?? 0}</p>}
           {(pdf.error ?? scan.error) && <p className="error">{(pdf.error ?? scan.error)!.message}</p>}
           {done && <p className="tone-ok" role="status">{done}</p>}
         </>

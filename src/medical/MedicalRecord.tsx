@@ -19,6 +19,7 @@ import { MultiToothPanel } from './MultiTeeth'
 import { ToothFullscreen } from './ToothFullscreen'
 import './toothChart.css'
 import { Select } from '../layout/Select'
+import { EmptyState } from '../layout/EmptyState'
 
 type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
@@ -360,7 +361,7 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
       )}
       {/* Печать и отправка — и ассистенту (без цен): он отдаёт план пациенту */}
       <PlanDocs patient={patient} steps={steps} />
-      {plan.isSuccess && steps.length === 0 && <p className="hint">{readOnly ? 'Плана пока нет.' : 'Плана пока нет — добавьте первый этап.'}</p>}
+      {plan.isSuccess && steps.length === 0 && <EmptyState compact title="Плана лечения пока нет">{readOnly ? null : 'Добавьте первый этап ниже.'}</EmptyState>}
       {!readOnly && <form className="plan-add" aria-label="Новый этап" onSubmit={submit} data-advance
         onChange={() => { setMissing(false); if (add.isSuccess) add.reset() }}>
         {priced.length > 0 && (

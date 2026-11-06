@@ -5,6 +5,7 @@ import { useClinicFilter, withCity } from '../lib/clinicSearch'
 import { InAppHint, LangSwitch } from './ClinicSite'
 import { SiteHeader } from './SiteHeader'
 import { getJson, inAppBrowser, initials, tgLink, useSiteLang, type DirectoryClinic } from './web'
+import { Loading } from '../layout/Loading'
 
 const TEXTS = {
   ru: {
@@ -50,7 +51,7 @@ export function Directory() {
         <div><h1>{t.title}</h1><p>{t.tagline}</p></div>
       </div>
       <InAppHint text={t.inAppTop} link="" />
-      {clinics === 'error' ? <p className="site-message">{t.error}</p> : clinics === null ? <p className="site-message hint">{t.loading}</p> : (
+      {clinics === 'error' ? <p className="site-message">{t.error}</p> : clinics === null ? <Loading className="site-message" text={t.loading} /> : (
         <>
           <ClinicFilters filter={filter} texts={t} lang={lang} />
           {clinics.length === 0 ? <p className="site-message">{t.empty}</p> : found.length === 0 ? (

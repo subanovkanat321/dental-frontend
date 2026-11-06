@@ -4,7 +4,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import { api, unwrap, type Schemas } from '../api/client'
 import { SetupChecklist } from '../clinic/SetupChecklist'
 import { openSettings, type Page } from '../lib/route'
-import { addDays, dayTitle, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
+import { addDays, dayTitle, emptyDayText, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
+import { EmptyState } from '../layout/EmptyState'
+import { Loading } from '../layout/Loading'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
 import { ApptBadges, BadgesLegend } from './ApptBadges'
@@ -452,102 +454,113 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             onNew={(day, minutes) => setSide({ kind: 'new', slot: { doctorId: weekDoctor, date: day, minutes } })}
             onOpenDay={(day) => { setDate(day); setMode('day') }} />
         ) : doctors.length === 0 ? (
-          <p className="hint">В клинике пока нет врачей — <button type="button" className="link" onClick={() => openSettings('doctors')}>добавьте их в «Настройки → Персонал»</button>.</p>
+          <EmptyState title="В клинике пока нет врачей" action={<button type="button" className="btn primary" onClick={() => openSettings('doctors')}>Добавить врача</button>}>
+            Добавьте врачей в «Настройки → Персонал» — появится расписание.
+          </EmptyState>
         ) : (
-          <div ref={grid} className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
-            <div className="grid-corner" />
-            {shown.map((d) => {
-              // Свой цвет врача — полоса над колонкой и слева на карточках; часы работы — под именем
-              const color = AVATARS[doctors.indexOf(d) % AVATARS.length]
-              const sl = slots[doctors.indexOf(d)]?.data
-              const hoursText = !sl ? '' : sl.workingDay && sl.workStart && sl.workEnd
-                ? `${sl.workStart.slice(0, 5)}–${sl.workEnd.slice(0, 5)}` : 'выходной'
-              return (
-                <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}
-                  style={{ '--doc': color } as CSSProperties} onClick={() => setView(d.id!)}>
-                  <span className="avatar" style={{ background: color }} aria-hidden="true">{initials(d.fullName)}</span>
-                  <span className="grid-head-text">
-                    <span className="grid-head-name">{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</span>
-                    {hoursText && <span className="grid-head-hours num">{hoursText}</span>}
-                  </span>
-                </button>
-              )
-            })}
-            <div className="grid-times" style={{ height }}>
-              {/* Час рядом с меткой «сейчас» прячем — иначе «11:00» и «11:10» наезжают друг на друга */}
-              {hours.filter((m) => nowTop == null || Math.abs(m - nowMinutes) > 15).map((m) => (
-                <span key={m} className="num" style={{ top: PAD + (m - from) * PX }}>{String(Math.floor(m / 60)).padStart(2, '0')}:00</span>
-              ))}
-              {nowTop != null && <span className="now-label num" style={{ top: nowTop }}>{timeOf(new Date().toISOString())}</span>}
+          <div className="grid-wrap">
+            <div ref={grid} className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
+              <div className="grid-corner" />
+              {shown.map((d) => {
+                // Свой цвет врача — полоса над колонкой и слева на карточках; часы работы — под именем
+                const color = AVATARS[doctors.indexOf(d) % AVATARS.length]
+                const sl = slots[doctors.indexOf(d)]?.data
+                const hoursText = !sl ? '' : sl.workingDay && sl.workStart && sl.workEnd
+                  ? `${sl.workStart.slice(0, 5)}–${sl.workEnd.slice(0, 5)}` : 'выходной'
+                return (
+                  <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}
+                    style={{ '--doc': color } as CSSProperties} onClick={() => setView(d.id!)}>
+                    <span className="avatar" style={{ background: color }} aria-hidden="true">{initials(d.fullName)}</span>
+                    <span className="grid-head-text">
+                      <span className="grid-head-name">{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</span>
+                      {hoursText && <span className="grid-head-hours num">{hoursText}</span>}
+                    </span>
+                  </button>
+                )
+              })}
+              <div className="grid-times" style={{ height }}>
+                {/* Час рядом с меткой «сейчас» прячем — иначе «11:00» и «11:10» наезжают друг на друга */}
+                {hours.filter((m) => nowTop == null || Math.abs(m - nowMinutes) > 15).map((m) => (
+                  <span key={m} className="num" style={{ top: PAD + (m - from) * PX }}>{String(Math.floor(m / 60)).padStart(2, '0')}:00</span>
+                ))}
+                {nowTop != null && <span className="now-label num" style={{ top: nowTop }}>{timeOf(new Date().toISOString())}</span>}
+              </div>
+              {shown.map((d) => {
+                const q = days[doctors.indexOf(d)]
+                const sl = slots[doctors.indexOf(d)]?.data
+                const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
+                const workFrom = sl?.workStart ? minutesOfTime(sl.workStart.slice(0, 5)) : null
+                const workTo = sl?.workEnd ? minutesOfTime(sl.workEnd.slice(0, 5)) : null
+                return (
+                  <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
+                    title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id!)}>
+                    {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
+                    {nowTop != null && <div className="grid-past" style={{ height: nowTop }} />}
+                    {sl && !sl.workingDay && (
+                      <div className="grid-off" style={{ top: 0, height }}><span>{sl.dayOff ? `${sl.dayOff.emoji ?? ''} ${sl.dayOff.title ?? ''}` : 'Выходной'}</span></div>
+                    )}
+                    {sl?.workingDay && workFrom != null && workFrom > from && <div className="grid-off" style={{ top: 0, height: y(workFrom) }} />}
+                    {sl?.workingDay && workTo != null && workTo < to && <div className="grid-off" style={{ top: y(workTo), height: height - y(workTo) }} />}
+                    {(sl?.breaks ?? []).map((b) => (
+                      <div key={b.start} className="grid-break" style={{ top: y(minutesOf(b.start!)), height: Math.max(y(minutesOf(b.end!)) - y(minutesOf(b.start!)), 14) }}
+                        title={`${timeOf(b.start!)}–${timeOf(b.end!)} ${b.title ?? ''}`}>
+                        <span>{b.emoji} {b.title}</span>
+                      </div>
+                    ))}
+                    {sl?.workingDay && (sl.free ?? []).map((w) => {
+                      // Свободное окно — светлый блок «Свободно 13:00–18:00 · ＋ записать»; сегодня — только то, что впереди
+                      const start = Math.max(minutesOf(w.start!), nowOrNull ?? 0, from)
+                      const end = Math.min(minutesOf(w.end!) || 24 * 60, to)
+                      if (end - start < 15) return null
+                      const text = `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}–${timeOf(w.end!)}`
+                      const h = (end - start) * PX - 4
+                      const style = { top: PAD + (start - from) * PX + 2, height: h }
+                      if (!canEditDoctor(me, d.id)) return <div key={w.start} className="grid-free readonly" style={style}><span className="num">{text}</span> свободно</div>
+                      return (
+                        <button key={w.start} type="button" className={`grid-free${h < 52 ? ' short' : ''}`} style={style}
+                          aria-label={`Свободно с ${text.replace('–', ' до ')}, записать`} onClick={() => bookAt(d.id!, Math.ceil(start / 5) * 5)}>
+                          <span className="grid-free-text">Свободно <span className="num">{text}</span></span>
+                          <span className="grid-free-add">＋ записать</span>
+                        </button>
+                      )
+                    })}
+                    {nowTop != null && <div className="grid-now" style={{ top: nowTop }} />}
+                    {q?.isPending && <Loading variant="inline" className="grid-loading" />}
+                    {q?.error && <div className="error grid-loading">{q.error.message}</div>}
+                    {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => {
+                      const s = statusOf(a)
+                      const top = PAD + (minutesOf(a.startAt!) - from) * PX
+                      const h = Math.max((minutesOf(a.endAt!) - minutesOf(a.startAt!)) * PX - 2, 22)
+                      const short = h < SHORT
+                      return (
+                        <button key={a.id} type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${selected?.id === a.id ? ' active' : ''}`}
+                          style={{ top, height: h, '--doc': AVATARS[doctors.indexOf(d) % AVATARS.length] } as CSSProperties}
+                          onClick={() => setSide({ kind: 'appointment', id: a.id! })}
+                          aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
+                          <span className="appt-time num">{short ? timeOf(a.startAt!) : `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`}</span>
+                          <span className="appt-name">{a.patient?.fullName}</span>
+                          <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} />
+                          {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
+                          {(short || h > 56) && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
+                          {h > 66 && a.serviceName && <span className="appt-note">{a.serviceName}</span>}
+                          {h > 88 && a.comment && <span className="appt-note">{a.comment}</span>}
+                          {h > 80 && a.depositStatus && seesMoneyOf(me, a.doctorId) && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
+                            <span className="appt-note">Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              })}
             </div>
-            {shown.map((d) => {
-              const q = days[doctors.indexOf(d)]
-              const sl = slots[doctors.indexOf(d)]?.data
-              const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
-              const workFrom = sl?.workStart ? minutesOfTime(sl.workStart.slice(0, 5)) : null
-              const workTo = sl?.workEnd ? minutesOfTime(sl.workEnd.slice(0, 5)) : null
-              return (
-                <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
-                  title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id!)}>
-                  {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
-                  {nowTop != null && <div className="grid-past" style={{ height: nowTop }} />}
-                  {sl && !sl.workingDay && (
-                    <div className="grid-off" style={{ top: 0, height }}><span>{sl.dayOff ? `${sl.dayOff.emoji ?? ''} ${sl.dayOff.title ?? ''}` : 'Выходной'}</span></div>
-                  )}
-                  {sl?.workingDay && workFrom != null && workFrom > from && <div className="grid-off" style={{ top: 0, height: y(workFrom) }} />}
-                  {sl?.workingDay && workTo != null && workTo < to && <div className="grid-off" style={{ top: y(workTo), height: height - y(workTo) }} />}
-                  {(sl?.breaks ?? []).map((b) => (
-                    <div key={b.start} className="grid-break" style={{ top: y(minutesOf(b.start!)), height: Math.max(y(minutesOf(b.end!)) - y(minutesOf(b.start!)), 14) }}
-                      title={`${timeOf(b.start!)}–${timeOf(b.end!)} ${b.title ?? ''}`}>
-                      <span>{b.emoji} {b.title}</span>
-                    </div>
-                  ))}
-                  {sl?.workingDay && (sl.free ?? []).map((w) => {
-                    // Свободное окно — светлый блок «Свободно 13:00–18:00 · ＋ записать»; сегодня — только то, что впереди
-                    const start = Math.max(minutesOf(w.start!), nowOrNull ?? 0, from)
-                    const end = Math.min(minutesOf(w.end!) || 24 * 60, to)
-                    if (end - start < 15) return null
-                    const text = `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}–${timeOf(w.end!)}`
-                    const h = (end - start) * PX - 4
-                    const style = { top: PAD + (start - from) * PX + 2, height: h }
-                    if (!canEditDoctor(me, d.id)) return <div key={w.start} className="grid-free readonly" style={style}><span className="num">{text}</span> свободно</div>
-                    return (
-                      <button key={w.start} type="button" className={`grid-free${h < 52 ? ' short' : ''}`} style={style}
-                        aria-label={`Свободно с ${text.replace('–', ' до ')}, записать`} onClick={() => bookAt(d.id!, Math.ceil(start / 5) * 5)}>
-                        <span className="grid-free-text">Свободно <span className="num">{text}</span></span>
-                        <span className="grid-free-add">＋ записать</span>
-                      </button>
-                    )
-                  })}
-                  {nowTop != null && <div className="grid-now" style={{ top: nowTop }} />}
-                  {q?.isPending && <div className="hint grid-loading">Загрузка…</div>}
-                  {q?.error && <div className="error grid-loading">{q.error.message}</div>}
-                  {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => {
-                    const s = statusOf(a)
-                    const top = PAD + (minutesOf(a.startAt!) - from) * PX
-                    const h = Math.max((minutesOf(a.endAt!) - minutesOf(a.startAt!)) * PX - 2, 22)
-                    const short = h < SHORT
-                    return (
-                      <button key={a.id} type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${selected?.id === a.id ? ' active' : ''}`}
-                        style={{ top, height: h, '--doc': AVATARS[doctors.indexOf(d) % AVATARS.length] } as CSSProperties}
-                        onClick={() => setSide({ kind: 'appointment', id: a.id! })}
-                        aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
-                        <span className="appt-time num">{short ? timeOf(a.startAt!) : `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`}</span>
-                        <span className="appt-name">{a.patient?.fullName}</span>
-                        <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} />
-                        {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
-                        {(short || h > 56) && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
-                        {h > 66 && a.serviceName && <span className="appt-note">{a.serviceName}</span>}
-                        {h > 88 && a.comment && <span className="appt-note">{a.comment}</span>}
-                        {h > 80 && a.depositStatus && seesMoneyOf(me, a.doctorId) && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
-                          <span className="appt-note">Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              )
-            })}
+            {/* Ни одного приёма в дне — Тишка «водяным знаком» поверх видимой части сетки (вне прокрутки); нажатия проходят к свободным окнам */}
+            {shown.length > 0 && shown.every((d) => days[doctors.indexOf(d)]?.isSuccess)
+              && shown.every((d) => !(days[doctors.indexOf(d)]?.data ?? []).some((a) => a.status !== 'CANCELLED')) && (
+              <div className="grid-empty">
+                <EmptyState title={emptyDayText(date, today)}>{date >= today ? 'Нажмите на свободное время, чтобы записать.' : null}</EmptyState>
+              </div>
+            )}
           </div>
         )}
         {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» под днём */}

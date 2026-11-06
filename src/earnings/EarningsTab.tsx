@@ -6,6 +6,7 @@ import { somText } from '../lib/time'
 import { monthName, todayOf, useEarnings, type Earnings } from './earnings'
 import { GoalBar } from './EarningsWidgets'
 import { NetMonthBlock } from './NetMonthBlock'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -33,7 +34,7 @@ function workDays(n: number): string {
  */
 export function EarningsTab({ me }: { me: Me }) {
   const q = useEarnings(me)
-  if (q.isPending) return <p className="hint">Загрузка…</p>
+  if (q.isPending) return <Loading />
   if (q.error) return <p className="error">{q.error.message}</p>
   return (
     <>

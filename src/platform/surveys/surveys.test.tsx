@@ -57,7 +57,7 @@ test('«Создать из шаблона» — черновик в редак�
     }),
   )
   await openSurveys()
-  expect(await screen.findByText('Опросов пока нет.')).toBeInTheDocument()
+  expect(await screen.findByText('Опросов пока нет')).toBeInTheDocument()
   const user = userEvent.setup()
   await user.click(screen.getByRole('button', { name: 'Создать из шаблона' }))
   expect(created).toMatchObject({ title: 'Как вам Tish?' })
