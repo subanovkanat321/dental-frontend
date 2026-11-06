@@ -58,7 +58,8 @@ export function Guide() {
     <main className="site-page manual">
       {fromApp ? <AppReturn /> : <SiteHeader />}
       <header className="site-hero manual-hero">
-        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} />
+        {/* Тишка — как логотип: на главную приложения (расписание; без входа — вход) */}
+        <a className="site-hero-home" href="/" aria-label="Открыть Tish — расписание" title="Открыть расписание"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} /></a>
         <div>
           <h1>Руководство Tish</h1>
           <p>Как работать в Tish: расписание, пациенты, касса, склад и настройки — по шагам, с картинками.

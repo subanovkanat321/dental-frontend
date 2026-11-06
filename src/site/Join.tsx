@@ -81,7 +81,8 @@ export function Join() {
     <main className="site-page">
       <SiteHeader />
       <div className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={84} height={80} />
+        {/* Тишка — как логотип: на главную приложения (расписание; без входа — вход) */}
+        <a className="site-hero-home" href="/" aria-label="Открыть Tish — расписание" title="Открыть расписание"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} /></a>
         <div><h1>Запись пациентов для стоматологии</h1>
           <p>Пациенты записываются в Telegram, бот напоминает о приёме. Работать можно в Telegram и на сайте — с телефона и компьютера.</p></div>
       </div>

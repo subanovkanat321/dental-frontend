@@ -38,7 +38,8 @@ export function Go() {
   return (
     <main className="site-page">
       <header className="site-hero">
-        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={84} height={80} />
+        {/* Тишка — как логотип: на главную приложения (расписание; без входа — вход) */}
+        <a className="site-hero-home" href="/" aria-label="Открыть Tish — расписание" title="Открыть расписание"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} /></a>
         <div><h1>Tish</h1><p>Запись к стоматологу в Telegram — без звонков и очередей</p></div>
       </header>
 

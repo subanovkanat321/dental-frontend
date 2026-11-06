@@ -31,6 +31,8 @@ test('/guide открывается без входа: заголовок, пе�
   const link = within(screen.getByRole('navigation', { name: 'Оглавление' })).getByRole('link', { name: 'Расписание' })
   expect(link).toHaveAttribute('href', '#raspisanie')
   expect(document.getElementById('raspisanie')).toHaveTextContent('Новая запись')
+  // Тишка в шапке — как логотип: в приложение, на расписание
+  expect(screen.getByRole('link', { name: 'Открыть Tish — расписание' })).toHaveAttribute('href', '/')
 })
 
 test('?role=assistant — без «Кассы» и «Настроек клиники»; выбор роли — в адресе', async () => {

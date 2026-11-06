@@ -30,6 +30,9 @@ body.site {
 /* Шапка страницы: мягкая бирюзовая плашка, Тишка и заголовок — без градиентов и пятен */
 .site-hero { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 16px; background: var(--accent-soft); }
 .site-hero img { flex: none; width: 72px; height: auto; }
+.site-hero-home { flex: none; display: inline-flex; border-radius: 16px; transition: transform .15s; }
+.site-hero-home:hover { transform: scale(1.05); }
+.site-hero-home:focus-visible { outline: 3px solid var(--accent, #12a99b); outline-offset: 4px; }
 .site-hero p { margin-top: 6px; color: var(--hero-ink); }
 
 .site-section { display: grid; gap: 10px; }
