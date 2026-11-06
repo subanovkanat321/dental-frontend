@@ -383,8 +383,9 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
 }
 
 /**
- * «Заметка о приёме»: что сделали, что дальше — медданные, видят врач приёма и админ (403 — нет
- * блока). Сохраняется здесь же; в медкарте пациента — в «Заметках о визитах».
+ * «Заметка о приёме»: что сделали, что дальше — медданные. Пишут врач приёма и админ; ассистент и
+ * другие врачи пациента только читают (`editable: false` — без поля и диктовки, с «Врач: …»);
+ * регистратуре сервер не отдаёт (403 — нет блока). В медкарте пациента — в «Заметках о визитах».
  */
 export function VisitNote({ appointment: a }: { appointment: Appointment }) {
   const client = useQueryClient()
@@ -394,7 +395,7 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
     retry: false,
   })
   const [text, setText] = useState<string | null>(null)
-  const save = useMutation<Schemas['ChartControllerNote'], ApiError>({
+  const save = useMutation<Schemas['ChartControllerNoteView'], ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/appointments/{id}/note', { params: { path: { id: a.id! } }, body: { note: (text ?? '').trim() } })),
     onSuccess: (saved) => {
       client.setQueryData(['note', a.id], saved)
@@ -405,6 +406,16 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
   // Пока идёт диктовка, поле заметки прячем: заметка — в экране «Проверьте», чтобы не было двух полей
   const [dictating, setDictating] = useState(false)
   if (note.isPending || note.error) return null
+  if (note.data.editable === false) {
+    // Чужой приём: только прочитать — менять заметку может врач приёма или админ (сервер ответит 403)
+    if (!note.data.note) return null
+    return (
+      <section className="form" aria-label="Заметка о приёме">
+        <span className="hint">Заметка о приёме{note.data.doctorName ? ` · Врач: ${note.data.doctorName}` : ''}</span>
+        <p className="continue-note">{note.data.note}</p>
+      </section>
+    )
+  }
   const value = text ?? note.data.note ?? ''
   const changed = text != null && text.trim() !== (note.data.note ?? '')
   return (

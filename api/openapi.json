@@ -2586,7 +2586,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ChartControllerNote"
+                  "$ref" : "#/components/schemas/ChartControllerNoteView"
                 }
               }
             }
@@ -2621,7 +2621,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ChartControllerNote"
+                  "$ref" : "#/components/schemas/ChartControllerNoteView"
                 }
               }
             }
@@ -12925,6 +12925,19 @@
           }
         }
       },
+      "ChartControllerNoteView" : {
+        "properties" : {
+          "note" : {
+            "type" : "string"
+          },
+          "editable" : {
+            "type" : "boolean"
+          },
+          "doctorName" : {
+            "type" : "string"
+          }
+        }
+      },
       "AppointmentRequestsComment" : {
         "properties" : {
           "comment" : {
@@ -16513,6 +16526,12 @@
           },
           "doctorName" : {
             "type" : "string"
+          },
+          "visitDoctorName" : {
+            "type" : "string"
+          },
+          "editable" : {
+            "type" : "boolean"
           }
         }
       },

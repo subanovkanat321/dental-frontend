@@ -62,7 +62,7 @@ export function ContinueTreatment({ appointment: a, onMedical, open = false }: {
     <div className="continue">
       {last && (
         <div>
-          <span className="hint">В прошлый раз — {shortDate(last.startAt!)}{last.doctorName ? `, ${last.doctorName}` : ''}</span>
+          <span className="hint">В прошлый раз — {shortDate(last.startAt!)}{last.editable === false && last.visitDoctorName ? `, Врач: ${last.visitDoctorName}` : last.doctorName ? `, ${last.doctorName}` : ''}</span>
           <p className="continue-note">{last.note}</p>
         </div>
       )}

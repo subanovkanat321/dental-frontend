@@ -436,7 +436,10 @@ function Notes({ patientId }: { patientId: number }) {
       <ul className="notes">
         {notes.data.map((n) => (
           <li key={n.appointmentId}>
-            <span className="hint">{n.startAt ? shortDate(n.startAt) : ''}{n.doctorName ? ` · ${n.doctorName}` : ''}</span>
+            {/* Заметки всех врачей пациента: чужая — только для чтения, с «Врач: …» (кто вёл приём) */}
+            <span className="hint">{n.startAt ? shortDate(n.startAt) : ''}{n.editable === false
+              ? (n.visitDoctorName ? ` · Врач: ${n.visitDoctorName}` : '')
+              : (n.doctorName ? ` · ${n.doctorName}` : '')}</span>
             <p>{n.note}</p>
           </li>
         ))}

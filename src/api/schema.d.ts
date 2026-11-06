@@ -5742,6 +5742,11 @@ export interface components {
         ChartControllerNote: {
             note?: string;
         };
+        ChartControllerNoteView: {
+            note?: string;
+            editable?: boolean;
+            doctorName?: string;
+        };
         AppointmentRequestsComment: {
             comment?: string;
         };
@@ -7221,6 +7226,8 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
             doctorName?: string;
+            visitDoctorName?: string;
+            editable?: boolean;
         };
         LessonsTarget: {
             telegram?: boolean;
@@ -9874,7 +9881,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ChartControllerNote"];
+                    "application/json": components["schemas"]["ChartControllerNoteView"];
                 };
             };
         };
@@ -9900,7 +9907,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ChartControllerNote"];
+                    "application/json": components["schemas"]["ChartControllerNoteView"];
                 };
             };
         };
