@@ -39,7 +39,7 @@ const report = (days: number): Schemas['PlatformAnalyticsAnalytics'] => ({
   },
   risks: [{ clinicId: 3, name: 'Белый зуб', city: 'Бишкек', plan: 'OVERDUE', last14: 2, prev14: 12, reasons: [{ code: 'FALLING', text: 'Приёмов меньше на 83%: 2 против 12' }] }],
   cohorts: [{ month: '2026-08', clinics: 2, after: [{ eligible: 2, active: 1 }, { eligible: 2, active: 1 }, { eligible: 0, active: 0 }] }],
-  features: { activeClinics: 2, appointments: 120, selfBooked: 30, items: [{ key: 'BOT', clinics: 2 }, { key: 'PLAN', clinics: 1 }, { key: 'PUSH', clinics: 0 }] },
+  features: { activeClinics: 2, appointments: 120, selfBooked: 30, aiBooked: 4, items: [{ key: 'BOT', clinics: 2 }, { key: 'PLAN', clinics: 1 }, { key: 'PUSH', clinics: 0 }] },
   patients: { total: 300, withBot: 150, done: 90, noShow: 10, newByMonth: months(10).map((m) => ({ month: m, count: 5 })) },
 })
 
@@ -67,6 +67,7 @@ test('владелец: аналитика платформы — сводка, 
   expect(screen.getByRole('list', { name: 'Шаги воронки' })).toHaveTextContent('Админ пришёл по ссылке1 · 50%')
   expect(screen.getByRole('table', { name: 'Клиники по городам' })).toHaveTextContent('Талас')
   expect(screen.getByRole('region', { name: 'Использование функций' })).toHaveTextContent('25%')
+  expect(screen.getByRole('region', { name: 'Использование функций' })).toHaveTextContent('ИИ записал: 4')
   expect(screen.getByRole('table', { name: 'Когорты по месяцу подключения' })).toHaveTextContent('50% (1 из 2)')
   expect(asked).toEqual(['30:'])
 

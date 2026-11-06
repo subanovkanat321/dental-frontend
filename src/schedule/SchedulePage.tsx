@@ -332,11 +332,12 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               <button type="button" className="btn ghost" aria-label={weekMode ? 'Следующая неделя' : 'Следующий день'}
                 onClick={() => setDate(addDays(date, weekMode ? 7 : 1))}>›</button>
               {/* Календарь — значком рядом со стрелками: дата и так крупно в заголовке */}
-              <DateInput iconOnly aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
+              <DateInput id="schedule-date" iconOnly aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
             </div>
             {weekMode ? (
               <div className="day-title">
-                <div className="with-hint"><h1>Неделя {weekLabel(monday)} {monday.slice(0, 4)}</h1><HelpHint hint="schedule" /></div>
+                <div className="with-hint"><h1><button type="button" className="day-title-pick" title="Выбрать дату"
+                  onClick={() => document.getElementById('schedule-date')?.click()}>Неделя {weekLabel(monday)} {monday.slice(0, 4)} <span className="caret" aria-hidden="true">▾</span></button></h1><HelpHint hint="schedule" /></div>
                 <span className="hint">
                   {monday === weekStart(today) ? 'эта неделя · ' : ''}{doctors.find((d) => d.id === weekDoctor)?.fullName}
                   {week.data ? ` · записей ${week.data.filter((a) => a.status !== 'CANCELLED').length}` : ''}
@@ -344,7 +345,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               </div>
             ) : (
               <div className="day-title">
-                <div className="with-hint"><h1>{dayTitle(date)}</h1><HelpHint hint="schedule" /></div>
+                {/* Дата кликабельна — открывает тот же календарь, что значок рядом со стрелками */}
+                <div className="with-hint"><h1><button type="button" className="day-title-pick" title="Выбрать дату"
+                  onClick={() => document.getElementById('schedule-date')?.click()}>{dayTitle(date)} <span className="caret" aria-hidden="true">▾</span></button></h1><HelpHint hint="schedule" /></div>
                 <span className="hint">
                   {date === today ? 'сегодня · ' : ''}{all.length ? `Записей: ${all.length}` : 'Записей нет'}
                   {doctors.length > 1 ? ` · врачей ${doctors.length}` : ''}

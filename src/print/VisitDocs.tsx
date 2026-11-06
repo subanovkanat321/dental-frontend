@@ -13,6 +13,8 @@ import { Select } from '../layout/Select'
 type Appointment = Schemas['AppointmentView']
 type Me = Schemas['BookingViewsMe']
 type Receipt = Schemas['ReceiptsReceiptView']
+type CareMemo = Schemas['CareMemosAppointmentMemo']
+type MemoLang = 'RU' | 'KY'
 
 const METHODS: Record<string, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта' }
 
@@ -42,11 +44,16 @@ export function VisitDocs({ appointment: a, me, memo = true }: { appointment: Ap
 export function MemoDocs({ appointment: a }: { appointment: Appointment }) {
   const id = a.id!
   const [chosen, setChosen] = useState<number | null>(null)
+  // Язык памятки: не выбран — язык пациента в боте (сервер); выбран — для WhatsApp, бота и печати
+  const [lang, setLang] = useState<MemoLang | null>(null)
   const [printing, setPrinting] = useState(false)
   const memo = useQuery({
-    queryKey: ['care-memo', id, chosen],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/care-memo', { params: { path: { id }, query: { memoId: chosen ?? undefined } } })),
+    queryKey: lang ? ['care-memo', id, chosen, lang] : ['care-memo', id, chosen],
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/care-memo', {
+      params: { path: { id }, query: { memoId: chosen ?? undefined, lang: lang ?? undefined } },
+    })),
     retry: false,
+    placeholderData: (prev) => prev,
   })
   const [picking, setPicking] = useState(false)
   const all = useQuery({
@@ -78,26 +85,62 @@ export function MemoDocs({ appointment: a }: { appointment: Appointment }) {
         {!picking && <button type="button" className="link" onClick={() => setPicking(true)}>другая</button>}
       </p>
       {picking && picker}
+      {m.ky && <MemoLangSwitch value={m.lang ?? 'RU'} patientLang={m.patientLang} onChange={setLang} />}
       <DocActions label={`памятка «${m.title}»`} phone={contactPhone(a.patient)} message={m}
-        send={() => unwrap(api.POST('/api/appointments/{id}/care-memo/send', { params: { path: { id } }, body: { memoId: m.memoId } }))}
+        send={() => unwrap(api.POST('/api/appointments/{id}/care-memo/send', { params: { path: { id } }, body: { memoId: m.memoId, lang: m.lang } }))}
         onPrint={() => setPrinting(true)} />
-      {printing && <MemoSheet appointment={a} title={m.title!} body={m.body!} onClose={() => setPrinting(false)} />}
+      {printing && <MemoSheet appointment={a} memo={m} onClose={() => setPrinting(false)} />}
     </div>
   )
 }
 
-/** Лист памятки пациенту на руки: название, пациент, дата приёма, текст. */
-export function MemoSheet({ appointment: a, title, body, onClose }: { appointment: Appointment; title: string; body: string; onClose: () => void }) {
+/** «Русский / Кыргызский» у памятки с кыргызским текстом; язык пациента — подсказкой. */
+function MemoLangSwitch({ value, patientLang, onChange }: { value: MemoLang; patientLang?: MemoLang; onChange: (lang: MemoLang) => void }) {
   return (
-    <PrintSheet title="Памятка пациенту" onClose={onClose}>
+    <div className="segments" role="group" aria-label="Язык памятки">
+      {(['RU', 'KY'] as const).map((l) => (
+        <button key={l} type="button" aria-pressed={value === l} onClick={() => onChange(l)}>
+          {l === 'RU' ? 'Русский' : 'Кыргызский'}{patientLang === l ? ' · язык пациента' : ''}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+const SHEET: Record<MemoLang, { patient: string; visit: string }> = {
+  RU: { patient: 'Пациент', visit: 'Приём' },
+  KY: { patient: 'Бейтап', visit: 'Кабыл алуу' },
+}
+
+/**
+ * Лист памятки пациенту на руки: название, пациент, дата приёма, текст. Есть кыргызский текст —
+ * переключатель «Русский / Кыргызский» над листом (не печатается); сначала — язык с карточки (язык
+ * пациента, если он известен).
+ */
+export function MemoSheet({ appointment: a, memo, onClose }: { appointment: Appointment; memo: CareMemo; onClose: () => void }) {
+  const first: MemoLang = memo.lang ?? 'RU'
+  const [lang, setLang] = useState<MemoLang>(first)
+  const sheet = useQuery({
+    queryKey: ['care-memo', a.id, memo.memoId, lang],
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/care-memo', { params: { path: { id: a.id! }, query: { memoId: memo.memoId, lang } } })),
+    // Первый язык — текст с карточки, без запроса; другой — с сервера (телефон клиники подставлен там)
+    enabled: lang !== first,
+    placeholderData: (prev) => prev,
+    retry: false,
+  })
+  const m = lang === first ? memo : sheet.data ?? memo
+  const words = SHEET[m.lang ?? 'RU']
+  return (
+    <PrintSheet title="Памятка пациенту" onClose={onClose}
+      tools={memo.ky ? <MemoLangSwitch value={lang} patientLang={memo.patientLang} onChange={setLang} /> : undefined}>
       {() => (
         <>
-          <h1>{title}</h1>
+          <h1>{m.title}</h1>
           <dl>
-            <dt>Пациент</dt><dd>{a.patient?.fullName}</dd>
-            <dt>Приём</dt><dd>{docDate(a.startAt!)}</dd>
+            <dt>{words.patient}</dt><dd>{a.patient?.fullName}</dd>
+            <dt>{words.visit}</dt><dd>{docDate(a.startAt!)}</dd>
           </dl>
-          <div className="memo-body">{body}</div>
+          <div className="memo-body">{m.body}</div>
         </>
       )}
     </PrintSheet>
