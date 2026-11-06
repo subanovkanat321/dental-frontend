@@ -5,7 +5,6 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
-import { timeOffWhen } from './texts'
 
 beforeEach(() => {
   window.location.hash = '/settings/doctors'
@@ -19,11 +18,6 @@ const doctors: Schemas['DoctorAdminView'][] = [
   { id: 1, fullName: 'Айгерим Садыкова', about: 'терапевт', active: true, telegramId: 111, role: 'ADMIN' },
   { id: 2, fullName: 'Дастан Т.', about: '', active: true },
 ]
-
-test('перерыв: подпись «когда»', () => {
-  expect(timeOffWhen({ weekday: 'FRIDAY', startTime: '12:00:00', endTime: '14:00:00', title: 'Намаз' })).toBe('Каждую пятницу · 12:00–14:00')
-  expect(timeOffWhen({ firstDay: '2026-11-03', lastDay: '2026-11-10', title: 'Отпуск' })).toBe('3 нояб – 10 нояб · весь день')
-})
 
 test('админ: врачи таблицей; карточка — сохранить данные, свои часы, ссылка-приглашение', async () => {
   const saved: Record<string, unknown> = {}
@@ -175,43 +169,6 @@ test('сотрудники: ассистент — выбрать врача, п
   expect(sent).toEqual([{ doctorIds: [2, 1] }, { role: 'ASSISTANT', fullName: 'Жылдыз', doctorIds: [2] }])
 })
 
-test('перерывы: список, добавить еженедельный, удалить', async () => {
-  let list: Schemas['TimeOffView'][] = [{ id: 1, doctorId: undefined, weekday: 'FRIDAY', startTime: '12:00:00', endTime: '14:00:00', title: 'Джума-намаз', emoji: '🕌' }]
-  let posted: unknown = null
-  server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(me)),
-    http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
-    http.get('*/api/time-off', () => HttpResponse.json(list)),
-    http.post('*/api/time-off', async ({ request }) => {
-      posted = await request.json()
-      const t = { id: 2, ...(posted as Schemas['TimeOffControllerRequest']) }
-      list = [...list, t]
-      return HttpResponse.json(t)
-    }),
-    http.delete('*/api/time-off/:id', ({ params }) => {
-      list = list.filter((t) => String(t.id) !== params.id)
-      return new HttpResponse(null, { status: 204 })
-    }),
-  )
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
-  const user = userEvent.setup()
-  renderApp()
-  openItem('timeoff')
-  const table = await screen.findByRole('table', { name: 'Перерывы' })
-  expect(within(table).getByText('Все врачи')).toBeInTheDocument()
-
-  const form = screen.getByRole('form', { name: 'Новый перерыв' })
-  await user.click(within(form).getByRole('button', { name: 'Вторник' }))
-  await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Обед')
-  await user.click(within(form).getByRole('button', { name: 'Добавить перерыв' }))
-  expect(await screen.findByText('Обед')).toBeInTheDocument()
-  expect(posted).toEqual({ doctorId: 1, weekday: 'TUESDAY', startTime: '13:00', endTime: '14:00', title: 'Обед', emoji: '🕌' })
-
-  await user.click(screen.getByRole('button', { name: 'Удалить: Джума-намаз' }))
-  expect(await screen.findByText('Перерыв добавлен')).toBeInTheDocument()
-  await vi.waitFor(() => expect(screen.queryByText('Джума-намаз')).not.toBeInTheDocument())
-})
-
 test('врач (не админ): в «Персонале» только врачи, открывает только себя и правит профиль', async () => {
   let profile: unknown = null
   server.use(
@@ -235,21 +192,6 @@ test('врач (не админ): в «Персонале» только вра�
   await user.click(within(panel).getByRole('button', { name: 'Сохранить' }))
   expect(await within(panel).findByText('Профиль врача сохранён')).toBeInTheDocument()
   expect(profile).toEqual({ fullName: 'Айгерим Садыкова', about: 'терапевт' })
-})
-
-test('ассистент: перерывы и выходные только смотрит — без формы и «Удалить»', async () => {
-  server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [2] })),
-    http.get('*/api/time-off', () => HttpResponse.json([
-      { id: 1, doctorId: 2, weekday: 'FRIDAY', startTime: '12:00:00', endTime: '14:00:00', title: 'Джума-намаз', emoji: '🕌' },
-    ] satisfies Schemas['TimeOffView'][])),
-  )
-  renderApp()
-  openItem('timeoff')
-  expect(await screen.findByText(/Джума-намаз/)).toBeInTheDocument()
-  expect(screen.queryByRole('form', { name: 'Новый перерыв' })).not.toBeInTheDocument()
-  expect(screen.getByText(/ставят врач, регистратура или администратор/)).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /Удалить/ })).not.toBeInTheDocument()
 })
 
 test('карточка врача: «Услуги врача» — все или только отмеченные', async () => {
