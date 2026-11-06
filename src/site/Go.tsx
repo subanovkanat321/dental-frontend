@@ -51,7 +51,7 @@ export function Go() {
         <h2 id="go-clinics">Клиникам</h2>
         {/* Акция — сама кнопка: нажали — сразу форма заявки */}
         <GoLink icon="🎁" badge={t?.promo?.title} title="Подключить клинику бесплатно" sub="Без предоплаты — настроим за час" href="/join#form" main />
-        <GoLink icon="📋" title="Что умеет приложение" sub="Запись, напоминания, касса, склад, медкарта" href="/join" />
+        <GoLink icon="📋" title="Tish для клиник — коротко о главном" sub="Запись, ИИ-диктовка, карта зубов, касса — с картинками" href="/about" />
         <GoLink icon="🔐" title="Вход для клиники" href="/login" />
         <p className="hint go-note">Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
       </section>

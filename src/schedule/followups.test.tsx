@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp, openMore } from '../test/fixtures'
+import { appointment, me, renderApp, openMore, openPay } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Appointment = Schemas['AppointmentView']
@@ -52,7 +52,7 @@ test('свой приём у врача — форма оплаты есть; у
   const doctor = { ...me, admin: false }
   day([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 }), appointment(11, 2, '23:30', 'Нурлан К.')], doctor)
   renderApp()
-  expect(within(await card(/Бакыт М\./)).getByRole('form', { name: 'Оплата' })).toBeInTheDocument()
+  expect(await openPay(await card(/Бакыт М\./))).toBeInTheDocument()
   const other = await card(/Нурлан К\./)
   expect(within(other).queryByRole('button', { name: 'Попросить предоплату' })).not.toBeInTheDocument()
 })

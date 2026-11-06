@@ -19,10 +19,12 @@ import './site.css'
  * Страницы сайта (/clinics, /c/<код>, /join, /go) — отдельные лёгкие входы Vite: без CRM, без
  * React Query и без скрипта Telegram. Свой HTML у каждой — свои og:-теги для превью ссылки.
  */
-export function mount(page: ReactNode): void {
+export function mount(page: ReactNode, { theme = 'light' }: { theme?: 'light' | 'system' } = {}): void {
   // Всегда светлые, как посты Instagram: в тёмной теме телефона (и во встроенном браузере
   // Instagram) страница была тёмной. data-theme=light отключает тёмные цвета из styles.css
-  document.documentElement.dataset.theme = 'light'
+  // Исключение — сайт-визитка /about (theme: 'system'): её открывают и на компьютере в клинике,
+  // тёмная тема там — по настройке системы, как у CRM
+  if (theme === 'light') document.documentElement.dataset.theme = 'light'
   // Ошибки страницы — владельцу в бот, как у CRM (lib/clientErrors)
   startErrorReports()
   createRoot(document.getElementById('root')!).render(<StrictMode>{page}</StrictMode>)

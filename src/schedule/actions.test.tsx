@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, me, renderApp, expand } from '../test/fixtures'
+import { appointment, me, renderApp, expand, openPay } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -62,7 +62,7 @@ test('приём состоялся — оплата: сумма из цены �
   const sent = backend([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', servicePriceSom: 2500, version: 1 })])
   renderApp()
   const panel = await open(/Бакыт М\./)
-  const form = within(panel).getByRole('form', { name: 'Оплата' })
+  const form = await openPay(panel)
   expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(2500)
 
   await userEvent.click(within(form).getByRole('button', { name: 'Карта' }))
@@ -75,6 +75,7 @@ test('в клинике есть регистратура — врач отпр�
   const sent = backend([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 })], { ...me, admin: false, hasReception: true })
   renderApp()
   const panel = await open(/Бакыт М\./)
+  await openPay(panel)
   await userEvent.type(within(panel).getByLabelText('Сумма, сом'), '4000')
   await userEvent.click(within(panel).getByRole('button', { name: /На кассу/ }))
 

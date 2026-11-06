@@ -1,0 +1,180 @@
+/*
+ * /about — сайт-визитка для клиник. Токены DESIGN.md (те же, что у CRM), режим Persuade: крупная
+ * типографика Geologica, много воздуха, один цвет действия — бирюзовый. Светлая и тёмная тема — по
+ * системе (mount с theme: 'system'); скриншоты — светлые, в «рамке» устройства.
+ */
+.about {
+  --about-max: 1200px;
+  --frame: #0F2A30;
+  --hl: var(--accent);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  overflow-x: clip;
+}
+.about a { color: inherit; }
+.about :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.about .num { font-weight: 500; font-variant-numeric: tabular-nums; }
+.about-hl { color: var(--hl); }
+
+/* Шапка: знак слева, ссылки и кнопка справа; липкая, с лёгким фоном */
+.about-top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px max(16px, calc((100vw - var(--about-max)) / 2)); padding-top: max(10px, env(safe-area-inset-top));
+  background: color-mix(in srgb, var(--page) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid color-mix(in srgb, var(--separator) 70%, transparent); }
+.about-brand { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font: 600 1.25rem var(--display); text-decoration: none; }
+.about-top-links { display: flex; align-items: center; gap: 20px; font-size: .95rem; }
+.about-top-links a:not(.about-btn) { text-decoration: none; color: var(--hint); }
+.about-top-links a:not(.about-btn):hover { color: var(--text); }
+
+/* Кнопки: залитая бирюзовая — главное действие; остальные — белые с рамкой (DESIGN.md) */
+.about-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 0 24px;
+  border: 1px solid var(--line-strong); border-radius: 14px; background: var(--card); color: var(--text) !important;
+  font: 600 1rem var(--ui); text-decoration: none; white-space: nowrap;
+  transition: background .15s ease-out, border-color .15s ease-out, transform .1s ease-out; }
+.about-btn:hover { border-color: var(--accent); }
+.about-btn:active { transform: scale(.98); }
+.about-btn.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-text) !important; }
+.about-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.about-btn.small { min-height: 40px; padding: 0 16px; border-radius: 10px; font-size: .9rem; }
+.about-btn.big { min-height: 60px; padding: 0 36px; font-size: 1.125rem; border-radius: 16px; }
+.about-ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.about-ctas.center { justify-content: center; }
+
+/* Слайд: на компьютере — весь экран, содержимое по центру; на телефоне — своей высоты */
+.about-slide { position: relative; display: flex; align-items: center; padding: 72px 16px; scroll-margin-top: 56px; }
+.about-inner { width: 100%; max-width: var(--about-max); margin: 0 auto; }
+.about-inner.narrow { max-width: 880px; text-align: center; }
+.about h1, .about h2, .about h3 { margin: 0; font-family: var(--display); font-weight: 600; letter-spacing: -.02em; text-wrap: balance; }
+.about h1 { font-size: clamp(2.25rem, 5.4vw, 4.25rem); line-height: 1.05; }
+.about h2 { font-size: clamp(1.9rem, 3.8vw, 3.1rem); line-height: 1.1; }
+.about p { margin: 0; }
+.about-eyebrow { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 16px !important; color: var(--accent); font-weight: 600; font-size: .95rem; }
+.about-eyebrow .num { display: inline-grid; place-items: center; min-width: 34px; height: 26px; padding: 0 8px; border-radius: 999px;
+  background: var(--accent-soft); font-size: .85rem; }
+.about-lead { margin-top: 20px !important; color: var(--hint); font-size: clamp(1.0625rem, 1.5vw, 1.25rem); line-height: 1.6; text-wrap: pretty; }
+.about-lead strong { color: var(--text); font-weight: 600; }
+.about-note { margin-top: 14px !important; color: var(--faint); font-size: .9rem; }
+
+/* Герой */
+.about-hero { padding-top: 40px; }
+.hero-grid { display: grid; gap: 48px; align-items: center; }
+.hero-copy .about-ctas { margin-top: 32px; }
+.about-scroll { position: absolute; left: 50%; bottom: 20px; translate: -50% 0; display: none; place-items: center; width: 44px; height: 44px;
+  border-radius: 50%; border: 1px solid var(--separator); background: var(--card); color: var(--hint) !important; text-decoration: none; font-size: 1.2rem; }
+
+/* Рамки устройств: тёмная кромка, скругление; телефон — с «островком» */
+.mock-desktop { position: relative; padding: 8px; border-radius: 18px; background: var(--frame);
+  box-shadow: 0 2px 4px rgba(15, 42, 48, .08), 0 24px 60px -12px rgba(15, 42, 48, .28); }
+.mock-desktop img { display: block; width: 100%; height: auto; border-radius: 11px; background: #fff; }
+.mock-phone { position: relative; width: 100%; padding: 7px; border-radius: 34px; background: var(--frame);
+  box-shadow: 0 2px 4px rgba(15, 42, 48, .1), 0 24px 50px -10px rgba(15, 42, 48, .35); }
+.mock-phone::before { content: ''; position: absolute; z-index: 1; top: 14px; left: 50%; translate: -50% 0; width: 30%; height: 16px; border-radius: 10px; background: var(--frame); }
+.mock-phone img { display: block; width: 100%; height: auto; aspect-ratio: 600 / 1298; object-fit: cover; object-position: top; border-radius: 27px; background: #fff; }
+
+/* Композиции: компьютер + телефон поверх справа внизу; три телефона веером; два экрана лесенкой */
+.vis { position: relative; }
+.vis-duo { padding: 0 9% 12% 0; }
+.vis-duo .mock-phone { position: absolute; right: 0; bottom: 0; width: 25%; }
+.vis-phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4%; align-items: end; max-width: 560px; margin: 0 auto; }
+.vis-phones .mock-phone:nth-child(2) { translate: 0 -8%; }
+.vis-stack { padding: 0 0 18% 12%; }
+.vis-stack .mock-desktop:nth-child(2) { position: absolute; left: 0; bottom: 0; width: 58%; }
+
+/* Части: текст и картинка в две колонки, через одну — зеркально */
+.part-grid { display: grid; gap: 40px; align-items: center; }
+.about-points { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 12px; }
+.about-points li { position: relative; padding-left: 34px; font-size: 1.0625rem; }
+.about-points li::before { content: '✓'; position: absolute; left: 0; top: 1px; display: grid; place-items: center; width: 24px; height: 24px;
+  border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: .8rem; font-weight: 600; }
+
+/* Слайды-высказывания: крупный текст по центру на мягкой плашке */
+.about-statement { background: var(--card); border-block: 1px solid var(--separator); }
+.about-promises { list-style: none; margin: 40px auto 0; padding: 0; display: grid; gap: 14px; max-width: 560px; text-align: left; }
+.about-promises li { display: flex; align-items: center; gap: 16px; padding: 18px 22px; border-radius: 16px; background: var(--page);
+  font: 500 clamp(1.125rem, 2vw, 1.375rem)/1.3 var(--ui); }
+.about-promises li > span:first-child { flex: none; font-size: 1.6rem; }
+.about-promises strong { color: var(--accent); font-weight: 600; }
+.about-cards { display: grid; gap: 14px; margin-top: 36px; text-align: left; }
+.about-card { display: grid; gap: 4px; padding: 24px; border-radius: 18px; background: var(--page); border: 1px solid var(--separator); }
+.about-card .ico { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 8px; border-radius: 14px; background: var(--accent-soft); font-size: 1.6rem; }
+.about-card strong { font: 600 1.375rem var(--display); }
+.about-card span:last-child { color: var(--hint); }
+.about-statement .about-lead { margin-top: 32px !important; }
+
+/* Ролик */
+.about-video .about-inner { display: grid; gap: 28px; justify-items: center; text-align: center; }
+.video-frame { width: 100%; max-width: 1040px; padding: 8px; border-radius: 20px; background: var(--frame); box-shadow: 0 24px 60px -12px rgba(15, 42, 48, .3); }
+.video-frame video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 13px; background: #0d2a2e; }
+
+/* Финал и контакты */
+.about-final { background: var(--accent-soft); }
+.about-final .about-ctas { margin-top: 32px; }
+.about-contacts-title { margin-top: 56px !important; font-size: 1.375rem; }
+.about-contacts { list-style: none; margin: 20px 0 0; padding: 0; display: grid; gap: 12px; text-align: left; }
+.about-contacts a { display: flex; align-items: center; gap: 16px; min-height: 76px; padding: 14px 18px; border-radius: 16px;
+  background: var(--card); border: 1px solid var(--separator); text-decoration: none; transition: border-color .15s ease-out, transform .1s ease-out; }
+.about-contacts a:hover { border-color: var(--accent); }
+.about-contacts .ico { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--accent-soft); font-size: 1.4rem; }
+.about-contacts a > span:last-child { display: grid; min-width: 0; }
+.about-contacts small { color: var(--hint); font-size: .875rem; }
+.about-contacts strong { font: 600 1.25rem/1.25 var(--display); overflow-wrap: anywhere; }
+.about-site { margin-top: 28px !important; font: 600 1.5rem var(--display); color: var(--accent); }
+.about-footer { padding: 28px 16px calc(28px + env(safe-area-inset-bottom)); text-align: center; color: var(--hint); font-size: .9rem; }
+.about-footer a { color: var(--link); text-underline-offset: 3px; }
+
+/* Точки справа (компьютер) */
+.about-dots { display: none; }
+/* Кнопки внизу (телефон) */
+.about-sticky { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--page) 92%, transparent);
+  backdrop-filter: blur(10px); border-top: 1px solid var(--separator);
+  translate: 0 110%; transition: translate .25s ease-out; }
+.about-sticky.shown { translate: 0 0; }
+.about-sticky .about-btn { min-height: 48px; padding: 0 12px; }
+
+/* Появление при прокрутке — только если есть JS-наблюдатель и пользователь не просил меньше движения */
+.about-anim [data-reveal] { opacity: 0; translate: 0 28px; transition: opacity .6s ease-out, translate .6s ease-out; }
+.about-anim [data-reveal].is-in { opacity: 1; translate: 0 0; }
+.about-anim .part-vis[data-reveal] { transition-delay: .08s; }
+
+@media (max-width: 759px) {
+  .about-top-links a:not(.about-btn) { display: none; }
+  .about-slide { padding: 56px 16px; }
+  .about-hero { padding-top: 24px; }
+  .hero-copy .about-ctas .about-btn { flex: 1 1 100%; }
+  .about-footer { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .about-contacts strong { font-size: 1.125rem; }
+}
+@media (min-width: 760px) {
+  .about-sticky { display: none; }
+  .about-cards { grid-template-columns: 1fr 1fr; }
+  .about-contacts { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 1000px) {
+  .about-slide { min-height: 100svh; padding: 96px 32px; }
+  .about-hero { min-height: calc(100svh - 65px); padding-top: 48px; }
+  .about-statement { min-height: 80svh; }
+  .about-scroll { display: grid; }
+  .hero-grid { grid-template-columns: 5fr 7fr; gap: 56px; }
+  .part-grid { grid-template-columns: 5fr 7fr; gap: 72px; }
+  .about-part.flip .part-copy { order: 2; }
+  .about-part.flip .part-grid { grid-template-columns: 7fr 5fr; }
+  .about-dots { position: fixed; z-index: 15; right: 18px; top: 50%; translate: 0 -50%; display: grid; gap: 4px; }
+  .about-dots a { position: relative; display: grid; place-items: center; width: 24px; height: 22px; text-decoration: none; }
+  .about-dots a::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); transition: background .15s, transform .15s; }
+  .about-dots a[aria-current]::before { background: var(--accent); transform: scale(1.4); }
+  .about-dots span { position: absolute; right: 30px; padding: 3px 10px; border-radius: 8px; background: var(--card); border: 1px solid var(--separator);
+    color: var(--text); font-size: .8rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
+  .about-dots a:hover span, .about-dots a:focus-visible span { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .about-btn, .about-sticky, .about-contacts a, .about-dots a::before { transition: none; }
+  .about-btn:active { transform: none; }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme=light]) .about { --frame: #050D0F; }
+}
+:root[data-theme=dark] .about { --frame: #050D0F; }
+@media (prefers-reduced-motion: no-preference) { html:has(.about) { scroll-behavior: smooth; } }

@@ -1691,8 +1691,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .panel.panel-full { inset: 0; transform: none; width: auto; top: 0; bottom: 0; left: 0; }
 }
 /* Свёрнутое меню слева (компьютер): полоса иконок с подсказками, как у привычных клиникам программ */
-.sidebar-toggle { margin-top: auto; color: var(--hint); font-size: .88rem; }
-.sidebar-toggle + .link-out { margin-top: 0; }
+.sidebar-toggle { margin-top: 8px; color: var(--hint); font-size: .88rem; }
 .sidebar-toggle-ico { display: inline-grid; place-items: center; width: 20px; font-size: 1.1rem; line-height: 1; }
 @media (min-width: 761px) {
   .shell.narrow { grid-template-columns: 64px 1fr; }
@@ -1922,3 +1921,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .patient-medical .btn, .patient-more > .link { justify-self: start; }
 .price-pick { display: grid; gap: 4px; margin-top: 6px; }
 .med-tabs { margin: 12px 0 4px; }
+.pay-unsaved { margin: 0 0 8px; padding: 6px 10px; border-radius: var(--r-md); background: color-mix(in srgb, var(--status-wait) 14%, transparent); color: var(--status-wait); font-size: .9rem; font-weight: 500; }
+.payment-unpaid { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.payment-unpaid-text { font-weight: 600; }
+.payment-unpaid-actions { display: flex; gap: 8px; flex-wrap: wrap; }
