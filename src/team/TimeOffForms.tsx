@@ -19,14 +19,27 @@ type Done = (message: string) => void
  * на запись), праздник на несколько дат — по записи на каждый период. Сервер отдельной «пачки» не
  * знает: упадёт на третьей — первые две останутся, список всё равно обновим.
  */
-function useCreate(onSaved: (count: number) => void) {
+function useCreate(onSaved: (count: number, skipped: number) => void) {
   const client = useQueryClient()
-  return useMutation<number, ApiError, Body[]>({
+  return useMutation<[number, number], ApiError, Body[]>({
     mutationFn: async (bodies) => {
-      for (const body of bodies) await unwrap(api.POST('/api/time-off', { body }))
-      return bodies.length
+      // Такой день уже есть (сервер: 409 duplicate-time-off) — пропускаем его, остальные сохраняем;
+      // все уже есть — показываем ответ сервера («Уже есть: …»)
+      let saved = 0
+      let duplicate: ApiError | null = null
+      for (const body of bodies) {
+        try {
+          await unwrap(api.POST('/api/time-off', { body }))
+          saved++
+        } catch (e) {
+          if (e instanceof ApiError && e.problem.code === 'duplicate-time-off') duplicate = e
+          else throw e
+        }
+      }
+      if (!saved && duplicate) throw duplicate
+      return [saved, bodies.length - saved]
     },
-    onSuccess: onSaved,
+    onSuccess: ([saved, skipped]) => onSaved(saved, skipped),
     onSettled: () => client.invalidateQueries({ queryKey: ['time-off'] }),
   })
 }
@@ -120,7 +133,8 @@ export function NewBreak({ me, onDone, onCancel }: { me: Me; onDone: Done; onCan
   const [startTime, setStartTime] = useState('13:00')
   const [endTime, setEndTime] = useState('14:00')
   const [error, setError] = useState<string | null>(null)
-  const save = useCreate((n) => onDone(n > 1 ? `Перерыв добавлен на ${n} дн.` : 'Перерыв добавлен'))
+  const save = useCreate((n, skipped) => onDone((n > 1 ? `Перерыв добавлен на ${n} дн.` : 'Перерыв добавлен')
+    + (skipped ? ` Уже были — пропустили: ${skipped}.` : '')))
   const submit = () => {
     if (!days.length) return setError('Выберите хотя бы один день')
     if (endTime <= startTime) return setError('Конец — позже начала')
@@ -152,7 +166,7 @@ export function NewDayOff({ me, onDone, onCancel }: { me: Me; onDone: Done; onCa
   const [kind, setKind] = useState(DAY_OFF_KINDS[0]!)
   const [own, setOwn] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const save = useCreate(() => onDone('Выходной добавлен'))
+  const save = useCreate((_n, skipped) => onDone(`Выходной добавлен${skipped ? `. Уже были — пропустили: ${skipped}` : ''}`))
   const submit = () => {
     const title = titleFor(kind, own, 'Выходной')
     const base = { doctorId: who.doctorId, title, emoji: kind.emoji }
