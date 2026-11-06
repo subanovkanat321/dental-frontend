@@ -130,3 +130,27 @@ test('руководство, открытое из CRM: «Вернуться в
   expect(screen.getByRole('button', { name: 'Закрыть руководство' })).toBeInTheDocument()
   window.history.replaceState(null, '', '/')
 })
+
+test('?print=1 — печатная инструкция: обложка с ролью, оглавление без ссылок, картинки грузятся сразу', () => {
+  window.history.replaceState(null, '', '/guide?print=1&role=reception')
+  render(<Guide />)
+  expect(screen.getByRole('heading', { level: 1, name: 'Инструкция Tish для клиники' })).toBeInTheDocument()
+  expect(screen.getByText('Для роли: Регистратура')).toBeInTheDocument()
+  const toc = screen.getByRole('navigation', { name: 'Оглавление' })
+  expect(within(toc).queryAllByRole('link')).toHaveLength(0)
+  expect(within(toc).getAllByRole('listitem').map((li) => li.textContent)).toEqual(chaptersFor('reception').map((c) => c.title))
+  // Ленивые картинки в PDF не попадут
+  const images = document.querySelectorAll('.manual-chapters img')
+  expect(images.length).toBeGreaterThan(0)
+  images.forEach((img) => expect(img).toHaveAttribute('loading', 'eager'))
+  expect(screen.queryByRole('group', { name: 'Для кого' })).not.toBeInTheDocument()
+  expect(screen.getByRole('link', { name: '‹ Обычная версия' })).toHaveAttribute('href', '/guide?role=reception')
+})
+
+test('в обычной версии — ссылка на печатную той же роли; у разделов «Новая запись» и «Карточка приёма» — якоря', () => {
+  window.history.replaceState(null, '', '/guide?role=doctor')
+  render(<Guide />)
+  expect(screen.getByRole('link', { name: /Версия для печати и PDF — врач/ })).toHaveAttribute('href', '/guide?print=1&role=doctor')
+  expect(document.getElementById('novaya-zapis')).toHaveAccessibleName('Новая запись')
+  expect(document.getElementById('kartochka-priema')).toHaveAccessibleName('Карточка приёма')
+})

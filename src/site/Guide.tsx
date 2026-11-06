@@ -28,6 +28,16 @@ function roleFromUrl(): GuideRole | null {
   return ROLES.some(([key]) => key === value) ? (value as GuideRole) : null
 }
 
+/** Печатная версия: /guide?print=1 (и ?role=…) — для PDF-инструкции клиникам. */
+function printFromUrl(): boolean {
+  return new URLSearchParams(window.location.search).get('print') === '1'
+}
+
+/** Ссылка на печатную версию той же роли. */
+function printUrl(role: GuideRole | null): string {
+  return `/guide?print=1${role ? `&role=${role}` : ''}`
+}
+
 /**
  * «Руководство Tish» (/guide): подробная инструкция по CRM для сотрудников клиники — по главам и
  * ролям, со скриншотами с пометками. Текст — обычным текстом (поиск по странице и печать), сами
@@ -53,6 +63,7 @@ export function Guide() {
   const fromApp = new URLSearchParams(window.location.search).get('from') === 'app'
   const chapters = chaptersFor(role)
   const roleTitle = ROLES.find(([key]) => key === role)?.[1]
+  if (printFromUrl()) return <GuidePrint role={role} roleTitle={roleTitle} />
 
   return (
     <main className="site-page manual">
@@ -74,6 +85,7 @@ export function Guide() {
         ))}
       </div>
       {roleTitle && <p className="hint manual-role-note">Показаны главы для роли «{roleTitle}». Остальное — в «Все главы».</p>}
+      <p className="manual-print-link"><a href={printUrl(role)}>🖨 Версия для печати и PDF{roleTitle ? ` — ${roleTitle.toLowerCase()}` : ''}</a></p>
 
       <div className="manual-layout">
         <nav className="manual-toc" aria-label="Оглавление">
@@ -89,7 +101,7 @@ export function Guide() {
               <h2 id={`${c.id}-title`}><span className="manual-num">{i + 1}.</span> {c.title}</h2>
               <p className="manual-intro">{c.intro}</p>
               {c.sections.map((s) => (
-                <article key={s.title} className="manual-section" aria-label={s.title}>
+                <article key={s.title} id={s.id} className="manual-section" aria-label={s.title}>
                   <h3>{s.title}</h3>
                   {s.text && <p>{s.text}</p>}
                   {s.steps.length > 0 && <ol className="manual-steps">{s.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
@@ -114,7 +126,7 @@ export function Guide() {
  * Картинка с подписью. Не шире своего размера: маленький снимок кнопки не растягивается на всю
  * колонку; снимок телефона (×2) — в половину своих пикселей, как на экране телефона.
  */
-function Figure({ image }: { image: GuideImage }) {
+function Figure({ image, eager = false }: { image: GuideImage; eager?: boolean }) {
   const size = imageSize(image.src)
   const maxWidth = size.width ? size.width / (image.phone ? 2 : 1) : undefined
   const url = `${import.meta.env.BASE_URL}guide/${image.src}`
@@ -122,9 +134,55 @@ function Figure({ image }: { image: GuideImage }) {
     <figure className={image.phone ? 'manual-figure phone' : 'manual-figure'} style={{ maxWidth }}>
       {/* Нажать — картинка целиком в новой вкладке: на телефоне снимок компьютера мелкий */}
       <a href={url} target="_blank" rel="noopener noreferrer">
-        <img src={url} alt={image.alt} loading="lazy" decoding="async" {...size} />
+        <img src={url} alt={image.alt} loading={eager ? 'eager' : 'lazy'} decoding="async" {...size} />
       </a>
       <figcaption>{image.caption}</figcaption>
     </figure>
+  )
+}
+
+/**
+ * Печатная инструкция для клиники (/guide?print=1&role=…): обложка (для кого, дата), оглавление,
+ * главы с новой страницы, картинки грузятся сразу (ленивые не попали бы в PDF). Кнопка «Печать» — только
+ * на экране. Из неё же делается PDF в «Платформа → Материалы» (docs/marketing/guide бэкенда).
+ * Картинки — со вымышленной клиники (e2e/promo/guide бэкенда), настоящих пациентов на них нет.
+ */
+function GuidePrint({ role, roleTitle }: { role: GuideRole | null; roleTitle?: string }) {
+  const chapters = chaptersFor(role)
+  const today = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Bishkek' }).format(new Date())
+  return (
+    <main className="site-page manual print">
+      <nav className="manual-print-bar" aria-label="Печать">
+        <a href={`/guide${role ? `?role=${role}` : ''}`}>‹ Обычная версия</a>
+        <button type="button" className="btn primary" onClick={() => window.print()}>Печать или PDF</button>
+      </nav>
+      <header className="manual-cover">
+        <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} />
+        <h1>Инструкция Tish для клиники</h1>
+        <p className="manual-cover-role">{roleTitle ? `Для роли: ${roleTitle}` : 'Для всех сотрудников: администратор, регистратура, врач, ассистент'}</p>
+        <p className="hint">Версия от {today}. Свежая версия с поиском — tish.kg/guide. Вопросы — «Настройки → Техподдержка» в Tish.</p>
+      </header>
+      <nav className="manual-toc" aria-label="Оглавление">
+        <h2>Оглавление</h2>
+        <ol>{chapters.map((c) => <li key={c.id}>{c.title}</li>)}</ol>
+      </nav>
+      <div className="manual-chapters">
+        {chapters.map((c, i) => (
+          <section key={c.id} id={c.id} className="manual-chapter" aria-labelledby={`${c.id}-title`}>
+            <h2 id={`${c.id}-title`}><span className="manual-num">{i + 1}.</span> {c.title}</h2>
+            <p className="manual-intro">{c.intro}</p>
+            {c.sections.map((s) => (
+              <article key={s.title} className="manual-section" aria-label={s.title}>
+                <h3>{s.title}</h3>
+                {s.text && <p>{s.text}</p>}
+                {s.steps.length > 0 && <ol className="manual-steps">{s.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
+                {s.image && <Figure image={s.image} eager />}
+                {s.tip && <p className="manual-tip"><strong>Совет.</strong> {s.tip}</p>}
+              </article>
+            ))}
+          </section>
+        ))}
+      </div>
+    </main>
   )
 }

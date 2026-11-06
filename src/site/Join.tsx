@@ -5,7 +5,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { SiteHeader } from './SiteHeader'
-import { getJson, inAppBrowser, type Links, type Tariffs } from './web'
+import { getJson, inAppBrowser, type JoinCase, type Links, type Tariffs } from './web'
 
 const FEATURES: [string, string, string][] = [
   ['📲', 'Запись в Telegram', 'Пациент выбирает врача, услугу и время сам — врач подтверждает одним нажатием.'],
@@ -28,6 +28,7 @@ export function Join() {
   // автозаполнения (autoComplete=off): его подсказка в браузере Instagram и сбивает клавиатуру.
   const [phone, setPhone] = useState('')
   const [links, setLinks] = useState<Links>({})
+  const [story, setStory] = useState<JoinCase | null>(null)
   const [consent, setConsent] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [sending, setSending] = useState(false)
@@ -35,6 +36,8 @@ export function Join() {
   useEffect(() => {
     document.title = 'Tish — запись пациентов для стоматологии'
     if (inAppBrowser()) void getJson<Links>('/web/links').then(({ data }) => setLinks(data ?? {}))
+    // Кейс владелец заполняет в «Платформа → Настройки»; не заполнен — блока нет
+    void getJson<JoinCase>('/web/case').then(({ data }) => setStory(data?.shown ? data : null))
     void getJson<Tariffs>('/web/tariffs').then(({ data }) => {
       setTariffs(data)
       // Пришли по ссылке /join#form (со страницы /go) — к форме, когда страница дорисовалась
@@ -98,6 +101,18 @@ export function Join() {
       <ul className="site-features">
         {FEATURES.map(([icon, title, text]) => <li key={title}><span className="ico" aria-hidden="true">{icon}</span><span><strong>{title}</strong><span>{text}</span></span></li>)}
       </ul>
+      {story && (
+        <section className="site-case" aria-label="Как работает в клинике">
+          <h2>Как работает в клинике</h2>
+          <h3>{story.title}</h3>
+          <p>{story.text}</p>
+          {(story.metrics?.length ?? 0) > 0 && (
+            <ul className="site-case-metrics">
+              {story.metrics!.map((m) => <li key={`${m.value}${m.label}`}><b>{m.value}</b><span>{m.label}</span></li>)}
+            </ul>
+          )}
+        </section>
+      )}
       {/* Цены пока не показываем (владелец, 2026-11-02): клиника сначала пробует бесплатно, о цене — в разговоре */}
       <h2 id="tariffs">Сколько стоит</h2>
       <p>Попробовать — бесплатно: всё приложение, без ограничений и без предоплаты.

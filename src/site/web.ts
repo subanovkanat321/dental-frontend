@@ -61,6 +61,8 @@ export type Links = {
 }
 
 export type Tariffs = Schemas['Tariffs']
+/** Кейс на /join (/web/case): shown — заголовок и текст заполнены, блок показываем. */
+export type JoinCase = Schemas['JoinCaseCase']
 
 /** GET открытого адреса: ответ, null — ошибка; status — чтобы отличить 404 от «нет связи». */
 export async function getJson<T>(path: string): Promise<{ status: number; data: T | null }> {

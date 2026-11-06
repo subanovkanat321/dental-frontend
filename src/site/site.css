@@ -119,3 +119,12 @@ body.site {
 /* Руководство из CRM: «✕ Закрыть» справа в шапке */
 .site-close { border: 1px solid var(--line-strong, #cfd8da); border-radius: 999px; background: var(--card, #fff); color: inherit; font: inherit; font-size: .9rem; padding: 6px 14px; cursor: pointer; }
 .plan-page { display: grid; gap: 14px; }
+
+/* Кейс пилота на /join («Как работает в клинике»): владелец заполняет в «Платформа → Настройки» */
+.site-case { display: grid; gap: 8px; padding: 18px; border-radius: 16px; background: var(--card); border: 1px solid var(--separator); }
+.site-case h2, .site-case h3, .site-case p { margin: 0; }
+.site-case h3 { font-size: 1.05rem; }
+.site-case-metrics { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.site-case-metrics li { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); }
+.site-case-metrics b { font-size: 1.5rem; color: var(--link); font-variant-numeric: tabular-nums; }
+.site-case-metrics span { color: var(--hint); font-size: .9rem; }
