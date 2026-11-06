@@ -175,3 +175,36 @@ test('у услуги нет памятки — выбрать из списка
   await choose(await within(panel).findByRole('combobox', { name: 'Выбрать памятку' }), 'После чистки')
   expect(await within(panel).findByText('После чистки', { selector: 'b' })).toBeInTheDocument()
 })
+
+test('памятка по-кыргызски: язык пациента по умолчанию, выбор языка для WhatsApp, бота и печати', async () => {
+  const open = vi.spyOn(window, 'open').mockReturnValue(null)
+  const KY = {
+    memoId: 3, title: 'Тиш жулдургандан кийин', body: '• Тампонду 20–30 мүнөт кармаңыз.', text: '📋 Кабыл алуудан кийинки эскертме\n\nТиш жулдургандан кийин',
+    telegram: false, lang: 'KY', patientLang: 'KY', ky: true,
+  } satisfies Schemas['CareMemosAppointmentMemo']
+  const RU = { ...MEMO, telegram: false, lang: 'RU', patientLang: 'KY', ky: true } satisfies Schemas['CareMemosAppointmentMemo']
+  backend(done(), reception, KY)
+  server.use(http.get('*/api/appointments/:id/care-memo', ({ request }) =>
+    HttpResponse.json(new URL(request.url).searchParams.get('lang') === 'RU' ? RU : KY)))
+  renderApp()
+  const panel = await card(/Бакыт М\./)
+  expect(await within(panel).findByText('Тиш жулдургандан кийин')).toBeInTheDocument()
+  const langs = within(panel).getByRole('group', { name: 'Язык памятки' })
+  expect(within(langs).getByRole('button', { name: 'Кыргызский · язык пациента' })).toHaveAttribute('aria-pressed', 'true')
+
+  // Печать — сначала язык пациента, переключатель над листом
+  await userEvent.click(within(panel).getByRole('button', { name: 'Печать: памятка «Тиш жулдургандан кийин»' }))
+  const sheet = await screen.findByRole('dialog', { name: 'Печать: Памятка пациенту' })
+  expect(within(sheet).getByRole('heading', { name: 'Тиш жулдургандан кийин' })).toBeInTheDocument()
+  expect(sheet).toHaveTextContent('Бейтап')
+  await userEvent.click(within(within(sheet).getByRole('group', { name: 'Язык памятки' })).getByRole('button', { name: 'Русский' }))
+  expect(await within(sheet).findByRole('heading', { name: 'После удаления зуба' })).toBeInTheDocument()
+  expect(sheet).toHaveTextContent('Держите тампон 20–30 минут.')
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Закрыть' }))
+
+  // WhatsApp — на выбранном языке
+  await userEvent.click(within(langs).getByRole('button', { name: 'Русский' }))
+  expect(await within(panel).findByText('После удаления зуба', { selector: 'b' })).toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Отправить пациенту в WhatsApp: памятка «После удаления зуба»' }))
+  expect(open).toHaveBeenCalledWith(`https://wa.me/996555123456?text=${encodeURIComponent(MEMO.text)}`, '_blank', 'noopener')
+})

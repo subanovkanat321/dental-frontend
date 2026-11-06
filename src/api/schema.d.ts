@@ -2852,6 +2852,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/care-memos/translate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["translate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/care-memos/starter": {
         parameters: {
             query?: never;
@@ -5906,6 +5922,8 @@ export interface components {
             title?: string;
             body?: string;
             active?: boolean;
+            titleKy?: string;
+            bodyKy?: string;
         };
         CareMemosCareMemoView: {
             /** Format: int64 */
@@ -5915,6 +5933,9 @@ export interface components {
             active?: boolean;
             standard?: boolean;
             serviceIds?: number[];
+            titleKy?: string;
+            bodyKy?: string;
+            kyStandard?: boolean;
         };
         CareMemoControllerLinkRequest: {
             /** Format: int64 */
@@ -6750,6 +6771,14 @@ export interface components {
             };
             scans?: components["schemas"]["AgreementsScan"][];
         };
+        CareMemoControllerTranslateRequest: {
+            title?: string;
+            body?: string;
+        };
+        MemoTranslationsTranslation: {
+            title?: string;
+            body?: string;
+        };
         CareMemoControllerLinked: {
             /** Format: int32 */
             services?: number;
@@ -6927,6 +6956,8 @@ export interface components {
         CareMemoControllerSend: {
             /** Format: int64 */
             memoId?: number;
+            /** @enum {string} */
+            lang?: "RU" | "KY";
         };
         ReportControllerRequest: {
             month?: string;
@@ -7506,7 +7537,7 @@ export interface components {
         };
         AiUsageStoreKindRow: {
             /** @enum {string} */
-            kind?: "VISIT_REPORT" | "DICTATION" | "QUESTION_DRAFT" | "POST_TEXT" | "PHOTO_FRAME" | "COMEBACK" | "BOT_ANSWER" | "SUPPORT" | "OTHER";
+            kind?: "VISIT_REPORT" | "DICTATION" | "QUESTION_DRAFT" | "POST_TEXT" | "PHOTO_FRAME" | "COMEBACK" | "BOT_ANSWER" | "MEMO_TRANSLATION" | "SUPPORT" | "OTHER";
             label?: string;
             /** Format: int64 */
             actions?: number;
@@ -8006,6 +8037,11 @@ export interface components {
             body?: string;
             text?: string;
             telegram?: boolean;
+            /** @enum {string} */
+            lang?: "RU" | "KY";
+            /** @enum {string} */
+            patientLang?: "RU" | "KY";
+            ky?: boolean;
         };
         WeekStats: {
             /** Format: date */
@@ -13930,6 +13966,30 @@ export interface operations {
             };
         };
     };
+    translate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CareMemoControllerTranslateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoTranslationsTranslation"];
+                };
+            };
+        };
+    };
     starter: {
         parameters: {
             query?: never;
@@ -16586,6 +16646,7 @@ export interface operations {
         parameters: {
             query?: {
                 memoId?: number;
+                lang?: "RU" | "KY";
             };
             header?: never;
             path: {

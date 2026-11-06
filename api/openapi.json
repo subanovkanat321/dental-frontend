@@ -7058,6 +7058,34 @@
         }
       }
     },
+    "/api/care-memos/translate" : {
+      "post" : {
+        "tags" : [ "care-memo-controller" ],
+        "operationId" : "translate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CareMemoControllerTranslateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MemoTranslationsTranslation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/care-memos/starter" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
@@ -10374,6 +10402,14 @@
             "type" : "integer",
             "format" : "int64"
           }
+        }, {
+          "name" : "lang",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          }
         } ],
         "responses" : {
           "200" : {
@@ -13306,6 +13342,12 @@
           },
           "active" : {
             "type" : "boolean"
+          },
+          "titleKy" : {
+            "type" : "string"
+          },
+          "bodyKy" : {
+            "type" : "string"
           }
         }
       },
@@ -13333,6 +13375,15 @@
               "type" : "integer",
               "format" : "int64"
             }
+          },
+          "titleKy" : {
+            "type" : "string"
+          },
+          "bodyKy" : {
+            "type" : "string"
+          },
+          "kyStandard" : {
+            "type" : "boolean"
           }
         }
       },
@@ -15301,6 +15352,26 @@
           }
         }
       },
+      "CareMemoControllerTranslateRequest" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MemoTranslationsTranslation" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          }
+        }
+      },
       "CareMemoControllerLinked" : {
         "properties" : {
           "services" : {
@@ -15741,6 +15812,10 @@
           "memoId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
           }
         }
       },
@@ -17190,7 +17265,7 @@
         "properties" : {
           "kind" : {
             "type" : "string",
-            "enum" : [ "VISIT_REPORT", "DICTATION", "QUESTION_DRAFT", "POST_TEXT", "PHOTO_FRAME", "COMEBACK", "BOT_ANSWER", "SUPPORT", "OTHER" ]
+            "enum" : [ "VISIT_REPORT", "DICTATION", "QUESTION_DRAFT", "POST_TEXT", "PHOTO_FRAME", "COMEBACK", "BOT_ANSWER", "MEMO_TRANSLATION", "SUPPORT", "OTHER" ]
           },
           "label" : {
             "type" : "string"
@@ -18433,6 +18508,17 @@
             "type" : "string"
           },
           "telegram" : {
+            "type" : "boolean"
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          },
+          "patientLang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          },
+          "ky" : {
             "type" : "boolean"
           }
         }
