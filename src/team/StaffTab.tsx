@@ -82,7 +82,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
     <>
       <section className="card-block">
         <p className="hint">Весь персонал клиники: роль — рядом с именем. «Telegram привязан» — человек вошёл и получает уведомления;
-          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT}</>}</p>
+          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT} Сотруднику без Telegram номер меняете вы; сотрудник с Telegram указывает номер для входа сам: Настройки → Мой профиль.</>}</p>
         {admin && (
           <div className="segments wrap" role="group" aria-label="Показать роль">
             {FILTERS.map(([f, label]) => (
@@ -134,9 +134,9 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                   )}
                   {admin && (
                     <td>
-                      {r.kind === 'member' && <StaffPhone compact who={{ telegramId: r.member.telegramId! }} phone={r.member.phone}
+                      {r.kind === 'member' && <StaffPhone compact telegramId={r.member.telegramId!} phone={r.member.phone}
                         phoneOnly={r.member.phoneOnly} name={r.name} />}
-                      {r.kind === 'doctor' && r.doctor.telegramId != null && <StaffPhone compact who={{ telegramId: r.doctor.telegramId }}
+                      {r.kind === 'doctor' && r.doctor.telegramId != null && <StaffPhone compact telegramId={r.doctor.telegramId}
                         phone={r.doctor.phone} phoneOnly={r.doctor.phoneOnly} name={r.name} />}
                     </td>
                   )}

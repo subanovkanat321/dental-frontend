@@ -185,7 +185,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
               {d.telegramId ? 'Новая ссылка-приглашение' : 'Пригласить по ссылке'}</button>}
           {makeInvite.error && <p className="error">{makeInvite.error.message}</p>}
           <DoctorPhone doctor={d} onDone={refresh} />
-          {d.telegramId != null && !inline && <StaffPhone who={{ telegramId: d.telegramId }} phone={d.phone} phoneOnly={d.phoneOnly} name={d.fullName} />}
+          {d.telegramId != null && !inline && <StaffPhone telegramId={d.telegramId} phone={d.phone} phoneOnly={d.phoneOnly} name={d.fullName} />}
         </section>
       )}
 

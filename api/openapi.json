@@ -1620,24 +1620,6 @@
             }
           }
         }
-      },
-      "delete" : {
-        "tags" : [ "staff-members-controller" ],
-        "operationId" : "removePhone",
-        "parameters" : [ {
-          "name" : "telegramId",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
       }
     },
     "/api/members/{telegramId}/doctors" : {
@@ -1680,7 +1662,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/StaffPhonesPhoneView"
+                  "$ref" : "#/components/schemas/MyPhoneControllerMyPhone"
                 }
               }
             }
@@ -1694,7 +1676,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/MyPhoneControllerPhoneChange"
+                "$ref" : "#/components/schemas/MyPhoneControllerPhoneConfirm"
               }
             }
           },
@@ -1706,7 +1688,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/StaffPhonesPhoneView"
+                  "$ref" : "#/components/schemas/MyPhoneControllerMyPhone"
                 }
               }
             }
@@ -6102,10 +6084,31 @@
         }
       }
     },
+    "/api/me/phone/code" : {
+      "post" : {
+        "tags" : [ "my-phone-controller" ],
+        "operationId" : "code",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MyPhoneControllerCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/me/password/code" : {
       "post" : {
         "tags" : [ "password-controller" ],
-        "operationId" : "code",
+        "operationId" : "code_1",
         "responses" : {
           "200" : {
             "description" : "OK"
@@ -12314,10 +12317,26 @@
           }
         }
       },
-      "MyPhoneControllerPhoneChange" : {
+      "MyPhoneControllerPhoneConfirm" : {
         "properties" : {
           "phone" : {
             "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MyPhoneControllerMyPhone" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          },
+          "phoneOnly" : {
+            "type" : "boolean"
+          },
+          "sms" : {
+            "type" : "boolean"
           }
         }
       },
@@ -14631,6 +14650,13 @@
           "telegramId" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "MyPhoneControllerCodeRequest" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
           }
         }
       },
