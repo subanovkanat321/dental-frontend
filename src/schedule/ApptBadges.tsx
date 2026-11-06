@@ -8,12 +8,18 @@ type Appointment = Schemas['AppointmentView']
  * ⭐ первый визит, 💬 есть комментарий, 🧾 долг по приёму (только тем, кто видит деньги этого врача).
  * Подтверждение («Придёт 👍») уже в статусе — здесь не дублируем. Подсказка — при наведении, и та же
  * расшифровка — в легенде под расписанием.
+ *
+ * Подпись у значка — по ширине блока приёма (container query `.appt` в styles.css): в широком блоке
+ * чип «⭐ Первый визит», в среднем — «⭐ Новый», в узком (неделя, телефон) — голый значок. Подпись
+ * рисует CSS из data-атрибутов: текст в DOM и имя для скринридера (aria-label) не меняются.
  */
-function badgesOf(a: Appointment, money: boolean): [string, string][] {
-  const list: [string, string][] = []
-  if (a.firstVisit && a.status !== 'CANCELLED') list.push(['⭐', 'Первый визит'])
-  if (a.comment?.trim()) list.push(['💬', `Комментарий: ${a.comment.trim()}`])
-  if (money && (a.debtSom ?? 0) > 0) list.push(['🧾', `Долг ${somText(a.debtSom!)}`])
+type Badge = { icon: string; text: string; short?: string; long: string }
+
+function badgesOf(a: Appointment, money: boolean): Badge[] {
+  const list: Badge[] = []
+  if (a.firstVisit && a.status !== 'CANCELLED') list.push({ icon: '⭐', text: 'Первый визит', short: 'Новый', long: 'Первый визит' })
+  if (a.comment?.trim()) list.push({ icon: '💬', text: `Комментарий: ${a.comment.trim()}`, long: 'Комментарий' })
+  if (money && (a.debtSom ?? 0) > 0) list.push({ icon: '🧾', text: `Долг ${somText(a.debtSom!)}`, long: `Долг ${somText(a.debtSom!)}` })
   return list
 }
 
@@ -22,7 +28,9 @@ export function ApptBadges({ appointment, money }: { appointment: Appointment; m
   if (!list.length) return null
   return (
     <span className="appt-badges">
-      {list.map(([icon, text]) => <span key={icon} title={text} role="img" aria-label={text}>{icon}</span>)}
+      {list.map((b) => (
+        <span key={b.icon} className="appt-badge" title={b.text} role="img" aria-label={b.text} data-short={b.short} data-long={b.long}>{b.icon}</span>
+      ))}
     </span>
   )
 }
