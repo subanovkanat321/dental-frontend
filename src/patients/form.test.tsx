@@ -107,3 +107,33 @@ test('карточка пациента: «откуда узнал» — во в
   expect(await within(panel).findByRole('button', { name: 'изменить' })).toBeInTheDocument()
   expect(within(panel).getByRole('group', { name: 'Откуда узнал о клинике' })).toHaveTextContent('📱 Instagram')
 })
+
+test('админ: «＋ Свой вариант» в «Откуда узнал» — вариант добавлен в список клиники и сразу выбран пациенту', async () => {
+  let saved: Record<string, unknown> | null = null
+  let added: Record<string, unknown> | null = null
+  const p = { id: 3, fullName: 'Бакыт М.', phone: '996700555666' }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: true })),
+    http.get('*/api/patients/recent', () => HttpResponse.json([p])),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/appointments/by-patient/3', () => HttpResponse.json(card(saved ? { ...p, sourceId: 77 } : p))),
+    http.post('*/api/patient-sources', async ({ request }) => {
+      added = await request.json() as Record<string, unknown>
+      return HttpResponse.json([{ id: 11, emoji: '📱', title: 'Instagram', active: true }, { id: 77, emoji: '', title: 'Ярмарка здоровья', active: true }])
+    }),
+    http.put('*/api/patients/3', async ({ request }) => {
+      saved = await request.json() as Record<string, unknown>
+      return HttpResponse.json({ ...p, sourceId: 77 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Бакыт М.' }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка пациента' })
+  await user.click(await within(panel).findByRole('tab', { name: 'Прочее' }))
+  await user.click(await within(panel).findByRole('button', { name: '＋ Свой вариант' }))
+  await user.type(within(panel).getByRole('textbox', { name: 'Название варианта' }), 'Ярмарка здоровья')
+  await user.click(within(panel).getByRole('button', { name: 'Добавить' }))
+  await vi.waitFor(() => expect(added).toMatchObject({ title: 'Ярмарка здоровья' }))
+  await vi.waitFor(() => expect(saved).toMatchObject({ sourceId: 77 }))
+})

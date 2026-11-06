@@ -129,6 +129,18 @@ test('«＋ Выходной день»: каждое воскресенье —
   expect(lines(list)).toEqual(['Каждое воскресенье, весь день — ⏸️ Выходной'])
 })
 
+test('«＋ Выходной день»: такой уже есть — ответ сервера «Уже есть…», второй строки нет', async () => {
+  const state = backend()
+  server.use(http.post('*/api/time-off', () => HttpResponse.json(
+    { detail: 'Уже есть: «⏸️ Выходной» — в это время. Второй раз добавлять не нужно', code: 'duplicate-time-off' }, { status: 409 })))
+  const user = await openTab()
+  await user.click(screen.getByRole('button', { name: '＋ Выходной день' }))
+  const form = screen.getByRole('form', { name: 'Новый выходной день' })
+  await user.click(within(form).getByRole('button', { name: 'Добавить выходной' }))
+  expect(await within(form).findByText(/Уже есть: «⏸️ Выходной»/)).toBeInTheDocument()
+  expect(state.list).toEqual([])
+})
+
 test('«＋ Выходной день» → «Одна дата / праздник»: две даты подряд — один период «Нооруз»', async () => {
   const state = backend()
   const user = await openTab()
