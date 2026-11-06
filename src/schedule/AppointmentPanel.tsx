@@ -34,6 +34,7 @@ import { Fold } from '../layout/Fold'
 import { AfterVisit } from '../print/VisitReport'
 import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { cancelledWhen } from './cancelled'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -193,7 +194,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {/* Шапка: когда, у кого и статус; справа — показать пациенту, на весь экран, закрыть */}
       <header className="panel-head">
         <div className="appt-when">
-          <h2>{timeOf(a.startAt!)}–{timeOf(a.endAt!)}</h2>
+          <div className="with-hint"><h2>{timeOf(a.startAt!)}–{timeOf(a.endAt!)}</h2><HelpHint hint="appointment" /></div>
           <span className="hint">{dayTitle(date)}{doctors.length > 1 && doctor ? ` · ${doctor.fullName}` : ''}</span>
         </div>
         <div className="panel-head-actions">

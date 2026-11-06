@@ -24,6 +24,7 @@ import { Select } from '../layout/Select'
 import { useDebounced } from '../lib/useDebounced'
 import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
 import { Spinner } from '../layout/Loading'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -249,7 +250,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     <aside className="panel" aria-label={walkIn ? 'Принять сейчас' : 'Новая запись'}>
       <header className="panel-head">
         <div>
-          <h2>{walkIn ? 'Принять сейчас' : 'Новая запись'}</h2>
+          <div className="with-hint"><h2>{walkIn ? 'Принять сейчас' : 'Новая запись'}</h2><HelpHint hint="newAppointment" /></div>
           {walkIn && <p className="hint">Пациент пришёл без записи: приём с этой минуты, без напоминаний.</p>}
           <span className="hint">{dayTitle(date)}</span>
         </div>

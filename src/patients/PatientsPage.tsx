@@ -18,6 +18,7 @@ import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -129,7 +130,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
     <div className={selected || (tab === 'questions' && question) ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
         <header ref={stickyHead} className="toolbar sticky-head patients-head">
-          <h1>Пациенты</h1>
+          <div className="with-hint"><h1>Пациенты</h1><HelpHint hint="patients" /></div>
           <div className="segments tabs" role="tablist" aria-label="Списки пациентов">
             {/* «Позвать снова» (бывшее «Вернуть») — деньги на столе и приглашения; ассистенту (денег не видит) — прежний «Профосмотр» */}
             {([['all', 'Все'], ['booked', 'Записаны'], ['waitlist', `Лист ожидания${waitlist.data?.length ? ` · ${waitlist.data.length}` : ''}`],

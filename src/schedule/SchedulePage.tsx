@@ -27,6 +27,7 @@ import { WeekGrid } from './week/WeekGrid'
 import { useEarnings } from '../earnings/earnings'
 import { EarningsChip } from '../earnings/EarningsWidgets'
 import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -335,7 +336,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             </div>
             {weekMode ? (
               <div className="day-title">
-                <h1>Неделя {weekLabel(monday)} {monday.slice(0, 4)}</h1>
+                <div className="with-hint"><h1>Неделя {weekLabel(monday)} {monday.slice(0, 4)}</h1><HelpHint hint="schedule" /></div>
                 <span className="hint">
                   {monday === weekStart(today) ? 'эта неделя · ' : ''}{doctors.find((d) => d.id === weekDoctor)?.fullName}
                   {week.data ? ` · записей ${week.data.filter((a) => a.status !== 'CANCELLED').length}` : ''}
@@ -343,7 +344,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               </div>
             ) : (
               <div className="day-title">
-                <h1>{dayTitle(date)}</h1>
+                <div className="with-hint"><h1>{dayTitle(date)}</h1><HelpHint hint="schedule" /></div>
                 <span className="hint">
                   {date === today ? 'сегодня · ' : ''}{all.length ? `Записей: ${all.length}` : 'Записей нет'}
                   {doctors.length > 1 ? ` · врачей ${doctors.length}` : ''}

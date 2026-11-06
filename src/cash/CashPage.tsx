@@ -19,6 +19,7 @@ import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { DebtorsTab } from './DebtorsTab'
 import { Loading } from '../layout/Loading'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Debt = Schemas['PaymentQueryDebt']
@@ -118,7 +119,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main cash">
         <header ref={stickyHead} className="toolbar sticky-head">
-          <h1>Касса</h1>
+          <div className="with-hint"><h1>Касса</h1><HelpHint hint="cash" /></div>
           {seesAll && doctors.length > 1 && (
             <Select aria-label="Чья касса" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
               <option value="">Вся клиника</option>

@@ -10,6 +10,7 @@ import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -81,7 +82,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
     <div className={side ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
         <header ref={stickyHead} className="toolbar sticky-head">
-          <h1>Склад</h1>
+          <div className="with-hint"><h1>Склад</h1><HelpHint hint="stock" /></div>
           <input type="search" className="search" aria-label="Поиск материала" placeholder="Название" value={query}
             onChange={(e) => setQuery(e.target.value)} />
           {choosesDoctor && doctors.length > 0 && (
