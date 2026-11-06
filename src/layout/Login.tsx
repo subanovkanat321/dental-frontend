@@ -5,6 +5,7 @@ import { botConfig } from '../api/client'
 import { isLoginPath } from '../lib/route'
 import { InstallHint } from '../pwa/InstallHint'
 import { PhoneLogin } from './PhoneLogin'
+import { Loading, Spinner } from './Loading'
 
 /**
  * «Войти через Telegram» на сайте: окно входа Telegram (Telegram.Login.auth из telegram-widget.js)
@@ -81,14 +82,14 @@ export function Login() {
       <p className="hint">Врачи, регистратура и администраторы. {byPhone
         ? 'Номер — тот, что администратор указал в «Настройки → Персонал».'
         : 'Входите тем же Telegram, что привязан в «Настройки → Персонал».'}</p>
-      {bot.isPending && <p className="hint">Загрузка…</p>}
+      {bot.isPending && <Loading />}
       {bot.isSuccess && !bot.data?.id && !phoneLogin && <p className="error">Вход сейчас недоступен: бот не настроен или не отвечает. Обновите страницу через минуту.</p>}
       {(byPhone || bot.data?.id == null) && phoneLogin
         && <PhoneLogin onDone={entered} sms={bot.data?.smsLogin === true} password={bot.data?.passwordLogin === true} />}
       {!byPhone && bot.data?.id != null && (
         <button type="button" className="btn tg-login" disabled={!ready || busy} onClick={login}>
           <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M9.8 15.3 9.6 19c.4 0 .6-.2.8-.4l2-1.9 4.1 3c.8.4 1.3.2 1.5-.7l2.7-12.7c.3-1.1-.4-1.6-1.1-1.3L3.7 10.8c-1.1.4-1.1 1-.2 1.3l4.1 1.3 9.5-6c.4-.3.9-.1.5.2"/></svg>
-          {busy ? 'Входим…' : 'Войти через Telegram'}
+          {busy ? <><Spinner />Входим…</> : 'Войти через Telegram'}
         </button>
       )}
       {error && <p className="error" role="alert">{error}</p>}

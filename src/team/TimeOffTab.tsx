@@ -8,6 +8,8 @@ import { TIME_OFF_EMOJI, timeOffWhen, WEEK, type Weekday } from './texts'
 import { isAssistant } from '../lib/roles'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -32,7 +34,7 @@ export function TimeOffTab({ me }: { me: Me }) {
       <section className="card-block">
         <p className="hint">В это время пациенты не смогут записаться через бота. Вы сами записать можете.</p>
         {list.error && <p className="error">{list.error.message}</p>}
-        {list.isPending ? <p className="hint">Загрузка…</p> : list.data?.length ? (
+        {list.isPending ? <Loading /> : list.data?.length ? (
           <table className="table" aria-label="Перерывы">
             <thead><tr><th>Перерыв</th><th>Когда</th>{doctors.length > 1 && <th>Для кого</th>}<th /></tr></thead>
             <tbody>
@@ -49,7 +51,7 @@ export function TimeOffTab({ me }: { me: Me }) {
               ))}
             </tbody>
           </table>
-        ) : <p className="hint">Перерывов нет.</p>}
+        ) : <EmptyState title="Перерывов нет" />}
         {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
       </section>
       {/* Ассистент только смотрит: перерывы и выходные ставят врач, регистратура и админ */}

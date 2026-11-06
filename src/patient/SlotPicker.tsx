@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import type { Schemas } from '../api/client'
 import { timeOf, todayIn } from '../lib/time'
 import { bookingDays, breakNote, type Lang, type T } from './i18n'
+import { EmptyState } from '../layout/EmptyState'
 
 type Slots = Schemas['BookingViewsSlots']
 
@@ -26,7 +27,7 @@ export function SlotGrid({ t, lang, slots, chosen, onPick, empty }: {
         <button key={at} type="button" className="slot time" aria-pressed={timeOf(at) === chosen} onClick={() => onPick(timeOf(at))}>{timeOf(at)}</button>
       ) : (
         <button key={at} type="button" className="slot time taken" disabled aria-label={`${timeOf(at)} — ${t('busySlot')}`}>{timeOf(at)}<small>{t('busySlot')}</small></button>
-      )) : <div className="hint">{empty}</div>}
+      )) : <EmptyState compact title={empty} />}
     </div>
   )
 }

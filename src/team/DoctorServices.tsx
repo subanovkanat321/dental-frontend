@@ -6,6 +6,8 @@ import { groupByCategory } from '../clinic/services'
 import { SaveBar } from '../layout/SaveBar'
 import { chosenServiceIds } from '../lib/doctorServices'
 import { useDirty } from '../lib/unsaved'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -62,7 +64,7 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
         <button type="button" aria-pressed={!some} onClick={() => choose(false)}>Все услуги клиники</button>
         <button type="button" aria-pressed={some} onClick={() => choose(true)}>Только выбранные</button>
       </div>
-      {some && (services.isPending ? <p className="hint">Загрузка…</p> : list.length ? (
+      {some && (services.isPending ? <Loading /> : list.length ? (
         <div className="doctor-services">
           {groupByCategory(list).map(({ category, items }) => (
             <fieldset key={category ?? '—'} className="field">
@@ -76,7 +78,7 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
           ))}
           <p className="hint small">Новую услугу клиники сюда нужно будет отметить отдельно.</p>
         </div>
-      ) : <p className="hint">Услуг пока нет — добавьте их в «Настройки → Услуги и цены».</p>)}
+      ) : <EmptyState compact title="Услуг пока нет">Добавьте их в «Настройки → Услуги и цены».</EmptyState>)}
       <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label="Сохранить услуги" savedText="Услуги врача сохранены"
         error={problem || (save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message))} onSave={submit} />
     </section>

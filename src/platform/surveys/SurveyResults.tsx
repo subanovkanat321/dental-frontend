@@ -7,6 +7,7 @@ import { Select } from '../../layout/Select'
 import { download } from '../../lib/download'
 import { shortDate } from '../../lib/time'
 import { ROLE_ONE, ROLES, rolesText, type Role } from '../../survey/texts'
+import { Loading } from '../../layout/Loading'
 
 type Details = Schemas['SurveyDetails']
 type Result = Schemas['SurveyResultsQuestionResult']
@@ -44,8 +45,8 @@ export function SurveyResults({ survey }: { survey: Details }) {
       </div>
       {csv.error && <p className="error" role="alert">{csv.error.message}</p>}
       {results.error && <p className="error">{results.error.message}</p>}
-      {results.isPending ? <p className="hint">Загрузка…</p> : !r?.responses ? (
-        <EmptyState icon="📊" title={role || clinicId ? 'С такими условиями ответов нет.' : 'Ответов пока нет.'}>
+      {results.isPending ? <Loading /> : !r?.responses ? (
+        <EmptyState title={role || clinicId ? 'С такими условиями ответов нет' : 'Ответов пока нет'}>
           {survey.status === 'DRAFT' ? 'Опрос не запущен — сотрудники его не видят.' : 'Сотрудники видят приглашение на «Расписании» и в «Настройках».'}
         </EmptyState>
       ) : (

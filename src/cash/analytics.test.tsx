@@ -161,7 +161,7 @@ test('аналитика: выручка по дням — оплат нет', a
   renderApp()
   await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
   const chart = await screen.findByRole('region', { name: 'Выручка по дням' })
-  expect(await within(chart).findByText('Оплат за этот период нет.')).toBeInTheDocument()
+  expect(await within(chart).findByText('Оплат за этот период нет')).toBeInTheDocument()
   expect(within(chart).queryByRole('group')).not.toBeInTheDocument()
 })
 

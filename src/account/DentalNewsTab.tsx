@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -30,7 +31,7 @@ export function DentalNewsTab({ me }: { me: Me }) {
         )}
         {digest.error && <p className="error" role="alert">{digest.error.message}</p>}
         {feed.error && <p className="error">{feed.error.message}</p>}
-        {feed.isPending ? <p className="hint">Загрузка…</p> : feed.data?.articles?.length ? (
+        {feed.isPending ? <Loading /> : feed.data?.articles?.length ? (
           <ul className="news-list">
             {feed.data.articles.map((a) => (
               <li key={a.id} className="news-item">
@@ -39,7 +40,7 @@ export function DentalNewsTab({ me }: { me: Me }) {
               </li>
             ))}
           </ul>
-        ) : <EmptyState compact icon="📚" title="Статей пока нет.">Сервер забирает ленты раз в 3 часа.</EmptyState>}
+        ) : <EmptyState compact title="Статей пока нет">Сервер забирает ленты раз в 3 часа.</EmptyState>}
       </section>
       {me.owner && <Feeds />}
     </>

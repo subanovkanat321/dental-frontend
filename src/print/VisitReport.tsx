@@ -10,6 +10,7 @@ import { shortDate } from '../lib/time'
 import { canPrint, docDate } from './paper'
 import { PrintSheet } from './PrintSheet'
 import { MemoDocs, MemoSheet } from './VisitDocs'
+import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -100,7 +101,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
           <p className="hint small">Что сделали и что дальше{m?.memoId != null ? <>, уход дома — из памятки «{m.title}»</> : null}. Проверите перед отправкой.</p>
           {m && m.memoId == null && <NoMemo />}
           <button type="button" className="btn" disabled={make.isPending} onClick={() => make.mutate()}>
-            {make.isPending ? 'Пишем сообщение…' : last ? 'Составить новое' : 'Составить сообщение'}</button>
+            {make.isPending ? <><Spinner />Пишем сообщение…</> : last ? 'Составить новое' : 'Составить сообщение'}</button>
           {m?.memoId != null && canPrint() && (
             <p><button type="button" className="link" onClick={() => setMemoPrinting(true)}>Распечатать только памятку</button></p>
           )}

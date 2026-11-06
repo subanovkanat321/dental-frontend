@@ -8,6 +8,7 @@ import { shortDate, somText } from '../lib/time'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { DeveloperContacts } from './Contacts'
 import { billingLine, PAY_PERIOD_TEXT } from './texts'
+import { Loading } from '../layout/Loading'
 
 type Pay = Schemas['PayRequestsClinicView']
 
@@ -17,7 +18,7 @@ const day = (d?: string) => (d ? shortDate(`${d}T12:00:00Z`) : '')
 export function PlanTab() {
   const plan = useQuery({ queryKey: ['clinic-plan'], queryFn: () => unwrap(api.GET('/api/clinic/plan')) })
   const pay = useQuery({ queryKey: ['clinic-pay'], queryFn: () => unwrap(api.GET('/api/clinic/pay')) })
-  if (plan.isPending || pay.isPending) return <p className="hint">Загрузка…</p>
+  if (plan.isPending || pay.isPending) return <Loading />
   if (plan.error || pay.error) return <p className="error">{(plan.error ?? pay.error)!.message}</p>
   const p = plan.data
   const line = billingLine(p.billing)

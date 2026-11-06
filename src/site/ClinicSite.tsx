@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { ContactLinks } from '../lib/ContactLinks'
 import { SiteHeader } from './SiteHeader'
 import { clinicCode, getJson, inAppBrowser, initials, promoCode, tgLink, useSiteLang, withPromo, type ClinicPage } from './web'
+import { Loading } from '../layout/Loading'
 
 // Форма записи на сайте — отдельным чанком: страницу клиники открывают с телефона, а форма нужна не всем
 const WebBooking = lazy(() => import('./WebBooking'))
@@ -91,7 +92,7 @@ export function ClinicSite() {
     if (d) document.title = d.name || TEXTS.ru.title
   }, [d])
   if (state.failed) return <main className="site-page"><SiteHeader back={t.back} /><p className="site-message">{t.error}</p></main>
-  if (!d) return <main className="site-page"><SiteHeader back={t.back} /><p className="site-message hint">{t.loading}</p></main>
+  if (!d) return <main className="site-page"><SiteHeader back={t.back} /><Loading className="site-message" text={t.loading} /></main>
   const name = d.name || t.title
   // Ссылка из рекламы с ?promo=КОД — бот получит код вместе с клиникой и подставит его в форму записи
   const promo = promoCode()
@@ -105,7 +106,7 @@ export function ClinicSite() {
       <main className="site-page">
         <SiteHeader back={t.back}><LangSwitch lang={lang} onChange={setLang} /></SiteHeader>
         <h1>{name}</h1>
-        <Suspense fallback={<p className="site-message hint">{t.loading}</p>}>
+        <Suspense fallback={<Loading className="site-message" text={t.loading} />}>
           <WebBooking code={clinicCode()} lang={lang} onClose={hideBooking} />
         </Suspense>
       </main>

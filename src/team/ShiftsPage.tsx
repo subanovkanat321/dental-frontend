@@ -10,6 +10,8 @@ import { useMedia } from '../lib/useMedia'
 import { addDays, todayIn, weekLabel, weekStart } from '../lib/time'
 import { SubHeader } from '../settings/SubHeader'
 import './shifts.css'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Schedule = Schemas['ShiftControllerSchedule']
 type Shift = Schemas['ShiftServiceShiftView']
@@ -77,7 +79,7 @@ export function ShiftsPage({ onBack, title = 'График смен', tabs }: { 
           : 'График смен ведёт администратор клиники. Ваша строка подсвечена.'}
       </p>
       {loaded.error && <p className="error" role="alert">{loaded.error.message}</p>}
-      {loaded.isPending ? <p className="hint">Загрузка…</p> : data && (
+      {loaded.isPending ? <Loading /> : data && (
         (data.people ?? []).length === 0 ? (
           // Одни врачи — графику некого показывать: объясняем и ведём туда, где настраивают
           <div className="card-block shifts-empty">
@@ -165,7 +167,7 @@ function DayList({ data, days, onOpen }: { data: Schedule; days: string[]; onOpe
         return (
           <section key={d} className="card-block shifts-day" aria-label={dayLong(d)}>
             <h2>{dayLong(d)}{d === todayIn() ? ' · сегодня' : ''}</h2>
-            {list.length === 0 && <p className="hint">Смен нет</p>}
+            {list.length === 0 && <EmptyState compact title="Смен нет" />}
             <ul>
               {list.map((s) => {
                 const p = nameOf(s.telegramId)!

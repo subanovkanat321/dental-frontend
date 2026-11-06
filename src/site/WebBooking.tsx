@@ -12,6 +12,7 @@ import { DayStrip, SlotGrid } from '../patient/SlotPicker'
 import { firstFree, minutesOf, stripLength } from '../patient/slots'
 import '../patient/patient.css'
 import { getJson, postJson, type SiteProblem, type WebBooked, type WebBookingInfo } from './web'
+import { Loading } from '../layout/Loading'
 
 type Slots = Schemas['BookingViewsSlots']
 type Service = WebBookingInfo['services'][number]
@@ -96,7 +97,7 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, code, length])
 
-  if (info === null) return <p className="site-message hint">{t('loading')}</p>
+  if (info === null) return <Loading className="site-message" text={t('loading')} />
   if (info === 'error') return <p className="site-message">{t('noConnection')}</p>
 
   const back = <button type="button" className="link web-book-back" onClick={onClose}>{t('webClose')}</button>
@@ -240,7 +241,7 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
             <div className="field"><span>{t('time')}</span>
               {err('time')}
               {!service ? <p className="hint">{t('pickServiceFirst')}</p>
-                : slots === 'loading' || slots === null ? <p className="hint">{t('loading')}</p>
+                : slots === 'loading' || slots === null ? <Loading text={t('loading')} />
                   : slots === 'error' ? <p className="error">{t('noConnection')}</p>
                     : slots.noneSoon ? <p className="hint">{t('noFreeSoon')} {callText(t, info.phones)}</p>
                       : <SlotGrid t={t} lang={lang} slots={slots.slots} chosen={chosen}

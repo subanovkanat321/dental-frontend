@@ -8,6 +8,7 @@ import { useBlobUrl } from '../lib/useBlobUrl'
 import { useClose } from '../lib/useClose'
 import { ticketForm } from './tickets'
 import { TICKET_KINDS, TICKET_STATUS } from './texts'
+import { Loading } from '../layout/Loading'
 
 type Thread = Schemas['SupportTicketsThread']
 
@@ -65,7 +66,7 @@ export function TicketPanel({ id, platform = false, onClose }: { id: number; pla
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
-      {thread.isPending && <p className="hint">Загрузка…</p>}
+      {thread.isPending && <Loading />}
       {thread.error && <p className="error">{thread.error.message}</p>}
       <div className="ticket-thread">
         {(thread.data?.messages ?? []).map((m) => (

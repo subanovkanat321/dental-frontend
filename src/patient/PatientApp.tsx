@@ -18,6 +18,8 @@ import { DayStrip, SlotGrid } from './SlotPicker'
 import { PlanView } from './PlanView'
 import { firstFree, minutesOf, stripLength } from './slots'
 import './patient.css'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorView']
@@ -327,7 +329,7 @@ function ClinicsScreen({ ctx, back }: { ctx: Ctx; back: Screen | null }) {
       <BackButton onBack={back ? () => ctx.go(back) : null} />
       <Hero t={t} title={t('chooseClinic')} subtitle={t('chooseClinicSub')} />
       {list.error && <p className="error">{errorText(t, list.error, ctx.me.clinicContact)}</p>}
-      {list.isFetching && !choices.length && <p className="hint">{t('loading')}</p>}
+      {list.isFetching && !choices.length && <Loading text={t('loading')} />}
       <ClinicFilters filter={filter} lang={ctx.lang} texts={{ search: t('clinicSearch'), cities: t('cities'), allCities: t('allCities') }} />
       {choices.length > 0 && !filter.shown.length && (
         <div className="empty-filter">
@@ -589,7 +591,7 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
         <div className="field"><span>{t('time')}</span>
           {errors.time && <p className="error" role="alert">{errors.time}</p>}
           {!service ? <p className="hint">{t('pickServiceFirst')}</p>
-            : slots.isPending ? <p className="hint">{t('loading')}</p>
+            : slots.isPending ? <Loading text={t('loading')} />
               : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
                 : slots.data.noneSoon ? <p className="hint">{t('noFreeSoon')} {callText(t, me.clinicContact)}</p>
                   : <SlotGrid t={t} lang={lang} slots={slots.data.slots} chosen={chosen}
@@ -948,7 +950,7 @@ function RescheduleScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
         <DayStrip t={t} lang={lang} length={daysOf(me)} date={date} onPick={(d) => { setDate(d); setChosen(''); setError('') }} /></div>
       <div className="field"><span>{t('time')}</span>
         {error && <p className="error" role="alert">{error}</p>}
-        {slots.isPending ? <p className="hint">{t('loading')}</p> : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
+        {slots.isPending ? <Loading text={t('loading')} /> : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
           : <SlotGrid t={t} lang={lang} slots={slots.data} chosen={chosen} onPick={(time) => { setChosen(time); setError('') }}
             empty={slots.data.dayOff ? t('otherDay') : slots.data.workingDay ? t('noFree') : t('dayOff')} />}
       </div>
@@ -1019,7 +1021,7 @@ function NewsScreen({ ctx, back }: { ctx: Ctx; back: Screen }) {
             <ul className="news-list">
               {d.news.map((n, i) => <li key={i} className="news-item"><p className="hint">📰 {n.createdAt ? whenAt(lang, n.createdAt) : ''}</p><p>{n.text}</p></li>)}
             </ul>
-          ) : <p className="hint">{t('newsNone')}</p>}
+          ) : <EmptyState compact title={t('newsNone')} />}
         </>
       )}
     </section>

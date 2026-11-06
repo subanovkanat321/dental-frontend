@@ -7,6 +7,7 @@ import { openSettings } from '../lib/route'
 import { SubHeader } from '../settings/SubHeader'
 import { CURRENT_KEY } from './keys'
 import { SurveyForm } from './SurveyForm'
+import { Loading } from '../layout/Loading'
 
 /**
  * «Настройки → Отзыв о Tish»: опрос команды Tish, который ждёт ответа этого сотрудника (сюда ведёт
@@ -22,10 +23,10 @@ export function SurveyPage({ onBack }: { onBack: () => void }) {
     <div className="schedule-main survey-page">
       <SubHeader title="Отзыв о Tish" onBack={onBack} />
       {current.error && <p className="error">{current.error.message}</p>}
-      {current.isPending ? <p className="hint">Загрузка…</p> : form ? (
+      {current.isPending ? <Loading /> : form ? (
         <SurveyForm key={form.id} form={form} onDone={() => setAnswered(form)} />
       ) : (
-        <EmptyState icon="📝" title="Сейчас опросов нет — спасибо, что заглянули!"
+        <EmptyState title="Сейчас опросов нет — спасибо, что заглянули!"
           action={<button type="button" className="btn" onClick={() => openSettings('support')}>Написать в техподдержку</button>}>
           Есть идея или что-то мешает в работе — напишите команде Tish, мы читаем каждое сообщение.
         </EmptyState>

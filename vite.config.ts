@@ -60,7 +60,7 @@ export default defineConfig({
       // CRM и Mini App — index.html; страницы сайта — свои HTML с og:-тегами и лёгкими скриптами
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
-        ...Object.fromEntries(['clinic', 'clinics', 'join', 'go', 'call', 'guide', 'plan', 'learn'].map((name) => [name, resolve(import.meta.dirname, `site/${name}.html`)])),
+        ...Object.fromEntries(['clinic', 'clinics', 'join', 'go', 'call', 'guide', 'plan', 'learn', 'about'].map((name) => [name, resolve(import.meta.dirname, `site/${name}.html`)])),
       },
     },
   },

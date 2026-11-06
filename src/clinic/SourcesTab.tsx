@@ -6,6 +6,7 @@ import { SaveBar } from '../layout/SaveBar'
 import { sourceLabel, useSources, type SourceOption } from '../lib/sources'
 import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -43,7 +44,7 @@ export function SourcesTab({ me, header, onPanel }: { me: Me; header: ReactNode;
             {!editable && ' Список меняет администратор клиники.'}</p>
           {list.error && <p className="error">{list.error.message}</p>}
           {move.error && <p className="error" role="alert">{move.error.message}</p>}
-          {list.isPending ? <p className="hint">Загрузка…</p> : (
+          {list.isPending ? <Loading /> : (
             <table className="table" aria-label="Откуда узнают о клинике">
               <thead><tr><th>Вариант</th><th>Пациентов</th><th className="r">
                 {editable && <button type="button" className="btn small" onClick={() => setOpened({ emoji: '', title: '', active: true })}>+ Добавить</button>}

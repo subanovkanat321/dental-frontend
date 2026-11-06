@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { haptic } from '../lib/telegram'
+import { Spinner } from './Loading'
 
 /** Сколько видно «✅ Сохранено» после успешного сохранения. */
 const SAVED_MS = 3000
@@ -55,7 +56,7 @@ export function SaveBar({ dirty, saving, saved, error, savedText = 'Сохран
       onClick={onSave ? () => onSave() : undefined}>{label}</button>
   )
   if (saving) {
-    return <div className="save-bar" data-state="saving"><span className="save-bar-text" role="status">Сохраняем…</span>{button}</div>
+    return <div className="save-bar" data-state="saving"><span className="save-bar-text" role="status"><Spinner />Сохраняем…</span>{button}</div>
   }
   if (error) {
     return <div className="save-bar" data-state="error"><span className="save-bar-text" role="alert">{error}</span>{button}</div>

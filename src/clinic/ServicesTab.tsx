@@ -14,6 +14,7 @@ import { groupByCategory, monthsText, priceText, recallChoices, SERVICE_CATEGORI
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
 import { clearServiceToOpen, serviceToOpen } from '../lib/openService'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Service = Schemas['ServiceTypeView']
@@ -82,7 +83,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
         </div>
         <RecallDefault admin={Boolean(me.admin)} />
         {list.error && <p className="error">{list.error.message}</p>}
-        {list.isPending ? <p className="hint">Загрузка…</p> : services.length ? (
+        {list.isPending ? <Loading /> : services.length ? (
           <table className="table" aria-label="Услуги">
             <thead><tr><th>Услуга</th><th className="r">Длительность</th><th className="r">Цена</th><th className="r">Профосмотр</th><th /></tr></thead>
             <tbody>
@@ -102,7 +103,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
               ))}
             </tbody>
           </table>
-        ) : <EmptyState icon="🦷" title="Услуг пока нет.">Добавьте свои или отметьте типовые в справочнике.</EmptyState>}
+        ) : <EmptyState title="Услуг пока нет">Добавьте свои или отметьте типовые в справочнике.</EmptyState>}
       </section>
       </section>
       {opened === 'new' && <ServicePanel me={me} all={services} onClose={close} />}
@@ -293,7 +294,7 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
-      {sections.isPending && <p className="hint">Загрузка…</p>}
+      {sections.isPending && <Loading />}
       {sections.error && <p className="error">{sections.error.message}</p>}
       {sections.data?.map((sec) => {
         const fresh = (sec.items ?? []).filter((i) => !i.added).length

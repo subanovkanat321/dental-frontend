@@ -9,6 +9,8 @@ import { MonthPicker } from '../layout/MonthPicker'
 import { Donut, type DonutPart } from '../lib/Donut'
 import { percents } from '../lib/parts'
 import { HBars } from './HBars'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -117,7 +119,7 @@ function MonthsChart({ month, scope }: { month: string; scope: { doctorId?: numb
   return (
     <section className="card-block chart" aria-label="Выручка за 6 месяцев">
       <h2>Растём или нет?</h2>
-      {data.some((q) => q.isPending) ? <p className="hint">Загрузка…</p> : failed(data) ? <p className="error">{failed(data)}</p> : (
+      {data.some((q) => q.isPending) ? <Loading /> : failed(data) ? <p className="error">{failed(data)}</p> : (
         <>
           <p className="chart-headline"><b>{somText(last)}</b> за {longMonth(months[full]!)}
             <span className="hint"> по приёмам</span>
@@ -184,9 +186,9 @@ function DaysChart({ period, scope }: { period: Period; scope: { doctorId?: numb
   return (
     <section className="card-block chart" aria-label="Выручка по дням">
       <h2>Выручка по дням {period.label}</h2>
-      {data.isPending ? <p className="hint">Загрузка…</p>
+      {data.isPending ? <Loading />
         : data.error ? <p className="error">{data.error.message}</p>
-          : !total ? <p className="hint">Оплат за этот период нет.</p> : (
+          : !total ? <EmptyState compact title="Оплат за этот период нет" /> : (
             <>
               <p className="chart-headline" aria-label="Среднее за день"><b>{somText(Math.round(total / worked))}</b> в среднем за день с оплатами
                 <span className="hint"> · таких дней {worked} из {dates.length}</span></p>
@@ -232,9 +234,9 @@ function DoctorsChart({ me, period }: { me: Me; period: Period }) {
   return (
     <section className="card-block chart" aria-label="Выручка по врачам">
       <h2>Кто сколько приносит {period.label}</h2>
-      {data.some((q) => q.isPending) ? <p className="hint">Загрузка…</p>
+      {data.some((q) => q.isPending) ? <Loading />
         : failed(data) ? <p className="error">{failed(data)}</p>
-          : rows.every((r) => !r.value) ? <p className="hint">Оплат за этот период нет.</p>
+          : rows.every((r) => !r.value) ? <EmptyState compact title="Оплат за этот период нет" />
             : doctors.length <= 6 ? <Donut parts={parts} label="Выручка по врачам" format={somText} caption="выручка" center={somText(total)} />
               : <HBars rows={rows} label="Выручка по врачам" />}
     </section>
@@ -277,10 +279,10 @@ function ServicesChart({ period, scope }: { period: Period; scope: { doctorId?: 
   return (
     <section className="card-block chart" aria-label="Выручка по услугам">
       <h2>Что приносит деньги {period.label}</h2>
-      {pending ? <p className="hint">Загрузка…</p>
+      {pending ? <Loading />
         : error ? <p className="error">{error}</p>
         : top.length ? <HBars rows={top} label="Выручка по услугам" />
-          : <p className="hint">Оплат за этот период нет. Услугу ставят при записи или в карточке приёма — тогда видно, что приносит деньги.</p>}
+          : <EmptyState compact title="Оплат за этот период нет">Услугу ставят при записи или в карточке приёма — тогда видно, что приносит деньги.</EmptyState>}
     </section>
   )
 }
@@ -304,7 +306,7 @@ function MethodsChart({ period, scope }: { period: Period; scope: { doctorId?: n
     <section className="card-block chart" aria-label="Способы оплаты">
       <h2>Как платят {period.label}</h2>
       <p className="hint small">Касса — деньги, полученные за период</p>
-      {data.isPending ? <p className="hint">Загрузка…</p>
+      {data.isPending ? <Loading />
         : data.error ? <p className="error">{data.error.message}</p>
           : <Donut parts={parts} label="Способы оплаты" format={somText} caption="касса" empty="Оплат за этот период нет." />}
     </section>
@@ -323,7 +325,7 @@ function OutcomesChart({ period, scope }: { period: Period; scope: { doctorId?: 
   return (
     <section className="card-block chart" aria-label="Чем закончились приёмы">
       <h2>Чем закончились приёмы {period.label}</h2>
-      {pending ? <p className="hint">Загрузка…</p>
+      {pending ? <Loading />
         : error ? <p className="error">{error}</p>
           : <Donut parts={parts} label="Чем закончились приёмы" center={`${percents(parts.map((p) => p.value))[0]}%`} caption="пришли"
             empty="Прошедших приёмов за этот период нет." />}
@@ -363,7 +365,7 @@ function LoadHeatmap({ period, scope }: { period: Period; scope: { doctorId?: nu
   return (
     <section className="card-block chart" aria-label="Загрузка по дням и часам">
       <h2>Когда больше всего приёмов {period.label}</h2>
-      {pending ? <p className="hint">Загрузка…</p> : error ? <p className="error">{error}</p> : !rows.length ? <p className="hint">Приёмов за этот период нет.</p> : (
+      {pending ? <Loading /> : error ? <p className="error">{error}</p> : !rows.length ? <EmptyState compact title="Приёмов за этот период нет" /> : (
         <>
           {peak.n > 0 && <p className="chart-headline">Пик — <b>{WEEK_SHORT[peak.wd]} {String(peak.h).padStart(2, '0')}:00</b> <span className="hint">· {peak.n} {peak.n === 1 ? 'приём' : 'приёмов'}</span></p>}
           <div className="heatmap" role="table" aria-label="Приёмы по дням недели и часам" style={{ gridTemplateColumns: `2.4em repeat(${cols.length}, minmax(0, 1fr))` }}>
@@ -412,7 +414,7 @@ function SourcesChart({ period, scope }: { period: Period; scope: { doctorId?: n
   return (
     <section className="card-block chart" aria-label="Откуда новые пациенты">
       <h2>Откуда новые пациенты {period.label}</h2>
-      {data.isPending ? <p className="hint">Загрузка…</p>
+      {data.isPending ? <Loading />
         : data.error ? <p className="error">{data.error.message}</p>
           : (
             <>
@@ -437,7 +439,7 @@ function VisitsChart({ period, scope }: { period: Period; scope: { doctorId?: nu
   return (
     <section className="card-block chart" aria-label="Первичные и повторные визиты">
       <h2>Возвращаются ли пациенты {period.label}</h2>
-      {data.isPending ? <p className="hint">Загрузка…</p>
+      {data.isPending ? <Loading />
         : data.error ? <p className="error">{data.error.message}</p>
           : (
             <>
@@ -468,11 +470,11 @@ function PromoChart({ period, scope }: { period: Period; scope: { doctorId?: num
   return (
     <section className="card-block chart" aria-label="Промокоды">
       <h2>Промокоды {period.label}</h2>
-      {data.isPending ? <p className="hint">Загрузка…</p>
+      {data.isPending ? <Loading />
         : data.error ? <p className="error">{data.error.message}</p>
           : rows.length === 0 ? (
-            <p className="hint">{data.data?.rows?.length ? 'По промокодам за этот период записей нет.'
-              : 'Промокодов нет. Заведите код для рекламы в «Настройки → Откуда приходят пациенты → Промокоды» — здесь будет видно, приводит ли он пациентов.'}</p>
+            data.data?.rows?.length ? <EmptyState compact title="По промокодам за этот период записей нет" />
+              : <EmptyState compact title="Промокодов нет">Заведите код для рекламы в «Настройки → Откуда приходят пациенты → Промокоды» — здесь будет видно, приводит ли он пациентов.</EmptyState>
           ) : (
             <table className="table" aria-label="Промокоды за период">
               <thead><tr><th>Промокод</th><th className="num">Записей</th><th className="num">Пришли</th><th className="num">Новых</th>
@@ -508,7 +510,7 @@ function NoShowChart({ scope }: { scope: { doctorId?: number } }) {
   return (
     <section className="card-block chart" aria-label="Неявки по неделям">
       <h2>Сколько теряем на неявках</h2>
-      {stats.isPending ? <p className="hint">Загрузка…</p> : share == null ? <p className="hint">Отмеченных приёмов за 12 недель пока нет.</p> : (
+      {stats.isPending ? <Loading /> : share == null ? <EmptyState compact title="Отмеченных приёмов за 12 недель пока нет" /> : (
         <>
           <p className="chart-headline"><b>{share}%</b> приёмов — неявка<span className="hint"> · {noShow} из {done + noShow} за 12 недель</span></p>
           <div className="legend" aria-hidden="true"><span className="key done" /> состоялось <span className="key bad" /> неявка</div>

@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { api, unwrap } from '../api/client'
 import { monthRange, somText, todayIn } from '../lib/time'
 import { MonthPicker } from '../layout/MonthPicker'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 const MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' })
 const MONTH_SHORT = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'short' })
@@ -30,7 +32,7 @@ export function SpendingBlock() {
         <h2>Расходы на склад · {monthTitle(`${month}-01`)}</h2>
         <MonthPicker label="Месяц расходов на склад" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
       </div>
-      {data.isPending && <p className="hint">Загрузка…</p>}
+      {data.isPending && <Loading />}
       {data.error && <p className="error">{data.error.message}</p>}
       {r && (
         <>
@@ -70,7 +72,7 @@ export function SpendingBlock() {
                 ))}
               </tbody>
             </table>
-          ) : <p className="hint">В этом месяце поставок и списаний не было.</p>}
+          ) : <EmptyState title="В этом месяце поставок и списаний не было" />}
         </>
       )}
     </section>

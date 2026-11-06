@@ -4,6 +4,7 @@ import { api, unwrap, type Schemas } from '../api/client'
 import { openSettings } from '../lib/route'
 import { DoctorPanel } from '../team/DoctorPanel'
 import { SubHeader } from './SubHeader'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
@@ -31,7 +32,7 @@ export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
           <p className="hint">Вы и принимаете пациентов? Добавьте себя врачом в «Врачах» — «Я тоже веду приём».</p>
           <button type="button" className="btn" onClick={() => openSettings('doctors')}>Персонал</button>
         </div>
-      ) : me.admin && admin.isPending ? <p className="hint">Загрузка…</p>
+      ) : me.admin && admin.isPending ? <Loading />
         : admin.error ? <p className="error">{admin.error.message}</p>
           : own ? <DoctorPanel key={own.id} doctor={own} me={me} onClose={onBack} inline />
             : <p className="hint">Профиль не найден — обновите страницу.</p>}

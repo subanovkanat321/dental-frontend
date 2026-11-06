@@ -7,6 +7,8 @@ import { shortDate } from '../lib/time'
 import { AssistantDoctors, ChangeRole, InviteMember } from './MemberParts'
 import { InviteByPhone, TemporaryPassword } from './PhoneParts'
 import { phoneText, ROLE_TEXT } from './texts'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
@@ -89,7 +91,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
           </div>
         )}
         {(error ?? members.error) && <p className="error">{(error ?? members.error)!.message}</p>}
-        {loading || (admin && members.isPending) ? <p className="hint">Загрузка…</p> : shown.length ? (
+        {loading || (admin && members.isPending) ? <Loading /> : shown.length ? (
           <table className="table staff-table" aria-label="Персонал">
             <thead><tr><th>Имя</th><th>Роль</th>{admin && <th>Вход</th>}<th /></tr></thead>
             <tbody>
@@ -151,7 +153,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
               ))}
             </tbody>
           </table>
-        ) : <p className="hint">{filter === 'all' ? 'Персонала пока нет.' : 'С этой ролью пока никого.'}</p>}
+        ) : <EmptyState title={filter === 'all' ? 'Персонала пока нет' : 'С этой ролью пока никого'} />}
         {(remove.error ?? cancel.error) && <p className="error" role="alert">{(remove.error ?? cancel.error)!.message}</p>}
       </section>
       {admin && <InviteMember me={me} />}

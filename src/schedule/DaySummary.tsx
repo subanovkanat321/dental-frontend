@@ -2,12 +2,13 @@ import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
-import { somText, timeOf } from '../lib/time'
+import { emptyDayText, somText, timeOf } from '../lib/time'
 import { initials } from '../lib/avatars'
 import { statusOf } from './status'
 import type { Earnings } from '../earnings/earnings'
 import { EarningsSummary } from '../earnings/EarningsWidgets'
 import { OnDuty } from '../team/OnDuty'
+import { EmptyState } from '../layout/EmptyState'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -91,7 +92,7 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
             <span className="ds-next-state"><span aria-hidden="true">{statusOf(next).icon}</span> {statusOf(next).label}</span>
           </button>
         ) : (
-          <p className="hint ds-empty">{isToday ? 'Больше записей на сегодня нет' : 'Записей нет'}</p>
+          <EmptyState compact title={all.length ? (isToday ? 'Больше записей на сегодня нет' : 'Все приёмы прошли') : emptyDayText(date, today)} />
         )}
         <dl className="ds-counts">
           <div><dt>Записей</dt><dd className="num">{all.length}</dd></div>

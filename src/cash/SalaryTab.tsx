@@ -7,6 +7,8 @@ import { somText, todayIn } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
 import { MonthPicker } from '../layout/MonthPicker'
 import { Select } from '../layout/Select'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Row = Schemas['SalaryControllerSalaryRow']
 type RentKind = 'none' | 'fixed' | 'percent'
@@ -79,9 +81,9 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
       </div>
       <SalaryHowTo seesAll={seesAll} noTerms={rows.some((r) => !r.former && !Number(r.percent ?? 0) && !r.baseSom)} />
       <SalaryCalc rows={rows.filter((r) => !r.former)} />
-      {list.isPending ? <p className="hint">Загрузка…</p>
+      {list.isPending ? <Loading />
         : list.error ? <p className="error">{list.error.message}</p>
-          : rows.length === 0 ? <p className="hint">Врачей пока нет.</p> : (
+          : rows.length === 0 ? <EmptyState title="Врачей пока нет">Добавьте врачей в «Настройки → Персонал» — здесь появится их зарплата.</EmptyState> : (
             <>
               {seesAll && rows.length > 1 && <p className="total-line" aria-label="Осталось выплатить">Осталось выплатить: <b className="num">{somText(due)}</b></p>}
               {/* Ключ с месяцем: сменили месяц — открытая форма выплаты не переносит сумму прошлого */}

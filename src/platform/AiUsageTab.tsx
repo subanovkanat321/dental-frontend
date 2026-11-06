@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { HBars } from '../cash/HBars'
 import { MonthPicker } from '../layout/MonthPicker'
 import { somText, todayIn } from '../lib/time'
+import { Loading } from '../layout/Loading'
 
 type Report = Schemas['AiUsageStoreReport']
 type ClinicRow = Schemas['AiUsageStoreClinicRow']
@@ -42,7 +43,7 @@ export function AiUsageTab() {
           <MonthPicker label="Месяц расхода ИИ" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
         </div>
         {report.error && <p className="error" role="alert">{report.error.message}</p>}
-        {report.isPending ? <p className="hint">Загрузка…</p> : r && (
+        {report.isPending ? <Loading /> : r && (
           <>
             <p className="strong">Всего: <span className="num">{usdText(r.usd ?? 0)}</span> · <span className="num">{somText(r.som ?? 0)}</span>
               <span className="hint"> · {r.actions ?? 0} запросов к ИИ</span></p>

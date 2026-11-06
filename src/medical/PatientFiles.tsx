@@ -119,7 +119,7 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
             </li>
           ))}
         </ul>
-      ) : files.isSuccess ? <EmptyState compact icon="🩻" title="Снимков пока нет." /> : null}
+      ) : files.isSuccess ? <EmptyState compact title="Снимков пока нет" /> : null}
       <div className="upload">
         <div className="segments" role="group" aria-label="Что загружаем">
           {KINDS.map(([k, name]) => <button key={k} type="button" aria-pressed={kind === k} onClick={() => setKind(k)}>{name}</button>)}

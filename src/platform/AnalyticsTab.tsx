@@ -7,6 +7,7 @@ import { saveCsv } from '../lib/csv'
 import { shortDate, somText } from '../lib/time'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
+import { Loading } from '../layout/Loading'
 
 type Analytics = Schemas['PlatformAnalyticsAnalytics']
 
@@ -97,7 +98,7 @@ export function AnalyticsTab() {
         </Select>
       </div>
       {query.error && <p className="error">{query.error.message}</p>}
-      {query.isPending ? <p className="hint">Загрузка…</p> : a && <Report a={a} />}
+      {query.isPending ? <Loading /> : a && <Report a={a} />}
     </>
   )
 }
@@ -106,7 +107,7 @@ function Report({ a }: { a: Analytics }) {
   const s = a.summary ?? {}
   const period = a.days === 365 ? 'за год' : `за ${a.days} дней`
   const change = changeOf(s.appointments ?? 0, s.appointmentsBefore ?? 0)
-  if (!s.clinics) return <EmptyState icon="📊" title={a.city ? 'В этом городе клиник нет.' : 'Клиник пока нет.'} />
+  if (!s.clinics) return <EmptyState title={a.city ? 'В этом городе клиник нет' : 'Клиник пока нет'} />
   return (
     <>
       <section className="card-block" aria-label="Сводка">
@@ -273,7 +274,7 @@ function MoneyBlock({ a }: { a: Analytics }) {
   return (
     <Block title="Деньги по месяцам" label="Оплаты по месяцам" csv={csv}
       hint="Столбик — сколько клиники заплатили в месяце. MRR — сколько в месяц приносят оплаты, срок которых идёт: годовая оплата — 1/12 в каждый месяц.">
-      {!months.some((x) => x.paidSom) ? <p className="hint">Оплат за год ещё не было.</p> : <>
+      {!months.some((x) => x.paidSom) ? <EmptyState compact title="Оплат за год ещё не было" /> : <>
       <div className="vbars" role="img" aria-label={months.map((x) => `${longMonth(x.month ?? '')}: ${somText(x.paidSom ?? 0)}`).join('; ')}>
         {months.map((x, k) => (
           <button key={x.month} type="button" className={k === picked ? 'vbar picked' : 'vbar'} onClick={() => setPicked(k)}

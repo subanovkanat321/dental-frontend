@@ -11,6 +11,7 @@ import { PhoneInput } from './PhoneInput'
 import { PhoneListInput } from './PhoneListInput'
 import { SetupChecklist } from './SetupChecklist'
 import { phoneFromInput, phonesFromInput, phonesToInput, phoneToInput } from './phone'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Clinic = Schemas['ClinicView']
@@ -24,7 +25,7 @@ const FIELDS = ['brandName', 'phones', 'whatsappPhone', 'legalName', 'address', 
  */
 export function AboutTab({ me }: { me: Me }) {
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
-  if (clinic.isPending) return <p className="hint">Загрузка…</p>
+  if (clinic.isPending) return <Loading />
   if (clinic.error) return <p className="error">{clinic.error.message}</p>
   return (
     <>
@@ -160,7 +161,7 @@ const MODES: [NonNullable<Deposit['mode']>, string][] = [['OFF', 'Не прос�
 function DepositSettings() {
   const client = useQueryClient()
   const st = useQuery({ queryKey: ['deposit-settings'], queryFn: () => unwrap(api.GET('/api/clinic/deposit')) })
-  if (st.isPending) return <section className="card-block"><h2>Предоплата за запись</h2><p className="hint">Загрузка…</p></section>
+  if (st.isPending) return <section className="card-block"><h2>Предоплата за запись</h2><Loading /></section>
   if (st.error) return <section className="card-block"><h2>Предоплата за запись</h2><p className="error">{st.error.message}</p></section>
   return <DepositForm st={st.data} onSaved={(d) => client.setQueryData(['deposit-settings'], d)} />
 }

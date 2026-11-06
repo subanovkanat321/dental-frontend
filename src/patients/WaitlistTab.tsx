@@ -12,6 +12,7 @@ import { isAssistant } from '../lib/roles'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { dueText, monthsText } from '../clinic/services'
+import { Loading, Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -29,10 +30,10 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
   })
   const doctor = (id?: number) => (id == null ? 'любой' : (me.doctors ?? []).find((d) => d.id === id)?.fullName ?? '—')
 
-  if (list.isPending) return <p className="hint">Загрузка…</p>
+  if (list.isPending) return <Loading />
   if (list.error) return <p className="error">{list.error.message}</p>
   if (!list.data.length) {
-    return <><WaitlistAdd me={me} /><EmptyState icon="⏳" title="Пока никто не ждёт.">Добавьте пациента — когда освободится время, CRM подскажет, кого позвать.</EmptyState></>
+    return <><WaitlistAdd me={me} /><EmptyState title="Пока никто не ждёт">Добавьте пациента — когда освободится время, CRM подскажет, кого позвать.</EmptyState></>
   }
   return (
     <>
@@ -92,9 +93,9 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
     openLink(whatsappUrl(p.phone!, recallText(p.fullName ?? '', settings.data?.clinicSignature, months)))
   }
 
-  if (due.isPending) return <p className="hint">Загрузка…</p>
+  if (due.isPending) return <Loading />
   if (due.error) return <p className="error">{due.error.message}</p>
-  if (!due.data.length) return <EmptyState icon="🦷" title="Звать некого — все записаны или были недавно." />
+  if (!due.data.length) return <EmptyState title="Звать некого — все записаны или были недавно" />
   const rows = due.data.slice(0, limit)
   const more = due.data.length > limit
   return (
@@ -119,7 +120,7 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
     </table>
     {more && (
       <button type="button" className="btn" disabled={due.isFetching} onClick={() => setLimit(limit + RECALL_PAGE)}>
-        {due.isFetching ? 'Загрузка…' : 'Показать ещё'}</button>
+        {due.isFetching ? <><Spinner />Загрузка…</> : 'Показать ещё'}</button>
     )}
     </>
   )

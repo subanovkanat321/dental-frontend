@@ -18,6 +18,7 @@ import { buildPost, chatGptUrl, durationBetween, POST_STYLES, type PostStyle } f
 import { Thumb } from './Thumb'
 import { resizePhoto } from './thumb'
 import './beforeAfter.css'
+import { Loading, Spinner } from '../layout/Loading'
 
 type FileView = Schemas['PatientFilesView']
 type Consent = Schemas['PublicationConsentsView']
@@ -352,14 +353,14 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
           <div className="ba-preview">
             <canvas ref={canvas} aria-label="Готовая картинка" className={mode === 'hide' ? 'hiding' : undefined}
               onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} />
-            {!ready && <p className="hint">Загружаем фото…</p>}
+            {!ready && <Loading text="Загружаем фото…" />}
             <div className="segments" role="group" aria-label="Что делает палец по фото">
               <button type="button" aria-pressed={mode === 'move'} onClick={() => setMode('move')}>Двигать фото</button>
               <button type="button" aria-pressed={mode === 'hide'} onClick={() => setMode('hide')}>Скрыть глаза</button>
             </div>
             {aiOn && (
               <button type="button" className="btn" disabled={!ready || fit.isPending} onClick={() => fit.mutate()}>
-                {fit.isPending ? 'Ищем улыбку…' : '✨ Подогнать кадр'}
+                {fit.isPending ? <><Spinner />Ищем улыбку…</> : '✨ Подогнать кадр'}
               </button>
             )}
           </div>
@@ -513,7 +514,7 @@ function PostText({ patientId, aiOn, procedure, duration, onDuration, doctor, cl
           <button type="button" className="btn" disabled={write.isPending || !procedure.trim()}
             title={procedure.trim() ? undefined : 'Сначала укажите процедуру'}
             onClick={() => write.mutate(fromAi ? text : undefined)}>
-            {write.isPending ? 'ИИ пишет…' : fromAi ? '✨ Другой вариант' : '✨ Написать с ИИ'}
+            {write.isPending ? <><Spinner />ИИ пишет…</> : fromAi ? '✨ Другой вариант' : '✨ Написать с ИИ'}
           </button>
           {!procedure.trim() && <span className="hint small">Укажите процедуру — ИИ пишет о ней.</span>}
         </div>

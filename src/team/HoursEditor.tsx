@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { useDirty } from '../lib/unsaved'
 import { WEEK, type Weekday } from './texts'
+import { Loading } from '../layout/Loading'
 
 type Day = { on: boolean; start: string; end: string }
 
@@ -17,7 +18,7 @@ export function HoursEditor({ doctorId }: { doctorId: number }) {
     queryKey: ['doctor-hours', doctorId],
     queryFn: () => unwrap(api.GET('/api/doctors/{id}/hours', { params: { path: { id: doctorId } } })),
   })
-  if (loaded.isPending) return <p className="hint">Загрузка…</p>
+  if (loaded.isPending) return <Loading />
   if (loaded.error) return <p className="error">{loaded.error.message}</p>
   return <HoursForm key={doctorId} doctorId={doctorId} loaded={loaded.data} />
 }

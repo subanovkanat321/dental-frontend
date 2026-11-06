@@ -12,6 +12,8 @@ import { useDirty } from '../lib/unsaved'
 import { somText } from '../lib/time'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { InviteLink } from '../team/InviteLink'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Info = Schemas['PlatformInfoInfo']
 type PaySettings = Schemas['PayRequestsSettings']
@@ -24,7 +26,7 @@ export function SettingsTab() {
   const info = usePlatformInfo()
   return (
     <>
-      {info.isPending ? <p className="hint">Загрузка…</p> : info.error ? <p className="error">{info.error.message}</p> : (
+      {info.isPending ? <Loading /> : info.error ? <p className="error">{info.error.message}</p> : (
         <>
           <InfoForm info={info.data} />
           <AccessToggles info={info.data} />
@@ -123,7 +125,7 @@ function PaySettingsBox() {
   return (
     <section className="card-block">
       <h2>Оплата для клиник</h2>
-      {st.isPending ? <p className="hint">Загрузка…</p> : st.error ? <p className="error">{st.error.message}</p> : <PayForm st={st.data} />}
+      {st.isPending ? <Loading /> : st.error ? <p className="error">{st.error.message}</p> : <PayForm st={st.data} />}
     </section>
   )
 }
@@ -205,7 +207,7 @@ function Managers() {
             </tr>
           ))}</tbody>
         </table>
-      ) : <p className="hint">{list.isPending ? 'Загрузка…' : 'Пока никого.'}</p>}
+      ) : list.isPending ? <Loading /> : <EmptyState compact title="Пока никого" />}
       {remove.error && <p className="error">{remove.error.message}</p>}
       {invite.data?.token ? <InviteLink start={`mgr_${invite.data.token}`} name={name.trim()} toWhom="менеджеру" /> : (
         <form className="form narrow" aria-label="Пригласить менеджера" onSubmit={(e) => { e.preventDefault(); invite.mutate() }}>

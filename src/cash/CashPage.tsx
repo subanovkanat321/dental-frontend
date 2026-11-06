@@ -18,6 +18,7 @@ import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { DebtorsTab } from './DebtorsTab'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Debt = Schemas['PaymentQueryDebt']
@@ -237,7 +238,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
         {money && (
           <section className="card-block">
             <h2>Последние оплаты</h2>
-            {reports.some((q) => q.isPending) ? <p className="hint">Загрузка…</p>
+            {reports.some((q) => q.isPending) ? <Loading />
               : <PaymentsTable rows={payments} label="Последние оплаты" onOpen={setOpened} active={opened} />}
           </section>
         )}
@@ -290,9 +291,9 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
   const text = query.trim().toLowerCase()
   const filtered = (rows ?? []).filter((d) => !text || (d.patient ?? '').toLowerCase().includes(text))
   const { sorted, sort, toggle } = useSort<Debt, DebtKey>(filtered, value, { key: 'when', desc: true })
-  if (pending) return <p className="hint">Загрузка…</p>
+  if (pending) return <Loading />
   if (error) return <p className="error">{error}</p>
-  if (!rows?.length) return <EmptyState compact icon={money === 'debtSom' ? '🤝' : '✅'} title={empty} />
+  if (!rows?.length) return <EmptyState compact title={empty} />
   const today = todayIn()
   return (
     <>
@@ -329,7 +330,7 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
           ))}
         </tbody>
       </table>
-      {!sorted.length && <EmptyState compact icon="🔍" title="По поиску никого." />}
+      {!sorted.length && <EmptyState compact title="По поиску никого" />}
     </>
   )
 }
@@ -340,7 +341,7 @@ function OpenedAppointment({ id, me, onClose, onOpenPatient }: { id: number; me:
     queryKey: ['appointment', id],
     queryFn: () => unwrap(api.GET('/api/appointments/{id}', { params: { path: { id } } })),
   })
-  if (a.isPending) return <aside className="panel" aria-label="Карточка приёма"><p className="hint">Загрузка…</p></aside>
+  if (a.isPending) return <aside className="panel" aria-label="Карточка приёма"><Loading /></aside>
   if (a.error) return <aside className="panel" aria-label="Карточка приёма"><p className="error">{a.error.message}</p></aside>
   return <AppointmentPanel key={a.data.id} appointment={a.data} me={me} onClose={onClose} onOpenPatient={onOpenPatient} />
 }

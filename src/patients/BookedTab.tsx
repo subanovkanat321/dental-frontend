@@ -11,6 +11,7 @@ import { openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { addDays, dateOf, dayTitle, timeOf, todayIn } from '../lib/time'
 import { statusOf } from '../schedule/status'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -91,8 +92,8 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
         </label>
       </div>
       {failed && <p className="error">{failed.message}</p>}
-      {pending ? <p className="hint">Загрузка…</p> : !all.length ? (
-        <EmptyState icon="📅" title={onlyUnconfirmed ? 'Все записанные подтвердили приход.' : 'Записей на этот период нет.'} />
+      {pending ? <Loading /> : !all.length ? (
+        <EmptyState title={onlyUnconfirmed ? 'Все записанные подтвердили приход' : 'Записей на этот период нет'} />
       ) : (
         <>
           <p className="hint small">Записей: {all.length}</p>

@@ -7,6 +7,8 @@ import { Icon } from '../layout/Icon'
 import { Select } from '../layout/Select'
 import { ask, notify } from '../lib/confirm'
 import { addDays, dayTitle, timeOf, todayIn, ZONE } from '../lib/time'
+import { Loading, Spinner } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Entry = Schemas['AuditLogEntry']
 type Category = NonNullable<Entry['category']>
@@ -114,7 +116,7 @@ export function AuditJournal() {
       )}
 
       {audit.error && <p className="error" role="alert">{audit.error.message}</p>}
-      {audit.isPending ? <p className="hint">Загрузка…</p> : items.length ? (
+      {audit.isPending ? <Loading /> : items.length ? (
         <>
           <p className="hint small audit-count" role="status">
             {filtered ? 'Найдено' : 'Всего'}: {total.toLocaleString('ru-RU')}{items.length < total ? `, показано ${items.length}` : ''}
@@ -139,13 +141,13 @@ export function AuditJournal() {
           </div>
           {audit.hasNextPage && (
             <button type="button" className="btn audit-more" disabled={audit.isFetchingNextPage} onClick={() => void audit.fetchNextPage()}>
-              {audit.isFetchingNextPage ? 'Загружаем…' : `Показать ещё${total - items.length > 0 ? ` (осталось ${total - items.length})` : ''}`}
+              {audit.isFetchingNextPage ? <><Spinner />Загружаем…</> : `Показать ещё${total - items.length > 0 ? ` (осталось ${total - items.length})` : ''}`}
             </button>
           )}
         </>
       ) : filtered ? (
-        <p className="hint" role="status">По фильтру ничего. <button type="button" className="link" onClick={reset}>Сбросить фильтры</button></p>
-      ) : <p className="hint" role="status">Пока пусто.</p>}
+        <EmptyState title="По фильтру ничего" action={<button type="button" className="btn" onClick={reset}>Сбросить фильтры</button>} />
+      ) : <EmptyState title="Журнал пока пуст">Здесь появятся действия сотрудников: записи, оплаты, изменения в медкартах.</EmptyState>}
     </section>
   )
 }
@@ -192,7 +194,7 @@ function AuditSettings({ onClose }: { onClose: () => void }) {
       <p className="hint small">По умолчанию записывается всё. Частые действия можно выключить — тогда они не попадут в журнал вовсе.
         Деньги, удаления, персонал и права, выгрузка, договор и оплата приложения записываются всегда.</p>
       {settings.error && <p className="error">{settings.error.message}</p>}
-      {settings.isPending || !off ? <p className="hint">Загрузка…</p> : (
+      {settings.isPending || !off ? <Loading /> : (
         <>
           <div className="audit-groups">
             {CATEGORIES.filter(([key]) => actions.some((a) => a.category === key)).map(([key, title]) => (
@@ -216,7 +218,7 @@ function AuditSettings({ onClose }: { onClose: () => void }) {
           {save.error && <p className="error" role="alert">{save.error.fieldErrors.disabled ?? save.error.message}</p>}
           <div className="audit-settings-actions">
             <button type="button" className="btn primary" disabled={!changed || save.isPending} onClick={() => void submit()}>
-              {save.isPending ? 'Сохраняем…' : 'Сохранить'}</button>
+              {save.isPending ? <><Spinner />Сохраняем…</> : 'Сохранить'}</button>
             <button type="button" className="btn" onClick={onClose}>Отмена</button>
           </div>
         </>

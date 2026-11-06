@@ -9,6 +9,7 @@ import { NewSupplyPanel, SupplyPanel } from './SupplyPanel'
 import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -106,10 +107,10 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
         {me.admin && <SeparateSupplies />}
         {spending && <SpendingBlock />}
 
-        {supplies.isPending && <p className="hint">Загрузка…</p>}
+        {supplies.isPending && <Loading />}
         {supplies.error && <p className="error">{supplies.error.message}</p>}
         {supplies.isSuccess && all.length === 0 && (
-          <EmptyState icon="📦" title="Склад пуст." action={(
+          <EmptyState title="Склад пуст" action={(
             <button type="button" className="btn" disabled={samples.isPending} onClick={() => samples.mutate()}>Добавить типовой набор</button>
           )}>
             Добавьте материалы по одному или начните с типового набора — потом поправите количество.
@@ -119,7 +120,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
         {supplies.isSuccess && all.length > 0 && all.length < 10 && (
           <p className="hint">Материалов пока мало — <button type="button" className="link" disabled={samples.isPending} onClick={() => samples.mutate()}>добавить типовой набор</button> (повторы не появятся).</p>
         )}
-        {all.length > 0 && shown.length === 0 && <EmptyState compact icon="🔍" title="Ничего не нашли." />}
+        {all.length > 0 && shown.length === 0 && <EmptyState compact title="Ничего не нашли" />}
         {samples.data && <p className="tone-ok" role="status">{samples.data.added ? `Добавлено материалов: ${samples.data.added}` : 'Типовой набор уже на складе'}</p>}
         {take.error && <p className="error" role="alert">{take.error.fieldErrors.delta ?? take.error.message}</p>}
         {taken && (

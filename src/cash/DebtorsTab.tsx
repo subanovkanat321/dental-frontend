@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { EmptyState } from '../layout/EmptyState'
 import { shortDate, somText } from '../lib/time'
 import { debtorsOf, type FamilyOf } from './debtors'
+import { Loading } from '../layout/Loading'
 
 type Debt = Schemas['PaymentQueryDebt']
 
@@ -25,10 +26,10 @@ export function DebtorsTab({ rows, pending, error, onOpen, onOpenPatient }: {
   const familyOf: FamilyOf = new Map()
   for (const f of families.data ?? []) for (const m of f.members ?? []) familyOf.set(m.id!, { id: f.id!, name: f.name ?? 'Семья' })
   const grouped = byFamily && familyOf.size > 0
-  if (pending) return <section className="card-block"><p className="hint">Загрузка…</p></section>
+  if (pending) return <section className="card-block"><Loading /></section>
   if (error) return <section className="card-block"><p className="error">{error}</p></section>
   const list = debtorsOf(rows ?? [], undefined, grouped ? familyOf : undefined)
-  if (!list.length) return <section className="card-block"><EmptyState icon="🤝" title="Должников нет">Все приёмы оплачены полностью.</EmptyState></section>
+  if (!list.length) return <section className="card-block"><EmptyState title="Должников нет">Все приёмы оплачены полностью.</EmptyState></section>
   const total = list.reduce((s, x) => s + x.total, 0)
   const overdue = list.filter((x) => x.overdue)
   return (

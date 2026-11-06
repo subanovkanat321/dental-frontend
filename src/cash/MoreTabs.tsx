@@ -14,6 +14,8 @@ import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { NetMonthTable } from './NetMonthTable'
 import { Donut } from '../lib/Donut'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Expense = Schemas['ExpensesExpense']
@@ -171,7 +173,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
             </Select>
           </div>
         )}
-        {list.isPending ? <p className="hint">Загрузка…</p> : list.data?.length ? (
+        {list.isPending ? <Loading /> : list.data?.length ? (
           <table className="table" aria-label="Расходы">
             <thead><tr>
               <SortTh k="when" title="Дата" sort={sort} onSort={toggle} desc />
@@ -203,7 +205,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
               })}
             </tbody>
           </table>
-        ) : <p className="hint">За {monthTitle(month)} расходов нет.</p>}
+        ) : <EmptyState title={`Расходов за ${monthTitle(month)} нет`} />}
         {remove.error && <p className="error">{errorText(remove.error)}</p>}
       </section>
     </>
@@ -271,7 +273,7 @@ export function StatsTab({ doctorId }: { doctorId: number | null }) {
               ))}
             </div>
           </>
-        ) : <p className="hint">Оценок пока нет. На следующий день после приёма бот спросит оценку у тех, кто записывался через бота.</p>}
+        ) : <EmptyState title="Оценок пока нет">На следующий день после приёма бот спросит оценку у тех, кто записывался через бота.</EmptyState>}
       </section>
     </>
   )
@@ -316,7 +318,7 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
       {send.error && <p className="error" role="alert">{errorText(send.error)}</p>}
       {rows.error && <p className="error">{rows.error.message}</p>}
       {rows.data?.length ? <PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus onOpen={onOpen} active={active} days={monthRange(month)} />
-        : rows.isSuccess ? <p className="hint">Приёмов за {monthTitle(month)} нет.</p> : null}
+        : rows.isSuccess ? <EmptyState title={`Приёмов за ${monthTitle(month)} нет`} /> : null}
     </section>
   )
 }

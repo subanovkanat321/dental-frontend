@@ -10,6 +10,7 @@ import { SaveBar } from '../layout/SaveBar'
 import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { EmptyState } from '../layout/EmptyState'
+import { Loading } from '../layout/Loading'
 
 type Version = Schemas['AgreementsVersion']
 
@@ -30,7 +31,7 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
         <section className="card-block">
           <p className={open ? 'tone-wait strong' : 'hint'}>{open ? `Ждут ответа: ${open}` : 'Все обращения отвечены.'}</p>
           {list.error && <p className="error">{list.error.message}</p>}
-          {list.isPending ? <p className="hint">Загрузка…</p> : list.data?.length ? (
+          {list.isPending ? <Loading /> : list.data?.length ? (
             <table className="table" aria-label="Обращения клиник">
               <thead><tr><th>Клиника</th><th>Обращение</th><th>Статус</th><th>Обновлено</th></tr></thead>
               <tbody>
@@ -47,7 +48,7 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
                 })}
               </tbody>
             </table>
-          ) : <EmptyState icon="💬" title="Обращений пока нет." />}
+          ) : <EmptyState title="Обращений пока нет" />}
         </section>
       </section>
       {opened != null && <TicketPanel key={opened} id={opened} platform onClose={close} />}

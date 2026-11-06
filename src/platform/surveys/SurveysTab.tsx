@@ -11,6 +11,7 @@ import { rolesText, STATUS } from '../../survey/texts'
 import { definitionOf } from './definition'
 import { SurveyEditor } from './SurveyEditor'
 import { SurveyResults } from './SurveyResults'
+import { Loading } from '../../layout/Loading'
 
 type Details = Schemas['SurveyDetails']
 type View = 'edit' | 'preview' | 'results'
@@ -44,7 +45,7 @@ export function SurveysTab() {
       <p className="hint">Спросите врачей, админов, регистратуру и ассистентов, что им удобно и чего не хватает. Сотрудник видит приглашение на «Расписании»
         и отвечает один раз; итоги — по ролям и клиникам, без данных пациентов.</p>
       {list.error && <p className="error">{list.error.message}</p>}
-      {list.isPending ? <p className="hint">Загрузка…</p> : surveys.length ? (
+      {list.isPending ? <Loading /> : surveys.length ? (
         <table className="table" aria-label="Опросы">
           <thead><tr><th>Опрос</th><th>Кому</th><th>Статус</th><th>Ответов</th><th>Создан</th></tr></thead>
           <tbody>
@@ -62,7 +63,7 @@ export function SurveysTab() {
             })}
           </tbody>
         </table>
-      ) : <EmptyState icon="📝" title="Опросов пока нет.">Начните с готового «Как вам Tish?» — 7 вопросов, его можно поправить.</EmptyState>}
+      ) : <EmptyState title="Опросов пока нет">Начните с готового «Как вам Tish?» — 7 вопросов, его можно поправить.</EmptyState>}
       {create.error && <p className="error" role="alert">{create.error.message}</p>}
       <div className="actions">
         <button type="button" className="btn primary" disabled={create.isPending} onClick={() => create.mutate('template')}>Создать из шаблона</button>
@@ -107,7 +108,7 @@ function SurveyView({ id, onBack, onOpen }: { id: number; onBack: () => void; on
     return (
       <section className="card-block">
         <button type="button" className="btn ghost back" onClick={onBack}>‹ Все опросы</button>
-        {survey.error ? <p className="error">{survey.error.message}</p> : <p className="hint">Загрузка…</p>}
+        {survey.error ? <p className="error">{survey.error.message}</p> : <Loading />}
       </section>
     )
   }

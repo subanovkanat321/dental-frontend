@@ -3396,6 +3396,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_9"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/materials/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/managers": {
         parameters: {
             query?: never;
@@ -3851,7 +3883,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_9"];
+        get: operations["list_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3899,7 +3931,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_10"];
+        get: operations["list_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4315,7 +4347,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_11"];
+        get: operations["list_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6837,6 +6869,23 @@ export interface components {
             roles?: ("ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT")[];
             /** Format: date-time */
             createdAt?: string;
+        };
+        MaterialsListing: {
+            configured?: boolean;
+            files?: components["schemas"]["MaterialsMaterial"][];
+        };
+        MaterialsMaterial: {
+            path?: string;
+            name?: string;
+            section?: string;
+            folder?: string;
+            kind?: string;
+            /** Format: int64 */
+            size?: number;
+            /** Format: date-time */
+            modified?: string;
+            url?: string;
+            downloadUrl?: string;
         };
         PlatformMembersManagerView: {
             /** Format: int64 */
@@ -14384,6 +14433,49 @@ export interface operations {
             };
         };
     };
+    list_9: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialsListing"];
+                };
+            };
+        };
+    };
+    file: {
+        parameters: {
+            query: {
+                path: string;
+                download?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
     managers: {
         parameters: {
             query?: never;
@@ -15008,7 +15100,7 @@ export interface operations {
             };
         };
     };
-    list_9: {
+    list_10: {
         parameters: {
             query?: {
                 done?: boolean;
@@ -15072,7 +15164,7 @@ export interface operations {
             };
         };
     };
-    list_10: {
+    list_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -15638,7 +15730,7 @@ export interface operations {
             };
         };
     };
-    list_11: {
+    list_12: {
         parameters: {
             query?: never;
             header?: never;

@@ -6,6 +6,8 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Question = Schemas['AnamnesisQuestion']
@@ -45,7 +47,7 @@ export function QuestionsTab({ me, header, onPanel }: { me: Me; header: ReactNod
             «В плашке» — ответ «да» видно красной плашкой перед лечением.</p>
           {list.error && <p className="error">{list.error.message}</p>}
           {move.error && <p className="error" role="alert">{move.error.message}</p>}
-          {list.isPending ? <p className="hint">Загрузка…</p> : (
+          {list.isPending ? <Loading /> : (
             <table className="table" aria-label="Анкета пациента">
               <thead><tr><th>Вопрос</th><th>Как отвечают</th><th /><th /></tr></thead>
               <tbody>
@@ -70,7 +72,7 @@ export function QuestionsTab({ me, header, onPanel }: { me: Me; header: ReactNod
                           )}</td>
                         </tr>
                       ))}
-                      {!items.length && <tr><td colSpan={4} className="hint">Пока пусто</td></tr>}
+                      {!items.length && <tr><td colSpan={4}><EmptyState compact title="Вопросов в этой группе нет" /></td></tr>}
                     </Fragment>
                   )
                 })}

@@ -10,6 +10,7 @@ import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
 import { MonthPicker } from '../layout/MonthPicker'
 import { Select } from '../layout/Select'
+import { Loading, Spinner } from '../layout/Loading'
 
 type Post = Schemas['ContentPostsPost']
 type Draft = Schemas['ContentPostsDraft']
@@ -93,8 +94,8 @@ export function ContentTab() {
       <SaveBar dirty={false} saving={false} saved={postSaved} savedText="Пост сохранён" />
       <section className="card-block" aria-label="Контент-план">
         {list.error && <p className="error">{list.error.message}</p>}
-        {list.isPending ? <p className="hint">Загрузка…</p> : posts.length === 0 ? (
-          <EmptyState icon="🗓️" title="В этом месяце постов нет.">Добавьте пост или загрузите готовый план.</EmptyState>
+        {list.isPending ? <Loading /> : posts.length === 0 ? (
+          <EmptyState title="В этом месяце постов нет">Добавьте пост или загрузите готовый план.</EmptyState>
         ) : (
           <>
             <p className="hint">Постов: {posts.length} · ждут публикации: {planned}</p>
@@ -195,7 +196,7 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
         {canPublish && (
           <button type="button" className="btn small primary" disabled={publish.isPending}
             onClick={() => void ask(`Опубликовать «${post.title}» в Instagram? Пост выйдет сразу.`).then((ok) => ok && publish.mutate())}>
-            {publish.isPending ? 'Публикую…' : 'Опубликовать в Instagram'}
+            {publish.isPending ? <><Spinner />Публикую…</> : 'Опубликовать в Instagram'}
           </button>
         )}
         {post.status === 'PLANNED' ? (

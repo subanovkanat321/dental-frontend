@@ -12,6 +12,7 @@ import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
 import { DoctorPhone } from './PhoneParts'
 import { isPhoneLogin } from './texts'
+import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
@@ -131,7 +132,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
         {d.photoUrl ? <img src={d.photoUrl} alt="Фото врача" /> : <span className="photo-empty" aria-hidden="true">{(d.fullName ?? '?').slice(0, 1)}</span>}
         <div className="actions">
           <label className="btn">
-            {photo.isPending ? 'Загружаем…' : d.photoUrl ? 'Сменить фото' : 'Загрузить фото'}
+            {photo.isPending ? <><Spinner />Загружаем…</> : d.photoUrl ? 'Сменить фото' : 'Загрузить фото'}
             <input type="file" accept="image/*" className="sr-only" aria-label="Фото врача" disabled={photo.isPending} onChange={pick} />
           </label>
           {d.photoUrl && <button type="button" className="btn ghost" disabled={removePhoto.isPending} onClick={() => removePhoto.mutate()}>Удалить фото</button>}

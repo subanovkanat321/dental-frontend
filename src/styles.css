@@ -172,6 +172,10 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .grid-past { position: absolute; left: 0; right: 0; top: 0; background: color-mix(in srgb, var(--page) 70%, transparent); pointer-events: none; z-index: 1; }
 .grid-now { position: absolute; left: 0; right: 0; height: 2px; background: var(--now); z-index: 4; pointer-events: none; transition: top .25s ease-in-out; }
 .grid-loading { padding: 8px; }
+/* Пустой день на компьютере: Тишка поверх сетки, не мешает нажимать на свободные окна */
+.grid-wrap { position: relative; }
+.grid-empty { position: absolute; left: 56px; right: 0; top: 56px; bottom: 0; z-index: 4; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.grid-empty .empty-state { padding: 20px 28px; border-radius: var(--radius); background: color-mix(in srgb, var(--card) 80%, transparent); }
 .appt {
   position: absolute; left: 4px; right: 4px; z-index: 2; display: flex; flex-direction: column; gap: 1px; padding: 4px 8px; overflow: hidden;
   border: 0; border-radius: var(--r-sm); font: inherit; font-size: .93rem; line-height: 1.25; text-align: left; cursor: pointer;
@@ -1037,6 +1041,21 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .content-caption .btn { justify-self: start; }
 @media (max-width: 760px) { .content-post .actions .btn { flex: 1 1 auto; } }
 
+/* «Платформа → Материалы» (src/platform/MaterialsTab): ролики с плеером, презентация, картинки Instagram */
+.materials-videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.materials-video, .materials-image { display: grid; gap: 8px; align-content: start; margin: 0; padding: 10px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+.materials-video video { width: 100%; max-height: 360px; border-radius: var(--r-sm); background: #000; }
+.materials-video figcaption, .materials-image figcaption { display: grid; gap: 4px; }
+.materials-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.materials-image img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--r-sm); background: var(--sunken); }
+.materials-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.materials-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--separator); }
+.materials-list li:first-child { border-top: 0; }
+.materials-name { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.materials-folder { margin-top: 12px; }
+.materials-folder summary { cursor: pointer; font-weight: 500; }
+.materials-folder[open] summary { margin-bottom: 10px; }
+
 /* Документы приёма и плана: памятка, квитанция — «🖨 Печать» и «📤 Отправить пациенту» (src/print) */
 .visit-docs {
   display: grid;
@@ -1258,15 +1277,47 @@ tr.clickable .row-link:not(.open-link)::after { content: " ›"; content: " ›"
   .mp-pop { left: 0; transform: none; }
 }
 
-/* Пустое состояние: значок на плашке, фраза, подсказка, действие (layout/EmptyState.tsx) */
-.empty-state { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 22px 20px; border: 1px dashed var(--line-strong); border-radius: var(--radius); background: var(--card); }
-.empty-ico { flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 12px; background: var(--accent-soft); font-size: 1.5rem; }
-.empty-body { flex: 1 1 240px; display: grid; gap: 2px; min-width: 0; }
+/* Пустое состояние: полупрозрачный Тишка, фраза, подсказка, действие (layout/EmptyState.tsx).
+   Обычное — по центру блока, Тишка крупно «водяным знаком»; compact — строкой внутри карточки. */
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 32px 20px; text-align: center; color: var(--text); }
+.empty-mark { flex: none; width: 72px; height: 112px; color: var(--accent); opacity: .22; }
+.empty-body { display: grid; gap: 4px; max-width: 420px; min-width: 0; }
 .empty-body p { margin: 0; }
-.empty-title { font-weight: 600; }
-.empty-action { flex: none; }
-.empty-state.compact { padding: 12px 14px; gap: 10px 12px; border-style: solid; border-color: transparent; background: var(--sunken); }
-.empty-state.compact .empty-ico { width: 36px; height: 36px; border-radius: 10px; font-size: 1.1rem; background: var(--card); }
+.empty-title { font-family: var(--display); font-weight: 600; font-size: 1.05rem; letter-spacing: -.01em; }
+.empty-action { flex: none; margin-top: 4px; }
+.empty-state.compact { flex-direction: row; flex-wrap: wrap; gap: 8px 12px; padding: 10px 12px; text-align: left; border-radius: var(--r-md); background: var(--sunken); }
+.empty-state.compact .empty-mark { width: 18px; height: 28px; opacity: .45; }
+.empty-state.compact .empty-body { flex: 1 1 200px; max-width: none; gap: 0; }
+.empty-state.compact .empty-title { font-family: var(--ui); font-size: 1rem; letter-spacing: 0; }
+.empty-state.compact .empty-action { margin-top: 0; }
+:root[data-theme=dark] .empty-mark { color: #CFEDEA; opacity: .38; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) .empty-mark { color: #CFEDEA; opacity: .38; } }
+:root[data-theme=dark] .empty-state.compact .empty-mark { opacity: .5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) .empty-state.compact .empty-mark { opacity: .5; } }
+
+/* Загрузка: спиннер + текст, появляется через 300 мс (layout/Loading.tsx). Спиннер — currentColor,
+   у «Загрузка…» — бирюзовый; без анимаций (reduced motion) — пульсирует, а не вращается. */
+.spinner { display: inline-block; flex: none; width: 1em; height: 1em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: tish-spin .8s linear infinite; vertical-align: -.125em; box-sizing: border-box; }
+@keyframes tish-spin { to { transform: rotate(360deg); } }
+@keyframes tish-pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: tish-pulse 1.6s ease-in-out infinite; border-right-color: currentColor; border-style: dotted; }
+}
+.loading { display: flex; align-items: center; gap: 10px; color: var(--hint); }
+.loading .spinner { color: var(--accent); width: 20px; height: 20px; border-width: 2.5px; }
+.loading.block { justify-content: center; padding: 24px 16px; }
+.loading.inline { display: inline-flex; gap: 8px; }
+.loading.inline .spinner { width: 1em; height: 1em; border-width: 2px; }
+.loading.overlay { position: absolute; inset: 0; z-index: 5; flex-direction: column; justify-content: center; gap: 14px; background: color-mix(in srgb, var(--page) 70%, transparent); font-size: 1.05rem; }
+.loading.overlay .spinner { width: 36px; height: 36px; border-width: 3px; }
+.loading.overlay.dark { background: rgba(18, 26, 34, .72); color: #eef3f6; }
+.loading.overlay.dark .spinner { color: #3cbfb2; }
+.loading.screen { min-height: 60vh; }
+.atlas-boot { position: fixed; inset: 0; z-index: 1000; background: #121a22; }
+.atlas-boot .loading.overlay.dark { background: transparent; }
+/* Спиннер в кнопке и строке: рядом с текстом «Сохраняем…», размер — по шрифту */
+.spinner { margin-right: .45em; }
+.loading .spinner { margin-right: 0; }
 
 /* Напоминания админу: спокойная плашка со значком, «Открыть ›» и ✕ «скрыть до конца сеанса» */
 .notice { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 12px; border: 1px solid color-mix(in srgb, var(--wait-ink) 22%, transparent); border-left-width: 1px; cursor: default; }
@@ -1889,3 +1940,6 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .price-pick { display: grid; gap: 4px; margin-top: 6px; }
 .med-tabs { margin: 12px 0 4px; }
 .pay-unsaved { margin: 0 0 8px; padding: 6px 10px; border-radius: var(--r-md); background: color-mix(in srgb, var(--status-wait) 14%, transparent); color: var(--status-wait); font-size: .9rem; font-weight: 500; }
+.payment-unpaid { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.payment-unpaid-text { font-weight: 600; }
+.payment-unpaid-actions { display: flex; gap: 8px; flex-wrap: wrap; }

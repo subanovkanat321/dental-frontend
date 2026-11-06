@@ -16,6 +16,8 @@ import { WaitlistBox } from './WaitlistTab'
 import { SourceLine } from './SourceLine'
 import { FamilyBox } from './FamilyBox'
 import { PatientExpenses } from './PatientExpenses'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -112,7 +114,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   }
 
   if (card.isPending) {
-    return <aside className="panel" aria-label="Карточка пациента"><p className="hint">Загрузка…</p></aside>
+    return <aside className="panel" aria-label="Карточка пациента"><Loading /></aside>
   }
   if (card.error) {
     return (
@@ -191,7 +193,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           </section>
           <section>
             <h3>История</h3>
-            {past.length ? <ul className="visits">{shownPast.map(line)}</ul> : <p className="hint">Визитов ещё не было</p>}
+            {past.length ? <ul className="visits">{shownPast.map(line)}</ul> : <EmptyState compact title="Визитов ещё не было" />}
             {past.length > shownPast.length && <button type="button" className="link" onClick={() => setAllPast(true)}>Показать все ({past.length})</button>}
           </section>
         </>
@@ -207,7 +209,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
 
       {shown === 'money' && (
         <section className="patient-money">
-          {debtRows.length === 0 && <p className="hint">Долгов нет</p>}
+          {debtRows.length === 0 && <EmptyState compact title="Долгов нет" />}
           {debtRows.map((d) => {
             const debt = debtLine(d)!
             const text = `🧾 ${debt.text} — приём ${d.startAt ? shortDate(d.startAt) : ''}`

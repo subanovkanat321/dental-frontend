@@ -5,6 +5,7 @@ import { botUsername } from '../api/client'
 import { openLink, telegram } from '../lib/telegram'
 import { smsUrl, whatsappUrl } from '../lib/texts'
 import { inviteText } from './texts'
+import { Loading } from '../layout/Loading'
 
 /**
  * Готовая ссылка-приглашение на бота: «join_<код>» врача или «staff_<код>» сотрудника. Человек
@@ -15,7 +16,7 @@ import { inviteText } from './texts'
 export function InviteLink({ start, name, toWhom, phone, sms = false }: { start: string; name: string; toWhom: string; phone?: string | null; sms?: boolean }) {
   const bot = useQuery({ queryKey: ['bot-username'], queryFn: botUsername, staleTime: Infinity })
   const [copied, setCopied] = useState('')
-  if (bot.isPending) return <p className="hint">Готовим ссылку…</p>
+  if (bot.isPending) return <Loading text="Готовим ссылку…" />
   if (!bot.data) return <p className="error">Бот не отвечает — попробуйте через минуту.</p>
   const link = `https://t.me/${bot.data}?start=${start}`
   const text = inviteText(name)

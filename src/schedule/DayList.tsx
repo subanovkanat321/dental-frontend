@@ -8,12 +8,14 @@ import { useReminderNotSent } from './useReminderNotSent'
 import { useReminderText, useWaitlist } from '../api/settings'
 import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
-import { addDays, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../lib/time'
+import { addDays, emptyDayText, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { DateInput } from '../layout/DateInput'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
 import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -149,11 +151,11 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
         )}
       </div>
       {note && <p className="hint day-note">{note}</p>}
-      {pending ? <p className="hint">Загрузка…</p>
+      {pending ? <Loading />
         : failed ? <p className="error">{failed.message}</p>
           : items.length === 0 ? (
             <>
-              <p className="day-empty hint">{offText ? `${offText} — записей нет` : 'На этот день записей нет'}</p>
+              <EmptyState title={emptyDayText(date, today)}>{offText}</EmptyState>
               <CancelledList items={cancelled} onOpen={onOpen} selectedId={selectedId} doctorName={many ? (id) => nameOf.get(id) ?? '' : undefined} />
             </>
           ) : (() => {
@@ -193,8 +195,12 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                 </section>
               ) : <div key={g.doctor.id}>{rows}</div>
             })
+            // Приёмов нет, но есть свободные окна: Тишка и «На сегодня записей нет», окна — ниже (нажать — записать)
+            const empty = list.length === 0 && (
+              <EmptyState title={emptyDayText(date, today)}>{offText ?? (date >= today ? 'Нажмите на свободное окно ниже, чтобы записать.' : null)}</EmptyState>
+            )
             // «Все врачи» — списки врачей рядом, колонками; больше двух — листаются вбок
-            return many ? <div className="doctor-columns" style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div> : blocks
+            return <>{empty}{many ? <div className="doctor-columns" style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div> : blocks}</>
           })()}
     </div>
   )

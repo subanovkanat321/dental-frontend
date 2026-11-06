@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap } from '../api/client'
 import { useClose } from '../lib/useClose'
 import { monthsText, priceText } from './services'
+import { Loading, Spinner } from '../layout/Loading'
 
 /**
  * Что предложит «Стартовая настройка»: памятки и материалы услугам, а админу — ещё недостающее из
@@ -123,7 +124,7 @@ export function StarterPanel({ admin, onClose }: { admin: boolean; onClose: () =
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
-      {(memos.isPending || supplies.isPending || (admin && kit.isPending)) && <p className="hint">Загрузка…</p>}
+      {(memos.isPending || supplies.isPending || (admin && kit.isPending)) && <Loading />}
       {(memos.error || supplies.error || kit.error) && <p className="error">{(memos.error ?? supplies.error ?? kit.error)!.message}</p>}
       {done && <p className="tone-ok" role="status">{done}</p>}
       {done && nothing && <div className="actions"><button type="button" className="btn" onClick={onClose}>Закрыть</button></div>}
@@ -216,7 +217,7 @@ export function StarterPanel({ admin, onClose }: { admin: boolean; onClose: () =
       {!nothing && (
         <div className="actions">
           <button type="button" className="btn primary" disabled={apply.isPending || (!withMemos && !withSupplies && !kitChosen)}
-            onClick={() => apply.mutate()}>{apply.isPending ? 'Заполняем…' : 'Заполнить'}</button>
+            onClick={() => apply.mutate()}>{apply.isPending ? <><Spinner />Заполняем…</> : 'Заполнить'}</button>
           <button type="button" className="btn ghost" onClick={onClose}>Закрыть</button>
         </div>
       )}

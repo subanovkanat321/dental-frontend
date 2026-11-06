@@ -4,6 +4,7 @@ import { Icon } from '../layout/Icon'
 import type { TopicSlug } from './catalog'
 import { TopicTiles } from './Tiles'
 import './learn.css'
+import { Loading } from '../layout/Loading'
 
 const LessonDialog = lazy(() => import('./LessonDialog'))
 // 3D-атлас (three.js, ~0,5 МБ) — свой чанк: скачивается, только когда его открыли
@@ -39,7 +40,7 @@ export function LearnPage() {
       <h2 id="learn-topics" className="learn-h">Презентации</h2>
       <TopicTiles lang="ru" action="Показать" onOpen={(t) => setOpen(t.slug)} />
       {open && (
-        <Suspense fallback={<p className="hint" role="status">Загрузка…</p>}>
+        <Suspense fallback={<Loading />}>
           <LessonDialog topic={open} onClose={() => setOpen(null)} />
         </Suspense>
       )}

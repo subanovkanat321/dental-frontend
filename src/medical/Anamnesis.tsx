@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { useAnamnesis } from '../api/anamnesis'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
+import { Loading } from '../layout/Loading'
 
 type Anamnesis = Schemas['AnamnesisView']
 type Item = Schemas['AnamnesisItem']
@@ -36,7 +37,7 @@ export function AnamnesisBlock({ patientId, readOnly = false }: { patientId: num
   return (
     <section className="card-block">
       <h2>Анкета: аллергии, болезни, лекарства</h2>
-      {an.isPending && <p className="hint">Загрузка…</p>}
+      {an.isPending && <Loading />}
       {an.error && <p className="error">{an.error.message}</p>}
       {an.data && <AnamnesisForm patientId={patientId} an={an.data} readOnly={readOnly} />}
     </section>

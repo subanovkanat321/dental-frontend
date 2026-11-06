@@ -8,6 +8,8 @@ import { discountText, expired, linkable, usePromoCodes, type PromoCode } from '
 import { addDays, somText, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
+import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Report = Schemas['PromoReportControllerPromoReport']
@@ -60,8 +62,8 @@ export function PromoTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
             </div>
             {editable && <button type="button" className="btn small" onClick={() => setOpened({ code: '', active: true })}>+ Промокод</button>}
           </div>
-          {list.isPending ? <p className="hint">Загрузка…</p> : codes.length === 0 ? (
-            <p className="hint">Промокодов пока нет.{editable && ' Нажмите «+ Промокод» — например, ZUBY10 для рекламы в Instagram.'}</p>
+          {list.isPending ? <Loading /> : codes.length === 0 ? (
+            <EmptyState title="Промокодов пока нет">{editable && 'Нажмите «+ Промокод» — например, ZUBY10 для рекламы в Instagram.'}</EmptyState>
           ) : (
             <PromoTable codes={codes} report={report.data} error={report.error?.message} today={to} opened={opened?.id}
               onOpen={editable ? setOpened : undefined} />

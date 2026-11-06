@@ -21,6 +21,7 @@ import { refreshAppointmentData } from './useAppointmentAction'
 import { editableDoctors } from '../lib/roles'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
+import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -383,7 +384,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           </label>
         )}
         {error && <p className="error" role="alert">{error}</p>}
-        <button ref={submitRef} type="submit" className="btn primary" disabled={busy}>{busy ? 'Записываем…' : walkIn ? 'Начать приём' : 'Записать'}</button>
+        <button ref={submitRef} type="submit" className="btn primary" disabled={busy}>{busy ? <><Spinner />Записываем…</> : walkIn ? 'Начать приём' : 'Записать'}</button>
       </form>
     </aside>
   )

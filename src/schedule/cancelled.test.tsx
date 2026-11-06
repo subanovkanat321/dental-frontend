@@ -82,7 +82,7 @@ test('телефон: в дне только отменённые — «запи
   backend([byPatient])
   localStorage.setItem('crm.schedule.view', '1')
   renderApp()
-  expect(await screen.findByText('На этот день записей нет')).toBeInTheDocument()
+  expect(await screen.findByText('На сегодня записей нет')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Отменено: 1/ })).toBeInTheDocument()
 })
 

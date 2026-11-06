@@ -17,6 +17,7 @@ import { canEditServices, isAssistant } from '../lib/roles'
 import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
+import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -151,7 +152,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
                   </Select>
                 )}
                 <span className="hint">
-                  {recent.isPending ? 'Загрузка…' : text ? `Найдено: ${sorted.length}${doctorId != null && !local.length && sorted.length ? ' — по всей клинике' : ''}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
+                  {recent.isPending ? <><Spinner />Загрузка…</> : text ? `Найдено: ${sorted.length}${doctorId != null && !local.length && sorted.length ? ' — по всей клинике' : ''}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
                 </span>
               </div>
               <button type="button" className="btn primary head-action" onClick={() => setSelected('new')}>＋ Новый пациент</button>
@@ -165,8 +166,8 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
         {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
-          <EmptyState icon={text ? '🔍' : '🧑‍🤝‍🧑'} title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}».`) : doctorId != null ? 'У этого врача пока не было пациентов.' : 'Пациентов пока нет — они появятся с первой записью.'}>
-            {text && !remote.isFetching ? 'Проверьте написание или ищите по последним цифрам телефона.' : undefined}
+          <EmptyState title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»`) : doctorId != null ? 'У этого врача пока не было пациентов' : 'Пациентов пока нет'}>
+            {text ? (remote.isFetching ? undefined : 'Проверьте написание или ищите по последним цифрам телефона.') : doctorId == null ? 'Они появятся с первой записью — или добавьте кнопкой «＋ Новый пациент».' : undefined}
           </EmptyState>
         )}
         {tab === 'all' && sorted.length > 0 && (

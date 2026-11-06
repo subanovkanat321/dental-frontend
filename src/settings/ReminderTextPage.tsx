@@ -10,6 +10,7 @@ import { addDays, todayIn } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
 import { SubHeader } from './SubHeader'
 import './reminder.css'
+import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Settings = Schemas['SettingsControllerSettings']
@@ -71,7 +72,7 @@ export function ReminderTextPage({ me, onBack }: { me: Me; onBack: () => void })
   return (
     <section className="schedule-main">
       <SubHeader title="Текст напоминания" onBack={onBack} />
-      {settings.isPending ? <p className="hint">Загрузка…</p>
+      {settings.isPending ? <Loading />
         : settings.error ? <p className="error">{settings.error.message}</p>
           : <Editor me={me} settings={settings.data} />}
     </section>

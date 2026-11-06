@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { api, fetchBlob, unwrap, type Schemas } from '../api/client'
 import { somText } from '../lib/time'
 import { useAppointmentAction } from './useAppointmentAction'
+import { Loading } from '../layout/Loading'
 
 type Appointment = Schemas['AppointmentView']
 type Method = NonNullable<Schemas['DepositControllerAction']['method']>
@@ -89,7 +90,7 @@ function Receipt({ id }: { id: number }) {
       if (url) URL.revokeObjectURL(url)
     }
   }, [id])
-  if (file === null) return <p className="hint">Загружаем чек…</p>
+  if (file === null) return <Loading text="Загружаем чек…" />
   if (file === 'none') return <p className="hint">Чек не приложили — сверьте перевод по банку.</p>
   return file.image
     ? <a href={file.url} target="_blank" rel="noopener noreferrer"><img className="receipt" src={file.url} alt="Чек пациента" /></a>

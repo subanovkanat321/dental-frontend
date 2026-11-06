@@ -5,6 +5,7 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { passwordProblem } from '../lib/password'
 import { NewPasswordFields, PasswordInput, ShowPassword } from './PasswordFields'
+import { Spinner } from './Loading'
 
 /** Повторная отправка — не раньше, чем через минуту: так же считает сервер. */
 export const RESEND_SECONDS = 60
@@ -139,7 +140,7 @@ export function PhoneLogin({ onDone, sms, password: byPassword = true }: { onDon
         </label>
         <PasswordInput label="Пароль" value={password} onChange={setPassword} shown={shown} autoComplete="current-password" />
         <ShowPassword shown={shown} onToggle={() => setShown(!shown)} />
-        <button type="submit" className="btn primary" disabled={busy || !phone.trim() || !password}>{busy ? 'Входим…' : 'Войти'}</button>
+        <button type="submit" className="btn primary" disabled={busy || !phone.trim() || !password}>{busy ? <><Spinner />Входим…</> : 'Войти'}</button>
         {error && <p className="error" role="alert">{error}</p>}
         {offerSms && sms && (
           <button type="button" className="btn" disabled={busy} onClick={() => void getCode()}>Войти по SMS-коду</button>
@@ -161,7 +162,7 @@ export function PhoneLogin({ onDone, sms, password: byPassword = true }: { onDon
         <label className="field"><span>Номер телефона</span>
           <PhoneInput label="Номер телефона" value={phone} onChange={setPhone} />
         </label>
-        <button type="submit" className="btn primary" disabled={busy || !phone.trim()}>{busy ? 'Отправляем…' : 'Получить код'}</button>
+        <button type="submit" className="btn primary" disabled={busy || !phone.trim()}>{busy ? <><Spinner />Отправляем…</> : 'Получить код'}</button>
         {error && <p className="error" role="alert">{error}</p>}
         {byPassword && <button type="button" className="link" onClick={() => go('password')}>Войти по паролю</button>}
       </form>
@@ -176,7 +177,7 @@ export function PhoneLogin({ onDone, sms, password: byPassword = true }: { onDon
           <input value={code} autoComplete="one-time-code" inputMode="numeric" pattern="\d{6}" maxLength={6} required autoFocus
             placeholder="123456" onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
         </label>
-        <button type="submit" className="btn primary" disabled={busy || code.length !== 6}>{busy ? 'Проверяем…' : 'Дальше'}</button>
+        <button type="submit" className="btn primary" disabled={busy || code.length !== 6}>{busy ? <><Spinner />Проверяем…</> : 'Дальше'}</button>
         {error && <p className="error" role="alert">{error}</p>}
         <div className="actions">
           <button type="button" className="link" disabled={wait > 0 || busy} onClick={() => void getCode()}>
@@ -195,7 +196,7 @@ export function PhoneLogin({ onDone, sms, password: byPassword = true }: { onDon
         : 'Номер подтверждён. Дальше входите номером и этим паролем.'}</p>
       <NewPasswordFields password={fresh.password} repeat={fresh.repeat} phone={phoneFromInput(phone)}
         onPassword={(v) => setFresh({ ...fresh, password: v })} onRepeat={(v) => setFresh({ ...fresh, repeat: v })} />
-      <button type="submit" className="btn primary" disabled={busy}>{busy ? 'Сохраняем…' : 'Сохранить и войти'}</button>
+      <button type="submit" className="btn primary" disabled={busy}>{busy ? <><Spinner />Сохраняем…</> : 'Сохранить и войти'}</button>
       {error && <p className="error" role="alert">{error}</p>}
     </form>
   )
