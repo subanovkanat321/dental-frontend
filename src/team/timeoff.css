@@ -1,0 +1,21 @@
+/* «Перерывы и выходные»: три кнопки-действия, формы и списки по группам */
+.timeoff-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.timeoff-group + .timeoff-group { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--separator); }
+.timeoff-group h2 { margin: 0 0 6px; font-size: 1rem; }
+.timeoff-group > .hint { margin: 0; }
+.timeoff-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.timeoff-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; }
+.timeoff-list li + li { border-top: 1px dashed var(--separator); }
+.timeoff-text { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.timeoff-text .hint { font-size: .85rem; }
+.timeoff-dates { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 6px; }
+.timeoff-dates li { display: flex; align-items: center; gap: 6px; }
+.timeoff-dates .date-input { flex: 1; min-width: 0; }
+.timeoff-form .form > .actions { margin-top: 4px; }
+@media (max-width: 640px) {
+  .timeoff-actions .btn { flex: 1 1 100%; }
+  /* «С даты / По дату» с днём недели и годом не влезают в две колонки — друг под другом */
+  .timeoff-period { grid-template-columns: minmax(0, 1fr); }
+}
+.timeoff-form .form > .hint { margin: -4px 0 0; }
+.timeoff-dates + .btn { justify-self: start; }

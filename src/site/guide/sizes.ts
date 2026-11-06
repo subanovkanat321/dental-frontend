@@ -33,7 +33,7 @@ export const SIZES: Record<string, [number, number]> = {
   'pamyatka.webp': [780, 1572],
   'pamyatki.webp': [1196, 362],
   'perenos.webp': [354, 597],
-  'pereryvy.webp': [1196, 909],
+  'pereryvy.webp': [1106, 1151],
   'plan-otpravit.webp': [1175, 586],
   'plan.webp': [1208, 600],
   'pomosh.webp': [636, 552],
