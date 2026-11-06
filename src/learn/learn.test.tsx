@@ -8,6 +8,7 @@ import { LearnSite } from '../site/LearnSite'
 import { appointment, me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
+import { readDeepLink } from '../lib/deepLink'
 import { lessonUrl, topicForService } from './catalog'
 import { Presentation } from './Presentation'
 import { TOPIC_LIST, topicBySlug, type Topic } from './topics'
@@ -214,13 +215,63 @@ test('без доступа к медкарте (403) — презентация
   expect(await screen.findByRole('dialog', { name: 'Удаление зуба и зуб мудрости' })).toBeInTheDocument()
 })
 
-test('«Настройки → Показать пациенту»: все темы обложками, открывается презентация', async () => {
+test('раздел «Для пациента» — сразу после «Пациентов» у врача, ассистента, регистратуры и админа; у команды Tish — нет', async () => {
+  const roles: Schemas['BookingViewsMe'][] = [
+    me,
+    { ...me, admin: false },
+    { ...me, admin: false, assistantOf: [1], doctorId: undefined },
+    { ...me, admin: false, reception: true, doctorId: undefined },
+  ]
+  for (const who of roles) {
+    server.use(http.get('*/api/patient/me', () => HttpResponse.json(who)), http.get('*/api/appointments', () => HttpResponse.json([])))
+    const { unmount } = renderApp()
+    const nav = await screen.findByRole('navigation', { name: 'Разделы' })
+    const names = within(nav).getAllByRole('button').map((b) => b.textContent?.trim())
+    expect(names.indexOf('Для пациента')).toBe(names.indexOf('Пациенты') + 1)
+    // Старой кнопки «3D-атлас» под меню больше нет
+    expect(screen.queryByRole('button', { name: '3D-атлас' })).toBeNull()
+    unmount()
+  }
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: true, fullName: 'Команда' })))
+  const { unmount } = renderApp()
+  const nav = await screen.findByRole('navigation', { name: 'Разделы' })
+  expect(within(nav).queryByRole('button', { name: 'Для пациента' })).toBeNull()
+  unmount()
+})
+
+test('«Для пациента»: 3D-атлас во весь экран и закрыть; все темы обложками — «Показать» открывает презентацию', async () => {
+  backend(appointment(34, 1, '12:00', 'Тест'), 403)
+  renderApp()
+  const nav = await screen.findByRole('navigation', { name: 'Разделы' })
+  await userEvent.click(within(nav).getByRole('button', { name: 'Для пациента' }))
+  expect(await screen.findByRole('heading', { name: 'Для пациента' })).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/learn')
+  expect(document.querySelectorAll('.learn-tile')).toHaveLength(TOPIC_LIST.length)
+
+  await userEvent.click(screen.getByRole('button', { name: /3D-атлас/ }))
+  // В тестах WebGL нет — атлас показывает схему; закрыли — снова раздел
+  await userEvent.click(await screen.findByRole('button', { name: 'Закрыть' }))
+  expect(document.querySelector('.atlas-page')).toBeNull()
+
+  await userEvent.click(screen.getByRole('button', { name: /Коронка/ }))
+  expect(await screen.findByRole('dialog', { name: 'Коронка' })).toBeInTheDocument()
+})
+
+test('старый адрес «Настройки → Показать пациенту» (#/settings/learn) и ?screen=learn ведут в раздел «Для пациента»', async () => {
   backend(appointment(34, 1, '12:00', 'Тест'), 403)
   openItem('learn')
   renderApp()
-  expect(await screen.findByRole('heading', { name: 'Показать пациенту' })).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: /Коронка/ }))
-  expect(await screen.findByRole('dialog', { name: 'Коронка' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Для пациента' })).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/learn')
+  expect(readDeepLink('?screen=learn')).toEqual({ page: 'learn' })
+})
+
+test('пункт «Настроек» «Для пациента» — ссылка на раздел (на телефоне его нет в нижнем меню)', async () => {
+  backend(appointment(34, 1, '12:00', 'Тест'), 403)
+  window.location.hash = '/settings'
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Для пациента.*3D-атлас и презентации/ }))
+  expect(await screen.findByRole('heading', { name: 'Для пациента' })).toBeInTheDocument()
 })
 
 test('страница /learn/<тема> без входа: язык из ссылки, название клиники по коду, «Записаться», без цен', async () => {

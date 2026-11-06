@@ -10,7 +10,7 @@ export interface AtlasRoute {
 
 /**
  * Атлас по адресу: «#/atlas», «#/atlas/caries», «#/atlas/36» (внутри CRM) или «/atlas» (ссылка для ТВ).
- * Пока временно — потом атлас откроют из презентаций и из зубной формулы через <Atlas />.
+ * В CRM атлас открывают из раздела «Для пациента» и из карточки приёма (кнопка «3D»), этот адрес — для ТВ.
  */
 export function readAtlasRoute(hash = window.location.hash, path = window.location.pathname): AtlasRoute | null {
   const parts = hash.replace(/^#\/?/, '').split('/')
@@ -30,10 +30,6 @@ export function useAtlasRoute(): AtlasRoute | null {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
   return route
-}
-
-export function openAtlas(): void {
-  window.location.hash = '/atlas'
 }
 
 /** Закрыть: назад в CRM (на главную — расписание). */

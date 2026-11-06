@@ -4,7 +4,7 @@ import type { AccountTab } from '../account/AccountPage'
 import { logout, type Schemas } from '../api/client'
 import type { ClinicTab } from '../clinic/ClinicPage'
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
-import { openSettings, settingsItem } from '../lib/route'
+import { openSection, openSettings, settingsItem, type Page } from '../lib/route'
 import { openLink, telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
 import type { TeamTab } from '../team/TeamPage'
@@ -25,7 +25,6 @@ const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m
 const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ default: m.ReminderTextPage })))
 const AiPage = lazy(() => import('./AiPage').then((m) => ({ default: m.AiPage })))
 const SourcesPage = lazy(() => import('./SourcesPage').then((m) => ({ default: m.SourcesPage })))
-const LearnPage = lazy(() => import('../learn/LearnPage').then((m) => ({ default: m.LearnPage })))
 const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
 type Me = Schemas['BookingViewsMe']
@@ -41,6 +40,8 @@ type Item = {
   render: (me: Me, back: () => void, extra: { ticketId?: number }) => ReactNode
   /** Не в списке, но открывается по адресу (старые ссылки, кнопки бота) */
   hidden?: boolean
+  /** Не свой экран, а ссылка на раздел меню */
+  section?: Page
 }
 
 const team = (only: TeamTab) => (title: string) => (me: Me, back: () => void) => <TeamPage me={me} only={only} title={title} onBack={back} />
@@ -86,8 +87,9 @@ const GROUPS: [string, Item[]][] = [
       () => (me, back) => <ReminderTextPage me={me} onBack={back} />),
     item('questions', 'Анкета пациента', 'Вопросы перед первым приёмом', (me) => Boolean(me.admin || me.doctorId != null), clinic('questions')),
     item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),
-    // Презентации для пациента по услугам — всем: показывают врачи, ассистенты и регистратура
-    item('learn', 'Показать пациенту', 'Презентации: кариес, каналы, имплант…', all, () => (_me, back) => <LearnPage onBack={back} />),
+    // Атлас и презентации — раздел меню «Для пациента»; здесь ссылка на него: на телефоне в нижнем меню
+    // для него нет места. Старый адрес #/settings/learn ведёт туда же (lib/route)
+    { ...item('learn', 'Для пациента', '3D-атлас и презентации — раздел меню', all, () => () => null), section: 'learn' },
     item('patient-news', 'Новости для пациентов', 'Акции и объявления в боте', admin, clinic('news')),
     // «Откуда узнал» и промокоды — оба про то, какая реклама работает
     item('sources', 'Откуда приходят пациенты', 'Варианты «откуда узнал» и промокоды рекламы', all,
@@ -175,7 +177,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
             <ul className="settings-list">
               {shown.map((i) => (
                 <li key={i.key}>
-                  <button type="button" className="settings-link" onClick={() => openSettings(i.key)}>
+                  <button type="button" className="settings-link" onClick={() => (i.section ? openSection(i.section) : openSettings(i.key))}>
                     <span className="settings-emoji" aria-hidden="true">{EMOJI[i.key]}</span>
                     <span className="settings-text"><strong>{i.title}</strong><span className="hint" title={i.hint}>{i.hint}</span></span>
                     <span aria-hidden="true" className="chev">›</span>

@@ -5,7 +5,7 @@ import type { Page } from './route'
  * Куда открыть CRM по кнопке бота. Бот шлёт адреса Mini App с параметрами (AssetVersion.miniApp
  * бэкенда): ?appointment=ID — карточка приёма, ?day=tomorrow — завтра, ?patient=ID — новая запись
  * на этого пациента, ?patientCard=ID — карточка пациента, ?question=ID — вопрос пациента, ?supply=ID — материал на складе,
- * ?screen=cash|stats|earnings|dental-news|support|support-tickets|pay-requests|survey|shifts — раздел; ?doctor=ID — «День»
+ * ?screen=cash|stats|earnings|dental-news|support|support-tickets|pay-requests|survey|shifts|learn — раздел; ?doctor=ID — «День»
  * этого врача (уведомление о приёмах коллеги), можно вместе с ?day=tomorrow;
  * ?screen=booked&day=today|tomorrow&unconfirmed=1&doctor=ID — «Пациенты → Записаны» на этот день, только
  * кто не подтвердил (кнопка «📲 Напомнить (N)» под утренней и вечерней сводкой).
@@ -60,6 +60,8 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (screen === 'support') return { page: 'settings', tab: 'support', ticketId: num('ticket') }
   if (screen === 'survey') return { page: 'settings', tab: 'survey' }
   if (screen === 'shifts') return { page: 'settings', tab: 'shifts' }
+  // «Для пациента»: 3D-атлас и презентации
+  if (screen === 'learn') return { page: 'learn' }
   if (screen === 'booked') {
     const day = p.get('day') === 'tomorrow' ? addDays(today, 1) : p.get('day') === 'today' ? today : undefined
     return { page: 'patients', tab: 'booked', date: day, unconfirmed: p.get('unconfirmed') === '1', doctorId: num('doctor') }

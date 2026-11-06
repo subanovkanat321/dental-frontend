@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react'
 
 /** Разделы CRM. Адрес — во фрагменте (#/patients): CRM отдаёт nginx одним index.html. */
-export type Page = 'schedule' | 'patients' | 'cash' | 'stock' | 'settings' | 'platform'
+export type Page = 'schedule' | 'patients' | 'learn' | 'cash' | 'stock' | 'settings' | 'platform'
 
-const PAGES: readonly Page[] = ['schedule', 'patients', 'cash', 'stock', 'settings', 'platform']
+const PAGES: readonly Page[] = ['schedule', 'patients', 'learn', 'cash', 'stock', 'settings', 'platform']
 /** Прежние адреса разделов (закладки) — теперь пункты «Настроек». */
 const OLD: Record<string, string> = { team: 'doctors', clinic: 'about', account: 'support' }
 
 function current(): Page {
-  const [name = ''] = window.location.hash.replace(/^#\/?/, '').split('/')
+  const [name = '', item] = window.location.hash.replace(/^#\/?/, '').split('/')
+  // «Настройки → Показать пациенту» стали разделом «Для пациента» (#/learn) — старые ссылки ведут туда
+  if (name === 'settings' && item === 'learn') {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#/learn`)
+    return 'learn'
+  }
   if (OLD[name]) return 'settings'
   return (PAGES as readonly string[]).includes(name) ? (name as Page) : 'schedule'
 }
@@ -25,6 +30,11 @@ export function settingsItem(): string | null {
 /** Открыть пункт «Настроек» (или их главную) — отдельной записью в истории: «Назад» вернёт. */
 export function openSettings(item: string | null): void {
   window.location.hash = item ? `/settings/${item}` : '/settings'
+}
+
+/** Перейти в раздел меню (из пункта «Настроек»-ссылки). */
+export function openSection(page: Page): void {
+  window.location.hash = `/${page}`
 }
 
 /**

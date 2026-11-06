@@ -10,7 +10,6 @@ import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
 import { useFullView } from '../lib/fullView'
-import { openAtlas } from '../atlas/route'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -24,6 +23,8 @@ const HELP_PAGES: Page[] = ['schedule', 'patients', 'cash', 'stock']
 const CLINIC_SECTIONS = [
   { key: 'schedule', title: 'Расписание' },
   { key: 'patients', title: 'Пациенты' },
+  // 3D-атлас и презентации — показать пациенту на консультации; всем сотрудникам клиники
+  { key: 'learn', title: 'Для пациента' },
   { key: 'cash', title: 'Касса' },
   { key: 'stock', title: 'Склад' },
   { key: 'settings', title: 'Настройки' },
@@ -35,6 +36,12 @@ function sectionsOf(me: Me): readonly { key: Page; title: string }[] {
   const clinic = isAssistant(me) ? CLINIC_SECTIONS.filter((s) => s.key !== 'cash') : CLINIC_SECTIONS
   return [...(me.doctor ? clinic : []), ...(me.platform ? [PLATFORM] : [])]
 }
+
+/**
+ * Телефон сотрудника клиники: внизу расписание, пациенты, касса, склад и «Настройки». «Для пациента»
+ * и «Платформа» туда не влезли — они пунктами в «Настройках».
+ */
+const PHONE_IN_SETTINGS: readonly Page[] = ['learn', 'platform']
 
 /** На телефоне внизу помещается 4 раздела и «Ещё»: остальное — в выезжающем меню. */
 const MOBILE_MAIN = 4
@@ -50,8 +57,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const sections = sectionsOf(me)
   // Вопросы пациентов ждут ответа — число у «Пациентов» (видно из любого раздела)
   const questions = useNewQuestions(Boolean(me.doctor)).data?.count ?? 0
-  // «Платформа» у сотрудника клиники на телефоне — в «Настройках»: внизу пять кнопок без «Ещё»
-  const extra = me.doctor ? sections.filter((x) => x.key === 'platform')
+  // «Для пациента» и «Платформа» у сотрудника клиники на телефоне — в «Настройках»: внизу пять кнопок без «Ещё»
+  const extra = me.doctor ? sections.filter((x) => PHONE_IN_SETTINGS.includes(x.key))
     : sections.length > MOBILE_MAIN + 1 ? sections.slice(MOBILE_MAIN) : []
   const moreButton = extra.length > 0 && !me.doctor
   const [more, setMore] = useState(false)
@@ -94,10 +101,6 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
             </button>
           )}
         </nav>
-        {/* 3D-атлас для пациента — временно здесь; потом его откроют из презентаций и зубной формулы */}
-        {me.doctor && (
-          <button type="button" className="nav extra" title={narrow ? '3D-атлас' : undefined} onClick={openAtlas}><Icon name="atlas" /> <span>3D-атлас</span></button>
-        )}
         <button type="button" className="nav sidebar-toggle" aria-expanded={!narrow} onClick={toggleNarrow}
           title={narrow ? 'Развернуть меню' : 'Свернуть меню'} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}>
           <span className="sidebar-toggle-ico" aria-hidden="true">{narrow ? '»' : '«'}</span> <span>Свернуть меню</span>
