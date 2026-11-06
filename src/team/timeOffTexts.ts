@@ -92,7 +92,7 @@ export function timeOffWhen(t: TimeOff): string {
 }
 
 /** Строка списка: записи с разными днями недели, но одним временем и названием — вместе (обед пн–пт — пять записей). */
-export type Row = { ids: number[]; first: TimeOff; when: string }
+export type Row = { ids: number[]; first: TimeOff; when: string; weekdays: Weekday[] }
 
 export function rowsOf(list: TimeOff[]): Row[] {
   const groups = new Map<string, TimeOff[]>()
@@ -104,7 +104,7 @@ export function rowsOf(list: TimeOff[]): Row[] {
   const sortKey = (t: TimeOff) => t.weekday ? `0|${t.startTime ?? ''}|${ORDER.indexOf(t.weekday)}` : `1|${t.firstDay ?? ''}|${t.startTime ?? ''}`
   return [...groups.values()].map((items) => {
     const sorted = [...items].sort((a, b) => byWeek(a.weekday, b.weekday))
-    return { ids: sorted.map((i) => i.id!), first: sorted[0]!, when: whenOf(sorted) }
+    return { ids: sorted.map((i) => i.id!), first: sorted[0]!, when: whenOf(sorted), weekdays: sorted.flatMap((i) => (i.weekday ? [i.weekday] : [])) }
   }).sort((a, b) => sortKey(a.first).localeCompare(sortKey(b.first)))
 }
 

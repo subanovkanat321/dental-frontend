@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -6,6 +6,7 @@ import { addDays, todayIn } from '../lib/time'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { WEEK, type Weekday } from './texts'
+import { DAYS, onWeekday } from './dayOffHours'
 import { BREAK_KINDS, DAY_OFF_KINDS, LEAVE_KINDS, OTHER, titleFor, toRanges, type Kind } from './timeOffTexts'
 
 type Me = Schemas['BookingViewsMe']
@@ -59,7 +60,22 @@ function useWho(me: Me) {
       </Select>
     </label>
   )
-  return { doctorId: who ?? undefined, field }
+  const name = who == null ? null : doctors.find((d) => d.id === who)?.fullName ?? 'врач'
+  return { doctorId: who ?? undefined, name, field }
+}
+
+/**
+ * Рабочие дни по часам: у врача — его (свои или клиники, сервер отдаёт итоговые), у «Все врачи» —
+ * клиники. Пока не загрузились — null: ничего не запрещаем, сервер всё равно примет.
+ */
+function useWorkDays(doctorId: number | undefined): Set<Weekday> | null {
+  const hours = useQuery({
+    queryKey: ['doctor-hours', doctorId], enabled: doctorId != null,
+    queryFn: () => unwrap(api.GET('/api/doctors/{id}/hours', { params: { path: { id: doctorId! } } })),
+  })
+  const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')), enabled: doctorId == null })
+  if (doctorId != null) return hours.data ? new Set((hours.data.days ?? []).map((d) => d.weekday!)) : null
+  return clinic.data ? new Set(clinic.data.workDays ?? DAYS) : null
 }
 
 /** Тип чипами (🍽️ Обед, 🕌 Намаз…): задаёт название и значок. */
@@ -167,10 +183,15 @@ export function NewDayOff({ me, onDone, onCancel }: { me: Me; onDone: Done; onCa
   const [own, setOwn] = useState('')
   const [error, setError] = useState<string | null>(null)
   const save = useCreate((_n, skipped) => onDone(`Выходной добавлен${skipped ? `. Уже были — пропустили: ${skipped}` : ''}`))
+  // Еженедельный выходной на день, который и так не рабочий по часам, — дубль: его не создаём
+  const workDays = useWorkDays(who.doctorId)
+  const idle = weekly && workDays ? DAYS.filter((d) => days.includes(d) && !workDays.has(d)) : []
+  const useful = weekly ? days.filter((d) => !idle.includes(d)) : days
   const submit = () => {
     const title = titleFor(kind, own, 'Выходной')
     const base = { doctorId: who.doctorId, title, emoji: kind.emoji }
-    const bodies: Body[] = weekly ? days.map((weekday) => ({ ...base, weekday }))
+    if (weekly && days.length && !useful.length) return setError('Эти дни и так не рабочие по часам — выходной не нужен')
+    const bodies: Body[] = weekly ? useful.map((weekday) => ({ ...base, weekday }))
       : toRanges(dates).map(([firstDay, lastDay]) => ({ ...base, firstDay, lastDay }))
     if (!bodies.length) return setError(weekly ? 'Выберите хотя бы один день' : 'Выберите дату')
     setError(null)
@@ -178,13 +199,17 @@ export function NewDayOff({ me, onDone, onCancel }: { me: Me; onDone: Done; onCa
   }
   return (
     <FormCard title="Новый выходной день" submit="Добавить выходной" onSubmit={submit} onCancel={onCancel}
-      error={error ?? errorText(save.error)} pending={save.isPending}>
+      error={error ?? errorText(save.error)} pending={save.isPending || (weekly && days.length > 0 && !useful.length)}>
       {who.field}
       <div className="segments" role="group" aria-label="Когда">
         <button type="button" aria-pressed={weekly} onClick={() => setWeekly(true)}>Каждую неделю</button>
         <button type="button" aria-pressed={!weekly} onClick={() => { setWeekly(false); if (kind === DAY_OFF_KINDS[0]) setKind(DAY_OFF_KINDS[1]!) }}>Одна дата / праздник</button>
       </div>
-      {weekly ? <Weekdays value={days} onChange={setDays} /> : (
+      {weekly && <Weekdays value={days} onChange={(d) => { setError(null); setDays(d) }} />}
+      {idle.map((d) => (
+        <p key={d} className="hint" role="note">{onWeekday(d)} {who.name ?? 'клиника'} и так не работает ({who.name ? 'часы работы' : 'часы клиники'}){useful.length ? ' — этот день пропустим' : ''}</p>
+      ))}
+      {weekly ? null : (
         <div className="field"><span>Даты — весь день</span>
           <ul className="timeoff-dates">
             {dates.map((d, i) => (

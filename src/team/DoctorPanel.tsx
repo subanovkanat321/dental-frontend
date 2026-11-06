@@ -168,7 +168,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
       <section className="form">
         <h3>Часы работы</h3>
         <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — во вкладке «Перерывы».</p>
-        <HoursEditor doctorId={d.id!} />
+        <HoursEditor doctorId={d.id!} doctorName={d.fullName ?? ''} />
       </section>
 
       {me.admin && (

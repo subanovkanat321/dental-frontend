@@ -589,6 +589,11 @@ tr.inactive td { opacity: .55; }
 .weekdays { display: flex; flex-wrap: wrap; gap: 6px; }
 .weekdays .day { min-width: 44px; height: 36px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
 .weekdays .day[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 700; }
+/* День с еженедельным выходным («Перерывы и выходные»): нерабочий, серым — вместо часов подпись откуда */
+.weekdays .day.off { background: var(--sunken); color: var(--hint); border-style: dashed; }
+.hours-row.off label { color: var(--hint); }
+.hours-row .hours-off { grid-column: 2 / -1; color: var(--hint); font-size: .9rem; overflow-wrap: anywhere; }
+p.hours-off { margin: 4px 0 0; font-size: .9rem; }
 .form.narrow { max-width: 520px; }
 .block-head input[type=month] { font: inherit; height: 34px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .table th.r, .table td.r { text-align: right; }

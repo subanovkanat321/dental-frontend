@@ -77,6 +77,10 @@ export const server = setupServer(
   http.get('*/api/clinic/billing', () => HttpResponse.json({ state: 'FREE' })),
   http.get('*/api/clinic/agreement', () => HttpResponse.json({ scans: [] })),
   http.get('*/api/clinic', () => HttpResponse.json({ legalName: 'ИП Тест', address: 'Бишкек' })),
+  // «Перерывы и выходные» (их видят и часы работы): по умолчанию нет; врач работает каждый день 09–18
+  http.get('*/api/time-off', () => HttpResponse.json([])),
+  http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: (['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const)
+    .map((weekday) => ({ weekday, start: '09:00:00', end: '18:00:00' })) } satisfies Schemas['DoctorHoursView'])),
   http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»' })),
   // Документы приёма и плана (src/print): по умолчанию у услуги памятки нет, квитанция пустая
   http.get('*/api/appointments/:id/care-memo', () => HttpResponse.json({ telegram: false } satisfies Schemas['CareMemosAppointmentMemo'])),

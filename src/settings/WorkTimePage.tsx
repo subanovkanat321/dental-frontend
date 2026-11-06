@@ -25,6 +25,6 @@ export function WorkTimePage({ me, onBack, initial }: { me: Me; onBack: () => vo
   )
   if (tab === 'timeoff') return <TeamPage me={me} only="timeoff" title={TITLE} onBack={onBack} tabs={tabs} />
   return tab === 'doctors'
-    ? <HoursPage me={me} onBack={onBack} title={TITLE} tabs={tabs} />
+    ? <HoursPage me={me} onBack={onBack} title={TITLE} tabs={tabs} onTimeOff={() => setTab('timeoff')} />
     : <ShiftsPage onBack={onBack} title={TITLE} tabs={tabs} />
 }

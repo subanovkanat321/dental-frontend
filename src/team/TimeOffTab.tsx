@@ -8,6 +8,8 @@ import { Loading } from '../layout/Loading'
 import './timeoff.css'
 import { NewBreak, NewDayOff, NewLeave } from './TimeOffForms'
 import { groupOf, rowsOf, type Group, type Row } from './timeOffTexts'
+import type { Weekday } from './texts'
+import { DAYS } from './dayOffHours'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -53,6 +55,7 @@ export function TimeOffTab({ me }: { me: Me }) {
           <span>{r.when.split(', ').map((part, i, all) => <span key={i}><span className="nowrap">{part}{i < all.length - 1 ? ',' : ''}</span> </span>)}
             <span className="nowrap">— <span className="strong">{label}</span></span></span>
           {doctors.length > 1 && <span className="hint">{t.doctorId ? nameOf(t.doctorId) : 'Все врачи'}</span>}
+          {groupOf(t) === 'dayOff' && t.weekday && <InsteadOfHours row={r} />}
         </div>
         {editor && canDelete(t) && (
           <button type="button" className="btn small ghost" aria-label={`Удалить: ${t.title}`} disabled={remove.isPending}
@@ -94,4 +97,29 @@ export function TimeOffTab({ me }: { me: Me }) {
       </section>
     </>
   )
+}
+
+/**
+ * Еженедельный выходной на рабочий по часам день — это нормально (выходной перекрывает часы), но
+ * пусть будет видно, что он закрывает: «вместо рабочих часов 09:00–18:00». Часы — врача, у «Все
+ * врачи» — клиники; у дней одной строки они разные или день и так нерабочий — не пишем.
+ */
+function InsteadOfHours({ row }: { row: Row }) {
+  const doctorId = row.first.doctorId ?? null
+  const hours = useQuery({
+    queryKey: ['doctor-hours', doctorId], enabled: doctorId != null,
+    queryFn: () => unwrap(api.GET('/api/doctors/{id}/hours', { params: { path: { id: doctorId! } } })),
+  })
+  const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')), enabled: doctorId == null })
+  const byDay = new Map<Weekday, string>()
+  const hm = (start?: string, end?: string) => `${(start ?? '').slice(0, 5)}–${(end ?? '').slice(0, 5)}`
+  if (doctorId != null) for (const d of hours.data?.days ?? []) byDay.set(d.weekday!, hm(d.start, d.end))
+  else if (clinic.data) {
+    for (const d of clinic.data.workDays ?? DAYS) {
+      byDay.set(d, hm(clinic.data.workStart ?? '09:00', clinic.data.workEnd ?? '18:00'))
+    }
+  }
+  const shown = [...new Set(row.weekdays.map((d) => byDay.get(d)).filter(Boolean))]
+  if (shown.length !== 1) return null
+  return <span className="hint">вместо рабочих часов <span className="nowrap">{shown[0]}</span></span>
 }
