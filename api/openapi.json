@@ -8173,6 +8173,51 @@
         }
       }
     },
+    "/api/service-types/popular" : {
+      "get" : {
+        "tags" : [ "service-type-controller" ],
+        "operationId" : "popular",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ServiceTypeControllerPopular"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/service-types/group-guess" : {
+      "get" : {
+        "tags" : [ "service-type-controller" ],
+        "operationId" : "guessGroup",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : ""
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ServiceTypeControllerGroupGuess"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/salaries" : {
       "get" : {
         "tags" : [ "salary-controller" ],
@@ -11002,6 +11047,10 @@
             "format" : "int32",
             "maximum" : 36,
             "minimum" : 1
+          },
+          "group" : {
+            "type" : "string",
+            "enum" : [ "EXAM", "HYGIENE", "THERAPY", "SURGERY", "PROSTHETICS", "ORTHODONTICS", "IMPLANTS", "AESTHETICS", "KIDS", "XRAY", "OTHER" ]
           }
         },
         "required" : [ "durationMinutes", "name" ]
@@ -11032,6 +11081,10 @@
           "recallMonths" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "group" : {
+            "type" : "string",
+            "enum" : [ "EXAM", "HYGIENE", "THERAPY", "SURGERY", "PROSTHETICS", "ORTHODONTICS", "IMPLANTS", "AESTHETICS", "KIDS", "XRAY", "OTHER" ]
           }
         }
       },
@@ -15857,6 +15910,25 @@
           }
         }
       },
+      "ServiceTypeControllerPopular" : {
+        "properties" : {
+          "ids" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        }
+      },
+      "ServiceTypeControllerGroupGuess" : {
+        "properties" : {
+          "group" : {
+            "type" : "string",
+            "enum" : [ "EXAM", "HYGIENE", "THERAPY", "SURGERY", "PROSTHETICS", "ORTHODONTICS", "IMPLANTS", "AESTHETICS", "KIDS", "XRAY", "OTHER" ]
+          }
+        }
+      },
       "ServiceTypeServiceCatalogItem" : {
         "properties" : {
           "name" : {
@@ -15879,6 +15951,10 @@
         "properties" : {
           "category" : {
             "type" : "string"
+          },
+          "group" : {
+            "type" : "string",
+            "enum" : [ "EXAM", "HYGIENE", "THERAPY", "SURGERY", "PROSTHETICS", "ORTHODONTICS", "IMPLANTS", "AESTHETICS", "KIDS", "XRAY", "OTHER" ]
           },
           "items" : {
             "type" : "array",

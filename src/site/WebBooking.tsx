@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { Schemas } from '../api/client'
-import { groupByCategory } from '../clinic/services'
+import { groupLabel, groupServices } from '../clinic/services'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { ContactLinks } from '../lib/ContactLinks'
@@ -188,7 +188,7 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
   }
 
   const doctor = info.doctors.find((d) => d.id === doctorId)
-  const groups = groupByCategory(services)
+  const groups = groupServices(services)
   const serviceButton = (s: Service) => (
     <button key={s.id} type="button" className="btn service" aria-pressed={service?.id === s.id}
       onClick={() => { setService(s); setChosen(''); setDateTouched(false); setErrors({}) }}>
@@ -227,8 +227,8 @@ export default function WebBooking({ code, lang, onClose }: { code: string | nul
             <h3 className="step-title">{t('stepService')}</h3>
             <div className="field services">
               {!services.length ? <p className="hint">{t('webNoServices')}</p> : groups.length > 1
-                ? groups.map(({ category, items }) => (
-                  <div key={category ?? '—'} className="services-group"><h3>{category || t('otherServices')}</h3>{items.map(serviceButton)}</div>
+                ? groups.map(({ group, items }) => (
+                  <div key={group} className="services-group"><h3>{groupLabel(group, lang)}</h3>{items.map(serviceButton)}</div>
                 ))
                 : services.map(serviceButton)}
             </div>

@@ -9,6 +9,7 @@ import { dateOf, shortDate, somText, todayIn } from '../lib/time'
 import { useAppointmentAction } from './useAppointmentAction'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
+import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
 import { useEarnings } from '../earnings/earnings'
 import { seesOwnEarnings } from '../lib/roles'
 import { Loading } from '../layout/Loading'
@@ -145,6 +146,8 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
   const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), staleTime: 10 * 60_000 })
   const [picked, setPicked] = useState<string[]>([])
   const list = (services.data ?? []).filter((s) => s.active && s.priceSom != null)
+  // Прайс длинный — сверху «Часто», дальше разделы; поиск в списке — с 9 пунктов (Select)
+  const popularIds = usePopularServices(list.length > 8)
   if (!list.length) return null
   return (
     <div className="price-pick">
@@ -155,7 +158,7 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
         setPicked([...picked, s.name ?? ''])
       }}>
         <option value="">{picked.length ? '＋ Прибавить ещё услугу…' : 'Выбрать из прайса…'}</option>
-        {list.map((s) => <option key={s.id} value={s.id}>{serviceEmoji(s.name)} {s.name} · {somText(s.priceSom!)}</option>)}
+        {serviceOptions(list, popularIds, (s) => `${serviceEmoji(s.name)} ${s.name} · ${somText(s.priceSom!)}`)}
       </Select>
       {picked.length > 0 && <p className="hint small">Из прайса: {picked.join(' + ')}</p>}
     </div>

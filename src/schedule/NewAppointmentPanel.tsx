@@ -1,7 +1,7 @@
 import { advanceOnEnter, reveal } from '../lib/advance'
 import { notify } from '../lib/confirm'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
@@ -21,11 +21,14 @@ import { refreshAppointmentData } from './useAppointmentAction'
 import { editableDoctors } from '../lib/roles'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
+import { useDebounced } from '../lib/useDebounced'
+import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
 import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
 type Appointment = Schemas['AppointmentView']
+type Service = Schemas['ServiceTypeView']
 
 /** Слот, на который нажали: врач, день и минуты от полуночи по Бишкеку. */
 /**
@@ -44,16 +47,6 @@ function timeText(minutes: number): string {
 /** Время в форме для слота: не выбрано — пусто, в форме сетка свободного времени. */
 function initialTime(slot: Slot): string {
   return slot.minutes == null ? '' : timeText(slot.minutes)
-}
-
-/** Пауза перед поиском: не дёргать сервер на каждую букву. */
-function useDebounced(value: string, ms = 300): string {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), ms)
-    return () => clearTimeout(t)
-  }, [value, ms])
-  return debounced
 }
 
 /**
@@ -83,7 +76,6 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const [source, setSource] = useState('')
   const sources = useSources()
   const [wantsEarlier, setWantsEarlier] = useState(false)
-  const [allServices, setAllServices] = useState(false)
   const [duration, setDuration] = useState(slot.duration ?? 30)
   const [serviceId, setServiceId] = useState<number | ''>('')
   const timeRef = useRef<HTMLDivElement>(null)
@@ -239,7 +231,19 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const activeServices = servicesOfDoctor(services.data ?? [], me.doctorServices, doctorId)
   // Врач сменился (и нажатием в другую колонку), а выбранную услугу он не оказывает — снять выбор
   if (serviceId !== '' && services.data && !activeServices.some((sv) => sv.id === serviceId)) setServiceId('')
-  const shownServices = allServices ? activeServices : activeServices.filter((sv, i) => i < 8 || sv.id === serviceId)
+  // Много услуг — кнопками только частые (и выбранная), остальные — списком с поиском и разделами
+  const many = activeServices.length > 8
+  const popularIds = usePopularServices(many)
+  const chipServices = many
+    ? activeServices.filter((sv) => popularIds.slice(0, 5).includes(sv.id!) || sv.id === serviceId)
+    : activeServices
+  const pickService = (sv: Service | undefined) => {
+    const next = !sv || sv.id === serviceId ? '' : sv.id!
+    setServiceId(next)
+    if (sv && next !== '' && sv.durationMinutes) setDuration(sv.durationMinutes)
+    // Выбрали услугу — дальше время (на телефоне сам прокрутим к нему)
+    if (next !== '') reveal(walkIn ? submitRef.current : timeRef.current, walkIn)
+  }
 
   return (
     <aside className="panel" aria-label={walkIn ? 'Принять сейчас' : 'Новая запись'}>
@@ -319,20 +323,20 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
 
         {activeServices.length > 0 && (
           <div className="field"><span>Услуга (необязательно) — длительность подставится сама</span>
-            <div className="price-hints" role="group" aria-label="Услуга">
-              {shownServices.map((sv) => (
-                <button key={sv.id} type="button" className="chip" aria-pressed={sv.id === serviceId} onClick={() => {
-                  const next = sv.id === serviceId ? '' : sv.id!
-                  setServiceId(next)
-                  if (next !== '' && sv.durationMinutes) setDuration(sv.durationMinutes)
-                  // Выбрали услугу — дальше время (на телефоне сам прокрутим к нему)
-                  if (next !== '') reveal(walkIn ? submitRef.current : timeRef.current, walkIn)
-                }}><span aria-hidden="true">{serviceEmoji(sv.name)} </span>{sv.name}<span className="hint"> · {sv.durationMinutes} мин</span></button>
-              ))}
-              {shownServices.length < activeServices.length && (
-                <button type="button" className="chip more" onClick={() => setAllServices(true)}>Ещё {activeServices.length - shownServices.length}…</button>
-              )}
-            </div>
+            {chipServices.length > 0 && (
+              <div className="price-hints" role="group" aria-label={many ? 'Частые услуги' : 'Услуга'}>
+                {chipServices.map((sv) => (
+                  <button key={sv.id} type="button" className="chip" aria-pressed={sv.id === serviceId} onClick={() => pickService(sv)}>
+                    <span aria-hidden="true">{serviceEmoji(sv.name)} </span>{sv.name}<span className="hint"> · {sv.durationMinutes} мин</span></button>
+                ))}
+              </div>
+            )}
+            {many && (
+              <Select aria-label="Все услуги" value={serviceId} onChange={(e) => pickService(activeServices.find((sv) => String(sv.id) === e.target.value))}>
+                <option value="">{serviceId === '' ? 'Найти услугу…' : 'Без услуги'}</option>
+                {serviceOptions(activeServices, popularIds, (sv) => `${sv.name} · ${sv.durationMinutes} мин`)}
+              </Select>
+            )}
           </div>
         )}
         {walkIn ? (

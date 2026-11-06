@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { groupByCategory } from '../clinic/services'
+import { groupLabel, groupServices } from '../clinic/services'
 import { SaveBar } from '../layout/SaveBar'
 import { chosenServiceIds } from '../lib/doctorServices'
 import { useDirty } from '../lib/unsaved'
@@ -66,9 +66,9 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
       </div>
       {some && (services.isPending ? <Loading /> : list.length ? (
         <div className="doctor-services">
-          {groupByCategory(list).map(({ category, items }) => (
-            <fieldset key={category ?? '—'} className="field">
-              <legend>{category || 'Другое'}</legend>
+          {groupServices(list).map(({ group, items }) => (
+            <fieldset key={group} className="field">
+              <legend>{groupLabel(group)}</legend>
               {items.map((s) => (
                 <label key={s.id} className="check">
                   <input type="checkbox" checked={picked.includes(s.id!)} onChange={(e) => toggle(s.id!, e.target.checked)} /> {s.name}

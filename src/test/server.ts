@@ -50,6 +50,9 @@ export const server = setupServer(
   http.get('*/api/appointments/:id/visit-report', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/patients/:id/family', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/service-types', () => HttpResponse.json([])),
+  // «Часто» в выборе услуги: по умолчанию записей нет; раздел новой услуги — «Другое»
+  http.get('*/api/service-types/popular', () => HttpResponse.json({ ids: [] } satisfies Schemas['ServiceTypeControllerPopular'])),
+  http.get('*/api/service-types/group-guess', () => HttpResponse.json({ group: 'OTHER' } satisfies Schemas['ServiceTypeControllerGroupGuess'])),
   http.get('*/api/appointments/:id/payments', () => HttpResponse.json([])),
   http.get('*/api/waitlist', () => HttpResponse.json([])),
   // График смен (V150): по умолчанию смен нет — в «Сводке дня» строки «На смене» нет

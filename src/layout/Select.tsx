@@ -2,10 +2,11 @@ import { Children, Fragment, isValidElement, useEffect, useId, useLayoutEffect, 
 import { createPortal } from 'react-dom'
 
 import { focusNext } from '../lib/advance'
+import { textMatches } from '../lib/search'
 import { useBack } from '../lib/back'
 
-/** Пункт списка: как `<option>` — значение, текст, можно выключить. */
-type Item = { value: string; text: string; disabled: boolean }
+/** Пункт списка: как `<option>` — значение, текст, можно выключить; group — подпись `<optgroup>`. */
+type Item = { value: string; text: string; disabled: boolean; group?: string }
 
 /** Тот же вид события, что у `<select>`: старые обработчики `(e) => e.target.value` работают как были. */
 export type SelectChange = { target: { value: string } }
@@ -18,18 +19,36 @@ function textOf(node: ReactNode): string {
   return ''
 }
 
-/** `<option>` из детей — в том числе из `.map(...)`, условий и фрагментов. */
-function itemsOf(children: ReactNode): Item[] {
+/**
+ * `<option>` из детей — в том числе из `.map(...)`, условий и фрагментов. `<optgroup label>` —
+ * группа с заголовком: её пункты помнят подпись группы.
+ */
+function itemsOf(children: ReactNode, group?: string): Item[] {
   const out: Item[] = []
   Children.forEach(children, (child) => {
-    if (!isValidElement<{ children?: ReactNode; value?: string | number; disabled?: boolean }>(child)) return
+    if (!isValidElement<{ children?: ReactNode; value?: string | number; disabled?: boolean; label?: string }>(child)) return
     if (child.type === Fragment) {
-      out.push(...itemsOf(child.props.children))
+      out.push(...itemsOf(child.props.children, group))
+      return
+    }
+    if (child.type === 'optgroup') {
+      out.push(...itemsOf(child.props.children, child.props.label ?? ''))
       return
     }
     if (child.type !== 'option') return
     const text = textOf(child.props.children)
-    out.push({ value: child.props.value != null ? String(child.props.value) : text, text, disabled: !!child.props.disabled })
+    out.push({ value: child.props.value != null ? String(child.props.value) : text, text, disabled: !!child.props.disabled, group })
+  })
+  return out
+}
+
+/** Подряд идущие пункты одной группы — вместе: [подпись, [[пункт, его номер в списке]]]. */
+function chunks(shown: Item[]): [string | undefined, [Item, number][]][] {
+  const out: [string | undefined, [Item, number][]][] = []
+  shown.forEach((item, i) => {
+    const last = out[out.length - 1]
+    if (last && last[0] === item.group) last[1].push([item, i])
+    else out.push([item.group, [[item, i]]])
   })
   return out
 }
@@ -50,7 +69,8 @@ const SEARCH_FROM = 9
  * окно на весь экран без нашего оформления. Пишется так же, как `<select>` с `<option>` внутри
  * (value / defaultValue / onChange / name / required / disabled), поэтому замена — одно слово.
  * Телефон — лист снизу экрана, компьютер — список под полем; длинный список — с поиском.
- * Клавиатура: ↑ ↓ Enter Esc, как у системного.
+ * Клавиатура: ↑ ↓ Enter Esc, как у системного. `<optgroup label>` — группы с заголовками (ARIA
+ * role="group"); стрелки идут по пунктам, заголовки пропускают. Поиск — без регистра и «ё/е».
  */
 export function Select({ value, defaultValue, onChange, children, name, required, disabled, className, id, ...aria }: {
   value?: string | number
@@ -79,10 +99,9 @@ export function Select({ value, defaultValue, onChange, children, name, required
   const listId = useId()
   const auto = useId()
 
-  const q = query.trim().toLowerCase()
   // «Материал со склада…», «Статья…» — подсказка в пустом поле, а не пункт: в списке её нет
   const choices = items.filter((i) => !(i.value === '' && /…$/.test(i.text)) && !(i.disabled && i.value === ''))
-  const shown = q ? choices.filter((i) => i.text.toLowerCase().includes(q)) : choices
+  const shown = query.trim() ? choices.filter((i) => textMatches(i.text, query) || textMatches(i.group, query)) : choices
   const searchable = choices.length >= SEARCH_FROM
 
   const close = (focus = true) => {
@@ -191,6 +210,17 @@ export function Select({ value, defaultValue, onChange, children, name, required
   const [main, hint] = split(selected?.text ?? '')
   const placeholder = !selected || selected.disabled || (selected.value === '' && /…$/.test(selected.text))
 
+  const option = (item: Item, i: number) => {
+    const [m, h] = split(item.text)
+    return (
+      <li key={item.value + i} id={`${auto}-${i}`} data-index={i} data-value={item.value} role="option" aria-selected={item.value === current}
+        aria-disabled={item.disabled || undefined} className={i === active ? 'active' : undefined}
+        onPointerMove={() => !item.disabled && setActive(i)} onClick={() => choose(item)}>
+        <span className="ui-select-text"><span>{m}</span>{h && <span className="hint"><span className="sr-only"> · </span>{h}</span>}</span>
+      </li>
+    )
+  }
+
   const options = (
     <div ref={list} className={`ui-select-pop${sheet ? ' sheet' : ''}`} onKeyDown={onKey}
       style={sheet || !place ? undefined : { left: place.left, width: place.width, top: place.top, bottom: place.bottom, maxHeight: place.maxHeight }}>
@@ -201,16 +231,14 @@ export function Select({ value, defaultValue, onChange, children, name, required
           onChange={(e) => { setQuery(e.target.value); setActive(0) }} />
       )}
       <ul id={listId} role="listbox" aria-label={aria['aria-label'] ?? (title || undefined)} tabIndex={-1}>
-        {shown.map((item, i) => {
-          const [m, h] = split(item.text)
-          return (
-            <li key={item.value + i} id={`${auto}-${i}`} data-index={i} data-value={item.value} role="option" aria-selected={item.value === current}
-              aria-disabled={item.disabled || undefined} className={i === active ? 'active' : undefined}
-              onPointerMove={() => !item.disabled && setActive(i)} onClick={() => choose(item)}>
-              <span className="ui-select-text"><span>{m}</span>{h && <span className="hint"><span className="sr-only"> · </span>{h}</span>}</span>
-            </li>
-          )
-        })}
+        {chunks(shown).map(([group, rows], g) => group == null ? rows.map(([item, i]) => option(item, i)) : (
+          <li key={`g${g}`} role="none" className="ui-select-group">
+            <ul role="group" aria-labelledby={`${auto}-g${g}`}>
+              <li role="presentation" id={`${auto}-g${g}`} className="ui-select-group-title">{group}</li>
+              {rows.map(([item, i]) => option(item, i))}
+            </ul>
+          </li>
+        ))}
         {!shown.length && <li className="ui-select-empty" aria-disabled="true">Ничего не нашлось</li>}
       </ul>
     </div>

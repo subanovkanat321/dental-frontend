@@ -598,6 +598,15 @@ tr.inactive td { opacity: .55; }
 .chips-pick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
 .chips-pick .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
 .chips-pick .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+/* «Услуги и цены»: поиск и разделы с количеством. Телефон — ряд чипов листается вбок (страница — нет), компьютер — переносится */
+.service-filter { display: grid; gap: 8px; min-width: 0; margin: 2px 0 12px; }
+.service-filter input[type=search] { width: 100%; max-width: 420px; height: 38px; padding: 0 12px; font: inherit; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+.service-filter input[type=search]:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.service-chips { display: flex; gap: 6px; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding-bottom: 2px; }
+.service-chips::-webkit-scrollbar { display: none; }
+.service-chips .chip { flex: none; white-space: nowrap; cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
+.service-chips .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+@media (min-width: 900px) { .service-chips { flex-wrap: wrap; overflow: visible; } }
 .catalog-section { border-top: 1px solid var(--separator); padding: 8px 0; }
 .catalog-section summary { cursor: pointer; font-weight: 600; }
 .catalog-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0 4px 4px; }
@@ -1518,6 +1527,15 @@ input.ui-select-proxy, .field input.ui-select-proxy { position: absolute; width:
 .ui-select-search { flex: none; margin: 2px 2px 6px; padding: 8px 10px; font: inherit; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--page); color: var(--text); }
 .ui-select-title { margin: 4px 8px 8px; font: 600 1.05rem var(--display); }
 .ui-select-empty { color: var(--hint); }
+/* Группы (<optgroup>): подпись мелко и серым, пункты под ней; группа не выбирается */
+.ui-select-pop li.ui-select-group { display: block; min-height: 0; padding: 0; border-radius: 0; cursor: default; background: none; }
+.ui-select-pop li.ui-select-group::after { content: none; }
+.ui-select-pop li.ui-select-group + li.ui-select-group { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--separator); }
+.ui-select-pop .ui-select-group ul { overflow: visible; }
+.ui-select-pop li.ui-select-group-title { min-height: 0; padding: 6px 10px 2px; color: var(--hint); font-size: .78rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; cursor: default; }
+.ui-select-pop li.ui-select-group-title::after { content: none; }
+.ui-select-pop.sheet li.ui-select-group { min-height: 0; padding: 0; }
+.ui-select-pop.sheet li.ui-select-group-title { min-height: 0; padding: 8px 12px 2px; font-size: .8rem; }
 /* Телефон и Telegram — лист снизу экрана, пункты крупнее: удобно большим пальцем */
 .ui-select-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; background: rgba(10, 25, 30, .38); animation: sheet-fade .15s ease-out; }
 .ui-select-pop.sheet { position: static; width: 100%; max-height: 75vh; max-height: 75dvh; padding: 10px 10px calc(14px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0;

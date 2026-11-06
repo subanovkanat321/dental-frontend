@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
-import { groupByCategory } from './services'
+import { groupServices, nameMatches } from './services'
 import { choose } from '../test/select'
 
 beforeEach(() => {
@@ -16,19 +16,27 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-test('услуги по категориям: стандартные по порядку, свои по алфавиту, без категории — последними', () => {
-  const groups = groupByCategory([
-    { id: 1, name: 'А', category: 'Хирургия' }, { id: 2, name: 'Б' }, { id: 3, name: 'В', category: 'Свои' },
-    { id: 4, name: 'Г', category: 'Терапия' }, { id: 5, name: 'Д', category: 'Хирургия' },
+test('услуги по разделам: в порядке разделов, без раздела — «Другое», пустых групп нет', () => {
+  const groups = groupServices<Schemas['ServiceTypeView']>([
+    { id: 1, name: 'А', group: 'SURGERY' }, { id: 2, name: 'Б' }, { id: 3, name: 'В', group: 'EXAM' },
+    { id: 4, name: 'Г', group: 'THERAPY' }, { id: 5, name: 'Д', group: 'SURGERY' },
   ])
-  expect(groups.map((g) => g.category)).toEqual(['Терапия', 'Хирургия', 'Свои', null])
-  expect(groups[1]!.items.map((s) => s.id)).toEqual([1, 5])
+  expect(groups.map((g) => g.group)).toEqual(['EXAM', 'THERAPY', 'SURGERY', 'OTHER'])
+  expect(groups[2]!.items.map((s) => s.id)).toEqual([1, 5])
+})
+
+test('поиск по названию: без регистра, «ё» = «е», слова в любом порядке', () => {
+  expect(nameMatches('Осмотр ребёнка', 'РЕБЕНКА')).toBe(true)
+  expect(nameMatches('Осмотр ребенка', 'ребён')).toBe(true)
+  expect(nameMatches('Лечение кариеса', 'кариес леч')).toBe(true)
+  expect(nameMatches('Лечение кариеса', 'пломба')).toBe(false)
+  expect(nameMatches('Лечение кариеса', '  ')).toBe(true)
 })
 
 test('услуги: таблица по группам, правка и новая услуга', async () => {
   let list: Schemas['ServiceTypeView'][] = [
-    { id: 1, name: 'Лечение кариеса', durationMinutes: 60, priceSom: 2500, category: 'Терапия', active: true },
-    { id: 2, name: 'Консультация', durationMinutes: 30, active: false },
+    { id: 1, name: 'Лечение кариеса', durationMinutes: 60, priceSom: 2500, category: 'Терапия', group: 'THERAPY', active: true },
+    { id: 2, name: 'Консультация', durationMinutes: 30, active: false, group: 'OTHER' },
   ]
   const bodies: unknown[] = []
   server.use(
@@ -39,18 +47,21 @@ test('услуги: таблица по группам, правка и нова
       list = list.map((s) => (String(s.id) === params.id ? { ...s, ...body } : s))
       return HttpResponse.json(list[0])
     }),
+    http.get('*/api/service-types/group-guess', ({ request }) => HttpResponse.json({
+      group: new URL(request.url).searchParams.get('name')?.startsWith('Удал') ? 'SURGERY' : 'OTHER',
+    } satisfies Schemas['ServiceTypeControllerGroupGuess'])),
     http.post('*/api/service-types', async ({ request }) => {
       const body = await request.json() as Schemas['ServiceTypeControllerRequest']
       bodies.push(body)
-      list = [...list, { id: 3, ...body }]
+      list = [...list, { id: 3, ...body, group: body.group ?? 'OTHER' }]
       return HttpResponse.json(list[2], { status: 201 })
     }),
   )
   const user = userEvent.setup()
   renderApp()
   const table = await screen.findByRole('table', { name: 'Услуги' })
-  expect(within(table).getByRole('columnheader', { name: 'Терапия' })).toBeInTheDocument()
-  expect(within(table).getByRole('columnheader', { name: 'Другое' })).toBeInTheDocument()
+  expect(within(table).getByRole('columnheader', { name: 'Терапия · 1' })).toBeInTheDocument()
+  expect(within(table).getByRole('columnheader', { name: 'Другое · 1' })).toBeInTheDocument()
   expect(within(table).getByText('от 2 500 сом')).toBeInTheDocument()
   expect(within(table).getByText('скрыта')).toBeInTheDocument()
 
@@ -60,15 +71,85 @@ test('услуги: таблица по группам, правка и нова
   await user.type(within(panel).getByRole('spinbutton', { name: 'Цена «от», сом' }), '3000')
   await user.click(within(panel).getByRole('button', { name: 'Сохранить' }))
   expect(await within(panel).findByText('Услуга сохранена')).toBeInTheDocument()
-  expect(bodies[0]).toEqual({ name: 'Лечение кариеса', category: 'Терапия', durationMinutes: 60, active: true, priceSom: 3000 })
+  // Старую категорию не шлём — сервер её оставит; раздел — как был
+  expect(bodies[0]).toEqual({ name: 'Лечение кариеса', group: 'THERAPY', durationMinutes: 60, active: true, priceSom: 3000 })
 
   await user.click(screen.getByRole('button', { name: '+ Добавить услугу' }))
   const fresh = await screen.findByRole('complementary', { name: 'Новая услуга' })
   await user.type(within(fresh).getByRole('textbox', { name: 'Название' }), 'Удаление зуба')
-  await user.click(within(fresh).getByRole('button', { name: 'Хирургия' }))
+  // Раздел подобрал сервер по названию — подсказка и значение в списке
+  expect(await within(fresh).findByText('Подобрали по названию — можно поменять')).toBeInTheDocument()
+  expect(within(fresh).getByRole('combobox', { name: 'Раздел' })).toHaveTextContent('Хирургия')
   await user.click(within(fresh).getByRole('button', { name: 'Добавить' }))
   expect(await within(await screen.findByRole('table', { name: 'Услуги' })).findByRole('button', { name: 'Удаление зуба' })).toBeInTheDocument()
-  expect(bodies[1]).toEqual({ name: 'Удаление зуба', category: 'Хирургия', durationMinutes: 30, active: true })
+  expect(bodies[1]).toEqual({ name: 'Удаление зуба', group: 'SURGERY', durationMinutes: 30, active: true })
+})
+
+/** ≈ прайс клиники: 12 услуг в 5 разделах (вымышленные). */
+const PRICE_LIST: Schemas['ServiceTypeView'][] = [
+  ['Первичная консультация', 'EXAM'], ['Профессиональная чистка', 'HYGIENE'], ['Фторирование', 'HYGIENE'],
+  ['Лечение кариеса', 'THERAPY'], ['Лечение пульпита, 1 канал', 'THERAPY'], ['Пломба светового отверждения', 'THERAPY'],
+  ['Удаление зуба мудрости', 'SURGERY'], ['Удаление зуба простое', 'SURGERY'], ['Лечение молочного зуба', 'KIDS'],
+  ['Осмотр ребёнка', 'KIDS'], ['Серебрение молочных зубов', 'KIDS'], ['Анестезия', 'OTHER'],
+].map(([name, group], i) => ({ id: i + 1, name, group: group as Schemas['ServiceTypeView']['group'], durationMinutes: 30, active: true }))
+
+test('«Услуги и цены»: поиск без регистра и «ё/е», чипы разделов с количеством, список по разделам', async () => {
+  server.use(http.get('*/api/service-types', () => HttpResponse.json(PRICE_LIST)))
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Услуги' })
+  const chips = screen.getByRole('group', { name: 'Разделы' })
+  expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual([
+    'Все · 12', 'Осмотр и консультация · 1', 'Профилактика и гигиена · 2', 'Терапия · 3', 'Хирургия · 2',
+    'Детская стоматология · 3', 'Другое · 1',
+  ])
+  expect(within(table).getAllByRole('columnheader').slice(5).map((h) => h.textContent)).toEqual([
+    'Осмотр и консультация · 1', 'Профилактика и гигиена · 2', 'Терапия · 3', 'Хирургия · 2', 'Детская стоматология · 3', 'Другое · 1',
+  ])
+
+  // Чип — только этот раздел; ещё раз — все
+  await user.click(within(chips).getByRole('button', { name: 'Хирургия · 2' }))
+  expect(within(table).getAllByRole('row').slice(1).map((r) => r.textContent)).toEqual([
+    'Хирургия · 2', expect.stringContaining('Удаление зуба мудрости'), expect.stringContaining('Удаление зуба простое'),
+  ])
+  await user.click(within(chips).getByRole('button', { name: 'Хирургия · 2' }))
+  expect(within(chips).getByRole('button', { name: 'Все · 12' })).toHaveAttribute('aria-pressed', 'true')
+
+  // Поиск: «РЕБЕНКА» находит «Осмотр ребёнка»; счётчики — по найденному
+  await user.type(screen.getByRole('searchbox', { name: 'Найти услугу' }), 'РЕБЕНКА')
+  expect(within(screen.getByRole('table', { name: 'Услуги' })).getByRole('button', { name: 'Осмотр ребёнка' })).toBeInTheDocument()
+  expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual(['Все · 1', 'Детская стоматология · 1'])
+  await user.clear(screen.getByRole('searchbox', { name: 'Найти услугу' }))
+  await user.type(screen.getByRole('searchbox', { name: 'Найти услугу' }), 'молочн')
+  await user.click(within(chips).getByRole('button', { name: 'Детская стоматология · 2' }))
+  expect(within(screen.getByRole('table', { name: 'Услуги' })).getAllByRole('row')).toHaveLength(4)
+
+  // Ничего — подсказка и «Показать все»
+  await user.clear(screen.getByRole('searchbox', { name: 'Найти услугу' }))
+  await user.type(screen.getByRole('searchbox', { name: 'Найти услугу' }), 'винир')
+  expect(screen.getByText('Ничего не нашлось')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Показать все' }))
+  expect(within(await screen.findByRole('table', { name: 'Услуги' })).getAllByRole('button')).toHaveLength(12)
+})
+
+test('карточка услуги: раздел меняют в списке — уходит в запросе', async () => {
+  let body: Schemas['ServiceTypeControllerRequest'] | null = null
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json(PRICE_LIST)),
+    http.put('*/api/service-types/:id', async ({ request }) => {
+      body = await request.json() as Schemas['ServiceTypeControllerRequest']
+      return HttpResponse.json({ ...PRICE_LIST[3], ...body })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Лечение кариеса' }))
+  const panel = await screen.findByRole('complementary', { name: 'Услуга' })
+  expect(within(panel).getByRole('combobox', { name: 'Раздел' })).toHaveTextContent('Терапия')
+  await choose(within(panel).getByRole('combobox', { name: 'Раздел' }), 'Детская стоматология')
+  await user.click(within(panel).getByRole('button', { name: 'Сохранить' }))
+  await within(panel).findByText('Услуга сохранена')
+  expect(body).toMatchObject({ name: 'Лечение кариеса', group: 'KIDS' })
 })
 
 test('справочник: отметить типовые с ценой и добавить', async () => {

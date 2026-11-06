@@ -88,3 +88,38 @@ test('телефон — лист снизу с заголовком из под
   await userEvent.click(document.querySelector('.ui-select-backdrop')!)
   expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
 })
+
+test('группы (<optgroup>): заголовки с role="group", стрелки их пропускают, поиск — без «ё/е» и по названию группы', async () => {
+  const onPick = vi.fn()
+  render(
+    <Select aria-label="Услуга" value="" onChange={(e) => onPick(e.target.value)}>
+      <option value="">Найти услугу…</option>
+      <optgroup label="Терапия">
+        <option value="1">Лечение кариеса</option>
+        <option value="2">Пломба</option>
+      </optgroup>
+      <optgroup label="Детская стоматология">
+        {['Осмотр ребёнка', 'Лечение молочного зуба', 'Серебрение', 'Герметизация', 'Фторирование', 'Удаление молочного', 'Пластинка']
+          .map((name, i) => <option key={name} value={10 + i}>{name}</option>)}
+      </optgroup>
+    </Select>,
+  )
+  screen.getByRole('combobox').focus()
+  await userEvent.keyboard('{ArrowDown}')
+  const list = screen.getByRole('listbox', { name: 'Услуга' })
+  const groups = within(list).getAllByRole('group')
+  expect(groups).toHaveLength(2)
+  expect(groups[0]).toHaveAccessibleName('Терапия')
+  expect(within(groups[1]!).getAllByRole('option')).toHaveLength(7)
+  // Первый пункт подсвечен; ↓ ↓ — через заголовок «Детская стоматология» сразу к «Осмотр ребёнка»
+  await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}')
+  expect(onPick).toHaveBeenCalledWith('10')
+
+  await userEvent.click(screen.getByRole('combobox'))
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Поиск в списке' }), 'РЕБЕНКА')
+  expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Осмотр ребёнка'])
+  expect(screen.getByRole('group')).toHaveAccessibleName('Детская стоматология')
+  await userEvent.clear(screen.getByRole('searchbox'))
+  await userEvent.type(screen.getByRole('searchbox'), 'терап')
+  expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['Лечение кариеса', 'Пломба'])
+})

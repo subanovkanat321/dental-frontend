@@ -1,11 +1,33 @@
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
 
+export { textMatches as nameMatches } from '../lib/search'
+
 type Service = Schemas['ServiceTypeView']
 
-/** Стандартные категории услуг — как в приложении (state.js бэкенда): так пациент видит их в боте. */
-export const SERVICE_CATEGORIES = ['Консультация', 'Диагностика', 'Анестезия', 'Терапия', 'Эндодонтия', 'Хирургия',
-  'Имплантация', 'Пародонтология', 'Гигиена и отбеливание', 'Эстетика', 'Ортопедия', 'Ортодонтия', 'Детская стоматология']
+/** Раздел услуги (V169 бэкенда) — фиксированный список; сервер присылает его у каждой услуги. */
+export type ServiceGroup = NonNullable<Service['group']>
+
+/** Разделы по порядку — так они идут в списках, чипах и выборе услуги: [код, по-русски, по-кыргызски]. */
+export const SERVICE_GROUPS: readonly (readonly [ServiceGroup, string, string])[] = [
+  ['EXAM', 'Осмотр и консультация', 'Кароо жана консультация'],
+  ['HYGIENE', 'Профилактика и гигиена', 'Алдын алуу жана гигиена'],
+  ['THERAPY', 'Терапия', 'Терапия'],
+  ['SURGERY', 'Хирургия', 'Хирургия'],
+  ['PROSTHETICS', 'Ортопедия', 'Ортопедия'],
+  ['ORTHODONTICS', 'Ортодонтия', 'Ортодонтия'],
+  ['IMPLANTS', 'Имплантация', 'Имплантация'],
+  ['AESTHETICS', 'Эстетика', 'Эстетика'],
+  ['KIDS', 'Детская стоматология', 'Балдар стоматологиясы'],
+  ['XRAY', 'Рентген и диагностика', 'Рентген жана диагностика'],
+  ['OTHER', 'Другое', 'Башка'],
+]
+
+/** «THERAPY» → «Терапия» (ky — по-кыргызски, для самозаписи пациента). */
+export function groupLabel(group: ServiceGroup | null | undefined, lang: 'ru' | 'ky' = 'ru'): string {
+  const row = SERVICE_GROUPS.find(([code]) => code === (group ?? 'OTHER')) ?? SERVICE_GROUPS[SERVICE_GROUPS.length - 1]!
+  return lang === 'ky' ? row[2] : row[1]
+}
 
 /** «от 2 000 сом»; цены нет — null (пациентам не показываем). */
 export function priceText(som?: number | null): string | null {
@@ -13,27 +35,13 @@ export function priceText(som?: number | null): string | null {
 }
 
 /**
- * Услуги группами по категории: сначала стандартные по порядку, свои — по алфавиту, без
- * категории («Другое») — последними. Внутри группы — как пришли с сервера.
+ * Услуги группами по разделу — в порядке {@link SERVICE_GROUPS}, пустых разделов нет. Внутри
+ * группы — как пришли с сервера. Раздела нет (старый ответ) — «Другое».
  */
-export function groupByCategory(services: Service[]): { category: string | null; items: Service[] }[] {
-  const groups = new Map<string | null, Service[]>()
-  for (const s of services) {
-    const key = s.category || null
-    groups.set(key, [...(groups.get(key) ?? []), s])
-  }
-  const rank = (c: string | null): [number, string] => {
-    if (c === null) return [2, '']
-    const i = SERVICE_CATEGORIES.indexOf(c)
-    return i >= 0 ? [0, String(i).padStart(3, '0')] : [1, c.toLowerCase()]
-  }
-  return [...groups.entries()]
-    .sort(([a], [b]) => {
-      const [ra, ka] = rank(a)
-      const [rb, kb] = rank(b)
-      return ra - rb || ka.localeCompare(kb, 'ru')
-    })
-    .map(([category, items]) => ({ category, items }))
+export function groupServices<S extends { group?: ServiceGroup }>(services: S[]): { group: ServiceGroup; items: S[] }[] {
+  return SERVICE_GROUPS
+    .map(([group]) => ({ group, items: services.filter((s) => (s.group ?? 'OTHER') === group) }))
+    .filter((g) => g.items.length > 0)
 }
 
 /** «Профосмотр через»: варианты срока в месяцах — в карточке услуги и сроке клиники. */

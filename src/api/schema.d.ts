@@ -3332,6 +3332,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/service-types/popular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["popular"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/service-types/group-guess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["guessGroup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/salaries": {
         parameters: {
             query?: never;
@@ -4961,6 +4993,8 @@ export interface components {
             category?: string;
             /** Format: int32 */
             recallMonths?: number;
+            /** @enum {string} */
+            group?: "EXAM" | "HYGIENE" | "THERAPY" | "SURGERY" | "PROSTHETICS" | "ORTHODONTICS" | "IMPLANTS" | "AESTHETICS" | "KIDS" | "XRAY" | "OTHER";
         };
         ServiceTypeView: {
             /** Format: int64 */
@@ -4974,6 +5008,8 @@ export interface components {
             category?: string;
             /** Format: int32 */
             recallMonths?: number;
+            /** @enum {string} */
+            group?: "EXAM" | "HYGIENE" | "THERAPY" | "SURGERY" | "PROSTHETICS" | "ORTHODONTICS" | "IMPLANTS" | "AESTHETICS" | "KIDS" | "XRAY" | "OTHER";
         };
         ServiceSuppliesLine: {
             /** Format: int64 */
@@ -6957,6 +6993,13 @@ export interface components {
             clinicAddress?: string;
             clinicPhone?: string;
         };
+        ServiceTypeControllerPopular: {
+            ids?: number[];
+        };
+        ServiceTypeControllerGroupGuess: {
+            /** @enum {string} */
+            group?: "EXAM" | "HYGIENE" | "THERAPY" | "SURGERY" | "PROSTHETICS" | "ORTHODONTICS" | "IMPLANTS" | "AESTHETICS" | "KIDS" | "XRAY" | "OTHER";
+        };
         ServiceTypeServiceCatalogItem: {
             name?: string;
             /** Format: int32 */
@@ -6967,6 +7010,8 @@ export interface components {
         };
         ServiceTypeServiceCatalogSection: {
             category?: string;
+            /** @enum {string} */
+            group?: "EXAM" | "HYGIENE" | "THERAPY" | "SURGERY" | "PROSTHETICS" | "ORTHODONTICS" | "IMPLANTS" | "AESTHETICS" | "KIDS" | "XRAY" | "OTHER";
             items?: components["schemas"]["ServiceTypeServiceCatalogItem"][];
         };
         SurveySummary: {
@@ -14611,6 +14656,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettingsControllerSettings"];
+                };
+            };
+        };
+    };
+    popular: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceTypeControllerPopular"];
+                };
+            };
+        };
+    };
+    guessGroup: {
+        parameters: {
+            query?: {
+                name?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceTypeControllerGroupGuess"];
                 };
             };
         };

@@ -291,3 +291,30 @@ test('оплачено заранее — «Изменить» открывае�
   expect(await within(panel).findByText(/1\s500 сом · наличные/)).toBeInTheDocument()
   expect(within(panel).queryByText('✅ Оплачено заранее')).not.toBeInTheDocument()
 })
+
+test('«Выбрать из прайса…»: длинный прайс — «Часто» сверху, дальше разделы, поиск', async () => {
+  backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 }), () => ({}))
+  const list: [string, Schemas['ServiceTypeView']['group']][] = [
+    ['Консультация', 'EXAM'], ['Чистка', 'HYGIENE'], ['Фторирование', 'HYGIENE'], ['Пломба', 'THERAPY'], ['Лечение каналов', 'THERAPY'],
+    ['Удаление', 'SURGERY'], ['Коронка', 'PROSTHETICS'], ['Брекеты', 'ORTHODONTICS'], ['Отбеливание', 'AESTHETICS'], ['Снимок', 'XRAY'],
+  ]
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json(list.map(([name, group], i) => ({
+      id: i + 1, name, group, active: true, priceSom: (i + 1) * 1000,
+    })) satisfies Schemas['ServiceTypeView'][])),
+    http.get('*/api/service-types/popular', () => HttpResponse.json({ ids: [4] } satisfies Schemas['ServiceTypeControllerPopular'])),
+  )
+  renderApp()
+  const form = await openPay(await card())
+  await userEvent.click(await within(form).findByRole('combobox', { name: 'Цена из прайса' }))
+  const box = screen.getByRole('listbox')
+  const groups = within(box).getAllByRole('group')
+  expect(groups.map((g) => document.getElementById(g.getAttribute('aria-labelledby')!)?.textContent)).toEqual([
+    'Часто', 'Осмотр и консультация', 'Профилактика и гигиена', 'Терапия', 'Хирургия', 'Ортопедия', 'Ортодонтия', 'Эстетика',
+    'Рентген и диагностика',
+  ])
+  expect(within(groups[0]!).getByRole('option')).toHaveTextContent('Пломба · 4 000 сом')
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Поиск в списке' }), 'КОРОН')
+  await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: /Коронка/ }))
+  expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(7000)
+})

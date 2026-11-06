@@ -10,11 +10,12 @@ import { canEditServices } from '../lib/roles'
 import { ServiceMemo } from './MemosTab'
 import { ServiceSupplies } from './ServiceSupplies'
 import { StarterCard, StarterPanel } from './StarterPanel'
-import { groupByCategory, monthsText, priceText, recallChoices, SERVICE_CATEGORIES } from './services'
+import { groupLabel, groupServices, monthsText, nameMatches, priceText, recallChoices, SERVICE_GROUPS, type ServiceGroup } from './services'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
 import { clearServiceToOpen, serviceToOpen } from '../lib/openService'
 import { Loading } from '../layout/Loading'
+import { useDebounced } from '../lib/useDebounced'
 
 type Me = Schemas['BookingViewsMe']
 type Service = Schemas['ServiceTypeView']
@@ -62,6 +63,12 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
     onPanel(true)
   }, [onPanel])
   const services = list.data ?? []
+  // Поиск и раздел — мгновенно, на фронте: услуг у клиники десятки, а не тысячи
+  const [query, setQuery] = useState('')
+  const [group, setGroup] = useState<ServiceGroup | ''>('')
+  const found = services.filter((s) => nameMatches(s.name, query))
+  const counts = new Map(groupServices(found).map((g) => [g.group, g.items.length]))
+  const shown = group ? found.filter((s) => (s.group ?? 'OTHER') === group) : found
   const editable = canEditServices(me)
   const openedService = typeof opened === 'number' ? services.find((s) => s.id === opened) : undefined
 
@@ -81,15 +88,27 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
             </span>
           )}
         </div>
-        <RecallDefault admin={Boolean(me.admin)} />
         {list.error && <p className="error">{list.error.message}</p>}
-        {list.isPending ? <Loading /> : services.length ? (
-          <table className="table" aria-label="Услуги">
+        {services.length > 0 && (
+          <div className="service-filter">
+            <input type="search" aria-label="Найти услугу" placeholder="Найти услугу" value={query} onChange={(e) => setQuery(e.target.value)} />
+            {/* Разделы с количеством; на телефоне ряд листается вбок, страница — нет */}
+            <div className="service-chips" role="group" aria-label="Разделы">
+              <button type="button" className="chip" aria-pressed={!group} onClick={() => setGroup('')}>Все · {found.length}</button>
+              {SERVICE_GROUPS.filter(([code]) => counts.has(code) || code === group).map(([code, label]) => (
+                <button key={code} type="button" className="chip" aria-pressed={code === group}
+                  onClick={() => setGroup(code === group ? '' : code)}>{label} · {counts.get(code) ?? 0}</button>
+              ))}
+            </div>
+          </div>
+        )}
+        {list.isPending ? <Loading /> : services.length ? shown.length ? (
+          <table className="table services-table" aria-label="Услуги">
             <thead><tr><th>Услуга</th><th className="r">Длительность</th><th className="r">Цена</th><th className="r">Профосмотр</th><th /></tr></thead>
             <tbody>
-              {groupByCategory(services).map(({ category, items }) => (
-                <Fragment key={category ?? '—'}>
-                  <tr className="group-row"><th colSpan={5} scope="colgroup">{category || 'Другое'}</th></tr>
+              {groupServices(shown).map(({ group: g, items }) => (
+                <Fragment key={g}>
+                  <tr className="group-row"><th colSpan={5} scope="colgroup">{`${groupLabel(g)} · ${items.length}`}</th></tr>
                   {items.map((s) => (
                     <tr key={s.id} className={[s.id === opened ? 'active' : '', s.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
                       <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(s.id!)}>{s.name}</button> : s.name}</td>
@@ -103,11 +122,18 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
               ))}
             </tbody>
           </table>
+        ) : (
+          <EmptyState title="Ничего не нашлось">
+            {query.trim() ? `Нет услуг со словами «${query.trim()}»${group ? ` в разделе «${groupLabel(group)}»` : ''}.` : 'В этом разделе услуг нет.'}{' '}
+            <button type="button" className="link" onClick={() => { setQuery(''); setGroup('') }}>Показать все</button>
+          </EmptyState>
         ) : <EmptyState title="Услуг пока нет">Добавьте свои или отметьте типовые в справочнике.</EmptyState>}
+        {/* Срок по умолчанию — под списком: сверху поиск и разделы, услуги находятся быстрее */}
+        <RecallDefault admin={Boolean(me.admin)} />
       </section>
       </section>
-      {opened === 'new' && <ServicePanel me={me} all={services} onClose={close} />}
-      {openedService && <ServicePanel key={openedService.id} me={me} service={openedService} all={services} onClose={close} />}
+      {opened === 'new' && <ServicePanel me={me} onClose={close} />}
+      {openedService && <ServicePanel key={openedService.id} me={me} service={openedService} onClose={close} />}
       {opened === 'catalog' && <CatalogPanel onClose={close} />}
       {opened === 'starter' && <StarterPanel admin={Boolean(me.admin)} onClose={close} />}
     </>
@@ -115,22 +141,33 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
 }
 
 /** Новая услуга или правка: название, категория, длительность, цена «от», показывать пациентам. */
-function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Service; all: Service[]; onClose: () => void }) {
+function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; onClose: () => void }) {
   const close = useClose(onClose)
   const refresh = useRefreshServices()
   const [form, setForm] = useState({
-    name: s?.name ?? '', category: s?.category ?? '', duration: String(s?.durationMinutes ?? 30),
+    // Раздел: у услуги — её (выбранный или угаданный сервером); у новой — пусто, пока не выбрали руками
+    name: s?.name ?? '', group: (s?.group ?? '') as ServiceGroup | '', duration: String(s?.durationMinutes ?? 30),
     price: s?.priceSom == null ? '' : String(s.priceSom), active: s ? s.active !== false : true,
     recall: s?.recallMonths == null ? '' : String(s.recallMonths),
   })
   const clinicRecall = useClinicRecall() ?? 6
   const [done, setDone] = useState('')
   const { dirty, commit } = useDirty(form)
-  const known = [...new Set([...SERVICE_CATEGORIES, ...all.map((x) => x.category).filter((c): c is string => Boolean(c))])]
+  // Новая услуга: раздел подбирает сервер по названию (те же правила, что у старых услуг) — можно поменять
+  const guessName = useDebounced(s ? '' : form.name.trim())
+  const guess = useQuery({
+    queryKey: ['service-group-guess', guessName],
+    queryFn: () => unwrap(api.GET('/api/service-types/group-guess', { params: { query: { name: guessName } } })),
+    enabled: guessName.length >= 3,
+    staleTime: Infinity,
+  })
+  const guessed = guessName.length >= 3 ? guess.data?.group : undefined
+  const group: ServiceGroup = form.group || guessed || 'OTHER'
   const save = useMutation<Service, ApiError>({
     mutationFn: () => {
       const body = {
-        name: form.name, category: form.category, durationMinutes: Number(form.duration), active: form.active,
+        // Старую категорию (свободный текст) не шлём — сервер её сохранит как была
+        name: form.name, group, durationMinutes: Number(form.duration), active: form.active,
         priceSom: form.price === '' ? undefined : Number(form.price),
         // Пусто — срок клиники: поле не шлём, сервер ставит null
         recallMonths: form.recall === '' ? undefined : Number(form.recall),
@@ -155,7 +192,7 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
     },
   })
   const error = (key: string) => save.error?.fieldErrors[key]
-  const set = (key: 'name' | 'category' | 'duration' | 'price' | 'recall') => (e: { target: { value: string } }) => {
+  const set = (key: 'name' | 'group' | 'duration' | 'price' | 'recall') => (e: { target: { value: string } }) => {
     setDone('')
     save.reset()
     setForm({ ...form, [key]: e.target.value })
@@ -177,16 +214,13 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
           <input value={form.name} required maxLength={100} autoFocus={!s} placeholder="Например: Лечение кариеса" onChange={set('name')} />
         </label>
         {error('name') && <p className="error">{error('name')}</p>}
-        <div className="field"><span>Категория</span>
-          <div className="chips-pick" role="group" aria-label="Категории">
-            {known.map((c) => (
-              <button key={c} type="button" className="chip" aria-pressed={form.category === c}
-                onClick={() => { save.reset(); setForm({ ...form, category: form.category === c ? '' : c }) }}>{c}</button>
-            ))}
-          </div>
-          <input aria-label="Категория" value={form.category} maxLength={40} placeholder="Или своя: например, Терапия" onChange={set('category')} />
+        <div className="field"><span>Раздел</span>
+          <Select aria-label="Раздел" value={group} onChange={set('group')}>
+            {SERVICE_GROUPS.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+          </Select>
+          {!s && !form.group && guessed && <span className="hint small">Подобрали по названию — можно поменять</span>}
         </div>
-        {error('category') && <p className="error">{error('category')}</p>}
+        {error('group') && <p className="error">{error('group')}</p>}
         <div className="row">
           <label className="field"><span>Длительность, мин</span>
             <input type="number" min={15} max={240} step={15} required value={form.duration} onChange={set('duration')} />
@@ -207,7 +241,7 @@ function ServicePanel({ me, service: s, all, onClose }: { me: Me; service?: Serv
         {s && <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { setDone(''); save.reset(); setForm({ ...form, active: e.target.checked }) }} /> Показывать пациентам</label>}
         {done && <p className="tone-ok" role="status">{done}</p>}
         <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label={s ? 'Сохранить' : 'Добавить'} savedText="Услуга сохранена"
-          error={save.error && (['name', 'category', 'durationMinutes', 'priceSom', 'recallMonths'].map((k) => error(k)).find(Boolean) ?? save.error.message)} />
+          error={save.error && (['name', 'group', 'durationMinutes', 'priceSom', 'recallMonths'].map((k) => error(k)).find(Boolean) ?? save.error.message)} />
       </form>
       {s && <ServiceSupplies serviceId={s.id!} />}
       {s && <ServiceMemo serviceId={s.id!} />}

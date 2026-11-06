@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
-import { groupByCategory } from '../clinic/services'
+import { groupLabel, groupServices } from '../clinic/services'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { formatPhone, slotInstant, todayIn, ZONE } from '../lib/time'
 import { haptic, openLink, telegram } from '../lib/telegram'
@@ -550,7 +550,7 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
     }
   }
 
-  const groups = groupByCategory(services)
+  const groups = groupServices(services)
   const serviceButton = (s: Service) => (
     <button key={s.id} type="button" className="btn service" aria-pressed={service?.id === s.id}
       onClick={() => { setService(s); setChosen(''); setErrors({}); scrollTo('time') }}>
@@ -573,9 +573,9 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
         <h2 className="step-title">{t('stepService')}</h2>
         <div className="field services">
           {!services.length ? <p className="hint">{t('unavailable')}</p> : groups.length > 1
-            ? groups.map(({ category, items }) => (
-              <div key={category ?? '—'} className="services-group">
-                <h3>{category || t('otherServices')}</h3>
+            ? groups.map(({ group, items }) => (
+              <div key={group} className="services-group">
+                <h3>{groupLabel(group, lang)}</h3>
                 {items.map(serviceButton)}
               </div>
             ))

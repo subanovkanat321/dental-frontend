@@ -310,3 +310,41 @@ test('новая запись: у врача выбраны услуги — т�
   expect(within(chips()).queryByRole('button', { name: /Чистка/ })).not.toBeInTheDocument()
   expect(within(chips()).getByRole('button', { name: /Удаление зуба/ })).toHaveAttribute('aria-pressed', 'false')
 })
+
+test('новая запись: услуг много — частые кнопками, остальные списком с поиском и разделами', async () => {
+  backend([], me)
+  const names: [string, Schemas['ServiceTypeView']['group']][] = [
+    ['Первичная консультация', 'EXAM'], ['Профессиональная чистка', 'HYGIENE'], ['Лечение кариеса', 'THERAPY'],
+    ['Пломба', 'THERAPY'], ['Лечение пульпита', 'THERAPY'], ['Удаление зуба', 'SURGERY'], ['Удаление зуба мудрости', 'SURGERY'],
+    ['Металлокерамическая коронка', 'PROSTHETICS'], ['Брекеты', 'ORTHODONTICS'], ['Отбеливание', 'AESTHETICS'],
+    ['Осмотр ребёнка', 'KIDS'], ['Прицельный снимок', 'XRAY'],
+  ]
+  server.use(
+    http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [new Date(`${todayIn()}T09:00:00+06:00`).toISOString()] })),
+    http.get('*/api/service-types', () => HttpResponse.json(names.map(([name, group], i) => ({
+      id: i + 1, name, group, durationMinutes: 30 + i * 5, active: true,
+    })) satisfies Schemas['ServiceTypeView'][])),
+    http.get('*/api/service-types/popular', () => HttpResponse.json({ ids: [3, 2] } satisfies Schemas['ServiceTypeControllerPopular'])),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('group', { name: 'Дастан Т.' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  const chips = await within(panel).findByRole('group', { name: 'Частые услуги' })
+  expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual([
+    expect.stringContaining('Профессиональная чистка'), expect.stringContaining('Лечение кариеса'),
+  ])
+
+  const all = within(panel).getByRole('combobox', { name: 'Все услуги' })
+  await userEvent.click(all)
+  const list = screen.getByRole('listbox')
+  expect(within(list).getAllByRole('group').map((g) => g.getAttribute('aria-labelledby') && document.getElementById(g.getAttribute('aria-labelledby')!)?.textContent))
+    .toEqual(['Часто', 'Осмотр и консультация', 'Профилактика и гигиена', 'Терапия', 'Хирургия', 'Ортопедия', 'Ортодонтия',
+      'Эстетика', 'Детская стоматология', 'Рентген и диагностика'])
+  await userEvent.type(within(document.body).getByRole('searchbox', { name: 'Поиск в списке' }), 'ребенк')
+  await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: /Осмотр ребёнка/ }))
+  // Выбрали из списка — длительность подставилась, кнопка выбранной услуги — среди частых
+  expect(within(panel).getByRole('combobox', { name: 'Все услуги' })).toHaveTextContent('Осмотр ребёнка')
+  expect(within(within(panel).getByRole('group', { name: 'Частые услуги' })).getByRole('button', { name: /Осмотр ребёнка/ }))
+    .toHaveAttribute('aria-pressed', 'true')
+  expect(within(panel).getByRole('spinbutton', { name: 'Длительность, мин' })).toHaveValue(80)
+})
