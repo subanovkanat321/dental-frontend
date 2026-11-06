@@ -34,7 +34,7 @@ test('админ: выручка за месяц, по способам; выб�
       const q = new URL(request.url).searchParams
       asked.push(`${q.get('from')}..${q.get('to')} ${q.get('doctorId') ?? 'все'}`)
       return HttpResponse.json({
-        totalSom: q.get('doctorId') ? 7000 : 25000, paidCount: 6, unpaidCount: 1, byMethod: { CASH: 15000, TRANSFER: 10000 },
+        totalSom: q.get('doctorId') ? 7000 : 25000, paidCount: 6, unpaidCount: 1, freeCount: 2, prepaidCount: 1, byMethod: { CASH: 15000, TRANSFER: 10000 },
         days: [{ date: '2026-10-01', totalSom: 5000 }, { date: '2026-10-02', totalSom: 20000 }],
         cash: { totalSom: q.get('doctorId') ? 8000 : 31000, paymentsCount: 8, depositsSom: 1000, byMethod: { CASH: 16000, CARD: 15000 }, days: [] },
       } satisfies Schemas['RevenueView'])
@@ -50,6 +50,8 @@ test('админ: выручка за месяц, по способам; выб�
   expect(screen.getByText('По приёмам — стоимость состоявшихся приёмов периода')).toBeInTheDocument()
   expect(screen.getByText(/Поступлений: 8 · Наличные: 16\s000 сом · Карта: 15\s000 сом · из них предоплаты: 1\s000 сом/)).toBeInTheDocument()
   expect(screen.getByText(/без оплаты: 1/)).toBeInTheDocument()
+  // Отметки 0 сом — отдельно: бесплатно и оплачено заранее
+  expect(screen.getByText(/Оплачено приёмов: 6/)).toHaveTextContent(/бесплатно: 2 · оплачено заранее: 1/)
   const month = periodOf('month')
   expect(asked).toContain(`${month.from}..${month.to} все`)
   // Под переключателем видно, какие даты входят в «Месяц»

@@ -2685,7 +2685,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ChartControllerNote"
+                  "$ref" : "#/components/schemas/ChartControllerNoteView"
                 }
               }
             }
@@ -2720,7 +2720,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ChartControllerNote"
+                  "$ref" : "#/components/schemas/ChartControllerNoteView"
                 }
               }
             }
@@ -13031,6 +13031,13 @@
           },
           "cancelledBy" : {
             "type" : "string"
+          },
+          "freeReason" : {
+            "type" : "string",
+            "enum" : [ "FREE", "PREPAID" ]
+          },
+          "freeComment" : {
+            "type" : "string"
           }
         }
       },
@@ -13063,6 +13070,19 @@
       "ChartControllerNote" : {
         "properties" : {
           "note" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ChartControllerNoteView" : {
+        "properties" : {
+          "note" : {
+            "type" : "string"
+          },
+          "editable" : {
+            "type" : "boolean"
+          },
+          "doctorName" : {
             "type" : "string"
           }
         }
@@ -14990,6 +15010,15 @@
             "items" : {
               "$ref" : "#/components/schemas/PaymentQueryPart"
             }
+          },
+          "freeReason" : {
+            "type" : "string",
+            "enum" : [ "FREE", "PREPAID" ]
+          },
+          "freeComment" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
           }
         }
       },
@@ -16655,6 +16684,12 @@
           },
           "doctorName" : {
             "type" : "string"
+          },
+          "visitDoctorName" : {
+            "type" : "string"
+          },
+          "editable" : {
+            "type" : "boolean"
           }
         }
       },
@@ -17836,6 +17871,14 @@
             "format" : "int64"
           },
           "unpaidCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "freeCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "prepaidCount" : {
             "type" : "integer",
             "format" : "int64"
           },

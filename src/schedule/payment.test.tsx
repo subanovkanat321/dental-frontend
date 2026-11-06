@@ -232,7 +232,62 @@ test('не оплачено — одна строка: «Бесплатно» о
   expect(within(panel).queryByRole('form', { name: 'Оплата' })).not.toBeInTheDocument()
   expect(within(panel).getByText('Оплата не отмечена')).toBeInTheDocument()
   await userEvent.click(within(panel).getByRole('button', { name: 'Бесплатно' }))
-  await vi.waitFor(() => expect(sent).toContainEqual(expect.objectContaining({ body: { amountSom: 0, method: 'CASH', chargeSom: 0 } })))
+  await vi.waitFor(() => expect(sent).toContainEqual(expect.objectContaining({ body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'FREE' } })))
   expect(await within(panel).findByText('🎁 Бесплатно')).toBeInTheDocument()
   vi.restoreAllMocks()
+})
+
+test('«Оплачено заранее»: 0 сом в кассу, с комментарием после вопроса — приём оплачен, а не бесплатный', async () => {
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 }),
+    (_, b) => ({ paidSom: 0, chargeSom: 0, paymentMethod: 'CASH', freeReason: b.freeReason as 'PREPAID', freeComment: b.freeComment as string }))
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  renderApp()
+  const panel = await card()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Оплачено заранее' }))
+  const form = within(panel).getByRole('form', { name: 'Оплачено заранее' })
+  await userEvent.type(within(form).getByLabelText('Комментарий (можно не писать)'), '  оплатил 12.10 вместе с лечением ')
+  // Передумал в вопросе — ничего не ушло
+  await userEvent.click(within(form).getByRole('button', { name: 'Отметить «Оплачено заранее»' }))
+  expect(confirm).toHaveBeenCalledWith(expect.stringContaining('В кассу сегодня ничего не добавится'))
+  expect(sent).toHaveLength(0)
+  confirm.mockReturnValue(true)
+  await userEvent.click(within(form).getByRole('button', { name: 'Отметить «Оплачено заранее»' }))
+  await vi.waitFor(() => expect(sent).toContainEqual({ path: 'payment',
+    body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'PREPAID', freeComment: 'оплатил 12.10 вместе с лечением' } }))
+  expect(await within(panel).findByText('✅ Оплачено заранее')).toBeInTheDocument()
+  expect(within(panel).getByText('оплатил 12.10 вместе с лечением')).toBeInTheDocument()
+  expect(within(panel).queryByText('🎁 Бесплатно')).not.toBeInTheDocument()
+  vi.restoreAllMocks()
+})
+
+test('«Оплачено заранее» без комментария; «Отмена» возвращает кнопки', async () => {
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 }), () => ({}))
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  const panel = await card()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Оплачено заранее' }))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Отмена' }))
+  expect(within(panel).queryByRole('form', { name: 'Оплачено заранее' })).not.toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Оплачено заранее' }))
+  await userEvent.click(within(panel).getByRole('button', { name: 'Отметить «Оплачено заранее»' }))
+  await vi.waitFor(() => expect(sent).toContainEqual({ path: 'payment', body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'PREPAID' } }))
+  vi.restoreAllMocks()
+})
+
+test('оплачено заранее — «Изменить» открывает обычную форму оплаты, как у бесплатного', async () => {
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1, paidSom: 0, chargeSom: 0, paymentMethod: 'CASH',
+    freeReason: 'PREPAID', freeComment: 'вместе с лечением' }),
+  (_, b) => ({ paidSom: b.amountSom as number, chargeSom: undefined, paymentMethod: b.method as 'CASH', freeReason: undefined, freeComment: undefined }),
+  { payments: [{ id: 1, amountSom: 0, method: 'CASH', paidAt: '2026-10-12T05:00:00Z' }] })
+  renderApp()
+  const panel = await card()
+  expect(await within(panel).findByText('✅ Оплачено заранее')).toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Изменить' }))
+  const form = await within(panel).findByRole('form', { name: 'Оплата' })
+  await userEvent.clear(within(form).getByLabelText('Сумма, сом'))
+  await userEvent.type(within(form).getByLabelText('Сумма, сом'), '1500')
+  await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату/ }))
+  await vi.waitFor(() => expect(sent).toContainEqual(expect.objectContaining({ body: expect.objectContaining({ amountSom: 1500 }) })))
+  expect(await within(panel).findByText(/1\s500 сом · наличные/)).toBeInTheDocument()
+  expect(within(panel).queryByText('✅ Оплачено заранее')).not.toBeInTheDocument()
 })

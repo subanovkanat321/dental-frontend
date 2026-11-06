@@ -52,7 +52,11 @@ function backend(options: { forbidden?: boolean } = {}) {
         : s))
       return HttpResponse.json(plan)
     }),
-    http.get('*/api/patients/2/notes', () => HttpResponse.json([{ appointmentId: 5, startAt: '2026-10-20T05:00:00Z', note: 'Жалобы на холодное', doctorName: 'Айгерим Садыкова' }])),
+    http.get('*/api/patients/2/notes', () => HttpResponse.json([
+      { appointmentId: 5, startAt: '2026-10-20T05:00:00Z', note: 'Жалобы на холодное', doctorName: 'Айгерим Садыкова', visitDoctorName: 'Айгерим Садыкова', editable: true },
+      // Заметка другого врача пациента — только для чтения, подписана «Врач: …»
+      { appointmentId: 4, startAt: '2026-09-01T05:00:00Z', note: 'Удаление 38 без осложнений', doctorName: 'Бекболот Асанов', visitDoctorName: 'Бекболот Асанов', editable: false },
+    ] satisfies Schemas['VisitNoteView'][])),
     http.get('*/api/patients/2/files', () => HttpResponse.json([{ id: 7, kind: 'XRAY', caption: 'Прицельный 16', takenOn: '2026-10-20', canDelete: true }])),
     http.get('*/api/patients/2/files/7', () => new HttpResponse(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/jpeg' } })),
   )
@@ -103,6 +107,10 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
   expect(await screen.findByText('Прицельный 16')).toBeInTheDocument()
   await medTab('Заметки')
   expect(await screen.findByText('Жалобы на холодное')).toBeInTheDocument()
+  // Чужая заметка — с именем врача приёма; своя — без «Врач:»
+  const other = screen.getByText('Удаление 38 без осложнений').closest('li')!
+  expect(other).toHaveTextContent('Врач: Бекболот Асанов')
+  expect(screen.getByText('Жалобы на холодное').closest('li')).not.toHaveTextContent('Врач:')
 
   await userEvent.click(screen.getByRole('button', { name: '← К списку' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка пациента' })).toBeInTheDocument()

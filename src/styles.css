@@ -1952,3 +1952,4 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .kid-info { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 4px 0 0; }
 .kid-badge { background: var(--sunken); color: var(--text); }
 .guardian-box h3 { margin-bottom: 4px; }
+.payment-unpaid .pay-form { flex-basis: 100%; }

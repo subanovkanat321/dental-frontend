@@ -5777,6 +5777,9 @@ export interface components {
             /** Format: date-time */
             cancelledAt?: string;
             cancelledBy?: string;
+            /** @enum {string} */
+            freeReason?: "FREE" | "PREPAID";
+            freeComment?: string;
         };
         FamiliesBooker: {
             fullName?: string;
@@ -5792,6 +5795,11 @@ export interface components {
         };
         ChartControllerNote: {
             note?: string;
+        };
+        ChartControllerNoteView: {
+            note?: string;
+            editable?: boolean;
+            doctorName?: string;
         };
         AppointmentRequestsComment: {
             comment?: string;
@@ -6604,6 +6612,9 @@ export interface components {
             /** Format: date */
             dueOn?: string;
             parts?: components["schemas"]["PaymentQueryPart"][];
+            /** @enum {string} */
+            freeReason?: "FREE" | "PREPAID";
+            freeComment?: string;
         };
         PaymentQueryPart: {
             /** Format: int32 */
@@ -7272,6 +7283,8 @@ export interface components {
             /** Format: date-time */
             updatedAt?: string;
             doctorName?: string;
+            visitDoctorName?: string;
+            editable?: boolean;
         };
         LessonsTarget: {
             telegram?: boolean;
@@ -7754,6 +7767,10 @@ export interface components {
             paidCount?: number;
             /** Format: int64 */
             unpaidCount?: number;
+            /** Format: int64 */
+            freeCount?: number;
+            /** Format: int64 */
+            prepaidCount?: number;
             byMethod?: {
                 [key: string]: number;
             };
@@ -9999,7 +10016,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ChartControllerNote"];
+                    "application/json": components["schemas"]["ChartControllerNoteView"];
                 };
             };
         };
@@ -10025,7 +10042,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ChartControllerNote"];
+                    "application/json": components["schemas"]["ChartControllerNoteView"];
                 };
             };
         };

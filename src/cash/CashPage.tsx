@@ -204,6 +204,8 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
                     <p className="hint">
                       Оплачено приёмов: {r.paidCount ?? 0}
                       {r.unpaidCount ? <span className="tone-wait"> · без оплаты: {r.unpaidCount}</span> : null}
+                      {r.freeCount ? ` · бесплатно: ${r.freeCount}` : ''}
+                      {r.prepaidCount ? ` · оплачено заранее: ${r.prepaidCount}` : ''}
                       {Object.entries(r.byMethod ?? {}).filter(([, v]) => v).map(([k, v]) => ` · ${METHODS[k] ?? k}: ${somText(v)}`).join('')}
                     </p>
                   </div>
