@@ -449,12 +449,12 @@ test('«Телефон» в «Персонале»: сотруднику с Tele
   openItem('members')
   const table = await screen.findByRole('table', { name: 'Персонал' })
   expect(screen.getByText(/По этому номеру можно войти на сайте без Telegram: код из SMS, потом свой пароль/)).toBeInTheDocument()
-  expect(screen.getByText(/сотрудник с Telegram указывает номер для входа сам: Настройки → Мой профиль/)).toBeInTheDocument()
+  expect(screen.getByText(/сотрудник с Telegram указывает номер для входа сам: Настройки → Изменить профиль/)).toBeInTheDocument()
 
   // Бермет (Telegram): номер виден, но кнопок нет — только подсказка
   const bermet = (await within(table).findByText('Бермет')).closest('tr')!
   expect(bermet).toHaveTextContent('+996 700 000 041')
-  expect(within(bermet).getByTitle('Номер для входа сотрудник указывает сам: Настройки → Мой профиль.')).toBeInTheDocument()
+  expect(within(bermet).getByTitle('Номер для входа сотрудник указывает сам: Настройки → Изменить профиль.')).toBeInTheDocument()
   expect(within(bermet).queryByRole('button', { name: 'Изменить' })).not.toBeInTheDocument()
   expect(within(bermet).queryByRole('button', { name: 'Убрать номер' })).not.toBeInTheDocument()
 

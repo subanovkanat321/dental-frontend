@@ -82,7 +82,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
     <>
       <section className="card-block">
         <p className="hint">Весь персонал клиники: роль — рядом с именем. «Telegram привязан» — человек вошёл и получает уведомления;
-          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT} Сотруднику без Telegram номер меняете вы; сотрудник с Telegram указывает номер для входа сам: Настройки → Мой профиль.</>}</p>
+          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT} Сотруднику без Telegram номер меняете вы; сотрудник с Telegram указывает номер для входа сам: Настройки → Изменить профиль.</>}</p>
         {admin && (
           <div className="segments wrap" role="group" aria-label="Показать роль">
             {FILTERS.map(([f, label]) => (
