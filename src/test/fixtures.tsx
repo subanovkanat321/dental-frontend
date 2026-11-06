@@ -42,6 +42,13 @@ export async function openMedicalTab() {
   await userEvent.click(screen.getByRole('button', { name: 'Открыть медкарту' }))
 }
 
+/** Карточка приёма → оплата: не оплачено — строка «Принять оплату», раскрыть её и вернуть форму. */
+export async function openPay(panel: HTMLElement) {
+  const open = within(panel).queryByRole('button', { name: 'Принять оплату' })
+  if (open) await userEvent.click(open)
+  return within(panel).findByRole('form', { name: 'Оплата' })
+}
+
 /** Медкарта → вкладка («Зубы», «План лечения», «Анкета», «Снимки и фото», «Заметки»). */
 export async function medTab(name: string) {
   await userEvent.click(await screen.findByRole('tab', { name: new RegExp(name) }))

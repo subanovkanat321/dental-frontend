@@ -21,7 +21,7 @@ const METHODS: [Method, string][] = [['CASH', 'Наличные'], ['TRANSFER', 
 const METHOD_NAME: Record<Method, string> = { CASH: 'наличные', TRANSFER: 'перевод', CARD: 'карта' }
 const methodName = (m?: Method) => (m ? METHOD_NAME[m] : '')
 
-type View = 'show' | 'edit' | 'bill' | 'extra' | 'rest' | 'billed'
+type View = 'show' | 'edit' | 'bill' | 'extra' | 'rest' | 'billed' | 'unpaid'
 
 /**
  * Оплата состоявшегося приёма — как paymentBox прежнего приложения:
@@ -34,14 +34,16 @@ type View = 'show' | 'edit' | 'bill' | 'extra' | 'rest' | 'billed'
  */
 export function PaymentBox({ appointment: a, me }: { appointment: Appointment; me: Me }) {
   // Регистратура открывает счёт с кассы — сразу форма оплаты с суммой счёта
-  const [view, setView] = useState<View>(a.paidSom != null ? 'show' : a.chargeSom != null && !me.reception ? 'billed' : 'edit')
+  // Не оплачено — одной строкой с кнопкой: форма с подставленной ценой на полэкрана сбивала с толку
+  const [view, setView] = useState<View>(a.paidSom != null ? 'show' : a.chargeSom != null && !me.reception ? 'billed' : a.chargeSom != null ? 'edit' : 'unpaid')
   const history = useQuery({
     queryKey: ['payments', a.id, a.version, a.paidSom],
     queryFn: () => unwrap(api.GET('/api/appointments/{id}/payments', { params: { path: { id: a.id! } } })),
     enabled: a.paidSom != null,
   })
-  const back = () => setView(a.paidSom != null ? 'show' : a.chargeSom != null ? 'billed' : 'edit')
+  const back = () => setView(a.paidSom != null ? 'show' : a.chargeSom != null ? 'billed' : 'unpaid')
 
+  if (view === 'unpaid') return <Unpaid a={a} onPay={() => setView('edit')} />
   if (view === 'extra') return <div className="payment"><ExtraForm a={a} onCancel={back} /></div>
   if (view === 'rest') return <div className="payment"><RestForm a={a} onCancel={back} /></div>
   if (view === 'edit' || view === 'bill') {
@@ -51,7 +53,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
     return (
       <div className="payment">
         <PayForm a={a} me={me} billOnly={view === 'bill'} parts={needParts ? history.data ?? [] : []}
-          onCancel={a.paidSom != null || (a.chargeSom != null && !me.reception) ? back : undefined} />
+          onCancel={back} />
       </div>
     )
   }
@@ -77,7 +79,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   return (
     <div className="payment">
       <p className="payment-done">
-        <span>{a.chargeSom != null ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
+        <span>{a.paidSom === 0 && !a.chargeSom ? '🎁 Бесплатно' : a.chargeSom != null ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
           : split ? somText(a.paidSom ?? 0) : `${somText(a.paidSom ?? 0)} · ${methodName(a.paymentMethod)}`}</span>
         {!installments && <button type="button" className="link" onClick={() => setView('edit')}>Изменить</button>}
       </p>
@@ -154,6 +156,26 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
         {list.map((s) => <option key={s.id} value={s.id}>{serviceEmoji(s.name)} {s.name} · {somText(s.priceSom!)}</option>)}
       </Select>
       {picked.length > 0 && <p className="hint small">Из прайса: {picked.join(' + ')}</p>}
+    </div>
+  )
+}
+
+/**
+ * Оплата не отмечена — одной строкой: «Принять оплату» раскрывает форму, «Бесплатно» сразу отмечает
+ * приём без оплаты (стоимость 0) — некоторым пациентам врач делает бесплатно.
+ */
+function Unpaid({ a, onPay }: { a: Appointment; onPay: () => void }) {
+  const action = useAppointmentAction(a)
+  const free = () => void ask('Отметить приём бесплатным? В кассу он попадёт с суммой 0 сом.', { ok: 'Бесплатно' })
+    .then((ok) => ok && action.mutate({ kind: 'payment', body: { amountSom: 0, method: 'CASH', chargeSom: 0 } }))
+  return (
+    <div className="payment payment-unpaid">
+      <span className="payment-unpaid-text"><span aria-hidden="true">💳</span> Оплата не отмечена</span>
+      <span className="payment-unpaid-actions">
+        <button type="button" className="btn" disabled={action.isPending} onClick={free}>Бесплатно</button>
+        <button type="button" className="btn primary" disabled={action.isPending} onClick={onPay}>Принять оплату</button>
+      </span>
+      {action.error && <p className="error" role="alert">{action.error.message}</p>}
     </div>
   )
 }

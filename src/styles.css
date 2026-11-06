@@ -1886,3 +1886,6 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .price-pick { display: grid; gap: 4px; margin-top: 6px; }
 .med-tabs { margin: 12px 0 4px; }
 .pay-unsaved { margin: 0 0 8px; padding: 6px 10px; border-radius: var(--r-md); background: color-mix(in srgb, var(--status-wait) 14%, transparent); color: var(--status-wait); font-size: .9rem; font-weight: 500; }
+.payment-unpaid { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.payment-unpaid-text { font-weight: 600; }
+.payment-unpaid-actions { display: flex; gap: 8px; flex-wrap: wrap; }
