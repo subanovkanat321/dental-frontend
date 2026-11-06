@@ -1972,12 +1972,27 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .fin-out, .key.fin-out { background: var(--chart-exp); }
 .fin-up, .key.fin-up { background: var(--status-ok); }
 .fin-down, .key.fin-down { background: var(--chart-bad); }
-.legend .key.fin-out, .legend .key.fin-up, .legend .key.fin-down { margin-left: 8px; }
+.legend .key.fin-out, .legend .key.fin-up, .legend .key.fin-down, .legend .key.fin-pending { margin-left: 8px; }
+/* «Каждый месяц» по факту: прогноз — пунктирный контур поверх столбика расхода */
+.fin-pair > .fin-stack { display: flex; flex-direction: column; border-radius: 3px 3px 0 0; overflow: hidden; }
+.fin-stack > span { flex: 1 1 0; min-height: 0; }
+.fin-stack > .fin-out { border-radius: 0; }
+.fin-pending, .key.fin-pending { background: transparent; border: 1.5px dashed var(--chart-exp); border-bottom: 0; border-radius: 3px 3px 0 0; box-sizing: border-box; }
+.key.fin-pending { border-bottom: 1.5px dashed var(--chart-exp); }
+.fin-pending-note { display: block; margin-top: 2px; }
+.fin-due-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.fin-due .fin-entry { grid-template-columns: minmax(0, 1fr) auto; }
+.fin-due .chip { margin-left: 8px; }
+.fin-due-late > .fin-entry { border-bottom-color: color-mix(in srgb, var(--status-wait) 35%, var(--separator)); }
+.fin-marks { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 2px; }
+.fin-marks .link { margin-left: 8px; }
 @media (max-width: 760px) {
   .fin-entry { grid-template-columns: minmax(0, 1fr) auto; }
   .fin-periods { width: 100%; }
   .fin-periods button { flex: 1 1 auto; padding: 6px 4px; font-size: .88rem; white-space: normal; line-height: 1.15; }
   .fin-entry .btn { grid-column: 1 / -1; justify-self: start; }
+  .fin-due-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .fin-due-actions .btn { grid-column: auto; }
   .fin-bars { height: 200px; }
   .fin-pair > span { max-width: 8px; }
   .fin-month .fin-odd { visibility: hidden; }

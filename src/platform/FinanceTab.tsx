@@ -14,6 +14,8 @@ type Finance = Schemas['PlatformFinanceFinance']
 type Line = Schemas['PlatformFinanceLine']
 type Expense = Schemas['PlatformExpensesExpense']
 type MonthTotal = Schemas['PlatformFinanceMonthTotal']
+type Due = Schemas['PlatformFinanceDue']
+type Mark = Schemas['PlatformExpensesMark']
 
 const MONTH_SHORT = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'short' })
 const MONTH_LONG = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' })
@@ -56,6 +58,10 @@ const MONTH_NAME = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'l
  * (Claude, реклама, сервер…; разовые и «каждый месяц»), прибыль. Период — месяц, квартал, год, всё
  * время или свой (с — по); за период больше месяца — график и таблица по месяцам. Считает сервер
  * (/api/platform/finance) — здесь только показываем и вводим ручные расходы.
+ *
+ * «Каждый месяц» — шаблон, а не факт: с ноября 2026 (factFrom) в расход месяца попадает только
+ * отмеченная оплата. Сверху — «Ожидаются в этом месяце» (оплачено / не в этом месяце), у итогов —
+ * «ещё ожидается» (прогноз, в расход не входит).
  */
 export function FinanceTab() {
   const current = todayIn().slice(0, 7)
@@ -74,8 +80,10 @@ export function FinanceTab() {
   const single = period === 'month'
   const scope = single ? 'за месяц' : 'за период'
   const openMonth = (m: string) => { setMonth(m); setPeriod('month') }
+  const pending = f?.pendingSom ?? 0
   return (
     <>
+      {f && (f.due?.length ?? 0) > 0 && <DueBlock due={f.due ?? []} current={current} rate={f.settings?.lastUsdRate} />}
       <section className="card-block" aria-label="Итог периода">
         <div className="toolbar fin-toolbar">
           <h2>Финансы</h2>
@@ -110,10 +118,13 @@ export function FinanceTab() {
             {!single && f.from && f.to && <p className="hint fin-scope" aria-live="polite">{rangeText(f.from, f.to)}{f.to === current ? ' (по текущий месяц)' : ''}</p>}
             <div className="survey-tiles fin-tiles">
               <div className="survey-tile"><span className="hint">Доход</span><b className="num" aria-label={`Доход ${scope}`}>{somText(f.incomeSom ?? 0)}</b></div>
-              <div className="survey-tile"><span className="hint">Расход</span><b className="num" aria-label={`Расход ${scope}`}>{somText(f.expenseSom ?? 0)}</b></div>
+              <div className="survey-tile"><span className="hint">Расход</span><b className="num" aria-label={`Расход ${scope}`}>{somText(f.expenseSom ?? 0)}</b>
+                {pending > 0 && <span className="hint small fin-pending-note">ещё ожидается: <span className="num nowrap">{somText(pending)}</span></span>}</div>
               <div className="survey-tile hero"><span className="hint">{(f.profitSom ?? 0) < 0 ? 'Убыток' : 'Прибыль'}</span>
-                <b className={`num ${tone(f.profitSom ?? 0) ?? ''}`.trim()} aria-label={`Прибыль ${scope}`}>{signed(f.profitSom ?? 0)}</b></div>
+                <b className={`num ${tone(f.profitSom ?? 0) ?? ''}`.trim()} aria-label={`Прибыль ${scope}`}>{signed(f.profitSom ?? 0)}</b>
+                {pending > 0 && <span className="hint small fin-pending-note">если оплатить всё ожидаемое: <span className="num nowrap">{signed((f.profitSom ?? 0) - pending)}</span></span>}</div>
             </div>
+            {pending > 0 && <p className="hint small">Расход и прибыль — только оплаченное. «Каждый месяц» без отметки не считается, пока не отметите «Оплачено».</p>}
           </>
         )}
       </section>
@@ -123,6 +134,125 @@ export function FinanceTab() {
       {f && single && <HistoryBlock history={f.history ?? []} month={month} onPick={setMonth} />}
       {f && <SmsPriceForm key={String(f.settings?.smsPriceSom ?? '')} price={f.settings?.smsPriceSom} />}
     </>
+  )
+}
+
+/** «октябрь» — для «не отмечено за октябрь». */
+const monthName = (m: string) => MONTH_NAME.format(new Date(`${m}-01T00:00:00Z`))
+
+/** «1 750 сом» или «$20 × 87,5 ≈ 1 750 сом» — сумма шаблона по умолчанию. */
+const dueAmount = (d: Due) => (d.amountUsd != null ? `$${decimal(d.amountUsd)} × ${decimal(d.usdRate ?? 0)} ≈ ${somText(d.amountSom ?? 0)}` : somText(d.amountSom ?? 0))
+
+/**
+ * «Ожидаются в этом месяце»: шаблоны «каждый месяц» без отметки — текущий месяц и прошлые
+ * неотмеченные («не отмечено за октябрь»). «Оплачено» — подтвердить сумму и день; «Не в этом
+ * месяце» — пропущено, 0. Пока не отмечено, в расход не входит.
+ */
+function DueBlock({ due, current, rate }: { due: Due[]; current: string; rate?: number }) {
+  const client = useQueryClient()
+  const [paying, setPaying] = useState<string | null>(null)
+  const key = (d: Due) => `${d.expenseId}-${d.month}`
+  const skip = useMutation<Mark, ApiError, Due>({
+    mutationFn: (d) => unwrap(api.PUT('/api/platform/finance/expenses/{id}/months/{month}', {
+      params: { path: { id: d.expenseId!, month: d.month! } }, body: { status: 'SKIPPED' },
+    })),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['platform-finance'] }),
+  })
+  const overdue = due.filter((d) => d.overdue).length
+  return (
+    <section className="card-block fin-due" aria-label="Ожидаются в этом месяце">
+      <h2>Ожидаются в этом месяце</h2>
+      <p className="hint small">Подписки «каждый месяц». В расход попадут, когда отметите оплату{overdue > 0 ? '; за прошлые месяцы есть неотмеченные' : ''}.</p>
+      {skip.error && <p className="error" role="alert">{skip.error.message}</p>}
+      <ul className="fin-entries" aria-label="Ожидаемые оплаты">
+        {due.map((d) => (
+          <li key={key(d)} className={d.overdue ? 'fin-due-late' : undefined}>
+            <div className="fin-entry">
+              <div>
+                <b>{d.category}</b> — <span className="num nowrap">{dueAmount(d)}</span>
+                {d.overdue && <span className="chip small s-wait">не отмечено за {monthName(d.month ?? '')}</span>}
+                <div className="hint small">{d.month === current ? `обычно до ${d.day}-го числа` : `${longMonth(d.month ?? '')} · обычно до ${d.day}-го числа`}</div>
+              </div>
+              {paying !== key(d) && (
+                <div className="fin-due-actions">
+                  <button type="button" className="btn small" aria-label={`Оплачено: ${d.category}, ${longMonth(d.month ?? '')}`}
+                    onClick={() => setPaying(key(d))}>Оплачено</button>
+                  <button type="button" className="btn ghost small" disabled={skip.isPending}
+                    aria-label={`Не в этом месяце: ${d.category}, ${longMonth(d.month ?? '')}`} onClick={() => skip.mutate(d)}>Не в этом месяце</button>
+                </div>
+              )}
+            </div>
+            {paying === key(d) && <PayForm due={d} rate={rate} onDone={() => setPaying(null)} />}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+/**
+ * Подтвердить оплату месяца: сумма — по умолчанию из шаблона (в его валюте), курс — шаблона или
+ * последний, день — сегодня (для прошлого месяца — его последний день). Сумму в сомах считает сервер.
+ */
+function PayForm({ due: d, rate, onDone }: { due: Due; rate?: number; onDone: () => void }) {
+  const client = useQueryClient()
+  const today = todayIn()
+  const lastDay = (m: string) => { const [y, mo] = m.split('-').map(Number); return `${m}-${String(new Date(Date.UTC(y!, mo!, 0)).getUTCDate()).padStart(2, '0')}` }
+  const [usd, setUsd] = useState(d.amountUsd != null)
+  const [amount, setAmount] = useState(String(d.amountUsd ?? d.amountSom ?? ''))
+  const [usdRate, setUsdRate] = useState(String(d.usdRate ?? rate ?? ''))
+  const [paidOn, setPaidOn] = useState(today.startsWith(d.month ?? '') || !d.month ? today : lastDay(d.month))
+  const save = useMutation<Mark, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/platform/finance/expenses/{id}/months/{month}', {
+      params: { path: { id: d.expenseId!, month: d.month! } },
+      body: { status: 'PAID', paidOn, ...(usd ? { amountUsd: Number(amount), usdRate: Number(usdRate) } : { amountSom: Number(amount) }) },
+    })),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['platform-finance'] })
+      onDone()
+    },
+  })
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    save.mutate()
+  }
+  const err = (k: string) => save.error?.fieldErrors[k]
+  const som = usd && Number(amount) > 0 && Number(usdRate) > 0 ? Math.round(Number(amount) * Number(usdRate)) : null
+  const known = ['amountSom', 'amountUsd', 'usdRate', 'paidOn']
+  return (
+    <form className="form sub-form fin-form" aria-label={`Оплата: ${d.category}`} onSubmit={submit}>
+      <div className="segments" role="group" aria-label="Валюта оплаты">
+        <button type="button" aria-pressed={!usd} onClick={() => setUsd(false)}>В сомах</button>
+        <button type="button" aria-pressed={usd} onClick={() => setUsd(true)}>В долларах</button>
+      </div>
+      <div className="fin-row">
+        <div className="field">
+          <label className="field"><span>{usd ? 'Оплачено, $' : 'Оплачено, сом'}</span>
+            <input type="number" min={usd ? 0.01 : 1} step={usd ? '0.01' : '1'} inputMode={usd ? 'decimal' : 'numeric'} required autoFocus value={amount}
+              onChange={(e) => { save.reset(); setAmount(e.target.value) }} /></label>
+          {(err('amountSom') ?? err('amountUsd')) && <p className="error">{err('amountSom') ?? err('amountUsd')}</p>}
+        </div>
+        {usd && (
+          <div className="field">
+            <label className="field"><span>Курс: сомов за $1</span>
+              <input type="number" min={0.01} step="0.01" inputMode="decimal" required value={usdRate}
+                onChange={(e) => { save.reset(); setUsdRate(e.target.value) }} /></label>
+            {err('usdRate') && <p className="error">{err('usdRate')}</p>}
+          </div>
+        )}
+        <div className="field">
+          <label className="field"><span>День оплаты</span>
+            <DateInput value={paidOn} required max={today} onChange={(e) => { save.reset(); setPaidOn(e.target.value) }} /></label>
+          {err('paidOn') && <p className="error">{err('paidOn')}</p>}
+        </div>
+      </div>
+      {som != null && <p className="hint small" aria-live="polite">≈ {somText(som)} — точную сумму посчитает сервер</p>}
+      {save.error && !known.some((k) => save.error?.fieldErrors[k]) && <p className="error" role="alert">{save.error.message}</p>}
+      <div className="actions">
+        <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить оплату</button>
+        <button type="button" className="btn ghost" onClick={onDone}>Отмена</button>
+      </div>
+    </form>
   )
 }
 
@@ -152,6 +282,7 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
   const [editing, setEditing] = useState<number | null>(null)
   const lines = f.expenses ?? []
   const entries = f.entries ?? []
+  const marks = f.marks ?? []
   return (
     <section className="card-block" aria-label="Расходы">
       <div className="block-head">
@@ -182,7 +313,7 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
       <h3>Записи вручную</h3>
       {entries.length === 0 ? (
         <EmptyState compact title={single ? 'В этом месяце ручных расходов нет' : 'За этот период ручных расходов нет'}>
-          Claude, реклама, сервер и домен, пополнение SMS-провайдера — «Добавить расход». Подписку отметьте «каждый месяц»: она сама попадёт в следующие месяцы.
+          Claude, реклама, сервер и домен, пополнение SMS-провайдера — «Добавить расход». Подписку отметьте «каждый месяц»: каждый месяц напомним, а в расход она попадёт, когда отметите оплату.
         </EmptyState>
       ) : (
         <ul className="fin-entries" aria-label={single ? 'Ручные расходы месяца' : 'Ручные расходы периода'}>
@@ -197,6 +328,7 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
                     <b>{x.category}</b>
                     {x.monthly && <span className="chip small s-quiet">каждый месяц</span>}
                     <div className="hint small">{entryNote(x)}</div>
+                    {x.monthly && <MarkList marks={marks.filter((k) => k.expenseId === x.id)} category={x.category ?? ''} />}
                   </div>
                   <span className="num strong nowrap">{somText(x.amountSom ?? 0)}{x.monthly && <span className="hint small"> / мес</span>}</span>
                   <button type="button" className="btn ghost small" aria-label={`Исправить: ${x.category}`}
@@ -208,6 +340,33 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
         </ul>
       )}
     </section>
+  )
+}
+
+/** Отметки шаблона за месяцы периода: «ноябрь 2026: оплачено 1 848 сом · 2 нояб.» — снять, если ошиблись. */
+function MarkList({ marks, category }: { marks: Mark[]; category: string }) {
+  const client = useQueryClient()
+  const unmark = useMutation<unknown, ApiError, Mark>({
+    mutationFn: (k) => unwrap(api.DELETE('/api/platform/finance/expenses/{id}/months/{month}', {
+      params: { path: { id: k.expenseId!, month: k.month! } },
+    })),
+    onSuccess: () => void client.invalidateQueries({ queryKey: ['platform-finance'] }),
+  })
+  if (marks.length === 0) return null
+  return (
+    <ul className="fin-marks" aria-label={`Отметки: ${category}`}>
+      {marks.map((k) => (
+        <li key={k.month}>
+          <span className="hint small">{longMonth(k.month ?? '')}: </span>
+          {k.status === 'PAID'
+            ? <span className="small">оплачено <span className="num nowrap">{somText(k.amountSom ?? 0)}</span>{k.amountUsd != null ? ` ($${decimal(k.amountUsd)} × ${decimal(k.usdRate ?? 0)})` : ''}{k.paidOn ? ` · ${shortDate(k.paidOn)}` : ''}</span>
+            : <span className="small">не платили</span>}
+          <button type="button" className="link small" disabled={unmark.isPending}
+            aria-label={`Снять отметку: ${category}, ${longMonth(k.month ?? '')}`} onClick={() => unmark.mutate(k)}>снять</button>
+        </li>
+      ))}
+      {unmark.error && <li className="error" role="alert">{unmark.error.message}</li>}
+    </ul>
   )
 }
 
@@ -317,7 +476,7 @@ function ExpenseForm({ expense: x, categories, rate, month, onDone }: {
         {err('spentOn') && <p className="error">{err('spentOn')}</p>}
       </div>
       <label className="check"><input type="checkbox" checked={monthly} onChange={(e) => setMonthly(e.target.checked)} />
-        Каждый месяц — подписка, сервер: попадёт в каждый месяц до отмены</label>
+        Каждый месяц — подписка, сервер: напомним каждый месяц; в расход попадёт, когда отметите оплату</label>
       {monthly && x && (
         <div className="field">
           <label className="field"><span>Отменён (последний месяц с этим расходом) — пусто, если ещё платите</span>
@@ -338,7 +497,7 @@ function ExpenseForm({ expense: x, categories, rate, month, onDone }: {
         {x && (
           <button type="button" className="btn danger" disabled={remove.isPending}
             onClick={() => void ask(x.monthly
-              ? 'Удалить расход? Он пропадёт из всех месяцев. Если подписку просто отменили — укажите дату отмены.'
+              ? 'Удалить расход? Он пропадёт из всех месяцев. Если подписку просто отменили — укажите дату отмены. С отмеченными оплатами удалить нельзя.'
               : 'Удалить расход?').then((ok) => ok && remove.mutate())}>Удалить</button>
         )}
       </div>
@@ -375,7 +534,7 @@ function IncomeBlock({ f, single }: { f: Finance; single: boolean }) {
   )
 }
 
-const monthText = (m: MonthTotal) => `${longMonth(m.month ?? '')}: доход ${somText(m.incomeSom ?? 0)}, расход ${somText(m.expenseSom ?? 0)}, прибыль ${signed(m.profitSom ?? 0)}`
+const monthText = (m: MonthTotal) => `${longMonth(m.month ?? '')}: доход ${somText(m.incomeSom ?? 0)}, расход ${somText(m.expenseSom ?? 0)}, прибыль ${signed(m.profitSom ?? 0)}${(m.pendingSom ?? 0) > 0 ? `, ещё ожидается ${somText(m.pendingSom ?? 0)}` : ''}`
 
 /**
  * Столбики по месяцам: доход и расход — парой от общей нулевой линии (dataviz: два ряда во времени,
@@ -384,14 +543,16 @@ const monthText = (m: MonthTotal) => `${longMonth(m.month ?? '')}: доход ${
  * несколько, январь — годом, чтобы было видно, где какой год.
  */
 function MonthBars({ rows, picked, onPick }: { rows: MonthTotal[]; picked?: string; onPick: (m: string) => void }) {
-  const max = Math.max(1, ...rows.flatMap((m) => [m.incomeSom ?? 0, m.expenseSom ?? 0]))
+  const max = Math.max(1, ...rows.flatMap((m) => [m.incomeSom ?? 0, (m.expenseSom ?? 0) + (m.pendingSom ?? 0)]))
+  const anyPending = rows.some((m) => (m.pendingSom ?? 0) > 0)
   const maxProfit = Math.max(1, ...rows.map((m) => Math.abs(m.profitSom ?? 0)))
   const step = Math.ceil(rows.length / 12)
   const label = (m: string) => (rows.length > 12 && m.endsWith('-01') ? m.slice(0, 4) : shortMonth(m))
   return (
     <>
       <div className="legend" aria-hidden="true"><span className="key fin-in" /> доход <span className="key fin-out" /> расход
-        <span className="key fin-up" /> прибыль <span className="key fin-down" /> убыток</div>
+        <span className="key fin-up" /> прибыль <span className="key fin-down" /> убыток
+        {anyPending && <><span className="key fin-pending" /> ещё ожидается</>}</div>
       <div className="fin-bars" role="img" aria-label={rows.map(monthText).join('; ')}>
         {rows.map((m, k) => {
           const back = rows.length - 1 - k
@@ -400,7 +561,11 @@ function MonthBars({ rows, picked, onPick }: { rows: MonthTotal[]; picked?: stri
               aria-label={longMonth(m.month ?? '')} onClick={() => m.month && onPick(m.month)}>
               <span className="fin-pair">
                 <span className="fin-in" style={{ height: `${((m.incomeSom ?? 0) / max) * 100}%` }} />
-                <span className="fin-out" style={{ height: `${((m.expenseSom ?? 0) / max) * 100}%` }} />
+                {/* Прогноз пунктиром поверх расхода: шаблоны «каждый месяц» без отметки */}
+                <span className="fin-stack" style={{ height: `${(((m.expenseSom ?? 0) + (m.pendingSom ?? 0)) / max) * 100}%` }}>
+                  {(m.pendingSom ?? 0) > 0 && <span className="fin-pending" style={{ flexGrow: m.pendingSom ?? 0 }} />}
+                  <span className="fin-out" style={{ flexGrow: Math.max(m.expenseSom ?? 0, (m.pendingSom ?? 0) > 0 ? 0 : 1) }} />
+                </span>
               </span>
               <span className="fin-profit" aria-hidden="true">
                 <span className={(m.profitSom ?? 0) < 0 ? 'fin-down' : 'fin-up'}
@@ -453,7 +618,8 @@ function MonthsBlock({ months, onPick }: { months: MonthTotal[]; onPick: (m: str
               <tr key={m.month}>
                 <td><button type="button" className="link" onClick={() => m.month && onPick(m.month)}>{longMonth(m.month ?? '')}</button></td>
                 <td className="r num nowrap">{somText(m.incomeSom ?? 0)}</td>
-                <td className="r num nowrap">{somText(m.expenseSom ?? 0)}</td>
+                <td className="r num nowrap">{somText(m.expenseSom ?? 0)}
+                  {(m.pendingSom ?? 0) > 0 && <div className="hint small">+ {somText(m.pendingSom ?? 0)} ожидается</div>}</td>
                 <td className={`r num nowrap ${tone(m.profitSom ?? 0) ?? ''}`.trim()}>{signed(m.profitSom ?? 0)}</td>
               </tr>
             ))}

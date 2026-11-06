@@ -244,6 +244,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/finance/expenses/{id}/months/{month}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["mark"];
+        post?: never;
+        delete: operations["unmark"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/content/{id}": {
         parameters: {
             query?: never;
@@ -972,9 +988,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["mark"];
+        put: operations["mark_1"];
         post?: never;
-        delete: operations["unmark"];
+        delete: operations["unmark_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5243,6 +5259,28 @@ export interface components {
             endedOn?: string;
             comment?: string;
         };
+        PlatformFinanceMarkForm: {
+            status?: string;
+            /** Format: int64 */
+            amountSom?: number;
+            amountUsd?: number;
+            usdRate?: number;
+            /** Format: date */
+            paidOn?: string;
+        };
+        PlatformExpensesMark: {
+            /** Format: int64 */
+            expenseId?: number;
+            category?: string;
+            month?: string;
+            status?: string;
+            /** Format: int64 */
+            amountSom?: number;
+            amountUsd?: number;
+            usdRate?: number;
+            /** Format: date */
+            paidOn?: string;
+        };
         ContentPostsDraft: {
             /** Format: date */
             date?: string;
@@ -7124,6 +7162,19 @@ export interface components {
             /** Format: int32 */
             payments?: number;
         };
+        PlatformFinanceDue: {
+            /** Format: int64 */
+            expenseId?: number;
+            category?: string;
+            month?: string;
+            /** Format: int64 */
+            amountSom?: number;
+            amountUsd?: number;
+            usdRate?: number;
+            /** Format: int32 */
+            day?: number;
+            overdue?: boolean;
+        };
         PlatformFinanceFinance: {
             period?: string;
             from?: string;
@@ -7142,6 +7193,11 @@ export interface components {
             history?: components["schemas"]["PlatformFinanceMonthTotal"][];
             settings?: components["schemas"]["PlatformFinanceSettings"];
             categories?: string[];
+            /** Format: int64 */
+            pendingSom?: number;
+            due?: components["schemas"]["PlatformFinanceDue"][];
+            marks?: components["schemas"]["PlatformExpensesMark"][];
+            factFrom?: string;
         };
         PlatformFinanceLine: {
             key?: string;
@@ -7161,6 +7217,8 @@ export interface components {
             expenseSom?: number;
             /** Format: int64 */
             profitSom?: number;
+            /** Format: int64 */
+            pendingSom?: number;
         };
         PlatformFinanceSettings: {
             smsPriceSom?: number;
@@ -8601,6 +8659,54 @@ export interface operations {
             header?: never;
             path: {
                 id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    mark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                month: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformFinanceMarkForm"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformExpensesMark"];
+                };
+            };
+        };
+    };
+    unmark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                month: string;
             };
             cookie?: never;
         };
@@ -10125,7 +10231,7 @@ export interface operations {
             };
         };
     };
-    mark: {
+    mark_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -10152,7 +10258,7 @@ export interface operations {
             };
         };
     };
-    unmark: {
+    unmark_1: {
         parameters: {
             query?: never;
             header?: never;

@@ -718,6 +718,75 @@
         }
       }
     },
+    "/api/platform/finance/expenses/{id}/months/{month}" : {
+      "put" : {
+        "tags" : [ "platform-finance-controller" ],
+        "operationId" : "mark",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "month",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlatformFinanceMarkForm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlatformExpensesMark"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "platform-finance-controller" ],
+        "operationId" : "unmark",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "month",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/platform/content/{id}" : {
       "put" : {
         "tags" : [ "content-controller" ],
@@ -2564,7 +2633,7 @@
     "/api/appointments/{id}/teeth/{number}" : {
       "put" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "mark",
+        "operationId" : "mark_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2610,7 +2679,7 @@
       },
       "delete" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "unmark",
+        "operationId" : "unmark_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11678,6 +11747,58 @@
           }
         }
       },
+      "PlatformFinanceMarkForm" : {
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "amountUsd" : {
+            "type" : "number"
+          },
+          "usdRate" : {
+            "type" : "number"
+          },
+          "paidOn" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "PlatformExpensesMark" : {
+        "properties" : {
+          "expenseId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "month" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "amountUsd" : {
+            "type" : "number"
+          },
+          "usdRate" : {
+            "type" : "number"
+          },
+          "paidOn" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
       "ContentPostsDraft" : {
         "properties" : {
           "date" : {
@@ -16254,6 +16375,37 @@
           }
         }
       },
+      "PlatformFinanceDue" : {
+        "properties" : {
+          "expenseId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "month" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "amountUsd" : {
+            "type" : "number"
+          },
+          "usdRate" : {
+            "type" : "number"
+          },
+          "day" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "overdue" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "PlatformFinanceFinance" : {
         "properties" : {
           "period" : {
@@ -16318,6 +16470,25 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "pendingSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "due" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformFinanceDue"
+            }
+          },
+          "marks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlatformExpensesMark"
+            }
+          },
+          "factFrom" : {
+            "type" : "string"
           }
         }
       },
@@ -16359,6 +16530,10 @@
             "format" : "int64"
           },
           "profitSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "pendingSom" : {
             "type" : "integer",
             "format" : "int64"
           }

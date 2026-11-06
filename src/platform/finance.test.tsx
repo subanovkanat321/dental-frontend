@@ -269,3 +269,91 @@ test('не владельцу вкладки «Финансы» нет', async (
   expect(await screen.findByRole('tab', { name: 'Клиники' })).toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Финансы' })).not.toBeInTheDocument()
 })
+
+test('«каждый месяц» по факту: блок «Ожидаются», «Оплачено» с подтверждением, «Не в этом месяце», итоги факт + «ещё ожидается»', async () => {
+  const prev = shift(current, -1)
+  const prevName = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long' }).format(new Date(`${prev}-01T00:00:00Z`))
+  const calls: [string, unknown][] = []
+  const data: Finance = {
+    ...finance(current),
+    expenseSom: 1305, profitSom: 9165, pendingSom: 2950,
+    expenses: finance(current).expenses!.slice(0, 2),
+    entries: [
+      { id: 5, category: 'Claude (разработка)', amountSom: 1750, amountUsd: 20, usdRate: 87.5, spentOn: '2026-10-03', monthly: true },
+      { id: 6, category: 'Сервер и домен', amountSom: 1200, spentOn: '2026-09-15', monthly: true },
+    ],
+    due: [
+      { expenseId: 6, category: 'Сервер и домен', month: prev, amountSom: 1200, day: 15, overdue: true },
+      { expenseId: 5, category: 'Claude (разработка)', month: current, amountSom: 1750, amountUsd: 20, usdRate: 87.5, day: 3, overdue: false },
+    ],
+    marks: [{ expenseId: 6, category: 'Сервер и домен', month: current, status: 'PAID', amountSom: 1208, paidOn: `${current}-01` }],
+    factFrom: '2026-11',
+  }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/finance', () => HttpResponse.json(data)),
+    http.put('*/api/platform/finance/expenses/:id/months/:month', async ({ params, request }) => {
+      calls.push([`PUT ${String(params.id)} ${String(params.month)}`, await request.json()])
+      const mark: Schemas['PlatformExpensesMark'] = { expenseId: Number(params.id), month: String(params.month), status: 'PAID' }
+      return HttpResponse.json(mark)
+    }),
+    http.delete('*/api/platform/finance/expenses/:id/months/:month', ({ params }) => {
+      calls.push([`DELETE ${String(params.id)} ${String(params.month)}`, null])
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+
+  // Итоги — только факт; рядом мелко «ещё ожидается» и прогноз прибыли
+  expect(await screen.findByLabelText('Расход за месяц')).toHaveTextContent('1 305 сом')
+  const totals = screen.getByRole('region', { name: 'Итог периода' })
+  expect(totals).toHaveTextContent('ещё ожидается: 2 950 сом')
+  expect(totals).toHaveTextContent('если оплатить всё ожидаемое: 6 215 сом')
+
+  const block = screen.getByRole('region', { name: 'Ожидаются в этом месяце' })
+  const items = within(block).getAllByRole('listitem')
+  expect(items[0]).toHaveTextContent(`Сервер и домен — 1 200 сом`)
+  expect(items[0]).toHaveTextContent(`не отмечено за ${prevName}`)
+  expect(items[1]).toHaveTextContent('Claude (разработка) — $20 × 87,5 ≈ 1 750 сом')
+  expect(items[1]).toHaveTextContent('обычно до 3-го числа')
+  expect(items[1]).not.toHaveTextContent('не отмечено')
+
+  // «Оплачено» — форма с суммой шаблона в долларах и сегодняшним днём; поправили сумму
+  await user.click(within(block).getByRole('button', { name: /^Оплачено: Claude/ }))
+  const pay = within(block).getByRole('form', { name: 'Оплата: Claude (разработка)' })
+  expect(within(pay).getByLabelText('Оплачено, $')).toHaveValue(20)
+  expect(within(pay).getByLabelText('Курс: сомов за $1')).toHaveValue(87.5)
+  await user.clear(within(pay).getByLabelText('Оплачено, $'))
+  await user.type(within(pay).getByLabelText('Оплачено, $'), '21')
+  expect(within(pay).getByText(/≈ 1 838 сом/)).toBeInTheDocument()
+  await user.click(within(pay).getByRole('button', { name: 'Сохранить оплату' }))
+  await within(block).findByRole('button', { name: /^Оплачено: Claude/ })
+  expect(calls[0]).toEqual([`PUT 5 ${current}`, { status: 'PAID', paidOn: todayIn(), amountUsd: 21, usdRate: 87.5 }])
+
+  // «Не в этом месяце» — пропущено за прошлый месяц
+  await user.click(within(block).getByRole('button', { name: /^Не в этом месяце: Сервер и домен/ }))
+  await vi.waitFor(() => expect(calls).toHaveLength(2))
+  expect(calls[1]).toEqual([`PUT 6 ${prev}`, { status: 'SKIPPED' }])
+
+  // Отметка в записях — «снять»: месяц снова ожидается
+  const marks = screen.getByRole('list', { name: 'Отметки: Сервер и домен' })
+  expect(marks).toHaveTextContent('оплачено 1 208 сом')
+  await user.click(within(marks).getByRole('button', { name: /^Снять отметку: Сервер и домен/ }))
+  await vi.waitFor(() => expect(calls).toHaveLength(3))
+  expect(calls[2]).toEqual([`DELETE 6 ${current}`, null])
+})
+
+test('нет ожидаемых — блока нет и «ещё ожидается» не показываем', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/finance', () => HttpResponse.json({ ...finance(current), due: [], pendingSom: 0 })),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  expect(await screen.findByLabelText('Расход за месяц')).toHaveTextContent('3 055 сом')
+  expect(screen.queryByRole('region', { name: 'Ожидаются в этом месяце' })).not.toBeInTheDocument()
+  expect(screen.queryByText(/ещё ожидается/)).not.toBeInTheDocument()
+})
