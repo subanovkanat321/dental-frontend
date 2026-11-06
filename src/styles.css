@@ -1085,6 +1085,8 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .content-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .content-thumbs { display: flex; flex-wrap: wrap; gap: 6px; }
 .content-thumbs img, .content-video { width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-sm); background: var(--sunken); display: grid; place-items: center; font-size: .8rem; color: var(--hint); }
+.content-reel { margin: 0; display: grid; gap: 6px; justify-items: start; }
+.content-reel video { width: 180px; max-width: 100%; aspect-ratio: 9 / 16; border-radius: var(--r-sm); background: #000; object-fit: cover; }
 .content-caption { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-sm); background: var(--sunken); }
 .content-caption p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .content-caption .btn { justify-self: start; }

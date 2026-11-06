@@ -1956,6 +1956,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/content/reels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addReels"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/content/import": {
         parameters: {
             query?: never;
@@ -5611,6 +5627,8 @@ export interface components {
             caption?: string;
             images?: string[];
             note?: string;
+            /** Format: time-local */
+            time?: string;
         };
         ContentPostsPost: {
             /** Format: int64 */
@@ -5631,6 +5649,13 @@ export interface components {
             createdAt?: string;
             instagramMediaId?: string;
             instagramUrl?: string;
+            /** Format: time-local */
+            publishTime?: string;
+            video?: string;
+            cover?: string;
+            videoUrl?: string;
+            coverUrl?: string;
+            instagramPublishing?: boolean;
         };
         BillingControllerPaidUntil: {
             /** Format: date */
@@ -6687,6 +6712,17 @@ export interface components {
         };
         DemoControllerGuest: {
             fullName?: string;
+        };
+        ContentPostsReelsAdded: {
+            /** Format: int32 */
+            added?: number;
+            /** Format: int32 */
+            already?: number;
+            missing?: string[];
+            /** Format: date */
+            from?: string;
+            /** Format: time-local */
+            time?: string;
         };
         ContentPostsImported: {
             /** Format: int32 */
@@ -12775,6 +12811,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContentPostsPost"];
+                };
+            };
+        };
+    };
+    addReels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentPostsReelsAdded"];
                 };
             };
         };
