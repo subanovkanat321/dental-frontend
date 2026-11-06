@@ -1,10 +1,11 @@
-import { lazy, Suspense, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useRef, useState, type ReactNode } from 'react'
 
 import { logout, type Schemas } from '../api/client'
 import type { Page } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { AdminNotices } from './AdminNotices'
 import { Icon } from './Icon'
+import { useFitPanels } from './fitPanels'
 import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
@@ -57,6 +58,9 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const [help, setHelp] = useState(false)
   // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается)
   const [narrow, toggleNarrow] = useFullView('sidebar-narrow')
+  // Панель справа — целиком в окне, прокрутка внутри неё (layout/fitPanels.ts)
+  const workspace = useRef<HTMLElement>(null)
+  useFitPanels(workspace)
   const go = (key: Page) => {
     setMore(false)
     onNavigate(key)
@@ -116,7 +120,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </div>
       )}
       {/* Напоминания админу и приглашение в опрос — на главном экране, чтобы не занимать место в каждом разделе */}
-      <main className="workspace">{page === 'schedule' && <><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</main>
+      <main ref={workspace} className="workspace">{page === 'schedule' && <><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</main>
       {/* «💬 Помощь» — спросить помощника Tish, не уходя с экрана (ИИ по базе знаний; не знает — команде Tish) */}
       {me.doctor && HELP_PAGES.includes(page) && !help && (
         <button type="button" className="help-fab" onClick={() => setHelp(true)} aria-label="Помощь: спросить помощника Tish">
