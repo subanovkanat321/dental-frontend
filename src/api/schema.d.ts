@@ -644,6 +644,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/name": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ownName"];
+        put: operations["rename"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/earnings/goal": {
         parameters: {
             query?: never;
@@ -684,7 +700,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["rename"];
+        put: operations["rename_1"];
         post?: never;
         delete?: never;
         options?: never;
@@ -703,22 +719,6 @@ export interface paths {
         put: operations["update_11"];
         post?: never;
         delete: operations["delete_8"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/doctors/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["update_12"];
-        post?: never;
-        delete: operations["delete_9"];
         options?: never;
         head?: never;
         patch?: never;
@@ -764,7 +764,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view"];
-        put: operations["update_13"];
+        put: operations["update_12"];
         post?: never;
         delete?: never;
         options?: never;
@@ -781,6 +781,22 @@ export interface paths {
         };
         get?: never;
         put: operations["setAdmin"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/doctors/{id}/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setActive"];
         post?: never;
         delete?: never;
         options?: never;
@@ -812,7 +828,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_1"];
-        put: operations["update_14"];
+        put: operations["update_13"];
         post?: never;
         delete?: never;
         options?: never;
@@ -940,7 +956,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_15"];
+        put: operations["update_14"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2846,7 +2862,7 @@ export interface paths {
         get: operations["get_2"];
         put?: never;
         post: operations["rotate"];
-        delete: operations["delete_10"];
+        delete: operations["delete_9"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3854,7 +3870,7 @@ export interface paths {
         get: operations["content"];
         put?: never;
         post?: never;
-        delete: operations["delete_11"];
+        delete: operations["delete_10"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4478,7 +4494,7 @@ export interface paths {
         get: operations["get_8"];
         put?: never;
         post?: never;
-        delete: operations["delete_12"];
+        delete: operations["delete_11"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4798,7 +4814,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_13"];
+        delete: operations["delete_12"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4846,7 +4862,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_14"];
+        delete: operations["delete_13"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4878,7 +4894,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_15"];
+        delete: operations["delete_14"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4911,6 +4927,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["cancelInvite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/doctors/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_15"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5609,6 +5641,13 @@ export interface components {
             setupToken?: string;
             newPassword?: string;
         };
+        StaffMembersControllerNameRequest: {
+            fullName?: string;
+        };
+        StaffMembersOwnName: {
+            fullName?: string;
+            editable?: boolean;
+        };
         EarningsControllerGoal: {
             /** Format: int64 */
             goalSom?: number;
@@ -5692,26 +5731,6 @@ export interface components {
             patientId?: number;
             patient?: string;
         };
-        DoctorControllerAdminRequest: {
-            fullName?: string;
-            about?: string;
-            /** Format: int64 */
-            telegramId?: number;
-            active?: boolean;
-        };
-        DoctorAdminView: {
-            /** Format: int64 */
-            id?: number;
-            fullName?: string;
-            about?: string;
-            photoUrl?: string;
-            active?: boolean;
-            /** Format: int64 */
-            telegramId?: number;
-            role?: string;
-            phone?: string;
-            phoneOnly?: boolean;
-        };
         DoctorServicesControllerRequest: {
             serviceTypeIds: number[];
         };
@@ -5750,6 +5769,22 @@ export interface components {
         };
         DoctorControllerAdminRole: {
             admin?: boolean;
+        };
+        DoctorControllerActiveRequest: {
+            active?: boolean;
+        };
+        DoctorAdminView: {
+            /** Format: int64 */
+            id?: number;
+            fullName?: string;
+            about?: string;
+            photoUrl?: string;
+            active?: boolean;
+            /** Format: int64 */
+            telegramId?: number;
+            role?: string;
+            phone?: string;
+            phoneOnly?: boolean;
         };
         DentalNewsControllerDigest: {
             on?: boolean;
@@ -6598,6 +6633,10 @@ export interface components {
             applied?: components["schemas"]["FamilyMoneyControllerApplied"][];
             /** Format: int32 */
             leftDebtSom?: number;
+        };
+        DoctorControllerCreateRequest: {
+            fullName?: string;
+            about?: string;
         };
         DoctorControllerPhoneRequest: {
             phone?: string;
@@ -9529,6 +9568,50 @@ export interface operations {
             };
         };
     };
+    ownName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMembersOwnName"];
+                };
+            };
+        };
+    };
+    rename: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffMembersControllerNameRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMembersOwnName"];
+                };
+            };
+        };
+    };
     goal: {
         parameters: {
             query?: never;
@@ -9577,7 +9660,7 @@ export interface operations {
             };
         };
     };
-    rename: {
+    rename_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -9630,52 +9713,6 @@ export interface operations {
         };
     };
     delete_8: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    update_12: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DoctorControllerAdminRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DoctorAdminView"];
-                };
-            };
-        };
-    };
-    delete_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -9769,7 +9806,7 @@ export interface operations {
             };
         };
     };
-    update_13: {
+    update_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -9819,6 +9856,32 @@ export interface operations {
             };
         };
     };
+    setActive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DoctorControllerActiveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorAdminView"];
+                };
+            };
+        };
+    };
     digest: {
         parameters: {
             query?: never;
@@ -9863,7 +9926,7 @@ export interface operations {
             };
         };
     };
-    update_14: {
+    update_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -10155,7 +10218,7 @@ export interface operations {
             };
         };
     };
-    update_15: {
+    update_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -13244,7 +13307,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DoctorControllerAdminRequest"];
+                "application/json": components["schemas"]["DoctorControllerCreateRequest"];
             };
         };
         responses: {
@@ -13883,7 +13946,7 @@ export interface operations {
             };
         };
     };
-    delete_10: {
+    delete_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -15459,7 +15522,7 @@ export interface operations {
             };
         };
     };
-    delete_11: {
+    delete_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -16301,7 +16364,7 @@ export interface operations {
             };
         };
     };
-    delete_12: {
+    delete_11: {
         parameters: {
             query?: {
                 force?: boolean;
@@ -16753,7 +16816,7 @@ export interface operations {
             };
         };
     };
-    delete_13: {
+    delete_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -16813,7 +16876,7 @@ export interface operations {
             };
         };
     };
-    delete_14: {
+    delete_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -16859,7 +16922,7 @@ export interface operations {
             };
         };
     };
-    delete_15: {
+    delete_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -16905,6 +16968,26 @@ export interface operations {
             header?: never;
             path: {
                 id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    delete_15: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
             };
             cookie?: never;
         };

@@ -126,7 +126,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                           ? <span className="tone-wait">ссылка истекла — нужна новая</span>
                           : <span className="tone-wait">ждём входа · ссылка до {shortDate(r.invite.expiresAt!, true)}</span>
                         : r.kind === 'doctor' && !r.doctor.telegramId
-                          ? <span className="tone-wait">не привязан — пригласите в карточке</span>
+                          ? <span className="tone-wait">ждём входа — пригласите в карточке</span>
                           : (r.kind === 'doctor' ? r.doctor.phoneOnly : r.member.phoneOnly)
                             ? <span className="tone-ok">✓ по номеру</span>
                             : <span className="tone-ok">✓ Telegram привязан</span>}

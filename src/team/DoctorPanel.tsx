@@ -30,9 +30,19 @@ function firstError(e: ApiError | null): string | null {
   return e ? Object.values(e.fieldErrors)[0] ?? e.message : null
 }
 
+/** Подсказка у чужого вошедшего врача: профиль для пациентов он ведёт сам. */
+export const SELF_PROFILE_HINT = 'Фото, имя и «о себе» врач заполняет сам в «Настройки → Изменить профиль».'
+
 /**
- * Карточка врача справа. Админ: имя, «кратко», Telegram, «работает», приглашение по ссылке, права
- * администратора, удалить. Врач сам себе — профиль и фото (их видят пациенты в боте) и часы работы.
+ * Карточка врача (панель справа в «Персонале» или во всю ширину в «Моём профиле») — три раздела:
+ * <ul>
+ * <li>«Для пациентов» — фото, имя, «Кратко»: их видят пациенты в боте, ведёт сам врач. Админ у чужого
+ * вошедшего врача видит их только для чтения; пока врач не вошёл («ждём входа») — заполняет черновик,
+ * иначе бот покажет пациентам пустую карточку;</li>
+ * <li>«Работа» — «Работает» (админ), услуги (админ или сам врач), часы работы (и регистратура);</li>
+ * <li>«Вход и права» — Telegram подключён или «ждём входа», приглашение, телефон, права администратора.</li>
+ * </ul>
+ * Telegram id руками не вписывают: привязка — ссылкой-приглашением или номером. Те же права проверяет сервер.
  */
 export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
   doctor: Doctor
@@ -45,27 +55,67 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
   const close = useClose(onClose, !inline)
   const refresh = useRefreshDoctors()
   const self = d.id === me.doctorId
-  // Профиль и фото — сам врач или админ; регистратура — только часы работы
-  const editsProfile = Boolean(me.admin) || self
-  const [form, setForm] = useState({ fullName: d.fullName ?? '', about: d.about ?? '', telegramId: d.telegramId == null ? '' : String(d.telegramId), active: d.active !== false })
-  // Telegram id и «работает» меняет только админ — у врача их нет в форме
-  const { dirty, commit } = useDirty(me.admin ? form : { fullName: form.fullName, about: form.about })
-  const [invite, setInvite] = useState<string | null>(null)
-  const [photoError, setPhotoError] = useState('')
-  // Вход по SMS: вместо Telegram id — синтетический (отрицательный); его не правят руками, а отправляют как есть
-  const byPhone = isPhoneLogin(d.telegramId)
-  const tgInvalid = !byPhone && form.telegramId.trim() !== '' && !/^\d{3,15}$/.test(form.telegramId.trim())
+  const admin = Boolean(me.admin)
+  // Вошёл — Telegram или номер привязаны. У не-админа DoctorView без id — есть только признак
+  const linked = d.telegramId != null || Boolean((d as Schemas['DoctorView']).telegramLinked)
+  // Профиль для пациентов: сам врач; админ — только черновик до входа врача
+  const editsProfile = self || (admin && !linked)
+  // Услуги — сам врач или админ; регистратура — только часы работы
+  const editsWork = self || admin
 
+  return (
+    <aside className={inline ? 'card-block doctor-inline' : 'panel'} aria-label="Врач">
+      <header className="panel-head">
+        <div>
+          <h2>{d.fullName}</h2>
+          <span className="hint">{[self ? 'это вы' : null, d.role === 'ADMIN' ? 'и администратор' : null, d.active === false ? 'скрыт' : null,
+            admin && !linked ? 'ждём входа' : null].filter(Boolean).join(' · ') || 'Врач'}</span>
+        </div>
+        {!inline && <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>}
+      </header>
+
+      <section className="doctor-group" aria-label="Для пациентов">
+        <h3 className="group-title">Для пациентов</h3>
+        {editsProfile
+          ? <ProfileForm key={d.id} doctor={d} draft={!self} onSaved={refresh} />
+          : <ProfileView doctor={d} />}
+      </section>
+
+      <section className="doctor-group" aria-label="Работа">
+        <h3 className="group-title">Работа</h3>
+        <ActiveSwitch doctor={d} admin={admin} onSaved={refresh} />
+        {editsWork && <DoctorServices key={d.id} doctorId={d.id!} me={me} />}
+        <section className="form">
+          <h4>Часы работы</h4>
+          <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — во вкладке «Перерывы».</p>
+          <HoursEditor doctorId={d.id!} doctorName={d.fullName ?? ''} />
+        </section>
+      </section>
+
+      {(admin || self) && (
+        <section className="doctor-group" aria-label="Вход и права">
+          <h3 className="group-title">Вход и права</h3>
+          {admin ? <AccessAdmin doctor={d} self={self} inline={inline} onDone={refresh} />
+            : <p className="hint">Телефон и пароль для входа — в «Телефон» и «Пароль и вход» выше. Права: врач — своё расписание,
+              пациенты и медкарты; сделать администратором может администратор клиники.</p>}
+        </section>
+      )}
+
+      {admin && <RemoveDoctor doctor={d} onDone={() => { refresh(); onClose() }} />}
+    </aside>
+  )
+}
+
+/** «Для пациентов» — форма: фото, имя, «Кратко». draft — админ заполняет за врача, который ещё не вошёл. */
+function ProfileForm({ doctor: d, draft, onSaved }: { doctor: Doctor; draft: boolean; onSaved: () => void }) {
+  const [form, setForm] = useState({ fullName: d.fullName ?? '', about: d.about ?? '' })
+  const { dirty, commit } = useDirty(form)
+  const [photoError, setPhotoError] = useState('')
   const save = useMutation<unknown, ApiError>({
-    mutationFn: () => (me.admin
-      ? unwrap(api.PUT('/api/doctors/{id}', {
-        params: { path: { id: d.id! } },
-        body: { fullName: form.fullName, about: form.about, telegramId: form.telegramId.trim() ? Number(form.telegramId) : undefined, active: form.active },
-      }))
-      : unwrap(api.PUT('/api/doctors/{id}/profile', { params: { path: { id: d.id! } }, body: { fullName: form.fullName, about: form.about } }))),
+    mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/profile', { params: { path: { id: d.id! } }, body: form })),
     onSuccess: () => {
       commit()
-      refresh()
+      onSaved()
     },
   })
   const photo = useMutation<unknown, ApiError | Error, File>({
@@ -74,60 +124,30 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
       body.append('photo', await resizePhoto(file, 800, 0.85), 'photo.jpg')
       return upload(`/api/doctors/${d.id}/photo`, body)
     },
-    onSuccess: refresh,
+    onSuccess: onSaved,
     onError: (e) => setPhotoError(e instanceof ApiError ? e.fieldErrors.photo ?? e.message : 'Не получилось открыть фото — выберите другое'),
   })
   const removePhoto = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.DELETE('/api/doctors/{id}/photo', { params: { path: { id: d.id! } } })),
-    onSuccess: refresh,
+    onSuccess: onSaved,
   })
-  const makeInvite = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/doctors/{id}/invite', { params: { path: { id: d.id! } } })),
-    onSuccess: (i) => setInvite(i.token ?? null),
-  })
-  const isAdmin = d.role === 'ADMIN'
-  const rights = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/admin', { params: { path: { id: d.id! } }, body: { admin: !isAdmin } })),
-    onSuccess: () => {
-      // Свои права поменялись — меню и доступы другие: проще начать заново
-      if (self) window.location.reload()
-      else refresh()
-    },
-  })
-  const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/doctors/{id}', { params: { path: { id: d.id! } } })),
-    onSuccess: () => {
-      refresh()
-      onClose()
-    },
-  })
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    if (!tgInvalid) save.mutate()
-  }
   const pick = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     setPhotoError('')
     if (file) photo.mutate(file)
   }
-  const set = (key: 'fullName' | 'about' | 'telegramId') => (e: { target: { value: string } }) => {
+  const set = (key: 'fullName' | 'about') => (e: { target: { value: string } }) => {
     save.reset()
     setForm({ ...form, [key]: e.target.value })
   }
-
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    save.mutate()
+  }
   return (
-    <aside className={inline ? 'card-block doctor-inline' : 'panel'} aria-label="Врач">
-      <header className="panel-head">
-        <div>
-          <h2>{d.fullName}</h2>
-          <span className="hint">{[self ? 'это вы' : null, isAdmin ? 'и администратор' : null, d.active === false ? 'скрыт' : null].filter(Boolean).join(' · ') || 'Врач'}</span>
-        </div>
-        {!inline && <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>}
-      </header>
-
-      {editsProfile && <>
+    <>
+      {draft && <p className="hint">Врач ещё не вошёл — можно заполнить черновик, чтобы пациенты не видели пустую карточку. Войдёт — поправит сам.</p>}
       <div className="profile-photo">
         {d.photoUrl ? <img src={d.photoUrl} alt="Фото врача" /> : <span className="photo-empty" aria-hidden="true">{(d.fullName ?? '?').slice(0, 1)}</span>}
         <div className="actions">
@@ -139,68 +159,99 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
         </div>
       </div>
       {(photoError || removePhoto.error) && <p className="error" role="alert">{photoError || removePhoto.error?.message}</p>}
-
       <form className="form" aria-label="Данные врача" onSubmit={submit}>
         <label className="field"><span>Имя</span>
           <input value={form.fullName} required maxLength={100} onChange={set('fullName')} />
         </label>
-        <label className="field"><span>Кратко — видят пациенты в боте</span>
+        <label className="field"><span>Кратко о себе — видят пациенты в боте</span>
           <textarea value={form.about} maxLength={300} rows={2} placeholder="Например: ортодонт, брекеты" onChange={set('about')} />
         </label>
-        {me.admin && (
-          <>
-            {!byPhone && (
-              <label className="field"><span>Telegram id врача</span>
-                <input value={form.telegramId} inputMode="numeric" placeholder="Например: 512345678" onChange={set('telegramId')} />
-              </label>
-            )}
-            {tgInvalid && <p className="error">Только цифры, как пишет @userinfobot</p>}
-            <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { save.reset(); setForm({ ...form, active: e.target.checked }) }} /> Работает (показывать пациентам)</label>
-          </>
-        )}
-        <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} disabled={tgInvalid} savedText="Профиль врача сохранён"
-          error={save.error && (save.error.code === 'telegram-taken' ? save.error.message : firstError(save.error))} />
+        <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="Профиль врача сохранён" error={firstError(save.error)} />
       </form>
-      </>}
+    </>
+  )
+}
 
-      {editsProfile && <DoctorServices key={d.id} doctorId={d.id!} me={me} />}
+/** «Для пациентов» — только посмотреть: чужой вошедший врач ведёт свой профиль сам. */
+function ProfileView({ doctor: d }: { doctor: Doctor }) {
+  return (
+    <div className="profile-view">
+      <div className="profile-photo">
+        {d.photoUrl ? <img src={d.photoUrl} alt="Фото врача" /> : <span className="photo-empty" aria-hidden="true">{(d.fullName ?? '?').slice(0, 1)}</span>}
+        <dl className="profile-facts">
+          <dt>Имя</dt><dd>{d.fullName}</dd>
+          <dt>Кратко о себе</dt><dd>{d.about?.trim() || <span className="hint">не заполнено</span>}</dd>
+        </dl>
+      </div>
+      <p className="hint">{SELF_PROFILE_HINT}</p>
+    </div>
+  )
+}
 
-      <section className="form">
-        <h3>Часы работы</h3>
-        <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — во вкладке «Перерывы».</p>
-        <HoursEditor doctorId={d.id!} doctorName={d.fullName ?? ''} />
-      </section>
+/** «Работает (показывать пациентам)»: меняет админ сразу, без «Сохранить»; остальным — как есть. */
+function ActiveSwitch({ doctor: d, admin, onSaved }: { doctor: Doctor; admin: boolean; onSaved: () => void }) {
+  const active = d.active !== false
+  const save = useMutation<unknown, ApiError, boolean>({
+    mutationFn: (next) => unwrap(api.PUT('/api/doctors/{id}/active', { params: { path: { id: d.id! } }, body: { active: next } })),
+    onSuccess: onSaved,
+  })
+  if (!admin) {
+    return <p className="hint">{active ? 'Работает — пациенты видят врача в боте.' : 'Скрыт — пациенты врача не видят.'}</p>
+  }
+  return (
+    <div className="form">
+      <label className="check">
+        <input type="checkbox" checked={save.isPending ? !active : active} disabled={save.isPending}
+          onChange={(e) => save.mutate(e.target.checked)} /> Работает (показывать пациентам)
+      </label>
+      <p className="hint small">Снимите, когда врач ушёл: пациенты его не увидят, а вход врача в приложение закроется. История приёмов останется.</p>
+      {save.error && <p className="error" role="alert">{save.error.message}</p>}
+    </div>
+  )
+}
 
-      {me.admin && (
-        <section className="form">
-          <h3>Вход врача</h3>
-          <p className="hint">{byPhone
-            ? 'Врач входит без Telegram. Появился Telegram — пришлите ссылку: после «Начать» в боте он будет входить через Telegram.'
-            : d.telegramId
-            ? `Telegram привязан (${d.telegramId}). Если врач сменил аккаунт — пришлите новую ссылку.`
-            : 'Telegram не привязан — уведомления о приёмах приходят вам. Пришлите врачу ссылку: он нажмёт «Начать» в боте, и всё готово.'}</p>
-          {invite
-            ? <InviteLink start={`join_${invite}`} name={d.fullName ?? ''} toWhom="врачу" />
-            : <button type="button" className="btn" disabled={makeInvite.isPending} onClick={() => makeInvite.mutate()}>
-              {d.telegramId ? 'Новая ссылка-приглашение' : 'Пригласить по ссылке'}</button>}
-          {makeInvite.error && <p className="error">{makeInvite.error.message}</p>}
-          <DoctorPhone doctor={d} onDone={refresh} />
-          {d.telegramId != null && !inline && <StaffPhone telegramId={d.telegramId} phone={d.phone} phoneOnly={d.phoneOnly} name={d.fullName} />}
-        </section>
-      )}
+/** «Вход и права» для админа: Telegram подключён или «ждём входа», приглашение, телефон, права администратора. */
+function AccessAdmin({ doctor: d, self, inline, onDone }: { doctor: Doctor; self: boolean; inline: boolean; onDone: () => void }) {
+  const [invite, setInvite] = useState<string | null>(null)
+  const byPhone = isPhoneLogin(d.telegramId)
+  const linked = d.telegramId != null
+  const isAdmin = d.role === 'ADMIN'
+  const makeInvite = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/doctors/{id}/invite', { params: { path: { id: d.id! } } })),
+    onSuccess: (i) => setInvite(i.token ?? null),
+  })
+  const rights = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/admin', { params: { path: { id: d.id! } }, body: { admin: !isAdmin } })),
+    onSuccess: () => {
+      // Свои права поменялись — меню и доступы другие: проще начать заново
+      if (self) window.location.reload()
+      else onDone()
+    },
+  })
+  return (
+    <>
+      <p className={linked ? 'tone-ok' : 'tone-wait'}>{byPhone ? '✓ Входит по номеру (без Telegram)' : linked ? '✓ Telegram подключён' : 'Ждём входа'}</p>
+      <p className="hint">{byPhone
+        ? 'Появился Telegram — пришлите ссылку: после «Начать» в боте врач будет входить через Telegram.'
+        : linked
+          ? 'Врач сменил аккаунт Telegram — пришлите новую ссылку.'
+          : 'Уведомления о приёмах пока приходят вам. Пришлите врачу ссылку: он нажмёт «Начать» в боте и дальше сам заполнит фото, имя и «о себе».'}</p>
+      {invite
+        ? <InviteLink start={`join_${invite}`} name={d.fullName ?? ''} toWhom="врачу" />
+        : <button type="button" className="btn" disabled={makeInvite.isPending} onClick={() => makeInvite.mutate()}>
+          {linked ? 'Новая ссылка-приглашение' : 'Пригласить по ссылке'}</button>}
+      {makeInvite.error && <p className="error">{makeInvite.error.message}</p>}
+      <DoctorPhone doctor={d} onDone={onDone} />
+      {linked && !inline && <StaffPhone telegramId={d.telegramId!} phone={d.phone} phoneOnly={d.phoneOnly} name={d.fullName} />}
 
+      <h4>Права</h4>
       {/* Права дают тому, кто вошёл: администратор — это Telegram врача. Не вошёл — объясняем, что сделать */}
-      {me.admin && d.telegramId == null && (
-        <section className="form">
-          <h3>Права</h3>
-          <p className="hint">Сделать врача администратором можно, когда он войдёт: нажмите выше «Пригласить по ссылке»,
-            отправьте ему — он откроет ссылку и нажмёт «Начать» в Telegram. После этого здесь появится кнопка
-            «Сделать администратором клиники».</p>
-        </section>
-      )}
-      {me.admin && d.telegramId != null && (
-        <section className="form">
-          <h3>Права</h3>
+      {!linked ? (
+        <p className="hint">Сделать врача администратором можно, когда он войдёт: нажмите выше «Пригласить по ссылке»,
+          отправьте ему — он откроет ссылку и нажмёт «Начать» в Telegram. После этого здесь появится кнопка
+          «Сделать администратором клиники».</p>
+      ) : (
+        <>
           <p className="hint">{isAdmin
             ? 'Этот врач — и администратор: ведёт «О клинике», врачей, сотрудников, видит выручку клиники.'
             : 'Врач сможет вести клинику вместе с вами: «О клинике», врачи, сотрудники, выручка клиники. Лечить и вести своё расписание он продолжит.'}</p>
@@ -208,22 +259,28 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
             onClick={() => void (!isAdmin || !self ? Promise.resolve(true) : ask('Снять с себя права администратора?')).then((ok) => ok && rights.mutate())}>
             {isAdmin ? 'Снять права администратора' : 'Сделать администратором клиники'}</button>
           {rights.error && <p className="error" role="alert">{rights.error.message}</p>}
-        </section>
+        </>
       )}
-
-      {me.admin && (
-        <div className="danger-zone">
-          <p className="hint">Удалить можно врача без приёмов — например, заведённого для пробы. Ушедшего врача скройте: снимите «Работает».</p>
-          <button type="button" className="btn danger" disabled={remove.isPending}
-            onClick={() => void ask(`Удалить врача «${d.fullName}»?`).then((ok) => ok && remove.mutate())}>Удалить врача</button>
-          {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
-        </div>
-      )}
-    </aside>
+    </>
   )
 }
 
-/** Новый врач: имя и «кратко»; Telegram — потом, ссылкой-приглашением из его карточки. */
+function RemoveDoctor({ doctor: d, onDone }: { doctor: Doctor; onDone: () => void }) {
+  const remove = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.DELETE('/api/doctors/{id}', { params: { path: { id: d.id! } } })),
+    onSuccess: onDone,
+  })
+  return (
+    <div className="danger-zone">
+      <p className="hint">Удалить можно врача без приёмов — например, заведённого для пробы. Ушедшего врача скройте: снимите «Работает».</p>
+      <button type="button" className="btn danger" disabled={remove.isPending}
+        onClick={() => void ask(`Удалить врача «${d.fullName}»?`).then((ok) => ok && remove.mutate())}>Удалить врача</button>
+      {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
+    </div>
+  )
+}
+
+/** Новый врач: имя и «кратко» — черновик до входа; Telegram — потом, ссылкой-приглашением из его карточки. */
 export function NewDoctorPanel({ onClose, onCreated }: { onClose: () => void; onCreated: (d: Doctor) => void }) {
   useClose(onClose)
   const refresh = useRefreshDoctors()
@@ -245,10 +302,11 @@ export function NewDoctorPanel({ onClose, onCreated }: { onClose: () => void; on
         <label className="field"><span>Имя</span>
           <input value={form.fullName} required maxLength={100} autoFocus placeholder="Например: Айгерим Садыкова" onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
         </label>
-        <label className="field"><span>Кратко — видят пациенты в боте</span>
+        <label className="field"><span>Кратко о себе — видят пациенты в боте</span>
           <input value={form.about} maxLength={300} placeholder="Например: ортодонт, брекеты" onChange={(e) => setForm({ ...form, about: e.target.value })} />
         </label>
-        <p className="hint">После «Добавить» откроется карточка врача: там ссылка-приглашение, фото и часы работы.</p>
+        <p className="hint">Имя и «кратко» — черновик: войдёт врач — поправит сам, вместе с фото. После «Добавить» откроется карточка врача:
+          там ссылка-приглашение и часы работы.</p>
         {create.error && <p className="error" role="alert">{firstError(create.error)}</p>}
         <button type="submit" className="btn primary" disabled={create.isPending}>Добавить</button>
       </form>
