@@ -105,7 +105,8 @@ const GROUPS: [string, Item[]][] = [
     item('ai', 'ИИ-помощник', 'Отчёты пациенту и разбор диктовки', admin, () => (_me, back) => <AiPage onBack={back} />),
   ]],
   ['Мои настройки', [
-    item('profile', 'Мой профиль', 'Имя, фото и «о себе» для пациентов', (me) => me.doctorId != null,
+    // Телефон для входа по номеру — у всех; врачу ещё имя, фото и «о себе»
+    item('profile', 'Мой профиль', 'Телефон для входа; врачу — имя, фото и «о себе»', all,
       () => (me, back) => <ProfilePage me={me} onBack={back} />),
     // Лента — приёмы своего кресла: у кого его нет (админ, регистратура, ассистент), пункта нет
     item('calendar', 'Календарь в телефоне', 'Приёмы в Google или Apple Календаре', (me) => me.doctorId != null,
@@ -254,8 +255,8 @@ function Appearance() {
 }
 
 /**
- * Профиль сверху «Настроек»: кто вошёл — фото, имя, роль и клиника. Врачу — «Изменить профиль»
- * (имя, фото, «о себе» — их видят пациенты при записи).
+ * Профиль сверху «Настроек»: кто вошёл — фото, имя, роль и клиника. «Изменить профиль» — телефон для
+ * входа, а врачу ещё имя, фото и «о себе» (их видят пациенты при записи).
  */
 function Profile({ me }: { me: Me }) {
   const own = (me.doctors ?? []).find((d) => d.id === me.doctorId)
@@ -273,7 +274,7 @@ function Profile({ me }: { me: Me }) {
         {clinic && <span className="hint">🏥 {clinic}</span>}
         {own?.about && <span className="profile-about">{own.about}</span>}
       </div>
-      {me.doctorId != null && <button type="button" className="btn" onClick={() => openSettings('profile')}>Изменить профиль</button>}
+      <button type="button" className="btn" onClick={() => openSettings('profile')}>Изменить профиль</button>
     </section>
   )
 }

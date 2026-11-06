@@ -564,6 +564,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/members/{telegramId}/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setPhone"];
+        post?: never;
+        delete: operations["removePhone"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/members/{telegramId}/doctors": {
         parameters: {
             query?: never;
@@ -575,6 +591,22 @@ export interface paths {
         put: operations["assistantDoctors"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_1"];
+        put: operations["set_2"];
+        post?: never;
+        delete: operations["remove"];
         options?: never;
         head?: never;
         patch?: never;
@@ -684,7 +716,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["set_2"];
+        put: operations["set_3"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2747,7 +2779,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_1"];
+        get: operations["get_2"];
         put?: never;
         post: operations["rotate"];
         delete: operations["delete_10"];
@@ -3355,7 +3387,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_2"];
+        get: operations["get_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3371,7 +3403,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3627,7 +3659,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
+        get: operations["get_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3931,7 +3963,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4011,7 +4043,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4347,7 +4379,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
+        get: operations["get_8"];
         put?: never;
         post?: never;
         delete: operations["delete_12"];
@@ -4654,7 +4686,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["remove"];
+        delete: operations["remove_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4686,7 +4718,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["remove_1"];
+        delete: operations["remove_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4766,7 +4798,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["remove_2"];
+        delete: operations["remove_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5426,8 +5458,18 @@ export interface components {
             role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
             doctorIds?: number[];
         };
+        StaffMembersControllerPhoneChange: {
+            phone?: string;
+        };
+        StaffPhonesPhoneView: {
+            phone?: string;
+            phoneOnly?: boolean;
+        };
         StaffMembersControllerAssistantDoctors: {
             doctorIds?: number[];
+        };
+        MyPhoneControllerPhoneChange: {
+            phone?: string;
         };
         PasswordControllerPasswordChange: {
             currentPassword?: string;
@@ -5535,6 +5577,7 @@ export interface components {
             telegramId?: number;
             role?: string;
             phone?: string;
+            phoneOnly?: boolean;
         };
         DoctorServicesControllerRequest: {
             serviceTypeIds: number[];
@@ -7428,6 +7471,7 @@ export interface components {
             doctor?: boolean;
             doctorIds?: number[];
             phone?: string;
+            phoneOnly?: boolean;
         };
         StaffMembersInviteView: {
             id?: string;
@@ -7445,6 +7489,7 @@ export interface components {
             /** Format: date-time */
             setAt?: string;
             sms?: boolean;
+            telegram?: boolean;
         };
         NetMonthMine: {
             month?: string;
@@ -9107,6 +9152,52 @@ export interface operations {
             };
         };
     };
+    setPhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                telegramId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffMembersControllerPhoneChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPhonesPhoneView"];
+                };
+            };
+        };
+    };
+    removePhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                telegramId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     assistantDoctors: {
         parameters: {
             query?: never;
@@ -9121,6 +9212,68 @@ export interface operations {
                 "application/json": components["schemas"]["StaffMembersControllerAssistantDoctors"];
             };
         };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPhonesPhoneView"];
+                };
+            };
+        };
+    };
+    set_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MyPhoneControllerPhoneChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffPhonesPhoneView"];
+                };
+            };
+        };
+    };
+    remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description No Content */
             204: {
@@ -9339,7 +9492,7 @@ export interface operations {
             };
         };
     };
-    set_2: {
+    set_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -13419,7 +13572,7 @@ export interface operations {
             };
         };
     };
-    get_1: {
+    get_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -14471,7 +14624,7 @@ export interface operations {
             };
         };
     };
-    get_2: {
+    get_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -14493,7 +14646,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -14838,7 +14991,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -15271,7 +15424,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -15373,7 +15526,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -15813,7 +15966,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -16267,7 +16420,7 @@ export interface operations {
             };
         };
     };
-    remove: {
+    remove_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -16307,7 +16460,7 @@ export interface operations {
             };
         };
     };
-    remove_1: {
+    remove_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -16413,7 +16566,7 @@ export interface operations {
             };
         };
     };
-    remove_2: {
+    remove_3: {
         parameters: {
             query?: never;
             header?: never;

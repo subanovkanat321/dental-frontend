@@ -10,7 +10,7 @@ import { useClose } from '../lib/useClose'
 import { HoursEditor } from './HoursEditor'
 import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
-import { DoctorPhone } from './PhoneParts'
+import { DoctorPhone, StaffPhone } from './PhoneParts'
 import { isPhoneLogin } from './texts'
 import { Spinner } from '../layout/Loading'
 
@@ -185,6 +185,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
               {d.telegramId ? 'Новая ссылка-приглашение' : 'Пригласить по ссылке'}</button>}
           {makeInvite.error && <p className="error">{makeInvite.error.message}</p>}
           <DoctorPhone doctor={d} onDone={refresh} />
+          {d.telegramId != null && !inline && <StaffPhone who={{ telegramId: d.telegramId }} phone={d.phone} phoneOnly={d.phoneOnly} name={d.fullName} />}
         </section>
       )}
 

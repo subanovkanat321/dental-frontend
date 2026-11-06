@@ -1585,6 +1585,61 @@
         }
       }
     },
+    "/api/members/{telegramId}/phone" : {
+      "put" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "setPhone",
+        "parameters" : [ {
+          "name" : "telegramId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffMembersControllerPhoneChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffPhonesPhoneView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "removePhone",
+        "parameters" : [ {
+          "name" : "telegramId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/members/{telegramId}/doctors" : {
       "put" : {
         "tags" : [ "staff-members-controller" ],
@@ -1608,6 +1663,59 @@
           },
           "required" : true
         },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/me/phone" : {
+      "get" : {
+        "tags" : [ "my-phone-controller" ],
+        "operationId" : "get_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffPhonesPhoneView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "my-phone-controller" ],
+        "operationId" : "set_2",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MyPhoneControllerPhoneChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffPhonesPhoneView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "my-phone-controller" ],
+        "operationId" : "remove",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -1858,7 +1966,7 @@
     "/api/doctors/{id}/service-types" : {
       "put" : {
         "tags" : [ "doctor-services-controller" ],
-        "operationId" : "set_2",
+        "operationId" : "set_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6800,7 +6908,7 @@
     "/api/calendar-feed" : {
       "get" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -8174,7 +8282,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8201,7 +8309,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8619,7 +8727,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_4",
+        "operationId" : "get_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9166,7 +9274,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9271,7 +9379,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9789,7 +9897,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10472,7 +10580,7 @@
     "/api/waitlist/{id}" : {
       "delete" : {
         "tags" : [ "waitlist-controller" ],
-        "operationId" : "remove",
+        "operationId" : "remove_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10512,7 +10620,7 @@
     "/api/platform/news-feeds/{id}" : {
       "delete" : {
         "tags" : [ "dental-news-controller" ],
-        "operationId" : "remove_1",
+        "operationId" : "remove_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10629,7 +10737,7 @@
     "/api/members/{telegramId}" : {
       "delete" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "remove_2",
+        "operationId" : "remove_3",
         "parameters" : [ {
           "name" : "telegramId",
           "in" : "path",
@@ -12178,6 +12286,23 @@
           }
         }
       },
+      "StaffMembersControllerPhoneChange" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StaffPhonesPhoneView" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          },
+          "phoneOnly" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "StaffMembersControllerAssistantDoctors" : {
         "properties" : {
           "doctorIds" : {
@@ -12186,6 +12311,13 @@
               "type" : "integer",
               "format" : "int64"
             }
+          }
+        }
+      },
+      "MyPhoneControllerPhoneChange" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
           }
         }
       },
@@ -12430,6 +12562,9 @@
           },
           "phone" : {
             "type" : "string"
+          },
+          "phoneOnly" : {
+            "type" : "boolean"
           }
         }
       },
@@ -17114,6 +17249,9 @@
           },
           "phone" : {
             "type" : "string"
+          },
+          "phoneOnly" : {
+            "type" : "boolean"
           }
         }
       },
@@ -17154,6 +17292,9 @@
             "format" : "date-time"
           },
           "sms" : {
+            "type" : "boolean"
+          },
+          "telegram" : {
             "type" : "boolean"
           }
         }

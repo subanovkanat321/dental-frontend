@@ -3,9 +3,9 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
-import { phoneFromInput } from '../clinic/phone'
+import { phoneFromInput, phoneToInput } from '../clinic/phone'
 import { PasswordInput, ShowPassword } from '../layout/PasswordFields'
-import { notify } from '../lib/confirm'
+import { ask, notify } from '../lib/confirm'
 import { phoneText, ROLE_TEXT } from './texts'
 
 type Role = NonNullable<Schemas['StaffMembersControllerPhoneInviteRequest']['role']>
@@ -102,9 +102,7 @@ export function DoctorPhone({ doctor: d, onDone }: { doctor: Doctor; onDone: () 
       onDone()
     },
   })
-  if (d.phone) {
-    return <p className="hint">Входит по номеру {phoneText(d.phone)} и паролю (первый раз — код из SMS). Уведомления — в приложение, если он их включит.</p>
-  }
+  // Есть вход (Telegram или номер) — телефон меняют в «Телефоне» (StaffPhone)
   if (d.telegramId != null) return null
   if (!open) {
     return <button type="button" className="link" onClick={() => setOpen(true)}>Нет Telegram? Вход по номеру телефона</button>
@@ -154,6 +152,85 @@ export function TemporaryPassword({ telegramId, name }: { telegramId: number; na
       {set.error && <p className="error" role="alert">{set.error.fieldErrors.password ?? set.error.message}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={set.isPending || !password}>Задать</button>
+        <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Отмена</button>
+      </div>
+    </form>
+  )
+}
+
+/** Подсказка у телефона сотрудника — одна в «Персонале» и в «Моём профиле». */
+export const PHONE_HINT = 'По этому номеру можно войти на сайте без Telegram: код из SMS, потом свой пароль.'
+
+/**
+ * «Телефон» сотрудника: для связи и входа на сайте по номеру. {@code who} — чей: сотрудник клиники
+ * (меняет админ, `/api/members/{id}/phone`) или свой («Мой профиль», `/api/me/phone`). Номер у другого
+ * человека — 409 с понятным текстом. Сменили или убрали — прежний пароль по номеру сервер гасит.
+ * У сотрудника без Telegram номер — единственный вход: только сменить, без «Убрать».
+ */
+export function StaffPhone({ who, phone, phoneOnly, name, compact = false }: {
+  who: { telegramId: number } | 'me'
+  phone?: string | null
+  phoneOnly?: boolean
+  /** Для вопроса «Убрать телефон …?» */
+  name?: string
+  /** В строке таблицы: номер и маленькие кнопки, без подсказки */
+  compact?: boolean
+}) {
+  const client = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
+  const done = () => {
+    setOpen(false)
+    void client.invalidateQueries({ queryKey: who === 'me' ? ['me-phone'] : ['members'] })
+    if (who !== 'me') void client.invalidateQueries({ queryKey: ['doctors-admin'] })
+    void client.invalidateQueries({ queryKey: ['me-password'] })
+  }
+  const save = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(who === 'me'
+      ? api.PUT('/api/me/phone', { body: { phone: phoneFromInput(value) } })
+      : api.PUT('/api/members/{telegramId}/phone', { params: { path: { telegramId: who.telegramId } }, body: { phone: phoneFromInput(value) } })),
+    onSuccess: done,
+  })
+  const remove = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(who === 'me'
+      ? api.DELETE('/api/me/phone')
+      : api.DELETE('/api/members/{telegramId}/phone', { params: { path: { telegramId: who.telegramId } } })),
+    onSuccess: done,
+  })
+  const askRemove = () => void ask(who === 'me'
+    ? 'Убрать свой телефон? Входить по номеру будет нельзя, через Telegram — как раньше.'
+    : `Убрать телефон «${name ?? ''}»? Входить по номеру будет нельзя, через Telegram — как раньше.`).then((ok) => ok && remove.mutate())
+  const start = () => {
+    save.reset()
+    remove.reset()
+    setValue(phoneToInput(phone?.replace(/^\+/, '')))
+    setOpen(true)
+  }
+
+  if (!open) {
+    return (
+      <div className={compact ? 'staff-phone' : 'staff-phone card-block'}>
+        {phone ? <span>{phoneText(phone)}</span> : !compact && <span className="hint">Телефон не указан.</span>}
+        {' '}
+        <button type="button" className={compact ? 'btn small ghost' : 'btn'} onClick={start}>{phone ? 'Изменить' : compact ? 'Телефон' : 'Указать телефон'}</button>
+        {phone && !phoneOnly && (
+          <button type="button" className={compact ? 'btn small ghost' : 'btn ghost'} disabled={remove.isPending} onClick={askRemove}>Убрать номер</button>
+        )}
+        {!compact && <p className="hint">{PHONE_HINT}{phoneOnly ? ` Без Telegram это ${who === 'me' ? 'ваш' : 'его'} единственный вход: номер можно сменить, но не убрать.` : ''}</p>}
+        {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
+      </div>
+    )
+  }
+  return (
+    <form className="form narrow" aria-label={who === 'me' ? 'Мой телефон' : `Телефон: ${name ?? ''}`}
+      onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
+      <label className="field"><span>Телефон</span>
+        <PhoneInput label="Телефон" value={value} onChange={setValue} />
+      </label>
+      <p className="hint">{PHONE_HINT}{phone ? ' После смены прежний пароль по номеру перестанет действовать.' : ''}</p>
+      {save.error && <p className="error" role="alert">{save.error.fieldErrors.phone ?? save.error.message}</p>}
+      <div className="actions">
+        <button type="submit" className="btn primary" disabled={save.isPending || !value.trim()}>Сохранить</button>
         <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Отмена</button>
       </div>
     </form>

@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { AssistantDoctors, ChangeRole, InviteMember } from './MemberParts'
-import { InviteByPhone, TemporaryPassword } from './PhoneParts'
+import { InviteByPhone, PHONE_HINT, StaffPhone, TemporaryPassword } from './PhoneParts'
 import { phoneText, ROLE_TEXT } from './texts'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
@@ -82,7 +82,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
     <>
       <section className="card-block">
         <p className="hint">Весь персонал клиники: роль — рядом с именем. «Telegram привязан» — человек вошёл и получает уведомления;
-          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.</p>
+          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT}</>}</p>
         {admin && (
           <div className="segments wrap" role="group" aria-label="Показать роль">
             {FILTERS.map(([f, label]) => (
@@ -93,7 +93,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
         {(error ?? members.error) && <p className="error">{(error ?? members.error)!.message}</p>}
         {loading || (admin && members.isPending) ? <Loading /> : shown.length ? (
           <table className="table staff-table" aria-label="Персонал">
-            <thead><tr><th>Имя</th><th>Роль</th>{admin && <th>Вход</th>}<th /></tr></thead>
+            <thead><tr><th>Имя</th><th>Роль</th>{admin && <th>Вход</th>}{admin && <th>Телефон</th>}<th /></tr></thead>
             <tbody>
               {shown.map((r) => (
                 <tr key={r.key} className={r.kind === 'doctor'
@@ -127,9 +127,17 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                           : <span className="tone-wait">ждём входа · ссылка до {shortDate(r.invite.expiresAt!, true)}</span>
                         : r.kind === 'doctor' && !r.doctor.telegramId
                           ? <span className="tone-wait">не привязан — пригласите в карточке</span>
-                          : (r.kind === 'doctor' ? r.doctor.phone : r.member.phone)
-                            ? <span className="tone-ok">✓ по номеру · {phoneText(r.kind === 'doctor' ? r.doctor.phone : r.member.phone)}</span>
+                          : (r.kind === 'doctor' ? r.doctor.phoneOnly : r.member.phoneOnly)
+                            ? <span className="tone-ok">✓ по номеру</span>
                             : <span className="tone-ok">✓ Telegram привязан</span>}
+                    </td>
+                  )}
+                  {admin && (
+                    <td>
+                      {r.kind === 'member' && <StaffPhone compact who={{ telegramId: r.member.telegramId! }} phone={r.member.phone}
+                        phoneOnly={r.member.phoneOnly} name={r.name} />}
+                      {r.kind === 'doctor' && r.doctor.telegramId != null && <StaffPhone compact who={{ telegramId: r.doctor.telegramId }}
+                        phone={r.doctor.phone} phoneOnly={r.doctor.phoneOnly} name={r.name} />}
                     </td>
                   )}
                   <td className="r">
@@ -146,8 +154,8 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                     )}
                     {r.kind === 'doctor' && admin && <button type="button" className="btn small ghost" onClick={() => onOpen(r.doctor.id!)}>Открыть</button>}
                     {/* Вход по номеру без SMS: админ даёт временный пароль (себе — нет: свой меняют в «Настройках») */}
-                    {admin && r.kind === 'member' && r.member.phone && !r.member.me && <TemporaryPassword telegramId={r.member.telegramId!} name={r.name} />}
-                    {admin && r.kind === 'doctor' && r.doctor.phone && r.doctor.id !== me.doctorId && <TemporaryPassword telegramId={r.doctor.telegramId!} name={r.name} />}
+                    {admin && r.kind === 'member' && r.member.phoneOnly && !r.member.me && <TemporaryPassword telegramId={r.member.telegramId!} name={r.name} />}
+                    {admin && r.kind === 'doctor' && r.doctor.phoneOnly && r.doctor.id !== me.doctorId && <TemporaryPassword telegramId={r.doctor.telegramId!} name={r.name} />}
                   </td>
                 </tr>
               ))}

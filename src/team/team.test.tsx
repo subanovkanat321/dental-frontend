@@ -348,7 +348,7 @@ test('«Пригласить по номеру»: без Telegram — сотру
     http.get('*/api/members', () => HttpResponse.json(members)),
     http.post('*/api/members/invite-phone', async ({ request }) => {
       invited = await request.json()
-      members = [...members, { telegramId: -1000000000000001, fullName: 'Нурия', role: 'RECEPTION', phone: '+996700000011', doctor: false }]
+      members = [...members, { telegramId: -1000000000000001, fullName: 'Нурия', role: 'RECEPTION', phone: '+996700000011', phoneOnly: true, doctor: false }]
       return HttpResponse.json({ telegramId: -1000000000000001 } satisfies Schemas['StaffMembersControllerPhoneInvited'], { status: 201 })
     }),
   )
@@ -363,7 +363,8 @@ test('«Пригласить по номеру»: без Telegram — сотру
   await user.click(within(form).getByRole('button', { name: 'Добавить' }))
   expect(await screen.findByText(/Нурия — в персонале/)).toBeInTheDocument()
   expect(invited).toEqual({ phone: '+996 700000011', role: 'RECEPTION', fullName: 'Нурия', alsoDoctor: false })
-  await vi.waitFor(() => expect(table).toHaveTextContent('✓ по номеру · +996 700 000 011'))
+  await vi.waitFor(() => expect(table).toHaveTextContent('✓ по номеру'))
+  expect(table).toHaveTextContent('+996 700 000 011')
 
   // SMS не доходят — админ задаёт временный пароль (себе — нет: у своей строки кнопки нет)
   expect(within(table).getAllByRole('button', { name: 'Временный пароль' })).toHaveLength(1)
@@ -398,7 +399,7 @@ test('карточка врача без Telegram: привязать номер
     http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
     http.post('*/api/doctors/:id/phone', async ({ request }) => {
       bound = await request.json()
-      list = [doctors[0]!, { ...doctors[1]!, telegramId: -1000000000000002, phone: '+996700000022' }]
+      list = [doctors[0]!, { ...doctors[1]!, telegramId: -1000000000000002, phone: '+996700000022', phoneOnly: true }]
       return new HttpResponse(null, { status: 204 })
     }),
   )
@@ -410,8 +411,69 @@ test('карточка врача без Telegram: привязать номер
   await user.click(within(panel).getByRole('button', { name: 'Нет Telegram? Вход по номеру телефона' }))
   await user.type(within(panel).getByRole('textbox', { name: 'Номер телефона врача' }), '0700000022')
   await user.click(within(panel).getByRole('button', { name: 'Привязать номер' }))
-  expect(await within(panel).findByText(/Входит по номеру \+996 700 000 022/)).toBeInTheDocument()
+  expect(await within(panel).findByText('+996 700 000 022')).toBeInTheDocument()
+  expect(panel).toHaveTextContent('Без Telegram это его единственный вход')
+  // Номер без Telegram — только сменить, «Убрать» нет
+  expect(within(panel).getByRole('button', { name: 'Изменить' })).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Убрать номер' })).not.toBeInTheDocument()
   expect(bound).toEqual({ phone: '0700000022' })
   expect(within(panel).queryByRole('textbox', { name: 'Telegram id врача' })).not.toBeInTheDocument()
-  expect(table).toHaveTextContent('✓ по номеру · +996 700 000 022')
+  expect(table).toHaveTextContent('✓ по номеру')
+  expect(table).toHaveTextContent('+996 700 000 022')
+})
+
+test('«Телефон» сотрудника с Telegram: админ задаёт номер для входа; чужой номер — 409 понятным текстом; убрать', async () => {
+  const puts: unknown[] = []
+  let removed = 0
+  let members: Schemas['StaffMembersMemberView'][] = [
+    { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true },
+    { telegramId: 5001, fullName: 'Бермет', role: 'RECEPTION', doctor: false, phoneOnly: false },
+  ]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
+    http.get('*/api/members', () => HttpResponse.json(members)),
+    http.get('*/api/members/invites', () => HttpResponse.json([])),
+    http.put('*/api/members/:id/phone', async ({ request, params }) => {
+      const body = await request.json() as Schemas['StaffMembersControllerPhoneChange']
+      puts.push({ id: String(params.id), ...body })
+      if (body.phone === '+996 700000099') {
+        return HttpResponse.json({ status: 409, code: 'phone-taken', detail: 'Этот номер уже у другого сотрудника' }, { status: 409 })
+      }
+      members = members.map((m) => (m.telegramId === 5001 ? { ...m, phone: '+996700000041' } : m))
+      return HttpResponse.json({ phone: '+996700000041', phoneOnly: false } satisfies Schemas['StaffPhonesPhoneView'])
+    }),
+    http.delete('*/api/members/:id/phone', () => {
+      removed++
+      members = members.map((m) => (m.telegramId === 5001 ? { ...m, phone: undefined } : m))
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  openItem('members')
+  const table = await screen.findByRole('table', { name: 'Персонал' })
+  expect(screen.getByText(/По этому номеру можно войти на сайте без Telegram: код из SMS, потом свой пароль/)).toBeInTheDocument()
+  // Без Telegram входит только сотрудник по номеру: у Бермет — Telegram, временного пароля нет
+  expect(within(table).queryByRole('button', { name: 'Временный пароль' })).not.toBeInTheDocument()
+
+  const row = (await within(table).findByText('Бермет')).closest('tr')!
+  await user.click(within(row).getByRole('button', { name: 'Телефон' }))
+  const form = within(table).getByRole('form', { name: 'Телефон: Бермет' })
+  await user.type(within(form).getByRole('textbox', { name: 'Телефон' }), '700000099')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(form).findByRole('alert')).toHaveTextContent('Этот номер уже у другого сотрудника')
+
+  await user.clear(within(form).getByRole('textbox', { name: 'Телефон' }))
+  await user.type(within(form).getByRole('textbox', { name: 'Телефон' }), '700000041')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(table).findByText('+996 700 000 041')).toBeInTheDocument()
+  expect(puts).toEqual([{ id: '5001', phone: '+996 700000099' }, { id: '5001', phone: '+996 700000041' }])
+  // С Telegram — вход «Telegram привязан», номер — дополнительно
+  expect(table).toHaveTextContent('✓ Telegram привязан')
+
+  vi.spyOn(window, 'confirm').mockReturnValue(true)
+  await user.click(within(row).getByRole('button', { name: 'Убрать номер' }))
+  await vi.waitFor(() => expect(removed).toBe(1))
+  await vi.waitFor(() => expect(within(table).queryByText('+996 700 000 041')).not.toBeInTheDocument())
 })
