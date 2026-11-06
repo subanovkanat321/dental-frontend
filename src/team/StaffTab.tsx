@@ -152,7 +152,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                         onClick={() => void ask(`Отменить приглашение «${r.name}»? Ссылка перестанет работать.`).then((ok) => ok && cancel.mutate(r.invite))}>
                         Отменить</button>
                     )}
-                    {r.kind === 'doctor' && admin && <button type="button" className="btn small ghost" onClick={() => onOpen(r.doctor.id!)}>Открыть</button>}
+                    {r.kind === 'doctor' && admin && <button type="button" className="btn small ghost" onClick={() => onOpen(r.doctor.id!)}>{r.doctor.id === me.doctorId ? 'Мой профиль' : 'Открыть'}</button>}
                     {/* Вход по номеру без SMS: админ даёт временный пароль (себе — нет: свой меняют в «Настройках») */}
                     {admin && r.kind === 'member' && r.member.phoneOnly && !r.member.me && <TemporaryPassword telegramId={r.member.telegramId!} name={r.name} />}
                     {admin && r.kind === 'doctor' && r.doctor.phoneOnly && r.doctor.id !== me.doctorId && <TemporaryPassword telegramId={r.doctor.telegramId!} name={r.name} />}
