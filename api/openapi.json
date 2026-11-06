@@ -12889,6 +12889,13 @@
           },
           "cancelledBy" : {
             "type" : "string"
+          },
+          "freeReason" : {
+            "type" : "string",
+            "enum" : [ "FREE", "PREPAID" ]
+          },
+          "freeComment" : {
+            "type" : "string"
           }
         }
       },
@@ -14861,6 +14868,15 @@
             "items" : {
               "$ref" : "#/components/schemas/PaymentQueryPart"
             }
+          },
+          "freeReason" : {
+            "type" : "string",
+            "enum" : [ "FREE", "PREPAID" ]
+          },
+          "freeComment" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
           }
         }
       },
@@ -17713,6 +17729,14 @@
             "format" : "int64"
           },
           "unpaidCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "freeCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "prepaidCount" : {
             "type" : "integer",
             "format" : "int64"
           },

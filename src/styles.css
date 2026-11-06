@@ -1943,3 +1943,4 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .payment-unpaid { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .payment-unpaid-text { font-weight: 600; }
 .payment-unpaid-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.payment-unpaid .pay-form { flex-basis: 100%; }

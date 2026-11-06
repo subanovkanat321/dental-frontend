@@ -30,6 +30,9 @@ test('касса: последние оплаты — новые сверху; �
       row(1, 'Старый Пациент', d1, { paidSom: 5000, startAt: slotInstant(d1, 540) }),
       row(2, 'Новый Пациент', today, { paidSom: 1500, method: 'CARD', startAt: slotInstant(today, 1000) }),
       row(3, 'Должник Тестов', d2, { paidSom: 500, debtSom: 2000 }),
+      // 0 сом: сервер вместо способа пишет, почему ноль
+      row(4, 'Бесплатный Тестов', d2, { paidSom: 0, method: 'FREE' }),
+      row(5, 'Заранее Тестов', d2, { paidSom: 0, method: 'PREPAID' }),
     ])),
   )
   const user = userEvent.setup()
@@ -46,6 +49,12 @@ test('касса: последние оплаты — новые сверху; �
   await user.click(screen.getByRole('checkbox', { name: 'Только с долгом' }))
   await choose(screen.getByRole('combobox', { name: 'Способ оплаты' }), 'CARD')
   expect(names()).toEqual(['Новый Пациент'])
+  await choose(screen.getByRole('combobox', { name: 'Способ оплаты' }), 'PREPAID')
+  expect(names()).toEqual(['Заранее Тестов'])
+  expect(table).toHaveTextContent('· оплачено заранее')
+  await choose(screen.getByRole('combobox', { name: 'Способ оплаты' }), 'FREE')
+  expect(names()).toEqual(['Бесплатный Тестов'])
+  expect(table).toHaveTextContent('· бесплатно')
 })
 
 test('долги: по умолчанию новые сверху, нажать «Долг» — большие сверху', async () => {
