@@ -61,7 +61,8 @@
 /* «На весь экран» — показать пациенту на ТВ, мониторе или планшете: только зубы и легенда */
 .tooth-fullscreen {
   position: fixed; inset: 0; z-index: 1000; display: grid; grid-template-rows: auto 1fr auto; gap: clamp(8px, 2vh, 24px);
-  padding: clamp(12px, 3vh, 40px) clamp(12px, 3vw, 56px); overflow: auto; background: var(--page); color: var(--text);
+  padding: clamp(12px, 3vh, 40px) clamp(12px, 3vw, 56px) max(clamp(12px, 3vh, 40px), env(safe-area-inset-bottom));
+  overflow-y: auto; overscroll-behavior: contain; background: var(--page); color: var(--text);
 }
 .tooth-fullscreen:focus { outline: none; }
 .fs-head { display: flex; align-items: center; gap: 12px; }

@@ -8203,6 +8203,59 @@
         }
       }
     },
+    "/api/platform/materials" : {
+      "get" : {
+        "tags" : [ "materials-controller" ],
+        "operationId" : "list_9",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MaterialsListing"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/materials/file" : {
+      "get" : {
+        "tags" : [ "materials-controller" ],
+        "operationId" : "file",
+        "parameters" : [ {
+          "name" : "path",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "download",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/managers" : {
       "get" : {
         "tags" : [ "platform-controller" ],
@@ -8966,7 +9019,7 @@
     "/api/patient-questions" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "list_9",
+        "operationId" : "list_10",
         "parameters" : [ {
           "name" : "done",
           "in" : "query",
@@ -9038,7 +9091,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_10",
+        "operationId" : "list_11",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9696,7 +9749,7 @@
     "/api/appointments/{id}/teeth" : {
       "get" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "list_11",
+        "operationId" : "list_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -15623,6 +15676,52 @@
           "createdAt" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "MaterialsListing" : {
+        "properties" : {
+          "configured" : {
+            "type" : "boolean"
+          },
+          "files" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MaterialsMaterial"
+            }
+          }
+        }
+      },
+      "MaterialsMaterial" : {
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "section" : {
+            "type" : "string"
+          },
+          "folder" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "modified" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "downloadUrl" : {
+            "type" : "string"
           }
         }
       },

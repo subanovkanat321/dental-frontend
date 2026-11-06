@@ -41,7 +41,7 @@
 .lsn .lsn-lang button[aria-pressed='true'] { background: var(--lsn-teal-soft); color: var(--lsn-teal); font-weight: 600; }
 .lsn .lsn-close { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--lsn-line-strong); background: #fff; font-size: 17px; flex: none; color: var(--lsn-muted); }
 
-.lsn-stage { flex: 1; min-height: 0; overflow-y: auto; touch-action: pan-y; display: flex; flex-direction: column; }
+.lsn-stage { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; display: flex; flex-direction: column; }
 .lsn-slide {
   flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(20px, 4vw, 64px);
   align-items: center; padding: clamp(14px, 2.4vw, 32px) clamp(16px, 5vw, 80px); animation: lsn-in 0.2s ease-out;
@@ -151,3 +151,21 @@
 .lsn-sent { align-self: center; font-weight: 600; color: #11683a; background: #d3f0de; border-radius: 999px; padding: 10px 16px; }
 .lsn-error { flex-basis: 100%; text-align: center; margin: 0; color: #a11f1f; font-weight: 500; }
 .site-page.learn-site { max-width: 1080px; }
+
+/* Раздел CRM «Для пациента» (LearnPage): две крупные карточки — 3D-атлас и презентации, ниже обложки тем */
+.learn-page .learn-start { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 14px 0 24px; }
+.learn-big { display: flex; align-items: center; gap: 16px; min-height: 96px; padding: 18px 20px; border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+.learn-big:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+.learn-big-ico { flex: none; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 14px; background: var(--accent-soft); color: var(--link); }
+.learn-big-ico .icon { width: 30px; height: 30px; }
+.learn-big-text { display: grid; gap: 4px; min-width: 0; }
+.learn-big-text strong { font: 600 1.15rem/1.25 var(--display); }
+.learn-page .learn-h { margin: 0 0 12px; font: 600 1.05rem var(--display); scroll-margin-top: 16px; }
+.learn-tile .learn-show { justify-self: start; align-self: end; margin: 6px 4px 0; padding: 6px 14px; border: 1px solid #c8d3d5; border-radius: 8px;
+  color: #0f2a30; font-weight: 600; font-size: 14px; }
+.learn-tile:hover .learn-show { border-color: #0e8a80; color: #0b5f58; }
+@media (max-width: 760px) {
+  .learn-big { min-height: 80px; padding: 14px; }
+  .learn-big-ico { width: 48px; height: 48px; }
+}

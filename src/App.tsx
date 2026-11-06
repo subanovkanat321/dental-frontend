@@ -25,6 +25,7 @@ const PlatformPage = lazy(() => import('./platform/PlatformPage').then((m) => ({
 const SchedulePage = lazy(() => import('./schedule/SchedulePage').then((m) => ({ default: m.SchedulePage })))
 const StockPage = lazy(() => import('./stock/StockPage').then((m) => ({ default: m.StockPage })))
 const SettingsPage = lazy(() => import('./settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const LearnPage = lazy(() => import('./learn/LearnPage').then((m) => ({ default: m.LearnPage })))
 // Самозапись пациента — тоже отдельный чанк: персонал его не скачивает
 const PatientApp = lazy(() => import('./patient/PatientApp'))
 // 3D-атлас для показа пациенту — свой чанк с three.js (около 0,5 МБ): грузится, только когда его открыли
@@ -117,6 +118,7 @@ function Screens() {
       case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} initialBooked={l?.tab === 'booked' ? { date: l.date, unconfirmed: l.unconfirmed, doctorId: l.doctorId } : undefined} onOpenAppointment={openAppointment} onBook={(x) => linkTo({ page: 'schedule', bookPatientId: x.id! })} />
       case 'cash': return <CashPage me={me.data} initialTab={l?.tab} onOpenPatient={openPatient} />
       case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} />
+      case 'learn': return <LearnPage />
       case 'settings': return <SettingsPage me={me.data} initialTicket={l?.ticketId} />
       case 'platform': return me.data.platform ? <PlatformPage me={me.data} initialTab={l?.tab} /> : null
       case 'schedule': return l?.appointmentId || l?.bookPatientId
