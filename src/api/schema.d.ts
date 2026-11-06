@@ -5694,6 +5694,9 @@ export interface components {
             /** Format: date-time */
             cancelledAt?: string;
             cancelledBy?: string;
+            /** @enum {string} */
+            freeReason?: "FREE" | "PREPAID";
+            freeComment?: string;
         };
         FamiliesBooker: {
             fullName?: string;
@@ -6521,6 +6524,9 @@ export interface components {
             /** Format: date */
             dueOn?: string;
             parts?: components["schemas"]["PaymentQueryPart"][];
+            /** @enum {string} */
+            freeReason?: "FREE" | "PREPAID";
+            freeComment?: string;
         };
         PaymentQueryPart: {
             /** Format: int32 */
@@ -7654,6 +7660,10 @@ export interface components {
             paidCount?: number;
             /** Format: int64 */
             unpaidCount?: number;
+            /** Format: int64 */
+            freeCount?: number;
+            /** Format: int64 */
+            prepaidCount?: number;
             byMethod?: {
                 [key: string]: number;
             };

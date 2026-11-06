@@ -80,10 +80,11 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   return (
     <div className="payment">
       <p className="payment-done">
-        <span>{a.paidSom === 0 && !a.chargeSom ? '🎁 Бесплатно' : a.chargeSom != null ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
+        <span>{a.paidSom === 0 && !a.chargeSom ? (a.freeReason === 'PREPAID' ? '✅ Оплачено заранее' : '🎁 Бесплатно') : a.chargeSom != null ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
           : split ? somText(a.paidSom ?? 0) : `${somText(a.paidSom ?? 0)} · ${methodName(a.paymentMethod)}`}</span>
         {!installments && <button type="button" className="link" onClick={() => setView('edit')}>Изменить</button>}
       </p>
+      {a.paidSom === 0 && a.freeComment && <p className="hint small payment-note">{a.freeComment}</p>}
       <EarningsGain a={a} me={me} />
       {installments && <p className="hint small">Есть доплаты — сумму меняют доплатой; ошиблись в платеже — напишите в техподдержку.</p>}
       {debt ? <p className={`tone-${debt.tone} payment-debt`}>{debt.text}</p>
@@ -133,7 +134,7 @@ function MethodButtons({ value, onChange, label = 'Как заплатили' }:
 function fieldError(e: { fieldErrors: Record<string, string>; message: string } | null): string {
   if (!e) return ''
   const f = e.fieldErrors
-  return f.amountSom ?? f.method ?? f.chargeSom ?? f.dueOn ?? e.message
+  return f.amountSom ?? f.method ?? f.chargeSom ?? f.dueOn ?? f.freeReason ?? f.freeComment ?? e.message
 }
 
 /**
@@ -163,20 +164,43 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
 
 /**
  * Оплата не отмечена — одной строкой: «Принять оплату» раскрывает форму, «Бесплатно» сразу отмечает
- * приём без оплаты (стоимость 0) — некоторым пациентам врач делает бесплатно.
+ * приём без оплаты (стоимость 0) — некоторым пациентам врач делает бесплатно. «Оплачено заранее» —
+ * тоже 0 сом в кассу этого дня (деньги уже получены и учтены раньше, например на прошлом визите), но
+ * приём показывается оплаченным; комментарий — по желанию («оплатил 12.10 вместе с лечением»).
  */
 function Unpaid({ a, onPay }: { a: Appointment; onPay: () => void }) {
   const action = useAppointmentAction(a)
+  const [prepaid, setPrepaid] = useState(false)
+  const [note, setNote] = useState('')
   const free = () => void ask('Отметить приём бесплатным? В кассу он попадёт с суммой 0 сом.', { ok: 'Бесплатно' })
-    .then((ok) => ok && action.mutate({ kind: 'payment', body: { amountSom: 0, method: 'CASH', chargeSom: 0 } }))
+    .then((ok) => ok && action.mutate({ kind: 'payment', body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'FREE' } }))
+  const savePrepaid = () => void ask('Отметить приём оплаченным заранее? В кассу сегодня ничего не добавится — деньги уже учтены раньше.',
+    { ok: 'Оплачено заранее' })
+    .then((ok) => ok && action.mutate({
+      kind: 'payment',
+      body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'PREPAID', freeComment: note.trim() || undefined },
+    }))
   return (
     <div className="payment payment-unpaid">
       <span className="payment-unpaid-text"><span aria-hidden="true">💳</span> Оплата не отмечена</span>
-      <span className="payment-unpaid-actions">
-        <button type="button" className="btn" disabled={action.isPending} onClick={free}>Бесплатно</button>
-        <button type="button" className="btn primary" disabled={action.isPending} onClick={onPay}>Принять оплату</button>
-      </span>
-      {action.error && <p className="error" role="alert">{action.error.message}</p>}
+      {!prepaid && (
+        <span className="payment-unpaid-actions">
+          <button type="button" className="btn" disabled={action.isPending} onClick={free}>Бесплатно</button>
+          <button type="button" className="btn" disabled={action.isPending} onClick={() => setPrepaid(true)}>Оплачено заранее</button>
+          <button type="button" className="btn primary" disabled={action.isPending} onClick={onPay}>Принять оплату</button>
+        </span>
+      )}
+      {prepaid && (
+        <form className="pay-form" aria-label="Оплачено заранее" onSubmit={(e) => { e.preventDefault(); savePrepaid() }}>
+          <p className="hint small">Деньги уже получены раньше — в кассу этого дня ничего не добавится, приём будет оплаченным.</p>
+          <label className="field"><span>Комментарий (можно не писать)</span>
+            <input value={note} maxLength={200} autoComplete="off" autoFocus placeholder="Оплатил 12.10 вместе с лечением"
+              onChange={(e) => setNote(e.target.value)} /></label>
+          <button type="submit" className="btn primary" disabled={action.isPending}>Отметить «Оплачено заранее»</button>
+          <button type="button" className="link" onClick={() => setPrepaid(false)}>Отмена</button>
+        </form>
+      )}
+      {action.error && <p className="error" role="alert">{fieldError(action.error)}</p>}
     </div>
   )
 }
