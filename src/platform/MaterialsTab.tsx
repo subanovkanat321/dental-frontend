@@ -34,6 +34,7 @@ export function MaterialsTab() {
   const videos = files.filter((f) => f.section === 'video')
   const decks = files.filter((f) => f.section === 'presentation')
   const instagram = files.filter((f) => f.section === 'instagram')
+  const guides = files.filter((f) => f.section === 'guide')
   const other = files.filter((f) => f.section === 'other')
   return (
     <>
@@ -57,6 +58,14 @@ export function MaterialsTab() {
         <section className="card-block" aria-label="Презентация">
           <h2>Презентация</h2>
           <ul className="materials-list">{decks.map((f) => <FileRow key={f.path} file={f} label={deckLabel(f)} />)}</ul>
+        </section>
+      )}
+      {guides.length > 0 && (
+        <section className="card-block" aria-label="Инструкция для клиник">
+          <h2>Инструкция для клиник</h2>
+          <p className="hint">Руководство Tish одним PDF — отправить клинике или распечатать. Для одной роли — печатная версия
+            на сайте: <a href="/guide?print=1" target="_blank" rel="noopener noreferrer">tish.kg/guide?print=1</a> (вверху — выбор роли в обычной версии).</p>
+          <ul className="materials-list">{guides.map((f) => <FileRow key={f.path} file={f} label={f.name ?? ''} />)}</ul>
         </section>
       )}
       {instagram.length > 0 && (

@@ -258,6 +258,12 @@ export async function webTariffs(): Promise<Schemas['Tariffs'] | null> {
   return response.ok ? (await response.json()) as Schemas['Tariffs'] : null
 }
 
+/** Кейс на /join («Как работает в клинике»): /web/case — не часть контракта /api; форма — JoinCaseCase. */
+export async function webCase(): Promise<Schemas['JoinCaseCase'] | null> {
+  const response = await globalThis.fetch(new Request(new URL('/web/case', window.location.origin), { credentials: 'same-origin' }))
+  return response.ok ? (await response.json()) as Schemas['JoinCaseCase'] : null
+}
+
 /**
  * Статичный JSON сайта (например, /content/plan.json — готовый контент-план из сборки фронта): не
  * API, без заголовков входа. Нет файла (404) — null; не JSON — ApiError.

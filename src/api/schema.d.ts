@@ -212,6 +212,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/funnel/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["change"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/finance/settings": {
         parameters: {
             query?: never;
@@ -301,6 +317,22 @@ export interface paths {
         };
         get?: never;
         put: operations["hide"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/case": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["set_2"];
         post?: never;
         delete?: never;
         options?: never;
@@ -620,7 +652,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["get_1"];
-        put: operations["set_2"];
+        put: operations["set_3"];
         post?: never;
         delete: operations["remove"];
         options?: never;
@@ -636,7 +668,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["state"];
-        put: operations["change"];
+        put: operations["change_1"];
         post?: never;
         delete?: never;
         options?: never;
@@ -732,7 +764,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["set_3"];
+        put: operations["set_4"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1684,6 +1716,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/funnel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["funnel"];
+        put?: never;
+        post: operations["add_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/finance/expenses": {
         parameters: {
             query?: never;
@@ -1700,6 +1748,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status"];
+        put?: never;
+        post: operations["create_7"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/demo/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["refresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/demo/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/demo/enter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["enter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/demo/close-guests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["closeGuests"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/content": {
         parameters: {
             query?: never;
@@ -1709,7 +1837,7 @@ export interface paths {
         };
         get: operations["list_4"];
         put?: never;
-        post: operations["create_7"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1821,7 +1949,7 @@ export interface paths {
         };
         get: operations["clinics"];
         put?: never;
-        post: operations["create_8"];
+        post: operations["create_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1869,7 +1997,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["enter"];
+        post: operations["enter_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1981,7 +2109,7 @@ export interface paths {
         };
         get: operations["versions"];
         put?: never;
-        post: operations["create_9"];
+        post: operations["create_10"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2029,7 +2157,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_10"];
+        post: operations["create_11"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2349,7 +2477,7 @@ export interface paths {
         };
         get: operations["all_4"];
         put?: never;
-        post: operations["add_3"];
+        post: operations["add_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2445,7 +2573,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["invite"];
+        post: operations["invite_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2557,7 +2685,7 @@ export interface paths {
         };
         get: operations["list_6"];
         put?: never;
-        post: operations["add_4"];
+        post: operations["add_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2573,7 +2701,7 @@ export interface paths {
         };
         get: operations["all_5"];
         put?: never;
-        post: operations["create_11"];
+        post: operations["create_12"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2621,7 +2749,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["invite_1"];
+        post: operations["invite_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2653,7 +2781,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["invite_2"];
+        post: operations["invite_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2717,7 +2845,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_12"];
+        post: operations["create_13"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2845,7 +2973,7 @@ export interface paths {
         };
         get: operations["list_7"];
         put?: never;
-        post: operations["create_13"];
+        post: operations["create_14"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2893,7 +3021,7 @@ export interface paths {
         };
         get: operations["day"];
         put?: never;
-        post: operations["create_14"];
+        post: operations["create_15"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5276,6 +5404,40 @@ export interface components {
             alert?: boolean;
             grant?: boolean;
         };
+        SalesFunnelChange: {
+            /** @enum {string} */
+            stage?: "LEAD" | "CONTACTED" | "DEMO" | "TRIAL" | "PAYING" | "LOST";
+            note?: string;
+            nextStep?: string;
+            /** Format: date */
+            nextStepOn?: string;
+        };
+        SalesFunnelLead: {
+            /** Format: int64 */
+            id?: number;
+            clinicName?: string;
+            contactName?: string;
+            phone?: string;
+            telegram?: string;
+            city?: string;
+            /** Format: int32 */
+            doctors?: number;
+            message?: string;
+            status?: string;
+            /** Format: int64 */
+            clinicId?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            solo?: boolean;
+            /** @enum {string} */
+            stage?: "LEAD" | "CONTACTED" | "DEMO" | "TRIAL" | "PAYING" | "LOST";
+            /** Format: date-time */
+            stageAt?: string;
+            note?: string;
+            nextStep?: string;
+            /** Format: date */
+            nextStepOn?: string;
+        };
         PlatformFinanceControllerSettingsRequest: {
             smsPriceSom?: number;
         };
@@ -5412,6 +5574,22 @@ export interface components {
             contactTelegram?: string;
             listed?: boolean;
             settingUp?: boolean;
+            demo?: boolean;
+        };
+        JoinCaseMetric: {
+            value?: string;
+            label?: string;
+        };
+        JoinCaseRequest: {
+            title?: string;
+            text?: string;
+            metrics?: components["schemas"]["JoinCaseMetric"][];
+        };
+        JoinCaseCase: {
+            title?: string;
+            text?: string;
+            metrics?: components["schemas"]["JoinCaseMetric"][];
+            shown?: boolean;
         };
         AiUsageControllerSettingsRequest: {
             /** Format: int32 */
@@ -6291,6 +6469,33 @@ export interface components {
             token?: string;
             /** Format: date-time */
             expiresAt?: string;
+        };
+        SalesFunnelNewLead: {
+            clinicName?: string;
+            contactName?: string;
+            phone?: string;
+            city?: string;
+            /** @enum {string} */
+            stage?: "LEAD" | "CONTACTED" | "DEMO" | "TRIAL" | "PAYING" | "LOST";
+            note?: string;
+            nextStep?: string;
+            /** Format: date */
+            nextStepOn?: string;
+        };
+        DemoClinicServiceStatus: {
+            /** Format: int64 */
+            clinicId?: number;
+            name?: string;
+            /** Format: int64 */
+            doctors?: number;
+            /** Format: int64 */
+            patients?: number;
+            /** Format: int64 */
+            appointments?: number;
+            guests?: string[];
+        };
+        DemoControllerGuest: {
+            fullName?: string;
         };
         ContentPostsImported: {
             /** Format: int32 */
@@ -7210,6 +7415,22 @@ export interface components {
             fullName?: string;
             /** Format: date-time */
             createdAt?: string;
+        };
+        SalesFunnelFunnel: {
+            /** Format: int64 */
+            total?: number;
+            stages?: components["schemas"]["SalesFunnelStageCount"][];
+            leads?: components["schemas"]["SalesFunnelLead"][];
+        };
+        SalesFunnelStageCount: {
+            /** @enum {string} */
+            stage?: "LEAD" | "CONTACTED" | "DEMO" | "TRIAL" | "PAYING" | "LOST";
+            /** Format: int64 */
+            current?: number;
+            /** Format: int64 */
+            reached?: number;
+            /** Format: int32 */
+            conversion?: number;
         };
         PlatformExpensesClinicIncome: {
             /** Format: int64 */
@@ -8664,6 +8885,32 @@ export interface operations {
             };
         };
     };
+    change: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesFunnelChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesFunnelLead"];
+                };
+            };
+        };
+    };
     settings_1: {
         parameters: {
             query?: never;
@@ -8874,6 +9121,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformServiceClinicRow"];
+                };
+            };
+        };
+    };
+    set_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JoinCaseRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JoinCaseCase"];
                 };
             };
         };
@@ -9504,7 +9775,7 @@ export interface operations {
             };
         };
     };
-    set_2: {
+    set_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -9566,7 +9837,7 @@ export interface operations {
             };
         };
     };
-    change: {
+    change_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -9752,7 +10023,7 @@ export interface operations {
             };
         };
     };
-    set_3: {
+    set_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -11772,6 +12043,52 @@ export interface operations {
             };
         };
     };
+    funnel: {
+        parameters: {
+            query?: {
+                stage?: "LEAD" | "CONTACTED" | "DEMO" | "TRIAL" | "PAYING" | "LOST";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesFunnelFunnel"];
+                };
+            };
+        };
+    };
+    add_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalesFunnelNewLead"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesFunnelLead"];
+                };
+            };
+        };
+    };
     create_6: {
         parameters: {
             query?: never;
@@ -11792,6 +12109,128 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlatformExpensesExpense"];
+                };
+            };
+        };
+    };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoClinicServiceStatus"];
+                };
+            };
+        };
+    };
+    create_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoClinicServiceStatus"];
+                };
+            };
+        };
+    };
+    refresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoClinicServiceStatus"];
+                };
+            };
+        };
+    };
+    invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DemoControllerGuest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorInvitesInvite"];
+                };
+            };
+        };
+    };
+    enter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    closeGuests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoClinicServiceStatus"];
                 };
             };
         };
@@ -11819,7 +12258,7 @@ export interface operations {
             };
         };
     };
-    create_7: {
+    create_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -11997,7 +12436,7 @@ export interface operations {
             };
         };
     };
-    create_8: {
+    create_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -12073,7 +12512,7 @@ export interface operations {
             };
         };
     };
-    enter: {
+    enter_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -12270,7 +12709,7 @@ export interface operations {
             };
         };
     };
-    create_9: {
+    create_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -12336,7 +12775,7 @@ export interface operations {
             };
         };
     };
-    create_10: {
+    create_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -12970,7 +13409,7 @@ export interface operations {
             };
         };
     };
-    add_3: {
+    add_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -13134,7 +13573,7 @@ export interface operations {
             };
         };
     };
-    invite: {
+    invite_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -13318,7 +13757,7 @@ export interface operations {
             };
         };
     };
-    add_4: {
+    add_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -13362,7 +13801,7 @@ export interface operations {
             };
         };
     };
-    create_11: {
+    create_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -13461,7 +13900,7 @@ export interface operations {
             };
         };
     };
-    invite_1: {
+    invite_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -13507,7 +13946,7 @@ export interface operations {
             };
         };
     };
-    invite_2: {
+    invite_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -13661,7 +14100,7 @@ export interface operations {
             };
         };
     };
-    create_12: {
+    create_13: {
         parameters: {
             query?: {
                 months?: number;
@@ -13906,7 +14345,7 @@ export interface operations {
             };
         };
     };
-    create_13: {
+    create_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -14051,7 +14490,7 @@ export interface operations {
             };
         };
     };
-    create_14: {
+    create_15: {
         parameters: {
             query?: never;
             header?: never;

@@ -11,6 +11,8 @@ import { formatPhone, shortDate, somText, timeOf } from '../lib/time'
 import { ClinicPanel } from './ClinicPanel'
 import { byHealth, CLINIC_HEALTH, noShowShare } from './health'
 import { Loading } from '../layout/Loading'
+import { DemoClinic } from './DemoClinic'
+import { SalesFunnel } from './SalesFunnel'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -54,6 +56,7 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
               <td>
                 <button type="button" className="row-link open-link" onClick={(e) => { e.stopPropagation(); setOpened({ id: c.id! }) }}>{c.name}<span aria-hidden="true"> ›</span></button>
                 {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
+                {c.demo && <span className="chip small s-quiet"> демо</span>}
                 <div><span className={`chip small ${hl.chip}`}>{hl.label}</span>
                   {c.settingUp ? <span className="hint"> · 🛠 не видна пациентам</span> : c.listed === false ? <span className="hint"> · не в каталоге</span> : null}</div>
               </td>
@@ -104,6 +107,8 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
             </>
           )}
         </section>
+        <SalesFunnel />
+        {owner && <DemoClinic />}
         <NewClinic onCreated={(id, solo) => setOpened({ id, invite: { name: '', solo } })} />
         <section className="card-block">
           <h2>Страница для клиник</h2>

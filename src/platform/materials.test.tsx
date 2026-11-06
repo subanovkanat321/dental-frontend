@@ -37,6 +37,7 @@ const listing = {
   files: [
     file('instagram/01-privet.png', 'image', 435_236),
     file('presentation/Tish-dlya-klinik.pdf', 'pdf', 2_400_000),
+    file('guide/Tish-instrukciya.pdf', 'pdf', 13_000_000),
     file('presentation/Tish-dlya-klinik.pptx', 'pptx', 5_100_000),
     file('video/promo-v3/promo-v3-16x9.mp4', 'video'),
     file('video/promo-v4/promo-v4-16x9.mp4', 'video'),
@@ -134,4 +135,17 @@ test('менеджер платформы вкладку «Материалы» 
   renderApp()
   expect(await screen.findByRole('tab', { name: 'Клиники' })).toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Материалы' })).not.toBeInTheDocument()
+})
+
+test('PDF-инструкция для клиник — свой блок со ссылкой на печатную версию руководства', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/materials', () => HttpResponse.json(listing)),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Материалы' }))
+  const block = await screen.findByRole('region', { name: 'Инструкция для клиник' })
+  expect(within(block).getByText('Tish-instrukciya.pdf')).toBeInTheDocument()
+  expect(within(block).getByRole('link', { name: 'tish.kg/guide?print=1' })).toHaveAttribute('href', '/guide?print=1')
 })

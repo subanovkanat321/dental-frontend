@@ -642,6 +642,43 @@
         }
       }
     },
+    "/api/platform/funnel/{id}" : {
+      "put" : {
+        "tags" : [ "sales-controller" ],
+        "operationId" : "change",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SalesFunnelChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalesFunnelLead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/finance/settings" : {
       "put" : {
         "tags" : [ "platform-finance-controller" ],
@@ -909,6 +946,34 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PlatformServiceClinicRow"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/case" : {
+      "put" : {
+        "tags" : [ "join-case" ],
+        "operationId" : "set_2",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/JoinCaseRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JoinCaseCase"
                 }
               }
             }
@@ -1740,7 +1805,7 @@
       },
       "put" : {
         "tags" : [ "my-phone-controller" ],
-        "operationId" : "set_2",
+        "operationId" : "set_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1793,7 +1858,7 @@
       },
       "put" : {
         "tags" : [ "password-controller" ],
-        "operationId" : "change",
+        "operationId" : "change_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2006,7 +2071,7 @@
     "/api/doctors/{id}/service-types" : {
       "put" : {
         "tags" : [ "doctor-services-controller" ],
-        "operationId" : "set_3",
+        "operationId" : "set_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4461,6 +4526,59 @@
         }
       }
     },
+    "/api/platform/funnel" : {
+      "get" : {
+        "tags" : [ "sales-controller" ],
+        "operationId" : "funnel",
+        "parameters" : [ {
+          "name" : "stage",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "LEAD", "CONTACTED", "DEMO", "TRIAL", "PAYING", "LOST" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalesFunnelFunnel"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "sales-controller" ],
+        "operationId" : "add_3",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SalesFunnelNewLead"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalesFunnelLead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/finance/expenses" : {
       "post" : {
         "tags" : [ "platform-finance-controller" ],
@@ -4482,6 +4600,115 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PlatformExpensesExpense"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/demo" : {
+      "get" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "status",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemoClinicServiceStatus"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "create_7",
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemoClinicServiceStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/demo/refresh" : {
+      "post" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "refresh",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemoClinicServiceStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/demo/invite" : {
+      "post" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "invite",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DemoControllerGuest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoctorInvitesInvite"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/demo/enter" : {
+      "post" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "enter",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/platform/demo/close-guests" : {
+      "post" : {
+        "tags" : [ "demo-controller" ],
+        "operationId" : "closeGuests",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DemoClinicServiceStatus"
                 }
               }
             }
@@ -4528,7 +4755,7 @@
       },
       "post" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "create_7",
+        "operationId" : "create_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4741,7 +4968,7 @@
       },
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "create_8",
+        "operationId" : "create_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4842,7 +5069,7 @@
     "/api/platform/clinics/{id}/enter" : {
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "enter",
+        "operationId" : "enter_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5070,7 +5297,7 @@
       },
       "post" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "create_9",
+        "operationId" : "create_10",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5145,7 +5372,7 @@
     "/api/patients" : {
       "post" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "create_10",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5964,7 +6191,7 @@
       },
       "post" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "add_3",
+        "operationId" : "add_4",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6170,7 +6397,7 @@
     "/api/members/invite" : {
       "post" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "invite",
+        "operationId" : "invite_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6387,7 +6614,7 @@
       },
       "post" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "add_4",
+        "operationId" : "add_5",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6434,7 +6661,7 @@
       },
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "create_11",
+        "operationId" : "create_12",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6560,7 +6787,7 @@
     "/api/doctors/{id}/invite" : {
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "invite_1",
+        "operationId" : "invite_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6615,7 +6842,7 @@
     "/api/comebacks/{patientId}/invite" : {
       "post" : {
         "tags" : [ "comeback-controller" ],
-        "operationId" : "invite_2",
+        "operationId" : "invite_3",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -6776,7 +7003,7 @@
     "/api/clinic/pay/requests" : {
       "post" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "create_12",
+        "operationId" : "create_13",
         "parameters" : [ {
           "name" : "months",
           "in" : "query",
@@ -7033,7 +7260,7 @@
       },
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "create_13",
+        "operationId" : "create_14",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7177,7 +7404,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_14",
+        "operationId" : "create_15",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -11764,6 +11991,86 @@
           }
         }
       },
+      "SalesFunnelChange" : {
+        "properties" : {
+          "stage" : {
+            "type" : "string",
+            "enum" : [ "LEAD", "CONTACTED", "DEMO", "TRIAL", "PAYING", "LOST" ]
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "nextStep" : {
+            "type" : "string"
+          },
+          "nextStepOn" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "SalesFunnelLead" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "contactName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "doctors" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "solo" : {
+            "type" : "boolean"
+          },
+          "stage" : {
+            "type" : "string",
+            "enum" : [ "LEAD", "CONTACTED", "DEMO", "TRIAL", "PAYING", "LOST" ]
+          },
+          "stageAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "nextStep" : {
+            "type" : "string"
+          },
+          "nextStepOn" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
       "PlatformFinanceControllerSettingsRequest" : {
         "properties" : {
           "smsPriceSom" : {
@@ -12081,6 +12388,54 @@
             "type" : "boolean"
           },
           "settingUp" : {
+            "type" : "boolean"
+          },
+          "demo" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "JoinCaseMetric" : {
+        "properties" : {
+          "value" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          }
+        }
+      },
+      "JoinCaseRequest" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "metrics" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/JoinCaseMetric"
+            }
+          }
+        }
+      },
+      "JoinCaseCase" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "metrics" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/JoinCaseMetric"
+            }
+          },
+          "shown" : {
             "type" : "boolean"
           }
         }
@@ -14207,6 +14562,72 @@
           "expiresAt" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "SalesFunnelNewLead" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "contactName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "stage" : {
+            "type" : "string",
+            "enum" : [ "LEAD", "CONTACTED", "DEMO", "TRIAL", "PAYING", "LOST" ]
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "nextStep" : {
+            "type" : "string"
+          },
+          "nextStepOn" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "DemoClinicServiceStatus" : {
+        "properties" : {
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "doctors" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patients" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "appointments" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "guests" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "DemoControllerGuest" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
           }
         }
       },
@@ -16467,6 +16888,46 @@
           "createdAt" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "SalesFunnelFunnel" : {
+        "properties" : {
+          "total" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "stages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SalesFunnelStageCount"
+            }
+          },
+          "leads" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SalesFunnelLead"
+            }
+          }
+        }
+      },
+      "SalesFunnelStageCount" : {
+        "properties" : {
+          "stage" : {
+            "type" : "string",
+            "enum" : [ "LEAD", "CONTACTED", "DEMO", "TRIAL", "PAYING", "LOST" ]
+          },
+          "current" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "reached" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "conversion" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },

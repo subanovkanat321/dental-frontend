@@ -387,6 +387,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
   html:has(.workspace .panel), html:has(.workspace .panel) body { overflow: hidden; overscroll-behavior: none; }
   .toolbar { gap: 8px; }
   .toolbar h1 { font-size: 1.1rem; flex-basis: 100%; }
+  .toolbar > .with-hint { flex-basis: 100%; }
+  .toolbar > .with-hint > h1 { flex-basis: auto; }
   .search { min-width: 0; flex: 1; }
   .push { margin-left: 0; }
   .grid { grid-template-columns: 44px repeat(var(--cols, 1), minmax(150px, 1fr)) !important; }
@@ -2103,3 +2105,19 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .profile-facts dd { margin: 0 0 6px; overflow-wrap: anywhere; }
 .profile-facts dd:last-child { margin-bottom: 0; }
 .schedule-main > .settings-group + .card-block { margin-top: 16px; }
+
+/* Подсказка «?» у заголовка экрана (src/help): кружок-кнопка, текст — карточкой под ним */
+.help-hint { position: relative; display: inline-flex; vertical-align: middle; margin-left: 6px; }
+.help-hint-btn { width: 22px; height: 22px; padding: 0; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 50%;
+  background: var(--card); color: var(--hint); font: inherit; font-size: .8rem; font-weight: 600; line-height: 1; cursor: pointer; }
+.help-hint-btn:hover, .help-hint-btn[aria-expanded=true] { border-color: var(--accent); color: var(--link); background: var(--accent-soft); }
+.help-hint-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.help-hint-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; width: min(300px, 80vw); display: grid; gap: 8px; padding: 12px 14px;
+  border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); box-shadow: 0 8px 24px rgba(15, 42, 48, .14);
+  color: var(--text); font-size: .875rem; font-weight: 400; line-height: 1.45; letter-spacing: 0; text-align: left; white-space: normal; }
+.help-hint-pop a { color: var(--link); font-weight: 600; }
+.with-hint { display: flex; align-items: center; gap: 2px; min-width: 0; }
+/* Два поля в строку («Цифра» и «Подпись» кейса); на телефоне — друг под другом */
+.row-fields { display: grid; grid-template-columns: 120px 1fr; gap: 8px; }
+@media (max-width: 480px) { .row-fields { grid-template-columns: 1fr; } }
+.funnel-list { display: grid; gap: 8px; margin-bottom: 12px; }

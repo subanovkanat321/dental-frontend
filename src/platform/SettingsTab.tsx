@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
 
-import { api, ApiError, unwrap, upload, webTariffs, type Schemas } from '../api/client'
+import { api, ApiError, unwrap, upload, webCase, webTariffs, type Schemas } from '../api/client'
 import { usePlatformInfo } from '../api/platform'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phonesFromInput, phonesToInput, phoneToInput } from '../clinic/phone'
@@ -32,6 +32,7 @@ export function SettingsTab() {
           <AccessToggles info={info.data} />
         </>
       )}
+      <CaseBox />
       <PaySettingsBox />
       <Managers />
       <TariffsBox />
@@ -240,5 +241,59 @@ function TariffsBox() {
       </div>
       <p className="hint">Новым клиникам — {t.data.pilotMonths} мес. бесплатно. Срок наружу не показываем: на сайте — «Попробуйте бесплатно», свою дату конца пилота клиника видит в «Тарифе и оплате».</p>
     </section>
+  )
+}
+
+type JoinCase = Schemas['JoinCaseCase']
+type Metric = { value: string; label: string }
+
+/**
+ * Кейс на /join — блок «Как работает в клинике»: заголовок, короткая история и до трёх цифр. Пока нет
+ * заголовка или текста, на сайте блока нет. Писать только то, что было на пилоте: выдуманных цифр
+ * на сайте не бывает.
+ */
+function CaseBox() {
+  const current = useQuery({ queryKey: ['web-case'], queryFn: webCase })
+  return (
+    <section className="card-block" aria-label="Кейс на странице для клиник">
+      <h2>Кейс на /join</h2>
+      <p className="hint">Блок «Как работает в клинике» на странице для клиник. Пусто — блока на сайте нет.
+        Только правда с пилота: что было до и что стало, цифры — из «Статистики» клиники.</p>
+      {current.isPending ? <Loading /> : <CaseForm initial={current.data ?? null} />}
+    </section>
+  )
+}
+
+function CaseForm({ initial }: { initial: JoinCase | null }) {
+  const client = useQueryClient()
+  const start: Metric[] = [0, 1, 2].map((i) => ({ value: initial?.metrics?.[i]?.value ?? '', label: initial?.metrics?.[i]?.label ?? '' }))
+  const [title, setTitle] = useState(initial?.title ?? '')
+  const [text, setText] = useState(initial?.text ?? '')
+  const [metrics, setMetrics] = useState<Metric[]>(start)
+  const [done, setDone] = useState('')
+  const save = useMutation<JoinCase, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/platform/case', { body: { title, text, metrics: metrics.filter((m) => m.value || m.label) } })),
+    onSuccess: (saved) => {
+      client.setQueryData(['web-case'], saved)
+      setDone(saved.shown ? 'Сохранено — блок виден на /join' : 'Сохранено — блок скрыт: нужны заголовок и текст')
+    },
+  })
+  const setMetric = (i: number, key: keyof Metric, value: string) => setMetrics((all) => all.map((m, k) => (k === i ? { ...m, [key]: value } : m)))
+  return (
+    <form className="form narrow" aria-label="Кейс" onSubmit={(e) => { e.preventDefault(); setDone(''); save.mutate() }}>
+      <label className="field"><span>Заголовок</span>
+        <input value={title} maxLength={120} placeholder="Пилот в клинике в Бишкеке" onChange={(e) => setTitle(e.target.value)} /></label>
+      <label className="field"><span>Короткая история</span>
+        <textarea value={text} maxLength={1000} rows={4} placeholder="Что было до Tish и что изменилось за месяц" onChange={(e) => setText(e.target.value)} /></label>
+      {metrics.map((m, i) => (
+        <div key={i} className="row-fields" role="group" aria-label={`Цифра ${i + 1}`}>
+          <label className="field"><span>Цифра {i + 1}</span><input value={m.value} maxLength={20} placeholder="−30%" onChange={(e) => setMetric(i, 'value', e.target.value)} /></label>
+          <label className="field"><span>Подпись</span><input value={m.label} maxLength={60} placeholder="неявок за месяц" onChange={(e) => setMetric(i, 'label', e.target.value)} /></label>
+        </div>
+      ))}
+      {save.error && <p className="error" role="alert">{save.error.fieldErrors.metrics ?? save.error.message}</p>}
+      {done && <p className="tone-ok" role="status">{done}</p>}
+      <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить кейс</button>
+    </form>
   )
 }

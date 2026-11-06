@@ -20,6 +20,11 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // Кейс на /join не заполнен — блока нет
+  http.get('*/web/case', () => HttpResponse.json({ metrics: [], shown: false } satisfies Schemas['JoinCaseCase'])),
+  // «Клиники»: воронка пустая, демо-клиники нет — тесты своих экранов задают своё
+  http.get('*/api/platform/funnel', () => HttpResponse.json({ total: 0, stages: [], leads: [] } satisfies Schemas['SalesFunnelFunnel'])),
+  http.get('*/api/platform/demo', () => HttpResponse.json({ doctors: 0, patients: 0, appointments: 0, guests: [] } satisfies Schemas['DemoClinicServiceStatus'])),
   // «Контент»: Instagram на сервере не подключён — кнопок публикации нет
   http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false } satisfies Schemas['InstagramTokensState'])),
   // Уведомления в приложение: по умолчанию на сервере не включены — блок в «Настройках» скрыт
