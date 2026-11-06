@@ -1475,6 +1475,12 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 }
 .login-card { display: contents; }
 @media (min-width: 761px) { .login-card { display: grid; } }
+/* «Настройки»: «Выйти» и «Выйти на всех устройствах» рядом */
+.logout-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* «Вы вышли из Tish» над формой входа: один раз после «Выйти» (Login.tsx) */
+.logged-out { display: grid; gap: 6px; width: 100%; text-align: left; font-size: .92rem; background: var(--accent-soft); }
+.logged-out p { margin: 0; }
+.logged-out .link { justify-self: end; }
 
 /* Свой выпадающий список (layout/Select.tsx) вместо системного: поле — как прежний select */
 .ui-select { display: flex; align-items: center; min-width: 0; max-width: 100%; min-height: 36px; padding: 6px 34px 6px 10px; font: inherit; text-align: left;

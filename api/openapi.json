@@ -6116,6 +6116,17 @@
         }
       }
     },
+    "/api/me/logout-all" : {
+      "post" : {
+        "tags" : [ "web-auth-controller" ],
+        "operationId" : "logoutAll",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/families/{id}/pay" : {
       "post" : {
         "tags" : [ "family-money-controller" ],

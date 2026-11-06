@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
-import { botConfig } from '../api/client'
+import { botConfig, LOGGED_OUT } from '../api/client'
 import { isLoginPath } from '../lib/route'
 import { InstallHint } from '../pwa/InstallHint'
 import { PhoneLogin } from './PhoneLogin'
@@ -34,6 +34,31 @@ function loadWidget(): Promise<void> {
   })
 }
 
+/** Только что нажали «Выйти» в этой вкладке? Флаг читаем при открытии экрана, стираем после показа. */
+function justLoggedOut(): boolean {
+  try {
+    return sessionStorage.getItem(LOGGED_OUT) === '1'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Подсказка сразу после «Выйти»: сервер вход закрыл, но Telegram сам помнит этот браузер и при
+ * следующем «Войти через Telegram» пустит без подтверждения — на общем компьютере это стоит отключить.
+ */
+function LoggedOutHint({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="card-block logged-out" role="status">
+      <p><strong>Вы вышли из Tish.</strong> Это общий компьютер?</p>
+      <p>Telegram помнит этот браузер и при следующем «Войти через Telegram» пустит без подтверждения. Чтобы этого
+        не было — в приложении Telegram: <b>Настройки → Устройства → Вход на сайты</b> (Сайты) → tish.kg → <b>Отключить</b>.</p>
+      <p className="hint">На общем компьютере удобнее входить по номеру и паролю или в режиме инкогнито.</p>
+      <button type="button" className="link" onClick={onClose}>Понятно</button>
+    </div>
+  )
+}
+
 export function Login() {
   const client = useQueryClient()
   const bot = useQuery({ queryKey: ['bot-config'], queryFn: botConfig, staleTime: Infinity })
@@ -43,6 +68,15 @@ export function Login() {
   // Вход по номеру (пароль или SMS) — для сотрудников без Telegram (если сервер его включил)
   const [byPhone, setByPhone] = useState(false)
   const phoneLogin = Boolean(bot.data?.smsLogin || bot.data?.passwordLogin)
+  const [loggedOut, setLoggedOut] = useState(justLoggedOut)
+  // Показали один раз: обновили страницу или вошли снова — подсказки уже нет
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(LOGGED_OUT)
+    } catch {
+      // хранилище закрыто — нечего стирать
+    }
+  }, [])
   useEffect(() => {
     if (!bot.data?.id) return
     loadWidget().then(() => setReady(true), () => setError('Не загрузилось окно входа Telegram — проверьте интернет и обновите страницу'))
@@ -78,6 +112,7 @@ export function Login() {
     <div className="center login">
       <div className="login-card">
       <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
+      {loggedOut && <LoggedOutHint onClose={() => setLoggedOut(false)} />}
       <h1>Вход для клиники</h1>
       <p className="hint">Врачи, регистратура и администраторы. {byPhone
         ? 'Номер — тот, что администратор указал в «Настройки → Персонал».'

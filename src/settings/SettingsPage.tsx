@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 
 import type { AccountTab } from '../account/AccountPage'
-import { logout, type Schemas } from '../api/client'
+import { logout, logoutEverywhere, type Schemas } from '../api/client'
 import type { ClinicTab } from '../clinic/ClinicPage'
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { openSection, openSettings, settingsItem, type Page } from '../lib/route'
+import { ask, notify } from '../lib/confirm'
 import { openLink, telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
 import type { TeamTab } from '../team/TeamPage'
@@ -218,12 +219,41 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
       <Notifications />
       {/* Пароль — только у входа по номеру (на сайте; в Telegram такого входа нет) */}
       {!telegram() && <PasswordSection />}
-      {!telegram() && (
-        <section className="settings-group">
-          <button type="button" className="btn danger" onClick={() => void logout()}>Выйти</button>
-        </section>
-      )}
+      <LogoutSection />
     </div>
+  )
+}
+
+const EVERYWHERE_SITE = 'Выйти на всех устройствах? Закроются все входы на сайт Tish — на всех компьютерах и телефонах, '
+  + 'через Telegram и по номеру, и здесь тоже. Пароль не меняется: войти снова можно как обычно.'
+
+const EVERYWHERE_TELEGRAM = 'Выйти на всех устройствах? Закроются все входы на сайт Tish — на всех компьютерах и телефонах, '
+  + 'через Telegram и по номеру. Здесь, в Telegram, Tish останется открытым.'
+
+/**
+ * «Выйти» (только на сайте: в Telegram выходить не из чего) и «Выйти на всех устройствах» — гасит
+ * все входы на сайт этого человека; из Telegram тоже: забыли выйти на компьютере клиники.
+ */
+function LogoutSection() {
+  const [busy, setBusy] = useState(false)
+  const inTelegram = Boolean(telegram())
+  const everywhere = async () => {
+    if (!await ask(inTelegram ? EVERYWHERE_TELEGRAM : EVERYWHERE_SITE)) return
+    setBusy(true)
+    try {
+      await logoutEverywhere()
+      if (inTelegram) await notify('Готово: все входы на сайт Tish закрыты.')
+    } catch (e) {
+      await notify(e instanceof Error ? e.message : 'Не получилось — попробуйте ещё раз')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <section className="settings-group logout-actions">
+      {!inTelegram && <button type="button" className="btn danger" onClick={() => void logout()}>Выйти</button>}
+      <button type="button" className="btn danger" disabled={busy} onClick={() => void everywhere()}>Выйти на всех устройствах</button>
+    </section>
   )
 }
 

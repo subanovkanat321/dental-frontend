@@ -1,6 +1,6 @@
 import createClient, { type Middleware } from 'openapi-fetch'
 
-import { authHeaders } from '../lib/telegram'
+import { authHeaders, telegram } from '../lib/telegram'
 
 import type { components, paths } from './schema'
 
@@ -178,12 +178,43 @@ export async function botUsername(): Promise<string | null> {
   return body?.botUsername ?? null
 }
 
-/** Выйти на сайте: сервер гасит cookie-сессию — снова экран входа. В Telegram выходить не из чего. */
+/**
+ * Флаг «только что вышли» (sessionStorage этой вкладки, без личных данных): экран входа один раз
+ * показывает подсказку про общий компьютер (layout/LoggedOutHint) и сразу его стирает.
+ */
+export const LOGGED_OUT = 'tish.loggedOut'
+
+function markLoggedOut(): void {
+  try {
+    sessionStorage.setItem(LOGGED_OUT, '1')
+  } catch {
+    // хранилище закрыто (приватный режим) — подсказки просто не будет
+  }
+}
+
+/**
+ * Выйти на сайте: сервер гасит именно эту сессию (скопированная cookie больше не подойдёт) —
+ * снова экран входа с подсказкой. В Telegram выходить не из чего.
+ */
 export async function logout(): Promise<void> {
   await forgetPushSubscription()
   await globalThis.fetch(new Request(new URL('/web/logout', window.location.origin), {
     method: 'POST', credentials: 'same-origin', headers: { 'X-Dental-Web': '1' },
   })).catch(() => null)
+  markLoggedOut()
+  window.location.reload()
+}
+
+/**
+ * «Выйти на всех устройствах»: сервер гасит все входы этого человека на сайт (через Telegram и по
+ * номеру), включая этот браузер. На сайте — экран входа с подсказкой; в Telegram Mini App сам вход
+ * в Telegram остаётся, гаснут только входы на сайт.
+ */
+export async function logoutEverywhere(): Promise<void> {
+  if (!telegram()) await forgetPushSubscription()
+  await unwrap(api.POST('/api/me/logout-all'))
+  if (telegram()) return
+  markLoggedOut()
   window.location.reload()
 }
 

@@ -2452,6 +2452,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/logout-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["logoutAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/families/{id}/pay": {
         parameters: {
             query?: never;
@@ -12881,6 +12897,24 @@ export interface operations {
         };
     };
     code_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    logoutAll: {
         parameters: {
             query?: never;
             header?: never;
