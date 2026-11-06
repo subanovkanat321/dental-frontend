@@ -29,6 +29,13 @@ function rule(css: string, selector: string): string {
   return found.join('\n')
 }
 
+test('карточка «на весь экран»: высота от top до bottom, лишнее листается внутри', () => {
+  // align-self: start у fixed-блока = высота по содержимому: низ уходил за окно, колесо ничего не листало
+  const full = rule(styles, '.panel.panel-full, .day-summary.ds-full').replace(/\s+/g, ' ')
+  expect(full).toContain('align-self: stretch')
+  expect(full).toContain('overflow: auto')
+})
+
 test('панель справа (карточка приёма, пациента, материал, формы) прокручивается внутри и не выше окна от своего верха', () => {
   const panel = rule(styles, '.panel').replace(/\s+/g, ' ')
   // Не «100vh - 32px»: панель под шапкой раздела уходила низом за край экрана (ноутбук, масштаб 125–150%)
