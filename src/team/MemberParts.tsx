@@ -154,7 +154,7 @@ export function InviteMember({ me }: { me: Me }) {
         </>
       ) : (
         <form className="form narrow" aria-label="Пригласить сотрудника" onSubmit={(e) => { e.preventDefault(); make.mutate() }}>
-          <label className="field"><span>Имя (видно в списке персонала)</span>
+          <label className="field"><span>Имя (черновик — сотрудник потом поправит сам)</span>
             <input value={name} required maxLength={100} placeholder="Например: Айпери" onChange={(e) => setName(e.target.value)} />
           </label>
           <div className="segments" role="group" aria-label="Роль">

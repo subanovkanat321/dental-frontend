@@ -58,7 +58,7 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
 
   return (
     <section className="form" aria-label="Услуги врача">
-      <h3>Услуги врача</h3>
+      <h4>Услуги врача</h4>
       <p className="hint">Их пациент видит у этого врача, когда записывается в боте, и регистратура — в «Новой записи».</p>
       <div className="segments" role="group" aria-label="Какие услуги">
         <button type="button" aria-pressed={!some} onClick={() => choose(false)}>Все услуги клиники</button>

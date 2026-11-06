@@ -1742,6 +1742,50 @@
         }
       }
     },
+    "/api/me/name" : {
+      "get" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "ownName",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffMembersOwnName"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "rename",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffMembersControllerNameRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffMembersOwnName"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/earnings/goal" : {
       "put" : {
         "tags" : [ "earnings-controller" ],
@@ -1801,7 +1845,7 @@
     "/api/families/{id}" : {
       "put" : {
         "tags" : [ "family-controller" ],
-        "operationId" : "rename",
+        "operationId" : "rename_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1874,61 +1918,6 @@
       "delete" : {
         "tags" : [ "expense-controller" ],
         "operationId" : "delete_8",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
-      }
-    },
-    "/api/doctors/{id}" : {
-      "put" : {
-        "tags" : [ "doctor-controller" ],
-        "operationId" : "update_12",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DoctorControllerAdminRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DoctorAdminView"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete" : {
-        "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2047,7 +2036,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_13",
+        "operationId" : "update_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2111,6 +2100,43 @@
         }
       }
     },
+    "/api/doctors/{id}/active" : {
+      "put" : {
+        "tags" : [ "doctor-controller" ],
+        "operationId" : "setActive",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DoctorControllerActiveRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoctorAdminView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/dental-news/digest" : {
       "put" : {
         "tags" : [ "dental-news-controller" ],
@@ -2158,7 +2184,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_14",
+        "operationId" : "update_13",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2462,7 +2488,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_15",
+        "operationId" : "update_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6300,7 +6326,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/DoctorControllerAdminRequest"
+                "$ref" : "#/components/schemas/DoctorControllerCreateRequest"
               }
             }
           },
@@ -6991,7 +7017,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_9",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -9027,7 +9053,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_10",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -10018,7 +10044,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10696,7 +10722,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10756,7 +10782,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_14",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10813,7 +10839,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_15",
+        "operationId" : "delete_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10860,6 +10886,26 @@
           "required" : true,
           "schema" : {
             "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/doctors/{id}" : {
+      "delete" : {
+        "tags" : [ "doctor-controller" ],
+        "operationId" : "delete_15",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         } ],
         "responses" : {
@@ -12467,6 +12513,23 @@
           }
         }
       },
+      "StaffMembersControllerNameRequest" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StaffMembersOwnName" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "editable" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "EarningsControllerGoal" : {
         "properties" : {
           "goalSom" : {
@@ -12651,56 +12714,6 @@
           }
         }
       },
-      "DoctorControllerAdminRequest" : {
-        "properties" : {
-          "fullName" : {
-            "type" : "string"
-          },
-          "about" : {
-            "type" : "string"
-          },
-          "telegramId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "active" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "DoctorAdminView" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "fullName" : {
-            "type" : "string"
-          },
-          "about" : {
-            "type" : "string"
-          },
-          "photoUrl" : {
-            "type" : "string"
-          },
-          "active" : {
-            "type" : "boolean"
-          },
-          "telegramId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "role" : {
-            "type" : "string"
-          },
-          "phone" : {
-            "type" : "string"
-          },
-          "phoneOnly" : {
-            "type" : "boolean"
-          }
-        }
-      },
       "DoctorServicesControllerRequest" : {
         "properties" : {
           "serviceTypeIds" : {
@@ -12805,6 +12818,46 @@
       "DoctorControllerAdminRole" : {
         "properties" : {
           "admin" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "DoctorControllerActiveRequest" : {
+        "properties" : {
+          "active" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "DoctorAdminView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "about" : {
+            "type" : "string"
+          },
+          "photoUrl" : {
+            "type" : "string"
+          },
+          "active" : {
+            "type" : "boolean"
+          },
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "phoneOnly" : {
             "type" : "boolean"
           }
         }
@@ -14833,6 +14886,16 @@
           "leftDebtSom" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "DoctorControllerCreateRequest" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "about" : {
+            "type" : "string"
           }
         }
       },

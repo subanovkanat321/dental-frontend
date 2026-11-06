@@ -56,7 +56,7 @@ export function InviteByPhone({ me }: { me: Me }) {
             <PhoneInput label="Номер телефона сотрудника" value={phone} onChange={setPhone} />
           </label>
           {make.error?.fieldErrors.phone && <p className="error">{make.error.fieldErrors.phone}</p>}
-          <label className="field"><span>Имя (видно в списке персонала)</span>
+          <label className="field"><span>Имя (черновик — сотрудник потом поправит сам)</span>
             <input value={name} required maxLength={100} placeholder="Например: Айпери" onChange={(e) => setName(e.target.value)} />
           </label>
           <div className="segments" role="group" aria-label="Роль по номеру">
