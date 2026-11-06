@@ -169,7 +169,7 @@ test('сотрудники: ассистент — выбрать врача, п
   expect(sent).toEqual([{ doctorIds: [2, 1] }, { role: 'ASSISTANT', fullName: 'Жылдыз', doctorIds: [2] }])
 })
 
-test('врач (не админ): в «Персонале» только врачи, открывает только себя и правит профиль', async () => {
+test('врач (не админ): в «Персонале» только врачи; своя строка открывает «Мой профиль», там правит профиль', async () => {
   let profile: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false })),
@@ -184,6 +184,8 @@ test('врач (не админ): в «Персонале» только вра�
   const table = await screen.findByRole('table', { name: 'Персонал' })
   expect(within(table).queryByRole('button', { name: 'Дастан Т.' })).not.toBeInTheDocument()
   await user.click(within(table).getByRole('button', { name: 'Айгерим Садыкова' }))
+  // Своя строка — это «Мой профиль» (одно место для своего профиля, а не вторая карточка в «Персонале»)
+  expect(await screen.findByRole('heading', { name: 'Мой профиль' })).toBeInTheDocument()
   const panel = await screen.findByRole('complementary', { name: 'Врач' })
   expect(within(panel).queryByRole('textbox', { name: 'Telegram id врача' })).not.toBeInTheDocument()
   // Без правок «Сохранить» нет — нечего сохранять
