@@ -154,3 +154,32 @@ test('ИИ-администратор бота: «🤖 Ответил ИИ» с 
   expect(answer).toHaveTextContent('Мы на Киевской, 1.')
   expect(within(panel).queryByLabelText('Ответ пациенту')).not.toBeInTheDocument()
 })
+
+test('ИИ записал по «Да» пациента — пометка в списке и в вопросе', async () => {
+  window.location.hash = '/patients'
+  const booked: Question = {
+    id: 9, status: 'ANSWERED', text: 'Запишите на чистку', createdAt: '2026-11-03T04:00:00Z', answeredAt: '2026-11-03T04:00:05Z',
+    answer: 'Могу записать вас 👍', aiOutcome: 'ANSWERED', aiAnswer: 'Могу записать вас 👍\n\nЗаписать вас: суббота, 9 ноября, в 10:00 · Профчистка · врач Айгерим?',
+    aiAction: 'BOOKED', patientId: 3, patientName: 'Айпери Вымышленная',
+  }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 0 })),
+    http.get('*/api/patient-questions', ({ request }) => {
+      const done = new URL(request.url).searchParams.get('done') === 'true'
+      return HttpResponse.json({ questions: done ? [booked] : [], ai: true, aiAvailable: true, botAi: true } satisfies Schemas['QuestionControllerQuestionList'])
+    }),
+    http.get('*/api/patient-questions/:id', () => HttpResponse.json(booked)),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: /Вопросы/ }))
+  await userEvent.click(await screen.findByRole('tab', { name: 'Отвеченные' }))
+  const done = await screen.findByRole('table', { name: 'Вопросы пациентов' })
+  await vi.waitFor(() => expect(done).toHaveTextContent('🤖 ИИ записал (пациент подтвердил)'))
+  await userEvent.click(within(done).getByRole('button', { name: 'Айпери Вымышленная' }))
+  const panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
+  const answer = await within(panel).findByRole('region', { name: 'Ответ ИИ' })
+  expect(answer).toHaveTextContent('заявка в расписании')
+  expect(answer).toHaveTextContent('Записать вас: суббота, 9 ноября')
+})

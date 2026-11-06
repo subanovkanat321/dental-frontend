@@ -6607,6 +6607,8 @@ export interface components {
             /** @enum {string} */
             aiOutcome?: "ANSWERED" | "ESCALATED" | "HANDOFF";
             aiAnswer?: string;
+            /** @enum {string} */
+            aiAction?: "BOOKED" | "RESCHEDULED" | "CANCELLED";
         };
         QuestionControllerAnswer: {
             text?: string;
@@ -7419,6 +7421,8 @@ export interface components {
             appointments?: number;
             /** Format: int64 */
             selfBooked?: number;
+            /** Format: int64 */
+            aiBooked?: number;
         };
         PlatformAnalyticsFunnel: {
             applications?: components["schemas"]["PlatformAnalyticsApplications"];

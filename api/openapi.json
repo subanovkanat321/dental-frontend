@@ -14950,6 +14950,10 @@
           },
           "aiAnswer" : {
             "type" : "string"
+          },
+          "aiAction" : {
+            "type" : "string",
+            "enum" : [ "BOOKED", "RESCHEDULED", "CANCELLED" ]
           }
         }
       },
@@ -16994,6 +16998,10 @@
             "format" : "int64"
           },
           "selfBooked" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "aiBooked" : {
             "type" : "integer",
             "format" : "int64"
           }

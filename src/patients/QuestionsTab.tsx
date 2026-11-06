@@ -30,10 +30,22 @@ function who(q: Question): string {
 }
 
 /**
+ * ИИ предложил запись, перенос или отмену, пациент нажал «✅ Да» в боте — бот это сделал (этап 2). null — нет.
+ */
+function aiActionText(q: Question): string | null {
+  if (q.aiAction === 'BOOKED') return '🤖 ИИ записал (пациент подтвердил)'
+  if (q.aiAction === 'RESCHEDULED') return '🤖 ИИ перенёс запись (пациент подтвердил)'
+  if (q.aiAction === 'CANCELLED') return '🤖 ИИ отменил запись (пациент подтвердил)'
+  return null
+}
+
+/**
  * Пометка ИИ-администратора бота: «🤖 Ответил ИИ» — ответил сам; «Передано администратору» — ИИ передал
  * вопрос (или пациент попросил человека) и вопрос ждёт сотрудника. null — ИИ не участвовал.
  */
 function aiMark(q: Question): string | null {
+  const action = aiActionText(q)
+  if (action) return action
   if (q.aiOutcome === 'ANSWERED') return '🤖 Ответил ИИ'
   if (q.aiOutcome === 'ESCALATED' || q.aiOutcome === 'HANDOFF') return 'Передано администратору'
   return null
@@ -150,6 +162,7 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
             <section aria-label="Ответ ИИ">
               <h3>🤖 Ответил ИИ · {shortDate(q.answeredAt!, true)}</h3>
               <p className="question-text">{q.aiAnswer ?? q.answer}</p>
+              {aiActionText(q) && <p className="notice tone-ok">{aiActionText(q)}{q.aiAction === 'CANCELLED' ? ' — время в расписании освободилось.' : ' — заявка в расписании, как самозапись: подтвердите или отклоните её там.'}</p>}
               <p className="hint small">ИИ-помощник ответил пациенту в боте сам, по данным клиники. Нужно уточнить — напишите пациенту в Telegram или позвоните.</p>
             </section>
           )}

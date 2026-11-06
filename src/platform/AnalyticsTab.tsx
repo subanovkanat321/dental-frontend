@@ -326,7 +326,7 @@ function FeaturesBlock({ a, period }: { a: Analytics; period: string }) {
   const items = [...(f.items ?? [])].sort((x, y) => (y.clinics ?? 0) - (x.clinics ?? 0))
   return (
     <Block title="Чем пользуются" label="Использование функций"
-      hint={<>Из {active} клиник с приёмами {period}. Пациенты записались сами (бот и сайт): <b>{pct(f.selfBooked ?? 0, f.appointments ?? 0)}</b> приёмов.</>}>
+      hint={<>Из {active} клиник с приёмами {period}. Пациенты записались сами (бот и сайт): <b>{pct(f.selfBooked ?? 0, f.appointments ?? 0)}</b> приёмов.{f.aiBooked ? <> ИИ записал: <b>{f.aiBooked}</b>.</> : null}</>}>
       {active ? (
         <ul className="hbars" aria-label="Функции">
           {items.map((x) => (
