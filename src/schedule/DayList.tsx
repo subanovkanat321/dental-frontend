@@ -196,12 +196,13 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                 </section>
               ) : <div key={g.doctor.id}>{rows}</div>
             })
-            // Приёмов нет, но есть свободные окна: Тишка и «На сегодня записей нет», окна — ниже (нажать — записать)
+            // Приёмов нет, но есть свободные окна: врачи и окна — сверху (сразу видно, куда записать),
+            // Тишка «На сегодня записей нет» — под ними
             const empty = list.length === 0 && (
-              <EmptyState title={emptyDayText(date, today)}>{offText ?? (date >= today ? 'Нажмите на свободное окно ниже, чтобы записать.' : null)}</EmptyState>
+              <EmptyState title={emptyDayText(date, today)}>{offText ?? (date >= today ? 'Нажмите на свободное окно выше, чтобы записать.' : null)}</EmptyState>
             )
             // «Все врачи» — списки врачей рядом, колонками; больше двух — листаются вбок
-            return <>{empty}{many ? <div className="doctor-columns" style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div> : blocks}</>
+            return <>{many ? <div className="doctor-columns" style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div> : blocks}{empty}</>
           })()}
     </div>
   )
