@@ -5327,7 +5327,7 @@ export interface components {
         Guardian: {
             fullName?: string;
             /** @enum {string} */
-            relation?: "MOTHER" | "FATHER" | "GRANDMOTHER" | "GRANDFATHER" | "GUARDIAN" | "OTHER";
+            relation?: "MOTHER" | "FATHER" | "PARENT" | "GRANDMOTHER" | "GRANDFATHER" | "GUARDIAN" | "OTHER";
             phone?: string;
         };
         PatientView: {
@@ -5386,7 +5386,7 @@ export interface components {
         PatientControllerGuardianRequest: {
             fullName?: string;
             /** @enum {string} */
-            relation?: "MOTHER" | "FATHER" | "GRANDMOTHER" | "GRANDFATHER" | "GUARDIAN" | "OTHER";
+            relation?: "MOTHER" | "FATHER" | "PARENT" | "GRANDMOTHER" | "GRANDFATHER" | "GUARDIAN" | "OTHER";
             phone?: string;
         };
         NewsControllerSubscription: {

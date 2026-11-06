@@ -11904,7 +11904,7 @@
           },
           "relation" : {
             "type" : "string",
-            "enum" : [ "MOTHER", "FATHER", "GRANDMOTHER", "GRANDFATHER", "GUARDIAN", "OTHER" ]
+            "enum" : [ "MOTHER", "FATHER", "PARENT", "GRANDMOTHER", "GRANDFATHER", "GUARDIAN", "OTHER" ]
           },
           "phone" : {
             "type" : "string"
@@ -12059,7 +12059,7 @@
           },
           "relation" : {
             "type" : "string",
-            "enum" : [ "MOTHER", "FATHER", "GRANDMOTHER", "GRANDFATHER", "GUARDIAN", "OTHER" ]
+            "enum" : [ "MOTHER", "FATHER", "PARENT", "GRANDMOTHER", "GRANDFATHER", "GUARDIAN", "OTHER" ]
           },
           "phone" : {
             "type" : "string"

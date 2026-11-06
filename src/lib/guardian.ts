@@ -6,7 +6,7 @@ export type GuardianRelation = NonNullable<Schemas['Guardian']['relation']>
 
 /** Кем представитель приходится пациенту (V164 бэкенда) — в строке «Представитель: мама, Айгуль, …». */
 export const GUARDIAN_RELATION: Record<GuardianRelation, string> = {
-  MOTHER: 'мама', FATHER: 'папа', GRANDMOTHER: 'бабушка', GRANDFATHER: 'дедушка', GUARDIAN: 'опекун', OTHER: 'другой',
+  MOTHER: 'мама', FATHER: 'папа', PARENT: 'родитель', GRANDMOTHER: 'бабушка', GRANDFATHER: 'дедушка', GUARDIAN: 'опекун', OTHER: 'другой',
 }
 
 /** Куда писать о записи: номер представителя, нет своего — номер карточки; без представителя — номер пациента. */
