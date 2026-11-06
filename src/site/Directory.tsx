@@ -11,7 +11,7 @@ const TEXTS = {
     title: 'Запись к стоматологу', tagline: 'Выберите клинику или врача и запишитесь в Telegram за минуту — бот напомнит о приёме 😊',
     search: 'Клиника, врач или адрес', cities: 'Город', allCities: 'Все города', showAll: 'Показать все клиники', book: 'Записаться в Telegram', bookWeb: 'Без Telegram — записаться на сайте', more: 'Врачи, услуги и цены', map: 'На карте', doctors: 'Врачи',
     clinic: 'Стоматология', nothing: 'Ничего не нашлось — попробуйте другое слово.', empty: 'Клиники скоро появятся здесь.',
-    forClinics: 'Для клиник', back: 'Назад', login: 'Вход для клиники', join: 'Подключить клинику',
+    forClinics: 'Для клиник', about: 'О Tish', back: 'Назад', login: 'Вход для клиники', join: 'Подключить клинику',
     staff: 'Вы врач или администратор клиники?', staffLogin: 'Войти в CRM',
     error: 'Не удалось загрузить список — обновите страницу через минуту.', loading: 'Загрузка…',
     inAppTop: 'Открыли из Instagram? Если Telegram не открывается — нажмите ⋮ вверху → «Открыть в браузере» или «📲 открыть Telegram» у клиники.', openTg: 'открыть Telegram',
@@ -20,7 +20,7 @@ const TEXTS = {
     title: 'Тиш дарыгерине жазылуу', tagline: 'Клиниканы же дарыгерди тандап, Telegram аркылуу бир мүнөттө жазылыңыз — бот эскертет 😊',
     search: 'Клиника, дарыгер же дарек', cities: 'Шаар', allCities: 'Бардык шаарлар', showAll: 'Бардык клиникаларды көрсөтүү', book: 'Telegram аркылуу жазылуу', bookWeb: 'Telegram’сыз — сайтта жазылуу', more: 'Дарыгерлер, кызматтар жана баалар', map: 'Картада', doctors: 'Дарыгерлер',
     clinic: 'Стоматология', nothing: 'Эч нерсе табылган жок — башка сөз менен издеңиз.', empty: 'Клиникалар жакында ушул жерде болот.',
-    forClinics: 'Клиникалар үчүн', back: 'Артка', login: 'Клиника үчүн кирүү', join: 'Клиниканы туташтыруу',
+    forClinics: 'Клиникалар үчүн', about: 'Tish жөнүндө', back: 'Артка', login: 'Клиника үчүн кирүү', join: 'Клиниканы туташтыруу',
     staff: 'Сиз клиниканын дарыгерисизби же администраторусузбу?', staffLogin: 'CRMге кирүү',
     error: 'Тизме жүктөлгөн жок — бир мүнөттөн кийин жаңыртыңыз.', loading: 'Жүктөлүүдө…',
     inAppTop: 'Instagram’дан ачтыңызбы? Telegram ачылбаса — жогорудагы ⋮ → «Браузерде ачуу» же клиниканын «📲 Telegram’ды ачуу» баскычын басыңыз.', openTg: 'Telegram’ды ачуу',
@@ -82,7 +82,7 @@ export function Directory() {
           ))}
         </>
       )}
-      <footer className="site-footer">{t.forClinics}: <a href="/login">{t.login}</a> · <a href="/join">{t.join}</a></footer>
+      <footer className="site-footer">{t.forClinics}: <a href="/about">{t.about}</a> · <a href="/login">{t.login}</a> · <a href="/join">{t.join}</a></footer>
     </main>
   )
 }
