@@ -110,3 +110,11 @@ test('компьютер: часы врача в шапке колонки, зн
   expect(screen.getAllByText('09:00–18:00').length).toBeGreaterThan(0)
   expect(screen.getByText(/⭐ первый визит · 💬 комментарий · 🧾 долг/)).toBeInTheDocument()
 })
+
+test('компьютер: дата в заголовке «Расписания» — кнопка, открывает календарь', async () => {
+  backend()
+  renderApp()
+  const title = await screen.findByRole('heading', { level: 1 })
+  await userEvent.click(within(title).getByRole('button'))
+  expect(await screen.findByRole('dialog', { name: 'Выбрать дату' })).toBeInTheDocument()
+})

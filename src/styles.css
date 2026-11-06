@@ -2124,3 +2124,9 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .profile-facts dd { margin: 0 0 6px; overflow-wrap: anywhere; }
 .profile-facts dd:last-child { margin-bottom: 0; }
 .schedule-main > .settings-group + .card-block { margin-top: 16px; }
+
+/* Заголовок дня в «Расписании» — кнопка: открывает календарь */
+.day-title-pick { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-align: left; border-radius: 6px; }
+.day-title-pick:hover { color: var(--accent); }
+.day-title-pick:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.day-title-pick .caret { font-size: .6em; color: var(--accent); vertical-align: middle; }
