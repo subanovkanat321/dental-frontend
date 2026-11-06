@@ -179,9 +179,6 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         {debtTotal > 0 && <div className={overdue ? 'tone-bad' : 'tone-wait'}><dt>Долг</dt><dd className="num">{somText(debtTotal)}</dd></div>}
       </dl>
 
-      {/* «Откуда узнал» не указано — видно сразу и выбирается одним нажатием; указано — в «Прочем» */}
-      {patient && patient.sourceId == null && <SourceLine patient={patient} canEdit={Boolean(mine)} />}
-
       <div className="segments tabs" role="tablist" aria-label="Разделы карточки пациента">
         {tabs.map(([key, title]) => (
           <button key={key} type="button" role="tab" aria-selected={shown === key} aria-pressed={shown === key} onClick={() => setTab(key)}>{title}</button>
@@ -232,7 +229,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
               {mine && <button type="button" className="link" onClick={() => setEditing(true)}>Изменить данные пациента</button>}
             </>
           )}
-          {patient && patient.sourceId != null && <SourceLine patient={patient} canEdit={Boolean(mine)} />}
+          {/* «Откуда узнал» — всегда в «Прочем»: в шапке карточки занимал полэкрана */}
+          {patient && <SourceLine patient={patient} canEdit={Boolean(mine)} />}
           {patient && mine && <WaitlistBox patient={patient} me={me} />}
           {patient && <GuardianBox patient={patient} canEdit={Boolean(mine)} />}
           {patient && mine && <FamilyBox patient={patient} me={me} onOpenPatient={onOpenPatient} />}

@@ -78,7 +78,7 @@ test('карточка пациента: изменить место работ�
   expect(saved).toEqual({ fullName: 'Айгуль Т.', phone: '+996 700 333 444', allowDuplicate: false, workplace: 'школа №5', sourceId: 16 })
 })
 
-test('карточка пациента: «откуда узнал» не указано — видно сразу и выбирается одним нажатием', async () => {
+test('карточка пациента: «откуда узнал» — во вкладке «Прочее», не в шапке; выбирается одним нажатием', async () => {
   let saved: Record<string, unknown> | null = null
   const p = { id: 3, fullName: 'Бакыт М.', phone: '996700555666', workplace: 'школа №5' }
   server.use(
@@ -95,13 +95,15 @@ test('карточка пациента: «откуда узнал» не ука
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Бакыт М.' }))
   const panel = screen.getByRole('complementary', { name: 'Карточка пациента' })
+  // В шапке карточки вопроса нет — только во вкладке «Прочее»
+  await within(panel).findByRole('tab', { name: 'Прочее' })
+  expect(within(panel).queryByRole('group', { name: 'Откуда узнал о клинике' })).not.toBeInTheDocument()
+  await user.click(within(panel).getByRole('tab', { name: 'Прочее' }))
   const source = await within(panel).findByRole('group', { name: 'Откуда узнал о клинике' })
   expect(source).toHaveTextContent('Откуда узнал о клинике?')
   await user.click(within(source).getByRole('button', { name: '📱 Instagram' }))
   await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', phone: '+996700555666', workplace: 'школа №5', sourceId: 11 }))
-  // Указано — уходит во вкладку «Прочее»: коротко и «изменить», кнопки-варианты спрятаны
-  await vi.waitFor(() => expect(within(panel).queryByRole('group', { name: 'Откуда узнал о клинике' })).not.toBeInTheDocument())
-  await user.click(within(panel).getByRole('tab', { name: 'Прочее' }))
+  // Указано — коротко и «изменить», кнопки-варианты спрятаны
   expect(await within(panel).findByRole('button', { name: 'изменить' })).toBeInTheDocument()
   expect(within(panel).getByRole('group', { name: 'Откуда узнал о клинике' })).toHaveTextContent('📱 Instagram')
 })
