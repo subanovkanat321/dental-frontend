@@ -6109,6 +6109,15 @@
       "post" : {
         "tags" : [ "password-controller" ],
         "operationId" : "code_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordControllerCodeRequest"
+              }
+            }
+          }
+        },
         "responses" : {
           "200" : {
             "description" : "OK"
@@ -12351,6 +12360,9 @@
           },
           "sms" : {
             "type" : "boolean"
+          },
+          "telegram" : {
+            "type" : "boolean"
           }
         }
       },
@@ -14670,6 +14682,13 @@
       "MyPhoneControllerCodeRequest" : {
         "properties" : {
           "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PasswordControllerCodeRequest" : {
+        "properties" : {
+          "channel" : {
             "type" : "string"
           }
         }
@@ -17335,6 +17354,9 @@
             "type" : "boolean"
           },
           "telegram" : {
+            "type" : "boolean"
+          },
+          "telegramCode" : {
             "type" : "boolean"
           }
         }

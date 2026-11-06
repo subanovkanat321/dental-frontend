@@ -113,14 +113,21 @@ export async function fetchBlob(path: string): Promise<Blob> {
  * Вход на сайт: бот (имя и числовой id — окно входа Telegram.Login.auth), включён ли вход по SMS
  * (smsLogin) и «номер + пароль» (passwordLogin — работает и без SMS). null — не настроено ничего.
  */
-export async function botConfig(): Promise<{ username: string; id: number | null; smsLogin: boolean; passwordLogin: boolean } | null> {
+/**
+ * Настройки страницы входа (/web/config, вне контракта /api). Вход на сайт — только по номеру и паролю;
+ * telegramCode — «Код в Telegram» для первого входа и «Забыли пароль?», smsLogin — «Код по SMS».
+ * null — вход на сайт не настроен (нет токена бота).
+ */
+export type LoginConfig = { username: string; smsLogin: boolean; passwordLogin: boolean; telegramCode: boolean }
+
+export async function botConfig(): Promise<LoginConfig | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
   if (!response.ok) return null
   const body = await response.json().catch(() => null) as
-    { botUsername?: string | null; botId?: number | null; smsLogin?: boolean; passwordLogin?: boolean } | null
-  // Для окна входа хватит id: имя бота (getMe) может временно не прийти, если Telegram не ответил
-  return body?.botUsername || body?.botId || body?.smsLogin || body?.passwordLogin
-    ? { username: body.botUsername ?? '', id: body.botId ?? null, smsLogin: body.smsLogin === true, passwordLogin: body.passwordLogin === true }
+    { botUsername?: string | null; smsLogin?: boolean; passwordLogin?: boolean; telegramCode?: boolean } | null
+  return body?.passwordLogin || body?.smsLogin
+    ? { username: body.botUsername ?? '', smsLogin: body.smsLogin === true, passwordLogin: body.passwordLogin === true,
+        telegramCode: body.telegramCode === true }
     : null
 }
 
@@ -143,12 +150,16 @@ async function webPost<T = void>(path: string, body: unknown): Promise<T | null>
  */
 export type SetupToken = { setupToken: string; temporary: boolean }
 
+/** Куда прислать код: в Telegram (бот сотрудников, бесплатно) или по SMS. */
+export type CodeChannel = 'telegram' | 'sms'
+
 /**
- * Вход без Telegram, шаг 1: прислать SMS-код. Сервер всегда отвечает «ок» — не говорит, есть ли
- * такой сотрудник; 503 — SMS не подключены, 422 — номер не похож на номер. Номер — только в теле.
+ * «Забыли пароль? / Первый вход», шаг 1: прислать код. Сервер всегда отвечает «ок» — не говорит, есть
+ * ли такой сотрудник и привязан ли номер к Telegram; 503 — SMS не подключены, 422 — номер не похож на
+ * номер. Номер — только в теле.
  */
-export async function requestSmsCode(phone: string): Promise<void> {
-  await webPost('/web/login/phone/code', { phone })
+export async function requestLoginCode(phone: string, channel: CodeChannel): Promise<void> {
+  await webPost('/web/login/phone/code', { phone, channel })
 }
 
 /** Шаг 2: номер и код → пропуск «Придумайте пароль» (ещё не вход). Неверный код — 401. */

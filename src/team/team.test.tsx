@@ -448,7 +448,7 @@ test('«Телефон» в «Персонале»: сотруднику с Tele
   renderApp()
   openItem('members')
   const table = await screen.findByRole('table', { name: 'Персонал' })
-  expect(screen.getByText(/По этому номеру можно войти на сайте без Telegram: код из SMS, потом свой пароль/)).toBeInTheDocument()
+  expect(screen.getByText(/По этому номеру вы входите на сайте: номер и пароль. Первый раз или забыли пароль — код в Telegram или по SMS/)).toBeInTheDocument()
   expect(screen.getByText(/сотрудник с Telegram указывает номер для входа сам: Настройки → Изменить профиль/)).toBeInTheDocument()
 
   // Бермет (Telegram): номер виден, но кнопок нет — только подсказка

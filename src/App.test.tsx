@@ -5,34 +5,34 @@ import { http, HttpResponse } from 'msw'
 import { appointment, me, renderApp } from './test/fixtures'
 import { server } from './test/server'
 
-test('не вошли (401) — «Войти через Telegram» (окно входа Telegram, без iframe и eval); вошли — CRM', async () => {
+test('не вошли (401) — вход по номеру и паролю, кнопки «Войти через Telegram» нет; вошли — CRM', async () => {
   let session = false
   let posted: unknown = null
   server.use(
     http.get('*/api/patient/me', () => (session ? HttpResponse.json(me) : HttpResponse.json({ detail: 'Войдите' }, { status: 401 }))),
-    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', botId: 123456 })),
-    http.post('*/web/login', async ({ request }) => {
+    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', smsLogin: false, passwordLogin: true, telegramCode: true })),
+    http.post('*/web/login/phone/password', async ({ request }) => {
       posted = await request.json()
       session = true
       return new HttpResponse(null, { status: 204 })
     }),
     http.get('*/api/appointments', () => HttpResponse.json([])),
   )
-  // Скрипт telegram-widget.js «уже загружен»: Telegram.Login.auth отдаёт подписанные данные входа
-  const auth = vi.fn((_options: unknown, callback: (user: Record<string, unknown> | false) => void) => callback({ id: 111, hash: 'abc' }))
-  window.Telegram = { Login: { auth } }
   window.history.replaceState(null, '', '/login')
+  const user = userEvent.setup()
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Вход для клиники' })).toBeInTheDocument()
-  const button = await screen.findByRole('button', { name: 'Войти через Telegram' })
-  await vi.waitFor(() => expect(button).toBeEnabled())
-  await userEvent.click(button)
-  expect(auth).toHaveBeenCalledWith({ bot_id: 123456, request_access: 'write', lang: 'ru' }, expect.any(Function))
+  expect(screen.queryByRole('button', { name: /Telegram/ })).not.toBeInTheDocument()
+  expect(await screen.findByText(/Нет пароля\? Нажмите «Забыли пароль\? \/ Первый вход» — код придёт в Telegram/)).toBeInTheDocument()
+  await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '0700 000 031')
+  await user.type(screen.getByLabelText('Пароль'), 'Тишина2026')
+  await user.click(screen.getByRole('button', { name: 'Войти' }))
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
-  expect(posted).toEqual({ id: 111, hash: 'abc' })
+  expect(posted).toEqual({ phone: '0700 000 031', password: 'Тишина2026' })
+  // Скрипт окна входа Telegram больше не грузится
+  expect(document.querySelector('script[src*="telegram-widget"]')).toBeNull()
   // Вошли — адрес чистый, без /login
   expect(window.location.pathname).toBe('/')
-  delete window.Telegram
 })
 
 test('расписание: все врачи колонками, нажать на приём — карточка справа, Esc — закрыть', async () => {

@@ -8,13 +8,14 @@ import { shortDate } from '../lib/time'
 import { NewPasswordFields, PasswordInput, ShowPassword } from '../layout/PasswordFields'
 import { Spinner } from '../layout/Loading'
 
-type Mode = 'current' | 'sms'
+type Mode = 'current' | 'code'
 
 /**
- * «Пароль и вход» в «Настройках» — у сотрудника, который входит по номеру телефона, и у сотрудника с
- * Telegram, у которого указан телефон (тогда пароль — для входа по номеру, по желанию).
- * Сменить пароль — по текущему или по коду из SMS (забыли; пароля ещё нет). После смены другие
- * устройства выходят (сервер поднимает версию пароля), этот браузер остаётся.
+ * «Пароль и вход» в «Изменить профиль» — у всех, у кого указан телефон. На сайт теперь входят только по
+ * номеру и паролю, поэтому и сотруднику с Telegram пароль нужен (в самом Telegram — не нужен).
+ * Задать или сменить — по текущему паролю или по коду: в Telegram (бесплатно, у кого номер привязан к
+ * Telegram) или по SMS. После смены другие устройства выходят (сервер поднимает версию пароля), этот
+ * браузер остаётся.
  */
 export function PasswordSection() {
   const client = useQueryClient()
@@ -24,23 +25,23 @@ export function PasswordSection() {
   const [current, setCurrent] = useState('')
   const [shown, setShown] = useState(false)
   const [code, setCode] = useState('')
-  const [sent, setSent] = useState(false)
+  const [sent, setSent] = useState<'telegram' | 'sms' | null>(null)
   const [fresh, setFresh] = useState({ password: '', repeat: '' })
   const [error, setError] = useState('')
 
-  const sendCode = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/me/password/code')),
-    onSuccess: () => setSent(true),
+  const sendCode = useMutation<unknown, ApiError, 'telegram' | 'sms'>({
+    mutationFn: (channel) => unwrap(api.POST('/api/me/password/code', { body: { channel } })),
+    onSuccess: (_r, channel) => setSent(channel),
   })
   const save = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/me/password', {
-      body: mode === 'sms' ? { code, newPassword: fresh.password } : { currentPassword: current, newPassword: fresh.password },
+      body: mode === 'code' ? { code, newPassword: fresh.password } : { currentPassword: current, newPassword: fresh.password },
     })),
     onSuccess: () => {
       setOpen(false)
       setCurrent('')
       setCode('')
-      setSent(false)
+      setSent(null)
       setFresh({ password: '', repeat: '' })
       void client.invalidateQueries({ queryKey: ['me-password'] })
       void notify('Пароль сохранён. На других устройствах нужно войти заново.')
@@ -49,6 +50,8 @@ export function PasswordSection() {
 
   const s = state.data
   const canCurrent = Boolean(s?.passwordSet && !s.temporary)
+  const byTelegram = Boolean(s?.telegramCode)
+  const anyCode = byTelegram || Boolean(s?.sms)
 
   const submit = () => {
     const problem = passwordProblem(fresh.password, fresh.repeat, '')
@@ -56,14 +59,14 @@ export function PasswordSection() {
     if (!problem) save.mutate()
   }
   const start = () => {
-    setMode(canCurrent ? 'current' : 'sms')
+    setMode(canCurrent ? 'current' : 'code')
     setOpen(true)
   }
   const close = () => {
     setOpen(false)
     setCurrent('')
     setCode('')
-    setSent(false)
+    setSent(null)
     setFresh({ password: '', repeat: '' })
     setError('')
     save.reset()
@@ -80,8 +83,8 @@ export function PasswordSection() {
       <div className="card-block">
         <p>{s.passwordSet
           ? s.temporary ? 'Сейчас пароль временный — придумайте свой.' : `Вы входите по номеру и паролю.${s.setAt ? ` Пароль задан ${shortDate(s.setAt)}.` : ''}`
-          : s.telegram ? 'Пароль для входа по номеру ещё не задан — задайте, чтобы входить на сайте и без Telegram.'
-            : 'Пароль ещё не задан — сейчас вы входите по коду из SMS.'}</p>
+          : s.telegram ? 'Пароль ещё не задан. На сайт теперь входят только по номеру и паролю — задайте его (в Telegram пароль не нужен).'
+            : 'Пароль ещё не задан — задайте его по коду.'}</p>
         {!open ? (
           <button type="button" className="btn" onClick={start}>{s.passwordSet ? 'Сменить пароль' : 'Задать пароль'}</button>
         ) : (
@@ -90,19 +93,24 @@ export function PasswordSection() {
               <>
                 <PasswordInput label="Текущий пароль" value={current} onChange={setCurrent} shown={shown} autoComplete="current-password" />
                 <ShowPassword shown={shown} onToggle={() => setShown(!shown)} />
-                {s.sms && <button type="button" className="link" onClick={() => { setMode('sms'); setError(''); save.reset() }}>
-                  Не помню текущий — подтвердить кодом из SMS</button>}
+                {anyCode && <button type="button" className="link" onClick={() => { setMode('code'); setError(''); save.reset() }}>
+                  {byTelegram ? 'Не помню текущий — подтвердить кодом' : 'Не помню текущий — подтвердить кодом из SMS'}</button>}
               </>
             ) : !sent ? (
               <>
-                <p className="hint">{s.sms ? 'Пришлём код на ваш номер — им подтвердите смену пароля.'
-                  : 'Вход по SMS пока не подключён. Попросите администратора клиники задать временный пароль.'}</p>
-                {s.sms && <button type="button" className="btn" disabled={sendCode.isPending} onClick={() => sendCode.mutate()}>
-                  {sendCode.isPending ? <><Spinner />Отправляем…</> : 'Получить код'}</button>}
+                <p className="hint">{byTelegram ? 'Пришлём код — им подтвердите пароль. В Telegram — бесплатно, в чат с ботом клиники.'
+                  : s.sms ? 'Пришлём код на ваш номер — им подтвердите смену пароля.'
+                    : 'Коды по SMS пока не подключены. Попросите администратора клиники задать временный пароль.'}</p>
+                <div className="actions">
+                  {byTelegram && <button type="button" className="btn" disabled={sendCode.isPending} onClick={() => sendCode.mutate('telegram')}>
+                    {sendCode.isPending && sendCode.variables === 'telegram' ? <><Spinner />Отправляем…</> : 'Код в Telegram'}</button>}
+                  {s.sms && <button type="button" className="btn" disabled={sendCode.isPending} onClick={() => sendCode.mutate('sms')}>
+                    {sendCode.isPending && sendCode.variables === 'sms' ? <><Spinner />Отправляем…</> : byTelegram ? 'Код по SMS' : 'Получить код'}</button>}
+                </div>
                 {canCurrent && <button type="button" className="link" onClick={() => { setMode('current'); setError('') }}>Помню текущий пароль</button>}
               </>
             ) : (
-              <label className="field"><span>Код из SMS</span>
+              <label className="field"><span>{sent === 'telegram' ? 'Код из Telegram' : 'Код из SMS'}</span>
                 <input value={code} autoComplete="one-time-code" inputMode="numeric" maxLength={6} placeholder="123456"
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
               </label>

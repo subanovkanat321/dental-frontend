@@ -14,7 +14,7 @@ function backend(session = true) {
   server.use(
     http.get('*/api/patient/me', () => (session ? HttpResponse.json(me) : HttpResponse.json({ detail: 'Войдите' }, { status: 401 }))),
     http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, sms: false, telegram: true })),
-    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', botId: 123456, smsLogin: false, passwordLogin: true })),
+    http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', smsLogin: false, passwordLogin: true, telegramCode: true })),
     http.post('*/web/logout', ({ request }) => {
       calls.push({ path: 'logout', header: request.headers.get('X-Dental-Web') })
       return new HttpResponse(null, { status: 204 })
@@ -57,16 +57,16 @@ test('«Выйти»: сервер гасит сессию, после пере�
 test('Экран входа после выхода: подсказка один раз, без личных данных в адресе', async () => {
   backend(false)
   sessionStorage.setItem(LOGGED_OUT, '1')
-  window.Telegram = { Login: { auth: vi.fn() } }
-  window.history.replaceState(null, '', '/login')
+    window.history.replaceState(null, '', '/login')
   const user = userEvent.setup()
   const { unmount } = renderApp()
 
   const hint = await screen.findByRole('status')
   expect(hint).toHaveTextContent('Вы вышли из Tish')
-  expect(hint).toHaveTextContent('Настройки → Устройства → Вход на сайты')
-  expect(hint).toHaveTextContent('tish.kg')
-  expect(hint).toHaveTextContent('по номеру и паролю или в режиме инкогнито')
+  expect(hint).toHaveTextContent('Не сохраняйте пароль в браузере')
+  expect(hint).toHaveTextContent('в режиме инкогнито')
+  // Про «Telegram помнит браузер» больше ни слова: входа через Telegram на сайте нет
+  expect(hint).not.toHaveTextContent('Telegram')
   expect(window.location.search).toBe('')
   // Флаг стёрт сразу: обновили страницу — подсказки нет
   expect(sessionStorage.getItem(LOGGED_OUT)).toBeNull()
@@ -81,8 +81,7 @@ test('Экран входа после выхода: подсказка один
 
 test('Обычный экран входа (не после выхода) — без подсказки', async () => {
   backend(false)
-  window.Telegram = { Login: { auth: vi.fn() } }
-  window.history.replaceState(null, '', '/login')
+    window.history.replaceState(null, '', '/login')
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Вход для клиники' })).toBeInTheDocument()
   expect(screen.queryByText(/Вы вышли из Tish/)).not.toBeInTheDocument()

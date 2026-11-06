@@ -51,7 +51,7 @@ test('«Мой профиль»: номер для входа — только �
   renderApp()
   const section = await screen.findByRole('region', { name: 'Телефон' })
   expect(await within(section).findByText('Телефон не указан.')).toBeInTheDocument()
-  expect(section).toHaveTextContent('По этому номеру можно войти на сайте без Telegram: код из SMS, потом свой пароль.')
+  expect(section).toHaveTextContent('По этому номеру вы входите на сайте: номер и пароль. Первый раз или забыли пароль — код в Telegram или по SMS.')
 
   await user.click(within(section).getByRole('button', { name: 'Указать телефон' }))
   const form = within(section).getByRole('form', { name: 'Мой телефон' })
@@ -99,4 +99,42 @@ test('«Мой профиль»: без Telegram номер — единстве
   expect(section).toHaveTextContent('Без Telegram это ваш единственный вход')
   expect(within(section).getByRole('button', { name: 'Изменить' })).toBeInTheDocument()
   expect(within(section).queryByRole('button', { name: 'Убрать номер' })).not.toBeInTheDocument()
+})
+
+test('«Подтвердить через Telegram» в Mini App: Telegram отдаёт номер боту — номер появляется без SMS', async () => {
+  const { codes } = backend({ phoneOnly: false, sms: true, telegram: true })
+  let requested = 0
+  window.Telegram = { WebApp: {
+    initData: 'signed', ready() {}, expand() {}, isVersionAtLeast: () => true,
+    requestContact(callback: (shared: boolean) => void) {
+      requested++
+      // Бот получил контакт и привязал номер (StaffPhoneShare на сервере)
+      server.use(http.get('*/api/me/phone', () => HttpResponse.json({ phone: '+996700000052', phoneOnly: false, sms: true, telegram: true })))
+      callback(true)
+    },
+  } } as unknown as typeof window.Telegram
+  const user = userEvent.setup()
+  renderApp()
+  const section = await screen.findByRole('region', { name: 'Телефон' })
+  await user.click(await within(section).findByRole('button', { name: 'Подтвердить через Telegram' }))
+  expect(await within(section).findByText('+996 700 000 052', {}, { timeout: 5000 })).toBeInTheDocument()
+  expect(requested).toBe(1)
+  expect(codes).toEqual([])
+  delete window.Telegram
+})
+
+test('«Подтвердить через Telegram» на сайте — ссылка на бота с кнопкой «Поделиться номером»', async () => {
+  backend({ phoneOnly: false, sms: false, telegram: true })
+  server.use(http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', smsLogin: false, passwordLogin: true, telegramCode: true })))
+  const open = vi.spyOn(window, 'open').mockReturnValue(null)
+  const user = userEvent.setup()
+  renderApp()
+  const section = await screen.findByRole('region', { name: 'Телефон' })
+  expect(within(section).queryByText(/SMS не подключены/)).not.toBeInTheDocument()
+  const button = await within(section).findByRole('button', { name: 'Подтвердить через Telegram' })
+  await vi.waitFor(async () => {
+    await user.click(button)
+    expect(open).toHaveBeenCalledWith('https://t.me/tish_test_bot?start=phone', '_blank', 'noopener,noreferrer')
+  })
+  expect(within(section).getByRole('status')).toHaveTextContent('«📱 Поделиться номером»')
 })

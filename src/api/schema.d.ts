@@ -5509,6 +5509,7 @@ export interface components {
             phone?: string;
             phoneOnly?: boolean;
             sms?: boolean;
+            telegram?: boolean;
         };
         PasswordControllerPasswordChange: {
             currentPassword?: string;
@@ -6477,6 +6478,9 @@ export interface components {
         };
         MyPhoneControllerCodeRequest: {
             phone?: string;
+        };
+        PasswordControllerCodeRequest: {
+            channel?: string;
         };
         FamilyMoneyControllerPay: {
             /** Format: int32 */
@@ -7532,6 +7536,7 @@ export interface components {
             setAt?: string;
             sms?: boolean;
             telegram?: boolean;
+            telegramCode?: boolean;
         };
         NetMonthMine: {
             month?: string;
@@ -12903,7 +12908,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PasswordControllerCodeRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

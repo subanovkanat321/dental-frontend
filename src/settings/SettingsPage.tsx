@@ -12,7 +12,6 @@ import type { TeamTab } from '../team/TeamPage'
 import { isAssistant, seesAllMoney } from '../lib/roles'
 import { InstallApp } from '../pwa/InstallApp'
 import { Notifications } from '../pwa/Notifications'
-import { PasswordSection } from './PasswordSection'
 import { Loading } from '../layout/Loading'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
@@ -217,8 +216,6 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
       <Appearance />
       <InstallApp />
       <Notifications />
-      {/* Пароль — только у входа по номеру (на сайте; в Telegram такого входа нет) */}
-      {!telegram() && <PasswordSection />}
       <LogoutSection />
     </div>
   )

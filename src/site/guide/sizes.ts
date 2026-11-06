@@ -54,7 +54,7 @@ export const SIZES: Record<string, [number, number]> = {
   'uslugi.webp': [1400, 1069],
   'uvedomleniya.webp': [1212, 147],
   'vernut.webp': [1236, 357],
-  'vhod.webp': [488, 534],
+  'vhod.webp': [488, 794],
   'voprosy.webp': [1212, 640],
   'vrach-bez-vhoda.webp': [374, 400],
   'vrach-prava.webp': [374, 345],
