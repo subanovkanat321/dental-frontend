@@ -76,7 +76,7 @@ function Screens() {
   // tish.kg/app — «Скачать Tish»: без входа, до проверки сессии
   if (isDownloadPath()) return <DownloadPage />
   // 3D-атлас (#/atlas, /atlas) — без входа: на экране нет данных пациентов, его можно открыть на ТВ
-  if (atlas) return <ErrorBoundary><Suspense fallback={<AtlasBoot />}><AtlasPage route={atlas} onClose={closeAtlas} /></Suspense></ErrorBoundary>
+  if (atlas) return <ErrorBoundary><Suspense fallback={<AtlasBoot />}><AtlasPage route={atlas} onClose={closeAtlas} byUrl /></Suspense></ErrorBoundary>
   if (me.isPending) {
     return <Loading className="screen" />
   }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 
+import { useBack } from '../lib/back'
 import type { Lang } from './catalog'
 import { ICONS, type IconName } from './icons.gen'
 import { UI, type ArtFn, type Photo, type Slide, type Topic } from './topics'
@@ -29,6 +30,8 @@ export function Presentation({ topic, lang, onLang, onClose, endActions, brand, 
   const last = slides.length - 1
   const go = useCallback((to: number) => setIndex(Math.max(0, Math.min(last, to))), [last])
   const root = useRef<HTMLDivElement>(null)
+  // Поверх CRM — слой: «назад» телефона и стрелка Telegram закрывают презентацию
+  useBack(overlay && onClose ? onClose : null)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

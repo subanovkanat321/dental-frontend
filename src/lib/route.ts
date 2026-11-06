@@ -27,14 +27,34 @@ export function settingsItem(): string | null {
   return name === 'settings' && item ? item : null
 }
 
-/** Открыть пункт «Настроек» (или их главную) — отдельной записью в истории: «Назад» вернёт. */
+/** Запись истории — пункт, открытый из списка «Настроек»: «‹ Настройки» — это шаг назад по ней. */
+type FromSettings = { tishFromSettings?: boolean }
+
+function fromSettingsList(): boolean {
+  return Boolean((window.history.state as FromSettings | null)?.tishFromSettings)
+}
+
+/** Открыли из главной «Настроек» — пометить новую запись (тот же адрес, только state). */
+function go(hash: string): void {
+  const fromList = window.location.hash.replace(/^#\/?/, '') === 'settings'
+  window.location.hash = hash
+  if (fromList) window.history.replaceState({ ...(window.history.state as object | null), tishFromSettings: true }, '')
+}
+
+/**
+ * Открыть пункт «Настроек» — отдельной записью в истории: «Назад» вернёт. null — назад в список:
+ * пришли из него — шагом назад по истории (иначе «Назад» телефона потом снова открыл бы пункт),
+ * по ссылке (бот, закладка) — новой записью.
+ */
 export function openSettings(item: string | null): void {
-  window.location.hash = item ? `/settings/${item}` : '/settings'
+  if (item == null && fromSettingsList()) window.history.back()
+  else if (item == null) window.location.hash = '/settings'
+  else go(`/settings/${item}`)
 }
 
 /** Перейти в раздел меню (из пункта «Настроек»-ссылки). */
 export function openSection(page: Page): void {
-  window.location.hash = `/${page}`
+  go(`/${page}`)
 }
 
 /**

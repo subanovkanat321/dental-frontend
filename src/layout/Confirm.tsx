@@ -1,12 +1,15 @@
 import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 
+import { useBack } from '../lib/back'
 import { pending as current, subscribe } from '../lib/confirm'
 
 /** Окно подтверждения для `ask` (lib/confirm): компьютер — по центру, телефон — лист снизу. */
 export function ConfirmHost() {
   const pending = useSyncExternalStore(subscribe, current)
   const okRef = useRef<HTMLButtonElement>(null)
+  // «Назад» телефона при открытом вопросе — как «Отмена»
+  useBack(pending ? () => pending.resolve(false) : null)
   useEffect(() => {
     if (!pending) return
     const back = document.activeElement as HTMLElement | null

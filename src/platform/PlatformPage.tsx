@@ -33,7 +33,7 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
   const [panel, setPanel] = useState(false)
   // Сотрудник клиники на телефоне попадает сюда из «Настроек» — стрелка Telegram ведёт обратно
   const fromSettings = Boolean(me.doctor) && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
-  useBack(fromSettings ? () => openSettings(null) : null)
+  useBack(fromSettings ? () => openSettings(null) : null, { url: true })
   const header = (
     <header ref={stickyHead} className="toolbar sticky-head">
       {fromSettings && <button type="button" className="btn ghost back" onClick={() => openSettings(null)}>‹ Настройки</button>}

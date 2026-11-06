@@ -9,8 +9,9 @@ import type { AtlasRoute } from './route'
  * в Telegram его нет — там атлас просто занимает всё окно (оверлей), а «назад» Telegram его закрывает.
  * Без персональных данных: ни имени, ни карты пациента на экране нет.
  */
-export function AtlasPage({ route, onClose }: { route: AtlasRoute; onClose: () => void }) {
-  useBack(onClose)
+/** @param byUrl атлас открыт адресом #/atlas: шаг «назад» уже в истории браузера */
+export function AtlasPage({ route, onClose, byUrl = false }: { route: AtlasRoute; onClose: () => void; byUrl?: boolean }) {
+  useBack(onClose, { url: byUrl })
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
