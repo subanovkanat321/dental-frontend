@@ -4,13 +4,15 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
-import { ask } from '../lib/confirm'
+import { ask, notify } from '../lib/confirm'
 import { openSettings } from '../lib/route'
 import { DoctorPanel } from '../team/DoctorPanel'
 import { PHONE_HINT } from '../team/PhoneParts'
 import { phoneText } from '../team/texts'
 import { SubHeader } from './SubHeader'
 import { Loading, Spinner } from '../layout/Loading'
+import { NewPasswordFields } from '../layout/PasswordFields'
+import { passwordProblem } from '../lib/password'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
@@ -72,6 +74,9 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
   const [value, setValue] = useState('')
   const [sentTo, setSentTo] = useState('')
   const [code, setCode] = useState('')
+  // Пароль для входа по номеру — сразу при подтверждении, тем же кодом (вторая SMS не нужна)
+  const [fresh, setFresh] = useState({ password: '', repeat: '' })
+  const [problem, setProblem] = useState('')
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['me-phone'] })
     void client.invalidateQueries({ queryKey: ['me-password'] })
@@ -81,8 +86,11 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
     onSuccess: (_r, p) => { setSentTo(p); setCode('') },
   })
   const confirm = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/me/phone', { body: { phone: sentTo, code } })),
-    onSuccess: refresh,
+    mutationFn: () => unwrap(api.PUT('/api/me/phone', { body: { phone: sentTo, code, password: fresh.password } })),
+    onSuccess: () => {
+      refresh()
+      void notify('Номер подтверждён, пароль задан. Теперь можно входить на сайте по номеру и паролю.')
+    },
   })
   const remove = useMutation<unknown, ApiError>({ mutationFn: () => unwrap(api.DELETE('/api/me/phone')), onSuccess: refresh })
   const close = () => {
@@ -124,13 +132,21 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
           </div>
         </form>
       ) : (
-        <form className="form narrow" aria-label="Подтвердить номер" onSubmit={(e) => { e.preventDefault(); confirm.mutate() }}>
+        <form className="form narrow" aria-label="Подтвердить номер" onSubmit={(e) => {
+          e.preventDefault()
+          const p = passwordProblem(fresh.password, fresh.repeat, sentTo.replace(/\D/g, ''))
+          setProblem(p)
+          if (!p) confirm.mutate()
+        }}>
           <p className="hint">Код отправлен на {phoneText(sentTo.replace(/\s/g, ''))}. Действует 5 минут.</p>
           <label className="field"><span>Код из SMS</span>
             <input value={code} autoComplete="one-time-code" inputMode="numeric" maxLength={6} placeholder="123456"
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
           </label>
-          {error && <p className="error" role="alert">{error.fieldErrors.code ?? error.fieldErrors.phone ?? error.message}</p>}
+          <p className="hint">И сразу придумайте пароль — им будете входить на сайте по номеру, без Telegram.</p>
+          <NewPasswordFields password={fresh.password} repeat={fresh.repeat} phone={sentTo.replace(/\D/g, '')} label="Пароль для входа по номеру"
+            onPassword={(v) => setFresh({ ...fresh, password: v })} onRepeat={(v) => setFresh({ ...fresh, repeat: v })} />
+          {(problem || error) && <p className="error" role="alert">{problem || (error && (error.fieldErrors.code ?? error.fieldErrors.password ?? error.fieldErrors.phone ?? error.message))}</p>}
           <div className="actions">
             <button type="submit" className="btn primary" disabled={confirm.isPending || code.length !== 6}>
               {confirm.isPending ? <><Spinner />Проверяем…</> : 'Подтвердить'}</button>

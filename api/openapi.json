@@ -12324,6 +12324,9 @@
           },
           "code" : {
             "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
           }
         }
       },

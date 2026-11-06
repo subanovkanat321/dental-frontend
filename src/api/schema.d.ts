@@ -5487,6 +5487,7 @@ export interface components {
         MyPhoneControllerPhoneConfirm: {
             phone?: string;
             code?: string;
+            password?: string;
         };
         MyPhoneControllerMyPhone: {
             phone?: string;

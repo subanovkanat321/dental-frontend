@@ -61,6 +61,9 @@ test('«Мой профиль»: номер для входа — только �
   expect(codes).toEqual([{ phone: '+996 700000051' }])
   expect(confirm).toHaveTextContent('Код отправлен на +996 700 000 051')
 
+  // Пароль для входа по номеру задаётся тут же, тем же кодом
+  await user.type(within(confirm).getByLabelText('Пароль для входа по номеру'), 'Тишина2026')
+  await user.type(within(confirm).getByLabelText('Повторите пароль'), 'Тишина2026')
   // Неверный код — номер не привязан, ошибка под полем
   await user.type(within(confirm).getByRole('textbox', { name: 'Код из SMS' }), '000000')
   await user.click(within(confirm).getByRole('button', { name: 'Подтвердить' }))
@@ -71,7 +74,8 @@ test('«Мой профиль»: номер для входа — только �
   await user.type(within(confirm).getByRole('textbox', { name: 'Код из SMS' }), '123456')
   await user.click(within(confirm).getByRole('button', { name: 'Подтвердить' }))
   expect(await within(section).findByText('+996 700 000 051')).toBeInTheDocument()
-  expect(confirms).toEqual([{ phone: '+996 700000051', code: '000000' }, { phone: '+996 700000051', code: '123456' }])
+  expect(confirms).toEqual([{ phone: '+996 700000051', code: '000000', password: 'Тишина2026' },
+    { phone: '+996 700000051', code: '123456', password: 'Тишина2026' }])
 
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   await user.click(within(section).getByRole('button', { name: 'Убрать номер' }))
