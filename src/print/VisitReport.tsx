@@ -166,7 +166,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
         </PrintSheet>
       )}
       {memoPrinting && m?.memoId != null && (
-        <MemoSheet appointment={a} title={m.title!} body={m.body!} onClose={() => setMemoPrinting(false)} />
+        <MemoSheet appointment={a} memo={m} onClose={() => setMemoPrinting(false)} />
       )}
     </section>
   )

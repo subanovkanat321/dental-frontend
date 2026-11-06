@@ -101,3 +101,63 @@ test('карточка услуги: «Памятка после процеду�
   await choose(select, 'Без памятки')
   await vi.waitFor(() => expect(sent).toContainEqual({ link: 5, memoId: null }))
 })
+
+test('вкладка «Кыргызский»: перевод Tish, «✨ Перевести с ИИ» кладёт перевод в поля, сохраняется с памяткой', async () => {
+  const sent = backend()
+  const asked: unknown[] = []
+  server.use(
+    http.get('*/api/care-memos', () => HttpResponse.json([
+      { id: 1, title: 'После удаления зуба', body: '• Держите тампон.', active: true, standard: true, serviceIds: [5],
+        titleKy: 'Тиш жулдургандан кийин', bodyKy: '• Тампонду кармаңыз.', kyStandard: true },
+      { id: 2, title: 'После отбеливания', body: '• Белая диета 48 часов.', active: true, standard: false, serviceIds: [] },
+    ] satisfies Memo[])),
+    http.get('*/api/clinic/visit-report-ai', () => HttpResponse.json({ available: true, on: true })),
+    http.post('*/api/care-memos/translate', async ({ request }) => {
+      asked.push(await request.json())
+      return HttpResponse.json({ title: 'Агартуудан кийин', body: '• 48 саат «ак диета».' } satisfies Schemas['MemoTranslationsTranslation'])
+    }),
+  )
+  window.location.hash = '/settings/memos'
+  renderApp()
+  const list = await screen.findByRole('list', { name: 'Памятки' })
+
+  // Стандартная нетронутая — перевод Tish уже в полях
+  await userEvent.click(within(list).getByRole('button', { name: '📋 После удаления зуба' }))
+  let panel = screen.getByRole('complementary', { name: 'Памятка' })
+  await userEvent.click(within(panel).getByRole('button', { name: 'Кыргызский' }))
+  expect(within(panel).getByLabelText('Название по-кыргызски')).toHaveValue('Тиш жулдургандан кийин')
+  expect(within(panel).getByLabelText('Текст по-кыргызски')).toHaveValue('• Тампонду кармаңыз.')
+  expect(panel).toHaveTextContent('Перевод Tish стандартной памятки')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }))
+
+  // Своя без перевода: пусто — уйдёт русский; ИИ переводит русский текст из редактора
+  await userEvent.click(within(list).getByRole('button', { name: '📋 После отбеливания' }))
+  panel = screen.getByRole('complementary', { name: 'Памятка' })
+  await userEvent.type(within(panel).getByLabelText('Текст для пациента'), ' Без кофе.')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Кыргызский' }))
+  expect(within(panel).getByLabelText('Текст по-кыргызски')).toHaveValue('')
+  expect(panel).toHaveTextContent('будет отправлен русский текст')
+  await userEvent.click(within(panel).getByRole('button', { name: '✨ Перевести с ИИ' }))
+  expect(await within(panel).findByDisplayValue('Агартуудан кийин')).toBeInTheDocument()
+  expect(within(panel).getByLabelText('Текст по-кыргызски')).toHaveValue('• 48 саат «ак диета».')
+  expect(asked).toEqual([{ title: 'После отбеливания', body: '• Белая диета 48 часов. Без кофе.' }])
+  // Сам перевод не сохранился — сохраняет сотрудник
+  expect(sent).toEqual([])
+  await userEvent.click(within(panel).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(panel).findByText('Памятка сохранена')).toBeInTheDocument()
+  expect(sent).toContainEqual({ id: 2, title: 'После отбеливания', body: '• Белая диета 48 часов. Без кофе.', active: true,
+    titleKy: 'Агартуудан кийин', bodyKy: '• 48 саат «ак диета».' })
+})
+
+test('ИИ клиники выключен — кнопки «Перевести с ИИ» нет, подсказка, где включить', async () => {
+  backend()
+  server.use(http.get('*/api/clinic/visit-report-ai', () => HttpResponse.json({ available: true, on: false })))
+  window.location.hash = '/settings/memos'
+  renderApp()
+  const list = await screen.findByRole('list', { name: 'Памятки' })
+  await userEvent.click(within(list).getByRole('button', { name: '📋 После отбеливания' }))
+  const panel = screen.getByRole('complementary', { name: 'Памятка' })
+  await userEvent.click(within(panel).getByRole('button', { name: 'Кыргызский' }))
+  expect(await within(panel).findByText(/когда администратор включит ИИ клиники/)).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: '✨ Перевести с ИИ' })).not.toBeInTheDocument()
+})
