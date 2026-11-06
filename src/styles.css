@@ -1655,8 +1655,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .panel.panel-full { inset: 0; transform: none; width: auto; top: 0; bottom: 0; left: 0; }
 }
 /* Свёрнутое меню слева (компьютер): полоса иконок с подсказками, как у привычных клиникам программ */
-.sidebar-toggle { margin-top: auto; color: var(--hint); font-size: .88rem; }
-.sidebar-toggle + .link-out { margin-top: 0; }
+.sidebar-toggle { margin-top: 8px; color: var(--hint); font-size: .88rem; }
 .sidebar-toggle-ico { display: inline-grid; place-items: center; width: 20px; font-size: 1.1rem; line-height: 1; }
 @media (min-width: 761px) {
   .shell.narrow { grid-template-columns: 64px 1fr; }
