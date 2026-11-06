@@ -4915,6 +4915,24 @@
         }
       }
     },
+    "/api/platform/content/reels" : {
+      "post" : {
+        "tags" : [ "content-controller" ],
+        "operationId" : "addReels",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentPostsReelsAdded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/content/import" : {
       "post" : {
         "tags" : [ "content-controller" ],
@@ -12299,6 +12317,10 @@
           },
           "note" : {
             "type" : "string"
+          },
+          "time" : {
+            "type" : "string",
+            "format" : "time-local"
           }
         }
       },
@@ -12348,6 +12370,25 @@
           },
           "instagramUrl" : {
             "type" : "string"
+          },
+          "publishTime" : {
+            "type" : "string",
+            "format" : "time-local"
+          },
+          "video" : {
+            "type" : "string"
+          },
+          "cover" : {
+            "type" : "string"
+          },
+          "videoUrl" : {
+            "type" : "string"
+          },
+          "coverUrl" : {
+            "type" : "string"
+          },
+          "instagramPublishing" : {
+            "type" : "boolean"
           }
         }
       },
@@ -14723,6 +14764,32 @@
         "properties" : {
           "fullName" : {
             "type" : "string"
+          }
+        }
+      },
+      "ContentPostsReelsAdded" : {
+        "properties" : {
+          "added" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "already" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "missing" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "time" : {
+            "type" : "string",
+            "format" : "time-local"
           }
         }
       },

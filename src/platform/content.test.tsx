@@ -123,7 +123,7 @@ test('«＋ Добавить пост»: картинки по строкам, �
   const user = await openTab()
   await user.click(await screen.findByRole('button', { name: '＋ Добавить пост' }))
   const form = screen.getByRole('form', { name: 'Новый пост' })
-  await choose(within(form).getByRole('combobox', { name: 'Тип' }), 'Reels')
+  await choose(within(form).getByRole('combobox', { name: 'Тип' }), 'Рилс')
   await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Утро в клинике')
   await user.type(within(form).getByRole('textbox', { name: /Картинки/ }), 'https://x.example/a.png')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
@@ -206,4 +206,103 @@ test('менеджеру вкладки «Контент» нет', async () => 
   renderApp()
   expect(await screen.findByRole('tab', { name: 'Клиники' })).toBeInTheDocument()
   expect(screen.queryByRole('tab', { name: 'Контент' })).not.toBeInTheDocument()
+})
+
+test('рилс в плане: плеер с обложкой, время; публикация — в фоне (202), «Публикуется в Instagram»', async () => {
+  const video = '02-chto-dumaet-stomatolog/02-chto-dumaet-stomatolog.mp4'
+  let posts = [
+    post(7, { kind: 'REELS', title: 'Что думает стоматолог', caption: 'POV #tish', publishTime: '19:30:00', video,
+      videoUrl: `/web/materials/reel/${video}?exp=1&sig=a`, coverUrl: '/web/materials/reel/02-chto-dumaet-stomatolog/cover.png?exp=1&sig=b' }),
+    post(8, { kind: 'REELS', title: 'Пропал', video: '05-x/05-x.mp4' }),
+  ]
+  const published: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json(posts)),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
+    http.post('*/api/platform/content/:id/publish', ({ params }) => {
+      published.push(String(params.id))
+      posts = posts.map((p) => (p.id === 7 ? { ...p, instagramPublishing: true } : p))
+      return HttpResponse.json(posts[0]!, { status: 202 })
+    }),
+  )
+  const user = await openTab()
+  const card = await screen.findByRole('article', { name: 'Что думает стоматолог' })
+  expect(card).toHaveTextContent('Рилс')
+  expect(card).toHaveTextContent('· 19:30')
+  const player = within(card).getByLabelText('Рилс: Что думает стоматолог')
+  expect(player.tagName).toBe('VIDEO')
+  expect(player).toHaveAttribute('src', `/web/materials/reel/${video}?exp=1&sig=a`)
+  expect(player).toHaveAttribute('poster', '/web/materials/reel/02-chto-dumaet-stomatolog/cover.png?exp=1&sig=b')
+  expect(player).toHaveAttribute('preload', 'none')
+  // Файла нет на сервере — понятная подсказка, публиковать нечего
+  const lost = screen.getByRole('article', { name: 'Пропал' })
+  expect(lost).toHaveTextContent('Видео рилса нет на сервере (05-x/05-x.mp4)')
+
+  await user.click(within(card).getByRole('button', { name: 'Опубликовать в Instagram' }))
+  const dialog = await screen.findByRole('alertdialog')
+  expect(dialog).toHaveTextContent('Опубликовать рилс «Что думает стоматолог» в Instagram?')
+  expect(dialog).toHaveTextContent('итог придёт в Telegram')
+  await user.click(within(dialog).getByRole('button', { name: 'Опубликовать' }))
+  expect(await within(card).findByText('Публикуется в Instagram')).toBeInTheDocument()
+  expect(within(card).queryByRole('button', { name: 'Опубликовать в Instagram' })).not.toBeInTheDocument()
+  expect(published).toEqual(['7'])
+})
+
+test('«Добавить рилсы в план»: после подтверждения — запрос и итог; повтор — «все уже в плане»', async () => {
+  let calls = 0
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json([])),
+    http.post('*/api/platform/content/reels', () => {
+      calls++
+      return HttpResponse.json((calls === 1
+        ? { added: 6, already: 0, missing: [], from: today, time: '19:30:00' }
+        : { added: 0, already: 6, missing: [], time: '19:30:00' }) satisfies Schemas['ContentPostsReelsAdded'])
+    }),
+  )
+  const user = await openTab()
+  const button = await screen.findByRole('button', { name: 'Добавить рилсы в план (6 шт., по одному в день)' })
+  await user.click(button)
+  const dialog = await screen.findByRole('alertdialog')
+  expect(dialog).toHaveTextContent('по одному в день в 19:30')
+  await user.click(within(dialog).getByRole('button', { name: 'Отмена' }))
+  expect(calls).toBe(0)
+
+  await user.click(button)
+  await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Добавить' }))
+  expect(await screen.findByText(/^Рилсы добавлены: 6, по одному в день с .+ в 19:30$/)).toBeInTheDocument()
+
+  await user.click(button)
+  await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Добавить' }))
+  expect(await screen.findByText('Новых рилсов нет — все уже в плане')).toBeInTheDocument()
+  expect(calls).toBe(2)
+})
+
+test('изменить рилс: время и подпись уходят на сервер, видео не меняется', async () => {
+  let sent: Schemas['ContentPostsDraft'] | null = null
+  const reel = post(7, { kind: 'REELS', title: 'Миф или правда', caption: 'Старая', publishTime: '19:30:00', video: '04-m/04-m.mp4' })
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json([reel])),
+    http.put('*/api/platform/content/:id', async ({ request }) => {
+      sent = (await request.json()) as Schemas['ContentPostsDraft']
+      return HttpResponse.json(reel)
+    }),
+  )
+  const user = await openTab()
+  const card = await screen.findByRole('article', { name: 'Миф или правда' })
+  await user.click(within(card).getByRole('button', { name: 'Изменить' }))
+  const form = screen.getByRole('form', { name: 'Изменить пост' })
+  const time = within(form).getByLabelText(/Время публикации/)
+  expect(time).toHaveValue('19:30')
+  expect(form).toHaveTextContent('Видео рилса: 04-m/04-m.mp4')
+  await user.clear(time)
+  await user.type(time, '18:15')
+  const caption = within(form).getByRole('textbox', { name: /Текст поста/ })
+  await user.clear(caption)
+  await user.type(caption, 'Новая подпись')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  await vi.waitFor(() => expect(sent).not.toBeNull())
+  expect(sent).toMatchObject({ date: today, kind: 'REELS', title: 'Миф или правда', caption: 'Новая подпись', time: '18:15' })
 })
