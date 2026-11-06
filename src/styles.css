@@ -772,6 +772,27 @@ button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family:
 .day-list .row:has(.row-error) { flex-wrap: wrap; }
 .day-list .row:has(.row-error) .row-button { flex-basis: 0; }
 .row-error { flex-basis: 100%; margin: 0 10px 8px; font-size: .85rem; }
+/* Свайп по строке приёма (телефон, schedule/useRowSwipe.ts): строка (.row-slide) едет за пальцем,
+   под ней подложка — вправо зелёная «Напомнить», влево синяя «Состоялся». Без свайпов .row-slide не мешает раскладке */
+.row-slide { display: contents; }
+.day-list .row.swipe { position: relative; overflow: hidden; touch-action: pan-y; }
+.day-list .row.swipe > .row-slide { position: relative; z-index: 1; flex: 1 1 0; min-width: 0; display: flex; align-items: stretch; gap: 6px;
+  border-radius: inherit; background: inherit; transform: translateX(var(--swipe-x, 0px)); transition: transform .18s ease-out; }
+.day-list .row.swipe.swiping > .row-slide { transition: none; }
+.swipe-under { position: absolute; inset: 0; display: none; align-items: center; padding: 0 16px; font-weight: 700; }
+.swipe-right { justify-content: flex-start; background: var(--ok-bg); color: var(--ok-ink); }
+.swipe-left { justify-content: flex-end; background: var(--req-bg); color: var(--req-ink); }
+.row[data-swipe=right] > .swipe-right, .row[data-swipe=left] > .swipe-left { display: flex; }
+.row[data-swipe-armed] > .swipe-under { font-size: 1.05rem; }
+.day-list .row:has(.row-undo) { flex-wrap: wrap; }
+.row-undo { flex-basis: 100%; margin: 0 8px 8px; }
+.swipe-hint { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 6px; padding: 4px 4px 4px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .88rem; }
+@media (prefers-reduced-motion: reduce) {
+  /* Строка не едет; пройден порог — рамка цвета действия */
+  .day-list .row.swipe > .row-slide { transition: none; transform: none; }
+  .row[data-swipe=right][data-swipe-armed] { box-shadow: inset 0 0 0 2px var(--ok-ink); }
+  .row[data-swipe=left][data-swipe-armed] { box-shadow: inset 0 0 0 2px var(--req-ink); }
+}
 /* Карточка приёма: «Вернуть» после неявки или отмены, оценка, отзыв */
 .undo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
 .rating { margin: 0; color: var(--wait-ink); letter-spacing: 2px; }
