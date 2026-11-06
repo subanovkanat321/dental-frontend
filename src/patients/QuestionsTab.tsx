@@ -30,6 +30,16 @@ function who(q: Question): string {
 }
 
 /**
+ * Пометка ИИ-администратора бота: «🤖 Ответил ИИ» — ответил сам; «Передано администратору» — ИИ передал
+ * вопрос (или пациент попросил человека) и вопрос ждёт сотрудника. null — ИИ не участвовал.
+ */
+function aiMark(q: Question): string | null {
+  if (q.aiOutcome === 'ANSWERED') return '🤖 Ответил ИИ'
+  if (q.aiOutcome === 'ESCALATED' || q.aiOutcome === 'HANDOFF') return 'Передано администратору'
+  return null
+}
+
+/**
  * «Пациенты → Вопросы»: что пациенты написали боту (не запись и не отзыв). Сервер показывает только
  * тех, кого сотрудник видит: регистратура и админ — всех, врач при «независимых врачах» — своих.
  */
@@ -45,6 +55,9 @@ export function QuestionsTab({ selected, onOpen }: { selected: number | null; on
       </div>
       {list.isPending && <Loading />}
       {list.error && <p className="error">{list.error.message}</p>}
+      {list.isSuccess && list.data.botAi && (
+        <p className="hint small">🤖 В боте пациентам сначала отвечает ИИ-помощник — его ответы в «Отвеченных» с пометкой «Ответил ИИ».</p>
+      )}
       {list.isSuccess && !list.data.questions?.length && (
         done
           ? <EmptyState title="Отвеченных вопросов пока нет" />
@@ -59,6 +72,7 @@ export function QuestionsTab({ selected, onOpen }: { selected: number | null; on
                 <td>
                   <button type="button" className="row-link" onClick={() => onOpen(q.id!)}>{who(q)}</button>
                   {q.status === 'CLOSED' && <span className="hint small"> · без ответа</span>}
+                  {aiMark(q) && <span className="hint small"> · {aiMark(q)}</span>}
                 </td>
                 <td className="nowrap">{shortDate(q.createdAt!, true)}</td>
                 <td className="question-preview">{q.text}</td>
@@ -132,7 +146,27 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
           </p>
           {q.patientId == null && <p className="hint small">Человек написал боту впервые — его ещё нет в базе клиники.</p>}
           <p className="question-text">{q.text}</p>
-          {q.status === 'ANSWERED' && (
+          {q.aiOutcome === 'ANSWERED' && (
+            <section aria-label="Ответ ИИ">
+              <h3>🤖 Ответил ИИ · {shortDate(q.answeredAt!, true)}</h3>
+              <p className="question-text">{q.aiAnswer ?? q.answer}</p>
+              <p className="hint small">ИИ-помощник ответил пациенту в боте сам, по данным клиники. Нужно уточнить — напишите пациенту в Telegram или позвоните.</p>
+            </section>
+          )}
+          {(q.aiOutcome === 'ESCALATED' || q.aiOutcome === 'HANDOFF') && (
+            <section aria-label="Передано администратору">
+              <p className="notice tone-wait">
+                {q.aiOutcome === 'HANDOFF' ? 'Передано администратору: пациент попросил человека (или ИИ на сегодня ответил уже много раз).' : 'Передано администратору: ИИ не стал отвечать сам (медицинский вопрос, жалоба или не уверен).'}
+              </p>
+              {q.aiAnswer && (
+                <>
+                  <h3>Что бот написал пациенту</h3>
+                  <p className="question-text">{q.aiAnswer}</p>
+                </>
+              )}
+            </section>
+          )}
+          {q.status === 'ANSWERED' && q.aiOutcome !== 'ANSWERED' && (
             <section aria-label="Ответ">
               <h3>Ответ · {shortDate(q.answeredAt!, true)}</h3>
               <p className="question-text">{q.answer}</p>

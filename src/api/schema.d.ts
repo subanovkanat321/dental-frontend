@@ -932,6 +932,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/bot-ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["botAi"];
+        put: operations["setBotAi"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/audit/settings": {
         parameters: {
             query?: never;
@@ -6567,6 +6583,9 @@ export interface components {
             answer?: string;
             /** Format: date-time */
             answeredAt?: string;
+            /** @enum {string} */
+            aiOutcome?: "ANSWERED" | "ESCALATED" | "HANDOFF";
+            aiAnswer?: string;
         };
         QuestionControllerAnswer: {
             text?: string;
@@ -7487,7 +7506,7 @@ export interface components {
         };
         AiUsageStoreKindRow: {
             /** @enum {string} */
-            kind?: "VISIT_REPORT" | "DICTATION" | "QUESTION_DRAFT" | "POST_TEXT" | "PHOTO_FRAME" | "COMEBACK" | "SUPPORT" | "OTHER";
+            kind?: "VISIT_REPORT" | "DICTATION" | "QUESTION_DRAFT" | "POST_TEXT" | "PHOTO_FRAME" | "COMEBACK" | "BOT_ANSWER" | "SUPPORT" | "OTHER";
             label?: string;
             /** Format: int64 */
             actions?: number;
@@ -7662,6 +7681,7 @@ export interface components {
             questions?: components["schemas"]["PatientQuestionsQuestionView"][];
             ai?: boolean;
             aiAvailable?: boolean;
+            botAi?: boolean;
         };
         QuestionControllerNewCount: {
             /** Format: int32 */
@@ -10170,6 +10190,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepositsSettings"];
+                };
+            };
+        };
+    };
+    botAi: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitReportControllerAiSetting"];
+                };
+            };
+        };
+    };
+    setBotAi: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitReportControllerAiChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitReportControllerAiSetting"];
                 };
             };
         };

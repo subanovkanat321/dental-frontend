@@ -109,3 +109,48 @@ test('кнопка уведомления «Открыть вопрос» (?ques
   expect(readDeepLink('?question=5')).toEqual({ page: 'patients', questionId: 5 })
   expect(readDeepLink('?question=abc')).toBeNull()
 })
+
+test('ИИ-администратор бота: «🤖 Ответил ИИ» с текстом в «Отвеченных», «Передано администратору» — в «Ждут ответа»', async () => {
+  window.location.hash = '/patients'
+  const byAi: Question = {
+    id: 7, status: 'ANSWERED', text: 'Где вы находитесь?', createdAt: '2026-11-03T04:00:00Z', answeredAt: '2026-11-03T04:00:05Z',
+    answer: 'Мы на Киевской, 1.', aiOutcome: 'ANSWERED', aiAnswer: 'Мы на Киевской, 1.',
+  }
+  const passed: Question = {
+    id: 8, status: 'NEW', text: 'Почему болит зуб?', createdAt: '2026-11-03T05:00:00Z', aiOutcome: 'ESCALATED',
+    aiAnswer: 'Это лучше обсудить с врачом на приёме.\n\nПередал администратору — ответим здесь в рабочее время 🙏',
+  }
+  const questions = [byAi, passed]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 1 })),
+    http.get('*/api/patient-questions', ({ request }) => {
+      const done = new URL(request.url).searchParams.get('done') === 'true'
+      return HttpResponse.json({ questions: questions.filter((q) => (q.status !== 'NEW') === done), ai: true, aiAvailable: true, botAi: true } satisfies Schemas['QuestionControllerQuestionList'])
+    }),
+    http.get('*/api/patient-questions/:id', ({ params }) => HttpResponse.json(questions.find((q) => q.id === Number(params.id))!)),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('tab', { name: /Вопросы/ }))
+  expect(await screen.findByText(/сначала отвечает ИИ-помощник/)).toBeInTheDocument()
+  const waiting = await screen.findByRole('table', { name: 'Вопросы пациентов' })
+  expect(waiting).toHaveTextContent('Передано администратору')
+  await userEvent.click(within(waiting).getByRole('button', { name: 'Нет в базе клиники' }))
+  let panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
+  expect(await within(panel).findByText(/ИИ не стал отвечать сам/)).toBeInTheDocument()
+  expect(within(panel).getByRole('region', { name: 'Передано администратору' })).toHaveTextContent('Это лучше обсудить с врачом')
+  // Отвечает сотрудник — как обычно
+  expect(within(panel).getByLabelText('Ответ пациенту')).toBeInTheDocument()
+
+  await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }))
+  await userEvent.click(screen.getByRole('tab', { name: 'Отвеченные' }))
+  const done = await screen.findByRole('table', { name: 'Вопросы пациентов' })
+  await vi.waitFor(() => expect(done).toHaveTextContent('🤖 Ответил ИИ'))
+  await userEvent.click(within(done).getByRole('button', { name: 'Нет в базе клиники' }))
+  panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
+  const answer = await within(panel).findByRole('region', { name: 'Ответ ИИ' })
+  expect(answer).toHaveTextContent('🤖 Ответил ИИ')
+  expect(answer).toHaveTextContent('Мы на Киевской, 1.')
+  expect(within(panel).queryByLabelText('Ответ пациенту')).not.toBeInTheDocument()
+})

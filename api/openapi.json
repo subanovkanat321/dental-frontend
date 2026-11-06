@@ -2510,6 +2510,50 @@
         }
       }
     },
+    "/api/clinic/bot-ai" : {
+      "get" : {
+        "tags" : [ "visit-report-controller" ],
+        "operationId" : "botAi",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportControllerAiSetting"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "visit-report-controller" ],
+        "operationId" : "setBotAi",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitReportControllerAiChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportControllerAiSetting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/audit/settings" : {
       "get" : {
         "tags" : [ "audit-controller" ],
@@ -14848,6 +14892,13 @@
           "answeredAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "aiOutcome" : {
+            "type" : "string",
+            "enum" : [ "ANSWERED", "ESCALATED", "HANDOFF" ]
+          },
+          "aiAnswer" : {
+            "type" : "string"
           }
         }
       },
@@ -17139,7 +17190,7 @@
         "properties" : {
           "kind" : {
             "type" : "string",
-            "enum" : [ "VISIT_REPORT", "DICTATION", "QUESTION_DRAFT", "POST_TEXT", "PHOTO_FRAME", "COMEBACK", "SUPPORT", "OTHER" ]
+            "enum" : [ "VISIT_REPORT", "DICTATION", "QUESTION_DRAFT", "POST_TEXT", "PHOTO_FRAME", "COMEBACK", "BOT_ANSWER", "SUPPORT", "OTHER" ]
           },
           "label" : {
             "type" : "string"
@@ -17613,6 +17664,9 @@
             "type" : "boolean"
           },
           "aiAvailable" : {
+            "type" : "boolean"
+          },
+          "botAi" : {
             "type" : "boolean"
           }
         }

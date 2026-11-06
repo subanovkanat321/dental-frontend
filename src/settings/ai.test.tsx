@@ -11,9 +11,10 @@ type Change = Schemas['VisitReportControllerAiChange']
 
 /** Три согласия клиники на сервере — каждое меняется только своим адресом. */
 function backend(reports: Setting, dictation: Setting, who: Schemas['BookingViewsMe'] = me,
-  usage: Schemas['AiUsageStoreCounter'] = { month: '2026-11', used: 120, limit: 600 }, post: Setting = { available: reports.available, on: false }) {
+  usage: Schemas['AiUsageStoreCounter'] = { month: '2026-11', used: 120, limit: 600 }, post: Setting = { available: reports.available, on: false },
+  bot: Setting = { available: reports.available, on: false }) {
   const puts: [string, Change][] = []
-  const state = { 'visit-report-ai': reports, 'dictation-ai': dictation, 'post-ai': post }
+  const state = { 'visit-report-ai': reports, 'dictation-ai': dictation, 'post-ai': post, 'bot-ai': bot }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(who)),
     http.get('*/api/clinic/ai-usage', () => HttpResponse.json(usage)),
@@ -23,6 +24,8 @@ function backend(reports: Setting, dictation: Setting, who: Schemas['BookingView
       const body = (await request.json()) as Change
       puts.push([key, body])
       state[key] = { ...state[key], on: Boolean(body.on) }
+      // Как сервер: выключили общий ИИ — выключились и ответы в боте
+      if (key === 'visit-report-ai' && !body.on) state['bot-ai'] = { ...state['bot-ai'], on: false }
       return HttpResponse.json(state[key])
     }),
   )
@@ -95,4 +98,26 @@ test('лимит ИИ клинике пока не показываем: счё�
   await screen.findByRole('region', { name: 'ИИ пишет отчёты пациенту' })
   expect(screen.queryByRole('region', { name: 'ИИ в этом месяце' })).not.toBeInTheDocument()
   expect(screen.queryByText(/использовано/)).not.toBeInTheDocument()
+})
+
+test('«ИИ отвечает пациентам в боте»: предупреждение, без общего согласия не нажать, выключили общий — выключился и бот', async () => {
+  const puts = backend({ available: true, on: false }, { available: true, on: false })
+  renderApp()
+  openItem('ai')
+  const bot = await screen.findByRole('region', { name: 'ИИ отвечает пациентам в боте' })
+  expect(bot).toHaveTextContent('без имени, телефона и медкарты')
+  expect(bot).toHaveTextContent('без проверки сотрудником')
+  const box = within(bot).getByRole('checkbox')
+  await vi.waitFor(() => expect(bot).toHaveTextContent('Сначала включите «ИИ пишет отчёты пациенту»'))
+  expect(box).toBeDisabled()
+
+  const reportBox = within(screen.getByRole('region', { name: 'ИИ пишет отчёты пациенту' })).getByRole('checkbox')
+  await userEvent.click(reportBox)
+  await vi.waitFor(() => expect(box).toBeEnabled())
+  await userEvent.click(box)
+  await vi.waitFor(() => expect(box).toBeChecked())
+
+  await userEvent.click(reportBox)
+  await vi.waitFor(() => expect(box).not.toBeChecked())
+  expect(puts).toEqual([['visit-report-ai', { on: true }], ['bot-ai', { on: true }], ['visit-report-ai', { on: false }]])
 })
