@@ -333,7 +333,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
               </div>
             )}
             {many && (
-              <Select aria-label="Все услуги" value={serviceId} onChange={(e) => pickService(activeServices.find((sv) => String(sv.id) === e.target.value))}>
+              <Select collapsible aria-label="Все услуги" value={serviceId} onChange={(e) => pickService(activeServices.find((sv) => String(sv.id) === e.target.value))}>
                 <option value="">{serviceId === '' ? 'Найти услугу…' : 'Без услуги'}</option>
                 {serviceOptions(activeServices, popularIds, (sv) => `${sv.name} · ${sv.durationMinutes} мин`)}
               </Select>

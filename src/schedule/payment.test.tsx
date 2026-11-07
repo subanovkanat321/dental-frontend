@@ -308,12 +308,13 @@ test('«Выбрать из прайса…»: длинный прайс — «�
   const form = await openPay(await card())
   await userEvent.click(await within(form).findByRole('combobox', { name: 'Цена из прайса' }))
   const box = screen.getByRole('listbox')
-  const groups = within(box).getAllByRole('group')
-  expect(groups.map((g) => document.getElementById(g.getAttribute('aria-labelledby')!)?.textContent)).toEqual([
+  // Разделы свёрнуты: только заголовки; «Часто» раскрыли — внутри частая услуга
+  expect(within(box).getAllByRole('button').map((b) => b.textContent?.replace(/\s*\d+\s*[▸▾]$/, ''))).toEqual([
     'Часто', 'Осмотр и консультация', 'Профилактика и гигиена', 'Терапия', 'Хирургия', 'Ортопедия', 'Ортодонтия', 'Эстетика',
     'Рентген и диагностика',
   ])
-  expect(within(groups[0]!).getByRole('option')).toHaveTextContent('Пломба · 4 000 сом')
+  await userEvent.click(within(box).getByRole('button', { name: /^Часто/ }))
+  expect(within(screen.getByRole('group', { name: 'Часто' })).getByRole('option')).toHaveTextContent('Пломба · 4 000 сом')
   await userEvent.type(screen.getByRole('searchbox', { name: 'Поиск в списке' }), 'КОРОН')
   await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: /Коронка/ }))
   expect(within(form).getByLabelText('Сумма, сом')).toHaveValue(7000)

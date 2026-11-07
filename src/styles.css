@@ -1581,6 +1581,13 @@ input.ui-select-proxy, .field input.ui-select-proxy { position: absolute; width:
 .ui-select-pop li.ui-select-group-title::after { content: none; }
 .ui-select-pop.sheet li.ui-select-group { min-height: 0; padding: 0; }
 .ui-select-pop.sheet li.ui-select-group-title { min-height: 0; padding: 8px 12px 2px; font-size: .8rem; }
+/* Свёрнутые группы (Select collapsible): заголовок — кнопка «Раздел · N ▸», раскрыт — пункты под ним */
+.ui-select-pop li.ui-select-group.fold { padding: 0; min-height: 0; border-bottom: 1px solid var(--separator); }
+.ui-select-fold { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 10px 12px;
+  border: 0; background: none; color: var(--text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.ui-select-fold:hover, .ui-select-fold:focus-visible { background: var(--sunken); }
+.ui-select-group.fold.open > .ui-select-fold { color: var(--accent); }
+.ui-select-pop.sheet .ui-select-fold { min-height: 50px; font-size: 1.05rem; }
 /* Телефон и Telegram — лист снизу экрана, пункты крупнее: удобно большим пальцем */
 .ui-select-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; background: rgba(10, 25, 30, .38); animation: sheet-fade .15s ease-out; }
 .ui-select-pop.sheet { position: static; width: 100%; max-height: 75vh; max-height: 75dvh; padding: 10px 10px calc(14px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0;

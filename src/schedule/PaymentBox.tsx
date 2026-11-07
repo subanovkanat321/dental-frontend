@@ -151,7 +151,7 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
   if (!list.length) return null
   return (
     <div className="price-pick">
-      <Select aria-label="Цена из прайса" value="" onChange={(e) => {
+      <Select collapsible aria-label="Цена из прайса" value="" onChange={(e) => {
         const s = list.find((x) => String(x.id) === e.target.value)
         if (!s) return
         onPick(s.priceSom!, picked.length > 0)

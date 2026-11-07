@@ -6,7 +6,7 @@ import type { Schemas } from '../api/client'
 import { addDays, slotInstant, todayIn } from '../lib/time'
 import { renderApp } from '../test/fixtures'
 import { server } from '../test/server'
-import { pickSlot, stepText } from '../test/wizard'
+import { pickService, pickSlot, stepText } from '../test/wizard'
 import { dayLong } from './i18n'
 
 /**
@@ -78,6 +78,9 @@ test('шаги и «Назад»: услуга → врач → дата → в�
   expect(await screen.findByRole('heading', { name: 'Выберите услугу' })).toBeInTheDocument()
   expect(stepText()).toBe('Шаг 1 из 5')
   // По разделам, цена «от» и длительность
+  // Разделы свёрнуты: только «Терапия 1 ›», «Хирургия 1 ›»; нажали — раскрылся
+  expect(screen.queryByRole('button', { name: /Лечение кариеса/ })).toBeNull()
+  await user.click(screen.getByRole('button', { name: /^Терапия/ }))
   const therapy = screen.getByRole('group', { name: 'Терапия' })
   expect(within(therapy).getByRole('button', { name: /Лечение кариеса.*60 мин.*от 2\s500 сом/ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '‹ Назад' })).toBeNull()
@@ -109,7 +112,7 @@ test('один врач — шага врача нет; время — «Утр�
   backend(me({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }), () => HttpResponse.json({}))
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: /Удаление зуба/ }))
+  await pickService(user, 'Хирургия', /Удаление зуба/)
   expect(await screen.findByRole('heading', { name: 'Выберите дату' })).toBeInTheDocument()
   expect(stepText()).toBe('Шаг 2 из 4')
   expect(screen.queryByRole('button', { name: /Любой свободный врач/ })).toBeNull()
@@ -128,7 +131,7 @@ test('«Любой свободный врач»: сетка и запись б�
   })
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: /Удаление зуба/ }))
+  await pickService(user, 'Хирургия', /Удаление зуба/)
   await user.click(await screen.findByRole('button', { name: /Любой свободный врач/ }))
   await pickSlot(user, tomorrow, '13:00')
   expect(asked.free).toEqual(['?serviceTypeId=6'])
@@ -153,7 +156,7 @@ test('«Изменить» в итоге: другая дата — осталь
   })
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: /Лечение кариеса/ }))
+  await pickService(user, 'Терапия', /Лечение кариеса/)
   await user.click(await screen.findByRole('button', { name: /Айгерим Садыкова/ }))
   await pickSlot(user, tomorrow, '10:00')
   const summary = () => screen.getByRole('region', { name: 'Ваша запись' })
@@ -178,7 +181,7 @@ test('«Изменить» в итоге: другая дата — осталь
   await user.click(await screen.findByRole('button', { name: '13:00' }))
   // Тот же выбор — сразу к контактам
   await user.click(within(summary()).getByRole('button', { name: 'Изменить: услуга' }))
-  await user.click(await screen.findByRole('button', { name: /Лечение кариеса/ }))
+  await pickService(user, 'Терапия', /Лечение кариеса/)
   expect(await screen.findByRole('heading', { name: 'Проверьте и подтвердите' })).toBeInTheDocument()
   await user.click(screen.getByRole('checkbox'))
   await user.click(screen.getByRole('button', { name: 'Записаться' }))

@@ -72,7 +72,7 @@ const SEARCH_FROM = 9
  * Клавиатура: ↑ ↓ Enter Esc, как у системного. `<optgroup label>` — группы с заголовками (ARIA
  * role="group"); стрелки идут по пунктам, заголовки пропускают. Поиск — без регистра и «ё/е».
  */
-export function Select({ value, defaultValue, onChange, children, name, required, disabled, className, id, ...aria }: {
+export function Select({ value, defaultValue, onChange, children, name, required, disabled, className, id, collapsible = false, ...aria }: {
   value?: string | number
   defaultValue?: string | number
   onChange?: (e: SelectChange) => void
@@ -82,6 +82,11 @@ export function Select({ value, defaultValue, onChange, children, name, required
   disabled?: boolean
   className?: string
   id?: string
+  /**
+   * Группы свёрнуты: сначала только заголовки с числом пунктов, нажали — раскрылась (одна за раз).
+   * Для длинных списков вроде услуг клиники. Поиск — по всем пунктам, найденное показано раскрытым.
+   */
+  collapsible?: boolean
   'aria-label'?: string
 }) {
   const items = itemsOf(children)
@@ -101,7 +106,12 @@ export function Select({ value, defaultValue, onChange, children, name, required
 
   // «Материал со склада…», «Статья…» — подсказка в пустом поле, а не пункт: в списке её нет
   const choices = items.filter((i) => !(i.value === '' && /…$/.test(i.text)) && !(i.disabled && i.value === ''))
-  const shown = query.trim() ? choices.filter((i) => textMatches(i.text, query) || textMatches(i.group, query)) : choices
+  const found = query.trim() ? choices.filter((i) => textMatches(i.text, query) || textMatches(i.group, query)) : choices
+  // Свёрнутые группы: без поиска видны пункты без группы и одной раскрытой группы
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const folding = collapsible && !query.trim() && choices.some((i) => i.group != null)
+  const shown = folding ? found.filter((i) => i.group == null || i.group === expanded) : found
+  const groupTitles = folding ? [...new Set(choices.map((i) => i.group).filter((g): g is string => g != null))] : []
   const searchable = choices.length >= SEARCH_FROM
 
   const close = (focus = true) => {
@@ -119,8 +129,12 @@ export function Select({ value, defaultValue, onChange, children, name, required
     const label = button.current?.labels?.[0]
     const inside = button.current?.textContent ?? ''
     setTitle(aria['aria-label'] ?? (label?.textContent ?? '').replace(inside, '').replace(/\s*\*\s*$/, '').trim())
+    // Свёрнутые группы: раскрыта та, где выбранный пункт (если он не в «Часто» — там он тоже есть)
+    const startGroup = collapsible ? (choices.filter((i) => i.value === current && i.value !== '').map((i) => i.group).find((g) => g !== 'Часто') ?? null) : null
+    setExpanded(startGroup)
+    const visible = collapsible ? choices.filter((i) => i.group == null || i.group === startGroup) : choices
     // На телефоне подсветку «под курсором» не ставим: она выглядит как уже выбранный пункт
-    const at = choices.findIndex((i) => i.value === current)
+    const at = visible.findIndex((i) => i.value === current)
     setActive(phone ? at : Math.max(0, at))
     setOpen(true)
   }
@@ -231,7 +245,25 @@ export function Select({ value, defaultValue, onChange, children, name, required
           onChange={(e) => { setQuery(e.target.value); setActive(0) }} />
       )}
       <ul id={listId} role="listbox" aria-label={aria['aria-label'] ?? (title || undefined)} tabIndex={-1}>
-        {chunks(shown).map(([group, rows], g) => group == null ? rows.map(([item, i]) => option(item, i)) : (
+        {folding && shown.filter((i) => i.group == null).map((item) => option(item, shown.indexOf(item)))}
+        {folding && groupTitles.map((group) => {
+          const isOpen = group === expanded
+          const count = choices.filter((i) => i.group === group).length
+          return (
+            <li key={`f-${group}`} role="none" className={`ui-select-group fold${isOpen ? ' open' : ''}`}>
+              <button type="button" className="ui-select-fold" aria-expanded={isOpen}
+                onClick={() => { setExpanded(isOpen ? null : group); setActive(-1) }}>
+                <span>{group}</span><span className="hint">{count} <span aria-hidden="true">{isOpen ? '▾' : '▸'}</span></span>
+              </button>
+              {isOpen && (
+                <ul role="group" aria-label={group}>
+                  {shown.filter((i) => i.group === group).map((item) => option(item, shown.indexOf(item)))}
+                </ul>
+              )}
+            </li>
+          )
+        })}
+        {!folding && chunks(shown).map(([group, rows], g) => group == null ? rows.map(([item, i]) => option(item, i)) : (
           <li key={`g${g}`} role="none" className="ui-select-group">
             <ul role="group" aria-labelledby={`${auto}-g${g}`}>
               <li role="presentation" id={`${auto}-g${g}`} className="ui-select-group-title">{group}</li>
@@ -239,7 +271,7 @@ export function Select({ value, defaultValue, onChange, children, name, required
             </ul>
           </li>
         ))}
-        {!shown.length && <li className="ui-select-empty" aria-disabled="true">Ничего не нашлось</li>}
+        {!folding && !shown.length && <li className="ui-select-empty" aria-disabled="true">Ничего не нашлось</li>}
       </ul>
     </div>
   )

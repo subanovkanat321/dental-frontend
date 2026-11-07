@@ -116,6 +116,13 @@
 
 .wiz-list { display: grid; gap: 8px; }
 .wiz-group { display: grid; gap: 8px; }
+/* Разделы услуг свёрнуты: заголовок — крупная кнопка, раскрыт — карточки услуг под ним */
+.wiz-fold { display: grid; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); overflow: hidden; }
+.wiz-fold-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 12px 16px;
+  border: 0; background: none; color: var(--text); font: inherit; font-size: 1.05rem; text-align: left; cursor: pointer; }
+.wiz-fold-head .chevron { display: inline-block; min-width: 1em; text-align: center; }
+.wiz-fold.open .wiz-fold-head { color: var(--accent); }
+.wiz-fold-body { display: grid; gap: 8px; padding: 0 10px 10px; }
 .wiz-group h3 { margin: 10px 0 0; font-size: .9rem; font-weight: 600; color: var(--hint); }
 .wiz-search { width: 100%; min-height: 46px; }
 .wiz-card { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 12px 14px; border: 1px solid var(--line-strong, var(--separator));

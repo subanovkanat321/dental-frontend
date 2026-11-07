@@ -337,9 +337,16 @@ test('новая запись: услуг много — частые кнопк
   const all = within(panel).getByRole('combobox', { name: 'Все услуги' })
   await userEvent.click(all)
   const list = screen.getByRole('listbox')
-  expect(within(list).getAllByRole('group').map((g) => g.getAttribute('aria-labelledby') && document.getElementById(g.getAttribute('aria-labelledby')!)?.textContent))
-    .toEqual(['Часто', 'Осмотр и консультация', 'Профилактика и гигиена', 'Терапия', 'Хирургия', 'Ортопедия', 'Ортодонтия',
-      'Эстетика', 'Детская стоматология', 'Рентген и диагностика'])
+  // Сначала только разделы (свёрнуты, с числом услуг); нажали — раскрылся один
+  const folds = within(list).getAllByRole('button')
+  expect(folds.map((b) => b.textContent?.replace(/\s*\d+\s*[▸▾]$/, ''))).toEqual(['Часто', 'Осмотр и консультация',
+    'Профилактика и гигиена', 'Терапия', 'Хирургия', 'Ортопедия', 'Ортодонтия', 'Эстетика', 'Детская стоматология', 'Рентген и диагностика'])
+  expect(within(list).queryAllByRole('option')).toHaveLength(0)
+  await userEvent.click(within(list).getByRole('button', { name: /^Терапия/ }))
+  expect(within(screen.getByRole('listbox')).getAllByRole('option').map((o) => o.textContent)).toEqual([
+    expect.stringContaining('Лечение кариеса'), expect.stringContaining('Пломба'), expect.stringContaining('Лечение пульпита'),
+  ])
+  // Поиск — по всем разделам сразу
   await userEvent.type(within(document.body).getByRole('searchbox', { name: 'Поиск в списке' }), 'ребенк')
   await userEvent.click(within(screen.getByRole('listbox')).getByRole('option', { name: /Осмотр ребёнка/ }))
   // Выбрали из списка — длительность подставилась, кнопка выбранной услуги — среди частых

@@ -275,6 +275,8 @@ function ServiceStep({ t, lang, services, chosen, query, onQuery, onPick }: {
   t: T; lang: Lang; services: WizardService[]; chosen: WizardService | null; query: string; onQuery: (q: string) => void
   onPick: (s: WizardService) => void
 }) {
+  // Раскрыт раздел выбранной услуги (вернулись по «Изменить»), иначе — ни один
+  const [openGroup, setOpenGroup] = useState<string | null>(() => (chosen ? (chosen.group ?? 'OTHER') : null))
   if (!services.length) return <p className="hint">{t('unavailable')}</p>
   const shown = services.filter((s) => textMatches(s.name, query))
   const groups = groupServices(shown)
@@ -300,12 +302,30 @@ function ServiceStep({ t, lang, services, chosen, query, onQuery, onPick }: {
           <button type="button" className="btn" onClick={() => onQuery('')}>{t('serviceAll')}</button>
         </div>
       )}
-      {groups.length > 1 ? groups.map(({ group, items }) => (
+      {groups.length > 1 && !query.trim() ? (
+        // Много разделов: сначала только разделы (с числом услуг), нажали — раскрылся один
+        groups.map(({ group, items }) => <ServiceFold key={group} label={groupLabel(group, lang)} count={items.length}
+          open={openGroup === group} onToggle={() => setOpenGroup(openGroup === group ? null : group)}>{items.map(card)}</ServiceFold>)
+      ) : groups.length > 1 ? groups.map(({ group, items }) => (
+        // Поиск: найденное — по разделам, раскрыто
         <div key={group} className="wiz-group" role="group" aria-label={groupLabel(group, lang)}>
           <h3>{groupLabel(group, lang)}</h3>
           {items.map(card)}
         </div>
       )) : shown.map(card)}
+    </div>
+  )
+}
+
+/** Раздел услуг: заголовок-кнопка «Терапия · 5 ›», раскрыт — услуги под ним. */
+function ServiceFold({ label, count, open, onToggle, children }: { label: string; count: number; open: boolean; onToggle: () => void; children: ReactNode }) {
+  return (
+    <div className={`wiz-fold${open ? ' open' : ''}`} role="group" aria-label={label}>
+      <button type="button" className="wiz-fold-head" aria-expanded={open} onClick={onToggle}>
+        <strong>{label}</strong>
+        <span className="hint num">{count} <span className="chevron" aria-hidden="true">{open ? '▾' : '›'}</span></span>
+      </button>
+      {open && <div className="wiz-fold-body">{children}</div>}
     </div>
   )
 }

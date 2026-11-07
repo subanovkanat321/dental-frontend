@@ -16,3 +16,10 @@ export async function pickSlot(user: User, date: string, time: string, lang: Lan
 export function stepText(): string {
   return screen.getByRole('navigation', { name: /^(Шаг|\d+ кадамдын)/ }).getAttribute('aria-label') ?? ''
 }
+
+/** Шаг «Услуга»: разделы свёрнуты — раскрыть раздел (если ещё не раскрыт) и выбрать услугу. */
+export async function pickService(user: User, group: string, name: RegExp) {
+  const fold = await screen.findByRole('button', { name: new RegExp(`^${group}`) })
+  if (fold.getAttribute('aria-expanded') === 'false') await user.click(fold)
+  await user.click(within(screen.getByRole('group', { name: group })).getByRole('button', { name }))
+}
