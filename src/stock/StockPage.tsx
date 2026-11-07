@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -40,6 +40,8 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   const supplies = useQuery({
     queryKey: ['supplies', doctorId],
     queryFn: () => unwrap(api.GET('/api/supplies', { params: { query: doctorId == null ? {} : { doctorId } } })),
+    // Сменили фильтр «Чей склад» — карточка открытого материала не закрывается, пока грузится новый список
+    placeholderData: keepPreviousData,
   })
   // Быстрое «−1» прямо в списке: взяли одну карпулу — не открывая карточку
   // Списали не то — «Вернуть» несколько секунд (пересчёт +1, как «вернуть» на приёме)
@@ -165,7 +167,10 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
           </table>
         )}
       </section>
-      {selected && <SupplyPanel key={selected.id} supply={selected} me={me} onClose={close} />}
+      {selected && <SupplyPanel key={selected.id} supply={selected} me={me} onClose={close} onMoved={(s) => {
+        // Перенесли из склада, который сейчас выбран в фильтре, — показать весь, чтобы карточка осталась
+        if ((doctorId != null && s.doctorId !== doctorId) || (owner === 'shared' && s.doctorId != null)) setOwner('')
+      }} />}
       {side?.kind === 'new' && (
         <NewSupplyPanel me={me} doctorId={doctorId} onClose={close} onCreated={(s) => setSide({ kind: 'supply', id: s.id! })} />
       )}

@@ -167,3 +167,58 @@ test('«Расходы на склад» за месяц — с первого �
   await userEvent.click(within(picker).getByRole('button', { name: 'Февраль 2026' }))
   await vi.waitFor(() => expect(periods).toContain('2026-02-01..2026-02-28'))
 })
+
+test('«Чей склад» в карточке: админ переносит общий материал врачу одним выбором, список обновляется', async () => {
+  const separate = { ...me, clinic: { ...me.clinic, separateSupplies: true } }
+  backend([anesthetic], separate)
+  const sent: unknown[] = []
+  let moved: Supply = anesthetic
+  server.use(
+    http.get('*/api/supplies', () => HttpResponse.json([moved])),
+    http.put('*/api/supplies/:id/owner', async ({ request }) => {
+      sent.push(await request.json())
+      moved = { ...anesthetic, doctorId: 2, doctorName: 'Дастан Т.' }
+      return HttpResponse.json({ supply: moved, services: ['Пломба'] } satisfies Schemas['SupplyControllerOwnerChanged'])
+    }),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
+  const owner = within(screen.getByRole('group', { name: 'Чей склад' }))
+  await choose(owner.getByLabelText('Чей склад'), 'Дастан Т.')
+
+  expect(await owner.findByRole('status')).toHaveTextContent('Перенесено в склад врача «Дастан Т.». История осталась.')
+  expect(owner.getByText(/«обычно уходит» услуг: Пломба/)).toBeInTheDocument()
+  expect(sent).toEqual([{ doctorId: 2 }])
+  // Список перечитан: в колонке «Чей» — врач, в карточке — «Склад врача»
+  const table = screen.getByRole('table', { name: 'Материалы' })
+  expect(await within(table).findByText('Дастан Т.')).toBeInTheDocument()
+  expect(screen.getByRole('complementary', { name: 'Материал' })).toHaveTextContent('Склад врача: Дастан Т.')
+})
+
+test('«Чей склад»: дубль названия у врача — текст ошибки 409', async () => {
+  backend([anesthetic], { ...me, clinic: { ...me.clinic, separateSupplies: true } })
+  server.use(http.put('*/api/supplies/:id/owner', () => HttpResponse.json(
+    { status: 409, code: 'name-taken', detail: 'У врача Дастан Т. уже есть «Анестетик» — спишите остаток или переименуйте один из них' },
+    { status: 409, headers: { 'Content-Type': 'application/problem+json' } },
+  )))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
+  const owner = within(screen.getByRole('group', { name: 'Чей склад' }))
+  await choose(owner.getByLabelText('Чей склад'), 'Дастан Т.')
+  expect(await owner.findByRole('alert')).toHaveTextContent('У врача Дастан Т. уже есть «Анестетик»')
+})
+
+test('«Чей склад» не видно: один склад на всех или врач', async () => {
+  backend([anesthetic])
+  const { unmount } = renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
+  expect(screen.getByRole('complementary', { name: 'Материал' })).toBeInTheDocument()
+  expect(screen.queryByRole('group', { name: 'Чей склад' })).not.toBeInTheDocument()
+  unmount()
+
+  backend([anesthetic], { ...me, admin: false, clinic: { ...me.clinic, separateSupplies: true } })
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
+  expect(screen.getByRole('complementary', { name: 'Материал' })).toBeInTheDocument()
+  expect(screen.queryByRole('group', { name: 'Чей склад' })).not.toBeInTheDocument()
+})

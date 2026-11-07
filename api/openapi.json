@@ -65,6 +65,43 @@
         }
       }
     },
+    "/api/supplies/{id}/owner" : {
+      "put" : {
+        "tags" : [ "supply-controller" ],
+        "operationId" : "owner",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SupplyControllerOwner"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SupplyControllerOwnerChanged"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/shifts/{id}" : {
       "put" : {
         "tags" : [ "shift-controller" ],
@@ -11677,6 +11714,27 @@
           },
           "doctorName" : {
             "type" : "string"
+          }
+        }
+      },
+      "SupplyControllerOwner" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "SupplyControllerOwnerChanged" : {
+        "properties" : {
+          "supply" : {
+            "$ref" : "#/components/schemas/SupplyView"
+          },
+          "services" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         }
       },

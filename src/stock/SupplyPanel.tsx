@@ -31,9 +31,15 @@ function unitPrice(costSom: number, delta: number, unit?: string): string {
 
 /**
  * Карточка материала справа: списать или принять поставку (с ценой — она пойдёт в расходы),
- * поменять название, единицу и минимум, история движений. Удалить — только админ.
+ * поменять название, единицу и минимум, чей склад, история движений. Удалить — только админ.
  */
-export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me; onClose: () => void }) {
+export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
+  supply: Supply
+  me: Me
+  onClose: () => void
+  /** Материал перенесли в другой склад — список может его больше не показывать при фильтре по врачу. */
+  onMoved?: (s: Supply) => void
+}) {
   useClose(onClose)
   const refresh = useRefresh()
   const [amount, setAmount] = useState('1')
@@ -122,6 +128,11 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
         {done && <p className="tone-ok" role="status">{done}</p>}
       </div>
 
+      {/* Чей склад: переносят те, кто видит весь склад, — админ и регистратура (сервер: 403 врачу и ассистенту) */}
+      {Boolean(me.clinic?.separateSupplies) && !isAssistant(me) && (me.admin || me.reception || me.doctorId == null) && (
+        <OwnerField supply={s} me={me} onMoved={onMoved} />
+      )}
+
       <form className="form" aria-label="Настройки материала" onSubmit={submitSettings}>
         <h3>Настройки</h3>
         <label className="field"><span>Название</span>
@@ -163,6 +174,54 @@ export function SupplyPanel({ supply: s, me, onClose }: { supply: Supply; me: Me
         </div>
       )}
     </aside>
+  )
+}
+
+/**
+ * «Чей склад» у заведённого материала: общий ↔ врач, сохраняется сразу при выборе. Остаток и история
+ * остаются у материала. Материал врача на приёмах других врачей не предлагается — если он в
+ * «обычно уходит» у услуг, говорим об этом после переноса.
+ */
+function OwnerField({ supply: s, me, onMoved }: { supply: Supply; me: Me; onMoved?: (s: Supply) => void }) {
+  const refresh = useRefresh()
+  const [done, setDone] = useState<{ text: string; services: string[] } | null>(null)
+  const current = s.doctorId == null ? '' : String(s.doctorId)
+  const doctors = (me.doctors ?? []).filter((d) => d.active !== false || d.id === s.doctorId)
+  const change = useMutation<Schemas['SupplyControllerOwnerChanged'], ApiError, string>({
+    mutationFn: (to) => unwrap(api.PUT('/api/supplies/{id}/owner', {
+      params: { path: { id: s.id! } },
+      body: { doctorId: to ? Number(to) : undefined },
+    })),
+    onSuccess: ({ supply, services }) => {
+      setDone({
+        text: supply?.doctorId == null ? 'Перенесено в общий склад. История осталась.'
+          : `Перенесено в склад врача «${supply.doctorName}». История осталась.`,
+        services: supply?.doctorId == null ? [] : services ?? [],
+      })
+      refresh()
+      if (supply) onMoved?.(supply)
+    },
+  })
+
+  return (
+    <div className="form" role="group" aria-label="Чей склад">
+      <label className="field"><span>Чей склад</span>
+        <Select value={change.isPending ? change.variables : current} disabled={change.isPending} onChange={(e) => {
+          setDone(null)
+          change.reset()
+          if (e.target.value !== current) change.mutate(e.target.value)
+        }}>
+          <option value="">Общий</option>
+          {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
+        </Select>
+      </label>
+      {!done && !change.error && <p className="hint small">Перенос — сразу; остаток и история остаются у материала. Склад врача видят он и его ассистент.</p>}
+      {change.error && <p className="error" role="alert">{change.error.message}</p>}
+      {done && <p className="tone-ok" role="status">{done.text}</p>}
+      {done && done.services.length > 0 && (
+        <p className="hint">«{s.name}» — в «обычно уходит» услуг: {done.services.join(', ')}. На приёмах других врачей его там больше не предложат: им — свой или общий.</p>
+      )}
+    </div>
   )
 }
 

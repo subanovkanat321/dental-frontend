@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/supplies/{id}/owner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["owner"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/shifts/{id}": {
         parameters: {
             query?: never;
@@ -5327,6 +5343,14 @@ export interface components {
             doctorId?: number;
             doctorName?: string;
         };
+        SupplyControllerOwner: {
+            /** Format: int64 */
+            doctorId?: number;
+        };
+        SupplyControllerOwnerChanged: {
+            supply?: components["schemas"]["SupplyView"];
+            services?: string[];
+        };
         ShiftControllerRequest: {
             /** Format: int64 */
             telegramId?: number;
@@ -8858,6 +8882,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    owner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupplyControllerOwner"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplyControllerOwnerChanged"];
+                };
             };
         };
     };
