@@ -12678,6 +12678,13 @@
           },
           "instagramPublishing" : {
             "type" : "boolean"
+          },
+          "instagramError" : {
+            "type" : "string"
+          },
+          "instagramErrorAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },

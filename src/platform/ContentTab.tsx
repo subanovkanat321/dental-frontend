@@ -261,6 +261,10 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
         {post.instagramPublishing && <span className="chip small s-wait" role="status"><Spinner />Публикуется в Instagram</span>}
       </header>
       <h4>{post.title}</h4>
+      {/* Почему Instagram отказал в прошлый раз (раньше — только в лог и в Telegram): пост вернулся в план */}
+      {post.instagramError && !post.instagramPublishing && !post.instagramMediaId && (
+        <p className="error" role="alert">⚠️ Не опубликовано в Instagram{post.instagramErrorAt ? ` (${shortDate(post.instagramErrorAt, true)})` : ''}: {post.instagramError}</p>
+      )}
       {reel && (post.videoUrl
         ? <ReelPlayer post={post} onExpired={onChanged} />
         : <p className="tone-bad">Видео рилса нет на сервере ({post.video}) — проверьте каталог docs/marketing/reels.</p>)}

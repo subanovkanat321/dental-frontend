@@ -5728,6 +5728,9 @@ export interface components {
             videoUrl?: string;
             coverUrl?: string;
             instagramPublishing?: boolean;
+            instagramError?: string;
+            /** Format: date-time */
+            instagramErrorAt?: string;
         };
         ContentSettingsSettings: {
             reelsAuto?: boolean;

@@ -370,3 +370,15 @@ test('«📲 Прислать в бот»: пост уходит владель�
   expect(await within(card).findByRole('status')).toHaveTextContent('Отправили в Telegram')
   expect(sent).toEqual(['7'])
 })
+
+test('Instagram отказал — причина видна под постом, пост в плане', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json([post(7, { kind: 'REELS', title: 'Что думает стоматолог',
+      instagramError: 'У токена нет права публиковать', instagramErrorAt: '2026-11-08T13:31:00Z' })])),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
+  )
+  await openTab()
+  const card = await screen.findByRole('article', { name: 'Что думает стоматолог' })
+  expect(within(card).getByRole('alert')).toHaveTextContent('⚠️ Не опубликовано в Instagram (8 нояб, 19:31): У токена нет права публиковать')
+})
