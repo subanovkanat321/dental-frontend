@@ -11,6 +11,7 @@ import { DateInput } from '../layout/DateInput'
 import { MonthPicker } from '../layout/MonthPicker'
 import { Select } from '../layout/Select'
 import { Loading, Spinner } from '../layout/Loading'
+import { inTelegram } from '../lib/telegram'
 
 type Post = Schemas['ContentPostsPost']
 type Draft = Schemas['ContentPostsDraft']
@@ -266,10 +267,16 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
  */
 function ReelPlayer({ post, onExpired }: { post: Post; onExpired: () => void }) {
   const [failed, setFailed] = useState(false)
+  // «Скачать» — та же подписанная ссылка с download=true: сервер отдаёт файл под своим именем.
+  // В Telegram ссылку открываем в браузере телефона (в Mini App скачивание не работает)
+  const download = new URL(`${post.videoUrl}&download=true`, window.location.origin).href
+  const file = post.video?.split('/').pop()
   return (
     <figure className="content-reel">
       <video controls preload="none" playsInline src={post.videoUrl} poster={post.coverUrl}
         aria-label={`Рилс: ${post.title}`} onError={() => setFailed(true)} />
+      <a className="btn small" href={download} download={file} onClick={inTelegram(download)}
+        aria-label={`Скачать рилс: ${post.title}`}>⬇ Скачать видео</a>
       {failed && (
         <figcaption className="error small" role="alert">Видео не проигрывается: ссылка могла устареть.{' '}
           <button type="button" className="btn small" onClick={() => { setFailed(false); onExpired() }}>Обновить</button>

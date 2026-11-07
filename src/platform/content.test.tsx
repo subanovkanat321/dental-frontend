@@ -235,6 +235,10 @@ test('рилс в плане: плеер с обложкой, время; пуб
   expect(player).toHaveAttribute('src', `/web/materials/reel/${video}?exp=1&sig=a`)
   expect(player).toHaveAttribute('poster', '/web/materials/reel/02-chto-dumaet-stomatolog/cover.png?exp=1&sig=b')
   expect(player).toHaveAttribute('preload', 'none')
+  // «Скачать видео» — та же ссылка с download=true, файл под своим именем
+  const save = within(card).getByRole('link', { name: 'Скачать рилс: Что думает стоматолог' })
+  expect(save).toHaveAttribute('href', `${window.location.origin}/web/materials/reel/${video}?exp=1&sig=a&download=true`)
+  expect(save).toHaveAttribute('download', '02-chto-dumaet-stomatolog.mp4')
   // Файла нет на сервере — понятная подсказка, публиковать нечего
   const lost = screen.getByRole('article', { name: 'Пропал' })
   expect(lost).toHaveTextContent('Видео рилса нет на сервере (05-x/05-x.mp4)')
