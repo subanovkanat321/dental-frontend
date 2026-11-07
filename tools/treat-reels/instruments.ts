@@ -123,8 +123,8 @@ export function createTools(): Record<ToolName, Tool> {
   const rib = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.18, 0.31), new THREE.MeshPhysicalMaterial({ color: '#bdb6a8', roughness: 0.9 }))
   rib.position.y = 0.14
   cupSpin.add(rib)
-  const cHead = new THREE.Mesh(lathe([[0, 0.3], [0.22, 0.31], [0.26, 0.36], [0.27, 0.7], [0.2, 0.76], [0, 0.77]], 40), satin)
-  const cBody = new THREE.Mesh(tube([new THREE.Vector3(0, 0.55, 0), new THREE.Vector3(0.6, 0.6, 0), new THREE.Vector3(1.8, 1.2, 0), new THREE.Vector3(5, 2.7, 0)], 0.2), satin)
+  const cHead = new THREE.Mesh(lathe([[0, 0.3], [0.15, 0.31], [0.18, 0.35], [0.185, 0.6], [0.13, 0.65], [0, 0.66]], 40), satin)
+  const cBody = new THREE.Mesh(tube([new THREE.Vector3(0, 0.48, 0), new THREE.Vector3(0.5, 0.52, 0), new THREE.Vector3(1.6, 1.1, 0), new THREE.Vector3(5, 2.7, 0)], 0.13), satin)
   cup.add(cupSpin, cHead, cBody)
 
   const all: Record<ToolName, Tool> = {

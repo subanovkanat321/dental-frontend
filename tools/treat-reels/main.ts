@@ -70,7 +70,7 @@ const TOOL_POSE: Record<ToolName, { at: [number, number, number]; dir: [number, 
   brush: { at: [0, -0.03, 0], dir: [0.35, 0.7, -0.6], side: [1, 0.4, 0] },
   lamp: { at: [0, 0.75, -0.45], dir: [0, 0.6, -0.8], side: [0, 1, 0] },
   plug: { at: [0, 0.02, 0], dir: [0.35, 0.72, -0.6], side: [1, 0.4, 0] },
-  cup: { at: [0, 0.13, 0.02], dir: [0.1, 0.8, -0.58], side: [-1, 0.1, 0] },
+  cup: { at: [0, 0.13, 0.02], dir: [0.12, 0.66, -0.74], side: [-1, 0.15, 0] },
 }
 const TOOLS = Object.keys(TOOL_POSE) as ToolName[]
 
@@ -343,19 +343,24 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
     applyParticles(s)
     const w = s.compare!
     if (w > 0.001 && w < 0.999 && scenario.beforeAt != null) {
-      // До/после: слева — «до» (стадии из beforeAt), справа — «после»; граница — дорожка compare
+      // До/после — два кадра рядом: слева зуб «до» (стадии из beforeAt), справа «после», в каждой половине
+      // зуб целиком по центру (у камеры половины своя ширина кадра). Граница — дорожка compare
       const before = stateAt(scenario.beforeAt)
       before.__t = t
       const split = Math.round(W * w)
       renderer.setScissorTest(true)
-      applyTissues(before)
-      renderer.setScissor(0, 0, split, H)
-      renderer.setViewport(0, 0, W, H)
-      renderer.render(scene, camera)
-      applyTissues(s)
-      renderer.setScissor(split, 0, W - split, H)
-      renderer.render(scene, camera)
+      for (const [x0, width, st] of [[0, split, before], [split, W - split, s]] as const) {
+        applyTissues(st)
+        camera.aspect = width / H
+        camera.updateProjectionMatrix()
+        renderer.setViewport(x0, 0, width, H)
+        renderer.setScissor(x0, 0, width, H)
+        renderer.render(scene, camera)
+      }
       renderer.setScissorTest(false)
+      renderer.setViewport(0, 0, W, H)
+      camera.aspect = W / H
+      camera.updateProjectionMatrix()
     } else {
       applyTissues(s)
       renderer.render(scene, camera)

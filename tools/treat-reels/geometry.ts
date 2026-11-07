@@ -52,7 +52,7 @@ function cavityAt(s: number, x: number, y: number, z: number): number {
  */
 function caries(x: number, y: number, z: number): number {
   const dentinPart = sdEllipsoid(x - 0.03, y - 0.48, z, 0.19, 0.075, 0.095)
-  const enamelPart = sdEllipsoid(x - 0.02, y - 0.57, z, 0.07, 0.13, 0.045)
+  const enamelPart = sdEllipsoid(x - 0.02, y - 0.58, z, 0.1, 0.14, 0.065)
   return smin(dentinPart, enamelPart, 0.04)
 }
 
@@ -65,11 +65,10 @@ function molarColor(x: number, y: number, z: number, cariesOn: boolean, out: Flo
   r = mix(r, 0.9, neck); g = mix(g, 0.82, neck); b = mix(b, 0.66, neck)
   const tip = smoothstep(0.82, 1.02, t) * 0.5
   r = mix(r, 0.97, tip); g = mix(g, 0.955, tip); b = mix(b, 0.91, tip)
-  // Естественная пигментация фиссур (у взрослых бороздки чуть темнее)
-  const fis = Math.min(1, (groove(x, z, -0.42, 0.0, -0.12, 0.02, 1, 0.02) + groove(x, z, -0.12, 0.02, 0.18, -0.01, 1, 0.02) + groove(x, z, 0.18, -0.01, 0.42, 0.02, 1, 0.02)) * smoothstep(0.45, 0.6, y))
-  // После пломбы бороздки в её границах чистые: композит без пигмента
-  const pig = cariesOn ? 0.3 : 0.3 * smoothstep(-0.01, 0.04, cavity(x, y, z))
-  r = mix(r, 0.74, fis * pig); g = mix(g, 0.64, fis * pig); b = mix(b, 0.5, fis * pig)
+  // Здоровые фиссуры — без пигмента: лишь чуть темнее тон эмали (остальное даёт тень AO). Тёмным в ролике
+  // должно быть только кариозное пятно — иначе даже вылеченный зуб кажется грязным
+  const fis = Math.min(1, (groove(x, z, -0.42, 0.0, -0.12, 0.02, 1, 0.025) + groove(x, z, -0.12, 0.02, 0.18, -0.01, 1, 0.025) + groove(x, z, 0.18, -0.01, 0.42, 0.02, 1, 0.025)) * smoothstep(0.45, 0.6, y))
+  r *= 1 - 0.07 * fis; g *= 1 - 0.08 * fis; b *= 1 - 0.09 * fis
   // Стенки полости: глубже эмали — дентин (сливочно-жёлтый), на срезе эмали — светлый ободок
   const d = dentinCore(x, y, z)
   const inDentin = smoothstep(0.012, -0.012, d)
@@ -81,24 +80,28 @@ function molarColor(x: number, y: number, z: number, cariesOn: boolean, out: Flo
     const c = caries(x, y, z)
     // Меловое пятно вокруг (деминерализация) и тёмный кариес в середине
     const halo = smoothstep(0.05, 0.0, c) * (1 - smoothstep(0.0, -0.02, c))
-    r = mix(r, 0.97, halo * 0.6); g = mix(g, 0.95, halo * 0.6); b = mix(b, 0.9, halo * 0.6)
+    r = mix(r, 0.93, halo * 0.5); g = mix(g, 0.88, halo * 0.5); b = mix(b, 0.8, halo * 0.5)
     const k = smoothstep(0.004, -0.02, c)
     const deep = smoothstep(0.52, 0.42, y) // в глубине — светлее и коричневее (мягкий дентин)
-    r = mix(r, mix(0.2, 0.42, deep), k); g = mix(g, mix(0.12, 0.27, deep), k); b = mix(b, mix(0.07, 0.14, deep), k)
+    r = mix(r, mix(0.16, 0.42, deep), k); g = mix(g, mix(0.09, 0.27, deep), k); b = mix(b, mix(0.05, 0.14, deep), k)
   }
   out[o] = lin(r); out[o + 1] = lin(g); out[o + 2] = lin(b)
 }
 
-/** Цвет по вершинам; впадины (AO из мешера) темнее и теплее — фиссуры и щели читаются, как на макрофото. */
-function paint(mesh: MeshData, fn: (x: number, y: number, z: number, out: Float32Array, o: number) => void, aoTint = 0.35): MeshData {
+/**
+ * Цвет по вершинам; впадины (AO из мешера) чуть темнее — нейтрально, почти серым, а не коричневым: фиссуры
+ * читаются тенью, как на макрофото здорового зуба.
+ */
+function paint(mesh: MeshData, fn: (x: number, y: number, z: number, out: Float32Array, o: number) => void, aoTint = 0.22): MeshData {
   const colors = new Float32Array(mesh.positions.length)
   for (let v = 0; v < mesh.positions.length; v += 3) {
     fn(mesh.positions[v]!, mesh.positions[v + 1]!, mesh.positions[v + 2]!, colors, v)
-    const a = mesh.ao ? mesh.ao[v / 3]! : 1
+    // Пол AO выше, чем в атласе: в стыках фиссур не должно быть чёрных точек (их легко принять за кариес)
+    const a = mesh.ao ? (mesh.ao[v / 3] = 0.5 + 0.5 * mesh.ao[v / 3]!) : 1
     const k = 1 - aoTint * (1 - a)
     colors[v] = colors[v]! * k
-    colors[v + 1] = colors[v + 1]! * k * k
-    colors[v + 2] = colors[v + 2]! * k * k * k
+    colors[v + 1] = colors[v + 1]! * k
+    colors[v + 2] = colors[v + 2]! * k ** 1.08
   }
   mesh.colors = colors
   return mesh
@@ -124,7 +127,7 @@ function neighbourColor(x: number, y: number, z: number, out: Float32Array, o: n
   const fis = n.shape === 'molarLower'
     ? Math.min(1, groove(lx, z, -0.42, 0, 0.42, 0.01, 1, 0.025)) * smoothstep(0.4, 0.58, ly)
     : Math.min(1, groove(lx, z, -0.2, -0.01, 0.2, -0.01, 1, 0.025)) * smoothstep(0.45, 0.6, ly)
-  r = mix(r, 0.7, fis * 0.5); g = mix(g, 0.6, fis * 0.5); b = mix(b, 0.46, fis * 0.5)
+  r *= 1 - 0.07 * fis; g *= 1 - 0.08 * fis; b *= 1 - 0.09 * fis
   out[o] = lin(r); out[o + 1] = lin(g); out[o + 2] = lin(b)
 }
 
