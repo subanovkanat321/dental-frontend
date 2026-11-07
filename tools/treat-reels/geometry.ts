@@ -16,8 +16,8 @@ import { SHAPES } from '../../src/atlas/geometry/jawModel'
 import { clamp01, sdEllipsoid, sdRoundBox, smax, smin, smoothstep } from '../../src/atlas/geometry/sdf'
 import { crownOuter, groove, rootOuter } from '../../src/atlas/geometry/toothModel'
 
-const lin = (c: number) => c ** 2.2
-const mix = (a: number, b: number, t: number) => a + (b - a) * t
+export const lin = (c: number) => c ** 2.2
+export const mix = (a: number, b: number, t: number) => a + (b - a) * t
 
 /** Шум значений 0…1 (гладкий, детерминированный): следы бора, зернистость среза. */
 function hash3(i: number, j: number, k: number): number {
@@ -37,9 +37,9 @@ export function noise3(x: number, y: number, z: number): number {
 }
 
 /** Весь моляр (коронка + корни) и дентин под эмалью — как в toothModel. */
-const toothT = (x: number, y: number, z: number) => smin(crownOuter(x, y, z), rootOuter(x, y, z), 0.12)
-const enamelThickness = (y: number) => 0.13 * smoothstep(-0.02, 0.38, y)
-const dentinCore = (x: number, y: number, z: number) => crownOuter(x, y, z) + enamelThickness(y)
+export const toothT = (x: number, y: number, z: number) => smin(crownOuter(x, y, z), rootOuter(x, y, z), 0.12)
+export const enamelThickness = (y: number) => 0.13 * smoothstep(-0.02, 0.38, y)
+export const dentinCore = (x: number, y: number, z: number) => crownOuter(x, y, z) + enamelThickness(y)
 
 /**
  * Полость под пломбу (I класс по Блэку — жевательная поверхность): вытянута вдоль центральной фиссуры,
@@ -78,7 +78,7 @@ function caries(x: number, y: number, z: number): number {
 }
 
 /** Цвет моляра по вершине: эмаль (тёплая шейка, светлые бугры), дентин в стенках полости, кариес. */
-function molarColor(x: number, y: number, z: number, cariesOn: boolean, out: Float32Array, o: number): void {
+export function molarColor(x: number, y: number, z: number, cariesOn: boolean, out: Float32Array, o: number): void {
   // Эмаль (как toothColor в jawModel: шейка просвечивает дентином, вершины бугров светлее)
   const t = clamp01(y / 0.78)
   let r = 0.935, g = 0.915, b = 0.86
@@ -115,7 +115,7 @@ function molarColor(x: number, y: number, z: number, cariesOn: boolean, out: Flo
  * Цвет по вершинам; впадины (AO из мешера) чуть темнее — нейтрально, почти серым, а не коричневым: фиссуры
  * читаются тенью, как на макрофото здорового зуба.
  */
-function paint(mesh: MeshData, fn: (x: number, y: number, z: number, out: Float32Array, o: number) => void, aoTint = 0.22): MeshData {
+export function paint(mesh: MeshData, fn: (x: number, y: number, z: number, out: Float32Array, o: number) => void, aoTint = 0.22): MeshData {
   const colors = new Float32Array(mesh.positions.length)
   for (let v = 0; v < mesh.positions.length; v += 3) {
     fn(mesh.positions[v]!, mesh.positions[v + 1]!, mesh.positions[v + 2]!, colors, v)
@@ -135,12 +135,12 @@ export const NEIGHBOURS = [
   { shape: 'premolarLower', x: -0.9, y: -0.06, s: 0.98 },
   { shape: 'molarLower', x: 1.07, y: 0.0, s: 0.93 },
 ] as const
-const neighbourField = (i: number, x: number, y: number, z: number) => {
+export const neighbourField = (i: number, x: number, y: number, z: number) => {
   const n = NEIGHBOURS[i]!
   return SHAPES[n.shape]((x - n.x) / n.s, (y - n.y) / n.s, z / n.s) * n.s
 }
 
-function neighbourColor(x: number, y: number, z: number, out: Float32Array, o: number, n: (typeof NEIGHBOURS)[number]): void {
+export function neighbourColor(x: number, y: number, z: number, out: Float32Array, o: number, n: (typeof NEIGHBOURS)[number]): void {
   const ly = (y - n.y) / n.s
   const t = clamp01(ly / 0.8)
   let r = 0.93, g = 0.91, b = 0.855
@@ -155,7 +155,7 @@ function neighbourColor(x: number, y: number, z: number, out: Float32Array, o: n
 }
 
 /** Овал вокруг шейки зуба: 0 у самой шейки, растёт наружу (как neckCollar в toothModel). */
-function collar(x: number, z: number): number {
+export function collar(x: number, z: number): number {
   let c = (Math.hypot(x / 0.56, z / 0.47) - 1) * 0.5
   c = Math.min(c, (Math.hypot((x - NEIGHBOURS[0].x) / 0.34, z / 0.38) - 1) * 0.35)
   c = Math.min(c, (Math.hypot((x - NEIGHBOURS[1].x) / 0.52, z / 0.44) - 1) * 0.5)
@@ -163,7 +163,7 @@ function collar(x: number, z: number): number {
 }
 
 /** Десна: альвеолярный гребень вдоль дуги, у шеек поднимается (десневой край), между зубами — сосочки. */
-function gumField(x: number, y: number, z: number, teeth: number): number {
+export function gumField(x: number, y: number, z: number, teeth: number): number {
   // Гребень по ширине шеек: от края десны склоны сразу уходят вниз (к щеке и к языку)
   const ridge = sdRoundBox(0, y + 0.7, z + 0.02, 10, 1.0, 0.6, 0.5)
   const top = -0.3 + 0.42 * Math.exp(-Math.max(collar(x, z), 0) * 4.5)
@@ -171,7 +171,7 @@ function gumField(x: number, y: number, z: number, teeth: number): number {
   return Math.max(smax(ridge, y - top, 0.1), ends, -(teeth + 0.004))
 }
 
-function gumColor(x: number, y: number, z: number, out: Float32Array, o: number): void {
+export function gumColor(x: number, y: number, z: number, out: Float32Array, o: number): void {
   // Прикреплённая десна — бледно-коралловая, у края светлее; ниже (слизистая) — краснее
   const margin = Math.exp(-Math.max(collar(x, z), 0) * 9)
   const low = smoothstep(-0.3, -0.8, y)
@@ -179,6 +179,22 @@ function gumColor(x: number, y: number, z: number, out: Float32Array, o: number)
   r = mix(r, 0.86, margin * 0.5); g = mix(g, 0.56, margin * 0.5); b = mix(b, 0.56, margin * 0.5)
   r = mix(r, 0.66, low); g = mix(g, 0.24, low); b = mix(b, 0.28, low)
   out[o] = lin(r); out[o + 1] = lin(g); out[o + 2] = lin(b)
+}
+
+/** Общее для роликов «в челюсти»: соседние зубы и десна вокруг главного зуба (или без него — gap). */
+export function buildCommon(opts: { withMain?: boolean } = {}): { neighbours: MeshData[]; gum: MeshData } {
+  const withMain = opts.withMain ?? true
+  const neighbours = NEIGHBOURS.map((n, i) => {
+    const g = makeGrid([n.x - 0.72 * n.s, -0.32, -0.62], [n.x + 0.72 * n.s, 1.0, 0.62], 0.016)
+    return paint(surfaceNets(g, sample(g, (x, y, z) => neighbourField(i, x, y, z))), (x, y, z, out, o) => neighbourColor(x, y, z, out, o, n))
+  })
+  // Десна: вычитаем все зубы
+  const gG: Grid = makeGrid([-2.25, -1.6, -0.9], [2.45, 0.24, 0.9], 0.02)
+  const gum = paint(surfaceNets(gG, sample(gG, (x, y, z) => {
+    const teeth = Math.min(withMain ? toothT(x, y, z) : 9, neighbourField(0, x, y, z), neighbourField(1, x, y, z))
+    return gumField(x, y, z, teeth)
+  })), gumColor)
+  return { neighbours, gum }
 }
 
 export interface TreatMeshes {
@@ -194,12 +210,10 @@ export interface TreatMeshes {
   fillFinal: MeshData
   gel: MeshData[]
   bond: MeshData
-  neighbours: MeshData[]
-  gum: MeshData
 }
 
 /** Построить всё. stages — число стадий препарирования; step — шаг сетки зуба. */
-export function buildTreatMeshes(opts: { stages?: number; step?: number } = {}): TreatMeshes {
+export function buildFillingMeshes(opts: { stages?: number; step?: number } = {}): TreatMeshes {
   const stages = opts.stages ?? 16
   const h = opts.step ?? 0.012
   // Зуб — только то, что над десной: ниже y = −0,3 не видно
@@ -246,18 +260,5 @@ export function buildTreatMeshes(opts: { stages?: number; step?: number } = {}):
   // Бонд: тонкая плёнка поверх стенок полости (зуб с полостью, раздутый на 0,012)
   const bond = surfaceNets(gC, sample(gC, (_x, _y, _z, n) => Math.max(Math.max(TC[n]!, -CAV[n]!) - 0.012, CAV[n]! - 0.02)))
 
-  // Соседи
-  const neighbours = NEIGHBOURS.map((n, i) => {
-    const g = makeGrid([n.x - 0.72 * n.s, -0.32, -0.62], [n.x + 0.72 * n.s, 1.0, 0.62], 0.016)
-    return paint(surfaceNets(g, sample(g, (x, y, z) => neighbourField(i, x, y, z))), (x, y, z, out, o) => neighbourColor(x, y, z, out, o, n))
-  })
-
-  // Десна: вычитаем все три зуба
-  const gG: Grid = makeGrid([-2.25, -1.6, -0.9], [2.45, 0.24, 0.9], 0.02)
-  const gum = paint(surfaceNets(gG, sample(gG, (x, y, z) => {
-    const teeth = Math.min(toothT(x, y, z), neighbourField(0, x, y, z), neighbourField(1, x, y, z))
-    return gumField(x, y, z, teeth)
-  })), gumColor)
-
-  return { toothStages, toothHealthy, layers, layerLevels: levels, fillRough, fillFinal, gel, bond, neighbours, gum }
+  return { toothStages, toothHealthy, layers, layerLevels: levels, fillRough, fillFinal, gel, bond }
 }

@@ -15,5 +15,5 @@
     "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["*.ts"]
+  "include": ["*.ts", "procs/*.ts"]
 }

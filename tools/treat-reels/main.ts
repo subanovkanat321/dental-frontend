@@ -14,33 +14,29 @@ import * as THREE from 'three'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 
 import type { MeshData } from '../../src/atlas/geometry/mesher'
+import { createMaterials } from '../../src/atlas/engine/materials'
 import { applySurface } from '../../src/atlas/engine/surface'
-import { buildTreatMeshes, CAVITY_TOP, cavity as cavityField, LAYER_SUBS, noise3 } from './geometry'
+import { noise3 } from './geometry'
 import { createTools, haloTexture, type ToolName } from './instruments'
 import { addLook } from './look'
 import { createPost } from './post'
+import { canalProcedure } from './procs/canal'
+import { cleaningProcedure } from './procs/cleaning'
+import { crownProcedure } from './procs/crown'
+import { fillingProcedure } from './procs/filling'
+import { implantProcedure } from './procs/implant'
+import type { Key, Pose, ProcCtx, Procedure, ProcedureName, Scenario, State } from './types'
 
-/** Ключ дорожки: [время, значение] или [время, значение, 'l' — линейно | 's' — скачком]. */
-export type Key = [number, number] | [number, number, 'l' | 's']
+export type { Key, Scenario }
 
-export interface Scenario {
-  width?: number
-  height?: number
-  /** Дорожки: cam* — камера; prep, etch, rinse, bond, fill, cure, polish, healed, compare — стадии; инструменты — по имени. */
-  tracks: Record<string, Key[]>
-  /** Момент «до» для сравнения до/после (стадии берутся из этого времени). */
-  beforeAt?: number
-  /**
-   * «Толчки» камеры на смене шага (в такт «вжух»): быстрый наезд zoom (доля расстояния, минус — ближе)
-   * и крен roll (градусы), затухают за ~1 с.
-   */
-  kicks?: { t: number; zoom?: number; roll?: number }[]
+const PROCEDURES: Record<ProcedureName, (ctx: ProcCtx) => Procedure> = {
+  filling: fillingProcedure, canal: canalProcedure, crown: crownProcedure, implant: implantProcedure, cleaning: cleaningProcedure,
 }
 
 /** Значения по умолчанию, если дорожки нет. */
 const DEFAULTS: Record<string, number> = {
-  camAz: 0, camEl: 48, camDist: 4.2, camFov: 26, camTx: CAVITY_TOP[0], camTy: CAVITY_TOP[1], camTz: CAVITY_TOP[2], camRoll: 0,
-  prep: 0, etch: 0, rinse: 0, bond: 0, fill: 0, cure: 0, polish: 0, healed: 0, compare: 0, water: 0, spray: 0, wet: 0,
+  camAz: 0, camEl: 48, camDist: 4.2, camFov: 26, camRoll: 0,
+  prep: 0, etch: 0, rinse: 0, bond: 0, fill: 0, cure: 0, polish: 0, healed: 0, compare: 0, water: 0, spray: 0, wet: 0, jet: 0,
   /** Постобработка: размытие по глубине и к краям, виньетка, зерно; «ручная» камера; капли на зубе. */
   dof: 9, edge: 5, vignette: 0.4, grain: 0.035, shake: 1, drops: 0,
 }
@@ -72,7 +68,7 @@ function hash(n: number): number {
  * Где работает инструмент (кончик, от центра полости), куда уходит его ось (dir) и куда изогнута ручка (side).
  * Оси наклонены к языку (−z): с камеры спереди-сверху инструмент «растёт» вверх по кадру и не закрывает зуб.
  */
-const TOOL_POSE: Record<ToolName, { at: [number, number, number]; dir: [number, number, number]; side: [number, number, number] }> = {
+const TOOL_POSE: Record<ToolName, Pose> = {
   bur: { at: [0, -0.04, 0], dir: [0.08, 0.82, -0.56], side: [-1, 0.1, 0] },
   syringe: { at: [0.02, 0.04, 0.02], dir: [0.3, 0.75, -0.6], side: [1, 0.3, 0] },
   air: { at: [-0.25, 0.6, -0.3], dir: [-0.35, 0.7, -0.6], side: [-1, 0.4, 0] },
@@ -80,6 +76,13 @@ const TOOL_POSE: Record<ToolName, { at: [number, number, number]; dir: [number, 
   lamp: { at: [0, 0.75, -0.45], dir: [0, 0.6, -0.8], side: [0, 1, 0] },
   plug: { at: [0, 0.02, 0], dir: [0.35, 0.72, -0.6], side: [1, 0.4, 0] },
   cup: { at: [0, 0.13, 0.02], dir: [0.12, 0.66, -0.74], side: [-1, 0.15, 0] },
+  file: { at: [0, 0, 0], dir: [0, 1, 0], side: [1, 0, 0] },
+  irrig: { at: [0, 0, 0], dir: [0.1, 0.9, -0.4], side: [1, 0.3, 0] },
+  scanner: { at: [0, 0.5, 0], dir: [0, 0.35, -0.94], side: [-1, 0, 0] },
+  idrill: { at: [0, 0, 0], dir: [0, 1, 0], side: [-1, 0, 0] },
+  driver: { at: [0, 0, 0], dir: [0, 1, 0], side: [-1, 0, 0] },
+  scaler: { at: [0, 0, 0], dir: [0.2, 0.6, 0.77], side: [1, 0.4, 0] },
+  airflow: { at: [0, 0.35, 0.45], dir: [0.15, 0.55, 0.82], side: [1, 0.3, 0] },
 }
 const TOOLS = Object.keys(TOOL_POSE) as ToolName[]
 
@@ -114,8 +117,6 @@ function backdrop(): THREE.Texture {
   return t
 }
 
-type State = Record<string, number>
-
 export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promise<void> {
   const W = scenario.width ?? 1080, H = scenario.height ?? 1920
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' })
@@ -125,6 +126,8 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
   renderer.toneMappingExposure = 1.0
   renderer.shadowMap.enabled = true
   renderer.shadowMap.type = THREE.VSMShadowMap
+  // Плоскости отсечения: пульпа уходит, гуттаперча и пломба растут
+  renderer.localClippingEnabled = true
   const post = createPost(renderer, W, H)
 
   const scene = new THREE.Scene()
@@ -160,28 +163,30 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
   const camLight = new THREE.PointLight('#fff6ee', 5, 0, 1.6)
   scene.add(key, key.target, fill, rim, hemi, camLight)
 
-  // ── Сетки ──
-  const meshes = buildTreatMeshes()
+  // ── Материалы и сетки процедуры ──
   const phys = (p: THREE.MeshPhysicalMaterialParameters) => new THREE.MeshPhysicalMaterial(p)
   const toothMat = applySurface(phys({ color: '#ffffff', vertexColors: true, roughness: 0.38, clearcoat: 0.9, clearcoatRoughness: 0.07, specularIntensity: 0.75 }),
     { kind: 'tooth', ao: true, sss: 0.45, sssColor: '#ffe2cc' })
   const gumMat = applySurface(phys({ color: '#ffffff', vertexColors: true, roughness: 0.48, clearcoat: 0.7, clearcoatRoughness: 0.12, sheen: 0.35, sheenColor: new THREE.Color('#ffc6cc') }),
     { kind: 'gum', ao: true, sss: 0.6, sssColor: '#ff7a70' })
-  // Композит до полировки — чуть матовее и плотнее эмали; синий отсвет — когда светит лампа
-  const compositeMat = applySurface(phys({ color: '#efdcb4', roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.08, emissive: new THREE.Color('#2f62ff'), emissiveIntensity: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
-    { kind: 'plain', ao: true })
-  const roughMat = applySurface(phys({ color: '#fbf3e4', vertexColors: true, roughness: 0.62, clearcoat: 0.15, emissive: new THREE.Color('#2f62ff'), emissiveIntensity: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
-    { kind: 'plain', ao: true })
-  const finalMat = toothMat.clone()
-  applySurface(finalMat, { kind: 'tooth', ao: true, sss: 0.45, sssColor: '#ffe2cc' })
-  addLook(finalMat, ['enamel', 'wet'])
+  const toothOverMat = toothMat.clone()
+  applySurface(toothOverMat, { kind: 'tooth', ao: true, sss: 0.45, sssColor: '#ffe2cc' })
+  addLook(toothOverMat, ['enamel', 'wet'])
   addLook(toothMat, ['enamel', 'wet'])
   addLook(gumMat, ['gum', 'wet'])
-  finalMat.polygonOffset = true
-  finalMat.polygonOffsetFactor = -2
-  finalMat.polygonOffsetUnits = -2
-  const gelMat = phys({ color: '#2d86f0', roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05, transparent: true, opacity: 0.85, emissive: new THREE.Color('#0b3a8a'), emissiveIntensity: 0.25 })
-  const bondMat = phys({ color: '#fff3cf', roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.02, transparent: true, opacity: 0, depthWrite: false, specularIntensity: 1 })
+  toothOverMat.polygonOffset = true
+  toothOverMat.polygonOffsetFactor = -2
+  toothOverMat.polygonOffsetUnits = -2
+  let atlasMats: ReturnType<typeof createMaterials> | null = null
+  const atlas = () => {
+    if (!atlasMats) {
+      atlasMats = createMaterials()
+      addLook(atlasMats.enamel, ['wet'])
+      addLook(atlasMats.gum, ['gum', 'wet'])
+      addLook(atlasMats.ceramic, ['enamel', 'wet'])
+    }
+    return atlasMats
+  }
 
   const mk = (m: MeshData, mat: THREE.Material, order = 0) => {
     const mesh = new THREE.Mesh(toGeometry(m), mat)
@@ -191,15 +196,11 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
     scene.add(mesh)
     return mesh
   }
-  const stages = meshes.toothStages.map((m) => mk(m, toothMat))
-  const healthy = mk(meshes.toothHealthy, toothMat)
-  const layers = meshes.layers.map((m) => mk(m, compositeMat, 1))
-  const fillRough = mk(meshes.fillRough, roughMat, 1)
-  const fillFinal = mk(meshes.fillFinal, finalMat, 1)
-  const gel = meshes.gel.map((m) => mk(m, gelMat, 2))
-  const bond = mk(meshes.bond, bondMat, 3)
-  for (const n of meshes.neighbours) mk(n, toothMat).visible = true
-  mk(meshes.gum, gumMat).visible = true
+  const proc = PROCEDURES[scenario.procedure ?? 'filling']({ scene, mk, phys, toothMat, toothOverMat, gumMat, atlas })
+  const work = new THREE.Vector3(...proc.work)
+  DEFAULTS.camTx = proc.work[0]
+  DEFAULTS.camTy = proc.work[1]
+  DEFAULTS.camTz = proc.work[2]
 
   // ── Инструменты и частицы ──
   const tools = createTools()
@@ -215,6 +216,15 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
     return pts
   }
   const spray = particles(900, 0.045, '#f4f9ff', 0.7)
+  const jet = particles(2600, 0.1, '#a9c8ee', 0.85)
+  // Струя Air Flow — полупрозрачный голубоватый конус от сопла и облако у поверхности (на светлой эмали
+  // одни частицы не видны)
+  const jetConeMat = new THREE.MeshBasicMaterial({ color: '#b4d2f5', transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })
+  const jetCone = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.02, 1, 32, 1, true), jetConeMat)
+  const jetHaloMat = new THREE.SpriteMaterial({ map: dot, color: '#cfe3ff', transparent: true, opacity: 0, depthWrite: false })
+  const jetHalo = new THREE.Sprite(jetHaloMat)
+  jetCone.visible = jetHalo.visible = false
+  scene.add(jetCone, jetHalo)
   const stream = particles(900, 0.035, '#dfeeff', 0.7)
   const splash = particles(320, 0.06, '#ffffff', 0.75)
 
@@ -227,21 +237,21 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
   drops.visible = false
   scene.add(drops)
   const dropSpots: { p: THREE.Vector3; n: THREE.Vector3; r: number; h: number }[] = []
-  {
-    const pos = meshes.toothHealthy.positions, nor = meshes.toothHealthy.normals
+  if (proc.drops) {
+    const { mesh, ok } = proc.drops
+    const pos = mesh.positions, nor = mesh.normals
     const count = pos.length / 3
     for (let i = 0; dropSpots.length < DROPS && i < 40000; i++) {
       const v = Math.floor(hash(i * 3.7 + 1) * count) * 3
       const x = pos[v]!, y = pos[v + 1]!, z = pos[v + 2]!
-      // Не в полости (там своя вода) и не на невидимой язычной стороне
-      if (y < 0.1 || nor[v + 2]! < -0.35 || cavityField(x, y, z) < 0.05) continue
+      if (!ok(x, y, z, nor[v + 2]!)) continue
       dropSpots.push({ p: new THREE.Vector3(x, y, z), n: new THREE.Vector3(nor[v]!, nor[v + 1]!, nor[v + 2]!), r: 0.007 + 0.016 * hash(i * 9.1) ** 2, h: hash(i * 5.3 + 2) })
     }
   }
   const m4 = new THREE.Matrix4(), dq = new THREE.Quaternion(), dv = new THREE.Vector3(), ds = new THREE.Vector3(), yUp = new THREE.Vector3(0, 1, 0)
   function applyDrops(s: State) {
     const amount = s.drops!
-    drops.visible = amount > 0.01
+    drops.visible = amount > 0.01 && dropSpots.length > 0
     if (!drops.visible) return
     const t = s.__t!
     dropSpots.forEach((d, i) => {
@@ -266,7 +276,6 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
   tools.bur.group.add(burBlur)
 
   const camera = new THREE.PerspectiveCamera(26, W / H, 0.05, 60)
-  const cavity = new THREE.Vector3(...CAVITY_TOP)
   const basis = new THREE.Matrix4()
 
   function stateAt(t: number): State {
@@ -276,31 +285,8 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
     return s
   }
 
-  /** Ткани и материалы по состоянию (без камеры и инструментов). */
-  function applyTissues(s: State) {
-    const healed = s.healed! >= 0.5
-    const stage = Math.round(Math.min(1, Math.max(0, s.prep!)) * (stages.length - 1))
-    stages.forEach((m, i) => { m.visible = !healed && i === stage })
-    healthy.visible = healed
-    // Слои: fill ∈ [0, 3] — три слоя по LAYER_SUBS подстадий
-    const sub = Math.ceil(Math.min(3, s.fill!) * LAYER_SUBS) - 1
-    const done = s.fill! >= 3
-    layers.forEach((m, i) => { m.visible = !healed && !done && i === sub })
-    fillRough.visible = !healed && done && s.polish! < 0.55
-    fillFinal.visible = !healed && done && s.polish! >= 0.55
-    const glowAmt = s.cure! * (0.75 + 0.25 * Math.sin(s.__t! * 31))
-    compositeMat.emissiveIntensity = 0.55 * glowAmt
-    roughMat.emissiveIntensity = 0.45 * glowAmt
-    // Гель протравки: появляется стадиями, при смыве тает
-    const g = s.etch!
-    const gi = g <= 0 ? -1 : Math.min(gel.length - 1, Math.ceil(g * gel.length) - 1)
-    gel.forEach((m, i) => { m.visible = i === gi && s.rinse! < 0.98 })
-    gelMat.opacity = 0.85 * (1 - s.rinse!)
-    bond.visible = s.bond! > 0.01 && s.fill! < 0.3
-    bondMat.opacity = 0.42 * Math.min(1, s.bond!) + 0.3 * s.wet!
-    toothMat.clearcoatRoughness = 0.07 - 0.04 * s.wet!
-  }
-
+  /** Ткани и материалы по состоянию (без камеры и инструментов) — у каждой процедуры свои. */
+  const applyTissues = (s: State) => proc.apply(s)
   function applyCamera(s: State) {
     const az = (s.camAz! * Math.PI) / 180, el = (s.camEl! * Math.PI) / 180
     const target = new THREE.Vector3(s.camTx, s.camTy, s.camTz)
@@ -346,13 +332,13 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
       const p = Math.min(1, Math.max(0, s[name] ?? 0))
       tool.group.visible = p > 0.001
       if (!tool.group.visible) continue
-      const pose = TOOL_POSE[name]
+      const pose = proc.poses?.[name] ?? TOOL_POSE[name]
       const dir = new THREE.Vector3(...pose.dir).normalize()
       // Подход: издалека вдоль оси ручки (за кадр), в конце — на месте
       // Быстро подлетает и мягко «садится» на место (ускорение → замедление), уходит наоборот
       const away = (1 - p) ** 3 * 3.4
       const wig = s[`${name}Wig`] ?? 0
-      const pos = cavity.clone().add(new THREE.Vector3(...pose.at))
+      const pos = work.clone().add(new THREE.Vector3(...pose.at))
         .add(new THREE.Vector3(s[`${name}X`] ?? 0, s[`${name}Y`] ?? 0, s[`${name}Z`] ?? 0))
         .add(new THREE.Vector3(Math.sin(t * 7.3) * 0.05 * wig, Math.sin(t * 11.1) * 0.012 * wig, Math.cos(t * 5.9) * 0.025 * wig))
         .addScaledVector(dir, away)
@@ -362,7 +348,9 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
       sx.addScaledVector(dir, -sx.dot(dir)).normalize()
       basis.makeBasis(sx, dir, new THREE.Vector3().crossVectors(sx, dir))
       tool.group.quaternion.setFromRotationMatrix(basis)
-      if (tool.spin) tool.spin.rotation.y = (s[`${name}Spin`] ?? 0) > 0 ? hash(Math.floor(t * 30)) * Math.PI * 2 : 0
+      // Вращение: Spin > 0 — быстрое (каждый кадр случайный угол — глазу это «размытие»), Turn — угол в оборотах
+      if (tool.spin) tool.spin.rotation.y = (s[`${name}Spin`] ?? 0) > 0 ? hash(Math.floor(t * 30)) * Math.PI * 2 : (s[`${name}Turn`] ?? 0) * Math.PI * 2
+      if (tool.glowMat) tool.glowMat.opacity = s[`${name}Glow`] ?? 0
     }
     const lamp = tools.lamp.glow!
     lamp.light.intensity = 1.6 * s.cure!
@@ -374,11 +362,13 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
   function applyParticles(s: State) {
     const t = s.__t!
     const frame = Math.floor(t * 30)
-    const tip = tools.bur.group.position
-    spray.visible = s.spray! > 0.01 && tools.bur.group.visible
+    // Брызги — из того вращающегося инструмента, что сейчас в кадре (бор, сверло имплантолога, скейлер)
+    const src = (['bur', 'idrill', 'scaler'] as const).find((n) => tools[n].group.visible) ?? 'bur'
+    const tip = tools[src].group.position
+    spray.visible = s.spray! > 0.01 && tools[src].group.visible
     if (spray.visible) {
       const a = spray.geometry.getAttribute('position') as THREE.BufferAttribute
-      const head = new THREE.Vector3(0, 1.3, 0).applyQuaternion(tools.bur.group.quaternion).add(tip)
+      const head = new THREE.Vector3(0, tools[src].nozzle ?? 1.3, 0).applyQuaternion(tools[src].group.quaternion).add(tip)
       for (let i = 0; i < a.count; i++) {
         const r1 = hash(i * 3.1 + frame * 17.7), r2 = hash(i * 7.7 + frame * 3.3), r3 = hash(i * 1.3 + frame * 9.1)
         const u = (r1 + (t * 2.2) % 1) % 1 // доля пути от сопла к бору и дальше
@@ -389,11 +379,38 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
       a.needsUpdate = true
       ;(spray.material as THREE.PointsMaterial).opacity = 0.5 * s.spray!
     }
+    // Air Flow: плотная струя порошка с водой из сопла в рабочую точку, облако у поверхности
+    jet.visible = s.jet! > 0.01 && tools.airflow.group.visible
+    if (jet.visible) {
+      const a = jet.geometry.getAttribute('position') as THREE.BufferAttribute
+      const from = tools.airflow.group.position
+      const to = work.clone().add(new THREE.Vector3(s.airflowX ?? 0, (s.airflowY ?? 0) - 0.03, (s.airflowZ ?? 0) + 0.17))
+      for (let i = 0; i < a.count; i++) {
+        const u = (hash(i * 1.7) + t * 3.3) % 1
+        const p = from.clone().lerp(to, Math.min(1, u * 1.4))
+        const cloud = Math.max(0, u * 1.4 - 1) * 1.2 + 0.015
+        a.setXYZ(i, p.x + (hash(i * 4.1 + frame) - 0.5) * cloud * 2, p.y + (hash(i * 6.3 + frame) - 0.5) * cloud + cloud * 0.5, p.z + (hash(i * 9.7 + frame) - 0.5) * cloud * 1.5)
+      }
+      a.needsUpdate = true
+      ;(jet.material as THREE.PointsMaterial).opacity = 0.85 * s.jet!
+      const mid = from.clone().add(to).multiplyScalar(0.5)
+      const len = from.distanceTo(to)
+      jetCone.position.copy(mid)
+      jetCone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize())
+      jetCone.scale.set(1, len, 1)
+      jetConeMat.opacity = 0.4 * s.jet! * (0.85 + 0.15 * Math.sin(t * 40))
+      jetHalo.position.copy(to)
+      const hs = 0.35 + 0.08 * Math.sin(t * 23)
+      jetHalo.scale.set(hs, hs, 1)
+      jetHaloMat.opacity = 0.7 * s.jet!
+    }
+    jetCone.visible = jetHalo.visible = jet.visible
     const water = s.water!
-    stream.visible = splash.visible = water > 0.01 && tools.air.group.visible
+    const wsrc = tools.irrig.group.visible ? tools.irrig : tools.air
+    stream.visible = splash.visible = water > 0.01 && wsrc.group.visible
     if (stream.visible) {
-      const nozzle = tools.air.group.position.clone()
-      const target = cavity.clone().add(new THREE.Vector3(0, -0.06, 0))
+      const nozzle = wsrc.group.position.clone()
+      const target = new THREE.Vector3(...(proc.waterTarget ?? proc.work))
       const a = stream.geometry.getAttribute('position') as THREE.BufferAttribute
       for (let i = 0; i < a.count; i++) {
         const u = (i / a.count + t * 3.1) % 1
