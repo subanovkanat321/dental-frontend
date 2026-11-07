@@ -149,7 +149,7 @@ const LOWER_INCISOR: FrontParams = { neck: 0.2, wide: 0.27, h: 0.95, lab: 0.27, 
 const UPPER_CANINE: FrontParams = { neck: 0.29, wide: 0.39, h: 1.05, lab: 0.38, ling: 0.36, edge: 0.07, distal: 0.05, mesial: 0.03, cusp: 0.28, root: 1.75, rx: 0.22, rz: 0.3 }
 const LOWER_CANINE: FrontParams = { neck: 0.26, wide: 0.35, h: 1.1, lab: 0.36, ling: 0.34, edge: 0.06, distal: 0.05, mesial: 0.03, cusp: 0.24, root: 1.6, rx: 0.2, rz: 0.3 }
 
-const SHAPES: Record<JawShape, (x: number, y: number, z: number) => number> = {
+export const SHAPES: Record<JawShape, (x: number, y: number, z: number) => number> = {
   incisorUpperCentral: (x, y, z) => frontTooth(x, y, z, UPPER_CENTRAL),
   incisorUpperLateral: (x, y, z) => frontTooth(x, y, z, UPPER_LATERAL),
   incisorLower: (x, y, z) => frontTooth(x, y, z, LOWER_INCISOR),

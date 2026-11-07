@@ -3,3 +3,6 @@ dist
 *.local
 .env
 .DS_Store
+
+# Рендерер рилсов «Как лечат» (tools/treat-reels): сборка
+tools/treat-reels/out
