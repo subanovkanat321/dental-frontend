@@ -3,8 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
-import { groupLabel, groupServices } from '../clinic/services'
-import { servicesOfDoctor } from '../lib/doctorServices'
 import { formatPhone, slotInstant, todayIn, ZONE } from '../lib/time'
 import { haptic, openLink, telegram } from '../lib/telegram'
 import { useBlobUrl } from '../lib/useBlobUrl'
@@ -13,24 +11,23 @@ import { ClinicFilters } from '../lib/ClinicFilters'
 import { ContactLinks } from '../lib/ContactLinks'
 import { useClinicFilter, withCity } from '../lib/clinicSearch'
 import { BackButton, MainButton } from '../lib/MainButton'
-import { bookingDays, initials, normalizeLang, priceText, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
+import { bookingDays, initials, normalizeLang, serviceEmoji, translator, whenAt, type Lang, type T } from './i18n'
 import { DayStrip, SlotGrid } from './SlotPicker'
+import { BookingWizard, type Chosen, type ContactsArgs } from './Wizard'
 import { PlanView } from './PlanView'
-import { firstFree, minutesOf, stripLength } from './slots'
+import { minutesOf, stripLength } from './slots'
 import './patient.css'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
-type Doctor = Schemas['DoctorView']
-type Service = Schemas['ServiceTypeView']
 type Booking = Schemas['BookingViewsBooking']
 type Relation = NonNullable<Schemas['RelativesRelative']['relation']>
 
 type Screen =
   | { name: 'clinics'; back: Screen | null }
-  | { name: 'doctors' }
-  | { name: 'book'; doctorId: number }
+  /** Пошаговая запись (Wizard); doctorId — «Записаться снова» к этому врачу */
+  | { name: 'book'; doctorId?: number }
   /** Без id: одна запись — она, несколько — список «Мои записи» */
   | { name: 'booking'; id?: number }
   | { name: 'reschedule'; id: number }
@@ -49,10 +46,9 @@ function bookingsOf(me: Me): Booking[] {
   return me.bookings?.length ? me.bookings : me.booking ? [me.booking] : []
 }
 
-/** Записаться (ещё раз): один врач — сразу запись к нему, иначе — выбор врача. */
-function bookStart(me: Me): Screen {
-  const doctors = me.doctors ?? []
-  return doctors.length === 1 ? { name: 'book', doctorId: doctors[0]!.id! } : { name: 'doctors' }
+/** Записаться (ещё раз): пошаговая запись с первого шага. */
+function bookStart(): Screen {
+  return { name: 'book' }
 }
 
 /**
@@ -65,14 +61,14 @@ function firstScreen(me: Me): Screen {
   const params = new URLSearchParams(launchSearch())
   const again = (me.doctors ?? []).find((d) => d.id === Number(params.get('doctor')))
   const nearest = bookingsOf(me)[0]
-  const home: Screen = nearest ? { name: 'booking' } : again ? { name: 'book', doctorId: again.id! } : bookStart(me)
+  const home: Screen = nearest ? { name: 'booking' } : again ? { name: 'book', doctorId: again.id! } : bookStart()
   if (params.get('screen') === 'plan') return { name: 'plan', back: home }
   // «📅 Записаться на 1-й этап» под планом — сразу запись, даже если уже есть другая
-  if (params.get('screen') === 'book') return bookStart(me)
+  if (params.get('screen') === 'book') return bookStart()
   if (nearest && params.get('screen') === 'reschedule') return { name: 'reschedule', id: nearest.id! }
   if (nearest) return { name: 'booking' }
   if (again) return { name: 'book', doctorId: again.id! }
-  return bookStart(me)
+  return bookStart()
 }
 
 /** Запись поменялась (перенос, предоплата, лист ожидания) — та же правка в booking и в bookings. */
@@ -183,7 +179,6 @@ export default function PatientApp({ me }: { me: Me }) {
       void client.invalidateQueries({ queryKey: ['me'] })
     },
   }
-  const doctor = current.name === 'book' ? (me.doctors ?? []).find((d) => d.id === current.doctorId) : undefined
   // Какая запись открыта: id с экрана, а без него — единственная
   const opened = current.name === 'booking' || current.name === 'reschedule'
     ? current.id == null ? (bookings.length === 1 ? bookings[0] : undefined) : bookings.find((b) => b.id === current.id)
@@ -195,9 +190,7 @@ export default function PatientApp({ me }: { me: Me }) {
       {notice && <p className="notice tone-ok" role="status">{notice}</p>}
       {me.elsewhere?.booking?.startAt && current.name !== 'privacy' && current.name !== 'clinics' && <Elsewhere ctx={ctx} />}
       {current.name === 'clinics' && <ClinicsScreen ctx={ctx} back={current.back} />}
-      {current.name === 'doctors' && <DoctorsScreen ctx={ctx} />}
-      {current.name === 'book' && doctor && <BookScreen key={doctor.id} ctx={ctx} doctor={doctor} />}
-      {current.name === 'book' && !doctor && <DoctorsScreen ctx={ctx} />}
+      {current.name === 'book' && <BookScreen ctx={ctx} initialDoctor={current.doctorId} />}
       {current.name === 'booking' && (opened ? <BookingScreen key={opened.id} ctx={ctx} b={opened} />
         : bookings.length > 0 && <MyBookingsScreen ctx={ctx} bookings={bookings} />)}
       {current.name === 'reschedule' && opened && <RescheduleScreen ctx={ctx} b={opened} />}
@@ -350,28 +343,6 @@ function ClinicsScreen({ ctx, back }: { ctx: Ctx; back: Screen | null }) {
   )
 }
 
-/** Врачей несколько — сначала выбрать, к кому: у каждого своё кресло и своё время. */
-function DoctorsScreen({ ctx }: { ctx: Ctx }) {
-  const { me, t } = ctx
-  const doctors = me.doctors ?? []
-  return (
-    <section className="screen">
-      <BackButton onBack={null} />
-      <Hero t={t} title={t('bookTitle')} subtitle={t('pickDoctorSub')} />
-      <h2>{t('doctor')}</h2>
-      {doctors.length ? doctors.map((d) => (
-        <button key={d.id} type="button" className="doctor-card" onClick={() => ctx.go({ name: 'book', doctorId: d.id! })}>
-          {d.photoUrl ? <img src={d.photoUrl} alt="" width={64} height={64} /> : <span className="doctor-initials" aria-hidden="true">{initials(d.fullName)}</span>}
-          <span className="doctor-card-text"><strong>{d.fullName}</strong>{d.about && <span className="hint">{d.about}</span>}</span>
-          <span className="chevron" aria-hidden="true">›</span>
-        </button>
-      )) : <p className="hint">{t('unavailable')}</p>}
-      <ClinicCard ctx={ctx} />
-      <Footer ctx={ctx} />
-    </section>
-  )
-}
-
 /** Кого записываем: себя, родственника из списка (его id) или нового. */
 type Who = 'self' | 'new' | number
 
@@ -390,8 +361,30 @@ function defaultWho(me: Me): Who {
   return (me.relatives ?? []).find((r) => !booked.has(r.id))?.id ?? 'new'
 }
 
-/** Запись: услуга → день → время → кого записываем, имя, телефон из Telegram, согласие → «Записаться». */
-function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
+/**
+ * Запись — пошаговый мастер (Wizard): услуга → врач (или «любой свободный») → дата → время →
+ * кого записываем, имя, телефон из Telegram, согласие → «Записаться».
+ */
+function BookScreen({ ctx, initialDoctor }: { ctx: Ctx; initialDoctor?: number }) {
+  const { me, t, lang } = ctx
+  const doctors = me.doctors ?? []
+  const loadSlots = (date: string, doctorId: number | null, serviceTypeId: number) =>
+    unwrap(api.GET('/api/patient/slots', { params: { query: { date, serviceTypeId, ...(doctorId == null ? {} : { doctorId }) } } }))
+  const loadFreeDays = (doctorId: number | null, serviceTypeId: number) =>
+    unwrap(api.GET('/api/patient/free-days', { params: { query: { serviceTypeId, ...(doctorId == null ? {} : { doctorId }) } } }))
+  return (
+    <BookingWizard t={t} lang={lang} services={me.services ?? []} doctors={doctors} doctorServices={me.doctorServices}
+      length={daysOf(me)} initialDoctor={initialDoctor} loadFreeDays={loadFreeDays} loadSlots={loadSlots}
+      noneSoon={`${t('noFreeSoon')} ${callText(t, me.clinicContact)}`} errorText={(e) => errorText(t, e, me.clinicContact)}
+      intro={<><Hero t={t} title={t('bookTitle')} subtitle={doctors.length > 1 ? t('pickDoctorSub') : t('pickServiceSub')}
+        doctor={doctors.length === 1 ? doctors[0] : undefined} />{doctors.length === 1 && <ClinicCard ctx={ctx} />}</>}
+      outro={<>{doctors.length > 1 && <ClinicCard ctx={ctx} />}<Footer ctx={ctx} /></>}
+      contacts={(args) => <BookContacts ctx={ctx} {...args} />} />
+  )
+}
+
+/** Шаг «Контакты»: кого записываем, имя (из Telegram — уже известно), телефон из Telegram, комментарий, промокод, согласие. */
+function BookContacts({ ctx, chosen, active, onTaken }: { ctx: Ctx } & ContactsArgs) {
   const { me, t, lang } = ctx
   const client = useQueryClient()
   const [who, setWho] = useState<Who>(() => defaultWho(me))
@@ -399,15 +392,9 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   const relativeName = who === 'new' ? relative.fullName.trim() : (me.relatives ?? []).find((r) => r.id === who)?.fullName ?? ''
   // Своё имя нужно для себя и для первой записи ребёнка, когда своей карточки ещё нет
   const askOwnName = who === 'self' || (who === 'new' && !me.hasCard)
-  // У врача выбраны услуги — только они; не выбраны — все услуги клиники
-  const services = servicesOfDoctor(me.services ?? [], me.doctorServices, doctor.id)
-  const many = (me.doctors ?? []).length > 1
-  const [service, setService] = useState<Service | null>(services.length === 1 ? services[0]! : null)
-  const [date, setDate] = useState(todayIn())
-  // Пока пациент сам не выбрал день, лента встаёт на первый день со свободным временем
-  const [dateTouched, setDateTouched] = useState(false)
-  const [chosen, setChosen] = useState('')
   const [name, setName] = useState(me.fullName ?? '')
+  // Имя уже известно (Telegram, прошлая запись) — строкой с «Изменить», а не полем
+  const [nameOpen, setNameOpen] = useState(!me.fullName)
   const [comment, setComment] = useState('')
   const [consent, setConsent] = useState(false)
   // «Откуда вы о нас узнали?» — только новому пациенту (сервер прислал варианты), необязательно
@@ -418,43 +405,13 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
   const [phone, setPhone] = useState(me.phone ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [sharing, setSharing] = useState(false)
-  const serviceRef = useRef<HTMLElement>(null)
-  const timeRef = useRef<HTMLElement>(null)
-  const dataRef = useRef<HTMLElement>(null)
-  const days = bookingDays(lang, todayIn(), daysOf(me)).map((d) => d.date)
+  const [commentOpen, setCommentOpen] = useState(false)
+  const [sourceOpen, setSourceOpen] = useState(false)
 
-  // Пока день не выбран сам — первый день со свободным временем (сегодня мест нет — завтра и т. д.);
-  // две недели пусто — сказать, что делать. Перебор — в одном запросе, без мигания пустых сеток
-  const slots = useQuery({
-    queryKey: ['patient-slots', doctor.id, service?.id, dateTouched ? date : 'first-free'],
-    queryFn: async () => {
-      const load = (d: string) => unwrap(api.GET('/api/patient/slots', { params: { query: { date: d, doctorId: doctor.id!, serviceTypeId: service!.id! } } }))
-      if (dateTouched) return { date, slots: await load(date), noneSoon: false }
-      // По неделе за раз, параллельно (а не 14–30 запросов друг за другом)
-      return firstFree(days, load)
-    },
-    enabled: service != null,
-  })
-  const shownDate = dateTouched ? date : slots.data?.date ?? date
-
-  const dataMissing = (askOwnName && !name.trim()) || (who === 'new' && !relativeName) || !phone || !consent
-  const missing = !service ? 'service' : !chosen ? 'time' : dataMissing ? 'data' : null
-  const scrollTo = (step: 'service' | 'time' | 'data', attention = false) => {
-    const el = (step === 'service' ? serviceRef : step === 'time' ? timeRef : dataRef).current
-    if (!el) return
-    const top = el.getBoundingClientRect().top
-    if (!attention && top > 0 && top < window.innerHeight / 3) return
-    el.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
-    if (attention) {
-      el.classList.remove('step-attention')
-      void el.offsetWidth
-      el.classList.add('step-attention')
-    }
-  }
-
-  const book = useMutation<Schemas['BookingViewsBooking'], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/patient/booking', {
-      body: { doctorId: doctor.id!, serviceTypeId: service!.id!, startAt: slotInstant(shownDate, minutesOf(chosen)), fullName: name, consent: true, comment, sourceId: sourceId ?? undefined,
+  const book = useMutation<Schemas['BookingViewsBooking'], ApiError, Chosen>({
+    mutationFn: (c) => unwrap(api.POST('/api/patient/booking', {
+      body: { ...(c.doctorId == null ? {} : { doctorId: c.doctorId }), serviceTypeId: c.service.id!, startAt: c.startAt, fullName: name, consent: true,
+        comment, sourceId: sourceId ?? undefined,
         promoCode: promo.trim() || undefined,
         patientId: typeof who === 'number' ? who : undefined,
         relative: who === 'new' ? { fullName: relative.fullName, birthDate: relative.birthDate || undefined, relation: relative.relation, phone: relative.phone.trim() || undefined } : undefined },
@@ -464,14 +421,14 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
       // Сразу «Ваша запись» (ближайшая остаётся в booking); новый родственник и порядок — со свежим me
       client.setQueryData<Me>(['me'], (old) => (old ? { ...old, booking: old.booking ?? booking, bookings: [...(old.bookings ?? []), booking], phone } : old))
       void client.invalidateQueries({ queryKey: ['me'] })
-      ctx.go({ name: 'booking', id: booking.id })
+      ctx.go({ name: 'booking', id: booking.id }, t('bookedNotice'))
     },
     onError: (e) => {
       haptic('error')
       if (e.code === 'time-taken') {
-        setErrors({ time: t('taken') })
-        setChosen('')
-        void slots.refetch()
+        // Время успели занять (в том числе гонка в базе — 409): к шагу «Время» со свежей сеткой
+        setErrors({})
+        onTaken()
       } else if (e.code === 'already-booked') {
         ctx.reload()
       } else {
@@ -483,28 +440,25 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
           relBirth: own('relative.birthDate', 'relativeBirthInvalid'), relPhone: own('relative.phone', 'relativePhoneInvalid'),
           relRelation: own('relative.relation', 'relativeRelationRequired') }
         if (next.promo) setPromoOpen(true)
+        if (next.name) setNameOpen(true)
         setErrors(Object.values(next).some(Boolean) ? next : { form: errorText(t, e, me.clinicContact) })
       }
     },
   })
 
-  const [commentOpen, setCommentOpen] = useState(false)
-  const [sourceOpen, setSourceOpen] = useState(false)
-  const bookLabel = missing === 'service' ? t('nextService') : missing === 'time' ? t('nextTime') : missing === 'data' ? t('nextData') : t('book')
-  const next = () => {
-    if (!missing) {
-      setErrors({})
-      book.mutate()
-      return
-    }
+  const submit = () => {
+    if (!chosen) return
     haptic('warning')
-    scrollTo(missing, true)
-    if (missing === 'service') setErrors({ form: t('pickService') })
-    else if (missing === 'time') setErrors({ time: t('pickTime') })
-    else if (who === 'new' && !relativeName) setErrors({ relName: t('relativeNameRequired') })
-    else if (askOwnName && !name.trim()) setErrors({ name: t('nameRequired') })
-    else if (!phone) setErrors({ phone: t('phoneRequired') })
-    else setErrors({ consent: t('consentRequired') })
+    if (who === 'new' && !relativeName) setErrors({ relName: t('relativeNameRequired') })
+    else if (askOwnName && !name.trim()) {
+      setNameOpen(true)
+      setErrors({ name: t('nameRequired') })
+    } else if (!phone) setErrors({ phone: t('phoneRequired') })
+    else if (!consent) setErrors({ consent: t('consentRequired') })
+    else {
+      setErrors({})
+      book.mutate(chosen)
+    }
   }
 
   /** Телефон — из Telegram: requestContact отдаёт номер боту, сервер сохраняет, ждём его в /api/patient/me. */
@@ -550,111 +504,60 @@ function BookScreen({ ctx, doctor }: { ctx: Ctx; doctor: Doctor }) {
     }
   }
 
-  const groups = groupServices(services)
-  const serviceButton = (s: Service) => (
-    <button key={s.id} type="button" className="btn service" aria-pressed={service?.id === s.id}
-      onClick={() => { setService(s); setChosen(''); setErrors({}); scrollTo('time') }}>
-      {/* Одна строка: значок, название с длительностью, цена справа — список короче, чем карточки */}
-      <span className="svc-emoji" aria-hidden="true">{serviceEmoji(s.name)}</span>
-      <span className="svc-main"><span className="svc-name">{s.name}</span>
-        <span className="sr-only"> · {s.durationMinutes} {t('min')}</span>
-        <span className="dur" aria-hidden="true">⏱ {s.durationMinutes} {t('min')}</span></span>
-      {priceText(lang, s.priceSom) && <span className="price">{priceText(lang, s.priceSom)}</span>}
-    </button>
-  )
-
   return (
-    <section className="screen">
-      <BackButton onBack={many ? () => ctx.go({ name: 'doctors' }) : null} />
-      <Hero t={t} title={t('bookTitle')} subtitle={t('pickServiceSub')} doctor={doctor} />
-      {many ? <button type="button" className="link" onClick={() => ctx.go({ name: 'doctors' })}>{t('otherDoctor')}</button> : <ClinicCard ctx={ctx} />}
-
-      <section ref={serviceRef} className="step">
-        <h2 className="step-title">{t('stepService')}</h2>
-        <div className="field services">
-          {!services.length ? <p className="hint">{t('unavailable')}</p> : groups.length > 1
-            ? groups.map(({ group, items }) => (
-              <div key={group} className="services-group">
-                <h3>{groupLabel(group, lang)}</h3>
-                {items.map(serviceButton)}
-              </div>
-            ))
-            : services.map(serviceButton)}
+    <div className="contacts-step">
+      <WhoField ctx={ctx} who={who} onChange={(w) => { setWho(w); setErrors({}) }} />
+      {who === 'new' && <RelativeFields ctx={ctx} value={relative} errors={errors}
+        onChange={(r) => { setRelative(r); setErrors({}) }} />}
+      {askOwnName && (nameOpen ? (
+        <label className="field"><span>{who === 'self' ? t('patientName') : t('yourName')}</span>
+          <input value={name} maxLength={200} autoComplete="name" enterKeyHint="done"
+            onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }} onChange={(e) => { setName(e.target.value); setErrors({}) }} /></label>
+      ) : (
+        <div className="field"><span>{who === 'self' ? t('patientName') : t('yourName')}</span>
+          <div className="picked picked-row"><span>{name}</span>
+            <button type="button" className="link" aria-label={t('nameEdit')} onClick={() => setNameOpen(true)}>{t('wizChange')}</button></div>
         </div>
-      </section>
-
-      <section ref={timeRef} className="step">
-        <h2 className="step-title">{t('stepTime')}</h2>
-        <div className="field"><span>{t('day')}</span>
-          <DayStrip t={t} lang={lang} length={daysOf(me)} date={shownDate} onPick={(d) => { setDate(d); setDateTouched(true); setChosen(''); setErrors({}) }} />
-        </div>
-        <div className="field"><span>{t('time')}</span>
-          {errors.time && <p className="error" role="alert">{errors.time}</p>}
-          {!service ? <p className="hint">{t('pickServiceFirst')}</p>
-            : slots.isPending ? <Loading text={t('loading')} />
-              : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
-                : slots.data.noneSoon ? <p className="hint">{t('noFreeSoon')} {callText(t, me.clinicContact)}</p>
-                  : <SlotGrid t={t} lang={lang} slots={slots.data.slots} chosen={chosen}
-                    onPick={(time) => { setChosen(time); setErrors({}); scrollTo('data') }}
-                    empty={slots.data.slots.dayOff ? t('otherDay') : slots.data.slots.workingDay ? t('noFree') : t('dayOff')} />}
-          {/* Сам выбрал день без свободного времени — одним нажатием к ближайшему свободному, а не листать ленту */}
-          {service && dateTouched && slots.data && !slots.data.slots.starts?.length && (
-            <button type="button" className="btn" onClick={() => { setDateTouched(false); setErrors({}) }}>{t('nearestFree')}</button>
-          )}
-        </div>
-      </section>
-
-      <section ref={dataRef} className="step">
-        <h2 className="step-title">{t('stepData')}</h2>
-        <WhoField ctx={ctx} who={who} onChange={(w) => { setWho(w); setErrors({}) }} />
-        {who === 'new' && <RelativeFields ctx={ctx} value={relative} errors={errors}
-          onChange={(r) => { setRelative(r); setErrors({}) }} />}
-        {askOwnName && (
-          <label className="field"><span>{who === 'self' ? t('patientName') : t('yourName')}</span>
-            <input value={name} maxLength={200} autoComplete="name" enterKeyHint="done"
-              onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }} onChange={(e) => { setName(e.target.value); setErrors({}) }} /></label>
-        )}
-        {errors.name && <p className="error">{errors.name}</p>}
-        <div className="field"><span>{who === 'self' ? t('phone') : t('yourPhone')}</span>
-          {phone ? (
-            <div className="picked">{formatPhone(phone)}<br /><span className="hint">{t('phoneFromTelegram')}</span></div>
-          ) : <button type="button" className="btn" disabled={sharing} onClick={sharePhone}>{sharing ? t('gettingPhone') : t('sharePhone')}</button>}
-        </div>
-        {errors.phone && <p className="error">{errors.phone}</p>}
-        {/* Необязательное — свёрнуто: запись короче, кто хочет — раскроет */}
-        {commentOpen ? (
-          <label className="field"><span>{t('comment')}</span>
-            <textarea rows={2} maxLength={500} autoFocus placeholder={t('commentHint')} value={comment} onChange={(e) => setComment(e.target.value)} /></label>
-        ) : <button type="button" className="link promo-open" onClick={() => setCommentOpen(true)}>＋ {t('comment')}</button>}
-        <PromoField ctx={ctx} value={promo} open={promoOpen} error={errors.promo}
-          onOpen={() => setPromoOpen(true)} onChange={(v) => { setPromo(v); setErrors({}) }} />
-        {(me.sourceChoices ?? []).length > 0 && !sourceOpen && (
-          <button type="button" className="link promo-open" onClick={() => setSourceOpen(true)}>＋ {t('sourceQuestion')}</button>
-        )}
-        {(me.sourceChoices ?? []).length > 0 && sourceOpen && (
-          <div className="field">
-            <span>{t('sourceQuestion')}</span>
-            <div className="source-chips" role="group" aria-label={t('sourceQuestion')}>
-              {(me.sourceChoices ?? []).map((c) => (
-                <button key={c.id} type="button" className="source-chip" aria-pressed={sourceId === c.id}
-                  onClick={() => setSourceId(sourceId === c.id ? null : c.id!)}>
-                  <span aria-hidden="true">{c.emoji}</span> {(lang === 'ky' && c.titleKy) || c.title}
-                </button>
-              ))}
-            </div>
-            <span className="hint">{t('sourceOptional')}</span>
+      ))}
+      {errors.name && <p className="error">{errors.name}</p>}
+      <div className="field"><span>{who === 'self' ? t('phone') : t('yourPhone')}</span>
+        {phone ? (
+          <div className="picked"><span className="num">{formatPhone(phone)}</span><br /><span className="hint">{t('phoneFromTelegram')}</span></div>
+        ) : <button type="button" className="btn" disabled={sharing} onClick={sharePhone}>{sharing ? t('gettingPhone') : t('sharePhone')}</button>}
+      </div>
+      {errors.phone && <p className="error">{errors.phone}</p>}
+      {/* Необязательное — свёрнуто: запись короче, кто хочет — раскроет */}
+      {commentOpen ? (
+        <label className="field"><span>{t('comment')}</span>
+          <textarea rows={2} maxLength={500} autoFocus placeholder={t('commentHint')} value={comment} onChange={(e) => setComment(e.target.value)} /></label>
+      ) : <button type="button" className="link promo-open" onClick={() => setCommentOpen(true)}>＋ {t('comment')}</button>}
+      <PromoField ctx={ctx} value={promo} open={promoOpen} error={errors.promo}
+        onOpen={() => setPromoOpen(true)} onChange={(v) => { setPromo(v); setErrors({}) }} />
+      {(me.sourceChoices ?? []).length > 0 && !sourceOpen && (
+        <button type="button" className="link promo-open" onClick={() => setSourceOpen(true)}>＋ {t('sourceQuestion')}</button>
+      )}
+      {(me.sourceChoices ?? []).length > 0 && sourceOpen && (
+        <div className="field">
+          <span>{t('sourceQuestion')}</span>
+          <div className="source-chips" role="group" aria-label={t('sourceQuestion')}>
+            {(me.sourceChoices ?? []).map((c) => (
+              <button key={c.id} type="button" className="source-chip" aria-pressed={sourceId === c.id}
+                onClick={() => setSourceId(sourceId === c.id ? null : c.id!)}>
+                <span aria-hidden="true">{c.emoji}</span> {(lang === 'ky' && c.titleKy) || c.title}
+              </button>
+            ))}
           </div>
-        )}
-        <label className="consent"><input type="checkbox" checked={consent} onChange={(e) => { setConsent(e.target.checked); setErrors({}) }} />
-          {' '}{who === 'self' ? t('consent', { holder: me.clinic?.legalName || t('holderDefault') })
-            : t('consentFor', { name: relativeName || t('relativeDefault'), holder: me.clinic?.legalName || t('holderDefault') })}</label>
-        <button type="button" className="link privacy-link" onClick={() => ctx.go({ name: 'privacy', back: ctx.screen })}>{t('privacy')}</button>
-        {errors.consent && <p className="error">{errors.consent}</p>}
-      </section>
+          <span className="hint">{t('sourceOptional')}</span>
+        </div>
+      )}
+      <label className="consent"><input type="checkbox" checked={consent} onChange={(e) => { setConsent(e.target.checked); setErrors({}) }} />
+        {' '}{who === 'self' ? t('consent', { holder: me.clinic?.legalName || t('holderDefault') })
+          : t('consentFor', { name: relativeName || t('relativeDefault'), holder: me.clinic?.legalName || t('holderDefault') })}</label>
+      <button type="button" className="link privacy-link" onClick={() => ctx.go({ name: 'privacy', back: ctx.screen })}>{t('privacy')}</button>
+      {errors.consent && <p className="error">{errors.consent}</p>}
       {errors.form && <p className="error" role="alert">{errors.form}</p>}
-      <Footer ctx={ctx} />
-      <MainButton busy={book.isPending} onClick={next} text={bookLabel} />
-    </section>
+      {active && <MainButton busy={book.isPending} onClick={submit} text={t('book')} />}
+    </div>
   )
 }
 
@@ -766,7 +669,7 @@ function whose(t: T, b: Booking): string {
 
 /** «Мои записи»: несколько записей — свои и детей; нажать — открыть запись. */
 function MyBookingsScreen({ ctx, bookings }: { ctx: Ctx; bookings: Booking[] }) {
-  const { me, t, lang } = ctx
+  const { t, lang } = ctx
   return (
     <section className="screen">
       <BackButton onBack={null} />
@@ -787,7 +690,7 @@ function MyBookingsScreen({ ctx, bookings }: { ctx: Ctx; bookings: Booking[] }) 
           </li>
         ))}
       </ul>
-      <button type="button" className="btn" onClick={() => ctx.go(bookStart(me))}>{t('bookAnother')}</button>
+      <button type="button" className="btn" onClick={() => ctx.go(bookStart())}>{t('bookAnother')}</button>
       <ClinicCard ctx={ctx} />
       <ClinicContacts ctx={ctx} />
       <Footer ctx={ctx} />
@@ -854,7 +757,7 @@ function BookingScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
           <button type="button" className="link" disabled={waitlist.isPending} onClick={() => waitlist.mutate(false)}>{t('waitlistLeave')}</button>
         </div>
       ) : <button type="button" className="btn" disabled={waitlist.isPending} onClick={() => waitlist.mutate(true)}><span aria-hidden="true">🔔 </span>{t('waitlistJoin')}</button>}
-      <button type="button" className="btn" onClick={() => ctx.go(bookStart(me))}>{t('bookAnother')}</button>
+      <button type="button" className="btn" onClick={() => ctx.go(bookStart())}>{t('bookAnother')}</button>
       <ClinicCard ctx={ctx} />
       <ClinicContacts ctx={ctx} />
       {error && <p className="error" role="alert">{errorText(t, error, ctx.me.clinicContact)}</p>}
@@ -986,7 +889,7 @@ function PlanScreen({ ctx, back }: { ctx: Ctx; back: Screen }) {
       {plans.isSuccess && !plan && <><h1>{t('planTitle')}</h1><p className="hint">{t('planNone')}</p></>}
       {plan && (
         <PlanView plan={plan} t={t} busy={answer.isPending} onAgree={() => answer.mutate('agree')} onAsk={() => answer.mutate('question')}
-          onBook={() => ctx.go(bookStart(ctx.me))}
+          onBook={() => ctx.go(bookStart())}
           error={answer.error ? (answer.error.status === 404 ? t('planGone') : errorText(t, answer.error, ctx.me.clinicContact)) : null} />
       )}
     </section>

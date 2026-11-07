@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { addDays, slotInstant, todayIn } from '../lib/time'
 import { renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { pickSlot } from '../test/wizard'
 
 type Me = Schemas['BookingViewsMe']
 type Book = Schemas['PatientBookingControllerBook']
@@ -30,6 +31,7 @@ function backend(extra: Partial<Me>, onBook: (body: Book) => Response) {
   }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
     http.get('*/api/patient/promo-code', ({ request }) => {
       const code = new URL(request.url).searchParams.get('code')?.toUpperCase()
@@ -46,9 +48,8 @@ function backend(extra: Partial<Me>, onBook: (body: Book) => Response) {
   )
 }
 
-async function pickTimeAndConsent(user: ReturnType<typeof userEvent.setup>) {
-  const grid = await screen.findByRole('group', { name: /Свободное время|Бош убакыт/ })
-  await user.click(await within(grid).findByRole('button', { name: '10:00' }))
+async function pickTimeAndConsent(user: ReturnType<typeof userEvent.setup>, lang: 'ru' | 'ky' = 'ru') {
+  await pickSlot(user, addDays(todayIn(), 1), '10:00', lang)
   await user.click(screen.getByRole('checkbox'))
 }
 
@@ -90,7 +91,7 @@ test('промокод из ссылки клиники подставлен; н
   })
   const user = userEvent.setup()
   renderApp()
-  await pickTimeAndConsent(user)
+  await pickTimeAndConsent(user, 'ky')
   // Пришёл по ссылке с кодом — поле уже открыто и заполнено
   expect(screen.getByRole('textbox', { name: 'Промокод (болсо)' })).toHaveValue('OLD2025')
   await user.click(screen.getByRole('button', { name: 'Жазылуу' }))

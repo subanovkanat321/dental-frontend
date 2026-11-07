@@ -7,6 +7,7 @@ import { slotInstant, todayIn, addDays } from '../lib/time'
 import { renderApp } from '../test/fixtures'
 import { pickDate } from '../test/date'
 import { server } from '../test/server'
+import { pickSlot } from '../test/wizard'
 
 /**
  * Мама записывает детей из своего Telegram: «Кого записываем?», новый ребёнок, «Мои записи» с
@@ -45,6 +46,7 @@ const mom = (extra: Partial<Me> = {}): Me => ({
 function bookingServer(me: () => Me, onBook: (body: Book) => Booking) {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me())),
+    http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('date') === tomorrow
       ? { workingDay: true, starts: [slotInstant(tomorrow, 600), slotInstant(tomorrow, 660)], taken: [], breaks: [] }
       : { workingDay: true, starts: [], taken: [], breaks: [] })),
@@ -67,8 +69,7 @@ test('у мамы своя запись: «Записать ещё» → «Ко�
   expect(await screen.findByRole('heading', { name: 'Ваша запись' })).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: '＋ Записать ещё — себя или ребёнка' }))
 
-  const grid = await screen.findByRole('group', { name: 'Свободное время' })
-  await user.click(within(grid).getByRole('button', { name: '11:00' }))
+  await pickSlot(user, tomorrow, '11:00')
   const who = screen.getByRole('group', { name: 'Кого записываем?' })
   // У себя запись уже есть — «Себя» не выбрать; по умолчанию — ребёнок из семьи
   expect(within(who).getByRole('button', { name: /Себя.*уже записан/ })).toBeDisabled()
@@ -79,8 +80,8 @@ test('у мамы своя запись: «Записать ещё» → «Ко�
   // Своя карточка есть — своё имя не спрашиваем, телефон — «Ваш телефон»
   expect(screen.queryByRole('textbox', { name: 'Ваше имя' })).toBeNull()
   expect(screen.getByText('Ваш телефон')).toBeInTheDocument()
-  // Без имени ребёнка — «Далее: ваши данные» и подсказка под полем
-  await user.click(screen.getByRole('button', { name: 'Далее: ваши данные ↓' }))
+  // Без имени ребёнка — подсказка под полем
+  await user.click(screen.getByRole('button', { name: 'Записаться' }))
   expect(await screen.findByText('Укажите имя родственника')).toBeInTheDocument()
 
   await user.type(screen.getByRole('textbox', { name: 'Имя и фамилия' }), 'Бекзат Асанов')
@@ -107,11 +108,13 @@ test('первая запись — сразу ребёнка: спрашива�
   })
   const user = userEvent.setup()
   renderApp()
-  const grid = await screen.findByRole('group', { name: 'Свободное время' })
-  await user.click(within(grid).getByRole('button', { name: '10:00' }))
+  await pickSlot(user, tomorrow, '10:00')
   const who = screen.getByRole('group', { name: 'Кого записываем?' })
   expect(within(who).getByRole('button', { name: 'Себя' })).toHaveAttribute('aria-pressed', 'true')
   await user.click(within(who).getByRole('button', { name: '＋ Ребёнка или родственника' }))
+  // Имя из Telegram известно — строкой; поправить — «Изменить»
+  expect(screen.queryByRole('textbox', { name: 'Ваше имя' })).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Изменить имя' }))
   const ownName = screen.getByRole('textbox', { name: 'Ваше имя' })
   await user.clear(ownName)
   await user.type(ownName, 'Жылдыз Асанова')
@@ -134,8 +137,7 @@ test('по-кыргызски: «Кимди жаздырабыз?» — бала
   })
   const user = userEvent.setup()
   renderApp()
-  const grid = await screen.findByRole('group', { name: 'Бош убакыт' })
-  await user.click(within(grid).getByRole('button', { name: '10:00' }))
+  await pickSlot(user, tomorrow, '10:00', 'ky')
   const who = screen.getByRole('group', { name: 'Кимди жаздырабыз?' })
   expect(within(who).getByRole('button', { name: 'Өзүмдү' })).toHaveAttribute('aria-pressed', 'true')
   await user.click(within(who).getByRole('button', { name: 'Аружан Асанова' }))

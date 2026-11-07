@@ -3,7 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
+import { addDays, todayIn } from '../lib/time'
 import { server } from '../test/server'
+import { pickSlot } from '../test/wizard'
 import { ClinicSite } from './ClinicSite'
 import { Directory } from './Directory'
 import type { ClinicPage, DirectoryClinic, SiteProblem, WebBooked, WebBookingInfo } from './web'
@@ -29,31 +31,40 @@ function slotsOf(url: string): Schemas['BookingViewsSlots'] {
   return { workingDay: true, starts: [`${date}T04:00:00Z`], taken: [`${date}T04:30:00Z`], breaks: [] }
 }
 
+/** Какие запросы сетки ушли (с врачом или «любой свободный») */
+let slotQueries: string[] = []
+
 function backend(post: (body: Record<string, unknown>, url: string) => Response | Promise<Response>, info: WebBookingInfo = INFO) {
   server.use(
     http.get('*/web/clinic', () => HttpResponse.json(PAGE)),
     http.get('*/web/booking', () => HttpResponse.json(info)),
-    http.get('*/web/booking/slots', ({ request }) => HttpResponse.json(slotsOf(request.url))),
+    http.get('*/web/booking/slots', ({ request }) => {
+      slotQueries.push(new URL(request.url).search)
+      return HttpResponse.json(slotsOf(request.url))
+    }),
+    http.get('*/web/booking/free-days', () => HttpResponse.json([addDays(todayIn(), 1)])),
     http.post('*/web/booking', async ({ request }) => post(await request.json() as Record<string, unknown>, request.url)),
   )
 }
 
-/** Врач → услуга → время → имя, телефон, согласие. */
-async function fillForm(user: ReturnType<typeof userEvent.setup>) {
+/** Услуга → врач → дата → время → имя, телефон (маска +996). */
+async function fillForm(user: ReturnType<typeof userEvent.setup>, doctor: RegExp = /Бакыт Маматов/, onFirstStep?: () => void) {
   render(<ClinicSite />)
   await user.click(await screen.findByRole('button', { name: /Записаться на сайте — без Telegram/ }))
   expect(window.location.hash).toBe('#book')
-  await user.click(await screen.findByRole('button', { name: /Бакыт Маматов/ }))
-  // У врача одна услуга — выбрана сама; первый день со свободным временем — сам
-  expect(screen.getByRole('button', { name: /Осмотр и консультация/ })).toHaveAttribute('aria-pressed', 'true')
-  expect(screen.queryByRole('button', { name: /Чистка/ })).toBeNull()
-  await user.click(await screen.findByRole('button', { name: '10:00' }))
-  expect(screen.getByRole('button', { name: /10:30 — занято/ })).toBeDisabled()
+  onFirstStep?.()
+  // «Чистку» Бакыт не делает — но Айгерим делает: услуга в списке
+  await user.click(await screen.findByRole('button', { name: /Осмотр и консультация/ }))
+  await user.click(await screen.findByRole('button', { name: doctor }))
+  await pickSlot(user, addDays(todayIn(), 1), '10:00')
   await user.type(screen.getByRole('textbox', { name: 'Имя пациента' }), 'Айгуль Тестова')
-  await user.type(screen.getByRole('textbox', { name: 'Телефон' }), '700 112 233')
+  await user.type(screen.getByRole('textbox', { name: 'Телефон' }), '700112233')
+  // Маска: цифры группами, как пишут номер
+  expect(screen.getByRole('textbox', { name: 'Телефон' })).toHaveValue('700 112 233')
 }
 
 afterEach(() => {
+  slotQueries = []
   window.history.replaceState(null, '', '/')
   localStorage.clear()
 })
@@ -148,8 +159,9 @@ test('WhatsApp клиники: в форме «Удобнее в WhatsApp?», п
     clinicName: 'Улыбка', phones: ['996555000111'], whatsapp: '996700000222',
   } satisfies WebBooked, { status: 201 }), { ...INFO, whatsapp: '996700000222' })
   const user = userEvent.setup()
-  await fillForm(user)
-  expect(screen.getByRole('link', { name: 'Написать клинике' }).getAttribute('href')).toMatch(/^https:\/\/wa\.me\/996700000222\?text=/)
+  await fillForm(user, /Бакыт Маматов/, () => {
+    expect(screen.getByRole('link', { name: 'Написать клинике' }).getAttribute('href')).toMatch(/^https:\/\/wa\.me\/996700000222\?text=/)
+  })
   await user.click(screen.getByRole('checkbox', { name: /ИП Садыкова/ }))
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
 
@@ -160,4 +172,27 @@ test('WhatsApp клиники: в форме «Удобнее в WhatsApp?», п
   const text = decodeURIComponent(href.split('text=')[1]!)
   expect(text).toMatch(/Записался\(-ась\) на сайте: .*в 10:00, врач Бакыт Маматов, Осмотр и консультация/)
   expect(text).not.toMatch(/Айгуль|700/)
+})
+
+test('«Любой свободный врач» на сайте: сетка и заявка без врача, на экране — врач, которого назначила клиника', async () => {
+  window.history.replaceState(null, '', '/c/abc123')
+  let sent: Record<string, unknown> = {}
+  backend((body) => {
+    sent = body
+    return HttpResponse.json({
+      startAt: body.startAt as string, endAt: body.startAt as string, doctorName: 'Айгерим Садыкова', serviceName: 'Осмотр и консультация',
+      clinicName: 'Улыбка', phones: ['996555000111'],
+    } satisfies WebBooked, { status: 201 })
+  })
+  const user = userEvent.setup()
+  await fillForm(user, /Любой свободный врач/)
+  expect(slotQueries.every((q) => !q.includes('doctorId'))).toBe(true)
+  expect(screen.getByRole('region', { name: 'Ваша запись' })).toHaveTextContent('Любой свободный')
+  await user.click(screen.getByRole('checkbox', { name: /ИП Садыкова/ }))
+  await user.click(screen.getByRole('button', { name: 'Записаться' }))
+
+  const done = await screen.findByRole('region', { name: 'Заявка отправлена' })
+  expect(sent).not.toHaveProperty('doctorId')
+  expect(sent).toMatchObject({ serviceTypeId: 5, phone: '+996 700 112 233' })
+  expect(within(done).getByText('Айгерим Садыкова')).toBeInTheDocument()
 })

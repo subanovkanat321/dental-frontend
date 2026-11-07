@@ -5,8 +5,9 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { slotInstant, todayIn, addDays } from '../lib/time'
 import { renderApp } from '../test/fixtures'
+import { pickSlot, stepText } from '../test/wizard'
 import { server } from '../test/server'
-import { bookingDays, breakNote, priceText, whenAt } from './i18n'
+import { bookingDays, breakNote, dayLong, priceText, whenAt } from './i18n'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -37,7 +38,7 @@ test('даты и тексты на русском и кыргызском', () 
     .toBe('🕌 С 13:00 до 15:00 — джума-намаз, врач не принимает')
 })
 
-test('запись: врач → услуга → первый день со свободным временем → время → согласие → «Ваша запись»', async () => {
+test('запись: врач → дата (свободные дни) → время → согласие → «Ваша запись»', async () => {
   fakeTelegram()
   const today = todayIn()
   const tomorrow = addDays(today, 1)
@@ -45,9 +46,9 @@ test('запись: врач → услуга → первый день со с�
   let booked: Schemas['PatientBookingControllerBook'] | null = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', ({ request }) => {
       const date = new URL(request.url).searchParams.get('date')
-      // Сегодня мест нет — лента сама встанет на завтра
       return HttpResponse.json(date === tomorrow
         ? { workingDay: true, starts: [slotInstant(tomorrow, 600), slotInstant(tomorrow, 660)], taken: [slotInstant(tomorrow, 630)], breaks: [] }
         : { workingDay: true, starts: [], taken: [], breaks: [] })
@@ -61,21 +62,31 @@ test('запись: врач → услуга → первый день со с�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: /Айгерим Садыкова/ }))
-  expect(screen.getByText('Айгерим Садыкова', { selector: '.hero-doctor' })).toBeInTheDocument()
-  // Услуга одна — уже выбрана; время — завтра
+  // Услуга одна — шага услуги нет: сначала врач
+  expect(await screen.findByRole('heading', { name: 'Выберите врача' })).toBeInTheDocument()
+  expect(stepText()).toBe('Шаг 1 из 4')
+  await user.click(screen.getByRole('button', { name: /Айгерим Садыкова/ }))
+  // Сегодня свободного нет — день приглушён и не нажимается
+  expect(await screen.findByRole('button', { name: `${dayLong('ru', today)} — нет свободного времени` })).toBeDisabled()
+  const summary = screen.getByRole('region', { name: 'Ваша запись' })
+  expect(within(summary).getByText('Лечение кариеса')).toBeInTheDocument()
+  expect(within(summary).getByText('Айгерим Садыкова')).toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: dayLong('ru', tomorrow) }))
   const grid = await screen.findByRole('group', { name: 'Свободное время' })
   expect(within(grid).getByRole('button', { name: '10:30 — занято' })).toBeDisabled()
-  expect(screen.getByRole('group', { name: 'День' }).querySelector('[aria-pressed=true]')).toHaveTextContent('Завтра')
-
-  expect(screen.getByRole('button', { name: 'Далее: выбрать время ↓' })).toBeInTheDocument()
+  expect(within(grid).getByRole('heading', { name: 'Утро' })).toBeInTheDocument()
   await user.click(within(grid).getByRole('button', { name: '11:00' }))
-  await user.click(screen.getByRole('button', { name: 'Далее: ваши данные ↓' }))
+
+  expect(await screen.findByRole('heading', { name: 'Проверьте и подтвердите' })).toBeInTheDocument()
+  // Имя из Telegram известно — строкой, а не полем
+  expect(screen.queryByRole('textbox', { name: 'Имя пациента' })).toBeNull()
+  await user.click(screen.getByRole('button', { name: 'Записаться' }))
   expect(await screen.findByText('Нужно согласие на обработку данных')).toBeInTheDocument()
   await user.click(screen.getByRole('checkbox', { name: /ИП Тест обрабатывает мои данные/ }))
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
 
   expect(await screen.findByRole('heading', { name: 'Ваша запись' })).toBeInTheDocument()
+  expect(screen.getByRole('status')).toHaveTextContent('Вы записаны')
   expect(screen.getByText(/Завтра, в 11:00/)).toBeInTheDocument()
   expect(screen.getByText(/Ждёт подтверждения врача/)).toBeInTheDocument()
   expect(booked).toEqual({ doctorId: 1, serviceTypeId: 5, startAt: slotInstant(tomorrow, 660), fullName: 'Айгуль', consent: true, comment: '' })
@@ -91,6 +102,7 @@ test('в Telegram — своя кнопка «Записаться» внизу,
   let booked: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
     http.post('*/api/patient/booking', async ({ request }) => {
       booked = await request.json()
@@ -99,8 +111,11 @@ test('в Telegram — своя кнопка «Записаться» внизу,
   )
   const user = userEvent.setup()
   renderApp()
-  const grid = await screen.findByRole('group', { name: 'Свободное время' })
-  await user.click(await within(grid).findByRole('button', { name: '10:00' }))
+  // Врач один, услуга одна — сразу дата
+  expect(await screen.findByRole('heading', { name: 'Выберите дату' })).toBeInTheDocument()
+  expect(stepText()).toBe('Шаг 1 из 3')
+  expect(screen.queryByRole('button', { name: 'Записаться' })).toBeNull()
+  await pickSlot(user, tomorrow, '10:00')
   await user.click(screen.getByRole('checkbox', { name: /ИП Тест обрабатывает мои данные/ }))
   expect(native.hide).toHaveBeenCalled()
   expect(native.show).not.toHaveBeenCalled()
@@ -120,6 +135,7 @@ async function bookAsNewPatient(lang: 'ru' | 'ky', pick: (user: ReturnType<typeo
   let booked: Schemas['PatientBookingControllerBook'] | null = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({ lang, sourceChoices, doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
     http.post('*/api/patient/booking', async ({ request }) => {
       booked = await request.json() as Schemas['PatientBookingControllerBook']
@@ -128,8 +144,7 @@ async function bookAsNewPatient(lang: 'ru' | 'ky', pick: (user: ReturnType<typeo
   )
   const user = userEvent.setup()
   renderApp()
-  const grid = await screen.findByRole('group', { name: lang === 'ky' ? 'Бош убакыт' : 'Свободное время' })
-  await user.click(await within(grid).findByRole('button', { name: '10:00' }))
+  await pickSlot(user, tomorrow, '10:00', lang)
   await pick(user)
   await user.click(screen.getByRole('checkbox'))
   await user.click(screen.getByRole('button', { name: lang === 'ky' ? 'Жазылуу' : 'Записаться' }))
@@ -268,12 +283,15 @@ test('перенос удался — «Ваша запись» с подтве�
   window.history.replaceState(null, '', '/')
 })
 
-test('выбрал день без свободного времени — одной кнопкой к ближайшему свободному', async () => {
+test('в сетке дня свободного не осталось — одной кнопкой к ближайшему свободному дню', async () => {
   fakeTelegram()
   const today = todayIn()
+  const soon = addDays(today, 1)
   const later = addDays(today, 3)
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    // Календарь думал, что завтра свободно, но пока выбирали — заняли
+    http.get('*/api/patient/free-days', () => HttpResponse.json([soon, later])),
     http.get('*/api/patient/slots', ({ request }) => {
       const date = new URL(request.url).searchParams.get('date')
       return HttpResponse.json(date === later
@@ -283,12 +301,14 @@ test('выбрал день без свободного времени — од�
   )
   const user = userEvent.setup()
   renderApp()
-  await screen.findByRole('button', { name: '10:00' })
-  expect(screen.queryByRole('button', { name: 'Показать ближайшее свободное время' })).toBeNull()
-  await user.click(within(screen.getByRole('group', { name: 'День' })).getByRole('button', { name: 'Сегодня' }))
+  await user.click(await screen.findByRole('button', { name: dayLong('ru', soon) }))
   expect(await screen.findByText('На этот день свободного времени нет')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Показать ближайшее свободное время' }))
   expect(await screen.findByRole('button', { name: '10:00' })).toBeInTheDocument()
+  expect(screen.getByText(dayLong('ru', later), { selector: '.day-nav-title' })).toBeInTheDocument()
+  // Стрелка назад — к прошлому свободному дню
+  await user.click(screen.getByRole('button', { name: 'Предыдущий день' }))
+  expect(await screen.findByText(dayLong('ru', soon), { selector: '.day-nav-title' })).toBeInTheDocument()
 })
 
 test('клиник несколько — сначала выбрать клинику', async () => {
@@ -349,30 +369,32 @@ test('вне Telegram пациенту — подсказка про бота, �
   expect(await screen.findByText(/Пациенты записываются через бота в Telegram/)).toBeInTheDocument()
 })
 
-test('поиск первого свободного дня — неделями параллельно, но день по порядку, а не по скорости ответа', async () => {
+test('календарь — столько дней, на сколько можно записаться; свободные дни — одним запросом, «Ближайшее свободное»', async () => {
   fakeTelegram()
   const today = todayIn()
+  const free = [addDays(today, 3), addDays(today, 5)]
   const asked: string[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({ daysAhead: 30, doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
-    http.get('*/api/patient/slots', async ({ request }) => {
+    http.get('*/api/patient/free-days', ({ request }) => {
+      asked.push(new URL(request.url).search)
+      return HttpResponse.json(free)
+    }),
+    http.get('*/api/patient/slots', ({ request }) => {
       const date = new URL(request.url).searchParams.get('date')!
-      asked.push(date)
-      // Свободно на 3-й и 5-й день; ответ про 3-й приходит позже
-      if (date === addDays(today, 3)) await new Promise((r) => setTimeout(r, 50))
-      return HttpResponse.json(date === addDays(today, 3) || date === addDays(today, 5)
-        ? { workingDay: true, starts: [slotInstant(date, 600)], taken: [], breaks: [] }
-        : { workingDay: true, starts: [], taken: [], breaks: [] })
+      return HttpResponse.json({ workingDay: true, starts: [slotInstant(date, 600)], taken: [], breaks: [] })
     }),
   )
+  const user = userEvent.setup()
   renderApp()
-  const grid = await screen.findByRole('group', { name: 'Свободное время' })
-  expect(within(grid).getByRole('button', { name: '10:00' })).toBeInTheDocument()
-  const strip = screen.getByRole('group', { name: 'День' })
-  expect(strip.querySelector('[aria-pressed=true]')).toHaveTextContent(bookingDays('ru', today, 4)[3]!.label)
-  // Лента — на столько дней, на сколько сервер даёт записаться (30 и сегодня); спросили одну неделю
-  expect(within(strip).getAllByRole('button')).toHaveLength(31)
-  expect(asked).toHaveLength(7)
+  const nearest = await screen.findByRole('button', { name: `Ближайшее свободное: ${dayLong('ru', free[0]!).toLowerCase()}` })
+  // 31 день (30 вперёд и сегодня), открыты только свободные
+  const days = document.querySelectorAll('.cal-day')
+  expect(days).toHaveLength(31)
+  expect([...days].filter((d) => !(d as HTMLButtonElement).disabled)).toHaveLength(2)
+  expect(asked).toEqual(['?serviceTypeId=5&doctorId=1'])
+  await user.click(nearest)
+  expect(await screen.findByRole('button', { name: '10:00' })).toBeInTheDocument()
 })
 
 test('ошибка записи по коду — текст на языке пациента; номера клиники нет — без «Позвоните в клинику: »', async () => {
@@ -380,12 +402,13 @@ test('ошибка записи по коду — текст на языке п�
   const tomorrow = addDays(todayIn(), 1)
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({ lang: 'ky', doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
     http.post('*/api/patient/booking', () => HttpResponse.json({ status: 409, code: 'subscription-paused', detail: 'Оплата клиники закончилась — новые записи на паузе.' }, { status: 409 })),
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: '10:00' }))
+  await pickSlot(user, tomorrow, '10:00', 'ky')
   await user.click(screen.getByRole('checkbox', { name: /атымды жана телефонумду/ }))
   await user.click(screen.getByRole('button', { name: 'Жазылуу' }))
   const alert = await screen.findByText(/Клиника азыр бот аркылуу жаңы жазылууларды кабыл албай жатат/)
@@ -396,12 +419,15 @@ test('ошибка записи по коду — текст на языке п�
 test('старый Telegram без requestContact 6.9 — подсказка обновить или отправить контакт боту', async () => {
   const requestContact = vi.fn()
   fakeTelegram({ requestContact, isVersionAtLeast: (v: string) => v <= '6.0' })
+  const tomorrow = addDays(todayIn(), 1)
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({ phone: undefined, doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
-    http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [], taken: [], breaks: [] })),
+    http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
+    http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
   )
   const user = userEvent.setup()
   renderApp()
+  await pickSlot(user, tomorrow, '10:00')
   await user.click(await screen.findByRole('button', { name: 'Поделиться номером' }))
   expect(screen.getByText(/Обновите Telegram или отправьте номер боту в чат/)).toBeInTheDocument()
   expect(requestContact).not.toHaveBeenCalled()
@@ -451,12 +477,13 @@ test('клиника на паузе (clinic-paused) и гонка (stale) — �
   let code = 'clinic-paused'
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({ clinicContact: '+996 555 000 111', doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
     http.post('*/api/patient/booking', () => HttpResponse.json({ status: 409, code, detail: 'серверный текст' }, { status: 409 })),
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: '10:00' }))
+  await pickSlot(user, tomorrow, '10:00', 'ru')
   await user.click(screen.getByRole('checkbox', { name: /ИП Тест обрабатывает/ }))
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
   expect(await screen.findByText('Запись онлайн временно недоступна. Позвоните в клинику: +996 555 000 111')).toBeInTheDocument()
@@ -465,7 +492,7 @@ test('клиника на паузе (clinic-paused) и гонка (stale) — �
   expect(await screen.findByText(/Данные только что изменились/)).toBeInTheDocument()
 })
 
-test('у врача выбраны услуги — пациент видит у него только их, у другого врача — все', async () => {
+test('у врача выбраны услуги: услуга, которую делает один врач, — шаг врача пропущен; «Изменить» услугу — снова выбор врача', async () => {
   fakeTelegram()
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({
@@ -475,16 +502,26 @@ test('у врача выбраны услуги — пациент видит у
       ],
       doctorServices: [{ doctorId: 2, serviceTypeIds: [6] }],
     }))),
+    http.get('*/api/patient/free-days', () => HttpResponse.json([])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [], taken: [], breaks: [] } satisfies Schemas['BookingViewsSlots'])),
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: /Дастан Т\./ }))
-  expect(await screen.findByRole('button', { name: /Удаление зуба/ })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /Лечение кариеса/ })).not.toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Выберите услугу' })).toBeInTheDocument()
+  expect(stepText()).toBe('Шаг 1 из 5')
+  await user.click(screen.getByRole('button', { name: /Лечение кариеса/ }))
+  // Кариес лечит только Айгерим — сразу дата, врач в итоге без «Изменить»
+  expect(await screen.findByRole('heading', { name: 'Выберите дату' })).toBeInTheDocument()
+  expect(stepText()).toBe('Шаг 2 из 4')
+  const summary = screen.getByRole('region', { name: 'Ваша запись' })
+  expect(within(summary).getByText('Айгерим Садыкова')).toBeInTheDocument()
+  expect(within(summary).queryByRole('button', { name: 'Изменить: врач' })).toBeNull()
+  expect(await screen.findByText(/В ближайшие дни свободного времени нет/)).toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: '‹ Другой врач' }))
-  await user.click(await screen.findByRole('button', { name: /Айгерим Садыкова/ }))
-  expect(await screen.findByRole('button', { name: /Лечение кариеса/ })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Удаление зуба/ })).toBeInTheDocument()
+  await user.click(within(summary).getByRole('button', { name: 'Изменить: услуга' }))
+  await user.click(await screen.findByRole('button', { name: /Удаление зуба/ }))
+  expect(await screen.findByRole('heading', { name: 'Выберите врача' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Дастан Т\./ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Айгерим Садыкова/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Любой свободный врач/ })).toBeInTheDocument()
 })

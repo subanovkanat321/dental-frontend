@@ -70,3 +70,22 @@ export function phonesToInput(digits?: string[] | null): string[] {
 export function phonesFromInput(values: string[]): string[] {
   return values.map(phoneFromInput).filter(Boolean)
 }
+
+/**
+ * Маска номера по группам страны («555 123 456», с нулём — «0555 123 456»): только когда печатают в
+ * конце поля — правка в середине не прыгает курсором. Номер, начатый с «996», — как набран.
+ */
+export function maskLocal(country: string, local: string): string {
+  const c = phoneCountry(country)
+  let digits = local.replace(/\D/g, '')
+  if (!c.groups?.length || !digits || (country === 'KG' && digits.startsWith('996'))) return local
+  const lead = country === 'KG' && digits.startsWith('0') ? '0' : ''
+  digits = digits.slice(lead.length)
+  const parts: string[] = []
+  for (const size of c.groups) {
+    if (!digits) break
+    parts.push(digits.slice(0, size))
+    digits = digits.slice(size)
+  }
+  return `${lead}${parts.join(' ')}${digits}`
+}

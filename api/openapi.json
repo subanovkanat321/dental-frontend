@@ -9711,7 +9711,7 @@
         }, {
           "name" : "doctorId",
           "in" : "query",
-          "required" : true,
+          "required" : false,
           "schema" : {
             "type" : "integer",
             "format" : "int64"
@@ -9815,6 +9815,45 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/BookingViewsMe"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patient/free-days" : {
+      "get" : {
+        "tags" : [ "patient-booking-controller" ],
+        "operationId" : "freeDays",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "serviceTypeId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string",
+                    "format" : "date"
+                  }
                 }
               }
             }
@@ -15675,7 +15714,7 @@
             "$ref" : "#/components/schemas/RelativesNewRelative"
           }
         },
-        "required" : [ "doctorId", "serviceTypeId", "startAt" ]
+        "required" : [ "serviceTypeId", "startAt" ]
       },
       "RelativesNewRelative" : {
         "properties" : {

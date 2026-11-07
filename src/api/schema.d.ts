@@ -4260,6 +4260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patient/free-days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["freeDays"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patient/deposit": {
         parameters: {
             query?: never;
@@ -6950,7 +6966,7 @@ export interface components {
         };
         PatientBookingControllerBook: {
             /** Format: int64 */
-            doctorId: number;
+            doctorId?: number;
             /** Format: int64 */
             serviceTypeId: number;
             /** Format: date-time */
@@ -16649,7 +16665,7 @@ export interface operations {
         parameters: {
             query: {
                 date: string;
-                doctorId: number;
+                doctorId?: number;
                 serviceTypeId: number;
             };
             header?: never;
@@ -16747,6 +16763,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BookingViewsMe"];
+                };
+            };
+        };
+    };
+    freeDays: {
+        parameters: {
+            query: {
+                doctorId?: number;
+                serviceTypeId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
                 };
             };
         };

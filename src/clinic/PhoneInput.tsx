@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import { Select } from '../layout/Select'
 import { focusNext, phoneDigits } from '../lib/advance'
 import { OTHER_COUNTRY, PHONE_COUNTRIES } from '../lib/phone'
-import { cleanPhone, joinPhone, phoneCountry, splitPhone } from './phone'
+import { cleanPhone, joinPhone, maskLocal, phoneCountry, splitPhone } from './phone'
 
 /**
  * Телефон: страна (флаг и код) и номер. По умолчанию Кыргызстан — местный «555 123 456» или «0555…»
@@ -20,17 +20,19 @@ function numberDigits(country: string, local: string): number {
   return d.startsWith('996') ? d.length - 3 : d.startsWith('0') ? d.length - 1 : d.length
 }
 
-export function PhoneInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+/** @param mask группировать цифры, пока печатают (самозапись на сайте); в CRM — как набрано */
+export function PhoneInput({ label, value, onChange, mask = false }: { label: string; value: string; onChange: (v: string) => void; mask?: boolean }) {
   // Выбранная страна нужна, пока номер пуст: в самом значении её ещё нет
   const [picked, setPicked] = useState(() => splitPhone(value, 'KG').country)
   const { country, local } = splitPhone(value, picked)
   const c = phoneCountry(country)
   const input = useRef<HTMLInputElement>(null)
 
-  const type = (raw: string) => {
+  const type = (raw: string, atEnd = false) => {
     const text = cleanPhone(raw)
     // Набрали или вставили номер с «+» — он сам говорит, какая страна
-    const next = splitPhone(/^\s*(\+|00)/.test(text) ? text : joinPhone(country, text) || '', country)
+    const split = splitPhone(/^\s*(\+|00)/.test(text) ? text : joinPhone(country, text) || '', country)
+    const next = mask && atEnd ? { ...split, local: maskLocal(split.country, split.local) } : split
     setPicked(next.country)
     onChange(joinPhone(next.country, next.local))
     // Набрали номер целиком — в форме с data-advance сразу к следующему полю
@@ -49,7 +51,7 @@ export function PhoneInput({ label, value, onChange }: { label: string; value: s
   return (
     <div className="phone">
       <input ref={input} aria-label={label} type="tel" enterKeyHint="next" inputMode="tel" autoComplete="off" maxLength={24} placeholder={c.example}
-        value={local} onChange={(e) => type(e.target.value)} />
+        value={local} onChange={(e) => type(e.target.value, e.target.selectionStart == null || e.target.selectionStart >= e.target.value.length)} />
       <Select aria-label="Код страны" value={country} onChange={(e) => pick(e.target.value)}>
         {[...PHONE_COUNTRIES, OTHER_COUNTRY].map((o) => (
           <option key={o.id} value={o.id}>{`${o.flag} +${o.code} · ${o.name}`}</option>

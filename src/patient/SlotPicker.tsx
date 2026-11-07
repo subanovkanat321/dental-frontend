@@ -4,30 +4,44 @@ import type { Schemas } from '../api/client'
 import { timeOf, todayIn } from '../lib/time'
 import { bookingDays, breakNote, type Lang, type T } from './i18n'
 import { EmptyState } from '../layout/EmptyState'
+import { partOfDay } from './slots'
 
 type Slots = Schemas['BookingViewsSlots']
 
+const PARTS = ['morning', 'afternoon', 'evening'] as const
+
 /**
- * Свободное и занятое время одной сеткой по порядку: занятое — серым «занято», его не нажать.
- * Перерывы и выходной — подписью над сеткой, чтобы было понятно, куда делось время.
- * Общая для записи в Telegram (PatientApp) и на сайте (site/WebBooking).
+ * Свободное и занятое время по порядку, разбитое на «Утро / День / Вечер»: занятое — серым
+ * «занято», его не нажать. Перерывы и выходной — подписью над сеткой, чтобы было понятно, куда
+ * делось время. Общая для записи в Telegram (PatientApp), на сайте (site/WebBooking) и переноса.
  */
 export function SlotGrid({ t, lang, slots, chosen, onPick, empty }: {
   t: T; lang: Lang; slots: Slots; chosen: string; onPick: (time: string) => void; empty: string
 }) {
   const notes = [...(slots.breaks ?? []), ...(slots.dayOff ? [slots.dayOff] : [])]
   const cells = [
-    ...(slots.starts ?? []).map((s) => ({ at: s, free: true })),
-    ...(slots.taken ?? []).map((s) => ({ at: s, free: false })),
+    ...(slots.starts ?? []).map((s) => ({ at: s, time: timeOf(s), free: true })),
+    ...(slots.taken ?? []).map((s) => ({ at: s, time: timeOf(s), free: false })),
   ].sort((a, b) => a.at.localeCompare(b.at))
   return (
     <div className="slots" role="group" aria-label={t('freeTime')}>
       {notes.map((b, i) => <div key={i} className="break-note">{breakNote(lang, b)}</div>)}
-      {slots.starts?.length ? cells.map(({ at, free }) => free ? (
-        <button key={at} type="button" className="slot time" aria-pressed={timeOf(at) === chosen} onClick={() => onPick(timeOf(at))}>{timeOf(at)}</button>
-      ) : (
-        <button key={at} type="button" className="slot time taken" disabled aria-label={`${timeOf(at)} — ${t('busySlot')}`}>{timeOf(at)}<small>{t('busySlot')}</small></button>
-      )) : <EmptyState compact title={empty} />}
+      {slots.starts?.length ? PARTS.map((part) => {
+        const items = cells.filter((c) => partOfDay(c.time) === part)
+        if (!items.length) return null
+        return (
+          <div key={part} className="slot-part">
+            <h3 className="slot-part-title">{t(part)}</h3>
+            <div className="slot-cells">
+              {items.map(({ at, time, free }) => free ? (
+                <button key={at} type="button" className="slot time" aria-pressed={time === chosen} onClick={() => onPick(time)}>{time}</button>
+              ) : (
+                <button key={at} type="button" className="slot time taken" disabled aria-label={`${time} — ${t('busySlot')}`}>{time}<small>{t('busySlot')}</small></button>
+              ))}
+            </div>
+          </div>
+        )
+      }) : <EmptyState compact title={empty} />}
     </div>
   )
 }

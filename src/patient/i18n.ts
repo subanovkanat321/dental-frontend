@@ -31,7 +31,7 @@ const TEXTS: Record<Lang, Record<string, string>> = {
     planMy: 'Мой план лечения',
     planPriceLater: 'цена — на приёме',
     bookTitle: 'Запись к стоматологу',
-    pickDoctorSub: 'Выберите врача, услугу и удобное время — врач подтвердит запись',
+    pickDoctorSub: 'Выберите услугу, врача и удобное время — врач подтвердит запись',
     pickServiceSub: 'Выберите услугу и удобное время — врач подтвердит запись',
     doctor: 'Врач',
     unavailable: 'Запись пока недоступна — позвоните в клинику.',
@@ -197,7 +197,7 @@ const TEXTS: Record<Lang, Record<string, string>> = {
     errRelativesLimit: 'Больше родственников добавить нельзя — остальных запишет клиника.',
     // Запись на сайте без Telegram (site/WebBooking)
     webTitle: 'Запись на сайте',
-    webSub: 'Без Telegram: выберите врача, услугу и время — клиника позвонит, чтобы подтвердить запись',
+    webSub: 'Без Telegram: выберите услугу, врача и время — клиника позвонит, чтобы подтвердить запись',
     webStepDoctor: 'Врач',
     webPhoneHint: 'На этот номер позвонит клиника, чтобы подтвердить запись',
     webPhoneRequired: 'Укажите номер телефона',
@@ -222,6 +222,38 @@ const TEXTS: Record<Lang, Record<string, string>> = {
     webAddress: 'Адрес',
     webPhoneClinic: 'Телефон клиники',
     webNoServices: 'Онлайн-запись к этому врачу пока недоступна — позвоните в клинику.',
+    // Пошаговый мастер записи (Wizard.tsx): услуга → врач → дата → время → контакты
+    wizStep: 'Шаг {n} из {total}',
+    wizStepService: 'Услуга',
+    wizStepDoctor: 'Врач',
+    wizStepDate: 'Дата',
+    wizStepTime: 'Время',
+    wizStepContacts: 'Контакты',
+    wizServiceTitle: 'Выберите услугу',
+    wizDoctorTitle: 'Выберите врача',
+    wizDateTitle: 'Выберите дату',
+    wizTimeTitle: 'Выберите время',
+    wizContactsTitle: 'Проверьте и подтвердите',
+    wizSummary: 'Ваша запись',
+    wizChange: 'Изменить',
+    wizChangeWhat: 'Изменить: {what}',
+    anyDoctor: 'Любой свободный врач',
+    anyDoctorSub: 'Покажем время всех врачей — запишем к тому, кто свободен',
+    anyDoctorShort: 'Любой свободный',
+    serviceSearch: 'Найти услугу',
+    serviceNone: 'Ничего не нашлось — попробуйте другое слово.',
+    serviceAll: 'Показать все услуги',
+    morning: 'Утро',
+    afternoon: 'День',
+    evening: 'Вечер',
+    nearestDay: 'Ближайшее свободное: {day}',
+    prevDay: 'Предыдущий день',
+    nextDay: 'Следующий день',
+    calendar: 'Календарь',
+    dayFull: 'нет свободного времени',
+    bookedNotice: '✅ Вы записаны — ждём подтверждения врача',
+    nameEdit: 'Изменить имя',
+    priceFrom: 'Цена',
   },
   ky: {
     langRu: 'Русский',
@@ -247,7 +279,7 @@ const TEXTS: Record<Lang, Record<string, string>> = {
     planMy: 'Менин дарылоо планым',
     planPriceLater: 'баасы — кабыл алууда',
     bookTitle: 'Тиш дарыгерине жазылуу',
-    pickDoctorSub: 'Дарыгерди, кызматты жана ыңгайлуу убакытты тандаңыз — дарыгер жазылууну ырастайт',
+    pickDoctorSub: 'Кызматты, дарыгерди жана ыңгайлуу убакытты тандаңыз — дарыгер жазылууну ырастайт',
     pickServiceSub: 'Кызматты жана ыңгайлуу убакытты тандаңыз — дарыгер жазылууну ырастайт',
     doctor: 'Дарыгер',
     unavailable: 'Азырынча жазылуу мүмкүн эмес — клиникага чалыңыз.',
@@ -411,7 +443,7 @@ const TEXTS: Record<Lang, Record<string, string>> = {
     errRelativesLimit: 'Мындан көп тууган кошууга болбойт — калгандарын клиника жазат.',
     // Сайтта Telegram’сыз жазылуу (site/WebBooking)
     webTitle: 'Сайтта жазылуу',
-    webSub: 'Telegram’сыз: дарыгерди, кызматты жана убакытты тандаңыз — клиника жазылууну ырастоо үчүн чалат',
+    webSub: 'Telegram’сыз: кызматты, дарыгерди жана убакытты тандаңыз — клиника жазылууну ырастоо үчүн чалат',
     webStepDoctor: 'Дарыгер',
     webPhoneHint: 'Жазылууну ырастоо үчүн клиника ушул номерге чалат',
     webPhoneRequired: 'Телефон номериңизди жазыңыз',
@@ -436,6 +468,38 @@ const TEXTS: Record<Lang, Record<string, string>> = {
     webAddress: 'Дарек',
     webPhoneClinic: 'Клиниканын телефону',
     webNoServices: 'Бул дарыгерге онлайн жазылуу азырынча жок — клиникага чалыңыз.',
+    // Кадам-кадам жазылуу (Wizard.tsx): кызмат → дарыгер → күн → убакыт → байланыш
+    wizStep: '{total} кадамдын {n}-кадамы',
+    wizStepService: 'Кызмат',
+    wizStepDoctor: 'Дарыгер',
+    wizStepDate: 'Күн',
+    wizStepTime: 'Убакыт',
+    wizStepContacts: 'Байланыш',
+    wizServiceTitle: 'Кызматты тандаңыз',
+    wizDoctorTitle: 'Дарыгерди тандаңыз',
+    wizDateTitle: 'Күндү тандаңыз',
+    wizTimeTitle: 'Убакытты тандаңыз',
+    wizContactsTitle: 'Текшерип, ырастаңыз',
+    wizSummary: 'Сиздин жазылууңуз',
+    wizChange: 'Өзгөртүү',
+    wizChangeWhat: 'Өзгөртүү: {what}',
+    anyDoctor: 'Каалаган бош дарыгер',
+    anyDoctorSub: 'Бардык дарыгерлердин убактысын көрсөтөбүз — бош дарыгерге жазабыз',
+    anyDoctorShort: 'Каалаган бош дарыгер',
+    serviceSearch: 'Кызматты издөө',
+    serviceNone: 'Эч нерсе табылган жок — башка сөз менен издеп көрүңүз.',
+    serviceAll: 'Бардык кызматтарды көрсөтүү',
+    morning: 'Эртең менен',
+    afternoon: 'Түштө',
+    evening: 'Кечинде',
+    nearestDay: 'Эң жакын бош күн: {day}',
+    prevDay: 'Мурунку күн',
+    nextDay: 'Кийинки күн',
+    calendar: 'Календарь',
+    dayFull: 'бош убакыт жок',
+    bookedNotice: '✅ Сиз жазылдыңыз — дарыгердин ырастоосун күтүңүз',
+    nameEdit: 'Атын өзгөртүү',
+    priceFrom: 'Баасы',
   },
 };
 
@@ -491,6 +555,28 @@ export function bookingDays(lang: Lang, today: string, n: number): { date: strin
       : new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'short', day: 'numeric' }).format(d).replace(',', '')
     return { date, label: label.charAt(0).toUpperCase() + label.slice(1) }
   })
+}
+
+/** «Среда, 12 ноября» — «12-ноябрь, шаршемби»: день в итоге записи и над сеткой времени. */
+export function dayLong(lang: Lang, date: string): string {
+  const d = new Date(`${date}T00:00:00Z`)
+  if (lang === 'ky') return `${d.getUTCDate()}-${KY_MONTHS[d.getUTCMonth()]}, ${KY_WEEKDAYS[d.getUTCDay()]}`
+  const text = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' }).format(d)
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+/** «Ноябрь 2026» — «Ноябрь 2026»: заголовок месяца в календаре записи. */
+export function monthTitle(lang: Lang, date: string): string {
+  const d = new Date(`${date}T00:00:00Z`)
+  if (lang === 'ky') return `${KY_MONTHS[d.getUTCMonth()]!.charAt(0).toUpperCase()}${KY_MONTHS[d.getUTCMonth()]!.slice(1)} ${d.getUTCFullYear()}`
+  const text = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(d).replace(/\s*г\.?$/, '')
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+/** Подписи дней недели с понедельника: «Пн … Вс» — «Дш … Жк». */
+export function weekdaysShort(lang: Lang): string[] {
+  if (lang === 'ky') return [...KY_WEEKDAYS_SHORT.slice(1), KY_WEEKDAYS_SHORT[0]!]
+  return ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 }
 
 type Break = { start?: string; end?: string; title?: string; emoji?: string }
