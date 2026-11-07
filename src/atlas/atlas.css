@@ -109,7 +109,8 @@
   .atlas-tabs button { padding: 6px 10px; font-size: .92rem; }
   .atlas-tools { flex-shrink: 0; }
   .atlas-title { display: none; }
-  .atlas-tools button span, .atlas-tools button:not(.atlas-close):not(:first-child) { display: none; }
+  /* Телефон: «Вернуть вид» — только значком ⟲ (модель можно сдвинуть двумя пальцами), во весь экран — нет */
+  .atlas-tools button span, .atlas-tools button:not(.atlas-close):not(.atlas-reset):not(:first-child) { display: none; }
   .atlas-legend { display: none; }
   .atlas-info { left: 10px; right: 10px; top: auto; bottom: 8px; width: auto; }
   .atlas-modes button { min-height: 44px; padding: 8px 14px; font-size: 1rem; }

@@ -97,7 +97,11 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
   const controls = new OrbitControls(camera, canvas)
   controls.enableDamping = true
   controls.dampingFactor = 0.08
-  controls.enablePan = false
+  // Двигать модель: два пальца на телефоне (вместе со щипком), правая кнопка или Shift+мышь на компьютере.
+  // Далеко не уводим — см. clampPan; «Вернуть вид» ставит на место
+  controls.enablePan = true
+  controls.screenSpacePanning = true
+  controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }
   controls.autoRotate = false
   controls.rotateSpeed = 0.7
   // Колесо и тачпад приближают плавнее (по умолчанию 1 — один жест тачпада и модель во весь экран)
@@ -192,6 +196,43 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
   }
 
   /**
+   * Сколько пикселей снизу кадра закрывает панель описания (на телефоне она лежит поверх холста внизу).
+   * Центр картинки сдвигаем вверх на половину — модель стоит посередине видимой части, а не под панелью.
+   */
+  function bottomCover(): number {
+    const stage = canvas.parentElement
+    if (!stage) return 0
+    const s = stage.getBoundingClientRect()
+    let cover = 0
+    for (const el of stage.querySelectorAll<HTMLElement>('.atlas-info, .atlas-legend')) {
+      const r = el.getBoundingClientRect()
+      if (!r.width || r.top < s.top + s.height / 2) continue
+      cover = Math.max(cover, s.bottom - r.top)
+    }
+    return Math.min(cover, s.height * 0.5)
+  }
+
+  let shift = 0
+  function applyShift(w: number, h: number) {
+    shift = Math.round(bottomCover() / 2)
+    if (shift > 0) camera.setViewOffset(w, h, 0, shift, w, h)
+    else camera.clearViewOffset()
+  }
+
+  /** Сдвиг (pan) — не дальше радиуса модели от её центра: модель не «улетает» за край. */
+  function clampPan() {
+    const c = CAMERAS[view]
+    const home = new THREE.Vector3(...c.target)
+    const away = controls.target.clone().sub(home)
+    const limit = c.radius * 1.1
+    if (away.length() <= limit) return
+    const back = away.clone().setLength(away.length() - limit)
+    controls.target.sub(back)
+    camera.position.sub(back)
+  }
+  controls.addEventListener('change', clampPan)
+
+  /**
    * На каком расстоянии камера видит модель целиком: не ближе стартового, а если кадр узкий (окно
    * уже, по бокам панели) — дальше, чтобы полуширина модели влезла между легендой и описанием.
    */
@@ -281,6 +322,7 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     camera.aspect = w / h
     // На узком экране (телефон стоя) — отодвинуть камеру, чтобы модель влезла
     camera.fov = w / h < 0.9 ? 42 : 30
+    applyShift(w, h)
     camera.updateProjectionMatrix()
     width = w
     // Кадр стал уже (или шире) — модель с панелями по бокам должна влезать: камеру отодвигаем
@@ -290,7 +332,16 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     }
   }
   const observer = new ResizeObserver(resize)
-  if (canvas.parentElement) observer.observe(canvas.parentElement)
+  // Описание появилось, пропало или поменяло высоту (другой режим, стадия) — пересчитать сдвиг модели вверх
+  const watchPanels = () => {
+    for (const el of canvas.parentElement?.querySelectorAll<HTMLElement>('.atlas-info, .atlas-legend') ?? []) observer.observe(el)
+  }
+  const panels = new MutationObserver(() => { watchPanels(); resize() })
+  if (canvas.parentElement) {
+    observer.observe(canvas.parentElement)
+    watchPanels()
+    panels.observe(canvas.parentElement, { childList: true })
+  }
   resize()
 
   // Нажатие (не поворот): на челюсти — выбрать зуб, на разрезе — ткань
@@ -421,6 +472,7 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
       canvas.removeEventListener('pointerup', onUp)
       worker.terminate()
       controls.dispose()
+      panels.disconnect()
       tooth.dispose()
       jaw?.dispose()
       wisdom?.dispose()

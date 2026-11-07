@@ -144,7 +144,7 @@ export function Atlas({ initialView, initialMode, initialTooth, lang: initialLan
         </div>
         <div className="atlas-tools">
           <button type="button" onClick={() => setLang(lang === 'ru' ? 'ky' : 'ru')}>{t.lang}</button>
-          {status !== 'nogl' && <button type="button" onClick={() => engine?.resetView()}>{t.resetView}</button>}
+          {status !== 'nogl' && <button type="button" className="atlas-reset" aria-label={t.resetView} onClick={() => engine?.resetView()}>⟲ <span>{t.resetView}</span></button>}
           {canFull && <button type="button" aria-pressed={full} onClick={toggleFull}>{full ? t.exitFullscreen : t.fullscreen}</button>}
           {onClose && <button type="button" className="atlas-close" onClick={onClose} aria-label={t.close}>✕ <span>{t.close}</span></button>}
         </div>
