@@ -117,12 +117,9 @@ export function createTools(): Record<ToolName, Tool> {
   // ── Угловой наконечник с резиновой полировочной чашкой ──
   const cup = new THREE.Group()
   const cupSpin = new THREE.Group()
-  const rubber = new THREE.MeshPhysicalMaterial({ color: '#d8d2c6', roughness: 0.85, side: THREE.DoubleSide })
+  const rubber = new THREE.MeshPhysicalMaterial({ color: '#aeb6c4', roughness: 0.8, sheen: 0.4, sheenColor: new THREE.Color('#ffffff'), side: THREE.DoubleSide })
   const cupGeo = lathe([[0.1, 0.0], [0.16, 0.0], [0.15, 0.08], [0.11, 0.24], [0.05, 0.3], [0, 0.3]], 36)
   cupSpin.add(new THREE.Mesh(grit(cupGeo, 0.006, 11), rubber))
-  const rib = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.18, 0.31), new THREE.MeshPhysicalMaterial({ color: '#bdb6a8', roughness: 0.9 }))
-  rib.position.y = 0.14
-  cupSpin.add(rib)
   const cHead = new THREE.Mesh(lathe([[0, 0.3], [0.15, 0.31], [0.18, 0.35], [0.185, 0.6], [0.13, 0.65], [0, 0.66]], 40), satin)
   const cBody = new THREE.Mesh(tube([new THREE.Vector3(0, 0.48, 0), new THREE.Vector3(0.5, 0.52, 0), new THREE.Vector3(1.6, 1.1, 0), new THREE.Vector3(5, 2.7, 0)], 0.13), satin)
   cup.add(cupSpin, cHead, cBody)

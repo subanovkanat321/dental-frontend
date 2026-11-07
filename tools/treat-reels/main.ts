@@ -15,8 +15,10 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 
 import type { MeshData } from '../../src/atlas/geometry/mesher'
 import { applySurface } from '../../src/atlas/engine/surface'
-import { buildTreatMeshes, CAVITY_TOP } from './geometry'
+import { buildTreatMeshes, CAVITY_TOP, cavity as cavityField, LAYER_SUBS, noise3 } from './geometry'
 import { createTools, haloTexture, type ToolName } from './instruments'
+import { addLook } from './look'
+import { createPost } from './post'
 
 /** Ключ дорожки: [время, значение] или [время, значение, 'l' — линейно | 's' — скачком]. */
 export type Key = [number, number] | [number, number, 'l' | 's']
@@ -28,12 +30,19 @@ export interface Scenario {
   tracks: Record<string, Key[]>
   /** Момент «до» для сравнения до/после (стадии берутся из этого времени). */
   beforeAt?: number
+  /**
+   * «Толчки» камеры на смене шага (в такт «вжух»): быстрый наезд zoom (доля расстояния, минус — ближе)
+   * и крен roll (градусы), затухают за ~1 с.
+   */
+  kicks?: { t: number; zoom?: number; roll?: number }[]
 }
 
 /** Значения по умолчанию, если дорожки нет. */
 const DEFAULTS: Record<string, number> = {
   camAz: 0, camEl: 48, camDist: 4.2, camFov: 26, camTx: CAVITY_TOP[0], camTy: CAVITY_TOP[1], camTz: CAVITY_TOP[2], camRoll: 0,
   prep: 0, etch: 0, rinse: 0, bond: 0, fill: 0, cure: 0, polish: 0, healed: 0, compare: 0, water: 0, spray: 0, wet: 0,
+  /** Постобработка: размытие по глубине и к краям, виньетка, зерно; «ручная» камера; капли на зубе. */
+  dof: 9, edge: 5, vignette: 0.4, grain: 0.035, shake: 1, drops: 0,
 }
 
 const smooth = (x: number) => x * x * (3 - 2 * x)
@@ -115,19 +124,20 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
   renderer.toneMapping = THREE.NeutralToneMapping
   renderer.toneMappingExposure = 1.0
   renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  renderer.shadowMap.type = THREE.VSMShadowMap
+  const post = createPost(renderer, W, H)
 
   const scene = new THREE.Scene()
   scene.background = backdrop()
   const pmrem = new THREE.PMREMGenerator(renderer)
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
   scene.environmentIntensity = 0.7
-  const fog = new THREE.Fog('#1d0f10', 6.5, 12)
+  const fog = new THREE.Fog('#1d0f10', 8, 16)
   scene.fog = fog
 
   // Свет как от стоматологического светильника: тёплый ключевой сверху-спереди с тенями, мягкий заполняющий
   // и холодный контровой сзади (отделяет бугры от тёмного фона)
-  const key = new THREE.DirectionalLight('#fff4e8', 2.4)
+  const key = new THREE.DirectionalLight('#ffe7c9', 2.6)
   key.position.set(1.5, 6, 4)
   key.castShadow = true
   key.shadow.mapSize.set(2048, 2048)
@@ -138,15 +148,16 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
   sc.far = 14
   key.shadow.bias = -0.0005
   key.shadow.normalBias = 0.015
-  key.shadow.radius = 4
+  key.shadow.radius = 7
+  key.shadow.blurSamples = 16
   key.target.position.set(0, 0.4, 0)
   const fill = new THREE.DirectionalLight('#ffe9de', 0.6)
   fill.position.set(-4, 2, 5)
-  const rim = new THREE.DirectionalLight('#b5d0ff', 1.1)
+  const rim = new THREE.DirectionalLight('#9cc2ff', 1.6)
   rim.position.set(-2, 3, -5)
   const hemi = new THREE.HemisphereLight('#f2ecff', '#4a2a2a', 0.35)
   // «Кольцевая вспышка» у камеры, как у стоматологических макрофото: блики на влажной эмали
-  const camLight = new THREE.PointLight('#ffffff', 9, 0, 1.6)
+  const camLight = new THREE.PointLight('#fff6ee', 5, 0, 1.6)
   scene.add(key, key.target, fill, rim, hemi, camLight)
 
   // ── Сетки ──
@@ -157,12 +168,15 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
   const gumMat = applySurface(phys({ color: '#ffffff', vertexColors: true, roughness: 0.48, clearcoat: 0.7, clearcoatRoughness: 0.12, sheen: 0.35, sheenColor: new THREE.Color('#ffc6cc') }),
     { kind: 'gum', ao: true, sss: 0.6, sssColor: '#ff7a70' })
   // Композит до полировки — чуть матовее и плотнее эмали; синий отсвет — когда светит лампа
-  const compositeMat = applySurface(phys({ color: '#f1dfb8', roughness: 0.55, clearcoat: 0.3, clearcoatRoughness: 0.3, emissive: new THREE.Color('#2f62ff'), emissiveIntensity: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+  const compositeMat = applySurface(phys({ color: '#efdcb4', roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.08, emissive: new THREE.Color('#2f62ff'), emissiveIntensity: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
     { kind: 'plain', ao: true })
-  const roughMat = applySurface(phys({ color: '#ffffff', vertexColors: true, roughness: 0.6, clearcoat: 0.2, emissive: new THREE.Color('#2f62ff'), emissiveIntensity: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
+  const roughMat = applySurface(phys({ color: '#fbf3e4', vertexColors: true, roughness: 0.62, clearcoat: 0.15, emissive: new THREE.Color('#2f62ff'), emissiveIntensity: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
     { kind: 'plain', ao: true })
   const finalMat = toothMat.clone()
   applySurface(finalMat, { kind: 'tooth', ao: true, sss: 0.45, sssColor: '#ffe2cc' })
+  addLook(finalMat, ['enamel', 'wet'])
+  addLook(toothMat, ['enamel', 'wet'])
+  addLook(gumMat, ['gum', 'wet'])
   finalMat.polygonOffset = true
   finalMat.polygonOffsetFactor = -2
   finalMat.polygonOffsetUnits = -2
@@ -200,9 +214,56 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
     scene.add(pts)
     return pts
   }
-  const spray = particles(700, 0.05, '#eef6ff', 0.55)
+  const spray = particles(900, 0.045, '#f4f9ff', 0.7)
   const stream = particles(900, 0.035, '#dfeeff', 0.7)
-  const splash = particles(260, 0.05, '#f2f8ff', 0.6)
+  const splash = particles(320, 0.06, '#ffffff', 0.75)
+
+  // ── Капли воды на зубе: мелкие линзы с бликами; на крутых склонах медленно стекают ──
+  const DROPS = 170
+  const dropMat = phys({ color: '#ffffff', roughness: 0.02, clearcoat: 1, clearcoatRoughness: 0.01, transparent: true, opacity: 0.4, specularIntensity: 1, envMapIntensity: 2.4, depthWrite: false })
+  const drops = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 18, 12), dropMat, DROPS)
+  drops.renderOrder = 4
+  drops.frustumCulled = false
+  drops.visible = false
+  scene.add(drops)
+  const dropSpots: { p: THREE.Vector3; n: THREE.Vector3; r: number; h: number }[] = []
+  {
+    const pos = meshes.toothHealthy.positions, nor = meshes.toothHealthy.normals
+    const count = pos.length / 3
+    for (let i = 0; dropSpots.length < DROPS && i < 40000; i++) {
+      const v = Math.floor(hash(i * 3.7 + 1) * count) * 3
+      const x = pos[v]!, y = pos[v + 1]!, z = pos[v + 2]!
+      // Не в полости (там своя вода) и не на невидимой язычной стороне
+      if (y < 0.1 || nor[v + 2]! < -0.35 || cavityField(x, y, z) < 0.05) continue
+      dropSpots.push({ p: new THREE.Vector3(x, y, z), n: new THREE.Vector3(nor[v]!, nor[v + 1]!, nor[v + 2]!), r: 0.007 + 0.016 * hash(i * 9.1) ** 2, h: hash(i * 5.3 + 2) })
+    }
+  }
+  const m4 = new THREE.Matrix4(), dq = new THREE.Quaternion(), dv = new THREE.Vector3(), ds = new THREE.Vector3(), yUp = new THREE.Vector3(0, 1, 0)
+  function applyDrops(s: State) {
+    const amount = s.drops!
+    drops.visible = amount > 0.01
+    if (!drops.visible) return
+    const t = s.__t!
+    dropSpots.forEach((d, i) => {
+      const on = d.h < amount
+      const steep = Math.max(0, 1 - d.n.y - 0.35)
+      const slide = steep * 0.12 * ((t * 0.22 + d.h * 7) % 1)
+      dv.copy(d.p).addScaledVector(d.n, d.r * 0.25)
+      dv.y -= slide
+      dq.setFromUnitVectors(yUp, d.n)
+      const r = on ? d.r * (1 + 0.6 * steep * slide * 8) : 0
+      ds.set(r, r * 0.45, r * (1 + slide * 3))
+      m4.compose(dv, dq, ds)
+      drops.setMatrixAt(i, m4)
+    })
+    drops.instanceMatrix.needsUpdate = true
+  }
+
+  // Бор на 300 000 об/мин глаз видит размытым «цилиндром» — полупрозрачная оболочка поверх рабочей части
+  const burBlur = new THREE.Mesh(new THREE.CylinderGeometry(0.047, 0.047, 0.37, 40, 1, true),
+    phys({ color: '#d6d2c8', metalness: 0.7, roughness: 0.3, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide }))
+  burBlur.position.y = 0.2
+  tools.bur.group.add(burBlur)
 
   const camera = new THREE.PerspectiveCamera(26, W / H, 0.05, 60)
   const cavity = new THREE.Vector3(...CAVITY_TOP)
@@ -221,8 +282,8 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
     const stage = Math.round(Math.min(1, Math.max(0, s.prep!)) * (stages.length - 1))
     stages.forEach((m, i) => { m.visible = !healed && i === stage })
     healthy.visible = healed
-    // Слои: fill ∈ [0, 3] — три слоя по четыре подстадии
-    const sub = Math.ceil(Math.min(3, s.fill!) * 4) - 1
+    // Слои: fill ∈ [0, 3] — три слоя по LAYER_SUBS подстадий
+    const sub = Math.ceil(Math.min(3, s.fill!) * LAYER_SUBS) - 1
     const done = s.fill! >= 3
     layers.forEach((m, i) => { m.visible = !healed && !done && i === sub })
     fillRough.visible = !healed && done && s.polish! < 0.55
@@ -243,18 +304,35 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
   function applyCamera(s: State) {
     const az = (s.camAz! * Math.PI) / 180, el = (s.camEl! * Math.PI) / 180
     const target = new THREE.Vector3(s.camTx, s.camTy, s.camTz)
-    // Лёгкое «дыхание» камеры в руке — кадр живой, но без тряски
+    // «Ручная» камера: несколько медленных волн и шум — дыхание оператора, без тряски
     const t = s.__t!
-    const drift = new THREE.Vector3(Math.sin(t * 0.7) * 0.012, Math.sin(t * 0.53 + 1) * 0.01, 0)
+    const sh = s.shake!
+    const nz = (k: number, f: number) => noise3(t * f, k * 7.3, 1.1) - 0.5
+    const drift = new THREE.Vector3(
+      (Math.sin(t * 0.71) * 0.014 + nz(1, 1.3) * 0.022) * sh,
+      (Math.sin(t * 0.53 + 1) * 0.012 + nz(2, 1.1) * 0.018) * sh,
+      nz(3, 0.9) * 0.02 * sh,
+    )
+    // Толчки на смене шага: быстрый наезд и крен, затухают
+    let kickZoom = 0, kickRoll = 0
+    for (const k of scenario.kicks ?? []) {
+      const dt = t - k.t
+      if (dt < 0 || dt > 1.6) continue
+      const a = (1 - Math.exp(-dt * 16)) * Math.exp(-dt * 3.2)
+      kickZoom += (k.zoom ?? -0.06) * a
+      kickRoll += (k.roll ?? 0) * a
+    }
+    const dist = s.camDist! * (1 + kickZoom)
     camera.position.set(
-      target.x + s.camDist! * Math.cos(el) * Math.sin(az),
-      target.y + s.camDist! * Math.sin(el),
-      target.z + s.camDist! * Math.cos(el) * Math.cos(az),
+      target.x + dist * Math.cos(el) * Math.sin(az),
+      target.y + dist * Math.sin(el),
+      target.z + dist * Math.cos(el) * Math.cos(az),
     ).add(drift)
-    camera.up.set(Math.sin((s.camRoll! * Math.PI) / 180), Math.cos((s.camRoll! * Math.PI) / 180), 0)
+    const roll = ((s.camRoll! + kickRoll + nz(4, 0.8) * 0.7 * sh) * Math.PI) / 180
+    camera.up.set(Math.sin(roll), Math.cos(roll), 0)
     camera.fov = s.camFov!
     camera.updateProjectionMatrix()
-    camera.lookAt(target.add(drift))
+    camera.lookAt(target.add(drift.multiplyScalar(0.6)))
     // Туман — за зубом: дальние края десны и соседей тонут в темноте (как малая глубина резкости)
     fog.near = s.camDist! + 1.2
     fog.far = s.camDist! + 7
@@ -271,7 +349,8 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
       const pose = TOOL_POSE[name]
       const dir = new THREE.Vector3(...pose.dir).normalize()
       // Подход: издалека вдоль оси ручки (за кадр), в конце — на месте
-      const away = (1 - smooth(p)) * 3.2
+      // Быстро подлетает и мягко «садится» на место (ускорение → замедление), уходит наоборот
+      const away = (1 - p) ** 3 * 3.4
       const wig = s[`${name}Wig`] ?? 0
       const pos = cavity.clone().add(new THREE.Vector3(...pose.at))
         .add(new THREE.Vector3(s[`${name}X`] ?? 0, s[`${name}Y`] ?? 0, s[`${name}Z`] ?? 0))
@@ -335,12 +414,17 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
     }
   }
 
+  const rt = post.target
   function draw(t: number): State {
     const s = stateAt(t)
     s.__t = t
     applyCamera(s)
     applyTools(s)
     applyParticles(s)
+    applyDrops(s)
+    burBlur.visible = (s.burSpin ?? 0) > 0
+    // Кадр рисуем в текстуру с глубиной, на экран — через постобработку (post.ts)
+    renderer.setRenderTarget(rt)
     const w = s.compare!
     if (w > 0.001 && w < 0.999 && scenario.beforeAt != null) {
       // До/после — два кадра рядом: слева зуб «до» (стадии из beforeAt), справа «после», в каждой половине
@@ -348,23 +432,27 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
       const before = stateAt(scenario.beforeAt)
       before.__t = t
       const split = Math.round(W * w)
-      renderer.setScissorTest(true)
+      rt.scissorTest = true
       for (const [x0, width, st] of [[0, split, before], [split, W - split, s]] as const) {
         applyTissues(st)
         camera.aspect = width / H
         camera.updateProjectionMatrix()
-        renderer.setViewport(x0, 0, width, H)
-        renderer.setScissor(x0, 0, width, H)
+        rt.viewport.set(x0, 0, width, H)
+        rt.scissor.set(x0, 0, width, H)
+        renderer.setRenderTarget(rt)
         renderer.render(scene, camera)
       }
-      renderer.setScissorTest(false)
-      renderer.setViewport(0, 0, W, H)
+      rt.scissorTest = false
+      rt.viewport.set(0, 0, W, H)
+      rt.scissor.set(0, 0, W, H)
       camera.aspect = W / H
       camera.updateProjectionMatrix()
     } else {
       applyTissues(s)
       renderer.render(scene, camera)
     }
+    const focus = camera.position.distanceTo(new THREE.Vector3(s.camTx, s.camTy, s.camTz))
+    post.finish(camera, { focus, aperture: s.dof!, edgeBlur: s.edge!, vignette: s.vignette!, grain: s.grain!, frame: Math.round(t * 30) })
     return s
   }
 

@@ -19,6 +19,23 @@ import { crownOuter, groove, rootOuter } from '../../src/atlas/geometry/toothMod
 const lin = (c: number) => c ** 2.2
 const mix = (a: number, b: number, t: number) => a + (b - a) * t
 
+/** Шум значений 0…1 (гладкий, детерминированный): следы бора, зернистость среза. */
+function hash3(i: number, j: number, k: number): number {
+  const s = Math.sin(i * 127.1 + j * 311.7 + k * 74.7) * 43758.5453
+  return s - Math.floor(s)
+}
+export function noise3(x: number, y: number, z: number): number {
+  const i = Math.floor(x), j = Math.floor(y), k = Math.floor(z)
+  const fx = x - i, fy = y - j, fz = z - k
+  const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy), uz = fz * fz * (3 - 2 * fz)
+  const l = (a: number, b: number, t: number) => a + (b - a) * t
+  return l(
+    l(l(hash3(i, j, k), hash3(i + 1, j, k), ux), l(hash3(i, j + 1, k), hash3(i + 1, j + 1, k), ux), uy),
+    l(l(hash3(i, j, k + 1), hash3(i + 1, j, k + 1), ux), l(hash3(i, j + 1, k + 1), hash3(i + 1, j + 1, k + 1), ux), uy),
+    uz,
+  )
+}
+
 /** Весь моляр (коронка + корни) и дентин под эмалью — как в toothModel. */
 const toothT = (x: number, y: number, z: number) => smin(crownOuter(x, y, z), rootOuter(x, y, z), 0.12)
 const enamelThickness = (y: number) => 0.13 * smoothstep(-0.02, 0.38, y)
@@ -32,11 +49,15 @@ export function cavity(x: number, y: number, z: number): number {
   const body = sdRoundBox(x - 0.01, y - 0.86, z, 0.27, 0.48, 0.125, 0.09)
   // Продолжение в щёчную бороздку — маленький «язычок», как при настоящем препарировании по фиссурам
   const buccal = sdRoundBox(x + 0.1, y - 0.92, z - 0.15, 0.06, 0.46, 0.08, 0.05)
-  return smin(body, buccal, 0.05)
+  // Неровные стенки и дно: следы бора (полосы поперёк хода) и зерно — полость не «отлита в форме»
+  const marks = 0.006 * (noise3(x * 22, y * 30, z * 22) - 0.5) + 0.004 * Math.sin(x * 70 + 3 * noise3(x * 8, y * 8, z * 8)) + 0.0025 * (noise3(x * 60, y * 60, z * 60) - 0.5)
+  return smin(body, buccal, 0.05) + marks
 }
 /** Центр полости на поверхности (сюда смотрит камера и приходят инструменты). */
 export const CAVITY_TOP: [number, number, number] = [0.0, 0.56, 0.0]
 export const CAVITY_FLOOR = 0.38
+/** Подстадий на слой композита (кадры «разминания»). */
+export const LAYER_SUBS = 6
 
 /** Полость на стадии s ∈ [0, 1]: снизу растёт эллипсоид «выборки» и в конце совпадает с полостью. */
 function cavityAt(s: number, x: number, y: number, z: number): number {
@@ -72,10 +93,12 @@ function molarColor(x: number, y: number, z: number, cariesOn: boolean, out: Flo
   // Стенки полости: глубже эмали — дентин (сливочно-жёлтый), на срезе эмали — светлый ободок
   const d = dentinCore(x, y, z)
   const inDentin = smoothstep(0.012, -0.012, d)
-  r = mix(r, 0.87, inDentin); g = mix(g, 0.72, inDentin); b = mix(b, 0.48, inDentin)
+  r = mix(r, 0.9, inDentin); g = mix(g, 0.8, inDentin); b = mix(b, 0.6, inDentin)
   // Глубина полости (точка внутри исходного зуба — это срез бором): стенки и дно в тени (свет и рассеянный, и прямой туда заходит хуже) — видно, что это ямка
   const inCav = smoothstep(-0.004, -0.03, toothT(x, y, z)) * (0.45 + 0.55 * smoothstep(0.8, 0.4, y))
-  r *= 1 - 0.3 * inCav; g *= 1 - 0.34 * inCav; b *= 1 - 0.4 * inCav
+  r *= 1 - 0.16 * inCav; g *= 1 - 0.18 * inCav; b *= 1 - 0.2 * inCav
+  const grain = 1 + (noise3(x * 90, y * 90, z * 90) - 0.5) * 0.1 * inCav
+  r *= grain; g *= grain; b *= grain
   if (cariesOn) {
     const c = caries(x, y, z)
     // Меловое пятно вокруг (деминерализация) и тёмный кариес в середине
@@ -194,12 +217,29 @@ export function buildTreatMeshes(opts: { stages?: number; step?: number } = {}):
   const gC = makeGrid([-0.42, 0.32, -0.34], [0.42, 0.98, 0.36], 0.008)
   const TC = sample(gC, toothT)
   const CAV = sample(gC, cavity)
+  // Слои композита: на каждую подстадию — уровень пасты и «бугорок» под штопфером, который при разминании
+  // оседает (пластичная масса: сначала комок, потом прижата к стенкам и выровнена)
   const levels: number[] = []
-  for (const [a, b] of [[CAVITY_FLOOR, 0.5], [0.5, 0.6], [0.6, 0.7]] as const) for (let k = 1; k <= 4; k++) levels.push(a + ((b - a) * k) / 4)
-  const layer = (lvl: number) => surfaceNets(gC, sample(gC, (_x, y, _z, n) => Math.max(TC[n]!, CAV[n]! - 0.006, y - lvl)))
-  const layers = levels.map(layer)
+  const tops: ((x: number, z: number) => number)[] = []
+  for (const [a, b] of [[CAVITY_FLOOR, 0.5], [0.5, 0.6], [0.6, 0.7]] as const) {
+    for (let k = 1; k <= LAYER_SUBS; k++) {
+      const p = k / LAYER_SUBS
+      const lvl = a + (b - a) * Math.min(1, 0.25 + p * 0.85)
+      const mound = 0.06 * (1 - p) ** 1.2
+      levels.push(lvl)
+      tops.push((x, z) => {
+        const r2 = (x - 0.03) ** 2 + z * z
+        return lvl + mound * Math.exp(-r2 / 0.014) + 0.005 * (1 - p) * Math.sin(Math.sqrt(r2) * 70) + 0.003 * (noise3(x * 30, lvl * 9, z * 30) - 0.5)
+      })
+    }
+  }
+  const layers = tops.map((top) => surfaceNets(gC, sample(gC, (x, y, z, n) => Math.max(TC[n]!, CAV[n]! - 0.006, y - top(x, z)))))
   const colorFill = (m: MeshData) => paint(m, (x, y, z, out, o) => molarColor(x, y, z, false, out, o))
-  const fillRough = colorFill(surfaceNets(gC, sample(gC, (_x, _y, _z, n) => Math.max(TC[n]! - 0.016, CAV[n]! - 0.035))))
+  // Излишек до полировки: тонкий наплыв поверх пломбы, сходящий на нет за краем полости (а не «блок»)
+  const fillRough = colorFill(surfaceNets(gC, sample(gC, (x, y, z, n) => {
+    const over = 0.011 * smoothstep(0.055, -0.01, CAV[n]!) * (0.8 + 0.4 * noise3(x * 25, y * 25, z * 25))
+    return Math.max(TC[n]! - over, CAV[n]! - 0.055)
+  })))
   const fillFinal = colorFill(surfaceNets(gC, sample(gC, (_x, _y, _z, n) => Math.max(TC[n]!, CAV[n]! - 0.006))))
   const gel = [0.5, 0.58, 0.66, 0.8].map((lvl) => surfaceNets(gC, sample(gC, (x, y, z, n) =>
     Math.max(TC[n]! - 0.03 - 0.012 * Math.sin(x * 37 + z * 23) * Math.sin(z * 31 - x * 11), CAV[n]! - 0.045, y - lvl))))
