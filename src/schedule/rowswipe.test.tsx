@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { todayIn } from '../lib/time'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -118,16 +119,23 @@ test('свайп влево у начавшегося приёма — «При�
 })
 
 test('будущий приём: влево неактивно (не начался), вправо — напоминание', async () => {
-  const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
-  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
-  renderApp()
-  const row = await rowOf('Бакыт М.')
-  await screen.findByRole('button', { name: /Напомнить в WhatsApp/ })
-  expect(within(row).queryByText('✅ Состоялся')).not.toBeInTheDocument()
-  swipe(row, 300, 300, -250)
-  expect(row).not.toHaveAttribute('data-swipe')
-  expect(open).not.toHaveBeenCalled()
-  expect(calls).toEqual([])
+  // «Сейчас» — 10:00 по Бишкеку: иначе поздно вечером приём в 23:30 уже начался
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date(`${todayIn()}T10:00:00+06:00`))
+  try {
+    const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
+    const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+    renderApp()
+    const row = await rowOf('Бакыт М.')
+    await screen.findByRole('button', { name: /Напомнить в WhatsApp/ })
+    expect(within(row).queryByText('✅ Состоялся')).not.toBeInTheDocument()
+    swipe(row, 300, 300, -250)
+    expect(row).not.toHaveAttribute('data-swipe')
+    expect(open).not.toHaveBeenCalled()
+    expect(calls).toEqual([])
+  } finally {
+    vi.useRealTimers()
+  }
 })
 
 test('чужой приём (коллега, только просмотр) — без свайпов в обе стороны', async () => {

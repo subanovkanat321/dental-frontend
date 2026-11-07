@@ -469,6 +469,14 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         ))}
 
+        {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» над сеткой дня —
+            под ней строка уходила за край экрана и её не замечали */}
+        {!dayList && !weekMode && !monthMode && shown.length > 0 && (
+          <CancelledList items={loaded.filter((a) => a.status === 'CANCELLED' && shown.some((d) => d.id === a.doctorId))}
+            selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
+            doctorName={shown.length > 1 ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
+        )}
+
         {dayList ? (
           <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id}
             onNewHere={bookable.length > 0 ? newHere : undefined}
@@ -609,12 +617,6 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               </div>
             )}
           </div>
-        )}
-        {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» под днём */}
-        {!dayList && !weekMode && !monthMode && shown.length > 0 && (
-          <CancelledList items={loaded.filter((a) => a.status === 'CANCELLED' && shown.some((d) => d.id === a.doctorId))}
-            selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
-            doctorName={shown.length > 1 ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
         )}
         {!dayList && !monthMode && doctors.length > 0 && <BadgesLegend />}
       </section>
