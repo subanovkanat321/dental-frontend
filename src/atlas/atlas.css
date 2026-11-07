@@ -31,7 +31,7 @@
 .atlas-tools { display: flex; gap: 8px; margin-left: auto; }
 .atlas-close span { margin-left: 4px; }
 
-.atlas-stage { position: relative; min-height: 0; }
+.atlas-stage { position: relative; min-height: 0; overflow: hidden; }
 .atlas-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 .atlas-canvas:active { cursor: grabbing; }
 .atlas-labels { position: absolute; inset: 0; pointer-events: none; }
@@ -103,12 +103,16 @@
   .atlas-info h2 { font-size: 1.2rem; }
   .atlas-info p { font-size: .98rem; }
 }
+.atlas-short { display: none; }
 @media (max-width: 700px) {
-  .atlas-top { padding: 8px 10px; gap: 8px; flex-wrap: nowrap; }
-  .atlas-tabs { min-width: 0; overflow-x: auto; }
-  .atlas-tabs button { padding: 6px 10px; font-size: .92rem; }
+  .atlas-long { display: none; }
+  .atlas-short, .atlas-tools button .atlas-short { display: inline; }
+  /* Телефон: сверху название и кнопки, вкладки — отдельной строкой во всю ширину (в одну строку не влезали) */
+  .atlas-top { padding: 8px 10px; gap: 8px; flex-wrap: wrap; }
+  .atlas-title { font-size: 1.1rem; }
+  .atlas-tabs { order: 2; flex: 1 0 100%; min-width: 0; }
+  .atlas-tabs button { flex: 1; padding: 6px 4px; font-size: .95rem; white-space: nowrap; }
   .atlas-tools { flex-shrink: 0; }
-  .atlas-title { display: none; }
   /* Телефон: «Вернуть вид» — только значком ⟲ (модель можно сдвинуть двумя пальцами), во весь экран — нет */
   .atlas-tools button span, .atlas-tools button:not(.atlas-close):not(.atlas-reset):not(:first-child) { display: none; }
   .atlas-legend { display: none; }

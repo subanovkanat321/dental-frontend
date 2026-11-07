@@ -239,11 +239,21 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
   function fitDistance(v: AtlasView): number {
     const c = CAMERAS[v]
     const d0 = startDistance(c)
+    if (!width || !height) return d0
+    let d = d0
+    // По ширине: между легендой и описанием по бокам
     const cover = sideCover()
-    if (!cover || !width) return d0
-    const free = Math.max(width - 2 * cover - 24, width * 0.3) / width
-    const tanHalf = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect * free
-    return Math.max(d0, c.radius / tanHalf)
+    if (cover) {
+      const free = Math.max(width - 2 * cover - 24, width * 0.3) / width
+      d = Math.max(d, c.radius / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect * free))
+    }
+    // По высоте: над описанием снизу (телефон) — иначе высокий зуб уходил верхом за край кадра
+    const bottom = bottomCover()
+    if (bottom) {
+      const free = Math.max(height - bottom - 16, height * 0.4) / height
+      d = Math.max(d, c.radius / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * free))
+    }
+    return d
   }
 
   /** Расстояние «вид целиком» для текущего вида; от него — пределы зума. */
@@ -314,6 +324,7 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
 
   // Размер холста — по родителю; ResizeObserver ловит и поворот планшета, и полноэкранный режим
   let width = 0
+  let height = 0
   const resize = () => {
     const parent = canvas.parentElement
     const w = parent?.clientWidth || canvas.clientWidth || 1
@@ -325,6 +336,7 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     applyShift(w, h)
     camera.updateProjectionMatrix()
     width = w
+    height = h
     // Кадр стал уже (или шире) — модель с панелями по бокам должна влезать: камеру отодвигаем
     if (fitted) {
       applyFit(view, true)

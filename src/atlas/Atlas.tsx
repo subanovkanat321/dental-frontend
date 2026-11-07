@@ -139,11 +139,16 @@ export function Atlas({ initialView, initialMode, initialTooth, lang: initialLan
         <strong className="atlas-title">{t.title}</strong>
         <div className="atlas-tabs" role="tablist" aria-label={t.title}>
           {(['tooth', 'jaw', 'wisdom'] as const).map((v) => (
-            <button key={v} type="button" role="tab" aria-selected={view === v} className={view === v ? 'active' : ''} onClick={() => chooseView(v)}>{t[v]}</button>
+            <button key={v} type="button" role="tab" aria-label={t[v]} aria-selected={view === v} className={view === v ? 'active' : ''} onClick={() => chooseView(v)}>
+              <span className="atlas-long">{t[v]}</span>
+              <span className="atlas-short" aria-hidden="true">{v === 'tooth' ? t.toothShort : v === 'wisdom' ? t.wisdomShort : t.jaw}</span>
+            </button>
           ))}
         </div>
         <div className="atlas-tools">
-          <button type="button" onClick={() => setLang(lang === 'ru' ? 'ky' : 'ru')}>{t.lang}</button>
+          <button type="button" aria-label={t.lang} onClick={() => setLang(lang === 'ru' ? 'ky' : 'ru')}>
+            <span className="atlas-long">{t.lang}</span><span className="atlas-short" aria-hidden="true">{t.langShort}</span>
+          </button>
           {status !== 'nogl' && <button type="button" className="atlas-reset" aria-label={t.resetView} onClick={() => engine?.resetView()}>⟲ <span>{t.resetView}</span></button>}
           {canFull && <button type="button" aria-pressed={full} onClick={toggleFull}>{full ? t.exitFullscreen : t.fullscreen}</button>}
           {onClose && <button type="button" className="atlas-close" onClick={onClose} aria-label={t.close}>✕ <span>{t.close}</span></button>}

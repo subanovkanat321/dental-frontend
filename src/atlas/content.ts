@@ -239,6 +239,9 @@ const UI_RU = {
   tooth: 'Зуб в разрезе',
   jaw: 'Челюсть',
   wisdom: 'Зуб мудрости',
+  // Телефон: вкладки и язык короче — иначе «Челюсть» и «Зуб мудрости» уезжают за край
+  toothShort: 'Разрез',
+  wisdomShort: 'Мудрости',
   stage: 'Стадия',
   close: 'Закрыть',
   fullscreen: 'На весь экран',
@@ -252,6 +255,7 @@ const UI_RU = {
   noWebgl: 'На этом устройстве 3D не работает (нет WebGL). Показываем схему.',
   resetView: 'Вернуть вид',
   lang: 'Кыргызча',
+  langShort: 'KG',
 }
 export const UI: Record<Lang, Record<keyof typeof UI_RU, string>> = {
   ru: UI_RU,
@@ -261,6 +265,8 @@ export const UI: Record<Lang, Record<keyof typeof UI_RU, string>> = {
     tooth: 'Тиштин кесилиши',
     jaw: 'Жаак',
     wisdom: 'Акыл тиш',
+    toothShort: 'Кесилиш',
+    wisdomShort: 'Акыл тиш',
     stage: 'Баскыч',
     close: 'Жабуу',
     fullscreen: 'Толук экран',
@@ -274,5 +280,6 @@ export const UI: Record<Lang, Record<keyof typeof UI_RU, string>> = {
     noWebgl: 'Бул түзмөктө 3D иштебейт (WebGL жок). Схеманы көрсөтөбүз.',
     resetView: 'Көрүнүштү кайтаруу',
     lang: 'Русский',
+    langShort: 'RU',
   },
 }
