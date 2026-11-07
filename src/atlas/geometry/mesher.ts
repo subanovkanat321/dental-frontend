@@ -27,6 +27,11 @@ export interface MeshData {
   indices: Uint32Array
   uvs?: Float32Array
   colors?: Float32Array
+  /**
+   * Окклюзия окружения (AO, ambient occlusion) по вершинам: 1 — открытое место, меньше — впадина
+   * (фиссура, щель между буграми), куда рассеянный свет попадает хуже. Шейдер темнит там «небо».
+   */
+  ao?: Float32Array
 }
 
 export function makeGrid(min: [number, number, number], max: [number, number, number], h: number): Grid {
@@ -147,36 +152,67 @@ export function surfaceNets(g: Grid, field: Float32Array, opts: { lo?: [number, 
 
   const positions = new Float32Array(pos)
   const normals = new Float32Array(pos.length)
+  const slope = new Float32Array(pos.length / 3)
   for (let v = 0; v < pos.length; v += 3) {
     const [gx, gy, gz] = gradient(g, field, pos[v]!, pos[v + 1]!, pos[v + 2]!)
     const len = Math.hypot(gx, gy, gz) || 1
+    slope[v / 3] = len / h
     normals[v] = gx / len
     normals[v + 1] = gy / len
     normals[v + 2] = gz / len
   }
   const indices = new Uint32Array(idx)
   orient(positions, normals, indices)
-  const mesh: MeshData = { positions, normals, indices }
+  const mesh: MeshData = { positions, normals, indices, ao: occlusion(g, field, positions, normals, slope) }
   if (opts.uvScale) mesh.uvs = triplanarUv(positions, normals, opts.uvScale)
   return mesh
+}
+
+/**
+ * AO из поля расстояний (приём из рендеринга SDF): шагаем от вершины по нормали. На открытом месте
+ * поле растёт ровно на длину шага; во впадине рядом другая стенка — поле меньше шага. Чем больше
+ * «недостача», тем темнее. Считается один раз в воркере — видеокарте в кадре это ничего не стоит.
+ * Поле не всегда честное расстояние (рельеф коронки, сглаживания) — делим на его наклон у вершины.
+ */
+const AO_STEPS = [1.5, 3, 6, 10] as const
+const AO_WEIGHTS = [0.35, 0.3, 0.2, 0.15] as const
+function occlusion(g: Grid, field: Float32Array, p: Float32Array, n: Float32Array, slope: Float32Array): Float32Array {
+  const ao = new Float32Array(p.length / 3)
+  for (let v = 0, w = 0; v < p.length; v += 3, w++) {
+    let occ = 0
+    for (let s = 0; s < AO_STEPS.length; s++) {
+      const d = AO_STEPS[s]! * g.h
+      const f = fieldAt(g, field, p[v]! + n[v]! * d, p[v + 1]! + n[v + 1]! * d, p[v + 2]! + n[v + 2]! * d)
+      occ += AO_WEIGHTS[s]! * Math.max(0, d - f / Math.max(slope[w]!, 0.2)) / d
+    }
+    ao[w] = Math.max(0.2, 1 - 1.35 * occ)
+  }
+  return ao
+}
+
+/** Значение поля в точке (между узлами — трилинейно). */
+function fieldAt(g: Grid, field: Float32Array, x: number, y: number, z: number): number {
+  return trilinear(g, field, (x - g.ox) / g.h, (y - g.oy) / g.h, (z - g.oz) / g.h)
+}
+
+function trilinear(g: Grid, field: Float32Array, px: number, py: number, pz: number): number {
+  const val = (i: number, j: number, k: number) => {
+    const ci = Math.min(g.nx - 1, Math.max(0, i)), cj = Math.min(g.ny - 1, Math.max(0, j)), ck = Math.min(g.nz - 1, Math.max(0, k))
+    return field[ci + g.nx * (cj + g.ny * ck)]!
+  }
+  const i = Math.floor(px), j = Math.floor(py), k = Math.floor(pz)
+  const tx = px - i, ty = py - j, tz = pz - k
+  const c00 = val(i, j, k) * (1 - tx) + val(i + 1, j, k) * tx
+  const c10 = val(i, j + 1, k) * (1 - tx) + val(i + 1, j + 1, k) * tx
+  const c01 = val(i, j, k + 1) * (1 - tx) + val(i + 1, j, k + 1) * tx
+  const c11 = val(i, j + 1, k + 1) * (1 - tx) + val(i + 1, j + 1, k + 1) * tx
+  return (c00 * (1 - ty) + c10 * ty) * (1 - tz) + (c01 * (1 - ty) + c11 * ty) * tz
 }
 
 /** Градиент поля в точке: разности по сетке, сглаженные между узлами. */
 function gradient(g: Grid, field: Float32Array, x: number, y: number, z: number): [number, number, number] {
   const fx = (x - g.ox) / g.h, fy = (y - g.oy) / g.h, fz = (z - g.oz) / g.h
-  const val = (i: number, j: number, k: number) => {
-    const ci = Math.min(g.nx - 1, Math.max(0, i)), cj = Math.min(g.ny - 1, Math.max(0, j)), ck = Math.min(g.nz - 1, Math.max(0, k))
-    return field[ci + g.nx * (cj + g.ny * ck)]!
-  }
-  const tri = (px: number, py: number, pz: number) => {
-    const i = Math.floor(px), j = Math.floor(py), k = Math.floor(pz)
-    const tx = px - i, ty = py - j, tz = pz - k
-    const c00 = val(i, j, k) * (1 - tx) + val(i + 1, j, k) * tx
-    const c10 = val(i, j + 1, k) * (1 - tx) + val(i + 1, j + 1, k) * tx
-    const c01 = val(i, j, k + 1) * (1 - tx) + val(i + 1, j, k + 1) * tx
-    const c11 = val(i, j + 1, k + 1) * (1 - tx) + val(i + 1, j + 1, k + 1) * tx
-    return (c00 * (1 - ty) + c10 * ty) * (1 - tz) + (c01 * (1 - ty) + c11 * ty) * tz
-  }
+  const tri = (px: number, py: number, pz: number) => trilinear(g, field, px, py, pz)
   const e = 0.5
   return [tri(fx + e, fy, fz) - tri(fx - e, fy, fz), tri(fx, fy + e, fz) - tri(fx, fy - e, fz), tri(fx, fy, fz + e) - tri(fx, fy, fz - e)]
 }

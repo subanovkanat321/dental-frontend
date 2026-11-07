@@ -71,15 +71,19 @@ const MESH_PART: Record<string, PartId> = {
 
 export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks): AtlasEngine {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' })
-  // Больше 2 — лишняя работа видеокарте без видимой разницы (4K-телевизор и так чёткий)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+  // Больше 2 — лишняя работа видеокарте без видимой разницы (4K-телевизор и так чёткий).
+  // Слабое устройство (мало ядер или памяти) — сразу 1,5: на телефоне разница почти не видна
+  let pixelRatio = Math.min(window.devicePixelRatio || 1, weakDevice() ? 1.5 : 2)
+  renderer.setPixelRatio(pixelRatio)
   renderer.shadowMap.enabled = true
   // VSM — мягкие края теней (у PCF на десне были «ступеньки»)
   renderer.shadowMap.type = THREE.VSMShadowMap
   // Тени пересчитываем, только когда что-то движется (ролик, смена режима): в покое — экономия видеокарты
   renderer.shadowMap.autoUpdate = false
-  renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 1.05
+  // Нейтральная тональная кривая (Khronos PBR Neutral): цвета тканей как заданы, без «киношного»
+  // пересвета ACES — у него белая эмаль выгорала в пластик, а розовая десна уходила в оранжевый
+  renderer.toneMapping = THREE.NeutralToneMapping
+  renderer.toneMappingExposure = 1.0
   renderer.localClippingEnabled = true
 
   const scene = new THREE.Scene()
@@ -99,8 +103,9 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
   // Колесо и тачпад приближают плавнее (по умолчанию 1 — один жест тачпада и модель во весь экран)
   controls.zoomSpeed = 0.4
 
-  // Свет: мягкий ключевой сверху-спереди с тенями, холодный контровой сзади, небо/земля для заполнения
-  const key = new THREE.DirectionalLight('#fff6ec', 2.3)
+  // Свет как на фото в клинике: мягкий ключевой сверху-спереди с тенями, заполняющий с другой стороны
+  // (тени не чёрные), холодный контровой сзади — отделяет край зуба от тёмного фона
+  const key = new THREE.DirectionalLight('#fff6ec', 2.1)
   key.position.set(3.5, 6, 5)
   key.castShadow = true
   key.shadow.mapSize.set(2048, 2048)
@@ -112,10 +117,12 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
   key.shadow.normalBias = 0.02
   key.shadow.radius = 6
   key.shadow.blurSamples = 8
-  const rim = new THREE.DirectionalLight('#9cc4ff', 1.1)
+  const fill = new THREE.DirectionalLight('#fff1e6', 0.55)
+  fill.position.set(-4.5, 1.5, 4)
+  const rim = new THREE.DirectionalLight('#a9ccff', 1.3)
   rim.position.set(-5, 3, -4)
-  const hemi = new THREE.HemisphereLight('#e4edff', '#30343f', 0.45)
-  scene.add(key, rim, hemi)
+  const hemi = new THREE.HemisphereLight('#e4edff', '#3a3330', 0.4)
+  scene.add(key, fill, rim, hemi)
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.28 }))
   floor.rotation.x = -Math.PI / 2
   floor.receiveShadow = true
@@ -228,6 +235,7 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
 
   async function showView(v: AtlasView) {
     view = v
+    settle(2.5)
     tooth.root.visible = v === 'tooth'
     if (jaw) jaw.root.visible = v === 'jaw'
     if (wisdom) wisdom.root.visible = v === 'wisdom'
@@ -306,9 +314,43 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
   canvas.addEventListener('pointerdown', onDown)
   canvas.addEventListener('pointerup', onUp)
 
+  /**
+   * Качество под устройство: если кадр стабильно дольше SLOW_FRAME_MS (меньше ~25 кадров в секунду),
+   * сначала снижаем плотность пикселей (до 1), потом выключаем тени. Обратно не повышаем — чтобы
+   * картинка не «мигала» качеством. Первые секунды после смены вида не считаем: там компиляция шейдеров.
+   */
+  let lastTs = 0, sum = 0, count = 0, settleUntil = 0
+  function settle(seconds: number) {
+    settleUntil = Math.max(settleUntil, performance.now() + seconds * 1000)
+    sum = count = 0
+  }
+  function adapt(ts: number) {
+    const dt = ts - lastTs
+    lastTs = ts
+    if (document.hidden || dt > 500 || ts < settleUntil) { sum = count = 0; return }
+    sum += dt
+    if (++count < 90) return
+    const avg = sum / count
+    sum = count = 0
+    if (avg < SLOW_FRAME_MS) return
+    if (pixelRatio > 1) {
+      pixelRatio = Math.max(1, pixelRatio - 0.5)
+      renderer.setPixelRatio(pixelRatio)
+      resize()
+    } else if (renderer.shadowMap.enabled) {
+      renderer.shadowMap.enabled = false
+      scene.traverse((o) => {
+        const mat = (o as THREE.Mesh).material
+        for (const m of Array.isArray(mat) ? mat : mat ? [mat] : []) m.needsUpdate = true
+      })
+    }
+    settle(1.5)
+  }
+
   const v3 = new THREE.Vector3()
   const toCam = new THREE.Vector3()
-  const frame = () => {
+  const frame = (ts: number) => {
+    adapt(ts)
     const t = now()
     controls.update()
     let step = 0
@@ -396,12 +438,22 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
   }
 }
 
+/** Кадр дольше этого (мс) в среднем — снижаем качество. 40 мс ≈ 25 кадров в секунду. */
+const SLOW_FRAME_MS = 40
+
+/** Слабое устройство по косвенным признакам: мало ядер процессора или памяти (телефоны попроще, ТВ-приставки). */
+function weakDevice(): boolean {
+  const nav = navigator as Navigator & { deviceMemory?: number }
+  return (nav.hardwareConcurrency || 8) <= 4 || (nav.deviceMemory ?? 8) <= 3
+}
+
 function toGeometry(m: MeshData): THREE.BufferGeometry {
   const g = new THREE.BufferGeometry()
   g.setAttribute('position', new THREE.BufferAttribute(m.positions, 3))
   g.setAttribute('normal', new THREE.BufferAttribute(m.normals, 3))
   if (m.uvs) g.setAttribute('uv', new THREE.BufferAttribute(m.uvs, 2))
   if (m.colors) g.setAttribute('color', new THREE.BufferAttribute(m.colors, 3))
+  if (m.ao) g.setAttribute('ao', new THREE.BufferAttribute(m.ao, 1))
   g.setIndex(new THREE.BufferAttribute(m.indices, 1))
   g.computeBoundingSphere()
   return g

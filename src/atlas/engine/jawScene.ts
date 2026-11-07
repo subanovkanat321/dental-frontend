@@ -5,6 +5,7 @@ import type { WisdomPosition } from '../content'
 import { ALL_FDI, fdiToIndex } from '../fdi'
 import { shapeOf, toothPlacement, WISDOM_BONE_TOP, WISDOM_NEIGHBOURS, WISDOM_POSES, WISDOM_SCALE, type JawShape } from '../geometry/jawModel'
 import type { Materials } from './materials'
+import { cloneSurface, applySurface } from './surface'
 
 /**
  * Обе челюсти: 32 зуба на дуге и десна. Каждый зуб — своя сетка (index = fdiToIndex), чтобы выделять
@@ -13,21 +14,27 @@ import type { Materials } from './materials'
 export function createJawScene(m: Materials, shapes: Map<string, THREE.BufferGeometry>) {
   const root = new THREE.Group()
   // Белый зуб + свечение пересвечивается в белый — поэтому выделенный зуб и сам бирюзовый
-  const highlight = m.toothJaw.clone()
+  const highlight = cloneSurface(m.toothJaw)
   highlight.color.set('#62d8cb')
   highlight.emissive.set('#0e8a80')
   const teeth: THREE.Mesh[] = []
   for (const fdi of ALL_FDI) {
     const p = toothPlacement(fdi)
+    // Место на дуге — у группы; у самого зуба — свои наклоны и зеркало. Зеркало (масштаб −1 по x)
+    // переворачивает и повороты вокруг y и z — поэтому у зеркального зуба их знак обратный
+    const place = new THREE.Group()
+    place.position.set(p.x, p.y, p.z)
+    place.rotation.set(0, p.rotY, p.upper ? Math.PI : 0, 'YXZ')
+    const flip = p.mirror ? -1 : 1
     const mesh = new THREE.Mesh(shapes.get(shapeOf(fdi)), m.toothJaw)
-    mesh.position.set(p.x, p.y, p.z)
-    mesh.rotation.set(0, p.rotY, p.upper ? Math.PI : 0, 'YXZ')
-    mesh.scale.setScalar(p.scale)
+    mesh.rotation.set(p.torque, flip * p.twist, flip * p.tip, 'YXZ')
+    mesh.scale.set(flip * p.scale, p.scale, p.scale)
     mesh.castShadow = true
     mesh.receiveShadow = true
     mesh.userData.fdi = fdi
     teeth[fdiToIndex(fdi)!] = mesh
-    root.add(mesh)
+    place.add(mesh)
+    root.add(place)
   }
   const gums = [gumGeometry(true), gumGeometry(false)]
   for (const geo of gums) {
@@ -64,7 +71,10 @@ export function createJawScene(m: Materials, shapes: Map<string, THREE.BufferGeo
 export type JawScene = ReturnType<typeof createJawScene>
 
 /** Половина ширины десны (к щеке и к языку) у зуба формы — в единицах масштаба зуба. */
-const GUM_HALF: Record<JawShape, number> = { incisor: 0.62, canine: 0.75, premolar: 0.82, molarLower: 0.9, molarUpper: 0.92 }
+const GUM_HALF: Record<JawShape, number> = {
+  incisorUpperCentral: 0.62, incisorUpperLateral: 0.66, incisorLower: 0.85, canineUpper: 0.78, canineLower: 0.82,
+  premolarUpper: 0.84, premolarLower: 0.82, molarUpper: 0.92, molarLower: 0.9,
+}
 
 /**
  * Десна — «валик» вдоль дуги: сечение (к щеке, сверху над шейками, к языку) протягиваем по дуге с обеих
@@ -76,8 +86,9 @@ function gumGeometry(upper: boolean): THREE.BufferGeometry {
   const order = [...[8, 7, 6, 5, 4, 3, 2, 1].map((n) => q[0]! * 10 + n), ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => q[1]! * 10 + n)]
   const P = order.map(toothPlacement)
   // Сечение: (n — от середины валика к щеке, d — от шейки вглубь челюсти)
-  const profile = smoothProfile([[0.7, 1.75], [0.98, 1.15], [1.0, 0.5], [0.74, 0.04], [0.3, -0.05], [-0.3, -0.05], [-0.74, 0.04], [-0.96, 0.5], [-0.96, 1.15], [-0.68, 1.75]])
+  const profile = smoothProfile([[0.7, 1.75], [0.98, 1.15], [1.03, 0.4], [0.82, -0.08], [0.3, -0.12], [-0.3, -0.12], [-0.8, -0.08], [-0.99, 0.4], [-0.96, 1.15], [-0.68, 1.75]])
   const verts: number[] = []
+  const colors: number[] = []
   const rows: number[] = []
   const samples = 20
   let rowCount = 0
@@ -109,6 +120,7 @@ function gumGeometry(upper: boolean): THREE.BufferGeometry {
         const d = pd - papilla * Math.max(0, 1 - Math.max(pd, 0) / 0.35)
         const y = upper ? base.y + d : base.y - d
         verts.push(base.x + nx * pn * half * 2, y, base.z + nz * pn * half * 2)
+        colors.push(...gumColor(d))
       }
       rows.push(rowCount++)
     }
@@ -123,9 +135,26 @@ function gumGeometry(upper: boolean): THREE.BufferGeometry {
   }
   const geo = new THREE.BufferGeometry()
   geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3))
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
   geo.setIndex(idx)
   geo.computeVertexNormals()
   return geo
+}
+
+/**
+ * Цвет десны по глубине от края (d): свободный край и сосочки светлее и розовее, прикреплённая десна —
+ * коралловая, ниже переходной складки слизистая краснее (там тонкий эпителий и сосуды ближе).
+ */
+const GUM_STOPS: readonly (readonly [number, number, number, number])[] = [
+  [-0.1, 0.94, 0.66, 0.66], [0.12, 0.9, 0.57, 0.58], [0.75, 0.86, 0.5, 0.52], [1.2, 0.78, 0.36, 0.42], [1.8, 0.74, 0.32, 0.38],
+]
+function gumColor(d: number): [number, number, number] {
+  let i = 0
+  while (i < GUM_STOPS.length - 2 && d > GUM_STOPS[i + 1]![0]) i++
+  const a = GUM_STOPS[i]!, b = GUM_STOPS[i + 1]!
+  const t = Math.min(1, Math.max(0, (d - a[0]) / (b[0] - a[0])))
+  const c = (k: 1 | 2 | 3) => (a[k] + (b[k] - a[k]) * t) ** 2.2
+  return [c(1), c(2), c(3)]
 }
 
 /** Сечение десны сглаживаем (Чайкин): без острых углов свет ложится ровно, без «граней». */
@@ -158,7 +187,7 @@ export function createWisdomScene(m: Materials, shapes: Map<string, THREE.Buffer
     t.castShadow = true
     root.add(t)
   }
-  const wisdomMat = m.toothJaw.clone()
+  const wisdomMat = cloneSurface(m.toothJaw)
   wisdomMat.color.set('#a6eae2')
   wisdomMat.emissive.set('#0e8a80')
   const wisdom = new THREE.Mesh(molar, wisdomMat)
@@ -171,7 +200,10 @@ export function createWisdomScene(m: Materials, shapes: Map<string, THREE.Buffer
   const gumGeo = new RoundedBoxGeometry(5.26, 0.34, 1.56, 4, 0.15)
   gumGeo.translate(0.5, WISDOM_BONE_TOP + 0.02, 0)
   geos.push(boneGeo, gumGeo)
-  const gumMat = m.gumJaw.clone()
+  // У коробки-десны нет цвета по вершинам — свой однотонный цвет
+  const gumMat = applySurface(m.gumJaw.clone(), { kind: 'gum', sss: 0.6, sssColor: '#ff7a70' })
+  gumMat.vertexColors = false
+  gumMat.color.set('#d9757c')
   gumMat.transparent = true
   gumMat.opacity = 0.7
   gumMat.depthWrite = false

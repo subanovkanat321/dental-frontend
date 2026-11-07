@@ -21,6 +21,7 @@ self.onmessage = (e: MessageEvent<GeometryRequest>) => {
       transfer.push(m.positions.buffer, m.normals.buffer, m.indices.buffer)
       if (m.uvs) transfer.push(m.uvs.buffer)
       if (m.colors) transfer.push(m.colors.buffer)
+      if (m.ao) transfer.push(m.ao.buffer)
     }
     ;(self as unknown as DedicatedWorkerGlobalScope).postMessage({ group, meshes } satisfies GeometryResponse, transfer)
   } catch (err) {

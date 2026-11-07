@@ -23,19 +23,56 @@ export const CANAL_PATH = {
   mesial: [[-0.3, -2.0], [-0.32, -1.5], [-0.33, -1.15], [-0.31, -0.6], [-0.29, 0.05]],
 } as const
 
+/**
+ * Коронка нижнего моляра: тело с выпуклостью у шейки и жевательная поверхность «картой высот» —
+ * пять бугров (язычные выше и острее щёчных), фиссуры между ними, краевые валики (см. jawModel).
+ * Центральная фиссура — на x ≈ 0, z ≈ 0: там начинается кариес и стоит пломба.
+ */
 export function crownOuter(x: number, y: number, z: number): number {
-  let d = sdRoundBox(x, y - 0.38, z, 0.55, 0.36, 0.48, 0.26)
-  d = smax(d, y - 0.7, 0.18)
-  // Четыре бугра (развёрнуто без массивов: функция вызывается миллион раз)
-  d = smin(d, sdSphere(x + 0.27, y - 0.64, z + 0.21, 0.19), 0.14)
-  d = smin(d, sdSphere(x - 0.27, y - 0.64, z + 0.21, 0.19), 0.14)
-  d = smin(d, sdSphere(x + 0.27, y - 0.64, z - 0.21, 0.19), 0.14)
-  d = smin(d, sdSphere(x - 0.27, y - 0.64, z - 0.21, 0.19), 0.14)
-  // Пятый бугор (дистальный) — как у настоящего нижнего моляра
-  d = smin(d, sdSphere(x - 0.45, y - 0.56, z - 0.02, 0.13), 0.12)
-  // Фиссуры — бороздки между буграми
-  const groove = Math.min(sdCapsule(x, y, z, -0.42, 0.86, 0, 0.42, 0.86, 0, 0.07), sdCapsule(x, y, z, 0, 0.88, -0.36, 0, 0.88, 0.36, 0.055))
-  return smax(d, -groove, 0.07)
+  const body = molarBody(x, y, z)
+  const top = 0.3 + 0.75 * lowerMolarTop(x, z)
+  return smax(smax(body, (y - top) * 0.55, 0.06), -y - 0.3, 0.05)
+}
+
+function molarBody(x: number, y: number, z: number): number {
+  const t = Math.min(1, Math.max(0, y / 0.7))
+  const bulgeB = 1 + 0.16 * Math.sin(Math.PI * Math.min(1, t * 1.6)) - 0.1 * t * t
+  const bulgeL = 1 + 0.14 * Math.sin(Math.PI * Math.min(1, t * 1.1))
+  const neck = 0.84 + 0.16 * smoothstep(0, 0.3, t)
+  const w = 0.55 * (neck + 0.08 * Math.sin(Math.PI * Math.min(1, t * 1.2)))
+  const zr = z >= 0 ? 0.45 * bulgeB * neck : 0.43 * bulgeL * neck
+  const r = ((Math.abs(x) / w) ** 2.6 + (Math.abs(z) / zr) ** 2.6) ** (1 / 2.6)
+  return (r - 1) * Math.min(w, zr)
+}
+
+/** Холм рельефа (бугор): высота h, радиусы по x и z. */
+export const hill = (x: number, z: number, cx: number, cz: number, h: number, rx: number, rz: number) =>
+  h * Math.exp(-(((x - cx) / rx) ** 2) - ((z - cz) / rz) ** 2)
+/** Канавка (фиссура) вдоль отрезка a→b в плоскости xz: глубина d, полуширина w. */
+export function groove(x: number, z: number, ax: number, az: number, bx: number, bz: number, d: number, w: number): number {
+  const px = x - ax, pz = z - az, vx = bx - ax, vz = bz - az
+  const h = Math.min(1, Math.max(0, (px * vx + pz * vz) / (vx * vx + vz * vz)))
+  const dx = px - vx * h, dz = pz - vz * h
+  return d * Math.exp(-(dx * dx + dz * dz) / (w * w))
+}
+
+/** Рельеф жевательной поверхности нижнего моляра (высота над шейкой в единицах формы). */
+export function lowerMolarTop(x: number, z: number): number {
+  let top = 0.42
+  top += hill(x, z, -0.28, 0.21, 0.22, 0.17, 0.15) // мезиально-щёчный
+  top += hill(x, z, 0.04, 0.24, 0.2, 0.15, 0.14) // дистально-щёчный
+  top += hill(x, z, 0.34, 0.12, 0.15, 0.12, 0.12) // дистальный (пятый)
+  top += hill(x, z, -0.25, -0.2, 0.27, 0.17, 0.15) // мезиально-язычный (язычные выше)
+  top += hill(x, z, 0.17, -0.2, 0.25, 0.17, 0.15) // дистально-язычный
+  // Центральная фиссура зигзагом и боковые — к щеке и к языку
+  top -= groove(x, z, -0.42, 0.0, -0.12, 0.02, 0.11, 0.035)
+  top -= groove(x, z, -0.12, 0.02, 0.18, -0.01, 0.11, 0.035)
+  top -= groove(x, z, 0.18, -0.01, 0.42, 0.02, 0.1, 0.035)
+  top -= groove(x, z, -0.12, 0.02, -0.1, 0.46, 0.08, 0.03)
+  top -= groove(x, z, 0.18, -0.01, 0.24, 0.42, 0.07, 0.03)
+  top -= groove(x, z, -0.02, 0.0, -0.03, -0.44, 0.08, 0.03)
+  top += hill(x, z, -0.44, 0, 0.09, 0.06, 0.28) + hill(x, z, 0.44, 0, 0.08, 0.06, 0.28) // краевые валики
+  return top
 }
 
 export function rootOuter(x: number, y: number, z: number): number {
