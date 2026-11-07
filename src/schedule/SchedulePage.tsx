@@ -161,7 +161,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   // не читаются, а перетаскивание между врачами и днями сразу легко промахнуться. «Все врачи» → свой врач или первый
   const [mode, setMode] = useMode()
   // «Месяц» — и на компьютере, и на телефоне (на телефоне ячейка — число дня и число записей); врач — выбранный или все
-  const monthMode = mode === 'month' && doctors.length > 0
+  const monthMode = mode === 'month' && doctors.length > 0 && !narrow
   const dayList = narrow && !monthMode && shown.length > 0 ? shown : null
   const desktop = useMedia('(min-width: 1024px)')
   const weekMode = mode === 'week' && desktop && !dayList && doctors.length > 0
@@ -448,8 +448,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           </div>
         )}
 
-        {/* Телефон, «День» списком: шапки раздела нет — «День | Месяц» отдельной строкой над днём */}
-        {dayList && doctors.length > 0 && <ViewModes mode="day" week={false} onChange={setMode} />}
+        {/* Телефон: переключателя «День | Месяц» нет — месяц открывается нажатием на дату (лист снизу) */}
         {doctors.length > 1 && (narrow || doctors.length > 8 ? (
           // Телефон (и очень много врачей на компьютере): один выпадающий список вместо ряда
           <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView} />

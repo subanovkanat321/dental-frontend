@@ -56,11 +56,13 @@ test('телефон, «Все врачи» — список: приёмы об�
   expect(screen.getAllByRole('button', { name: 'Предыдущий день' })).toHaveLength(1)
   expect(screen.getAllByRole('button', { name: '＋ Новая запись' })).toHaveLength(1)
   expect(screen.getByRole('button', { name: 'Принять сейчас (без записи)' })).toBeInTheDocument()
-  // Дата — наш календарь, не системный
+  // Дата — месяц листом снизу (как вид «Месяц»), не системный календарь; «Закрыть» — назад к дню
   expect(document.querySelector('input[type=date]')).toBeNull()
-  await userEvent.click(screen.getByRole('button', { name: 'Выбрать дату' }))
-  expect(screen.getByRole('dialog', { name: 'Выбрать дату' })).toBeInTheDocument()
-  await userEvent.keyboard('{Escape}')
+  await userEvent.click(screen.getByRole('button', { name: /выбрать день$/ }))
+  const sheet = screen.getByRole('dialog', { name: 'Выбрать день' })
+  expect(sheet.querySelector('.month.compact')).not.toBeNull()
+  await userEvent.click(within(sheet).getByRole('button', { name: 'Закрыть' }))
+  expect(screen.queryByRole('dialog', { name: 'Выбрать день' })).not.toBeInTheDocument()
   // У каждого врача свой блок: приём Нурлана — в блоке Дастана, не в общем списке
   const dastan = screen.getByRole('region', { name: 'Дастан Т.' })
   expect(within(dastan).getByRole('button', { name: /12:00–12:30, Нурлан К\./ })).toBeInTheDocument()

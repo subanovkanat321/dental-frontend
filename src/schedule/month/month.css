@@ -60,3 +60,10 @@
 .month.compact .month-num { min-width: 26px; height: 26px; font-size: .95rem; }
 .month.compact .month-count { font-size: .78rem; color: var(--link); }
 .month.compact .month-load { left: 5px; right: 5px; bottom: 4px; height: 3px; }
+
+/* Телефон: месяц листом снизу по нажатию на дату в «Дне» */
+.month-sheet { width: 100%; max-height: 90dvh; overflow-y: auto; display: grid; gap: 10px; padding: 12px 12px calc(16px + env(safe-area-inset-bottom));
+  background: var(--card); border-radius: 20px 20px 0 0; animation: sheet-up .2s ease-out; }
+.month-sheet::before { content: ""; justify-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); }
+.month-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 1.1rem; }
+.month-sheet-foot { display: flex; justify-content: flex-end; gap: 8px; }

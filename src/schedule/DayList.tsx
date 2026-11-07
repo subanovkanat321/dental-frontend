@@ -11,7 +11,7 @@ import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { addDays, emptyDayText, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
-import { DateInput } from '../layout/DateInput'
+import { MonthSheet } from './month/MonthSheet'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
 import { useRowSwipe } from './useRowSwipe'
@@ -133,21 +133,23 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   const walkInDoctor = doctors.find((d) => d.id === me.doctorId) ?? doctors.find((d) => canEditDoctor(d.id))
   const pending = appointments.some((q) => q.isPending) || slots.some((q) => q.isPending)
   const failed = appointments.find((q) => q.error)?.error
+  const [monthOpen, setMonthOpen] = useState(false)
 
   return (
     <div className="day-list">
       {/* Один день крупно: стрелки — на день назад и вперёд, нажать на дату — календарь, «Сегодня» — назад */}
       <div className="date-bar" role="group" aria-label="День">
         <button type="button" className="date-step" aria-label="Предыдущий день" onClick={() => onDate(addDays(date, -1))}>‹</button>
-        {/* Наш календарь, не системный: невидимая кнопка поверх даты — нажатие по дате открывает его */}
-        <div className="date-pick">
+        {/* Нажать на дату — месяц листом снизу (число записей по дням), как вид «Месяц» */}
+        <button type="button" className="date-pick" aria-label={`${title.main}, ${title.sub}: выбрать день`} aria-haspopup="dialog"
+          onClick={() => setMonthOpen(true)}>
           <span className="date-main">{title.main} <span className="date-caret" aria-hidden="true">▾</span></span>
           <span className="date-sub">{title.sub}</span>
-          <DateInput iconOnly required className="date-pick-input" aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && onDate(e.target.value)} />
-        </div>
+        </button>
         <button type="button" className="date-step" aria-label="Следующий день" onClick={() => onDate(addDays(date, 1))}>›</button>
         {date !== today && <button type="button" className="btn small date-today" onClick={() => onDate(today)}>Сегодня</button>}
       </div>
+      {monthOpen && <MonthSheet date={date} today={today} doctorIds={doctors.map((d) => d.id)} onPick={onDate} onClose={() => setMonthOpen(false)} />}
       {single && !canEditDoctor(single.id) && <p className="readonly-note">Расписание коллеги — только просмотр</p>}
       <div className="day-actions">
         {onNewHere && <button type="button" className="btn primary" onClick={onNewHere}>＋ Новая запись</button>}

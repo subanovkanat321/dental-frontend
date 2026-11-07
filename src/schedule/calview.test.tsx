@@ -121,17 +121,20 @@ describe('«Месяц»', () => {
     expect(await screen.findByRole('button', { name: new RegExp(`^${dayTitle(tuesday)}, 1 запись`) })).toBeInTheDocument()
   })
 
-  test('телефон: «День | Месяц» над днём, в ячейке — число записей', async () => {
+  test('телефон: «День | Месяц» нет — нажали на дату, месяц листом снизу; день — открывается в «Дне»', async () => {
     screenOf('phone')
     backend()
     renderApp()
-    await userEvent.click(await screen.findByRole('button', { name: 'Месяц' }))
-    expect(screen.queryByRole('button', { name: 'Неделя' })).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Следующий месяц' }))
+    await userEvent.click(await screen.findByRole('button', { name: /выбрать день$/ }))
+    expect(screen.queryByRole('button', { name: 'Месяц' })).not.toBeInTheDocument()
+    const sheet = screen.getByRole('dialog', { name: 'Выбрать день' })
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Следующий месяц' }))
     // На телефоне — свой врач (Айгерим): 2 записи
-    const day = await screen.findByRole('button', { name: new RegExp(`^${dayTitle(tuesday)}, 2 записи`) })
+    const day = await within(sheet).findByRole('button', { name: new RegExp(`^${dayTitle(tuesday)}, 2 записи`) })
     expect(day.querySelector('.month-count')).toHaveTextContent(/^2$/)
     expect(day.closest('.month')).toHaveClass('compact')
+    await userEvent.click(day)
+    expect(screen.queryByRole('dialog', { name: 'Выбрать день' })).not.toBeInTheDocument()
   })
 })
 
