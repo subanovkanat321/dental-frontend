@@ -310,3 +310,21 @@ test('изменить рилс: время и подпись уходят на 
   await vi.waitFor(() => expect(sent).not.toBeNull())
   expect(sent).toMatchObject({ date: today, kind: 'REELS', title: 'Миф или правда', caption: 'Новая подпись', time: '18:15' })
 })
+
+test('«📲 Прислать в бот»: пост уходит владельцу в Telegram, видно подтверждение', async () => {
+  const sent: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json([post(7, { kind: 'REELS', title: 'Что думает стоматолог' })])),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false } satisfies Schemas['InstagramTokensState'])),
+    http.post('*/api/platform/content/:id/to-telegram', ({ params }) => {
+      sent.push(String(params.id))
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = await openTab()
+  const card = await screen.findByRole('article', { name: 'Что думает стоматолог' })
+  await user.click(within(card).getByRole('button', { name: '📲 Прислать в бот' }))
+  expect(await within(card).findByRole('status')).toHaveTextContent('Отправили в Telegram')
+  expect(sent).toEqual(['7'])
+})

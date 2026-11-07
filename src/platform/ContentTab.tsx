@@ -174,6 +174,10 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
     mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/publish', { params: { path: { id: post.id! } } })),
     onSuccess: onChanged,
   })
+  // «📲 Прислать в бот»: видео/картинки и подпись — в Telegram сейчас, чтобы сохранить и выложить вручную
+  const toBot = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/to-telegram', { params: { path: { id: post.id! } } })),
+  })
   const action = useMutation<unknown, ApiError, 'done' | 'skip' | 'postpone' | 'plan' | 'delete'>({
     mutationFn: (what) => {
       const params = { params: { path: { id: post.id! } } }
@@ -251,12 +255,17 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
             <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('skip')}>Пропустить</button>
           </>
         ) : <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('plan')}>Вернуть в план</button>}
+        <button type="button" className="btn small" disabled={toBot.isPending} onClick={() => toBot.mutate()}>
+          {toBot.isPending ? <><Spinner />Отправляю…</> : '📲 Прислать в бот'}
+        </button>
         <button type="button" className="btn small" onClick={onEdit}>Изменить</button>
         <button type="button" className="btn small danger" disabled={action.isPending}
           onClick={() => void ask(`Удалить «${post.title}» из плана?`).then((ok) => ok && action.mutate('delete'))}>Удалить</button>
       </div>
       {action.error && <p className="error" role="alert">{action.error.message}</p>}
       {publish.error && <p className="error" role="alert">{publish.error.message}</p>}
+      {toBot.isSuccess && <p className="tone-ok" role="status">Отправили в Telegram — откройте бота: видео можно сохранить, подпись — скопировать.</p>}
+      {toBot.error && <p className="error" role="alert">{toBot.error.message}</p>}
     </article>
   )
 }

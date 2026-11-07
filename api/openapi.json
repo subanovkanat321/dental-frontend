@@ -4854,6 +4854,26 @@
         }
       }
     },
+    "/api/platform/content/{id}/to-telegram" : {
+      "post" : {
+        "tags" : [ "content-controller" ],
+        "operationId" : "toTelegram",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/platform/content/{id}/skip" : {
       "post" : {
         "tags" : [ "content-controller" ],
