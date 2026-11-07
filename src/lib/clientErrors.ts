@@ -58,7 +58,7 @@ export function startErrorReports(): void {
 }
 
 const NOISE = /ResizeObserver loop|^Script error\.?$|dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i
-const NETWORK = /Failed to fetch|Load failed|NetworkError when attempting|Network request failed|network error/i
+const NETWORK = /Нет связи с сервером|Failed to fetch|Load failed|NetworkError when attempting|Network request failed|network error/i
 const EXTENSION = /(chrome|moz|safari|safari-web|ms-browser)-extension:\/\//i
 
 /** Отправить ошибку, если это не шум и лимит сессии не исчерпан. */

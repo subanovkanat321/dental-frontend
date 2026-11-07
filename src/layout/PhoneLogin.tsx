@@ -48,7 +48,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
   const canRecover = telegram || sms
 
   const explain = (e: unknown) => {
-    if (!(e instanceof ApiError)) return 'Нет связи с сервером'
+    if (!(e instanceof ApiError) || e.status === 0) return 'Нет связи с сервером'
     if (e.status === 503) return e.message || 'Коды по SMS пока не подключены'
     return e.fieldErrors.phone ?? e.fieldErrors.password ?? e.message
   }

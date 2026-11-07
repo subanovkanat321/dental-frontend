@@ -51,9 +51,24 @@ export const api = createClient<paths>({
   baseUrl: window.location.origin,
   credentials: 'same-origin',
   // fetch — в момент запроса: так его подменяет MSW в тестах
-  fetch: (request) => globalThis.fetch(request),
+  fetch: (request) => send(request),
 })
 api.use(webHeader)
+
+/**
+ * fetch, у которого обрыв сети — тоже {@link ApiError} (status 0), а не голый TypeError «Failed to fetch»:
+ * экраны показывают e.message и e.fieldErrors любой ошибки запроса — у TypeError fieldErrors нет, и
+ * Object.values(undefined) ронял карточку приёма на телефоне с плохой связью. Отмену запроса
+ * (AbortError — React Query отменил устаревший) пропускаем как есть.
+ */
+async function send(request: Request): Promise<Response> {
+  try {
+    return await globalThis.fetch(request)
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') throw e
+    throw new ApiError(0, 'Нет связи с сервером — проверьте интернет и повторите')
+  }
+}
 
 function toApiError(status: number, body: unknown): ApiError {
   const problem = (typeof body === 'object' && body !== null ? body : {}) as {
@@ -84,7 +99,7 @@ export async function unwrap<T>(request: Promise<{ data?: T; error?: unknown; re
  * X-Dental-Web и те же ошибки ApiError, что у {@link api}.
  */
 export async function upload<T>(path: string, form: FormData): Promise<T> {
-  const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), {
+  const response = await send(new Request(new URL(path, window.location.origin), {
     method: 'POST', body: form, credentials: 'same-origin', headers: { 'X-Dental-Web': '1', ...authHeaders() },
   }))
   const body: unknown = await response.json().catch(() => null)
@@ -96,7 +111,7 @@ export async function upload<T>(path: string, form: FormData): Promise<T> {
 
 /** Картинка с сервера (снимок пациента) — с заголовком сайта; в <img> — через URL.createObjectURL. */
 export async function fetchBlob(path: string): Promise<Blob> {
-  const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), {
+  const response = await send(new Request(new URL(path, window.location.origin), {
     credentials: 'same-origin', headers: { 'X-Dental-Web': '1', ...authHeaders() },
   }))
   if (!response.ok) {
@@ -137,7 +152,7 @@ export async function botConfig(): Promise<LoginConfig | null> {
  * Ответ 204 — null, с телом — его JSON.
  */
 async function webPost<T = void>(path: string, body: unknown): Promise<T | null> {
-  const response = await globalThis.fetch(new Request(new URL(path, window.location.origin), {
+  const response = await send(new Request(new URL(path, window.location.origin), {
     method: 'POST', credentials: 'same-origin', headers: { 'X-Dental-Web': '1', 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   }))

@@ -105,7 +105,7 @@ function callText(t: T, phone?: string | null): string {
  * его языке; остальное — текст сервера.
  */
 function errorText(t: T, e: unknown, phone?: string | null): string {
-  if (!(e instanceof ApiError)) return t('noConnection')
+  if (!(e instanceof ApiError) || e.status === 0) return t('noConnection')
   const known = e.code ? ERRORS[e.code] : undefined
   if (known) return known[1] ? `${t(known[0])} ${callText(t, phone)}` : t(known[0])
   if (e.status === 404) return t('errBookingGone')
