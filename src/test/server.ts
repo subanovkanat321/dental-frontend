@@ -27,6 +27,7 @@ export const server = setupServer(
   http.get('*/api/platform/demo', () => HttpResponse.json({ doctors: 0, patients: 0, appointments: 0, guests: [] } satisfies Schemas['DemoClinicServiceStatus'])),
   // «Контент»: Instagram на сервере не подключён — кнопок публикации нет
   http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false } satisfies Schemas['InstagramTokensState'])),
+  http.get('*/api/platform/content/settings', () => HttpResponse.json({ reelsAuto: false } satisfies Schemas['ContentSettingsSettings'])),
   // Уведомления в приложение: по умолчанию на сервере не включены — блок в «Настройках» скрыт
   http.get('*/api/push', () => HttpResponse.json({ enabled: false, channel: 'TELEGRAM', devices: [] })),
   // «Пароль и вход»: по умолчанию вошли через Telegram — блока нет

@@ -18,6 +18,7 @@ type Draft = Schemas['ContentPostsDraft']
 type Kind = NonNullable<Post['kind']>
 type Instagram = Schemas['InstagramTokensState']
 type ReelsAdded = Schemas['ContentPostsReelsAdded']
+type Settings = Schemas['ContentSettingsSettings']
 
 const KINDS: Record<Kind, string> = { POST: 'Пост', CAROUSEL: 'Карусель', REELS: 'Рилс', STORIES: 'Сторис' }
 const STATUS: Record<NonNullable<Post['status']>, [string, string]> = {
@@ -36,7 +37,8 @@ function weekStart(date: string): string {
  * файлы сайта /content/…; пост дня бот присылает в 10:00, кнопки там те же, что здесь. Instagram
  * подключён на сервере — пост, карусель, сторис и рилс с видео публикуются кнопкой (сервер сам
  * выкладывает). Рилсы — готовые ролики из docs/marketing/reels на сервере: «Добавить рилсы в план»
- * ставит их по одному в день на 19:30; бот пришлёт видео и кнопку в это время.
+ * ставит их по одному в день на 19:30 вперемешку с уже запланированными; бот пришлёт видео и кнопку в
+ * это время. «Рилсы — автоматически» — новые ролики встают в план сами, а рилс в 19:30 сам выходит в Instagram.
  */
 export function ContentTab() {
   const client = useQueryClient()
@@ -94,13 +96,16 @@ export function ContentTab() {
         <p className="hint">Пост дня бот пришлёт вам в 10:00: картинки, текст для копирования и что снять. В 19:00 напомнит, если не отмечен.
           Запись со временем (рилс в 19:30) придёт в своё время — видео, подпись и кнопка «Опубликовать».</p>
         {instagram.data && <InstagramStatus state={instagram.data} />}
+        <ReelsAuto instagram={instagram.data?.enabled === true} instagramKnown={instagram.data != null}
+          onChanged={() => void refresh()} />
         <div className="actions">
           <button type="button" className="btn primary" onClick={() => { setPostSaved(false); setEditing('new') }}>＋ Добавить пост</button>
           <button type="button" className="btn" disabled={load.isPending} onClick={() => load.mutate()}>Загрузить готовый план</button>
           <button type="button" className="btn" disabled={addReels.isPending}
-            onClick={() => void ask('Добавить 6 готовых рилсов в план — по одному в день в 19:30, начиная с ближайшего дня? Посты плана останутся как есть.')
+            onClick={() => void ask('Добавить новые готовые рилсы в план — по одному в день в 19:30, начиная с ближайшего дня? '
+              + 'Ещё не опубликованные рилсы переставятся, чтобы шли вперемешку; посты плана и рилсы, которые вы меняли сами, останутся как есть.')
               .then((ok) => ok && addReels.mutate())}>
-            {addReels.isPending ? <><Spinner />Добавляю…</> : 'Добавить рилсы в план (6 шт., по одному в день)'}
+            {addReels.isPending ? <><Spinner />Добавляю…</> : 'Добавить рилсы в план (по одному в день)'}
           </button>
         </div>
         {addReels.data && <p className="tone-ok" role="status">{reelsText(addReels.data)}</p>}
@@ -138,6 +143,7 @@ function reelsText(r: ReelsAdded): string {
   const parts = r.added
     ? [`Рилсы добавлены: ${r.added}, по одному в день с ${shortDate(r.from!)} в ${hhmm(r.time)}`]
     : ['Новых рилсов нет — все уже в плане']
+  if (r.moved) parts.push(`переставлено, чтобы шли вперемешку: ${r.moved}`)
   if (r.added && r.already) parts.push(`уже были в плане: ${r.already}`)
   if (r.missing?.length) parts.push(`нет в каталоге на сервере: ${r.missing.join(', ')}`)
   return parts.join(' · ')
@@ -146,6 +152,42 @@ function reelsText(r: ReelsAdded): string {
 /** «19:30:00» → «19:30». */
 function hhmm(time: string | undefined): string {
   return (time ?? '').slice(0, 5)
+}
+
+/**
+ * «Рилсы — автоматически»: сохраняется сразу. Включили — сервер тут же ставит новые ролики в план (итог
+ * придёт в Telegram), поэтому план перечитываем. Без Instagram автопубликации нет — предупреждаем.
+ */
+function ReelsAuto({ instagram, instagramKnown, onChanged }: { instagram: boolean; instagramKnown: boolean; onChanged: () => void }) {
+  const client = useQueryClient()
+  const settings = useQuery({
+    queryKey: ['platform-content-settings'],
+    queryFn: () => unwrap(api.GET('/api/platform/content/settings')),
+  })
+  const save = useMutation<Settings, ApiError, boolean>({
+    mutationFn: (reelsAuto) => unwrap(api.PUT('/api/platform/content/settings', { body: { reelsAuto } })),
+    onSuccess: (saved) => {
+      client.setQueryData(['platform-content-settings'], saved)
+      // Сервер добавляет рилсы в фоне — перечитаем план чуть позже
+      if (saved.reelsAuto) setTimeout(onChanged, 2000)
+    },
+  })
+  if (settings.isPending) return null
+  if (settings.error) return <p className="error">{settings.error.message}</p>
+  const on = Boolean(settings.data.reelsAuto)
+  return (
+    <div className="content-reels-auto">
+      <label className="check"><input type="checkbox" checked={on} disabled={save.isPending}
+        onChange={(e) => save.mutate(e.target.checked)} /> Рилсы — автоматически</label>
+      <p className="hint">Новые ролики после обновления сервера сами встают в план (вперемешку, по одному в день в 19:30) — бот сообщит, какие.
+        В 19:30 рилс сам публикуется в Instagram, итог придёт в Telegram. Если публикация не удалась — бот пришлёт видео с кнопками, как обычно.</p>
+      {on && instagramKnown && !instagram && (
+        <p className="notice tone-wait" role="alert">Instagram не подключён — рилсы будут вставать в план, но публиковать их придётся вручную
+          (бот пришлёт видео с кнопками). Подключите Instagram на сервере, чтобы они выходили сами.</p>
+      )}
+      {save.error && <p className="error" role="alert">{save.error.message}</p>}
+    </div>
+  )
 }
 
 /** Подключён ли Instagram (переменные окружения сервера) и до когда токен — его сервер продлевает сам. */

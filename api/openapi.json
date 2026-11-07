@@ -879,6 +879,50 @@
         }
       }
     },
+    "/api/platform/content/settings" : {
+      "get" : {
+        "tags" : [ "content-controller" ],
+        "operationId" : "contentSettings",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentSettingsSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "content-controller" ],
+        "operationId" : "updateContentSettings",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ContentSettingsSettings"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentSettingsSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/clinics/{id}/paid-until" : {
       "put" : {
         "tags" : [ "billing-controller" ],
@@ -12579,6 +12623,13 @@
           }
         }
       },
+      "ContentSettingsSettings" : {
+        "properties" : {
+          "reelsAuto" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "BillingControllerPaidUntil" : {
         "properties" : {
           "paidUntil" : {
@@ -15143,6 +15194,17 @@
           }
         }
       },
+      "ContentPostsPlannedReel" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
       "ContentPostsReelsAdded" : {
         "properties" : {
           "added" : {
@@ -15150,6 +15212,10 @@
             "format" : "int32"
           },
           "already" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "moved" : {
             "type" : "integer",
             "format" : "int32"
           },
@@ -15166,6 +15232,12 @@
           "time" : {
             "type" : "string",
             "format" : "time-local"
+          },
+          "reels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ContentPostsPlannedReel"
+            }
           }
         }
       },

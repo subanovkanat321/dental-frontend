@@ -261,26 +261,68 @@ test('«Добавить рилсы в план»: после подтвержд
     http.post('*/api/platform/content/reels', () => {
       calls++
       return HttpResponse.json((calls === 1
-        ? { added: 6, already: 0, missing: [], from: today, time: '19:30:00' }
-        : { added: 0, already: 6, missing: [], time: '19:30:00' }) satisfies Schemas['ContentPostsReelsAdded'])
+        ? { added: 2, already: 6, moved: 4, missing: ['10', '11'], from: today, time: '19:30:00', reels: [] }
+        : { added: 0, already: 8, moved: 0, missing: [], time: '19:30:00', reels: [] }) satisfies Schemas['ContentPostsReelsAdded'])
     }),
   )
   const user = await openTab()
-  const button = await screen.findByRole('button', { name: 'Добавить рилсы в план (6 шт., по одному в день)' })
+  const button = await screen.findByRole('button', { name: 'Добавить рилсы в план (по одному в день)' })
   await user.click(button)
   const dialog = await screen.findByRole('alertdialog')
   expect(dialog).toHaveTextContent('по одному в день в 19:30')
+  expect(dialog).toHaveTextContent('переставятся, чтобы шли вперемешку')
   await user.click(within(dialog).getByRole('button', { name: 'Отмена' }))
   expect(calls).toBe(0)
 
   await user.click(button)
   await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Добавить' }))
-  expect(await screen.findByText(/^Рилсы добавлены: 6, по одному в день с .+ в 19:30$/)).toBeInTheDocument()
+  expect(await screen.findByText(/^Рилсы добавлены: 2, по одному в день с .+ в 19:30 · переставлено, чтобы шли вперемешку: 4 · уже были в плане: 6 · нет в каталоге на сервере: 10, 11$/)).toBeInTheDocument()
 
   await user.click(button)
   await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Добавить' }))
   expect(await screen.findByText('Новых рилсов нет — все уже в плане')).toBeInTheDocument()
   expect(calls).toBe(2)
+})
+
+test('«Рилсы — автоматически»: переключатель сохраняется сразу; без Instagram — предупреждение', async () => {
+  const sent: boolean[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json([])),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false } satisfies Schemas['InstagramTokensState'])),
+    http.put('*/api/platform/content/settings', async ({ request }) => {
+      const body = await request.json() as Schemas['ContentSettingsSettings']
+      sent.push(Boolean(body.reelsAuto))
+      return HttpResponse.json(body satisfies Schemas['ContentSettingsSettings'])
+    }),
+  )
+  const user = await openTab()
+  const toggle = await screen.findByRole('checkbox', { name: 'Рилсы — автоматически' })
+  expect(toggle).not.toBeChecked()
+  expect(screen.getByText(/В 19:30 рилс сам публикуется в Instagram/)).toBeInTheDocument()
+  expect(screen.queryByText(/Instagram не подключён — рилсы будут вставать в план/)).not.toBeInTheDocument()
+
+  await user.click(toggle)
+  expect(await screen.findByRole('checkbox', { name: 'Рилсы — автоматически' })).toBeChecked()
+  expect(sent).toEqual([true])
+  expect(screen.getByRole('alert')).toHaveTextContent('Instagram не подключён — рилсы будут вставать в план, но публиковать их придётся вручную')
+
+  await user.click(screen.getByRole('checkbox', { name: 'Рилсы — автоматически' }))
+  await vi.waitFor(() => expect(sent).toEqual([true, false]))
+  expect(screen.queryByText(/Instagram не подключён — рилсы будут вставать в план/)).not.toBeInTheDocument()
+})
+
+test('«Рилсы — автоматически» с подключённым Instagram — без предупреждения', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json([])),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
+    http.get('*/api/platform/content/settings', () => HttpResponse.json({ reelsAuto: true } satisfies Schemas['ContentSettingsSettings'])),
+  )
+  await openTab()
+  expect(await screen.findByRole('checkbox', { name: 'Рилсы — автоматически' })).toBeChecked()
+  expect(await screen.findByText(/Instagram подключён/)).toBeInTheDocument()
+  expect(screen.queryByText(/Instagram не подключён — рилсы будут вставать в план/)).not.toBeInTheDocument()
 })
 
 test('изменить рилс: время и подпись уходят на сервер, видео не меняется', async () => {

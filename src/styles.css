@@ -1081,6 +1081,8 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .content-month { margin-bottom: 0; }
 .content-month h2 { margin: 0; min-width: 9em; text-align: center; font-family: var(--display); }
 .content-week { display: grid; gap: 10px; }
+.content-reels-auto { display: grid; gap: 4px; margin: 8px 0 12px; }
+.content-reels-auto .hint, .content-reels-auto .notice { margin: 0; }
 .content-week + .content-week { padding-top: 12px; border-top: 1px solid var(--separator); }
 .content-week h3 { margin: 0; font-size: .95rem; }
 .content-post { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }

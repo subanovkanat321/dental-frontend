@@ -292,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/content/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["contentSettings"];
+        put: operations["updateContentSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/clinics/{id}/paid-until": {
         parameters: {
             query?: never;
@@ -5689,6 +5705,9 @@ export interface components {
             coverUrl?: string;
             instagramPublishing?: boolean;
         };
+        ContentSettingsSettings: {
+            reelsAuto?: boolean;
+        };
         BillingControllerPaidUntil: {
             /** Format: date */
             paidUntil?: string;
@@ -6745,16 +6764,24 @@ export interface components {
         DemoControllerGuest: {
             fullName?: string;
         };
+        ContentPostsPlannedReel: {
+            title?: string;
+            /** Format: date */
+            day?: string;
+        };
         ContentPostsReelsAdded: {
             /** Format: int32 */
             added?: number;
             /** Format: int32 */
             already?: number;
+            /** Format: int32 */
+            moved?: number;
             missing?: string[];
             /** Format: date */
             from?: string;
             /** Format: time-local */
             time?: string;
+            reels?: components["schemas"]["ContentPostsPlannedReel"][];
         };
         ContentPostsImported: {
             /** Format: int32 */
@@ -9473,6 +9500,50 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    contentSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentSettingsSettings"];
+                };
+            };
+        };
+    };
+    updateContentSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContentSettingsSettings"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentSettingsSettings"];
+                };
             };
         };
     };
