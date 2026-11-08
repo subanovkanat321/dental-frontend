@@ -209,3 +209,28 @@ test('«🎬 Отправить ролик»: телефон — «Подели�
   expect(await within(card).findByText(/Ролик скачан/)).toBeInTheDocument()
   expect(click).toHaveBeenCalled()
 })
+
+test('«＋ Добавить клинику» по одной: отправляет одну строку с заголовками; дубль — понятный текст', async () => {
+  const sent: string[] = []
+  server.use(http.post('*/api/platform/outreach/import', async ({ request }) => {
+    const form = await request.formData()
+    sent.push(String(form.get('text')).replace(/\r\n/g, '\n'))
+    const dup = sent.length > 1
+    return HttpResponse.json({ total: 1, fresh: dup ? 0 : 1, duplicates: dup ? 1 : 0, errors: 0, added: dup ? 0 : 1,
+      rows: [{ line: 2, clinicName: 'Тест-Новая', status: dup ? 'DUPLICATE' : 'NEW' }] } satisfies Schemas['ClinicOutreachImportReport'])
+  }))
+  const user = await openTab()
+  await user.click(screen.getByRole('button', { name: '＋ Добавить клинику' }))
+  const form = screen.getByRole('form', { name: 'Добавить клинику' })
+  const add = within(form).getByRole('button', { name: 'Добавить' })
+  await user.type(within(form).getByLabelText('Название *'), 'Тест-Новая')
+  expect(add).toBeDisabled()
+  await user.type(within(form).getByLabelText('Телефон (WhatsApp)'), '0555 000 111')
+  await user.click(add)
+  expect(await within(form).findByText(/Добавлена «Тест-Новая»/)).toBeInTheDocument()
+  expect(sent[0]).toBe('Название\tТелефон\tАдрес\tСсылка\nТест-Новая\t0555 000 111\t\t')
+  await user.type(within(form).getByLabelText('Название *'), 'Тест-Новая')
+  await user.type(within(form).getByLabelText('Телефон (WhatsApp)'), '0555 000 111')
+  await user.click(add)
+  expect(await within(form).findByText(/уже есть в списке/)).toBeInTheDocument()
+})

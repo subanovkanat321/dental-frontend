@@ -27,6 +27,7 @@ export function OutreachTab() {
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<number | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [adding, setAdding] = useState(false)
   const [allDone, setAllDone] = useState(false)
   const data = outreach.data
   const leads = data?.leads ?? []
@@ -71,9 +72,11 @@ export function OutreachTab() {
               <input type="search" className="outreach-search" aria-label="Поиск по названию" placeholder="Поиск по названию" value={query}
                 onChange={(e) => setQuery(e.target.value)} />
               <button type="button" className="btn primary" onClick={next}>Следующая клиника →</button>
+              {!adding && <button type="button" className="btn" onClick={() => setAdding(true)}>＋ Добавить клинику</button>}
               {!uploading && <button type="button" className="btn" onClick={() => setUploading(true)}>Загрузить список клиник</button>}
             </div>
             {allDone && <p className="tone-ok" role="status">Неписаных клиник нет — всем из списка уже написали.</p>}
+            {adding && <OneClinic onClose={() => setAdding(false)} />}
             {uploading && <ListUpload onClose={() => setUploading(false)} />}
             {leads.length === 0 ? <p className="hint">Список пуст. Нажмите «Загрузить список клиник» и вставьте клиники из 2ГИС или таблицы.</p>
               : shown.length === 0 ? <p className="hint">Здесь никого.</p>
@@ -193,6 +196,58 @@ const VIDEO_DONE: Record<'shared' | 'downloaded' | 'opened', string> = {
   shared: 'Ролик отправлен через «Поделиться».',
   downloaded: 'Ролик скачан — прикрепите его в чат клиники в WhatsApp.',
   opened: 'Ролик открыт в браузере — нажмите «Поделиться» → WhatsApp → чат клиники.',
+}
+
+/**
+ * «＋ Добавить клинику» — по одной, если в списке пропустили. Тот же серверный разбор, что у загрузки
+ * списка (одна строка с заголовками): нормализация телефона, дубли по номеру и названию, ошибки.
+ */
+function OneClinic({ onClose }: { onClose: () => void }) {
+  const client = useQueryClient()
+  const empty = { name: '', phone: '', address: '', link: '' }
+  const [f, setF] = useState(empty)
+  const [city, setCity] = useState('Бишкек')
+  const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement>) => { setF({ ...f, [k]: e.target.value }); add.reset() }
+  const cell = (v: string) => v.replace(/[\t\r\n]+/g, ' ').trim()
+  const add = useMutation<Report, ApiError>({
+    mutationFn: () => {
+      const body = new FormData()
+      body.append('text', `Название\tТелефон\tАдрес\tСсылка\n${[f.name, f.phone, f.address, f.link].map(cell).join('\t')}`)
+      body.append('city', city)
+      return upload<Report>('/api/platform/outreach/import', body)
+    },
+    onSuccess: (r) => {
+      if (r.added) {
+        setF(empty)
+        void client.invalidateQueries({ queryKey: ['platform-outreach'] })
+        void client.invalidateQueries({ queryKey: ['platform-funnel'] })
+      }
+    },
+  })
+  const r = add.data
+  const row = r?.rows?.[0]
+  return (
+    <form className="sub-form form" aria-label="Добавить клинику" onSubmit={(e) => { e.preventDefault(); add.mutate() }}>
+      <div className="row">
+        <label className="field"><span>Название *</span><input required value={f.name} maxLength={200} onChange={set('name')} /></label>
+        <label className="field"><span>Телефон (WhatsApp)</span><input type="tel" value={f.phone} placeholder="0555 123 456" onChange={set('phone')} /></label>
+        <label className="field"><span>Адрес</span><input value={f.address} maxLength={300} onChange={set('address')} /></label>
+        <label className="field"><span>Ссылка (2ГИС, карты, Instagram)</span><input value={f.link} placeholder="https://…" onChange={set('link')} /></label>
+        <label className="field"><span>Город</span>
+          <Select value={city} onChange={(e) => setCity(e.target.value)}>{CITIES.map((c) => <option key={c} value={c}>{c}</option>)}</Select>
+        </label>
+      </div>
+      <p className="hint">Нужно название и телефон или ссылка.</p>
+      <div className="actions">
+        <button type="submit" className="btn primary" disabled={add.isPending || !f.name.trim() || (!f.phone.trim() && !f.link.trim())}>Добавить</button>
+        <button type="button" className="btn ghost" onClick={onClose}>Закрыть</button>
+      </div>
+      {r && (r.added ? <p className="tone-ok" role="status">Добавлена «{row?.clinicName}» — она в списке «Не писали».</p>
+        : row?.status === 'DUPLICATE' ? <p className="tone-bad" role="status">Такая клиника уже есть в списке{row.message ? `: ${row.message}` : ''}.</p>
+          : <p className="error" role="alert">{row?.message ?? 'Не добавилось — проверьте поля'}</p>)}
+      {add.error && <p className="error" role="alert">{add.error.message}</p>}
+    </form>
+  )
 }
 
 /** «Загрузить список клиник»: вставить текст или выбрать файл → предпросмотр → добавить новые. */
