@@ -4,22 +4,30 @@ import { useState } from 'react'
 import { botUsername } from '../api/client'
 import { openLink, telegram } from '../lib/telegram'
 import { smsUrl, whatsappUrl } from '../lib/texts'
-import { inviteText } from './texts'
+import { inviteText, siteInviteText } from './texts'
 import { Loading } from '../layout/Loading'
 
+/** Врача и сотрудника клиники зовём ссылкой на сайт; менеджера платформы («mgr_») — только ботом. */
+function siteInvite(start: string): boolean {
+  return /^(join|staff)_/.test(start)
+}
+
 /**
- * Готовая ссылка-приглашение на бота: «join_<код>» врача или «staff_<код>» сотрудника. Человек
- * нажимает «Начать» — его Telegram привязывается сам. Отправить в WhatsApp (номер известен — сразу в его
+ * Готовая ссылка-приглашение. Врачу («join_<код>») и сотруднику («staff_<код>») — на сайт:
+ * {@code /invite#<старт>} (код во фрагменте — не уходит на сервер и в журнал nginx). Там человек выбирает:
+ * «Открыть в Telegram» (тот же старт у бота — «Начать», и Telegram привязан) или регистрация по номеру
+ * телефона без Telegram. Менеджеру платформы («mgr_») — как раньше, сразу на бота. Отправить в WhatsApp (номер известен — сразу в его
  * чат, иначе WhatsApp спросит кому), в Telegram или скопировать. sms — ещё и SMS (владелец платформы
  * приглашает клинику без WhatsApp и Telegram: SMS уходит с SIM-карты его телефона).
  */
 export function InviteLink({ start, name, toWhom, phone, sms = false }: { start: string; name: string; toWhom: string; phone?: string | null; sms?: boolean }) {
-  const bot = useQuery({ queryKey: ['bot-username'], queryFn: botUsername, staleTime: Infinity })
+  const site = siteInvite(start)
+  const bot = useQuery({ queryKey: ['bot-username'], queryFn: botUsername, staleTime: Infinity, enabled: !site })
   const [copied, setCopied] = useState('')
-  if (bot.isPending) return <Loading text="Готовим ссылку…" />
-  if (!bot.data) return <p className="error">Бот не отвечает — попробуйте через минуту.</p>
-  const link = `https://t.me/${bot.data}?start=${start}`
-  const text = inviteText(name)
+  if (!site && bot.isPending) return <Loading text="Готовим ссылку…" />
+  if (!site && !bot.data) return <p className="error">Бот не отвечает — попробуйте через минуту.</p>
+  const link = site ? `${window.location.origin}/invite#${start}` : `https://t.me/${bot.data}?start=${start}`
+  const text = site ? siteInviteText(name) : inviteText(name)
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(`${text} ${link}`)
@@ -30,7 +38,7 @@ export function InviteLink({ start, name, toWhom, phone, sms = false }: { start:
   }
   return (
     <div className="invite">
-      <p className="hint">Ссылка работает один раз и 24 часа. Отправьте её {toWhom}:</p>
+      <p className="hint">Ссылка работает один раз и 24 часа. Отправьте её {toWhom}{site ? ' — войдёт через Telegram или по номеру телефона, если Telegram нет' : ''}:</p>
       <a className="invite-link" href={link} target="_blank" rel="noopener noreferrer">{link}</a>
       <div className="actions">
         <button type="button" className="btn" onClick={() => openLink(whatsappUrl(phone ?? '', `${text} ${link}`))}>Отправить в WhatsApp</button>

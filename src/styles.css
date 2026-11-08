@@ -1559,6 +1559,10 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 }
 .login-card { display: contents; }
 @media (min-width: 761px) { .login-card { display: grid; } }
+/* Ссылка-приглашение (/invite): Telegram — главная кнопка, регистрация по номеру — скромной ссылкой ниже */
+.invite-page .invite-phone-link { text-align: center; font-size: .9rem; }
+.invite-page .invite-form { width: 100%; text-align: left; }
+.invite-page .invite-form .btn.primary { width: 100%; }
 /* «Настройки»: «Выйти» и «Выйти на всех устройствах» рядом */
 .logout-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 /* «Вы вышли из Tish» над формой входа: один раз после «Выйти» (Login.tsx) */

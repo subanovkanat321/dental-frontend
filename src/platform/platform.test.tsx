@@ -80,7 +80,7 @@ test('владелец: клиники таблицей, карточка — о
   const form = within(panel).getByRole('form', { name: 'Пригласить руководителя клиники' })
   await user.type(within(form).getByRole('textbox', { name: 'Имя руководителя' }), 'Айгерим')
   await user.click(within(form).getByRole('button', { name: 'Создать ссылку' }))
-  expect(await within(panel).findByRole('link', { name: 'https://t.me/tish_test_bot?start=staff_adm1' })).toBeInTheDocument()
+  expect(await within(panel).findByRole('link', { name: `${window.location.origin}/invite#staff_adm1` })).toBeInTheDocument()
   expect(invited).toEqual({ fullName: 'Айгерим', alsoDoctor: false })
 })
 
@@ -117,11 +117,11 @@ test('заявка с /join: одобрить — новая клиника с �
   await user.click(await within(panel).findByRole('button', { name: 'Отправить в WhatsApp' }))
   const url = String(open.mock.calls.at(-1)?.[0])
   expect(url).toMatch(/^https:\/\/wa\.me\/996700111222\?text=/)
-  expect(decodeURIComponent(url)).toContain('https://t.me/tish_test_bot?start=staff_adm9')
+  expect(decodeURIComponent(url)).toContain(`${window.location.origin}/invite#staff_adm9`)
   // Клинике без WhatsApp и Telegram — SMS с телефона владельца, тот же текст со ссылкой
   const sms = within(panel).getByRole('link', { name: 'Отправить SMS' }).getAttribute('href')!
   expect(sms).toMatch(/^sms:\+996700111222\?&body=/)
-  expect(decodeURIComponent(sms)).toContain('https://t.me/tish_test_bot?start=staff_adm9')
+  expect(decodeURIComponent(sms)).toContain(`${window.location.origin}/invite#staff_adm9`)
   // В Telegram ссылка sms: молчит — открывается своя страница браузером телефона, номер и текст — во фрагменте
   window.Telegram = { WebApp: { initData: 'query_id=1&hash=abc', openLink: vi.fn() } } as unknown as typeof window.Telegram
   await user.click(within(panel).getByRole('link', { name: 'Отправить SMS' }))

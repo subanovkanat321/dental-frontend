@@ -60,7 +60,7 @@ test('владелец создаёт демо-клинику, обновляе�
   await user.click(within(block).getByText('Показать клиенту: ссылка гостю на сутки'))
   await user.type(within(block).getByRole('textbox', { name: /Кому/ }), 'Клиника Улыбка')
   await user.click(within(block).getByRole('button', { name: 'Сделать ссылку' }))
-  expect(await within(block).findByText('https://t.me/tish_test_bot?start=staff_demo1')).toBeInTheDocument()
+  expect(await within(block).findByText(`${window.location.origin}/invite#staff_demo1`)).toBeInTheDocument()
   expect(guest).toEqual({ fullName: 'Клиника Улыбка' })
 })
 

@@ -77,7 +77,7 @@ test('админ: врачи таблицей; карточка врача, ко
   expect(access).toHaveTextContent('Ждём входа')
   expect(within(access).getByText(/Сделать врача руководителем можно, когда он войдёт/)).toBeInTheDocument()
   await user.click(within(access).getByRole('button', { name: 'Пригласить по ссылке' }))
-  expect(await within(access).findByRole('link', { name: 'https://t.me/tish_test_bot?start=join_abc123' })).toBeInTheDocument()
+  expect(await within(access).findByRole('link', { name: `${window.location.origin}/invite#join_abc123` })).toBeInTheDocument()
 })
 
 test('админ: у вошедшего врача фото, имя и «о себе» — только посмотреть; работа и права — можно', async () => {
@@ -131,7 +131,7 @@ test('сотрудники: пригласить регистратора ссы
   const form = screen.getByRole('form', { name: 'Пригласить сотрудника' })
   await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Айпери')
   await user.click(within(form).getByRole('button', { name: 'Создать ссылку' }))
-  expect(await screen.findByRole('link', { name: 'https://t.me/tish_test_bot?start=staff_xyz' })).toBeInTheDocument()
+  expect(await screen.findByRole('link', { name: `${window.location.origin}/invite#staff_xyz` })).toBeInTheDocument()
   expect(screen.getByText(/Отправьте её регистратору/)).toBeInTheDocument()
   expect(invited).toEqual({ role: 'RECEPTION', fullName: 'Айпери', alsoDoctor: false })
 })

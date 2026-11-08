@@ -95,3 +95,8 @@ export function isDownloadPath(path = window.location.pathname): boolean {
   }
   return /^\/(app|download|скачать)\/?$/i.test(p)
 }
+
+/** Страница по ссылке-приглашению (врач, сотрудник): /invite#join_… или /invite#staff_… — без входа. */
+export function isInvitePath(path = window.location.pathname): boolean {
+  return /^\/invite\/?$/i.test(path)
+}

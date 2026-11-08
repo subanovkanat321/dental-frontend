@@ -10,7 +10,7 @@ import { Login } from './layout/Login'
 import { Shell } from './layout/Shell'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
-import { isDownloadPath, isLoginPath, usePage, type Page } from './lib/route'
+import { isDownloadPath, isInvitePath, isLoginPath, usePage, type Page } from './lib/route'
 import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
 import { launchedAsApp } from './pwa/pwa'
@@ -30,6 +30,8 @@ const LearnPage = lazy(() => import('./learn/LearnPage').then((m) => ({ default:
 const PatientApp = lazy(() => import('./patient/PatientApp'))
 // 3D-атлас для показа пациенту — свой чанк с three.js (около 0,5 МБ): грузится, только когда его открыли
 const AtlasPage = lazy(() => import('./atlas/AtlasPage'))
+// Ссылка-приглашение (/invite#…) — маленький свой чанк: нужен один раз в жизни сотрудника
+const InvitePage = lazy(() => import('./invite/InvitePage').then((m) => ({ default: m.InvitePage })))
 
 /**
  * Одно приложение на всех (ADR 0001 и 0002 бэкенда): сотрудник видит CRM, команда платформы —
@@ -75,6 +77,8 @@ function Screens() {
 
   // tish.kg/app — «Скачать Tish»: без входа, до проверки сессии
   if (isDownloadPath()) return <DownloadPage />
+  // /invite#join_… — приглашение врача или сотрудника: без входа, до проверки сессии
+  if (isInvitePath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><InvitePage /></Suspense></ErrorBoundary>
   // 3D-атлас (#/atlas, /atlas) — без входа: на экране нет данных пациентов, его можно открыть на ТВ
   if (atlas) return <ErrorBoundary><Suspense fallback={<AtlasBoot />}><AtlasPage route={atlas} onClose={closeAtlas} byUrl /></Suspense></ErrorBoundary>
   if (me.isPending) {
