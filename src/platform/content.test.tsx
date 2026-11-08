@@ -63,7 +63,10 @@ test('владелец: пост дня с картинками, текст ко
   expect(await navigator.clipboard.readText()).toBe('5 советов #tish')
   expect(within(card).getByRole('status')).toHaveTextContent('Скопировано')
 
-  const reels = screen.getByRole('article', { name: 'Один день клиники' })
+  // По умолчанию — только ждущие публикации: опубликованный рилс виден в «Все»
+  expect(screen.queryByRole('article', { name: 'Один день клиники' })).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: /^Все/ }))
+  const reels = await screen.findByRole('article', { name: 'Один день клиники' })
   expect(reels).toHaveTextContent('Что снять: Ресепшен и кресло')
   expect(reels).toHaveTextContent('Опубликован')
   expect(within(reels).queryByRole('button', { name: 'Опубликовал' })).not.toBeInTheDocument()
@@ -164,6 +167,8 @@ test('Instagram подключён: «Опубликовать в Instagram» п
   )
   const user = await openTab()
   expect(await screen.findByText(/Instagram подключён · токен до 4 янв 2027/)).toBeInTheDocument()
+  // «Все»: опубликованный пост остаётся в списке с бейджем
+  await user.click(await screen.findByRole('button', { name: /^Все/ }))
   const card = await screen.findByRole('article', { name: 'Тишка' })
   // У Reels видео нет — публиковать вручную
   expect(within(screen.getByRole('article', { name: 'Видео' })).queryByRole('button', { name: 'Опубликовать в Instagram' })).not.toBeInTheDocument()
@@ -401,9 +406,10 @@ test('план — с сегодняшнего дня и на 2 месяца в�
       return HttpResponse.json(all)
     }),
   )
-  await openTab()
+  const user = await openTab()
   const plan = await screen.findByRole('region', { name: 'Контент-план' })
   await within(plan).findByRole('article', { name: 'Сегодня' })
+  await user.click(within(plan).getByRole('button', { name: /^Все/ }))
   expect(asked[0]).toBe(shift(60))
   // Сначала сегодня и дальше (в том числе следующий месяц), прошедшее — в свёрнутом блоке внизу
   const titles = within(plan).getAllByRole('article').map((a) => a.getAttribute('aria-label'))
@@ -413,4 +419,24 @@ test('план — с сегодняшнего дня и на 2 месяца в�
     expect(pastBlock).not.toHaveAttribute('open')
     expect(within(pastBlock).getByRole('article', { name: 'Вчера' })).toBeInTheDocument()
   }
+})
+
+test('фильтр: по умолчанию только ждущие; в «Все» опубликованный вручную — без кнопки публикации', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
+    http.get('*/api/platform/content', () => HttpResponse.json([
+      post(1, { title: 'Ждёт', images: ['/content/a.png'] }),
+      post(2, { title: 'Выложил сам', images: ['/content/b.png'], status: 'DONE' }),
+    ])),
+  )
+  const user = await openTab()
+  const plan = await screen.findByRole('region', { name: 'Контент-план' })
+  await within(plan).findByRole('article', { name: 'Ждёт' })
+  expect(within(plan).getByRole('button', { name: 'Ждут публикации · 1' })).toHaveAttribute('aria-pressed', 'true')
+  expect(within(plan).queryByRole('article', { name: 'Выложил сам' })).not.toBeInTheDocument()
+  await user.click(within(plan).getByRole('button', { name: 'Все · опубликовано и пропущено 1' }))
+  const done = within(plan).getByRole('article', { name: 'Выложил сам' })
+  expect(within(done).queryByRole('button', { name: 'Опубликовать в Instagram' })).not.toBeInTheDocument()
+  expect(within(within(plan).getByRole('article', { name: 'Ждёт' })).getByRole('button', { name: 'Опубликовать в Instagram' })).toBeInTheDocument()
 })

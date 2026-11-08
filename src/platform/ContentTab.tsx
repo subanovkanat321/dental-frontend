@@ -47,6 +47,8 @@ export function ContentTab() {
   const [editing, setEditing] = useState<Post | 'new' | null>(null)
   // Форма поста после «Сохранить» закрывается — подтверждение показывает план
   const [postSaved, setPostSaved] = useState(false)
+  // По умолчанию — только ждущие публикации; «Все» — вместе с опубликованными и пропущенными
+  const [showAll, setShowAll] = useState(false)
   // Этот месяц: план — с сегодняшнего дня и на 2 месяца вперёд (рилсы по одному в день уходят за месяц),
   // прошедшие дни месяца — внизу, свёрнуты. Другой месяц — как был, целиком
   const current = month === today.slice(0, 7)
@@ -81,7 +83,9 @@ export function ContentTab() {
     },
   })
 
-  const posts = list.data ?? []
+  const loaded = list.data ?? []
+  const done = loaded.filter((p) => p.status !== 'PLANNED').length
+  const posts = showAll ? loaded : loaded.filter((p) => p.status === 'PLANNED')
   const upcoming = current ? posts.filter((p) => p.publishOn! >= today) : posts
   const past = current ? posts.filter((p) => p.publishOn! < today) : []
   const byWeek = (items: Post[]) => {
@@ -92,7 +96,7 @@ export function ContentTab() {
     }
     return [...weeks.entries()]
   }
-  const planned = upcoming.filter((p) => p.status === 'PLANNED').length
+  const planned = (current ? loaded.filter((p) => p.publishOn! >= today) : loaded).filter((p) => p.status === 'PLANNED').length
   const card = (p: Post) => <PostCard key={p.id} post={p} today={today} instagram={instagram.data?.enabled === true}
     onEdit={() => { setPostSaved(false); setEditing(p) }} onChanged={() => void refresh()} />
   const weeksOf = (items: Post[]) => byWeek(items).map(([start, list]) => (
@@ -138,15 +142,23 @@ export function ContentTab() {
       <SaveBar dirty={false} saving={false} saved={postSaved} savedText="Пост сохранён" />
       <section className="card-block" aria-label="Контент-план">
         {list.error && <p className="error">{list.error.message}</p>}
-        {list.isPending ? <Loading /> : posts.length === 0 ? (
+        {list.isPending ? <Loading /> : loaded.length === 0 ? (
           <EmptyState title="В этом месяце постов нет">Добавьте пост или загрузите готовый план.</EmptyState>
         ) : (
           <>
-            <p className="hint">{current ? 'С сегодняшнего дня · ' : ''}Постов: {upcoming.length} · ждут публикации: {planned}</p>
-            {upcoming.length ? weeksOf(upcoming) : <p className="hint">С сегодняшнего дня в плане пусто.</p>}
+            <div className="content-filter">
+              <div className="segments" role="group" aria-label="Какие посты показать">
+                <button type="button" aria-pressed={!showAll} onClick={() => setShowAll(false)}>Ждут публикации · {planned}</button>
+                <button type="button" aria-pressed={showAll} onClick={() => setShowAll(true)}>Все{done ? ` · опубликовано и пропущено ${done}` : ''}</button>
+              </div>
+              {current && <span className="hint">с сегодняшнего дня</span>}
+            </div>
+            {upcoming.length ? weeksOf(upcoming) : (
+              <p className="hint">{showAll ? 'С сегодняшнего дня в плане пусто.' : 'Всё опубликовано — ждущих публикации нет.'}</p>
+            )}
             {past.length > 0 && (
               <details className="content-past">
-                <summary>Прошедшие дни этого месяца: {past.length}</summary>
+                <summary>{showAll ? 'Прошедшие дни этого месяца' : 'Прошедшие дни — не опубликованы'}: {past.length}</summary>
                 {weeksOf(past)}
               </details>
             )}
@@ -265,7 +277,8 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
   const late = post.status === 'PLANNED' && date < today
   const images = post.images ?? []
   const reel = post.kind === 'REELS' && !!post.video
-  const canPublish = instagram && !post.instagramMediaId && !post.instagramPublishing
+  // Опубликованный (отметкой «Опубликовал» или через Instagram) и пропущенный — без кнопки публикации
+  const canPublish = instagram && post.status === 'PLANNED' && !post.instagramMediaId && !post.instagramPublishing
     && (post.kind === 'REELS' ? reel : images.length > 0)
   return (
     <article className={date === today ? 'content-post today' : 'content-post'} aria-label={post.title}>
