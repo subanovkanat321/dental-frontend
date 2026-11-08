@@ -31,11 +31,11 @@ function IosSteps() {
         <span className="pwa-safari-btn hot">⋯<span className="pwa-safari-tap">нажмите</span></span>
       </div>
       <ol className="pwa-steps">
-        <li>В <strong>Safari</strong> нажмите <MoreIcon /> <strong>внизу справа</strong>, рядом с адресом {window.location.host}.</li>
-        <li>Выберите <ShareIcon /> <strong>Поделиться</strong>.<br />
-          <span className="hint">В старых iPhone значок <ShareIcon /> сразу внизу посередине экрана — нажмите его.</span></li>
-        <li>Пролистайте вниз и выберите <strong>На экран «Домой»</strong>. Не видно — нажмите <strong>Ещё</strong> в конце списка.</li>
-        <li>Нажмите <strong>Добавить</strong> вверху справа — на экране появится значок Tish. Открывайте его, как приложение.</li>
+        <li>Нажмите <MoreIcon /> <strong>внизу справа</strong> экрана.</li>
+        <li>Нажмите <ShareIcon /> <strong>Поделиться</strong>.<br />
+          <span className="hint">Нет кнопки <MoreIcon />? Тогда сразу нажмите <ShareIcon /> внизу посередине.</span></li>
+        <li>Пролистайте вниз и нажмите <strong>На экран «Домой»</strong> (не видно — <strong>Ещё</strong>).</li>
+        <li>Нажмите <strong>Добавить</strong> — готово, значок Tish на экране.</li>
       </ol>
     </>
   )
