@@ -7311,6 +7311,22 @@
       }
     },
     "/api/me/password/code" : {
+      "get" : {
+        "tags" : [ "password-controller" ],
+        "operationId" : "codePending",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PasswordControllerCodePending"
+                }
+              }
+            }
+          }
+        }
+      },
       "post" : {
         "tags" : [ "password-controller" ],
         "operationId" : "code_1",
@@ -21033,6 +21049,21 @@
           },
           "telegramCode" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "PasswordControllerCodePending" : {
+        "properties" : {
+          "pending" : {
+            "type" : "boolean"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "resendSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { notify } from '../lib/confirm'
@@ -22,6 +22,9 @@ type CodeStep = 'send' | 'code' | 'new'
  * Telegram, если номер привязан к вашему Telegram, иначе SMS) → код → «Подтвердить» → только потом новый
  * пароль: сервер выдаёт одноразовый пропуск на 10 минут, с ним и сохраняем. После смены другие
  * устройства выходят (сервер поднимает версию пароля), этот браузер остаётся.
+ * <p>
+ * Ушли в Telegram за кодом, а телефон перезагрузил страницу — при открытии спрашиваем сервер, ждёт ли он код
+ * на ваш номер ({@code GET /api/me/password/code}), и сразу открываем шаг «Код» с оставшимся отсчётом.
  */
 export function PasswordSection() {
   const client = useQueryClient()
@@ -37,6 +40,21 @@ export function PasswordSection() {
   const [wait, restart] = useCountdown()
   const [fresh, setFresh] = useState({ password: '', repeat: '' })
   const [error, setError] = useState('')
+  const pending = useQuery({
+    queryKey: ['me-password-code'], enabled: Boolean(state.data?.phoneLogin), staleTime: Infinity,
+    queryFn: () => unwrap(api.GET('/api/me/password/code')),
+  })
+  const resumed = useRef(false)
+  useEffect(() => {
+    const p = pending.data
+    if (!p?.pending || resumed.current) return
+    resumed.current = true
+    setMode('code')
+    setStep('code')
+    setOpen(true)
+    restart(p.resendSeconds)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- один раз, когда пришёл ответ
+  }, [pending.data])
 
   const sendCode = useMutation<unknown, ApiError, 'auto' | 'sms'>({
     mutationFn: (channel) => unwrap(api.POST('/api/me/password/code', { body: channel === 'sms' ? { channel } : {} })),

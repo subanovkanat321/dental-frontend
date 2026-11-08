@@ -35,6 +35,11 @@ export const server = setupServer(
   // «Пароль и вход»: по умолчанию вошли через Telegram — блока нет
   http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Айпери', editable: true } satisfies Schemas['StaffMembersOwnName'])),
   http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, sms: false } satisfies Schemas['PasswordControllerPasswordState'])),
+  // Код на свой номер не ждём (шаг «Код» в «Пароль и вход» после перезагрузки — свои тесты)
+  http.get('*/api/me/password/code', () => HttpResponse.json({ pending: false, secondsLeft: 0, resendSeconds: 0 } satisfies Schemas['PasswordControllerCodePending'])),
+  // Экран входа: незаконченного входа нет (шаг после перезагрузки — свои тесты)
+  http.get('*/web/login/phone/pending', () => new HttpResponse(null, { status: 204 })),
+  http.delete('*/web/login/phone/pending', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/patient-sources', () => HttpResponse.json(SOURCES)),
   // Промокоды (V122): по умолчанию у клиники их нет
   http.get('*/api/promo-codes', () => HttpResponse.json([])),

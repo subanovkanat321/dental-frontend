@@ -241,3 +241,109 @@ test('ни Telegram-кодов, ни SMS — подсказка про врем�
   expect(screen.getByText(/задать временный пароль/)).toBeInTheDocument()
   expect(screen.queryByText(/код придёт в Telegram/)).not.toBeInTheDocument()
 })
+
+/** Сервер помнит незаконченный вход (HttpOnly-cookie) — страницу перезагрузили, пока человек был в Telegram. */
+function pendingStep(step: 'code' | 'password', extra: { temporary?: boolean } = {}) {
+  const forgotten: string[] = []
+  server.use(
+    http.get('*/web/login/phone/pending', ({ request }) => {
+      expect(request.headers.get('X-Dental-Web')).toBe('1')
+      return forgotten.length ? new HttpResponse(null, { status: 204 })
+        : HttpResponse.json({ step, phoneMasked: '+996 *** **31', secondsLeft: 200, resendSeconds: 0, temporary: extra.temporary ?? false })
+    }),
+    http.delete('*/web/login/phone/pending', ({ request }) => {
+      forgotten.push(request.headers.get('X-Dental-Web') ?? '')
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  return forgotten
+}
+
+test('перезагрузили на шаге кода — сразу «Код подтверждения» с маской номера; код и пароль уходят без номера', async () => {
+  const posts = backend()
+  pendingStep('code')
+  const user = userEvent.setup()
+  renderApp()
+
+  const step = await screen.findByRole('form', { name: 'Код подтверждения' })
+  expect(step).toHaveTextContent('Код отправлен на +996 *** **31.')
+  expect(step).toHaveTextContent('Код действует ещё 4 мин.')
+  // Отсчёт повторной отправки — по словам сервера: уже можно
+  expect(screen.getByRole('button', { name: 'Не пришло? Отправить по SMS' })).toBeInTheDocument()
+  await user.type(screen.getByRole('textbox', { name: 'Код подтверждения' }), '123456')
+  await user.click(screen.getByRole('button', { name: 'Подтвердить' }))
+
+  expect(await screen.findByRole('form', { name: 'Придумайте пароль' })).toHaveTextContent('Номер +996 *** **31 подтверждён')
+  await user.type(screen.getByLabelText('Новый пароль'), 'Тишина2026')
+  await user.type(screen.getByLabelText('Повторите пароль'), 'Тишина2026')
+  await user.click(screen.getByRole('button', { name: 'Сохранить и войти' }))
+  expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
+  expect(posts.map((p) => p.body)).toEqual([{ code: '123456' }, { token: 'tok-1', password: 'Тишина2026' }])
+  expect(JSON.stringify({ ...localStorage, ...sessionStorage })).not.toContain('31')
+})
+
+test('повторная отправка после перезагрузки — без номера: сервер возьмёт свой', async () => {
+  const posts = backend()
+  pendingStep('code')
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Не пришло? Отправить по SMS' }))
+  expect(await screen.findByText(/Отправили SMS с кодом на этот номер/)).toBeInTheDocument()
+  expect(posts).toEqual([{ path: 'code', body: { channel: 'sms' }, header: '1' }])
+})
+
+test('перезагрузили на шаге пароля — сразу «Придумайте пароль»; пропуск уходит из cookie, не из страницы', async () => {
+  const posts = backend()
+  server.use(http.post('*/web/login/phone/password/new', async ({ request }) => {
+    posts.push({ path: 'new', body: await request.json() as Record<string, unknown>, header: request.headers.get('X-Dental-Web') })
+    return new HttpResponse(null, { status: 204 })
+  }))
+  pendingStep('password')
+  const user = userEvent.setup()
+  renderApp()
+  expect(await screen.findByRole('form', { name: 'Придумайте пароль' })).toHaveTextContent('Номер +996 *** **31 подтверждён')
+  await user.type(screen.getByLabelText('Новый пароль'), 'Тишина2026')
+  await user.type(screen.getByLabelText('Повторите пароль'), 'Тишина2026')
+  await user.click(screen.getByRole('button', { name: 'Сохранить и войти' }))
+  await vi.waitFor(() => expect(posts).toEqual([{ path: 'new', body: { password: 'Тишина2026' }, header: '1' }]))
+})
+
+test('«Другой номер» после перезагрузки гасит незаконченный вход на сервере', async () => {
+  backend()
+  const forgotten = pendingStep('code')
+  const user = userEvent.setup()
+  renderApp()
+  await screen.findByRole('form', { name: 'Код подтверждения' })
+  await user.click(screen.getByRole('button', { name: 'Другой номер' }))
+  expect(screen.getByRole('form', { name: 'Код для входа' })).toBeInTheDocument()
+  expect((screen.getByRole('textbox', { name: 'Номер телефона' }) as HTMLInputElement).value).toBe('')
+  await vi.waitFor(() => expect(forgotten).toEqual(['1']))
+})
+
+test('время на код вышло после перезагрузки — понятная ошибка и снова номер', async () => {
+  backend()
+  pendingStep('code')
+  server.use(http.post('*/web/login/phone', () => HttpResponse.json(
+    { detail: 'Время на ввод кода вышло — введите номер и запросите код ещё раз' }, { status: 401 })))
+  const user = userEvent.setup()
+  renderApp()
+  await user.type(await screen.findByRole('textbox', { name: 'Код подтверждения' }), '123456')
+  await user.click(screen.getByRole('button', { name: 'Подтвердить' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Время на ввод кода вышло')
+  expect(screen.getByRole('form', { name: 'Код для входа' })).toBeInTheDocument()
+})
+
+test('«Вставить код» — по нажатию берёт 6 цифр из буфера (скопировали в Telegram)', async () => {
+  backend()
+  pendingStep('code')
+  const user = userEvent.setup()
+  renderApp()
+  const field = await screen.findByRole('textbox', { name: 'Код подтверждения' })
+  await navigator.clipboard.writeText('Код: 654 321')
+  await user.click(screen.getByRole('button', { name: 'Вставить код' }))
+  expect(field).toHaveValue('654321')
+  await navigator.clipboard.writeText('привет')
+  await user.click(screen.getByRole('button', { name: 'Вставить код' }))
+  expect(await screen.findByText(/В буфере нет кода из 6 цифр/)).toBeInTheDocument()
+  expect(field).toHaveValue('654321')
+})

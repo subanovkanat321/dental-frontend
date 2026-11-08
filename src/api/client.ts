@@ -152,9 +152,14 @@ export async function botConfig(): Promise<LoginConfig | null> {
  * Ответ 204 — null, с телом — его JSON.
  */
 async function webPost<T = void>(path: string, body: unknown): Promise<T | null> {
+  return webRequest<T>('POST', path, body)
+}
+
+async function webRequest<T = void>(method: 'GET' | 'POST' | 'DELETE', path: string, body?: unknown): Promise<T | null> {
   const response = await send(new Request(new URL(path, window.location.origin), {
-    method: 'POST', credentials: 'same-origin', headers: { 'X-Dental-Web': '1', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    method, credentials: 'same-origin',
+    headers: body === undefined ? { 'X-Dental-Web': '1' } : { 'X-Dental-Web': '1', 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
   }))
   if (!response.ok) throw toApiError(response.status, await response.json().catch(() => null))
   return response.status === 204 ? null : await response.json().catch(() => null) as T | null
@@ -178,12 +183,17 @@ export type CodeChannel = 'auto' | 'sms'
  * 422 — номер не похож на номер. Номер — только в теле.
  */
 export async function requestLoginCode(phone: string, channel: CodeChannel = 'auto'): Promise<void> {
-  await webPost('/web/login/phone/code', channel === 'sms' ? { phone, channel } : { phone })
+  // Без номера (страницу перезагрузили на шаге кода) — сервер берёт номер из своей cookie «ждём код»
+  const body = phone ? { phone } : {}
+  await webPost('/web/login/phone/code', channel === 'sms' ? { ...body, channel } : body)
 }
 
-/** Шаг 2: номер и код → пропуск «Придумайте пароль» (ещё не вход). Неверный код — 401. */
+/**
+ * Шаг 2: номер и код → пропуск «Придумайте пароль» (ещё не вход). Неверный код — 401. Номера нет (страницу
+ * перезагрузили) — сервер берёт его из HttpOnly-cookie «ждём код»; она истекла — 401 «Время на ввод кода вышло».
+ */
 export async function phoneLogin(phone: string, code: string): Promise<SetupToken> {
-  const token = await webPost<SetupToken>('/web/login/phone', { phone, code })
+  const token = await webPost<SetupToken>('/web/login/phone', phone ? { phone, code } : { code })
   if (!token?.setupToken) throw new ApiError(500, 'Вход не удался — попробуйте ещё раз')
   return token
 }
@@ -198,7 +208,31 @@ export function passwordLogin(phone: string, password: string): Promise<SetupTok
 
 /** «Придумайте пароль»: пропуск + пароль → вход. Слабый пароль — 422 (поле password), пропуск устарел — 401. */
 export async function setNewPassword(token: string, password: string): Promise<void> {
-  await webPost('/web/login/phone/password/new', { token, password })
+  // Без пропуска (страницу перезагрузили) — он в HttpOnly-cookie шага, сервер возьмёт его оттуда
+  await webPost('/web/login/phone/password/new', token ? { token, password } : { password })
+}
+
+/**
+ * Незаконченный вход после перезагрузки страницы (iOS выгружает вкладку, пока человек копирует код в
+ * Telegram). Сам шаг помнит сервер — в HttpOnly-cookie: номер там зашифрован, скрипту страницы недоступен.
+ * Номер в ответе — только маской. step «code» — ввести код, «password» — придумать пароль.
+ */
+export type LoginPending = {
+  step: 'code' | 'password'; phoneMasked: string; secondsLeft: number; resendSeconds: number; temporary: boolean
+}
+
+/** На каком шаге продолжить вход; ничего не ждём или ошибка — null (тогда обычный экран входа). */
+export async function loginPending(): Promise<LoginPending | null> {
+  try {
+    return await webRequest<LoginPending>('GET', '/web/login/phone/pending')
+  } catch {
+    return null
+  }
+}
+
+/** «Другой номер»: сервер гасит cookie незаконченного входа. */
+export async function forgetLoginPending(): Promise<void> {
+  await webRequest('DELETE', '/web/login/phone/pending')
 }
 
 export async function botUsername(): Promise<string | null> {

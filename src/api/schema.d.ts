@@ -2971,7 +2971,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["codePending"];
         put?: never;
         post: operations["code_1"];
         delete?: never;
@@ -9020,6 +9020,13 @@ export interface components {
             sms?: boolean;
             telegram?: boolean;
             telegramCode?: boolean;
+        };
+        PasswordControllerCodePending: {
+            pending?: boolean;
+            /** Format: int64 */
+            secondsLeft?: number;
+            /** Format: int64 */
+            resendSeconds?: number;
         };
         NetMonthMine: {
             month?: string;
@@ -15376,6 +15383,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PasswordControllerSetupToken"];
+                };
+            };
+        };
+    };
+    codePending: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordControllerCodePending"];
                 };
             };
         };

@@ -22,13 +22,22 @@ export function sentText(bySms: boolean, telegram: boolean, sms: boolean): strin
   return sms ? SENT_AUTO : SENT_TELEGRAM
 }
 
-/** Обратный отсчёт до повторной отправки: {@link RESEND_SECONDS} секунд после каждой отправки. */
-export function useCountdown(): [number, () => void] {
+/**
+ * Обратный отсчёт до повторной отправки: {@link RESEND_SECONDS} секунд после каждой отправки; после
+ * перезагрузки страницы — сколько осталось по словам сервера.
+ */
+export function useCountdown(): [number, (seconds?: number) => void] {
   const [wait, setWait] = useState(0)
   useEffect(() => {
     if (wait <= 0) return
     const timer = setTimeout(() => setWait((w) => w - 1), 1000)
     return () => clearTimeout(timer)
   }, [wait])
-  return [wait, () => setWait(RESEND_SECONDS)]
+  return [wait, (seconds = RESEND_SECONDS) => setWait(seconds)]
+}
+
+/** Первые 6 цифр подряд из скопированного: «Код: 123 456» или «<code>123456</code>» → «123456». */
+export function codeFromText(text: string): string | null {
+  const digits = /\d{6}/.exec(text.replace(/[\s-]/g, ''))
+  return digits ? digits[0] : null
 }

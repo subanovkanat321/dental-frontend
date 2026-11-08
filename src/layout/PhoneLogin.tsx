@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { ApiError, passwordLogin, phoneLogin, requestLoginCode, setNewPassword, type CodeChannel } from '../api/client'
+import {
+  ApiError, forgetLoginPending, loginPending, passwordLogin, phoneLogin, requestLoginCode, setNewPassword, type CodeChannel,
+} from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { CodeInput, ResendLink } from './CodeStep'
@@ -12,7 +14,10 @@ import { Spinner } from './Loading'
 /** Кнопка с пароля на восстановление: и первый пароль, и «забыли» — один и тот же путь. */
 export const FORGOT = 'Забыли пароль? / Первый вход'
 
-type Step = 'password' | 'phone' | 'code' | 'new-password'
+type Step = 'checking' | 'password' | 'phone' | 'code' | 'new-password'
+
+/** Ответ сервера, когда cookie «ждём код» истекла: тогда — снова номер. */
+const CODE_EXPIRED = 'Время на ввод кода вышло'
 
 /**
  * Вход на сайт — по номеру телефона и паролю (кнопки «Войти через Telegram» больше нет):
@@ -26,6 +31,10 @@ type Step = 'password' | 'phone' | 'code' | 'new-password'
  * Сервер не говорит, есть ли такой номер, задан ли пароль и куда ушёл код: ответ на «Получить код» всегда
  * один. Поэтому под кодом — оба варианта («в Telegram, если номер привязан, иначе SMS»), а через 60 секунд —
  * «Не пришло? Отправить по SMS». Номер и пароль не сохраняем ни в адресе, ни в localStorage.
+ * <p>
+ * Шаг переживает перезагрузку (iOS выгружает вкладку или PWA, пока человек копирует код в Telegram): при
+ * открытии спрашиваем сервер ({@link loginPending}) — он помнит шаг в HttpOnly-cookie и отдаёт номер только
+ * маской. Тогда номера на странице нет: код, повтор и пароль уходят без него, сервер подставит свой.
  *
  * @param sms коды по SMS подключены
  * @param telegram код в Telegram включён (бот настроен)
@@ -33,8 +42,12 @@ type Step = 'password' | 'phone' | 'code' | 'new-password'
  */
 export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword = true }:
   { onDone: () => void; sms: boolean; telegram?: boolean; password?: boolean }) {
-  const [step, setStep] = useState<Step>(byPassword ? 'password' : 'phone')
+  const first: Step = byPassword ? 'password' : 'phone'
+  const [step, setStep] = useState<Step>('checking')
   const [phone, setPhone] = useState('')
+  /** Номер маской от сервера — после перезагрузки; набранного номера тогда нет. */
+  const [masked, setMasked] = useState('')
+  const [minutesLeft, setMinutesLeft] = useState(5)
   const [password, setPassword] = useState('')
   const [shown, setShown] = useState(false)
   const [code, setCode] = useState('')
@@ -46,6 +59,30 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
   const [error, setError] = useState('')
   const [wait, restart] = useCountdown()
   const canRecover = telegram || sms
+
+  useEffect(() => {
+    let alive = true
+    void loginPending().then((p) => {
+      if (!alive) return
+      if (p?.step === 'code') {
+        setMasked(p.phoneMasked)
+        setMinutesLeft(Math.max(1, Math.ceil(p.secondsLeft / 60)))
+        restart(p.resendSeconds)
+        setStep('code')
+      } else if (p?.step === 'password') {
+        setMasked(p.phoneMasked)
+        setTemporary(p.temporary)
+        setStep('new-password')
+      } else {
+        setStep(first)
+      }
+    })
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- только при открытии экрана входа
+  }, [])
+
+  /** Номер для запроса: набранный; после перезагрузки его нет — пусто, сервер возьмёт свой из cookie. */
+  const typed = () => (phone.trim() ? phoneFromInput(phone) : '')
 
   const explain = (e: unknown) => {
     if (!(e instanceof ApiError) || e.status === 0) return 'Нет связи с сервером'
@@ -73,12 +110,21 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
   }
 
   const getCode = (via: CodeChannel) => run(async () => {
-    await requestLoginCode(phoneFromInput(phone), via)
+    await requestLoginCode(typed(), via)
     setChannel(via)
     setStep('code')
     setCode('')
+    setMinutesLeft(5)
     restart()
   })
+
+  /** «Другой номер»: забыть шаг и на сервере (cookie), чтобы перезагрузка не вернула старый номер. */
+  const anotherNumber = () => {
+    void forgetLoginPending().catch(() => undefined)
+    setMasked('')
+    setCode('')
+    go('phone')
+  }
 
   const enterByPassword = async () => {
     setError('')
@@ -102,16 +148,23 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
     }
   }
 
-  const confirmCode = () => run(async () => {
-    const t = await phoneLogin(phoneFromInput(phone), code.trim())
-    setToken(t.setupToken)
-    setTemporary(false)
-    setFresh({ password: '', repeat: '' })
-    setStep('new-password')
-  })
+  const confirmCode = async () => {
+    const failed = await run(async () => {
+      const t = await phoneLogin(typed(), code.trim())
+      setToken(t.setupToken)
+      setTemporary(false)
+      setFresh({ password: '', repeat: '' })
+      setStep('new-password')
+    })
+    // Код после перезагрузки, а время вышло — снова номер (сообщение сервера остаётся)
+    if (failed instanceof ApiError && failed.status === 401 && failed.message.startsWith(CODE_EXPIRED)) {
+      setMasked('')
+      setStep('phone')
+    }
+  }
 
   const savePassword = async () => {
-    const problem = passwordProblem(fresh.password, fresh.repeat, phoneFromInput(phone))
+    const problem = passwordProblem(fresh.password, fresh.repeat, typed())
     if (problem) {
       setError(problem)
       return
@@ -124,8 +177,13 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
     // Пропуск устарел (10 минут) или уже использован — заново через код
     if (failed instanceof ApiError && failed.status === 401) {
       setToken('')
+      setMasked('')
       setStep(canRecover ? 'phone' : 'password')
     }
+  }
+
+  if (step === 'checking') {
+    return <p className="hint phone-login" role="status"><Spinner />Загружаем…</p>
   }
 
   if (step === 'password') {
@@ -177,13 +235,14 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
   if (step === 'code') {
     return (
       <form className="form phone-login" aria-label="Код подтверждения" onSubmit={(e) => { e.preventDefault(); void confirmCode() }}>
-        <p className="hint" role="status">{sentText(channel === 'sms', telegram, sms)} Код действует 5 минут.</p>
+        <p className="hint" role="status">{masked && <>Код отправлен на <b>{masked}</b>. </>}
+          {sentText(channel === 'sms', telegram, sms)} Код действует {masked ? `ещё ${minutesLeft} мин.` : '5 минут.'}</p>
         <CodeInput value={code} onChange={setCode} />
         <button type="submit" className="btn primary" disabled={busy || code.length !== 6}>{busy ? <><Spinner />Проверяем…</> : 'Подтвердить'}</button>
         {error && <p className="error" role="alert">{error}</p>}
         <div className="actions">
           <ResendLink wait={wait} sms={sms} busy={busy} onSms={() => void getCode('sms')} onAgain={() => void getCode('auto')} />
-          <button type="button" className="link" onClick={() => go('phone')}>Другой номер</button>
+          <button type="button" className="link" onClick={anotherNumber}>Другой номер</button>
         </div>
         {/* Сервер не скажет, что номера нет (по ответу не узнать чужой номер), — частая причина «не пришло»:
             сотрудник работает через Telegram, а номер для входа ещё не привязал */}
@@ -200,8 +259,8 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
       <h2>Придумайте пароль</h2>
       <p className="hint">{temporary
         ? 'Временный пароль подошёл. Придумайте свой — дальше входите номером и им.'
-        : 'Номер подтверждён. Дальше входите номером и этим паролем.'}</p>
-      <NewPasswordFields password={fresh.password} repeat={fresh.repeat} phone={phoneFromInput(phone)}
+        : `Номер${masked ? ` ${masked}` : ''} подтверждён. Дальше входите номером и этим паролем.`}</p>
+      <NewPasswordFields password={fresh.password} repeat={fresh.repeat} phone={typed()}
         onPassword={(v) => setFresh({ ...fresh, password: v })} onRepeat={(v) => setFresh({ ...fresh, repeat: v })} />
       <button type="submit" className="btn primary" disabled={busy}>{busy ? <><Spinner />Сохраняем…</> : 'Сохранить и войти'}</button>
       {error && <p className="error" role="alert">{error}</p>}

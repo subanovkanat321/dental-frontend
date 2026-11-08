@@ -160,3 +160,23 @@ test('баннера нет, если пароль задан', async () => {
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Задайте пароль/ })).not.toBeInTheDocument()
 })
+
+test('перезагрузили, пока ходили за кодом в Telegram, — «Пароль и вход» сразу на шаге кода', async () => {
+  const { changes, codes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true })
+  server.use(http.get('*/api/me/password/code', () => HttpResponse.json(
+    { pending: true, secondsLeft: 200, resendSeconds: 20 } satisfies Schemas['PasswordControllerCodePending'])))
+  const user = userEvent.setup()
+  renderApp()
+  const section = await screen.findByRole('region', { name: 'Пароль и вход' })
+  const code = await within(section).findByRole('textbox', { name: 'Код подтверждения' })
+  // Отсчёт — оставшийся, код заново не запрашивали
+  expect(section).toHaveTextContent(/Через (20|19) с можно отправить по SMS/)
+  await user.type(code, '123456')
+  await user.click(within(section).getByRole('button', { name: 'Подтвердить' }))
+  await user.type(await within(section).findByLabelText('Новый пароль'), 'Новый-пароль-3')
+  await user.type(within(section).getByLabelText('Повторите пароль'), 'Новый-пароль-3')
+  await user.click(within(section).getByRole('button', { name: 'Сохранить пароль' }))
+  expect(await screen.findByText(/Пароль сохранён/)).toBeInTheDocument()
+  expect(codes()).toBe(0)
+  expect(changes).toEqual([{ setupToken: 'tok-9', newPassword: 'Новый-пароль-3' }])
+})
