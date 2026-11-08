@@ -22,6 +22,8 @@ export const server = setupServer(
   http.get('*/api/supplies', () => HttpResponse.json([])),
   // Кейс на /join не заполнен — блока нет
   http.get('*/web/case', () => HttpResponse.json({ metrics: [], shown: false } satisfies Schemas['JoinCaseCase'])),
+  // Ролик и презентация на /join: по умолчанию каталога материалов нет — блока нет
+  http.get('*/web/materials/public', () => HttpResponse.json({ video: null, poster: null, presentation: null })),
   // «Клиники»: воронка пустая, демо-клиники нет — тесты своих экранов задают своё
   http.get('*/api/platform/funnel', () => HttpResponse.json({ total: 0, stages: [], leads: [] } satisfies Schemas['SalesFunnelFunnel'])),
   http.get('*/api/platform/demo', () => HttpResponse.json({ doctors: 0, patients: 0, appointments: 0, guests: [] } satisfies Schemas['DemoClinicServiceStatus'])),

@@ -2217,6 +2217,11 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .row-fields { display: grid; grid-template-columns: 120px 1fr; gap: 8px; }
 @media (max-width: 480px) { .row-fields { grid-template-columns: 1fr; } }
 .funnel-list { display: grid; gap: 8px; margin-bottom: 12px; }
+/* «Написать клиникам»: открытая клиника — рамка цвета действия; текст сообщения — как в мессенджере */
+.outreach-lead.active { box-shadow: inset 0 0 0 2px var(--accent); background: var(--card); }
+.outreach-text { margin: 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--accent-soft); white-space: pre-wrap; }
+.outreach-ask { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--r-md); background: var(--card); }
+.outreach-search { flex: 1 1 200px; min-width: 0; }
 /* Заголовок дня в «Расписании» — кнопка: открывает календарь */
 .day-title-pick { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-align: left; border-radius: 6px; }
 .day-title-pick:hover { color: var(--accent); }

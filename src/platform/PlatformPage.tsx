@@ -9,6 +9,7 @@ import { AnalyticsTab } from './AnalyticsTab'
 import { FinanceTab } from './FinanceTab'
 import { HealthTab } from './HealthTab'
 import { MaterialsTab } from './MaterialsTab'
+import { OutreachTab } from './OutreachTab'
 import { useBack } from '../lib/back'
 import { openSettings } from '../lib/route'
 import { SettingsTab } from './SettingsTab'
@@ -18,10 +19,10 @@ import { stickyHead } from '../layout/stickyHead'
 
 type Me = Schemas['BookingViewsMe']
 type Tab = 'clinics' | 'surveys' | 'tickets' | 'broadcast' | 'agreements' | 'tariffs' | 'content' | 'ai' | 'settings'
-  | 'analytics' | 'finance' | 'materials' | 'health'
+  | 'analytics' | 'finance' | 'materials' | 'health' | 'outreach'
 
 /**
- * «Платформа» — команда Tish: клиники и опросы сотрудников (менеджеры и владелец); обращения, рассылка, договор,
+ * «Платформа» — команда Tish: клиники и опросы сотрудников (менеджеры и владелец); «Написать клиникам» (список стоматологий и WhatsApp по одной), обращения, рассылка, договор,
  * контент-план Instagram, материалы (ролики, презентация), расход ИИ (токены и деньги), финансы (доходы и расходы платформы), здоровье сервера и настройки — только владелец. Права проверяет сервер (/api/platform/*).
  */
 export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }) {
@@ -29,7 +30,7 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
     // «Аналитика» и «Финансы» — деньги платформы: только владелец (сервер тоже: менеджеру 403)
     ...(me.owner ? [['analytics', 'Аналитика'], ['finance', 'Финансы']] as [Tab, string][] : []),
     ['surveys', 'Опросы'],
-    ...(me.owner ? [['tickets', 'Обращения'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['tariffs', 'Тарифы'], ['content', 'Контент'], ['materials', 'Материалы'], ['ai', 'Расход ИИ'], ['health', 'Здоровье'], ['settings', 'Настройки']] as [Tab, string][] : [])]
+    ...(me.owner ? [['tickets', 'Обращения'], ['outreach', 'Написать клиникам'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['tariffs', 'Тарифы'], ['content', 'Контент'], ['materials', 'Материалы'], ['ai', 'Расход ИИ'], ['health', 'Здоровье'], ['settings', 'Настройки']] as [Tab, string][] : [])]
   const [tab, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? 'clinics')
   const [panel, setPanel] = useState(false)
   // Сотрудник клиники на телефоне попадает сюда из «Настроек» — стрелка Telegram ведёт обратно
@@ -54,7 +55,7 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
       {tab === 'agreements' && <AgreementsTab header={header} onPanel={setPanel} />}
       {tab === 'analytics' && <section className="schedule-main">{header}<AnalyticsTab /></section>}
       {(tab === 'surveys' || tab === 'broadcast' || tab === 'settings' || tab === 'tariffs' || tab === 'content' || tab === 'ai'
-        || tab === 'finance' || tab === 'materials' || tab === 'health') && (
+        || tab === 'finance' || tab === 'materials' || tab === 'health' || tab === 'outreach') && (
         <section className="schedule-main">
           {header}
           {tab === 'surveys' && <SurveysTab />}
@@ -66,6 +67,7 @@ export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }
           {tab === 'finance' && <FinanceTab />}
           {tab === 'materials' && <MaterialsTab />}
           {tab === 'health' && <HealthTab />}
+          {tab === 'outreach' && <OutreachTab />}
         </section>
       )}
     </div>

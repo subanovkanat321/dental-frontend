@@ -679,6 +679,34 @@
         }
       }
     },
+    "/api/platform/outreach/template" : {
+      "put" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "template",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicOutreachTemplateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicOutreachTemplate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/info" : {
       "put" : {
         "tags" : [ "platform-info-controller" ],
@@ -2789,7 +2817,7 @@
     "/api/clinic/contract-template" : {
       "get" : {
         "tags" : [ "contract-controller" ],
-        "operationId" : "template",
+        "operationId" : "template_1",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4699,6 +4727,166 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PayRequestsRequest"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/outreach/{id}/sent" : {
+      "post" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "sent",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalesFunnelLead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/outreach/{id}/decline" : {
+      "post" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "decline",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicOutreachDeclineRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalesFunnelLead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/outreach/import" : {
+      "post" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "apply_1",
+        "parameters" : [ {
+          "name" : "text",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "city",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicOutreachImportReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/platform/outreach/import/preview" : {
+      "post" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "preview_1",
+        "parameters" : [ {
+          "name" : "text",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "city",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicOutreachImportReport"
                 }
               }
             }
@@ -7432,7 +7620,7 @@
     "/api/clinic/starter" : {
       "get" : {
         "tags" : [ "starter-controller" ],
-        "operationId" : "preview_1",
+        "operationId" : "preview_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -7448,7 +7636,7 @@
       },
       "post" : {
         "tags" : [ "starter-controller" ],
-        "operationId" : "apply_1",
+        "operationId" : "apply_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7538,7 +7726,7 @@
     "/api/clinic/import" : {
       "post" : {
         "tags" : [ "import-controller" ],
-        "operationId" : "apply_2",
+        "operationId" : "apply_3",
         "parameters" : [ {
           "name" : "kind",
           "in" : "query",
@@ -7669,7 +7857,7 @@
     "/api/clinic/import/preview" : {
       "post" : {
         "tags" : [ "import-controller" ],
-        "operationId" : "preview_2",
+        "operationId" : "preview_3",
         "parameters" : [ {
           "name" : "kind",
           "in" : "query",
@@ -8875,7 +9063,7 @@
     "/api/appointments/{id}/dictation/apply" : {
       "post" : {
         "tags" : [ "visit-dictation-controller" ],
-        "operationId" : "apply_3",
+        "operationId" : "apply_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9510,7 +9698,7 @@
     "/api/platform/surveys/template" : {
       "get" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "template_1",
+        "operationId" : "template_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9677,10 +9865,44 @@
         }
       }
     },
+    "/api/platform/outreach" : {
+      "get" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "list_9",
+        "parameters" : [ {
+          "name" : "group",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "FRESH", "SENT", "FURTHER", "DECLINED" ]
+          }
+        }, {
+          "name" : "q",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicOutreachOutreach"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/materials" : {
       "get" : {
         "tags" : [ "materials-controller" ],
-        "operationId" : "list_9",
+        "operationId" : "list_10",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9999,7 +10221,7 @@
     "/api/platform/agreements/template" : {
       "get" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "template_2",
+        "operationId" : "template_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10678,7 +10900,7 @@
     "/api/patient-questions" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "list_10",
+        "operationId" : "list_11",
         "parameters" : [ {
           "name" : "done",
           "in" : "query",
@@ -10750,7 +10972,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_11",
+        "operationId" : "list_12",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11146,7 +11368,7 @@
     "/api/clinic/import/template" : {
       "get" : {
         "tags" : [ "import-controller" ],
-        "operationId" : "template_3",
+        "operationId" : "template_4",
         "parameters" : [ {
           "name" : "kind",
           "in" : "query",
@@ -11444,7 +11666,7 @@
     "/api/appointments/{id}/teeth" : {
       "get" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "list_12",
+        "operationId" : "list_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -13069,6 +13291,26 @@
           }
         }
       },
+      "ClinicOutreachTemplateRequest" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ClinicOutreachTemplate" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "custom" : {
+            "type" : "boolean"
+          },
+          "defaultText" : {
+            "type" : "string"
+          }
+        }
+      },
       "PlatformInfoControllerRequest" : {
         "properties" : {
           "legalName" : {
@@ -13227,6 +13469,23 @@
           "nextStepOn" : {
             "type" : "string",
             "format" : "date"
+          },
+          "source" : {
+            "type" : "string",
+            "enum" : [ "SITE", "MANUAL", "LIST" ]
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "contactedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lostReason" : {
+            "type" : "string"
           }
         }
       },
@@ -15950,6 +16209,73 @@
           }
         }
       },
+      "ClinicOutreachDeclineRequest" : {
+        "properties" : {
+          "reason" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ClinicOutreachImportReport" : {
+        "properties" : {
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "fresh" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "duplicates" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "errors" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "added" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rows" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ClinicOutreachImportRow"
+            }
+          }
+        }
+      },
+      "ClinicOutreachImportRow" : {
+        "properties" : {
+          "line" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "NEW", "DUPLICATE", "ERROR" ]
+          },
+          "message" : {
+            "type" : "string"
+          }
+        }
+      },
       "DentalNewsControllerAddFeed" : {
         "properties" : {
           "url" : {
@@ -18439,6 +18765,42 @@
           "createdAt" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "ClinicOutreachCounts" : {
+        "properties" : {
+          "fresh" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "sent" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "further" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "declined" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "ClinicOutreachOutreach" : {
+        "properties" : {
+          "counts" : {
+            "$ref" : "#/components/schemas/ClinicOutreachCounts"
+          },
+          "leads" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SalesFunnelLead"
+            }
+          },
+          "template" : {
+            "$ref" : "#/components/schemas/ClinicOutreachTemplate"
           }
         }
       },

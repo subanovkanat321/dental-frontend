@@ -61,6 +61,11 @@ export type Links = {
 }
 
 export type Tariffs = Schemas['Tariffs']
+/**
+ * Ролик и презентация для /join (/web/materials/public — вне контракта /api, отдаёт бэкенд из MARKETING_DIR).
+ * null — файла нет (каталог не подключён), блок не показываем.
+ */
+export type PublicMaterials = { video?: string | null; poster?: string | null; presentation?: string | null }
 /** Кейс на /join (/web/case): shown — заголовок и текст заполнены, блок показываем. */
 export type JoinCase = Schemas['JoinCaseCase']
 

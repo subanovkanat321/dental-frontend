@@ -5,7 +5,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { SiteHeader } from './SiteHeader'
-import { getJson, inAppBrowser, type JoinCase, type Links, type Tariffs } from './web'
+import { getJson, inAppBrowser, type JoinCase, type Links, type PublicMaterials, type Tariffs } from './web'
 
 const FEATURES: [string, string, string][] = [
   ['📲', 'Запись в Telegram', 'Пациент выбирает врача, услугу и время сам — врач подтверждает одним нажатием.'],
@@ -29,6 +29,7 @@ export function Join() {
   const [phone, setPhone] = useState('')
   const [links, setLinks] = useState<Links>({})
   const [story, setStory] = useState<JoinCase | null>(null)
+  const [materials, setMaterials] = useState<PublicMaterials>({})
   const [consent, setConsent] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [sending, setSending] = useState(false)
@@ -37,6 +38,8 @@ export function Join() {
     document.title = 'Tish — запись пациентов для стоматологии'
     if (inAppBrowser()) void getJson<Links>('/web/links').then(({ data }) => setLinks(data ?? {}))
     // Кейс владелец заполняет в «Платформа → Настройки»; не заполнен — блока нет
+    // Ролик и PDF-презентация — на них ведёт ссылка из сообщения клиникам («Написать клиникам»)
+    void getJson<PublicMaterials>('/web/materials/public').then(({ data }) => setMaterials(data ?? {}))
     void getJson<JoinCase>('/web/case').then(({ data }) => setStory(data?.shown ? data : null))
     void getJson<Tariffs>('/web/tariffs').then(({ data }) => {
       setTariffs(data)
@@ -89,6 +92,21 @@ export function Join() {
         <div><h1>Запись пациентов для стоматологии</h1>
           <p>Пациенты записываются в Telegram, бот напоминает о приёме. Работать можно в Telegram и на сайте — с телефона и компьютера.</p></div>
       </div>
+      {(materials.video || materials.presentation) && (
+        <section id="materials" className="site-case site-materials" aria-label="Посмотрите за минуту">
+          <h2>Посмотрите за минуту</h2>
+          {materials.video && (
+            // preload="none": ролик ~9 МБ не грузится, пока не нажали «Play» (страницу часто открывают с мобильного)
+            <video className="site-video" controls preload="none" playsInline poster={materials.poster ?? undefined} width={1080} height={1350}
+              aria-label="Ролик о Tish на минуту">
+              <source src={materials.video} type="video/mp4" />
+            </video>
+          )}
+          {materials.presentation && (
+            <a className="btn" href={materials.presentation} target="_blank" rel="noopener noreferrer">📄 Презентация (PDF)</a>
+          )}
+        </section>
+      )}
       {tariffs?.promo && (
         <div className="site-promo">
           <h2>🎁 {tariffs.promo.title}</h2>

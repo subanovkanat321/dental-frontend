@@ -273,3 +273,22 @@ test('обычный браузер — без подсказки про Instagr
   expect(await screen.findByRole('heading', { name: 'Улыбка' })).toBeInTheDocument()
   expect(screen.queryByText(/Открыть в браузере/)).not.toBeInTheDocument()
 })
+
+test('/join: «Посмотрите за минуту» — ролик без предзагрузки и PDF-презентация; нет файлов — нет блока', async () => {
+  server.use(http.get('*/web/materials/public', () => HttpResponse.json({
+    video: '/web/materials/public/promo.mp4', poster: '/web/materials/public/promo.png', presentation: '/web/materials/public/presentation.pdf',
+  })))
+  const { unmount } = render(<Join />)
+  const block = await screen.findByRole('region', { name: 'Посмотрите за минуту' })
+  const video = within(block).getByLabelText('Ролик о Tish на минуту')
+  expect(video).toHaveAttribute('preload', 'none')
+  expect(video).toHaveAttribute('poster', '/web/materials/public/promo.png')
+  expect(video.querySelector('source')).toHaveAttribute('src', '/web/materials/public/promo.mp4')
+  expect(within(block).getByRole('link', { name: '📄 Презентация (PDF)' })).toHaveAttribute('href', '/web/materials/public/presentation.pdf')
+  unmount()
+
+  server.use(http.get('*/web/materials/public', () => HttpResponse.json({ video: null, poster: null, presentation: null })))
+  render(<Join />)
+  expect(await screen.findByText(/Попробовать — бесплатно/)).toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Посмотрите за минуту' })).not.toBeInTheDocument()
+})

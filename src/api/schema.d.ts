@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/outreach/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["template"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/info": {
         parameters: {
             query?: never;
@@ -1067,7 +1083,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template"];
+        get: operations["template_1"];
         put: operations["saveTemplate"];
         post?: never;
         delete?: never;
@@ -1790,6 +1806,70 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/outreach/{id}/sent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["sent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/outreach/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/outreach/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["apply_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/outreach/import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["preview_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3035,9 +3115,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["preview_1"];
+        get: operations["preview_2"];
         put?: never;
-        post: operations["apply_1"];
+        post: operations["apply_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3085,7 +3165,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["apply_2"];
+        post: operations["apply_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3101,7 +3181,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["preview_2"];
+        post: operations["preview_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3581,7 +3661,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["apply_3"];
+        post: operations["apply_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3883,7 +3963,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template_1"];
+        get: operations["template_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3988,7 +4068,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/platform/materials": {
+    "/api/platform/outreach": {
         parameters: {
             query?: never;
             header?: never;
@@ -3996,6 +4076,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["list_9"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4187,7 +4283,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template_2"];
+        get: operations["template_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4555,7 +4651,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_10"];
+        get: operations["list_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4603,7 +4699,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_11"];
+        get: operations["list_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4875,7 +4971,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template_3"];
+        get: operations["template_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5035,7 +5131,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_12"];
+        get: operations["list_13"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5809,6 +5905,14 @@ export interface components {
             hasRequisites?: boolean;
             hasQr?: boolean;
         };
+        ClinicOutreachTemplateRequest: {
+            text?: string;
+        };
+        ClinicOutreachTemplate: {
+            text?: string;
+            custom?: boolean;
+            defaultText?: string;
+        };
         PlatformInfoControllerRequest: {
             legalName?: string;
             hosting?: string;
@@ -5869,6 +5973,13 @@ export interface components {
             nextStep?: string;
             /** Format: date */
             nextStepOn?: string;
+            /** @enum {string} */
+            source?: "SITE" | "MANUAL" | "LIST";
+            address?: string;
+            link?: string;
+            /** Format: date-time */
+            contactedAt?: string;
+            lostReason?: string;
         };
         PlatformFinanceControllerSettingsRequest: {
             smsPriceSom?: number;
@@ -6986,6 +7097,34 @@ export interface components {
             /** Format: date */
             paidUntil?: string;
         };
+        ClinicOutreachDeclineRequest: {
+            reason?: string;
+        };
+        ClinicOutreachImportReport: {
+            /** Format: int32 */
+            total?: number;
+            /** Format: int32 */
+            fresh?: number;
+            /** Format: int32 */
+            duplicates?: number;
+            /** Format: int32 */
+            errors?: number;
+            /** Format: int32 */
+            added?: number;
+            rows?: components["schemas"]["ClinicOutreachImportRow"][];
+        };
+        ClinicOutreachImportRow: {
+            /** Format: int32 */
+            line?: number;
+            clinicName?: string;
+            phone?: string;
+            address?: string;
+            link?: string;
+            city?: string;
+            /** @enum {string} */
+            status?: "NEW" | "DUPLICATE" | "ERROR";
+            message?: string;
+        };
         DentalNewsControllerAddFeed: {
             url?: string;
         };
@@ -8006,6 +8145,21 @@ export interface components {
             roles?: ("ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT")[];
             /** Format: date-time */
             createdAt?: string;
+        };
+        ClinicOutreachCounts: {
+            /** Format: int64 */
+            fresh?: number;
+            /** Format: int64 */
+            sent?: number;
+            /** Format: int64 */
+            further?: number;
+            /** Format: int64 */
+            declined?: number;
+        };
+        ClinicOutreachOutreach: {
+            counts?: components["schemas"]["ClinicOutreachCounts"];
+            leads?: components["schemas"]["SalesFunnelLead"][];
+            template?: components["schemas"]["ClinicOutreachTemplate"];
         };
         MaterialsListing: {
             configured?: boolean;
@@ -9678,6 +9832,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayRequestsSettings"];
+                };
+            };
+        };
+    };
+    template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicOutreachTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicOutreachTemplate"];
                 };
             };
         };
@@ -11406,7 +11584,7 @@ export interface operations {
             };
         };
     };
-    template: {
+    template_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -12956,6 +13134,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PayRequestsRequest"];
+                };
+            };
+        };
+    };
+    sent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesFunnelLead"];
+                };
+            };
+        };
+    };
+    decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicOutreachDeclineRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesFunnelLead"];
+                };
+            };
+        };
+    };
+    apply_1: {
+        parameters: {
+            query?: {
+                text?: string;
+                city?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicOutreachImportReport"];
+                };
+            };
+        };
+    };
+    preview_1: {
+        parameters: {
+            query?: {
+                text?: string;
+                city?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicOutreachImportReport"];
                 };
             };
         };
@@ -15210,7 +15496,7 @@ export interface operations {
             };
         };
     };
-    preview_1: {
+    preview_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -15230,7 +15516,7 @@ export interface operations {
             };
         };
     };
-    apply_1: {
+    apply_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -15303,7 +15589,7 @@ export interface operations {
             };
         };
     };
-    apply_2: {
+    apply_3: {
         parameters: {
             query: {
                 kind: "PATIENTS" | "SERVICES";
@@ -15343,7 +15629,7 @@ export interface operations {
             };
         };
     };
-    preview_2: {
+    preview_3: {
         parameters: {
             query: {
                 kind: "PATIENTS" | "SERVICES";
@@ -16265,7 +16551,7 @@ export interface operations {
             };
         };
     };
-    apply_3: {
+    apply_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -16745,7 +17031,7 @@ export interface operations {
             };
         };
     };
-    template_1: {
+    template_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -16894,6 +17180,29 @@ export interface operations {
         };
     };
     list_9: {
+        parameters: {
+            query?: {
+                group?: "FRESH" | "SENT" | "FURTHER" | "DECLINED";
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicOutreachOutreach"];
+                };
+            };
+        };
+    };
+    list_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -17152,7 +17461,7 @@ export interface operations {
             };
         };
     };
-    template_2: {
+    template_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -17694,7 +18003,7 @@ export interface operations {
             };
         };
     };
-    list_10: {
+    list_11: {
         parameters: {
             query?: {
                 done?: boolean;
@@ -17758,7 +18067,7 @@ export interface operations {
             };
         };
     };
-    list_11: {
+    list_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -18111,7 +18420,7 @@ export interface operations {
             };
         };
     };
-    template_3: {
+    template_4: {
         parameters: {
             query: {
                 kind: "PATIENTS" | "SERVICES";
@@ -18347,7 +18656,7 @@ export interface operations {
             };
         };
     };
-    list_12: {
+    list_13: {
         parameters: {
             query?: never;
             header?: never;
