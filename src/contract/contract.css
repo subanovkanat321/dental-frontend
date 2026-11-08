@@ -1,0 +1,30 @@
+/* Договор с пациентом: шаблон в «Настройках», блок в карточке пациента, подпись пальцем */
+.contract-template { display: grid; gap: 16px; max-width: 860px; }
+.contract-template .card-block { display: grid; gap: 12px; }
+.contract-template textarea { width: 100%; line-height: 1.45; resize: vertical; }
+.contract-legal { margin: 0; padding: 8px 12px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--text); }
+.contract-preview { padding: 12px 14px; border-radius: var(--r-md); background: var(--sunken); color: var(--text);
+  max-height: 420px; overflow: auto; }
+.contract-preview h3 { margin: 0 0 8px; font-size: 1rem; }
+.contract-preview p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
+
+.contract-box { display: grid; gap: 8px; }
+.contract-box h3 { margin: 0; }
+.contract-status { margin: 0; }
+.contract-box .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.signature-pad { position: fixed; inset: 0; z-index: 900; display: grid; place-items: center; padding: 16px;
+  background: rgb(15 42 48 / 45%); }
+.signature-card { width: min(720px, 100%); display: grid; gap: 12px; padding: 16px; border-radius: var(--r-lg);
+  background: var(--card); color: var(--text); box-shadow: 0 8px 32px rgb(0 0 0 / 20%); }
+.signature-card h2 { margin: 0; font-size: 1.1rem; }
+.signature-canvas { width: 100%; height: 240px; border: 1.5px dashed var(--line-strong); border-radius: var(--r-md);
+  background: #fff; touch-action: none; cursor: crosshair; }
+.signature-card .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+
+/* Лист договора: текст как есть (переносы строк шаблона), подписи внизу */
+.print-sheet .contract-body { white-space: pre-wrap; text-align: justify; }
+.print-sheet .contract-signs { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
+.print-sheet .contract-signs div { display: grid; gap: 4px; align-content: end; }
+.print-sheet .contract-signs img { max-width: 60mm; max-height: 22mm; object-fit: contain; }
+.print-sheet .contract-signs .line { border-bottom: 1px solid #111; min-height: 22mm; display: flex; align-items: flex-end; }

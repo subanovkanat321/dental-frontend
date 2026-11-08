@@ -100,6 +100,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/salaries/timesheet/norm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["norm"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/salaries/timesheet/day": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["day"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/salaries/assistants/{telegramId}": {
         parameters: {
             query?: never;
@@ -1021,6 +1053,22 @@ export interface paths {
         };
         get: operations["settings_3"];
         put: operations["setSettings_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinic/contract-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["template"];
+        put: operations["saveTemplate"];
         post?: never;
         delete?: never;
         options?: never;
@@ -2404,6 +2452,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/contract/sign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["sign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{patientId}/contract/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["scanFile"];
+        put?: never;
+        post: operations["scan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/before-after/ai-text": {
         parameters: {
             query?: never;
@@ -3163,7 +3243,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["day"];
+        get: operations["day_1"];
         put?: never;
         post: operations["create_15"];
         delete?: never;
@@ -3700,6 +3780,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/salaries/timesheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/push": {
         parameters: {
             query?: never;
@@ -3755,7 +3851,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template"];
+        get: operations["template_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3787,7 +3883,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3803,7 +3899,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
+        get: operations["get_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3915,7 +4011,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4059,7 +4155,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template_1"];
+        get: operations["template_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4091,7 +4187,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4204,6 +4300,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["ofPatient_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{patientId}/contract": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_8"];
+        put?: never;
+        post?: never;
+        delete: operations["unsign"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/patients/{patientId}/contract/signature": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["signature"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4411,7 +4539,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
+        get: operations["get_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4491,7 +4619,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_8"];
+        get: operations["get_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4827,7 +4955,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_9"];
+        get: operations["get_11"];
         put?: never;
         post?: never;
         delete: operations["delete_11"];
@@ -5432,6 +5560,7 @@ export interface components {
             /** Format: int64 */
             rentSom?: number;
             rentPercent?: number;
+            byTimesheet?: boolean;
         };
         SalaryControllerSalaryRow: {
             /** Format: int64 */
@@ -5461,6 +5590,61 @@ export interface components {
             owesSom?: number;
             /** Format: int64 */
             rentReceivedSom?: number;
+            byTimesheet?: boolean;
+            /** Format: int32 */
+            workedDays?: number;
+            /** Format: int32 */
+            normDays?: number;
+            /** Format: int64 */
+            baseAccruedSom?: number;
+        };
+        TimesheetControllerNormRequest: {
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            telegramId?: number;
+            month?: string;
+            /** Format: int32 */
+            days?: number;
+        };
+        TimesheetControllerView: {
+            month?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            telegramId?: number;
+            /** Format: int64 */
+            baseSom?: number;
+            byTimesheet?: boolean;
+            /** Format: int64 */
+            accruedSom?: number;
+            /** Format: int32 */
+            normDays?: number;
+            normManual?: boolean;
+            /** Format: int32 */
+            plannedDays?: number;
+            /** Format: int32 */
+            workedDays?: number;
+            days?: components["schemas"]["TimesheetsDay"][];
+        };
+        TimesheetsDay: {
+            /** Format: date */
+            date?: string;
+            planned?: boolean;
+            /** @enum {string} */
+            mark?: "WORKED" | "OFF" | "SICK" | "VACATION";
+            manual?: boolean;
+            note?: string;
+        };
+        TimesheetControllerDayRequest: {
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            telegramId?: number;
+            /** Format: date */
+            date?: string;
+            /** @enum {string} */
+            mark?: "WORKED" | "OFF" | "SICK" | "VACATION";
         };
         PushControllerChannelForm: {
             channel?: string;
@@ -6355,6 +6539,20 @@ export interface components {
             details?: string;
             hasQr?: boolean;
         };
+        ContractControllerTemplateRequest: {
+            title?: string;
+            body?: string;
+            requisites?: string;
+        };
+        PatientContractsTemplate: {
+            title?: string;
+            body?: string;
+            requisites?: string;
+            custom?: boolean;
+            variables?: string[];
+            defaultTitle?: string;
+            defaultBody?: string;
+        };
         AuditControllerSettingsChange: {
             disabled: string[];
         };
@@ -6953,6 +7151,22 @@ export interface components {
             stage?: number;
             /** Format: int64 */
             serviceTypeId?: number;
+        };
+        PatientContractsView: {
+            signed?: boolean;
+            /** Format: date */
+            signedOn?: string;
+            /** Format: date-time */
+            signedAt?: string;
+            signedBy?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            hasSignature?: boolean;
+            hasScan?: boolean;
+            scanType?: string;
+            title?: string;
+            text?: string;
+            canSign?: boolean;
         };
         BeforeAfterAiTextRequest: {
             procedure?: string;
@@ -9084,6 +9298,54 @@ export interface operations {
             };
         };
     };
+    norm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimesheetControllerNormRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimesheetControllerView"];
+                };
+            };
+        };
+    };
+    day: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimesheetControllerDayRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimesheetControllerView"];
+                };
+            };
+        };
+    };
     assistantTerms: {
         parameters: {
             query: {
@@ -11040,6 +11302,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepositsSettings"];
+                };
+            };
+        };
+    };
+    template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientContractsTemplate"];
+                };
+            };
+        };
+    };
+    saveTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContractControllerTemplateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientContractsTemplate"];
                 };
             };
         };
@@ -13711,6 +14017,89 @@ export interface operations {
             };
         };
     };
+    sign: {
+        parameters: {
+            query?: {
+                doctorId?: number;
+                signedOn?: string;
+            };
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    signature?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientContractsView"];
+                };
+            };
+        };
+    };
+    scanFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    scan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientContractsView"];
+                };
+            };
+        };
+    };
     beforeAfterText: {
         parameters: {
             query?: never;
@@ -15156,7 +15545,7 @@ export interface operations {
             };
         };
     };
-    day: {
+    day_1: {
         parameters: {
             query: {
                 date: string;
@@ -16085,6 +16474,30 @@ export interface operations {
             };
         };
     };
+    get_3: {
+        parameters: {
+            query: {
+                month: string;
+                doctorId?: number;
+                telegramId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimesheetControllerView"];
+                };
+            };
+        };
+    };
     view_3: {
         parameters: {
             query?: never;
@@ -16152,7 +16565,7 @@ export interface operations {
             };
         };
     };
-    template: {
+    template_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -16192,7 +16605,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -16214,7 +16627,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -16363,7 +16776,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -16559,7 +16972,7 @@ export interface operations {
             };
         };
     };
-    template_1: {
+    template_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -16601,7 +17014,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -16795,6 +17208,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExpensesExpense"][];
+                };
+            };
+        };
+    };
+    get_8: {
+        parameters: {
+            query?: {
+                doctorId?: number;
+            };
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientContractsView"];
+                };
+            };
+        };
+    };
+    unsign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    signature: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
                 };
             };
         };
@@ -17057,7 +17536,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -17159,7 +17638,7 @@ export interface operations {
             };
         };
     };
-    get_8: {
+    get_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -17599,7 +18078,7 @@ export interface operations {
             };
         };
     };
-    get_9: {
+    get_11: {
         parameters: {
             query?: never;
             header?: never;

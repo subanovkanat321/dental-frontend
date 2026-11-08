@@ -331,6 +331,62 @@
         }
       }
     },
+    "/api/salaries/timesheet/norm" : {
+      "put" : {
+        "tags" : [ "timesheet-controller" ],
+        "operationId" : "norm",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TimesheetControllerNormRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TimesheetControllerView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/salaries/timesheet/day" : {
+      "put" : {
+        "tags" : [ "timesheet-controller" ],
+        "operationId" : "day",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TimesheetControllerDayRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TimesheetControllerView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/salaries/assistants/{telegramId}" : {
       "put" : {
         "tags" : [ "salary-controller" ],
@@ -2723,6 +2779,50 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/DepositsSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/contract-template" : {
+      "get" : {
+        "tags" : [ "contract-controller" ],
+        "operationId" : "template",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientContractsTemplate"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "contract-controller" ],
+        "operationId" : "saveTemplate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ContractControllerTemplateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientContractsTemplate"
                 }
               }
             }
@@ -6008,6 +6108,132 @@
         }
       }
     },
+    "/api/patients/{patientId}/contract/sign" : {
+      "post" : {
+        "tags" : [ "contract-controller" ],
+        "operationId" : "sign",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "signedOn",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "signature" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientContractsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/contract/scan" : {
+      "get" : {
+        "tags" : [ "contract-controller" ],
+        "operationId" : "scanFile",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "contract-controller" ],
+        "operationId" : "scan",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientContractsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/before-after/ai-text" : {
       "post" : {
         "tags" : [ "before-after-ai-controller" ],
@@ -7643,7 +7869,7 @@
     "/api/appointments" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "day",
+        "operationId" : "day_1",
         "parameters" : [ {
           "name" : "date",
           "in" : "query",
@@ -8888,6 +9114,48 @@
         }
       }
     },
+    "/api/salaries/timesheet" : {
+      "get" : {
+        "tags" : [ "timesheet-controller" ],
+        "operationId" : "get_3",
+        "parameters" : [ {
+          "name" : "month",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "telegramId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TimesheetControllerView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/push" : {
       "get" : {
         "tags" : [ "push-controller" ],
@@ -8980,7 +9248,7 @@
     "/api/platform/surveys/template" : {
       "get" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "template",
+        "operationId" : "template_1",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9019,7 +9287,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9046,7 +9314,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_4",
+        "operationId" : "get_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9224,7 +9492,7 @@
     "/api/platform/health" : {
       "get" : {
         "tags" : [ "health-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9469,7 +9737,7 @@
     "/api/platform/agreements/template" : {
       "get" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "template_1",
+        "operationId" : "template_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9508,7 +9776,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9760,6 +10028,87 @@
                   "items" : {
                     "$ref" : "#/components/schemas/ExpensesExpense"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/contract" : {
+      "get" : {
+        "tags" : [ "contract-controller" ],
+        "operationId" : "get_8",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientContractsView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "contract-controller" ],
+        "operationId" : "unsign",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/patients/{patientId}/contract/signature" : {
+      "get" : {
+        "tags" : [ "contract-controller" ],
+        "operationId" : "signature",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
                 }
               }
             }
@@ -10094,7 +10443,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10199,7 +10548,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_8",
+        "operationId" : "get_10",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10717,7 +11066,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_9",
+        "operationId" : "get_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11927,6 +12276,9 @@
           },
           "rentPercent" : {
             "type" : "number"
+          },
+          "byTimesheet" : {
+            "type" : "boolean"
           }
         }
       },
@@ -11990,6 +12342,128 @@
           "rentReceivedSom" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "byTimesheet" : {
+            "type" : "boolean"
+          },
+          "workedDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "normDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "baseAccruedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "TimesheetControllerNormRequest" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "month" : {
+            "type" : "string"
+          },
+          "days" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "TimesheetControllerView" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "baseSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "byTimesheet" : {
+            "type" : "boolean"
+          },
+          "accruedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "normDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "normManual" : {
+            "type" : "boolean"
+          },
+          "plannedDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "workedDays" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TimesheetsDay"
+            }
+          }
+        }
+      },
+      "TimesheetsDay" : {
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "planned" : {
+            "type" : "boolean"
+          },
+          "mark" : {
+            "type" : "string",
+            "enum" : [ "WORKED", "OFF", "SICK", "VACATION" ]
+          },
+          "manual" : {
+            "type" : "boolean"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TimesheetControllerDayRequest" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "mark" : {
+            "type" : "string",
+            "enum" : [ "WORKED", "OFF", "SICK", "VACATION" ]
           }
         }
       },
@@ -14223,6 +14697,47 @@
           }
         }
       },
+      "ContractControllerTemplateRequest" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "requisites" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PatientContractsTemplate" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "body" : {
+            "type" : "string"
+          },
+          "requisites" : {
+            "type" : "string"
+          },
+          "custom" : {
+            "type" : "boolean"
+          },
+          "variables" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "defaultTitle" : {
+            "type" : "string"
+          },
+          "defaultBody" : {
+            "type" : "string"
+          }
+        }
+      },
       "AuditControllerSettingsChange" : {
         "properties" : {
           "disabled" : {
@@ -15637,6 +16152,46 @@
           "serviceTypeId" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "PatientContractsView" : {
+        "properties" : {
+          "signed" : {
+            "type" : "boolean"
+          },
+          "signedOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "signedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "signedBy" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "hasSignature" : {
+            "type" : "boolean"
+          },
+          "hasScan" : {
+            "type" : "boolean"
+          },
+          "scanType" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "canSign" : {
+            "type" : "boolean"
           }
         }
       },
