@@ -29,6 +29,8 @@ import { EarningsChip } from '../earnings/EarningsWidgets'
 import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
 import { HelpHint } from '../help/HelpHint'
 import { useApptHover } from './useApptHover'
+import { ChairBadge } from '../team/ChairBadge'
+import { useChairs } from '../team/chairs'
 import { MonthGrid } from './month/MonthGrid'
 import { addMonths, monthTitle } from './month/monthModel'
 import { useMonthData } from './month/useMonth'
@@ -276,7 +278,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
 
   /** Пустое место в колонке врача → «Новая запись» на это время, вниз до 15 минут. */
   const pick = (doctorId: number) => (e: MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('.appt, .grid-free')) return
+    if ((e.target as HTMLElement).closest('.appt, .grid-free, .grid-chair')) return
     // Расписание коллеги — только просмотр: записать к нему может он сам, регистратура или админ
     if (!canEditDoctor(me, doctorId)) return
     const y = e.clientY - e.currentTarget.getBoundingClientRect().top - PAD
@@ -322,6 +324,10 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     return { doctorId: d.id!, name: d.fullName ?? '', color: AVATARS[doctors.indexOf(d) % AVATARS.length]!, canBook: canEditDoctor(me, d.id), ...f }
   })
   const bookAt = (doctorId: number, minutes: number) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })
+
+  // Общие кресла (V185): значок «🪑 Кресло 1» в шапке колонки врача
+  const chairs = useChairs(!dayList && !weekMode && !monthMode)
+  const doctorName = (id: number) => doctors.find((d) => d.id === id)?.fullName ?? ''
 
   // Всплывающая карточка приёма при наведении мышью (компьютер) — общая для «Дня»
   const hover = useApptHover(me, (id) => doctors.find((d) => d.id === id)?.fullName ?? '')
@@ -518,6 +524,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                           {hoursText && <span className="grid-head-hours num">{hoursText}</span>}
                         </span>
                       )}
+                      <ChairBadge chairs={chairs.data} doctorId={d.id} nameOf={doctorName} />
                     </span>
                   </button>
                 )
@@ -551,6 +558,18 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                         <span>{b.emoji} {b.title}</span>
                       </div>
                     ))}
+                    {/* Кресло врача занято другим врачом (общее кресло, V185): не свободно, нажатие не создаёт запись */}
+                    {sl?.workingDay && (sl.chairBusy ?? []).map((b) => {
+                      const top = y(minutesOf(b.start!))
+                      const text = `${timeOf(b.start!)}–${timeOf(b.end!)}: кресло занято (${b.doctorName})`
+                      return (
+                        <div key={`chair-${b.start}`} className="grid-break grid-chair" role="note" aria-label={text}
+                          title={`${text} — «${b.chairName}» в это время у другого врача`}
+                          style={{ top, height: Math.max(y(minutesOf(b.end!) || 24 * 60) - top, 14) }}>
+                          <span>🪑 кресло занято ({b.doctorName})</span>
+                        </div>
+                      )
+                    })}
                     {sl?.workingDay && (sl.free ?? []).map((w) => {
                       // Свободное окно — светлый блок «Свободно 13:00–18:00 · ＋ записать»; сегодня — только то, что впереди
                       const start = Math.max(minutesOf(w.start!), nowOrNull ?? 0, from)

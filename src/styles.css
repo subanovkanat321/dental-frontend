@@ -2239,3 +2239,11 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .segments.view-mode.compact { width: 100%; margin-bottom: 8px; }
   .toolbar .segments.view-mode.compact { margin-bottom: 0; }
 }
+
+/* Общее кресло (V185): значок у врача и «кресло занято» другим врачом в сетке дня — штриховка, как у
+   «нельзя записать» (DESIGN.md), но нажатие ловит сама полоса: запись не создаётся */
+.chair-badge { display: inline-flex; align-items: center; gap: 3px; max-width: 100%; padding: 0 6px; border-radius: var(--r-sm); background: var(--sunken); color: var(--hint); font-size: .78rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.who + .chair-badge, .grid-head-text .chair-badge { margin-top: 2px; }
+.grid-head-text .chair-badge { justify-self: start; }
+.grid-chair { pointer-events: auto; cursor: not-allowed; }
+.chair-conflicts { margin: 6px 0 0; padding-left: 18px; }

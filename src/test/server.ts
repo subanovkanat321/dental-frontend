@@ -68,6 +68,8 @@ export const server = setupServer(
   http.get('*/api/shifts', () => HttpResponse.json({ people: [], shifts: [], canEdit: false, me: 0 } satisfies Schemas['ShiftControllerSchedule'])),
   // Вопросы пациентов (V142): по умолчанию новых нет — бейджа у «Пациентов» нет
   http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 0 } satisfies Schemas['QuestionControllerNewCount'])),
+  // Кресла (V185): по умолчанию у клиники их нет — значков и штриховки «кресло занято» нет
+  http.get('*/api/chairs', () => HttpResponse.json([] satisfies Schemas['ChairOverview'][])),
   http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [], free: [], breaks: [] })),
   http.get('*/api/appointments/:id/note', () => HttpResponse.json({ note: '' })),
   http.get('*/api/patients/:id/notes', () => HttpResponse.json([])),

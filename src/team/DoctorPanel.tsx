@@ -7,6 +7,7 @@ import { SaveBar } from '../layout/SaveBar'
 import { resizePhoto } from '../medical/thumb'
 import { useDirty } from '../lib/unsaved'
 import { useClose } from '../lib/useClose'
+import { ChairField, ChairHoursHint } from './ChairField'
 import { HoursEditor } from './HoursEditor'
 import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
@@ -89,7 +90,9 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
           <h4>Часы работы</h4>
           <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — во вкладке «Перерывы».</p>
           <HoursEditor doctorId={d.id!} doctorName={d.fullName ?? ''} />
+          <ChairHoursHint doctorId={d.id!} me={me} />
         </section>
+        <ChairField key={`chair-${d.id}`} doctorId={d.id!} me={me} />
       </section>
 
       {(admin || self) && (

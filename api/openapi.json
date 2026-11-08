@@ -2498,6 +2498,46 @@
         }
       }
     },
+    "/api/doctors/{id}/chair" : {
+      "put" : {
+        "tags" : [ "chair-assignment-controller" ],
+        "operationId" : "assign_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChairAssignmentControllerChairRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChairOverview"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/doctors/{id}/admin" : {
       "put" : {
         "tags" : [ "doctor-controller" ],
@@ -2997,6 +3037,61 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/chairs/{id}" : {
+      "put" : {
+        "tags" : [ "chair-controller" ],
+        "operationId" : "rename_2",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChairControllerNameRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChairsChair"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "chair-controller" ],
+        "operationId" : "delete_10",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
           }
         }
       }
@@ -8216,10 +8311,57 @@
         }
       }
     },
+    "/api/chairs" : {
+      "get" : {
+        "tags" : [ "chair-assignment-controller" ],
+        "operationId" : "list_7",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChairOverview"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "chair-controller" ],
+        "operationId" : "create_14",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChairControllerNameRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChairsChair"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/care-memos" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "list_7",
+        "operationId" : "list_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -8238,7 +8380,7 @@
       },
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "create_14",
+        "operationId" : "create_15",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8363,7 +8505,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_11",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -8410,7 +8552,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_15",
+        "operationId" : "create_16",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9593,7 +9735,7 @@
     "/api/salaries" : {
       "get" : {
         "tags" : [ "salary-controller" ],
-        "operationId" : "list_8",
+        "operationId" : "list_9",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -9923,7 +10065,7 @@
     "/api/platform/outreach" : {
       "get" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "list_9",
+        "operationId" : "list_10",
         "parameters" : [ {
           "name" : "group",
           "in" : "query",
@@ -9985,7 +10127,7 @@
     "/api/platform/materials" : {
       "get" : {
         "tags" : [ "materials-controller" ],
-        "operationId" : "list_10",
+        "operationId" : "list_11",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10547,7 +10689,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -10983,7 +11125,7 @@
     "/api/patient-questions" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "list_11",
+        "operationId" : "list_12",
         "parameters" : [ {
           "name" : "done",
           "in" : "query",
@@ -11055,7 +11197,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_12",
+        "operationId" : "list_13",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11694,7 +11836,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11749,7 +11891,7 @@
     "/api/appointments/{id}/teeth" : {
       "get" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "list_13",
+        "operationId" : "list_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12380,7 +12522,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12440,7 +12582,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_14",
+        "operationId" : "delete_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12497,7 +12639,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_15",
+        "operationId" : "delete_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12556,7 +12698,7 @@
     "/api/doctors/{id}" : {
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_16",
+        "operationId" : "delete_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -15081,6 +15223,62 @@
           }
         }
       },
+      "ChairAssignmentControllerChairRequest" : {
+        "properties" : {
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "ChairOverview" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "doctorIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "overlaps" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ChairOverviewHoursOverlap"
+            }
+          }
+        }
+      },
+      "ChairOverviewHoursOverlap" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "otherDoctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "weekday" : {
+            "type" : "string",
+            "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "time-local"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "time-local"
+          }
+        }
+      },
       "DoctorControllerAdminRole" : {
         "properties" : {
           "admin" : {
@@ -15435,6 +15633,31 @@
           },
           "enabled" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "ChairControllerNameRequest" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ChairsChair" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "doctorIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
           }
         }
       },
@@ -18510,6 +18733,12 @@
               "type" : "string",
               "format" : "date-time"
             }
+          },
+          "chairBusy" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SlotsViewChairBusy"
+            }
           }
         }
       },
@@ -18527,6 +18756,28 @@
             "type" : "string"
           },
           "emoji" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SlotsViewChairBusy" : {
+        "properties" : {
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "chairName" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorName" : {
             "type" : "string"
           }
         }

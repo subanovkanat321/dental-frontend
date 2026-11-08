@@ -932,6 +932,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/doctors/{id}/chair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["assign_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/doctors/{id}/admin": {
         parameters: {
             query?: never;
@@ -1135,6 +1151,22 @@ export interface paths {
         put: operations["saveSettings"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chairs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["rename_2"];
+        post?: never;
+        delete: operations["delete_10"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3300,7 +3332,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/care-memos": {
+    "/api/chairs": {
         parameters: {
             query?: never;
             header?: never;
@@ -3310,6 +3342,22 @@ export interface paths {
         get: operations["list_7"];
         put?: never;
         post: operations["create_14"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/care-memos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_8"];
+        put?: never;
+        post: operations["create_15"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3358,7 +3406,7 @@ export interface paths {
         get: operations["get_2"];
         put?: never;
         post: operations["rotate"];
-        delete: operations["delete_10"];
+        delete: operations["delete_11"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3373,7 +3421,7 @@ export interface paths {
         };
         get: operations["day_1"];
         put?: never;
-        post: operations["create_15"];
+        post: operations["create_16"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3899,7 +3947,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4091,7 +4139,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_9"];
+        get: operations["list_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4123,7 +4171,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_10"];
+        get: operations["list_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4446,7 +4494,7 @@ export interface paths {
         get: operations["content"];
         put?: never;
         post?: never;
-        delete: operations["delete_11"];
+        delete: operations["delete_12"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4683,7 +4731,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_11"];
+        get: operations["list_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4731,7 +4779,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_12"];
+        get: operations["list_13"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5134,7 +5182,7 @@ export interface paths {
         get: operations["get_11"];
         put?: never;
         post?: never;
-        delete: operations["delete_12"];
+        delete: operations["delete_13"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5163,7 +5211,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_13"];
+        get: operations["list_14"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5454,7 +5502,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_13"];
+        delete: operations["delete_14"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5502,7 +5550,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_14"];
+        delete: operations["delete_15"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5534,7 +5582,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_15"];
+        delete: operations["delete_16"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5582,7 +5630,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_16"];
+        delete: operations["delete_17"];
         options?: never;
         head?: never;
         patch?: never;
@@ -6632,6 +6680,29 @@ export interface components {
             custom?: boolean;
             days?: components["schemas"]["DoctorHoursViewDay"][];
         };
+        ChairAssignmentControllerChairRequest: {
+            /** Format: int64 */
+            chairId?: number;
+        };
+        ChairOverview: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            doctorIds?: number[];
+            overlaps?: components["schemas"]["ChairOverviewHoursOverlap"][];
+        };
+        ChairOverviewHoursOverlap: {
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            otherDoctorId?: number;
+            /** @enum {string} */
+            weekday?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+            /** Format: time-local */
+            start?: string;
+            /** Format: time-local */
+            end?: string;
+        };
         DoctorControllerAdminRole: {
             admin?: boolean;
         };
@@ -6764,6 +6835,15 @@ export interface components {
             title?: string;
             mandatory?: boolean;
             enabled?: boolean;
+        };
+        ChairControllerNameRequest: {
+            name?: string;
+        };
+        ChairsChair: {
+            /** Format: int64 */
+            id?: number;
+            name?: string;
+            doctorIds?: number[];
         };
         CareMemoControllerMemo: {
             title?: string;
@@ -8049,6 +8129,7 @@ export interface components {
             breaks?: components["schemas"]["SlotsViewBreak"][];
             dayOff?: components["schemas"]["SlotsViewBreak"];
             taken?: string[];
+            chairBusy?: components["schemas"]["SlotsViewChairBusy"][];
         };
         SlotsViewBreak: {
             /** Format: date-time */
@@ -8057,6 +8138,16 @@ export interface components {
             end?: string;
             title?: string;
             emoji?: string;
+        };
+        SlotsViewChairBusy: {
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            chairName?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            doctorName?: string;
         };
         TimeRange: {
             /** Format: date-time */
@@ -11327,6 +11418,32 @@ export interface operations {
             };
         };
     };
+    assign_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChairAssignmentControllerChairRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChairOverview"][];
+                };
+            };
+        };
+    };
     setAdmin: {
         parameters: {
             query?: never;
@@ -11798,6 +11915,52 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AuditControllerSettings"];
                 };
+            };
+        };
+    };
+    rename_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChairControllerNameRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChairsChair"];
+                };
+            };
+        };
+    };
+    delete_10: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -15945,12 +16108,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CareMemosCareMemoView"][];
+                    "application/json": components["schemas"]["ChairOverview"][];
                 };
             };
         };
     };
     create_14: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChairControllerNameRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChairsChair"];
+                };
+            };
+        };
+    };
+    list_8: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CareMemosCareMemoView"][];
+                };
+            };
+        };
+    };
+    create_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -16078,7 +16285,7 @@ export interface operations {
             };
         };
     };
-    delete_10: {
+    delete_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -16119,7 +16326,7 @@ export interface operations {
             };
         };
     };
-    create_15: {
+    create_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -17003,7 +17210,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query: {
                 month: string;
@@ -17264,7 +17471,7 @@ export interface operations {
             };
         };
     };
-    list_9: {
+    list_10: {
         parameters: {
             query?: {
                 group?: "FRESH" | "SENT" | "FURTHER" | "DECLINED";
@@ -17309,7 +17516,7 @@ export interface operations {
             };
         };
     };
-    list_10: {
+    list_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -17765,7 +17972,7 @@ export interface operations {
             };
         };
     };
-    delete_11: {
+    delete_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -18110,7 +18317,7 @@ export interface operations {
             };
         };
     };
-    list_11: {
+    list_12: {
         parameters: {
             query?: {
                 done?: boolean;
@@ -18174,7 +18381,7 @@ export interface operations {
             };
         };
     };
-    list_12: {
+    list_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -18719,7 +18926,7 @@ export interface operations {
             };
         };
     };
-    delete_12: {
+    delete_13: {
         parameters: {
             query?: {
                 force?: boolean;
@@ -18763,7 +18970,7 @@ export interface operations {
             };
         };
     };
-    list_13: {
+    list_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -19172,7 +19379,7 @@ export interface operations {
             };
         };
     };
-    delete_13: {
+    delete_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -19232,7 +19439,7 @@ export interface operations {
             };
         };
     };
-    delete_14: {
+    delete_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -19278,7 +19485,7 @@ export interface operations {
             };
         };
     };
-    delete_15: {
+    delete_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -19338,7 +19545,7 @@ export interface operations {
             };
         };
     };
-    delete_16: {
+    delete_17: {
         parameters: {
             query?: never;
             header?: never;

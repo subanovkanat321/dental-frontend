@@ -49,6 +49,8 @@ function HoursForm({ doctorId, doctorName, onTimeOff, loaded }: {
     onSuccess: (saved) => {
       commit()
       client.setQueryData(['doctor-hours', doctorId], saved)
+      // Подсказка «часы пересекаются с соседом по креслу» — по новым часам
+      void client.invalidateQueries({ queryKey: ['chairs'] })
     },
   })
   const set = (code: Weekday, patch: Partial<Day>) => {

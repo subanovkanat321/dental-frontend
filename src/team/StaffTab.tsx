@@ -8,6 +8,8 @@ import { AssistantDoctors, ChangeRole, InviteMember } from './MemberParts'
 import { InviteByPhone, PHONE_HINT, StaffPhone, TemporaryPassword } from './PhoneParts'
 import { phoneText, ROLE_TEXT } from './texts'
 import { Loading } from '../layout/Loading'
+import { ChairBadge } from './ChairBadge'
+import { useChairs } from './chairs'
 import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
@@ -48,6 +50,8 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
   const members = useQuery({ queryKey: ['members'], queryFn: () => unwrap(api.GET('/api/members')), enabled: admin })
   const invites = useQuery({ queryKey: ['member-invites'], queryFn: () => unwrap(api.GET('/api/members/invites')), enabled: admin })
   const [filter, setFilter] = useState<Filter>('all')
+  const chairs = useChairs()
+  const nameOf = (id: number) => doctors.find((d) => d.id === id)?.fullName ?? ''
 
   const remove = useMutation<unknown, ApiError, Member>({
     mutationFn: (m) => unwrap(api.DELETE('/api/members/{telegramId}', { params: { path: { telegramId: m.telegramId! } } })),
@@ -108,6 +112,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                         ? <button type="button" className="row-link" onClick={() => onOpen(r.doctor.id!)}>{r.name}</button>
                         : <span className="strong">{r.name}</span>}
                     </span>
+                    {r.kind === 'doctor' && <ChairBadge chairs={chairs.data} doctorId={r.doctor.id} nameOf={nameOf} />}
                     {r.kind === 'member' && r.member.role === 'ASSISTANT' && <AssistantDoctors me={me} member={r.member} />}
                   </td>
                   <td>
