@@ -1,15 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
+import { PhoneInput } from '../clinic/PhoneInput'
+import { phoneFromInput, phoneToInput } from '../clinic/phone'
 import { ask } from '../lib/confirm'
+import { download } from '../lib/download'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
 import { CITIES } from '../lib/clinicSearch'
-import { openLink } from '../lib/telegram'
+import { haptic, openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
-import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, shareVideo, type Group, type OutreachLead } from './outreach'
+import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, prepareVideo, sendVideo, videoWay, type Group, type OutreachLead, type VideoResult } from './outreach'
 
 type Template = Schemas['ClinicOutreachTemplate']
 type Report = Schemas['ClinicOutreachImportReport']
@@ -33,8 +36,9 @@ export function OutreachTab() {
   const data = outreach.data
   const leads = data?.leads ?? []
   const q = query.trim().toLowerCase().replace(/ё/g, 'е')
-  const shown = leads.filter((l) => (group == null || groupOf(l) === group)
-    && (!q || (l.clinicName ?? '').toLowerCase().replace(/ё/g, 'е').includes(q)))
+  // Открытая карточка остаётся на месте, даже когда после отметки ушла из фильтра «Не писали», — до «Следующей»
+  const shown = leads.filter((l) => l.id === selected || ((group == null || groupOf(l) === group)
+    && (!q || (l.clinicName ?? '').toLowerCase().replace(/ё/g, 'е').includes(q))))
   const counts = data?.counts ?? {}
   const countOf: Record<Group, number> = { FRESH: counts.fresh ?? 0, SENT: counts.sent ?? 0, FURTHER: counts.further ?? 0, DECLINED: counts.declined ?? 0 }
 
@@ -57,8 +61,9 @@ export function OutreachTab() {
         <h2>Написать клиникам</h2>
         <p className="hint">Пишите по одной — своим нажатием: WhatsApp блокирует номер за массовые рассылки, а личное сообщение
           читают охотнее. После отправки отметьте «Да» — клиника перейдёт в «Написали» (и в воронке — «Связались»).</p>
-        <p className="hint">Порядок: <b>«Написать в WhatsApp»</b> — текст, затем <b>«🎬 Отправить ролик»</b> — видео отдельным файлом.
-          У незнакомого номера WhatsApp не делает ссылки кликабельными, поэтому ролик — вложением, а сайт — просто адресом в тексте.</p>
+        <p className="hint"><b>«📨 Отправить сообщение и ролик»</b>: ① откроется WhatsApp с текстом — отправьте; ② вернитесь сюда — появится
+          кнопка ролика: «Поделиться» → WhatsApp → этот чат (он первый в списке). Ролик — файлом: у незнакомого номера WhatsApp не делает
+          ссылки кликабельными. На компьютере ролик скачается — прикрепите его в WhatsApp Web.</p>
         {outreach.error && <p className="error">{outreach.error.message}</p>}
         {outreach.isPending ? <Loading /> : data && (
           <>
@@ -85,7 +90,7 @@ export function OutreachTab() {
                   <div role="list" className="funnel-list" aria-label="Клиники">
                     {shown.map((l) => (
                       <LeadRow key={l.id} lead={l} template={data.template?.text ?? ''} selected={l.id === selected}
-                        onSelect={() => setSelected(l.id === selected ? null : l.id!)} />
+                        onSelect={() => setSelected(l.id === selected ? null : l.id!)} onActive={() => setSelected(l.id!)} onNext={next} />
                     ))}
                   </div>
                 )}
@@ -97,12 +102,23 @@ export function OutreachTab() {
   )
 }
 
-function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead; template: string; selected: boolean; onSelect: () => void }) {
+/**
+ * Где клиника в «📨 Отправить сообщение и ролик»: message — открыли WhatsApp с текстом и ждём возврата в
+ * приложение; video — вернулись, крупно шаг 2 (ролик); ask — «Отправили?»; done — отметили, «Следующая».
+ */
+type Step = 'message' | 'video' | 'ask' | 'done' | null
+
+function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
+  lead: OutreachLead; template: string; selected: boolean; onSelect: () => void; onActive: () => void; onNext: () => void
+}) {
   const client = useQueryClient()
-  const [asking, setAsking] = useState(false)
+  const [step, setStep] = useState<Step>(null)
   const [copied, setCopied] = useState(false)
   const [declining, setDeclining] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [reason, setReason] = useState('')
+  const [video, setVideo] = useState<VideoResult | 'pending' | null>(null)
+  const [videoError, setVideoError] = useState<string | null>(null)
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['platform-outreach'] })
     void client.invalidateQueries({ queryKey: ['platform-funnel'] })
@@ -110,7 +126,8 @@ function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead
   const sent = useMutation<OutreachLead, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/platform/outreach/{id}/sent', { params: { path: { id: l.id! } } })),
     onSuccess: () => {
-      setAsking(false)
+      setStep('done')
+      haptic('success')
       refresh()
     },
   })
@@ -128,6 +145,39 @@ function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead
   })
   const text = messageFor(template, l.clinicName ?? '')
   const lost = l.stage === 'LOST'
+  const way = videoWay()
+
+  // Карточка открыта — ролик заранее в память (один раз на вкладку): «Поделиться» потом вызывается сразу по нажатию
+  useEffect(() => {
+    if (selected && !lost && l.phone && way !== 'telegram') prepareVideo().catch(() => {})
+  }, [selected, lost, l.phone, way])
+
+  // Шаг 1 → 2: WhatsApp открыли — ждём, когда владелец вернётся в приложение (вкладка снова видна или окно
+  // в фокусе), и только после того, как ушёл (иначе шаг 2 выскочил бы сразу)
+  useEffect(() => {
+    if (step !== 'message') return
+    let left = document.visibilityState === 'hidden'
+    const away = () => { left = true }
+    const back = () => {
+      if (left && document.visibilityState !== 'hidden') setStep('video')
+    }
+    const visibility = () => (document.visibilityState === 'hidden' ? away() : back())
+    document.addEventListener('visibilitychange', visibility)
+    window.addEventListener('blur', away)
+    window.addEventListener('focus', back)
+    return () => {
+      document.removeEventListener('visibilitychange', visibility)
+      window.removeEventListener('blur', away)
+      window.removeEventListener('focus', back)
+    }
+  }, [step])
+
+  // Вернулись из WhatsApp — шаг 2 сразу на виду (на телефоне карточка длинная)
+  const stepTwo = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (step === 'video') stepTwo.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+  }, [step])
+
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text)
@@ -135,15 +185,34 @@ function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead
     } catch {
       setCopied(false)
     }
-    setAsking(true)
+    setStep('ask')
+  }
+  // Шаг 1: текст — в WhatsApp, ролик тем временем качается в память
+  const both = () => {
+    onActive()
+    openLink(whatsappUrl(l.phone!, text))
+    setVideo(null)
+    setStep('message')
+    if (way !== 'telegram') prepareVideo().catch(() => {})
+  }
+  // Ролик: sendVideo зовёт «Поделиться» синхронно, в этом же нажатии (iPhone иначе откажет)
+  const shareVideo = (afterMessage: boolean) => {
+    setVideoError(null)
+    setVideo('pending')
+    sendVideo().then((r) => {
+      setVideo(r)
+      if (r !== 'cancelled' && r !== 'retry') setStep('ask')
+      else if (afterMessage) setStep('video')
+    }, (e: unknown) => {
+      setVideo(null)
+      setVideoError(e instanceof Error ? e.message : String(e))
+    })
   }
   const g = groupOf(l)
   const status = g === 'FRESH' ? <span className="chip small s-quiet">Не писали</span>
     : g === 'SENT' ? <span className="chip small s-ok">Написали{l.contactedAt ? ` ${shortDate(l.contactedAt)}` : ''}</span>
       : g === 'DECLINED' ? <span className="chip small s-bad">Отказ</span>
         : <span className="chip small s-request">{STAGE_TEXT[l.stage ?? ''] ?? 'Дальше'}</span>
-  // Ролик — отдельным файлом (ссылки у незнакомого номера не кликабельны)
-  const video = useMutation<Awaited<ReturnType<typeof shareVideo>>, Error>({ mutationFn: shareVideo })
   const error = sent.error ?? decline.error
   return (
     <div role="listitem" id={`outreach-${l.id}`} className={`sub-form form outreach-lead${selected ? ' active' : ''}`} aria-label={`Клиника: ${l.clinicName}`}
@@ -156,41 +225,83 @@ function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead
         {g !== 'SENT' && l.contactedAt && <> · написали {shortDate(l.contactedAt)}</>}</span>
       {lost && <span className="tone-bad">Просили не беспокоить{l.lostReason ? `: ${l.lostReason}` : ''} — не пишем.</span>}
       {selected && !lost && <p className="outreach-text" aria-label="Текст сообщения">{text}</p>}
-      {!lost && (
+      {!lost && step == null && (
         <div className="actions">
           {l.phone && (
-            <button type="button" className={g === 'FRESH' ? 'btn primary' : 'btn'}
-              onClick={() => { openLink(whatsappUrl(l.phone!, text)); setAsking(true) }}>Написать в WhatsApp</button>
+            <button type="button" className={g === 'FRESH' ? 'btn primary' : 'btn'} onClick={both}>📨 Отправить сообщение и ролик</button>
           )}
-          {!l.phone && l.link && <button type="button" className="btn" onClick={() => { openLink(l.link!); setAsking(true) }}>Открыть ссылку</button>}
-          <button type="button" className="btn" disabled={video.isPending} onClick={() => video.mutate()}>
-            {video.isPending ? 'Готовлю ролик…' : '🎬 Отправить ролик'}</button>
-          <button type="button" className="btn" onClick={() => void copy()}>Скопировать текст</button>
+          {!l.phone && l.link && <button type="button" className="btn" onClick={() => { onActive(); openLink(l.link!); setStep('ask') }}>Открыть ссылку</button>}
           {!declining && <button type="button" className="btn ghost" onClick={() => setDeclining(true)}>Не беспокоить</button>}
         </div>
       )}
-      {selected && (
+      {!lost && step == null && (
+        <div className="actions outreach-more" role="group" aria-label="По отдельности">
+          {l.phone && (
+            <button type="button" className="btn small ghost" onClick={() => { onActive(); openLink(whatsappUrl(l.phone!, text)); setStep('ask') }}>
+              Только сообщение</button>
+          )}
+          <button type="button" className="btn small ghost" disabled={video === 'pending'} onClick={() => shareVideo(false)}>
+            {video === 'pending' && step !== 'video' ? 'Готовлю ролик…' : 'Только ролик'}</button>
+          <button type="button" className="btn small ghost" onClick={() => void copy()}>Скопировать текст</button>
+        </div>
+      )}
+      {step === 'message' && (
+        <div className="outreach-step" role="status">
+          <span>① Текст открыт в WhatsApp — отправьте его и вернитесь сюда: будет шаг ② — ролик.</span>
+          <span className="actions">
+            <button type="button" className="btn small" onClick={() => setStep('video')}>Текст отправлен → к ролику</button>
+            <button type="button" className="btn small ghost" onClick={() => setStep(null)}>Отмена</button>
+          </span>
+        </div>
+      )}
+      {step === 'video' && (
+        <div ref={stepTwo} className="outreach-step big" role="group" aria-label="Шаг 2: ролик">
+          <strong>🎬 Теперь ролик</strong>
+          <span>{way === 'share' ? 'Нажмите кнопку → WhatsApp → выберите этот чат (он первый в списке).'
+            : way === 'telegram' ? 'Ролик откроется в браузере → «Поделиться» → WhatsApp → этот чат (он первый в списке).'
+              : 'Файл скачается — прикрепите его в этот чат WhatsApp Web (📎 → «Фото и видео»).'}</span>
+          {video === 'retry' && <span className="tone-wait">Ролик загрузился — нажмите ещё раз.</span>}
+          <span className="actions">
+            <button type="button" className="btn primary" disabled={video === 'pending'} onClick={() => shareVideo(true)}>
+              {video === 'pending' ? 'Готовлю ролик…' : way === 'download' ? '🎬 Скачать ролик' : '🎬 Отправить ролик'}</button>
+            <button type="button" className="btn ghost" onClick={() => setStep('ask')}>Без ролика</button>
+          </span>
+        </div>
+      )}
+      {copied && step !== 'ask' && <span className="tone-ok" role="status">Текст скопирован</span>}
+      {video && video !== 'pending' && video !== 'cancelled' && video !== 'retry' && step !== 'done' && (
+        <span className="tone-ok" role="status">{VIDEO_DONE[video]}</span>
+      )}
+      {videoError && <p className="error" role="alert">Ролик не открылся: {videoError}</p>}
+      {step === 'ask' && (
+        <div className="outreach-ask" role="group" aria-label="Отправили?">
+          <span>{copied ? 'Текст скопирован. ' : ''}Отправили «{l.clinicName}»?</span>
+          <span className="actions">
+            <button type="button" className="btn primary small" disabled={sent.isPending} onClick={() => sent.mutate()}>Да</button>
+            <button type="button" className="btn small" onClick={() => setStep(null)}>Нет</button>
+          </span>
+        </div>
+      )}
+      {step === 'done' && (
+        <div className="outreach-ask" role="group" aria-label="Отмечено">
+          <span className="tone-ok">✓ «{l.clinicName}» — в «Написали».</span>
+          <span className="actions">
+            <button type="button" className="btn primary" onClick={() => { setStep(null); onNext() }}>Следующая клиника →</button>
+          </span>
+        </div>
+      )}
+      {selected && !editing && (
         <div className="actions">
+          {l.clinicId == null
+            ? <button type="button" className="btn small" onClick={() => setEditing(true)}>Изменить</button>
+            : <span className="hint small">Клиника подключена — её данные правят в «Клиниках».</span>}
           <button type="button" className="btn small danger" disabled={remove.isPending}
             onClick={() => void ask(`Удалить «${l.clinicName}» из списка? Клиника исчезнет из рассылки и воронки.`).then((ok) => ok && remove.mutate())}>
             Удалить из списка</button>
         </div>
       )}
+      {editing && <EditClinic lead={l} onClose={() => setEditing(false)} />}
       {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
-      {copied && !asking && <span className="tone-ok" role="status">Текст скопирован</span>}
-      {video.data && video.data !== 'cancelled' && (
-        <span className="tone-ok" role="status">{VIDEO_DONE[video.data]}</span>
-      )}
-      {video.error && <p className="error" role="alert">Ролик не открылся: {video.error.message}</p>}
-      {asking && (
-        <div className="outreach-ask" role="group" aria-label="Отправили?">
-          <span>{copied ? 'Текст скопирован. ' : ''}Отправили сообщение «{l.clinicName}»?</span>
-          <span className="actions">
-            <button type="button" className="btn primary small" disabled={sent.isPending} onClick={() => sent.mutate()}>Да</button>
-            <button type="button" className="btn small" onClick={() => setAsking(false)}>Нет</button>
-          </span>
-        </div>
-      )}
       {declining && (
         <form className="form" aria-label={`Не беспокоить: ${l.clinicName}`} onSubmit={(e) => { e.preventDefault(); decline.mutate() }}>
           <label className="field"><span>Почему — для себя</span>
@@ -212,21 +323,73 @@ const VIDEO_DONE: Record<'shared' | 'downloaded' | 'opened', string> = {
   opened: 'Ролик открыт в браузере — нажмите «Поделиться» → WhatsApp → чат клиники.',
 }
 
+/** Город клиники: из списка городов, а свой (из загруженного файла) — тоже вариантом. */
+function cityOptions(current: string): string[] {
+  const cities: readonly string[] = CITIES
+  return current && !cities.includes(current) ? [current, ...cities] : [...cities]
+}
+
+/**
+ * «Изменить» клинику — вдруг номер написали неправильно: название, телефон (страна + номер), адрес,
+ * ссылка, город. Проверяет сервер: телефон нормализует, номер другой клиники — 409 с её названием.
+ */
+function EditClinic({ lead: l, onClose }: { lead: OutreachLead; onClose: () => void }) {
+  const client = useQueryClient()
+  const [f, setF] = useState({ name: l.clinicName ?? '', phone: phoneToInput(l.phone), address: l.address ?? '', link: l.link ?? '', city: l.city || 'Бишкек' })
+  const save = useMutation<OutreachLead, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/platform/outreach/{id}', {
+      params: { path: { id: l.id! } },
+      body: { clinicName: f.name, phone: phoneFromInput(f.phone), address: f.address, link: f.link, city: f.city },
+    })),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: ['platform-outreach'] })
+      void client.invalidateQueries({ queryKey: ['platform-funnel'] })
+      onClose()
+    },
+  })
+  const set = (k: keyof typeof f) => (v: string) => { setF({ ...f, [k]: v }); save.reset() }
+  const err = (field: string) => save.error?.fieldErrors[field]
+  const conflict = save.error && !Object.keys(save.error.fieldErrors).length ? save.error.message : null
+  return (
+    <form className="form" aria-label={`Изменить: ${l.clinicName}`} onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
+      <div className="row">
+        <label className="field"><span>Название *</span><input required value={f.name} maxLength={100} onChange={(e) => set('name')(e.target.value)} /></label>
+        <label className="field"><span>Телефон (WhatsApp)</span><PhoneInput label="Телефон (WhatsApp)" value={f.phone} onChange={set('phone')} /></label>
+      </div>
+      {(err('clinicName') || err('phone')) && <p className="error">{err('clinicName') ?? err('phone')}</p>}
+      <div className="row">
+        <label className="field"><span>Адрес</span><input value={f.address} maxLength={200} onChange={(e) => set('address')(e.target.value)} /></label>
+        <label className="field"><span>Ссылка (2ГИС, карты, Instagram)</span>
+          <input value={f.link} placeholder="https://…" onChange={(e) => set('link')(e.target.value)} /></label>
+        <label className="field"><span>Город</span>
+          <Select value={f.city} onChange={(e) => set('city')(e.target.value)}>{cityOptions(f.city).map((c) => <option key={c} value={c}>{c}</option>)}</Select>
+        </label>
+      </div>
+      {(err('link') || err('address') || err('city')) && <p className="error">{err('link') ?? err('address') ?? err('city')}</p>}
+      {conflict && <p className="error" role="alert">{conflict}</p>}
+      <div className="actions">
+        <button type="submit" className="btn primary" disabled={save.isPending || !f.name.trim() || (!f.phone.trim() && !f.link.trim())}>Сохранить</button>
+        <button type="button" className="btn ghost" onClick={onClose}>Отмена</button>
+      </div>
+    </form>
+  )
+}
+
 /**
  * «＋ Добавить клинику» — по одной, если в списке пропустили. Тот же серверный разбор, что у загрузки
- * списка (одна строка с заголовками): нормализация телефона, дубли по номеру и названию, ошибки.
+ * списка (одна строка с заголовками): нормализация телефона, дубль — тот же номер, ошибки. Телефон — страна + номер.
  */
 function OneClinic({ onClose }: { onClose: () => void }) {
   const client = useQueryClient()
   const empty = { name: '', phone: '', address: '', link: '' }
   const [f, setF] = useState(empty)
   const [city, setCity] = useState('Бишкек')
-  const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement>) => { setF({ ...f, [k]: e.target.value }); add.reset() }
+  const set = (k: keyof typeof empty) => (v: string) => { setF({ ...f, [k]: v }); add.reset() }
   const cell = (v: string) => v.replace(/[\t\r\n]+/g, ' ').trim()
   const add = useMutation<Report, ApiError>({
     mutationFn: () => {
       const body = new FormData()
-      body.append('text', `Название\tТелефон\tАдрес\tСсылка\n${[f.name, f.phone, f.address, f.link].map(cell).join('\t')}`)
+      body.append('text', `Название\tТелефон\tАдрес\tСсылка\n${[f.name, phoneFromInput(f.phone), f.address, f.link].map(cell).join('\t')}`)
       body.append('city', city)
       return upload<Report>('/api/platform/outreach/import', body)
     },
@@ -243,10 +406,11 @@ function OneClinic({ onClose }: { onClose: () => void }) {
   return (
     <form className="sub-form form" aria-label="Добавить клинику" onSubmit={(e) => { e.preventDefault(); add.mutate() }}>
       <div className="row">
-        <label className="field"><span>Название *</span><input required value={f.name} maxLength={200} onChange={set('name')} /></label>
-        <label className="field"><span>Телефон (WhatsApp)</span><input type="tel" value={f.phone} placeholder="0555 123 456" onChange={set('phone')} /></label>
-        <label className="field"><span>Адрес</span><input value={f.address} maxLength={300} onChange={set('address')} /></label>
-        <label className="field"><span>Ссылка (2ГИС, карты, Instagram)</span><input value={f.link} placeholder="https://…" onChange={set('link')} /></label>
+        <label className="field"><span>Название *</span><input required value={f.name} maxLength={200} onChange={(e) => set('name')(e.target.value)} /></label>
+        <label className="field"><span>Телефон (WhatsApp)</span><PhoneInput label="Телефон (WhatsApp)" value={f.phone} onChange={set('phone')} /></label>
+        <label className="field"><span>Адрес</span><input value={f.address} maxLength={300} onChange={(e) => set('address')(e.target.value)} /></label>
+        <label className="field"><span>Ссылка (2ГИС, карты, Instagram)</span>
+          <input value={f.link} placeholder="https://…" onChange={(e) => set('link')(e.target.value)} /></label>
         <label className="field"><span>Город</span>
           <Select value={city} onChange={(e) => setCity(e.target.value)}>{CITIES.map((c) => <option key={c} value={c}>{c}</option>)}</Select>
         </label>
@@ -257,7 +421,7 @@ function OneClinic({ onClose }: { onClose: () => void }) {
         <button type="button" className="btn ghost" onClick={onClose}>Закрыть</button>
       </div>
       {r && (r.added ? <p className="tone-ok" role="status">Добавлена «{row?.clinicName}» — она в списке «Не писали».</p>
-        : row?.status === 'DUPLICATE' ? <p className="tone-bad" role="status">Такая клиника уже есть в списке{row.message ? `: ${row.message}` : ''}.</p>
+        : row?.status === 'DUPLICATE' ? <p className="tone-wait" role="status">Этот номер уже в списке{row.message ? ` — ${row.message}` : ''}. Не добавляли.</p>
           : <p className="error" role="alert">{row?.message ?? 'Не добавилось — проверьте поля'}</p>)}
       {add.error && <p className="error" role="alert">{add.error.message}</p>}
     </form>
@@ -298,7 +462,13 @@ function ListUpload({ onClose }: { onClose: () => void }) {
       <strong>Загрузить список клиник</strong>
       <p className="hint">Строка — одна клиника: <b>Название; телефон; адрес; ссылка</b> (2ГИС, карты или Instagram). Можно скопировать
         колонки из Excel или Google-таблицы — разделитель «;» или табуляция. Обязательно название и телефон или ссылка.
-        Кто уже есть в воронке (тот же телефон или название, в том числе заявки с сайта) — пропустим.</p>
+        Номер можно с кодом страны: +7 701 123 45 67. Клиника — это её номер: кто уже в списке (тот же номер, в том числе заявки
+        с сайта), просто пропустим; две клиники с одним названием и разными номерами — разные.</p>
+      <p className="hint">Скачать шаблон:{' '}
+        <button type="button" className="link" onClick={() => void download('/api/platform/outreach/import/template?format=xlsx', 'клиники-шаблон.xlsx')}>Excel (.xlsx)</button>
+        {' · '}
+        <button type="button" className="link" onClick={() => void download('/api/platform/outreach/import/template?format=csv', 'клиники-шаблон.csv')}>CSV</button>
+        {' '}— колонки «Название, Телефон, Адрес, Ссылка, Город» и строки-примеры.</p>
       <label className="field"><span>Список</span>
         <textarea value={text} rows={6} disabled={Boolean(file)} placeholder={'Стоматология «Пример»; 0555 000 000; ул. Примерная, 1; https://2gis.kg/…'}
           onChange={(e) => { setText(e.target.value); changed() }} /></label>
@@ -311,14 +481,17 @@ function ListUpload({ onClose }: { onClose: () => void }) {
         </Select></label>
       {error && <p className="error" role="alert">{Object.values(error.fieldErrors)[0] ?? error.message}</p>}
       {done ? (
-        <p className="tone-ok" role="status">Добавлено клиник: {done.added}. Они — в «Не писали», по порядку списка.</p>
+        <p className="tone-ok" role="status">Добавлено клиник: {done.added}. Они — в «Не писали», по порядку списка.
+          {done.duplicates ? ` Уже были в списке — пропустили: ${done.duplicates}.` : ''}{done.errors ? ` С ошибками — не добавили: ${done.errors}.` : ''}</p>
       ) : r ? (
         <>
           <p className="stats" aria-label="Итог проверки">
             <span className="chip small s-ok">Новых: <b className="num">{r.fresh}</b></span>
-            <span className="chip small s-quiet">Уже есть: <b className="num">{r.duplicates}</b></span>
-            <span className={`chip small ${r.errors ? 's-bad' : 's-quiet'}`}>Ошибок: <b className="num">{r.errors}</b></span>
+            {(r.duplicates ?? 0) > 0 && <span className="chip small s-quiet">уже в списке — пропустим: <b className="num">{r.duplicates}</b></span>}
+            {(r.errors ?? 0) > 0 && <span className="chip small s-bad">С ошибкой — не добавим: <b className="num">{r.errors}</b></span>}
           </p>
+          {(r.errors ?? 0) > 0 && (r.fresh ?? 0) > 0 && <p className="hint">Строки с ошибкой загрузке не мешают: добавим остальные, а эти можно поправить и загрузить потом.</p>}
+          {(r.fresh ?? 0) === 0 && <p className="hint">Новых клиник нет — добавлять нечего.</p>}
           <table className="table" aria-label="Проверка списка">
             <thead><tr><th className="r">Строка</th><th>Клиника</th><th>Телефон</th><th>Итог</th></tr></thead>
             <tbody>
@@ -328,7 +501,7 @@ function ListUpload({ onClose }: { onClose: () => void }) {
                   <td>{row.clinicName || '—'}{row.address && <span className="hint"> · {row.address}</span>}</td>
                   <td className="nowrap">{row.phone ? formatPhone(row.phone) : row.link ? 'ссылка' : '—'}</td>
                   <td className={row.status === 'NEW' ? 'tone-ok' : row.status === 'ERROR' ? 'tone-bad' : 'hint'}>
-                    {row.status === 'NEW' ? 'Добавим' : row.message}</td>
+                    {row.status === 'NEW' ? 'Добавим' : row.status === 'DUPLICATE' ? `пропустим · ${row.message ?? 'уже в списке'}` : row.message}</td>
                 </tr>
               ))}
             </tbody>

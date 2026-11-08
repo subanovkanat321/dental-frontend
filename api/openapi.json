@@ -679,6 +679,61 @@
         }
       }
     },
+    "/api/platform/outreach/{id}" : {
+      "put" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "update_5",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicOutreachChangeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalesFunnelLead"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "delete_5",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/platform/outreach/template" : {
       "put" : {
         "tags" : [ "outreach-controller" ],
@@ -824,7 +879,7 @@
     "/api/platform/finance/expenses/{id}" : {
       "put" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "update_5",
+        "operationId" : "update_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -859,7 +914,7 @@
       },
       "delete" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "delete_5",
+        "operationId" : "delete_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -948,7 +1003,7 @@
     "/api/platform/content/{id}" : {
       "put" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "update_6",
+        "operationId" : "update_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -983,7 +1038,7 @@
       },
       "delete" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "delete_6",
+        "operationId" : "delete_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1244,7 +1299,7 @@
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "update_7",
+        "operationId" : "update_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1279,7 +1334,7 @@
       },
       "delete" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "delete_7",
+        "operationId" : "delete_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1336,7 +1391,7 @@
     "/api/patients/{patientId}/teeth/{number}" : {
       "put" : {
         "tags" : [ "chart-controller" ],
-        "operationId" : "update_8",
+        "operationId" : "update_9",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -1692,7 +1747,7 @@
     "/api/patients/{id}" : {
       "put" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "update_9",
+        "operationId" : "update_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1861,7 +1916,7 @@
     "/api/patient-sources/{id}" : {
       "put" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "update_10",
+        "operationId" : "update_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2255,7 +2310,7 @@
     "/api/expenses/{id}" : {
       "put" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "update_11",
+        "operationId" : "update_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2290,7 +2345,7 @@
       },
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_8",
+        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2409,7 +2464,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_12",
+        "operationId" : "update_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2557,7 +2612,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_13",
+        "operationId" : "update_14",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2949,7 +3004,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_14",
+        "operationId" : "update_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8308,7 +8363,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_9",
+        "operationId" : "delete_10",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -9899,6 +9954,34 @@
         }
       }
     },
+    "/api/platform/outreach/import/template" : {
+      "get" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "importTemplate",
+        "parameters" : [ {
+          "name" : "format",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "csv"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/materials" : {
       "get" : {
         "tags" : [ "materials-controller" ],
@@ -10464,7 +10547,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -11611,7 +11694,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12297,26 +12380,6 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_12",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        } ],
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
-      }
-    },
-    "/api/platform/outreach/{id}" : {
-      "delete" : {
-        "tags" : [ "outreach-controller" ],
         "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "id",
@@ -13311,6 +13374,104 @@
           }
         }
       },
+      "ClinicOutreachChangeRequest" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SalesFunnelLead" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "contactName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "telegram" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "doctors" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "clinicId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "solo" : {
+            "type" : "boolean"
+          },
+          "stage" : {
+            "type" : "string",
+            "enum" : [ "LEAD", "CONTACTED", "DEMO", "TRIAL", "PAYING", "LOST" ]
+          },
+          "stageAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "nextStep" : {
+            "type" : "string"
+          },
+          "nextStepOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "source" : {
+            "type" : "string",
+            "enum" : [ "SITE", "MANUAL", "LIST" ]
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "link" : {
+            "type" : "string"
+          },
+          "contactedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lostReason" : {
+            "type" : "string"
+          }
+        }
+      },
       "ClinicOutreachTemplateRequest" : {
         "properties" : {
           "text" : {
@@ -13427,85 +13588,6 @@
           "nextStepOn" : {
             "type" : "string",
             "format" : "date"
-          }
-        }
-      },
-      "SalesFunnelLead" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "clinicName" : {
-            "type" : "string"
-          },
-          "contactName" : {
-            "type" : "string"
-          },
-          "phone" : {
-            "type" : "string"
-          },
-          "telegram" : {
-            "type" : "string"
-          },
-          "city" : {
-            "type" : "string"
-          },
-          "doctors" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "message" : {
-            "type" : "string"
-          },
-          "status" : {
-            "type" : "string"
-          },
-          "clinicId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "solo" : {
-            "type" : "boolean"
-          },
-          "stage" : {
-            "type" : "string",
-            "enum" : [ "LEAD", "CONTACTED", "DEMO", "TRIAL", "PAYING", "LOST" ]
-          },
-          "stageAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "note" : {
-            "type" : "string"
-          },
-          "nextStep" : {
-            "type" : "string"
-          },
-          "nextStepOn" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "source" : {
-            "type" : "string",
-            "enum" : [ "SITE", "MANUAL", "LIST" ]
-          },
-          "address" : {
-            "type" : "string"
-          },
-          "link" : {
-            "type" : "string"
-          },
-          "contactedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "lostReason" : {
-            "type" : "string"
           }
         }
       },

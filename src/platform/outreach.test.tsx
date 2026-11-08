@@ -4,8 +4,9 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
+import { choose, chosen } from '../test/select'
 import { server } from '../test/server'
-import { messageFor, nextLead } from './outreach'
+import { forgetVideo, messageFor, nextLead } from './outreach'
 
 type Lead = Schemas['SalesFunnelLead']
 
@@ -29,8 +30,28 @@ function outreach(leads: Lead[]): Schemas['ClinicOutreachOutreach'] {
 }
 
 let leads: Lead[]
+/** Сколько раз качали ролик — должен один раз на вкладку, а не на каждую клинику. */
+let videoFetches = 0
+
+/** Владелец ушёл в WhatsApp и вернулся: вкладка скрылась и снова видна. */
+function leaveAndReturn() {
+  for (const state of ['hidden', 'visible']) {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => state })
+    document.dispatchEvent(new Event('visibilitychange'))
+  }
+}
+
+/** Телефон: «Поделиться» файлом есть; что поделились — в shared. */
+function phoneShare(shared: File[][]) {
+  Object.assign(navigator, {
+    canShare: (d: { files?: File[] }) => !!d.files?.length,
+    share: (d: { files: File[] }) => { shared.push(d.files); return Promise.resolve() },
+  })
+}
 
 beforeEach(() => {
+  forgetVideo()
+  videoFetches = 0
   window.location.hash = '/platform'
   leads = [
     lead(1, 'Тест-Улыбка', { stage: 'CONTACTED', contactedAt: '2026-11-07T08:00:00Z' }),
@@ -48,9 +69,16 @@ beforeEach(() => {
     http.get('*/api/platform/pay-requests', () => HttpResponse.json([])),
     http.get('*/api/platform/funnel', () => HttpResponse.json({ total: 0, stages: [], leads: [] })),
     http.get('*/api/platform/outreach', () => HttpResponse.json(outreach(leads))),
+    http.get('*/web/materials/public/promo.mp4', () => {
+      videoFetches++
+      return new HttpResponse('mp4', { headers: { 'Content-Type': 'video/mp4' } })
+    }),
   )
 })
 afterEach(() => {
+  Reflect.deleteProperty(navigator, 'canShare')
+  Reflect.deleteProperty(navigator, 'share')
+  Reflect.deleteProperty(document, 'visibilityState')
   window.location.hash = ''
   vi.restoreAllMocks()
 })
@@ -75,7 +103,7 @@ test('текст с названием клиники и «Следующая к
   expect(nextLead([lead(1, 'А', { stage: 'CONTACTED' })], null)).toBeNull()
 })
 
-test('WhatsApp открывает wa.me с номером и текстом, «Отправили? — Да» ставит отметку', async () => {
+test('«Только сообщение» открывает wa.me с номером и текстом, «Отправили? — Да» ставит отметку', async () => {
   const open = vi.spyOn(window, 'open').mockImplementation(() => null)
   let marked: string | null = null
   server.use(http.post('*/api/platform/outreach/:id/sent', ({ params }) => {
@@ -86,7 +114,7 @@ test('WhatsApp открывает wa.me с номером и текстом, «�
   const user = await openTab()
 
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
-  await user.click(within(card).getByRole('button', { name: 'Написать в WhatsApp' }))
+  await user.click(within(card).getByRole('button', { name: 'Только сообщение' }))
   const text = 'Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/about'
   expect(open).toHaveBeenCalledWith(`https://wa.me/996555000402?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
 
@@ -104,7 +132,7 @@ test('WhatsApp открывает wa.me с номером и текстом, «�
 
   // Просили не беспокоить — кнопки WhatsApp нет, причина видна
   const lost = screen.getByRole('listitem', { name: 'Клиника: Тест-Отказ' })
-  expect(within(lost).queryByRole('button', { name: 'Написать в WhatsApp' })).not.toBeInTheDocument()
+  expect(within(lost).queryByRole('button', { name: '📨 Отправить сообщение и ролик' })).not.toBeInTheDocument()
   expect(within(lost).getByText(/Просили не беспокоить: Уже есть программа/)).toBeInTheDocument()
 })
 
@@ -133,13 +161,13 @@ test('счётчики, фильтры, поиск и «Следующая кл�
   expect(screen.getByRole('listitem', { name: 'Клиника: Тест-Ёлка' })).toHaveAttribute('aria-current', 'true')
 })
 
-test('загрузка списка: вставка → предпросмотр с дублями и ошибками → добавить', async () => {
+test('загрузка списка: вставка → предпросмотр (дубли — спокойно «пропустим», ошибки не мешают) → добавить', async () => {
   const sent: { url: string; text: string | null; city: string | null }[] = []
   const report = (added: number): Schemas['ClinicOutreachImportReport'] => ({
     total: 3, fresh: 1, duplicates: 1, errors: 1, added,
     rows: [
       { line: 1, clinicName: 'Новая-Тест', phone: '996555000411', city: 'Бишкек', status: 'NEW' },
-      { line: 2, clinicName: 'Тест-Дент', phone: '996555000402', city: 'Бишкек', status: 'DUPLICATE', message: 'Уже в воронке: «Тест-Дент» — тот же телефон' },
+      { line: 2, clinicName: 'Тест-Дент', phone: '996555000402', city: 'Бишкек', status: 'DUPLICATE', message: 'Уже в списке: «Тест-Дент» — тот же телефон' },
       { line: 3, clinicName: 'Без контактов', city: 'Бишкек', status: 'ERROR', message: 'Нужен телефон или ссылка — иначе как написать?' },
     ],
   })
@@ -161,15 +189,18 @@ test('загрузка списка: вставка → предпросмотр
 
   const summary = await within(box).findByLabelText('Итог проверки')
   expect(summary).toHaveTextContent('Новых: 1')
-  expect(summary).toHaveTextContent('Уже есть: 1')
-  expect(summary).toHaveTextContent('Ошибок: 1')
+  expect(summary).toHaveTextContent('уже в списке — пропустим: 1')
+  expect(within(summary).getByText(/уже в списке/).closest('.chip')).not.toHaveClass('s-bad')
+  expect(summary).toHaveTextContent('С ошибкой — не добавим: 1')
+  expect(within(box).getByText(/Строки с ошибкой загрузке не мешают/)).toBeInTheDocument()
   const table = within(box).getByRole('table', { name: 'Проверка списка' })
-  expect(within(table).getByText('Уже в воронке: «Тест-Дент» — тот же телефон')).toBeInTheDocument()
+  const dup = within(table).getByText('пропустим · Уже в списке: «Тест-Дент» — тот же телефон')
+  expect(dup).not.toHaveClass('tone-bad')
   expect(within(table).getByText('Нужен телефон или ссылка — иначе как написать?')).toBeInTheDocument()
   expect(sent[0]).toEqual({ url: '/api/platform/outreach/import/preview', text: 'Новая-Тест; 0555000411\nТест-Дент; 0555000402\nБез контактов', city: 'Бишкек' })
 
   await user.click(within(box).getByRole('button', { name: 'Добавить клиник: 1' }))
-  expect(await within(box).findByRole('status')).toHaveTextContent('Добавлено клиник: 1')
+  expect(await within(box).findByRole('status')).toHaveTextContent('Добавлено клиник: 1. Они — в «Не писали», по порядку списка. Уже были в списке — пропустили: 1. С ошибками — не добавили: 1.')
   expect(sent[1]!.url).toBe('/api/platform/outreach/import')
 })
 
@@ -187,16 +218,12 @@ test('«Не беспокоить» — отказ с причиной', async (
   await waitFor(() => expect(body).toEqual({ reason: 'Дорого' }))
 })
 
-test('«🎬 Отправить ролик»: телефон — «Поделиться» файлом mp4; компьютер — файл скачивается', async () => {
-  server.use(http.get('*/web/materials/public/promo.mp4', () => new HttpResponse('mp4', { headers: { 'Content-Type': 'video/mp4' } })))
+test('«Только ролик»: телефон — «Поделиться» файлом mp4; компьютер — файл скачивается', async () => {
   const shared: File[][] = []
-  Object.assign(navigator, {
-    canShare: (d: { files?: File[] }) => !!d.files?.length,
-    share: (d: { files: File[] }) => { shared.push(d.files); return Promise.resolve() },
-  })
+  phoneShare(shared)
   const user = await openTab()
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
-  await user.click(within(card).getByRole('button', { name: '🎬 Отправить ролик' }))
+  await user.click(within(card).getByRole('button', { name: 'Только ролик' }))
   expect(await within(card).findByText('Ролик отправлен через «Поделиться».')).toBeInTheDocument()
   expect(shared[0]?.[0]?.name).toBe('Tish-rolik.mp4')
   expect(shared[0]?.[0]?.type).toBe('video/mp4')
@@ -205,9 +232,11 @@ test('«🎬 Отправить ролик»: телефон — «Подели�
   Object.assign(navigator, { canShare: () => false })
   const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
   if (!('createObjectURL' in URL)) Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} })
-  await user.click(within(card).getByRole('button', { name: '🎬 Отправить ролик' }))
+  await user.click(within(card).getByRole('button', { name: 'Нет' }))
+  await user.click(within(card).getByRole('button', { name: 'Только ролик' }))
   expect(await within(card).findByText(/Ролик скачан/)).toBeInTheDocument()
   expect(click).toHaveBeenCalled()
+  expect(videoFetches).toBe(1)
 })
 
 test('«＋ Добавить клинику» по одной: отправляет одну строку с заголовками; дубль — понятный текст', async () => {
@@ -225,14 +254,24 @@ test('«＋ Добавить клинику» по одной: отправля�
   const add = within(form).getByRole('button', { name: 'Добавить' })
   await user.type(within(form).getByLabelText('Название *'), 'Тест-Новая')
   expect(add).toBeDisabled()
-  await user.type(within(form).getByLabelText('Телефон (WhatsApp)'), '0555 000 111')
+  // Телефон — PhoneInput: страна (по умолчанию Кыргызстан) и номер
+  expect(chosen(within(form).getByRole('combobox', { name: 'Код страны' }))).toContain('🇰🇬 +996')
+  await user.type(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }), '0555 000 111')
   await user.click(add)
   expect(await within(form).findByText(/Добавлена «Тест-Новая»/)).toBeInTheDocument()
   expect(sent[0]).toBe('Название\tТелефон\tАдрес\tСсылка\nТест-Новая\t0555 000 111\t\t')
   await user.type(within(form).getByLabelText('Название *'), 'Тест-Новая')
-  await user.type(within(form).getByLabelText('Телефон (WhatsApp)'), '0555 000 111')
+  await user.type(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }), '0555 000 111')
   await user.click(add)
-  expect(await within(form).findByText(/уже есть в списке/)).toBeInTheDocument()
+  expect(await within(form).findByText(/Этот номер уже в списке/)).toBeInTheDocument()
+  // Номер другой страны: выбрали Казахстан — уходит с кодом +7
+  await user.clear(within(form).getByLabelText('Название *'))
+  await user.type(within(form).getByLabelText('Название *'), 'Алма-Тест')
+  await user.clear(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }))
+  await choose(within(form).getByRole('combobox', { name: 'Код страны' }), 'KZ')
+  await user.type(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }), '701 000 00 03')
+  await user.click(add)
+  await waitFor(() => expect(sent[2]).toBe('Название\tТелефон\tАдрес\tСсылка\nАлма-Тест\t+7 701 000 00 03\t\t'))
 })
 
 test('адрес сайта без https:// в тексте — становится ссылкой https://', () => {
@@ -254,4 +293,117 @@ test('«Удалить из списка» — после подтвержден
   expect(dialog).toHaveTextContent('Удалить «Тест-Дент» из списка?')
   await user.click(within(dialog).getAllByRole('button').find((b) => /Удалить/.test(b.textContent ?? ''))!)
   await waitFor(() => expect(deleted).toEqual(['2']))
+})
+
+test('«📨 Отправить сообщение и ролик»: ① wa.me → возврат в приложение → ② «Поделиться» роликом → «Отправили?» → «Следующая»', async () => {
+  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+  const shared: File[][] = []
+  phoneShare(shared)
+  server.use(http.post('*/api/platform/outreach/:id/sent', () => {
+    leads = leads.map((l) => l.id === 2 ? { ...l, stage: 'CONTACTED', contactedAt: '2026-11-08T06:00:00Z' } : l)
+    return HttpResponse.json(leads.find((l) => l.id === 2)!)
+  }))
+  const user = await openTab()
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  await user.click(within(card).getByRole('button', { name: '📨 Отправить сообщение и ролик' }))
+  const text = 'Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/about'
+  expect(open).toHaveBeenCalledWith(`https://wa.me/996555000402?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
+  expect(within(card).getByText(/Текст открыт в WhatsApp/)).toBeInTheDocument()
+  expect(within(card).queryByRole('group', { name: 'Шаг 2: ролик' })).not.toBeInTheDocument()
+  // Пока владелец в WhatsApp, ролик уже качается в память
+  await waitFor(() => expect(videoFetches).toBe(1))
+
+  leaveAndReturn()
+  const step2 = await within(card).findByRole('group', { name: 'Шаг 2: ролик' })
+  expect(step2).toHaveTextContent('выберите этот чат (он первый в списке)')
+  await user.click(within(step2).getByRole('button', { name: '🎬 Отправить ролик' }))
+  // «Поделиться» — сразу по нажатию, из готового файла (без повторного скачивания)
+  expect(shared).toHaveLength(1)
+  expect(shared[0]?.[0]?.name).toBe('Tish-rolik.mp4')
+  expect(shared[0]?.[0]?.type).toBe('video/mp4')
+
+  const ask = await within(card).findByRole('group', { name: 'Отправили?' })
+  await user.click(within(ask).getByRole('button', { name: 'Да' }))
+  const done = await within(card).findByRole('group', { name: 'Отмечено' })
+  await user.click(within(done).getByRole('button', { name: 'Следующая клиника →' }))
+  expect(screen.getByRole('listitem', { name: 'Клиника: Тест-Ёлка' })).toHaveAttribute('aria-current', 'true')
+
+  // Другая клиника — ролик тот же, из памяти: второй раз не качаем
+  const next = screen.getByRole('listitem', { name: 'Клиника: Тест-Ёлка' })
+  await user.click(within(next).getByRole('button', { name: 'Только ролик' }))
+  expect(shared).toHaveLength(2)
+  expect(videoFetches).toBe(1)
+})
+
+test('шаг ② на компьютере: «Поделиться» файлом нет — ролик скачивается, подсказка про WhatsApp Web', async () => {
+  vi.spyOn(window, 'open').mockImplementation(() => null)
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  if (!('createObjectURL' in URL)) Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} })
+  const user = await openTab()
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  await user.click(within(card).getByRole('button', { name: '📨 Отправить сообщение и ролик' }))
+  leaveAndReturn()
+  const step2 = await within(card).findByRole('group', { name: 'Шаг 2: ролик' })
+  expect(step2).toHaveTextContent('прикрепите его в этот чат WhatsApp Web')
+  await user.click(within(step2).getByRole('button', { name: '🎬 Скачать ролик' }))
+  expect(await within(card).findByRole('group', { name: 'Отправили?' })).toBeInTheDocument()
+  expect(click).toHaveBeenCalled()
+})
+
+test('«Изменить» клинику: страна и номер, 409 — номер у другой клиники, потом сохраняется', async () => {
+  const bodies: unknown[] = []
+  server.use(http.put('*/api/platform/outreach/:id', async ({ request, params }) => {
+    const body = await request.json() as Schemas['ClinicOutreachChangeRequest']
+    bodies.push({ id: String(params.id), ...body })
+    if (bodies.length === 1) {
+      return HttpResponse.json({ status: 409, detail: 'Этот номер уже у клиники «Тест-Улыбка» — у одной клиники один номер' }, { status: 409 })
+    }
+    leads = leads.map((l) => l.id === 2 ? { ...l, clinicName: body.clinicName, phone: '77010000003', address: body.address } : l)
+    return HttpResponse.json(leads.find((l) => l.id === 2)!)
+  }))
+  leads = leads.map((l) => l.id === 5 ? { ...l, clinicId: 9 } : l)
+  const user = await openTab()
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  await user.click(within(card).getByRole('button', { name: 'Тест-Дент' }))
+  await user.click(within(card).getByRole('button', { name: 'Изменить' }))
+  const form = within(card).getByRole('form', { name: 'Изменить: Тест-Дент' })
+  expect(within(form).getByLabelText('Название *')).toHaveValue('Тест-Дент')
+  expect(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' })).toHaveValue('555 000 402')
+  expect(within(form).getByLabelText('Адрес')).toHaveValue('ул. Вымышленная, 2')
+
+  await choose(within(form).getByRole('combobox', { name: 'Код страны' }), 'KZ')
+  const phone = within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' })
+  await user.clear(phone)
+  await user.type(phone, '701 000 00 03')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  expect(await within(form).findByRole('alert')).toHaveTextContent('Этот номер уже у клиники «Тест-Улыбка»')
+  expect(bodies[0]).toEqual({ id: '2', clinicName: 'Тест-Дент', phone: '+7 701 000 00 03', address: 'ул. Вымышленная, 2', link: '', city: 'Бишкек' })
+
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  await waitFor(() => expect(within(card).queryByRole('form', { name: /Изменить/ })).not.toBeInTheDocument())
+  expect(await within(card).findByText(/\+7 701 000 00 03/)).toBeInTheDocument()
+
+  // Подключённая клиника — «Изменить» нет, подсказка про «Клиники»
+  const connected = screen.getByRole('listitem', { name: 'Клиника: Тест-Демо' })
+  await user.click(within(connected).getByRole('button', { name: 'Тест-Демо' }))
+  expect(within(connected).getByText(/правят в «Клиниках»/)).toBeInTheDocument()
+  expect(within(connected).queryByRole('button', { name: 'Изменить' })).not.toBeInTheDocument()
+})
+
+test('«Скачать шаблон» в окне загрузки: Excel и CSV с сервера', async () => {
+  const asked: string[] = []
+  server.use(http.get('*/api/platform/outreach/import/template', ({ request }) => {
+    asked.push(new URL(request.url).search)
+    return new HttpResponse('x', { headers: { 'Content-Type': 'text/csv' } })
+  }))
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  if (!('createObjectURL' in URL)) Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} })
+  const user = await openTab()
+  await user.click(screen.getByRole('button', { name: 'Загрузить список клиник' }))
+  const box = screen.getByRole('group', { name: 'Загрузить список клиник' })
+  await user.click(within(box).getByRole('button', { name: 'Excel (.xlsx)' }))
+  await user.click(within(box).getByRole('button', { name: 'CSV' }))
+  await waitFor(() => expect(asked).toEqual(['?format=xlsx', '?format=csv']))
+  await waitFor(() => expect(click).toHaveBeenCalledTimes(2))
+  expect(box).toHaveTextContent('«Название, Телефон, Адрес, Ссылка, Город»')
 })

@@ -228,6 +228,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/outreach/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_5"];
+        post?: never;
+        delete: operations["delete_5"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/outreach/template": {
         parameters: {
             query?: never;
@@ -316,9 +332,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_5"];
+        put: operations["update_6"];
         post?: never;
-        delete: operations["delete_5"];
+        delete: operations["delete_6"];
         options?: never;
         head?: never;
         patch?: never;
@@ -348,9 +364,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_6"];
+        put: operations["update_7"];
         post?: never;
-        delete: operations["delete_6"];
+        delete: operations["delete_7"];
         options?: never;
         head?: never;
         patch?: never;
@@ -476,9 +492,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_7"];
+        put: operations["update_8"];
         post?: never;
-        delete: operations["delete_7"];
+        delete: operations["delete_8"];
         options?: never;
         head?: never;
         patch?: never;
@@ -508,7 +524,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_8"];
+        put: operations["update_9"];
         post?: never;
         delete?: never;
         options?: never;
@@ -604,7 +620,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_9"];
+        put: operations["update_10"];
         post?: never;
         delete?: never;
         options?: never;
@@ -684,7 +700,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_10"];
+        put: operations["update_11"];
         post?: never;
         delete?: never;
         options?: never;
@@ -860,9 +876,9 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_11"];
+        put: operations["update_12"];
         post?: never;
-        delete: operations["delete_8"];
+        delete: operations["delete_9"];
         options?: never;
         head?: never;
         patch?: never;
@@ -908,7 +924,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view"];
-        put: operations["update_12"];
+        put: operations["update_13"];
         post?: never;
         delete?: never;
         options?: never;
@@ -972,7 +988,7 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_1"];
-        put: operations["update_13"];
+        put: operations["update_14"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1132,7 +1148,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_14"];
+        put: operations["update_15"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3342,7 +3358,7 @@ export interface paths {
         get: operations["get_2"];
         put?: never;
         post: operations["rotate"];
-        delete: operations["delete_9"];
+        delete: operations["delete_10"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4084,6 +4100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/outreach/import/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["importTemplate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/materials": {
         parameters: {
             query?: never;
@@ -4414,7 +4446,7 @@ export interface paths {
         get: operations["content"];
         put?: never;
         post?: never;
-        delete: operations["delete_10"];
+        delete: operations["delete_11"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5102,7 +5134,7 @@ export interface paths {
         get: operations["get_11"];
         put?: never;
         post?: never;
-        delete: operations["delete_11"];
+        delete: operations["delete_12"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5413,22 +5445,6 @@ export interface paths {
         trace?: never;
     };
     "/api/time-off/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["delete_12"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/platform/outreach/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -5921,6 +5937,46 @@ export interface components {
             hasRequisites?: boolean;
             hasQr?: boolean;
         };
+        ClinicOutreachChangeRequest: {
+            clinicName?: string;
+            phone?: string;
+            address?: string;
+            link?: string;
+            city?: string;
+        };
+        SalesFunnelLead: {
+            /** Format: int64 */
+            id?: number;
+            clinicName?: string;
+            contactName?: string;
+            phone?: string;
+            telegram?: string;
+            city?: string;
+            /** Format: int32 */
+            doctors?: number;
+            message?: string;
+            status?: string;
+            /** Format: int64 */
+            clinicId?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            solo?: boolean;
+            /** @enum {string} */
+            stage?: "LEAD" | "CONTACTED" | "DEMO" | "TRIAL" | "PAYING" | "LOST";
+            /** Format: date-time */
+            stageAt?: string;
+            note?: string;
+            nextStep?: string;
+            /** Format: date */
+            nextStepOn?: string;
+            /** @enum {string} */
+            source?: "SITE" | "MANUAL" | "LIST";
+            address?: string;
+            link?: string;
+            /** Format: date-time */
+            contactedAt?: string;
+            lostReason?: string;
+        };
         ClinicOutreachTemplateRequest: {
             text?: string;
         };
@@ -5963,39 +6019,6 @@ export interface components {
             nextStep?: string;
             /** Format: date */
             nextStepOn?: string;
-        };
-        SalesFunnelLead: {
-            /** Format: int64 */
-            id?: number;
-            clinicName?: string;
-            contactName?: string;
-            phone?: string;
-            telegram?: string;
-            city?: string;
-            /** Format: int32 */
-            doctors?: number;
-            message?: string;
-            status?: string;
-            /** Format: int64 */
-            clinicId?: number;
-            /** Format: date-time */
-            createdAt?: string;
-            solo?: boolean;
-            /** @enum {string} */
-            stage?: "LEAD" | "CONTACTED" | "DEMO" | "TRIAL" | "PAYING" | "LOST";
-            /** Format: date-time */
-            stageAt?: string;
-            note?: string;
-            nextStep?: string;
-            /** Format: date */
-            nextStepOn?: string;
-            /** @enum {string} */
-            source?: "SITE" | "MANUAL" | "LIST";
-            address?: string;
-            link?: string;
-            /** Format: date-time */
-            contactedAt?: string;
-            lostReason?: string;
         };
         PlatformFinanceControllerSettingsRequest: {
             smsPriceSom?: number;
@@ -9852,6 +9875,52 @@ export interface operations {
             };
         };
     };
+    update_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicOutreachChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesFunnelLead"];
+                };
+            };
+        };
+    };
+    delete_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     template: {
         parameters: {
             query?: never;
@@ -9972,7 +10041,7 @@ export interface operations {
             };
         };
     };
-    update_5: {
+    update_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -9998,7 +10067,7 @@ export interface operations {
             };
         };
     };
-    delete_5: {
+    delete_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -10066,7 +10135,7 @@ export interface operations {
             };
         };
     };
-    update_6: {
+    update_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -10092,7 +10161,7 @@ export interface operations {
             };
         };
     };
-    delete_6: {
+    delete_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -10306,7 +10375,7 @@ export interface operations {
             };
         };
     };
-    update_7: {
+    update_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -10332,7 +10401,7 @@ export interface operations {
             };
         };
     };
-    delete_7: {
+    delete_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -10378,7 +10447,7 @@ export interface operations {
             };
         };
     };
-    update_8: {
+    update_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -10624,7 +10693,7 @@ export interface operations {
             };
         };
     };
-    update_9: {
+    update_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -10766,7 +10835,7 @@ export interface operations {
             };
         };
     };
-    update_10: {
+    update_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -11112,7 +11181,7 @@ export interface operations {
             };
         };
     };
-    update_11: {
+    update_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -11138,7 +11207,7 @@ export interface operations {
             };
         };
     };
-    delete_8: {
+    delete_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -11232,7 +11301,7 @@ export interface operations {
             };
         };
     };
-    update_12: {
+    update_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -11352,7 +11421,7 @@ export interface operations {
             };
         };
     };
-    update_13: {
+    update_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -11732,7 +11801,7 @@ export interface operations {
             };
         };
     };
-    update_14: {
+    update_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -16009,7 +16078,7 @@ export interface operations {
             };
         };
     };
-    delete_9: {
+    delete_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -17218,6 +17287,28 @@ export interface operations {
             };
         };
     };
+    importTemplate: {
+        parameters: {
+            query?: {
+                format?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
     list_10: {
         parameters: {
             query?: never;
@@ -17674,7 +17765,7 @@ export interface operations {
             };
         };
     };
-    delete_10: {
+    delete_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -18628,7 +18719,7 @@ export interface operations {
             };
         };
     };
-    delete_11: {
+    delete_12: {
         parameters: {
             query?: {
                 force?: boolean;
@@ -19062,26 +19153,6 @@ export interface operations {
         };
     };
     remove_1: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    delete_12: {
         parameters: {
             query?: never;
             header?: never;
