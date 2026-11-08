@@ -165,6 +165,9 @@ test('сервер отказал (409 «Время занято») — приё
 
 test('не тащатся: прошедший и состоявшийся приём, расписание коллеги; нажатие без сдвига — карточка', async () => {
   const lastWeek = addDays(monday, -7)
+  // «Прошлый» приём — понедельник этой недели, 10:00: в понедельник ночью он ещё впереди. Часы — среда, полдень
+  vi.useFakeTimers({ shouldAdvanceTime: true, now: new Date(slotInstant(addDays(monday, -5), 12 * 60)) })
+  onTestFinished(() => { vi.useRealTimers() })
   backend([
     visit(10, tuesday, 600, 'Состоялся Т.', { status: 'DONE' }),
     visit(11, lastWeek, 600, 'Прошлый Т.'),

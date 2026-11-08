@@ -15,8 +15,8 @@ function readHidden(): boolean {
 }
 
 /**
- * «Задайте пароль для входа на сайте» — сотруднику с Telegram без пароля: на сайт теперь входят только
- * по номеру и паролю (в Telegram — как раньше). «Задать» ведёт в «Изменить профиль»: там телефон
+ * «Чтобы входить без Telegram, задайте пароль» — сотруднику с Telegram без пароля (в том числе сразу после
+ * «Войти через Telegram» на сайте): с паролем можно входить и без телефона под рукой. «Задать» ведёт в «Изменить профиль»: там телефон
  * («Подтвердить через Telegram») и «Пароль и вход». Скрыть ✕ — до конца сеанса (sessionStorage, без
  * личных данных). Задали пароль — баннер пропадает сам (тот же запрос, что у «Пароль и вход»).
  */
@@ -38,7 +38,7 @@ export function PasswordNotice() {
       <div className="notice tone-wait">
         <span className="notice-ico" aria-hidden="true">i</span>
         <button type="button" className="notice-text" onClick={() => openSettings('profile')}>
-          Задайте пароль для входа на сайте: на сайт теперь входят по номеру и паролю.{' '}
+          Чтобы входить без Telegram, задайте пароль в Настройках.{' '}
           <span className="notice-open" aria-hidden="true">Задать ›</span>
         </button>
         <button type="button" className="notice-close" aria-label="Скрыть до конца сеанса" title="Скрыть до конца сеанса" onClick={hide}>✕</button>
