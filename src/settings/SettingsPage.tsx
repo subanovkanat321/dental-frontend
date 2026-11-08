@@ -26,12 +26,13 @@ const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m
 const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ default: m.ReminderTextPage })))
 const AiPage = lazy(() => import('./AiPage').then((m) => ({ default: m.AiPage })))
 const SourcesPage = lazy(() => import('./SourcesPage').then((m) => ({ default: m.SourcesPage })))
+const ContractTemplatePage = lazy(() => import('../contract/ContractTemplatePage').then((m) => ({ default: m.ContractTemplatePage })))
 const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'about': '🏥', 'doctors': '👩‍⚕️', 'services': '🦷', 'hours': '🕘', 'reminder': '🔔', 'questions': '🩺', 'memos': '📋', 'learn': '📖', 'patient-news': '📰', 'sources': '📣', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'ai': '✨', 'profile': '🧑‍⚕️', 'calendar': '📅', 'guide': '📘', 'support': '🛟', 'survey': '📝', 'dental-news': '📚', 'privacy': '🔒' }
+const EMOJI: Record<string, string> = { 'about': '🏥', 'doctors': '👩‍⚕️', 'services': '🦷', 'hours': '🕘', 'reminder': '🔔', 'questions': '🩺', 'memos': '📋', 'learn': '📖', 'patient-news': '📰', 'sources': '📣', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'ai': '✨', 'profile': '🧑‍⚕️', 'calendar': '📅', 'guide': '📘', 'support': '🛟', 'survey': '📝', 'dental-news': '📚', 'privacy': '🔒', 'contract': '✍️' }
 
 type Item = {
   key: string
@@ -87,6 +88,9 @@ const GROUPS: [string, Item[]][] = [
     item('reminder', 'Текст напоминания', 'Что пациент получит перед приёмом', admin,
       () => (me, back) => <ReminderTextPage me={me} onBack={back} />),
     item('questions', 'Анкета пациента', 'Вопросы перед первым приёмом', (me) => Boolean(me.admin || me.doctorId != null), clinic('questions')),
+    // Договор на услуги и согласие на лечение — от имени клиники, меняет админ (сервер: 403 остальным)
+    item('contract', 'Договор с пациентом', 'Шаблон договора и согласия на лечение', admin,
+      () => (me, back) => <ContractTemplatePage me={me} onBack={back} />),
     item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),
     // Атлас и презентации — раздел меню «Для пациента»; здесь ссылка на него: на телефоне в нижнем меню
     // для него нет места. Старый адрес #/settings/learn ведёт туда же (lib/route)
@@ -100,7 +104,7 @@ const GROUPS: [string, Item[]][] = [
   ['Аккаунт клиники', [
     item('plan', 'Тариф и оплата', 'Сколько осталось и как продлить', admin, account('plan')),
     item('agreement', 'Договор', 'Договор с платформой Tish', admin, account('agreement')),
-    item('data', 'Данные', 'Выгрузка и журнал действий', (me) => admin(me) || seesAll(me), account('data')),
+    item('data', 'Данные', 'Загрузка из Excel, выгрузка и журнал действий', (me) => admin(me) || seesAll(me), account('data')),
     // Согласие клиники на ИИ — решает админ (сервер: 403 остальным); отчёты и диктовка — отдельно
     item('ai', 'ИИ-помощник', 'Отчёты пациенту и разбор диктовки', admin, () => (_me, back) => <AiPage onBack={back} />),
   ]],

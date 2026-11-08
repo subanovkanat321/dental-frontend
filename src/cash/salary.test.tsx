@@ -73,7 +73,7 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   expect(within(card).getByLabelText('Сумма выплаты, сом')).toHaveValue('25000')
   await user.click(within(card).getByRole('button', { name: 'Выплачено' }))
   expect(await within(card).findByText('✅ Выплачено')).toBeInTheDocument()
-  expect(sent).toEqual([{ percent: 30, baseSom: 10000, rentSom: 0, rentPercent: 0 }, { month: expect.stringMatching(/^\d{4}-\d{2}$/), amountSom: 25000 }])
+  expect(sent).toEqual([{ percent: 30, baseSom: 10000, rentSom: 0, rentPercent: 0, byTimesheet: false }, { month: expect.stringMatching(/^\d{4}-\d{2}$/), amountSom: 25000 }])
 })
 
 test('бывший сотрудник: выплата месяца осталась в истории, без «Условий» и «Выплатить»', async () => {
@@ -154,7 +154,7 @@ test('условия у каждого свои: «Вся выручка — в�
   expect(within(card).getByLabelText('Пример расчёта')).toHaveTextContent(/= 50\s000 сом/)
   await user.click(within(card).getByRole('button', { name: 'Сохранить' }))
   expect(await within(card).findByText('Условия: вся выручка — врачу (100%)')).toBeInTheDocument()
-  expect(sent).toEqual([{ percent: 100, baseSom: 0, rentSom: 0, rentPercent: 0 }])
+  expect(sent).toEqual([{ percent: 100, baseSom: 0, rentSom: 0, rentPercent: 0, byTimesheet: false }])
 })
 
 test('аренда кресла: пресет «частный врач», сумма в месяц — «к выплате» за вычетом аренды', async () => {
@@ -185,7 +185,7 @@ test('аренда кресла: пресет «частный врач», су�
   expect(await within(card).findByText('Условия: вся выручка — врачу (100%), минус аренда кресла 20 000 сом в месяц')).toBeInTheDocument()
   expect(card).toHaveTextContent(/Аренда кресла−20\s000 сом/)
   expect(card).toHaveTextContent(/К выплате30\s000 сом/)
-  expect(sent).toEqual([{ percent: 100, baseSom: 0, rentSom: 20000, rentPercent: 0 }])
+  expect(sent).toEqual([{ percent: 100, baseSom: 0, rentSom: 20000, rentPercent: 0, byTimesheet: false }])
 })
 
 test('аренда процентом в форме; аренда больше заработка — «врач должен клинике», получено от врача', async () => {

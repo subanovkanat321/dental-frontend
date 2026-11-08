@@ -20,6 +20,7 @@ import { GuardianBox } from './GuardianBox'
 import { KidInfo } from './KidInfo'
 import { contactPhone } from '../lib/guardian'
 import { PatientExpenses } from './PatientExpenses'
+import { ContractBox } from '../contract/ContractBox'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 
@@ -42,7 +43,7 @@ function ageText(birth: string): string {
  * → «＋ Записать» и связаться → сводка (визиты, неявки, следующий приём, долг) → вкладки: «Визиты»
  * (записан, история — первые 5 и «Показать все»), «Медкарта» (карта зубов и план лечения, анкета,
  * снимки — во всю ширину), «Деньги» (долги, расходы), «Прочее» (данные, откуда узнал, представитель, лист
- * ожидания, семья). Ребёнок — бейдж «Ребёнок, 7 лет» и строка представителя в шапке.
+ * ожидания, семья, договор). Ребёнок — бейдж «Ребёнок, 7 лет» и строка представителя в шапке.
  */
 export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpenAppointment, onOpenPatient }: {
   patientId: number
@@ -234,6 +235,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {patient && mine && <WaitlistBox patient={patient} me={me} />}
           {patient && <GuardianBox patient={patient} canEdit={Boolean(mine)} />}
           {patient && mine && <FamilyBox patient={patient} me={me} onOpenPatient={onOpenPatient} />}
+          {/* Договор и согласие на лечение: печать, подпись на экране, отметка и скан */}
+          {patient && mine && <ContractBox patient={patient} me={me} defaultDoctorId={(next ?? past[0])?.doctorId} />}
         </section>
       )}
     </aside>

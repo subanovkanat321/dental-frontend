@@ -9,6 +9,8 @@ import { MonthPicker } from '../layout/MonthPicker'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { Timesheet } from './Timesheet'
+import { daysText } from './daysText'
 
 type Row = Schemas['SalaryControllerSalaryRow']
 type RentKind = 'none' | 'fixed' | 'percent'
@@ -46,7 +48,7 @@ function termsText(r: Row): string {
   const rent = rentText(r)
   const minusRent = rent ? `, минус аренда кресла ${rent}` : ''
   if (!isEmployee(r) && percent === 100 && !r.baseSom) return `вся выручка — врачу (100%)${minusRent}`
-  const parts = [percent ? `${String(percent).replace('.', ',')}% ${of}` : '', r.baseSom ? `оклад ${somText(r.baseSom)}` : '']
+  const parts = [percent ? `${String(percent).replace('.', ',')}% ${of}` : '', r.baseSom ? `оклад ${somText(r.baseSom)}${r.byTimesheet ? ' по табелю' : ''}` : '']
   return (parts.filter(Boolean).join(' + ') || 'Условия не заданы') + minusRent
 }
 
@@ -99,6 +101,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   const [editing, setEditing] = useState(false)
   const [paying, setPaying] = useState(false)
   const [receiving, setReceiving] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   // Форма условий после «Сохранить» закрывается — подтверждение показывает карточка
   const [termsSaved, setTermsSaved] = useState(false)
   const left = Math.max(0, (r.dueSom ?? 0) - (r.paidSom ?? 0))
@@ -144,6 +147,19 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
         : noTerms && !editing
           ? <p className="tone-wait">Условия не заданы — «К выплате» считается как 0. Нажмите «Задать процент и оклад».</p>
           : !noTerms && <p className="hint">Условия: {termsText(r)}</p>}
+      {/* Оклад по табелю: расшифровка «отработано 20 из 22 дней → 27 273 сом» */}
+      {r.byTimesheet && !r.former && (
+        <p className="salary-timesheet" aria-label="Оклад по табелю">
+          📅 Отработано <b className="num">{r.workedDays}</b> из <b className="num">{r.normDays}</b> {daysText(r.normDays ?? 0)} →{' '}
+          <b className="num">{somText(r.baseAccruedSom ?? 0)}</b> из оклада {somText(r.baseSom ?? 0)}
+          {' '}<button type="button" className="link" aria-expanded={sheetOpen} onClick={() => setSheetOpen(!sheetOpen)}>
+            {sheetOpen ? 'Скрыть табель' : seesAll ? 'Табель — отметить дни' : 'Табель'}</button>
+        </p>
+      )}
+      {sheetOpen && r.byTimesheet && (
+        <Timesheet whose={r.doctorId != null ? { doctorId: r.doctorId } : { telegramId: r.assistantId! }} month={month} name={r.doctor ?? ''}
+          canEdit={seesAll} onChanged={refresh} showSum={false} />
+      )}
       {seesAll && !r.former && !editing && !paying && !receiving && (
         <div className="actions">
           {left > 0 && <button type="button" className="btn primary" onClick={() => setPaying(true)}>Выплатить {somText(left)}</button>}
@@ -167,10 +183,12 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
 function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: string; onDone: () => void; onCancel: () => void }) {
   const [percent, setPercent] = useState(String(Number(r.percent ?? 0) || ''))
   const [base, setBase] = useState(r.baseSom ? String(r.baseSom) : '')
+  // Оклад по табелю: за отработанные дни (оклад × отработано / норма), а не весь
+  const [byTimesheet, setByTimesheet] = useState(Boolean(r.byTimesheet))
   // Аренда кресла — только у врача: нет, сумма в месяц или процент от его выручки
   const [rentKind, setRentKind] = useState<RentKind>(r.rentFixedSom ? 'fixed' : Number(r.rentPercent ?? 0) ? 'percent' : 'none')
   const [rent, setRent] = useState(r.rentFixedSom ? String(r.rentFixedSom) : Number(r.rentPercent ?? 0) ? String(Number(r.rentPercent)) : '')
-  const { dirty } = useDirty({ percent, base, rentKind, rent })
+  const { dirty } = useDirty({ percent, base, rentKind, rent, byTimesheet })
   // Пример на выручке этого месяца — подсказка; настоящую сумму считает сервер после «Сохранить»
   const p = Number(percent.replace(',', '.') || 0)
   const revenue = r.revenueSom ?? 0
@@ -183,7 +201,7 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
   const save = useMutation<Row, ApiError>({
     mutationFn: () => {
       const body = {
-        percent: Number(percent.replace(',', '.') || 0), baseSom: Number(base || 0),
+        percent: Number(percent.replace(',', '.') || 0), baseSom: Number(base || 0), byTimesheet: byTimesheet && Number(base || 0) > 0,
         ...(isEmployee(r) ? {} : { rentSom: rentKind === 'fixed' ? rentValue : 0, rentPercent: rentKind === 'percent' ? rentValue : 0 }),
       }
       return unwrap(r.assistantId != null
@@ -218,6 +236,12 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
         <label className="field"><span>Оклад в месяц, сом</span>
           <input inputMode="numeric" value={base} placeholder="0 — без оклада" onChange={(e) => setBase(e.target.value.replace(/\D/g, ''))} /></label>
       </div>
+      {Number(base || 0) > 0 && (
+        <label className="check">
+          <input type="checkbox" checked={byTimesheet} onChange={(e) => setByTimesheet(e.target.checked)} />
+          <span>Оклад по табелю — за отработанные дни: оклад × отработано / норма (рабочие дни месяца по графику)</span>
+        </label>
+      )}
       {!isEmployee(r) && (
         <div className="row">
           <label className="field"><span>Аренда кресла</span>
@@ -241,7 +265,7 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
         ))}
       </div>
       <p className="salary-preview" aria-label="Пример расчёта">
-        За {monthTitle(month)}: {Number(base || 0) ? `${somText(Number(base))} + ` : ''}{String(p).replace('.', ',')}% от {somText(revenue)}
+        За {monthTitle(month)}: {Number(base || 0) ? `${somText(Number(base))}${byTimesheet ? ' (по табелю — за отработанные дни)' : ''} + ` : ''}{String(p).replace('.', ',')}% от {somText(revenue)}
         {rentSom > 0 && ` − аренда ${somText(rentSom)}`} = <b className="num">{preview < 0 ? `врач должен клинике ${somText(-preview)}` : somText(preview)}</b>
       </p>
       <div className="actions">
@@ -317,6 +341,7 @@ function SalaryHowTo({ seesAll, noTerms }: { seesAll: boolean; noTerms: boolean 
       <ol>
         {seesAll && <li><b>Условия</b> — у каждого врача и сотрудника (ассистента, регистратуры, руководителя) своя кнопка «⚙️ Задать процент и оклад»: процент от выручки, оклад в месяц или оба. Задаются один раз; настраивает и выплачивает только руководитель.</li>}
         <li><b>Расчёт сам</b> — «К выплате» = оклад + процент от выручки за месяц. Выручка врача — оплаты пациентов за его приёмы; ассистента — оплаты за приёмы врачей, которым он помогает; регистратуры и руководителя — всей клиники (им обычно ставят только оклад).</li>
+        <li><b>Оклад по табелю</b> — галочка в условиях: оклад начисляется за отработанные дни, «Табель» в карточке — сетка дней месяца. Рабочие дни берутся из графика (часы врача, смены сотрудника), отпуск и выходные — из «Перерывов и выходных»; больничный и прогул отмечает руководитель. Пример: оклад 30 000, отработано 20 из 22 дней → 27 273 сом.</li>
         <li><b>Аренда кресла</b> — частный врач забирает выручку своих пациентов, но платит клинике аренду: сумму в месяц или процент от своей выручки. Она вычитается из «К выплате»; если аренда больше заработка — выплаты нет, а карточка покажет, сколько врач должен клинике.</li>
         {seesAll && <li><b>Выплата</b> — в начале месяца выберите прошлый месяц и нажмите «Выплатить». Выплата сама запишется в «Расходы» как «Зарплата», прибыль её учтёт.</li>}
       </ol>
