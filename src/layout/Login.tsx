@@ -1,11 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { botConfig, LOGGED_OUT } from '../api/client'
 import { isLoginPath } from '../lib/route'
+import { telegram } from '../lib/telegram'
 import { InstallHint } from '../pwa/InstallHint'
 import { PhoneLogin } from './PhoneLogin'
 import { Loading } from './Loading'
+import { TelegramLogin } from './TelegramLogin'
 
 /** Только что нажали «Выйти» в этой вкладке? Флаг читаем при открытии экрана, стираем после показа. */
 function justLoggedOut(): boolean {
@@ -29,14 +31,18 @@ function LoggedOutHint({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * Страница входа на сайт: только номер телефона и пароль (кнопку «Войти через Telegram» убрали — сервер
- * отвечает на неё 410). Нет пароля — «Забыли пароль? / Первый вход»: код в Telegram (бот сотрудников)
- * или по SMS. В Telegram (Mini App) этой страницы нет: там вход сам, по initData.
+ * Страница входа на сайт: номер телефона и пароль или «Войти через Telegram» — ссылка в бота и «Подтвердить
+ * вход» там (TelegramLogin; прежний Telegram Login Widget убран — сервер отвечает на него 410). Нет пароля —
+ * «Забыли пароль? / Первый вход»: код в Telegram (бот сотрудников) или по SMS. В Telegram (Mini App) вход сам,
+ * по initData — кнопку «Войти через Telegram» там не показываем.
  */
 export function Login() {
   const client = useQueryClient()
   const bot = useQuery({ queryKey: ['bot-config'], queryFn: botConfig, staleTime: Infinity })
   const [loggedOut, setLoggedOut] = useState(justLoggedOut)
+  /** Ждём «Подтвердить вход» в боте — форму номера и пароля прячем, чтобы не путать. */
+  const [tgWaiting, setTgWaiting] = useState(false)
+  const onWaiting = useCallback((w: boolean) => setTgWaiting(w), [])
   // Показали один раз: обновили страницу или вошли снова — подсказки уже нет
   useEffect(() => {
     try {
@@ -52,18 +58,20 @@ export function Login() {
     void client.invalidateQueries({ queryKey: ['me'] })
   }
   const config = bot.data
+  const viaTelegram = !!config?.telegramLogin && !telegram()
   return (
     <div className="center login">
       <div className="login-card">
       <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
       {loggedOut && <LoggedOutHint onClose={() => setLoggedOut(false)} />}
       <h1>Вход для клиники</h1>
-      <p className="hint">Врачи, регистратура и руководители — по номеру телефона и паролю.</p>
+      <p className="hint">Врачи, регистратура и руководители — по номеру телефона и паролю{viaTelegram ? ' или через Telegram' : ''}.</p>
       {bot.isPending && <Loading />}
       {bot.isSuccess && !config && <p className="error">Вход сейчас недоступен: сервер не настроен или не отвечает. Обновите страницу через минуту.</p>}
-      {config && (
+      {config && !tgWaiting && (
         <PhoneLogin onDone={entered} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin} />
       )}
+      {viaTelegram && <TelegramLogin onDone={entered} onWaiting={onWaiting} />}
       <InstallHint />
       <p className="hint small">В Telegram приложение открывается кнопкой «Открыть» в боте клиники — там пароль не нужен.</p>
       <p className="hint small">📲 <a href="/app">Скачать Tish на телефон или компьютер</a> — как приложение, со своим значком</p>

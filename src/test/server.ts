@@ -40,6 +40,8 @@ export const server = setupServer(
   // Экран входа: незаконченного входа нет (шаг после перезагрузки — свои тесты)
   http.get('*/web/login/phone/pending', () => new HttpResponse(null, { status: 204 })),
   http.delete('*/web/login/phone/pending', () => new HttpResponse(null, { status: 204 })),
+  // «Войти через Telegram»: подтверждения не ждём (ожидание и вход — layout/telegramLogin.test.tsx)
+  http.get('*/web/login/telegram/status', () => HttpResponse.json({ state: 'none', secondsLeft: 0, link: null })),
   http.get('*/api/patient-sources', () => HttpResponse.json(SOURCES)),
   // Промокоды (V122): по умолчанию у клиники их нет
   http.get('*/api/promo-codes', () => HttpResponse.json([])),

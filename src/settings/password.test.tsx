@@ -142,12 +142,12 @@ test('сотрудник с Telegram без пароля: одна кнопка 
   }
 })
 
-test('баннер в CRM «Задайте пароль для входа на сайте» — у сотрудника с Telegram без пароля; «Задать» → профиль', async () => {
+test('баннер в CRM «Чтобы входить без Telegram, задайте пароль» — у сотрудника с Telegram без пароля; «Задать» → профиль', async () => {
   backend({ phoneLogin: false, passwordSet: false, temporary: false, sms: false, telegram: true })
   window.location.hash = ''
   const user = userEvent.setup()
   renderApp()
-  const banner = await screen.findByRole('button', { name: /Задайте пароль для входа на сайте/ })
+  const banner = await screen.findByRole('button', { name: /Чтобы входить без Telegram, задайте пароль/ })
   await user.click(banner)
   expect(window.location.hash).toBe('#/settings/profile')
   expect(await screen.findByRole('region', { name: 'Телефон' })).toBeInTheDocument()

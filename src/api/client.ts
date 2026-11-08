@@ -134,16 +134,20 @@ export async function fetchBlob(path: string): Promise<Blob> {
  * выбирает сервер (сначала Telegram, иначе SMS); smsLogin — показать «Не пришло? Отправить по SMS».
  * null — вход на сайт не настроен (нет токена бота).
  */
-export type LoginConfig = { username: string; smsLogin: boolean; passwordLogin: boolean; telegramCode: boolean }
+export type LoginConfig = {
+  username: string; smsLogin: boolean; passwordLogin: boolean; telegramCode: boolean
+  /** «Войти через Telegram» — ссылка в бота и «Подтвердить вход» там (TelegramLoginController бэкенда) */
+  telegramLogin: boolean
+}
 
 export async function botConfig(): Promise<LoginConfig | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
   if (!response.ok) return null
   const body = await response.json().catch(() => null) as
-    { botUsername?: string | null; smsLogin?: boolean; passwordLogin?: boolean; telegramCode?: boolean } | null
+    { botUsername?: string | null; smsLogin?: boolean; passwordLogin?: boolean; telegramCode?: boolean; telegramLogin?: boolean } | null
   return body?.passwordLogin || body?.smsLogin
     ? { username: body.botUsername ?? '', smsLogin: body.smsLogin === true, passwordLogin: body.passwordLogin === true,
-        telegramCode: body.telegramCode === true }
+        telegramCode: body.telegramCode === true, telegramLogin: body.telegramLogin === true }
     : null
 }
 
@@ -233,6 +237,36 @@ export async function loginPending(): Promise<LoginPending | null> {
 /** «Другой номер»: сервер гасит cookie незаконченного входа. */
 export async function forgetLoginPending(): Promise<void> {
   await webRequest('DELETE', '/web/login/phone/pending')
+}
+
+/**
+ * «Войти через Telegram»: сервер дал одноразовую ссылку в бота (t.me/<бот>?start=weblogin_…) и поставил
+ * HttpOnly-cookie, которая привязывает вход к этому браузеру. Адреса вне контракта /api — типы здесь.
+ */
+export type TelegramLoginStarted = { link: string; secondsLeft: number }
+
+/**
+ * Как дела у входа через Telegram: none — не ждём (нет, истёк, уже вошли); waiting — ждём «Подтвердить вход»
+ * в боте (link — та же ссылка, после перезагрузки страницы); cancelled — в боте нажали «Нет»; done — вошли,
+ * cookie-сессия уже в ответе.
+ */
+export type TelegramLoginStatus = { state: 'none' | 'waiting' | 'cancelled' | 'done'; secondsLeft: number; link: string | null }
+
+/** Начать вход через Telegram. 429 — много попыток с адреса, 503 — вход через Telegram не настроен. */
+export async function startTelegramLogin(): Promise<TelegramLoginStarted> {
+  const started = await webPost<TelegramLoginStarted>('/web/login/telegram/start', undefined)
+  if (!started?.link) throw new ApiError(500, 'Сервер не ответил — попробуйте ещё раз')
+  return started
+}
+
+/** Опрос входа через Telegram (раз в 2 секунды и при открытии экрана входа). */
+export async function telegramLoginStatus(): Promise<TelegramLoginStatus> {
+  return await webRequest<TelegramLoginStatus>('GET', '/web/login/telegram/status') ?? { state: 'none', secondsLeft: 0, link: null }
+}
+
+/** «Отмена»: сервер забывает вход и гасит cookie. */
+export async function forgetTelegramLogin(): Promise<void> {
+  await webRequest('DELETE', '/web/login/telegram')
 }
 
 /**

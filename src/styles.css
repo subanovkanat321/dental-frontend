@@ -1076,6 +1076,11 @@ button.timesheet-day:hover { border-color: var(--accent); }
 /* «Войти через Telegram» — своя кнопка (layout/Login.tsx), цветом Telegram */
 .btn.tg-login { min-height: 48px; padding: 0 26px; gap: 10px; border: 0; border-radius: 12px; background: #2AABEE; color: #fff; font-size: 1.05rem; font-weight: 600; }
 .btn.tg-login:hover:not(:disabled) { background: #229ED9; }
+.telegram-login { width: 100%; max-width: 360px; justify-self: center; display: grid; gap: 10px; justify-items: center; text-align: center; }
+.telegram-login .btn.tg-login { width: 100%; text-decoration: none; }
+.telegram-login.waiting p:first-child { font-weight: 600; }
+.login-or { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--faint); font-size: .9rem; }
+.login-or::before, .login-or::after { content: ''; flex: 1; border-top: 1px solid var(--separator); }
 /* Вход по номеру и SMS (без Telegram): форма в карточке входа — по ширине кнопки, слева направо */
 .phone-login { width: 100%; max-width: 360px; justify-self: center; text-align: left; }
 .phone-login .actions { display: flex; justify-content: space-between; gap: 12px; }
