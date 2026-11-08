@@ -8,7 +8,7 @@ import { CITIES } from '../lib/clinicSearch'
 import { openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
-import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, type Group, type OutreachLead } from './outreach'
+import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, shareVideo, type Group, type OutreachLead } from './outreach'
 
 type Template = Schemas['ClinicOutreachTemplate']
 type Report = Schemas['ClinicOutreachImportReport']
@@ -55,6 +55,8 @@ export function OutreachTab() {
         <h2>Написать клиникам</h2>
         <p className="hint">Пишите по одной — своим нажатием: WhatsApp блокирует номер за массовые рассылки, а личное сообщение
           читают охотнее. После отправки отметьте «Да» — клиника перейдёт в «Написали» (и в воронке — «Связались»).</p>
+        <p className="hint">Порядок: <b>«Написать в WhatsApp»</b> — текст, затем <b>«🎬 Отправить ролик»</b> — видео отдельным файлом.
+          У незнакомого номера WhatsApp не делает ссылки кликабельными, поэтому ролик — вложением, а сайт — просто адресом в тексте.</p>
         {outreach.error && <p className="error">{outreach.error.message}</p>}
         {outreach.isPending ? <Loading /> : data && (
           <>
@@ -131,6 +133,8 @@ function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead
     : g === 'SENT' ? <span className="chip small s-ok">Написали{l.contactedAt ? ` ${shortDate(l.contactedAt)}` : ''}</span>
       : g === 'DECLINED' ? <span className="chip small s-bad">Отказ</span>
         : <span className="chip small s-request">{STAGE_TEXT[l.stage ?? ''] ?? 'Дальше'}</span>
+  // Ролик — отдельным файлом (ссылки у незнакомого номера не кликабельны)
+  const video = useMutation<Awaited<ReturnType<typeof shareVideo>>, Error>({ mutationFn: shareVideo })
   const error = sent.error ?? decline.error
   return (
     <div role="listitem" id={`outreach-${l.id}`} className={`sub-form form outreach-lead${selected ? ' active' : ''}`} aria-label={`Клиника: ${l.clinicName}`}
@@ -150,11 +154,17 @@ function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead
               onClick={() => { openLink(whatsappUrl(l.phone!, text)); setAsking(true) }}>Написать в WhatsApp</button>
           )}
           {!l.phone && l.link && <button type="button" className="btn" onClick={() => { openLink(l.link!); setAsking(true) }}>Открыть ссылку</button>}
+          <button type="button" className="btn" disabled={video.isPending} onClick={() => video.mutate()}>
+            {video.isPending ? 'Готовлю ролик…' : '🎬 Отправить ролик'}</button>
           <button type="button" className="btn" onClick={() => void copy()}>Скопировать текст</button>
           {!declining && <button type="button" className="btn ghost" onClick={() => setDeclining(true)}>Не беспокоить</button>}
         </div>
       )}
       {copied && !asking && <span className="tone-ok" role="status">Текст скопирован</span>}
+      {video.data && video.data !== 'cancelled' && (
+        <span className="tone-ok" role="status">{VIDEO_DONE[video.data]}</span>
+      )}
+      {video.error && <p className="error" role="alert">Ролик не открылся: {video.error.message}</p>}
       {asking && (
         <div className="outreach-ask" role="group" aria-label="Отправили?">
           <span>{copied ? 'Текст скопирован. ' : ''}Отправили сообщение «{l.clinicName}»?</span>
@@ -177,6 +187,12 @@ function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead
       {error && <p className="error" role="alert">{error.message}</p>}
     </div>
   )
+}
+
+const VIDEO_DONE: Record<'shared' | 'downloaded' | 'opened', string> = {
+  shared: 'Ролик отправлен через «Поделиться».',
+  downloaded: 'Ролик скачан — прикрепите его в чат клиники в WhatsApp.',
+  opened: 'Ролик открыт в браузере — нажмите «Поделиться» → WhatsApp → чат клиники.',
 }
 
 /** «Загрузить список клиник»: вставить текст или выбрать файл → предпросмотр → добавить новые. */

@@ -17,7 +17,7 @@ function lead(id: number, clinicName: string, extra: Partial<Lead> = {}): Lead {
   }
 }
 
-const TEMPLATE = 'Здравствуйте, {клиника}! 😊\nМы — Tish. Подробнее: https://tish.kg/join'
+const TEMPLATE = 'Здравствуйте, {клиника}! 😊\nМы — Tish. Подробнее: tish.kg/about'
 const owner = { ...me, owner: true, platform: true }
 
 function outreach(leads: Lead[]): Schemas['ClinicOutreachOutreach'] {
@@ -87,7 +87,7 @@ test('WhatsApp открывает wa.me с номером и текстом, «�
 
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
   await user.click(within(card).getByRole('button', { name: 'Написать в WhatsApp' }))
-  const text = 'Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/join'
+  const text = 'Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: tish.kg/about'
   expect(open).toHaveBeenCalledWith(`https://wa.me/996555000402?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
 
   const ask = within(card).getByRole('group', { name: 'Отправили?' })
@@ -185,4 +185,27 @@ test('«Не беспокоить» — отказ с причиной', async (
   await user.type(within(card).getByRole('textbox', { name: 'Почему — для себя' }), 'Дорого')
   await user.click(within(card).getByRole('button', { name: 'Больше не писать' }))
   await waitFor(() => expect(body).toEqual({ reason: 'Дорого' }))
+})
+
+test('«🎬 Отправить ролик»: телефон — «Поделиться» файлом mp4; компьютер — файл скачивается', async () => {
+  server.use(http.get('*/web/materials/public/promo.mp4', () => new HttpResponse('mp4', { headers: { 'Content-Type': 'video/mp4' } })))
+  const shared: File[][] = []
+  Object.assign(navigator, {
+    canShare: (d: { files?: File[] }) => !!d.files?.length,
+    share: (d: { files: File[] }) => { shared.push(d.files); return Promise.resolve() },
+  })
+  const user = await openTab()
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  await user.click(within(card).getByRole('button', { name: '🎬 Отправить ролик' }))
+  expect(await within(card).findByText('Ролик отправлен через «Поделиться».')).toBeInTheDocument()
+  expect(shared[0]?.[0]?.name).toBe('Tish-rolik.mp4')
+  expect(shared[0]?.[0]?.type).toBe('video/mp4')
+
+  // Нет «Поделиться» файлом (компьютер) — скачивание
+  Object.assign(navigator, { canShare: () => false })
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  if (!('createObjectURL' in URL)) Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} })
+  await user.click(within(card).getByRole('button', { name: '🎬 Отправить ролик' }))
+  expect(await within(card).findByText(/Ролик скачан/)).toBeInTheDocument()
+  expect(click).toHaveBeenCalled()
 })

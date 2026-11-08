@@ -1,4 +1,5 @@
-import type { Schemas } from '../api/client'
+import { fetchBlob, type Schemas } from '../api/client'
+import { openLink, telegram } from '../lib/telegram'
 
 export type OutreachLead = Schemas['SalesFunnelLead']
 export type Group = 'FRESH' | 'SENT' | 'FURTHER' | 'DECLINED'
@@ -37,4 +38,39 @@ export function nextLead(leads: OutreachLead[], currentId: number | null): Outre
   const from = currentId == null ? -1 : leads.findIndex((l) => l.id === currentId)
   if (from < 0) return candidates[0]!
   return leads.slice(from + 1).find(writable) ?? candidates.find((l) => l.id !== currentId) ?? null
+}
+
+
+/** Публичный промо-ролик (бэкенд, /web/materials/public — без входа) — под этим именем уходит клинике. */
+export const PROMO_VIDEO = '/web/materials/public/promo.mp4'
+
+/**
+ * «Отправить ролик» отдельным файлом: у незнакомого номера WhatsApp не делает ссылки кликабельными,
+ * поэтому видео — вложением. Телефон: системное «Поделиться» с файлом (выбрать WhatsApp и чат клиники).
+ * Компьютер: файл скачивается — прикрепить в WhatsApp Web. В Telegram (Mini App) «Поделиться» файлом нет —
+ * ролик открывается в браузере телефона, оттуда «Поделиться».
+ */
+export async function shareVideo(): Promise<'shared' | 'downloaded' | 'opened' | 'cancelled'> {
+  if (telegram()) {
+    openLink(new URL(PROMO_VIDEO, window.location.origin).href)
+    return 'opened'
+  }
+  const blob = await fetchBlob(PROMO_VIDEO)
+  const file = new File([blob], 'Tish-rolik.mp4', { type: 'video/mp4' })
+  if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] })
+      return 'shared'
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return 'cancelled'
+      throw e
+    }
+  }
+  const href = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = href
+  a.download = file.name
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(href), 10_000)
+  return 'downloaded'
 }
