@@ -16,6 +16,7 @@ import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { adminsLine, remindedText } from './agreementTarget'
+import { StockClearBox } from './StockClearBox'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -25,7 +26,7 @@ const day = (d?: string) => (d ? shortDate(`${d}T12:00:00Z`) : '')
 
 /**
  * Клиника на платформе — карточка справа: цифры, оплата и договор (владелец), ссылка для
- * пациентов, войти в клинику (владелец), пригласить админа, выгрузка, скрыть и удалить (владелец).
+ * пациентов, войти в клинику (владелец), пригласить админа, выгрузка, очистить склад, скрыть и удалить (владелец).
  * Менеджер видит только цифры и приглашает админа — пациентов платформа не видит.
  */
 /** Видна ли клиника пациентам: новая — пока админ не нажал «Показать пациентам» (V95 бэкенда). */
@@ -72,6 +73,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
       )}
       {!inviteFirst && <AdminInvite clinic={c} initial={invite} owner={owner} />}
       {owner && <ExportBox id={c.id!} />}
+      {owner && <StockClearBox id={c.id!} name={c.name ?? ''} />}
       {owner && <HideBox clinic={c} />}
       {owner && c.id !== 1 && <DeleteBox clinic={c} onDeleted={onClose} />}
     </aside>
