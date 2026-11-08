@@ -185,6 +185,12 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
           <ResendLink wait={wait} sms={sms} busy={busy} onSms={() => void getCode('sms')} onAgain={() => void getCode('auto')} />
           <button type="button" className="link" onClick={() => go('phone')}>Другой номер</button>
         </div>
+        {/* Сервер не скажет, что номера нет (по ответу не узнать чужой номер), — частая причина «не пришло»:
+            сотрудник работает через Telegram, а номер для входа ещё не привязал */}
+        {telegram && wait === 0 && (
+          <p className="hint small">Не приходит код? Если вы работаете в Tish через Telegram, сначала привяжите номер: в боте
+            нажмите «📱&nbsp;Поделиться номером» или в приложении — «Настройки → Изменить профиль → Телефон».</p>
+        )}
       </form>
     )
   }

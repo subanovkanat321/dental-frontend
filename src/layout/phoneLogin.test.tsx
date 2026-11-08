@@ -164,7 +164,10 @@ test('«Не пришло? Отправить по SMS» появляется ч
     for (let i = 0; i < 59; i++) await act(async () => { vi.advanceTimersByTime(1000) })
     expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
     expect(screen.getByText('Не пришло? Через 1 с можно отправить по SMS.')).toBeInTheDocument()
+    expect(screen.queryByText(/Не приходит код\? Если вы работаете в Tish через Telegram/)).not.toBeInTheDocument()
     await act(async () => { vi.advanceTimersByTime(1000) })
+    // Через минуту — подсказка про частую причину: номер для входа не привязан к Telegram
+    expect(screen.getByText(/Не приходит код\? Если вы работаете в Tish через Telegram/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Не пришло? Отправить по SMS' }))
 
     expect(await screen.findByText(/Отправили SMS с кодом на этот номер/)).toBeInTheDocument()
