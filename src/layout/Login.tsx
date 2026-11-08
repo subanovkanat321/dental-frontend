@@ -66,6 +66,7 @@ export function Login() {
       )}
       <InstallHint />
       <p className="hint small">В Telegram приложение открывается кнопкой «Открыть» в боте клиники — там пароль не нужен.</p>
+      <p className="hint small">📲 <a href="/app">Скачать Tish на телефон или компьютер</a> — как приложение, со своим значком</p>
       <p className="hint small">Пациенты записываются через бота в Telegram: <a href="/clinics">выбрать клинику</a></p>
       </div>
     </div>

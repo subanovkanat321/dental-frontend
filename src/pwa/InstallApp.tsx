@@ -41,9 +41,9 @@ function IosSteps() {
   )
 }
 
-/** Адрес для установки: вход CRM (корень без входа увёл бы на каталог клиник). */
-function loginUrl(): string {
-  return `${window.location.origin}/login`
+/** Страница «Скачать Tish» (/app): установка как приложение — с неё браузер и предлагает установку. */
+function appUrl(): string {
+  return `${window.location.origin}/app`
 }
 
 /**
@@ -55,7 +55,34 @@ export function InstallApp() {
     <section className="settings-group" aria-label="Установить приложение">
       <h2>Установить приложение</h2>
       <div className="card-block pwa-install"><InstallBody /></div>
+      <ShareAppLink />
     </section>
+  )
+}
+
+/**
+ * Ссылка «Скачать Tish» коллегам: один адрес — tish.kg/app, открыли на телефоне или компьютере → установили.
+ * «Поделиться» (телефон) или «Скопировать» — отправить в WhatsApp/Telegram.
+ */
+function ShareAppLink() {
+  const [done, setDone] = useState('')
+  const url = appUrl()
+  const share = () => {
+    if (typeof navigator.share === 'function') {
+      navigator.share({ title: 'Tish', text: 'Tish на телефон или компьютер — как приложение:', url }).then(() => setDone(''), () => {})
+      return
+    }
+    navigator.clipboard?.writeText(url).then(() => setDone('Ссылка скопирована ✓'), () => setDone('Не получилось скопировать — выделите ссылку'))
+  }
+  return (
+    <div className="card-block pwa-share">
+      <p><strong>Ссылка для сотрудников</strong> — откроют на телефоне или компьютере и установят Tish в пару нажатий.</p>
+      <p className="pwa-link"><input readOnly aria-label="Ссылка «Скачать Tish»" value={url} onFocus={(e) => e.currentTarget.select()} /></p>
+      <div className="actions">
+        <button type="button" className="btn" onClick={share}>{typeof navigator.share === 'function' ? 'Поделиться с коллегами' : 'Скопировать для коллег'}</button>
+      </div>
+      {done && <p className="tone-ok" role="status">{done}</p>}
+    </div>
   )
 }
 
@@ -67,7 +94,7 @@ export function InstallBody() {
   let body
   if (app) {
     const copy = () => {
-      navigator.clipboard?.writeText(loginUrl()).then(() => setCopied(true), () => setCopied(false))
+      navigator.clipboard?.writeText(appUrl()).then(() => setCopied(true), () => setCopied(false))
     }
     const ios = isIos() || app.platform === 'ios'
     body = (
@@ -76,13 +103,13 @@ export function InstallBody() {
         <ol className="pwa-steps">
           <li>Нажмите <strong>Скопировать ссылку</strong>.</li>
           <li>Откройте <strong>{ios ? 'Safari' : 'Chrome'}</strong>, нажмите на адресную строку и вставьте ссылку.</li>
-          <li>Войдите через Telegram и установите: «Настройки» → «Установить приложение» — там будет подсказка.</li>
+          <li>Откроется страница «Скачать Tish» — там кнопка или подсказка, как установить.</li>
         </ol>
-        <p className="pwa-link"><input readOnly aria-label="Ссылка для браузера" value={loginUrl()} onFocus={(e) => e.currentTarget.select()} /></p>
+        <p className="pwa-link"><input readOnly aria-label="Ссылка для браузера" value={appUrl()} onFocus={(e) => e.currentTarget.select()} /></p>
         <div className="actions">
           <button type="button" className="btn primary" onClick={copy}>{copied ? 'Ссылка скопирована ✓' : 'Скопировать ссылку'}</button>
           {app.openLink && !ios && (
-            <button type="button" className="btn" onClick={() => app.openLink!(loginUrl(), { try_browser: 'chrome' })}>Открыть в браузере</button>
+            <button type="button" className="btn" onClick={() => app.openLink!(appUrl(), { try_browser: 'chrome' })}>Открыть в браузере</button>
           )}
         </div>
       </>

@@ -69,12 +69,12 @@ test('в Telegram: открыть сайт в браузере и установ
   render(<InstallApp />)
   expect(screen.getByRole('region', { name: 'Установить приложение' })).toHaveTextContent('только из браузера телефона')
   await userEvent.click(screen.getByRole('button', { name: 'Скопировать ссылку' }))
-  expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/login`)
+  expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/app`)
   expect(await screen.findByRole('button', { name: 'Ссылка скопирована ✓' })).toBeInTheDocument()
-  expect(screen.getByRole('textbox', { name: 'Ссылка для браузера' })).toHaveValue(`${window.location.origin}/login`)
+  expect(screen.getByRole('textbox', { name: 'Ссылка для браузера' })).toHaveValue(`${window.location.origin}/app`)
   // Android: сразу в Chrome
   await userEvent.click(screen.getByRole('button', { name: 'Открыть в браузере' }))
-  expect(openLink).toHaveBeenCalledWith(`${window.location.origin}/login`, { try_browser: 'chrome' })
+  expect(openLink).toHaveBeenCalledWith(`${window.location.origin}/app`, { try_browser: 'chrome' })
 })
 
 test('Telegram на iPhone: «Открыть в браузере» нет (откроется браузер Telegram, оттуда не установить) — копировать в Safari', () => {
@@ -157,4 +157,14 @@ test('tish.kg/app — страница «Скачать Tish» без входа
   })
   expect(await screen.findByRole('button', { name: 'Установить' })).toBeInTheDocument()
   expect(replace).not.toHaveBeenCalled()
+})
+
+test('«Ссылка для сотрудников» — tish.kg/app: скопировать (компьютер) коллегам', async () => {
+  const user = userEvent.setup()
+  const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue()
+  render(<InstallApp />)
+  expect(screen.getByRole('textbox', { name: 'Ссылка «Скачать Tish»' })).toHaveValue(`${window.location.origin}/app`)
+  await user.click(screen.getByRole('button', { name: /для коллег|с коллегами/ }))
+  expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/app`)
+  expect(await screen.findByText('Ссылка скопирована ✓')).toBeInTheDocument()
 })
