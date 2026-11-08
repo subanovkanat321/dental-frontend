@@ -1,12 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { ApiError, inviteInfo, inviteRegister } from '../api/client'
+import { ApiError, forgetInviteCode, inviteCode, inviteInfo, inviteRegister, type InviteCodeStep } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
+import { CodeInput, ResendLink } from '../layout/CodeStep'
 import { Loading } from '../layout/Loading'
 import { NewPasswordFields } from '../layout/PasswordFields'
+import { useCountdown } from '../lib/otp'
 import { passwordProblem } from '../lib/password'
+
+type Done = { fullName: string; roleText: string }
 
 const RENEW = 'Попросите руководителя клиники прислать новую ссылку.'
 
@@ -19,15 +23,17 @@ function inviteToken(hash = window.location.hash): string {
 /**
  * Страница по ссылке-приглашению {@code /invite#join_<код>} (врач) или {@code /invite#staff_<код>}
  * (сотрудник) — без входа. Главное — «Открыть в Telegram» (тот же старт у бота, что и раньше: «Начать» —
- * и готово). Ниже — мелкая ссылка «Нет Telegram? Зарегистрироваться по номеру телефона»: номер и свой
- * пароль → человек сразу в CRM (сессия от сервера, cookie). Код, номер и пароль — только в памяти
- * страницы и в теле запросов: не в localStorage и не в консоли.
+ * и готово). Ниже — мелкая ссылка «Нет Telegram? Зарегистрироваться по номеру телефона»: номер → код из
+ * SMS и свой пароль → человек сразу в CRM (сессия от сервера, cookie). SMS на сервере не подключены
+ * (codeRequired: false) — номер и пароль без кода. Код, номер и пароль — только в памяти страницы и в теле
+ * запросов: не в localStorage и не в консоли. Шаг кода переживает перезагрузку: его помнит сервер
+ * (HttpOnly-cookie), а код ссылки и так в адресе после «#».
  */
 export function InvitePage() {
   const token = inviteToken()
   const info = useQuery({ queryKey: ['invite', token], queryFn: () => inviteInfo(token), enabled: token !== '', retry: false, staleTime: Infinity })
   const [byPhone, setByPhone] = useState(false)
-  const [done, setDone] = useState<{ fullName: string; roleText: string } | null>(null)
+  const [done, setDone] = useState<Done | null>(null)
 
   let body: React.ReactNode
   if (done) body = <Welcome {...done} />
@@ -49,10 +55,11 @@ export function InvitePage() {
             <p className="hint">Нажмите «Начать» в боте — и вы в приложении.</p>
           </>
         )}
-        {!byPhone ? (
+        {!byPhone && !i.pending ? (
           <button type="button" className="link invite-phone-link" onClick={() => setByPhone(true)}>
             {tg ? 'Нет Telegram? Зарегистрироваться по номеру телефона' : 'Зарегистрироваться по номеру телефона'}</button>
-        ) : <Register token={token} onDone={setDone} />}
+        ) : i.codeRequired ? <RegisterWithCode token={token} pending={i.pending} onDone={setDone} />
+          : <Register token={token} onDone={setDone} />}
         <p className="hint small">Ссылка работает один раз и 24 часа.</p>
       </>
     )
@@ -77,15 +84,18 @@ function Invalid({ text }: { text: string }) {
   )
 }
 
-/** Номер, пароль и повтор — те же правила, что у «Придумайте пароль» при входе; последнее слово — за сервером. */
-function Register({ token, onDone }: { token: string; onDone: (d: { fullName: string; roleText: string }) => void }) {
+/**
+ * SMS не подключены: номер, пароль и повтор — те же правила, что у «Придумайте пароль» при входе; последнее
+ * слово — за сервером.
+ */
+function Register({ token, onDone }: { token: string; onDone: (d: Done) => void }) {
   const client = useQueryClient()
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [repeat, setRepeat] = useState('')
   const [check, setCheck] = useState('')
   const send = useMutation<{ fullName: string; roleText: string }, ApiError>({
-    mutationFn: () => inviteRegister(token, phoneFromInput(phone), password),
+    mutationFn: () => inviteRegister(token, { phone: phoneFromInput(phone), password }),
     onSuccess: (d) => {
       // Сессия уже в cookie — «кто я» спросим заново, когда откроют CRM
       void client.invalidateQueries({ queryKey: ['me'] })
@@ -115,6 +125,108 @@ function Register({ token, onDone }: { token: string; onDone: (d: { fullName: st
       {other && <p className="error" role="alert">{other}</p>}
       <button type="submit" className="btn primary" disabled={send.isPending || !phone.trim()}>
         {send.isPending ? 'Регистрируем…' : 'Зарегистрироваться'}</button>
+    </form>
+  )
+}
+
+/**
+ * С кодом из SMS — два шага, удобно на телефоне: «Номер» → «Получить код», затем код и «Придумайте пароль» на
+ * одном экране → «Зарегистрироваться». Номер занят — сервер скажет до отправки SMS. После перезагрузки
+ * страницы (pending от сервера) — сразу второй шаг: номер тогда только маской, набранного нет.
+ */
+function RegisterWithCode({ token, pending, onDone }: { token: string; pending: InviteCodeStep | null; onDone: (d: Done) => void }) {
+  const client = useQueryClient()
+  const [step, setStep] = useState<'phone' | 'code'>(pending ? 'code' : 'phone')
+  const [phone, setPhone] = useState('')
+  const [sent, setSent] = useState<InviteCodeStep | null>(pending)
+  const [code, setCode] = useState('')
+  const [password, setPassword] = useState('')
+  const [repeat, setRepeat] = useState('')
+  const [check, setCheck] = useState('')
+  const [wait, restart] = useCountdown()
+  useEffect(() => {
+    // После перезагрузки — сколько осталось до «Отправить ещё раз» по словам сервера
+    if (pending) restart(pending.resendSeconds)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- только при открытии шага
+  }, [])
+
+  const getCode = useMutation<InviteCodeStep, ApiError, string>({
+    mutationFn: (typed) => inviteCode(token, typed),
+    onSuccess: (s) => {
+      setSent(s)
+      setCode('')
+      restart(s.resendSeconds)
+      setStep('code')
+    },
+    onError: (e) => {
+      // «Отправить ещё раз», а сервер шаг уже забыл (5 минут вышли) — заново с номера
+      if (step === 'code' && e.fieldErrors.phone) setStep('phone')
+    },
+  })
+  const send = useMutation<Done, ApiError>({
+    mutationFn: () => inviteRegister(token, { code, password }),
+    onSuccess: (d) => {
+      void client.invalidateQueries({ queryKey: ['me'] })
+      onDone(d)
+    },
+  })
+
+  if (step === 'phone') {
+    const e = getCode.error
+    const phoneError = e?.fieldErrors.phone ?? (e?.status === 409 ? e.message : undefined)
+    const other = e && !phoneError ? e.message || 'Нет связи с сервером' : ''
+    return (
+      <form className="form narrow invite-form" aria-label="Регистрация по номеру" onSubmit={(ev) => {
+        ev.preventDefault()
+        getCode.mutate(phoneFromInput(phone))
+      }}>
+        <p className="hint">Пришлём SMS с кодом — так проверим, что номер ваш. Войти потом — на сайте по этому номеру и паролю.</p>
+        <label className="field"><span>Номер телефона</span>
+          <PhoneInput label="Ваш номер телефона" value={phone} onChange={setPhone} />
+        </label>
+        {phoneError && <p className="error">{phoneError}</p>}
+        {other && <p className="error" role="alert">{other}</p>}
+        <button type="submit" className="btn primary" disabled={getCode.isPending || !phone.trim()}>
+          {getCode.isPending ? 'Отправляем…' : 'Получить код'}</button>
+      </form>
+    )
+  }
+
+  const e = send.error
+  const codeError = e?.fieldErrors.code
+  const passwordError = check || e?.fieldErrors.password
+  const resendError = getCode.error ? getCode.error.message || 'Нет связи с сервером' : ''
+  const other = e && !codeError && !e.fieldErrors.password ? e.message || 'Нет связи с сервером' : ''
+  const typed = phone.trim() ? phoneFromInput(phone) : ''
+  return (
+    <form className="form narrow invite-form" aria-label="Код из SMS" onSubmit={(ev) => {
+      ev.preventDefault()
+      const problem = passwordProblem(password, repeat, typed)
+      setCheck(problem)
+      if (!problem) send.mutate()
+    }}>
+      <p className="hint" role="status">Отправили SMS с кодом{sent ? <> на <b>{sent.phoneMasked}</b></> : null}.
+        Код действует {sent ? `${Math.max(1, Math.ceil(sent.secondsLeft / 60))} мин.` : '5 минут.'}</p>
+      <CodeInput value={code} onChange={setCode} />
+      {codeError && <p className="error">{codeError}</p>}
+      <NewPasswordFields password={password} repeat={repeat} phone={typed} label="Придумайте пароль"
+        onPassword={(v) => { setPassword(v); setCheck('') }} onRepeat={(v) => { setRepeat(v); setCheck('') }} />
+      {passwordError && <p className="error">{passwordError}</p>}
+      {other && <p className="error" role="alert">{other}</p>}
+      <button type="submit" className="btn primary" disabled={send.isPending || code.length !== 6}>
+        {send.isPending ? 'Регистрируем…' : 'Зарегистрироваться'}</button>
+      {resendError && <p className="error" role="alert">{resendError}</p>}
+      <div className="actions">
+        <ResendLink wait={wait} sms={false} busy={getCode.isPending} onSms={() => getCode.mutate(typed)}
+          onAgain={() => getCode.mutate(typed)} />
+        <button type="button" className="link" onClick={() => {
+          void forgetInviteCode().catch(() => undefined)
+          getCode.reset()
+          send.reset()
+          setCode('')
+          setStep('phone')
+        }}>Другой номер</button>
+      </div>
     </form>
   )
 }

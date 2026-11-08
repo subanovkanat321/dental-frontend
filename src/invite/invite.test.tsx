@@ -9,8 +9,11 @@ import { server } from '../test/server'
 /** Ссылка-приглашение на сайт: /invite#join_… — имена и номера вымышленные. */
 const DOCTOR: InviteInfo = {
   kind: 'DOCTOR', clinicName: 'Стоматология «Тест»', fullName: 'Бакыт Тестов', role: null, roleText: 'врач',
-  expiresAt: '2026-11-09T10:00:00Z', botUsername: 'tish_test_bot',
+  expiresAt: '2026-11-09T10:00:00Z', botUsername: 'tish_test_bot', codeRequired: false, pending: null,
 }
+
+/** SMS на сервере подключены — номер подтверждается кодом. */
+const WITH_CODE: InviteInfo = { ...DOCTOR, codeRequired: true }
 
 type Sent = { path: string; body: Record<string, unknown>; header: string | null }
 
@@ -33,7 +36,22 @@ function backend(info: InviteInfo | null = DOCTOR) {
       if (body.password === 'Тишина-слабая') {
         return HttpResponse.json({ detail: 'Проверьте поля формы', errors: [{ field: 'password', message: 'Пароль слишком простой' }] }, { status: 422 })
       }
+      if (body.code !== undefined && body.code !== '123456') {
+        return HttpResponse.json({ detail: 'Проверьте поля формы', errors: [{ field: 'code', message: 'Код не подошёл или устарел. Запросите новый' }] }, { status: 422 })
+      }
       return HttpResponse.json({ fullName: 'Бакыт Тестов', roleText: 'врач' })
+    }),
+    http.post('*/web/invite/code', async ({ request }) => {
+      const body = await request.json() as Record<string, unknown>
+      sent.push({ path: 'code', body, header: request.headers.get('X-Dental-Web') })
+      if (String(body.phone).includes('700 000 011')) {
+        return HttpResponse.json({ detail: 'Этот номер уже зарегистрирован в Tish — войдите на сайте по номеру и паролю', code: 'phone-taken' }, { status: 409 })
+      }
+      return HttpResponse.json({ phoneMasked: '+996 *** **56', secondsLeft: 300, resendSeconds: 60 })
+    }),
+    http.delete('*/web/invite/pending', () => {
+      sent.push({ path: 'forget', body: {}, header: '1' })
+      return new HttpResponse(null, { status: 204 })
     }),
   )
   return sent
@@ -61,6 +79,8 @@ test('приглашение: главное — «Открыть в Telegram»,
   expect(screen.queryByRole('form', { name: 'Регистрация по номеру' })).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Нет Telegram? Зарегистрироваться по номеру телефона' }))
   const form = screen.getByRole('form', { name: 'Регистрация по номеру' })
+  // SMS не подключены (codeRequired: false) — без шага кода: номер и пароль сразу
+  expect(within(form).queryByRole('button', { name: 'Получить код' })).not.toBeInTheDocument()
 
   await user.type(within(form).getByRole('textbox', { name: 'Ваш номер телефона' }), '555 123 456')
   await user.type(within(form).getByLabelText('Придумайте пароль'), 'Улыбка2026')
@@ -119,4 +139,69 @@ test('приглашение: недействительная или испор
   open('что-то-не-то')
   renderApp()
   expect(await screen.findByRole('alert')).toHaveTextContent('Ссылка неполная или с ошибкой. Попросите руководителя клиники прислать новую ссылку.')
+})
+
+test('приглашение с SMS: номер → «Получить код» → код и пароль → вход; номер — не в адресе и не в localStorage', async () => {
+  const sent = backend(WITH_CODE)
+  open('join_abc123')
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Нет Telegram? Зарегистрироваться по номеру телефона' }))
+  const form = screen.getByRole('form', { name: 'Регистрация по номеру' })
+  // На первом шаге — только номер
+  expect(within(form).queryByLabelText('Придумайте пароль')).not.toBeInTheDocument()
+
+  // Номер занят — сервер скажет до SMS, шаг кода не открывается
+  const phone = within(form).getByRole('textbox', { name: 'Ваш номер телефона' })
+  await user.type(phone, '700 000 011')
+  await user.click(within(form).getByRole('button', { name: 'Получить код' }))
+  expect(await within(form).findByText('Этот номер уже зарегистрирован в Tish — войдите на сайте по номеру и паролю')).toBeInTheDocument()
+
+  await user.clear(phone)
+  await user.type(phone, '555 123 456')
+  await user.click(within(form).getByRole('button', { name: 'Получить код' }))
+  const step = await screen.findByRole('form', { name: 'Код из SMS' })
+  expect(within(step).getByRole('status')).toHaveTextContent('Отправили SMS с кодом на +996 *** **56. Код действует 5 мин.')
+  expect(sent.find((x) => x.path === 'code' && x.body.phone === '+996 555 123 456')).toBeTruthy()
+  // «Отправить ещё раз» — только через минуту
+  expect(within(step).getByText('Отправить ещё раз — через 60 с.')).toBeInTheDocument()
+
+  // Неверный код — под полем кода
+  await user.type(within(step).getByLabelText('Код подтверждения'), '000000')
+  await user.type(within(step).getByLabelText('Придумайте пароль'), 'Улыбка2026')
+  await user.type(within(step).getByLabelText('Повторите пароль'), 'Улыбка2026')
+  await user.click(within(step).getByRole('button', { name: 'Зарегистрироваться' }))
+  expect(await within(step).findByText('Код не подошёл или устарел. Запросите новый')).toBeInTheDocument()
+
+  await user.clear(within(step).getByLabelText('Код подтверждения'))
+  await user.type(within(step).getByLabelText('Код подтверждения'), '123456')
+  await user.click(within(step).getByRole('button', { name: 'Зарегистрироваться' }))
+  expect(await screen.findByRole('heading', { name: 'Добро пожаловать, Бакыт Тестов!' })).toBeInTheDocument()
+  // Номер в регистрации не шлём — сервер знает его сам (код пришёл на него)
+  expect(sent.filter((x) => x.path === 'register').at(-1)).toEqual({
+    path: 'register', body: { token: 'join_abc123', code: '123456', password: 'Улыбка2026' }, header: '1',
+  })
+  expect(window.location.href).not.toContain('555')
+  expect(JSON.stringify({ ...localStorage })).not.toContain('555')
+})
+
+test('приглашение с SMS: перезагрузка на шаге кода — сразу шаг кода, «Отправить ещё раз» без номера', async () => {
+  const sent = backend({ ...WITH_CODE, pending: { phoneMasked: '+996 *** **56', secondsLeft: 170, resendSeconds: 0 } })
+  open('join_abc123')
+  const user = userEvent.setup()
+  renderApp()
+
+  const step = await screen.findByRole('form', { name: 'Код из SMS' })
+  expect(within(step).getByRole('status')).toHaveTextContent('Отправили SMS с кодом на +996 *** **56. Код действует 3 мин.')
+  expect(screen.queryByRole('form', { name: 'Регистрация по номеру' })).not.toBeInTheDocument()
+
+  await user.click(within(step).getByRole('button', { name: 'Отправить код ещё раз' }))
+  // Набранного номера после перезагрузки нет — только код ссылки, номер сервер возьмёт из своей cookie
+  expect(sent.find((x) => x.path === 'code')).toEqual({ path: 'code', body: { token: 'join_abc123' }, header: '1' })
+  expect(await within(step).findByText('Отправить ещё раз — через 60 с.')).toBeInTheDocument()
+
+  // «Другой номер» — сервер забывает шаг, снова ввод номера
+  await user.click(within(step).getByRole('button', { name: 'Другой номер' }))
+  expect(await screen.findByRole('form', { name: 'Регистрация по номеру' })).toBeInTheDocument()
+  expect(sent.some((x) => x.path === 'forget')).toBe(true)
 })

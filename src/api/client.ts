@@ -238,12 +238,17 @@ export async function forgetLoginPending(): Promise<void> {
 /**
  * Ссылка-приглашение на сайт (/invite#join_… врачу, /invite#staff_… сотруднику): что за приглашение.
  * Адрес вне контракта /api (как вход) — тип здесь. kind — DOCTOR или STAFF; botUsername — для
- * «Открыть в Telegram», бот не настроен — null.
+ * «Открыть в Telegram», бот не настроен — null. codeRequired — регистрация по номеру с кодом из SMS (SMS
+ * на сервере подключены); false — номер и пароль без кода. pending — код по этой ссылке уже отправлен и ещё
+ * действует (страницу перезагрузили): сразу шаг кода.
  */
 export type InviteInfo = {
   kind: 'DOCTOR' | 'STAFF'; clinicName: string; fullName: string; role: string | null; roleText: string
-  expiresAt: string; botUsername: string | null
+  expiresAt: string; botUsername: string | null; codeRequired: boolean; pending: InviteCodeStep | null
 }
+
+/** Шаг «Код из SMS»: номер маской, сколько ещё действует код и через сколько можно отправить ещё раз (с). */
+export type InviteCodeStep = { phoneMasked: string; secondsLeft: number; resendSeconds: number }
 
 /** Код ссылки — только в теле: 404 — ссылка недействительна или истекла, 429 — много неверных кодов. */
 export async function inviteInfo(token: string): Promise<InviteInfo> {
@@ -253,12 +258,30 @@ export async function inviteInfo(token: string): Promise<InviteInfo> {
 }
 
 /**
- * «Без Telegram — по номеру телефона»: номер и свой пароль → врач или сотрудник, сразу вход (cookie).
- * 422 — поле phone или password; 409 — номер занят (code 'phone-taken'); 404 — ссылка не действует.
- * Номер и пароль — только в теле, нигде не сохраняем.
+ * «Получить код» по SMS для регистрации по ссылке. Сначала сервер проверяет номер: 409 — занят (SMS не
+ * уходит), 422 — не номер, 404 — ссылка не действует; 429 — лимит SMS, 503 — SMS не отправилась. phone пусто —
+ * «Отправить ещё раз» после перезагрузки: номер сервер берёт из своей HttpOnly-cookie.
  */
-export async function inviteRegister(token: string, phone: string, password: string): Promise<{ fullName: string; roleText: string }> {
-  const done = await webPost<{ fullName: string; roleText: string }>('/web/invite/register', { token, phone, password })
+export async function inviteCode(token: string, phone: string): Promise<InviteCodeStep> {
+  const step = await webPost<InviteCodeStep>('/web/invite/code', phone ? { token, phone } : { token })
+  if (!step) throw new ApiError(500, 'Сервер не ответил — попробуйте ещё раз')
+  return step
+}
+
+/** «Другой номер»: сервер гасит cookie шага кода. */
+export async function forgetInviteCode(): Promise<void> {
+  await webRequest('DELETE', '/web/invite/pending')
+}
+
+/**
+ * «Без Telegram — по номеру телефона» → врач или сотрудник, сразу вход (cookie). С кодом (SMS подключены) —
+ * код и пароль, номер сервер знает сам (cookie шага кода); без кода — номер и пароль. 422 — поле code, phone
+ * или password; 409 — номер занят (code 'phone-taken'); 404 — ссылка не действует. Номер и пароль — только в
+ * теле, нигде не сохраняем.
+ */
+export async function inviteRegister(token: string, fields: { phone?: string; code?: string; password: string }):
+Promise<{ fullName: string; roleText: string }> {
+  const done = await webPost<{ fullName: string; roleText: string }>('/web/invite/register', { token, ...fields })
   return done ?? { fullName: '', roleText: '' }
 }
 
