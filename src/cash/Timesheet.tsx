@@ -32,12 +32,14 @@ export type Whose = { doctorId?: number; telegramId?: number }
  * графику») и нажимает на дни — за прошлые тоже; норму можно задать вручную. Врач видит свой табель
  * без правок. Считает сервер: начислено = оклад × отработано / норма.
  */
-export function Timesheet({ whose, month, name, canEdit, onChanged }: {
+export function Timesheet({ whose, month, name, canEdit, onChanged, showSum = true }: {
   whose: Whose
   month: string
   name: string
   canEdit: boolean
   onChanged?: () => void
+  /** Итог строкой над сеткой; карточка зарплаты показывает его сама — там false */
+  showSum?: boolean
 }) {
   const client = useQueryClient()
   const key = ['timesheet', month, whose.doctorId ?? null, whose.telegramId ?? null]
@@ -61,11 +63,11 @@ export function Timesheet({ whose, month, name, canEdit, onChanged }: {
   const first = days[0]?.date ? (new Date(`${days[0].date}T00:00:00Z`).getUTCDay() + 6) % 7 : 0
   return (
     <section className="timesheet" aria-label={`Табель: ${name}`}>
-      <p className="timesheet-sum" aria-label="Итог табеля">
+      {showSum && <p className="timesheet-sum" aria-label="Итог табеля">
         Отработано <b className="num">{s.workedDays}</b> из <b className="num">{s.normDays}</b> {daysText(s.normDays ?? 0)}
         {s.normManual ? ' (норма вручную)' : ' по графику'}
         {(s.baseSom ?? 0) > 0 && <> → <b className="num">{somText(s.accruedSom ?? 0)}</b> из оклада {somText(s.baseSom ?? 0)}</>}
-      </p>
+      </p>}
       {canEdit && (
         <div className="day-quick wrap" role="group" aria-label="Что ставить">
           {BRUSHES.map(([b, label]) => (
@@ -110,7 +112,7 @@ function NormForm({ sheet: s, whose, month, onDone }: { sheet: Sheet; whose: Who
     save.mutate(days ? Number(days) : undefined)
   }
   return (
-    <form className="row timesheet-norm" aria-label="Норма дней" onSubmit={submit}>
+    <form className="timesheet-norm" aria-label="Норма дней" onSubmit={submit}>
       <label className="field"><span>Норма дней в месяце</span>
         <input inputMode="numeric" value={days} placeholder={`по графику: ${s.plannedDays}`} onChange={(e) => setDays(e.target.value.replace(/\D/g, ''))} /></label>
       <button type="submit" className="btn" disabled={save.isPending}>{days ? 'Задать норму' : 'По графику'}</button>

@@ -31,7 +31,7 @@ afterEach(() => {
 })
 
 test('склонение дней', () => {
-  expect([1, 2, 5, 11, 21, 22].map((n) => `${n} ${daysText(n)}`)).toEqual(['1 день', '2 дня', '5 дней', '11 дней', '21 день', '22 дня'])
+  expect([1, 2, 5, 11, 21, 22].map((n) => `из ${n} ${daysText(n)}`)).toEqual(['из 1 дня', 'из 2 дней', 'из 5 дней', 'из 11 дней', 'из 21 дня', 'из 22 дней'])
 })
 
 test('оклад по табелю: расшифровка в карточке, табель, больничный кистью, норма вручную', async () => {
@@ -62,7 +62,7 @@ test('оклад по табелю: расшифровка в карточке, 
   await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
   const card = await screen.findByRole('region', { name: 'Зарплата: Айпери' })
   expect(card).toHaveTextContent('Условия: оклад 30 000 сом по табелю')
-  expect(within(card).getByLabelText('Оклад по табелю')).toHaveTextContent(/Отработано 22 из 22 дня → 30\s000 сом из оклада 30\s000 сом/)
+  expect(within(card).getByLabelText('Оклад по табелю')).toHaveTextContent(/Отработано 22 из 22 дней → 30\s000 сом из оклада 30\s000 сом/)
 
   await user.click(within(card).getByRole('button', { name: 'Табель — отметить дни' }))
   const grid = await within(card).findByRole('grid', { name: 'Дни месяца' })
@@ -72,13 +72,12 @@ test('оклад по табелю: расшифровка в карточке, 
   await user.click(within(grid).getByRole('gridcell', { name: '10: Отработан' }))
   expect(await within(grid).findByRole('gridcell', { name: '10: Больничный (вручную)' })).toBeInTheDocument()
   expect(sent[0]).toEqual({ telegramId: 7303, date: '2026-03-10', mark: 'SICK' })
-  expect(within(card).getByLabelText('Итог табеля')).toHaveTextContent(/Отработано 21 из 22 дня по графику → 28\s636 сом/)
   // Карточка зарплаты пересчиталась с сервера
-  expect(await within(card).findByLabelText('Оклад по табелю')).toHaveTextContent(/21 из 22 дня → 28\s636 сом/)
+  expect(await within(card).findByLabelText('Оклад по табелю')).toHaveTextContent(/21 из 22 дней → 28\s636 сом/)
 
   await user.type(within(card).getByLabelText('Норма дней в месяце'), '21')
   await user.click(within(card).getByRole('button', { name: 'Задать норму' }))
-  expect(await within(card).findByText(/норма вручную/)).toBeInTheDocument()
+  await vi.waitFor(() => expect(within(card).getByLabelText('Норма дней в месяце')).toHaveValue('21'))
   expect(sent[1]).toEqual({ telegramId: 7303, month: expect.stringMatching(/^\d{4}-\d{2}$/), days: 21 })
 })
 

@@ -158,7 +158,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
       )}
       {sheetOpen && r.byTimesheet && (
         <Timesheet whose={r.doctorId != null ? { doctorId: r.doctorId } : { telegramId: r.assistantId! }} month={month} name={r.doctor ?? ''}
-          canEdit={seesAll} onChanged={refresh} />
+          canEdit={seesAll} onChanged={refresh} showSum={false} />
       )}
       {seesAll && !r.former && !editing && !paying && !receiving && (
         <div className="actions">
