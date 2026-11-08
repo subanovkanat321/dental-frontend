@@ -47,7 +47,12 @@ export function ContentTab() {
   const [editing, setEditing] = useState<Post | 'new' | null>(null)
   // Форма поста после «Сохранить» закрывается — подтверждение показывает план
   const [postSaved, setPostSaved] = useState(false)
-  const range = monthRange(month)
+  // Этот месяц: план — с сегодняшнего дня и на 2 месяца вперёд (рилсы по одному в день уходят за месяц),
+  // прошедшие дни месяца — внизу, свёрнуты. Другой месяц — как был, целиком
+  const current = month === today.slice(0, 7)
+  const monthOnly = monthRange(month)
+  const ahead = addDays(today, 60)
+  const range = current && ahead > monthOnly.to ? { from: monthOnly.from, to: ahead } : monthOnly
   const list = useQuery({
     queryKey: ['platform-content', month],
     queryFn: () => unwrap(api.GET('/api/platform/content', { params: { query: range } })),
@@ -77,12 +82,25 @@ export function ContentTab() {
   })
 
   const posts = list.data ?? []
-  const weeks = new Map<string, Post[]>()
-  for (const p of posts) {
-    const key = weekStart(p.publishOn!)
-    weeks.set(key, [...(weeks.get(key) ?? []), p])
+  const upcoming = current ? posts.filter((p) => p.publishOn! >= today) : posts
+  const past = current ? posts.filter((p) => p.publishOn! < today) : []
+  const byWeek = (items: Post[]) => {
+    const weeks = new Map<string, Post[]>()
+    for (const p of items) {
+      const key = weekStart(p.publishOn!)
+      weeks.set(key, [...(weeks.get(key) ?? []), p])
+    }
+    return [...weeks.entries()]
   }
-  const planned = posts.filter((p) => p.status === 'PLANNED').length
+  const planned = upcoming.filter((p) => p.status === 'PLANNED').length
+  const card = (p: Post) => <PostCard key={p.id} post={p} today={today} instagram={instagram.data?.enabled === true}
+    onEdit={() => { setPostSaved(false); setEditing(p) }} onChanged={() => void refresh()} />
+  const weeksOf = (items: Post[]) => byWeek(items).map(([start, list]) => (
+    <section key={start} className="content-week" aria-label={`Неделя ${weekLabel(start)}`}>
+      <h3>{weekLabel(start)}</h3>
+      {list.map(card)}
+    </section>
+  ))
   return (
     <>
       <section className="card-block">
@@ -124,13 +142,14 @@ export function ContentTab() {
           <EmptyState title="В этом месяце постов нет">Добавьте пост или загрузите готовый план.</EmptyState>
         ) : (
           <>
-            <p className="hint">Постов: {posts.length} · ждут публикации: {planned}</p>
-            {[...weeks.entries()].map(([start, items]) => (
-              <section key={start} className="content-week" aria-label={`Неделя ${weekLabel(start)}`}>
-                <h3>{weekLabel(start)}</h3>
-                {items.map((p) => <PostCard key={p.id} post={p} today={today} instagram={instagram.data?.enabled === true} onEdit={() => { setPostSaved(false); setEditing(p) }} onChanged={() => void refresh()} />)}
-              </section>
-            ))}
+            <p className="hint">{current ? 'С сегодняшнего дня · ' : ''}Постов: {upcoming.length} · ждут публикации: {planned}</p>
+            {upcoming.length ? weeksOf(upcoming) : <p className="hint">С сегодняшнего дня в плане пусто.</p>}
+            {past.length > 0 && (
+              <details className="content-past">
+                <summary>Прошедшие дни этого месяца: {past.length}</summary>
+                {weeksOf(past)}
+              </details>
+            )}
           </>
         )}
       </section>

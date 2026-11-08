@@ -1084,6 +1084,10 @@ input[type=date], input[type=month], input[type=time] { min-width: 0; max-width:
 .content-reels-auto { display: grid; gap: 4px; margin: 8px 0 12px; }
 .content-reels-auto .hint, .content-reels-auto .notice { margin: 0; }
 .content-week + .content-week { padding-top: 12px; border-top: 1px solid var(--separator); }
+/* Прошедшие дни месяца — внизу, свёрнуты: план начинается с сегодня */
+.content-past { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--separator); }
+.content-past > summary { min-height: 44px; display: flex; align-items: center; color: var(--hint); font-weight: 600; cursor: pointer; }
+.content-past[open] > summary { margin-bottom: 10px; }
 .content-week h3 { margin: 0; font-size: .95rem; }
 .content-post { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
 .content-post.today { border-color: var(--now); }

@@ -382,3 +382,35 @@ test('Instagram отказал — причина видна под постом
   const card = await screen.findByRole('article', { name: 'Что думает стоматолог' })
   expect(within(card).getByRole('alert')).toHaveTextContent('⚠️ Не опубликовано в Instagram (8 нояб, 19:31): У токена нет права публиковать')
 })
+
+test('план — с сегодняшнего дня и на 2 месяца вперёд; прошедшие дни месяца — внизу, свёрнуты', async () => {
+  const shift = (days: number) => {
+    const d = new Date(`${today}T00:00:00Z`)
+    d.setUTCDate(d.getUTCDate() + days)
+    return d.toISOString().slice(0, 10)
+  }
+  const asked: (string | null)[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false } satisfies Schemas['InstagramTokensState'])),
+    http.get('*/api/platform/content', ({ request }) => {
+      asked.push(new URL(request.url).searchParams.get('to'))
+      const all = [post(1, { title: 'Сегодня', publishOn: today }), post(2, { title: 'Через 40 дней', publishOn: shift(40) })]
+      // «Вчера» — только если вчера в этом же месяце
+      if (shift(-1).slice(0, 7) === today.slice(0, 7)) all.unshift(post(3, { title: 'Вчера', publishOn: shift(-1), status: 'DONE' }))
+      return HttpResponse.json(all)
+    }),
+  )
+  await openTab()
+  const plan = await screen.findByRole('region', { name: 'Контент-план' })
+  await within(plan).findByRole('article', { name: 'Сегодня' })
+  expect(asked[0]).toBe(shift(60))
+  // Сначала сегодня и дальше (в том числе следующий месяц), прошедшее — в свёрнутом блоке внизу
+  const titles = within(plan).getAllByRole('article').map((a) => a.getAttribute('aria-label'))
+  expect(titles.slice(0, 2)).toEqual(['Сегодня', 'Через 40 дней'])
+  if (shift(-1).slice(0, 7) === today.slice(0, 7)) {
+    const pastBlock = within(plan).getByText(/Прошедшие дни этого месяца: 1/).closest('details')!
+    expect(pastBlock).not.toHaveAttribute('open')
+    expect(within(pastBlock).getByRole('article', { name: 'Вчера' })).toBeInTheDocument()
+  }
+})
