@@ -20,7 +20,8 @@ export function groupOf(lead: OutreachLead): Group {
 
 /** Текст первого сообщения клинике: {клиника} → её название (везде, где встретится). */
 export function messageFor(template: string, clinicName: string): string {
-  return template.split(PLACEHOLDER).join(clinicName)
+  // Адрес сайта без https:// (в старом сохранённом тексте) — с https://: так WhatsApp делает его ссылкой
+  return template.split(PLACEHOLDER).join(clinicName).replace(/(^|[\s(«"])(tish\.kg(?:\/\S*)?)/g, '$1https://$2')
 }
 
 /** Кому можно написать: ещё не писали, не просили не беспокоить, есть телефон или ссылка. */

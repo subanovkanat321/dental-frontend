@@ -12314,6 +12314,26 @@
         }
       }
     },
+    "/api/platform/outreach/{id}" : {
+      "delete" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "delete_13",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/platform/news-feeds/{id}" : {
       "delete" : {
         "tags" : [ "dental-news-controller" ],
@@ -12357,7 +12377,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12414,7 +12434,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_14",
+        "operationId" : "delete_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12473,7 +12493,7 @@
     "/api/doctors/{id}" : {
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_15",
+        "operationId" : "delete_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",

@@ -87,7 +87,7 @@ test('WhatsApp открывает wa.me с номером и текстом, «�
 
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
   await user.click(within(card).getByRole('button', { name: 'Написать в WhatsApp' }))
-  const text = 'Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: tish.kg/about'
+  const text = 'Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/about'
   expect(open).toHaveBeenCalledWith(`https://wa.me/996555000402?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
 
   const ask = within(card).getByRole('group', { name: 'Отправили?' })
@@ -233,4 +233,25 @@ test('«＋ Добавить клинику» по одной: отправля�
   await user.type(within(form).getByLabelText('Телефон (WhatsApp)'), '0555 000 111')
   await user.click(add)
   expect(await within(form).findByText(/уже есть в списке/)).toBeInTheDocument()
+})
+
+test('адрес сайта без https:// в тексте — становится ссылкой https://', () => {
+  expect(messageFor('Подробнее о нас: tish.kg/about', 'Тест')).toBe('Подробнее о нас: https://tish.kg/about')
+  expect(messageFor('Сайт https://tish.kg/about', 'Тест')).toBe('Сайт https://tish.kg/about')
+})
+
+test('«Удалить из списка» — после подтверждения запрос DELETE, клиника уходит', async () => {
+  const deleted: string[] = []
+  server.use(http.delete('*/api/platform/outreach/:id', ({ params }) => {
+    deleted.push(String(params.id))
+    return new HttpResponse(null, { status: 204 })
+  }))
+  const user = await openTab()
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  await user.click(within(card).getByRole('button', { name: 'Тест-Дент' }))
+  await user.click(within(card).getByRole('button', { name: 'Удалить из списка' }))
+  const dialog = await screen.findByRole('alertdialog')
+  expect(dialog).toHaveTextContent('Удалить «Тест-Дент» из списка?')
+  await user.click(within(dialog).getAllByRole('button').find((b) => /Удалить/.test(b.textContent ?? ''))!)
+  await waitFor(() => expect(deleted).toEqual(['2']))
 })

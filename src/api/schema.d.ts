@@ -5428,6 +5428,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/outreach/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["delete_13"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/news-feeds/{id}": {
         parameters: {
             query?: never;
@@ -5470,7 +5486,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_13"];
+        delete: operations["delete_14"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5502,7 +5518,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_14"];
+        delete: operations["delete_15"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5550,7 +5566,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["delete_15"];
+        delete: operations["delete_16"];
         options?: never;
         head?: never;
         patch?: never;
@@ -19085,6 +19101,26 @@ export interface operations {
             };
         };
     };
+    delete_13: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     remove_2: {
         parameters: {
             query?: never;
@@ -19125,7 +19161,7 @@ export interface operations {
             };
         };
     };
-    delete_13: {
+    delete_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -19171,7 +19207,7 @@ export interface operations {
             };
         };
     };
-    delete_14: {
+    delete_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -19231,7 +19267,7 @@ export interface operations {
             };
         };
     };
-    delete_15: {
+    delete_16: {
         parameters: {
             query?: never;
             header?: never;

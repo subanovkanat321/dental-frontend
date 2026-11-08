@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
+import { ask } from '../lib/confirm'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
 import { CITIES } from '../lib/clinicSearch'
@@ -120,6 +121,11 @@ function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead
       refresh()
     },
   })
+  // «Удалить из списка» — клиника исчезает из рассылки и воронки совсем (подключённую — нельзя, 409 с текстом)
+  const remove = useMutation<unknown, ApiError>({
+    mutationFn: () => unwrap(api.DELETE('/api/platform/outreach/{id}', { params: { path: { id: l.id! } } })),
+    onSuccess: refresh,
+  })
   const text = messageFor(template, l.clinicName ?? '')
   const lost = l.stage === 'LOST'
   const copy = async () => {
@@ -163,6 +169,14 @@ function LeadRow({ lead: l, template, selected, onSelect }: { lead: OutreachLead
           {!declining && <button type="button" className="btn ghost" onClick={() => setDeclining(true)}>Не беспокоить</button>}
         </div>
       )}
+      {selected && (
+        <div className="actions">
+          <button type="button" className="btn small danger" disabled={remove.isPending}
+            onClick={() => void ask(`Удалить «${l.clinicName}» из списка? Клиника исчезнет из рассылки и воронки.`).then((ok) => ok && remove.mutate())}>
+            Удалить из списка</button>
+        </div>
+      )}
+      {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
       {copied && !asking && <span className="tone-ok" role="status">Текст скопирован</span>}
       {video.data && video.data !== 'cancelled' && (
         <span className="tone-ok" role="status">{VIDEO_DONE[video.data]}</span>
