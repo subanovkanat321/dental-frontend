@@ -8130,6 +8130,7 @@ export interface components {
             dayOff?: components["schemas"]["SlotsViewBreak"];
             taken?: string[];
             chairBusy?: components["schemas"]["SlotsViewChairBusy"][];
+            work?: components["schemas"]["TimeRange"][];
         };
         SlotsViewBreak: {
             /** Format: date-time */
@@ -16308,6 +16309,7 @@ export interface operations {
             query: {
                 date: string;
                 doctorId: number;
+                overnight?: boolean;
             };
             header?: never;
             path?: never;
@@ -19248,6 +19250,7 @@ export interface operations {
                 from: string;
                 days?: number;
                 doctorId: number;
+                overnight?: boolean;
             };
             header?: never;
             path?: never;

@@ -11,10 +11,13 @@ export function minutesOf(time: string): number {
   return h! * 60 + m!
 }
 
-/** Часть дня по времени по Бишкеку («10:30»): до 12:00 — утро, до 17:00 — день, дальше — вечер. */
-export function partOfDay(time: string): 'morning' | 'afternoon' | 'evening' {
+/**
+ * Часть дня по времени по Бишкеку («10:30»): до 06:00 — ночь (у врача ночная смена), до 12:00 — утро,
+ * до 17:00 — день, дальше — вечер.
+ */
+export function partOfDay(time: string): 'night' | 'morning' | 'afternoon' | 'evening' {
   const h = Number(time.slice(0, 2))
-  return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'
+  return h < 6 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'
 }
 
 /** Специальность — первая строка «Кратко о себе» (как в шапке колонки врача в CRM), остальное — подробнее. */

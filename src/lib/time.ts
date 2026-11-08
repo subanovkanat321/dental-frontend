@@ -115,3 +115,25 @@ export function weekLabel(weekStart: string): string {
     ? `${fmt(weekStart, { day: 'numeric' })}–${fmt(end, { day: 'numeric', month: 'short' })}`
     : `${fmt(weekStart, { day: 'numeric', month: 'short' })} – ${fmt(end, { day: 'numeric', month: 'short' })}`
 }
+
+/**
+ * Минуты от начала дня {@code date} по Бишкеку, внутри [0, 1440]: приём через полночь (23:30–00:30)
+ * в сетке дня D кончается в 24:00, а в сетке D+1 начинается в 00:00. Конец ровно в полночь — 1440, а не 0.
+ */
+export function dayMinutes(instant: string, date: string): number {
+  const minutes = (new Date(instant).getTime() - new Date(`${date}T00:00:00+06:00`).getTime()) / 60_000
+  return Math.min(Math.max(Math.round(minutes), 0), 24 * 60)
+}
+
+/** Смена до утра следующего дня: конец не позже начала (кроме 00:00 — «до полуночи»). */
+export function isNightShift(start?: string | null, end?: string | null): boolean {
+  if (!start || !end) return false
+  const e = minutesOfTime(end)
+  return e !== 0 && e <= minutesOfTime(start)
+}
+
+/** Часы врача строкой: «09:00–18:00», ночная смена — «18:00–08:00 (ночь)». */
+export function shiftText(start?: string | null, end?: string | null): string {
+  if (!start || !end) return ''
+  return `${start.slice(0, 5)}–${end.slice(0, 5)}${isNightShift(start, end) ? ' (ночь)' : ''}`
+}

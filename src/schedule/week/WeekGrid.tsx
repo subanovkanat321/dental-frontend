@@ -5,7 +5,8 @@ import { canEditDoctor, seesMoneyOf } from '../../lib/roles'
 import { ApptBadges } from '../ApptBadges'
 import { useApptHover } from '../useApptHover'
 import { CancelledList } from '../CancelledList'
-import { dateOf, dayTitle, minutesOf, minutesOfTime, timeOf } from '../../lib/time'
+import { dateOf, dayMinutes, dayTitle, minutesOf, timeOf } from '../../lib/time'
+import { apptSpan, fromYesterday, offSpans, touchesDay, untilTomorrow, workSpans } from '../workSpans'
 import { hhmm, PAD, PX, useNowMinutes } from '../gridScale'
 import { statusOf } from '../status'
 import { useDrag } from './useDrag'
@@ -46,7 +47,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
   const week = useWeekAppointments(monday, doctorId)
   const slots = useWeekSlots(monday, doctorId).map((q) => q.data)
   const list = (week.data ?? []).filter((a) => a.status !== 'CANCELLED')
-  const { from, to } = weekHours(slots, list, me.clinic)
+  const { from, to } = weekHours(slots, list, me.clinic, days)
   const height = (to - from) * PX + PAD * 2
   const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
   const nowMinutes = useNowMinutes()
@@ -142,7 +143,8 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
         </div>
         {days.map((date, i) => {
           const sl = slots[i]
-          const own = list.filter((a) => a.startAt && dateOf(a.startAt) === date)
+          // Приёмы дня и хвост вчерашнего через полночь (ночная смена)
+          const own = list.filter((a) => touchesDay(a, date))
           const past = date < today ? height : date === today && showNow ? y(nowMinutes) : 0
           return (
             <div key={date} ref={(el) => { columns.current[i] = el }} role="group" aria-label={dayTitle(date)}
@@ -150,10 +152,10 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
               title={editable ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'}>
               {hours.map((m) => <div key={m} className="grid-hour" style={{ top: y(m) }} />)}
               {past > 0 && <div className="grid-past" style={{ height: past }} />}
-              <Hours slots={sl} from={from} to={to} height={height} y={y} />
+              <Hours slots={sl} date={date} from={from} to={to} height={height} y={y} />
               {editable && date >= today && sl?.workingDay && (sl.free ?? []).map((w) => {
-                const start = Math.max(minutesOf(w.start!), date === today ? nowMinutes : 0, from)
-                const end = Math.min(minutesOf(w.end!) || 24 * 60, to)
+                const start = Math.max(dayMinutes(w.start!, date), date === today ? nowMinutes : 0, from)
+                const end = Math.min(dayMinutes(w.end!, date), to)
                 if (end - start < 30) return null
                 const text = `${hhmm(start)}–${hhmm(end)}`
                 return (
@@ -165,9 +167,9 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
               })}
               {date === today && showNow && <div className="grid-now" style={{ top: y(nowMinutes) }} />}
               {own.map((a) => (
-                <Block key={a.id} a={a} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)}
+                <Block key={a.id} a={a} date={date} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)}
                   moving={ghost?.appointment.id === a.id || (move.isPending && move.variables?.appointment.id === a.id)}
-                  drag={canDrag(a, me) ? handlers(a) : undefined}
+                  drag={canDrag(a, me) && !fromYesterday(a, date) ? handlers(a) : undefined}
                   onClick={() => { if (!consumeDrag()) onOpen(a) }} />
               ))}
               {ghost?.day === i && <GhostBlock ghost={ghost} y={y} />}
@@ -176,7 +178,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
         })}
       </div>
       {!ghost && hover.card}
-      <CancelledList items={(week.data ?? []).filter((a) => a.status === 'CANCELLED')} onOpen={onOpen} selectedId={selectedId} withDate />
+      <CancelledList items={(week.data ?? []).filter((a) => a.status === 'CANCELLED' && !fromYesterday(a, monday))} onOpen={onOpen} selectedId={selectedId} withDate />
       {week.isPending && <Loading text="Загрузка недели…" />}
     </div>
   )
@@ -187,19 +189,21 @@ function isOff(sl: Slots | undefined): boolean {
 }
 
 /** Нерабочее: выходной целиком, до начала и после конца рабочего дня, перерывы. */
-function Hours({ slots: sl, from, to, height, y }: { slots: Slots | undefined; from: number; to: number; height: number; y: (m: number) => number }) {
+function Hours({ slots: sl, date, from, to, height, y }: {
+  slots: Slots | undefined; date: string; from: number; to: number; height: number; y: (m: number) => number
+}) {
   if (!sl) return null
   if (!sl.workingDay) {
     return <div className="grid-off" style={{ top: 0, height }}><span>{sl.dayOff ? `${sl.dayOff.emoji ?? ''} ${sl.dayOff.title ?? ''}` : 'Выходной'}</span></div>
   }
-  const workFrom = sl.workStart ? minutesOfTime(sl.workStart) : null
-  const workTo = sl.workEnd ? minutesOfTime(sl.workEnd) : null
+  // Нерабочее до начала, после конца и между утром ночной смены и новой сменой
   return (
     <>
-      {workFrom != null && workFrom > from && <div className="grid-off" style={{ top: 0, height: y(workFrom) }} />}
-      {workTo != null && workTo < to && <div className="grid-off" style={{ top: y(workTo), height: height - y(workTo) }} />}
+      {offSpans(workSpans(sl, date), from, to).map(([s, e]) => (
+        <div key={`off-${s}`} className="grid-off" style={{ top: s <= from ? 0 : y(s), height: (e >= to ? height : y(e)) - (s <= from ? 0 : y(s)) }} />
+      ))}
       {(sl.breaks ?? []).map((b) => (
-        <div key={b.start} className="grid-break" style={{ top: y(minutesOf(b.start!)), height: Math.max(y(minutesOf(b.end!)) - y(minutesOf(b.start!)), 14) }}
+        <div key={b.start} className="grid-break" style={{ top: y(dayMinutes(b.start!, date)), height: Math.max(y(dayMinutes(b.end!, date)) - y(dayMinutes(b.start!, date)), 14) }}
           title={`${timeOf(b.start!)}–${timeOf(b.end!)} ${b.title ?? ''}`}>
           <span>{b.emoji}</span>
         </div>
@@ -212,8 +216,10 @@ function Hours({ slots: sl, from, to, height, y }: { slots: Slots | undefined; f
 const WEEK_SHORT = 40
 
 /** Приём в колонке дня: заливка статуса, время и имя; можно тащить — курсор «рука». */
-function Block({ a, me, y, selected, moving, drag, hover, onClick }: {
+function Block({ a, date, me, y, selected, moving, drag, hover, onClick }: {
   a: Appointment
+  /** День колонки: приём через полночь виден в обоих днях, каждый раз — своей частью. */
+  date: string
   /** Всплывающая карточка при наведении (useApptHover); нажатие прячет её и начинает перетаскивание. */
   hover: ReturnType<ReturnType<typeof useApptHover>['bind']>
   me: Me
@@ -224,16 +230,17 @@ function Block({ a, me, y, selected, moving, drag, hover, onClick }: {
   onClick: () => void
 }) {
   const s = statusOf(a)
-  const start = minutesOf(a.startAt!)
-  const h = Math.max(durationOf(a) * PX - 2, 22)
+  const [start, end] = apptSpan(a, date)
+  const carried = fromYesterday(a, date)
+  const h = Math.max((end - start) * PX - 2, 22)
   // Колонка недели уже, чем у «Дня»: приём на 30 минут — время и имя в две строки, статус — от 45 минут
   const short = h < WEEK_SHORT
   const range = `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`
   return (
     <button type="button" {...drag} {...hover} onClick={onClick}
       onPointerDown={(e) => { hover.onPointerDown(); drag?.onPointerDown(e) }}
-      className={`appt s-${s.kind}${short ? ' short' : ''}${selected ? ' active' : ''}${drag ? ' can-drag' : ''}${moving ? ' moving' : ''}`}
-      style={{ top: y(start), height: h }} aria-label={`${range}, ${a.patient?.fullName}: ${s.label}`}
+      className={`appt s-${s.kind}${short ? ' short' : ''}${selected ? ' active' : ''}${drag ? ' can-drag' : ''}${moving ? ' moving' : ''}${carried ? ' carried' : ''}${untilTomorrow(a, date) ? ' continues' : ''}`}
+      style={{ top: y(start), height: h }} aria-label={`${carried ? 'со вчера ' : ''}${range}, ${a.patient?.fullName}: ${s.label}`}
       title={drag ? 'Перетащите мышью на другое время или день' : canEditPast(a, me) ? 'Прошедший приём не переносят' : undefined}>
       <span className="appt-time num">{short ? timeOf(a.startAt!) : range}</span>
       <span className="appt-name">{a.patient?.fullName}</span>

@@ -7,7 +7,8 @@ import { weekDays } from './weekModel'
 const REFRESH_MS = 60_000
 
 /**
- * Приёмы врача за неделю — один запрос /api/appointments/range. Ключ начинается с 'appointments':
+ * Приёмы врача за неделю — один запрос /api/appointments/range, и приём с воскресенья прошлой недели,
+ * который идёт в понедельник после полуночи (overnight: ночная смена). Ключ начинается с 'appointments':
  * действия над приёмом (useAppointmentAction) обновляют и перечитывают недели так же, как дни.
  */
 export function weekKey(monday: string, doctorId: number) {
@@ -17,7 +18,7 @@ export function weekKey(monday: string, doctorId: number) {
 export function useWeekAppointments(monday: string, doctorId: number | null, enabled = true) {
   return useQuery({
     queryKey: weekKey(monday, doctorId ?? 0),
-    queryFn: () => unwrap(api.GET('/api/appointments/range', { params: { query: { from: monday, days: 7, doctorId: doctorId! } } })),
+    queryFn: () => unwrap(api.GET('/api/appointments/range', { params: { query: { from: monday, days: 7, doctorId: doctorId!, overnight: true } } })),
     enabled: enabled && doctorId != null,
     refetchInterval: REFRESH_MS,
   })

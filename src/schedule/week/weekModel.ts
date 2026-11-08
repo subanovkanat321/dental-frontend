@@ -1,6 +1,7 @@
 import type { Schemas } from '../../api/client'
 import { canEditDoctor } from '../../lib/roles'
 import { addDays, minutesOf, minutesOfTime } from '../../lib/time'
+import { apptSpan, touchesDay, workSpans } from '../workSpans'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -33,16 +34,21 @@ export function canDrag(a: Appointment, me: Me, now = new Date()): boolean {
  * Часы сетки недели: от раннего начала до позднего конца рабочих дней (по целым часам); пока часы
  * не загружены или вся неделя выходная — часы клиники. Приём вне часов растягивает сетку до себя.
  */
-export function weekHours(slots: (Slots | undefined)[], appointments: Appointment[], clinic: { workStart?: string; workEnd?: string } | undefined) {
-  const working = slots.filter((s): s is Slots => Boolean(s?.workingDay && s.workStart && s.workEnd))
-  let from = working.length ? Math.min(...working.map((s) => Math.floor(minutesOfTime(s.workStart!) / 60) * 60))
+export function weekHours(slots: (Slots | undefined)[], appointments: Appointment[], clinic: { workStart?: string; workEnd?: string } | undefined,
+  days: string[]) {
+  // Рабочие отрезки каждого дня: у ночной смены — вечер и утро, сетка тогда на все сутки
+  const spans = days.flatMap((date, i) => workSpans(slots[i], date))
+  let from = spans.length ? Math.min(...spans.map(([s]) => Math.floor(s / 60) * 60))
     : minutesOfTime(clinic?.workStart ?? '09:00')
-  let to = working.length ? Math.max(...working.map((s) => Math.ceil(minutesOfTime(s.workEnd!) / 60) * 60))
+  let to = spans.length ? Math.max(...spans.map(([, e]) => Math.ceil(e / 60) * 60))
     : minutesOfTime(clinic?.workEnd ?? '18:00')
   for (const a of appointments) {
     if (a.status === 'CANCELLED') continue
-    from = Math.min(from, Math.floor(minutesOf(a.startAt!) / 60) * 60)
-    to = Math.max(to, Math.ceil(minutesOf(a.endAt!) / 60) * 60 || 24 * 60)
+    for (const date of days.filter((d) => touchesDay(a, d))) {
+      const [s, e] = apptSpan(a, date)
+      from = Math.min(from, Math.floor(s / 60) * 60)
+      to = Math.max(to, Math.ceil(e / 60) * 60)
+    }
   }
   return { from, to }
 }

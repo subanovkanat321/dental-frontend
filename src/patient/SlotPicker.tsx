@@ -8,10 +8,10 @@ import { partOfDay } from './slots'
 
 type Slots = Schemas['BookingViewsSlots']
 
-const PARTS = ['morning', 'afternoon', 'evening'] as const
+const PARTS = ['night', 'morning', 'afternoon', 'evening'] as const
 
 /**
- * Свободное и занятое время по порядку, разбитое на «Утро / День / Вечер»: занятое — серым
+ * Свободное и занятое время по порядку, разбитое на «Ночь / Утро / День / Вечер» (ночь — только у ночной смены): занятое — серым
  * «занято», его не нажать. Перерывы и выходной — подписью над сеткой, чтобы было понятно, куда
  * делось время. Общая для записи в Telegram (PatientApp), на сайте (site/WebBooking) и переноса.
  */

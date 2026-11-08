@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProp
 import { api, unwrap, type Schemas } from '../api/client'
 import { SetupChecklist } from '../clinic/SetupChecklist'
 import { openSettings, type Page } from '../lib/route'
-import { addDays, dateOf, dayTitle, emptyDayText, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
+import { addDays, dateOf, dayMinutes, dayTitle, emptyDayText, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { MedicalRecord } from '../medical/MedicalRecord'
@@ -20,6 +20,7 @@ import { DoctorPicker } from './DoctorPicker'
 import './doctorChips.css'
 import { AVATARS, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
+import { apptSpan, fromYesterday, offSpans, slotsHoursText, untilTomorrow, workSpans } from './workSpans'
 import { statusOf } from './status'
 import { PAD, PX, SHORT, useNowMinutes } from './gridScale'
 import { useWeekAppointments } from './week/useWeek'
@@ -179,8 +180,10 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
 
   const days = useQueries({
     queries: doctors.map((d) => ({
-      queryKey: ['appointments', date, d.id],
-      queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: { date, doctorId: d.id! } } })),
+      // overnight — и приёмы со вчера, которые идут после полуночи (ночная смена): сетка рисует их хвост.
+      // Свой ключ: «День» списком на телефоне берёт день без них (тот же префикс — действия обновляют оба)
+      queryKey: ['appointments', date, d.id, 'overnight'],
+      queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: { date, doctorId: d.id!, overnight: true } } })),
       refetchInterval: REFRESH_MS,
       // В «Неделе» и «Месяце» дни не нужны: у них свой запрос на несколько дней
       enabled: !weekMode && !monthMode,
@@ -199,7 +202,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     })),
   })
 
-  const loaded = days.flatMap((q) => q.data ?? [])
+  // Приёмы этого дня; вчерашние через полночь — только в сетке (их считает вчерашний день)
+  const withCarried = days.flatMap((q) => q.data ?? [])
+  const loaded = withCarried.filter((a) => !fromYesterday(a, date))
   const all = loaded.filter((a) => a.status !== 'CANCELLED')
   // Карточка — всегда свежая версия приёма: из кэша дня (после действий и автообновления), а приём,
   // перенесённый на другой день, — из ответа на действие (useAppointmentAction кладёт его в ['appointment', id])
@@ -210,17 +215,20 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     enabled: false,
   })
   const selected = side?.kind === 'appointment'
-    ? loaded.find((a) => a.id === side.id) ?? week.data?.find((a) => a.id === side.id) ?? lastAction.data ?? side.fallback ?? null : null
+    ? withCarried.find((a) => a.id === side.id) ?? week.data?.find((a) => a.id === side.id) ?? lastAction.data ?? side.fallback ?? null : null
   // Сетка — рабочие часы врачей на экране (а пока не загружены или все выходные — часы клиники), по
   // целым часам: без длинных пустых «хвостов» до полуночи. Приём раньше или позже — сетка растягивается до него
-  const hoursOf = shown.map((d) => slots[doctors.indexOf(d)]?.data).filter((x) => x?.workingDay && x.workStart && x.workEnd)
-  let from = hoursOf.length ? Math.min(...hoursOf.map((x) => Math.floor(minutesOfTime(x!.workStart!) / 60) * 60))
+  // Рабочие отрезки — у ночной смены их два (00:00–08:00 и 18:00–24:00): сетка тогда на все сутки
+  const spans = shown.flatMap((d) => workSpans(slots[doctors.indexOf(d)]?.data, date))
+  let from = spans.length ? Math.min(...spans.map(([s]) => Math.floor(s / 60) * 60))
     : minutesOfTime(me.clinic?.workStart ?? '09:00')
-  let to = hoursOf.length ? Math.max(...hoursOf.map((x) => Math.ceil(minutesOfTime(x!.workEnd!) / 60) * 60))
+  let to = spans.length ? Math.max(...spans.map(([, e]) => Math.ceil(e / 60) * 60))
     : minutesOfTime(me.clinic?.workEnd ?? '18:00')
-  for (const a of all) {
-    from = Math.min(from, Math.floor(minutesOf(a.startAt!) / 60) * 60)
-    to = Math.max(to, Math.ceil(minutesOf(a.endAt!) / 60) * 60 || 24 * 60)
+  for (const a of shown.flatMap((d) => days[doctors.indexOf(d)]?.data ?? [])) {
+    if (a.status === 'CANCELLED') continue
+    const [s, e] = apptSpan(a, date)
+    from = Math.min(from, Math.floor(s / 60) * 60)
+    to = Math.max(to, Math.ceil(e / 60) * 60)
   }
   const hours = Array.from({ length: Math.ceil((to - from) / 60) }, (_, i) => from + i * 60)
   const height = (to - from) * PX + PAD * 2
@@ -370,7 +378,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                   onClick={() => document.getElementById('schedule-date')?.click()}>Неделя {weekLabel(monday)} {monday.slice(0, 4)} <span className="caret" aria-hidden="true">▾</span></button></h1><HelpHint hint="schedule" /></div>
                 <span className="hint">
                   {monday === weekStart(today) ? 'эта неделя · ' : ''}{doctors.find((d) => d.id === weekDoctor)?.fullName}
-                  {week.data ? ` · записей ${week.data.filter((a) => a.status !== 'CANCELLED').length}` : ''}
+                  {week.data ? ` · записей ${week.data.filter((a) => a.status !== 'CANCELLED' && !fromYesterday(a, monday)).length}` : ''}
                 </span>
               </div>
             ) : (
@@ -508,8 +516,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 // Свой цвет врача — полоса над колонкой и слева на карточках; часы работы — под именем
                 const color = AVATARS[doctors.indexOf(d) % AVATARS.length]
                 const sl = slots[doctors.indexOf(d)]?.data
-                const hoursText = !sl ? '' : sl.workingDay && sl.workStart && sl.workEnd
-                  ? `${sl.workStart.slice(0, 5)}–${sl.workEnd.slice(0, 5)}` : 'выходной'
+                const hoursText = slotsHoursText(sl)
                 return (
                   <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}
                     style={{ '--doc': color } as CSSProperties} onClick={() => setView(d.id!)}>
@@ -540,8 +547,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 const q = days[doctors.indexOf(d)]
                 const sl = slots[doctors.indexOf(d)]?.data
                 const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
-                const workFrom = sl?.workStart ? minutesOfTime(sl.workStart.slice(0, 5)) : null
-                const workTo = sl?.workEnd ? minutesOfTime(sl.workEnd.slice(0, 5)) : null
+                const off = sl?.workingDay ? offSpans(workSpans(sl, date), from, to) : []
                 return (
                   <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
                     title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id!)}>
@@ -550,30 +556,32 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                     {sl && !sl.workingDay && (
                       <div className="grid-off" style={{ top: 0, height }}><span>{sl.dayOff ? `${sl.dayOff.emoji ?? ''} ${sl.dayOff.title ?? ''}` : 'Выходной'}</span></div>
                     )}
-                    {sl?.workingDay && workFrom != null && workFrom > from && <div className="grid-off" style={{ top: 0, height: y(workFrom) }} />}
-                    {sl?.workingDay && workTo != null && workTo < to && <div className="grid-off" style={{ top: y(workTo), height: height - y(workTo) }} />}
+                    {/* Нерабочее до начала, после конца и между хвостом ночной смены и новой сменой */}
+                    {off.map(([s, e]) => (
+                      <div key={`off-${s}`} className="grid-off" style={{ top: s <= from ? 0 : y(s), height: (e >= to ? height : y(e)) - (s <= from ? 0 : y(s)) }} />
+                    ))}
                     {(sl?.breaks ?? []).map((b) => (
-                      <div key={b.start} className="grid-break" style={{ top: y(minutesOf(b.start!)), height: Math.max(y(minutesOf(b.end!)) - y(minutesOf(b.start!)), 14) }}
+                      <div key={b.start} className="grid-break" style={{ top: y(dayMinutes(b.start!, date)), height: Math.max(y(dayMinutes(b.end!, date)) - y(dayMinutes(b.start!, date)), 14) }}
                         title={`${timeOf(b.start!)}–${timeOf(b.end!)} ${b.title ?? ''}`}>
                         <span>{b.emoji} {b.title}</span>
                       </div>
                     ))}
                     {/* Кресло врача занято другим врачом (общее кресло, V185): не свободно, нажатие не создаёт запись */}
                     {sl?.workingDay && (sl.chairBusy ?? []).map((b) => {
-                      const top = y(minutesOf(b.start!))
+                      const top = y(dayMinutes(b.start!, date))
                       const text = `${timeOf(b.start!)}–${timeOf(b.end!)}: кресло занято (${b.doctorName})`
                       return (
                         <div key={`chair-${b.start}`} className="grid-break grid-chair" role="note" aria-label={text}
                           title={`${text} — «${b.chairName}» в это время у другого врача`}
-                          style={{ top, height: Math.max(y(minutesOf(b.end!) || 24 * 60) - top, 14) }}>
+                          style={{ top, height: Math.max(y(dayMinutes(b.end!, date)) - top, 14) }}>
                           <span>🪑 кресло занято ({b.doctorName})</span>
                         </div>
                       )
                     })}
                     {sl?.workingDay && (sl.free ?? []).map((w) => {
                       // Свободное окно — светлый блок «Свободно 13:00–18:00 · ＋ записать»; сегодня — только то, что впереди
-                      const start = Math.max(minutesOf(w.start!), nowOrNull ?? 0, from)
-                      const end = Math.min(minutesOf(w.end!) || 24 * 60, to)
+                      const start = Math.max(dayMinutes(w.start!, date), nowOrNull ?? 0, from)
+                      const end = Math.min(dayMinutes(w.end!, date), to)
                       if (end - start < 15) return null
                       const text = `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}–${timeOf(w.end!)}`
                       const h = (end - start) * PX - 4
@@ -592,20 +600,24 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                     {q?.error && <div className="error grid-loading">{q.error.message}</div>}
                     {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => {
                       const s = statusOf(a)
-                      const top = PAD + (minutesOf(a.startAt!) - from) * PX
-                      const h = Math.max((minutesOf(a.endAt!) - minutesOf(a.startAt!)) * PX - 2, 22)
+                      // Через полночь: в своём дне — до 24:00, на следующий день — с 00:00 и пометкой «со вчера»
+                      const [startMin, endMin] = apptSpan(a, date)
+                      const carried = fromYesterday(a, date)
+                      const continues = untilTomorrow(a, date)
+                      const top = PAD + (startMin - from) * PX
+                      const h = Math.max((endMin - startMin) * PX - 2, 22)
                       const short = h < SHORT
                       return (
-                        <button key={a.id} type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${selected?.id === a.id ? ' active' : ''}`}
+                        <button key={a.id} type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${selected?.id === a.id ? ' active' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}`}
                           style={{ top, height: h }} {...hover.bind(a)}
                           onClick={() => setSide({ kind: 'appointment', id: a.id! })}
-                          aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
+                          aria-label={`${carried ? 'со вчера ' : ''}${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
                           {/* Обёртка — для широкого блока (один врач на экране): там она сеткой «время | имя и услуга | значки и статус»
                               (container query в styles.css). В узком блоке она display: contents — раскладка прежняя.
                               «wide-only» — то, что узкому блоку по высоте не влезает, а широкому влезает в ту же строку. */}
                           <span className="appt-body">
                             <span className="appt-time num">
-                              <span className="appt-from">{timeOf(a.startAt!)}</span>
+                              <span className="appt-from">{carried && <span className="appt-carried">со вчера </span>}{timeOf(a.startAt!)}</span>
                               <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt!)}</span>
                             </span>
                             <span className="appt-name">{a.patient?.fullName}</span>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
 import { isAssistant } from '../lib/roles'
+import { shiftText } from '../lib/time'
 import { Loading } from '../layout/Loading'
 import './timeoff.css'
 import { NewBreak, NewDayOff, NewLeave } from './TimeOffForms'
@@ -112,7 +113,7 @@ function InsteadOfHours({ row }: { row: Row }) {
   })
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')), enabled: doctorId == null })
   const byDay = new Map<Weekday, string>()
-  const hm = (start?: string, end?: string) => `${(start ?? '').slice(0, 5)}–${(end ?? '').slice(0, 5)}`
+  const hm = (start?: string, end?: string) => shiftText(start ?? '', end ?? '')
   if (doctorId != null) for (const d of hours.data?.days ?? []) byDay.set(d.weekday!, hm(d.start, d.end))
   else if (clinic.data) {
     for (const d of clinic.data.workDays ?? DAYS) {

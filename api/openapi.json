@@ -8533,6 +8533,14 @@
             "type" : "integer",
             "format" : "int64"
           }
+        }, {
+          "name" : "overnight",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
         } ],
         "responses" : {
           "200" : {
@@ -12325,6 +12333,14 @@
           "schema" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }, {
+          "name" : "overnight",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
           }
         } ],
         "responses" : {
@@ -18738,6 +18754,12 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/SlotsViewChairBusy"
+            }
+          },
+          "work" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TimeRange"
             }
           }
         }

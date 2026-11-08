@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { useDirty } from '../lib/unsaved'
 import { WEEK, type Weekday } from './texts'
+import { isNightShift } from '../lib/time'
 import { Loading } from '../layout/Loading'
 import { weekdaysText } from './timeOffTexts'
 import { askMakeWorkday, offLabel, useTimeOff, weeklyDaysOff } from './dayOffHours'
@@ -16,6 +17,8 @@ type Day = { on: boolean; start: string; end: string }
  * часы кабинета («О клинике»). Обед и намаз — не здесь, а в «Перерывах».
  * День с еженедельным выходным («Перерывы и выходные») — нерабочий: выходной перекрывает часы.
  * onTimeOff — открыть «Перерывы и выходные» (есть во вкладке «Рабочее время»).
+ * Конец раньше начала — ночная смена до утра следующего дня (Пн 18:00 → 08:00): подпись «до утра след. дня»,
+ * не ошибка. Смена относится к дню, в который началась.
  */
 export function HoursEditor({ doctorId, doctorName, onTimeOff }: { doctorId: number; doctorName: string; onTimeOff?: () => void }) {
   const loaded = useQuery({
@@ -82,6 +85,11 @@ function HoursForm({ doctorId, doctorName, onTimeOff, loaded }: {
       setError('Отметьте хотя бы один рабочий день')
       return
     }
+    const same = custom ? WEEK.find(([code]) => days[code].on && !off[code] && days[code].start === days[code].end) : undefined
+    if (same) {
+      setError(`${same[1]}: начало и конец совпадают — для ночной смены укажите, до скольких утра`)
+      return
+    }
     save.mutate(days)
   }
 
@@ -108,6 +116,7 @@ function HoursForm({ doctorId, doctorName, onTimeOff, loaded }: {
                   <input type="time" step={900} aria-label={`${name}: с`} disabled={!days[code].on} value={days[code].start} onChange={(e) => set(code, { start: e.target.value })} />
                   <span aria-hidden="true">–</span>
                   <input type="time" step={900} aria-label={`${name}: до`} disabled={!days[code].on} value={days[code].end} onChange={(e) => set(code, { end: e.target.value })} />
+                  {days[code].on && isNightShift(days[code].start, days[code].end) && <span className="hours-night hint">🌙 до утра след. дня</span>}
                 </>}
               </div>
             )
