@@ -100,7 +100,7 @@ const GROUPS: [string, Item[]][] = [
   ['Аккаунт клиники', [
     item('plan', 'Тариф и оплата', 'Сколько осталось и как продлить', admin, account('plan')),
     item('agreement', 'Договор', 'Договор с платформой Tish', admin, account('agreement')),
-    item('data', 'Данные', 'Выгрузка и журнал действий', (me) => admin(me) || seesAll(me), account('data')),
+    item('data', 'Данные', 'Загрузка из Excel, выгрузка и журнал действий', (me) => admin(me) || seesAll(me), account('data')),
     // Согласие клиники на ИИ — решает админ (сервер: 403 остальным); отчёты и диктовка — отдельно
     item('ai', 'ИИ-помощник', 'Отчёты пациенту и разбор диктовки', admin, () => (_me, back) => <AiPage onBack={back} />),
   ]],

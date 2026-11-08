@@ -3,13 +3,15 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { AuditJournal } from './AuditJournal'
+import { ImportData } from './ImportData'
 import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 
 /**
  * «Данные»: выгрузка всей клиники одним архивом в бот (кто видит всех врачей) и журнал важных
- * действий сотрудников (админ, AuditJournal) — без имён и телефонов пациентов.
+ * действий сотрудников (админ, AuditJournal) — без имён и телефонов пациентов. Админу — ещё
+ * «Загрузить из Excel» (ImportData): перенос пациентов и прайса из таблицы.
  */
 export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
   const exportAll = useMutation<Schemas['ExportControllerResult'], ApiError>({
@@ -33,6 +35,7 @@ export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
           </div>
         </section>
       )}
+      {me.admin && <ImportData />}
       {/* Удалить все приёмы — только владелец Tish (сервер тоже: остальным 403) */}
       {me.owner && <ClearAll />}
       {me.admin && <AuditJournal />}

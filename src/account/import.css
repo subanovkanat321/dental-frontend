@@ -1,0 +1,15 @@
+/* «Загрузить из Excel» (ImportData): колонки сеткой, первые строки и ошибки — прокручиваемые таблицы */
+.import-data h3 { margin: 6px 0 0; font-size: .95rem; }
+.import-data .segments { max-width: 360px; }
+.import-columns { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px 12px; }
+.import-sample { overflow-x: auto; border: 1px solid var(--line-strong); border-radius: var(--r-md); }
+.import-data table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.import-data th, .import-data td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--separator); white-space: nowrap; }
+.import-data th { background: var(--sunken); font-weight: 600; }
+.import-data tbody tr:last-child td { border-bottom: 0; }
+.import-summary { display: grid; gap: 6px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
+.import-summary p { margin: 0; }
+.import-counts { margin: 0; padding-left: 18px; display: grid; gap: 2px; }
+.import-errors { background: var(--card); border-radius: var(--r-sm); }
+.import-errors td:last-child { white-space: normal; }
+.import-done { display: grid; gap: 8px; justify-items: start; }
