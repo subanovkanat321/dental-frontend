@@ -10315,6 +10315,68 @@
         }
       }
     },
+    "/api/platform/clinics/{id}/stock" : {
+      "get" : {
+        "tags" : [ "platform-controller" ],
+        "operationId" : "stock",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StockCleanupCounts"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "platform-controller" ],
+        "operationId" : "clearStock",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PlatformControllerConfirm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StockCleanupCounts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/clinics/{id}/plan" : {
       "get" : {
         "tags" : [ "billing-controller" ],
@@ -19830,6 +19892,22 @@
           "refreshedAt" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }
+      },
+      "StockCleanupCounts" : {
+        "properties" : {
+          "supplies" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "movements" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceNorms" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },

@@ -143,6 +143,7 @@ test('менеджер без клиники: только «Платформа�
   const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
   expect(within(panel).queryByRole('button', { name: 'Отметить оплату' })).not.toBeInTheDocument()
   expect(within(panel).queryByRole('button', { name: 'Войти как руководитель' })).not.toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Очистить склад…' })).not.toBeInTheDocument()
   // Второго админа в работающую клинику приглашает только владелец
   expect(within(panel).getByText('Айгуль')).toBeInTheDocument()
   expect(within(panel).queryByText('Пригласить ещё одного руководителя')).not.toBeInTheDocument()
