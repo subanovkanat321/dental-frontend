@@ -123,6 +123,16 @@ export function InstallBody() {
         <div className="actions"><button type="button" className="btn primary" onClick={() => void install()}>Установить</button></div>
       </>
     )
+  } else if (isIos() && /CriOS|FxiOS|EdgiOS/.test(navigator.userAgent)) {
+    // Chrome, Firefox, Edge на iPhone: одной кнопкой тоже нельзя (Apple не даёт) — «Поделиться» → «На экран «Домой»» (iOS 16.4+)
+    body = (
+      <ol className="pwa-steps">
+        <li>Нажмите <ShareIcon /> <strong>Поделиться</strong> — в Chrome он справа в адресной строке (или в меню <strong>⋯</strong>).</li>
+        <li>Выберите <strong>На экран «Домой»</strong> (нет в списке — нажмите <strong>Ещё</strong>).</li>
+        <li>Нажмите <strong>Добавить</strong> — на экране появится значок Tish.</li>
+        <li className="hint">Нет такого пункта — обновите iPhone до iOS 16.4 или новее либо откройте эту страницу в Safari.</li>
+      </ol>
+    )
   } else if (isIos()) {
     body = <IosSteps />
   } else {

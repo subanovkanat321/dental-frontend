@@ -168,3 +168,11 @@ test('«Ссылка для сотрудников» — tish.kg/app: скопи
   expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/app`)
   expect(await screen.findByText('Ссылка скопирована ✓')).toBeInTheDocument()
 })
+
+test('iPhone, Chrome: свои шаги — «Поделиться» в адресной строке → «На экран «Домой»»', () => {
+  const ua = vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/131.0 Mobile/15E148 Safari/604.1')
+  render(<InstallApp />)
+  expect(screen.getByText(/в Chrome он справа в адресной строке/)).toBeInTheDocument()
+  expect(screen.queryByText(/В Safari нажмите/)).not.toBeInTheDocument()
+  ua.mockRestore()
+})
