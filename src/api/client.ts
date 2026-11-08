@@ -201,6 +201,33 @@ export async function setNewPassword(token: string, password: string): Promise<v
   await webPost('/web/login/phone/password/new', { token, password })
 }
 
+/**
+ * Ссылка-приглашение на сайт (/invite#join_… врачу, /invite#staff_… сотруднику): что за приглашение.
+ * Адрес вне контракта /api (как вход) — тип здесь. kind — DOCTOR или STAFF; botUsername — для
+ * «Открыть в Telegram», бот не настроен — null.
+ */
+export type InviteInfo = {
+  kind: 'DOCTOR' | 'STAFF'; clinicName: string; fullName: string; role: string | null; roleText: string
+  expiresAt: string; botUsername: string | null
+}
+
+/** Код ссылки — только в теле: 404 — ссылка недействительна или истекла, 429 — много неверных кодов. */
+export async function inviteInfo(token: string): Promise<InviteInfo> {
+  const info = await webPost<InviteInfo>('/web/invite', { token })
+  if (!info) throw new ApiError(500, 'Сервер не ответил — обновите страницу')
+  return info
+}
+
+/**
+ * «Без Telegram — по номеру телефона»: номер и свой пароль → врач или сотрудник, сразу вход (cookie).
+ * 422 — поле phone или password; 409 — номер занят (code 'phone-taken'); 404 — ссылка не действует.
+ * Номер и пароль — только в теле, нигде не сохраняем.
+ */
+export async function inviteRegister(token: string, phone: string, password: string): Promise<{ fullName: string; roleText: string }> {
+  const done = await webPost<{ fullName: string; roleText: string }>('/web/invite/register', { token, phone, password })
+  return done ?? { fullName: '', roleText: '' }
+}
+
 export async function botUsername(): Promise<string | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
   if (!response.ok) return null
