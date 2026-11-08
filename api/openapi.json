@@ -11146,7 +11146,7 @@
     "/api/clinic/import/template" : {
       "get" : {
         "tags" : [ "import-controller" ],
-        "operationId" : "template_2",
+        "operationId" : "template_3",
         "parameters" : [ {
           "name" : "kind",
           "in" : "query",

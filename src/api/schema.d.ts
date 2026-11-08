@@ -4875,7 +4875,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template_2"];
+        get: operations["template_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -18111,7 +18111,7 @@ export interface operations {
             };
         };
     };
-    template_2: {
+    template_3: {
         parameters: {
             query: {
                 kind: "PATIENTS" | "SERVICES";
