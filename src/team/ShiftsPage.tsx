@@ -18,7 +18,7 @@ type Shift = Schemas['ShiftServiceShiftView']
 type Person = Schemas['ShiftServicePerson']
 
 /** Роль в строке графика — коротко, как в «Персонале». */
-const SHIFT_ROLE: Record<string, string> = { ADMIN: 'администратор', RECEPTION: 'регистратура', ASSISTANT: 'ассистент' }
+const SHIFT_ROLE: Record<string, string> = { ADMIN: 'руководитель', RECEPTION: 'регистратура', ASSISTANT: 'ассистент' }
 
 /** '09:00:00' → '09:00'. */
 const hm = (time?: string) => (time ?? '').slice(0, 5)
@@ -75,8 +75,8 @@ export function ShiftsPage({ onBack, title = 'График смен', tabs }: { 
       </SubHeader>
       <p className="hint">
         {canEdit
-          ? 'Смены администраторов, регистратуры и ассистентов. Нажмите на ячейку, чтобы добавить или изменить смену. У врачей — вкладка «Врачи».'
-          : 'График смен ведёт администратор клиники. Ваша строка подсвечена.'}
+          ? 'Смены руководителей, регистратуры и ассистентов. Нажмите на ячейку, чтобы добавить или изменить смену. У врачей — вкладка «Врачи».'
+          : 'График смен ведёт руководитель клиники. Ваша строка подсвечена.'}
       </p>
       {loaded.error && <p className="error" role="alert">{loaded.error.message}</p>}
       {loaded.isPending ? <Loading /> : data && (
@@ -84,7 +84,7 @@ export function ShiftsPage({ onBack, title = 'График смен', tabs }: { 
           // Одни врачи — графику некого показывать: объясняем и ведём туда, где настраивают
           <div className="card-block shifts-empty">
             <h2>В графике пока никого</h2>
-            <p>График смен — для персонала без своего кресла: регистратуры, ассистентов и администраторов, которые не лечат.
+            <p>График смен — для персонала без своего кресла: регистратуры, ассистентов и руководителей, которые не лечат.
               Врачи здесь не показываются — их дни и часы настраиваются в «Часах работы».</p>
             <div className="actions">
               <button type="button" className="btn primary" onClick={() => openSettings('hours')}>Часы работы врачей</button>

@@ -265,7 +265,7 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
         {!money && !toPayShown && (
           <p className="hint">{me.admin && me.clinic?.independentDoctors
             ? 'В клинике включено «Врачи работают независимо» (Настройки → О клинике): в этом режиме каждый врач видит только свою кассу, общей кассы нет.'
-            : 'Касса — у администратора и врачей.'}</p>
+            : 'Касса — у руководителя и врачей.'}</p>
         )}
         </>}
       </section>

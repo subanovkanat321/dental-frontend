@@ -50,7 +50,7 @@ export function AiPage({ onBack }: { onBack: () => void }) {
   return (
     <section className="schedule-main">
       <SubHeader title="ИИ-помощник" onBack={onBack} />
-      <p className="hint">Что клиника доверяет ИИ (Claude). Каждое — отдельно; включает и выключает администратор клиники.</p>
+      <p className="hint">Что клиника доверяет ИИ (Claude). Каждое — отдельно; включает и выключает руководитель клиники.</p>
       {SWITCHES.map((s) => <AiSwitch key={s.key} s={s} />)}
     </section>
   )

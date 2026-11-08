@@ -59,7 +59,7 @@ function NotificationsBody() {
   const devices = data.devices ?? []
   // Вход по SMS: Telegram нет — только приложение; не включил — о записях узнает администратор
   const noTelegram = data.noTelegram === true
-  const fallback = 'Включите уведомления приложения, иначе сообщения о записях получит администратор.'
+  const fallback = 'Включите уведомления приложения, иначе сообщения о записях получит руководитель.'
 
   const save = (next: View) => client.setQueryData(['push'], next)
 
@@ -115,7 +115,7 @@ function NotificationsBody() {
     status = <p>На iPhone уведомления приходят только в установленное приложение (iOS 16.4 и новее): добавьте Tish
       на экран «Домой» — выше «Установить приложение», — откройте его с иконки и включите здесь.</p>
   } else if (support === 'unsupported') {
-    status = <p>{noTelegram ? 'Этот браузер не умеет уведомления — сообщения о записях получит администратор.'
+    status = <p>{noTelegram ? 'Этот браузер не умеет уведомления — сообщения о записях получит руководитель.'
       : 'Этот браузер не умеет уведомления — они приходят в Telegram.'} Подойдут Chrome, Edge, Firefox,
       Safari на Mac, а на iPhone — приложение с экрана «Домой».</p>
   } else if (allowed === 'denied') {

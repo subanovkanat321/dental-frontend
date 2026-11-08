@@ -41,11 +41,11 @@ function backend() {
 
 test('подписи: статус, каналы админов — только числа, текст ответа «Напомнить», кнопка бота', () => {
   expect(adminsLine({ telegram: 2, phone: 1, push: 1 })).toBe('✈️ Telegram 2 · 📱 по номеру 1 · 🔔 push 1')
-  expect(adminsLine({ telegram: 0, phone: 0, push: 0 })).toBe('админов нет')
+  expect(adminsLine({ telegram: 0, phone: 0, push: 0 })).toBe('руководителей нет')
   expect(statusText(statuses['2']).text).toBe('v3 · назначена — не подписан')
   expect(statusText(statuses['3']).text).toBe('не адресован')
   expect(remindedText({ clinics: 2, skipped: 1, telegram: 3, push: 1, bannerOnly: 1 }))
-    .toBe('Напомнили клиникам: 2. Админам в Telegram — 3, в приложение — 1, только баннер — 1. Уже напоминали за сутки — пропущено: 1.')
+    .toBe('Напомнили клиникам: 2. Руководителям в Telegram — 3, в приложение — 1, только баннер — 1. Уже напоминали за сутки — пропущено: 1.')
   expect(readDeepLink('?screen=agreement')).toEqual({ page: 'settings', tab: 'agreement' })
 })
 
@@ -71,7 +71,7 @@ test('список клиник: версия и подпись, «У кого T
 
   await user.click(screen.getByRole('button', { name: 'Напомнить всем не подписавшим' }))
   await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Напомнить' }))
-  expect(await screen.findByText(/Напомнили клиникам: 1\. Админам в Telegram — 2, в приложение — 1, только баннер — 0/)).toBeInTheDocument()
+  expect(await screen.findByText(/Напомнили клиникам: 1\. Руководителям в Telegram — 2, в приложение — 1, только баннер — 0/)).toBeInTheDocument()
   expect(reminded).toBe(1)
 })
 
@@ -108,13 +108,13 @@ test('карточка клиники: назначить версию для п
   await user.click(await screen.findByRole('button', { name: /Улыбка/ }))
   const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
   expect(await within(panel).findByText('Версия 3 не подписана')).toBeInTheDocument()
-  expect(within(panel).getByText(/Админы: ✈️ Telegram 2 · 📱 по номеру 1 · 🔔 push 1/)).toBeInTheDocument()
+  expect(within(panel).getByText(/Руководители: ✈️ Telegram 2 · 📱 по номеру 1 · 🔔 push 1/)).toBeInTheDocument()
 
   await choose(within(panel).getByRole('combobox', { name: 'Какую версию подписать' }), 'Версия 1')
   expect(assigned).toEqual({ versionId: 11 })
 
   await user.click(within(panel).getByRole('button', { name: 'Напомнить подписать' }))
-  expect(await within(panel).findByText(/Напомнили клиникам: 1\. Админам в Telegram — 2/)).toBeInTheDocument()
+  expect(await within(panel).findByText(/Напомнили клиникам: 1\. Руководителям в Telegram — 2/)).toBeInTheDocument()
   await user.click(within(panel).getByRole('button', { name: 'Напомнить подписать' }))
   expect(await within(panel).findByRole('alert')).toHaveTextContent('уже напоминали за последние сутки')
 })

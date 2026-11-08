@@ -113,7 +113,7 @@ test('диктовка голосом: текст по мере речи, раз
 
 test('без распознавания речи — поле для текста; ИИ для диктовки выключен клиникой — текст идёт в заметку', async () => {
   const calls = backend(() => HttpResponse.json(
-    { type: 'about:blank', title: 'Conflict', status: 409, detail: 'ИИ для диктовки выключен — включите в «Настройки → ИИ-помощник» (администратор клиники) или запишите заметку текстом', code: 'ai-unavailable' },
+    { type: 'about:blank', title: 'Conflict', status: 409, detail: 'ИИ для диктовки выключен — включите в «Настройки → ИИ-помощник» (руководитель клиники) или запишите заметку текстом', code: 'ai-unavailable' },
     { status: 409, headers: { 'Content-Type': 'application/problem+json' } }))
   await userEvent.click(await openPanel())
   const box = screen.getByRole('region', { name: 'Диктовка' })
@@ -123,7 +123,7 @@ test('без распознавания речи — поле для текст�
   await userEvent.click(within(box).getByRole('button', { name: 'Разобрать' }))
 
   const review = await screen.findByRole('region', { name: 'Проверьте диктовку' })
-  expect(review).toHaveTextContent('ИИ для диктовки выключен — включите в «Настройки → ИИ-помощник» (администратор клиники) или запишите заметку текстом')
+  expect(review).toHaveTextContent('ИИ для диктовки выключен — включите в «Настройки → ИИ-помощник» (руководитель клиники) или запишите заметку текстом')
   expect(review).toHaveTextContent('Текст добавлен в заметку.')
   expect(within(review).queryByRole('checkbox')).not.toBeInTheDocument()
   expect(within(review).getByRole('textbox', { name: 'Заметка из диктовки' })).toHaveValue('Анестезия без реакции\nПломба на 36')
@@ -134,7 +134,7 @@ test('без распознавания речи — поле для текст�
 test('регистратуре кнопки нет: заметка о приёме ей закрыта (403)', async () => {
   backend(() => HttpResponse.json(proposal))
   server.use(http.get('*/api/appointments/:id/note', () => HttpResponse.json(
-    { status: 403, detail: 'Заметки о лечении видят врач приёма и администратор' },
+    { status: 403, detail: 'Заметки о лечении видят врач приёма и руководитель' },
     { status: 403, headers: { 'Content-Type': 'application/problem+json' } })))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))

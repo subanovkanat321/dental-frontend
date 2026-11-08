@@ -177,7 +177,7 @@ test('вход без Telegram: канала Telegram нет; не включи�
   )
   renderBlock()
   const block = await screen.findByRole('region', { name: 'Уведомления' })
-  await waitFor(() => expect(block).toHaveTextContent('Включите уведомления приложения, иначе сообщения о записях получит администратор.'))
+  await waitFor(() => expect(block).toHaveTextContent('Включите уведомления приложения, иначе сообщения о записях получит руководитель.'))
   expect(screen.queryByRole('group', { name: 'Куда присылать уведомления' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Telegram' })).not.toBeInTheDocument()
 

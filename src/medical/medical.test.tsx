@@ -29,7 +29,7 @@ function backend(options: { forbidden?: boolean } = {}) {
     })),
     http.get('*/api/appointments/debts', () => HttpResponse.json([])),
     http.get('*/api/patients/2/teeth', () => options.forbidden
-      ? HttpResponse.json({ status: 403, detail: 'Медкарту видят врач пациента и администратор' }, { status: 403 })
+      ? HttpResponse.json({ status: 403, detail: 'Медкарту видят врач пациента и руководитель' }, { status: 403 })
       : HttpResponse.json(teeth)),
     http.put('*/api/patients/2/teeth/:n', async ({ request, params }) => {
       const body = (await request.json()) as Schemas['ChartControllerUpdate']
@@ -119,7 +119,7 @@ test('медкарта: зуб 16 — кариес с заметкой; отме
 test('не свой пациент — 403: замок с текстом сервера, а не ошибка всей CRM', async () => {
   backend({ forbidden: true })
   await openMedical()
-  expect(await screen.findByText(/Медкарту видят врач пациента и администратор/)).toBeInTheDocument()
+  expect(await screen.findByText(/Медкарту видят врач пациента и руководитель/)).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: 'Верхняя челюсть' })).not.toBeInTheDocument()
 })
 

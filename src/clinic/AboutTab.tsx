@@ -85,7 +85,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   return (
     <form className="card-block about" aria-label="О клинике" onSubmit={submit}>
       <fieldset className="about-grid" disabled={!canEdit}>
-        {!canEdit && <p className="tone-wait">Только просмотр: «О клинике» меняют администратор и врачи.</p>}
+        {!canEdit && <p className="tone-wait">Только просмотр: «О клинике» меняют руководитель и врачи.</p>}
         <div className="about-col">
           <WebVersion />
           <h2>Для пациентов</h2>
@@ -130,7 +130,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
           <label className="check"><input type="checkbox" checked={f.independentDoctors} disabled={!me.admin} onChange={flag('independentDoctors')} />
             Врачи работают независимо: медкарты, заметки и выручку врача видит только он сам</label>
           <p className="hint">Для частных врачей в одном кабинете. Расписание и пациенты остаются общими. Владелец кабинета
-            (администратор без своего приёма) видит всё при любой настройке. Выключено — все администраторы видят всё.</p>
+            (руководитель без своего приёма) видит всё при любой настройке. Выключено — все руководители видят всё.</p>
           <label className="check"><input type="checkbox" checked={f.separateSupplies} disabled={!me.admin} onChange={flag('separateSupplies')} />
             Свой склад у каждого врача</label>
           <p className="hint">Когда каждый врач закупает материалы сам: врач видит и тратит свои материалы и общие. Выключено — один склад на всех.</p>

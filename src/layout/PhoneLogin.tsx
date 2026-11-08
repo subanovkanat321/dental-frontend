@@ -144,7 +144,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
             {telegram && <p className="hint">Нет пароля? Нажмите «{FORGOT}» — пришлём код {sms ? 'в Telegram или по SMS' : 'в Telegram'}.</p>}
           </>
         ) : (
-          <p className="hint">Первый вход или забыли пароль? Попросите администратора клиники задать временный пароль
+          <p className="hint">Первый вход или забыли пароль? Попросите руководителя клиники задать временный пароль
             («Настройки → Персонал»).</p>
         )}
       </form>
@@ -167,7 +167,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
           <p className="hint small">Код бесплатно придёт в Telegram от бота клиники, если номер привязан к вашему Telegram
             (в боте: «📱&nbsp;Поделиться номером»){sms ? ', иначе — SMS на этот номер.' : '.'}</p>
         )}
-        {!canRecover && <p className="hint">Коды сейчас не отправляются — попросите администратора задать временный пароль.</p>}
+        {!canRecover && <p className="hint">Коды сейчас не отправляются — попросите руководителя задать временный пароль.</p>}
         {error && <p className="error" role="alert">{error}</p>}
         {byPassword && <button type="button" className="link" onClick={() => go('password')}>Назад: вход по паролю</button>}
       </form>

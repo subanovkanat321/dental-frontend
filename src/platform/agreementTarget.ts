@@ -12,14 +12,14 @@ export function adminsLine(a?: Channels): string {
   const tg = a?.telegram ?? 0
   const phone = a?.phone ?? 0
   const push = a?.push ?? 0
-  if (!tg && !phone) return 'админов нет'
+  if (!tg && !phone) return 'руководителей нет'
   return [tg ? `✈️ Telegram ${tg}` : null, phone ? `📱 по номеру ${phone}` : null, push ? `🔔 push ${push}` : null].filter(Boolean).join(' · ')
 }
 
 /** Ответ кнопки «Напомнить»: куда дошло. */
 export function remindedText(r: Reminded): string {
   const parts = [`в Telegram — ${r.telegram ?? 0}`, `в приложение — ${r.push ?? 0}`, `только баннер — ${r.bannerOnly ?? 0}`]
-  const head = (r.clinics ?? 0) === 0 ? 'Никому не напомнили' : `Напомнили клиникам: ${r.clinics}. Админам ${parts.join(', ')}`
+  const head = (r.clinics ?? 0) === 0 ? 'Никому не напомнили' : `Напомнили клиникам: ${r.clinics}. Руководителям ${parts.join(', ')}`
   return (r.skipped ? `${head}. Уже напоминали за сутки — пропущено: ${r.skipped}` : head) + '.'
 }
 

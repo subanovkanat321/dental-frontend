@@ -76,7 +76,7 @@ export function TimeOffTab({ me }: { me: Me }) {
               <button key={g} type="button" className={form === g ? 'btn primary' : 'btn'} aria-pressed={form === g} onClick={() => open(g)}>{name}</button>
             ))}
           </div>
-        ) : <p className="hint">Перерывы и выходные ставят врач, регистратура или администратор.</p>}
+        ) : <p className="hint">Перерывы и выходные ставят врач, регистратура или руководитель.</p>}
         {done && <p className="tone-ok" role="status">{done}</p>}
       </section>
       {form === 'break' && <NewBreak me={me} onDone={finish} onCancel={close} />}

@@ -110,7 +110,7 @@ test('кнопка уведомления «Открыть вопрос» (?ques
   expect(readDeepLink('?question=abc')).toBeNull()
 })
 
-test('ИИ-администратор бота: «🤖 Ответил ИИ» с текстом в «Отвеченных», «Передано администратору» — в «Ждут ответа»', async () => {
+test('ИИ-администратор бота: «🤖 Ответил ИИ» с текстом в «Отвеченных», «Передано сотрудникам» — в «Ждут ответа»', async () => {
   window.location.hash = '/patients'
   const byAi: Question = {
     id: 7, status: 'ANSWERED', text: 'Где вы находитесь?', createdAt: '2026-11-03T04:00:00Z', answeredAt: '2026-11-03T04:00:05Z',
@@ -135,11 +135,11 @@ test('ИИ-администратор бота: «🤖 Ответил ИИ» с 
   await userEvent.click(await screen.findByRole('tab', { name: /Вопросы/ }))
   expect(await screen.findByText(/сначала отвечает ИИ-помощник/)).toBeInTheDocument()
   const waiting = await screen.findByRole('table', { name: 'Вопросы пациентов' })
-  expect(waiting).toHaveTextContent('Передано администратору')
+  expect(waiting).toHaveTextContent('Передано сотрудникам')
   await userEvent.click(within(waiting).getByRole('button', { name: 'Нет в базе клиники' }))
   let panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
   expect(await within(panel).findByText(/ИИ не стал отвечать сам/)).toBeInTheDocument()
-  expect(within(panel).getByRole('region', { name: 'Передано администратору' })).toHaveTextContent('Это лучше обсудить с врачом')
+  expect(within(panel).getByRole('region', { name: 'Передано сотрудникам' })).toHaveTextContent('Это лучше обсудить с врачом')
   // Отвечает сотрудник — как обычно
   expect(within(panel).getByLabelText('Ответ пациенту')).toBeInTheDocument()
 

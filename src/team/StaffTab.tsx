@@ -17,7 +17,7 @@ type Invite = Schemas['StaffMembersInviteView']
 
 /** Фильтр списка по роли: «Все» — весь персонал одной таблицей. */
 type Filter = 'all' | 'DOCTOR' | 'ADMIN' | 'RECEPTION' | 'ASSISTANT'
-const FILTERS: [Filter, string][] = [['all', 'Все'], ['DOCTOR', 'Врачи'], ['ADMIN', 'Администраторы'], ['RECEPTION', 'Регистратура'], ['ASSISTANT', 'Ассистенты']]
+const FILTERS: [Filter, string][] = [['all', 'Все'], ['DOCTOR', 'Врачи'], ['ADMIN', 'Руководители'], ['RECEPTION', 'Регистратура'], ['ASSISTANT', 'Ассистенты']]
 
 /**
  * Строка «Персонала»: врач (из «Врачей», роль админа или регистратора — рядом), сотрудник без
@@ -28,7 +28,7 @@ type Row =
   | { kind: 'member'; key: string; name: string; roles: Filter[]; member: Member }
   | { kind: 'invite'; key: string; name: string; roles: Filter[]; invite: Invite }
 
-const ROLE_CHIP: Record<Exclude<Filter, 'all'>, string> = { DOCTOR: 'Врач', ADMIN: 'Администратор', RECEPTION: 'Регистратура', ASSISTANT: 'Ассистент' }
+const ROLE_CHIP: Record<Exclude<Filter, 'all'>, string> = { DOCTOR: 'Врач', ADMIN: 'Руководитель', RECEPTION: 'Регистратура', ASSISTANT: 'Ассистент' }
 
 /**
  * «Персонал»: все, кто работает в клинике, — одной таблицей с ролями рядом с именем и тем, вошёл ли
@@ -144,8 +144,8 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                     {r.kind === 'member' && <ChangeRole me={me} member={r.member} />}
                     {r.kind === 'member' && (
                       <button type="button" className="btn small ghost" disabled={remove.isPending}
-                        onClick={() => void ask(r.member.me ? 'Выйти из администраторов клиники?' : `Убрать «${r.name}» из клиники? Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.`).then((ok) => ok && remove.mutate(r.member))}>
-                        {r.member.me ? 'Выйти из администраторов' : 'Убрать'}</button>
+                        onClick={() => void ask(r.member.me ? 'Выйти из руководителей клиники?' : `Убрать «${r.name}» из клиники? Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.`).then((ok) => ok && remove.mutate(r.member))}>
+                        {r.member.me ? 'Выйти из руководителей' : 'Убрать'}</button>
                     )}
                     {r.kind === 'invite' && (
                       <button type="button" className="btn small ghost" disabled={cancel.isPending}

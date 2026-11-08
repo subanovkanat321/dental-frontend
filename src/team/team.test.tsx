@@ -75,7 +75,7 @@ test('админ: врачи таблицей; карточка врача, ко
   // Врач ещё не вошёл — вместо «Сделать администратором» подсказка, как пригласить
   const access = within(panel).getByRole('region', { name: 'Вход и права' })
   expect(access).toHaveTextContent('Ждём входа')
-  expect(within(access).getByText(/Сделать врача администратором можно, когда он войдёт/)).toBeInTheDocument()
+  expect(within(access).getByText(/Сделать врача руководителем можно, когда он войдёт/)).toBeInTheDocument()
   await user.click(within(access).getByRole('button', { name: 'Пригласить по ссылке' }))
   expect(await within(access).findByRole('link', { name: 'https://t.me/tish_test_bot?start=join_abc123' })).toBeInTheDocument()
 })
@@ -106,7 +106,7 @@ test('админ: у вошедшего врача фото, имя и «о се
   const access = within(panel).getByRole('region', { name: 'Вход и права' })
   expect(access).toHaveTextContent('✓ Telegram подключён')
   expect(access).not.toHaveTextContent('333')
-  expect(within(access).getByRole('button', { name: 'Сделать администратором клиники' })).toBeInTheDocument()
+  expect(within(access).getByRole('button', { name: 'Сделать руководителем клиники' })).toBeInTheDocument()
 })
 
 test('сотрудники: пригласить регистратора ссылкой', async () => {
@@ -127,7 +127,7 @@ test('сотрудники: пригласить регистратора ссы
   openItem('members')
   // Админ, который и лечит, — строкой врача с двумя ролями рядом
   const staff = await screen.findByRole('table', { name: 'Персонал' })
-  expect(staff).toHaveTextContent('ВрачАдминистратор')
+  expect(staff).toHaveTextContent('ВрачРуководитель')
   const form = screen.getByRole('form', { name: 'Пригласить сотрудника' })
   await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Айпери')
   await user.click(within(form).getByRole('button', { name: 'Создать ссылку' }))

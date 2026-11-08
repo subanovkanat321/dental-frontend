@@ -139,7 +139,7 @@ function MemoPanel({ memo: m, editable, onClose }: { memo?: Memo; editable: bool
         </form>
       ) : (
         <>
-          <p className="hint">Памятки меняют администратор и врачи.</p>
+          <p className="hint">Памятки меняют руководитель и врачи.</p>
           {lang === 'ru' ? <p className="memo-text">{m?.body}</p>
             : m?.bodyKy ? <><h3>{m.titleKy}</h3><p className="memo-text">{m.bodyKy}</p></>
               : <p className="hint">Кыргызского текста нет — будет отправлен русский текст.</p>}
@@ -190,7 +190,7 @@ function KyFields({ form, memo: m, onChange, titleError, bodyError }: {
             onClick={() => translate.mutate()}>{translate.isPending ? 'Переводим…' : '✨ Перевести с ИИ'}</button>
         </div>
       ) : ai.data?.available ? (
-        <p className="hint small">✨ Перевести с ИИ — когда администратор включит ИИ клиники в «Настройки → ИИ-помощник».</p>
+        <p className="hint small">✨ Перевести с ИИ — когда руководитель включит ИИ клиники в «Настройки → ИИ-помощник».</p>
       ) : null}
       {translate.isSuccess && <p className="hint small" role="status">Перевод ИИ — в полях выше. Проверьте и сохраните.</p>}
       {translate.error && <p className="error small" role="alert">{translate.error.message}</p>}

@@ -200,7 +200,7 @@ test('ассистент: перерывы и выходные только см
   await openTab()
   expect(await screen.findByText(/Джума-намаз/)).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '＋ Перерыв' })).not.toBeInTheDocument()
-  expect(screen.getByText(/ставят врач, регистратура или администратор/)).toBeInTheDocument()
+  expect(screen.getByText(/ставят врач, регистратура или руководитель/)).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Удалить/ })).not.toBeInTheDocument()
 })
 

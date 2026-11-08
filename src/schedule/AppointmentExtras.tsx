@@ -425,7 +425,7 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
     {a.patient?.id != null && <Dictation appointment={a} note={value} onActive={setDictating} />}
     {!dictating && <form className="form" aria-label="Заметка о приёме" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
       <label className="field"><span>Заметка о приёме</span>
-        <textarea rows={3} maxLength={2000} value={value} placeholder="Что сделали, что дальше — видят врач и админ"
+        <textarea rows={3} maxLength={2000} value={value} placeholder="Что сделали, что дальше — видят врач и руководитель"
           onChange={(e) => setText(e.target.value)} />
       </label>
       {changed && <button type="submit" className="btn" disabled={save.isPending}>Сохранить заметку</button>}

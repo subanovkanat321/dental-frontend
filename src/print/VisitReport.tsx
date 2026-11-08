@@ -222,7 +222,7 @@ function AiSwitch({ me, onOn }: { me: Me; onOn: () => void }) {
     },
   })
   if (!me.admin && !me.platform) {
-    return <p className="hint small">✨ ИИ пишет сообщение понятнее — его может включить администратор клиники.</p>
+    return <p className="hint small">✨ ИИ пишет сообщение понятнее — его может включить руководитель клиники.</p>
   }
   return (
     <div className="ai-switch">

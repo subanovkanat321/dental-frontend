@@ -52,16 +52,16 @@ export function DemoClinic() {
             <span className="chip small s-quiet">Записей: <b className="num">{s.appointments}</b></span>
           </p>
           <div className="actions">
-            <button type="button" className="btn primary" disabled={enter.isPending} onClick={() => enter.mutate()}>Открыть как админ</button>
+            <button type="button" className="btn primary" disabled={enter.isPending} onClick={() => enter.mutate()}>Открыть как руководитель</button>
             <button type="button" className="btn" disabled={refresh.isPending}
               onClick={() => void ask('Пересоздать вымышленные записи, оплаты и пациентов с датами от этой недели?').then((ok) => ok && refresh.mutate())}>
               {refresh.isPending ? 'Обновляем…' : 'Обновить демо-данные'}</button>
           </div>
-          <p className="hint">Вернуться в свою клинику — «Платформа → Клиники» → клиника → «Войти как админ».</p>
+          <p className="hint">Вернуться в свою клинику — «Платформа → Клиники» → клиника → «Войти как руководитель».</p>
           <details>
             <summary>Показать клиенту: ссылка гостю на сутки</summary>
             <div className="form">
-              <p className="hint">Гость станет админом демо-клиники (только вымышленные данные). После показа — «Закрыть доступ гостям».</p>
+              <p className="hint">Гость станет руководителем демо-клиники (только вымышленные данные). После показа — «Закрыть доступ гостям».</p>
               {invite.data?.token ? <InviteLink start={`staff_${invite.data.token}`} name={guest.trim()} toWhom="клиенту" /> : (
                 <form className="form narrow" aria-label="Ссылка гостю" onSubmit={(e) => { e.preventDefault(); invite.mutate() }}>
                   <label className="field"><span>Кому (для «Персонала» демо)</span>

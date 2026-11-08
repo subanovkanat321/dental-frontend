@@ -40,14 +40,14 @@ function aiActionText(q: Question): string | null {
 }
 
 /**
- * Пометка ИИ-администратора бота: «🤖 Ответил ИИ» — ответил сам; «Передано администратору» — ИИ передал
+ * Пометка ИИ-администратора бота: «🤖 Ответил ИИ» — ответил сам; «Передано сотрудникам» — ИИ передал
  * вопрос (или пациент попросил человека) и вопрос ждёт сотрудника. null — ИИ не участвовал.
  */
 function aiMark(q: Question): string | null {
   const action = aiActionText(q)
   if (action) return action
   if (q.aiOutcome === 'ANSWERED') return '🤖 Ответил ИИ'
-  if (q.aiOutcome === 'ESCALATED' || q.aiOutcome === 'HANDOFF') return 'Передано администратору'
+  if (q.aiOutcome === 'ESCALATED' || q.aiOutcome === 'HANDOFF') return 'Передано сотрудникам'
   return null
 }
 
@@ -167,9 +167,9 @@ export function QuestionPanel({ questionId, onClose, onOpenPatient }: {
             </section>
           )}
           {(q.aiOutcome === 'ESCALATED' || q.aiOutcome === 'HANDOFF') && (
-            <section aria-label="Передано администратору">
+            <section aria-label="Передано сотрудникам">
               <p className="notice tone-wait">
-                {q.aiOutcome === 'HANDOFF' ? 'Передано администратору: пациент попросил человека (или ИИ на сегодня ответил уже много раз).' : 'Передано администратору: ИИ не стал отвечать сам (медицинский вопрос, жалоба или не уверен).'}
+                {q.aiOutcome === 'HANDOFF' ? 'Передано сотрудникам: пациент попросил человека (или ИИ на сегодня ответил уже много раз).' : 'Передано сотрудникам: ИИ не стал отвечать сам (медицинский вопрос, жалоба или не уверен).'}
               </p>
               {q.aiAnswer && (
                 <>

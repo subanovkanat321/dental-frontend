@@ -89,8 +89,8 @@ export function BroadcastTab() {
       <section className="card-block">
         <h2>Сообщение клиникам</h2>
         <form className="form narrow" aria-label="Сообщение клиникам"
-          onSubmit={(e) => { e.preventDefault(); void ask(`Отправить админам клиник (${count})? Отменить нельзя.`, { ok: 'Отправить' }).then((ok) => ok && send.mutate()) }}>
-          <p className="hint">Придёт в бот администраторам клиник с подписью «Сообщение от команды Tish». Не пишите сюда данные пациентов.</p>
+          onSubmit={(e) => { e.preventDefault(); void ask(`Отправить руководителям клиник (${count})? Отменить нельзя.`, { ok: 'Отправить' }).then((ok) => ok && send.mutate()) }}>
+          <p className="hint">Придёт в бот руководителям клиник с подписью «Сообщение от команды Tish». Не пишите сюда данные пациентов.</p>
           <label className="field"><span>Текст · {text.length} / 2000</span>
             <textarea rows={6} maxLength={2000} required value={text} placeholder="Например: в субботу с 23:00 до 23:30 — плановые работы, приложение может не открываться"
               onChange={(e) => { send.reset(); setText(e.target.value) }} /></label>
@@ -105,7 +105,7 @@ export function BroadcastTab() {
           )}
           {send.error && <p className="error" role="alert">{send.error.fieldErrors.text ?? send.error.fieldErrors.clinicIds ?? send.error.message}</p>}
           {send.isSuccess && <p className="tone-ok" role="status">Отправлено: дошло {send.data.delivered} из {send.data.recipients}</p>}
-          <button type="submit" className="btn primary" disabled={send.isPending || !text.trim() || !count}>Отправить админам</button>
+          <button type="submit" className="btn primary" disabled={send.isPending || !text.trim() || !count}>Отправить руководителям</button>
         </form>
       </section>
       {(history.data?.length ?? 0) > 0 && (
@@ -155,7 +155,7 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
       <section className="schedule-main">
         {header}
         <section className="card-block">
-          <p className="hint">Неопубликованную версию видите только вы. Опубликованную видят админы клиник, которым она адресована (всем или выбранным),
+          <p className="hint">Неопубликованную версию видите только вы. Опубликованную видят руководители клиник, которым она адресована (всем или выбранным),
             и подписывают её в «Настройки → Договор»; менять текст нельзя — выпустите новую. Какую версию подписать конкретной клинике — в её карточке
             («Клиники → клиника → Договор»). Перед публикацией — показать юристу.</p>
           {list.error && <p className="error">{list.error.message}</p>}

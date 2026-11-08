@@ -84,7 +84,7 @@ test('регистратура памятки только читает', async 
   expect(screen.queryByRole('button', { name: '＋ Своя памятка' })).not.toBeInTheDocument()
   await userEvent.click(within(list).getByRole('button', { name: '📋 После удаления зуба' }))
   const panel = screen.getByRole('complementary', { name: 'Памятка' })
-  expect(panel).toHaveTextContent('Памятки меняют администратор и врачи.')
+  expect(panel).toHaveTextContent('Памятки меняют руководитель и врачи.')
   expect(within(panel).queryByRole('textbox')).not.toBeInTheDocument()
 })
 
@@ -158,6 +158,6 @@ test('ИИ клиники выключен — кнопки «Перевести
   await userEvent.click(within(list).getByRole('button', { name: '📋 После отбеливания' }))
   const panel = screen.getByRole('complementary', { name: 'Памятка' })
   await userEvent.click(within(panel).getByRole('button', { name: 'Кыргызский' }))
-  expect(await within(panel).findByText(/когда администратор включит ИИ клиники/)).toBeInTheDocument()
+  expect(await within(panel).findByText(/когда руководитель включит ИИ клиники/)).toBeInTheDocument()
   expect(within(panel).queryByRole('button', { name: '✨ Перевести с ИИ' })).not.toBeInTheDocument()
 })

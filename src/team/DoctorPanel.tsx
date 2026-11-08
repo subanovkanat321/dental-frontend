@@ -68,7 +68,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
       <header className="panel-head">
         <div>
           <h2>{d.fullName}</h2>
-          <span className="hint">{[self ? 'это вы' : null, d.role === 'ADMIN' ? 'и администратор' : null, d.active === false ? 'скрыт' : null,
+          <span className="hint">{[self ? 'это вы' : null, d.role === 'ADMIN' ? 'и руководитель' : null, d.active === false ? 'скрыт' : null,
             admin && !linked ? 'ждём входа' : null].filter(Boolean).join(' · ') || 'Врач'}</span>
         </div>
         {!inline && <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>}
@@ -97,7 +97,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
           <h3 className="group-title">Вход и права</h3>
           {admin ? <AccessAdmin doctor={d} self={self} inline={inline} onDone={refresh} />
             : <p className="hint">Телефон и пароль для входа — в «Телефон» и «Пароль и вход» выше. Права: врач — своё расписание,
-              пациенты и медкарты; сделать администратором может администратор клиники.</p>}
+              пациенты и медкарты; сделать руководителем может руководитель клиники.</p>}
         </section>
       )}
 
@@ -247,17 +247,17 @@ function AccessAdmin({ doctor: d, self, inline, onDone }: { doctor: Doctor; self
       <h4>Права</h4>
       {/* Права дают тому, кто вошёл: администратор — это Telegram врача. Не вошёл — объясняем, что сделать */}
       {!linked ? (
-        <p className="hint">Сделать врача администратором можно, когда он войдёт: нажмите выше «Пригласить по ссылке»,
+        <p className="hint">Сделать врача руководителем можно, когда он войдёт: нажмите выше «Пригласить по ссылке»,
           отправьте ему — он откроет ссылку и нажмёт «Начать» в Telegram. После этого здесь появится кнопка
-          «Сделать администратором клиники».</p>
+          «Сделать руководителем клиники».</p>
       ) : (
         <>
           <p className="hint">{isAdmin
-            ? 'Этот врач — и администратор: ведёт «О клинике», врачей, сотрудников, видит выручку клиники.'
+            ? 'Этот врач — и руководитель: ведёт «О клинике», врачей, сотрудников, видит выручку клиники.'
             : 'Врач сможет вести клинику вместе с вами: «О клинике», врачи, сотрудники, выручка клиники. Лечить и вести своё расписание он продолжит.'}</p>
           <button type="button" className="btn" disabled={rights.isPending}
-            onClick={() => void (!isAdmin || !self ? Promise.resolve(true) : ask('Снять с себя права администратора?')).then((ok) => ok && rights.mutate())}>
-            {isAdmin ? 'Снять права администратора' : 'Сделать администратором клиники'}</button>
+            onClick={() => void (!isAdmin || !self ? Promise.resolve(true) : ask('Снять с себя права руководителя?')).then((ok) => ok && rights.mutate())}>
+            {isAdmin ? 'Снять права руководителя' : 'Сделать руководителем клиники'}</button>
           {rights.error && <p className="error" role="alert">{rights.error.message}</p>}
         </>
       )}

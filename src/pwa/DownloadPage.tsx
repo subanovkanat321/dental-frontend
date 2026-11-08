@@ -21,7 +21,7 @@ export function DownloadPage() {
       <header className="download-head">
         <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={48} height={72} />
         <div>
-          <p className="hint">Для врачей, регистратуры и администраторов клиник</p>
+          <p className="hint">Для врачей, регистратуры и руководителей клиник</p>
           <h1>Tish на экране телефона</h1>
           <p>Значок на главном экране, своё окно без адресной строки — как обычное приложение. Без магазинов приложений и обновлений: новое появляется само.</p>
         </div>

@@ -45,7 +45,7 @@ test('?role=assistant — без «Кассы» и «Настроек клини
   expect(screen.queryByRole('article', { name: 'Оплата после приёма' })).not.toBeInTheDocument()
   expect(screen.getByRole('article', { name: '«Профосмотр» (у ассистента)' })).toBeInTheDocument()
 
-  await userEvent.click(within(screen.getByRole('group', { name: 'Для кого' })).getByRole('button', { name: 'Администратор' }))
+  await userEvent.click(within(screen.getByRole('group', { name: 'Для кого' })).getByRole('button', { name: 'Руководитель' }))
   expect(window.location.search).toBe('?role=admin')
   expect(chapterTitles()).toContain('Настройки клиники')
   expect(screen.getByRole('article', { name: 'Персонал: все сотрудники и их роли' })).toBeInTheDocument()

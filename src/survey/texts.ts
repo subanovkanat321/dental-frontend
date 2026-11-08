@@ -5,10 +5,10 @@ export type QuestionType = NonNullable<Question['type']>
 export type Role = NonNullable<Schemas['SurveyDefinition']['roles']>[number]
 
 /** Роли сотрудников клиники — кому адресован опрос (как Survey.Role на сервере). */
-export const ROLES: [Role, string][] = [['ADMIN', 'Администраторы'], ['DOCTOR', 'Врачи'], ['RECEPTION', 'Регистратура'], ['ASSISTANT', 'Ассистенты']]
+export const ROLES: [Role, string][] = [['ADMIN', 'Руководители'], ['DOCTOR', 'Врачи'], ['RECEPTION', 'Регистратура'], ['ASSISTANT', 'Ассистенты']]
 
 /** Одна роль — в итогах и у ответов текстом. */
-export const ROLE_ONE: Record<Role, string> = { ADMIN: 'администратор', DOCTOR: 'врач', RECEPTION: 'регистратура', ASSISTANT: 'ассистент' }
+export const ROLE_ONE: Record<Role, string> = { ADMIN: 'руководитель', DOCTOR: 'врач', RECEPTION: 'регистратура', ASSISTANT: 'ассистент' }
 
 export function rolesText(roles: Role[] | undefined): string {
   return roles?.length ? roles.map((r) => ROLE_ONE[r]).join(', ') : 'все сотрудники'

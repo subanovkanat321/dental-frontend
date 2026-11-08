@@ -104,7 +104,7 @@ test('«Промокоды»: регистратура видит коды и ч
   expect(within(table).queryByRole('button')).toBeNull()
   expect(within(table).queryByRole('columnheader', { name: 'Оплачено' })).toBeNull()
   expect(screen.queryByRole('button', { name: '+ Промокод' })).toBeNull()
-  expect(screen.getByText(/Промокоды заводят врачи и администратор/)).toBeInTheDocument()
+  expect(screen.getByText(/Промокоды заводят врачи и руководитель/)).toBeInTheDocument()
 })
 
 test('«Касса → Аналитика»: промокоды за период — записи, пришли, новые, оплачено', async () => {

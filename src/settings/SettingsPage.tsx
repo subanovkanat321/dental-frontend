@@ -73,7 +73,7 @@ const GROUPS: [string, Item[]][] = [
   ['Клиника', [
     item('about', 'О клинике', 'Адрес, контакты, предоплата, склад', all, clinic('about')),
     // Врачи и сотрудники — одним списком с ролями; адрес «doctors» прежний (#/settings/members ведёт сюда же)
-    item('doctors', 'Персонал', 'Врачи, админы, регистратура, ассистенты — роли и вход', all, team('doctors')),
+    item('doctors', 'Персонал', 'Врачи, руководители, регистратура, ассистенты — роли и вход', all, team('doctors')),
     // Ассистенту цены не показываем — и пункта «Услуги» у него нет
     item('services', 'Услуги и цены', 'Цены, длительность, материалы и памятки', (me) => !isAssistant(me), clinic('services')),
     // Кто и когда работает — один пункт с вкладками: часы врачей, смены персонала, перерывы
@@ -288,7 +288,7 @@ function Appearance() {
  */
 function Profile({ me }: { me: Me }) {
   const own = (me.doctors ?? []).find((d) => d.id === me.doctorId)
-  const roles = [me.admin ? 'администратор' : null, me.reception ? 'регистратура' : null, isAssistant(me) ? 'ассистент врача' : null, me.doctorId != null ? 'врач' : null,
+  const roles = [me.admin ? 'руководитель' : null, me.reception ? 'регистратура' : null, isAssistant(me) ? 'ассистент врача' : null, me.doctorId != null ? 'врач' : null,
     me.owner ? 'владелец платформы' : me.platform ? 'менеджер платформы' : null].filter(Boolean)
   const clinic = me.clinic?.brandName || me.clinic?.name
   const name = own?.fullName ?? me.fullName ?? 'Без имени'

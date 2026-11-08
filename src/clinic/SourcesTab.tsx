@@ -41,7 +41,7 @@ export function SourcesTab({ me, header, onPanel }: { me: Me; header: ReactNode;
         <section className="card-block">
           <p className="hint">Что выбирают в карточке пациента и что новый пациент видит в боте при записи: «Откуда вы о нас узнали?».
             По этим ответам — «Касса → Аналитика»: какая реклама приводит пациентов.
-            {!editable && ' Список меняет администратор клиники.'}</p>
+            {!editable && ' Список меняет руководитель клиники.'}</p>
           {list.error && <p className="error">{list.error.message}</p>}
           {move.error && <p className="error" role="alert">{move.error.message}</p>}
           {list.isPending ? <Loading /> : (

@@ -93,7 +93,7 @@ test('условия зарплаты не заданы — выручка вр�
 
   const block = await screen.findByRole('region', { name: 'Мой заработок' })
   expect(block).toHaveTextContent(/Принято от ваших пациентов: сегодня 5\s000 сом, за ноябрь 90\s000 сом/)
-  expect(block).toHaveTextContent('Процент задаёт администратор в «Касса → Зарплата»')
+  expect(block).toHaveTextContent('Процент задаёт руководитель в «Касса → Зарплата»')
   expect(within(block).queryByLabelText('Сравнение с прошлым месяцем')).not.toBeInTheDocument()
   // Цели нет — сразу поле, чтобы поставить
   const goal = screen.getByRole('region', { name: 'Цель на месяц' })

@@ -3,7 +3,7 @@ import { formatPhone } from '../lib/phone'
 
 /** Подписи раздела «Команда» — как в приложении (static/js бэкенда), чтобы клиника видела одно и то же. */
 
-export const ROLE_TEXT: Record<string, string> = { ADMIN: 'Администратор', RECEPTION: 'Регистратор', ASSISTANT: 'Ассистент' }
+export const ROLE_TEXT: Record<string, string> = { ADMIN: 'Руководитель', RECEPTION: 'Регистратор', ASSISTANT: 'Ассистент' }
 
 export type Weekday = NonNullable<Schemas['TimeOffView']['weekday']>
 

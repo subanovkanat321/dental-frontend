@@ -160,7 +160,7 @@ function BillingForm({ id, plan }: { id: number; plan: Plan }) {
             <button type="button" className="btn" disabled={!manual || setUntil.isPending} onClick={() => setUntil.mutate(manual)}>Сохранить срок</button>
             <button type="button" className="btn" disabled={setUntil.isPending} onClick={() => setUntil.mutate(null)}>Бесплатно (пилот)</button>
           </div>
-          <p className="hint">После срока — 7 дней отсрочки, затем новые записи на паузе; остальное работает. Админам бот напомнит за 7, 3 и 1 день.</p>
+          <p className="hint">После срока — 7 дней отсрочки, затем новые записи на паузе; остальное работает. Руководителям бот напомнит за 7, 3 и 1 день.</p>
         </div>
       </details>
     </section>
@@ -226,7 +226,7 @@ function AgreementBox({ id, owner }: { id: number; owner: boolean }) {
               </Select></label>
           )}
           {!choices.length && <p className="hint">Клинике не адресована ни одна версия — требования подписать у неё нет.</p>}
-          <p className="hint">Админы: {adminsLine(t?.admins)}{t?.remindedAt ? ` · напоминали ${shortDate(t.remindedAt, true)}` : ''}</p>
+          <p className="hint">Руководители: {adminsLine(t?.admins)}{t?.remindedAt ? ` · напоминали ${shortDate(t.remindedAt, true)}` : ''}</p>
           {owner && d.current && !accepted && (
             <button type="button" className="btn small" disabled={remind.isPending} onClick={() => { setDone(''); remind.mutate() }}>Напомнить подписать</button>
           )}
@@ -263,9 +263,9 @@ function EnterBox({ id }: { id: number }) {
   return (
     <section className="form">
       <h3>Войти в клинику</h3>
-      <p className="hint">Откроется CRM этой клиники — как у её админа. В её «Персонале» вас не видно. Сообщать админам клиники о входе и вести журнал входов — «Платформа → Сведения».</p>
+      <p className="hint">Откроется CRM этой клиники — как у её руководителя. В её «Персонале» вас не видно. Сообщать руководителям клиники о входе и вести журнал входов — «Платформа → Сведения».</p>
       <div className="actions">
-        <button type="button" className="btn primary" disabled={enter.isPending} onClick={() => go(false)}>Войти как админ</button>
+        <button type="button" className="btn primary" disabled={enter.isPending} onClick={() => go(false)}>Войти как руководитель</button>
         <button type="button" className="btn" disabled={enter.isPending} onClick={() => go(true)}>Войти как регистратор</button>
       </div>
       {enter.error?.code === 'support-access-required' ? (
@@ -292,11 +292,11 @@ function AdminInvite({ clinic: c, initial, owner }: { clinic: Row; initial?: { n
   const make = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/platform/clinics/{id}/admin-invite', { params: { path: { id: c.id! } }, body: { fullName: name, alsoDoctor } })),
   })
-  const form = make.data?.token ? <InviteLink start={`staff_${make.data.token}`} name={name.trim()} toWhom="админу клиники" phone={c.contactPhone ?? phoneDigits(phone)} sms={owner} /> : (
-    <form className="form" aria-label="Пригласить админа клиники" onSubmit={(e) => { e.preventDefault(); make.mutate() }}>
-      <label className="field"><span>Имя админа</span><input value={name} required maxLength={100} onChange={(e) => setName(e.target.value)} /></label>
-      {!c.contactPhone && <label className="field"><span>Телефон админа — по желанию, чтобы отправить ссылку в WhatsApp{owner ? ' или SMS' : ''}</span>
-        <PhoneInput label="Телефон админа" value={phone} onChange={setPhone} /></label>}
+  const form = make.data?.token ? <InviteLink start={`staff_${make.data.token}`} name={name.trim()} toWhom="руководителю клиники" phone={c.contactPhone ?? phoneDigits(phone)} sms={owner} /> : (
+    <form className="form" aria-label="Пригласить руководителя клиники" onSubmit={(e) => { e.preventDefault(); make.mutate() }}>
+      <label className="field"><span>Имя руководителя</span><input value={name} required maxLength={100} onChange={(e) => setName(e.target.value)} /></label>
+      {!c.contactPhone && <label className="field"><span>Телефон руководителя — по желанию, чтобы отправить ссылку в WhatsApp{owner ? ' или SMS' : ''}</span>
+        <PhoneInput label="Телефон руководителя" value={phone} onChange={setPhone} /></label>}
       <label className="check"><input type="checkbox" checked={alsoDoctor} onChange={(e) => setAlsoDoctor(e.target.checked)} /> Он же ведёт приём (частный врач) — станет и врачом</label>
       {make.error && <p className="error" role="alert">{make.error.fieldErrors.fullName ?? make.error.message}</p>}
       <button type="submit" className="btn primary" disabled={make.isPending}>Создать ссылку</button>
@@ -304,14 +304,14 @@ function AdminInvite({ clinic: c, initial, owner }: { clinic: Row; initial?: { n
   )
   return c.admins ? (
     <section className="form">
-      <h3>Админ клиники</h3>
+      <h3>Руководитель клиники</h3>
       <p>{c.admins}</p>
-      {owner && <details><summary>Пригласить ещё одного админа</summary>{form}</details>}
+      {owner && <details><summary>Пригласить ещё одного руководителя</summary>{form}</details>}
     </section>
   ) : (
     <section className="form">
-      <h3>Пригласить админа клиники</h3>
-      <p className="hint">Админ откроет ссылку, нажмёт «Начать» и сам добавит врачей и регистратуру, заполнит «О клинике» и цены.</p>
+      <h3>Пригласить руководителя клиники</h3>
+      <p className="hint">Руководитель откроет ссылку, нажмёт «Начать» и сам добавит врачей и регистратуру, заполнит «О клинике» и цены.</p>
       {form}
     </section>
   )

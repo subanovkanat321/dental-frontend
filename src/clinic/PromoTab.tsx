@@ -52,7 +52,7 @@ export function PromoTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
         <section className="card-block">
           <p className="hint">Промокод для рекламы: опубликуйте его в Instagram, на листовке или у блогера. Пациент вводит код при записи
             в боте, а если назвал по телефону — поставьте его в записи. Скидка — подсказка пациенту: её применяет клиника на приёме,
-            сумму записи промокод не меняет.{!editable && ' Промокоды заводят врачи и администратор.'}</p>
+            сумму записи промокод не меняет.{!editable && ' Промокоды заводят врачи и руководитель.'}</p>
           {list.error && <p className="error">{list.error.message}</p>}
           <div className="analytics-filter" role="group" aria-label="Период отчёта">
             <div className="segments">

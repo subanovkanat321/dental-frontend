@@ -15,7 +15,7 @@ const PERIODS = [7, 30, 90, 365] as const
 
 const STEPS: Record<string, string> = {
   CREATED: 'Заведена',
-  ADMIN: 'Админ пришёл по ссылке',
+  ADMIN: 'Руководитель пришёл по ссылке',
   CONFIGURED: 'Настроена: врач и часы',
   FIRST_VISIT: 'Первый приём',
   MONTH: 'Работает месяц после первого приёма',

@@ -51,7 +51,7 @@ test('владелец создаёт демо-клинику, обновляе�
   const block = await screen.findByRole('region', { name: 'Демо-клиника' })
   await user.click(await within(block).findByRole('button', { name: 'Создать демо-клинику' }))
   expect(await within(block).findByText('40')).toBeInTheDocument()
-  expect(within(block).getByRole('button', { name: 'Открыть как админ' })).toBeInTheDocument()
+  expect(within(block).getByRole('button', { name: 'Открыть как руководитель' })).toBeInTheDocument()
 
   await user.click(within(block).getByRole('button', { name: 'Обновить демо-данные' }))
   await user.click(await screen.findByRole('button', { name: 'Пересоздать' }))

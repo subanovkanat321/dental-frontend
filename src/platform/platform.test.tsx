@@ -77,8 +77,8 @@ test('владелец: клиники таблицей, карточка — о
   expect(await within(panel).findByText(/Оплата отмечена/)).toBeInTheDocument()
   expect(paid).toMatchObject({ months: 3, amountSom: 10470 })
 
-  const form = within(panel).getByRole('form', { name: 'Пригласить админа клиники' })
-  await user.type(within(form).getByRole('textbox', { name: 'Имя админа' }), 'Айгерим')
+  const form = within(panel).getByRole('form', { name: 'Пригласить руководителя клиники' })
+  await user.type(within(form).getByRole('textbox', { name: 'Имя руководителя' }), 'Айгерим')
   await user.click(within(form).getByRole('button', { name: 'Создать ссылку' }))
   expect(await within(panel).findByRole('link', { name: 'https://t.me/tish_test_bot?start=staff_adm1' })).toBeInTheDocument()
   expect(invited).toEqual({ fullName: 'Айгерим', alsoDoctor: false })
@@ -107,7 +107,7 @@ test('заявка с /join: одобрить — новая клиника с �
   await user.click(within(card).getByRole('button', { name: 'Одобрить и завести клинику' }))
   const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
   expect(within(panel).getByRole('heading', { name: 'Дент Плюс' })).toBeInTheDocument()
-  expect(within(panel).getByRole('textbox', { name: 'Имя админа' })).toHaveValue('Бакыт')
+  expect(within(panel).getByRole('textbox', { name: 'Имя руководителя' })).toHaveValue('Бакыт')
   expect(within(panel).getByRole('checkbox', { name: /частный врач/ })).toBeChecked()
   // Связаться с тем, кто оставил заявку: номер остаётся в карточке клиники
   const contact = within(panel).getByRole('region', { name: 'Контакт из заявки' })
@@ -142,10 +142,10 @@ test('менеджер без клиники: только «Платформа�
   await user.click(await screen.findByRole('button', { name: 'Стоматология «Тест»' }))
   const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
   expect(within(panel).queryByRole('button', { name: 'Отметить оплату' })).not.toBeInTheDocument()
-  expect(within(panel).queryByRole('button', { name: 'Войти как админ' })).not.toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Войти как руководитель' })).not.toBeInTheDocument()
   // Второго админа в работающую клинику приглашает только владелец
   expect(within(panel).getByText('Айгуль')).toBeInTheDocument()
-  expect(within(panel).queryByText('Пригласить ещё одного админа')).not.toBeInTheDocument()
+  expect(within(panel).queryByText('Пригласить ещё одного руководителя')).not.toBeInTheDocument()
 })
 
 test('рассылка клиникам: подтверждение и итог', async () => {
@@ -167,7 +167,7 @@ test('рассылка клиникам: подтверждение и итог'
   await user.type(within(form).getByRole('textbox'), 'Плановые работы в субботу')
   await user.click(within(form).getByRole('button', { name: 'Выбрать' }))
   await user.click(await within(form).findByRole('checkbox', { name: 'Б' }))
-  await user.click(within(form).getByRole('button', { name: 'Отправить админам' }))
+  await user.click(within(form).getByRole('button', { name: 'Отправить руководителям' }))
   expect(await within(form).findByText('Отправлено: дошло 1 из 1')).toBeInTheDocument()
   expect(sent).toEqual({ text: 'Плановые работы в субботу', clinicIds: [2] })
 })
@@ -230,7 +230,7 @@ test('владелец: нажать в любом месте строки кл�
   await user.click(within(table).getAllByRole('row')[1]!.querySelectorAll('td')[4]!)
   const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
   expect(within(panel).getAllByRole('heading', { level: 3 })[0]).toHaveTextContent('Войти в клинику')
-  await user.click(within(panel).getByRole('button', { name: 'Войти как админ' }))
+  await user.click(within(panel).getByRole('button', { name: 'Войти как руководитель' }))
   await vi.waitFor(() => expect(entered).toEqual({ reception: false }))
   expect(reload).toHaveBeenCalled()
   vi.unstubAllGlobals()

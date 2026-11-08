@@ -125,7 +125,7 @@ test('регистратура: график только для чтения, �
   renderApp()
 
   const table = await screen.findByRole('table', { name: 'График смен на неделю' })
-  expect(screen.getByText('График смен ведёт администратор клиники. Ваша строка подсвечена.')).toBeInTheDocument()
+  expect(screen.getByText('График смен ведёт руководитель клиники. Ваша строка подсвечена.')).toBeInTheDocument()
   const mine = within(table).getByRole('row', { name: /Айпери \(вы\)/ })
   expect(mine).toHaveAttribute('aria-current', 'true')
   expect(within(table).getByText('09:00–15:00')).toBeInTheDocument()

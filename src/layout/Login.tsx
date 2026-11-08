@@ -58,7 +58,7 @@ export function Login() {
       <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
       {loggedOut && <LoggedOutHint onClose={() => setLoggedOut(false)} />}
       <h1>Вход для клиники</h1>
-      <p className="hint">Врачи, регистратура и администраторы — по номеру телефона и паролю.</p>
+      <p className="hint">Врачи, регистратура и руководители — по номеру телефона и паролю.</p>
       {bot.isPending && <Loading />}
       {bot.isSuccess && !config && <p className="error">Вход сейчас недоступен: сервер не настроен или не отвечает. Обновите страницу через минуту.</p>}
       {config && (

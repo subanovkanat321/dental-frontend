@@ -56,7 +56,7 @@ const MOBILE_MAIN = 4
 export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
   const clinic = me.doctor ? me.clinic?.brandName || me.clinic?.name || 'Клиника' : 'Команда Tish'
   const role = !me.doctor ? (me.owner ? 'владелец платформы' : 'менеджер платформы')
-    : me.admin ? 'администратор' : me.reception ? 'регистратура' : isAssistant(me) ? 'ассистент' : 'врач'
+    : me.admin ? 'руководитель' : me.reception ? 'регистратура' : isAssistant(me) ? 'ассистент' : 'врач'
   const sections = sectionsOf(me)
   // Вопросы пациентов ждут ответа — число у «Пациентов» (видно из любого раздела)
   const questions = useNewQuestions(Boolean(me.doctor)).data?.count ?? 0

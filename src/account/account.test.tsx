@@ -155,5 +155,5 @@ test('«Конфиденциальность»: в журнале платфор
   window.location.hash = '/settings/privacy'
   renderApp()
   const table = await screen.findByRole('table', { name: 'Входы платформы' })
-  expect(within(table).getAllByRole('row').map((r) => r.querySelector('td')?.textContent)).toEqual(['выгрузил данные', 'вошёл как админ'])
+  expect(within(table).getAllByRole('row').map((r) => r.querySelector('td')?.textContent)).toEqual(['выгрузил данные', 'вошёл как руководитель'])
 })

@@ -66,7 +66,7 @@ function EarningsView({ e }: { e: Earnings }) {
         {!e.hasTerms ? (
           <>
             <p className="hint">Принято от ваших пациентов: сегодня {somText(e.todayRevenueSom ?? 0)}, за {month} {somText(e.monthRevenueSom ?? 0)}.</p>
-            <p className="hint small">Процент задаёт администратор в «Касса → Зарплата» — тогда здесь будет ваш заработок.</p>
+            <p className="hint small">Процент задаёт руководитель в «Касса → Зарплата» — тогда здесь будет ваш заработок.</p>
           </>
         ) : (
           <p className="hint">

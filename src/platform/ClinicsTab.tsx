@@ -57,7 +57,7 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
 
   const table = (rows: Row[], label: string) => (
     <table className="table" aria-label={label}>
-      <thead><tr><th>Клиника</th><th>Заходили</th><th>Оплата</th><th>Договор</th><th>Админы</th><th className="r">Врачей</th><th className="r">Приёмов 30 дн</th><th className="r">Неявки</th></tr></thead>
+      <thead><tr><th>Клиника</th><th>Заходили</th><th>Оплата</th><th>Договор</th><th>Руководители</th><th className="r">Врачей</th><th className="r">Приёмов 30 дн</th><th className="r">Неявки</th></tr></thead>
       <tbody>
         {rows.map((c) => {
           const hl = CLINIC_HEALTH[c.health ?? 'OK'] ?? CLINIC_HEALTH.OK!
@@ -106,8 +106,8 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
           </section>
         )}
         <section className="card-block">
-          <p className="hint">{owner ? 'Все клиники приложения. Нажмите на клинику: оплата, договор, пригласить её админа или войти в неё самому.'
-            : 'Все клиники приложения — только цифры, без пациентов. Нажмите на клинику, чтобы пригласить её админа.'}</p>
+          <p className="hint">{owner ? 'Все клиники приложения. Нажмите на клинику: оплата, договор, пригласить её руководителя или войти в неё самому.'
+            : 'Все клиники приложения — только цифры, без пациентов. Нажмите на клинику, чтобы пригласить её руководителя.'}</p>
           {list.error && <p className="error">{list.error.message}</p>}
           {list.isPending ? <Loading /> : (
             <>
@@ -172,7 +172,7 @@ function NewClinic({ onCreated }: { onCreated: (id: number, solo: boolean) => vo
             <option value="">Не указан — клиника выберет в «О клинике»</option>
             {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </Select></label>
-        <label className="check"><input type="checkbox" checked={solo} onChange={(e) => setSolo(e.target.checked)} /> Частный врач — работает один (он и врач, и админ)</label>
+        <label className="check"><input type="checkbox" checked={solo} onChange={(e) => setSolo(e.target.checked)} /> Частный врач — работает один (он и врач, и руководитель)</label>
         {create.error && <p className="error" role="alert">{create.error.fieldErrors.name ?? create.error.message}</p>}
         <button type="submit" className="btn primary" disabled={create.isPending}>Создать клинику</button>
       </form>

@@ -80,7 +80,7 @@ function ClinicHours({ clinic: c, canEdit, admin, onTimeOff }: { clinic: Clinic;
     if (t) {
       const next = new Set(days).add(code)
       if (!admin) {
-        void ask(`${onWeekday(code)} выходной у всей клиники — убрать его может администратор в «Перерывы и выходные»`, { ok: 'Понятно', single: true })
+        void ask(`${onWeekday(code)} выходной у всей клиники — убрать его может руководитель в «Перерывы и выходные»`, { ok: 'Понятно', single: true })
         return
       }
       void askMakeWorkday({ day: code, off: t, who: 'всей клиники', doctorHours: false, onTimeOff }).then((ok) => {

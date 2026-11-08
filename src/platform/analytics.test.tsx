@@ -64,7 +64,7 @@ test('владелец: аналитика платформы — сводка, 
   expect(within(screen.getByRole('table', { name: 'Оплата: кому звонить' })).getByText('Жемчуг')).toBeInTheDocument()
   expect(screen.getByRole('table', { name: 'Оплата: кому звонить' })).toHaveTextContent('через 17 дн.')
   expect(screen.getByRole('table', { name: 'Клиники в зоне риска' })).toHaveTextContent('Приёмов меньше на 83%')
-  expect(screen.getByRole('list', { name: 'Шаги воронки' })).toHaveTextContent('Админ пришёл по ссылке1 · 50%')
+  expect(screen.getByRole('list', { name: 'Шаги воронки' })).toHaveTextContent('Руководитель пришёл по ссылке1 · 50%')
   expect(screen.getByRole('table', { name: 'Клиники по городам' })).toHaveTextContent('Талас')
   expect(screen.getByRole('region', { name: 'Использование функций' })).toHaveTextContent('25%')
   expect(screen.getByRole('region', { name: 'Использование функций' })).toHaveTextContent('ИИ записал: 4')

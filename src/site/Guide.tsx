@@ -159,7 +159,7 @@ function GuidePrint({ role, roleTitle }: { role: GuideRole | null; roleTitle?: s
       <header className="manual-cover">
         <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} />
         <h1>Инструкция Tish для клиники</h1>
-        <p className="manual-cover-role">{roleTitle ? `Для роли: ${roleTitle}` : 'Для всех сотрудников: администратор, регистратура, врач, ассистент'}</p>
+        <p className="manual-cover-role">{roleTitle ? `Для роли: ${roleTitle}` : 'Для всех сотрудников: руководитель, регистратура, врач, ассистент'}</p>
         <p className="hint">Версия от {today}. Свежая версия с поиском — tish.kg/guide. Вопросы — «Настройки → Техподдержка» в Tish.</p>
       </header>
       <nav className="manual-toc" aria-label="Оглавление">

@@ -89,7 +89,7 @@ export function ChangeRole({ me, member }: { me: Me; member: Member }) {
   })
   const submit = async () => {
     if (member.me && current === 'ADMIN' && role !== 'ADMIN'
-      && !await ask('Вы перестанете быть администратором: «Персонал», деньги и настройки станут недоступны. Продолжить?', { ok: 'Продолжить', danger: true })) return
+      && !await ask('Вы перестанете быть руководителем: «Персонал», деньги и настройки станут недоступны. Продолжить?', { ok: 'Продолжить', danger: true })) return
     save.mutate()
   }
   if (!open) {
@@ -143,13 +143,13 @@ export function InviteMember({ me }: { me: Me }) {
   return (
     <section className="card-block" id="invite-member">
       <h2>Пригласить сотрудника</h2>
-      <p className="hint">Администратор ведёт клинику: врачи, «О клинике», выручка, медкарты. Регистратор записывает пациентов ко всем врачам
+      <p className="hint">Руководитель ведёт клинику: врачи, «О клинике», выручка, медкарты. Регистратор записывает пациентов ко всем врачам
         и отмечает оплату, но не видит медкарт и выручки. Ассистент помогает своим врачам: ведёт их расписание, смотрит медкарту
         их пациентов и загружает снимки; денег и настроек не видит.</p>
       {invite ? (
         <>
           <InviteLink start={`staff_${invite.token}`} name={invite.name}
-            toWhom={invite.role === 'ADMIN' ? 'администратору' : invite.role === 'ASSISTANT' ? 'ассистенту' : 'регистратору'} />
+            toWhom={invite.role === 'ADMIN' ? 'руководителю' : invite.role === 'ASSISTANT' ? 'ассистенту' : 'регистратору'} />
           <button type="button" className="btn ghost" onClick={again}>Пригласить ещё</button>
         </>
       ) : (
