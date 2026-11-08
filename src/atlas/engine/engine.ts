@@ -47,10 +47,15 @@ export interface AtlasEngine {
  * модели с метками (в единицах сцены): по ней камера отъезжает, если модель не влезает по ширине
  * между легендой и описанием.
  */
-const CAMERAS: Record<AtlasView, { pos: [number, number, number]; target: [number, number, number]; max: number; radius: number }> = {
+/**
+ * halfWidth — половина ширины сцены (с подписями слева): узкий экран (телефон стоя) — камера отходит,
+ * чтобы влезло по ширине; иначе «Мудрости» (длинный блок кости) обрезалась слева.
+ */
+const CAMERAS: Record<AtlasView, { pos: [number, number, number]; target: [number, number, number]; max: number; radius: number; halfWidth?: number }> = {
   tooth: { pos: [2.75, 1.1, 5.0], target: [0.1, -0.68, 0], max: 11, radius: 1.45 },
   jaw: { pos: [0, 3.2, 12.4], target: [0, -0.1, -2.4], max: 18, radius: 3.7 },
-  wisdom: { pos: [0.9, 0.6, 9.4], target: [0.5, -1.0, 0], max: 14, radius: 2.35 },
+  // Камера — прямо напротив центра кости (x = 0,5): раньше стояла правее, и сцена уезжала влево
+  wisdom: { pos: [0.5, 0.6, 9.4], target: [0.5, -1.0, 0], max: 14, radius: 2.35, halfWidth: 3.2 },
 }
 /**
  * Ближе стартового вида — только на 15%: прокрутка тачпадом на ноутбуке — это зум, и модель раньше
@@ -247,6 +252,8 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
       const free = Math.max(width - 2 * cover - 24, width * 0.3) / width
       d = Math.max(d, c.radius / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect * free))
     }
+    // По ширине всей сцены (узкий экран)
+    if (c.halfWidth) d = Math.max(d, c.halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect))
     // По высоте: над описанием снизу (телефон) — иначе высокий зуб уходил верхом за край кадра
     const bottom = bottomCover()
     if (bottom) {
