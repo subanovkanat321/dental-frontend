@@ -7535,6 +7535,268 @@
         }
       }
     },
+    "/api/clinic/import" : {
+      "post" : {
+        "tags" : [ "import-controller" ],
+        "operationId" : "apply_2",
+        "parameters" : [ {
+          "name" : "kind",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PATIENTS", "SERVICES" ]
+          }
+        }, {
+          "name" : "fullName",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "lastName",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "firstName",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "middleName",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "phone",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "birthDate",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "workplace",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "name",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "price",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "duration",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "group",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DataImportReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/import/preview" : {
+      "post" : {
+        "tags" : [ "import-controller" ],
+        "operationId" : "preview_2",
+        "parameters" : [ {
+          "name" : "kind",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PATIENTS", "SERVICES" ]
+          }
+        }, {
+          "name" : "fullName",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "lastName",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "firstName",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "middleName",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "phone",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "birthDate",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "workplace",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "name",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "price",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "duration",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "group",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DataImportReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/export" : {
       "post" : {
         "tags" : [ "export-controller" ],
@@ -8613,7 +8875,7 @@
     "/api/appointments/{id}/dictation/apply" : {
       "post" : {
         "tags" : [ "visit-dictation-controller" ],
-        "operationId" : "apply_2",
+        "operationId" : "apply_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10864,6 +11126,42 @@
           "schema" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/import/template" : {
+      "get" : {
+        "tags" : [ "import-controller" ],
+        "operationId" : "template_2",
+        "parameters" : [ {
+          "name" : "kind",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "PATIENTS", "SERVICES" ]
+          }
+        }, {
+          "name" : "format",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "default" : "csv"
           }
         } ],
         "responses" : {
@@ -16855,6 +17153,130 @@
             "format" : "int32"
           },
           "sources" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "DataImportReport" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "PATIENTS", "SERVICES" ]
+          },
+          "headers" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "sample" : {
+            "type" : "array",
+            "items" : {
+              "type" : "array",
+              "items" : {
+                "type" : "string"
+              }
+            }
+          },
+          "rows" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "columns" : {
+            "$ref" : "#/components/schemas/ImportColumns"
+          },
+          "added" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "updated" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "unchanged" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sharedPhone" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "errorCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DataImportRowError"
+            }
+          },
+          "applied" : {
+            "type" : "boolean"
+          },
+          "summary" : {
+            "type" : "string"
+          }
+        }
+      },
+      "DataImportRowError" : {
+        "properties" : {
+          "row" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "column" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ImportColumns" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lastName" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "firstName" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "middleName" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "phone" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "birthDate" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "workplace" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "price" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "duration" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "group" : {
             "type" : "integer",
             "format" : "int32"
           }

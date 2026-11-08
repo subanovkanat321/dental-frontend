@@ -141,6 +141,27 @@
   margin-top: 28px;
 }
 
+/* План лечения: строка этапа и итог за этап */
+.print-sheet .plan-table .stage-row th {
+  padding-top: 10px;
+  border-bottom: 1px solid #111;
+  font-family: Geologica, 'Golos Text', sans-serif;
+}
+
+.print-sheet .plan-table .subtotal td {
+  font-weight: 600;
+  border-bottom: 0;
+}
+
+.print-sheet .signatures small {
+  display: block;
+  color: #555;
+}
+
+.print-sheet .sign-date {
+  margin-top: 18px;
+}
+
 .print-sheet .note {
   font-size: 0.85em;
   color: #444;

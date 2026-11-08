@@ -3076,6 +3076,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["apply_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinic/import/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["preview_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/export": {
         parameters: {
             query?: never;
@@ -3549,7 +3581,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["apply_2"];
+        post: operations["apply_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4828,6 +4860,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["invoice"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinic/import/template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["template_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7449,6 +7497,58 @@ export interface components {
             questions?: number;
             /** Format: int32 */
             sources?: number;
+        };
+        DataImportReport: {
+            /** @enum {string} */
+            kind?: "PATIENTS" | "SERVICES";
+            headers?: string[];
+            sample?: string[][];
+            /** Format: int32 */
+            rows?: number;
+            columns?: components["schemas"]["ImportColumns"];
+            /** Format: int32 */
+            added?: number;
+            /** Format: int32 */
+            updated?: number;
+            /** Format: int32 */
+            unchanged?: number;
+            /** Format: int32 */
+            sharedPhone?: number;
+            /** Format: int32 */
+            errorCount?: number;
+            errors?: components["schemas"]["DataImportRowError"][];
+            applied?: boolean;
+            summary?: string;
+        };
+        DataImportRowError: {
+            /** Format: int32 */
+            row?: number;
+            column?: string;
+            message?: string;
+        };
+        ImportColumns: {
+            /** Format: int32 */
+            fullName?: number;
+            /** Format: int32 */
+            lastName?: number;
+            /** Format: int32 */
+            firstName?: number;
+            /** Format: int32 */
+            middleName?: number;
+            /** Format: int32 */
+            phone?: number;
+            /** Format: int32 */
+            birthDate?: number;
+            /** Format: int32 */
+            workplace?: number;
+            /** Format: int32 */
+            name?: number;
+            /** Format: int32 */
+            price?: number;
+            /** Format: int32 */
+            duration?: number;
+            /** Format: int32 */
+            group?: number;
         };
         AgreementControllerAccept: {
             sha256?: string;
@@ -15203,6 +15303,86 @@ export interface operations {
             };
         };
     };
+    apply_2: {
+        parameters: {
+            query: {
+                kind: "PATIENTS" | "SERVICES";
+                fullName?: number;
+                lastName?: number;
+                firstName?: number;
+                middleName?: number;
+                phone?: number;
+                birthDate?: number;
+                workplace?: number;
+                name?: number;
+                price?: number;
+                duration?: number;
+                group?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataImportReport"];
+                };
+            };
+        };
+    };
+    preview_2: {
+        parameters: {
+            query: {
+                kind: "PATIENTS" | "SERVICES";
+                fullName?: number;
+                lastName?: number;
+                firstName?: number;
+                middleName?: number;
+                phone?: number;
+                birthDate?: number;
+                workplace?: number;
+                name?: number;
+                price?: number;
+                duration?: number;
+                group?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataImportReport"];
+                };
+            };
+        };
+    };
     clinic_1: {
         parameters: {
             query?: never;
@@ -16085,7 +16265,7 @@ export interface operations {
             };
         };
     };
-    apply_2: {
+    apply_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -17913,6 +18093,29 @@ export interface operations {
         parameters: {
             query?: {
                 months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    template_2: {
+        parameters: {
+            query: {
+                kind: "PATIENTS" | "SERVICES";
+                format?: string;
             };
             header?: never;
             path?: never;

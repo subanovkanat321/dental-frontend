@@ -75,6 +75,36 @@ test('план лечения на печать: пациент, врач, эт�
   await vi.waitFor(() => expect(window.print).toHaveBeenCalled())
 })
 
+test('«🖨 План лечения»: этапы с итогом за этап, выполнено и осталось, долг за лечение, подписи с датой', async () => {
+  backend(me, false)
+  server.use(
+    http.get('*/api/appointments/by-patient/2', () => HttpResponse.json({
+      patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', birthDate: '1990-03-14' }, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [],
+    })),
+    http.get('*/api/patients/2/plan', () => HttpResponse.json([
+      { id: 1, tooth: 36, title: 'Лечение каналов', priceSom: 8000, stage: 1 },
+      { id: 2, title: 'Профчистка', priceSom: 2500, stage: 1, doneAt: '2026-10-20T05:00:00Z' },
+      { id: 3, tooth: 36, title: 'Коронка', priceSom: 15000, stage: 2 },
+    ] satisfies Schemas['TreatmentStepView'][])),
+    http.get('*/api/appointments/debts', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('patientId') === '2'
+      ? [{ appointmentId: 7, patientId: 2, chargeSom: 2500, paidSom: 1000, debtSom: 1500 }] satisfies Schemas['PaymentQueryDebt'][] : [])),
+  )
+  await openMedical()
+  await userEvent.click(await screen.findByRole('button', { name: 'Печать: план лечения' }))
+  const sheet = await screen.findByRole('dialog', { name: 'Печать: План лечения' })
+  expect(sheet).toHaveTextContent('Дата рождения14.03.1990')
+  const table = within(sheet).getByRole('table', { name: 'Этапы плана' })
+  expect(within(table).getByRole('rowheader', { name: 'Этап 1' })).toBeInTheDocument()
+  expect(within(table).getByRole('rowheader', { name: 'Этап 2' })).toBeInTheDocument()
+  expect(table).toHaveTextContent(/Итого за этап 110\s500 сом/)
+  expect(table).toHaveTextContent(/336Коронка15\s000 сомв плане/)
+  expect(sheet).toHaveTextContent(/Итого: 25\s500 сом · осталось: 23\s000 сом/)
+  expect(sheet).toHaveTextContent(/Уже выполнено на 2\s500 сом/)
+  expect(await within(sheet).findByText(/Осталось оплатить за проведённое лечение: 1\s500 сом/)).toBeInTheDocument()
+  expect(sheet).toHaveTextContent('ознакомлен(а), согласен(на)')
+  expect(sheet).toHaveTextContent('Дата «____»')
+})
+
 // Врач и админ отправляют план с ценами и «Согласен» (planOffer.test.tsx); у ассистента — прежний текст без цен
 test('ассистент — «📤 Отправить пациенту» в Telegram', async () => {
   const sent = backend({ ...me, admin: false, doctorId: undefined, fullName: 'Асель', assistantOf: [1] }, true)
