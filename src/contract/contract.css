@@ -8,9 +8,14 @@
 .contract-preview h3 { margin: 0 0 8px; font-size: 1rem; }
 .contract-preview p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
 
-.contract-box { display: grid; gap: 8px; }
-.contract-box h3 { margin: 0; }
-.contract-status { margin: 0; }
+/* Карточка пациента: строка-раскрывашка (классы layout/Fold) «📄 Договор: не подписан ›» */
+.contract-box.fold { gap: 0; }
+.contract-head { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.contract-head b { font-weight: 600; }
+.contract-head + .fold-chev { margin-left: auto; }
+.contract-meta { color: var(--hint); font-weight: 400; }
+.fold-head:hover .contract-head { color: var(--link); }
+.contract-box .fold-body > p { margin: 0; }
 .contract-box .actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .signature-pad { position: fixed; inset: 0; z-index: 900; display: grid; place-items: center; padding: 16px;

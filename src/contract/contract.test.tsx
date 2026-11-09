@@ -47,12 +47,14 @@ function backend(start: Contract = UNSIGNED) {
   return { forms, queries }
 }
 
-async function openContract() {
+async function openContract({ expand = true } = {}) {
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Айжан Вымышленная' }))
   await user.click(await screen.findByRole('tab', { name: 'Прочее' }))
-  return { user, box: await screen.findByRole('region', { name: 'Договор' }) }
+  const box = await screen.findByRole('region', { name: 'Договор' })
+  if (expand) await user.click(await within(box).findByRole('button', { name: /^📄 Договор/ }))
+  return { user, box }
 }
 
 beforeEach(() => {
@@ -69,12 +71,51 @@ test('подстановки шаблона: регистр не важен, п�
   expect(unknownContractVariables('{пациент} {имя} {Врач}', ['пациент', 'врач'])).toEqual(['{имя}'])
 })
 
+test('свёрнут в одну строку: «📄 Договор: не подписан», нажали — кнопки, ещё раз — снова строка', async () => {
+  backend()
+  const { user, box } = await openContract({ expand: false })
+  const head = await within(box).findByRole('button', { name: '📄 Договор: не подписан' })
+  expect(head).toHaveAttribute('aria-expanded', 'false')
+  expect(within(box).queryByRole('button', { name: 'Отметить подписанным' })).not.toBeInTheDocument()
+
+  await user.click(head)
+  expect(head).toHaveAttribute('aria-expanded', 'true')
+  expect(within(box).getByRole('button', { name: '✍️ Подписать на экране' })).toBeInTheDocument()
+  // Врача не выбирают — его подставляет карточка
+  expect(within(box).queryByLabelText('Врач в договоре')).not.toBeInTheDocument()
+
+  await user.click(head)
+  expect(head).toHaveAttribute('aria-expanded', 'false')
+  expect(within(box).queryByRole('button', { name: '✍️ Подписать на экране' })).not.toBeInTheDocument()
+})
+
+test('подписанный — строка «📄 Договор подписан 08.11.2026 ✓»', async () => {
+  backend({ ...UNSIGNED, signed: true, signedOn: '2026-11-08', signedBy: 'Айпери' })
+  const { box } = await openContract({ expand: false })
+  expect(await within(box).findByRole('button', { name: '📄 Договор подписан 08.11.2026 ✓' })).toHaveAttribute('aria-expanded', 'false')
+})
+
+test('врач в договоре: врач приёма пациента, иначе сам сотрудник-врач, иначе без врача', async () => {
+  const { queries } = backend()
+  server.use(http.get('*/api/appointments/by-patient/:id', () => HttpResponse.json({ patient: PATIENT, done: 1, noShow: 0, cancelled: 0,
+    upcoming: [], past: [{ id: 5, doctorId: 2, patientId: 9, startAt: '2026-11-01T04:00:00Z', endAt: '2026-11-01T04:30:00Z', status: 'DONE' }] })))
+  await openContract({ expand: false })
+  await vi.waitFor(() => expect(queries.at(-1)).toContain('doctorId=2'))
+})
+
+test('не врач и приёмов нет — договор без врача (линия на листе)', async () => {
+  const { queries } = backend()
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined })))
+  await openContract({ expand: false })
+  await vi.waitFor(() => expect(queries.length).toBeGreaterThan(0))
+  expect(queries.at(-1)).not.toContain('doctorId')
+})
+
 test('карточка: «не подписан» → печать листа с текстом и линиями подписи → отметить подписанным', async () => {
   vi.spyOn(window, 'print').mockImplementation(() => {})
   const { forms, queries } = backend()
   const { user, box } = await openContract()
-  expect(within(box).getByText('Договор не подписан')).toBeInTheDocument()
-  // Врач в договоре — свой (me.doctorId): сервер подставит его имя
+  // Приёмов нет — врач в договоре свой (me.doctorId): сервер подставит его имя
   expect(queries.at(-1)).toContain('doctorId=1')
 
   await user.click(within(box).getByRole('button', { name: '🖨 Распечатать' }))
@@ -86,7 +127,8 @@ test('карточка: «не подписан» → печать листа с
 
   await user.click(within(box).getByRole('button', { name: 'Отметить подписанным' }))
   await user.click(within(box).getByRole('button', { name: 'Подписан' }))
-  expect(await within(box).findByText(/Договор подписан \d\d\.\d\d\.\d{4} · отметил\(а\) Айпери/)).toBeInTheDocument()
+  expect(await within(box).findByRole('button', { name: /^📄 Договор подписан \d\d\.\d\d\.\d{4} ✓$/ })).toBeInTheDocument()
+  expect(within(box).getByText('отметил(а) Айпери')).toBeInTheDocument()
   expect(forms[0]!.get('doctorId')).toBe('1')
   expect(forms[0]!.has('signature')).toBe(false)
   // Подписанный — скан и «Снять отметку» вместо подписи
@@ -111,7 +153,7 @@ test('подпись пальцем: пустую не отправить, на�
   fireEvent.pointerUp(canvas, { pointerId: 1 })
   await user.click(done)
 
-  expect(await within(box).findByText(/Договор подписан/)).toBeInTheDocument()
+  expect(await within(box).findByRole('button', { name: /^📄 Договор подписан/ })).toBeInTheDocument()
   expect((forms[0]!.get('signature') as Blob).type).toBe('image/png')
   expect(screen.queryByRole('dialog', { name: /Подпись пациента/ })).not.toBeInTheDocument()
   expect(within(box).getByRole('button', { name: 'подпись на экране' })).toBeInTheDocument()
@@ -120,7 +162,7 @@ test('подпись пальцем: пустую не отправить, на�
 test('ассистент только смотрит: подписанный договор без кнопок отметки', async () => {
   backend({ ...UNSIGNED, signed: true, signedOn: '2026-11-08', signedBy: 'Айпери', canSign: false })
   const { box } = await openContract()
-  expect(within(box).getByText('✅ Договор подписан 08.11.2026 · отметил(а) Айпери')).toBeInTheDocument()
+  expect(within(box).getByText('отметил(а) Айпери')).toBeInTheDocument()
   expect(within(box).queryByRole('button', { name: 'Снять отметку' })).not.toBeInTheDocument()
   expect(within(box).queryByRole('button', { name: '📎 Загрузить скан' })).not.toBeInTheDocument()
 })
