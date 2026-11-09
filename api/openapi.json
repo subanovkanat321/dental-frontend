@@ -12603,6 +12603,49 @@
         }
       }
     },
+    "/api/appointments/chair-check" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "chairCheck",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "startAt",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "endAt",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChairCheckView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/by-patient/{patientId}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -22132,6 +22175,38 @@
           "requested" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "ChairCheckView" : {
+        "properties" : {
+          "colleague" : {
+            "$ref" : "#/components/schemas/ChairCheckViewColleague"
+          },
+          "strict" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "ChairCheckViewColleague" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "chairName" : {
+            "type" : "string"
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },

@@ -5492,6 +5492,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/chair-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["chairCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/by-patient/{patientId}": {
         parameters: {
             query?: never;
@@ -9486,6 +9502,20 @@ export interface components {
             booked?: number;
             /** Format: int64 */
             requested?: number;
+        };
+        ChairCheckView: {
+            colleague?: components["schemas"]["ChairCheckViewColleague"];
+            strict?: boolean;
+        };
+        ChairCheckViewColleague: {
+            /** Format: int64 */
+            doctorId?: number;
+            doctorName?: string;
+            chairName?: string;
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
         };
         PatientCard: {
             patient?: components["schemas"]["PatientView"];
@@ -19502,6 +19532,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DayCount"][];
+                };
+            };
+        };
+    };
+    chairCheck: {
+        parameters: {
+            query: {
+                doctorId: number;
+                startAt: string;
+                endAt: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChairCheckView"];
                 };
             };
         };
