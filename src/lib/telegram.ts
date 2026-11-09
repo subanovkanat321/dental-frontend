@@ -95,7 +95,15 @@ export function startTelegram(): void {
   app.expand()
   // Свайп вниз/вверх в Telegram сворачивает Mini App и тянет всё окно: при прокрутке «плыло» нижнее
   // меню. Свайпы окна выключаем (Bot API 7.7) — прокрутка остаётся обычной; старый Telegram — пропустит
-  app.disableVerticalSwipes?.()
+  // Метода нет (клиент старше 7.7) или SDK ругается на версию — пропускаем: остальное важнее.
+  // В таких клиентах от случайного «закрыть» страхует enableClosingConfirmation у панелей выбора (lib/unsaved)
+  if (!app.isVersionAtLeast || app.isVersionAtLeast('7.7')) {
+    try {
+      app.disableVerticalSwipes?.()
+    } catch {
+      // старый клиент
+    }
+  }
   app.setHeaderColor?.('#0F2A30')
   document.body.classList.add('in-telegram')
 }

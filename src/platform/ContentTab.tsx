@@ -8,6 +8,7 @@ import { addDays, dayTitle, monthRange, shortDate, todayIn, weekLabel } from '..
 import { useDirty } from '../lib/unsaved'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
+import { TimeInput } from '../layout/TimeInput'
 import { MonthPicker } from '../layout/MonthPicker'
 import { Select } from '../layout/Select'
 import { Loading, Spinner } from '../layout/Loading'
@@ -404,7 +405,7 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
         <label className="field"><span>День</span><DateInput weekday required value={date} onChange={(e) => setDate(e.target.value)} /></label>
         {errors.date && <p className="error">{errors.date}</p>}
         <label className="field"><span>Время публикации (по Бишкеку) — бот пришлёт запись в это время; пусто — утром в 10:00</span>
-          <input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></label>
+          <TimeInput value={time} onChange={setTime} /></label>
         {errors.time && <p className="error">{errors.time}</p>}
         <label className="field"><span>Тип</span>
           <Select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>

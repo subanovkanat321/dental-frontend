@@ -65,14 +65,26 @@ test('«＋ Новая запись» — время не подставлено
   expect(within(panel).getByRole('alert')).toHaveTextContent('Выберите время')
 })
 
-test('время не кратно 5 (окно после приёма в 10:47) — ручной ввод принимает его', async () => {
+test('«Другое время» в 10:47 — подставлено 10:50 (вверх до 5 минут), а не текущая минута', async () => {
+  backend()
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Другое время' }))
+  expect(within(panel).getByLabelText('Время', { selector: 'input' })).toHaveValue('10:50')
+  expect(within(panel).getByText('Приём: 10:50–11:20')).toBeInTheDocument()
+})
+
+test('время не кратно 5 (окно после приёма в 10:47) — ручной ввод цифрами принимает его', async () => {
   backend([])
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
   await userEvent.click(await within(panel).findByRole('button', { name: 'Другое время' }))
   const time = within(panel).getByLabelText('Время', { selector: 'input' }) as HTMLInputElement
+  await userEvent.clear(time)
   await userEvent.type(time, '12:47')
-  expect(time.step).toBe('60')
+  expect(time).toHaveValue('12:47')
   expect(time.checkValidity()).toBe(true)
+  expect(within(panel).getByText(/Приём: 12:47–/)).toBeInTheDocument()
 })

@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
+import { TimeInput } from '../layout/TimeInput'
 import { useDirty } from '../lib/unsaved'
 import { HoursEditor } from '../team/HoursEditor'
 import { WEEK, type Weekday } from '../team/texts'
@@ -99,8 +100,8 @@ function ClinicHours({ clinic: c, canEdit, admin, onTimeOff }: { clinic: Clinic;
     <form className="form" aria-label="Часы клиники" onSubmit={(e) => { e.preventDefault(); save.mutate(days) }}>
       <fieldset className="form" disabled={!canEdit}>
         <div className="row">
-          <label className="field"><span>С</span><input type="time" step={900} value={start} onChange={(e) => { save.reset(); setStart(e.target.value) }} /></label>
-          <label className="field"><span>До</span><input type="time" step={900} value={end} onChange={(e) => { save.reset(); setEnd(e.target.value) }} /></label>
+          <label className="field"><span>С</span><TimeInput step={15} value={start} onChange={(v) => { save.reset(); setStart(v) }} /></label>
+          <label className="field"><span>До</span><TimeInput step={15} value={end} onChange={(v) => { save.reset(); setEnd(v) }} /></label>
         </div>
         <div className="field"><span>Рабочие дни</span>
           <div className="weekdays" role="group" aria-label="Рабочие дни клиники">

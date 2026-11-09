@@ -8,7 +8,7 @@ import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
-import { dayTitle, formatPhone, shortDate, slotInstant, timeOf, timeStep, todayIn } from '../lib/time'
+import { dayTitle, formatPhone, shortDate, slotInstant, timeOf, todayIn } from '../lib/time'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { serviceEmoji } from '../lib/serviceEmoji'
@@ -21,6 +21,7 @@ import { TimePicker } from './TimePicker'
 import { refreshAppointmentData } from './useAppointmentAction'
 import { editableDoctors } from '../lib/roles'
 import { DateInput } from '../layout/DateInput'
+import { TimeInput } from '../layout/TimeInput'
 import { Select } from '../layout/Select'
 import { useDebounced } from '../lib/useDebounced'
 import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
@@ -360,7 +361,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
         {walkIn ? (
           <div className="row">
             <label className="field"><span>Время</span>
-              <input type="time" step={timeStep(time)} value={time} required onChange={(e) => setTime(e.target.value)} /></label>
+              <TimeInput value={time} required onChange={setTime} /></label>
             {durationField}
           </div>
         ) : (

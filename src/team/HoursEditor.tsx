@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
+import { TimeInput } from '../layout/TimeInput'
 import { useDirty } from '../lib/unsaved'
 import { WEEK, type Weekday } from './texts'
 import { isNightShift } from '../lib/time'
@@ -113,9 +114,9 @@ function HoursForm({ doctorId, doctorName, onTimeOff, loaded }: {
                 <label title={name}><input type="checkbox" aria-label={name} checked={days[code].on && !t} disabled={dropOff.isPending}
                   onChange={(e) => check(code, e.target.checked)} /> {short}</label>
                 {t ? <span className="hours-off">{offLabel(t)} — из «Перерывы и выходные»{t.doctorId == null ? ' (вся клиника)' : ''}</span> : <>
-                  <input type="time" step={900} aria-label={`${name}: с`} disabled={!days[code].on} value={days[code].start} onChange={(e) => set(code, { start: e.target.value })} />
+                  <TimeInput step={15} aria-label={`${name}: с`} disabled={!days[code].on} value={days[code].start} onChange={(v) => set(code, { start: v })} />
                   <span aria-hidden="true">–</span>
-                  <input type="time" step={900} aria-label={`${name}: до`} disabled={!days[code].on} value={days[code].end} onChange={(e) => set(code, { end: e.target.value })} />
+                  <TimeInput step={15} aria-label={`${name}: до`} disabled={!days[code].on} value={days[code].end} onChange={(v) => set(code, { end: v })} />
                   {days[code].on && isNightShift(days[code].start, days[code].end) && <span className="hours-night hint">🌙 до утра след. дня</span>}
                 </>}
               </div>

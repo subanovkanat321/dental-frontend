@@ -1,0 +1,32 @@
+/* Поле времени (layout/TimeInput.tsx): своё вместо системного колеса iPhone. Вид — как у полей CRM */
+.time-input { position: relative; display: inline-flex; align-items: center; min-width: 0; width: 100%; }
+.time-input .ti-ico { position: absolute; left: 10px; width: 16px; height: 16px; color: var(--link); pointer-events: none; }
+.time-input input, .field .time-input input, .hours-row .time-input input {
+  width: 100%; min-width: 0; height: auto; min-height: 36px; padding: 6px 8px 6px 32px; font: inherit; font-variant-numeric: tabular-nums;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); cursor: pointer;
+}
+.time-input input:focus, .time-input input[aria-expanded=true] { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.time-input input::placeholder { color: var(--hint); }
+.time-input input:read-only { -webkit-user-select: none; user-select: none; }
+.time-input.disabled input { opacity: .6; cursor: default; }
+.field .time-input input { min-height: 38px; }
+@media (max-width: 760px) { .time-input input, .field .time-input input { min-height: 44px; } }
+
+/* Панель: компьютер — карточка под полем, телефон — лист снизу (как календарь DateInput) */
+.ti-pop { position: fixed; z-index: 1000; width: 300px; max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 6px; padding: 12px;
+  border: 1px solid var(--separator); border-radius: 16px; background: var(--card); color: var(--text); box-shadow: 0 12px 32px rgba(15, 42, 48, .18); animation: pick-in .12s ease-out; }
+.ti-pop.sheet { position: static; width: 100%; padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0; animation: sheet-up .2s ease-out;
+  /* жест по листу — не прокрутка и не «закрыть» Telegram */
+  touch-action: manipulation; }
+.ti-pop.sheet::before { content: ""; justify-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); }
+.ti-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ti-preview { font: 600 1.25rem var(--display, inherit); letter-spacing: -.01em; }
+.ti-label { margin-top: 4px; color: var(--hint); font-size: .8rem; }
+.ti-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.ti-chip { min-height: 36px; padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text);
+  font: inherit; font-variant-numeric: tabular-nums; cursor: pointer; }
+.ti-chip:hover:not(:disabled):not([aria-pressed=true]) { background: var(--sunken); }
+.ti-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ti-chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); font-weight: 600; }
+.ti-chip:disabled { opacity: .4; cursor: default; }
+.ti-pop.sheet .ti-chip { min-height: 44px; font-size: 1.05rem; }

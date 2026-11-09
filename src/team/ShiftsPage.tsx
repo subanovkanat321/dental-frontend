@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { DateInput } from '../layout/DateInput'
+import { TimeInput } from '../layout/TimeInput'
 import { Select } from '../layout/Select'
 import { useMedia } from '../lib/useMedia'
 import { addDays, todayIn, weekLabel, weekStart } from '../lib/time'
@@ -246,8 +247,8 @@ function ShiftForm({ editing, people, onDone }: { editing: Editing; people: Pers
           <DateInput weekday value={day} required onChange={(e) => setDay(e.target.value)} />
         </label>
         <div className="row">
-          <label className="field"><span>С</span><input type="time" step={900} value={startTime} required onChange={(e) => setStartTime(e.target.value)} /></label>
-          <label className="field"><span>До</span><input type="time" step={900} value={endTime} required onChange={(e) => setEndTime(e.target.value)} /></label>
+          <label className="field"><span>С</span><TimeInput step={15} value={startTime} required onChange={setStartTime} /></label>
+          <label className="field"><span>До</span><TimeInput step={15} value={endTime} required onChange={setEndTime} /></label>
         </div>
         {(err.startTime || err.endTime || err.day) && <p className="error" role="alert">{err.startTime ?? err.endTime ?? err.day}</p>}
         <label className="field"><span>Пометка (необязательно)</span>

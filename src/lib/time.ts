@@ -33,9 +33,28 @@ export function nowMinutes5(now = new Date()): number {
   return Math.floor(minutesOf(now.toISOString()) / 5) * 5
 }
 
-/** Шаг поля времени: 5 минут, а для времени не кратного 5 (окно после приёма в 10:47) — минута, иначе форма не отправится. */
-export function timeStep(value: string): number {
-  return Number(value.slice(3, 5)) % 5 ? 60 : 300
+/**
+ * Что подставить в «Другое время», пока поле пустое: сегодня — ближайшее к «сейчас» время, вверх до
+ * шага (22:43 → 22:45), но не раньше начала работы врача; другой день — начало работы врача или 09:00.
+ */
+export function suggestTime(date: string, workStart?: string | null, step = 5, now = new Date()): string {
+  const start = workStart ? workStart.slice(0, 5) : '09:00'
+  if (date !== todayIn(now)) return start
+  const up = Math.min(Math.ceil(minutesOf(now.toISOString()) / step) * step, 24 * 60 - step)
+  const text = `${String(Math.floor(up / 60)).padStart(2, '0')}:${String(up % 60).padStart(2, '0')}`
+  return workStart && text < start ? start : text
+}
+
+/**
+ * Набранный текст → 'HH:MM' или null, пока время не полное: «9:30», «09:30», «0930». Неполное
+ * («16:3», «163») родителю не отдаём — форма не дёргается на каждой цифре.
+ */
+export function parseTime(text: string): string | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(text.trim()) ?? /^(\d{2})(\d{2})$/.exec(text.trim())
+  if (!m) return null
+  const h = Number(m[1])
+  const min = Number(m[2])
+  return h < 24 && min < 60 ? `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}` : null
 }
 
 /** '09:00' или '09:00:00' → 540. */

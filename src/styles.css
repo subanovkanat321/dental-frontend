@@ -261,8 +261,6 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 /* Поле не шире своей колонки: у time/date на телефоне свой минимальный размер, иначе «До» вылезает за карточку (390px) */
 .field input { min-width: 0; max-width: 100%; }
-/* iOS Safari (и Telegram в нём) не даёт сузить поле времени, пока оно в системном виде */
-@supports (-webkit-touch-callout: none) { .field input[type=time] { -webkit-appearance: none; appearance: none; min-height: 38px; } }
 /* «Откуда узнают о клинике»: узкое поле эмодзи рядом с названием и подсказки под ними */
 .row:has(> .emoji-field) { grid-template-columns: 5.5rem 1fr; }
 .emoji-field input { text-align: center; font-size: 1.2rem; }
@@ -600,7 +598,6 @@ tr.inactive td { opacity: .55; }
 .promo-link .btn { justify-self: start; }
 .hours { display: grid; gap: 6px; }
 .hours-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
-.hours-row input[type=time], .form input[type=time] { min-width: 0; font: inherit; height: 34px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .weekdays { display: flex; flex-wrap: wrap; gap: 6px; }
 .weekdays .day { min-width: 44px; height: 36px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
 .weekdays .day[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 700; }
@@ -968,7 +965,7 @@ tr.clickable:hover td { background: var(--sunken); }
 .day-quick .chip { justify-content: center; min-height: 38px; padding: 0 14px; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .9rem; cursor: pointer; }
 .day-quick .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
 @media (max-width: 760px) { .day-pick { grid-template-columns: 1fr; } .day-quick .chip { flex: 1; } }
-input[type=date], input[type=month], input[type=time] { min-width: 0; max-width: 100%; }
+input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 .period-line { margin: 2px 0 6px; }
 
 /* «Касса → Зарплата»: карточка врача — три суммы в ряд, условия, действия */

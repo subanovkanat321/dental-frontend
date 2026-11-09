@@ -4,6 +4,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
 import { DateInput } from '../layout/DateInput'
+import { TimeInput } from '../layout/TimeInput'
 import { Select } from '../layout/Select'
 import { WEEK, type Weekday } from './texts'
 import { DAYS, onWeekday } from './dayOffHours'
@@ -165,8 +166,8 @@ export function NewBreak({ me, onDone, onCancel }: { me: Me; onDone: Done; onCan
       <KindChips label="Какой перерыв" kinds={BREAK_KINDS} kind={kind} onKind={setKind} />
       <Weekdays value={days} onChange={setDays} />
       <div className="row">
-        <label className="field"><span>С</span><input type="time" step={900} value={startTime} required onChange={(e) => setStartTime(e.target.value)} /></label>
-        <label className="field"><span>До</span><input type="time" step={900} value={endTime} required onChange={(e) => setEndTime(e.target.value)} /></label>
+        <label className="field"><span>С</span><TimeInput step={15} value={startTime} required onChange={setStartTime} /></label>
+        <label className="field"><span>До</span><TimeInput step={15} value={endTime} required onChange={setEndTime} /></label>
       </div>
       <TitleField kind={kind} own={own} onOwn={setOwn} fallback="Перерыв" />
     </FormCard>

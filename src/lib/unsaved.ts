@@ -10,14 +10,38 @@ import { telegram } from './telegram'
  * никуда не пропадут — переход между разделами не спрашиваем.
  */
 const dirtyForms = new Set<object>()
+/** Открытые панели выбора (время): свайп по ним не должен закрыть Mini App — Telegram спросит «закрыть?» */
+const closingGuards = new Set<object>()
 
 export const LEAVE_TEXT = 'Есть несохранённые изменения — выйти без сохранения?'
 
 function syncTelegram() {
   // Закрыть Mini App свайпом вниз с несохранённым — Telegram сам спросит «закрыть?»
   const app = telegram()
-  if (dirtyForms.size) app?.enableClosingConfirmation?.()
-  else app?.disableClosingConfirmation?.()
+  try {
+    if (dirtyForms.size || closingGuards.size) app?.enableClosingConfirmation?.()
+    else app?.disableClosingConfirmation?.()
+  } catch {
+    // старый клиент Telegram без подтверждения закрытия — просто не спросит
+  }
+}
+
+/**
+ * Пока `on` (открыта панель выбора времени), закрыть Mini App свайпом можно только через
+ * «закрыть?» Telegram. Общий счёт с несохранёнными формами: закрыли панель — подтверждение
+ * остаётся, если в разделе есть несохранённые правки. На «назад» (confirmLeave) не влияет.
+ */
+export function useClosingGuard(on: boolean): void {
+  useEffect(() => {
+    if (!on) return
+    const token = {}
+    closingGuards.add(token)
+    syncTelegram()
+    return () => {
+      closingGuards.delete(token)
+      syncTelegram()
+    }
+  }, [on])
 }
 
 /** Отметить форму «есть правки», пока dirty и раздел на экране. */
