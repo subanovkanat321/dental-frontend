@@ -27,12 +27,13 @@ const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ 
 const AiPage = lazy(() => import('./AiPage').then((m) => ({ default: m.AiPage })))
 const SourcesPage = lazy(() => import('./SourcesPage').then((m) => ({ default: m.SourcesPage })))
 const ContractTemplatePage = lazy(() => import('../contract/ContractTemplatePage').then((m) => ({ default: m.ContractTemplatePage })))
+const ChairsPage = lazy(() => import('./ChairsPage').then((m) => ({ default: m.ChairsPage })))
 const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ default: m.SurveyPage })))
 
 type Me = Schemas['BookingViewsMe']
 
 /** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'about': '🏥', 'doctors': '👩‍⚕️', 'services': '🦷', 'hours': '🕘', 'reminder': '🔔', 'questions': '🩺', 'memos': '📋', 'learn': '📖', 'patient-news': '📰', 'sources': '📣', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'ai': '✨', 'profile': '🧑‍⚕️', 'calendar': '📅', 'guide': '📘', 'support': '🛟', 'survey': '📝', 'dental-news': '📚', 'privacy': '🔒', 'contract': '✍️' }
+const EMOJI: Record<string, string> = { 'about': '🏥', 'doctors': '👩‍⚕️', 'services': '🦷', 'hours': '🕘', 'reminder': '🔔', 'questions': '🩺', 'memos': '📋', 'learn': '📖', 'patient-news': '📰', 'sources': '📣', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'ai': '✨', 'profile': '🧑‍⚕️', 'calendar': '📅', 'guide': '📘', 'support': '🛟', 'survey': '📝', 'dental-news': '📚', 'privacy': '🔒', 'contract': '✍️', 'chairs': '🪑' }
 
 type Item = {
   key: string
@@ -79,6 +80,9 @@ const GROUPS: [string, Item[]][] = [
     item('services', 'Услуги и цены', 'Цены, длительность, материалы и памятки', (me) => !isAssistant(me), clinic('services')),
     // Кто и когда работает — один пункт с вкладками: часы врачей, смены персонала, перерывы
     item('hours', 'Рабочее время', 'Часы врачей, смены, перерывы и выходные', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="doctors" />),
+    // Кресла (V185, V187): переименовать, режим «Предупреждать / Запрещать», удалить пустое — руководитель, как PUT /api/chairs
+    item('chairs', 'Кресла', 'Общие кресла врачей: названия и запись в часы коллеги', admin,
+      () => (me, back) => <ChairsPage me={me} onBack={back} />),
     // Старые адреса: «График смен» (кнопка бота «Кто на смене») и «Перерывы и выходные» — та же страница
     { ...item('shifts', 'Рабочее время', '', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="shifts" />), hidden: true },
     { ...item('timeoff', 'Рабочее время', '', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="timeoff" />), hidden: true },

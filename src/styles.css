@@ -2256,9 +2256,28 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .who + .chair-badge, .grid-head-text .chair-badge { margin-top: 2px; }
 .grid-head-text .chair-badge { justify-self: start; }
 .grid-chair { pointer-events: auto; cursor: not-allowed; }
+/* Часы коллеги по креслу (V187): «можно, но с вопросом» — тон ожидания, своя штриховка (не как «кресло занято»).
+   Поверх «Свободно» (z-index 3), но нажатия пропускает к нему; подпись — внизу справа, чтобы не закрыть «Свободно» */
+.grid-colleague {
+  position: absolute; left: 0; right: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: flex-end; padding: 2px 4px;
+  border-left: 3px solid var(--status-wait); pointer-events: none; overflow: hidden;
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--status-wait) 28%, transparent) 0 1.5px, transparent 1.5px 9px);
+}
+.grid-colleague span { max-width: 100%; padding: 0 6px; border-radius: var(--r-sm); background: var(--wait-bg); color: var(--wait-ink);
+  font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.day-list .row.colleague, .doctor-columns .row.colleague { background: var(--wait-bg); color: var(--wait-ink); box-shadow: inset 3px 0 0 var(--status-wait); }
 .chair-conflicts { margin: 6px 0 0; padding-left: 18px; }
 
 /* Приём через полночь в сетке следующего дня (ночная смена): верх «оторван» пунктиром — начало вчера */
 .appt.carried { border-top: 2px dashed currentColor; border-top-left-radius: 0; border-top-right-radius: 0; }
 .appt-carried { font-weight: 500; font-size: .8em; opacity: .8; }
 .appt.continues { border-bottom: 2px dashed currentColor; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+
+/* «Настройки → Кресла» (V187): название с кнопкой «Сохранить» в строку, режим — двумя вариантами */
+.chair-item { display: grid; gap: 8px; }
+.chair-item .chair-name { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.chair-item .chair-name .field { flex: 1 1 200px; }
+.chair-item .chair-mode { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.chair-item .chair-mode legend { padding: 0; margin-bottom: 4px; font-size: .85rem; color: var(--hint); }
+.chair-item .chair-mode .check { align-items: flex-start; }
+.chair-item .chair-mode input { flex: none; margin-top: 3px; }

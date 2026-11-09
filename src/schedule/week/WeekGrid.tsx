@@ -5,6 +5,7 @@ import { canEditDoctor, seesMoneyOf } from '../../lib/roles'
 import { ApptBadges } from '../ApptBadges'
 import { useApptHover } from '../useApptHover'
 import { CancelledList } from '../CancelledList'
+import { ChairTimeBands } from '../ChairTimeBands'
 import { dateOf, dayMinutes, dayTitle, minutesOf, timeOf } from '../../lib/time'
 import { apptSpan, fromYesterday, offSpans, touchesDay, untilTomorrow, workSpans } from '../workSpans'
 import { hhmm, PAD, PX, useNowMinutes } from '../gridScale'
@@ -165,6 +166,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
                   </button>
                 )
               })}
+              <ChairTimeBands slots={sl} date={date} y={y} />
               {date === today && showNow && <div className="grid-now" style={{ top: y(nowMinutes) }} />}
               {own.map((a) => (
                 <Block key={a.id} a={a} date={date} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)}

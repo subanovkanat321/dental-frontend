@@ -28,6 +28,7 @@ type Item =
   | { kind: 'appointment'; at: string; a: Appointment }
   | { kind: 'free'; at: string; end: string; doctorId: number }
   | { kind: 'pause'; at: string; end: string; title: string; emoji: string; doctorId: number }
+  | { kind: 'colleague'; at: string; end: string; name: string; doctorId: number }
 
 const WEEKDAY = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', weekday: 'long' })
 const DAY_MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', day: 'numeric', month: 'long' })
@@ -114,6 +115,8 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
     ...list.filter((a) => a.doctorId === d.id).map((a) => ({ kind: 'appointment' as const, at: a.startAt!, a })),
     ...(slots[i]?.data?.free ?? []).map((w) => ({ kind: 'free' as const, at: w.start!, end: w.end!, doctorId: d.id })),
     ...(slots[i]?.data?.breaks ?? []).map((b) => ({ kind: 'pause' as const, at: b.start!, end: b.end!, title: b.title ?? '', emoji: b.emoji ?? '', doctorId: d.id })),
+    // Часы коллеги по креслу (V187): записать можно, сервер спросит «Коллега предупреждён?»
+    ...(slots[i]?.data?.workingDay ? slots[i]?.data?.chairTime ?? [] : []).map((t) => ({ kind: 'colleague' as const, at: t.start!, end: t.end!, name: t.doctorName ?? '', doctorId: d.id })),
   ].sort((x, y) => x.at.localeCompare(y.at))
   const groups = doctors.map((d, i) => ({ doctor: d, items: itemsOf(d, i), booked: list.filter((a) => a.doctorId === d.id).length }))
   const items = groups.flatMap((g) => g.items)
@@ -175,7 +178,13 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                     {g.items.map((item) => item.kind === 'appointment'
                       ? <Row key={`a${item.a.id}`} a={item.a} next={item.a === next} active={item.a.id === selectedId}
                           canEdit={canEditDoctor(item.a.doctorId!)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} swipe={swipe} />
-                      : item.kind === 'pause' ? (
+                      : item.kind === 'colleague' ? (
+                        <li key={`c${item.at}`} className="row pause colleague" role="note" aria-label={`${timeOf(item.at)}–${timeOf(item.end)}: время ${item.name}`}>
+                          <span className="time num">{timeOf(item.at)}</span>
+                          <span className="name"><span aria-hidden="true">🪑 </span>время {item.name}</span>
+                          <span className="end num hint">{timeOf(item.end)}</span>
+                        </li>
+                      ) : item.kind === 'pause' ? (
                         <li key={`p${item.at}`} className="row pause">
                           <span className="time num">{timeOf(item.at)}</span>
                           <span className="name"><span aria-hidden="true">{item.emoji} </span>{item.title}</span>

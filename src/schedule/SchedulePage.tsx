@@ -12,6 +12,7 @@ import { AppointmentPanel } from './AppointmentPanel'
 import { ApptBadges, BadgesLegend } from './ApptBadges'
 import { DayList } from './DayList'
 import { CancelledList } from './CancelledList'
+import { ChairTimeBands } from './ChairTimeBands'
 import { DaySummary } from './DaySummary'
 import { freeMinutes } from './free'
 import { DateInput } from '../layout/DateInput'
@@ -595,6 +596,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                         </button>
                       )
                     })}
+                    {/* Часы коллеги по креслу (V187) — поверх «Свободно»: записать можно, но с вопросом */}
+                    <ChairTimeBands slots={sl} date={date} y={y} />
                     {nowTop != null && <div className="grid-now" style={{ top: nowTop }} />}
                     {q?.isPending && <Loading variant="inline" className="grid-loading" />}
                     {q?.error && <div className="error grid-loading">{q.error.message}</div>}

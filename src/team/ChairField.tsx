@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
+import { openSettings } from '../lib/route'
 import { dayTitle, dateOf, timeOf } from '../lib/time'
 import { chairOf, conflictsOf, overlapTexts, sharesText, useChairs } from './chairs'
 
@@ -90,6 +91,8 @@ export function ChairField({ doctorId, me }: { doctorId: number; me: Me }) {
         </form>
       )}
       {shares && <p className="hint">🪑 {current!.name} — {shares}</p>}
+      {admin && <p className="hint">Названия кресел и что делать с записью в часы коллеги по креслу (предупреждать или запрещать) —{' '}
+        <button type="button" className="link" onClick={() => openSettings('chairs')}>Настройки → Кресла</button>.</p>}
       {assign.error && (
         <div className="error" role="alert">
           <p>{assign.error.message}</p>

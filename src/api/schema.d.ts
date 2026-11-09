@@ -1172,6 +1172,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/chairs/{id}/mode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["mode"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/care-memos/{id}": {
         parameters: {
             query?: never;
@@ -6706,6 +6722,8 @@ export interface components {
             name?: string;
             doctorIds?: number[];
             overlaps?: components["schemas"]["ChairOverviewHoursOverlap"][];
+            /** @enum {string} */
+            mode?: "WARN" | "STRICT";
         };
         ChairOverviewHoursOverlap: {
             /** Format: int64 */
@@ -6860,6 +6878,12 @@ export interface components {
             id?: number;
             name?: string;
             doctorIds?: number[];
+            /** @enum {string} */
+            mode?: "WARN" | "STRICT";
+        };
+        ChairControllerModeRequest: {
+            /** @enum {string} */
+            mode?: "WARN" | "STRICT";
         };
         CareMemoControllerMemo: {
             title?: string;
@@ -7045,6 +7069,7 @@ export interface components {
             doctorId: number;
             /** Format: date-time */
             startAt: string;
+            confirmChairTime?: boolean;
         };
         TimeOffControllerRequest: {
             /** Format: int64 */
@@ -7859,6 +7884,7 @@ export interface components {
             /** Format: int64 */
             serviceTypeId?: number;
             promoCode?: string;
+            confirmChairTime?: boolean;
         };
         VisitReportControllerSend: {
             text?: string;
@@ -7897,6 +7923,7 @@ export interface components {
             startAt: string;
             /** Format: int32 */
             durationMinutes: number;
+            confirmChairTime?: boolean;
         };
         VisitTeethControllerMany: {
             numbers?: number[];
@@ -7933,6 +7960,7 @@ export interface components {
             startAt: string;
             /** Format: int32 */
             durationMinutes: number;
+            confirmChairTime?: boolean;
         };
         AppointmentRequestsChangeReply: {
             /** Format: int64 */
@@ -8147,6 +8175,7 @@ export interface components {
             taken?: string[];
             chairBusy?: components["schemas"]["SlotsViewChairBusy"][];
             work?: components["schemas"]["TimeRange"][];
+            chairTime?: components["schemas"]["SlotsViewChairTime"][];
         };
         SlotsViewBreak: {
             /** Format: date-time */
@@ -8165,6 +8194,16 @@ export interface components {
             /** Format: int64 */
             doctorId?: number;
             doctorName?: string;
+        };
+        SlotsViewChairTime: {
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            doctorName?: string;
+            chairName?: string;
         };
         TimeRange: {
             /** Format: date-time */
@@ -11993,6 +12032,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    mode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChairControllerModeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChairsChair"];
+                };
             };
         };
     };

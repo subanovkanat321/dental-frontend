@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { withChairConfirm } from './chairTime'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -35,10 +36,13 @@ export function sendAppointmentAction(id: number, action: Action): Promise<Appoi
       return unwrap(api.POST('/api/appointments/{id}/payment/bill', { ...path, body: action.body }))
     case 'charge':
       return unwrap(api.POST('/api/appointments/{id}/payment/charge', { ...path, body: action.body }))
+    // В часы коллеги по креслу (V187) — вопрос «Коллега предупреждён?» и повтор с подтверждением
     case 'reschedule':
-      return unwrap(api.POST('/api/appointments/{id}/reschedule', { ...path, body: action.body }))
+      return withChairConfirm((confirm) => unwrap(api.POST('/api/appointments/{id}/reschedule',
+        { ...path, body: { ...action.body, confirmChairTime: confirm || undefined } })))
     case 'transfer':
-      return unwrap(api.POST('/api/appointments/{id}/transfer', { ...path, body: action.body }))
+      return withChairConfirm((confirm) => unwrap(api.POST('/api/appointments/{id}/transfer',
+        { ...path, body: { ...action.body, confirmChairTime: confirm || undefined } })))
     case 'service':
       return unwrap(api.PUT('/api/appointments/{id}/service', { ...path, body: action.body }))
     case 'comment':

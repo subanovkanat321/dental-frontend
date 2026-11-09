@@ -15,6 +15,7 @@ import { serviceEmoji } from '../lib/serviceEmoji'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { sourceChoices, useSources } from '../lib/sources'
 import { expired, usePromoCodes } from '../lib/promo'
+import { withChairConfirm } from './chairTime'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { refreshAppointmentData } from './useAppointmentAction'
@@ -127,7 +128,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
 
   const create = useMutation<Appointment, ApiError, Patient>({
     mutationFn: async (p) => {
-      const created = await unwrap(api.POST('/api/appointments', {
+      // В часы коллеги по креслу (V187) сервер спросит «Коллега предупреждён?» — «Записать» повторит с подтверждением
+      const created = await withChairConfirm((confirm) => unwrap(api.POST('/api/appointments', {
         body: {
           doctorId,
           patientId: p.id!,
@@ -136,8 +138,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           serviceTypeId: serviceId === '' ? undefined : serviceId,
           comment: comment.trim() || undefined,
           promoCode: promoCode || undefined,
+          confirmChairTime: confirm || undefined,
         },
-      }))
+      })))
       // «Хочет раньше»: запись есть, а освободится время раньше — предложим (лист ожидания).
       // Запись уже создана — не проваливаем её, но и не молчим: скажем, что в лист не попал
       if (wantsEarlier) {
@@ -412,7 +415,8 @@ function WaitlistCandidates({ doctorId, duration, startAt, onBooked }: {
   const list = useWaitlist()
   const settings = useSettings()
   const book = useMutation<Appointment, ApiError, WaitlistEntry>({
-    mutationFn: (e) => unwrap(api.POST('/api/waitlist/{id}/book', { params: { path: { id: e.id! } }, body: { doctorId, startAt: startAt! } })),
+    mutationFn: (e) => withChairConfirm((confirm) => unwrap(api.POST('/api/waitlist/{id}/book',
+      { params: { path: { id: e.id! } }, body: { doctorId, startAt: startAt!, confirmChairTime: confirm || undefined } }))),
     onSuccess: (a) => {
       // Записали или перенесли — окна, счётчики и карточка пациента тоже меняются
       refreshAppointmentData(client, ['waitlist', 'patients', 'recall'])

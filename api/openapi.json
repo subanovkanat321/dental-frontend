@@ -3096,6 +3096,43 @@
         }
       }
     },
+    "/api/chairs/{id}/mode" : {
+      "put" : {
+        "tags" : [ "chair-controller" ],
+        "operationId" : "mode",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChairControllerModeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ChairsChair"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
@@ -15346,6 +15383,10 @@
             "items" : {
               "$ref" : "#/components/schemas/ChairOverviewHoursOverlap"
             }
+          },
+          "mode" : {
+            "type" : "string",
+            "enum" : [ "WARN", "STRICT" ]
           }
         }
       },
@@ -15752,6 +15793,18 @@
               "type" : "integer",
               "format" : "int64"
             }
+          },
+          "mode" : {
+            "type" : "string",
+            "enum" : [ "WARN", "STRICT" ]
+          }
+        }
+      },
+      "ChairControllerModeRequest" : {
+        "properties" : {
+          "mode" : {
+            "type" : "string",
+            "enum" : [ "WARN", "STRICT" ]
           }
         }
       },
@@ -16196,6 +16249,9 @@
           "startAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "confirmChairTime" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "doctorId", "startAt" ]
@@ -18114,6 +18170,9 @@
           },
           "promoCode" : {
             "type" : "string"
+          },
+          "confirmChairTime" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "doctorId", "durationMinutes", "patientId", "startAt" ]
@@ -18204,6 +18263,9 @@
             "format" : "int32",
             "maximum" : 240,
             "minimum" : 15
+          },
+          "confirmChairTime" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "doctorId", "durationMinutes", "startAt", "version" ]
@@ -18296,6 +18358,9 @@
             "format" : "int32",
             "maximum" : 240,
             "minimum" : 15
+          },
+          "confirmChairTime" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "durationMinutes", "startAt", "version" ]
@@ -18839,6 +18904,12 @@
             "items" : {
               "$ref" : "#/components/schemas/TimeRange"
             }
+          },
+          "chairTime" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SlotsViewChairTime"
+            }
           }
         }
       },
@@ -18878,6 +18949,28 @@
             "format" : "int64"
           },
           "doctorName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SlotsViewChairTime" : {
+        "properties" : {
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "chairName" : {
             "type" : "string"
           }
         }
