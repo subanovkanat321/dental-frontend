@@ -11,6 +11,7 @@ import { minutesOf, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
 import { Dictation } from './Dictation'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
+import { ChairTimeHint } from './ChairTimeHint'
 import { useAppointmentAction } from './useAppointmentAction'
 import { canEditServices, editableDoctors } from '../lib/roles'
 import { openServiceLater } from '../lib/openService'
@@ -86,6 +87,11 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
       </div>
       <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} exclude={doctorId === a.doctorId ? a.id : undefined}
         value={time} onChange={(t) => { setTime(t); setProblem('') }} error={problem || errorText(action.error)} />
+      {/* Новое время — в часах коллеги по креслу: сказать до «Перенести», как в «Новой записи» */}
+      {/^\d{2}:\d{2}$/.test(time) && (
+        <ChairTimeHint doctorId={doctorId} startAt={slotInstant(date, Number(time.slice(0, 2)) * 60 + Number(time.slice(3)))} duration={duration}
+          action={doctorId === a.doctorId ? 'Перенести' : 'Передать'} />
+      )}
       {doctorId !== a.doctorId && <p className="hint small">Новому врачу придёт уведомление, а пациенту, если он записан через бота, — сообщение с именем врача и временем.</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={action.isPending}>{doctorId === a.doctorId ? 'Перенести' : 'Передать'}</button>

@@ -1,10 +1,10 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { slotInstant } from '../lib/time'
-import { me, openItem, renderApp } from '../test/fixtures'
+import { minutesOf, slotInstant } from '../lib/time'
+import { appointment, me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 /**
@@ -25,9 +25,27 @@ afterEach(() => {
 
 type Create = Schemas['AppointmentRequestsCreate']
 
-function backend(created: (body: Create) => Response, chairs: Schemas['ChairOverview'][] = [{ id: 5, name: 'Кресло 1', doctorIds: [1, 2], overlaps: [], mode: 'WARN' }]) {
+type Check = Schemas['ChairCheckView']
+
+/** Часы Айгерим глазами сервера (chair-check): 15:00–18:00 и вечер 22:00–23:30 — у Дастана (№2) общее кресло. */
+function herTime(doctorId: number, startAt: string, endAt: string, strict = false): Check {
+  const [s, e] = [minutesOf(startAt), minutesOf(endAt)]
+  const hit = [[15 * 60, 18 * 60], [22 * 60, 23 * 60 + 30]].find(([a, b]) => s < b! && e > a!)
+  if (doctorId !== 2 || !hit) return { colleague: undefined, strict }
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bishkek' }).format(new Date(startAt))
+  const start = slotInstant(day, Math.max(s, hit[0]!))
+  const end = slotInstant(day, Math.min(e, hit[1]!))
+  return { colleague: { doctorId: 1, doctorName: 'Айгерим Садыкова', chairName: 'Кресло 1', start, end }, strict }
+}
+
+function backend(created: (body: Create) => Response, chairs: Schemas['ChairOverview'][] = [{ id: 5, name: 'Кресло 1', doctorIds: [1, 2], overlaps: [], mode: 'WARN' }],
+  check: (doctorId: number, startAt: string, endAt: string) => Check = herTime) {
   const posts: Create[] = []
   server.use(
+    http.get('*/api/appointments/chair-check', ({ request }) => {
+      const q = new URL(request.url).searchParams
+      return HttpResponse.json(check(Number(q.get('doctorId')), q.get('startAt')!, q.get('endAt')!))
+    }),
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
     http.get('*/api/chairs', () => HttpResponse.json(chairs)),
@@ -99,7 +117,61 @@ test('выбрали время коллеги — подсказка в фор�
   const column = await screen.findByRole('group', { name: 'Дастан Т.' })
   await userEvent.click(await within(column).findByRole('button', { name: 'Свободно с 15:00 до 18:00, записать' }))
   const panel = await screen.findByRole('complementary', { name: 'Новая запись' })
-  expect(await within(panel).findByText(/15:00–18:00 — время врача Айгерим Садыкова \(Кресло 1\)/)).toBeInTheDocument()
+  expect(await within(panel).findByText(/15:00–15:30 — время врача Айгерим Садыкова \(Кресло 1\)/)).toBeInTheDocument()
+})
+
+/** «Следующий день» → колонка Дастана → «Свободно» → «Другое время» → ввести время руками. */
+async function otherTime(time: string) {
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Следующий день' }))
+  const column = await screen.findByRole('group', { name: 'Дастан Т.' })
+  await userEvent.click(await within(column).findByRole('button', { name: 'Свободно с 15:00 до 18:00, записать' }))
+  const panel = await screen.findByRole('complementary', { name: 'Новая запись' })
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Другое время' }))
+  const input = within(panel).getByLabelText('Время', { selector: 'input' })
+  // Значение целиком: user-event печатает в <input type="time"> jsdom по цифре и путает минуты (22:43 → 22:04)
+  fireEvent.change(input, { target: { value: time } })
+  return panel
+}
+
+test('«Другое время» вне часов врача, но в часы коллеги (22:43) — подсказка от сервера', async () => {
+  backend(() => HttpResponse.json({}, { status: 500 }))
+  const panel = await otherTime('22:43')
+  // В chairTime слотов Дастана вечера нет — подсказку даёт chair-check
+  expect(await within(panel).findByRole('status')).toHaveTextContent(
+    '🪑 22:43–23:13 — время врача Айгерим Садыкова (Кресло 1). Предупредите коллегу: после «Записать» спросим, предупреждён ли он.')
+})
+
+test('«Запрещать» — подсказка, что записать нельзя', async () => {
+  backend(() => HttpResponse.json({}, { status: 500 }), undefined, (d, s, e) => herTime(d, s, e, true))
+  const panel = await otherTime('22:43')
+  expect(await within(panel).findByText('🪑 Это время врача Айгерим Садыкова — записать нельзя, пусть Айгерим Садыкова поставит себе перерыв.'))
+    .toBeInTheDocument()
+})
+
+test('без коллеги в это время — подсказки нет', async () => {
+  const asked: string[] = []
+  backend(() => HttpResponse.json({}, { status: 500 }), undefined, (d, s, e) => { asked.push(s); return herTime(d, s, e) })
+  const panel = await otherTime('20:00')
+  // Сервер спросили про 20:00 — и он ответил «никого»
+  await waitFor(() => expect(asked.map(minutesOf)).toContain(20 * 60))
+  expect(within(panel).queryByText(/🪑/)).not.toBeInTheDocument()
+})
+
+test('перенос «Другим временем» в часы коллеги — та же подсказка, «после «Перенести»»', async () => {
+  backend(() => HttpResponse.json({}, { status: 500 }))
+  const a = appointment(10, 2, '10:00', 'Бакыт М.')
+  server.use(http.get('*/api/appointments', ({ request }) =>
+    HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '2' ? [a] : [])))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  await userEvent.click(within(panel).getByRole('button', { name: 'Перенести или передать врачу' }))
+  const form = within(panel).getByRole('form', { name: 'Перенос записи' })
+  if (!within(form).queryByLabelText('Время', { selector: 'input' })) await userEvent.click(within(form).getByRole('button', { name: 'Другое время' }))
+  fireEvent.change(within(form).getByLabelText('Время', { selector: 'input' }), { target: { value: '22:43' } })
+  expect(await within(form).findByText(/22:43–23:13 — время врача Айгерим Садыкова \(Кресло 1\)\. Предупредите коллегу: после «Перенести»/))
+    .toBeInTheDocument()
 })
 
 test('«Предупреждать»: окно «Коллега предупреждён?», «Записать» — тот же запрос с confirmChairTime', async () => {

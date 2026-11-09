@@ -20,6 +20,8 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // Подсказка «🪑 время коллеги по креслу» в «Новой записи» и переносе: по умолчанию коллеги в это время нет
+  http.get('*/api/appointments/chair-check', () => HttpResponse.json({ strict: false } satisfies Schemas['ChairCheckView'])),
   // Кейс на /join не заполнен — блока нет
   http.get('*/web/case', () => HttpResponse.json({ metrics: [], shown: false } satisfies Schemas['JoinCaseCase'])),
   // Ролик и презентация на /join: по умолчанию каталога материалов нет — блока нет
