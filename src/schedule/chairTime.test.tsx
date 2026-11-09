@@ -92,6 +92,16 @@ test('часы коллеги по креслу — своей штриховк�
   expect(within(own).queryByRole('note', { name: /время/ })).not.toBeInTheDocument()
 })
 
+test('выбрали время коллеги — подсказка в форме сразу, до «Записать»', async () => {
+  backend(() => HttpResponse.json({}, { status: 500 }))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Следующий день' }))
+  const column = await screen.findByRole('group', { name: 'Дастан Т.' })
+  await userEvent.click(await within(column).findByRole('button', { name: 'Свободно с 15:00 до 18:00, записать' }))
+  const panel = await screen.findByRole('complementary', { name: 'Новая запись' })
+  expect(await within(panel).findByText(/15:00–18:00 — время врача Айгерим Садыкова \(Кресло 1\)/)).toBeInTheDocument()
+})
+
 test('«Предупреждать»: окно «Коллега предупреждён?», «Записать» — тот же запрос с confirmChairTime', async () => {
   const detail = 'Это время врача Айгерим Садыкова (Кресло 1). Коллега предупреждён?'
   const posts = backend((body) => body.confirmChairTime

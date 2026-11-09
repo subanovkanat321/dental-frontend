@@ -8,7 +8,7 @@ import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
-import { dayTitle, formatPhone, shortDate, slotInstant, timeStep, todayIn } from '../lib/time'
+import { dayTitle, formatPhone, shortDate, slotInstant, timeOf, timeStep, todayIn } from '../lib/time'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { serviceEmoji } from '../lib/serviceEmoji'
@@ -382,6 +382,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
             onChange={(t) => { setTime(t); if (t) reveal(submitRef.current, true) }} error={fieldError('startAt') ?? (create.error?.code === 'time-taken' ? create.error.message : null)} /></div>
         )}
         {walkIn && fieldError('startAt') && <p className="error">{fieldError('startAt')}</p>}
+        {/* Выбрали время коллеги по общему креслу — сказать сразу, а не только окном после «Записать» */}
+        {!walkIn && startAt && <ChairTimeHint date={date} doctorId={doctorId} startAt={startAt} duration={duration} />}
 
         {/* Кто из листа ожидания помещается в это свободное окно — только пока пациент не выбран; никого — блока нет */}
         {!walkIn && !patient && startAt && <WaitlistCandidates date={date} doctorId={doctorId} startAt={startAt} onPick={pickWaiting} onBooked={onCreated} />}
@@ -413,6 +415,28 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
 }
 
 type WaitlistEntry = Schemas['WaitlistView']
+
+/**
+ * «🪑 Это время врача Айгерим (Кресло 1)»: выбранное время задевает часы коллеги по общему креслу (V187,
+ * /api/slots → chairTime). Те же слоты, что у выбора времени, — из кэша. Записать можно: после «Записать» сервер
+ * спросит «Коллега предупреждён?» (в строгом режиме кресла — откажет).
+ */
+function ChairTimeHint({ date, doctorId, startAt, duration }: { date: string; doctorId: number; startAt: string; duration: number }) {
+  const slots = useQuery({
+    queryKey: ['slots', date, doctorId],
+    queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId } } })),
+  })
+  const start = Date.parse(startAt)
+  const end = start + duration * 60_000
+  const hit = (slots.data?.chairTime ?? []).find((t) => Date.parse(t.start!) < end && Date.parse(t.end!) > start)
+  if (!hit) return null
+  return (
+    <p className="notice tone-wait chair-time-hint" role="status">
+      🪑 {timeOf(hit.start!)}–{timeOf(hit.end!)} — время врача {hit.doctorName}{hit.chairName ? ` (${hit.chairName})` : ''}.
+      Предупредите коллегу: после «Записать» спросим, предупреждён ли он.
+    </p>
+  )
+}
 
 /** Конец свободного окна (/api/slots, free), в котором начинается приём; не в свободном окне — null. */
 function windowEnd(free: Schemas['TimeRange'][] | undefined, startAt: string): string | null {
