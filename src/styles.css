@@ -383,7 +383,11 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
     position: fixed; inset: 0; z-index: 40; max-height: none; border-radius: 0;
     align-self: stretch; justify-self: stretch; align-content: start;
     padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); overflow-y: auto;
+    /* Ровно в видимой части экрана (lib/visualViewport.ts): клавиатура iPhone не уводит верх с ✕ за край */
+    top: var(--vv-top, 0px); bottom: auto; height: var(--vv-height, 100dvh);
   }
+  /* Строка с заголовком и ✕ — всегда сверху карточки, сколько ни листай вниз */
+  .panel > .panel-head { position: sticky; top: -14px; z-index: 3; margin: -14px -14px 0; padding: 14px 14px 8px; background: var(--card); }
   /* Карточка на весь экран открыта — страница под ней не прокручивается. Иначе iPhone (Safari, Telegram)
      прокручивал страницу вместе с «закреплённой» карточкой: снизу проглядывало расписание, а верх с ✕
      уезжал за край, и долистать до него было нельзя */

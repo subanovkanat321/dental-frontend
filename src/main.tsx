@@ -26,6 +26,7 @@ import { startButtonIcons } from './lib/buttonIcons'
 import { startEdgeSwipe } from './lib/edgeSwipe'
 import { startErrorReports } from './lib/clientErrors'
 import { startTableLabels } from './lib/tableLabels'
+import { startVisualViewport } from './lib/visualViewport'
 import { applyLook } from './lib/theme'
 import { listenInstallPrompt } from './pwa/pwa'
 import './styles.css'
@@ -64,6 +65,8 @@ startButtonIcons()
 startTableLabels()
 // «Назад» свайпом от левого края — в PWA и Telegram на iPhone (lib/edgeSwipe.ts)
 startEdgeSwipe()
+// iPhone: карточка на весь экран — ровно в видимой части, и после клавиатуры ✕ не уезжает (lib/visualViewport.ts)
+startVisualViewport()
 
 // Перезагрузка «вышла новая версия» — одна; проработали минуту без сбоев — снова разрешена
 setTimeout(() => {
