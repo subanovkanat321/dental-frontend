@@ -862,24 +862,39 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-day-head .avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .9rem; }
 .doctor-inline { display: grid; gap: 10px; max-width: 640px; }
 .doctor-inline .panel-head { margin-bottom: 4px; }
-/* Телефон, «Все врачи»: списки врачей рядом, компактные строки (время сверху, имя под ним) */
-.doctor-columns { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(158px, 1fr)); gap: 8px; overflow-x: auto; align-items: start; margin-top: 10px; scrollbar-width: none; }
+/* Телефон, «Все врачи»: списки врачей рядом, компактные строки (время сверху, имя под ним).
+   Две колонки — ровно по половине экрана; три и больше — следующая выглядывает краем (--peek)
+   и колонки листаются вбок с прилипанием (scroll-snap). Ширина колонки задана треком сетки,
+   а всё внутри — minmax(0, 1fr) и min-width: 0: длинное имя переносится, а не раздвигает колонку */
+.doctor-columns { --gap: 8px; --peek: 0px; display: grid; grid-template-columns: repeat(var(--cols, 2), calc((100% - var(--gap) - var(--peek)) / 2));
+  gap: var(--gap); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; align-items: start; margin-top: 10px; scrollbar-width: none; }
+.doctor-columns.peek { --peek: calc(20px + var(--gap)); }
 .doctor-columns::-webkit-scrollbar { display: none; }
-.doctor-columns .doctor-day { margin-top: 0; min-width: 0; }
-.doctor-columns .doctor-day-head { gap: 6px; padding: 6px 2px; font-size: .95rem; }
+.doctor-columns .doctor-day { grid-template-columns: minmax(0, 1fr); margin-top: 0; min-width: 0; scroll-snap-align: start; }
+.doctor-columns .rows { grid-template-columns: minmax(0, 1fr); }
+.doctor-columns .row { min-width: 0; }
+.doctor-columns .doctor-day-head { gap: 6px; padding: 6px 2px; font-size: .95rem; min-width: 0; }
+.doctor-columns .doctor-day-head .avatar { flex: none; }
 .doctor-day-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doctor-day-count { flex: none; min-width: 24px; padding: 0 7px; border-radius: 99px; background: var(--accent-soft); color: var(--link); font: 600 .8rem/22px var(--mono); text-align: center; }
-.doctor-columns .row-button { grid-template-columns: 1fr; gap: 1px; padding: 8px 8px; }
+.doctor-columns .row-button { grid-template-columns: minmax(0, 1fr); gap: 1px; padding: 8px 8px; }
 .doctor-columns .row .time { font-size: .88rem; }
 .doctor-columns .row .end { display: none; }
-.doctor-columns .row .name { white-space: normal; overflow-wrap: anywhere; font-size: .92rem; line-height: 1.2; }
-.doctor-columns .row .state, .doctor-columns .row .row-note { grid-column: auto; font-size: .85rem; }
+/* Имя — по словам; по буквам только слово, которое само шире колонки */
+.doctor-columns .row .name { white-space: normal; overflow-wrap: break-word; font-size: .92rem; line-height: 1.2; }
+.doctor-columns .row .state, .doctor-columns .row .row-note { grid-column: auto; font-size: .85rem; overflow-wrap: break-word; }
 .doctor-columns .row .state .hint { display: none; }
-.doctor-columns .remind-quick { width: 34px; height: 34px; margin: 6px 6px 0 0; align-self: flex-start; font-size: .7rem; }
-.doctor-columns .row.free .row-button { grid-template-columns: auto 1fr auto; align-items: center; gap: 6px; }
+/* Строка приёма: «✓ отправлено» / кнопка напоминания — отдельной строкой внизу карточки, а не сбоку
+   (сбоку они отнимали ширину у имени). В свайп-режиме раскладку держит .row-slide */
+.doctor-columns .row:has(> .row-slide):not(.swipe), .doctor-columns .row.swipe > .row-slide { flex-direction: column; gap: 0; }
+.doctor-columns .row:has(> .row-slide) .row-button { flex: none; }
+.doctor-columns .remind-sent { align-self: flex-start; margin: -4px 0 4px 4px; white-space: normal; text-align: left; }
+.doctor-columns .remind-quick { width: 34px; height: 34px; margin: -2px 0 8px 8px; align-self: flex-start; font-size: .7rem; }
+.doctor-columns .row.free .row-button { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px; }
 .doctor-columns .row.free { background: var(--ok-bg); border-color: transparent; }
-.doctor-columns .row.free .hint { font-size: .85rem; }
+.doctor-columns .row.free .hint { font-size: .85rem; overflow-wrap: break-word; }
 .doctor-columns .row.pause { flex-wrap: wrap; padding: 8px; gap: 2px 6px; font-size: .82rem; }
+.doctor-columns .row.pause .name { min-width: 0; }
 tr.clickable { cursor: pointer; }
 tr.clickable:hover td { background: var(--sunken); }
 .row-link.open-link { color: var(--link); }

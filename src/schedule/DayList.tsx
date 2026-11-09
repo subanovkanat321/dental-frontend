@@ -218,8 +218,11 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
             const empty = list.length === 0 && (
               <EmptyState title={emptyDayText(date, today)}>{offText ?? (date >= today ? 'Нажмите на свободное окно выше, чтобы записать.' : null)}</EmptyState>
             )
-            // «Все врачи» — списки врачей рядом, колонками; больше двух — листаются вбок
-            return <>{many ? <div className="doctor-columns" style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div> : blocks}{empty}</>
+            // «Все врачи» — списки врачей рядом, колонками; две — по половине экрана, больше двух — третья
+            // выглядывает краем (peek: видно, что можно листать) и колонки листаются вбок
+            return <>{many ? (
+              <div className={groups.length > 2 ? 'doctor-columns peek' : 'doctor-columns'} style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div>
+            ) : blocks}{empty}</>
           })()}
     </div>
   )
