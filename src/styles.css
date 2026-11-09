@@ -553,7 +553,11 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .waitlist-box select, .waitlist-box .ui-select { font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .candidates { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-md); background: var(--wait-bg); }
 .candidates h3 { margin: 0; color: var(--wait-ink); }
-.candidate { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.candidate { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 8px; }
+.candidate + .candidate { padding-top: 6px; border-top: 1px solid color-mix(in srgb, var(--wait-ink) 15%, transparent); }
+.candidate-who { display: grid; flex: 1 1 12em; min-width: 0; }
+.candidate .actions { display: flex; gap: 6px; flex-wrap: nowrap; }
+.candidate .actions .btn { white-space: nowrap; }
 .remind { display: grid; gap: 8px; }
 
 /* Касса: расходы, прибыль, оценки */

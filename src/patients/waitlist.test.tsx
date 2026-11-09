@@ -141,18 +141,20 @@ test('ассистент — «Профосмотр»: WhatsApp — отметк
   vi.restoreAllMocks()
 })
 
-test('«Новая запись» предлагает пациентов из листа ожидания и записывает одним нажатием', async () => {
-  backend([{ id: 7, patient: aigul, durationMinutes: 30, createdAt: '2026-10-20T04:00:00Z' }])
+test('«Новая запись»: выбрали время в сетке — кто из листа ожидания уже записан позже, «Перенести сюда» одним нажатием', async () => {
+  backend([{ id: 7, patient: aigul, durationMinutes: 30, createdAt: '2026-10-20T04:00:00Z', upcoming: appointment(56, 1, '23:30', 'Айгуль Т.') }])
   let booked: unknown
+  const nine = new Date(`${todayIn()}T09:00:00+06:00`).toISOString()
   server.use(http.post('*/api/waitlist/7/book', async ({ request }) => {
     booked = await request.json()
     return HttpResponse.json(appointment(55, 1, '09:00', 'Айгуль Т.'))
-  }), http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [new Date(`${todayIn()}T09:00:00+06:00`).toISOString()] })))
+  }), http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [nine],
+    free: [{ start: nine, end: new Date(`${todayIn()}T10:00:00+06:00`).toISOString() }] })))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
   // Время не подставлено: окно выбирают в сетке, и тогда — кто его ждёт
   await userEvent.click(await screen.findByRole('button', { name: '09:00' }))
-  const box = await screen.findByRole('region', { name: 'Ждут свободного времени' })
+  const box = await screen.findByRole('region', { name: 'Подходит из листа ожидания' })
   expect(box).toHaveTextContent('Айгуль Т.')
   // WhatsApp — через openLink (в Telegram откроется снаружи); вне Telegram — window.open
   const opened: string[] = []
@@ -162,9 +164,9 @@ test('«Новая запись» предлагает пациентов из �
   await userEvent.click(wa)
   expect(opened[0]).toContain('wa.me/996700333444')
   vi.restoreAllMocks()
-  await userEvent.click(within(box).getByRole('button', { name: 'Записать сюда' }))
+  await userEvent.click(within(box).getByRole('button', { name: 'Перенести сюда' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айгуль Т.')
-  expect(booked).toEqual({ doctorId: 1, startAt: new Date(`${todayIn()}T09:00:00+06:00`).toISOString() })
+  expect(booked).toEqual({ doctorId: 1, startAt: nine })
 })
 
 test('вкладка «Лист ожидания»: «Добавить» — найти пациента и записать в лист', async () => {

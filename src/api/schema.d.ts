@@ -7885,6 +7885,8 @@ export interface components {
             serviceTypeId?: number;
             promoCode?: string;
             confirmChairTime?: boolean;
+            /** Format: int64 */
+            fromWaitlistId?: number;
         };
         VisitReportControllerSend: {
             text?: string;

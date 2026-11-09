@@ -18173,6 +18173,10 @@
           },
           "confirmChairTime" : {
             "type" : "boolean"
+          },
+          "fromWaitlistId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "doctorId", "durationMinutes", "patientId", "startAt" ]

@@ -92,6 +92,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const [phone, setPhone] = useState('')
   const [duplicate, setDuplicate] = useState<Patient | null>(null)
   const [problem, setProblem] = useState('')
+  // «Записать сюда» в подсказке листа ожидания: после записи сервер уберёт эту строку листа
+  const [fromWaitlist, setFromWaitlist] = useState<WaitlistEntry | null>(null)
 
   // Новый слот (нажали в другое место) — новое время и врач, введённое о пациенте остаётся.
   // Меняем состояние прямо при отрисовке, а не в эффекте: React перерисует сразу, без мигания
@@ -123,6 +125,16 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     })),
   })
 
+  /** Строка листа ожидания — только пока выбран тот же пациент («Другой» — уже обычная запись). */
+  const waitlistId = (p: Patient) => (fromWaitlist && fromWaitlist.patient?.id === p.id ? fromWaitlist.id : undefined)
+  const pickWaiting = (e: WaitlistEntry) => {
+    setPatient(e.patient ?? null)
+    setAdding(false)
+    setFromWaitlist(e)
+    if (e.durationMinutes) setDuration(e.durationMinutes)
+    reveal(submitRef.current, true)
+  }
+
   const [hh, mm] = time.split(':').map(Number)
   const startAt = time ? slotInstant(date, (hh ?? 0) * 60 + (mm ?? 0)) : null
 
@@ -139,6 +151,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           comment: comment.trim() || undefined,
           promoCode: promoCode || undefined,
           confirmChairTime: confirm || undefined,
+          fromWaitlistId: waitlistId(p),
         },
       })))
       // «Хочет раньше»: запись есть, а освободится время раньше — предложим (лист ожидания).
@@ -153,7 +166,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     },
     onSuccess: (a) => {
       // Новая запись — и в «Пациентах» (недавние, карточка, «Позвать на профосмотр»)
-      refreshAppointmentData(client, ['patients', 'recall', ...(wantsEarlier ? ['waitlist'] : [])])
+      refreshAppointmentData(client, ['patients', 'recall', ...(wantsEarlier || fromWaitlist ? ['waitlist'] : [])])
       onCreated(a)
     },
   })
@@ -271,7 +284,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
           )}
           {patient ? (
             <div className="chosen">
-              <span><strong>{patient.fullName}</strong>{patient.phone && <span className="hint"> · {formatPhone(patient.phone)}</span>}</span>
+              <span><strong>{patient.fullName}</strong>{patient.phone && <span className="hint"> · {formatPhone(patient.phone)}</span>}
+                {waitlistId(patient) != null && <span className="hint small"> · из листа ожидания — после записи уберём из листа</span>}</span>
               <button type="button" className="btn ghost small" onClick={() => setPatient(null)}>Другой</button>
             </div>
           ) : adding ? (
@@ -369,8 +383,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
         )}
         {walkIn && fieldError('startAt') && <p className="error">{fieldError('startAt')}</p>}
 
-        <WaitlistCandidates doctorId={doctorId} duration={duration} startAt={startAt} onBooked={onCreated} />
-
+        {/* Кто из листа ожидания помещается в это свободное окно — только пока пациент не выбран; никого — блока нет */}
+        {!walkIn && !patient && startAt && <WaitlistCandidates date={date} doctorId={doctorId} startAt={startAt} onPick={pickWaiting} onBooked={onCreated} />}
 
         <label className="field">
           <span>Комментарий (необязательно)</span>
@@ -400,56 +414,79 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
 
 type WaitlistEntry = Schemas['WaitlistView']
 
+/** Конец свободного окна (/api/slots, free), в котором начинается приём; не в свободном окне — null. */
+function windowEnd(free: Schemas['TimeRange'][] | undefined, startAt: string): string | null {
+  const at = Date.parse(startAt)
+  const w = (free ?? []).find((r) => Date.parse(r.start!) <= at && at < Date.parse(r.end!))
+  return w?.end ?? null
+}
+
 /**
- * Лист ожидания для этого окна (как fitsWindow в приложении): к этому врачу или к любому,
- * помещается по длительности и, если уже записан к этому врачу, окно раньше его записи.
- * WhatsApp — «освободилось время»; «Записать сюда» — сервер запишет (или перенесёт) и уберёт из листа.
+ * Помещается ли пациент из листа в окно [startAt, end) врача doctorId (как прежняя fits в «Дне»):
+ * хочет к этому врачу или к любому; приём не длиннее окна; уже записан к этому врачу — окно раньше
+ * его записи. Без записи («запишите, как появится место») — подходит в любое окно, где помещается.
  */
-function WaitlistCandidates({ doctorId, duration, startAt, onBooked }: {
+function fitsWindow(e: WaitlistEntry, doctorId: number, startAt: string, end: string): boolean {
+  if (e.doctorId != null && e.doctorId !== doctorId) return false
+  const sameDoctor = !e.upcoming || e.upcoming.doctorId === doctorId
+  const earlier = !e.upcoming?.startAt || !sameDoctor || Date.parse(startAt) < Date.parse(e.upcoming.startAt)
+  return earlier && (e.durationMinutes ?? 30) * 60_000 <= Date.parse(end) - Date.parse(startAt)
+}
+
+/**
+ * «Подходит из листа ожидания» — нажали на свободное окно, а его ждут. «Записать сюда» выбирает
+ * пациента в форме и ставит его длительность; дальше обычное «Записать» — сервер уберёт его из листа
+ * (fromWaitlistId). Уже записан позже — «Перенести сюда»: сервер перенесёт ту запись, а не сделает
+ * вторую. WhatsApp — «освободилось время».
+ */
+function WaitlistCandidates({ date, doctorId, startAt, onPick, onBooked }: {
+  date: string
   doctorId: number
-  duration: number
-  startAt: string | null
+  startAt: string
+  onPick: (e: WaitlistEntry) => void
   onBooked: (a: Appointment) => void
 }) {
   const client = useQueryClient()
   const list = useWaitlist()
   const settings = useSettings()
-  const book = useMutation<Appointment, ApiError, WaitlistEntry>({
+  // Те же окна, что в «Дне» и сетке (тот же ключ — из кэша, без лишнего запроса)
+  const slots = useQuery({
+    queryKey: ['slots', date, doctorId],
+    queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId } } })),
+  })
+  const move = useMutation<Appointment, ApiError, WaitlistEntry>({
     mutationFn: (e) => withChairConfirm((confirm) => unwrap(api.POST('/api/waitlist/{id}/book',
-      { params: { path: { id: e.id! } }, body: { doctorId, startAt: startAt!, confirmChairTime: confirm || undefined } }))),
+      { params: { path: { id: e.id! } }, body: { doctorId, startAt, confirmChairTime: confirm || undefined } }))),
     onSuccess: (a) => {
-      // Записали или перенесли — окна, счётчики и карточка пациента тоже меняются
+      // Перенесли — окна, счётчики и карточка пациента тоже меняются
       refreshAppointmentData(client, ['waitlist', 'patients', 'recall'])
       onBooked(a)
     },
   })
-  if (!startAt) return null
-  const fits = (list.data ?? []).filter((e) => {
-    if (e.doctorId != null && e.doctorId !== doctorId) return false
-    const sameDoctor = !e.upcoming || e.upcoming.doctorId === doctorId
-    const earlier = !e.upcoming || !sameDoctor || startAt < (e.upcoming.startAt ?? '')
-    return earlier && (e.durationMinutes ?? 30) <= duration
-  })
+  const end = windowEnd(slots.data?.free, startAt)
+  const fits = end ? (list.data ?? []).filter((e) => fitsWindow(e, doctorId, startAt, end)) : []
   if (!fits.length) return null
   return (
-    <section className="candidates" aria-label="Ждут свободного времени">
-      <h3>Ждут свободного времени</h3>
+    <section className="candidates" aria-label="Подходит из листа ожидания">
+      <h3>Подходит из листа ожидания</h3>
       {fits.map((e) => (
         <div key={e.id} className="candidate">
-          <span>
+          <span className="candidate-who">
             <strong>{e.patient?.fullName}</strong>
-            <span className="hint small"> · {e.upcoming?.startAt ? `сейчас ${shortDate(e.upcoming.startAt, true)}` : 'записи нет'} · {e.durationMinutes} мин</span>
+            <span className="hint small">{e.durationMinutes} мин · {e.upcoming?.startAt ? `записан на ${shortDate(e.upcoming.startAt, true)}` : 'без записи'}</span>
           </span>
           <span className="actions">
             <button type="button" className="btn small" disabled={!settings.data}
               onClick={() => openLink(whatsappUrl(e.patient?.phone ?? '', freeSlotText(e.patient?.fullName ?? '', startAt, settings.data?.clinicSignature)))}>WhatsApp</button>
-            <button type="button" className="btn small primary" disabled={book.isPending} onClick={() => book.mutate(e)}>
-              {e.upcoming ? 'Перенести сюда' : 'Записать сюда'}
-            </button>
+            {e.upcoming ? (
+              <button type="button" className="btn small primary" disabled={move.isPending} onClick={() => move.mutate(e)}>Перенести сюда</button>
+            ) : (
+              <button type="button" className="btn small primary" onClick={() => onPick(e)}>Записать сюда</button>
+            )}
           </span>
         </div>
       ))}
-      {book.error && <p className="error">{book.error.message}</p>}
+      {move.error && <p className="error">{move.error.message}</p>}
     </section>
   )
 }
