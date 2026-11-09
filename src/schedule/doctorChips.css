@@ -10,3 +10,16 @@
 .doctor-chip[aria-pressed=true] { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 70%, var(--card)); color: var(--link); font-weight: 600; }
 .doctor-chip .avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; font-size: .72rem; font-weight: 600; flex: none; }
 .doctor-chip .avatar.all { background: var(--sunken); color: var(--text); font-size: .9rem; }
+/* «Порядок врачей…» — последним в ряду чипов, только значок */
+.doctor-chip.order { padding: 3px 12px; color: var(--hint); font-size: 1rem; }
+
+/* Окно «Порядок врачей» (schedule/DoctorOrderDialog.tsx): строка — номер, кружок, имя, ↑ ↓ */
+.doctor-order h2 { margin: 0 0 4px; font: 600 1.15rem var(--display); }
+.doctor-order .hint { margin: 0; font-size: .88rem; }
+.doctor-order-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.doctor-order-list li { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 4px 4px 8px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); }
+.doctor-order-n { flex: none; width: 1.4em; color: var(--hint); text-align: right; }
+.doctor-order-list .avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: #fff; font-size: .78rem; font-weight: 600; flex: none; }
+.doctor-order-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doctor-order-list .btn { flex: none; width: 44px; min-height: 44px; padding: 0; font-size: 1.15rem; }
+.doctor-order-list .btn:disabled { opacity: .35; cursor: default; }

@@ -2,7 +2,7 @@ import { useQueries } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { AVATARS, initials } from '../lib/avatars'
+import { colorOf, initials } from '../lib/avatars'
 import { useBack } from '../lib/back'
 import { todayIn } from '../lib/time'
 
@@ -18,10 +18,10 @@ function appointmentsText(n: number): string {
   return n ? `${n} ${word}` : 'записей нет'
 }
 
-function Avatar({ doctor, index }: { doctor: Doctor; index: number }) {
+function Avatar({ doctor, color }: { doctor: Doctor; color: string }) {
   return doctor.photoUrl
     ? <img className="pick-avatar" src={doctor.photoUrl} alt="" />
-    : <span className="pick-avatar" style={{ background: AVATARS[index % AVATARS.length] }} aria-hidden="true">{initials(doctor.fullName)}</span>
+    : <span className="pick-avatar" style={{ background: color }} aria-hidden="true">{initials(doctor.fullName)}</span>
 }
 
 /**
@@ -29,12 +29,17 @@ function Avatar({ doctor, index }: { doctor: Doctor; index: number }) {
  * карточками: фото или инициалы, имя, «я», сколько записей в выбранный день, заявки из бота;
  * «Все врачи» — последним. Свой список вместо системного: у системного — только текст.
  */
-export function DoctorPicker({ me, doctors, view, date, onChange }: {
+export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors = doctors, onOrder }: {
   me: Me
+  /** Врачи в порядке на экране (schedule/doctorOrder.ts) */
   doctors: Doctor[]
   view: View
   date: string
   onChange: (view: View) => void
+  /** Врачи клиники в исходном порядке — по ним цвет врача (colorOf), он не зависит от порядка */
+  colorDoctors?: Doctor[]
+  /** «Порядок врачей…» — окно с ↑ ↓ */
+  onOrder?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
@@ -74,7 +79,7 @@ export function DoctorPicker({ me, doctors, view, date, onChange }: {
     <div ref={root} className="doctor-picker">
       <button type="button" className="pick-current" aria-haspopup="listbox" aria-expanded={open} aria-label={`Чьё расписание: ${current ? nameOf(current) : 'Все врачи'}`}
         onClick={() => setOpen(!open)}>
-        {current ? <Avatar doctor={current} index={index} /> : <span className="pick-avatar all" aria-hidden="true">👥</span>}
+        {current ? <Avatar doctor={current} color={colorOf(colorDoctors, current.id)} /> : <span className="pick-avatar all" aria-hidden="true">👥</span>}
         <span className="pick-text">
           <strong>{current ? nameOf(current) : 'Все врачи'}</strong>
           <span className="hint">{appointmentsText(current ? booked(index) : total)} {day}</span>
@@ -82,11 +87,12 @@ export function DoctorPicker({ me, doctors, view, date, onChange }: {
         <span className="pick-caret" aria-hidden="true">{open ? '▴' : '▾'}</span>
       </button>
       {open && (
-        <ul className="pick-list" role="listbox" aria-label="Чьё расписание">
+        <div className="pick-list">
+        <ul role="listbox" aria-label="Чьё расписание">
           {doctors.map((d, i) => (
             <li key={d.id} role="option" aria-selected={view === d.id} onClick={() => pick(d.id!)}
               onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && pick(d.id!)} tabIndex={0}>
-              <Avatar doctor={d} index={i} />
+              <Avatar doctor={d} color={colorOf(colorDoctors, d.id)} />
               <span className="pick-text">
                 <strong>{nameOf(d)}</strong>
                 <span className="hint">{appointmentsText(booked(i))} {day}</span>
@@ -105,6 +111,12 @@ export function DoctorPicker({ me, doctors, view, date, onChange }: {
             <span className="pick-check" aria-hidden="true">{view === 'all' ? '✓' : ''}</span>
           </li>
         </ul>
+        {onOrder && (
+          <button type="button" className="pick-order" onClick={() => { setOpen(false); onOrder() }}>
+            <span aria-hidden="true">⇅</span> Порядок врачей…
+          </button>
+        )}
+        </div>
       )}
     </div>
   )

@@ -1,6 +1,16 @@
 /** Цвета аватаров врачей — по порядку, различимы рядом и на светлой, и на тёмной теме. */
 export const AVATARS = ['#0E8A80', '#5B7FD6', '#C2793B', '#8E5BB5', '#2F8F5B', '#C2506B']
 
+/**
+ * Цвет врача — по месту в списке врачей клиники (`doctors` — список с сервера, не порядок на экране):
+ * поменяли порядок колонок — цвет у врача тот же. Один и тот же цвет на компьютере (шапка колонки,
+ * чипы) и на телефоне (кружок в шапке, полоска у записей). Врача нет в списке — первый цвет.
+ */
+export function colorOf(doctors: readonly { id?: number }[], id: number | null | undefined): string {
+  const i = doctors.findIndex((d) => d.id === id)
+  return AVATARS[Math.max(0, i) % AVATARS.length]!
+}
+
 /** «Каримова Динара» → «КД», «Нурболот» → «Н». */
 export function initials(name = ''): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()

@@ -43,7 +43,8 @@ function dayTitle(date: string, today: string): { main: string; sub: string } {
   return near ? { main: near, sub: `${weekday}, ${dayMonth}` } : { main: weekday.replace(/^./, (x) => x.toUpperCase()), sub: dayMonth }
 }
 
-type Doctor = { id: number; name: string }
+/** color — цвет врача (lib/avatars colorOf): кружок в шапке колонки и полоска слева у его записей */
+type Doctor = { id: number; name: string; color?: string }
 
 /** «Нурболот Асанов» → «Нурболот»: в строке списка мало места. */
 function shortName(name: string): string {
@@ -131,6 +132,13 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   const pending = appointments.some((q) => q.isPending) || slots.some((q) => q.isPending)
   const failed = appointments.find((q) => q.error)?.error
   const [monthOpen, setMonthOpen] = useState(false)
+  // Поменяли порядок врачей — колонки снова с начала: браузер держит прокрутку за прежней колонкой,
+  // и первый врач оказывался за левым краем
+  const columns = useRef<HTMLDivElement>(null)
+  const order = doctors.map((d) => d.id).join(',')
+  useEffect(() => {
+    if (columns.current) columns.current.scrollLeft = 0
+  }, [order])
 
   return (
     <div className="day-list">
@@ -170,7 +178,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                   {swipe && g.items.some((i) => i.kind === 'appointment') && <SwipeHint />}
                   <ul className="rows">
                     {g.items.map((item) => item.kind === 'appointment'
-                      ? <Row key={`a${item.a.id}`} a={item.a} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
+                      ? <Row key={`a${item.a.id}`} a={item.a} color={g.doctor.color} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
                           canEdit={canEditDoctor(item.a.doctorId!)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} swipe={swipe} />
                       : item.kind === 'colleague' ? (
                         <li key={`c${item.at}`} className="row pause colleague" role="note" aria-label={`${timeOf(item.at)}–${timeOf(item.end)}: время ${item.name}`}>
@@ -198,7 +206,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
               return many ? (
                 <section key={g.doctor.id} className="doctor-day" aria-label={g.doctor.name}>
                   <h3 className="doctor-day-head" title={g.doctor.name}>
-                    <span className="avatar" aria-hidden="true">{g.doctor.name.slice(0, 1)}</span>
+                    <span className="avatar" style={g.doctor.color ? { background: g.doctor.color, color: '#fff' } : undefined} aria-hidden="true">{g.doctor.name.slice(0, 1)}</span>
                     <span className="doctor-day-name">{shortName(g.doctor.name)}{g.doctor.id === me.doctorId ? ' (я)' : ''}</span>
                     <span className="doctor-day-count" aria-label={`записей: ${g.booked}`}>{g.booked}</span>
                   </h3>
@@ -214,7 +222,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
             // «Все врачи» — списки врачей рядом, колонками; две — по половине экрана, больше двух — третья
             // выглядывает краем (peek: видно, что можно листать) и колонки листаются вбок
             return <>{many ? (
-              <div className={groups.length > 2 ? 'doctor-columns peek' : 'doctor-columns'} style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div>
+              <div ref={columns} className={groups.length > 2 ? 'doctor-columns peek' : 'doctor-columns'} style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div>
             ) : blocks}{empty}</>
           })()}
     </div>
@@ -246,8 +254,10 @@ function FreeRow({ start, end, canEdit, doctor, onPick }: {
  * Ошибка — под строкой. WhatsApp — только когда загружены настройки (подпись клиники и ссылка на бота).
  * Телефон (swipe): свайп вправо — то же напоминание, влево — «Приём состоялся» с «Вернуть» (useRowSwipe).
  */
-function Row({ a, chair, next, active, canEdit, money, onOpen, swipe = false }: {
+function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = false }: {
   a: Appointment
+  /** Цвет врача — полоска слева; статус остаётся заливкой строки и словом (DESIGN.md) */
+  color?: string
   /** Часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — бейдж «🪑 время Айгерим» */
   chair?: ChairTime
   /** Видит ли деньги этого приёма (seesMoneyOf): иначе сервер прислал их пустыми — строки «предоплата» нет */
@@ -304,7 +314,8 @@ function Row({ a, chair, next, active, canEdit, money, onOpen, swipe = false }: 
   const error = action.error ?? opened.error ?? notSent.undo.error
   const statusError = status.error
   return (
-    <li ref={li} className={['row', `s-${s.kind}`, next ? 'next' : '', active ? 'active' : '', a.status === 'NO_SHOW' ? 'struck' : '', swipe ? 'swipe' : ''].join(' ').trim()}>
+    <li ref={li} className={['row', `s-${s.kind}`, next ? 'next' : '', active ? 'active' : '', a.status === 'NO_SHOW' ? 'struck' : '', swipe ? 'swipe' : '', color ? 'doc' : ''].join(' ').trim()}
+      style={color ? { '--doc': color } as CSSProperties : undefined}>
       {swipe && canSwipeRemind && <span className="swipe-under swipe-right" aria-hidden="true">💬 Напомнить</span>}
       {swipe && canSwipeDone && <span className="swipe-under swipe-left" aria-hidden="true">✅ Состоялся</span>}
       <div className="row-slide">

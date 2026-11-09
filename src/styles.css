@@ -760,6 +760,10 @@ details.agreement-box { max-height: none; }
 .day-list .row { display: flex; align-items: stretch; gap: 6px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--separator); }
 .day-list .row.s-request .state { color: var(--req-ink); }
 .day-list .row.next { box-shadow: 0 0 0 2px var(--accent-soft); }
+/* Цвет врача на телефоне — полоска слева (как шапка колонки на компьютере); статус — заливкой строки и словом */
+.day-list .row.doc { box-shadow: inset 4px 0 0 var(--doc); }
+.day-list .row.doc.next { box-shadow: inset 4px 0 0 var(--doc), 0 0 0 2px var(--accent-soft); }
+.day-list .row.doc .row-button { padding-left: 14px; }
 .day-list .row.active { border-color: var(--accent); }
 .day-list .row.struck .name { text-decoration: line-through; color: var(--hint); }
 .day-list .row-button { flex: 1; display: grid; grid-template-columns: 52px 1fr auto; gap: 2px 8px; align-items: baseline; min-width: 0;
@@ -1081,14 +1085,18 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .pick-text strong { font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pick-text .hint { font-size: .88rem; }
 .pick-caret { flex: none; color: var(--hint); font-size: 1.1rem; }
-.pick-list { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none; border: 1px solid var(--separator);
+.pick-list { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 6px; border: 1px solid var(--separator);
   border-radius: 16px; background: var(--card); box-shadow: 0 12px 32px rgba(15, 42, 48, .18); max-height: 60vh; overflow-y: auto; animation: pick-in .15s ease-out; }
+.pick-list ul { margin: 0; padding: 0; list-style: none; }
 .pick-list li { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; cursor: pointer; }
 .pick-list li + li { margin-top: 2px; }
 .pick-list li:hover, .pick-list li:focus-visible { background: var(--sunken); outline: none; }
 .pick-list li[aria-selected=true] { background: var(--accent-soft); }
 .pick-list li[aria-selected=true] strong { color: var(--link); }
 .pick-list li:last-child { margin-top: 6px; border-top: 1px solid var(--separator); border-radius: 0 0 12px 12px; padding-top: 12px; }
+.pick-order { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin-top: 6px; padding: 8px 12px; border: 0; border-top: 1px solid var(--separator);
+  border-radius: 0 0 12px 12px; background: none; color: var(--link); font: inherit; font-size: .95rem; text-align: left; cursor: pointer; }
+.pick-order:hover, .pick-order:focus-visible { background: var(--sunken); outline: none; }
 .pick-check { flex: none; width: 20px; color: var(--link); font-weight: 700; font-size: 1.15rem; text-align: center; }
 @keyframes pick-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 

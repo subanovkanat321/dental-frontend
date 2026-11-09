@@ -19,8 +19,10 @@ import { freeMinutes } from './free'
 import { DateInput } from '../layout/DateInput'
 import { useMedia } from '../lib/useMedia'
 import { DoctorPicker } from './DoctorPicker'
+import { DoctorOrderDialog } from './DoctorOrderDialog'
+import { orderDoctors, useDoctorOrder } from './doctorOrder'
 import './doctorChips.css'
-import { AVATARS, initials, specialtyOf } from '../lib/avatars'
+import { colorOf as doctorColor, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { apptSpan, fromYesterday, offSpans, slotsHoursText, untilTomorrow, workSpans } from './workSpans'
 import { statusOf } from './status'
@@ -131,7 +133,14 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   }, [bookPatient, onBookingShown])
   const close = useCallback(() => setSide(null), [])
   // Ассистент видит только своих врачей (V68): чужие расписания ему не нужны
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
+  const clinicDoctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
+  // Порядок колонок, чипов и выбора врача: свой на устройстве (окно «Порядок врачей»), а если его нет —
+  // свой врач первым: третьему врачу на телефоне не листать вбок до своей колонки
+  const [doctorOrder, setDoctorOrder] = useDoctorOrder()
+  const [ordering, setOrdering] = useState(false)
+  const doctors = orderDoctors(clinicDoctors, doctorOrder, me.doctorId)
+  // Цвет врача — по списку клиники, не по порядку на экране: поменяли порядок — цвета не перепутались
+  const colorOf = (d: (typeof doctors)[number]) => doctorColor(clinicDoctors, d.id)
   // Чьё расписание: все врачи колонками или один. Выбор запоминается на устройстве (только id врача —
   // не личные данные). По умолчанию на телефоне — свой врач, на компьютере — все
   const [view, setViewState] = useState<number | 'all'>(() => {
@@ -334,7 +343,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const free = shown.map((d) => {
     const sl = slots[doctors.indexOf(d)]?.data
     const f = sl?.workingDay ? freeMinutes(sl.free ?? [], nowOrNull) : { minutes: 0, first: null }
-    return { doctorId: d.id!, name: d.fullName ?? '', color: AVATARS[doctors.indexOf(d) % AVATARS.length]!, canBook: canEditDoctor(me, d.id), ...f }
+    return { doctorId: d.id!, name: d.fullName ?? '', color: colorOf(d), canBook: canEditDoctor(me, d.id), ...f }
   })
   const bookAt = (doctorId: number, minutes: number) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })
 
@@ -470,7 +479,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         {/* Телефон: переключателя «День | Месяц» нет — месяц открывается нажатием на дату (лист снизу) */}
         {doctors.length > 1 && (narrow || doctors.length > 8 ? (
           // Телефон (и очень много врачей на компьютере): один выпадающий список вместо ряда
-          <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView} />
+          <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView}
+            colorDoctors={clinicDoctors} onOrder={() => setOrdering(true)} />
         ) : (
           // Компьютер: чипы с тем же цветным кружком, что у колонки врача, — видно, кто где
           <div className="doctor-chips" role="group" aria-label="Чьё расписание">
@@ -479,14 +489,21 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 <span className="avatar all" aria-hidden="true">👥</span>Все врачи
               </button>
             )}
-            {doctors.map((d, i) => (
+            {doctors.map((d) => (
               <button key={d.id} type="button" className="doctor-chip" aria-pressed={(weekMode ? weekDoctor : view) === d.id} onClick={() => setView(d.id!)}>
-                <span className="avatar" style={{ background: AVATARS[i % AVATARS.length] }} aria-hidden="true">{initials(d.fullName)}</span>
+                <span className="avatar" style={{ background: colorOf(d) }} aria-hidden="true">{initials(d.fullName)}</span>
                 {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
               </button>
             ))}
+            <button type="button" className="doctor-chip order" title="Порядок врачей" aria-label="Порядок врачей…" onClick={() => setOrdering(true)}>⇅</button>
           </div>
         ))}
+        {ordering && (
+          <DoctorOrderDialog doctors={doctors} myDoctorId={me.doctorId} colorDoctors={clinicDoctors}
+            onSave={(ids) => { setDoctorOrder(ids); setOrdering(false) }}
+            onReset={() => { setDoctorOrder(null); setOrdering(false) }}
+            onClose={() => setOrdering(false)} />
+        )}
 
         {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» над сеткой дня —
             под ней строка уходила за край экрана и её не замечали */}
@@ -497,7 +514,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
         )}
 
         {dayList ? (
-          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '' }))} date={date} onDate={setDate} selectedId={selected?.id}
+          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '', color: colorOf(d) }))} date={date} onDate={setDate} selectedId={selected?.id}
             onNewHere={bookable.length > 0 ? newHere : undefined}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />
@@ -519,7 +536,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               <div className="grid-corner" />
               {shown.map((d) => {
                 // Свой цвет врача — полоса над колонкой и слева на карточках; часы работы — под именем
-                const color = AVATARS[doctors.indexOf(d) % AVATARS.length]
+                const color = colorOf(d)
                 const sl = slots[doctors.indexOf(d)]?.data
                 const hoursText = slotsHoursText(sl)
                 return (
