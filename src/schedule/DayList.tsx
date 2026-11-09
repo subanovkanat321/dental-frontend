@@ -222,7 +222,10 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
             // «Все врачи» — списки врачей рядом, колонками; две — по половине экрана, больше двух — третья
             // выглядывает краем (peek: видно, что можно листать) и колонки листаются вбок
             return <>{many ? (
-              <div ref={columns} className={groups.length > 2 ? 'doctor-columns peek' : 'doctor-columns'} style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div>
+              // key={order}: сменили порядок — колонки строятся заново, а не переставляются внутри прокрутки. iPhone
+              // (WebKit) при перестановке в прокручиваемом блоке со scroll-snap оставлял «призрак» прежней колонки
+              // поверх соседней, пока экран не перерисуется
+              <div key={order} ref={columns} className={groups.length > 2 ? 'doctor-columns peek' : 'doctor-columns'} style={{ '--cols': groups.length } as CSSProperties}>{blocks}</div>
             ) : blocks}{empty}</>
           })()}
     </div>
