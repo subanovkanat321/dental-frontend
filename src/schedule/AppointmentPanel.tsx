@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { KidInfo } from '../patients/KidInfo'
 import { contactPhone } from '../lib/guardian'
 import { ask } from '../lib/confirm'
@@ -27,6 +27,7 @@ import { PaymentBox } from './PaymentBox'
 import { PatientExpenses } from '../patients/PatientExpenses'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
+import { colleagueMarkText, colleagueTimeOf } from './chairTime'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
 import { VisitDocs } from '../print/VisitDocs'
 import { LessonPicker } from '../learn/LessonButton'
@@ -183,6 +184,13 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
   // Главная кнопка — одна на карточку (DESIGN.md): после приёма, пока не оплачено, это «Принять оплату»
   const payPending = a.status === 'DONE' && seesMoney && a.paidSom == null
+  // Приём в рабочих часах коллеги по креслу (V187): слоты дня врача (те же, что у сетки и списка — обычно из кэша)
+  const daySlots = useQuery({
+    queryKey: ['slots', date, a.doctorId],
+    queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId: a.doctorId! } } })),
+    enabled: a.doctorId != null && a.status !== 'CANCELLED',
+  })
+  const colleague = colleagueTimeOf(a, daySlots.data?.chairTime)
   const sourceHint = a.bookedBy ? bookedByText(a.bookedBy) : a.source === 'PATIENT' ? 'Запись через бота'
     : a.source === 'WEB' ? (a.status === 'REQUESTED' ? '🌐 Заявка с сайта, без Telegram — подтвердите звонком' : '🌐 С сайта, без Telegram — бот не напомнит')
       : null
@@ -212,6 +220,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <LessonPicker key={`${a.id}-${a.serviceName ?? ''}`} serviceName={a.serviceName} patientId={a.patient.id} onClose={() => setLesson(false)} />
       )}
       <span className={`chip s-${s.kind} appt-status`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
+      {colleague && (
+        <p className="appt-chair-mark" role="note"><span aria-hidden="true">🪑 </span>{colleagueMarkText(colleague)}</p>
+      )}
 
       {/* Пациент: имя (→ его карточка), телефон, история одной строкой и важное из анкеты */}
       <section className="appt-patient" aria-label="Пациент">

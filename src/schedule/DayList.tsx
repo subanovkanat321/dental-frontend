@@ -14,6 +14,7 @@ import { serviceEmoji } from '../lib/serviceEmoji'
 import { MonthSheet } from './month/MonthSheet'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
+import { colleagueMarkText, colleagueTimeOf, listedChairTime } from './chairTime'
 import { useRowSwipe } from './useRowSwipe'
 import { useMedia } from '../lib/useMedia'
 import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
@@ -22,9 +23,10 @@ import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
+type ChairTime = Schemas['SlotsViewChairTime']
 
 type Item =
-  | { kind: 'appointment'; at: string; a: Appointment }
+  | { kind: 'appointment'; at: string; a: Appointment; chair?: ChairTime }
   | { kind: 'free'; at: string; end: string; doctorId: number }
   | { kind: 'pause'; at: string; end: string; title: string; emoji: string; doctorId: number }
   | { kind: 'colleague'; at: string; end: string; name: string; doctorId: number }
@@ -102,11 +104,13 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   const nameOf = new Map(doctors.map((d) => [d.id, shortName(d.name)]))
   // Строки одного врача по времени: приёмы, свободные окна, перерывы
   const itemsOf = (d: Doctor, i: number): Item[] => [
-    ...list.filter((a) => a.doctorId === d.id).map((a) => ({ kind: 'appointment' as const, at: a.startAt!, a })),
+    ...list.filter((a) => a.doctorId === d.id).map((a) => ({ kind: 'appointment' as const, at: a.startAt!, a, chair: colleagueTimeOf(a, slots[i]?.data?.chairTime) })),
     ...(slots[i]?.data?.free ?? []).map((w) => ({ kind: 'free' as const, at: w.start!, end: w.end!, doctorId: d.id })),
     ...(slots[i]?.data?.breaks ?? []).map((b) => ({ kind: 'pause' as const, at: b.start!, end: b.end!, title: b.title ?? '', emoji: b.emoji ?? '', doctorId: d.id })),
-    // Часы коллеги по креслу (V187): записать можно, сервер спросит «Коллега предупреждён?»
-    ...(slots[i]?.data?.workingDay ? slots[i]?.data?.chairTime ?? [] : []).map((t) => ({ kind: 'colleague' as const, at: t.start!, end: t.end!, name: t.doctorName ?? '', doctorId: d.id })),
+    // Часы коллеги по креслу (V187): записать можно, сервер спросит «Коллега предупреждён?». В часах врача — всегда,
+    // вне их и в выходной — только если там его приём (listedChairTime): без шума от пустого вечера коллеги
+    ...listedChairTime(slots[i]?.data, date, list.filter((a) => a.doctorId === d.id))
+      .map((t) => ({ kind: 'colleague' as const, at: t.start!, end: t.end!, name: t.doctorName ?? '', doctorId: d.id })),
   ].sort((x, y) => x.at.localeCompare(y.at))
   const groups = doctors.map((d, i) => ({ doctor: d, items: itemsOf(d, i), booked: list.filter((a) => a.doctorId === d.id).length }))
   const items = groups.flatMap((g) => g.items)
@@ -166,7 +170,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                   {swipe && g.items.some((i) => i.kind === 'appointment') && <SwipeHint />}
                   <ul className="rows">
                     {g.items.map((item) => item.kind === 'appointment'
-                      ? <Row key={`a${item.a.id}`} a={item.a} next={item.a === next} active={item.a.id === selectedId}
+                      ? <Row key={`a${item.a.id}`} a={item.a} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
                           canEdit={canEditDoctor(item.a.doctorId!)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} swipe={swipe} />
                       : item.kind === 'colleague' ? (
                         <li key={`c${item.at}`} className="row pause colleague" role="note" aria-label={`${timeOf(item.at)}–${timeOf(item.end)}: время ${item.name}`}>
@@ -242,8 +246,10 @@ function FreeRow({ start, end, canEdit, doctor, onPick }: {
  * Ошибка — под строкой. WhatsApp — только когда загружены настройки (подпись клиники и ссылка на бота).
  * Телефон (swipe): свайп вправо — то же напоминание, влево — «Приём состоялся» с «Вернуть» (useRowSwipe).
  */
-function Row({ a, next, active, canEdit, money, onOpen, swipe = false }: {
+function Row({ a, chair, next, active, canEdit, money, onOpen, swipe = false }: {
   a: Appointment
+  /** Часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — бейдж «🪑 время Айгерим» */
+  chair?: ChairTime
   /** Видит ли деньги этого приёма (seesMoneyOf): иначе сервер прислал их пустыми — строки «предоплата» нет */
   money: boolean
   next: boolean
@@ -303,11 +309,16 @@ function Row({ a, next, active, canEdit, money, onOpen, swipe = false }: {
       {swipe && canSwipeDone && <span className="swipe-under swipe-left" aria-hidden="true">✅ Состоялся</span>}
       <div className="row-slide">
         <button type="button" className="row-button" onClick={() => onOpen(a)}
-          aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
+          aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}${chair ? `. ${colleagueMarkText(chair)}` : ''}`}>
           <span className="time num">{timeOf(a.startAt!)}</span>
           <span className="name">{a.patient?.fullName} <ApptBadges appointment={a} money={money} /></span>
           <span className="end num hint">{timeOf(a.endAt!)}</span>
           <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {a.serviceName}</span> : null}</span>
+          {chair && (
+            <span className="row-note chair-mark" title={colleagueMarkText(chair)}>
+              <span aria-hidden="true">🪑 </span>время {shortName(chair.doctorName ?? 'коллеги')}
+            </span>
+          )}
           {a.comment && <span className="row-note">{a.comment}</span>}
           {a.depositStatus && money && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
             <span className={`row-note tone-${a.depositStatus === 'RECEIVED' ? 'ok' : 'wait'}`}>

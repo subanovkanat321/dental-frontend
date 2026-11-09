@@ -13,6 +13,7 @@ import { ApptBadges, BadgesLegend } from './ApptBadges'
 import { DayList } from './DayList'
 import { CancelledList } from './CancelledList'
 import { ChairTimeBands } from './ChairTimeBands'
+import { colleagueTimeOf } from './chairTime'
 import { DaySummary } from './DaySummary'
 import { freeMinutes } from './free'
 import { DateInput } from '../layout/DateInput'
@@ -597,7 +598,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                       )
                     })}
                     {/* Часы коллеги по креслу (V187) — поверх «Свободно»: записать можно, но с вопросом */}
-                    <ChairTimeBands slots={sl} date={date} y={y} />
+                    <ChairTimeBands slots={sl} date={date} y={y} from={from} to={to}
+                      appointments={(q?.data ?? []).filter((a) => a.status !== 'CANCELLED')} />
                     {nowTop != null && <div className="grid-now" style={{ top: nowTop }} />}
                     {q?.isPending && <Loading variant="inline" className="grid-loading" />}
                     {q?.error && <div className="error grid-loading">{q.error.message}</div>}
@@ -624,7 +626,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                               <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt!)}</span>
                             </span>
                             <span className="appt-name">{a.patient?.fullName}</span>
-                            <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} />
+                            <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} chair={colleagueTimeOf(a, sl?.chairTime)} />
                             {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
                             <span className={`appt-state${short || h > 56 ? '' : ' wide-only'}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>
                             <span className="appt-sub">
@@ -652,7 +654,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             )}
           </div>
         )}
-        {!dayList && !monthMode && doctors.length > 0 && <BadgesLegend />}
+        {!dayList && !monthMode && doctors.length > 0 && <BadgesLegend chair={Boolean(chairs.data?.some((c) => (c.doctorIds?.length ?? 0) > 1))} />}
       </section>
       {summary && (
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}

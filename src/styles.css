@@ -2272,14 +2272,22 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .grid-head-text .chair-badge { justify-self: start; }
 .grid-chair { pointer-events: auto; cursor: not-allowed; }
 /* Часы коллеги по креслу (V187): «можно, но с вопросом» — тон ожидания, своя штриховка (не как «кресло занято»).
-   Поверх «Свободно» (z-index 3), но нажатия пропускает к нему; подпись — внизу справа, чтобы не закрыть «Свободно» */
+   Поверх «Свободно» (тот же z-index 2, но позже в разметке) и под приёмами (они ещё позже; на них — значок 🪑), нажатия
+   пропускает к «Свободно»; подпись — внизу справа, чтобы не закрыть «Свободно». Вне часов врача — поверх серой
+   штриховки «нерабочее»: лёгкая заливка тона ожидания, чтобы полоса не терялась на сером */
 .grid-colleague {
-  position: absolute; left: 0; right: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: flex-end; padding: 2px 4px;
+  position: absolute; left: 0; right: 0; z-index: 2; display: flex; align-items: flex-end; justify-content: flex-end; padding: 2px 4px;
   border-left: 3px solid var(--status-wait); pointer-events: none; overflow: hidden;
-  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--status-wait) 28%, transparent) 0 1.5px, transparent 1.5px 9px);
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--status-wait) 28%, transparent) 0 1.5px, transparent 1.5px 9px),
+    color-mix(in srgb, var(--status-wait) 7%, transparent);
 }
 .grid-colleague span { max-width: 100%; padding: 0 6px; border-radius: var(--r-sm); background: var(--wait-bg); color: var(--wait-ink);
   font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* …и строкой в карточке приёма под статусом */
+.appt-chair-mark { margin: 0; padding: 6px 10px; border-radius: var(--r-sm); background: var(--wait-bg); color: var(--wait-ink); font-size: .9rem; box-shadow: inset 3px 0 0 var(--status-wait); }
+/* Приём в часах коллеги по креслу (V187) — бейдж «🪑 время Айгерим» в строке списка дня */
+.day-list .row .row-note.chair-mark, .doctor-columns .row .row-note.chair-mark { justify-self: start; padding: 0 8px; border-radius: var(--r-sm);
+  background: var(--wait-bg); color: var(--wait-ink); font-size: .8rem; }
 .day-list .row.colleague, .doctor-columns .row.colleague { background: var(--wait-bg); color: var(--wait-ink); box-shadow: inset 3px 0 0 var(--status-wait); }
 .chair-conflicts { margin: 6px 0 0; padding-left: 18px; }
 

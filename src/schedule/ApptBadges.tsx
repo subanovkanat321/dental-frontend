@@ -1,11 +1,13 @@
 import type { Schemas } from '../api/client'
 import { somText } from '../lib/time'
+import { colleagueMarkText } from './chairTime'
 
 type Appointment = Schemas['AppointmentView']
 
 /**
  * Значки на карточке приёма — то, что регистратуре важно увидеть, не открывая карточку:
- * ⭐ первый визит, 💬 есть комментарий, 🧾 долг по приёму (только тем, кто видит деньги этого врача).
+ * 🪑 записан в часы коллеги по креслу, ⭐ первый визит, 💬 есть комментарий, 🧾 долг по приёму (только тем, кто
+ * видит деньги этого врача).
  * Подтверждение («Придёт 👍») уже в статусе — здесь не дублируем. Подсказка — при наведении, и та же
  * расшифровка — в легенде под расписанием.
  *
@@ -14,17 +16,29 @@ type Appointment = Schemas['AppointmentView']
  * рисует CSS из data-атрибутов: текст в DOM и имя для скринридера (aria-label) не меняются.
  */
 type Badge = { icon: string; text: string; short?: string; long: string }
+type ChairTime = Schemas['SlotsViewChairTime']
 
-function badgesOf(a: Appointment, money: boolean): Badge[] {
+function badgesOf(a: Appointment, money: boolean, chair: ChairTime | undefined): Badge[] {
   const list: Badge[] = []
+  // Приём в рабочих часах коллеги по креслу (V187; colleagueTimeOf) — первым: это про само время приёма
+  if (chair) {
+    const name = chair.doctorName ?? 'коллеги'
+    list.push({ icon: '🪑', text: colleagueMarkText(chair), short: firstName(name), long: `время ${name}` })
+  }
   if (a.firstVisit && a.status !== 'CANCELLED') list.push({ icon: '⭐', text: 'Первый визит', short: 'Новый', long: 'Первый визит' })
   if (a.comment?.trim()) list.push({ icon: '💬', text: `Комментарий: ${a.comment.trim()}`, long: 'Комментарий' })
   if (money && (a.debtSom ?? 0) > 0) list.push({ icon: '🧾', text: `Долг ${somText(a.debtSom!)}`, long: `Долг ${somText(a.debtSom!)}` })
   return list
 }
 
-export function ApptBadges({ appointment, money }: { appointment: Appointment; money: boolean }) {
-  const list = badgesOf(appointment, money)
+/** «Айгерим С.» → «Айгерим»: среднему блоку — коротко. */
+function firstName(name: string): string {
+  return name.trim().split(/\s+/)[0] ?? name
+}
+
+/** @param chair часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — значок 🪑 */
+export function ApptBadges({ appointment, money, chair }: { appointment: Appointment; money: boolean; chair?: ChairTime }) {
+  const list = badgesOf(appointment, money, chair)
   if (!list.length) return null
   return (
     <span className="appt-badges">
@@ -35,7 +49,7 @@ export function ApptBadges({ appointment, money }: { appointment: Appointment; m
   )
 }
 
-/** Легенда значков — одной строкой под расписанием. */
-export function BadgesLegend() {
-  return <p className="badges-legend hint small">⭐ первый визит · 💬 комментарий · 🧾 долг</p>
+/** Легенда значков — одной строкой под расписанием; 🪑 — только в клинике с общими креслами. */
+export function BadgesLegend({ chair = false }: { chair?: boolean }) {
+  return <p className="badges-legend hint small">⭐ первый визит · 💬 комментарий · 🧾 долг{chair ? ' · 🪑 в часы коллеги по креслу' : ''}</p>
 }

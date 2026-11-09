@@ -6,6 +6,7 @@ import { ApptBadges } from '../ApptBadges'
 import { useApptHover } from '../useApptHover'
 import { CancelledList } from '../CancelledList'
 import { ChairTimeBands } from '../ChairTimeBands'
+import { colleagueTimeOf } from '../chairTime'
 import { dateOf, dayMinutes, dayTitle, minutesOf, timeOf } from '../../lib/time'
 import { apptSpan, fromYesterday, offSpans, touchesDay, untilTomorrow, workSpans } from '../workSpans'
 import { hhmm, PAD, PX, useNowMinutes } from '../gridScale'
@@ -166,10 +167,11 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
                   </button>
                 )
               })}
-              <ChairTimeBands slots={sl} date={date} y={y} />
+              <ChairTimeBands slots={sl} date={date} y={y} from={from} to={to} appointments={own} />
               {date === today && showNow && <div className="grid-now" style={{ top: y(nowMinutes) }} />}
               {own.map((a) => (
                 <Block key={a.id} a={a} date={date} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)}
+                  chair={colleagueTimeOf(a, sl?.chairTime)}
                   moving={ghost?.appointment.id === a.id || (move.isPending && move.variables?.appointment.id === a.id)}
                   drag={canDrag(a, me) && !fromYesterday(a, date) ? handlers(a) : undefined}
                   onClick={() => { if (!consumeDrag()) onOpen(a) }} />
@@ -218,8 +220,10 @@ function Hours({ slots: sl, date, from, to, height, y }: {
 const WEEK_SHORT = 40
 
 /** Приём в колонке дня: заливка статуса, время и имя; можно тащить — курсор «рука». */
-function Block({ a, date, me, y, selected, moving, drag, hover, onClick }: {
+function Block({ a, date, me, y, selected, moving, drag, hover, onClick, chair }: {
   a: Appointment
+  /** Часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — значок 🪑 */
+  chair?: Schemas['SlotsViewChairTime']
   /** День колонки: приём через полночь виден в обоих днях, каждый раз — своей частью. */
   date: string
   /** Всплывающая карточка при наведении (useApptHover); нажатие прячет её и начинает перетаскивание. */
@@ -246,7 +250,7 @@ function Block({ a, date, me, y, selected, moving, drag, hover, onClick }: {
       title={drag ? 'Перетащите мышью на другое время или день' : canEditPast(a, me) ? 'Прошедший приём не переносят' : undefined}>
       <span className="appt-time num">{short ? timeOf(a.startAt!) : range}</span>
       <span className="appt-name">{a.patient?.fullName}</span>
-      <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} />
+      <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} chair={chair} />
       {short && <span className="ico" aria-hidden="true">{s.icon}</span>}
       {h > 56 && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
     </button>
