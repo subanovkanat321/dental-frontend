@@ -149,8 +149,9 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
               {shown.map((s: Supply) => (
                 <tr key={s.id} className={selected?.id === s.id ? 'active' : undefined}>
                   <td><button type="button" className="row-link" onClick={() => setSide({ kind: 'supply', id: s.id! })}>{s.name}</button></td>
-                  <td className={`nowrap strong ${s.quantity === 0 ? 'tone-bad' : s.low ? 'tone-wait' : ''}`}>
-                    {s.quantity === 0 ? 'закончился' : `${s.quantity} ${s.unit}${s.low ? ' · мало' : ''}`}
+                  {/* Остаток 0 и не «заканчивается» — материал из стартового набора, остаток ещё не вносили (сервер: fresh) */}
+                  <td className={`nowrap strong ${s.quantity === 0 && !s.low ? 'hint' : s.quantity === 0 ? 'tone-bad' : s.low ? 'tone-wait' : ''}`}>
+                    {s.quantity === 0 && !s.low ? 'не внесён' : s.quantity === 0 ? 'закончился' : `${s.quantity} ${s.unit}${s.low ? ' · мало' : ''}`}
                   </td>
                   <td className="hint nowrap">{s.minQuantity} {s.unit}</td>
                   {separate && <td className="hint">{s.doctorName ?? 'общий'}</td>}

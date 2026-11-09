@@ -9,6 +9,7 @@ import { isAssistant } from '../lib/roles'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
+import { Fold } from '../layout/Fold'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -102,9 +103,12 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
-      <p className={`stock-big ${s.quantity === 0 ? 'tone-bad' : s.low ? 'tone-wait' : 'tone-ok'}`}>
-        {s.quantity === 0 ? 'Закончился' : `Осталось: ${s.quantity} ${s.unit}${s.low ? ' — мало' : ''}`}
-      </p>
+      {/* Остаток 0 и не «заканчивается» — из стартового набора, остаток ещё не вносили (сервер: fresh) */}
+      {s.quantity === 0 && !s.low
+        ? <p className="stock-big hint">Остаток не внесён — внесите приход: «＋ Пришла поставка»</p>
+        : <p className={`stock-big ${s.quantity === 0 ? 'tone-bad' : s.low ? 'tone-wait' : 'tone-ok'}`}>
+          {s.quantity === 0 ? 'Закончился' : `Осталось: ${s.quantity} ${s.unit}${s.low ? ' — мало' : ''}`}
+        </p>}
       {s.orderedAt && <p className="hint">Заказан {shortDate(s.orderedAt)}{s.orderedBy ? ` · ${s.orderedBy}` : ''}</p>}
 
       <div className="form">
@@ -128,27 +132,29 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
         {done && <p className="tone-ok" role="status">{done}</p>}
       </div>
 
-      {/* Чей склад: переносят те, кто видит весь склад, — админ и регистратура (сервер: 403 врачу и ассистенту) */}
-      {Boolean(me.clinic?.separateSupplies) && !isAssistant(me) && (me.admin || me.reception || me.doctorId == null) && (
-        <OwnerField supply={s} me={me} onMoved={onMoved} />
-      )}
+      {/* Название, единица, минимум и «Чей склад» нужны редко — свёрнуты, чтобы карточка была короче */}
+      <Fold title="Настройки" meta={`мин. ${s.minQuantity} ${s.unit}`}>
+        {/* Чей склад: переносят те, кто видит весь склад, — админ и регистратура (сервер: 403 врачу и ассистенту) */}
+        {Boolean(me.clinic?.separateSupplies) && !isAssistant(me) && (me.admin || me.reception || me.doctorId == null) && (
+          <OwnerField supply={s} me={me} onMoved={onMoved} />
+        )}
 
-      <form className="form" aria-label="Настройки материала" onSubmit={submitSettings}>
-        <h3>Настройки</h3>
-        <label className="field"><span>Название</span>
-          <input value={settings.name} required maxLength={100} onChange={(e) => setSettings({ ...settings, name: e.target.value })} />
-        </label>
-        <div className="row">
-          <label className="field"><span>Единица</span>
-            <input value={settings.unit} required maxLength={20} onChange={(e) => setSettings({ ...settings, unit: e.target.value })} />
+        <form className="form" aria-label="Настройки материала" onSubmit={submitSettings}>
+          <label className="field"><span>Название</span>
+            <input value={settings.name} required maxLength={100} onChange={(e) => setSettings({ ...settings, name: e.target.value })} />
           </label>
-          <label className="field"><span>Минимум</span>
-            <input type="number" min={0} value={settings.minQuantity} onChange={(e) => setSettings({ ...settings, minQuantity: e.target.value })} />
-          </label>
-        </div>
-        {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}
-        <button type="submit" className="btn" disabled={save.isPending}>Сохранить</button>
-      </form>
+          <div className="row">
+            <label className="field"><span>Единица</span>
+              <input value={settings.unit} required maxLength={20} onChange={(e) => setSettings({ ...settings, unit: e.target.value })} />
+            </label>
+            <label className="field"><span>Минимум</span>
+              <input type="number" min={0} value={settings.minQuantity} onChange={(e) => setSettings({ ...settings, minQuantity: e.target.value })} />
+            </label>
+          </div>
+          {save.error && <p className="error" role="alert">{Object.values(save.error.fieldErrors)[0] ?? save.error.message}</p>}
+          <button type="submit" className="btn" disabled={save.isPending}>Сохранить</button>
+        </form>
+      </Fold>
 
       <section>
         <h3>История</h3>

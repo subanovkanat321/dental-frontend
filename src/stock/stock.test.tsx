@@ -183,6 +183,8 @@ test('«Чей склад» в карточке: админ переносит �
   )
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
+  // «Чей склад» — в свёрнутых «Настройках» карточки
+  await userEvent.click(within(screen.getByRole('complementary', { name: 'Материал' })).getByRole('button', { name: /^Настройки/ }))
   const owner = within(screen.getByRole('group', { name: 'Чей склад' }))
   await choose(owner.getByLabelText('Чей склад'), 'Дастан Т.')
 
@@ -203,6 +205,8 @@ test('«Чей склад»: дубль названия у врача — те�
   )))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
+  // «Чей склад» — в свёрнутых «Настройках» карточки
+  await userEvent.click(within(screen.getByRole('complementary', { name: 'Материал' })).getByRole('button', { name: /^Настройки/ }))
   const owner = within(screen.getByRole('group', { name: 'Чей склад' }))
   await choose(owner.getByLabelText('Чей склад'), 'Дастан Т.')
   expect(await owner.findByRole('alert')).toHaveTextContent('У врача Дастан Т. уже есть «Анестетик»')
@@ -221,4 +225,16 @@ test('«Чей склад» не видно: один склад на всех �
   await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
   expect(screen.getByRole('complementary', { name: 'Материал' })).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: 'Чей склад' })).not.toBeInTheDocument()
+})
+
+test('стартовый материал без остатка — «не внесён», а не «закончился», и не в «Только заканчивается»', async () => {
+  const fresh: Supply = { id: 9, name: 'Слепочная масса', unit: 'уп', quantity: 0, minQuantity: 0, low: false }
+  backend([glove, cotton, fresh])
+  renderApp()
+  const row = (await screen.findByRole('button', { name: 'Слепочная масса' })).closest('tr')!
+  expect(row).toHaveTextContent('не внесён')
+  expect(row).not.toHaveTextContent('закончился')
+  expect((await screen.findByRole('button', { name: 'Валики' })).closest('tr')!).toHaveTextContent('закончился')
+  await userEvent.click(within(row).getByRole('button', { name: 'Слепочная масса' }))
+  expect(await screen.findByText(/Остаток не внесён/)).toBeInTheDocument()
 })
