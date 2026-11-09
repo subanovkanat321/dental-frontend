@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -341,7 +341,8 @@ test('«Вставить код» — по нажатию берёт 6 цифр 
   const field = await screen.findByRole('textbox', { name: 'Код подтверждения' })
   await navigator.clipboard.writeText('Код: 654 321')
   await user.click(screen.getByRole('button', { name: 'Вставить код' }))
-  expect(field).toHaveValue('654321')
+  // Буфер читается асинхронно: в полном параллельном прогоне значение появляется не сразу после нажатия
+  await waitFor(() => expect(field).toHaveValue('654321'))
   await navigator.clipboard.writeText('привет')
   await user.click(screen.getByRole('button', { name: 'Вставить код' }))
   expect(await screen.findByText(/В буфере нет кода из 6 цифр/)).toBeInTheDocument()
