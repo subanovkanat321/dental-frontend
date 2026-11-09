@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useReminderNotSent } from './useReminderNotSent'
-import { useReminderText, useWaitlist } from '../api/settings'
+import { useReminderText } from '../api/settings'
 import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { addDays, emptyDayText, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../lib/time'
@@ -22,7 +22,6 @@ import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
-type Waiting = Schemas['WaitlistView']
 
 type Item =
   | { kind: 'appointment'; at: string; a: Appointment }
@@ -40,14 +39,6 @@ function dayTitle(date: string, today: string): { main: string; sub: string } {
   const weekday = WEEKDAY.format(at0(date))
   const dayMonth = DAY_MONTH.format(at0(date))
   return near ? { main: near, sub: `${weekday}, ${dayMonth}` } : { main: weekday.replace(/^./, (x) => x.toUpperCase()), sub: dayMonth }
-}
-
-/** Пациент из листа ожидания помещается в окно: по длительности и, если уже записан, окно раньше его приёма. */
-function fits(w: Waiting, start: string, end: string, doctorId: number): boolean {
-  if (w.doctorId != null && w.doctorId !== doctorId) return false
-  const sameDoctor = !w.upcoming || w.upcoming.doctorId === doctorId
-  const earlier = !w.upcoming?.startAt || !sameDoctor || start < w.upcoming.startAt
-  return earlier && (w.durationMinutes ?? 30) <= (Date.parse(end) - Date.parse(start)) / 60_000
 }
 
 type Doctor = { id: number; name: string }
@@ -95,7 +86,6 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
       refetchInterval: 60_000,
     })),
   })
-  const waitlist = useWaitlist()
   const single = many ? null : doctors[0]
   const seesAllMoney = seesAllMoneyOf(me)
   const seesMoney = single ? seesAllMoney || single.id === me.doctorId : seesAllMoney
@@ -193,7 +183,6 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                       ) : (
                         <FreeRow key={`f${item.at}`} start={item.at} end={item.end} canEdit={canEditDoctor(item.doctorId)}
                           doctor={many ? g.doctor.name : undefined}
-                          waiting={(waitlist.data ?? []).filter((w) => fits(w, item.at, item.end, item.doctorId)).length}
                           onPick={() => onNew(item.doctorId, minutesOf(item.at))} />
                       ))}
                     {g.items.length === 0 && <li className="hint day-empty">Нет записей</li>}
@@ -228,16 +217,15 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   )
 }
 
-function FreeRow({ start, end, canEdit, doctor, waiting, onPick }: {
+function FreeRow({ start, end, canEdit, doctor, onPick }: {
   start: string
   end: string
   canEdit: boolean
   /** «Все врачи» (узкая колонка): коротко «до 13:00» */
   doctor?: string
-  waiting: number
   onPick: () => void
 }) {
-  const text = <>{doctor ? 'до' : 'свободно до'} {timeOf(end)}{waiting > 0 && <span className="waiting"> · ждут: {waiting}</span>}</>
+  const text = <>{doctor ? 'до' : 'свободно до'} {timeOf(end)}</>
   if (!canEdit) return <li className="row free readonly"><span className="time num">{timeOf(start)}</span><span className="hint">{text}</span></li>
   return (
     <li className="row free">

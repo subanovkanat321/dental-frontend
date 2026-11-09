@@ -768,7 +768,6 @@ details.agreement-box { max-height: none; }
 .day-list .row.free .row-button { grid-template-columns: 52px 1fr auto; }
 .day-list .row.free .plus { color: var(--accent); font-weight: 700; }
 .day-list .row.free.readonly { padding: 10px; gap: 8px; }
-.day-list .row .waiting { color: var(--wait-ink); font-weight: 600; }
 .day-list .row.pause { padding: 10px; gap: 8px; background: var(--sunken); color: var(--hint); }
 .remind-quick { flex: none; align-self: center; width: 44px; height: 44px; margin-right: 6px; border: 1px solid var(--line-strong); border-radius: 50%;
   background: var(--card); color: var(--ok-ink); font: 700 .78rem var(--display); cursor: pointer; }
