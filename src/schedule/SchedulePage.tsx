@@ -250,12 +250,15 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
     const top = el.getBoundingClientRect().top + window.scrollY
     el.style.setProperty('--grid-top', `${Math.round(top)}px`)
   })
+  // «Неделя» или «Месяц» — сетки дня нет: вернулись на «День» — сетка новая (прокрутка с 00:00), снова к «сейчас»
+  const gridShown = !weekMode && !monthMode
   useEffect(() => {
+    if (!gridShown) { scrolledFor.current = null; return }
     if (!ready || !grid.current || scrolledFor.current === date) return
     scrolledFor.current = date
     const target = nowTop ?? firstTop
     if (target != null) grid.current.scrollTop = Math.max(0, target - 80)
-  }, [ready, date, nowTop, firstTop])
+  }, [gridShown, ready, date, nowTop, firstTop])
 
   // Полоса «Сегодня»: что требует действия — одним рядом (DESIGN.md → Components)
   const seesMoney = seesAllMoney(me) || me.doctorId != null
