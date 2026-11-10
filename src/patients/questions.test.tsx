@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { readDeepLink } from '../lib/deepLink'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Question = Schemas['PatientQuestionsQuestionView']
@@ -59,9 +59,9 @@ test('«Вопросы»: бейдж, список, черновик ИИ пра
   window.location.hash = '/patients'
   const { answers } = backend({ ai: true })
   renderApp()
-  // Число новых — у раздела в меню и на вкладке
-  expect(await screen.findByLabelText('Вопросов ждут ответа: 2')).toHaveTextContent('2')
-  await userEvent.click(await screen.findByRole('tab', { name: 'Вопросы · 2' }))
+  // Число новых — у раздела в меню (сумма подразделов: лист ожидания пуст) и у подраздела «Вопросы»
+  expect(await screen.findByLabelText('Пациенты: новое — 2')).toHaveTextContent('2')
+  await userEvent.click(await findSub('Вопросы · 2'))
   const table = await screen.findByRole('table', { name: 'Вопросы пациентов' })
   expect(table).toHaveTextContent('Айгуль Т.')
   expect(table).toHaveTextContent('Нет в базе клиники')
@@ -79,7 +79,7 @@ test('«Вопросы»: бейдж, список, черновик ИИ пра
   await userEvent.click(within(panel).getByRole('button', { name: 'Отправить' }))
   expect(await within(panel).findByRole('status')).toHaveTextContent('Ответ отправлен пациенту')
   expect(answers).toEqual([{ text: 'Здравствуйте! Чистка — от 2500 сом, точная стоимость — после осмотра. Ждём вас!' }])
-  expect(await screen.findByRole('tab', { name: 'Вопросы · 1' })).toBeInTheDocument()
+  expect(await findSub('Вопросы · 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('tab', { name: 'Отвеченные' }))
   expect(await screen.findByRole('table', { name: 'Вопросы пациентов' })).toHaveTextContent('Айгуль Т.')
@@ -89,7 +89,7 @@ test('без ИИ кнопки черновика нет: отвечают вр�
   window.location.hash = '/patients'
   const { answers, drafts } = backend({ ai: false })
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: /Вопросы/ }))
+  await userEvent.click(await findSub(/Вопросы/))
   await userEvent.click(await screen.findByRole('button', { name: 'Нет в базе клиники' }))
   const panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
   expect(await within(panel).findByText(/впервые/)).toBeInTheDocument()
@@ -132,7 +132,7 @@ test('ИИ-администратор бота: «🤖 Ответил ИИ» с 
     http.get('*/api/patient-questions/:id', ({ params }) => HttpResponse.json(questions.find((q) => q.id === Number(params.id))!)),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: /Вопросы/ }))
+  await userEvent.click(await findSub(/Вопросы/))
   expect(await screen.findByText(/сначала отвечает ИИ-помощник/)).toBeInTheDocument()
   const waiting = await screen.findByRole('table', { name: 'Вопросы пациентов' })
   expect(waiting).toHaveTextContent('Передано сотрудникам')
@@ -173,7 +173,7 @@ test('ИИ записал по «Да» пациента — пометка в �
     http.get('*/api/patient-questions/:id', () => HttpResponse.json(booked)),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: /Вопросы/ }))
+  await userEvent.click(await findSub(/Вопросы/))
   await userEvent.click(await screen.findByRole('tab', { name: 'Отвеченные' }))
   const done = await screen.findByRole('table', { name: 'Вопросы пациентов' })
   await vi.waitFor(() => expect(done).toHaveTextContent('🤖 ИИ записал (пациент подтвердил)'))

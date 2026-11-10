@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup, configure } from '@testing-library/react'
 
+import { resetSubs } from '../lib/sub'
 import { server } from './server'
 
 // findBy/waitFor ждут до 5 с, а не 1 с по умолчанию: под нагрузкой (CI, параллельные прогоны)
@@ -13,6 +14,8 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => {
   server.resetHandlers()
   cleanup()
+  // Подраздел (#/cash/salary) запоминается в модуле — следующий тест начинает с подраздела по умолчанию
+  resetSubs()
 })
 afterAll(() => server.close())
 

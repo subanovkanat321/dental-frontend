@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, findSub, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -118,7 +118,7 @@ test('«Касса → Аналитика»: промокоды за перио�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  await user.click(await findSub('Аналитика'))
   const chart = await screen.findByRole('region', { name: 'Промокоды' })
   const table = await within(chart).findByRole('table', { name: 'Промокоды за период' })
   // Код без записей за период не показываем

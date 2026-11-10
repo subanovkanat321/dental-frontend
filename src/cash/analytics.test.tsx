@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 
 beforeEach(() => {
@@ -47,7 +47,7 @@ test('аналитика: выручка по месяцам, по врачам,
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  await user.click(await findSub('Аналитика'))
 
   const months = await screen.findByRole('region', { name: 'Выручка за 6 месяцев' })
   // Главная цифра — последний полный месяц (текущий идёт): 40 000, как месяцем раньше
@@ -109,7 +109,7 @@ test('аналитика: ошибка сервера — сообщение, а
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  await user.click(await findSub('Аналитика'))
   const months = await screen.findByRole('region', { name: 'Выручка за 6 месяцев' })
   expect(await within(months).findByText('Нет доступа к выручке')).toBeInTheDocument()
   expect(within(months).queryByText(/0 сом за/)).not.toBeInTheDocument()
@@ -131,7 +131,7 @@ test('аналитика: выручка по дням — среднее, лу�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  await user.click(await findSub('Аналитика'))
   const chart = await screen.findByRole('region', { name: 'Выручка по дням' })
   // Текстовая сводка: среднее за день с оплатами и сколько таких дней
   expect(await within(chart).findByLabelText('Среднее за день')).toHaveTextContent(/8\s500 сом в среднем за день с оплатами · таких дней 2 из 30/)
@@ -159,7 +159,7 @@ test('аналитика: выручка по дням — оплат нет', a
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  await user.click(await findSub('Аналитика'))
   const chart = await screen.findByRole('region', { name: 'Выручка по дням' })
   expect(await within(chart).findByText('Оплат за этот период нет')).toBeInTheDocument()
   expect(within(chart).queryByRole('group')).not.toBeInTheDocument()
@@ -168,7 +168,7 @@ test('аналитика: выручка по дням — оплат нет', a
 test('«Аналитика»: под «30 дней / Месяц» — какие именно дни считаются', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  await userEvent.click(await findSub('Аналитика'))
   expect(await screen.findByLabelText('Даты периода')).toHaveTextContent('последние 30 дней по сегодня')
   await userEvent.click(screen.getByRole('button', { name: 'Месяц' }))
   expect(screen.getByLabelText('Даты периода')).toHaveTextContent(/с 1-го числа|месяц только начался/)

@@ -1,10 +1,10 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn, weekLabel } from '../lib/time'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { pickDate } from '../test/date'
 import { choose } from '../test/select'
@@ -52,8 +52,8 @@ test('расходы: список по статьям, прибыль, доба
   const user = userEvent.setup()
   renderApp()
 
-  await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
-  expect(await screen.findByLabelText('Расходы за месяц')).toHaveTextContent('35 000')
+  await user.click(await findSub('Расходы'))
+  await waitFor(() => expect(screen.getByLabelText('Расходы за месяц')).toHaveTextContent('35 000'))
   // Структура расходов — бублик: доли в описании, легенда с суммой и процентом, в центре — итог месяца
   expect(screen.getByRole('img', { name: /^Расходы по статьям:/ }).getAttribute('aria-label')?.replace(/\s/g, ' '))
     .toBe('Расходы по статьям: Аренда 30 000 сом (86%), Техник 5 000 сом (14%)')
@@ -97,7 +97,7 @@ test('прибыль: аренда кресла, полученная от вр�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
+  await user.click(await findSub('Расходы'))
   const profit = await screen.findByLabelText('Прибыль за месяц')
   expect(within(profit).getByText('Аренда от врачей').parentElement).toHaveTextContent('15 000')
   expect(within(profit).getByText('Прибыль').parentElement).toHaveTextContent('20 000')
@@ -111,7 +111,7 @@ test('расходы: пустой месяц — без диаграммы', as
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
+  await user.click(await findSub('Расходы'))
   expect(await screen.findByText(/^Расходов за .+ нет$/)).toBeInTheDocument()
   expect(screen.queryByRole('list', { name: 'Расходы по статьям' })).not.toBeInTheDocument()
 })
@@ -127,7 +127,7 @@ test('статистика: неявки по неделям, среднее б�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Статистика' }))
+  await user.click(await findSub('Статистика'))
   expect(await screen.findByLabelText('Неявок в неделю')).toHaveTextContent('1,5')
   expect(screen.getByText(/Не отмечено «явка \/ неявка»: 1/)).toBeInTheDocument()
   expect(within(screen.getByRole('table', { name: 'Неявки по неделям' })).getAllByRole('row')).toHaveLength(4)
@@ -148,7 +148,7 @@ test('отчёт: строки месяца, итоги и отправка в �
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Отчёт' }))
+  await user.click(await findSub('Отчёт'))
   expect(await screen.findByRole('cell', { name: 'Бакыт М.' })).toBeInTheDocument()
   expect(screen.getByText(/Оплачено:/)).toHaveTextContent('3 000 сом · долги: 1 000 сом · приёмов: 2 · состоялось: 1 · неявок: 1')
   expect(screen.getByRole('cell', { name: 'Состоялся' })).toBeInTheDocument()
@@ -170,7 +170,7 @@ test('отчёт: дни внутри месяца — «с … по …» и б
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Отчёт' }))
+  await user.click(await findSub('Отчёт'))
   expect(await screen.findByRole('cell', { name: 'Нурлан К.' })).toBeInTheDocument()
   await pickDate(screen.getByLabelText('По день'), `${m}-03`)
   expect(screen.queryByRole('cell', { name: 'Нурлан К.' })).not.toBeInTheDocument()

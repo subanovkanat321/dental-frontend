@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 
 beforeEach(() => {
@@ -36,7 +36,7 @@ test('сохранили новые цены — форма показывает
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Тарифы' }))
+  await user.click(await findSub('Тарифы'))
   const form = await screen.findByRole('form', { name: 'Тарифы' })
   await user.clear(within(form).getByLabelText('В месяц: Кабинет'))
   await user.type(within(form).getByLabelText('В месяц: Кабинет'), '1090')

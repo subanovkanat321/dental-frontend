@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 
 /** Вымышленные пациенты: у Айгуль незаконченный план, Бакыт не пришёл. */
@@ -54,7 +54,7 @@ test('«Позвать снова»: деньги на столе, «Tish вер
     }),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const summary = await screen.findByRole('region', { name: 'Деньги на столе' })
   expect(summary).toHaveTextContent(/Незаконченные планы лечения18\s000 сом/)
   expect(screen.getByLabelText('Tish вернул')).toHaveTextContent(/вернулись 2 из 5 приглашённых · в их планах 40\s000 сом · уже оплачено 12\s000 сом/)
@@ -89,7 +89,7 @@ test('«Позвать снова»: «пора на осмотр» — посл
     http.get('*/api/service-types', () => HttpResponse.json(services)),
   )
   const { unmount } = renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(list).toHaveTextContent(/последний визит: 3 апр 2026 · Профессиональная чистка · пора с 3 октября( 2026)? \(через 6 мес\.\)/)
   const link = await screen.findByRole('link', { name: 'Настройки → Услуги и цены' })
@@ -99,7 +99,7 @@ test('«Позвать снова»: «пора на осмотр» — посл
   // У услуги есть свой срок — подсказки нет
   services = [{ ...services[0]!, recallMonths: 6 }]
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(screen.queryByRole('link', { name: 'Настройки → Услуги и цены' })).not.toBeInTheDocument()
 })
@@ -118,7 +118,7 @@ test('«Позвать снова»: отправили план с ценами
     http.get('*/api/comebacks', serve(sentPlan)),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent(/план отправлен 3 нояб?\.? 2026 · согласован 4 нояб?\.? 2026 — запишите на первый этап/)
   const filter = screen.getByRole('button', { name: /Отправили план, не записались: 1 · согласились: 1/ })
@@ -141,7 +141,7 @@ test('«Позвать снова»: по 50 за раз — «Показать 
     http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(within(list).getAllByRole('listitem')).toHaveLength(50)
   await userEvent.click(screen.getByRole('button', { name: 'Показать ещё (10 из 10)' }))

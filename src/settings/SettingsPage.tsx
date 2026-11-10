@@ -4,15 +4,17 @@ import type { AccountTab } from '../account/AccountPage'
 import { logout, logoutEverywhere, type Schemas } from '../api/client'
 import type { ClinicTab } from '../clinic/ClinicPage'
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
-import { openSection, openSettings, settingsItem, type Page } from '../lib/route'
+import { openSection, openSettings, settingsItem } from '../lib/route'
 import { ask, notify } from '../lib/confirm'
 import { openLink, telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
 import type { TeamTab } from '../team/TeamPage'
-import { isAssistant, seesAllMoney } from '../lib/roles'
+import { isAssistant } from '../lib/roles'
 import { InstallApp } from '../pwa/InstallApp'
 import { Notifications } from '../pwa/Notifications'
 import { Loading } from '../layout/Loading'
+import { SETTINGS_EMOJI, SETTINGS_GROUPS } from './items'
+import { SubHeader } from './SubHeader'
 
 // Экраны пунктов — своими чанками: список «Настроек» открывается сразу (~10 КБ вместо ~110 КБ),
 // код «Договора» или «Услуг» скачивается, только когда пункт открыли
@@ -32,111 +34,43 @@ const SurveyPage = lazy(() => import('../survey/SurveyPage').then((m) => ({ defa
 
 type Me = Schemas['BookingViewsMe']
 
-/** Значки пунктов — как в меню прежнего приложения. */
-const EMOJI: Record<string, string> = { 'about': '🏥', 'doctors': '👩‍⚕️', 'services': '🦷', 'hours': '🕘', 'reminder': '🔔', 'questions': '🩺', 'memos': '📋', 'learn': '📖', 'patient-news': '📰', 'sources': '📣', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'ai': '✨', 'profile': '🧑‍⚕️', 'calendar': '📅', 'guide': '📘', 'support': '🛟', 'survey': '📝', 'dental-news': '📚', 'privacy': '🔒', 'contract': '✍️', 'chairs': '🪑' }
+type Render = (me: Me, back: () => void, extra: { ticketId?: number }) => ReactNode
 
-type Item = {
-  key: string
-  title: string
-  hint: string
-  show: (me: Me) => boolean
-  render: (me: Me, back: () => void, extra: { ticketId?: number }) => ReactNode
-  /** Не в списке, но открывается по адресу (старые ссылки, кнопки бота) */
-  hidden?: boolean
-  /** Не свой экран, а ссылка на раздел меню */
-  section?: Page
-}
-
-const team = (only: TeamTab) => (title: string) => (me: Me, back: () => void) => <TeamPage me={me} only={only} title={title} onBack={back} />
-const clinic = (only: ClinicTab) => (title: string) => (me: Me, back: () => void) => <ClinicPage me={me} only={only} title={title} onBack={back} />
-const account = (only: AccountTab) => (title: string) => (me: Me, back: () => void, extra: { ticketId?: number }) =>
+const team = (only: TeamTab, title: string): Render => (me, back) => <TeamPage me={me} only={only} title={title} onBack={back} />
+const clinic = (only: ClinicTab, title: string): Render => (me, back) => <ClinicPage me={me} only={only} title={title} onBack={back} />
+const account = (only: AccountTab, title: string): Render => (me, back, extra) =>
   <AccountPage me={me} only={only} title={title} onBack={back} initialTicket={extra.ticketId} />
 
-const all = () => true
-const admin = (me: Me) => Boolean(me.admin)
-const seesAll = (me: Me) => seesAllMoney(me)
-
-function item(key: string, title: string, hint: string, show: Item['show'], render: (title: string) => Item['render']): Item {
-  return { key, title, hint, show, render: render(title) }
+/** Экраны пунктов «Настроек» (названия, группы и права — settings/items.ts, их же показывает меню). */
+const RENDER: Record<string, (title: string) => Render> = {
+  about: (t) => clinic('about', t),
+  doctors: (t) => team('doctors', t),
+  services: (t) => clinic('services', t),
+  hours: () => (me, back) => <WorkTimePage me={me} onBack={back} initial="doctors" />,
+  chairs: () => (me, back) => <ChairsPage me={me} onBack={back} />,
+  shifts: () => (me, back) => <WorkTimePage me={me} onBack={back} initial="shifts" />,
+  timeoff: () => (me, back) => <WorkTimePage me={me} onBack={back} initial="timeoff" />,
+  reminder: () => (me, back) => <ReminderTextPage me={me} onBack={back} />,
+  questions: (t) => clinic('questions', t),
+  contract: () => (me, back) => <ContractTemplatePage me={me} onBack={back} />,
+  memos: (t) => clinic('memos', t),
+  'patient-news': (t) => clinic('news', t),
+  sources: () => (me, back) => <SourcesPage me={me} onBack={back} initial="sources" />,
+  promo: () => (me, back) => <SourcesPage me={me} onBack={back} initial="promo" />,
+  plan: (t) => account('plan', t),
+  agreement: (t) => account('agreement', t),
+  data: (t) => account('data', t),
+  ai: () => (_me, back) => <AiPage onBack={back} />,
+  profile: () => (me, back) => <ProfilePage me={me} onBack={back} />,
+  appearance: (t) => (_me, back) => <AppearancePage title={t} onBack={back} />,
+  calendar: () => (_me, back) => <CalendarPage onBack={back} />,
+  guide: () => (me, back) => <GuidePage me={me} onBack={back} />,
+  support: (t) => account('support', t),
+  help: (t) => (me, back) => <AccountPage me={me} only="support" title={t} onBack={back} initialHelp />,
+  survey: () => (_me, back) => <SurveyPage onBack={back} />,
+  'dental-news': (t) => account('news', t),
+  privacy: (t) => account('privacy', t),
 }
-
-/**
- * Пункты «Настроек» группами — в порядке «от клиники к себе»: клиника (о ней, персонал, услуги,
- * рабочее время) → что получают пациенты (напоминание, анкета, памятки, презентации, новости,
- * откуда приходят) → аккаунт клиники (тариф, договор, данные, ИИ) → моё (профиль, календарь) →
- * помощь. Каждый пункт — свой экран с «‹ Настройки» назад.
- *
- * Объединены (2026-11-05): «Часы и смены» + «Перерывы и выходные» → «Рабочее время» (вкладки);
- * «Откуда узнают» + «Промокоды» → «Откуда приходят пациенты»; «Помощь» + «Техподдержка» →
- * «Помощь и техподдержка». Старые адреса (#/settings/timeoff, /shifts, /promo, /help — закладки,
- * кнопки бота, напоминания) — скрытые пункты: открывают нужную вкладку.
- */
-const GROUPS: [string, Item[]][] = [
-  ['Клиника', [
-    item('about', 'О клинике', 'Адрес, контакты, предоплата, склад', all, clinic('about')),
-    // Врачи и сотрудники — одним списком с ролями; адрес «doctors» прежний (#/settings/members ведёт сюда же)
-    item('doctors', 'Персонал', 'Врачи, руководители, регистратура, ассистенты — роли и вход', all, team('doctors')),
-    // Ассистенту цены не показываем — и пункта «Услуги» у него нет
-    item('services', 'Услуги и цены', 'Цены, длительность, материалы и памятки', (me) => !isAssistant(me), clinic('services')),
-    // Кто и когда работает — один пункт с вкладками: часы врачей, смены персонала, перерывы
-    item('hours', 'Рабочее время', 'Часы врачей, смены, перерывы и выходные', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="doctors" />),
-    // Кресла (V185, V187): переименовать, режим «Предупреждать / Запрещать», удалить пустое — руководитель, как PUT /api/chairs
-    item('chairs', 'Кресла', 'Общие кресла врачей: названия и запись в часы коллеги', admin,
-      () => (me, back) => <ChairsPage me={me} onBack={back} />),
-    // Старые адреса: «График смен» (кнопка бота «Кто на смене») и «Перерывы и выходные» — та же страница
-    { ...item('shifts', 'Рабочее время', '', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="shifts" />), hidden: true },
-    { ...item('timeoff', 'Рабочее время', '', all, () => (me, back) => <WorkTimePage me={me} onBack={back} initial="timeoff" />), hidden: true },
-  ]],
-  ['Пациентам', [
-    // От имени клиники всем пациентам — меняет только админ (сервер: 403 остальным)
-    item('reminder', 'Текст напоминания', 'Что пациент получит перед приёмом', admin,
-      () => (me, back) => <ReminderTextPage me={me} onBack={back} />),
-    item('questions', 'Анкета пациента', 'Вопросы перед первым приёмом', (me) => Boolean(me.admin || me.doctorId != null), clinic('questions')),
-    // Договор на услуги и согласие на лечение — от имени клиники, меняет админ (сервер: 403 остальным)
-    item('contract', 'Договор с пациентом', 'Шаблон договора и согласия на лечение', admin,
-      () => (me, back) => <ContractTemplatePage me={me} onBack={back} />),
-    item('memos', 'Памятки после процедур', 'Что делать после удаления, чистки…', all, clinic('memos')),
-    // Атлас и презентации — раздел меню «Для пациента»; здесь ссылка на него: на телефоне в нижнем меню
-    // для него нет места. Старый адрес #/settings/learn ведёт туда же (lib/route)
-    { ...item('learn', 'Для пациента', '3D-атлас и презентации — раздел меню', all, () => () => null), section: 'learn' },
-    item('patient-news', 'Новости для пациентов', 'Акции и объявления в боте', admin, clinic('news')),
-    // «Откуда узнал» и промокоды — оба про то, какая реклама работает
-    item('sources', 'Откуда приходят пациенты', 'Варианты «откуда узнал» и промокоды рекламы', all,
-      () => (me, back) => <SourcesPage me={me} onBack={back} initial="sources" />),
-    { ...item('promo', 'Откуда приходят пациенты', '', (me) => !isAssistant(me), () => (me, back) => <SourcesPage me={me} onBack={back} initial="promo" />), hidden: true },
-  ]],
-  ['Аккаунт клиники', [
-    item('plan', 'Тариф и оплата', 'Сколько осталось и как продлить', admin, account('plan')),
-    item('agreement', 'Договор', 'Договор с платформой Tish', admin, account('agreement')),
-    item('data', 'Данные', 'Загрузка из Excel, выгрузка и журнал действий', (me) => admin(me) || seesAll(me), account('data')),
-    // Согласие клиники на ИИ — решает админ (сервер: 403 остальным); отчёты и диктовка — отдельно
-    item('ai', 'ИИ-помощник', 'Отчёты пациенту и разбор диктовки', admin, () => (_me, back) => <AiPage onBack={back} />),
-  ]],
-  ['Мои настройки', [
-    // Всё о себе — сам сотрудник: имя, телефон и пароль; врачу ещё фото и «о себе»
-    // В списке не показываем: тот же экран открывает «Изменить профиль» в карточке профиля наверху
-    { ...item('profile', 'Мой профиль', 'Имя, телефон и пароль; врачу — фото и «о себе»', all,
-      () => (me, back) => <ProfilePage me={me} onBack={back} />), hidden: true },
-    // Лента — приёмы своего кресла: у кого его нет (админ, регистратура, ассистент), пункта нет
-    item('calendar', 'Календарь в телефоне', 'Приёмы в Google или Apple Календаре', (me) => me.doctorId != null,
-      () => (_me, back) => <CalendarPage onBack={back} />),
-  ]],
-  ['Помощь', [
-    // Одно место для обучения: видео, коротко по роли и ссылка на полное руководство с картинками
-    item('guide', 'Руководство', 'Видео, коротко по вашей роли и подробно с картинками', all,
-      () => (me, back) => <GuidePage me={me} onBack={back} />),
-    // Помощник (ответит сразу) и обращения к команде Tish — одна страница
-    item('support', 'Помощь и техподдержка', 'Спросить помощника или написать команде Tish', all, account('support')),
-    // «Спросить помощника» (руководство, старые ссылки) — та же страница, сразу чат
-    { ...item('help', 'Помощь и техподдержка', '', all,
-      (title) => (me, back) => <AccountPage me={me} only="support" title={title} onBack={back} initialHelp />), hidden: true },
-    // Опросы команды Tish проходят сотрудники клиник; команда платформы их составляет
-    item('survey', 'Отзыв о Tish', 'Опрос команды Tish — 2–3 минуты', (me) => !me.platform,
-      () => (_me, back) => <SurveyPage onBack={back} />),
-    item('dental-news', 'Новости стоматологии', 'Подборка профессиональных изданий', all, account('news')),
-    item('privacy', 'Конфиденциальность', 'Как мы обращаемся с данными пациентов', all, account('privacy')),
-  ]],
-]
 
 /** «Настройки»: главная — список пунктов и оформление; пункт — во всю рабочую область. */
 export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: number }) {
@@ -147,7 +81,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
   const back = () => openSettings(null)
-  const found = GROUPS.flatMap(([, items]) => items).find((i) => i.key === current && i.show(me))
+  const found = SETTINGS_GROUPS.flatMap(([, items]) => items).find((i) => i.key === current && i.show(me) && !i.section && RENDER[i.key])
   // Пункт открывается с начала, а назад в список — туда, где его листали
   const listY = useRef(0)
   const openKey = found?.key ?? null
@@ -169,7 +103,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
   if (found) {
     return (
       <div key={found.key} className="settings-item">
-        <Suspense fallback={<Loading />}>{found.render(me, back, { ticketId: initialTicket })}</Suspense>
+        <Suspense fallback={<Loading />}>{RENDER[found.key]!(found.title)(me, back, { ticketId: initialTicket })}</Suspense>
       </div>
     )
   }
@@ -179,7 +113,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
       <header className="toolbar"><h1>Настройки</h1></header>
       <Profile me={me} />
       <div className="settings-groups">
-      {GROUPS.map(([group, items], index) => {
+      {SETTINGS_GROUPS.map(([group, items], index) => {
         const shown = items.filter((i) => !i.hidden && i.show(me))
         if (!shown.length) return null
         return (
@@ -189,7 +123,7 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
               {shown.map((i) => (
                 <li key={i.key}>
                   <button type="button" className="settings-link" onClick={() => (i.section ? openSection(i.section) : openSettings(i.key))}>
-                    <span className="settings-emoji" aria-hidden="true">{EMOJI[i.key]}</span>
+                    <span className="settings-emoji" aria-hidden="true">{SETTINGS_EMOJI[i.key]}</span>
                     <span className="settings-text"><strong>{i.title}</strong><span className="hint" title={i.hint}>{i.hint}</span></span>
                     <span aria-hidden="true" className="chev">›</span>
                   </button>
@@ -221,7 +155,6 @@ export function SettingsPage({ me, initialTicket }: { me: Me; initialTicket?: nu
           </ul>
         </section>
       )}
-      <Appearance />
       <InstallApp />
       <Notifications />
       <LogoutSection />
@@ -262,13 +195,21 @@ function LogoutSection() {
   )
 }
 
-/** «Оформление»: тема и размер текста — сразу, на этом устройстве. */
+/** «Оформление»: тема и размер текста — сразу, на этом устройстве. Свой пункт в «Мои настройки». */
+function AppearancePage({ title, onBack }: { title: string; onBack: () => void }) {
+  return (
+    <div className="settings">
+      <SubHeader title={title} onBack={onBack} />
+      <Appearance />
+    </div>
+  )
+}
+
 function Appearance() {
   const [theme, setTheme] = useState(themeChoice)
   const [size, setSize] = useState(textSize)
   return (
     <section className="settings-group" aria-label="Оформление">
-      <h2>Оформление</h2>
       <div className="card-block appearance">
         <div className="field"><span>Тема</span>
           <div className="segments wrap" role="group" aria-label="Тема">

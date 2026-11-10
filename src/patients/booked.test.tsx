@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -35,7 +35,7 @@ test('«Пациенты → Записаны»: будущие записи в�
   )
   window.location.hash = '/patients'
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Записаны' }))
+  await userEvent.click(await findSub('Записаны'))
   const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
   expect(await within(list).findByText('Айгуль Т.')).toBeInTheDocument()
   expect(list).toHaveTextContent('Записей: 3')
@@ -81,7 +81,7 @@ test('кнопка сводки «📲 Напомнить» (?screen=booked&day=
   expect(asked).toEqual([`2:${addDays(todayIn(), 1)}:1`])
   // Адрес чистый: ссылку не открыть повторно обновлением страницы
   expect(window.location.search).toBe('')
-  expect(window.location.hash).toBe('#/patients')
+  expect(window.location.hash).toBe('#/patients/booked')
   window.history.replaceState(null, '', '/')
 })
 
@@ -103,7 +103,7 @@ test('«WhatsApp» в строке неподтверждённого: гото�
   vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
   window.location.hash = '/patients'
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Записаны' }))
+  await userEvent.click(await findSub('Записаны'))
   const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
   // Telegram-пациент, бот уже писал, ответа нет — WhatsApp всё равно можно
   const wa = await within(list).findByRole('button', { name: /Напомнить в WhatsApp: Бакыт М\., 10:00/ })

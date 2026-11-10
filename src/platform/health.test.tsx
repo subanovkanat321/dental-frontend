@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
 import { mbText, uptimeText } from './serverHealth'
 
@@ -54,7 +54,7 @@ test('владелец: «Здоровье» — проблемы сверху, 
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Здоровье' }))
+  await user.click(await findSub('Здоровье'))
 
   const alert = await screen.findByRole('alert', { name: 'Сейчас не так' })
   expect(alert).toHaveTextContent('Диск сервера занят на 90%')
@@ -103,7 +103,7 @@ test('поиск по номеру запроса: строки лога со с
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Здоровье' }))
+  await user.click(await findSub('Здоровье'))
   expect(await screen.findByRole('status')).toHaveTextContent('Всё в порядке')
 
   const form = screen.getByRole('form', { name: 'Поиск по номеру запроса' })
@@ -124,8 +124,8 @@ test('поиск по номеру запроса: строки лога со с
 test('менеджер платформы вкладку «Здоровье» не видит', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: false, platform: true })))
   renderApp()
-  expect(await screen.findByRole('tab', { name: 'Клиники' })).toBeInTheDocument()
-  expect(screen.queryByRole('tab', { name: 'Здоровье' })).not.toBeInTheDocument()
+  expect(await findSub('Клиники')).toBeInTheDocument()
+  expect(querySub('Здоровье')).not.toBeInTheDocument()
 })
 
 test('время работы и размеры — коротко', () => {
