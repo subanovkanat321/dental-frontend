@@ -9,7 +9,7 @@ import { ChairTimeBands } from '../ChairTimeBands'
 import { colleagueTimeOf } from '../chairTime'
 import { dateOf, dayMinutes, dayTitle, minutesOf, timeOf } from '../../lib/time'
 import { apptSpan, fromYesterday, offSpans, touchesDay, untilTomorrow, workSpans } from '../workSpans'
-import { hhmm, PAD, PX, useNowMinutes } from '../gridScale'
+import { hhmm, PAD, PX, useFitToWindow, useNowMinutes } from '../gridScale'
 import { statusOf } from '../status'
 import { useDrag } from './useDrag'
 import { useMove, type Move } from './useMove'
@@ -78,10 +78,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
   })
 
   // Сетка — до низа окна, как у «Дня»; открыли неделю — к «сейчас» или к первому приёму (один раз на неделю)
-  useEffect(() => {
-    const el = grid.current
-    if (el) el.style.setProperty('--grid-top', `${Math.round(el.getBoundingClientRect().top + window.scrollY)}px`)
-  })
+  useFitToWindow(grid)
   const scrolledFor = useRef<string | null>(null)
   useEffect(() => {
     if (week.isPending || !grid.current || scrolledFor.current === monday) return

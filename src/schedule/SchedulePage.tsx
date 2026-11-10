@@ -1,5 +1,5 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { SetupChecklist } from '../clinic/SetupChecklist'
@@ -26,13 +26,14 @@ import { colorOf as doctorColor, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { apptSpan, fromYesterday, offSpans, slotsHoursText, untilTomorrow, workSpans } from './workSpans'
 import { statusOf } from './status'
-import { PAD, PX, SHORT, useNowMinutes } from './gridScale'
+import { PAD, PX, SHORT, useFitToWindow, useNowMinutes } from './gridScale'
 import { useWeekAppointments } from './week/useWeek'
 import { WeekGrid } from './week/WeekGrid'
 import { useEarnings } from '../earnings/earnings'
 import { EarningsChip } from '../earnings/EarningsWidgets'
 import { canEditDoctor, isAssistant, seesMoneyOf, seesToPay, seesAllMoney } from '../lib/roles'
 import { HelpHint } from '../help/HelpHint'
+import { Icon } from '../layout/Icon'
 import { useApptHover } from './useApptHover'
 import { ChairBadge } from '../team/ChairBadge'
 import { useChairs } from '../team/chairs'
@@ -251,14 +252,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const scrolledFor = useRef<string | null>(null)
   const ready = days.length > 0 && days.every((q) => !q.isPending) && (dayList != null || slots.every((q) => !q.isPending))
   const firstTop = all.length ? PAD + (Math.min(...all.map((a) => minutesOf(a.startAt!))) - from) * PX : null
-  // Сетка — до низа окна, где бы она ни начиналась (напоминания, полоса «Сегодня» сверху): без
-  // двойной прокрутки страницы и сетки
-  useLayoutEffect(() => {
-    const el = grid.current
-    if (!el) return
-    const top = el.getBoundingClientRect().top + window.scrollY
-    el.style.setProperty('--grid-top', `${Math.round(top)}px`)
-  })
+  // Сетка — до низа окна, где бы она ни начиналась (напоминания, строка врачей сверху)
+  useFitToWindow(grid)
   // «Неделя» или «Месяц» — сетки дня нет: вернулись на «День» — сетка новая (прокрутка с 00:00), снова к «сейчас»
   const gridShown = !weekMode && !monthMode
   useEffect(() => {
@@ -354,6 +349,29 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   // Всплывающая карточка приёма при наведении мышью (компьютер) — общая для «Дня»
   const hover = useApptHover(me, (id) => doctors.find((d) => d.id === id)?.fullName ?? '')
 
+  // Чьё расписание. Телефон: переключателя «День | Месяц» нет — месяц открывается нажатием на дату (лист снизу)
+  const doctorSwitch = doctors.length > 1 && (narrow || doctors.length > 8 ? (
+    // Телефон (и очень много врачей на компьютере): один выпадающий список вместо ряда
+    <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView}
+      colorDoctors={clinicDoctors} onOrder={() => setOrdering(true)} />
+  ) : (
+    // Компьютер: чипы с тем же цветным кружком, что у колонки врача, — видно, кто где
+    <div className="doctor-chips" role="group" aria-label="Чьё расписание">
+      {!weekMode && (
+        <button type="button" className="doctor-chip" aria-pressed={view === 'all'} onClick={() => setView('all')}>
+          <span className="avatar all" aria-hidden="true">👥</span>Все врачи
+        </button>
+      )}
+      {doctors.map((d) => (
+        <button key={d.id} type="button" className="doctor-chip" aria-pressed={(weekMode ? weekDoctor : view) === d.id} onClick={() => setView(d.id!)}>
+          <span className="avatar" style={{ background: colorOf(d) }} aria-hidden="true">{initials(d.fullName)}</span>
+          {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
+        </button>
+      ))}
+      <button type="button" className="doctor-chip order" title="Порядок врачей" aria-label="Порядок врачей…" onClick={() => setOrdering(true)}>⇅</button>
+    </div>
+  ))
+
   if (medical) {
     return (
       <div className="schedule">
@@ -418,99 +436,89 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
               <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
             )}
             {/* Открытую сводку закрывает «×» в ней самой — в шапке кнопка только чтобы вернуть */}
+            {/* Маленькая кнопка в той же строке, что и действия: отдельной строкой она съедала высоту над сеткой.
+                На ноутбуке поуже подпись прячется — остаётся значок (имя кнопки для экранного диктора то же) */}
             {canSummary && !summary && (
-              <button type="button" className="btn" onClick={toggleSummary}
-                title="Кто следующий, что требует внимания, свободное время">Сводка дня</button>
+              <button type="button" className="btn small toolbar-summary" onClick={toggleSummary} aria-label="Сводка дня"
+                title="Сводка дня: кто следующий, что требует внимания, свободное время">
+                <Icon name="summary" /><span className="toolbar-summary-label">Сводка дня</span>
+              </button>
             )}
           </header>
         )}
 
         <SetupChecklist me={me} />
-        {!dayList && !summary && !weekMode && !monthMode && (
-          <div className="today-strip" role="group" aria-label="Требует внимания">
-            {requests.length > 0 && (
-              <button type="button" className="stat s-request" onClick={firstOf(requests)}>
-                <b>{requests.length}</b> {requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить
-              </button>
+        {dayList ? (
+          <>
+            {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках
+                дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
+            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data) && (
+              <div className="today-strip compact" role="group" aria-label="Требует внимания">
+                {requests.length > 0 && (
+                  <button type="button" className="stat s-request" onClick={firstOf(requests)}>
+                    <b>{requests.length}</b> {requests.length === 1 ? 'заявка' : 'заявки'}
+                  </button>
+                )}
+                {(toPay.data?.length ?? 0) > 0 && (
+                  <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}><b>{toPay.data!.length}</b> к оплате</button>
+                )}
+                {earnings.data && <EarningsChip compact e={earnings.data} onOpen={openEarnings} />}
+              </div>
             )}
-            {waiting.length > 0 && (
-              <button type="button" className="stat s-wait" onClick={firstOf(waiting)}>
-                <b>{waiting.length}</b> ждём ответа на напоминание
-              </button>
-            )}
-            {(toPay.data?.length ?? 0) > 0 && (
-              <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}>
-                <b>{toPay.data!.length}</b> ждут оплаты на кассе
-              </button>
-            )}
-            {revenue.data && (
-              <button type="button" className="stat s-quiet" onClick={() => onNavigate?.('cash')}>
-                <b>{somText(revenue.data.totalSom ?? 0).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
-              </button>
-            )}
-            {earnings.data && <EarningsChip e={earnings.data} onOpen={openEarnings} />}
-            {low > 0 && (
-              <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}>
-                <b>{low}</b> на складе заканчивается
-              </button>
-            )}
-            {!requests.length && !waiting.length && !toPay.data?.length && !low && (
-              <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>
-            )}
-          </div>
-        )}
-
-        {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках
-            дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
-        {dayList && (requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data) && (
-          <div className="today-strip compact" role="group" aria-label="Требует внимания">
-            {requests.length > 0 && (
-              <button type="button" className="stat s-request" onClick={firstOf(requests)}>
-                <b>{requests.length}</b> {requests.length === 1 ? 'заявка' : 'заявки'}
-              </button>
-            )}
-            {(toPay.data?.length ?? 0) > 0 && (
-              <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}><b>{toPay.data!.length}</b> к оплате</button>
-            )}
-            {earnings.data && <EarningsChip compact e={earnings.data} onOpen={openEarnings} />}
-          </div>
-        )}
-
-        {/* Телефон: переключателя «День | Месяц» нет — месяц открывается нажатием на дату (лист снизу) */}
-        {doctors.length > 1 && (narrow || doctors.length > 8 ? (
-          // Телефон (и очень много врачей на компьютере): один выпадающий список вместо ряда
-          <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView}
-            colorDoctors={clinicDoctors} onOrder={() => setOrdering(true)} />
+            {doctorSwitch}
+          </>
         ) : (
-          // Компьютер: чипы с тем же цветным кружком, что у колонки врача, — видно, кто где
-          <div className="doctor-chips" role="group" aria-label="Чьё расписание">
-            {!weekMode && (
-              <button type="button" className="doctor-chip" aria-pressed={view === 'all'} onClick={() => setView('all')}>
-                <span className="avatar all" aria-hidden="true">👥</span>Все врачи
-              </button>
+          // Компьютер: врачи, полоса «Сегодня» и «Отменено: N» — одной строкой над сеткой (врачи слева,
+          // плашки справа): каждое отдельной строкой съедало полэкрана над расписанием
+          <div className="schedule-bar">
+            {doctorSwitch}
+            {!summary && !weekMode && !monthMode && (
+              <div className="today-strip" role="group" aria-label="Требует внимания">
+                {requests.length > 0 && (
+                  <button type="button" className="stat s-request" onClick={firstOf(requests)}>
+                    <b>{requests.length}</b> {requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить
+                  </button>
+                )}
+                {waiting.length > 0 && (
+                  <button type="button" className="stat s-wait" onClick={firstOf(waiting)}>
+                    <b>{waiting.length}</b> ждём ответа на напоминание
+                  </button>
+                )}
+                {(toPay.data?.length ?? 0) > 0 && (
+                  <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}>
+                    <b>{toPay.data!.length}</b> ждут оплаты на кассе
+                  </button>
+                )}
+                {revenue.data && (
+                  <button type="button" className="stat s-quiet" onClick={() => onNavigate?.('cash')}>
+                    <b>{somText(revenue.data.totalSom ?? 0).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
+                  </button>
+                )}
+                {earnings.data && <EarningsChip e={earnings.data} onOpen={openEarnings} />}
+                {low > 0 && (
+                  <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}>
+                    <b>{low}</b> на складе заканчивается
+                  </button>
+                )}
+                {!requests.length && !waiting.length && !toPay.data?.length && !low && (
+                  <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>
+                )}
+              </div>
             )}
-            {doctors.map((d) => (
-              <button key={d.id} type="button" className="doctor-chip" aria-pressed={(weekMode ? weekDoctor : view) === d.id} onClick={() => setView(d.id!)}>
-                <span className="avatar" style={{ background: colorOf(d) }} aria-hidden="true">{initials(d.fullName)}</span>
-                {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
-              </button>
-            ))}
-            <button type="button" className="doctor-chip order" title="Порядок врачей" aria-label="Порядок врачей…" onClick={() => setOrdering(true)}>⇅</button>
+            {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» — ссылкой в конце строки над
+                сеткой (под сеткой строка уходила за край экрана и её не замечали); раскрытый список — строкой ниже */}
+            {!weekMode && !monthMode && shown.length > 0 && (
+              <CancelledList inline items={loaded.filter((a) => a.status === 'CANCELLED' && shown.some((d) => d.id === a.doctorId))}
+                selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
+                doctorName={shown.length > 1 ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
+            )}
           </div>
-        ))}
+        )}
         {ordering && (
           <DoctorOrderDialog doctors={doctors} myDoctorId={me.doctorId} colorDoctors={clinicDoctors}
             onSave={(ids) => { setDoctorOrder(ids); setOrdering(false) }}
             onReset={() => { setDoctorOrder(null); setOrdering(false) }}
             onClose={() => setOrdering(false)} />
-        )}
-
-        {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» над сеткой дня —
-            под ней строка уходила за край экрана и её не замечали */}
-        {!dayList && !weekMode && !monthMode && shown.length > 0 && (
-          <CancelledList items={loaded.filter((a) => a.status === 'CANCELLED' && shown.some((d) => d.id === a.doctorId))}
-            selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
-            doctorName={shown.length > 1 ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
         )}
 
         {dayList ? (
@@ -535,7 +543,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             <div ref={grid} className="grid" style={{ gridTemplateColumns: `56px repeat(${shown.length}, minmax(140px, 1fr))`, '--cols': shown.length } as CSSProperties}>
               <div className="grid-corner" />
               {shown.map((d) => {
-                // Свой цвет врача — полоса над колонкой и слева на карточках; часы работы — под именем
+                // Свой цвет врача — полоса над колонкой и слева на карточках; часы работы и кресло — под именем
                 const color = colorOf(d)
                 const sl = slots[doctors.indexOf(d)]?.data
                 const hoursText = slotsHoursText(sl)
@@ -545,15 +553,14 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                     {d.photoUrl
                       ? <img className="avatar photo" src={d.photoUrl} alt="" />
                       : <span className="avatar" style={{ background: color }} aria-hidden="true">{initials(d.fullName)}</span>}
+                    {/* Две строки: имя; ниже мелко «специальность · часы · 🪑 кресло» одной строкой с многоточием */}
                     <span className="grid-head-text">
                       <span className="grid-head-name">{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</span>
-                      {(specialtyOf(d.about) || hoursText) && (
-                        <span className="grid-head-sub">
-                          {specialtyOf(d.about) && <span className="grid-head-spec" title={d.about}>{specialtyOf(d.about)}</span>}
-                          {hoursText && <span className="grid-head-hours num">{hoursText}</span>}
-                        </span>
-                      )}
-                      <ChairBadge chairs={chairs.data} doctorId={d.id} nameOf={doctorName} />
+                      <span className="grid-head-sub">
+                        {specialtyOf(d.about) && <span className="grid-head-spec" title={d.about}>{specialtyOf(d.about)}</span>}
+                        {hoursText && <span className="grid-head-hours num">{hoursText}</span>}
+                        <ChairBadge chairs={chairs.data} doctorId={d.id} nameOf={doctorName} />
+                      </span>
                     </span>
                   </button>
                 )

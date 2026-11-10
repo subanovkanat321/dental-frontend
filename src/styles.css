@@ -1518,7 +1518,8 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 }
 .day-switch { align-items: center; }
 /* Сетка — до низа окна (--grid-top ставит SchedulePage) */
-@media (min-width: 761px) { .grid { max-height: max(420px, calc(100dvh - var(--grid-top, 150px) - 16px)); } }
+/* --grid-below — что под сеткой в разделе (легенда значков, «Отменено» у «Недели»): страница не прокручивается */
+@media (min-width: 761px) { .grid { max-height: max(420px, calc(100dvh - var(--grid-top, 150px) - var(--grid-below, 0px) - 16px)); } }
 
 /* Шапка раздела на компьютере прилипает к верху (layout/stickyHead.ts), под ней — шапки таблиц */
 @media (min-width: 761px) {
@@ -2318,3 +2319,47 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .chair-item .chair-mode legend { padding: 0; margin-bottom: 4px; font-size: .85rem; color: var(--hint); }
 .chair-item .chair-mode .check { align-items: flex-start; }
 .chair-item .chair-mode input { flex: none; margin-top: 3px; }
+
+/* Шапка «Расписания» на компьютере — компактно (2026-11-10): над сеткой две строки, а не шесть.
+   1) дата, вид, действия и маленькая «Сводка дня»; 2) врачи слева, полоса «Сегодня» справа, «Отменено: N» в конце.
+   Телефон (DayList и его шапка) не трогаем — всё под min-width: 761px */
+.toolbar-summary .icon { width: 16px; height: 16px; }
+@media (min-width: 761px) and (max-width: 1439px) {
+  /* Ноутбук: у «Сводки дня» только значок — иначе действия переносятся второй строкой */
+  .toolbar-summary { width: 36px; min-height: 36px; padding: 0; }
+  .toolbar-summary-label { display: none; }
+}
+@media (min-width: 761px) {
+  .toolbar-summary { min-height: 36px; color: var(--hint); }
+  .toolbar-summary:hover:not(:disabled) { color: var(--text); }
+  .schedule-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 10px; }
+  .schedule-bar:empty { display: none; }
+  /* Врачи — сколько влезет, остальное вбок; плашки — справа, переносятся под врачей целиком, без пустых строк */
+  .schedule-bar .doctor-chips { flex: 0 1 auto; min-width: 0; margin-bottom: 0; }
+  .schedule-bar .doctor-chip { min-height: 32px; padding: 2px 12px 2px 3px; gap: 6px; font-size: .88rem; }
+  .schedule-bar .doctor-chip .avatar { width: 26px; height: 26px; font-size: .68rem; }
+  .schedule-bar .doctor-chip.order { padding: 2px 10px; }
+  .schedule-bar .today-strip { flex: 0 1 auto; gap: 6px; margin: 0 0 0 auto; }
+  .schedule-bar .stat { align-items: center; min-height: 32px; padding: 3px 10px; font-size: .85rem; }
+  .schedule-bar .stat b { font-size: 1rem; }
+  /* «Отменено: N ›» — маленькой ссылкой в конце строки; раскрытый список — отдельной строкой во всю ширину */
+  .schedule-bar .cancelled.inline { display: contents; }
+  .cancelled.inline .cancelled-toggle { min-height: 32px; padding: 0 4px; border: 0; font-size: .85rem; white-space: nowrap; }
+  .cancelled.inline .cancelled-toggle:hover { color: var(--text); text-decoration: underline; }
+  .cancelled.inline .cancelled-list { flex: 1 0 100%; }
+  /* Полосы «Сегодня» нет (сводка открыта, она там) — ссылка всё равно в правом конце строки */
+  .schedule-bar .doctor-chips + .cancelled.inline .cancelled-toggle { margin-left: auto; }
+  /* Шапка колонки врача — две строки: аватар поменьше и имя; ниже мелко «специальность · часы · 🪑 кресло» */
+  /* min-height по содержимому: у шапки overflow: hidden, и сетка с max-height иначе сжимает строку шапок
+     (у «Недели» подпись «нет записей» обрезалась) — прежние 50px держали её только числом */
+  .grid-head { min-height: min-content; padding: 6px 10px; gap: 8px; }
+  .grid-head .avatar { width: 30px; height: 30px; font-size: .78rem; }
+  .grid-head-text { gap: 0; }
+  /* Одна строка текста с одним многоточием в конце (а не у каждой части): «Врач-стоматолог · 09:00–22:00 · 🪑 Крес…» */
+  .grid-head-sub { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .78rem; color: var(--hint); }
+  .grid-head-sub:empty { display: none; }
+  .grid-head-sub > * { display: inline; overflow: visible; }
+  .grid-head-hours { font-size: inherit; }
+  .grid-head-text .chair-badge { margin-top: 0; padding: 0; border-radius: 0; background: none; font-size: inherit; }
+  .grid-head-sub > * + *::before { content: '·'; margin: 0 6px; color: var(--faint); }
+}
