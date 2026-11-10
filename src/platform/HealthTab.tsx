@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { Loading } from '../layout/Loading'
 import { mbText, uptimeText } from './serverHealth'
+import { HeadTools } from '../layout/PageHead'
 
 type Health = Schemas['HealthServiceHealth']
 type Job = Schemas['HealthServiceJob']
@@ -42,12 +43,11 @@ export function HealthTab() {
   const h = health.data
   return (
     <>
-      <section className="card-block">
-        <div className="toolbar">
-          <h2>Здоровье сервера</h2>
-          <button type="button" className="btn ghost" disabled={health.isFetching} onClick={() => void health.refetch()}>
-            {health.isFetching ? 'Проверяю…' : 'Проверить снова'}</button>
-        </div>
+      <HeadTools>
+        <button type="button" className="btn ghost" disabled={health.isFetching} onClick={() => void health.refetch()}>
+          {health.isFetching ? 'Проверяю…' : 'Проверить снова'}</button>
+      </HeadTools>
+      <section className="card-block" aria-label="Здоровье сервера">
         {health.error && <p className="error" role="alert">{health.error.message}</p>}
         {health.isPending ? <Loading /> : h && (
           <>

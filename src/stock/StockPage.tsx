@@ -6,7 +6,8 @@ import { shortDate } from '../lib/time'
 import { clinicRequest } from '../settings/clinicUpdate'
 import { SpendingBlock } from './Spending'
 import { NewSupplyPanel, SupplyPanel } from './SupplyPanel'
-import { stickyHead } from '../layout/stickyHead'
+import { HeadSlotProvider, PageHead } from '../layout/PageHead'
+import { useHeadSlot } from '../layout/headSlot'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
@@ -83,13 +84,16 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   const low = all.filter((s) => s.low).length
   const selected = side?.kind === 'supply' ? all.find((s) => s.id === side.id) ?? null : null
 
+  const [slot, setSlot] = useHeadSlot()
   const title = <SectionTitle page="stock" title="Склад" subTitle={subTitle} hint={<HelpHint hint="stock" />} />
   if (sub === 'spending') {
     return (
       <div className="schedule">
         <section className="schedule-main">
-          <header ref={stickyHead} className="toolbar sticky-head">{title}</header>
-          <SpendingBlock />
+          <HeadSlotProvider slot={slot}>
+            <PageHead title={title} slotRef={setSlot} />
+            <SpendingBlock />
+          </HeadSlotProvider>
         </section>
       </div>
     )
@@ -98,8 +102,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   return (
     <div className={side ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
-        <header ref={stickyHead} className="toolbar sticky-head">
-          {title}
+        <PageHead title={title}>
           <input type="search" className="search" aria-label="Поиск материала" placeholder="Название" value={query}
             onChange={(e) => setQuery(e.target.value)} />
           {choosesDoctor && doctors.length > 0 && (
@@ -116,17 +119,17 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
             <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} />
             Только заканчивается{low ? ` (${low})` : ''}
           </label>
+          {me.admin && <SeparateSupplies />}
           <button type="button" className="btn primary push" onClick={() => setSide({ kind: 'new' })}
-            title="Новая позиция на складе: материал или инструмент, которого ещё нет в списке">＋ Новый материал</button>
-        </header>
-        {/* «＋ Новый материал» — новая позиция; пришла поставка уже имеющегося — через сам материал */}
-        {all.length > 0 && <p className="hint small stock-how">Пришла поставка — нажмите на материал в списке → «＋ Пришла поставка». «＋ Новый материал» — только если его ещё нет в списке.</p>}
-        {me.admin && <SeparateSupplies />}
+            title="Новая позиция на складе: материал или инструмент, которого ещё нет в списке. Пришла поставка — нажмите на материал в списке → «＋ Пришла поставка»">＋ Новый материал</button>
+        </PageHead>
+        {/* «＋ Новый материал» — новая позиция; пришла поставка уже имеющегося — через сам материал
+            (подсказка «?» у заголовка и у кнопки — отдельной строкой над таблицей не стоит) */}
 
         {supplies.isPending && <Loading />}
         {supplies.error && <p className="error">{supplies.error.message}</p>}
         {supplies.isSuccess && all.length === 0 && (
-          <EmptyState title="Склад пуст" action={(
+          <EmptyState fill title="Склад пуст" action={(
             <button type="button" className="btn" disabled={samples.isPending} onClick={() => samples.mutate()}>Добавить типовой набор</button>
           )}>
             Добавьте материалы по одному или начните с типового набора — потом поправите количество.
@@ -209,13 +212,13 @@ function SeparateSupplies() {
   })
   if (!clinic.data) return null
   return (
-    <div className="stock-mode">
-      <label className="check">
+    <>
+      {/* Флажок — в строке шапки «Склада»; что он значит сейчас — подсказкой при наведении */}
+      <label className="check" title={clinic.data.separateSupplies ? 'Врач видит и тратит свои материалы и общие.' : 'Сейчас один склад на всех.'}>
         <input type="checkbox" checked={Boolean(clinic.data.separateSupplies)} disabled={save.isPending} onChange={(e) => save.mutate(e.target.checked)} />
         Свой склад у каждого врача
       </label>
-      <span className="hint">{clinic.data.separateSupplies ? 'Врач видит и тратит свои материалы и общие.' : 'Сейчас один склад на всех.'}</span>
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
-    </div>
+    </>
   )
 }

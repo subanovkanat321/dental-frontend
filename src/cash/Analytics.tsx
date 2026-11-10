@@ -11,6 +11,7 @@ import { percents } from '../lib/parts'
 import { HBars } from './HBars'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { HeadTools } from '../layout/PageHead'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -56,17 +57,20 @@ export function AnalyticsTab({ me, doctorId, seesAll }: { me: Me; doctorId: numb
   const period: Period = month ? { label: `· ${longMonth(month)}`, ...rangeOf(month), months: [month] } : last30()
   return (
     <>
-      <div className="analytics-filter" role="group" aria-label="Период аналитики">
-        <div className="segments">
-          <button type="button" aria-pressed={month == null} onClick={() => setMonth(null)}>30 дней</button>
-          <button type="button" aria-pressed={month != null} onClick={() => setMonth(month ?? todayIn().slice(0, 7))}>Месяц</button>
+      {/* Период — в строку шапки «Кассы»; какие именно дни считаются — мелко рядом (в начале месяца
+          «Месяц» почти пуст, а «30 дней» — нет) */}
+      <HeadTools>
+        <div className="analytics-filter" role="group" aria-label="Период аналитики">
+          <div className="segments">
+            <button type="button" aria-pressed={month == null} onClick={() => setMonth(null)}>30 дней</button>
+            <button type="button" aria-pressed={month != null} onClick={() => setMonth(month ?? todayIn().slice(0, 7))}>Месяц</button>
+          </div>
+          {month && <MonthPicker label="Месяц аналитики" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />}
         </div>
-        {month && <MonthPicker label="Месяц аналитики" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />}
-      </div>
-      {/* Какие именно дни считаются: в начале месяца «Месяц» почти пуст, а «30 дней» — нет */}
-      <p className="hint small period-line" aria-label="Даты периода">
-        {month ? periodText('month', period, todayIn()) : `${datesText(period)} — последние 30 дней по сегодня`}
-      </p>
+        <span className="head-note" aria-label="Даты периода">
+          {month ? periodText('month', period, todayIn()) : `${datesText(period)} — последние 30 дней по сегодня`}
+        </span>
+      </HeadTools>
       <MonthsChart month={month ?? todayIn().slice(0, 7)} scope={scope} />
       <DaysChart key={`${period.from}-${period.to}`} period={period} scope={scope} />
       {seesAll && doctorId == null && (me.doctors ?? []).filter((d) => d.active !== false).length > 1 && <DoctorsChart me={me} period={period} />}

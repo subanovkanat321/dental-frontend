@@ -30,3 +30,7 @@
 /* «Отправили план, не записались» (V140): фильтр под суммой на столе */
 .comeback-sent-filter { justify-self: start; cursor: pointer; font: inherit; border: 1px solid var(--separator); background: var(--card); color: var(--text); }
 .comeback-sent-filter[aria-pressed=true] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+/* Группы — в строке шапки «Пациентов» (PageHead): чуть мельче, не влезли — переносятся внутри своего блока */
+.head-tools > .comeback-summary { flex: 1 1 0; min-width: min(100%, 300px); }
+.head-tools > .comeback-summary button { padding: 4px 10px; font-size: .85rem; }
+.head-tools > .comeback-summary b { font-size: .95rem; }

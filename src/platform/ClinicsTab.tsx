@@ -14,6 +14,8 @@ import { Loading } from '../layout/Loading'
 import { DemoClinic } from './DemoClinic'
 import { SalesFunnel } from './SalesFunnel'
 import { adminsLine, remindedText, statusText } from './agreementTarget'
+import { HeadTools } from '../layout/PageHead'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -105,9 +107,12 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
             {applications.data!.map((a) => <Application key={a.id} a={a} onApproved={(id, invite) => setOpened({ id, invite })} />)}
           </section>
         )}
+        {/* Что здесь — в «?» у заголовка, а не абзацем над списком */}
+        <HeadTools>
+          <HelpHint title="Клиники">{owner ? 'Все клиники приложения. Нажмите на клинику: оплата, договор, пригласить её руководителя или войти в неё самому.'
+            : 'Все клиники приложения — только цифры, без пациентов. Нажмите на клинику, чтобы пригласить её руководителя.'}</HelpHint>
+        </HeadTools>
         <section className="card-block">
-          <p className="hint">{owner ? 'Все клиники приложения. Нажмите на клинику: оплата, договор, пригласить её руководителя или войти в неё самому.'
-            : 'Все клиники приложения — только цифры, без пациентов. Нажмите на клинику, чтобы пригласить её руководителя.'}</p>
           {list.error && <p className="error">{list.error.message}</p>}
           {list.isPending ? <Loading /> : (
             <>

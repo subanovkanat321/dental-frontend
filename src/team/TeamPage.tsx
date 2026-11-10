@@ -7,6 +7,8 @@ import { SubHeader } from '../settings/SubHeader'
 import { DoctorPanel, NewDoctorPanel } from './DoctorPanel'
 import { StaffTab } from './StaffTab'
 import { TimeOffTab } from './TimeOffTab'
+import { HeadSlotProvider } from '../layout/PageHead'
+import { useHeadSlot } from '../layout/headSlot'
 
 type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
@@ -33,6 +35,7 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: 
   const [chosen, setTab] = useState<Tab>('doctors')
   const tab = only ?? chosen
   const [opened, setOpened] = useState<number | 'new' | null>(initialOpened)
+  const [slot, setSlot] = useHeadSlot()
   const close = useCallback(() => setOpened(null), [setOpened])
   const admin = useQuery({
     queryKey: ['doctors-admin'],
@@ -51,9 +54,10 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: 
 
   return (
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
+      <HeadSlotProvider slot={slot}>
       <section className="schedule-main">
         {only && onBack ? (
-          <SubHeader title={title ?? ''} onBack={onBack}>
+          <SubHeader title={title ?? ''} onBack={onBack} slotRef={setSlot}>
             {itemTabs}
             {tab === 'doctors' && addButtons}
           </SubHeader>
@@ -79,6 +83,7 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: 
         )}
         {tab === 'timeoff' && <TimeOffTab me={me} />}
       </section>
+      </HeadSlotProvider>
       {opened === 'new' && <NewDoctorPanel onClose={close} onCreated={(d) => setOpened(d.id!)} />}
       {openedDoctor && <DoctorPanel key={openedDoctor.id} doctor={openedDoctor} me={me} onClose={close} />}
     </div>

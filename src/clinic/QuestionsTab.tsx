@@ -8,6 +8,8 @@ import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { HeadTools } from '../layout/PageHead'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Question = Schemas['AnamnesisQuestion']
@@ -42,9 +44,11 @@ export function QuestionsTab({ me, header, onPanel }: { me: Me; header: ReactNod
     <>
       <section className="schedule-main">
         {header}
+        <HeadTools>
+          <HelpHint title="Анкета пациента">Вопросы, которые врач отмечает у пациента. Свои у вашей клиники: добавьте нужные, ненужные скройте.
+            «В плашке» — ответ «да» видно красной плашкой перед лечением.</HelpHint>
+        </HeadTools>
         <section className="card-block">
-          <p className="hint">Вопросы, которые врач отмечает у пациента. Свои у вашей клиники: добавьте нужные, ненужные скройте.
-            «В плашке» — ответ «да» видно красной плашкой перед лечением.</p>
           {list.error && <p className="error">{list.error.message}</p>}
           {move.error && <p className="error" role="alert">{move.error.message}</p>}
           {list.isPending ? <Loading /> : (

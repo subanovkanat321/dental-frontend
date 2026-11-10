@@ -13,7 +13,8 @@ import { ExpensesTab, ReportTab, StatsTab } from './MoreTabs'
 import { PaymentsTable } from './PaymentsTable'
 import { SortTh } from '../layout/SortTh'
 import { useSort } from '../lib/useSort'
-import { stickyHead } from '../layout/stickyHead'
+import { HeadSlotProvider, HeadTools, PageHead } from '../layout/PageHead'
+import { useHeadSlot } from '../layout/headSlot'
 import { EmptyState } from '../layout/EmptyState'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
@@ -114,21 +115,22 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
     .filter((x) => x.startAt && dayOf(x.startAt) >= range.from && dayOf(x.startAt) <= range.to)
     .filter((x) => x.paidSom != null || (x.debtSom ?? 0) > 0)
 
+  const [slot, setSlot] = useHeadSlot()
   const r = revenue.data
   const max = Math.max(1, ...(r?.days ?? []).map((d) => d.totalSom ?? 0))
 
   return (
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
+      <HeadSlotProvider slot={slot}>
       <section className="schedule-main cash">
-        <header ref={stickyHead} className="toolbar sticky-head">
-          <SectionTitle page="cash" title="Касса" subTitle={subTitle} hint={<HelpHint hint="cash" />} />
+        <PageHead slotRef={setSlot} title={<SectionTitle page="cash" title="Касса" subTitle={subTitle} hint={<HelpHint hint="cash" />} />}>
           {seesAll && doctors.length > 1 && (
             <Select aria-label="Чья касса" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
               <option value="">Вся клиника</option>
               {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
             </Select>
           )}
-        </header>
+        </PageHead>
 
         {tab === 'earnings' && <EarningsTab me={me} />}
         {tab === 'analytics' && <AnalyticsTab me={me} doctorId={doctorId} seesAll={seesAll} />}
@@ -149,15 +151,16 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
         )}
 
         {money && (
-          <section className="card-block">
-            <div className="block-head">
-              <h2>Касса и выручка</h2>
+          <section className="card-block" aria-label="Касса и выручка">
+            {/* Период и его даты — в строку шапки «Кассы», не отдельными строками над карточкой */}
+            <HeadTools>
               <div className="segments" role="group" aria-label="Период">
                 {([['day', 'День'], ['week', 'Неделя'], ['month', 'Месяц'], ['custom', 'Период']] as const).map(([key, title]) => (
                   <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
                 ))}
               </div>
-            </div>
+              {period !== 'custom' && <span className="head-note" aria-label="Даты периода">{periodText(period, range, todayIn())}</span>}
+            </HeadTools>
             {period === 'day' && (
               <div className="day-pick">
                 <label className="field"><span>День</span>
@@ -178,7 +181,6 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                 </label>
               </div>
             )}
-            {period !== 'custom' && <p className="hint small period-line" aria-label="Даты периода">{periodText(period, range, todayIn())}</p>}
             {revenue.error && <p className="error">{revenue.error.message}</p>}
             {r && (
               <>
@@ -264,6 +266,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
         )}
         </>}
       </section>
+      </HeadSlotProvider>
       {opened && <OpenedAppointment id={opened} me={me} onClose={close} onOpenPatient={onOpenPatient} />}
     </div>
   )

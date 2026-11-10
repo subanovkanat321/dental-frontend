@@ -14,7 +14,8 @@ import { QuestionPanel, QuestionsTab } from './QuestionsTab'
 import { SectionTitle } from '../layout/section'
 import { useSection } from '../layout/useSection'
 import { canEditServices, isAssistant } from '../lib/roles'
-import { stickyHead } from '../layout/stickyHead'
+import { HeadSlotProvider, PageHead } from '../layout/PageHead'
+import { useHeadSlot } from '../layout/headSlot'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
@@ -76,6 +77,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
   // Ассистент сразу видит пациентов своего врача
   const [doctorId, setDoctorId] = useState<number | null>(() => (me.assistantOf?.length === 1 ? me.assistantOf[0]! : null))
+  const [slot, setSlot] = useHeadSlot()
   const recent = useQuery({
     queryKey: ['patients', 'recent', doctorId],
     queryFn: () => unwrap(api.GET('/api/patients/recent', { params: { query: { doctorId: doctorId ?? undefined } } })),
@@ -129,9 +131,9 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
 
   return (
     <div className={selected || (tab === 'questions' && question) ? 'schedule with-panel' : 'schedule'}>
+      <HeadSlotProvider slot={slot}>
       <section className="schedule-main">
-        <header ref={stickyHead} className="toolbar sticky-head patients-head">
-          <SectionTitle page="patients" title="Пациенты" subTitle={subTitle} hint={<HelpHint hint="patients" />} />
+        <PageHead className="patients-head" slotRef={setSlot} title={<SectionTitle page="patients" title="Пациенты" subTitle={subTitle} hint={<HelpHint hint="patients" />} />}>
           {tab === 'all' && (
             <>
               {/* На компьютере: строка поиска и фильтров под заголовком, «Новый пациент» — справа от вкладок */}
@@ -151,7 +153,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
               <button type="button" className="btn primary head-action" onClick={() => setSelected('new')}>＋ Новый пациент</button>
             </>
           )}
-        </header>
+        </PageHead>
         {tab === 'booked' && <BookedTab me={me} initial={initialBooked} onOpenAppointment={onOpenAppointment} />}
         {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} />}
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
@@ -159,7 +161,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
         {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
-          <EmptyState title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»`) : doctorId != null ? 'У этого врача пока не было пациентов' : 'Пациентов пока нет'}>
+          <EmptyState fill title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»`) : doctorId != null ? 'У этого врача пока не было пациентов' : 'Пациентов пока нет'}>
             {text ? (remote.isFetching ? undefined : 'Проверьте написание или ищите по последним цифрам телефона.') : doctorId == null ? 'Они появятся с первой записью — или добавьте кнопкой «＋ Новый пациент».' : undefined}
           </EmptyState>
         )}
@@ -189,6 +191,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
           </table>
         )}
       </section>
+      </HeadSlotProvider>
       {tab === 'questions' && question != null && selected == null && (
         <QuestionPanel key={question} questionId={question} onClose={closeQuestion} onOpenPatient={(id) => { setQuestion(null); setSelected(id) }} />
       )}

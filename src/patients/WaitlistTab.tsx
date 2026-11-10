@@ -13,6 +13,7 @@ import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { dueText, monthsText } from '../clinic/services'
 import { Loading, Spinner } from '../layout/Loading'
+import { HeadTools } from '../layout/PageHead'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -33,7 +34,7 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
   if (list.isPending) return <Loading />
   if (list.error) return <p className="error">{list.error.message}</p>
   if (!list.data.length) {
-    return <><WaitlistAdd me={me} /><EmptyState title="Пока никто не ждёт">Добавьте пациента — когда освободится время, CRM подскажет, кого позвать.</EmptyState></>
+    return <><WaitlistAdd me={me} /><EmptyState fill title="Пока никто не ждёт">Добавьте пациента — когда освободится время, CRM подскажет, кого позвать.</EmptyState></>
   }
   return (
     <>
@@ -95,7 +96,7 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
 
   if (due.isPending) return <Loading />
   if (due.error) return <p className="error">{due.error.message}</p>
-  if (!due.data.length) return <EmptyState title="Звать некого — все записаны или были недавно" />
+  if (!due.data.length) return <EmptyState fill title="Звать некого — все записаны или были недавно" />
   const rows = due.data.slice(0, limit)
   const more = due.data.length > limit
   return (
@@ -197,7 +198,8 @@ function WaitlistAdd({ me }: { me: Me }) {
     queryFn: () => unwrap(api.POST('/api/patients/search', { body: { query: search } })),
     enabled: open && search.length >= 2 && !patient,
   })
-  if (!open) return <button type="button" className="btn" onClick={() => setOpen(true)}>➕ Добавить в лист ожидания</button>
+  // Кнопка — в строку шапки «Пациентов» справа; открытая форма — карточкой над списком
+  if (!open) return <HeadTools><button type="button" className="btn head-end" onClick={() => setOpen(true)}>➕ Добавить в лист ожидания</button></HeadTools>
   return (
     <section className="card-block waitlist-add" aria-label="Добавить в лист ожидания">
       {patient ? (

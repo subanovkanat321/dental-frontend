@@ -13,6 +13,8 @@ import { haptic, openLink } from '../lib/telegram'
 import { isWindows, whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
 import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, prepareVideo, sendVideo, videoWay, type Group, type OutreachLead, type VideoResult } from './outreach'
+import { HeadTools } from '../layout/PageHead'
+import { HelpHint } from '../help/HelpHint'
 
 type Template = Schemas['ClinicOutreachTemplate']
 type Report = Schemas['ClinicOutreachImportReport']
@@ -57,13 +59,15 @@ export function OutreachTab() {
 
   return (
     <>
-      <section className="card-block" aria-label="Написать клиникам">
-        <h2>Написать клиникам</h2>
-        <p className="hint">Пишите по одной — своим нажатием: WhatsApp блокирует номер за массовые рассылки, а личное сообщение
-          читают охотнее. После отправки отметьте «Да» — клиника перейдёт в «Написали» (и в воронке — «Связались»).</p>
-        <p className="hint"><b>«📨 Отправить сообщение и ролик»</b>: ① откроется WhatsApp с текстом — отправьте; ② вернитесь сюда — появится
+      {/* Как писать — в «?» у заголовка: два абзаца над списком отодвигали его на полэкрана */}
+      <HeadTools>
+        <HelpHint title="Написать клиникам">Пишите по одной — своим нажатием: WhatsApp блокирует номер за массовые рассылки, а личное сообщение
+          читают охотнее. После отправки отметьте «Да» — клиника перейдёт в «Написали» (и в воронке — «Связались»).<br /><br />
+          <b>«📨 Отправить сообщение и ролик»</b>: ① откроется WhatsApp с текстом — отправьте; ② вернитесь сюда — появится
           кнопка ролика: «Поделиться» → WhatsApp → этот чат (он первый в списке). Ролик — файлом: у незнакомого номера WhatsApp не делает
-          ссылки кликабельными. На компьютере ролик скачается — прикрепите его в WhatsApp Web.</p>
+          ссылки кликабельными. На компьютере ролик скачается — прикрепите его в WhatsApp Web.</HelpHint>
+      </HeadTools>
+      <section className="card-block" aria-label="Написать клиникам">
         {outreach.error && <p className="error">{outreach.error.message}</p>}
         {outreach.isPending ? <Loading /> : data && (
           <>

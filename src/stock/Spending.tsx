@@ -6,6 +6,7 @@ import { monthRange, somText, todayIn } from '../lib/time'
 import { MonthPicker } from '../layout/MonthPicker'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { HeadTools } from '../layout/PageHead'
 
 const MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' })
 const MONTH_SHORT = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'short' })
@@ -28,10 +29,10 @@ export function SpendingBlock() {
   const max = Math.max(1, ...(r?.months ?? []).map((m) => m.purchasedSom ?? 0))
   return (
     <section className="card-block spending" aria-label="Расходы на склад">
-      <div className="block-head">
-        <h2>Расходы на склад · {monthTitle(`${month}-01`)}</h2>
+      {/* Месяц — в строку шапки «Склада» */}
+      <HeadTools>
         <MonthPicker label="Месяц расходов на склад" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
-      </div>
+      </HeadTools>
       {data.isPending && <Loading />}
       {data.error && <p className="error">{data.error.message}</p>}
       {r && (
@@ -72,7 +73,7 @@ export function SpendingBlock() {
                 ))}
               </tbody>
             </table>
-          ) : <EmptyState title="В этом месяце поставок и списаний не было" />}
+          ) : <EmptyState compact title="В этом месяце поставок и списаний не было" />}
         </>
       )}
     </section>

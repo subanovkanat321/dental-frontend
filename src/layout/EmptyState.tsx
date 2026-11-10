@@ -20,16 +20,19 @@ function TishkaMark({ className }: { className?: string }) {
 /**
  * Пустое состояние: полупрозрачный Тишка, фраза, подсказка и действие — вместо голой серой строки.
  * Обычное — на месте целого экрана или списка (Тишка крупно, по центру); `compact` — мелкий блок
- * внутри карточки (долги, оплаты, снимки): Тишка маленьким значком слева, строкой.
+ * внутри карточки (долги, оплаты, снимки): Тишка маленьким значком слева, строкой. `fill` — пустой
+ * весь подраздел: без карточки, прямо на фоне страницы, по центру всей свободной высоты до низа окна
+ * (Тишка — водяным знаком). В узких местах (карточка справа, форма) — обычный или `compact`.
  */
-export function EmptyState({ title, children, action, compact }: {
+export function EmptyState({ title, children, action, compact, fill }: {
   title: string
   children?: ReactNode
   action?: ReactNode
   compact?: boolean
+  fill?: boolean
 }) {
   return (
-    <div className={compact ? 'empty-state compact' : 'empty-state'}>
+    <div className={['empty-state', compact ? 'compact' : '', fill ? 'fill' : ''].filter(Boolean).join(' ')}>
       <TishkaMark className="empty-mark" />
       <div className="empty-body">
         <p className="empty-title">{title}</p>

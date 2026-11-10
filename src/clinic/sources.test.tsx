@@ -73,5 +73,7 @@ test('«Откуда узнают о клинике»: не админ толь�
   const table = await screen.findByRole('table', { name: 'Откуда узнают о клинике' })
   expect(within(table).getByText('📱 Instagram')).toBeInTheDocument()
   expect(within(table).queryByRole('button')).toBeNull()
+  // Пояснение — в «?» у названия пункта
+  await userEvent.click(screen.getByRole('button', { name: 'Подсказка: Откуда приходят пациенты' }))
   expect(screen.getByText(/Список меняет руководитель клиники/)).toBeInTheDocument()
 })

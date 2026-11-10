@@ -8,6 +8,8 @@ import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
+import { HeadTools } from '../layout/PageHead'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Memo = Schemas['CareMemosCareMemoView']
@@ -38,11 +40,11 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
       <section className="schedule-main">
         {header}
         <section className="card-block">
-          <div className="block-head">
-            <p className="hint">Памятку отдают пациенту после приёма: «📤 Отправить пациенту» или «🖨 Печать» на карточке приёма.
-              Какая памятка у услуги — в «Настройки → Услуги и цены».</p>
-            {editable && <button type="button" className="btn primary" onClick={() => setOpened('new')}>＋ Своя памятка</button>}
-          </div>
+          <HeadTools>
+            <HelpHint title="Памятки">Памятку отдают пациенту после приёма: «📤 Отправить пациенту» или «🖨 Печать» на карточке приёма.
+              Какая памятка у услуги — в «Настройки → Услуги и цены».</HelpHint>
+            {editable && <button type="button" className="btn primary head-end" onClick={() => setOpened('new')}>＋ Своя памятка</button>}
+          </HeadTools>
           {memos.error && <p className="error">{memos.error.message}</p>}
           {memos.isPending ? <Loading /> : (
             <ul className="memo-list" aria-label="Памятки">
