@@ -21,7 +21,7 @@ export type SettingsItem = {
 }
 
 /** Значки пунктов — как в меню прежнего приложения. */
-export const SETTINGS_EMOJI: Record<string, string> = { 'about': '🏥', 'doctors': '👩‍⚕️', 'services': '🦷', 'hours': '🕘', 'reminder': '🔔', 'questions': '🩺', 'memos': '📋', 'learn': '📖', 'patient-news': '📰', 'sources': '📣', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'ai': '✨', 'profile': '🧑‍⚕️', 'appearance': '🎨', 'calendar': '📅', 'guide': '📘', 'support': '🛟', 'survey': '📝', 'dental-news': '📚', 'privacy': '🔒', 'contract': '✍️', 'chairs': '🪑' }
+export const SETTINGS_EMOJI: Record<string, string> = { 'about': '🏥', 'doctors': '👩‍⚕️', 'services': '🦷', 'hours': '🕘', 'reminder': '🔔', 'questions': '🩺', 'memos': '📋', 'learn': '📖', 'patient-news': '📰', 'sources': '📣', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'ai': '✨', 'profile': '🧑‍⚕️', 'appearance': '🎨', 'calendar': '📅', 'guide': '📘', 'support': '🛟', 'survey': '📝', 'privacy': '🔒', 'contract': '✍️', 'chairs': '🪑' }
 
 const all = () => true
 const admin = (me: Me) => Boolean(me.admin)
@@ -96,7 +96,6 @@ export const SETTINGS_GROUPS: [string, SettingsItem[]][] = [
     item('help', 'Помощь и техподдержка', '', all, { hidden: true }),
     // Опросы команды Tish проходят сотрудники клиник; команда платформы их составляет
     item('survey', 'Отзыв о Tish', 'Опрос команды Tish — 2–3 минуты', (me) => !me.platform),
-    item('dental-news', 'Новости стоматологии', 'Подборка профессиональных изданий', all),
     item('privacy', 'Конфиденциальность', 'Как мы обращаемся с данными пациентов', all),
   ]],
 ]
