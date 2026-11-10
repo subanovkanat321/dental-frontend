@@ -152,6 +152,8 @@ test('tish.kg/app — страница «Скачать Tish» без входа
   expect(screen.getByRole('heading', { name: 'Tish на экране телефона' })).toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Установить приложение' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Войти в Tish' })).toHaveAttribute('href', '/login')
+  // Подсказка: уведомления можно присылать в приложение, а не в Telegram
+  expect(screen.getByRole('region', { name: 'Уведомления в приложение' })).toHaveTextContent('«В приложение»')
   act(() => {
     window.dispatchEvent(Object.assign(new Event('beforeinstallprompt'), { prompt: vi.fn(), userChoice: Promise.resolve({ outcome: 'dismissed' }) }))
   })

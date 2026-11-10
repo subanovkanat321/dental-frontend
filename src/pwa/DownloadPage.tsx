@@ -30,6 +30,13 @@ export function DownloadPage() {
         <h2>Установить</h2>
         <InstallBody />
       </section>
+      {/* После установки — уведомления в приложение, а не в Telegram (pwa/Notifications.tsx) */}
+      <section className="card-block download-notify" aria-label="Уведомления в приложение">
+        <h2>🔔 Уведомления — в приложение</h2>
+        <p>Хотите получать уведомления о записях не в Telegram, а прямо в Tish? После установки откройте Tish с главного
+          экрана → <b>Настройки</b> → внизу блок <b>«Уведомления»</b> → <b>«В приложение»</b> и разрешите уведомления, когда телефон спросит.</p>
+        <p className="hint">На iPhone это работает только в установленном приложении (значок на главном экране), iOS 16.4 и новее.</p>
+      </section>
       <ul className="download-points">
         {POINTS.map(([icon, text]) => <li key={text}><span aria-hidden="true">{icon}</span>{text}</li>)}
       </ul>
