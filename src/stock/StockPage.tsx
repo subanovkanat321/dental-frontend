@@ -11,6 +11,8 @@ import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
+import { SectionTitle } from '../layout/section'
+import { useSection } from '../layout/useSection'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -31,7 +33,8 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   // Чей склад: весь, только общий или врача
   const [owner, setOwner] = useState<'' | 'shared' | number>('')
   const doctorId = typeof owner === 'number' ? owner : null
-  const [spending, setSpending] = useState(false)
+  // Подраздел: материалы или «Расходы на склад» (руководителю) — в меню слева, адрес #/stock/<подраздел>
+  const { sub, subTitle } = useSection('stock', me)
   const [query, setQuery] = useState('')
   const [lowOnly, setLowOnly] = useState(false)
   const [side, setSide] = useState<Side>(initialSupply ? { kind: 'supply', id: initialSupply } : null)
@@ -80,11 +83,23 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   const low = all.filter((s) => s.low).length
   const selected = side?.kind === 'supply' ? all.find((s) => s.id === side.id) ?? null : null
 
+  const title = <SectionTitle page="stock" title="Склад" subTitle={subTitle} hint={<HelpHint hint="stock" />} />
+  if (sub === 'spending') {
+    return (
+      <div className="schedule">
+        <section className="schedule-main">
+          <header ref={stickyHead} className="toolbar sticky-head">{title}</header>
+          <SpendingBlock />
+        </section>
+      </div>
+    )
+  }
+
   return (
     <div className={side ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
         <header ref={stickyHead} className="toolbar sticky-head">
-          <div className="with-hint"><h1>Склад</h1><HelpHint hint="stock" /></div>
+          {title}
           <input type="search" className="search" aria-label="Поиск материала" placeholder="Название" value={query}
             onChange={(e) => setQuery(e.target.value)} />
           {choosesDoctor && doctors.length > 0 && (
@@ -101,14 +116,12 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
             <input type="checkbox" checked={lowOnly} onChange={(e) => setLowOnly(e.target.checked)} />
             Только заканчивается{low ? ` (${low})` : ''}
           </label>
-          {me.admin && <button type="button" className="btn push" aria-pressed={spending} onClick={() => setSpending(!spending)}>Расходы на склад</button>}
-          <button type="button" className={me.admin ? 'btn primary' : 'btn primary push'} onClick={() => setSide({ kind: 'new' })}
+          <button type="button" className="btn primary push" onClick={() => setSide({ kind: 'new' })}
             title="Новая позиция на складе: материал или инструмент, которого ещё нет в списке">＋ Новый материал</button>
         </header>
         {/* «＋ Новый материал» — новая позиция; пришла поставка уже имеющегося — через сам материал */}
         {all.length > 0 && <p className="hint small stock-how">Пришла поставка — нажмите на материал в списке → «＋ Пришла поставка». «＋ Новый материал» — только если его ещё нет в списке.</p>}
         {me.admin && <SeparateSupplies />}
-        {spending && <SpendingBlock />}
 
         {supplies.isPending && <Loading />}
         {supplies.error && <p className="error">{supplies.error.message}</p>}

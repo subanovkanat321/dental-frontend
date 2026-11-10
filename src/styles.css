@@ -2380,3 +2380,70 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .grid-head-text .chair-badge { margin-top: 0; padding: 0; border-radius: 0; background: none; font-size: inherit; }
   .grid-head-sub > * + *::before { content: '·'; margin: 0 6px; color: var(--faint); }
 }
+
+/* ===== Меню деревом (2026-11-10, макет «A»): под открытым разделом — его подразделы, бывшие
+   вкладки сверху; стрелка › раскрывает соседний раздел. Свёрнутое меню — панель при наведении.
+   Телефон — нижняя полоса как была, подразделы — листом снизу (layout/Shell, layout/section). */
+.nav-item { display: grid; }
+.nav-row { display: flex; align-items: center; gap: 2px; }
+.nav-row > .nav { flex: 1; min-width: 0; }
+.nav-chev { flex: none; display: grid; place-items: center; width: 28px; height: 32px; padding: 0; border: 0; border-radius: var(--r-sm); background: none; color: var(--faint); cursor: pointer; }
+.nav-chev svg { width: 16px; height: 16px; transition: transform .15s; }
+.nav-chev[aria-expanded=true] svg { transform: rotate(90deg); }
+.nav-chev:hover { background: var(--sunken); color: var(--text); }
+.nav-chev:focus-visible, .nav-subitem:focus-visible, .sect-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nav .nav-badge.quiet, .nav-count.quiet { background: var(--sunken); color: var(--hint); }
+/* Открытый раздел: выделен подраздел, сам раздел — просто тёмным текстом */
+.nav-item.sub-active > .nav-row > .nav.active { background: none; color: var(--text); }
+.nav-sub { display: grid; gap: 1px; margin: 2px 0 6px 18px; padding-left: 8px; border-left: 1px solid var(--separator); }
+.nav-subitem { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px; border-radius: var(--r-md); color: var(--rail-text); font-size: .93rem; text-decoration: none; cursor: pointer; }
+.nav-subitem:hover { background: var(--sunken); color: var(--text); }
+.nav-subitem.active { background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.nav-sub-title { flex: 1; min-width: 0; line-height: 1.3; overflow-wrap: anywhere; } /* длинный пункт «Настроек» — в две строки, а не «Текст напомин…» */
+.nav-count { flex: none; min-width: 18px; padding: 0 6px; border-radius: 99px; background: var(--accent); color: #fff; font-size: .72rem; font-weight: 600; line-height: 18px; text-align: center; }
+.nav-group { margin: 8px 10px 2px; font-size: .8rem; font-weight: 600; color: var(--faint); }
+.nav-sub > .nav-group:first-child { margin-top: 2px; }
+/* Свёрнутое меню: подразделы панелью рядом с иконкой */
+.nav-fly { position: fixed; z-index: 50; width: 240px; max-height: calc(100vh - 16px); overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 1px; align-content: start;
+  padding: 6px; background: var(--card); border: 1px solid var(--separator); border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(15, 42, 48, .06), 0 8px 24px rgba(15, 42, 48, .12); }
+.nav-fly-head { margin-bottom: 4px; padding: 6px 10px 8px; border: 0; border-bottom: 1px solid var(--separator); background: none; color: var(--text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.nav-fly-head:hover { color: var(--link); }
+.nav-fly > .nav-group:nth-child(2) { margin-top: 2px; }
+@media (min-width: 761px) {
+  /* Открытый раздел: число — у подразделов, у самого раздела его не повторяем */
+  .shell:not(.narrow) .nav-item.open > .nav-row .nav-badge { display: none; }
+  .shell.narrow .nav-chev { display: none; }
+  .shell.narrow .nav-item { justify-items: center; }
+  .shell.narrow .nav-row > .nav { width: 48px; flex: none; }
+  .shell.narrow .nav-item.sub-active > .nav-row > .nav.active { background: var(--accent-soft); color: var(--link); }
+  .settings-back { display: none; }
+}
+/* Заголовок раздела с подразделами: мелко раздел, крупно подраздел */
+.sect-titles { display: grid; min-width: 0; line-height: 1.25; }
+.sect-crumb { font-size: .85rem; color: var(--hint); }
+.sect-title > h1 { min-width: 0; flex: 0 1 auto; }
+@media (max-width: 760px) { .toolbar > .sect-title > h1 { flex: 1 1 auto; } }
+.sect-switch { display: flex; align-items: center; gap: 6px; min-width: 0; margin-left: -6px; padding: 4px 8px 4px 6px; border: 0; border-radius: var(--r-md); background: none; color: var(--text); font: inherit; cursor: pointer; text-align: left; }
+.sect-switch:active { background: var(--sunken); }
+.sect-dot { color: var(--faint); }
+.sect-sub { color: var(--link); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sect-caret { flex: none; width: 18px; height: 18px; color: var(--hint); }
+@media (max-width: 760px) {
+  .nav-item, .nav-row { display: contents; }
+  .nav-item.extra .nav { display: none; }
+  .nav-chev, .nav-sub, .nav-fly { display: none; }
+  /* Долгое нажатие на раздел внизу — лист подразделов, а не меню «Скопировать» */
+  .sidebar .nav { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  .sub-titles .sect-crumb { display: none; }
+  .sub-sheet-head { display: flex; align-items: center; gap: 10px; margin: 0 4px 6px; }
+  .sub-sheet-head .icon { width: 22px; height: 22px; color: var(--hint); }
+  .sub-sheet-head h2 { font-size: 1.1rem; }
+  .sub-sheet-close { margin-left: auto; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--sunken); color: var(--hint); font: inherit; cursor: pointer; }
+  .sheet-item { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: var(--r-md); color: var(--text); font-size: 1rem; text-decoration: none; }
+  .sheet-item.active { background: var(--accent-soft); color: var(--link); font-weight: 600; }
+  .sheet-item .nav-sub-title { flex: 1; }
+  .sheet-check { margin-left: 4px; }
+  .sub-sheet .nav-group { margin: 10px 12px 2px; }
+  .sub-sheet-tip { margin: 8px 6px 0; }
+}

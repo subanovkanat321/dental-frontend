@@ -145,7 +145,7 @@ test('«О клинике»: несколько телефонов (до трё�
 
 test('«Настройки → Оформление»: тёмная тема и крупный текст сразу и запоминаются', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
-  window.location.hash = '/settings'
+  window.location.hash = '/settings/appearance'
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: 'Тёмная' }))

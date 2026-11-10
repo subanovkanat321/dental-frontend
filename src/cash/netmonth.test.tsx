@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { saveCsv } from '../lib/csv'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 
 vi.mock('../lib/csv', () => ({ saveCsv: vi.fn() }))
@@ -60,7 +60,7 @@ test('частный врач: «Чистыми за месяц» столбик
   backend(doctorOnly, { month: '2026-11', row: DASTAN })
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Мой заработок' }))
+  await user.click(await findSub('Мой заработок'))
 
   const block = await screen.findByRole('region', { name: 'Чистыми за месяц' })
   expect(block).toHaveTextContent('Чистыми за ноябрь')
@@ -78,7 +78,7 @@ test('врач за клинику: в «Моём заработке» о мар
   backend({ ...doctorOnly, doctorId: 3 }, { month: '2026-11' })
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Мой заработок' }))
+  await user.click(await findSub('Мой заработок'))
 
   await screen.findByRole('region', { name: 'Мой заработок' })
   expect(screen.queryByRole('region', { name: 'Чистыми за месяц' })).toBeNull()
@@ -89,7 +89,7 @@ test('админ: «Итог месяца по врачам» в «Расход�
   backend(me, { month: '2026-11' })
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Расходы' }))
+  await user.click(await findSub('Расходы'))
 
   const table = await screen.findByRole('table', { name: 'Итог месяца по врачам' })
   const rows = within(table).getAllByRole('row')
@@ -124,7 +124,7 @@ test('регистратура «Итог месяца по врачам» не 
   backend({ ...me, admin: false, reception: true, doctorId: undefined }, { month: '2026-11' })
   const user = userEvent.setup()
   renderApp()
-  const tab = await screen.findByRole('tab', { name: 'Расходы' }).catch(() => null)
+  const tab = await findSub('Расходы').catch(() => null)
   if (tab) await user.click(tab)
   expect(screen.queryByRole('region', { name: 'Итог месяца по врачам' })).toBeNull()
 })

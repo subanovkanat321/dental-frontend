@@ -119,7 +119,7 @@ test('имя пациента в карточке — его карточка в
   await userEvent.click(within(panel).getByRole('button', { name: 'Бакыт М. ›' }))
   const card = await screen.findByRole('complementary', { name: 'Карточка пациента' })
   expect(await within(card).findByRole('heading', { name: 'Бакыт М.' })).toBeInTheDocument()
-  expect(window.location.hash).toBe('#/patients')
+  expect(window.location.hash).toBe('#/patients/all')
 })
 
 test('ребёнка записала мама из бота — в карточке приёма кто и кем приходится', async () => {

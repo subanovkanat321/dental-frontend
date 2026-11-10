@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
 import { todayIn } from '../lib/time'
 // Настоящий готовый план из сборки (public/content/plan.json) — формат должен совпадать с контрактом импорта
@@ -28,7 +28,7 @@ const post = (id: number, extra: Partial<Schemas['ContentPostsPost']> = {}) => (
 async function openTab() {
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Контент' }))
+  await user.click(await findSub('Контент'))
   return user
 }
 
@@ -209,8 +209,8 @@ test('Instagram не подключён: кнопок публикации не�
 test('менеджеру вкладки «Контент» нет', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: false, fullName: 'Мира' })))
   renderApp()
-  expect(await screen.findByRole('tab', { name: 'Клиники' })).toBeInTheDocument()
-  expect(screen.queryByRole('tab', { name: 'Контент' })).not.toBeInTheDocument()
+  expect(await findSub('Клиники')).toBeInTheDocument()
+  expect(querySub('Контент')).not.toBeInTheDocument()
 })
 
 test('рилс в плане: плеер с обложкой, время; публикация — в фоне (202), «Публикуется в Instagram»', async () => {

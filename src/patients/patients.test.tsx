@@ -37,7 +37,9 @@ const names = () => screen.getAllByRole('row').slice(1).map((r) => within(r).get
 test('таблица: сначала кто был недавно; сортировка по имени; поиск по имени и по номеру', async () => {
   backend()
   renderApp()
-  expect(await screen.findByRole('heading', { name: 'Пациенты' })).toBeInTheDocument()
+  // «Пациенты» мелко, подраздел «Все» — заголовком
+  expect(await screen.findByRole('heading', { name: 'Все' })).toBeInTheDocument()
+  expect(screen.getByText('Пациенты', { selector: '.sect-crumb' })).toBeInTheDocument()
   await screen.findByText('Айгуль Т.')
   // Не был ни разу — в конце, даже при обратной сортировке
   expect(names()).toEqual(['Айгуль Т.', 'Бакыт М.', 'Нурлан К.'])

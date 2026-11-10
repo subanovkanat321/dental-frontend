@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../../api/client'
-import { me, renderApp } from '../../test/fixtures'
+import { me, renderApp, findSub } from '../../test/fixtures'
 import { choose } from '../../test/select'
 import { server } from '../../test/server'
 
@@ -36,7 +36,7 @@ const details = (extra: Partial<Schemas['SurveyDetails']> = {}): Schemas['Survey
 
 async function openSurveys() {
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Опросы' }))
+  await userEvent.click(await findSub('Опросы'))
 }
 
 test('«Создать из шаблона» — черновик в редакторе; правки уходят одним PUT', async () => {

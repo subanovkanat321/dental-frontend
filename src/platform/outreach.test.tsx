@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { choose, chosen } from '../test/select'
 import { server } from '../test/server'
 import { forgetVideo, messageFor, nextLead } from './outreach'
@@ -86,7 +86,7 @@ afterEach(() => {
 async function openTab() {
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Написать клиникам' }))
+  await user.click(await findSub('Написать клиникам'))
   await screen.findByRole('list', { name: 'Клиники' })
   return user
 }

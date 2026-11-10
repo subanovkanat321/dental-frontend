@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { daysText } from './daysText'
 
@@ -59,7 +59,7 @@ test('оклад по табелю: расшифровка в карточке, 
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  await user.click(await findSub('Зарплата'))
   const card = await screen.findByRole('region', { name: 'Зарплата: Айпери' })
   expect(card).toHaveTextContent('Условия: оклад 30 000 сом по табелю')
   expect(within(card).getByLabelText('Оклад по табелю')).toHaveTextContent(/Отработано 22 из 22 дней → 30\s000 сом из оклада 30\s000 сом/)
@@ -95,7 +95,7 @@ test('условия: галочка «оклад по табелю» уходи
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  await user.click(await findSub('Зарплата'))
   const card = await screen.findByRole('region', { name: 'Зарплата: Дастан Т.' })
   await user.click(within(card).getByRole('button', { name: '⚙️ Задать процент и оклад' }))
   // Галочка — только когда есть оклад

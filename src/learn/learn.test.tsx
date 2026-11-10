@@ -226,7 +226,7 @@ test('раздел «Для пациента» — сразу после «Па�
     server.use(http.get('*/api/patient/me', () => HttpResponse.json(who)), http.get('*/api/appointments', () => HttpResponse.json([])))
     const { unmount } = renderApp()
     const nav = await screen.findByRole('navigation', { name: 'Разделы' })
-    const names = within(nav).getAllByRole('button').map((b) => b.textContent?.trim())
+    const names = within(nav).getAllByRole('button').filter((b) => b.dataset.section).map((b) => b.textContent?.trim())
     expect(names.indexOf('Для пациента')).toBe(names.indexOf('Пациенты') + 1)
     // Старой кнопки «3D-атлас» под меню больше нет
     expect(screen.queryByRole('button', { name: '3D-атлас' })).toBeNull()
