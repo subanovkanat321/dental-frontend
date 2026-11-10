@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -54,7 +54,7 @@ test('карточка пациента: «В лист ожидания» на 4
   expect(await within(panel).findByText(/В листе ожидания/)).toHaveTextContent('45 мин')
   expect(sent).toEqual([{ patientId: 2, doctorId: 2, durationMinutes: 45 }])
 
-  await userEvent.click(screen.getByRole('tab', { name: /Лист ожидания · 1/ }))
+  await userEvent.click((await findSub(/Лист ожидания · 1/)))
   const table = await screen.findByRole('table', { name: 'Лист ожидания' })
   expect(table).toHaveTextContent('Дастан Т.')
   // «Убрать» переспрашивает: нажали случайно — пациент остаётся в листе
@@ -73,7 +73,7 @@ test('лист ожидания: «Убрать» не прошло — ошиб
   server.use(http.delete('*/api/waitlist/:id', () => HttpResponse.json({ title: 'Forbidden', status: 403, detail: 'Нет доступа' }, { status: 403 })))
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: /Лист ожидания/ }))
+  await userEvent.click(await findSub(/Лист ожидания/))
   const table = await screen.findByRole('table', { name: 'Лист ожидания' })
   await userEvent.click(within(table).getByRole('button', { name: 'Убрать из листа: Айгуль Т.' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Нет доступа')
@@ -121,7 +121,7 @@ test('ассистент — «Профосмотр»: WhatsApp — отметк
     }),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Профосмотр' }))
+  await userEvent.click(await findSub('Профосмотр'))
   const table = await screen.findByRole('table', { name: 'Позвать на профосмотр' })
   expect(table).toHaveTextContent('ещё не звали')
   // Строка: последний визит · услуга, с какого дня пора и какой срок применён (считает сервер)
@@ -174,7 +174,7 @@ test('вкладка «Лист ожидания»: «Добавить» — н�
   server.use(http.post('*/api/patients/search', () => HttpResponse.json([aigul])))
   window.location.hash = '/patients'
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: /Лист ожидания/ }))
+  await userEvent.click(await findSub(/Лист ожидания/))
   await userEvent.click(await screen.findByRole('button', { name: /Добавить в лист ожидания/ }))
   await userEvent.type(screen.getByLabelText('Найти пациента для листа ожидания'), 'Айг')
   await userEvent.click(await screen.findByRole('button', { name: /Айгуль Т\./ }))

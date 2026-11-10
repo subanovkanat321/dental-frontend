@@ -27,9 +27,10 @@ export function useReminderText(): ((a: Schemas['AppointmentView']) => string) |
 }
 
 /** Лист ожидания клиники — им пользуются «Пациенты», карточка пациента и «Новая запись». */
-export function useWaitlist() {
+export function useWaitlist(enabled = true) {
   return useQuery({
     queryKey: ['waitlist'],
     queryFn: () => unwrap(api.GET('/api/waitlist')),
+    enabled,
   })
 }

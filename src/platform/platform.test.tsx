@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
 import { byHealth, extendPaid, noShowShare } from './health'
 
@@ -137,8 +137,8 @@ test('менеджер без клиники: только «Платформа�
   const user = userEvent.setup()
   renderApp()
   const nav = await screen.findByRole('navigation', { name: 'Разделы' })
-  expect(within(nav).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual(['Платформа'])
-  expect(screen.queryByRole('tab', { name: 'Настройки' })).not.toBeInTheDocument()
+  expect(within(nav).getAllByRole('button').filter((b) => b.dataset.section).map((b) => b.textContent?.trim())).toEqual(['Платформа'])
+  expect(querySub('Настройки')).not.toBeInTheDocument()
   await user.click(await screen.findByRole('button', { name: 'Стоматология «Тест»' }))
   const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
   expect(within(panel).queryByRole('button', { name: 'Отметить оплату' })).not.toBeInTheDocument()
@@ -163,7 +163,7 @@ test('рассылка клиникам: подтверждение и итог'
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Сообщение клиникам' }))
+  await user.click(await findSub('Сообщение клиникам'))
   const form = screen.getByRole('form', { name: 'Сообщение клиникам' })
   await user.type(within(form).getByRole('textbox'), 'Плановые работы в субботу')
   await user.click(within(form).getByRole('button', { name: 'Выбрать' }))
@@ -193,7 +193,7 @@ test('владелец меняет тарифы: год следует за м�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Тарифы' }))
+  await user.click(await findSub('Тарифы'))
   const form = await screen.findByRole('form', { name: 'Тарифы' })
   await user.clear(within(form).getByLabelText('В месяц: Кабинет'))
   await user.type(within(form).getByLabelText('В месяц: Кабинет'), '790')
@@ -280,7 +280,7 @@ test('«Сведения о платформе»: несколько телеф�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Настройки' }))
+  await user.click(await findSub('Настройки'))
   const form = await screen.findByRole('form', { name: 'Сведения о платформе' })
   expect(within(form).getByRole('textbox', { name: 'Телефон поддержки' })).toHaveValue('555 000 111')
   await user.click(within(form).getByRole('button', { name: '＋ Ещё номер' }))

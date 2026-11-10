@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
 import { toCsv } from '../lib/csv'
 
@@ -55,7 +55,7 @@ test('владелец: аналитика платформы — сводка, 
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  await user.click(await findSub('Аналитика'))
 
   const summary = await screen.findByRole('region', { name: 'Сводка' })
   expect(summary).toHaveTextContent('Платят1')
@@ -79,8 +79,8 @@ test('владелец: аналитика платформы — сводка, 
 test('менеджер платформы аналитику не видит', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: false, platform: true })))
   renderApp()
-  expect(await screen.findByRole('tab', { name: 'Клиники' })).toBeInTheDocument()
-  expect(screen.queryByRole('tab', { name: 'Аналитика' })).not.toBeInTheDocument()
+  expect(await findSub('Клиники')).toBeInTheDocument()
+  expect(querySub('Аналитика')).not.toBeInTheDocument()
 })
 
 test('CSV для Excel: BOM, «;», кавычки', () => {
@@ -97,7 +97,7 @@ test('пусто: оплат за год не было — текст вмест
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Аналитика' }))
+  await user.click(await findSub('Аналитика'))
   const money = await screen.findByRole('region', { name: 'Оплаты по месяцам' })
   expect(money).toHaveTextContent('Оплат за год ещё не было')
   expect(within(money).queryByRole('img')).not.toBeInTheDocument()

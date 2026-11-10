@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Earnings = Schemas['EarningsView']
@@ -53,7 +53,7 @@ test('«Касса → Мой заработок»: сегодня, за мес�
   const sent = backend(doctorOnly, NOVEMBER)
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Мой заработок' }))
+  await user.click(await findSub('Мой заработок'))
 
   const block = await screen.findByRole('region', { name: 'Мой заработок' })
   expect(within(block).getByLabelText('Сегодня')).toHaveTextContent(/12\s400 сом/)
@@ -89,7 +89,7 @@ test('условия зарплаты не заданы — выручка вр�
   })
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Мой заработок' }))
+  await user.click(await findSub('Мой заработок'))
 
   const block = await screen.findByRole('region', { name: 'Мой заработок' })
   expect(block).toHaveTextContent(/Принято от ваших пациентов: сегодня 5\s000 сом, за ноябрь 90\s000 сом/)
@@ -105,8 +105,8 @@ test('админ без кресла и ассистент «Мой зарабо
   window.location.hash = '/cash'
   backend({ ...me, doctorId: undefined }, null)
   const { unmount } = renderApp()
-  expect(await screen.findByRole('tab', { name: 'Деньги' })).toBeInTheDocument()
-  expect(screen.queryByRole('tab', { name: 'Мой заработок' })).not.toBeInTheDocument()
+  expect(await findSub('Деньги')).toBeInTheDocument()
+  expect(querySub('Мой заработок')).not.toBeInTheDocument()
   unmount()
 
   // Ассистент: денег нет вовсе — и запроса за заработком нет
@@ -131,7 +131,7 @@ test('«Расписание»: чип «мой день» в полосе «С�
   const chip = await screen.findByRole('button', { name: /Мой заработок сегодня: 12\s400 сом/ })
   expect(chip).toHaveTextContent(/12\s400 сом мой день · ноябрь 186\s000/)
   await user.click(chip)
-  expect(await screen.findByRole('tab', { name: 'Мой заработок' })).toHaveAttribute('aria-selected', 'true')
+  expect(await findSub('Мой заработок')).toHaveAttribute('aria-current', 'page')
   expect(await screen.findByRole('region', { name: 'Цель на месяц' })).toBeInTheDocument()
 })
 
@@ -164,7 +164,7 @@ test('«Мой заработок» с арендой кресла: месяц �
   })
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Мой заработок' }))
+  await user.click(await findSub('Мой заработок'))
   const block = await screen.findByRole('region', { name: 'Мой заработок' })
   expect(within(block).getByLabelText('Сегодня')).toHaveTextContent(/8\s000 сом/)
   expect(within(block).getByText('За ноябрь, на руки после аренды')).toBeInTheDocument()
@@ -181,7 +181,7 @@ test('«Мой заработок»: аренда больше заработк�
   })
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Мой заработок' }))
+  await user.click(await findSub('Мой заработок'))
   const block = await screen.findByRole('region', { name: 'Мой заработок' })
   expect(within(block).getByLabelText('За месяц')).toHaveTextContent(/−12\s000 сом/)
   expect(within(block).getByLabelText('Аренда')).toHaveTextContent(/вы должны клинике 12\s000 сом/)

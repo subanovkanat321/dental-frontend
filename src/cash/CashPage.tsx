@@ -1,7 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
-import { seesOwnEarnings, seesToPay, seesAllMoney } from '../lib/roles'
+import { seesToPay, seesAllMoney } from '../lib/roles'
 import { EarningsTab } from '../earnings/EarningsTab'
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf, datesText, periodText, previousRange } from '../lib/compare'
@@ -20,6 +20,8 @@ import { Select } from '../layout/Select'
 import { DebtorsTab } from './DebtorsTab'
 import { Loading } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
+import { SectionTitle } from '../layout/section'
+import { useSection } from '../layout/useSection'
 
 type Me = Schemas['BookingViewsMe']
 type Debt = Schemas['PaymentQueryDebt']
@@ -46,7 +48,6 @@ const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: '�
 type Period = 'day' | 'week' | 'month' | 'custom'
 type Tab = 'money' | 'earnings' | 'analytics' | 'expenses' | 'debtors' | 'salary' | 'stats' | 'report'
 
-const ALL_TABS: [Tab, string][] = [['money', 'Деньги'], ['earnings', 'Мой заработок'], ['analytics', 'Аналитика'], ['expenses', 'Расходы'], ['debtors', 'Должники'], ['salary', 'Зарплата'], ['stats', 'Статистика'], ['report', 'Отчёт']]
 
 /**
  * «Касса»: за период рядом две суммы — касса (деньги, полученные в эти дни, по дате платежа) и
@@ -55,7 +56,7 @@ const ALL_TABS: [Tab, string][] = [['money', 'Деньги'], ['earnings', 'Мо
  * сервере: всю клинику видит админ (если врачи не независимы), врач — свою; «К оплате» —
  * регистратура и клиники с регистратурой.
  */
-export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab?: string; onOpenPatient?: (patientId: number) => void }) {
+export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patientId: number) => void }) {
   const seesAll = seesAllMoney(me)
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   // Чья касса: админ выбирает (пусто — вся клиника), врач — всегда своя
@@ -64,9 +65,10 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
   // «Ждут оплаты на кассе»: «независимому» админу без своего кресла сервер его не отдаст (403)
   const toPayShown = seesToPay(me)
 
-  // «Мой заработок» — только у врача со своим креслом (админ без кресла, регистратура — нет)
-  const tabs = ALL_TABS.filter(([key]) => key !== 'earnings' || seesOwnEarnings(me))
-  const [tab, setTab] = useState<Tab>(tabs.some(([key]) => key === initialTab) ? initialTab as Tab : 'money')
+  // Подраздел (бывшие вкладки) — в меню слева, адрес #/cash/<подраздел>; права — layout/nav.ts
+  // («Мой заработок» — только у врача со своим креслом). Без денег — один экран «К оплате»
+  const { sub, subTitle } = useSection('cash', me)
+  const tab = (sub ?? 'money') as Tab
   const [period, setPeriod] = useState<Period>('month')
   const [custom, setCustom] = useState(periodOf('month'))
   // «День» — любой день: по умолчанию сегодня, можно выбрать вчера или любую дату
@@ -119,19 +121,12 @@ export function CashPage({ me, initialTab, onOpenPatient }: { me: Me; initialTab
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main cash">
         <header ref={stickyHead} className="toolbar sticky-head">
-          <div className="with-hint"><h1>Касса</h1><HelpHint hint="cash" /></div>
+          <SectionTitle page="cash" title="Касса" subTitle={subTitle} hint={<HelpHint hint="cash" />} />
           {seesAll && doctors.length > 1 && (
             <Select aria-label="Чья касса" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
               <option value="">Вся клиника</option>
               {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
             </Select>
-          )}
-          {money && (
-            <div className="segments tabs" role="tablist" aria-label="Разделы кассы">
-              {tabs.map(([key, title]) => (
-                <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>
-              ))}
-            </div>
           )}
         </header>
 

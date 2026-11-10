@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { Join } from '../site/Join'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 
 const filled: Schemas['JoinCaseCase'] = {
@@ -56,7 +56,7 @@ test('«Платформа → Настройки»: владелец пишет
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Настройки' }))
+  await user.click(await findSub('Настройки'))
   const form = await screen.findByRole('form', { name: 'Кейс' })
   await user.type(within(form).getByRole('textbox', { name: 'Заголовок' }), 'Пилот в клинике в Бишкеке')
   await user.type(within(form).getByRole('textbox', { name: 'Короткая история' }), 'Пациенты записываются в боте.')

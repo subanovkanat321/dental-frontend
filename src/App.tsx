@@ -9,7 +9,7 @@ import { DownloadPage } from './pwa/DownloadPage'
 import { Login } from './layout/Login'
 import { Shell } from './layout/Shell'
 import { ErrorBoundary } from './layout/ErrorBoundary'
-import { readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
+import { linkHash, readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
 import { isDownloadPath, isInvitePath, isLoginPath, usePage, type Page } from './lib/route'
 import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
@@ -51,8 +51,7 @@ function Screens() {
     rememberLaunch(window.location.search)
     const found = readDeepLink(window.location.search)
     if (found) {
-      const hash = found.page === 'settings' && found.tab ? `settings/${found.tab}` : found.page
-      window.history.replaceState(null, '', `${window.location.pathname}#/${hash}`)
+      window.history.replaceState(null, '', `${window.location.pathname}#/${linkHash(found)}`)
     }
     return found
   })
@@ -65,7 +64,8 @@ function Screens() {
   const linkTo = (next: DeepLink) => {
     setLink(next)
     setKeys((k) => ({ ...k, [next.page]: (k[next.page] ?? 0) + 1 }))
-    goPage(next.page)
+    // С подразделом: «Мой заработок» из расписания — #/cash/earnings
+    window.location.hash = `/${linkHash(next)}`
   }
   const go = (next: Page) => goPage(next)
   // Имя пациента в карточке приёма → «Пациенты» с его карточкой
@@ -120,11 +120,11 @@ function Screens() {
     const l = linkOf(p)
     switch (p) {
       case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} initialBooked={l?.tab === 'booked' ? { date: l.date, unconfirmed: l.unconfirmed, doctorId: l.doctorId } : undefined} onOpenAppointment={openAppointment} onBook={(x, preset) => linkTo({ page: 'schedule', bookPatientId: x.id!, ...(preset && { bookDoctorId: preset.doctorId, bookServiceId: preset.serviceId, bookDuration: preset.duration }) })} />
-      case 'cash': return <CashPage me={me.data} initialTab={l?.tab} onOpenPatient={openPatient} />
+      case 'cash': return <CashPage me={me.data} onOpenPatient={openPatient} />
       case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} />
       case 'learn': return <LearnPage />
       case 'settings': return <SettingsPage me={me.data} initialTicket={l?.ticketId} />
-      case 'platform': return me.data.platform ? <PlatformPage me={me.data} initialTab={l?.tab} /> : null
+      case 'platform': return me.data.platform ? <PlatformPage me={me.data} /> : null
       case 'schedule': return l?.appointmentId || l?.bookPatientId
         ? <LinkedSchedule link={l} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
         : <SchedulePage me={me.data} initialDate={l?.date} initialDoctor={l?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go}

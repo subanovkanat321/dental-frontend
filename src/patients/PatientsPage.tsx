@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { rowClick } from '../lib/rowClick'
 import { api, unwrap, type Schemas } from '../api/client'
-import { useWaitlist } from '../api/settings'
 import { formatPhone, shortDate } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { NewPatientPanel } from './PatientForm'
@@ -12,7 +11,8 @@ import { BookedTab, type BookedFilter } from './BookedTab'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
 import { ComebackTab, type BookPreset } from './ComebackTab'
 import { QuestionPanel, QuestionsTab } from './QuestionsTab'
-import { useNewQuestions } from '../api/questions'
+import { SectionTitle } from '../layout/section'
+import { useSection } from '../layout/useSection'
 import { canEditServices, isAssistant } from '../lib/roles'
 import { stickyHead } from '../layout/stickyHead'
 import { EmptyState } from '../layout/EmptyState'
@@ -62,14 +62,14 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   const [selected, setSelected] = useState<number | 'new' | null>(initialPatient ?? null)
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
-  // Вкладки: все пациенты, лист ожидания, «позвать на профосмотр» — как в «Пациентах» приложения
-  const [tab, setTab] = useState<'all' | 'booked' | 'waitlist' | 'recall' | 'comeback' | 'questions'>(initialQuestion ? 'questions' : initialBooked ? 'booked' : 'all')
-  const waitlist = useWaitlist()
+  // Подраздел (бывшие вкладки): все пациенты, записаны, лист ожидания, «позвать снова», вопросы —
+  // в меню слева (на телефоне — лист из заголовка), адрес #/patients/<подраздел>
+  const { sub, subTitle } = useSection('patients', me)
+  const tab = sub as 'all' | 'booked' | 'waitlist' | 'recall' | 'comeback' | 'questions'
   const close = useCallback(() => setSelected(null), [])
   // Вопрос пациента справа (вкладка «Вопросы»); открыли карточку пациента — вопрос закрываем, и наоборот
   const [question, setQuestion] = useState<number | null>(initialQuestion ?? null)
   const closeQuestion = useCallback(() => setQuestion(null), [])
-  const newQuestions = useNewQuestions().data?.count ?? 0
 
   // Чьи пациенты: все или одного врача (у кого был или будет приём у него)
   // Ассистенту — только его врачи
@@ -131,16 +131,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
     <div className={selected || (tab === 'questions' && question) ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
         <header ref={stickyHead} className="toolbar sticky-head patients-head">
-          <div className="with-hint"><h1>Пациенты</h1><HelpHint hint="patients" /></div>
-          <div className="segments tabs" role="tablist" aria-label="Списки пациентов">
-            {/* «Позвать снова» (бывшее «Вернуть») — деньги на столе и приглашения; ассистенту (денег не видит) — прежний «Профосмотр» */}
-            {([['all', 'Все'], ['booked', 'Записаны'], ['waitlist', `Лист ожидания${waitlist.data?.length ? ` · ${waitlist.data.length}` : ''}`],
-              isAssistant(me) ? ['recall', 'Профосмотр'] : ['comeback', 'Позвать снова'],
-              ['questions', `Вопросы${newQuestions ? ` · ${newQuestions}` : ''}`]] satisfies [typeof tab, string][])
-              .map(([key, title]) => (
-                <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key} onClick={() => setTab(key)}>{title}</button>
-              ))}
-          </div>
+          <SectionTitle page="patients" title="Пациенты" subTitle={subTitle} hint={<HelpHint hint="patients" />} />
           {tab === 'all' && (
             <>
               {/* На компьютере: строка поиска и фильтров под заголовком, «Новый пациент» — справа от вкладок */}
