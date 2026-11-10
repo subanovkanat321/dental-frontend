@@ -9,7 +9,7 @@ import { matches, useMedia } from '../lib/useMedia'
 import { useWaitlist } from '../api/settings'
 import { CLINIC_ALIAS, SETTINGS_ALIAS } from '../settings/items'
 import { countOf, currentSub, LOUD, subsOf, sumOf, type Counts, type Sub } from './nav'
-import { NavContext } from './useSection'
+import { NavContext, type NavApi } from './useSection'
 import { AdminNotices } from './AdminNotices'
 import { PasswordNotice } from './PasswordNotice'
 import { ProfileNotice } from './ProfileNotice'
@@ -92,8 +92,8 @@ function useSettingsItem(): string | null {
  * уведомления, календарь, установить приложение, «Выйти» (DESIGN.md → Layout).
  *
  * Телефон: меню — полоса внизу (расписание, пациенты, касса, склад и «Ещё» — остальные разделы, свой
- * аватар и «Помощь»). Подразделы — листом снизу: из заголовка раздела «Пациенты · Записаны ▾»
- * (layout/section.tsx) или долгим нажатием на кнопку раздела внизу. «Я» и «Помощь» — тоже листом.
+ * аватар и «Помощь»). Подразделы — листом снизу: из строки-переключателя под шапкой раздела
+ * (layout/section.tsx; у коротких списков под ней ещё таблетки) или долгим нажатием на кнопку раздела внизу. «Я» и «Помощь» — тоже листом.
  */
 export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
   const clinic = me.doctor ? me.clinic?.brandName || me.clinic?.name || 'Клиника' : 'Команда Tish'
@@ -242,7 +242,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       )
     })
   }
-  const nav = useMemo(() => ({ openSheet: (key: Page) => setSheet(key) }), [])
+  const nav: NavApi = { openSheet: setSheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts }
   const sheetSection = sheet ? sections.find((s) => s.key === sheet) : undefined
   const { name } = whoAmI(me)
   const meHead = <><Avatar me={me} size="lg" /><p className="menu-who"><strong>{name}</strong><span className="hint">{role} · {clinic}</span></p></>
