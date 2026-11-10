@@ -543,7 +543,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                   </button>
                 )}
                 {!requests.length && !waiting.length && !toPay.data?.length && !low && (
-                  <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>
+                  <span className="stat s-quiet calm" title="Всё под контролем: заявок и срочных дел нет" aria-label="Всё под контролем: заявок и срочных дел нет">✓ Всё спокойно</span>
                 )}
               </div>
             )}
