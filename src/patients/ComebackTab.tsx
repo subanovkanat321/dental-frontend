@@ -97,7 +97,7 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
         <button type="button" className="comeback-money" aria-pressed={filter === 'PLAN'} onClick={() => setFilter(filter === 'PLAN' ? 'ALL' : 'PLAN')}>
           <span className="hint">Незаконченные планы лечения</span>
           <b className="num">{somText(board.data.planSom ?? 0)}</b>
-          <span className="hint">пациентов: {board.data.planPatients ?? 0}</span>
+          <span className="hint">· пациентов: {board.data.planPatients ?? 0}</span>
         </button>
         <button type="button" aria-pressed={filter === 'CANCELLED'} onClick={() => setFilter(filter === 'CANCELLED' ? 'ALL' : 'CANCELLED')}>
           <span className="hint">Отменили и не записались</span><b className="num">{board.data.cancelled ?? 0}</b>
