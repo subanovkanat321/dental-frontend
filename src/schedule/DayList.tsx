@@ -9,7 +9,7 @@ import { useReminderNotSent } from './useReminderNotSent'
 import { useReminderText } from '../api/settings'
 import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
-import { addDays, emptyDayText, minutesOf, nowMinutes5, somText, timeOf, todayIn } from '../lib/time'
+import { addDays, emptyDayText, minutesOf, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { MonthSheet } from './month/MonthSheet'
 import { statusOf } from './status'
@@ -53,7 +53,7 @@ function shortName(name: string): string {
 
 /**
  * «День» списком — как в прежнем приложении на телефоне: один день крупно (листать стрелками, любой — календарём),
- * «Принять сейчас», строки по времени — приёмы, «свободно до …» (нажать — записать) и перерывы.
+ * «＋ Новая запись», строки по времени — приёмы, «свободно до …» (нажать — записать) и перерывы.
  * Один врач — его день; «Все врачи» — все приёмы вместе, у строки имя врача, свободные окна
  * каждого врача отдельно. У приёма — быстрое напоминание (Telegram или WhatsApp). Завтра — «Готово X из Y».
  */
@@ -63,7 +63,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   date: string
   onDate: (date: string) => void
   onOpen: (a: Appointment) => void
-  onNew: (doctorId: number, minutes: number, walkIn?: boolean) => void
+  onNew: (doctorId: number, minutes: number) => void
   /** «＋ Новая запись» на этот день (врач и время — в форме). */
   onNewHere?: () => void
   selectedId?: number
@@ -132,7 +132,6 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
     revenue.data?.totalSom ? `За день: ${somText(revenue.data.totalSom)}` : null,
   ].filter(Boolean).join(' · ')
   const title = dayTitle(date, today)
-  const walkInDoctor = doctors.find((d) => d.id === me.doctorId) ?? doctors.find((d) => canEditDoctor(d.id))
   const pending = appointments.some((q) => q.isPending) || slots.some((q) => q.isPending)
   const failed = appointments.find((q) => q.error)?.error
   const [monthOpen, setMonthOpen] = useState(false)
@@ -160,13 +159,8 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
       </div>
       {monthOpen && <MonthSheet date={date} today={today} doctorIds={doctors.map((d) => d.id)} onPick={onDate} onClose={() => setMonthOpen(false)} />}
       {single && !canEditDoctor(single.id) && <p className="readonly-note">Расписание коллеги — только просмотр</p>}
-      <div className="day-actions">
-        {onNewHere && <button type="button" className="btn primary" onClick={onNewHere}>＋ Новая запись</button>}
-        {date === today && walkInDoctor && (
-          <button type="button" className="btn walk-in" aria-label="Принять сейчас (без записи)"
-            onClick={() => onNew(walkInDoctor.id, nowMinutes5(), true)}>{onNewHere ? '⚡ Без записи' : '🚶 Принять сейчас (без записи)'}</button>
-        )}
-      </div>
+      {/* Пришёл без записи — та же «Новая запись», в ней «⚡ Сейчас» */}
+      {onNewHere && <div className="day-actions"><button type="button" className="btn primary" onClick={onNewHere}>＋ Новая запись</button></div>}
       {/* Одной строкой: «Не работают: … · Показано 6 из 10 · Выходной: … показать» */}
       {(note || doctorsNote) && <p className="hint day-note">{note}{note && doctorsNote ? ' · ' : ''}{doctorsNote}</p>}
       {pending ? <Loading />

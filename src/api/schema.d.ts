@@ -996,22 +996,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/dental-news/digest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put: operations["digest"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/clinic": {
         parameters: {
             query?: never;
@@ -1956,22 +1940,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/platform/news-feeds": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["feeds"];
-        put?: never;
-        post: operations["add_2"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/platform/managers/invite": {
         parameters: {
             query?: never;
@@ -1997,7 +1965,7 @@ export interface paths {
         };
         get: operations["funnel"];
         put?: never;
-        post: operations["add_3"];
+        post: operations["add_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2877,7 +2845,7 @@ export interface paths {
         };
         get: operations["all_4"];
         put?: never;
-        post: operations["add_4"];
+        post: operations["add_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3085,7 +3053,7 @@ export interface paths {
         };
         get: operations["list_6"];
         put?: never;
-        post: operations["add_5"];
+        post: operations["add_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5012,22 +4980,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/dental-news": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["feed"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/comebacks": {
         parameters: {
             query?: never;
@@ -5620,22 +5572,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/platform/news-feeds/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete: operations["remove_2"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/platform/managers/{telegramId}": {
         parameters: {
             query?: never;
@@ -5710,7 +5646,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["remove_3"];
+        delete: operations["remove_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -6876,9 +6812,6 @@ export interface components {
             phone?: string;
             phoneOnly?: boolean;
         };
-        DentalNewsControllerDigest: {
-            on?: boolean;
-        };
         ClinicControllerRequest: {
             brandName?: string;
             legalName?: string;
@@ -7404,21 +7337,6 @@ export interface components {
             /** @enum {string} */
             status?: "NEW" | "DUPLICATE" | "ERROR";
             message?: string;
-        };
-        DentalNewsControllerAddFeed: {
-            url?: string;
-        };
-        DentalNewsServiceFeed: {
-            /** Format: int64 */
-            id?: number;
-            url?: string;
-            title?: string;
-            active?: boolean;
-            /** Format: date-time */
-            lastFetchedAt?: string;
-            lastError?: string;
-            /** Format: int64 */
-            articles?: number;
         };
         PlatformControllerPerson: {
             fullName?: string;
@@ -9302,19 +9220,6 @@ export interface components {
         ExpenseControllerCategories: {
             standard?: string[];
             own?: string[];
-        };
-        DentalNewsControllerFeed: {
-            articles?: components["schemas"]["DentalNewsServiceArticle"][];
-            digest?: boolean;
-        };
-        DentalNewsServiceArticle: {
-            /** Format: int64 */
-            id?: number;
-            title?: string;
-            link?: string;
-            /** Format: date-time */
-            publishedAt?: string;
-            source?: string;
         };
         ComebacksBoard: {
             patients?: components["schemas"]["ComebacksCandidate"][];
@@ -11791,30 +11696,6 @@ export interface operations {
             };
         };
     };
-    digest: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DentalNewsControllerDigest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DentalNewsControllerDigest"];
-                };
-            };
-        };
-    };
     view_1: {
         parameters: {
             query?: never;
@@ -13817,50 +13698,6 @@ export interface operations {
             };
         };
     };
-    feeds: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DentalNewsServiceFeed"][];
-                };
-            };
-        };
-    };
-    add_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DentalNewsControllerAddFeed"];
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DentalNewsServiceFeed"];
-                };
-            };
-        };
-    };
     inviteManager: {
         parameters: {
             query?: never;
@@ -13907,7 +13744,7 @@ export interface operations {
             };
         };
     };
-    add_3: {
+    add_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -15486,7 +15323,7 @@ export interface operations {
             };
         };
     };
-    add_4: {
+    add_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -15854,7 +15691,7 @@ export interface operations {
             };
         };
     };
-    add_5: {
+    add_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -19043,26 +18880,6 @@ export interface operations {
             };
         };
     };
-    feed: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DentalNewsControllerFeed"];
-                };
-            };
-        };
-    };
     board: {
         parameters: {
             query?: {
@@ -19902,26 +19719,6 @@ export interface operations {
             };
         };
     };
-    remove_2: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     removeManager: {
         parameters: {
             query?: never;
@@ -20008,7 +19805,7 @@ export interface operations {
             };
         };
     };
-    remove_3: {
+    remove_2: {
         parameters: {
             query?: never;
             header?: never;
