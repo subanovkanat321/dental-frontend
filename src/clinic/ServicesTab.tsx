@@ -69,6 +69,17 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
   const found = services.filter((s) => nameMatches(s.name, query))
   const counts = new Map(groupServices(found).map((g) => [g.group, g.items.length]))
   const shown = group ? found.filter((s) => (s.group ?? 'OTHER') === group) : found
+  // Разделы сворачиваются: услуг десятки — без этого до нужного раздела долго листать. Сначала свёрнуты, если
+  // услуг много; при поиске и выбранном разделе — всё раскрыто (иначе найденное спрятано)
+  const [toggled, setToggled] = useState<Set<ServiceGroup>>(new Set())
+  const foldByDefault = services.length > 12
+  const isOpen = (g: ServiceGroup) => Boolean(query.trim() || group) || (foldByDefault ? toggled.has(g) : !toggled.has(g))
+  const toggle = (g: ServiceGroup) => setToggled((prev) => {
+    const next = new Set(prev)
+    if (next.has(g)) next.delete(g)
+    else next.add(g)
+    return next
+  })
   const editable = canEditServices(me)
   const openedService = typeof opened === 'number' ? services.find((s) => s.id === opened) : undefined
 
@@ -108,8 +119,14 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
             <tbody>
               {groupServices(shown).map(({ group: g, items }) => (
                 <Fragment key={g}>
-                  <tr className="group-row"><th colSpan={5} scope="colgroup">{`${groupLabel(g)} · ${items.length}`}</th></tr>
-                  {items.map((s) => (
+                  <tr className="group-row">
+                    <th colSpan={5} scope="colgroup">
+                      <button type="button" className="group-toggle" aria-expanded={isOpen(g)} onClick={() => toggle(g)}>
+                        <span className="group-chev" aria-hidden="true">{isOpen(g) ? '▾' : '▸'}</span> {`${groupLabel(g)} · ${items.length}`}
+                      </button>
+                    </th>
+                  </tr>
+                  {isOpen(g) && items.map((s) => (
                     <tr key={s.id} className={[s.id === opened ? 'active' : '', s.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
                       <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(s.id!)}>{s.name}</button> : s.name}</td>
                       <td className="r num nowrap">{s.durationMinutes} мин</td>
