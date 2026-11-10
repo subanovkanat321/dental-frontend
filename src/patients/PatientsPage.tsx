@@ -10,7 +10,7 @@ import { NewPatientPanel } from './PatientForm'
 import { PatientPanel } from './PatientPanel'
 import { BookedTab, type BookedFilter } from './BookedTab'
 import { RecallTab, WaitlistTab } from './WaitlistTab'
-import { ComebackTab } from './ComebackTab'
+import { ComebackTab, type BookPreset } from './ComebackTab'
 import { QuestionPanel, QuestionsTab } from './QuestionsTab'
 import { useNewQuestions } from '../api/questions'
 import { canEditServices, isAssistant } from '../lib/roles'
@@ -48,7 +48,8 @@ function phoneDigits(text: string): string {
  */
 export function PatientsPage({ me, onBook, initialPatient, initialQuestion, initialBooked, onOpenAppointment }: {
   me: Me
-  onBook: (p: Patient) => void
+  /** «Записать»: preset — врач и услуга из «Позвать снова → Отменили» */
+  onBook: (p: Patient, preset?: BookPreset) => void
   initialPatient?: number
   /** Кнопка уведомления «Открыть вопрос» — вкладка «Вопросы» с этим вопросом */
   initialQuestion?: number

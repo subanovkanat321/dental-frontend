@@ -31,6 +31,10 @@ export type DeepLink = {
   date?: string
   appointmentId?: number
   bookPatientId?: number
+  /** «Записать» из «Позвать снова → Отменили»: врач, услуга и длительность отменённой записи */
+  bookDoctorId?: number
+  bookServiceId?: number
+  bookDuration?: number
   patientId?: number
   questionId?: number
   supplyId?: number

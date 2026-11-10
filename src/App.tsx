@@ -119,7 +119,7 @@ function Screens() {
   const section = (p: Page) => {
     const l = linkOf(p)
     switch (p) {
-      case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} initialBooked={l?.tab === 'booked' ? { date: l.date, unconfirmed: l.unconfirmed, doctorId: l.doctorId } : undefined} onOpenAppointment={openAppointment} onBook={(x) => linkTo({ page: 'schedule', bookPatientId: x.id! })} />
+      case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} initialBooked={l?.tab === 'booked' ? { date: l.date, unconfirmed: l.unconfirmed, doctorId: l.doctorId } : undefined} onOpenAppointment={openAppointment} onBook={(x, preset) => linkTo({ page: 'schedule', bookPatientId: x.id!, ...(preset && { bookDoctorId: preset.doctorId, bookServiceId: preset.serviceId, bookDuration: preset.duration }) })} />
       case 'cash': return <CashPage me={me.data} initialTab={l?.tab} onOpenPatient={openPatient} />
       case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} />
       case 'learn': return <LearnPage />
@@ -210,5 +210,6 @@ function LinkedSchedule({ link, me, onNavigate, onOpenPatient }: {
     retry: false,
   })
   if (appointment.isLoading || patient.isLoading) return <Loading />
-  return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null} onNavigate={onNavigate} onOpenPatient={onOpenPatient} />
+  return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null}
+    bookPreset={{ doctorId: link.bookDoctorId, serviceId: link.bookServiceId, duration: link.bookDuration }} onNavigate={onNavigate} onOpenPatient={onOpenPatient} />
 }

@@ -103,7 +103,7 @@ function useNarrow(): boolean {
 /** Сводка дня справа открыта или скрыта — на этом устройстве (не персональные данные). */
 const SUMMARY_KEY = 'crm.daySummary'
 
-export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigate, onOpenEarnings, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
+export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShown, onNavigate, onOpenEarnings, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
   /** Кнопка бота «приёмы коллеги» (?doctor=ID): сразу этот врач. */
   initialDoctor?: number
   me: Me
@@ -118,6 +118,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   onOpenEarnings?: () => void
   /** Пришли из «Пациентов» по «Записать»: сразу «Новая запись» на этого пациента. */
   bookPatient?: Schemas['PatientView'] | null
+  /** Вместе с bookPatient: врач, услуга и длительность (из «Позвать снова → Отменили») */
+  bookPreset?: { doctorId?: number; serviceId?: number; duration?: number }
   onBookingShown?: () => void
 }) {
   const today = todayIn()
@@ -127,11 +129,13 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const [medical, setMedical] = useState<{ patient: Schemas['PatientView']; from: number } | null>(null)
   const [side, setSide] = useState<Side>(() => {
     if (openAppointment) return { kind: 'appointment', id: openAppointment.id!, fallback: openAppointment }
-    const doctor = (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
+    // Врач отменённой записи (если к нему можно записать), иначе — свой
+    const doctor = (me.doctors ?? []).find((d) => d.id === bookPreset?.doctorId && d.active !== false && canEditDoctor(me, d.id))
+      ?? (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
       ?? (me.doctors ?? []).find((d) => d.active !== false && canEditDoctor(me, d.id))
     return bookPatient && doctor
       // Время не подставляем: открытие клиники могло пройти или быть занято — сетка свободного покажет, что есть
-      ? { kind: 'new', patient: bookPatient, slot: { doctorId: doctor.id!, date: today, minutes: null } }
+      ? { kind: 'new', patient: bookPatient, slot: { doctorId: doctor.id!, date: today, minutes: null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId } }
       : null
   })
   // Пациента для записи взяли — забыть, чтобы при следующем заходе «Расписание» открылось как обычно

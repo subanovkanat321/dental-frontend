@@ -7832,6 +7832,26 @@
         }
       }
     },
+    "/api/comebacks/{patientId}/skip" : {
+      "post" : {
+        "tags" : [ "comeback-controller" ],
+        "operationId" : "skip_1",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/comebacks/{patientId}/invite" : {
       "post" : {
         "tags" : [ "comeback-controller" ],
@@ -11669,7 +11689,7 @@
           "schema" : {
             "type" : "string",
             "default" : "ALL",
-            "enum" : [ "ALL", "PLAN", "NO_SHOW", "RECALL", "SENT" ]
+            "enum" : [ "ALL", "PLAN", "CANCELLED", "NO_SHOW", "RECALL", "SENT" ]
           }
         }, {
           "name" : "offset",
@@ -21762,6 +21782,47 @@
           "agreed" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "cancelled" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "ComebacksCancelled" : {
+        "properties" : {
+          "at" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "source" : {
+            "type" : "string",
+            "enum" : [ "PATIENT", "STAFF", "SYSTEM" ]
+          },
+          "by" : {
+            "type" : "string"
+          },
+          "serviceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "service" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "minutes" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
@@ -21782,7 +21843,7 @@
           },
           "reason" : {
             "type" : "string",
-            "enum" : [ "PLAN", "NO_SHOW", "RECALL" ]
+            "enum" : [ "PLAN", "CANCELLED", "NO_SHOW", "RECALL" ]
           },
           "planSom" : {
             "type" : "integer",
@@ -21824,6 +21885,9 @@
           "planAgreedAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "cancelled" : {
+            "$ref" : "#/components/schemas/ComebacksCancelled"
           }
         }
       },

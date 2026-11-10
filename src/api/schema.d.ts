@@ -3172,6 +3172,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/comebacks/{patientId}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["skip_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/comebacks/{patientId}/invite": {
         parameters: {
             query?: never;
@@ -9316,6 +9332,25 @@ export interface components {
             sent?: number;
             /** Format: int32 */
             agreed?: number;
+            /** Format: int32 */
+            cancelled?: number;
+        };
+        ComebacksCancelled: {
+            /** Format: date-time */
+            at?: string;
+            /** @enum {string} */
+            source?: "PATIENT" | "STAFF" | "SYSTEM";
+            by?: string;
+            /** Format: int64 */
+            serviceId?: number;
+            service?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            doctor?: string;
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: int32 */
+            minutes?: number;
         };
         ComebacksCandidate: {
             /** Format: int64 */
@@ -9324,7 +9359,7 @@ export interface components {
             phone?: string;
             telegram?: boolean;
             /** @enum {string} */
-            reason?: "PLAN" | "NO_SHOW" | "RECALL";
+            reason?: "PLAN" | "CANCELLED" | "NO_SHOW" | "RECALL";
             /** Format: int32 */
             planSom?: number;
             plan?: string[];
@@ -9343,6 +9378,7 @@ export interface components {
             planSentAt?: string;
             /** Format: date-time */
             planAgreedAt?: string;
+            cancelled?: components["schemas"]["ComebacksCancelled"];
         };
         ComebacksResult: {
             /** Format: int32 */
@@ -16007,6 +16043,26 @@ export interface operations {
             };
         };
     };
+    skip_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     invite_3: {
         parameters: {
             query?: never;
@@ -19010,7 +19066,7 @@ export interface operations {
     board: {
         parameters: {
             query?: {
-                filter?: "ALL" | "PLAN" | "NO_SHOW" | "RECALL" | "SENT";
+                filter?: "ALL" | "PLAN" | "CANCELLED" | "NO_SHOW" | "RECALL" | "SENT";
                 offset?: number;
                 limit?: number;
             };
