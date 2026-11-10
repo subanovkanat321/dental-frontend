@@ -8,7 +8,7 @@ import { useSettings, useWaitlist } from '../api/settings'
 import { useClose } from '../lib/useClose'
 import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
-import { dayTitle, formatPhone, shortDate, slotInstant, todayIn } from '../lib/time'
+import { dayTitle, formatPhone, nowMinutes5, shortDate, slotInstant, todayIn } from '../lib/time'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { serviceEmoji } from '../lib/serviceEmoji'
@@ -58,12 +58,16 @@ function initialTime(slot: Slot): string {
  * «Новая запись» справа: нажали на пустое место в колонке врача — время уже стоит (кратно 15
  * минутам). Пациента — найти по имени или номеру, или завести нового (+996). Занятое время
  * не пустит база (appointment_no_overlap → 409): показываем её ответ.
+ *
+ * Пришёл без записи — чип «⚡ Сейчас» над временем (раньше — отдельная кнопка «Принять сейчас» в шапке):
+ * сегодня, время — эта минута вниз до 5, врач — тот, к кому записывает кнопка шапки; вместо сетки
+ * свободного — поле времени, главная кнопка — «Начать приём». Сервер walk-in не отличает: это та же запись.
  */
-export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = false, onClose, onCreated }: {
+export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctorId, onClose, onCreated }: {
   slot: Slot
   me: Me
-  /** «Принять сейчас (без записи)»: пациент пришёл сам — приём с этой минуты, без напоминаний. */
-  walkIn?: boolean
+  /** К кому «⚡ Сейчас»: выбранный в расписании врач, иначе свой, иначе первый доступный. Нет — врач формы. */
+  nowDoctorId?: number
   /** Пациент уже выбран — «Записать» из его карточки в «Пациентах». */
   initialPatient?: Patient | null
   onClose: () => void
@@ -77,6 +81,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const [doctorId, setDoctorId] = useState(() => (doctors.some((d) => d.id === slot.doctorId) ? slot.doctorId : doctors[0]?.id ?? slot.doctorId))
   const [date, setDate] = useState(slot.date)
   const [time, setTime] = useState(() => initialTime(slot))
+  // «⚡ Сейчас»: пациент пришёл сам — приём с этой минуты, без сетки свободного и листа ожидания
+  const [walkIn, setWalkIn] = useState(false)
   const [birthDate, setBirthDate] = useState('')
   const [source, setSource] = useState('')
   const sources = useSources()
@@ -106,6 +112,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     setDoctorId(slot.doctorId)
     setDate(slot.date)
     setTime(initialTime(slot))
+    setWalkIn(false)
   }
 
   const services = useQuery({
@@ -265,12 +272,24 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
     if (next !== '') reveal(walkIn ? submitRef.current : timeRef.current, walkIn)
   }
 
+  /** «⚡ Сейчас» — включить: сегодня, эта минута, врач по умолчанию; ещё раз — обратно к выбору времени. */
+  const toggleNow = () => {
+    if (walkIn) {
+      setWalkIn(false)
+      setTime('')
+      return
+    }
+    setWalkIn(true)
+    setDate(todayIn())
+    setTime(timeText(nowMinutes5()))
+    if (nowDoctorId != null && doctors.some((d) => d.id === nowDoctorId)) setDoctorId(nowDoctorId)
+  }
+
   return (
-    <aside className="panel" aria-label={walkIn ? 'Принять сейчас' : 'Новая запись'}>
+    <aside className="panel" aria-label="Новая запись">
       <header className="panel-head">
         <div>
-          <div className="with-hint"><h2>{walkIn ? 'Принять сейчас' : 'Новая запись'}</h2><HelpHint hint="newAppointment" /></div>
-          {walkIn && <p className="hint">Пациент пришёл без записи: приём с этой минуты, без напоминаний.</p>}
+          <div className="with-hint"><h2>Новая запись</h2><HelpHint hint="newAppointment" /></div>
           <span className="hint">{dayTitle(date)}</span>
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
@@ -360,6 +379,13 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
             )}
           </div>
         )}
+        {/* Пришёл без записи — одним нажатием: сегодня, сейчас, врач по умолчанию */}
+        <div className="field now-pick">
+          <div className="price-hints" role="group" aria-label="Когда">
+            <button type="button" className="chip" aria-pressed={walkIn} onClick={toggleNow}>⚡ Сейчас</button>
+          </div>
+          <span className="hint small">{walkIn ? 'Пациент пришёл без записи: приём с этой минуты, без напоминаний.' : 'Пришёл без записи — приём с этой минуты'}</span>
+        </div>
         {walkIn ? (
           <div className="row">
             <label className="field"><span>Время</span>

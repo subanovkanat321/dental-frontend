@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Mous
 import { api, unwrap, type Schemas } from '../api/client'
 import { SetupChecklist } from '../clinic/SetupChecklist'
 import { openSettings, type Page } from '../lib/route'
-import { addDays, dateOf, dayMinutes, dayTitle, emptyDayText, minutesOf, minutesOfTime, nowMinutes5, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
+import { addDays, dateOf, dayMinutes, dayTitle, emptyDayText, minutesOf, minutesOfTime, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { MedicalRecord } from '../medical/MedicalRecord'
@@ -50,7 +50,7 @@ type Appointment = Schemas['AppointmentView']
 /** Расписание само перечитывается раз в минуту: кто-то записал с телефона — видно без F5. */
 const REFRESH_MS = 60_000
 
-type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView']; walkIn?: boolean } | null
+type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView'] } | null
 
 /** Узкий экран (телефон): там «День» списком, а не сетка колонок. */
 function isNarrow(): boolean {
@@ -185,7 +185,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   // «показать» у подсказки «Выходной: …» — до смены дня: запоминаем день, на который нажали
   const [offShownFor, setOffShownFor] = useState<string | null>(null)
   const narrow = useNarrow()
-  // Один врач на телефоне — «День» списком (лента дней, свободные окна, «Принять сейчас»)
+  // Один врач на телефоне — «День» списком (лента дней, свободные окна)
   // Телефон — всегда «День» списком (как в прежнем приложении): один врач или «Все врачи» вместе
   // «Неделя» — только на компьютере (от 1024px) и всегда один врач: семь дней × несколько врачей
   // не читаются, а перетаскивание между врачами и днями сразу легко промахнуться. «Все врачи» → свой врач или первый
@@ -339,11 +339,6 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   // К кому записать с кнопки: выбранный врач, если его расписание можно менять, иначе свой, иначе первый доступный
   const bookable = doctors.filter((d) => canEditDoctor(me, d.id))
   const firstBookable = () => (view === 'all' ? null : bookable.find((d) => d.id === view)) ?? bookable.find((d) => d.id === me.doctorId) ?? bookable[0]
-  /** «Принять сейчас (без записи)» — к выбранному врачу или к себе; приём с этой минуты (вниз до 5 минут). */
-  const walkInHere = () => {
-    const first = firstBookable()
-    if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date: today, minutes: nowMinutes5() }, walkIn: true })
-  }
   const newHere = () => {
     const first = firstBookable()
     // Без времени: в форме — сетка свободного, а не 09:00, которое могло пройти или быть занято
@@ -469,14 +464,9 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
             <ViewModes mode={monthMode ? 'month' : weekMode ? 'week' : 'day'} week={desktop} onChange={setMode} />
 
             {/* Действия — одной неразрывной группой справа. Тесно (крупный текст, зум, узкое окно) — useToolbarFit
-                сначала оставляет у «Принять сейчас» только ⚡, потом у «Сводки дня» — значок; группа строки не делит */}
+                оставляет у «Сводки дня» только значок; группа строки не делит. Пришёл без записи — «⚡ Сейчас» в «Новой записи» */}
             <div className="toolbar-actions push">
               {bookable.length > 0 && <button type="button" className="btn primary" onClick={newHere}>＋ Новая запись</button>}
-              {bookable.length > 0 && date === today && !monthMode && (
-                <button type="button" className="btn toolbar-walkin" onClick={walkInHere} aria-label="Принять сейчас" title="Принять сейчас (без записи)">
-                  <span className="toolbar-walkin-icon" aria-hidden="true">⚡</span><span className="toolbar-walkin-label">Принять сейчас</span>
-                </button>
-              )}
               {/* Открытую сводку закрывает «×» в ней самой — в шапке кнопка только чтобы вернуть */}
               {canSummary && !summary && (
                 <button type="button" className="btn small toolbar-summary" onClick={toggleSummary} aria-label="Сводка дня"
@@ -573,7 +563,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
             doctorsNote={partial || offHidden.length ? <>{partial && <span className="shown-of">{partial.replace(/^./, (c) => c.toUpperCase())}</span>}{partial && offHidden.length ? ' · ' : ''}{offHint}</> : undefined}
             onNewHere={bookable.length > 0 ? newHere : undefined}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
-            onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />
+            onNew={(doctorId, minutes) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })} />
         ) : monthMode ? (
           <MonthGrid month={month} today={today} selected={date} data={monthData} compact={narrow}
             onOpenDay={(day) => { setDate(day); setMode('day') }} />
@@ -742,7 +732,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
         onMedical={(patient) => setMedical({ patient, from: selected.id! })}
         onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />}
       {side?.kind === 'new' && (
-        <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} walkIn={side.walkIn} onClose={close}
+        <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} nowDoctorId={firstBookable()?.id} onClose={close}
           onCreated={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} />
       )}
     </div>
