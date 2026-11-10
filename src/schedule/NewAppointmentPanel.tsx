@@ -39,7 +39,8 @@ type Service = Schemas['ServiceTypeView']
  * Куда записать; duration — длительность по умолчанию («Записать снова» — как прошлый приём).
  * minutes: null — время не выбрано: в форме сетка свободного времени.
  */
-export type Slot = { doctorId: number; date: string; minutes: number | null; duration?: number }
+/** serviceId — услуга сразу выбрана («Записать» из «Позвать снова → Отменили»). */
+export type Slot = { doctorId: number; date: string; minutes: number | null; duration?: number; serviceId?: number }
 
 type ContactsNavigator = Navigator & { contacts?: { select: (props: string[]) => Promise<{ name?: string[]; tel?: string[] }[]> } }
 const contactsSupported = () => typeof navigator !== 'undefined' && 'contacts' in navigator
@@ -81,7 +82,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, walkIn = 
   const sources = useSources()
   const [wantsEarlier, setWantsEarlier] = useState(false)
   const [duration, setDuration] = useState(slot.duration ?? 30)
-  const [serviceId, setServiceId] = useState<number | ''>('')
+  const [serviceId, setServiceId] = useState<number | ''>(slot.serviceId ?? '')
   const timeRef = useRef<HTMLDivElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
   const [comment, setComment] = useState('')

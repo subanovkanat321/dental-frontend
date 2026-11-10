@@ -1,6 +1,6 @@
 /* «Вернуть пациентов» (patients/ComebackTab.tsx): деньги на столе, список, приглашение */
 .comeback { display: grid; gap: 12px; }
-.comeback-summary { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; }
+.comeback-summary { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 8px; }
 .comeback-summary button { display: grid; gap: 2px; text-align: left; padding: 12px 14px; border: 1px solid var(--separator); border-radius: var(--radius);
   background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
 .comeback-summary button[aria-pressed=true] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
@@ -20,6 +20,7 @@
 .comeback-sent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .comeback-sent p { margin: 0; }
 .chip.comeback-plan { background: color-mix(in srgb, var(--accent-soft) 70%, var(--card)); color: var(--link); }
+.chip.comeback-cancelled { background: var(--sunken); color: var(--text); }
 .chip.comeback-noshow { background: var(--sunken); color: var(--text); }
 .chip.comeback-recall { background: var(--sunken); color: var(--hint); }
 @media (max-width: 640px) { .comeback-summary { grid-template-columns: 1fr 1fr; } .comeback-money { grid-column: 1 / -1; } }
