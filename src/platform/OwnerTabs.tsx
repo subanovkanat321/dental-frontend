@@ -13,6 +13,8 @@ import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { audienceText, type Audience } from './agreementTarget'
 import { AudiencePicker } from './AudiencePicker'
+import { HeadTools } from '../layout/PageHead'
+import { HelpHint } from '../help/HelpHint'
 
 type Version = Schemas['AgreementsVersion']
 
@@ -30,10 +32,12 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
     <>
       <section className="schedule-main">
         {header}
-        <section className="card-block">
-          <p className={open ? 'tone-wait strong' : 'hint'}>{open ? `Ждут ответа: ${open}` : 'Все обращения отвечены.'}</p>
-          {list.error && <p className="error">{list.error.message}</p>}
-          {list.isPending ? <Loading /> : list.data?.length ? (
+        <HeadTools>
+          <span className={open ? 'head-note tone-wait strong' : 'head-note'}>{open ? `Ждут ответа: ${open}` : 'Все обращения отвечены.'}</span>
+        </HeadTools>
+        {list.error && <p className="error">{list.error.message}</p>}
+        {list.isPending ? <Loading /> : list.data?.length ? (
+          <section className="card-block">
             <table className="table" aria-label="Обращения клиник">
               <thead><tr><th>Клиника</th><th>Обращение</th><th>Статус</th><th>Обновлено</th></tr></thead>
               <tbody>
@@ -50,8 +54,8 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
                 })}
               </tbody>
             </table>
-          ) : <EmptyState title="Обращений пока нет" />}
-        </section>
+          </section>
+        ) : <EmptyState fill title="Обращений пока нет" />}
       </section>
       {opened != null && <TicketPanel key={opened} id={opened} platform onClose={close} />}
     </>
@@ -87,10 +91,9 @@ export function BroadcastTab() {
   return (
     <>
       <section className="card-block">
-        <h2>Сообщение клиникам</h2>
         <form className="form narrow" aria-label="Сообщение клиникам"
           onSubmit={(e) => { e.preventDefault(); void ask(`Отправить руководителям клиник (${count})? Отменить нельзя.`, { ok: 'Отправить' }).then((ok) => ok && send.mutate()) }}>
-          <p className="hint">Придёт в бот руководителям клиник с подписью «Сообщение от команды Tish». Не пишите сюда данные пациентов.</p>
+          <p className="hint small">Придёт в бот руководителям клиник с подписью «Сообщение от команды Tish». Не пишите сюда данные пациентов.</p>
           <label className="field"><span>Текст · {text.length} / 2000</span>
             <textarea rows={6} maxLength={2000} required value={text} placeholder="Например: в субботу с 23:00 до 23:30 — плановые работы, приложение может не открываться"
               onChange={(e) => { send.reset(); setText(e.target.value) }} /></label>
@@ -154,10 +157,12 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
     <>
       <section className="schedule-main">
         {header}
-        <section className="card-block">
-          <p className="hint">Неопубликованную версию видите только вы. Опубликованную видят руководители клиник, которым она адресована (всем или выбранным),
+        <HeadTools>
+          <HelpHint title="Договор">Неопубликованную версию видите только вы. Опубликованную видят руководители клиник, которым она адресована (всем или выбранным),
             и подписывают её в «Настройки → Договор»; менять текст нельзя — выпустите новую. Какую версию подписать конкретной клинике — в её карточке
-            («Клиники → клиника → Договор»). Перед публикацией — показать юристу.</p>
+            («Клиники → клиника → Договор»). Перед публикацией — показать юристу.</HelpHint>
+        </HeadTools>
+        <section className="card-block">
           {list.error && <p className="error">{list.error.message}</p>}
           {versions.length > 0 && (
             <table className="table" aria-label="Версии договора">

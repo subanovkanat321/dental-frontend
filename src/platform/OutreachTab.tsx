@@ -10,9 +10,11 @@ import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
 import { CITIES } from '../lib/clinicSearch'
 import { haptic, openLink } from '../lib/telegram'
-import { isWindows, whatsappUrl } from '../lib/texts'
+import { whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
 import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, prepareVideo, sendVideo, videoWay, type Group, type OutreachLead, type VideoResult } from './outreach'
+import { HeadTools } from '../layout/PageHead'
+import { HelpHint } from '../help/HelpHint'
 
 type Template = Schemas['ClinicOutreachTemplate']
 type Report = Schemas['ClinicOutreachImportReport']
@@ -57,13 +59,15 @@ export function OutreachTab() {
 
   return (
     <>
-      <section className="card-block" aria-label="Написать клиникам">
-        <h2>Написать клиникам</h2>
-        <p className="hint">Пишите по одной — своим нажатием: WhatsApp блокирует номер за массовые рассылки, а личное сообщение
-          читают охотнее. После отправки отметьте «Да» — клиника перейдёт в «Написали» (и в воронке — «Связались»).</p>
-        <p className="hint"><b>«📨 Отправить сообщение и ролик»</b>: ① откроется WhatsApp с текстом — отправьте; ② вернитесь сюда — появится
+      {/* Как писать — в «?» у заголовка: два абзаца над списком отодвигали его на полэкрана */}
+      <HeadTools>
+        <HelpHint title="Написать клиникам">Пишите по одной — своим нажатием: WhatsApp блокирует номер за массовые рассылки, а личное сообщение
+          читают охотнее. После отправки отметьте «Да» — клиника перейдёт в «Написали» (и в воронке — «Связались»).<br /><br />
+          <b>«📨 Отправить сообщение и ролик»</b>: ① откроется WhatsApp с текстом — отправьте; ② вернитесь сюда — появится
           кнопка ролика: «Поделиться» → WhatsApp → этот чат (он первый в списке). Ролик — файлом: у незнакомого номера WhatsApp не делает
-          ссылки кликабельными. На компьютере ролик скачается — прикрепите его в WhatsApp Web.</p>
+          ссылки кликабельными. На компьютере ролик скачается — прикрепите его в WhatsApp Web.</HelpHint>
+      </HeadTools>
+      <section className="card-block" aria-label="Написать клиникам">
         {outreach.error && <p className="error">{outreach.error.message}</p>}
         {outreach.isPending ? <Loading /> : data && (
           <>
@@ -114,7 +118,6 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
   const client = useQueryClient()
   const [step, setStep] = useState<Step>(null)
   const [copied, setCopied] = useState(false)
-  const [pasted, setPasted] = useState(true)
   const [declining, setDeclining] = useState(false)
   const [editing, setEditing] = useState(false)
   const [reason, setReason] = useState('')
@@ -189,15 +192,9 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
     setStep('ask')
   }
   // Шаг 1: текст — в WhatsApp, ролик тем временем качается в память
-  // Windows: WhatsApp на компьютере портит эмодзи из ссылки («�»). Там текст — в буфер обмена как есть (с эмодзи),
-  // а чат открываем пустым: вставить Ctrl+V. На телефоне и Mac — текст сразу в поле, как раньше
-  const openMessage = () => {
-    if (isWindows()) {
-      void navigator.clipboard?.writeText(text).then(() => setPasted(true), () => setPasted(false))
-      openLink(`https://wa.me/${l.phone!}`)
-    }
-    else openLink(whatsappUrl(l.phone!, text))
-  }
+  // Текст — сразу в поле чата и на телефоне, и на компьютере (whatsappUrl на Windows сам убирает эмодзи: из ссылки
+  // они приходят «�»). Копировать-вставлять не нужно (владелец: «и так два шага — текст и ролик»)
+  const openMessage = () => openLink(whatsappUrl(l.phone!, text))
   const both = () => {
     onActive()
     openMessage()
@@ -247,7 +244,7 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
       {!lost && step == null && (
         <div className="actions outreach-more" role="group" aria-label="По отдельности">
           {l.phone && (
-            <button type="button" className="btn small ghost" onClick={() => { onActive(); openMessage(); setStep(isWindows() ? 'message' : 'ask') }}>
+            <button type="button" className="btn small ghost" onClick={() => { onActive(); openMessage(); setStep('ask') }}>
               Только сообщение</button>
           )}
           <button type="button" className="btn small ghost" disabled={video === 'pending'} onClick={() => shareVideo(false)}>
@@ -257,9 +254,7 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
       )}
       {step === 'message' && (
         <div className="outreach-step" role="status">
-          <span>{isWindows()
-            ? <>① Текст скопирован{pasted ? '' : ' (если не вставится — «Скопировать текст»)'} — в открывшемся чате WhatsApp нажмите <b>Ctrl+V</b> и отправьте, потом вернитесь сюда: будет шаг ② — ролик.</>
-            : '① Текст открыт в WhatsApp — отправьте его и вернитесь сюда: будет шаг ② — ролик.'}</span>
+          <span>① Текст открыт в WhatsApp — отправьте его и вернитесь сюда: будет шаг ② — ролик.</span>
           <span className="actions">
             <button type="button" className="btn small" onClick={() => setStep('video')}>Текст отправлен → к ролику</button>
             <button type="button" className="btn small ghost" onClick={() => setStep(null)}>Отмена</button>

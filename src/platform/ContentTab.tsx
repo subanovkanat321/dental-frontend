@@ -13,6 +13,8 @@ import { MonthPicker } from '../layout/MonthPicker'
 import { Select } from '../layout/Select'
 import { Loading, Spinner } from '../layout/Loading'
 import { inTelegram } from '../lib/telegram'
+import { HeadTools } from '../layout/PageHead'
+import { HelpHint } from '../help/HelpHint'
 
 type Post = Schemas['ContentPostsPost']
 type Draft = Schemas['ContentPostsDraft']
@@ -111,16 +113,13 @@ export function ContentTab() {
   ))
   return (
     <>
-      <section className="card-block">
-        <div className="block-head content-month">
-          <h2>Контент-план</h2>
-          <span className="actions">
-            {month !== today.slice(0, 7) && <button type="button" className="btn small" onClick={() => setMonth(today.slice(0, 7))}>Этот месяц</button>}
-            <MonthPicker label="Месяц контент-плана" value={month} onChange={setMonth} />
-          </span>
-        </div>
-        <p className="hint">Пост дня бот пришлёт вам в 10:00: картинки, текст для копирования и что снять. В 19:00 напомнит, если не отмечен.
-          Запись со временем (рилс в 19:30) придёт в своё время — видео, подпись и кнопка «Опубликовать».</p>
+      <HeadTools>
+        <HelpHint title="Контент-план">Пост дня бот пришлёт вам в 10:00: картинки, текст для копирования и что снять. В 19:00 напомнит, если не отмечен.
+          Запись со временем (рилс в 19:30) придёт в своё время — видео, подпись и кнопка «Опубликовать».</HelpHint>
+        <MonthPicker label="Месяц контент-плана" value={month} onChange={setMonth} />
+        {month !== today.slice(0, 7) && <button type="button" className="btn small" onClick={() => setMonth(today.slice(0, 7))}>Этот месяц</button>}
+      </HeadTools>
+      <section className="card-block" aria-label="Публикация">
         {instagram.data && <InstagramStatus state={instagram.data} />}
         <ReelsAuto instagram={instagram.data?.enabled === true} instagramKnown={instagram.data != null}
           onChanged={() => void refresh()} />

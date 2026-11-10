@@ -6,6 +6,7 @@ import { ask } from '../lib/confirm'
 import { Loading } from '../layout/Loading'
 import { useChairs, type Chair } from '../team/chairs'
 import { SubHeader } from './SubHeader'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Mode = NonNullable<Chair['mode']>
@@ -25,10 +26,12 @@ export function ChairsPage({ me, onBack }: { me: Me; onBack: () => void }) {
   const nameOf = (id: number) => (me.doctors ?? []).find((d) => d.id === id)?.fullName ?? ''
   return (
     <section className="schedule-main">
-      <SubHeader title="Кресла" onBack={onBack} />
-      <p className="hint">Кресло (кабинет) могут делить несколько врачей: двух пациентов в одно кресло на одно время не записать. Если сотрудник
-        записывает пациента в рабочие часы коллеги по креслу — по режиму кресла сервер спросит «Коллега предупреждён?» или не даст записать.
-        Пациенты про кресла ничего не видят: в чужие часы они не записываются. Кресло врачу — в «Персонал» → врач → «Кресло».</p>
+      {/* Что такое кресло — в «?» у названия, а не абзацем на три строки над списком */}
+      <SubHeader title="Кресла" onBack={onBack}>
+        <HelpHint title="Кресла">Кресло (кабинет) могут делить несколько врачей: двух пациентов в одно кресло на одно время не записать. Если сотрудник
+          записывает пациента в рабочие часы коллеги по креслу — по режиму кресла сервер спросит «Коллега предупреждён?» или не даст записать.
+          Пациенты про кресла ничего не видят: в чужие часы они не записываются. Кресло врачу — в «Персонал» → врач → «Кресло».</HelpHint>
+      </SubHeader>
       {chairs.isPending ? <Loading />
         : chairs.error ? <p className="error" role="alert">{chairs.error.message}</p>
           : !chairs.data?.length ? <p className="hint">Кресел пока нет — заведите первое в карточке врача («Персонал» → врач → «Кресло» → «＋ Новое кресло»).</p>

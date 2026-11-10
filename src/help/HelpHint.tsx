@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 
 import { HINTS, type HintKey } from './hints'
 
@@ -6,9 +6,12 @@ import { HINTS, type HintKey } from './hints'
  * Кнопка «?» рядом с заголовком экрана: по нажатию — коротко, что здесь делают, и «Подробнее в
  * руководстве» (открывается новой вкладкой, from=app — «Вернуться в Tish»). Закрывается повторным
  * нажатием, Esc или нажатием мимо. Сама не открывается никогда.
+ *
+ * Свой текст (`title` + `children`) — вместо длинного абзаца-пояснения над таблицей: он прятался бы в
+ * «?», а не занимал 2–3 строки над содержимым. Без ссылки на руководство.
  */
-export function HelpHint({ hint }: { hint: HintKey }) {
-  const h = HINTS[hint]
+export function HelpHint({ hint, title, children }: { hint?: HintKey; title?: string; children?: ReactNode }) {
+  const h = hint ? HINTS[hint] : { title: title ?? 'Подсказка', text: children, anchor: null }
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLSpanElement>(null)
   const id = useId()
@@ -30,7 +33,7 @@ export function HelpHint({ hint }: { hint: HintKey }) {
       {open && (
         <span className="help-hint-pop" id={id} role="note" aria-label={`Подсказка: ${h.title}`}>
           <span>{h.text}</span>
-          <a href={`/guide?from=app#${h.anchor}`} target="_blank" rel="noopener noreferrer">Подробнее в руководстве</a>
+          {h.anchor && <a href={`/guide?from=app#${h.anchor}`} target="_blank" rel="noopener noreferrer">Подробнее в руководстве</a>}
         </span>
       )}
     </span>

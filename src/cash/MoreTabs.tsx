@@ -10,6 +10,7 @@ import { useSort } from '../lib/useSort'
 import { PaymentsTable } from './PaymentsTable'
 import { monthRange, shortDate, somText, todayIn, weekLabel } from '../lib/time'
 import { MonthPicker } from '../layout/MonthPicker'
+import { HeadTools } from '../layout/PageHead'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { NetMonthTable } from './NetMonthTable'
@@ -105,11 +106,11 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
 
   return (
     <>
-      <section className="card-block">
-        <div className="block-head">
-          <h2>Расходы · {monthTitle(month)}</h2>
-          <MonthPicker label="Месяц" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
-        </div>
+      <HeadTools>
+        <MonthPicker label="Месяц" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
+      </HeadTools>
+      <section className="card-block" aria-label={`Расходы · ${monthTitle(month)}`}>
+        <h2>Итого за {monthTitle(month)}</h2>
         <p className="total" aria-label="Расходы за месяц">{somText(total)}</p>
         {/* Структура расходов месяца — бублик: целое (итог месяца) на статьи с одного взгляда. До 6
             статей — каждая своим цветом, больше — мелкие в «Другое» (их список — в подсказке строки
@@ -164,6 +165,8 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
         {add.error && <p className="error" role="alert">{errorText(add.error)}</p>}
       </section>
 
+      {/* Расходов за месяц нет — пустое состояние на фоне страницы, без пустой карточки */}
+      {list.isSuccess && !list.data?.length ? <EmptyState fill title={`Расходов за ${monthTitle(month)} нет`} /> : (
       <section className="card-block">
         {byCategory.length > 1 && (
           <div className="filters">
@@ -205,9 +208,10 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
               })}
             </tbody>
           </table>
-        ) : <EmptyState title={`Расходов за ${monthTitle(month)} нет`} />}
+        ) : null}
         {remove.error && <p className="error">{errorText(remove.error)}</p>}
       </section>
+      )}
     </>
   )
 }
@@ -298,16 +302,13 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
     queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { ...range, ...scope(doctorId) } } })),
   })
   return (
-    <section className="card-block">
-      <div className="block-head">
-        <h2>Отчёт · {monthTitle(month)}</h2>
-        <span className="actions">
-          <MonthPicker label="Месяц отчёта" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
-          <button type="button" className="btn" disabled={send.isPending} onClick={() => send.mutate()}>Отправить в бот</button>
-        </span>
-      </div>
+    <>
+      <HeadTools>
+        <MonthPicker label="Месяц отчёта" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
+        <button type="button" className="btn" disabled={send.isPending} onClick={() => send.mutate()}>Отправить в бот</button>
+      </HeadTools>
       {sums.data && (
-        <div className="money-pair" aria-label="Итоги месяца">
+        <div className="card-block money-pair" aria-label="Итоги месяца">
           <p className="money-cell"><span>Касса: <b className="num">{somText(sums.data.cash?.totalSom ?? 0)}</b></span>
             <span className="hint small">деньги, полученные за период</span></p>
           <p className="money-cell"><span>По приёмам: <b className="num">{somText(sums.data.totalSom ?? 0)}</b></span>
@@ -317,9 +318,9 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
       {send.isSuccess && <p className="tone-ok" role="status">Отчёт отправлен в Telegram</p>}
       {send.error && <p className="error" role="alert">{errorText(send.error)}</p>}
       {rows.error && <p className="error">{rows.error.message}</p>}
-      {rows.data?.length ? <PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus onOpen={onOpen} active={active} days={monthRange(month)} />
-        : rows.isSuccess ? <EmptyState title={`Приёмов за ${monthTitle(month)} нет`} /> : null}
-    </section>
+      {rows.data?.length ? <section className="card-block"><PaymentsTable rows={rows.data} label="Отчёт за месяц" withStatus onOpen={onOpen} active={active} days={monthRange(month)} /></section>
+        : rows.isSuccess ? <EmptyState fill title={`Приёмов за ${monthTitle(month)} нет`} /> : null}
+    </>
   )
 }
 

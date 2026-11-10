@@ -52,10 +52,10 @@ test('телефон, «Все врачи» — список: приёмы об�
   expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   expect(await screen.findByRole('button', { name: /12:00–12:30, Нурлан К\./ })).toBeInTheDocument()
   expect(screen.queryByRole('group', { name: 'Дастан Т.' })).not.toBeInTheDocument() // не сетка
-  // Верх на телефоне — без повторов: один день крупно, одна «Новая запись» рядом с «Без записи»
+  // Верх на телефоне — без повторов: один день крупно, одна «Новая запись»; отдельной «Без записи» нет — она «⚡ Сейчас» в форме
   expect(screen.getAllByRole('button', { name: 'Предыдущий день' })).toHaveLength(1)
   expect(screen.getAllByRole('button', { name: '＋ Новая запись' })).toHaveLength(1)
-  expect(screen.getByRole('button', { name: 'Принять сейчас (без записи)' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Без записи|Принять сейчас/ })).not.toBeInTheDocument()
   // Дата — месяц листом снизу (как вид «Месяц»), не системный календарь; «Закрыть» — назад к дню
   expect(document.querySelector('input[type=date]')).toBeNull()
   await userEvent.click(screen.getByRole('button', { name: /выбрать день$/ }))
@@ -83,7 +83,7 @@ test('телефон, один врач — только его приёмы и 
   expect(screen.getByRole('button', { name: /Свободно с 13:00 до 15:00, записать/ })).toBeInTheDocument()
 })
 
-test('телефон в Telegram — «＋ Новая запись» кнопкой на экране, рядом с «Без записи»', async () => {
+test('телефон в Telegram — «＋ Новая запись» кнопкой на экране', async () => {
   backend()
   vi.stubGlobal('Telegram', { WebApp: { initData: 'query_id=test', platform: 'ios', ready() {}, expand() {} } })
   try {

@@ -15,7 +15,8 @@ import { openSettings } from '../lib/route'
 import { SettingsTab } from './SettingsTab'
 import { SurveysTab } from './surveys/SurveysTab'
 import { TariffsTab } from './TariffsTab'
-import { stickyHead } from '../layout/stickyHead'
+import { HeadSlotProvider, PageHead } from '../layout/PageHead'
+import { useHeadSlot } from '../layout/headSlot'
 import { SectionTitle } from '../layout/section'
 import { useSection } from '../layout/useSection'
 
@@ -31,6 +32,7 @@ export function PlatformPage({ me }: { me: Me }) {
   // Подраздел (бывшие вкладки) — в меню слева, адрес #/platform/<подраздел>; права — layout/nav.ts
   const { sub, subTitle } = useSection('platform', me)
   const tab = (sub ?? 'clinics') as Tab
+  const [slot, setSlot] = useHeadSlot()
   const [panel, setPanel] = useState(false)
   // Сменили подраздел — карточка справа прежнего закрыта (её закроет и сам подраздел, но отступ под неё — здесь)
   const [panelTab, setPanelTab] = useState(tab)
@@ -42,12 +44,13 @@ export function PlatformPage({ me }: { me: Me }) {
   const fromSettings = Boolean(me.doctor) && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
   useBack(fromSettings ? () => openSettings(null) : null, { url: true })
   const header = (
-    <header ref={stickyHead} className="toolbar sticky-head">
+    <PageHead slotRef={setSlot} title={<>
       {fromSettings && <button type="button" className="btn ghost back" onClick={() => openSettings(null)}>‹ Настройки</button>}
       <SectionTitle page="platform" title="Платформа" subTitle={subTitle} />
-    </header>
+    </>} />
   )
   return (
+    <HeadSlotProvider slot={slot}>
     <div className={panel ? 'schedule with-panel' : 'schedule'}>
       {tab === 'clinics' && <ClinicsTab me={me} header={header} onPanel={setPanel} />}
       {tab === 'tickets' && <TicketsTab header={header} onPanel={setPanel} />}
@@ -70,5 +73,6 @@ export function PlatformPage({ me }: { me: Me }) {
         </section>
       )}
     </div>
+    </HeadSlotProvider>
   )
 }

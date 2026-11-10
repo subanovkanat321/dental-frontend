@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { api, unwrap } from '../api/client'
 import type { Schemas } from '../api/client'
 import { EmptyState } from '../layout/EmptyState'
+import { HeadTools } from '../layout/PageHead'
 import { shortDate, somText } from '../lib/time'
 import { debtorsOf, type FamilyOf } from './debtors'
 import { Loading } from '../layout/Loading'
@@ -29,17 +30,16 @@ export function DebtorsTab({ rows, pending, error, onOpen, onOpenPatient }: {
   if (pending) return <section className="card-block"><Loading /></section>
   if (error) return <section className="card-block"><p className="error">{error}</p></section>
   const list = debtorsOf(rows ?? [], undefined, grouped ? familyOf : undefined)
-  if (!list.length) return <section className="card-block"><EmptyState title="Должников нет">Все приёмы оплачены полностью.</EmptyState></section>
+  if (!list.length) return <EmptyState fill title="Должников нет">Все приёмы оплачены полностью.</EmptyState>
   const total = list.reduce((s, x) => s + x.total, 0)
   const overdue = list.filter((x) => x.overdue)
   return (
     <section className="card-block debtors" aria-label="Должники">
-      <div className="block-head">
-        <h2>Должники</h2>
-        {familyOf.size > 0 && (
+      {familyOf.size > 0 && (
+        <HeadTools>
           <label className="check"><input type="checkbox" checked={byFamily} onChange={(e) => setByFamily(e.target.checked)} /> Семьи вместе</label>
-        )}
-      </div>
+        </HeadTools>
+      )}
       <div className="debtors-sum">
         <div><span className="hint">Должны всего</span><b className="num">{somText(total)}</b></div>
         <div><span className="hint">Пациентов</span><b className="num">{list.length}</b></div>

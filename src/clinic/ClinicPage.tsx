@@ -9,6 +9,8 @@ import { PromoTab } from './PromoTab'
 import { QuestionsTab } from './QuestionsTab'
 import { ServicesTab } from './ServicesTab'
 import { SourcesTab } from './SourcesTab'
+import { HeadSlotProvider } from '../layout/PageHead'
+import { useHeadSlot } from '../layout/headSlot'
 
 type Me = Schemas['BookingViewsMe']
 export type ClinicTab = 'services' | 'memos' | 'about' | 'questions' | 'news' | 'sources' | 'promo'
@@ -28,7 +30,8 @@ export function ClinicPage({ me, only, title, onBack, tabs: itemTabs }: {
   const [chosen, setTab] = useState<Tab>('services')
   const tab = only ?? chosen
   const [panel, setPanel] = useState(false)
-  const header = only && onBack ? <SubHeader title={title ?? ''} onBack={onBack}>{itemTabs}</SubHeader> : (
+  const [slot, setSlot] = useHeadSlot()
+  const header = only && onBack ? <SubHeader title={title ?? ''} onBack={onBack} slotRef={setSlot}>{itemTabs}</SubHeader> : (
     <header className="toolbar">
       <h1>Клиника</h1>
       <div className="segments tabs" role="tablist" aria-label="Разделы клиники">
@@ -39,6 +42,7 @@ export function ClinicPage({ me, only, title, onBack, tabs: itemTabs }: {
     </header>
   )
   return (
+    <HeadSlotProvider slot={slot}>
     <div className={panel ? 'schedule with-panel' : 'schedule'}>
       {tab === 'services' && <ServicesTab me={me} header={header} onPanel={setPanel} />}
       {tab === 'memos' && <MemosTab me={me} header={header} onPanel={setPanel} />}
@@ -53,5 +57,6 @@ export function ClinicPage({ me, only, title, onBack, tabs: itemTabs }: {
         </section>
       )}
     </div>
+    </HeadSlotProvider>
   )
 }

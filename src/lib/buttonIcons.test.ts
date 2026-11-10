@@ -13,7 +13,7 @@ test('значок и цвет кнопки — по подписи; без цв
   const root = document.createElement('div')
   const confirm = button('Подтвердить')
   const move = button('Перенести или передать врачу')
-  const walkIn = button('⚡ Без записи')
+  const walkIn = button('Начать приём')
   const plain = button('Сохранить')
   root.append(confirm, move, walkIn, plain)
   const stop = startButtonIcons(root)

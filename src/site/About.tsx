@@ -282,7 +282,7 @@ export function About() {
                 <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                   <span aria-hidden="true">💬</span> Написать в WhatsApp</a>
               </div>
-              <p className="about-note">Попробуйте бесплатно — без предоплаты, настроим за час</p>
+              <p className="about-note">Первые 3 месяца бесплатно — без предоплаты, настроим за час</p>
             </div>
             <HeroVideo />
           </div>
@@ -330,7 +330,7 @@ export function About() {
         <section id="contacts" className="about-slide about-final" aria-labelledby="about-final">
           <div className="about-inner narrow" data-reveal>
             <h2 id="about-final">Меньше рутины — <span className="about-hl">больше пациентов и спокойствия</span></h2>
-            <p className="about-lead">Попробуйте бесплатно: всё приложение, без ограничений и без предоплаты. Оставьте заявку — мы позвоним и
+            <p className="about-lead">Первые 3 месяца — бесплатно: всё приложение, без ограничений и без предоплаты. Оставьте заявку — мы позвоним и
               настроим клинику вместе с вами.</p>
             <div className="about-ctas center">
               <a className="about-btn primary big" href={JOIN}>Попробовать бесплатно</a>

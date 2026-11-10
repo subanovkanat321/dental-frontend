@@ -5,7 +5,7 @@ import { logout, type Schemas } from '../api/client'
 import { useBack } from '../lib/back'
 import { openSettings, settingsItem, type Page } from '../lib/route'
 import { openSub, subHref, useSub } from '../lib/sub'
-import { matches } from '../lib/useMedia'
+import { matches, useMedia } from '../lib/useMedia'
 import { useWaitlist } from '../api/settings'
 import { countOf, currentSub, LOUD, subsOf, sumOf, type Counts, type Sub } from './nav'
 import { NavContext } from './useSection'
@@ -25,7 +25,12 @@ type Me = Schemas['BookingViewsMe']
 // Чат «Помощь» — отдельным кусочком: грузится, только когда его открыли
 const HelpChatPanel = lazy(() => import('../account/HelpChat').then((m) => ({ default: m.HelpChatPanel })))
 
-/** Где видна кнопка «💬 Помощь»: главные экраны клиники (в «Настройках» помощь — свой пункт). */
+/**
+ * «💬 Помощь» (чат с помощником Tish). Компьютер — пункт внизу меню, рядом со «Свернуть меню» и «Выйти»:
+ * плавающая кнопка в углу закрывала последнюю строку таблиц. Телефон — маленькая круглая кнопка над
+ * нижним меню на главных экранах клиники (в «Настройках» помощь — свой пункт); под неё у страницы
+ * запас снизу, последняя строка докручивается выше кнопки.
+ */
 const HELP_PAGES: Page[] = ['schedule', 'patients', 'cash', 'stock']
 
 /** Разделы клиники — сотрудникам; «Платформа» — команде Tish (владелец и менеджеры). */
@@ -112,6 +117,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const [sheet, setSheet] = useState<Page | null>(null)
   useBack(sheet ? () => setSheet(null) : null)
   const [help, setHelp] = useState(false)
+  const phone = useMedia('(max-width: 760px)')
   // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается)
   const [narrow, toggleNarrow] = useFullView('sidebar-narrow')
   // Раскрыт открытый раздел; стрелкой можно раскрыть другой или свернуть открытый. Не запоминаем:
@@ -281,6 +287,12 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           title={narrow ? 'Развернуть меню' : 'Свернуть меню'} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}>
           <span className="sidebar-toggle-ico" aria-hidden="true">{narrow ? '»' : '«'}</span> <span>Свернуть меню</span>
         </button>
+        {me.doctor && !phone && (
+          <button type="button" className={help ? 'nav help-nav active' : 'nav help-nav'} aria-expanded={help} title={narrow ? 'Помощь' : undefined}
+            aria-label="Помощь: спросить помощника Tish" onClick={() => setHelp(!help)}>
+            <Icon name="help" /> <span>Помощь</span>
+          </button>
+        )}
         {!telegram() && (
           <button type="button" className="nav link-out" title={narrow ? 'Выйти' : undefined} onClick={() => void logout()}><Icon name="external" /> <span>Выйти</span></button>
         )}
@@ -313,9 +325,9 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       {/* Напоминания админу и приглашение в опрос — на главном экране, чтобы не занимать место в каждом разделе */}
       <main ref={workspace} className="workspace"><NavContext.Provider value={nav}>{page === 'schedule' && <><PasswordNotice /><ProfileNotice me={me} /><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</NavContext.Provider></main>
       {/* «💬 Помощь» — спросить помощника Tish, не уходя с экрана (ИИ по базе знаний; не знает — команде Tish) */}
-      {me.doctor && HELP_PAGES.includes(page) && !help && (
+      {me.doctor && phone && HELP_PAGES.includes(page) && !help && (
         <button type="button" className="help-fab" onClick={() => setHelp(true)} aria-label="Помощь: спросить помощника Tish">
-          <span aria-hidden="true">💬</span> <span className="help-fab-text">Помощь</span>
+          <span aria-hidden="true">💬</span>
         </button>
       )}
       {help && (

@@ -10,6 +10,7 @@ import { EmptyState } from '../layout/EmptyState'
 import { MonthPicker } from '../layout/MonthPicker'
 import { Loading } from '../layout/Loading'
 import { TopupsBlock } from './TopupsBlock'
+import { HeadTools } from '../layout/PageHead'
 
 type Finance = Schemas['PlatformFinanceFinance']
 type Line = Schemas['PlatformFinanceLine']
@@ -86,8 +87,8 @@ export function FinanceTab() {
     <>
       {f && (f.due?.length ?? 0) > 0 && <DueBlock due={f.due ?? []} current={current} rate={f.settings?.lastUsdRate} />}
       <section className="card-block" aria-label="Итог периода">
-        <div className="toolbar fin-toolbar">
-          <h2>Финансы</h2>
+        {/* Период — в строку шапки «Платформы» */}
+        <HeadTools>
           <div className="segments fin-periods" role="group" aria-label="Период">
             {PERIODS.map(([key, title]) => (
               <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
@@ -112,7 +113,7 @@ export function FinanceTab() {
               <MonthPicker label="Последний месяц" value={to} max={current} onChange={(m) => { setTo(m); if (m < from) setFrom(m) }} />
             </div>
           )}
-        </div>
+        </HeadTools>
         {query.error && <p className="error" role="alert">{query.error.message}</p>}
         {query.isPending ? <Loading /> : f && (
           <>

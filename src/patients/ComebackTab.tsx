@@ -9,6 +9,7 @@ import { addDays, shortDate, somText, todayIn } from '../lib/time'
 import { dueText, monthsText } from '../clinic/services'
 import './comeback.css'
 import { Loading, Spinner } from '../layout/Loading'
+import { HeadTools } from '../layout/PageHead'
 
 type Candidate = Schemas['ComebacksCandidate']
 type Reason = NonNullable<Candidate['reason']>
@@ -93,6 +94,7 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
 
   return (
     <div className="comeback">
+      <HeadTools>
       <section className="comeback-summary" aria-label="Деньги на столе">
         <button type="button" className="comeback-money" aria-pressed={filter === 'PLAN'} onClick={() => setFilter(filter === 'PLAN' ? 'ALL' : 'PLAN')}>
           <span className="hint">Незаконченные планы лечения</span>
@@ -109,6 +111,7 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
           <span className="hint">Пора на осмотр</span><b className="num">{board.data.recalls ?? 0}</b>
         </button>
       </section>
+      </HeadTools>
       {sent > 0 && (
         <button type="button" className="chip comeback-sent-filter" aria-pressed={filter === 'SENT'}
           onClick={() => setFilter(filter === 'SENT' ? 'ALL' : 'SENT')}>
@@ -127,8 +130,8 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
           <a href="#/settings/services">Настройки → Услуги и цены</a>.</p>
       )}
       {!everyone ? (
-        <EmptyState title="Звать некого">Все с планом лечения записаны, кто отменил — перезаписался, неявок нет, осмотры — вовремя.</EmptyState>
-      ) : !shown.length ? <EmptyState title="По этому отбору никого" /> : (
+        <EmptyState fill title="Звать некого">Все с планом лечения записаны, кто отменил — перезаписался, неявок нет, осмотры — вовремя.</EmptyState>
+      ) : !shown.length ? <EmptyState fill title="По этому отбору никого" /> : (
         <ul className="comeback-list" aria-label="Кого вернуть">
           {shown.map((c) => (
             <li key={c.patientId}>

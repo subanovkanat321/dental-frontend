@@ -12,6 +12,8 @@ import { definitionOf } from './definition'
 import { SurveyEditor } from './SurveyEditor'
 import { SurveyResults } from './SurveyResults'
 import { Loading } from '../../layout/Loading'
+import { HeadTools } from '../../layout/PageHead'
+import { HelpHint } from '../../help/HelpHint'
 
 type Details = Schemas['SurveyDetails']
 type View = 'edit' | 'preview' | 'results'
@@ -40,10 +42,11 @@ export function SurveysTab() {
   }
   const surveys = list.data ?? []
   return (
-    <section className="card-block">
-      <h2>Опросы сотрудников</h2>
-      <p className="hint">Спросите врачей, руководителей, регистратуру и ассистентов, что им удобно и чего не хватает. Сотрудник видит приглашение на «Расписании»
-        и отвечает один раз; итоги — по ролям и клиникам, без данных пациентов.</p>
+    <section className="card-block" aria-label="Опросы сотрудников">
+      <HeadTools>
+        <HelpHint title="Опросы сотрудников">Спросите врачей, руководителей, регистратуру и ассистентов, что им удобно и чего не хватает. Сотрудник видит приглашение на «Расписании»
+          и отвечает один раз; итоги — по ролям и клиникам, без данных пациентов.</HelpHint>
+      </HeadTools>
       {list.error && <p className="error">{list.error.message}</p>}
       {list.isPending ? <Loading /> : surveys.length ? (
         <table className="table" aria-label="Опросы">

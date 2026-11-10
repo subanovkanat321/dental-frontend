@@ -8,6 +8,7 @@ import { shortDate, somText } from '../lib/time'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
+import { HeadTools } from '../layout/PageHead'
 
 type Analytics = Schemas['PlatformAnalyticsAnalytics']
 
@@ -86,17 +87,19 @@ export function AnalyticsTab() {
   const a = query.data
   return (
     <>
-      <div className="analytics-filter" role="group" aria-label="Период и город">
-        <div className="segments">
-          {PERIODS.map((d) => (
-            <button key={d} type="button" aria-pressed={days === d} onClick={() => setDays(d)}>{d === 365 ? 'Год' : `${d} дней`}</button>
-          ))}
+      <HeadTools>
+        <div className="analytics-filter" role="group" aria-label="Период и город">
+          <div className="segments">
+            {PERIODS.map((d) => (
+              <button key={d} type="button" aria-pressed={days === d} onClick={() => setDays(d)}>{d === 365 ? 'Год' : `${d} дней`}</button>
+            ))}
+          </div>
+          <Select aria-label="Город" value={city} onChange={(e) => setCity(e.target.value)}>
+            <option value="">Все города</option>
+            {(a?.cities ?? (city ? [city] : [])).map((c) => <option key={c} value={c}>{c}</option>)}
+          </Select>
         </div>
-        <Select aria-label="Город" value={city} onChange={(e) => setCity(e.target.value)}>
-          <option value="">Все города</option>
-          {(a?.cities ?? (city ? [city] : [])).map((c) => <option key={c} value={c}>{c}</option>)}
-        </Select>
-      </div>
+      </HeadTools>
       {query.error && <p className="error">{query.error.message}</p>}
       {query.isPending ? <Loading /> : a && <Report a={a} />}
     </>
@@ -107,7 +110,7 @@ function Report({ a }: { a: Analytics }) {
   const s = a.summary ?? {}
   const period = a.days === 365 ? 'за год' : `за ${a.days} дней`
   const change = changeOf(s.appointments ?? 0, s.appointmentsBefore ?? 0)
-  if (!s.clinics) return <EmptyState title={a.city ? 'В этом городе клиник нет' : 'Клиник пока нет'} />
+  if (!s.clinics) return <EmptyState fill title={a.city ? 'В этом городе клиник нет' : 'Клиник пока нет'} />
   return (
     <>
       <section className="card-block" aria-label="Сводка">

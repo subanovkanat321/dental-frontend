@@ -68,7 +68,6 @@ const RENDER: Record<string, (title: string) => Render> = {
   support: (t) => account('support', t),
   help: (t) => (me, back) => <AccountPage me={me} only="support" title={t} onBack={back} initialHelp />,
   survey: () => (_me, back) => <SurveyPage onBack={back} />,
-  'dental-news': (t) => account('news', t),
   privacy: (t) => account('privacy', t),
 }
 

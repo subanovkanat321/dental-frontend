@@ -155,6 +155,7 @@ test('«Должники»: семья — одной строкой, «Семь
   const box = await screen.findByRole('region', { name: 'Должники' })
   expect(await within(box).findByText('👨‍👩‍👧 Семья Садыкова')).toBeInTheDocument()
   expect(within(box).getAllByRole('listitem')).toHaveLength(1)
-  await userEvent.click(within(box).getByRole('checkbox', { name: 'Семьи вместе' }))
+  // «Семьи вместе» — в строке шапки «Кассы» (PageHead), не в карточке
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Семьи вместе' }))
   expect(within(box).getAllByRole('listitem')).toHaveLength(2)
 })

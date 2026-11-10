@@ -38,7 +38,8 @@ test('«Пациенты → Записаны»: будущие записи в�
   await userEvent.click(await findSub('Записаны'))
   const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
   expect(await within(list).findByText('Айгуль Т.')).toBeInTheDocument()
-  expect(list).toHaveTextContent('Записей: 3')
+  // Фильтры и «Записей: N» — в строке шапки «Пациентов» (PageHead), список — под ней
+  expect(screen.getByText('Записей: 3')).toBeInTheDocument()
   expect(within(list).queryByText('Отменённая К.')).toBeNull()
   // По дням и по времени: завтра 10:00 Айгуль, 11:00 Нурлан (заявка) — потом через 3 дня Бакыт
   const names = within(list).getAllByRole('listitem').map((li) => li.querySelector('strong')?.textContent)
@@ -48,13 +49,13 @@ test('«Пациенты → Записаны»: будущие записи в�
   expect(asked).toEqual(expect.arrayContaining(['1:7', '2:7']))
 
   // Только кто не подтвердил: Айгуль (придёт) уходит
-  await userEvent.click(within(list).getByRole('checkbox', { name: /не подтвердил/ }))
+  await userEvent.click(screen.getByRole('checkbox', { name: /не подтвердил/ }))
   expect(within(list).queryByText('Айгуль Т.')).toBeNull()
-  expect(list).toHaveTextContent('Записей: 2')
+  expect(await screen.findByText('Записей: 2')).toBeInTheDocument()
 
   // Один врач и месяц — запрос с days=31 только по нему
-  await choose(within(list).getByRole('combobox', { name: 'Врач' }), 'Дастан Т.')
-  await userEvent.click(within(list).getByRole('button', { name: 'Месяц' }))
+  await choose(screen.getByRole('combobox', { name: 'Врач' }), 'Дастан Т.')
+  await userEvent.click(screen.getByRole('button', { name: 'Месяц' }))
   expect(await within(list).findByText('Нурлан К.')).toBeInTheDocument()
   expect(within(list).queryByText('Бакыт М.')).toBeNull()
   expect(asked).toContain('2:31')
@@ -75,9 +76,9 @@ test('кнопка сводки «📲 Напомнить» (?screen=booked&day=
   const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
   expect(await within(list).findByText('Нурлан К.')).toBeInTheDocument()
   expect(within(list).queryByText('Айгуль Т.')).toBeNull()
-  expect(within(list).getByRole('button', { name: 'Завтра' })).toHaveAttribute('aria-pressed', 'true')
-  expect(within(list).getByRole('checkbox', { name: /не подтвердил/ })).toBeChecked()
-  expect(within(list).getByRole('combobox', { name: 'Врач' })).toHaveTextContent('Дастан Т.')
+  expect(screen.getByRole('button', { name: 'Завтра' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('checkbox', { name: /не подтвердил/ })).toBeChecked()
+  expect(screen.getByRole('combobox', { name: 'Врач' })).toHaveTextContent('Дастан Т.')
   expect(asked).toEqual([`2:${addDays(todayIn(), 1)}:1`])
   // Адрес чистый: ссылку не открыть повторно обновлением страницы
   expect(window.location.search).toBe('')

@@ -5,6 +5,7 @@ import type { TopicSlug } from './catalog'
 import { TopicTiles } from './Tiles'
 import './learn.css'
 import { Loading } from '../layout/Loading'
+import { HelpHint } from '../help/HelpHint'
 
 const LessonDialog = lazy(() => import('./LessonDialog'))
 // 3D-атлас (three.js, ~0,5 МБ) — свой чанк: скачивается, только когда его открыли
@@ -22,9 +23,13 @@ export function LearnPage() {
   const toTopics = () => document.getElementById('learn-topics')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   return (
     <div className="schedule-main learn-page">
-      <header className="toolbar"><h1>Для пациента</h1></header>
-      <p className="hint">Показать на консультации: зуб в разрезе и короткие презентации — что это, почему лучше не откладывать, как
-        проходит лечение и что делать после. Без цен и без данных пациента.</p>
+      {/* Что здесь — в «?» у заголовка: абзац на две строки отодвигал плитки (шапка — одной строкой, PageHead) */}
+      <header className="toolbar page-head">
+        <div className="with-hint"><h1>Для пациента</h1>
+          <HelpHint title="Для пациента">Показать на консультации: зуб в разрезе и короткие презентации — что это, почему лучше не откладывать, как
+            проходит лечение и что делать после. Без цен и без данных пациента.</HelpHint>
+        </div>
+      </header>
       <div className="learn-start">
         <button type="button" className="learn-big" onClick={() => setAtlas(true)}>
           <span className="learn-big-ico" aria-hidden="true"><Icon name="atlas" /></span>

@@ -6,6 +6,7 @@ import { SaveBar } from '../layout/SaveBar'
 import { somText, todayIn } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
 import { MonthPicker } from '../layout/MonthPicker'
+import { HeadTools } from '../layout/PageHead'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
@@ -74,18 +75,20 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
   return (
     <>
       {/* Месяц — «‹ Октябрь 2026 ›»; по умолчанию прошлый (его зарплату выплачивают), «Этот месяц» — одним нажатием */}
-      <div className="analytics-filter">
-        <MonthPicker label="Месяц зарплаты" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
-        <div className="day-quick" role="group" aria-label="Быстро">
-          <button type="button" className="chip" aria-pressed={month === previousMonth()} onClick={() => setMonth(previousMonth())}>Прошлый месяц</button>
-          <button type="button" className="chip" aria-pressed={month === todayIn().slice(0, 7)} onClick={() => setMonth(todayIn().slice(0, 7))}>Этот месяц</button>
+      <HeadTools>
+        <div className="analytics-filter">
+          <MonthPicker label="Месяц зарплаты" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
+          <div className="day-quick" role="group" aria-label="Быстро">
+            <button type="button" className="chip" aria-pressed={month === previousMonth()} onClick={() => setMonth(previousMonth())}>Прошлый месяц</button>
+            <button type="button" className="chip" aria-pressed={month === todayIn().slice(0, 7)} onClick={() => setMonth(todayIn().slice(0, 7))}>Этот месяц</button>
+          </div>
         </div>
-      </div>
+      </HeadTools>
       <SalaryHowTo seesAll={seesAll} noTerms={rows.some((r) => !r.former && !Number(r.percent ?? 0) && !r.baseSom)} />
       <SalaryCalc rows={rows.filter((r) => !r.former)} />
       {list.isPending ? <Loading />
         : list.error ? <p className="error">{list.error.message}</p>
-          : rows.length === 0 ? <EmptyState title="Врачей пока нет">Добавьте врачей в «Настройки → Персонал» — здесь появится их зарплата.</EmptyState> : (
+          : rows.length === 0 ? <EmptyState fill title="Врачей пока нет">Добавьте врачей в «Настройки → Персонал» — здесь появится их зарплата.</EmptyState> : (
             <>
               {seesAll && rows.length > 1 && <p className="total-line" aria-label="Осталось выплатить">Осталось выплатить: <b className="num">{somText(due)}</b></p>}
               {/* Ключ с месяцем: сменили месяц — открытая форма выплаты не переносит сумму прошлого */}

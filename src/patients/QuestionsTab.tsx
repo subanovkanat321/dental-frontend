@@ -9,6 +9,7 @@ import { formatPhone, shortDate } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading, Spinner } from '../layout/Loading'
+import { HeadTools } from '../layout/PageHead'
 
 type Question = Schemas['PatientQuestionsQuestionView']
 
@@ -60,11 +61,13 @@ export function QuestionsTab({ selected, onOpen }: { selected: number | null; on
   const list = useQuestions(done)
   return (
     <>
-      <div className="segments" role="tablist" aria-label="Какие вопросы">
-        {([[false, 'Ждут ответа'], [true, 'Отвеченные']] as const).map(([key, title]) => (
-          <button key={title} type="button" role="tab" aria-selected={done === key} aria-pressed={done === key} onClick={() => setDone(key)}>{title}</button>
-        ))}
-      </div>
+      <HeadTools>
+        <div className="segments" role="tablist" aria-label="Какие вопросы">
+          {([[false, 'Ждут ответа'], [true, 'Отвеченные']] as const).map(([key, title]) => (
+            <button key={title} type="button" role="tab" aria-selected={done === key} aria-pressed={done === key} onClick={() => setDone(key)}>{title}</button>
+          ))}
+        </div>
+      </HeadTools>
       {list.isPending && <Loading />}
       {list.error && <p className="error">{list.error.message}</p>}
       {list.isSuccess && list.data.botAi && (
@@ -72,8 +75,8 @@ export function QuestionsTab({ selected, onOpen }: { selected: number | null; on
       )}
       {list.isSuccess && !list.data.questions?.length && (
         done
-          ? <EmptyState title="Отвеченных вопросов пока нет" />
-          : <EmptyState title="Новых вопросов нет">Пациент напишет боту — вопрос появится здесь, а вам придёт уведомление.</EmptyState>
+          ? <EmptyState fill title="Отвеченных вопросов пока нет" />
+          : <EmptyState fill title="Новых вопросов нет">Пациент напишет боту — вопрос появится здесь, а вам придёт уведомление.</EmptyState>
       )}
       {list.isSuccess && Boolean(list.data.questions?.length) && (
         <table className="table" aria-label="Вопросы пациентов">

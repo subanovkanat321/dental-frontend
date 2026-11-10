@@ -6,6 +6,7 @@ import { HBars } from '../cash/HBars'
 import { MonthPicker } from '../layout/MonthPicker'
 import { somText, todayIn } from '../lib/time'
 import { Loading } from '../layout/Loading'
+import { HeadTools } from '../layout/PageHead'
 
 type Report = Schemas['AiUsageStoreReport']
 type ClinicRow = Schemas['AiUsageStoreClinicRow']
@@ -37,11 +38,10 @@ export function AiUsageTab() {
   const r = report.data
   return (
     <>
-      <section className="card-block">
-        <div className="toolbar">
-          <h2>Расход ИИ</h2>
-          <MonthPicker label="Месяц расхода ИИ" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
-        </div>
+      <HeadTools>
+        <MonthPicker label="Месяц расхода ИИ" value={month} max={todayIn().slice(0, 7)} onChange={setMonth} />
+      </HeadTools>
+      <section className="card-block" aria-label="Расход ИИ за месяц">
         {report.error && <p className="error" role="alert">{report.error.message}</p>}
         {report.isPending ? <Loading /> : r && (
           <>

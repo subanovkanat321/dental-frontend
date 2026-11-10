@@ -223,6 +223,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .payment-debt { font-weight: 600; }
 .payment-history { margin: 0; font-size: .88rem; }
 .price-hints { display: flex; flex-wrap: wrap; gap: 6px; }
+/* «⚡ Сейчас» в «Новой записи»: чип и пояснение одной строкой (тесно — пояснение строкой ниже) */
+.now-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .price-hints .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
 .payment-part, .payment-extra-row, .payment-split { display: grid; gap: 8px; padding: 8px 10px; border-radius: var(--r-sm); background: var(--sunken); }
 /* Оплата по шагам (PaymentBox): номер шага слева — «сколько стоит → сколько заплатил → чем» */
@@ -758,7 +760,6 @@ details.agreement-box { max-height: none; }
 /* «📅 другой день»: прозрачное поле даты поверх — нажатие открывает календарь */
 .day-actions { display: flex; gap: 8px; }
 .day-actions .btn { flex: 1 1 0; min-height: 44px; justify-content: center; }
-.day-actions .btn.primary + .btn.walk-in { flex: 0 1 auto; padding: 0 14px; }
 .readonly-note { margin: 0; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); color: var(--hint); font-size: .88rem; }
 .day-note { margin: 0; }
 .day-empty { padding: 24px 0; text-align: center; }
@@ -836,7 +837,6 @@ button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family:
 .toolbar .back { padding-left: 6px; color: var(--link); }
 .hours-doctor { border-top: 1px solid var(--separator); padding: 4px 0; }
 .hours-toggle { display: flex; justify-content: space-between; width: 100%; padding: 10px 0; border: 0; background: none; color: var(--text); font: inherit; cursor: pointer; text-align: left; }
-.stock-mode { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; }
 .web-version { display: grid; gap: 6px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--separator); }
 .mobile-only { display: none; }
 @media (max-width: 760px) { .mobile-only { display: grid; } .toolbar .back { flex-basis: 100%; justify-content: flex-start; } }
@@ -980,7 +980,6 @@ tr.clickable:hover td { background: var(--sunken); }
 .day-quick .chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
 @media (max-width: 760px) { .day-pick { grid-template-columns: 1fr; } .day-quick .chip { flex: 1; } }
 input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
-.period-line { margin: 2px 0 6px; }
 
 /* «Касса → Зарплата»: карточка врача — три суммы в ряд, условия, действия */
 .salary { display: grid; gap: 8px; }
@@ -1411,6 +1410,18 @@ tr.clickable .row-link:not(.open-link)::after { content: " ›"; content: " ›"
 .empty-body p { margin: 0; }
 .empty-title { font-family: var(--display); font-weight: 600; font-size: 1.05rem; letter-spacing: -.01em; }
 .empty-action { flex: none; margin-top: 4px; }
+/* Пустой подраздел целиком: на фоне страницы, по центру свободного места от шапки (--head-h, layout/stickyHead)
+   до низа окна. Блок — прямо в секции страницы: секция столбиком на высоту окна, блок забирает остаток
+   (над ним может быть что-то ещё — всё равно без лишней прокрутки) */
+.empty-state.fill { flex: 1 1 auto; justify-content: center; min-height: max(240px, calc(100dvh - var(--head-h, 72px) - 44px)); padding: 24px 16px; background: none; }
+.empty-state.fill .empty-mark { opacity: .4; }
+.schedule-main:has(> .empty-state.fill), .settings-item:has(> .empty-state.fill) { display: flex; flex-direction: column; min-height: calc(100dvh - 32px); }
+.schedule-main:has(> .empty-state.fill) > .empty-state.fill, .settings-item:has(> .empty-state.fill) > .empty-state.fill { min-height: 240px; }
+@media (max-width: 760px) {
+  .empty-state.fill { min-height: max(200px, calc(100dvh - var(--head-h, 90px) - 104px - env(safe-area-inset-bottom))); }
+  .schedule-main:has(> .empty-state.fill), .settings-item:has(> .empty-state.fill) { min-height: calc(100dvh - 82px - env(safe-area-inset-bottom)); }
+  .schedule-main:has(> .empty-state.fill) > .empty-state.fill, .settings-item:has(> .empty-state.fill) > .empty-state.fill { min-height: 200px; }
+}
 .empty-state.compact { flex-direction: row; flex-wrap: wrap; gap: 8px 12px; padding: 10px 12px; text-align: left; border-radius: var(--r-md); background: var(--sunken); }
 .empty-state.compact .empty-mark { width: 18px; height: 28px; opacity: .45; }
 .empty-state.compact .empty-body { flex: 1 1 200px; max-width: none; gap: 0; }
@@ -1525,6 +1536,28 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 /* --grid-below — что под сеткой в разделе (легенда значков, «Отменено» у «Недели»): страница не прокручивается */
 @media (min-width: 761px) { .grid { max-height: max(420px, calc(100dvh - var(--grid-top, 150px) - var(--grid-below, 0px) - 16px)); } }
 
+/* Шапка страницы — одна строка-панель (layout/PageHead.tsx): заголовок, инструменты подраздела в той же
+   строке (портал в .head-tools), общее для раздела — справа. Пояснение к периоду — мелко, не строкой ниже */
+.head-tools { display: contents; }
+.head-tools > .analytics-filter, .head-tools > .block-head-tools { margin: 0; }
+.head-note { font-size: .8rem; line-height: 1.3; color: var(--hint); min-width: 0; }
+.head-tools-inline { margin-bottom: 12px; }
+.head-tools > .help-hint { margin-left: -6px; align-self: flex-end; margin-bottom: 4px; } /* на уровне крупного названия */
+.head-tools > .segments > button { padding-inline: 12px; white-space: nowrap; }
+.page-head .push, .page-head .head-end { margin-left: auto; }
+@media (min-width: 761px) { .page-head > .search { flex: 1 1 160px; min-width: 160px; max-width: 280px; } }
+@media (max-width: 760px) {
+  /* Телефон: заголовок, общий выбор раздела («Вся клиника»), потом инструменты подраздела — переносами, без пустых строк */
+  .page-head > .head-tools > * { order: 2; }
+  .head-note { order: 3; flex-basis: 100%; }
+  /* «?» подраздела — в строке заголовка, а не один на своей строке */
+  .page-head > .head-tools > .help-hint { order: 1; margin: 0; align-self: center; }
+  .page-head:has(> .head-tools > .help-hint) > :is(.with-hint, .sect-titles) { flex: 1 1 calc(100% - 40px); }
+  .page-head:has(> .head-tools > .help-hint) > :not(.with-hint, .sect-titles, .head-tools, .back) { order: 2; }
+  .head-tools > .segments { flex: 1 1 100%; display: flex; flex-wrap: nowrap; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .head-tools > .segments > button { flex: 1 0 auto; padding-inline: 10px; white-space: nowrap; }
+  .head-tools > .comeback-summary { flex-basis: 100%; }
+}
 /* Шапка раздела на компьютере прилипает к верху (layout/stickyHead.ts), под ней — шапки таблиц */
 @media (min-width: 761px) {
   .toolbar { min-height: 44px; }
@@ -1538,10 +1571,10 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   /* Таблица в своём блоке прокрутки (.table-scroll): шапка липнет к нему, а не к окну — отступ под
      шапку раздела сдвинул бы её на строки и закрыл их */
   .schedule-main .table-scroll .table th { top: 0; }
-  /* «Пациенты»: заголовок, вкладки и «Новый пациент» в первой строке, поиск и фильтры — во второй */
-  .patients-head .head-action { order: 1; margin-left: auto; }
-  .head-filters { order: 2; flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-  .head-filters .search { flex: 0 1 380px; }
+  /* «Пациенты»: заголовок, поиск и фильтры, «Новый пациент» справа — одной строкой (не влезли — перенос) */
+  .patients-head .head-action { order: 2; margin-left: auto; }
+  .head-filters { order: 1; flex: 1 1 520px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+  .head-filters .search { flex: 0 1 340px; min-width: 200px; }
   .head-filters select, .head-filters .ui-select { min-width: 200px; }
   /* «Касса»: вкладки сразу за заголовком, «Чья касса» — справа */
   .cash > .toolbar select, .cash > .toolbar .ui-select { order: 3; margin-left: auto; min-width: 200px; }
@@ -1550,7 +1583,7 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .head-filters { display: contents; }
   .patients-head .head-filters .hint { order: 2; }
 }
-@media (min-width: 761px) { .cash > .toolbar.sticky-head { margin-bottom: 0; } }
+.cash > .toolbar { margin-bottom: 0; } /* у .cash свой промежуток (gap) */
 
 /* Ширина: формы и длинный текст не растягиваются на 1900px */
 .settings-item { max-width: 1280px; }
@@ -1586,7 +1619,6 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .money-cell .total { margin: 2px 0; }
 
 /* Склад: шапка одной строкой, «Свой склад у каждого врача» — тихой строкой под ней */
-.stock-mode { padding: 8px 12px; border-radius: var(--r-md); background: var(--sunken); }
 
 /* Вход на компьютере: карточка по центру экрана; телефон — как был, без рамки */
 @media (min-width: 761px) {
@@ -1971,17 +2003,24 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 }
 /* «Ещё» в карточке приёма: редкое (промокод, предоплата, лист ожидания) — по нажатию */
 .rare > .link { justify-self: start; }
-/* «💬 Помощь» на главных экранах: кнопка внизу справа и чат поверх (панель приёма её перекрывает — так и задумано) */
-.help-fab { position: fixed; right: 20px; bottom: 20px; z-index: 12; display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
-  padding: 0 16px; border: 1px solid var(--separator); border-radius: 999px; background: var(--card); color: var(--text);
-  font: inherit; font-weight: 600; box-shadow: var(--panel-shadow); cursor: pointer; }
+/* «💬 Помощь»: на компьютере — пункт внизу меню (над «Выйти»), на телефоне — круглая кнопка над нижним
+   меню на главных экранах; чат — поверх (панель приёма его перекрывает — так и задумано) */
+.help-nav { margin-top: auto; }
+.help-nav + .link-out { margin-top: 0; }
+.help-fab { position: fixed; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 12; display: grid; place-items: center;
+  width: 44px; height: 44px; padding: 0; border: 1px solid var(--separator); border-radius: 50%; background: var(--card); color: var(--text);
+  font: inherit; font-size: 1.15rem; box-shadow: var(--panel-shadow); cursor: pointer; }
 .help-fab:hover { border-color: var(--accent); color: var(--link); }
 .help-float { position: fixed; right: 16px; bottom: 16px; z-index: 50; width: min(420px, calc(100vw - 32px)); }
 .help-float .panel { position: static; max-height: min(80vh, 720px); overflow: auto; }
 @media (max-width: 760px) {
-  .help-fab { right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); min-height: 40px; padding: 0 12px; }
-  .help-fab-text { display: none; }
+  .help-nav { display: none; }
+  /* Запас снизу под круглую кнопку: последняя строка списка докручивается выше неё (нижнее меню 72 + кнопка 44 + зазор) */
+  .shell:has(> .help-fab) .workspace { padding-bottom: calc(128px + env(safe-area-inset-bottom)); }
 }
+/* «Доступна новая версия» внизу по центру — тоже с запасом, пока видна */
+html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
+@media (max-width: 760px) { html:has(.pwa-toast) .workspace { padding-bottom: calc(136px + env(safe-area-inset-bottom)); } }
 /* «Снимки и фото» в карточке приёма: свёрнуто под кнопкой, раскрытое — компактнее, чем в медкарте */
 
 /* Подтверждение (layout/Confirm): компьютер — окно по центру, телефон — лист снизу */
@@ -2015,8 +2054,6 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 
 /* «Пациенты → Записаны»: будущие записи по дням */
 .booked { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-.booked-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
-.booked-filters .segments button { padding-inline: 12px; white-space: nowrap; }
 .booked-day h3 { margin: 6px 0 6px; font-size: 1rem; }
 .booked-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .booked-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
@@ -2034,9 +2071,6 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   /* Телефон: «WhatsApp» — под строкой справа, а не рядом (строка не уезжает за край экрана) */
   .booked-item.with-action { grid-template-columns: minmax(0, 1fr); }
   .booked-wa { justify-self: end; }
-  /* Пять периодов не влезают — ряд листается вбок сам, страница — нет */
-  .booked-filters .segments { width: 100%; min-width: 0; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-  .booked-filters .segments button { flex: 1 0 auto; }
 }
 .patient-expense-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
 .patient-expense-list li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; }
@@ -2259,7 +2293,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   background: var(--card); color: var(--hint); font: inherit; font-size: .8rem; font-weight: 600; line-height: 1; cursor: pointer; }
 .help-hint-btn:hover, .help-hint-btn[aria-expanded=true] { border-color: var(--accent); color: var(--link); background: var(--accent-soft); }
 .help-hint-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.help-hint-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; width: min(300px, 80vw); display: grid; gap: 8px; padding: 12px 14px;
+.help-hint-pop { position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; width: min(360px, 80vw); display: grid; gap: 8px; padding: 12px 14px;
   border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); box-shadow: 0 8px 24px rgba(15, 42, 48, .14);
   color: var(--text); font-size: .875rem; font-weight: 400; line-height: 1.45; letter-spacing: 0; text-align: left; white-space: normal; }
 .help-hint-pop a { color: var(--link); font-weight: 600; }
@@ -2336,16 +2370,12 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
    Телефон (DayList и его шапка) не трогаем — всё под min-width: 761px */
 .toolbar-summary .icon { width: 16px; height: 16px; }
 /* Действия шапки — одной неразрывной группой справа (SchedulePage). Тесно — schedule/useToolbarFit.ts ставит
-   data-fit: 1 — у «Принять сейчас» только ⚡, 2 — и у «Сводки дня» только значок. Порогов в px нет: при крупном
+   data-fit: 1 — у «Сводки дня» только значок. Порогов в px нет: при крупном
    тексте и зуме они другие, поэтому меряем, а не угадываем */
 .toolbar-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
 .toolbar-actions > .btn { flex: none; white-space: nowrap; }
-.toolbar-walkin-icon { display: none; }
-.schedule-toolbar[data-fit="1"] .toolbar-walkin, .schedule-toolbar[data-fit="2"] .toolbar-walkin { width: 40px; padding: 0; }
-.schedule-toolbar[data-fit="1"] .toolbar-walkin-icon, .schedule-toolbar[data-fit="2"] .toolbar-walkin-icon { display: inline; }
-.schedule-toolbar[data-fit="1"] .toolbar-walkin-label, .schedule-toolbar[data-fit="2"] .toolbar-walkin-label { display: none; }
-.schedule-toolbar[data-fit="2"] .toolbar-summary { width: 36px; padding: 0; }
-.schedule-toolbar[data-fit="2"] .toolbar-summary-label { display: none; }
+.schedule-toolbar[data-fit="1"] .toolbar-summary { width: 36px; padding: 0; }
+.schedule-toolbar[data-fit="1"] .toolbar-summary-label { display: none; }
 @media (min-width: 761px) {
   .toolbar-summary { min-height: 36px; color: var(--hint); }
   .toolbar-summary:hover:not(:disabled) { color: var(--text); }
