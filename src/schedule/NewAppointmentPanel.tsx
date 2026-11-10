@@ -282,7 +282,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
     setWalkIn(true)
     setDate(todayIn())
     setTime(timeText(nowMinutes5()))
-    if (nowDoctorId != null && doctors.some((d) => d.id === nowDoctorId)) setDoctorId(nowDoctorId)
+    // Врача, которого уже выбрали в форме, не меняем: «Сейчас» — только про время. Врач по умолчанию — если форма
+    // открыта без врача
+    if (doctorId == null && nowDoctorId != null && doctors.some((d) => d.id === nowDoctorId)) setDoctorId(nowDoctorId)
   }
 
   return (

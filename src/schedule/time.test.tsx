@@ -57,12 +57,12 @@ test('пришёл без записи: «⚡ Сейчас» в 10:47 — вре
   expect(created).toEqual([expect.objectContaining({ startAt: slotInstant(DAY, 10 * 60 + 45), doctorId: 1 })])
 })
 
-test('«⚡ Сейчас» подставляет сегодня, время и врача по умолчанию; ещё раз — обратно к выбору времени', async () => {
+test('«⚡ Сейчас» подставляет сегодня и время, выбранного врача не меняет; ещё раз — обратно к выбору времени', async () => {
   backend()
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
-  // Выбрали другого врача — «Сейчас» ставит 10:45 и врача по умолчанию (как прежнее «Принять сейчас»)
+  // Выбрали другого врача — «Сейчас» ставит 10:45, а выбранного врача не меняет
   await choose(within(panel).getByLabelText('Врач'), '2')
   expect(within(panel).getByLabelText('Врач')).toHaveAttribute('data-value', '2')
   const now = within(panel).getByRole('button', { name: '⚡ Сейчас' })
@@ -70,7 +70,7 @@ test('«⚡ Сейчас» подставляет сегодня, время и 
   await userEvent.click(now)
   expect(now).toHaveAttribute('aria-pressed', 'true')
   expect(within(panel).getByLabelText('Время')).toHaveValue('10:45')
-  expect(within(panel).getByLabelText('Врач')).toHaveAttribute('data-value', '1')
+  expect(within(panel).getByLabelText('Врач')).toHaveAttribute('data-value', '2')
   expect(within(panel).queryByRole('group', { name: 'Свободное время' })).not.toBeInTheDocument()
   expect(within(panel).getByRole('button', { name: 'Начать приём' })).toBeInTheDocument()
   // Передумали — снова выбор свободного времени, кнопка «Записать»
