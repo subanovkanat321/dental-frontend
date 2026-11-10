@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 
 /** Вымышленные пациенты: у Айгуль незаконченный план, Бакыт не пришёл. */
@@ -54,7 +54,7 @@ test('«Позвать снова»: деньги на столе, «Tish вер
     }),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const summary = await screen.findByRole('region', { name: 'Деньги на столе' })
   expect(summary).toHaveTextContent(/Незаконченные планы лечения18\s000 сом/)
   expect(screen.getByLabelText('Tish вернул')).toHaveTextContent(/вернулись 2 из 5 приглашённых · в их планах 40\s000 сом · уже оплачено 12\s000 сом/)
@@ -89,7 +89,7 @@ test('«Позвать снова»: «пора на осмотр» — посл
     http.get('*/api/service-types', () => HttpResponse.json(services)),
   )
   const { unmount } = renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(list).toHaveTextContent(/последний визит: 3 апр 2026 · Профессиональная чистка · пора с 3 октября( 2026)? \(через 6 мес\.\)/)
   const link = await screen.findByRole('link', { name: 'Настройки → Услуги и цены' })
@@ -99,7 +99,7 @@ test('«Позвать снова»: «пора на осмотр» — посл
   // У услуги есть свой срок — подсказки нет
   services = [{ ...services[0]!, recallMonths: 6 }]
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(screen.queryByRole('link', { name: 'Настройки → Услуги и цены' })).not.toBeInTheDocument()
 })
@@ -118,7 +118,7 @@ test('«Позвать снова»: отправили план с ценами
     http.get('*/api/comebacks', serve(sentPlan)),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent(/план отправлен 3 нояб?\.? 2026 · согласован 4 нояб?\.? 2026 — запишите на первый этап/)
   const filter = screen.getByRole('button', { name: /Отправили план, не записались: 1 · согласились: 1/ })
@@ -141,10 +141,100 @@ test('«Позвать снова»: по 50 за раз — «Показать 
     http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(within(list).getAllByRole('listitem')).toHaveLength(50)
   await userEvent.click(screen.getByRole('button', { name: 'Показать ещё (10 из 10)' }))
   await vi.waitFor(() => expect(within(screen.getByRole('list', { name: 'Кого вернуть' })).getAllByRole('listitem')).toHaveLength(60))
   expect(screen.queryByRole('button', { name: /Показать ещё/ })).not.toBeInTheDocument()
+})
+
+/** Вымышленная Динара сама отменила чистку у Дастана 3 дня назад и не перезаписалась. */
+function cancelledBoard(): Schemas['ComebacksBoard'] {
+  const day = 86_400_000
+  return {
+    patients: [{ patientId: 5, fullName: 'Динара Ж.', phone: '996555000295', telegram: false, reason: 'CANCELLED', planSom: 0, plan: [],
+      doctorId: 2, cancelled: { at: new Date(Date.now() - 3 * day).toISOString(), source: 'PATIENT', serviceId: 9, service: 'Чистка',
+        doctorId: 2, doctor: 'Дастан Т.', startAt: '2026-11-08T05:00:00Z', minutes: 60 } }],
+    planSom: 0, planPatients: 0, noShows: 0, recalls: 0, cancelled: 1,
+  }
+}
+
+function cancelledBackend() {
+  const skipped: number[] = []
+  let board = cancelledBoard()
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/comebacks', ({ request }) => serve(board)({ request })),
+    http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
+    http.post('*/api/comebacks/5/skip', () => {
+      skipped.push(5)
+      board = { ...board, patients: [], cancelled: 0 }
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  return skipped
+}
+
+test('«Позвать снова» → «Отменили и не записались»: строка, «Напомнить» в WhatsApp готовым текстом, «Не звать»', async () => {
+  const skipped = cancelledBackend()
+  const opened: string[] = []
+  vi.stubGlobal('open', vi.fn((url: string) => { opened.push(String(url)); return null }))
+  const text = 'Здравствуйте, Динара Ж.! Вы отменяли запись на Чистка в Стоматология «Тест». Подберём удобное время? Записаться: https://tish.test/c/test#book'
+  const sent: unknown[] = []
+  server.use(
+    http.post('*/api/comebacks/5/draft', () => HttpResponse.json({ text, ai: false, lang: 'RU', telegram: false })),
+    http.post('*/api/comebacks/5/invite', async ({ request }) => {
+      sent.push(await request.json())
+      return HttpResponse.json({ text: `🦷 Приглашение от клиники\n\n${text}`, telegram: false })
+    }),
+  )
+  renderApp()
+  await userEvent.click(await findSub('Позвать снова'))
+  const summary = await screen.findByRole('region', { name: 'Деньги на столе' })
+  const group = within(summary).getByRole('button', { name: /Отменили и не записались/ })
+  expect(group).toHaveTextContent('1')
+  await userEvent.click(group)
+  expect(group).toHaveAttribute('aria-pressed', 'true')
+  const row = within(screen.getByRole('list', { name: 'Кого вернуть' })).getAllByRole('listitem')[0]!
+  expect(row).toHaveTextContent('Отменил запись')
+  expect(row).toHaveTextContent('отменил пациент в боте · 3 дня назад')
+  expect(row).toHaveTextContent(/был записан: Чистка · Дастан Т\. · 8 нояб?\.?, \d\d:\d\d/)
+
+  await userEvent.click(within(row).getByRole('button', { name: 'Напомнить' }))
+  const box = await screen.findByRole('textbox', { name: 'Текст приглашения' })
+  expect(box).toHaveValue(text)
+  expect(screen.getByText(/Готовый текст — можно поправить/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'WhatsApp' }))
+  expect(await screen.findByRole('status')).toHaveTextContent('Открыли WhatsApp с текстом')
+  expect(sent).toEqual([{ text, channel: 'WHATSAPP' }])
+  expect(opened[0]).toContain('996555000295')
+  expect(decodeURIComponent(opened[0]!)).toContain('Вы отменяли запись на Чистка')
+  await userEvent.click(screen.getByRole('button', { name: 'Готово' }))
+
+  await userEvent.click(within(screen.getByRole('list', { name: 'Кого вернуть' })).getByRole('button', { name: 'Не звать' }))
+  await vi.waitFor(() => expect(skipped).toEqual([5]))
+  expect(await screen.findByText('Звать некого')).toBeInTheDocument()
+})
+
+test('«Отменили»: «Записать» — «Новая запись» с этим пациентом, врачом и услугой отменённой записи', async () => {
+  cancelledBackend()
+  const dinara = { id: 5, fullName: 'Динара Ж.', phone: '996555000295', telegram: false }
+  server.use(
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/waitlist', () => HttpResponse.json([])),
+    http.get('*/api/appointments/by-patient/5', () => HttpResponse.json({ patient: dinara, done: 1, noShow: 0, cancelled: 1, upcoming: [], past: [] })),
+    http.get('*/api/service-types', () => HttpResponse.json([{ id: 9, name: 'Чистка', durationMinutes: 45, active: true },
+      { id: 10, name: 'Пломба', durationMinutes: 30, active: true }])),
+  )
+  renderApp()
+  await userEvent.click(await findSub('Позвать снова'))
+  const list = await screen.findByRole('list', { name: 'Кого вернуть' })
+  await userEvent.click(within(list).getByRole('button', { name: 'Записать' }))
+  const form = await screen.findByRole('complementary', { name: 'Новая запись' })
+  expect(form).toHaveTextContent('Динара Ж.')
+  expect(within(form).getByRole('combobox', { name: 'Врач' })).toHaveTextContent('Дастан Т.')
+  expect(await within(form).findByRole('button', { name: /Чистка/ })).toHaveAttribute('aria-pressed', 'true')
 })

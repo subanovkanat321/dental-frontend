@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { readDeepLink } from '../lib/deepLink'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { choose } from '../test/select'
 import { server } from '../test/server'
 import { adminsLine, remindedText, statusText } from './agreementTarget'
@@ -135,7 +135,7 @@ test('версия договора: опубликовать выбранным
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Договор' }))
+  await user.click(await findSub('Договор'))
   expect(await screen.findByText(/выбранным клиникам: 2 · подписали: 1/)).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: /Версия 2 · Договор/ }))
   const panel = await screen.findByRole('complementary', { name: 'Версия договора' })

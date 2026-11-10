@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
 
 beforeEach(() => {
@@ -52,7 +52,7 @@ test('владелец: «Расход ИИ» — итог в $ и сомах, �
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Расход ИИ' }))
+  await user.click(await findSub('Расход ИИ'))
   expect(await screen.findByText(/Всего:/)).toHaveTextContent('Всего: $3.50 · 341 сом · 42 запросов к ИИ')
   expect(screen.getByText(/по курсу 87 сом за \$1 и с НДС 12%/)).toHaveTextContent('Помощник техподдержки платформы: $0.2500')
   const table = screen.getByRole('table', { name: 'Расход ИИ по клиникам' })
@@ -86,6 +86,6 @@ test('владелец: «Расход ИИ» — итог в $ и сомах, �
 test('менеджер платформы не видит «Расход ИИ»', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: false, fullName: 'Мира' })))
   renderApp()
-  expect(await screen.findByRole('tab', { name: 'Клиники' })).toBeInTheDocument()
-  expect(screen.queryByRole('tab', { name: 'Расход ИИ' })).not.toBeInTheDocument()
+  expect(await findSub('Клиники')).toBeInTheDocument()
+  expect(querySub('Расход ИИ')).not.toBeInTheDocument()
 })

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
 import { folderTitle, sizeText, videoLabel } from './materials'
 
@@ -67,7 +67,7 @@ test('владелец: «Материалы» — новые ролики с п
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Материалы' }))
+  await user.click(await findSub('Материалы'))
 
   const videos = await screen.findByRole('region', { name: 'Ролики' })
   expect(within(videos).getByRole('heading', { name: 'Промо-ролик v4' })).toBeInTheDocument()
@@ -112,7 +112,7 @@ test('каталог не подключён — понятная подсказ
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Материалы' }))
+  await user.click(await findSub('Материалы'))
   expect(await screen.findByText(/Каталог материалов не подключён/)).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Ролики' })).not.toBeInTheDocument()
   // Ссылки — и без каталога
@@ -126,15 +126,15 @@ test('ошибка сервера — текст ошибки', async () => {
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Материалы' }))
+  await user.click(await findSub('Материалы'))
   expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось загрузить материалы')
 })
 
 test('менеджер платформы вкладку «Материалы» не видит', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: false, platform: true })))
   renderApp()
-  expect(await screen.findByRole('tab', { name: 'Клиники' })).toBeInTheDocument()
-  expect(screen.queryByRole('tab', { name: 'Материалы' })).not.toBeInTheDocument()
+  expect(await findSub('Клиники')).toBeInTheDocument()
+  expect(querySub('Материалы')).not.toBeInTheDocument()
 })
 
 test('PDF-инструкция для клиник — свой блок со ссылкой на печатную версию руководства', async () => {
@@ -144,7 +144,7 @@ test('PDF-инструкция для клиник — свой блок со с
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Материалы' }))
+  await user.click(await findSub('Материалы'))
   const block = await screen.findByRole('region', { name: 'Инструкция для клиник' })
   expect(within(block).getByText('Tish-instrukciya.pdf')).toBeInTheDocument()
   expect(within(block).getByRole('link', { name: 'tish.kg/guide?print=1' })).toHaveAttribute('href', '/guide?print=1')

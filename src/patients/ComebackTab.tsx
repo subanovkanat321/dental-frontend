@@ -13,11 +13,24 @@ import { Loading, Spinner } from '../layout/Loading'
 type Candidate = Schemas['ComebacksCandidate']
 type Reason = NonNullable<Candidate['reason']>
 type Patient = Schemas['PatientView']
+type Cancelled = NonNullable<Candidate['cancelled']>
+
+/** «Записать» из «Отменили»: тот же врач, та же услуга и длительность, что у отменённой записи. */
+export type BookPreset = { doctorId?: number; serviceId?: number; duration?: number }
 
 const REASONS: Record<Reason, { label: string; tone: string }> = {
   PLAN: { label: 'Лечение не закончено', tone: 'plan' },
+  CANCELLED: { label: 'Отменил запись', tone: 'cancelled' },
   NO_SHOW: { label: 'Не пришёл', tone: 'noshow' },
   RECALL: { label: 'Пора на осмотр', tone: 'recall' },
+}
+
+/** «отменил пациент в боте · 3 дня назад» — кто и когда (V160). */
+function cancelledText(c: Cancelled): string {
+  const who = c.source === 'PATIENT' ? 'отменил пациент в боте'
+    : c.source === 'STAFF' ? `отменили в клинике${c.by ? ` (${c.by})` : ''}`
+      : c.source === 'SYSTEM' ? 'отменено автоматически' : 'отменено'
+  return c.at ? `${who} · ${agoText(c.at)}` : who
 }
 
 function errorText(e: ApiError | null): string | null {
@@ -33,8 +46,9 @@ const PAGE = 50
  * «Tish вернул»: кто записался после приглашения за 30 дней. Считает сервер; здесь только показываем.
  */
 export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
-  onOpen: (patientId: number) => void; onBook: (p: Patient) => void; canEditServices?: boolean
+  onOpen: (patientId: number) => void; onBook: (p: Patient, preset?: BookPreset) => void; canEditServices?: boolean
 }) {
+  const client = useQueryClient()
   // Ни у одной услуги нет своего срока профосмотра — подсказать, где он задаётся
   const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), enabled: canEditServices })
   const noServiceTerms = services.isSuccess && services.data.length > 0 && !services.data.some((s) => s.recallMonths != null)
@@ -58,11 +72,20 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
     // Сменили фильтр или «Показать ещё» — прежний список на экране, пока грузится новый
     placeholderData: keepPreviousData,
   })
+  // «Не звать» — только в группе «Отменили и не записались»: убрать до новой отмены
+  const skip = useMutation<unknown, ApiError, number>({
+    mutationFn: (patientId) => unwrap(api.POST('/api/comebacks/{patientId}/skip', { params: { path: { patientId } } })),
+    onSuccess: () => {
+      haptic('success')
+      void client.invalidateQueries({ queryKey: ['comebacks'] })
+    },
+    onError: () => haptic('error'),
+  })
 
   if (board.isPending) return <Loading />
   if (board.error) return <p className="error">{board.error.message}</p>
   const shown = board.data.patients ?? []
-  const everyone = (board.data.planPatients ?? 0) + (board.data.noShows ?? 0) + (board.data.recalls ?? 0)
+  const everyone = (board.data.planPatients ?? 0) + (board.data.noShows ?? 0) + (board.data.recalls ?? 0) + (board.data.cancelled ?? 0)
   const total = board.data.total ?? shown.length
   const sent = board.data.sent ?? 0
   const agreed = board.data.agreed ?? 0
@@ -75,6 +98,9 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
           <span className="hint">Незаконченные планы лечения</span>
           <b className="num">{somText(board.data.planSom ?? 0)}</b>
           <span className="hint">пациентов: {board.data.planPatients ?? 0}</span>
+        </button>
+        <button type="button" aria-pressed={filter === 'CANCELLED'} onClick={() => setFilter(filter === 'CANCELLED' ? 'ALL' : 'CANCELLED')}>
+          <span className="hint">Отменили и не записались</span><b className="num">{board.data.cancelled ?? 0}</b>
         </button>
         <button type="button" aria-pressed={filter === 'NO_SHOW'} onClick={() => setFilter(filter === 'NO_SHOW' ? 'ALL' : 'NO_SHOW')}>
           <span className="hint">Не пришли и не перезаписались</span><b className="num">{board.data.noShows ?? 0}</b>
@@ -101,7 +127,7 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
           <a href="#/settings/services">Настройки → Услуги и цены</a>.</p>
       )}
       {!everyone ? (
-        <EmptyState title="Звать некого">Все с планом лечения записаны, неявок нет, осмотры — вовремя.</EmptyState>
+        <EmptyState title="Звать некого">Все с планом лечения записаны, кто отменил — перезаписался, неявок нет, осмотры — вовремя.</EmptyState>
       ) : !shown.length ? <EmptyState title="По этому отбору никого" /> : (
         <ul className="comeback-list" aria-label="Кого вернуть">
           {shown.map((c) => (
@@ -117,7 +143,14 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
                   план отправлен {shortDate(c.planSentAt)}{c.planAgreedAt ? ` · согласован ${shortDate(c.planAgreedAt)} — запишите на первый этап` : ' · ещё не согласован'}
                 </p>
               )}
-              {c.reason === 'RECALL' && c.recallDueOn ? (
+              {c.reason === 'CANCELLED' && c.cancelled ? (
+                <>
+                  <p className="hint small">{cancelledText(c.cancelled)} · {c.invitedAt ? `напоминали ${agoText(c.invitedAt)}` : 'ещё не напоминали'}</p>
+                  <p className="comeback-plan">
+                    был записан: {[c.cancelled.service, c.cancelled.doctor, c.cancelled.startAt && shortDate(c.cancelled.startAt, true)].filter(Boolean).join(' · ')}
+                  </p>
+                </>
+              ) : c.reason === 'RECALL' && c.recallDueOn ? (
                 <p className="hint small">
                   последний визит: {c.lastVisit ? shortDate(c.lastVisit) : '—'}{c.recallService ? ` · ${c.recallService}` : ''}
                   {' '}· пора с {dueText(c.recallDueOn)}{c.recallMonths ? ` (через ${monthsText(c.recallMonths)})` : ''}
@@ -133,15 +166,22 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
               ) : (
                 <div className="actions">
                   <button type="button" className={c.invitedAt ? 'btn small' : 'btn small primary'} onClick={() => setInviting(c.patientId!)}>
-                    Пригласить</button>
+                    {c.reason === 'CANCELLED' ? 'Напомнить' : 'Пригласить'}</button>
                   <button type="button" className="btn small ghost"
-                    onClick={() => onBook({ id: c.patientId, fullName: c.fullName, phone: c.phone, telegram: c.telegram })}>Записать</button>
+                    onClick={() => onBook({ id: c.patientId, fullName: c.fullName, phone: c.phone, telegram: c.telegram },
+                      c.cancelled ? { doctorId: c.cancelled.doctorId, serviceId: c.cancelled.serviceId, duration: c.cancelled.minutes } : undefined)}>
+                    Записать</button>
+                  {c.reason === 'CANCELLED' && (
+                    <button type="button" className="btn small ghost" disabled={skip.isPending && skip.variables === c.patientId}
+                      onClick={() => skip.mutate(c.patientId!)}>Не звать</button>
+                  )}
                 </div>
               )}
             </li>
           ))}
         </ul>
       )}
+      {skip.error && <p className="error" role="alert">{errorText(skip.error)}</p>}
       {shown.length < total && (
         <button type="button" className="btn" disabled={board.isFetching} onClick={() => setLimit(limit + PAGE)}>
           {board.isFetching ? <><Spinner />Загрузка…</> : `Показать ещё (${Math.min(PAGE, total - shown.length)} из ${total - shown.length})`}</button>
@@ -180,7 +220,7 @@ function InviteForm({ candidate: c, onDone }: { candidate: Candidate; onDone: ()
   }
   return (
     <form className="form comeback-invite" aria-label={`Приглашение: ${c.fullName}`} onSubmit={(e) => e.preventDefault()}>
-      <p className="hint small">{draft.data?.ai ? '✨ Написал ИИ — проверьте' : 'Текст по плану лечения — можно поправить'}
+      <p className="hint small">{draft.data?.ai ? '✨ Написал ИИ — проверьте' : c.reason === 'CANCELLED' ? 'Готовый текст — можно поправить' : 'Текст по плану лечения — можно поправить'}
         {draft.data?.lang === 'KY' ? ' · на кыргызском' : ''}</p>
       <textarea aria-label="Текст приглашения" rows={6} maxLength={2000} value={value} onChange={(e) => setText(e.target.value)} />
       <div className="actions">

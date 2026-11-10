@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { findSub, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { todayIn } from '../lib/time'
 import { choose } from '../test/select'
@@ -139,7 +139,8 @@ test('«−1» в списке списывает одну штуку; «Рас�
   expect(moves).toEqual([{ delta: -1 }, { delta: 1, reason: 'CORRECTION' }])
   expect(screen.queryByText(/Списано 1 уп/)).not.toBeInTheDocument()
 
-  await userEvent.click(screen.getByRole('button', { name: 'Расходы на склад' }))
+  // «Склад → Расходы на склад» — подраздел в меню слева
+  await userEvent.click(await findSub('Расходы на склад'))
   const block = await screen.findByRole('region', { name: 'Расходы на склад' })
   expect(await within(block).findByText(/10% выручки/)).toBeInTheDocument()
   expect(block).toHaveTextContent('Поставок без суммы: 1')
@@ -155,7 +156,7 @@ test('«Расходы на склад» за месяц — с первого �
     return HttpResponse.json({ purchasedSom: 0, usedSom: 0, months: [], items: [] } satisfies Schemas['SpendingView'])
   }))
   renderApp()
-  await userEvent.click(await screen.findByRole('button', { name: 'Расходы на склад' }))
+  await userEvent.click(await findSub('Расходы на склад'))
   // «‹ Ноябрь 2026 ›»: нажать на месяц — окошко с месяцами года, выбрать февраль
   const picker = await screen.findByRole('group', { name: 'Месяц расходов на склад' })
   await userEvent.click(within(picker).getByRole('button', { expanded: false }))

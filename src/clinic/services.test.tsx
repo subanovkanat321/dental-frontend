@@ -103,13 +103,13 @@ test('«Услуги и цены»: поиск без регистра и «ё/�
     'Все · 12', 'Осмотр и консультация · 1', 'Профилактика и гигиена · 2', 'Терапия · 3', 'Хирургия · 2',
     'Детская стоматология · 3', 'Другое · 1',
   ])
-  expect(within(table).getAllByRole('columnheader').slice(5).map((h) => h.textContent)).toEqual([
+  expect(within(table).getAllByRole('columnheader').slice(5).map((h) => h.textContent?.replace(/^[▾▸] /, ''))).toEqual([
     'Осмотр и консультация · 1', 'Профилактика и гигиена · 2', 'Терапия · 3', 'Хирургия · 2', 'Детская стоматология · 3', 'Другое · 1',
   ])
 
   // Чип — только этот раздел; ещё раз — все
   await user.click(within(chips).getByRole('button', { name: 'Хирургия · 2' }))
-  expect(within(table).getAllByRole('row').slice(1).map((r) => r.textContent)).toEqual([
+  expect(within(table).getAllByRole('row').slice(1).map((r) => r.textContent?.replace(/^[▾▸] /, ''))).toEqual([
     'Хирургия · 2', expect.stringContaining('Удаление зуба мудрости'), expect.stringContaining('Удаление зуба простое'),
   ])
   await user.click(within(chips).getByRole('button', { name: 'Хирургия · 2' }))
@@ -129,7 +129,7 @@ test('«Услуги и цены»: поиск без регистра и «ё/�
   await user.type(screen.getByRole('searchbox', { name: 'Найти услугу' }), 'винир')
   expect(screen.getByText('Ничего не нашлось')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Показать все' }))
-  expect(within(await screen.findByRole('table', { name: 'Услуги' })).getAllByRole('button')).toHaveLength(12)
+  expect(within(await screen.findByRole('table', { name: 'Услуги' })).getAllByRole('button').filter((b) => !b.hasAttribute('aria-expanded'))).toHaveLength(12)
 })
 
 test('карточка услуги: раздел меняют в списке — уходит в запросе', async () => {
@@ -399,4 +399,19 @@ test('«Профосмотр по умолчанию»: не админ толь
   const box = await screen.findByLabelText('Профосмотр по умолчанию', { selector: 'div' })
   await vi.waitFor(() => expect(box).toHaveTextContent('Профосмотр по умолчанию: через 4 мес.'))
   expect(within(box).queryByRole('combobox')).not.toBeInTheDocument()
+})
+
+test('«Услуги и цены»: раздел сворачивается и раскрывается нажатием на заголовок', async () => {
+  server.use(http.get('*/api/service-types', () => HttpResponse.json(PRICE_LIST)))
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Услуги' })
+  const surgery = within(table).getByRole('button', { name: /Хирургия · 2/ })
+  expect(surgery).toHaveAttribute('aria-expanded', 'true')
+  expect(within(table).getByRole('button', { name: 'Удаление зуба простое' })).toBeInTheDocument()
+  await user.click(surgery)
+  expect(surgery).toHaveAttribute('aria-expanded', 'false')
+  expect(within(table).queryByRole('button', { name: 'Удаление зуба простое' })).not.toBeInTheDocument()
+  await user.click(surgery)
+  expect(within(table).getByRole('button', { name: 'Удаление зуба простое' })).toBeInTheDocument()
 })

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { choose, chosen } from '../test/select'
 import { server } from '../test/server'
 import { forgetVideo, messageFor, nextLead } from './outreach'
@@ -86,7 +86,7 @@ afterEach(() => {
 async function openTab() {
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Написать клиникам' }))
+  await user.click(await findSub('Написать клиникам'))
   await screen.findByRole('list', { name: 'Клиники' })
   return user
 }
@@ -406,4 +406,41 @@ test('«Скачать шаблон» в окне загрузки: Excel и CSV
   await waitFor(() => expect(asked).toEqual(['?format=xlsx', '?format=csv']))
   await waitFor(() => expect(click).toHaveBeenCalledTimes(2))
   expect(box).toHaveTextContent('«Название, Телефон, Адрес, Ссылка, Город»')
+})
+
+test('Windows: текст с эмодзи — в буфер обмена, чат WhatsApp открывается пустым (из ссылки эмодзи приходят «�»)', async () => {
+  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130')
+  const user = await openTab()
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  await user.click(within(card).getByRole('button', { name: 'Только сообщение' }))
+  expect(open).toHaveBeenCalledWith('https://wa.me/996555000402', '_blank', 'noopener')
+  await waitFor(async () => expect(await navigator.clipboard.readText()).toBe('Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/about'))
+  expect(within(card).getByRole('status')).toHaveTextContent('Ctrl+V')
+})
+
+test('шаблон: свой текст → «Вернуть текст по умолчанию» шлёт пустое значение, сервер отдаёт текст по умолчанию', async () => {
+  const DEFAULT = 'Здравствуйте, {клиника}! Если интересно — просто ответьте «+»'
+  let template: Schemas['ClinicOutreachTemplate'] = { text: 'Свой, {клиника}!', custom: true, defaultText: DEFAULT }
+  const puts: (string | undefined)[] = []
+  server.use(
+    http.get('*/api/platform/outreach', () => HttpResponse.json({ ...outreach(leads), template })),
+    http.put('*/api/platform/outreach/template', async ({ request }) => {
+      const { text } = await request.json() as { text?: string }
+      puts.push(text)
+      template = text ? { text, custom: true, defaultText: DEFAULT } : { text: DEFAULT, custom: false, defaultText: DEFAULT }
+      return HttpResponse.json(template)
+    }),
+  )
+  const user = await openTab()
+  const block = screen.getByRole('region', { name: 'Текст сообщения' })
+  await user.click(within(block).getByText('Текст сообщения (свой)'))
+  expect(within(block).getByRole('textbox', { name: 'Текст' })).toHaveValue('Свой, {клиника}!')
+
+  await user.click(within(block).getByRole('button', { name: 'Вернуть текст по умолчанию' }))
+  await waitFor(() => expect(within(block).getByRole('textbox', { name: 'Текст' })).toHaveValue(DEFAULT))
+  expect(puts).toEqual([''])
+  // Текст снова по умолчанию — кнопки «Вернуть» нет, пометки «(свой)» тоже
+  await waitFor(() => expect(within(block).queryByRole('button', { name: 'Вернуть текст по умолчанию' })).not.toBeInTheDocument())
+  expect(within(block).getByText('Текст сообщения')).toBeInTheDocument()
 })

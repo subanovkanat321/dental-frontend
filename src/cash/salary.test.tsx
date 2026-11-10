@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -40,7 +40,7 @@ test('зарплата: условия 30% + оклад, к выплате, вы
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  await user.click(await findSub('Зарплата'))
 
   const aCard = await screen.findByRole('region', { name: 'Зарплата: Айгерим Садыкова' })
   expect(aCard).toHaveTextContent('Условия: 40% от выручки')
@@ -85,7 +85,7 @@ test('бывший сотрудник: выплата месяца остала�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  await user.click(await findSub('Зарплата'))
   const card = await screen.findByRole('region', { name: 'Зарплата: Бермет (больше не работает)' })
   // Кем работал — уже не пишем: имя и так говорит «больше не работает»
   expect(card).not.toHaveTextContent('· ассистент')
@@ -106,7 +106,7 @@ test('калькулятор зарплаты: свои цифры, минус �
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  await user.click(await findSub('Зарплата'))
   await screen.findByRole('region', { name: 'Зарплата: Айгерим Садыкова' })
 
   const calc = screen.getByText('Калькулятор зарплаты').closest('details')!
@@ -147,7 +147,7 @@ test('условия у каждого свои: «Вся выручка — в�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  await user.click(await findSub('Зарплата'))
   const card = await screen.findByRole('region', { name: 'Зарплата: Дастан Т.' })
   await user.click(within(card).getByRole('button', { name: '⚙️ Задать процент и оклад' }))
   await user.click(within(card).getByRole('button', { name: 'Вся выручка — врачу (100%)' }))
@@ -172,7 +172,7 @@ test('аренда кресла: пресет «частный врач», су�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  await user.click(await findSub('Зарплата'))
   const card = await screen.findByRole('region', { name: 'Зарплата: Дастан Т.' })
   await user.click(within(card).getByRole('button', { name: '⚙️ Задать процент и оклад' }))
   const preset = within(card).getByRole('button', { name: 'Частный врач: вся выручка — врачу, минус аренда' })
@@ -206,7 +206,7 @@ test('аренда процентом в форме; аренда больше �
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Зарплата' }))
+  await user.click(await findSub('Зарплата'))
   const card = await screen.findByRole('region', { name: 'Зарплата: Дастан Т.' })
   // Отрицательной выплаты нет: «врач должен клинике», и «Выплатить» не предлагаем
   expect(within(card).getByLabelText('Врач должен клинике')).toHaveTextContent(/15\s000 сом/)

@@ -14,7 +14,7 @@ test('меню слева сворачивается до иконок и раз
   expect(container.querySelector('.shell')).toHaveClass('narrow')
   // Подсказка у раздела — когда подписи спрятаны
   const nav = screen.getByRole('navigation', { name: 'Разделы' })
-  expect(within(nav).getByRole('button', { name: /Пациенты/ })).toHaveAttribute('title', 'Пациенты')
+  expect(within(nav).getByRole('button', { name: /^Пациенты/ })).toHaveAttribute('title', 'Пациенты')
   expect(localStorage.getItem('tish.full.sidebar-narrow')).toBe('1')
   unmount()
 

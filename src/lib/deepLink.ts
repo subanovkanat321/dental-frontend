@@ -31,6 +31,10 @@ export type DeepLink = {
   date?: string
   appointmentId?: number
   bookPatientId?: number
+  /** «Записать» из «Позвать снова → Отменили»: врач, услуга и длительность отменённой записи */
+  bookDoctorId?: number
+  bookServiceId?: number
+  bookDuration?: number
   patientId?: number
   questionId?: number
   supplyId?: number
@@ -74,4 +78,16 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (num('doctor')) return { page: 'schedule', doctorId: num('doctor'), date: tomorrow }
   if (tomorrow) return { page: 'schedule', date: tomorrow }
   return null
+}
+
+/**
+ * Адрес (без «#/»), куда ведёт ссылка: раздел и подраздел — #/cash/earnings, #/patients/questions,
+ * #/settings/support. Подраздел в адресе — его и откроет раздел (lib/sub), и подсветит меню.
+ */
+export function linkHash(link: DeepLink): string {
+  const sub = link.page === 'patients'
+    // Карточка пациента (имя в приёме, кнопка бота) — поверх списка «Все», как раньше
+    ? (link.questionId ? 'questions' : link.tab ?? (link.patientId ? 'all' : undefined))
+    : link.page === 'stock' ? undefined : link.tab
+  return sub ? `${link.page}/${sub}` : link.page
 }

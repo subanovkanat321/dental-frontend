@@ -61,6 +61,11 @@
 .about-hero { padding-top: 40px; }
 .hero-grid { display: grid; gap: 48px; align-items: center; }
 .hero-copy .about-ctas { margin-top: 32px; }
+/* Крючок ролика длиннее прежнего заголовка — чуть мельче, чтобы первый экран влез рядом с роликом */
+.about-hero h1 { font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.08; }
+.hero-points { margin-top: 24px; gap: 10px; }
+.hero-points li { font-size: 1rem; line-height: 1.45; }
+.hero-points strong { font-weight: 600; }
 .about-scroll { position: absolute; left: 50%; bottom: 20px; translate: -50% 0; display: none; place-items: center; width: 44px; height: 44px;
   border-radius: 50%; border: 1px solid var(--separator); background: var(--card); color: var(--hint) !important; text-decoration: none; font-size: 1.2rem; }
 
@@ -103,10 +108,10 @@
 .about-card span:last-child { color: var(--hint); }
 .about-statement .about-lead { margin-top: 32px !important; }
 
-/* Ролик */
-.about-video .about-inner { display: grid; gap: 28px; justify-items: center; text-align: center; }
-.video-frame { width: 100%; max-width: 1040px; padding: 8px; border-radius: 20px; background: var(--frame); box-shadow: 0 24px 60px -12px rgba(15, 42, 48, .3); }
-.video-frame video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 13px; background: #0d2a2e; }
+/* Ролик v6 4:5 на первом экране: телефон — во всю ширину, компьютер — колонка ~450 px рядом с текстом */
+.hero-video { margin: 0; width: 100%; text-align: center; }
+.video-frame { width: 100%; padding: 8px; border-radius: 20px; background: var(--frame); box-shadow: 0 24px 60px -12px rgba(15, 42, 48, .3); }
+.video-frame video { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: 13px; background: #0d2a2e; object-fit: cover; }
 
 /* Финал и контакты */
 .about-final { background: var(--accent-soft); }
@@ -149,6 +154,7 @@
 }
 @media (min-width: 760px) {
   .about-sticky { display: none; }
+  .hero-video { max-width: 480px; justify-self: center; }
   .about-cards { grid-template-columns: 1fr 1fr; }
   .about-contacts { grid-template-columns: 1fr 1fr; }
 }
@@ -157,7 +163,8 @@
   .about-hero { min-height: calc(100svh - 65px); padding-top: 48px; }
   .about-statement { min-height: 80svh; }
   .about-scroll { display: grid; }
-  .hero-grid { grid-template-columns: 5fr 7fr; gap: 56px; }
+  .hero-grid { grid-template-columns: minmax(0, 1fr) clamp(420px, 36vw, 470px); gap: 56px; }
+  .hero-grid:has(.hero-vis) { grid-template-columns: 5fr 7fr; }
   .part-grid { grid-template-columns: 5fr 7fr; gap: 72px; }
   .about-part.flip .part-copy { order: 2; }
   .about-part.flip .part-grid { grid-template-columns: 7fr 5fr; }

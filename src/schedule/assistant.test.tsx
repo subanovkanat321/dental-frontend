@@ -19,7 +19,7 @@ test('ассистент: только расписание своего вра�
   )
   renderApp()
   const nav = await screen.findByRole('navigation', { name: 'Разделы' })
-  expect(within(nav).queryByRole('button', { name: /Касса/ })).not.toBeInTheDocument()
+  expect(within(nav).queryByRole('button', { name: /^Касса/ })).not.toBeInTheDocument()
   expect(within(nav).getByRole('button', { name: /Расписание/ })).toBeInTheDocument()
   expect(await screen.findByText('Бакыт М.')).toBeInTheDocument()
   // Чужого врача не спрашиваем и не показываем

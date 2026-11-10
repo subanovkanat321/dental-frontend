@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { me, renderApp } from '../test/fixtures'
+import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Finance = Schemas['PlatformFinanceFinance']
@@ -83,7 +83,7 @@ test('владелец: «Финансы» — итог, авто-расходы
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await findSub('Финансы'))
   expect(await screen.findByLabelText('Доход за месяц')).toHaveTextContent('10 470 сом')
   expect(screen.getByLabelText('Расход за месяц')).toHaveTextContent('3 055 сом')
   expect(screen.getByLabelText('Прибыль за месяц')).toHaveTextContent('7 415 сом')
@@ -137,7 +137,7 @@ test('добавить расход в долларах, исправить (о�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await findSub('Финансы'))
   await user.click(await screen.findByRole('button', { name: 'Добавить расход' }))
   const form = screen.getByRole('form', { name: 'Новый расход' })
   await user.click(within(form).getByRole('button', { name: 'Реклама' }))
@@ -185,7 +185,7 @@ test('ошибка сервера под полем: курс', async () => {
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await findSub('Финансы'))
   await user.click(await screen.findByRole('button', { name: 'Добавить расход' }))
   const form = screen.getByRole('form', { name: 'Новый расход' })
   await user.type(within(form).getByLabelText('Статья'), 'Реклама')
@@ -216,7 +216,7 @@ test('период: квартал, год, всё время и свой — и
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await findSub('Финансы'))
   await screen.findByLabelText('Доход за месяц')
   // В режиме «Месяц» таблицы по месяцам нет, есть 12 месяцев
   expect(screen.queryByRole('table', { name: 'Итоги по месяцам' })).not.toBeInTheDocument()
@@ -266,8 +266,8 @@ test('период: квартал, год, всё время и свой — и
 test('не владельцу вкладки «Финансы» нет', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: false, platform: true })))
   renderApp()
-  expect(await screen.findByRole('tab', { name: 'Клиники' })).toBeInTheDocument()
-  expect(screen.queryByRole('tab', { name: 'Финансы' })).not.toBeInTheDocument()
+  expect(await findSub('Клиники')).toBeInTheDocument()
+  expect(querySub('Финансы')).not.toBeInTheDocument()
 })
 
 test('«каждый месяц» по факту: блок «Ожидаются», «Оплачено» с подтверждением, «Не в этом месяце», итоги факт + «ещё ожидается»', async () => {
@@ -304,7 +304,7 @@ test('«каждый месяц» по факту: блок «Ожидаются
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await findSub('Финансы'))
 
   // Итоги — только факт; рядом мелко «ещё ожидается» и прогноз прибыли
   expect(await screen.findByLabelText('Расход за месяц')).toHaveTextContent('1 305 сом')
@@ -352,7 +352,7 @@ test('нет ожидаемых — блока нет и «ещё ожидает
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await findSub('Финансы'))
   expect(await screen.findByLabelText('Расход за месяц')).toHaveTextContent('3 055 сом')
   expect(screen.queryByRole('region', { name: 'Ожидаются в этом месяце' })).not.toBeInTheDocument()
   expect(screen.queryByText(/ещё ожидается/)).not.toBeInTheDocument()
@@ -384,7 +384,7 @@ test('балансы ИИ и SMS: пополнено, израсходовано
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await findSub('Финансы'))
   const block = await screen.findByRole('region', { name: 'Балансы ИИ и SMS' })
   const ai = within(block).getByRole('group', { name: 'Баланс ИИ' })
   expect(ai).toHaveTextContent('Пополнено')
@@ -420,7 +420,7 @@ test('баланс в минусе — красный остаток; без п�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await findSub('Финансы'))
   const block = await screen.findByRole('region', { name: 'Балансы ИИ и SMS' })
   expect(within(block).getByRole('group', { name: 'Баланс ИИ' })).toHaveTextContent('Пополнений ещё не было')
   const sms = within(block).getByRole('group', { name: 'Баланс SMS' })
@@ -451,7 +451,7 @@ test('пополнение: добавить в долларах, исправи
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await findSub('Финансы'))
   await user.click(await screen.findByRole('button', { name: '＋ Пополнение' }))
   const form = screen.getByRole('form', { name: 'Новое пополнение' })
   // По умолчанию — ИИ в долларах по последнему курсу

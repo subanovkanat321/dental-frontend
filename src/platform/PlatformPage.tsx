@@ -16,6 +16,8 @@ import { SettingsTab } from './SettingsTab'
 import { SurveysTab } from './surveys/SurveysTab'
 import { TariffsTab } from './TariffsTab'
 import { stickyHead } from '../layout/stickyHead'
+import { SectionTitle } from '../layout/section'
+import { useSection } from '../layout/useSection'
 
 type Me = Schemas['BookingViewsMe']
 type Tab = 'clinics' | 'surveys' | 'tickets' | 'broadcast' | 'agreements' | 'tariffs' | 'content' | 'ai' | 'settings'
@@ -25,27 +27,24 @@ type Tab = 'clinics' | 'surveys' | 'tickets' | 'broadcast' | 'agreements' | 'tar
  * «Платформа» — команда Tish: клиники и опросы сотрудников (менеджеры и владелец); «Написать клиникам» (список стоматологий и WhatsApp по одной), обращения, рассылка, договор,
  * контент-план Instagram, материалы (ролики, презентация), расход ИИ (токены и деньги), финансы (доходы и расходы платформы), здоровье сервера и настройки — только владелец. Права проверяет сервер (/api/platform/*).
  */
-export function PlatformPage({ me, initialTab }: { me: Me; initialTab?: string }) {
-  const tabs: [Tab, string][] = [['clinics', 'Клиники'],
-    // «Аналитика» и «Финансы» — деньги платформы: только владелец (сервер тоже: менеджеру 403)
-    ...(me.owner ? [['analytics', 'Аналитика'], ['finance', 'Финансы']] as [Tab, string][] : []),
-    ['surveys', 'Опросы'],
-    ...(me.owner ? [['tickets', 'Обращения'], ['outreach', 'Написать клиникам'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'], ['tariffs', 'Тарифы'], ['content', 'Контент'], ['materials', 'Материалы'], ['ai', 'Расход ИИ'], ['health', 'Здоровье'], ['settings', 'Настройки']] as [Tab, string][] : [])]
-  const [tab, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? 'clinics')
+export function PlatformPage({ me }: { me: Me }) {
+  // Подраздел (бывшие вкладки) — в меню слева, адрес #/platform/<подраздел>; права — layout/nav.ts
+  const { sub, subTitle } = useSection('platform', me)
+  const tab = (sub ?? 'clinics') as Tab
   const [panel, setPanel] = useState(false)
+  // Сменили подраздел — карточка справа прежнего закрыта (её закроет и сам подраздел, но отступ под неё — здесь)
+  const [panelTab, setPanelTab] = useState(tab)
+  if (panelTab !== tab) {
+    setPanelTab(tab)
+    setPanel(false)
+  }
   // Сотрудник клиники на телефоне попадает сюда из «Настроек» — стрелка Telegram ведёт обратно
   const fromSettings = Boolean(me.doctor) && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
   useBack(fromSettings ? () => openSettings(null) : null, { url: true })
   const header = (
     <header ref={stickyHead} className="toolbar sticky-head">
       {fromSettings && <button type="button" className="btn ghost back" onClick={() => openSettings(null)}>‹ Настройки</button>}
-      <h1>Платформа</h1>
-      <div className="segments tabs" role="tablist" aria-label="Разделы платформы">
-        {tabs.map(([key, title]) => (
-          <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key}
-            onClick={() => { setTab(key); setPanel(false) }}>{title}</button>
-        ))}
-      </div>
+      <SectionTitle page="platform" title="Платформа" subTitle={subTitle} />
     </header>
   )
   return (

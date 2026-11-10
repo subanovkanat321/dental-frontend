@@ -28,6 +28,21 @@ export function renderApp() {
   return render(<QueryClientProvider client={client}><App /></QueryClientProvider>)
 }
 
+/** Меню слева — подразделы открытого раздела (бывшие вкладки сверху: «Касса → Зарплата»). */
+function sections() {
+  return screen.getByRole('navigation', { name: 'Разделы' })
+}
+
+/** Подраздел в меню слева — ссылка; число у подраздела — в имени: «Вопросы · 2». */
+export async function findSub(name: string | RegExp) {
+  await screen.findByRole('navigation', { name: 'Разделы' })
+  return within(sections()).findByRole('link', { name })
+}
+
+export function querySub(name: string | RegExp) {
+  return within(sections()).queryByRole('link', { name })
+}
+
 /** Пункт «Настроек» (#/settings/<item>) — как нажать его в списке. */
 export function openItem(item: string) {
   act(() => {

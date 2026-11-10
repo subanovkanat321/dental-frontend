@@ -5,7 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { periodText, previousRange } from '../lib/compare'
 import { addDays, periodOf, todayIn } from '../lib/time'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -131,7 +131,7 @@ test('«Должники»: по пациентам — кто сколько д
     ] satisfies Schemas['PaymentQueryDebt'][])),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Должники' }))
+  await userEvent.click(await findSub('Должники'))
   const box = await screen.findByRole('region', { name: 'Должники' })
   expect(box).toHaveTextContent(/Должны всего13\s000 сом/)
   expect(box).toHaveTextContent(/Просрочили1 · 5\s000 сом/)
@@ -151,7 +151,7 @@ test('«Должники»: семья — одной строкой, «Семь
     ] satisfies Schemas['PaymentQueryDebt'][])),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Должники' }))
+  await userEvent.click(await findSub('Должники'))
   const box = await screen.findByRole('region', { name: 'Должники' })
   expect(await within(box).findByText('👨‍👩‍👧 Семья Садыкова')).toBeInTheDocument()
   expect(within(box).getAllByRole('listitem')).toHaveLength(1)
