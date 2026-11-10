@@ -185,9 +185,11 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
   border: 0; border-radius: var(--r-sm); font: inherit; font-size: .93rem; line-height: 1.25; text-align: left; cursor: pointer;
   transition: background-color .15s ease-out;
 }
-.appt.short { flex-direction: row; align-items: baseline; gap: 6px; padding-top: 3px; }
+.appt.short { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 0 6px; padding-top: 3px; }
 .appt.short .appt-name { flex: 0 1 auto; min-width: 0; }
-.appt.short .appt-state { flex: 1 1 0; min-width: 0; align-self: baseline; }
+/* Статус целиком: не влез рядом с именем («Ждём от…») — переносится второй строкой; у очень коротких приёмов
+   вторая строка просто скрыта краем блока */
+.appt.short .appt-state { flex: 0 0 auto; max-width: 100%; align-self: baseline; }
 .appt.active { outline: 2px solid var(--accent); outline-offset: 1px; }
 .appt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .appt-time { font-size: .85rem; font-weight: 500; opacity: .9; white-space: nowrap; }
