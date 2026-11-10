@@ -5,8 +5,9 @@ import type { L } from './catalog'
  * раскладка выносок по краям кадра. Без React: файл только с данными и функциями.
  */
 export type LabelKey = 'enamel' | 'dentin' | 'pulp' | 'root' | 'gum' | 'bone' | 'tartar' | 'filling' | 'crown' | 'sealant' | 'caries' | 'canals'
-/** Подпись на 3D-кадре: части из рисунков и части коронки и импланта. */
-export type Part = LabelKey | 'stump' | 'implant' | 'abutment'
+/** Подпись на 3D-кадре: части из рисунков, части коронки и импланта и состояния из сцен презентаций (learnScene). */
+export type Part = LabelKey | 'stump' | 'implant' | 'abutment' | 'plaque' | 'deadPulp' | 'lesion' | 'spot' | 'crack' | 'chip' | 'clot'
+  | 'baby' | 'germ' | 'wisdom' | 'hood' | 'gap' | 'before' | 'after'
 
 export const LABEL_TEXT: Record<LabelKey, L> = {
   caries: { ru: 'Кариес', ky: 'Кариес' },
@@ -28,6 +29,20 @@ export const PART_TEXT: Record<Part, L> = {
   stump: { ru: 'Обточенный зуб', ky: 'Жонулган тиш' },
   implant: { ru: 'Имплант', ky: 'Имплант' },
   abutment: { ru: 'Опора (абатмент)', ky: 'Таяныч (абатмент)' },
+  plaque: { ru: 'Мягкий налёт', ky: 'Жумшак кир' },
+  deadPulp: { ru: 'Погибший нерв', ky: 'Өлгөн нерв' },
+  lesion: { ru: 'Воспаление у корня', ky: 'Тамырдагы сезгенүү' },
+  spot: { ru: 'Белое пятно', ky: 'Ак так' },
+  crack: { ru: 'Трещина', ky: 'Жарака' },
+  chip: { ru: 'Скол', ky: 'Сынык' },
+  clot: { ru: 'Сгусток крови', ky: 'Уюган кан' },
+  baby: { ru: 'Молочный зуб', ky: 'Сүт тиш' },
+  germ: { ru: 'Постоянный зуб', ky: 'Туруктуу тиш' },
+  wisdom: { ru: 'Зуб мудрости', ky: 'Акыл тиш' },
+  hood: { ru: 'Десна над зубом', ky: 'Тишти жапкан бүйлө' },
+  gap: { ru: 'Пустое место', ky: 'Бош орун' },
+  before: { ru: 'До', ky: 'Мурун' },
+  after: { ru: 'После', ky: 'Кийин' },
 }
 
 /** Подпись → часть атласа, чья точка записана в shots.gen.ts (корень — по слою цемента на нём). */

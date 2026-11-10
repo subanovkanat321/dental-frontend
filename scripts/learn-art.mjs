@@ -30,16 +30,31 @@ const DIR = norm([2.65, 1.78, 5.0])
 function norm(v) { const l = Math.hypot(...v); return v.map((x) => x / l) }
 const cam = (target, dist, fov, dir = DIR) => ({ target, pos: target.map((t, i) => t + dir[i] * dist), fov })
 
-/** Кадрирование: размер страницы (CSS px, ×2 — плотность) и камера. */
+/**
+ * Кадрирование: размер страницы (CSS px, ×2 — плотность) и камера. До setCameraPose «точно в позу» движок
+ * не подпускал камеру ближе 5,04 (предел зума атласа) — «зуб» и «коронка» сняты с этого расстояния, так и оставлено.
+ */
 const FRAMES = {
   // Зуб в разрезе целиком: коронка, корни, кость, десна
-  tooth: { w: 800, h: 960, ...cam([0.1, -0.62, 0], 5.0, 42) },
+  tooth: { w: 800, h: 960, ...cam([0.1, -0.62, 0], 5.04, 42) },
   // То же, но выше: коронка или части импланта ещё над зубом
   tall: { w: 800, h: 960, ...cam([0.1, -0.12, 0], 6.4, 42) },
   // Коронка крупно — стадии кариеса в карточках (на целом зубе мелкая точка не видна)
-  crown: { w: 800, h: 640, ...cam([0.05, -0.05, 0], 2.7, 30) },
+  crown: { w: 800, h: 640, ...cam([0.05, -0.05, 0], 5.04, 30) },
   // Зуб мудрости: участок челюсти сбоку
-  wisdom: { w: 900, h: 640, target: [0.5, -0.75, 0], pos: [0.5, 0.15, 6.6], fov: 30 },
+  wisdom: { w: 900, h: 640, target: [0.5, -0.75, 0], pos: [0.5, 0.345, 8.03], fov: 30 },
+  // Шейка зуба крупнее: коронка, край десны и гребень кости — камень, воспалённая десна, убыль кости
+  neck: { w: 800, h: 800, ...cam([0.1, -0.2, 0], 4.1, 34) },
+  // Жевательная поверхность сверху-спереди: фиссуры и герметик
+  occlusal: { w: 800, h: 640, ...cam([0.0, 0.55, 0.0], 2.9, 30, norm([0.9, 3.0, 2.2])) },
+  // Участок челюсти сбоку в разрезе (зуб мудрости): спереди и чуть сверху
+  segment: { w: 900, h: 640, ...cam([0.2, -0.75, 0], 7.2, 30, norm([0.35, 0.55, 2.6])) },
+  // Пустое место: обе челюсти
+  gap: { w: 900, h: 760, ...cam([0.1, 0.72, 0], 9.6, 30, norm([0.3, 0.3, 2.6])) },
+  // Улыбка спереди: передние зубы в десне
+  smile: { w: 900, h: 600, target: [0, 0.62, 0.5], pos: [0, 0.95, 6.4], fov: 26 },
+  // Шкала оттенков: образцы на держателе
+  shades: { w: 900, h: 520, ...cam([0, -0.28, 0], 6.3, 30, norm([0.0, 0.9, 3.0])) },
 }
 
 /**
@@ -51,13 +66,28 @@ const SHOTS = [
   { name: 'healthy', frame: 'tooth', set: { view: 'tooth', mode: 'healthy' } },
   // Кариес в дентине и до пульпы — целым зубом (слайды «что это»); все четыре стадии — крупно, для карточек
   ...[2, 3].map((s) => ({ name: `caries-${s + 1}`, frame: 'tooth', set: { view: 'tooth', mode: 'caries', stage: s } })),
-  ...[0, 1, 2, 3].map((s) => ({ name: `caries-${s + 1}-close`, frame: 'crown', set: { view: 'tooth', mode: 'caries', stage: s } })),
+  // Стадия 1 (белое пятно) — своя сцена ниже: в фиссуре атласа пятно почти не видно
+  ...[1, 2, 3].map((s) => ({ name: `caries-${s + 1}-close`, frame: 'crown', set: { view: 'tooth', mode: 'caries', stage: s } })),
   { name: 'filling', frame: 'tooth', set: { view: 'tooth', mode: 'filling' }, t: 5.4 },
   // Коронка ещё над зубом: точка подписи — где она в момент t (сдвиг по формулам ролика в engine/toothScene.ts)
   { name: 'crown-fit', frame: 'tall', set: { view: 'tooth', mode: 'crown', extra: { crown: [0.45, 1.25, 0] } }, t: 1.75 },
   { name: 'implant-parts', frame: 'tall', set: { view: 'tooth', mode: 'implant', extra: { crown: [0.4, 1.6, 0] } }, t: 4.3 },
   { name: 'implant', frame: 'tooth', set: { view: 'tooth', mode: 'implant' }, t: 5.6 },
   { name: 'wisdom', frame: 'wisdom', set: { view: 'wisdom', wisdom: 'mesial' }, t: 1.5, noLabels: true },
+  // Сцены презентаций сверх режимов атласа (src/atlas/engine/learnScene.ts): тем же светом и материалами
+  ...['pulp-dead', 'abscess', 'socket', 'kid', 'kid-caries', 'kid-deep', 'kid-lost'].map((id) => ({ name: id, frame: 'tooth', set: { learn: id } })),
+  ...['plaque', 'tartar', 'gingivitis', 'tartar-below', 'perio', 'perio-severe'].map((id) => ({ name: id, frame: 'neck', set: { learn: id } })),
+  // Здоровая десна в том же кадре — первая карточка стадий «Дёсен»
+  { name: 'healthy-neck', frame: 'neck', set: { view: 'tooth', mode: 'healthy' } },
+  // Первая стадия кариеса — белое меловое пятно на щёчной стороне (в атласе пятно в фиссуре почти не видно)
+  { name: 'caries-1-close', frame: 'crown', set: { learn: 'spot' } },
+  // Трещины и скол — коронка крупно (на целом зубе тонкая линия не видна); у «до корня» срез виден ниже шейки
+  ...['crack-line', 'crack-chip', 'crack-split'].map((id) => ({ name: id, frame: 'crown', set: { learn: id } })),
+  { name: 'sealant', frame: 'occlusal', set: { learn: 'sealant' } },
+  ...['wisdom-tilt', 'wisdom-half', 'wisdom-decay'].map((id) => ({ name: id, frame: 'segment', set: { learn: id } })),
+  ...['gap-1', 'gap-2', 'gap-3'].map((id) => ({ name: id, frame: 'gap', set: { learn: id } })),
+  { name: 'whiten-split', frame: 'smile', set: { learn: 'whiten-split' } },
+  { name: 'shades', frame: 'shades', set: { learn: 'shades' } },
 ]
 
 /**
@@ -72,6 +102,10 @@ const CLIPS = [
   // Коронка опускается сверху — кадр выше, чтобы её было видно с начала
   { name: 'crown-clip', frame: 'tall', mode: 'crown', from: 0.8, to: 2.8, speed: 0.8, hold: 1.2 },
   { name: 'implant-clip', mode: 'implant', from: 0.4, to: 5.2, speed: 1.15, hold: 0.8 },
+  // Сцены презентаций: заживление лунки, герметик, отбеливание (ролики — в engine/learnScene.ts)
+  { name: 'socket-clip', learn: 'socket-heal', from: 0.2, to: 3.5, speed: 1, hold: 1.0 },
+  { name: 'sealant-clip', frame: 'occlusal', learn: 'sealant-apply', from: 0.2, to: 3.8, speed: 1, hold: 0.8 },
+  { name: 'whiten-clip', frame: 'smile', learn: 'whiten', from: 0.2, to: 3.3, speed: 1, hold: 1.2 },
 ]
 const CLIP_W = 640
 
@@ -124,7 +158,8 @@ async function settle(page) {
 }
 
 async function setScene(page, frame, set) {
-  await page.evaluate((s) => window.shot.set(s), { ...set, pos: frame.pos, target: frame.target, fov: frame.fov })
+  // Сцена презентаций или атлас: learn: null возвращает вид атласа после сцены
+  await page.evaluate((s) => window.shot.set(s), { learn: null, ...set, pos: frame.pos, target: frame.target, fov: frame.fov })
   await settle(page)
 }
 
@@ -137,7 +172,8 @@ async function capture(page) {
 const webp = (src, dest, width) => ff(['-i', src, '-vf', `scale=${width}:-2:flags=lanczos,format=rgba,lut=a='if(lt(val,6),0,val)'`, '-c:v', 'libwebp', '-quality', '82', '-compression_level', '6', '-pix_fmt', 'yuva420p', dest])
 const round = (x) => Math.round(x * 1000) / 1000
 /** Части, к которым слайды ставят подписи (Part в src/learn/callouts.ts; корень — по цементу, каналы — canal). */
-const LABELLED = new Set(['enamel', 'dentin', 'pulp', 'canal', 'cementum', 'gum', 'bone', 'caries', 'filling', 'crown', 'stump', 'implant', 'abutment'])
+const LABELLED = new Set(['enamel', 'dentin', 'pulp', 'canal', 'cementum', 'gum', 'bone', 'caries', 'filling', 'crown', 'stump', 'implant', 'abutment',
+  'plaque', 'tartar', 'deadPulp', 'lesion', 'spot', 'crack', 'chip', 'sealant', 'clot', 'baby', 'germ', 'wisdom', 'hood', 'gap', 'before', 'after'])
 
 async function shoot(browser, url, gen) {
   const byFrame = Object.groupBy(pick(SHOTS), (s) => s.frame)
@@ -174,7 +210,7 @@ async function film(browser, url, gen) {
     const t0 = Date.now()
     const dir = path.join(TMP, c.name)
     fs.mkdirSync(dir, { recursive: true })
-    await setScene(page, small, { view: 'tooth', mode: c.mode })
+    await setScene(page, small, c.learn ? { learn: c.learn } : { view: 'tooth', mode: c.mode })
     await page.evaluate(() => window.shot.replay())
     await advance(page, c.from * 1000)
     const n = Math.round(((c.to - c.from) / c.speed) * FPS)

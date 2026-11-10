@@ -159,8 +159,10 @@ function allMedia(): (Img3D | Video3D)[] {
 
 test('3D-кадры и ролики: файлы лежат в public/content/learn, у каждого — запасной SVG, подписи — на точках кадра', () => {
   const media = allMedia()
-  expect(media.filter((m) => 'img' in m).length).toBeGreaterThanOrEqual(15)
-  expect(new Set(media.flatMap((m) => ('video' in m ? [m.video] : [])))).toEqual(new Set(['filling-clip', 'canals-clip', 'crown-clip', 'implant-clip']))
+  expect(new Set(media.flatMap((m) => ('img' in m ? [m.img] : []))).size).toBeGreaterThanOrEqual(38)
+  expect(new Set(media.flatMap((m) => ('video' in m ? [m.video] : [])))).toEqual(new Set([
+    'filling-clip', 'canals-clip', 'crown-clip', 'implant-clip', 'socket-clip', 'sealant-clip', 'whiten-clip',
+  ]))
   const dir = resolve(import.meta.dirname, '../../public/content/learn')
   for (const m of media) {
     expect(m.alt.ru && m.alt.ky).toBeTruthy()
@@ -172,6 +174,35 @@ test('3D-кадры и ролики: файлы лежат в public/content/lea
       for (const l of m.labels ?? []) expect(at[{ root: 'cementum', canals: 'canal' }[l as string] ?? l], `${m.img}: ${l}`).toBeDefined()
     }
   }
+})
+
+test('плоских SVG-рисунков в темах не осталось: слайды без фото, карточки стадий и обложки — кадры и ролики 3D', () => {
+  for (const t of TOPIC_LIST) {
+    expect(typeof t.cover, `${t.slug}: обложка`).not.toBe('function')
+    t.slides.forEach((s, i) => {
+      // Слайд с фото показывает фото, его рисунок не виден
+      if (s.kind !== 'stages' && s.art && !s.photo) expect(typeof s.art, `${t.slug}, слайд ${i + 1}`).not.toBe('function')
+      if (s.kind !== 'what') for (const p of s.points) if (p.art) expect(typeof p.art, `${t.slug}, слайд ${i + 1}: ${p.text.ru}`).not.toBe('function')
+    })
+  }
+})
+
+test('новые 3D-сцены: подписи камня, десны и кости, «До / После» отбеливания — на ru и ky; файла нет — прежний SVG', () => {
+  const { unmount } = render(<Presentation topic={topicBySlug('gums')!} lang="ky" />)
+  let slide = screen.getByRole('heading', { name: 'Бүйлө эмне үчүн канайт' }).closest('section')!
+  expect(within(slide).getByRole('img', { name: 'Сезгенген бүйлө: кызыл жана шишик, четинде — таш' })).toHaveAttribute('src', '/content/learn/gingivitis-640.webp')
+  expect([...slide.querySelectorAll('.lsn-callout')].map((c) => c.textContent).sort()).toEqual(['Бүйлө', 'Сөөк', 'Тиш ташы'])
+  fireEvent.keyDown(window, { key: 'ArrowRight' })
+  expect([...document.querySelectorAll('.lsn-card img')].map((i) => i.getAttribute('src')))
+    .toEqual(['healthy-neck', 'gingivitis', 'perio', 'perio-severe'].map((n) => `/content/learn/${n}-640.webp`))
+  unmount()
+
+  render(<Presentation topic={topicBySlug('whitening')!} lang="ru" />)
+  slide = screen.getByRole('heading', { name: 'Отбеливание — зубы светлее на несколько тонов' }).closest('section')!
+  const img = within(slide).getByRole('img', { name: 'Передние зубы: слева — до отбеливания, справа — после' })
+  expect([...slide.querySelectorAll('.lsn-callout')].map((c) => c.textContent).sort()).toEqual(['До', 'После'])
+  fireEvent.error(img)
+  expect(within(slide).getByRole('img', { name: 'Зуб до и после отбеливания' })).toBeInTheDocument()
 })
 
 test('слайд с 3D-кадром: <img> 640/1280 с подписью на ru и ky, выноски частей поверх; файл не загрузился — SVG', () => {

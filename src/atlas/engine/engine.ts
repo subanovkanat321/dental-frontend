@@ -7,7 +7,7 @@ import { CUT_X, type ToothGroup } from '../geometry/toothModel'
 import type { MeshData } from '../geometry/mesher'
 import type { GeometryRequest, GeometryResponse } from '../geometry/worker'
 import { createJawScene, createWisdomScene, type JawScene, type WisdomScene } from './jawScene'
-import { createMaterials } from './materials'
+import { createMaterials, type Materials } from './materials'
 import { createToothScene, TIMELINE } from './toothScene'
 
 /** Точка метки на экране (в CSS-пикселях холста) и видна ли она с этой стороны. */
@@ -44,6 +44,19 @@ export interface AtlasEngine {
    * там камеру ставит вид и пациент пальцем.
    */
   setCameraPose(pos: readonly [number, number, number], target: readonly [number, number, number], fov?: number): void
+  /**
+   * Своя сцена вместо зуба и челюстей — те же свет, материалы, тени и камера (кадры презентаций,
+   * tools/learn-art). null — обратно к виду атласа. В CRM не вызывается.
+   */
+  setCustom(make: ((m: Materials) => CustomScene) | null): void
+  dispose(): void
+}
+
+/** Своя сцена для setCustom: корень, кадр анимации (t — секунды с replay) и высота «пола» под тенью. */
+export interface CustomScene {
+  root: THREE.Object3D
+  update(t: number): void
+  floorY?: number
   dispose(): void
 }
 
@@ -179,6 +192,8 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
   let wisdomPos: WisdomPosition = 'vertical'
   let roots = false
   let anchors: readonly (readonly [number, number, number])[] = []
+  let custom: CustomScene | null = null
+  let customStart = 0
   const t0 = performance.now()
   const now = () => (performance.now() - t0) / 1000
   /** До какого времени сцена «в движении» — пересчитывать тени каждый кадр. */
@@ -429,7 +444,12 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     const t = now()
     controls.update()
     let step = 0
-    if (view === 'tooth') step = tooth.update(t)
+    if (custom) {
+      tooth.root.visible = false
+      if (jaw) jaw.root.visible = false
+      if (wisdom) wisdom.root.visible = false
+      custom.update(t - customStart)
+    } else if (view === 'tooth') step = tooth.update(t)
     else if (view === 'jaw') jaw?.update(t)
     else wisdom?.update(t)
     if (t < busyUntil) renderer.shadowMap.needsUpdate = true
@@ -439,7 +459,7 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     const points = anchors.map(([x, y, z]) => {
       v3.set(x, y, z).project(camera)
       let visible = v3.z < 1
-      if (view === 'tooth') {
+      if (view === 'tooth' && !custom) {
         toCam.set(camera.position.x - x, camera.position.y - y, camera.position.z - z)
         visible &&= Math.abs(x - CUT_X) < 0.01 ? toCam.x > 0 : toCam.z > 0
       }
@@ -484,11 +504,15 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     },
     setAnchors(points) { anchors = points },
     replay() {
+      customStart = now()
       tooth.replay(now())
       busy((TIMELINE[mode]?.total ?? 0) + 0.5)
     },
     resetView: () => placeCamera(view),
     setCameraPose(pos, target, fov) {
+      // Точно в позу: пределы зума атласа (от «вида целиком») здесь не действуют — иначе камера отъезжала
+      controls.minDistance = 0
+      controls.maxDistance = Infinity
       controls.target.set(...target)
       camera.position.set(...pos)
       if (fov) camera.fov = fov
@@ -496,8 +520,20 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
       controls.update()
       busy(0.3)
     },
+    setCustom(make) {
+      if (custom) { scene.remove(custom.root); custom.dispose() }
+      custom = make ? make(materials) : null
+      if (custom) {
+        scene.add(custom.root)
+        floor.position.y = custom.floorY ?? -2.37
+        floor.visible = custom.floorY !== undefined || view === 'tooth'
+        customStart = now()
+      } else void run(showView(view))
+      busy(0.5)
+    },
     dispose() {
       disposed = true
+      custom?.dispose()
       renderer.setAnimationLoop(null)
       observer.disconnect()
       canvas.removeEventListener('pointerdown', onDown)

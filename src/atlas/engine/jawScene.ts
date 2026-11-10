@@ -80,7 +80,7 @@ const GUM_HALF: Record<JawShape, number> = {
  * Десна — «валик» вдоль дуги: сечение (к щеке, сверху над шейками, к языку) протягиваем по дуге с обеих
  * сторон. Между зубами край десны выше — межзубные сосочки, как у настоящей десны.
  */
-function gumGeometry(upper: boolean): THREE.BufferGeometry {
+export function gumGeometry(upper: boolean): THREE.BufferGeometry {
   const q = upper ? [1, 2] : [4, 3]
   // Соседние зубы по порядку вдоль дуги: правая сторона (от 8 к 1), затем левая (от 1 к 8)
   const order = [...[8, 7, 6, 5, 4, 3, 2, 1].map((n) => q[0]! * 10 + n), ...[1, 2, 3, 4, 5, 6, 7, 8].map((n) => q[1]! * 10 + n)]

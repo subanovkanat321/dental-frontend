@@ -2,7 +2,8 @@
  * Страница кадров для презентаций «Для пациента»: один холст 3D-атласа без кнопок и подписей.
  * Её открывает scripts/learn-art.mjs (Playwright + vite dev) и управляет через window.shot:
  *
- *   shot.set({ view, mode, stage, wisdom, pos, target, fov }) — сцена и камера;
+ *   shot.set({ view, mode, stage, wisdom, learn, pos, target, fov }) — сцена и камера (learn — сцена презентаций,
+ *                                                              src/atlas/engine/learnScene.ts);
  *   shot.replay()                                              — ролик режима с начала;
  *   await shot.advance(ms)                                     — сдвинуть время сцены;
  *   await shot.capture()                                       — PNG холста (с прозрачным фоном) и где на нём метки частей.
@@ -17,8 +18,12 @@
  */
 import { MODE_LABELS, type AtlasMode, type AtlasView, type PartId, type WisdomPosition } from '../../src/atlas/content'
 import { createAtlasEngine, type AtlasEngine, type ScreenPoint } from '../../src/atlas/engine/engine'
+import { createLearnScene } from '../../src/atlas/engine/learnScene'
+import { LEARN_ANCHORS, type LearnId } from '../../src/atlas/geometry/learnModel'
 
 type Vec = [number, number, number]
+/** Точка подписи: часть атласа или подпись сцены презентаций (tartar, clot, germ…). */
+type Anchor = [PartId | string, Vec]
 
 export interface ShotState {
   view?: AtlasView
@@ -28,6 +33,8 @@ export interface ShotState {
   pos?: Vec
   target?: Vec
   fov?: number
+  /** Сцена презентаций (состояния сверх режимов атласа, src/atlas/engine/learnScene.ts); null — обратно к атласу. */
+  learn?: LearnId | null
   /** Свои точки частей: часть в ролике ещё не на месте (коронка над зубом) — точка там, где она в этот момент. */
   extra?: Partial<Record<PartId, Vec>>
 }
@@ -43,7 +50,7 @@ declare global {
       set(s: ShotState): void
       replay(): void
       advance(ms: number): Promise<void>
-      capture(): Promise<{ png: string; points: Partial<Record<PartId, ShotPoint>> }>
+      capture(): Promise<{ png: string; points: Partial<Record<string, ShotPoint>> }>
     }
   }
 }
@@ -85,7 +92,7 @@ function anchorsOf(mode: AtlasMode): [PartId, Vec][] {
 let loading = true
 let error = ''
 let last: ScreenPoint[] = []
-let anchors: [PartId, Vec][] = anchorsOf('healthy')
+let anchors: Anchor[] = anchorsOf('healthy')
 let pose: [Vec, Vec, number | undefined] | null = null
 let view: AtlasView = 'tooth'
 
@@ -108,6 +115,11 @@ window.shot = {
       view = s.view
       engine.setView(s.view)
     }
+    if (s.learn !== undefined) {
+      const id = s.learn
+      engine.setCustom(id ? (m) => createLearnScene(m, id) : null)
+      anchors = id ? (Object.entries(LEARN_ANCHORS[id]) as Anchor[]) : anchorsOf('healthy')
+    }
     if (s.mode) {
       loading = true
       engine.setMode(s.mode)
@@ -115,7 +127,7 @@ window.shot = {
     }
     if (s.extra) {
       const map = new Map(anchors)
-      for (const [part, at] of Object.entries(s.extra)) map.set(part as PartId, at)
+      for (const [part, at] of Object.entries(s.extra)) map.set(part, at)
       anchors = [...map]
     }
     engine.setAnchors(anchors.map(([, at]) => at))
@@ -139,7 +151,7 @@ window.shot = {
     // Тени и сглаживание считаются в этом же кадре; холст читаем сразу — буфер ещё не очищен
     const png = canvas.toDataURL('image/png')
     const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1
-    const points: Partial<Record<PartId, ShotPoint>> = {}
+    const points: Partial<Record<string, ShotPoint>> = {}
     anchors.forEach(([part], i) => {
       const p = last[i]
       if (p) points[part] = { x: p.x / w, y: p.y / h, visible: p.visible }

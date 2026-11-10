@@ -167,7 +167,7 @@ const SHAPE_WIDTH: Record<JawShape, number> = {
   premolarUpper: 0.66, premolarLower: 0.66, molarUpper: 1.1, molarLower: 1.1,
 }
 /** Высота коронки формы (от шейки до режущего края или бугров) — зубы стоят кончиками на плоскости смыкания. */
-const CROWN_H: Record<JawShape, number> = {
+export const CROWN_H: Record<JawShape, number> = {
   incisorUpperCentral: 1.05, incisorUpperLateral: 0.95, incisorLower: 0.95, canineUpper: 1.05, canineLower: 1.1,
   premolarUpper: 0.84, premolarLower: 0.8, molarUpper: 0.72, molarLower: 0.72,
 }
@@ -201,7 +201,7 @@ const lin = (c: number) => c ** 2.2
  * у шейки эмаль тонкая и просвечивает жёлтый дентин; в середине — цвет слоновой кости; режущий край
  * резцов и клыков полупрозрачный — сероголубой; клыки чуть желтее резцов; корень — желтоватый цемент.
  */
-function toothColor(shape: JawShape, x: number, y: number, z: number, out: Float32Array, o: number): void {
+export function toothColor(shape: JawShape, x: number, y: number, z: number, out: Float32Array, o: number): void {
   const front = shape.startsWith('incisor') || shape.startsWith('canine')
   const h = CROWN_H[shape]
   const prox = (x * x) / (x * x + z * z + 1e-6)
