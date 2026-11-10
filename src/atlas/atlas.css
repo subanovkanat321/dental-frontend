@@ -80,9 +80,22 @@
 .atlas-steps span { font-size: 1.15rem; font-weight: 500; padding: 6px 14px; border-radius: 10px; background: rgba(255, 255, 255, .06); }
 
 .atlas-fdi { display: grid; gap: 6px; justify-items: center; }
-.atlas-fdi-row { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
+.atlas-fdi-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; }
+.atlas-fdi-jaw { flex-basis: 100%; text-align: center; font-size: .78rem; opacity: .7; }
+.atlas-fdi-half { display: flex; gap: 4px; }
+.atlas-fdi-half.mid { margin-left: 14px; padding-left: 14px; border-left: 1px solid rgba(255, 255, 255, .25); }
 .atlas-fdi button { min-width: 46px; min-height: 40px; padding: 4px 6px; font-weight: 600; }
-.atlas-fdi button.mid { margin-left: 14px; }
+/* Телефон: половина челюсти — своей строкой по 8 зубов во всю ширину (18…11, ниже 21…28) */
+@media (max-width: 760px) {
+  .atlas-fdi { width: 100%; }
+  .atlas-fdi-row { flex-direction: column; align-items: stretch; width: 100%; }
+  .atlas-fdi-jaw { flex-basis: auto; align-self: center; }
+  .atlas-fdi-half { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); width: 100%; }
+  .atlas-fdi-half.mid { margin-left: 0; padding-left: 0; border-left: 0; padding-top: 4px; border-top: 1px dashed rgba(255, 255, 255, .25); }
+  .atlas-fdi button { min-width: 0; padding: 4px 0; font-size: .95rem; }
+  .atlas-fdi { justify-items: stretch; }
+  .atlas-fdi .atlas-check { justify-self: center; }
+}
 .atlas-check { display: flex; gap: 8px; align-items: center; color: var(--a-muted); font-size: 1rem; cursor: pointer; }
 .atlas-check input { width: 20px; height: 20px; accent-color: var(--a-accent); }
 
