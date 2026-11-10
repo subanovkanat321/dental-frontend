@@ -9,6 +9,7 @@ import { DateInput } from '../layout/DateInput'
 import { EmptyState } from '../layout/EmptyState'
 import { MonthPicker } from '../layout/MonthPicker'
 import { Loading } from '../layout/Loading'
+import { TopupsBlock } from './TopupsBlock'
 
 type Finance = Schemas['PlatformFinanceFinance']
 type Line = Schemas['PlatformFinanceLine']
@@ -125,9 +126,15 @@ export function FinanceTab() {
                 {pending > 0 && <span className="hint small fin-pending-note">если оплатить всё ожидаемое: <span className="num nowrap">{signed((f.profitSom ?? 0) - pending)}</span></span>}</div>
             </div>
             {pending > 0 && <p className="hint small">Расход и прибыль — только оплаченное. «Каждый месяц» без отметки не считается, пока не отметите «Оплачено».</p>}
+            {(f.topups?.length ?? 0) > 0 && (
+              <p className="hint small fin-topup-note">
+                Оплачено пополнениями: <b className="num nowrap">{somText(f.topupSom ?? 0)}</b> — в расход не входит: ИИ и SMS уже посчитаны в расходе по использованию.
+              </p>
+            )}
           </>
         )}
       </section>
+      {f && <TopupsBlock f={f} single={single} />}
       {f && <ExpensesBlock f={f} single={single} />}
       {f && !single && (f.months?.length ?? 0) > 1 && <MonthsBlock months={f.months ?? []} onPick={openMonth} />}
       {f && <IncomeBlock f={f} single={single} />}
@@ -313,7 +320,7 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
       <h3>Записи вручную</h3>
       {entries.length === 0 ? (
         <EmptyState compact title={single ? 'В этом месяце ручных расходов нет' : 'За этот период ручных расходов нет'}>
-          Claude, реклама, сервер и домен, пополнение SMS-провайдера — «Добавить расход». Подписку отметьте «каждый месяц»: каждый месяц напомним, а в расход она попадёт, когда отметите оплату.
+          Claude, реклама, сервер и домен — «Добавить расход». Пополнения ИИ и SMS — в «Балансах ИИ и SMS» выше. Подписку отметьте «каждый месяц»: каждый месяц напомним, а в расход она попадёт, когда отметите оплату.
         </EmptyState>
       ) : (
         <ul className="fin-entries" aria-label={single ? 'Ручные расходы месяца' : 'Ручные расходы периода'}>

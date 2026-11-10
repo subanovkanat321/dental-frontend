@@ -308,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/finance/topups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateTopup"];
+        post?: never;
+        delete: operations["deleteTopup"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/finance/settings": {
         parameters: {
             query?: never;
@@ -1982,6 +1998,22 @@ export interface paths {
         get: operations["funnel"];
         put?: never;
         post: operations["add_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/platform/finance/topups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["topups"];
+        put?: never;
+        post: operations["createTopup"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6132,6 +6164,32 @@ export interface components {
             /** Format: date */
             nextStepOn?: string;
         };
+        PlatformFinanceTopupForm: {
+            service?: string;
+            /** Format: int64 */
+            amountSom?: number;
+            amountUsd?: number;
+            usdRate?: number;
+            /** Format: date */
+            paidOn?: string;
+            comment?: string;
+        };
+        PlatformTopupsTopup: {
+            /** Format: int64 */
+            id?: number;
+            service?: string;
+            /** Format: int64 */
+            amountSom?: number;
+            amountUsd?: number;
+            usdRate?: number;
+            /** Format: date */
+            paidOn?: string;
+            comment?: string;
+            /** Format: int64 */
+            createdBy?: number;
+            /** Format: date-time */
+            createdAt?: string;
+        };
         PlatformFinanceControllerSettingsRequest: {
             smsPriceSom?: number;
         };
@@ -8584,6 +8642,26 @@ export interface components {
             /** Format: int32 */
             payments?: number;
         };
+        PlatformFinanceBalance: {
+            service?: string;
+            label?: string;
+            /** Format: int64 */
+            topupTotalSom?: number;
+            /** Format: int64 */
+            topupPeriodSom?: number;
+            /** Format: date */
+            since?: string;
+            /** Format: int64 */
+            spentSinceSom?: number;
+            /** Format: int64 */
+            spentPeriodSom?: number;
+            /** Format: int64 */
+            balanceSom?: number;
+            /** Format: int64 */
+            lastTopupSom?: number;
+            low?: boolean;
+            needsPrice?: boolean;
+        };
         PlatformFinanceDue: {
             /** Format: int64 */
             expenseId?: number;
@@ -8620,6 +8698,10 @@ export interface components {
             due?: components["schemas"]["PlatformFinanceDue"][];
             marks?: components["schemas"]["PlatformExpensesMark"][];
             factFrom?: string;
+            /** Format: int64 */
+            topupSom?: number;
+            balances?: components["schemas"]["PlatformFinanceBalance"][];
+            topups?: components["schemas"]["PlatformTopupsTopup"][];
         };
         PlatformFinanceLine: {
             key?: string;
@@ -10240,6 +10322,52 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SalesFunnelLead"];
                 };
+            };
+        };
+    };
+    updateTopup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformFinanceTopupForm"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformTopupsTopup"];
+                };
+            };
+        };
+    };
+    deleteTopup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -13763,6 +13891,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SalesFunnelLead"];
+                };
+            };
+        };
+    };
+    topups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformTopupsTopup"][];
+                };
+            };
+        };
+    };
+    createTopup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformFinanceTopupForm"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformTopupsTopup"];
                 };
             };
         };

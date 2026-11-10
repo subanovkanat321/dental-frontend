@@ -357,3 +357,127 @@ test('нет ожидаемых — блока нет и «ещё ожидает
   expect(screen.queryByRole('region', { name: 'Ожидаются в этом месяце' })).not.toBeInTheDocument()
   expect(screen.queryByText(/ещё ожидается/)).not.toBeInTheDocument()
 })
+
+/** Балансы: ИИ — с запасом, SMS — остаток 30 из последних 500 (меньше 10%) — «пора пополнить». */
+function withTopups(month: string): Finance {
+  return {
+    ...finance(month),
+    topupSom: 4875,
+    balances: [
+      { service: 'AI', label: 'ИИ', topupTotalSom: 8750, topupPeriodSom: 4375, since: '2026-03-01', spentSinceSom: 1585,
+        spentPeriodSom: 97, balanceSom: 7165, lastTopupSom: 4375, low: false, needsPrice: false },
+      { service: 'SMS', label: 'SMS', topupTotalSom: 500, topupPeriodSom: 500, since: '2026-03-10', spentSinceSom: 470,
+        spentPeriodSom: 60, balanceSom: 30, lastTopupSom: 500, low: true, needsPrice: false },
+    ],
+    topups: [
+      { id: 3, service: 'SMS', amountSom: 500, paidOn: `${month}-03`, comment: 'SMSPRO', createdBy: 1 },
+      { id: 2, service: 'AI', amountSom: 4375, amountUsd: 50, usdRate: 87.5, paidOn: `${month}-01`, comment: 'Anthropic $50', createdBy: 1 },
+      { id: 1, service: 'AI', amountSom: 4375, amountUsd: 50, usdRate: 87.5, paidOn: '2026-03-01', comment: 'Anthropic $50', createdBy: 1 },
+    ],
+  }
+}
+
+test('балансы ИИ и SMS: пополнено, израсходовано, остаток и «пора пополнить»; пополнения не в расходе', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/finance', () => HttpResponse.json(withTopups(current))),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  const block = await screen.findByRole('region', { name: 'Балансы ИИ и SMS' })
+  const ai = within(block).getByRole('group', { name: 'Баланс ИИ' })
+  expect(ai).toHaveTextContent('Пополнено')
+  expect(ai).toHaveTextContent('8 750 сом')
+  expect(ai).toHaveTextContent('за месяц: 4 375 сом')
+  expect(ai).toHaveTextContent('1 585 сом')
+  expect(within(ai).getByLabelText('Остаток ИИ')).toHaveTextContent('7 165 сом')
+  expect(within(ai).queryByText('пора пополнить')).not.toBeInTheDocument()
+
+  const sms = within(block).getByRole('group', { name: 'Баланс SMS' })
+  expect(within(sms).getByText('пора пополнить')).toBeInTheDocument()
+  expect(within(sms).getByLabelText('Остаток SMS')).toHaveTextContent('30 сом')
+  expect(within(sms).getByLabelText('Остаток SMS')).toHaveClass('tone-wait')
+
+  expect(within(block).getByRole('list', { name: 'Пополнения' })).toHaveTextContent('Anthropic $50')
+  expect(within(block).getByRole('list', { name: 'Пополнения' })).toHaveTextContent('$50 × 87,5')
+
+  // Итог месяца: расход — как был, пополнения — отдельной строкой
+  expect(screen.getByLabelText('Расход за месяц')).toHaveTextContent('3 055 сом')
+  expect(screen.getByText(/Оплачено пополнениями:/)).toHaveTextContent('Оплачено пополнениями: 4 875 сом — в расход не входит')
+})
+
+test('баланс в минусе — красный остаток; без пополнений — подсказка', async () => {
+  const f = withTopups(current)
+  f.balances = [
+    { service: 'AI', label: 'ИИ', topupTotalSom: 0, topupPeriodSom: 0, spentSinceSom: 0, spentPeriodSom: 97, balanceSom: 0, low: false },
+    { service: 'SMS', label: 'SMS', topupTotalSom: 500, topupPeriodSom: 0, since: '2026-03-10', spentSinceSom: 520, spentPeriodSom: 60,
+      balanceSom: -20, lastTopupSom: 500, low: true },
+  ]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/finance', () => HttpResponse.json(f)),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  const block = await screen.findByRole('region', { name: 'Балансы ИИ и SMS' })
+  expect(within(block).getByRole('group', { name: 'Баланс ИИ' })).toHaveTextContent('Пополнений ещё не было')
+  const sms = within(block).getByRole('group', { name: 'Баланс SMS' })
+  expect(within(sms).getByLabelText('Остаток SMS')).toHaveTextContent('−20 сом')
+  expect(within(sms).getByLabelText('Остаток SMS')).toHaveClass('tone-bad')
+  expect(within(sms).getByText('пора пополнить')).toBeInTheDocument()
+})
+
+test('пополнение: добавить в долларах, исправить и удалить', async () => {
+  const calls: [string, unknown][] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/finance', () => HttpResponse.json(withTopups(current))),
+    http.post('*/api/platform/finance/topups', async ({ request }) => {
+      calls.push(['POST', await request.json()])
+      const created: Schemas['PlatformTopupsTopup'] = { id: 9, service: 'AI', amountSom: 4375 }
+      return HttpResponse.json(created, { status: 201 })
+    }),
+    http.put('*/api/platform/finance/topups/:id', async ({ params, request }) => {
+      calls.push([`PUT ${String(params.id)}`, await request.json()])
+      const updated: Schemas['PlatformTopupsTopup'] = { id: 3 }
+      return HttpResponse.json(updated)
+    }),
+    http.delete('*/api/platform/finance/topups/:id', ({ params }) => {
+      calls.push([`DELETE ${String(params.id)}`, null])
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('tab', { name: 'Финансы' }))
+  await user.click(await screen.findByRole('button', { name: '＋ Пополнение' }))
+  const form = screen.getByRole('form', { name: 'Новое пополнение' })
+  // По умолчанию — ИИ в долларах по последнему курсу
+  expect(within(form).getByRole('button', { name: 'ИИ' })).toHaveAttribute('aria-pressed', 'true')
+  expect(within(form).getByLabelText('Курс: сомов за $1')).toHaveValue(87.5)
+  await user.type(within(form).getByLabelText('Сумма, $'), '50')
+  expect(within(form).getByText(/≈ 4 375 сом/)).toBeInTheDocument()
+  await user.type(within(form).getByLabelText(/Комментарий/), 'Anthropic $50')
+  await user.click(within(form).getByRole('button', { name: 'Добавить' }))
+  await screen.findByRole('button', { name: '＋ Пополнение' })
+  expect(calls[0]).toEqual(['POST', { service: 'AI', amountUsd: 50, usdRate: 87.5, paidOn: todayIn(), comment: 'Anthropic $50' }])
+
+  // Исправить: SMS 500 сом → 700
+  await user.click(screen.getByRole('button', { name: /^Исправить пополнение: SMS/ }))
+  const edit = screen.getByRole('form', { name: 'Исправить пополнение' })
+  expect(within(edit).getByRole('button', { name: 'SMS' })).toHaveAttribute('aria-pressed', 'true')
+  await user.clear(within(edit).getByLabelText('Сумма, сом'))
+  await user.type(within(edit).getByLabelText('Сумма, сом'), '700')
+  await user.click(within(edit).getByRole('button', { name: 'Сохранить' }))
+  await screen.findByRole('button', { name: /^Исправить пополнение: SMS/ })
+  expect(calls[1]).toEqual(['PUT 3', { service: 'SMS', amountSom: 700, paidOn: `${current}-03`, comment: 'SMSPRO' }])
+
+  // Удалить — с подтверждением
+  await user.click(screen.getByRole('button', { name: /^Исправить пополнение: SMS/ }))
+  await user.click(within(screen.getByRole('form', { name: 'Исправить пополнение' })).getByRole('button', { name: 'Удалить' }))
+  await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Удалить' }))
+  await screen.findByRole('button', { name: /^Исправить пополнение: SMS/ })
+  expect(calls[2]).toEqual(['DELETE 3', null])
+})
