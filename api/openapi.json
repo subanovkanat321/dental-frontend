@@ -1079,7 +1079,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ContentSettingsSettings"
+                "$ref" : "#/components/schemas/ContentSettingsUpdate"
               }
             }
           },
@@ -5426,6 +5426,33 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/platform/content/{id}/story" : {
+      "post" : {
+        "tags" : [ "content-controller" ],
+        "operationId" : "story",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentPostsPost"
+                }
+              }
+            }
           }
         }
       }
@@ -14059,6 +14086,9 @@
           "time" : {
             "type" : "string",
             "format" : "time-local"
+          },
+          "story" : {
+            "type" : "boolean"
           }
         }
       },
@@ -14134,12 +14164,45 @@
           "instagramErrorAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "story" : {
+            "type" : "boolean"
+          },
+          "storyMediaId" : {
+            "type" : "string"
+          },
+          "storyAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "storyPublishing" : {
+            "type" : "boolean"
+          },
+          "storyError" : {
+            "type" : "string"
+          },
+          "storyErrorAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "ContentSettingsUpdate" : {
+        "properties" : {
+          "reelsAuto" : {
+            "type" : "boolean"
+          },
+          "storiesAuto" : {
+            "type" : "boolean"
           }
         }
       },
       "ContentSettingsSettings" : {
         "properties" : {
           "reelsAuto" : {
+            "type" : "boolean"
+          },
+          "storiesAuto" : {
             "type" : "boolean"
           }
         }

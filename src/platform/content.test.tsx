@@ -140,7 +140,7 @@ test('«＋ Добавить пост»: картинки по строкам, �
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await screen.findByText(/В этом месяце постов нет/)).toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Новый пост' })).not.toBeInTheDocument()
-  expect(sent).toEqual({ date: today, kind: 'REELS', title: 'Утро в клинике', caption: '', note: 'Кофе и улыбки', images: ['/content/a.png', '/content/b.png'] })
+  expect(sent).toEqual({ date: today, kind: 'REELS', title: 'Утро в клинике', caption: '', note: 'Кофе и улыбки', images: ['/content/a.png', '/content/b.png'], story: true })
 })
 
 test('Instagram подключён: «Опубликовать в Instagram» после подтверждения, бейдж со ссылкой; ошибка — текстом', async () => {
@@ -439,4 +439,117 @@ test('фильтр: по умолчанию только ждущие; в «Вс
   const done = within(plan).getByRole('article', { name: 'Выложил сам' })
   expect(within(done).queryByRole('button', { name: 'Опубликовать в Instagram' })).not.toBeInTheDocument()
   expect(within(within(plan).getByRole('article', { name: 'Ждёт' })).getByRole('button', { name: 'Опубликовать в Instagram' })).toBeInTheDocument()
+})
+
+test('сторис после поста: «✓ в сторис», ошибка с «Повторить сторис», «📤 В сторис» у поста без сторис', async () => {
+  const published = { status: 'DONE', instagramMediaId: 'm1' } as const
+  let posts = [
+    post(1, { ...published, kind: 'POST', title: 'Со сторис', images: ['/content/a.png'], storyMediaId: 's1', storyAt: '2099-06-01T10:00:00Z' }),
+    post(2, { ...published, kind: 'POST', title: 'Сторис не вышла', images: ['/content/b.png'],
+      storyError: 'Лимит Instagram — слишком много запросов или публикаций за сутки, попробуйте позже', storyErrorAt: '2099-06-01T10:00:00Z' }),
+    post(3, { ...published, kind: 'CAROUSEL', title: 'Без сторис', images: ['/content/c-1.png', '/content/c-2.png'], story: false }),
+    post(4, { ...published, kind: 'STORIES', title: 'Сама сторис', images: ['/content/s.png'] }),
+    post(5, { kind: 'POST', title: 'Ещё в плане', images: ['/content/d.png'] }),
+  ]
+  const calls: string[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json(posts)),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
+    http.post('*/api/platform/content/:id/story', ({ params }) => {
+      const id = Number(params.id)
+      calls.push(String(id))
+      posts = posts.map((p) => (p.id === id ? { ...p, storyMediaId: `s${id}`, storyError: undefined, storyErrorAt: undefined } : p))
+      return HttpResponse.json(posts.find((p) => p.id === id)!)
+    }),
+  )
+  const user = await openTab()
+  await user.click(await screen.findByRole('button', { name: /^Все/ }))
+
+  const done = await screen.findByRole('article', { name: 'Со сторис' })
+  expect(done).toHaveTextContent('✓ в сторис')
+  expect(within(done).queryByRole('button', { name: /сторис/i })).not.toBeInTheDocument()
+
+  const failed = screen.getByRole('article', { name: 'Сторис не вышла' })
+  expect(within(failed).getByRole('alert')).toHaveTextContent('Сторис: ошибка')
+  expect(within(failed).getByRole('alert')).toHaveTextContent('Лимит Instagram')
+  // Сама сторис и пост, ещё не опубликованный в Instagram, — без кнопок сторис
+  expect(within(screen.getByRole('article', { name: 'Сама сторис' })).queryByRole('button', { name: /сторис/i })).not.toBeInTheDocument()
+  expect(within(screen.getByRole('article', { name: 'Ещё в плане' })).queryByRole('button', { name: /сторис/i })).not.toBeInTheDocument()
+
+  await user.click(within(failed).getByRole('button', { name: 'Повторить сторис' }))
+  expect(await within(failed).findByText('✓ в сторис')).toBeInTheDocument()
+  expect(within(failed).queryByRole('alert')).not.toBeInTheDocument()
+
+  // Галочку сняли — сторис не было: выложить вручную
+  const none = screen.getByRole('article', { name: 'Без сторис' })
+  await user.click(within(none).getByRole('button', { name: '📤 В сторис' }))
+  expect(await within(none).findByText('✓ в сторис')).toBeInTheDocument()
+  expect(calls).toEqual(['2', '3'])
+})
+
+test('«Повторить сторис» снова не вышла — причина под постом, кнопка остаётся', async () => {
+  let posts = [post(1, { status: 'DONE', instagramMediaId: 'm1', kind: 'POST', title: 'Пост', images: ['/content/a.png'], storyError: 'старая' })]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json(posts)),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
+    http.post('*/api/platform/content/:id/story', () => {
+      posts = posts.map((p) => ({ ...p, storyError: 'Токен Instagram истёк или отозван' }))
+      return HttpResponse.json({ status: 409, title: 'Conflict', code: 'instagram-story-failed', detail: 'Токен Instagram истёк или отозван' }, { status: 409 })
+    }),
+  )
+  const user = await openTab()
+  await user.click(await screen.findByRole('button', { name: /^Все/ }))
+  const card = await screen.findByRole('article', { name: 'Пост' })
+  await user.click(within(card).getByRole('button', { name: 'Повторить сторис' }))
+  expect(await within(card).findByText(/Сторис: ошибка: Токен Instagram истёк/)).toBeInTheDocument()
+  // Одна причина — из поста, без повтора текстом ответа
+  expect(within(card).getAllByRole('alert')).toHaveLength(1)
+  expect(within(card).getByRole('button', { name: 'Повторить сторис' })).toBeEnabled()
+})
+
+test('«Также в сторис» в форме — по умолчанию включена, снятая уходит на сервер; у сторис галочки нет', async () => {
+  let sent: Schemas['ContentPostsDraft'] | null = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json([])),
+    http.post('*/api/platform/content', async ({ request }) => {
+      sent = (await request.json()) as Schemas['ContentPostsDraft']
+      return HttpResponse.json(post(5, { title: sent.title }), { status: 201 })
+    }),
+  )
+  const user = await openTab()
+  await user.click(await screen.findByRole('button', { name: '＋ Добавить пост' }))
+  const form = screen.getByRole('form', { name: 'Новый пост' })
+  const story = within(form).getByRole('checkbox', { name: /Также в сторис/ })
+  expect(story).toBeChecked()
+  await choose(within(form).getByRole('combobox', { name: 'Тип' }), 'Сторис')
+  expect(within(form).queryByRole('checkbox', { name: /Также в сторис/ })).not.toBeInTheDocument()
+  await choose(within(form).getByRole('combobox', { name: 'Тип' }), 'Пост')
+  await user.click(within(form).getByRole('checkbox', { name: /Также в сторис/ }))
+  await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Без сторис')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  await vi.waitFor(() => expect(sent).not.toBeNull())
+  expect(sent).toMatchObject({ kind: 'POST', title: 'Без сторис', story: false })
+})
+
+test('«Сторис — автоматически»: включена по умолчанию, выключение — только своим полем', async () => {
+  const sent: Schemas['ContentSettingsUpdate'][] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json([])),
+    http.put('*/api/platform/content/settings', async ({ request }) => {
+      const body = await request.json() as Schemas['ContentSettingsUpdate']
+      sent.push(body)
+      return HttpResponse.json({ reelsAuto: false, storiesAuto: body.storiesAuto ?? true } satisfies Schemas['ContentSettingsSettings'])
+    }),
+  )
+  const user = await openTab()
+  const toggle = await screen.findByRole('checkbox', { name: 'Сторис — автоматически' })
+  expect(toggle).toBeChecked()
+  await user.click(toggle)
+  expect(await screen.findByRole('checkbox', { name: 'Сторис — автоматически' })).not.toBeChecked()
+  expect(sent).toEqual([{ storiesAuto: false }])
+  expect(screen.getByRole('checkbox', { name: 'Рилсы — автоматически' })).not.toBeChecked()
 })

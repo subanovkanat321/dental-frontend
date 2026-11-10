@@ -20,6 +20,7 @@ type Kind = NonNullable<Post['kind']>
 type Instagram = Schemas['InstagramTokensState']
 type ReelsAdded = Schemas['ContentPostsReelsAdded']
 type Settings = Schemas['ContentSettingsSettings']
+type SettingsUpdate = Schemas['ContentSettingsUpdate']
 
 const KINDS: Record<Kind, string> = { POST: 'Пост', CAROUSEL: 'Карусель', REELS: 'Рилс', STORIES: 'Сторис' }
 const STATUS: Record<NonNullable<Post['status']>, [string, string]> = {
@@ -40,6 +41,8 @@ function weekStart(date: string): string {
  * выкладывает). Рилсы — готовые ролики из docs/marketing/reels на сервере: «Добавить рилсы в план»
  * ставит их по одному в день на 19:30 вперемешку с уже запланированными; бот пришлёт видео и кнопку в
  * это время. «Рилсы — автоматически» — новые ролики встают в план сами, а рилс в 19:30 сам выходит в Instagram.
+ * После публикации пост или рилс сразу уходит и в сторис (галочка «Также в сторис» у поста и «Сторис —
+ * автоматически»); не вышла — причина под постом и «Повторить сторис».
  */
 export function ContentTab() {
   const client = useQueryClient()
@@ -59,8 +62,8 @@ export function ContentTab() {
   const list = useQuery({
     queryKey: ['platform-content', month],
     queryFn: () => unwrap(api.GET('/api/platform/content', { params: { query: range } })),
-    // Рилс публикуется в фоне (Instagram обрабатывает видео минуты) — план перечитываем, пока не выйдет
-    refetchInterval: (query) => (query.state.data?.some((p) => p.instagramPublishing) ? 15_000 : false),
+    // Рилс (и его сторис) публикуется в фоне (Instagram обрабатывает видео минуты) — план перечитываем, пока не выйдет
+    refetchInterval: (query) => (query.state.data?.some((p) => p.instagramPublishing || p.storyPublishing) ? 15_000 : false),
   })
   const instagram = useQuery({
     queryKey: ['platform-content-instagram'],
@@ -187,8 +190,9 @@ function hhmm(time: string | undefined): string {
 }
 
 /**
- * «Рилсы — автоматически»: сохраняется сразу. Включили — сервер тут же ставит новые ролики в план (итог
- * придёт в Telegram), поэтому план перечитываем. Без Instagram автопубликации нет — предупреждаем.
+ * «Рилсы — автоматически» и «Сторис — автоматически»: сохраняются сразу, каждая своим полем (другое
+ * сервер не трогает). Включили рилсы — сервер тут же ставит новые ролики в план (итог придёт в
+ * Telegram), поэтому план перечитываем. Без Instagram автопубликации нет — предупреждаем.
  */
 function ReelsAuto({ instagram, instagramKnown, onChanged }: { instagram: boolean; instagramKnown: boolean; onChanged: () => void }) {
   const client = useQueryClient()
@@ -196,27 +200,33 @@ function ReelsAuto({ instagram, instagramKnown, onChanged }: { instagram: boolea
     queryKey: ['platform-content-settings'],
     queryFn: () => unwrap(api.GET('/api/platform/content/settings')),
   })
-  const save = useMutation<Settings, ApiError, boolean>({
-    mutationFn: (reelsAuto) => unwrap(api.PUT('/api/platform/content/settings', { body: { reelsAuto } })),
-    onSuccess: (saved) => {
+  const save = useMutation<Settings, ApiError, SettingsUpdate>({
+    mutationFn: (body) => unwrap(api.PUT('/api/platform/content/settings', { body })),
+    onSuccess: (saved, sent) => {
       client.setQueryData(['platform-content-settings'], saved)
       // Сервер добавляет рилсы в фоне — перечитаем план чуть позже
-      if (saved.reelsAuto) setTimeout(onChanged, 2000)
+      if (sent.reelsAuto && saved.reelsAuto) setTimeout(onChanged, 2000)
     },
   })
   if (settings.isPending) return null
   if (settings.error) return <p className="error">{settings.error.message}</p>
   const on = Boolean(settings.data.reelsAuto)
+  // Нет поля (старый сервер) — как по умолчанию на сервере: включено
+  const stories = settings.data.storiesAuto !== false
   return (
     <div className="content-reels-auto">
       <label className="check"><input type="checkbox" checked={on} disabled={save.isPending}
-        onChange={(e) => save.mutate(e.target.checked)} /> Рилсы — автоматически</label>
+        onChange={(e) => save.mutate({ reelsAuto: e.target.checked })} /> Рилсы — автоматически</label>
       <p className="hint">Новые ролики после обновления сервера сами встают в план (вперемешку, по одному в день в 19:30) — бот сообщит, какие.
         В 19:30 рилс сам публикуется в Instagram, итог придёт в Telegram. Если публикация не удалась — бот пришлёт видео с кнопками, как обычно.</p>
       {on && instagramKnown && !instagram && (
         <p className="notice tone-wait" role="alert">Instagram не подключён — рилсы будут вставать в план, но публиковать их придётся вручную
           (бот пришлёт видео с кнопками). Подключите Instagram на сервере, чтобы они выходили сами.</p>
       )}
+      <label className="check"><input type="checkbox" checked={stories} disabled={save.isPending}
+        onChange={(e) => save.mutate({ storiesAuto: e.target.checked })} /> Сторис — автоматически</label>
+      <p className="hint">Опубликованный в Instagram пост или рилс сразу уходит и в сторис — той же картинкой (у карусели — первой) или видео.
+        Подписи и ссылки на пост у сторис нет — так устроен Instagram. Для одного поста можно снять галочку «Также в сторис».</p>
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </div>
   )
@@ -247,6 +257,12 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
   const publish = useMutation<Post, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/publish', { params: { path: { id: post.id! } } })),
     onSuccess: onChanged,
+  })
+  // «📤 В сторис» / «Повторить сторис»: картинка — сразу (200), видео рилса — в фоне (202, итог в Telegram)
+  const story = useMutation<Post, ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/story', { params: { path: { id: post.id! } } })),
+    onSuccess: onChanged,
+    onError: onChanged,
   })
   // «📲 Прислать в бот»: видео/картинки и подпись — в Telegram сейчас, чтобы сохранить и выложить вручную
   const toBot = useMutation<unknown, ApiError>({
@@ -281,6 +297,10 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
   // Опубликованный (отметкой «Опубликовал» или через Instagram) и пропущенный — без кнопки публикации
   const canPublish = instagram && post.status === 'PLANNED' && !post.instagramMediaId && !post.instagramPublishing
     && (post.kind === 'REELS' ? reel : images.length > 0)
+  // Сторис после поста: пост в Instagram, сам не сторис и есть из чего (видео рилса или картинка)
+  const storyable = !!post.instagramMediaId && post.kind !== 'STORIES' && (post.kind === 'REELS' ? reel : images.length > 0)
+  const storyBusy = post.storyPublishing || story.isPending
+  const canStory = instagram && storyable && !post.storyMediaId && !storyBusy
   return (
     <article className={date === today ? 'content-post today' : 'content-post'} aria-label={post.title}>
       <header className="content-head">
@@ -292,11 +312,17 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
           ? <a className="chip small s-ok" href={post.instagramUrl} target="_blank" rel="noreferrer">В Instagram ↗</a>
           : post.instagramMediaId && <span className="chip small s-ok">В Instagram</span>}
         {post.instagramPublishing && <span className="chip small s-wait" role="status"><Spinner />Публикуется в Instagram</span>}
+        {storyable && post.storyMediaId && <span className="chip small s-ok">✓ в сторис</span>}
+        {storyable && storyBusy && <span className="chip small s-wait" role="status"><Spinner />Выкладывается в сторис</span>}
       </header>
       <h4>{post.title}</h4>
       {/* Почему Instagram отказал в прошлый раз (раньше — только в лог и в Telegram): пост вернулся в план */}
       {post.instagramError && !post.instagramPublishing && !post.instagramMediaId && (
         <p className="error" role="alert">⚠️ Не опубликовано в Instagram{post.instagramErrorAt ? ` (${shortDate(post.instagramErrorAt, true)})` : ''}: {post.instagramError}</p>
+      )}
+      {/* Сторис не вышла — пост уже опубликован, повторить можно отдельно */}
+      {storyable && post.storyError && !post.storyMediaId && !storyBusy && (
+        <p className="error" role="alert">⚠️ Сторис: ошибка{post.storyErrorAt ? ` (${shortDate(post.storyErrorAt, true)})` : ''}: {post.storyError}</p>
       )}
       {reel && (post.videoUrl
         ? <ReelPlayer post={post} onExpired={onChanged} />
@@ -327,6 +353,11 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
             {publish.isPending ? <><Spinner />Публикую…</> : 'Опубликовать в Instagram'}
           </button>
         )}
+        {canStory && (
+          <button type="button" className="btn small" onClick={() => story.mutate()}>
+            {post.storyError ? 'Повторить сторис' : '📤 В сторис'}
+          </button>
+        )}
         {post.status === 'PLANNED' ? (
           <>
             <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('done')}>Опубликовал</button>
@@ -343,6 +374,7 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
       </div>
       {action.error && <p className="error" role="alert">{action.error.message}</p>}
       {publish.error && <p className="error" role="alert">{publish.error.message}</p>}
+      {story.error && story.error.code !== 'instagram-story-failed' && <p className="error" role="alert">{story.error.message}</p>}
       {toBot.isSuccess && <p className="tone-ok" role="status">Отправили в Telegram — откройте бота: видео можно сохранить, подпись — скопировать.</p>}
       {toBot.error && <p className="error" role="alert">{toBot.error.message}</p>}
     </article>
@@ -382,10 +414,11 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
   const [caption, setCaption] = useState(post?.caption ?? '')
   const [images, setImages] = useState((post?.images ?? []).join('\n'))
   const [note, setNote] = useState(post?.note ?? '')
-  const { dirty } = useDirty({ date, time, kind, title, caption, images, note })
+  const [story, setStory] = useState(post?.story ?? true)
+  const { dirty } = useDirty({ date, time, kind, title, caption, images, note, story })
   const save = useMutation<Post, ApiError>({
     mutationFn: () => {
-      const body: Draft = { date, kind, title, caption, note, images: images.split('\n').map((s) => s.trim()).filter(Boolean), ...(time ? { time } : {}) }
+      const body: Draft = { date, kind, title, caption, note, images: images.split('\n').map((s) => s.trim()).filter(Boolean), ...(time ? { time } : {}), story }
       return post
         ? unwrap(api.PUT('/api/platform/content/{id}', { params: { path: { id: post.id! } }, body }))
         : unwrap(api.POST('/api/platform/content', { body }))
@@ -423,6 +456,10 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
         <label className="field"><span>{kind === 'REELS' ? 'Что снять' : 'Заметка для себя'}</span>
           <textarea rows={2} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {errors.note && <p className="error">{errors.note}</p>}
+        {kind !== 'STORIES' && (
+          <label className="check"><input type="checkbox" checked={story} onChange={(e) => setStory(e.target.checked)} /> Также в сторис
+            <span className="hint"> — после публикации в Instagram та же картинка (видео рилса) сразу уйдёт в сторис</span></label>
+        )}
         <div className="actions">
           <button type="button" className="btn" onClick={onCancel}>Отмена</button>
         </div>

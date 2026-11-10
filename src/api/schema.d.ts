@@ -2116,6 +2116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/content/{id}/story": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["story"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/content/{id}/skip": {
         parameters: {
             query?: never;
@@ -6179,6 +6195,7 @@ export interface components {
             note?: string;
             /** Format: time-local */
             time?: string;
+            story?: boolean;
         };
         ContentPostsPost: {
             /** Format: int64 */
@@ -6209,9 +6226,22 @@ export interface components {
             instagramError?: string;
             /** Format: date-time */
             instagramErrorAt?: string;
+            story?: boolean;
+            storyMediaId?: string;
+            /** Format: date-time */
+            storyAt?: string;
+            storyPublishing?: boolean;
+            storyError?: string;
+            /** Format: date-time */
+            storyErrorAt?: string;
+        };
+        ContentSettingsUpdate: {
+            reelsAuto?: boolean;
+            storiesAuto?: boolean;
         };
         ContentSettingsSettings: {
             reelsAuto?: boolean;
+            storiesAuto?: boolean;
         };
         BillingControllerPaidUntil: {
             /** Format: date */
@@ -10404,7 +10434,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ContentSettingsSettings"];
+                "application/json": components["schemas"]["ContentSettingsUpdate"];
             };
         };
         responses: {
@@ -13947,6 +13977,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    story: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentPostsPost"];
+                };
             };
         };
     };
