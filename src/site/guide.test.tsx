@@ -154,3 +154,13 @@ test('в обычной версии — ссылка на печатную то
   expect(document.getElementById('novaya-zapis')).toHaveAccessibleName('Новая запись')
   expect(document.getElementById('kartochka-priema')).toHaveAccessibleName('Карточка приёма')
 })
+
+test('раздел «Ссылка на запись» — руководителю и врачу, с якорем для подсказки в «О клинике»', () => {
+  const find = (role: 'admin' | 'doctor' | 'reception') => chaptersFor(role).flatMap((c) => c.sections).find((s) => s.id === 'ssylka-na-zapis')
+  const section = find('admin')
+  expect(section?.title).toBe('Ссылка на запись: Instagram, 2ГИС, реклама')
+  expect(section?.steps.join(' ')).toMatch(/2ГИС для бизнеса/)
+  expect(section?.tip).toMatch(/Промокоды/)
+  expect(find('doctor')).toBeDefined()
+  expect(find('reception')).toBeUndefined()
+})

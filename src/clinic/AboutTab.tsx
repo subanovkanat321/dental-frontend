@@ -115,11 +115,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
             <input type="url" value={f.mapUrl} maxLength={300} placeholder="https://2gis.kg/bishkek/…" onChange={text('mapUrl')} /></label>
           {err('mapUrl') && <p className="error">{err('mapUrl')}</p>}
           <p className="hint">В 2ГИС найдите кабинет → «Поделиться» → «Скопировать ссылку» и вставьте сюда.</p>
-          {page && (
-            <div className="field"><span>Страница для Instagram — запись, WhatsApp, врачи, услуги, адрес</span>
-              <a className="invite-link" href={page} target="_blank" rel="noopener noreferrer">{page}</a>
-            </div>
-          )}
+          {page && <BookingPage url={page} />}
           <label className="check"><input type="checkbox" checked={f.listed} onChange={flag('listed')} /> Показывать клинику в общем каталоге /clinics</label>
 
           <p className="hint">Часы клиники и каждого врача — в «Настройки → Рабочее время».</p>
@@ -231,6 +227,34 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
           label="Сохранить предоплату" savedText="Предоплата сохранена" onSave={() => save.mutate()} />
       </div>
     </section>
+  )
+}
+
+/**
+ * «Страница для Instagram»: tish.kg/c/<код> — запись, «Позвонить», WhatsApp, врачи, услуги, адрес.
+ * «Скопировать» и подсказка, куда её ставить; подробно — раздел руководства (#ssylka-na-zapis).
+ */
+function BookingPage({ url }: { url: string }) {
+  const [copied, setCopied] = useState<boolean | null>(null)
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+    } catch {
+      setCopied(false)
+    }
+  }
+  return (
+    <div className="field"><span>Страница для Instagram — запись, WhatsApp, врачи, услуги, адрес</span>
+      <a className="invite-link" href={url} target="_blank" rel="noopener noreferrer">{url}</a>
+      <div className="actions">
+        <button type="button" className="btn" aria-label="Скопировать ссылку на страницу записи" onClick={() => void copy()}>Скопировать</button>
+      </div>
+      {copied === true && <p className="tone-ok" role="status">Ссылка на запись скопирована</p>}
+      {copied === false && <p className="hint" role="status">Скопировать не получилось — нажмите на ссылку выше и удерживайте, затем «Копировать»</p>}
+      <p className="hint">Поставьте в Instagram (Ссылки в профиле), 2ГИС (поле «Сайт»), Google Карты и рекламу. Отдельная ссылка под каждую рекламу — «Откуда приходят → Промокоды».{' '}
+        <a href="/guide?from=app#ssylka-na-zapis" target="_blank" rel="noopener noreferrer">Как и куда поставить</a></p>
+    </div>
   )
 }
 

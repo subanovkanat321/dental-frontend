@@ -70,6 +70,19 @@ test('админ: сохранить «О клинике» с днями и What
   expect(screen.queryByRole('button', { name: 'Удалить все записи' })).not.toBeInTheDocument()
 })
 
+test('«Страница для Instagram»: «Скопировать» кладёт ссылку в буфер, подсказка ведёт на раздел руководства', async () => {
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: 1 })))
+  const user = userEvent.setup()
+  renderApp()
+  const form = await screen.findByRole('form', { name: 'О клинике' })
+  const page = `${window.location.origin}/c/test1`
+  expect(within(form).getByText(/Поставьте в Instagram \(Ссылки в профиле\), 2ГИС \(поле «Сайт»\)/)).toBeInTheDocument()
+  expect(within(form).getByRole('link', { name: 'Как и куда поставить' })).toHaveAttribute('href', '/guide?from=app#ssylka-na-zapis')
+  await user.click(within(form).getByRole('button', { name: 'Скопировать ссылку на страницу записи' }))
+  expect(await within(form).findByText('Ссылка на запись скопирована')).toBeInTheDocument()
+  expect(await navigator.clipboard.readText()).toBe(page)
+})
+
 test('регистратура: «О клинике» только просмотр, без предоплаты и удаления', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, reception: true, doctorId: undefined })))
   renderApp()
