@@ -30,35 +30,45 @@ async function groups(who: Me): Promise<[string, string[]][]> {
   ])
 }
 
-test('порядок: клиника → пациентам → аккаунт клиники → мои настройки → помощь; похожие пункты объединены', async () => {
+test('порядок: в «Настройках» две группы — пациентам и аккаунт клиники; «Для пациента» — только раздел меню, без дубля', async () => {
   expect(await groups(me)).toEqual([
-    ['Клиника', ['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время', 'Кресла']],
-    ['Пациентам', ['Текст напоминания', 'Анкета пациента', 'Договор с пациентом', 'Памятки после процедур', 'Для пациента', 'Новости для пациентов', 'Откуда приходят пациенты']],
+    ['Пациентам', ['Текст напоминания', 'Анкета пациента', 'Договор с пациентом', 'Памятки после процедур', 'Новости для пациентов', 'Откуда приходят пациенты']],
     ['Аккаунт клиники', ['Тариф и оплата', 'Договор', 'Данные', 'ИИ-помощник']],
-    ['Мои настройки', ['Мой профиль', 'Оформление', 'Календарь в телефоне']],
-    ['Помощь', ['Руководство', 'Помощь и техподдержка', 'Отзыв о Tish', 'Конфиденциальность', 'Tish в Instagram']],
   ])
+  // Профиль, установка, уведомления и выход — в блоке «Я» внизу меню, не на главной «Настроек»
+  expect(screen.queryByRole('button', { name: 'Изменить профиль' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Установить приложение' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Выйти на всех устройствах' })).not.toBeInTheDocument()
 })
 
-test('роли: каждый видит те же пункты, что и раньше (с учётом объединённых)', async () => {
-  const flat = async (who: Me) => (await groups(who)).flatMap(([, items]) => items)
-  // Врач без прав админа: без текста напоминания, новостей, тарифа, договора, данных и ИИ
-  expect(await flat(doctor)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время',
-    'Анкета пациента', 'Памятки после процедур', 'Для пациента', 'Откуда приходят пациенты',
-    'Мой профиль', 'Оформление', 'Календарь в телефоне',
-    'Руководство', 'Помощь и техподдержка', 'Отзыв о Tish', 'Конфиденциальность', 'Tish в Instagram'])
-})
+/** Пункты раздела «Клиника» в меню слева — как видит пользователь. */
+async function clinicItems(who: Me): Promise<string[]> {
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(who)))
+  window.location.hash = '/clinic'
+  renderApp()
+  const group = await within(await screen.findByRole('navigation', { name: 'Разделы' })).findByRole('group', { name: 'Клиника' })
+  return within(group).getAllByRole('link').map((a) => a.textContent ?? '')
+}
 
-test('роли: ассистенту — без цен услуг и анкеты; регистратуре — услуги без анкеты; «Мой профиль» (телефон) — у всех, кнопкой «Изменить профиль» наверху', async () => {
+test('роли: каждый видит те же пункты, что и раньше (с учётом переезда в «Клинику»)', async () => {
   const flat = async (who: Me) => (await groups(who)).flatMap(([, items]) => items)
-  const help = ['Руководство', 'Помощь и техподдержка', 'Отзыв о Tish', 'Конфиденциальность', 'Tish в Instagram']
-  expect(await flat(assistant)).toEqual(['О клинике', 'Персонал', 'Рабочее время',
-    'Памятки после процедур', 'Для пациента', 'Откуда приходят пациенты', 'Мой профиль', 'Оформление', ...help])
-  expect(screen.getByRole('button', { name: 'Изменить профиль' })).toBeInTheDocument()
+  // Врач без прав админа: без текста напоминания, договора, новостей, тарифа, договора с Tish, данных и ИИ
+  expect(await flat(doctor)).toEqual(['Анкета пациента', 'Памятки после процедур', 'Откуда приходят пациенты'])
   document.body.innerHTML = ''
-  expect(await flat(reception)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время',
-    'Памятки после процедур', 'Для пациента', 'Откуда приходят пациенты', 'Мой профиль', 'Оформление', ...help])
-  expect(screen.getByRole('button', { name: 'Изменить профиль' })).toBeInTheDocument()
+  expect(await clinicItems(doctor)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время'])
+  document.body.innerHTML = ''
+  expect(await clinicItems(me)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время', 'Кресла'])
+})
+
+test('роли: ассистенту — без цен услуг и анкеты; регистратуре — услуги без анкеты', async () => {
+  const flat = async (who: Me) => (await groups(who)).flatMap(([, items]) => items)
+  expect(await flat(assistant)).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
+  document.body.innerHTML = ''
+  expect(await clinicItems(assistant)).toEqual(['О клинике', 'Персонал', 'Рабочее время'])
+  document.body.innerHTML = ''
+  expect(await flat(reception)).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
+  document.body.innerHTML = ''
+  expect(await clinicItems(reception)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время'])
 })
 
 test('«Откуда приходят пациенты»: вкладки «Откуда узнают» и «Промокоды»; старый адрес промокодов открывает их вкладку; ассистенту — без промокодов', async () => {
@@ -83,5 +93,6 @@ test('«Помощь и техподдержка» — одна страница
   openItem('help')
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Помощь и техподдержка' })).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/help/chat')
   expect(await screen.findByRole('complementary', { name: 'Помощь' })).toBeInTheDocument()
 })

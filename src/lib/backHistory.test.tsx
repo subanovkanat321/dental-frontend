@@ -122,7 +122,7 @@ function Settings() {
     window.addEventListener('hashchange', on)
     return () => window.removeEventListener('hashchange', on)
   }, [])
-  if (item === '#/settings') return <button type="button" onClick={() => openSettings('hours')}>Рабочее время</button>
+  if (item === '#/settings') return <button type="button" onClick={() => openSettings('reminder')}>Текст напоминания</button>
   return (
     <>
       <h1>Пункт</h1>
@@ -135,27 +135,27 @@ function Settings() {
 test('подэкран «Настроек» и лист: первый «Назад» закрывает лист, второй — подэкран', async () => {
   window.history.replaceState(null, '', '/#/settings')
   render(<Settings />)
-  await userEvent.click(screen.getByRole('button', { name: 'Рабочее время' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Текст напоминания' }))
   expect(await screen.findByRole('heading', { name: 'Пункт' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Выбрать' }))
   await vi.waitFor(() => expect(depth()).toBe(1))
 
   await pressBack()
   expect(screen.queryByRole('dialog', { name: 'Лист' })).not.toBeInTheDocument()
-  expect(window.location.hash).toBe('#/settings/hours')
+  expect(window.location.hash).toBe('#/settings/reminder')
 
   await pressBack()
-  expect(await screen.findByRole('button', { name: 'Рабочее время' })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: 'Текст напоминания' })).toBeInTheDocument()
 })
 
 test('«‹ Настройки» в пункте, открытом из списка, — шаг назад, а не новая запись', async () => {
   window.history.replaceState(null, '', '/#/settings')
   render(<Settings />)
-  await userEvent.click(screen.getByRole('button', { name: 'Рабочее время' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Текст напоминания' }))
   expect(await screen.findByRole('heading', { name: 'Пункт' })).toBeInTheDocument()
   const opened = window.history.length
   await act(async () => openSettings(null))
-  expect(await screen.findByRole('button', { name: 'Рабочее время' })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: 'Текст напоминания' })).toBeInTheDocument()
   // Шагнули назад по истории, а не положили новую запись: «Вперёд» снова откроет пункт
   expect(window.history.length).toBe(opened)
   expect(window.location.hash).toBe('#/settings')

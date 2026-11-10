@@ -230,7 +230,7 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
       {used.isSuccess && list.length === 0 && <SuggestedSupplies appointment={a} />}
       {used.isSuccess && list.length === 0 && suggested.isSuccess && suggested.data.length === 0 && serviceId != null && (
         <p className="hint small supplies-setup">Готового списка у услуги нет —{' '}
-          <a href="#/settings/services" onClick={() => openServiceLater(serviceId)}>настроить материалы услуги</a></p>
+          <a href="#/clinic/services" onClick={() => openServiceLater(serviceId)}>настроить материалы услуги</a></p>
       )}
       {list.length > 0 && (
         <ul className="visits">
@@ -266,7 +266,7 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
 type SuggestedRow = { supplyId: number; name: string; unit: string; quantity: string; inStock: number }
 
 /**
- * «Обычно уходит»: материалы по умолчанию услуги приёма (Настройки → Услуги), готовым списком.
+ * «Обычно уходит»: материалы по умолчанию услуги приёма (Клиника → Услуги и цены), готовым списком.
  * Врач правит количество, убирает лишнее и нажимает «Списать всё» — всё или ничего, как «−1»
  * по каждому (остатки, «заканчивается», «вернуть»). «Не нужно» — скрыть до следующего открытия.
  */

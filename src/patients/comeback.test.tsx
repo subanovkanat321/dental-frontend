@@ -92,8 +92,8 @@ test('«Позвать снова»: «пора на осмотр» — посл
   await userEvent.click(await findSub('Позвать снова'))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(list).toHaveTextContent(/последний визит: 3 апр 2026 · Профессиональная чистка · пора с 3 октября( 2026)? \(через 6 мес\.\)/)
-  const link = await screen.findByRole('link', { name: 'Настройки → Услуги и цены' })
-  expect(link).toHaveAttribute('href', '#/settings/services')
+  const link = await screen.findByRole('link', { name: 'Клиника → Услуги и цены' })
+  expect(link).toHaveAttribute('href', '#/clinic/services')
   unmount()
 
   // У услуги есть свой срок — подсказки нет
@@ -101,7 +101,7 @@ test('«Позвать снова»: «пора на осмотр» — посл
   renderApp()
   await userEvent.click(await findSub('Позвать снова'))
   await screen.findByRole('list', { name: 'Кого вернуть' })
-  expect(screen.queryByRole('link', { name: 'Настройки → Услуги и цены' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('link', { name: 'Клиника → Услуги и цены' })).not.toBeInTheDocument()
 })
 
 test('«Позвать снова»: отправили план с ценами, а пациент не записался — строка статуса и фильтр', async () => {

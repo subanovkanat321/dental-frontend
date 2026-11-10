@@ -47,13 +47,12 @@ function appUrl(): string {
 }
 
 /**
- * «Настройки → Установить приложение»: CRM на экран телефона или компьютера, как программа —
+ * «Я → Установить приложение» (блок «Я» внизу меню; заголовок — в шапке пункта): CRM на экран телефона или компьютера, как программа —
  * своё окно без адресной строки, значок Тишки. Как именно — зависит от того, где открыта.
  */
 export function InstallApp() {
   return (
     <section className="settings-group" aria-label="Установить приложение">
-      <h2>Установить приложение</h2>
       <div className="card-block pwa-install"><InstallBody /></div>
       <ShareAppLink />
     </section>

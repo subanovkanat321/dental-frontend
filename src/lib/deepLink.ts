@@ -60,11 +60,12 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (screen === 'cash') return { page: 'cash', tab: 'money' }
   if (screen === 'stats') return { page: 'cash', tab: 'stats' }
   if (screen === 'earnings') return { page: 'cash', tab: 'earnings' }
-  if (screen === 'support') return { page: 'settings', tab: 'support', ticketId: num('ticket') }
-  if (screen === 'survey') return { page: 'settings', tab: 'survey' }
+  if (screen === 'support') return { page: 'help', tab: 'support', ticketId: num('ticket') }
+  if (screen === 'survey') return { page: 'help', tab: 'survey' }
   // Напоминание «подпишите договор» (бот или push админу)
   if (screen === 'agreement') return { page: 'settings', tab: 'agreement' }
-  if (screen === 'shifts') return { page: 'settings', tab: 'shifts' }
+  // «Кто на смене» — «Клиника → Рабочее время», вкладка смен
+  if (screen === 'shifts') return { page: 'clinic', tab: 'shifts' }
   // «Для пациента»: 3D-атлас и презентации
   if (screen === 'learn') return { page: 'learn' }
   if (screen === 'booked') {
@@ -81,7 +82,7 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
 
 /**
  * Адрес (без «#/»), куда ведёт ссылка: раздел и подраздел — #/cash/earnings, #/patients/questions,
- * #/settings/support. Подраздел в адресе — его и откроет раздел (lib/sub), и подсветит меню.
+ * #/help/support, #/clinic/shifts. Подраздел в адресе — его и откроет раздел (lib/sub), и подсветит меню.
  */
 export function linkHash(link: DeepLink): string {
   const sub = link.page === 'patients'

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { openSettings } from '../lib/route'
+import { openMine } from '../lib/route'
 import { CURRENT_KEY } from './keys'
 
 type Me = Schemas['BookingViewsMe']
@@ -9,7 +9,7 @@ type Me = Schemas['BookingViewsMe']
 /**
  * Приглашение в опрос команды Tish — спокойная плашка над «Расписанием», а не окно поверх работы:
  * между пациентами его можно не заметить, и это нормально. «Позже» прячет на 3 дня (сервер помнит —
- * на всех устройствах), ответить можно и раньше: «Настройки → Отзыв о Tish». Команде платформы не
+ * на всех устройствах), ответить можно и раньше: «Помощь → Отзыв о Tish». Команде платформы не
  * показываем — они опросы составляют.
  */
 export function SurveyInvite({ me }: { me: Me }) {
@@ -28,7 +28,7 @@ export function SurveyInvite({ me }: { me: Me }) {
     <div className="notices">
       <div className="notice tone-info" role="status">
         <span className="notice-ico" aria-hidden="true">📝</span>
-        <button type="button" className="notice-text" onClick={() => openSettings('survey')}>
+        <button type="button" className="notice-text" onClick={() => openMine('help', 'survey')}>
           Команда Tish просит вашего мнения: «{survey.title}». 2–3 минуты. <span className="notice-open" aria-hidden="true">Пройти опрос ›</span>
         </button>
         <button type="button" className="btn ghost small" disabled={later.isPending} title="Скрыть на 3 дня" onClick={() => later.mutate(survey.id!)}>Позже</button>

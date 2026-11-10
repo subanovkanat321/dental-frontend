@@ -109,16 +109,18 @@ test('«Руководство» в CRM: «Открыть полное руко�
   expect(open).toHaveBeenLastCalledWith(`${window.location.origin}/guide?role=doctor&from=app`, '_blank', 'noopener')
 })
 
-test('«Настройки»: один пункт «Руководство» (бывшая «Памятка») — открывается в CRM, на роли сотрудника', async () => {
+test('«Помощь» внизу меню: один пункт «Руководство» (бывшая «Памятка») — открывается в CRM, на роли сотрудника', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
   )
-  window.location.hash = '/settings'
+  window.location.hash = '/schedule'
   renderApp()
-  expect(await screen.findAllByRole('button', { name: /Руководство/ })).toHaveLength(1)
-  expect(screen.queryByRole('button', { name: /Памятка/ })).not.toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: /Руководство/ }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Помощь' }))
+  const menu = screen.getByRole('dialog', { name: 'Помощь' })
+  expect(within(menu).getAllByRole('button', { name: /Руководство/ })).toHaveLength(1)
+  expect(within(menu).queryByRole('button', { name: /Памятка/ })).not.toBeInTheDocument()
+  await userEvent.click(within(menu).getByRole('button', { name: /Руководство/ }))
   expect(await screen.findByRole('button', { name: /Открыть полное руководство/ })).toBeInTheDocument()
   window.location.hash = ''
 })

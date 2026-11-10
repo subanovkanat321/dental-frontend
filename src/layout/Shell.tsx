@@ -1,24 +1,27 @@
-import { Fragment, lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Fragment, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
-import { logout, type Schemas } from '../api/client'
+import type { Schemas } from '../api/client'
 import { useBack } from '../lib/back'
 import { openSettings, settingsItem, type Page } from '../lib/route'
 import { openSub, subHref, useSub } from '../lib/sub'
 import { matches, useMedia } from '../lib/useMedia'
 import { useWaitlist } from '../api/settings'
+import { CLINIC_ALIAS, SETTINGS_ALIAS } from '../settings/items'
 import { countOf, currentSub, LOUD, subsOf, sumOf, type Counts, type Sub } from './nav'
 import { NavContext } from './useSection'
-import { telegram } from '../lib/telegram'
 import { AdminNotices } from './AdminNotices'
 import { PasswordNotice } from './PasswordNotice'
 import { ProfileNotice } from './ProfileNotice'
 import { Icon } from './Icon'
+import { Avatar, HelpMenuItems, MeMenuItems, MenuPanel } from './MeMenu'
+import { whoAmI } from './me'
 import { useFitPanels } from './fitPanels'
 import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
 import { useFullView } from '../lib/fullView'
+import { confirmLeave } from '../lib/unsaved'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -26,10 +29,10 @@ type Me = Schemas['BookingViewsMe']
 const HelpChatPanel = lazy(() => import('../account/HelpChat').then((m) => ({ default: m.HelpChatPanel })))
 
 /**
- * «💬 Помощь» (чат с помощником Tish). Компьютер — пункт внизу меню, рядом со «Свернуть меню» и «Выйти»:
- * плавающая кнопка в углу закрывала последнюю строку таблиц. Телефон — маленькая круглая кнопка над
- * нижним меню на главных экранах клиники (в «Настройках» помощь — свой пункт); под неё у страницы
- * запас снизу, последняя строка докручивается выше кнопки.
+ * «Помощь». Компьютер — пункт внизу меню (плавающая кнопка в углу закрывала последнюю строку таблиц):
+ * открывает меню — первым чат с помощником Tish, затем руководство, техподдержка, отзыв,
+ * конфиденциальность, Instagram. Телефон — маленькая круглая кнопка над нижним меню на главных экранах
+ * клиники (сразу чат; под неё у страницы запас снизу) и пункт «Помощь» в «Ещё» — то же меню листом.
  */
 const HELP_PAGES: Page[] = ['schedule', 'patients', 'cash', 'stock']
 
@@ -41,27 +44,28 @@ const CLINIC_SECTIONS = [
   { key: 'learn', title: 'Для пациента' },
   { key: 'cash', title: 'Касса' },
   { key: 'stock', title: 'Склад' },
+  // О клинике, персонал, услуги, рабочее время, кресла (с 2026-11-10 — раздел, до того группа «Настроек»)
+  { key: 'clinic', title: 'Клиника' },
   { key: 'settings', title: 'Настройки' },
 ] as const
 const PLATFORM = { key: 'platform', title: 'Платформа' } as const
 
 function sectionsOf(me: Me): readonly { key: Page; title: string }[] {
-  // Ассистенту — без «Кассы»: денег он не видит
-  const clinic = isAssistant(me) ? CLINIC_SECTIONS.filter((s) => s.key !== 'cash') : CLINIC_SECTIONS
+  // Ассистенту — без «Кассы»: денег он не видит. Раздел без единого пункта по правам роли
+  // («Настройки» — все пункты только руководителю) не показываем
+  const clinic = CLINIC_SECTIONS.filter((s) => !(s.key === 'cash' && isAssistant(me))
+    && !((s.key === 'settings' || s.key === 'clinic') && subsOf(s.key, me).length === 0))
   return [...(me.doctor ? clinic : []), ...(me.platform ? [PLATFORM] : [])]
 }
 
 /**
- * Телефон сотрудника клиники: внизу расписание, пациенты, касса, склад и «Настройки». «Для пациента»
- * и «Платформа» туда не влезли — они пунктами в «Настройках».
+ * Телефон сотрудника клиники: внизу расписание, пациенты, касса, склад и «Ещё» — в нём свой аватар
+ * (лист «Я»), «Клиника», «Для пациента», «Настройки», «Платформа» и «Помощь».
  */
-const PHONE_IN_SETTINGS: readonly Page[] = ['learn', 'platform']
+const PHONE_MAIN: readonly Page[] = ['schedule', 'patients', 'cash', 'stock']
 
 /** На телефоне внизу помещается 4 раздела и «Ещё»: остальное — в выезжающем меню. */
 const MOBILE_MAIN = 4
-
-/** Старые адреса пунктов «Настроек» — в дереве подсвечиваем пункт, который они открывают. */
-const SETTINGS_ALIAS: Record<string, string> = { shifts: 'hours', timeoff: 'hours', promo: 'sources', help: 'support' }
 
 /** Долгое нажатие на кнопку раздела внизу (телефон) — лист подразделов. */
 const LONG_PRESS_MS = 500
@@ -84,9 +88,12 @@ function useSettingsItem(): string | null {
  * меню — полоса иконок: подразделы всплывают панелью при наведении (на сенсорном экране — по нажатию).
  * У свёрнутого раздела — сумма чисел его подразделов.
  *
- * Телефон: меню — полоса внизу (расписание, пациенты, касса, склад и «Настройки»; у команды
- * платформы — ещё «Ещё»). Подразделы — листом снизу: из заголовка раздела «Пациенты · Записаны ▾»
- * (layout/section.tsx) или долгим нажатием на кнопку раздела внизу.
+ * Внизу меню — «Помощь» и блок «Я» (аватар, имя, роль): по нажатию меню — профиль, оформление,
+ * уведомления, календарь, установить приложение, «Выйти» (DESIGN.md → Layout).
+ *
+ * Телефон: меню — полоса внизу (расписание, пациенты, касса, склад и «Ещё» — остальные разделы, свой
+ * аватар и «Помощь»). Подразделы — листом снизу: из заголовка раздела «Пациенты · Записаны ▾»
+ * (layout/section.tsx) или долгим нажатием на кнопку раздела внизу. «Я» и «Помощь» — тоже листом.
  */
 export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
   const clinic = me.doctor ? me.clinic?.brandName || me.clinic?.name || 'Клиника' : 'Команда Tish'
@@ -99,18 +106,21 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const counts: Counts = { 'patients/questions': questions, 'patients/waitlist': waitlist }
   // Открытый подраздел каждого раздела (адрес или последний открытый) и пункт «Настроек»
   const chosen: Partial<Record<Page, string | null>> = {
-    patients: useSub('patients'), cash: useSub('cash'), stock: useSub('stock'), platform: useSub('platform'),
+    patients: useSub('patients'), cash: useSub('cash'), stock: useSub('stock'), clinic: useSub('clinic'), platform: useSub('platform'),
   }
   const item = useSettingsItem()
   const subsBy = useMemo(() => Object.fromEntries(sections.map((s) => [s.key, subsOf(s.key, me)])) as Record<Page, Sub[]>, [sections, me])
   const activeSub = (key: Page): string | null => key === 'settings'
     ? (item ? SETTINGS_ALIAS[item] ?? item : null)
-    : currentSub(subsBy[key] ?? [], chosen[key])
-  // «Для пациента» и «Платформа» у сотрудника клиники на телефоне — в «Настройках»: внизу пять кнопок без «Ещё»
-  const extra = me.doctor ? sections.filter((x) => PHONE_IN_SETTINGS.includes(x.key))
-    : sections.length > MOBILE_MAIN + 1 ? sections.slice(MOBILE_MAIN) : []
-  const moreButton = extra.length > 0 && !me.doctor
+    : currentSub(subsBy[key] ?? [], key === 'clinic' && chosen.clinic ? CLINIC_ALIAS[chosen.clinic] ?? chosen.clinic : chosen[key])
+  // Телефон: внизу четыре раздела и «Ещё» (в нём остальные разделы, свой аватар и «Помощь»)
+  const extra = me.doctor ? sections.filter((x) => !PHONE_MAIN.includes(x.key)) : sections.slice(MOBILE_MAIN)
   const [more, setMore] = useState(false)
+  // Меню блока «Я» и «Помощи» (компьютер — карточка у кнопки, телефон — лист)
+  const [menu, setMenu] = useState<'me' | 'help' | null>(null)
+  const meButton = useRef<HTMLButtonElement>(null)
+  const helpButton = useRef<HTMLButtonElement>(null)
+  const closeMenu = useCallback(() => setMenu(null), [])
   // «Ещё» снизу — тоже слой: «назад» телефона закрывает его, а не уводит из раздела
   useBack(more ? () => setMore(false) : null)
   // Лист подразделов (телефон): «назад» закрывает его
@@ -155,10 +165,13 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   }, [fly])
   const go = (key: Page) => {
     setMore(false)
+    setMenu(null)
     setFly(null)
     onNavigate(key)
   }
   const goSub = (key: Page, sub: string) => {
+    // Пункты «Клиники» и «Настроек» — формы: из пункта с несохранёнными правками сначала спросим
+    if ((key === 'clinic' || key === 'settings') && key === page && !confirmLeave()) return
     setMore(false)
     setFly(null)
     setSheet(null)
@@ -231,6 +244,13 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   }
   const nav = useMemo(() => ({ openSheet: (key: Page) => setSheet(key) }), [])
   const sheetSection = sheet ? sections.find((s) => s.key === sheet) : undefined
+  const { name } = whoAmI(me)
+  const meHead = <><Avatar me={me} size="lg" /><p className="menu-who"><strong>{name}</strong><span className="hint">{role} · {clinic}</span></p></>
+  const openMenu = (which: 'me' | 'help') => {
+    setMore(false)
+    setFly(null)
+    setMenu((m) => (m === which ? null : which))
+  }
   return (
     <div className={narrow ? 'shell narrow' : 'shell'}>
       <aside className="sidebar">
@@ -239,9 +259,9 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={24} height={36} />
           <span>Tish</span>
         </button>
+        {/* Кто вошёл — внизу, блоком «Я»; здесь только клиника */}
         <div className="clinic">
           <strong>{clinic}</strong>
-          <span>{me.fullName ? `${me.fullName} · ` : ''}{role}</span>
         </div>
         <nav aria-label="Разделы">
           {sections.map((s) => {
@@ -276,39 +296,64 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
               </div>
             )
           })}
-          {moreButton && (
-            <button type="button" className={extra.some((s) => s.key === page) || more ? 'nav more active' : 'nav more'}
-              aria-expanded={more} onClick={() => setMore(!more)}>
-              <Icon name="more" /> <span>Ещё</span>
-            </button>
-          )}
+          {/* Телефон: «Ещё» — остальные разделы, свой аватар и «Помощь» (на компьютере кнопки нет) */}
+          <button type="button" className={extra.some((s) => s.key === page) || page === 'me' || page === 'help' || more ? 'nav more active' : 'nav more'}
+            aria-expanded={more} onClick={() => { setMenu(null); setMore(!more) }}>
+            <Icon name="more" /> <span>Ещё</span>
+          </button>
         </nav>
-        <button type="button" className="nav sidebar-toggle" aria-expanded={!narrow} onClick={() => { setFly(null); toggleNarrow() }}
-          title={narrow ? 'Развернуть меню' : 'Свернуть меню'} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}>
-          <span className="sidebar-toggle-ico" aria-hidden="true">{narrow ? '»' : '«'}</span> <span>Свернуть меню</span>
-        </button>
         {me.doctor && !phone && (
-          <button type="button" className={help ? 'nav help-nav active' : 'nav help-nav'} aria-expanded={help} title={narrow ? 'Помощь' : undefined}
-            aria-label="Помощь: спросить помощника Tish" onClick={() => setHelp(!help)}>
+          <button ref={helpButton} type="button" className={help || menu === 'help' || page === 'help' ? 'nav help-nav active' : 'nav help-nav'}
+            aria-haspopup="dialog" aria-expanded={menu === 'help'} title={narrow ? 'Помощь' : undefined}
+            aria-label="Помощь" onClick={() => openMenu('help')}>
             <Icon name="help" /> <span>Помощь</span>
           </button>
         )}
-        {!telegram() && (
-          <button type="button" className="nav link-out" title={narrow ? 'Выйти' : undefined} onClick={() => void logout()}><Icon name="external" /> <span>Выйти</span></button>
+        <button type="button" className="nav sidebar-toggle" aria-expanded={!narrow} onClick={() => { setFly(null); setMenu(null); toggleNarrow() }}
+          title={narrow ? 'Развернуть меню' : 'Свернуть меню'} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}>
+          <span className="sidebar-toggle-ico" aria-hidden="true">{narrow ? '»' : '«'}</span> <span>Свернуть меню</span>
+        </button>
+        {!phone && (
+          <button ref={meButton} type="button" className={menu === 'me' || page === 'me' ? 'me-block active' : 'me-block'}
+            aria-haspopup="dialog" aria-expanded={menu === 'me'} aria-label={`${name}, ${role}: профиль, оформление, выход`}
+            title={narrow ? `${name} · ${role}` : undefined} onClick={() => openMenu('me')}>
+            <Avatar me={me} />
+            <span className="me-text"><strong>{name}</strong><span>{role}</span></span>
+          </button>
         )}
       </aside>
       {more && (
         <div className="more-sheet" role="dialog" aria-label="Ещё разделы" onClick={() => setMore(false)}>
           <div className="more-card" onClick={(e) => e.stopPropagation()}>
-            <p className="more-who"><strong>{clinic}</strong><span className="hint">{me.fullName ? `${me.fullName} · ` : ''}{role}</span></p>
+            {/* Свой аватар — лист «Я»: профиль, оформление, уведомления, выход */}
+            <button type="button" className={page === 'me' ? 'more-who-btn active' : 'more-who-btn'} aria-label={`${name}, ${role}: профиль, оформление, выход`}
+              onClick={() => openMenu('me')}>
+              <Avatar me={me} size="lg" />
+              <span className="more-who"><strong>{name}</strong><span className="hint">{role} · {clinic}</span></span>
+              <span className="chev" aria-hidden="true">›</span>
+            </button>
             {extra.map((s) => (
               <button key={s.key} type="button" className={s.key === page ? 'more-item active' : 'more-item'} onClick={() => go(s.key)}>
                 <Icon name={s.key} /> <span>{s.title}</span>
               </button>
             ))}
-            {!telegram() && <button type="button" className="more-item" onClick={() => void logout()}><Icon name="external" /> <span>Выйти</span></button>}
+            {me.doctor && (
+              <button type="button" className={page === 'help' ? 'more-item active' : 'more-item'} onClick={() => openMenu('help')}>
+                <Icon name="help" /> <span>Помощь</span>
+              </button>
+            )}
           </div>
         </div>
+      )}
+      {menu === 'me' && (
+        <MenuPanel label="Я: мои настройки" anchor={meButton} phone={phone} head={meHead} onClose={closeMenu}>
+          <MeMenuItems me={me} onPick={closeMenu} />
+        </MenuPanel>
+      )}
+      {menu === 'help' && (
+        <MenuPanel label="Помощь" anchor={helpButton} phone={phone} head={<><Icon name="help" /><h2>Помощь</h2></>} onClose={closeMenu}>
+          <HelpMenuItems me={me} onChat={() => setHelp(true)} onPick={closeMenu} />
+        </MenuPanel>
       )}
       {sheetSection && (
         <div className="more-sheet sub-sheet" role="dialog" aria-label={`Подразделы: ${sheetSection.title}`} onClick={() => setSheet(null)}>
@@ -318,7 +363,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
               <button type="button" className="sub-sheet-close" aria-label="Закрыть" onClick={() => setSheet(null)}>✕</button>
             </div>
             {subLinks(sheetSection.key, 'sheet-item')}
-            <p className="hint small sub-sheet-tip">Тот же список — долгим нажатием на «{sheetSection.title}» в нижнем меню.</p>
+            {!extra.includes(sheetSection) && <p className="hint small sub-sheet-tip">Тот же список — долгим нажатием на «{sheetSection.title}» в нижнем меню.</p>}
           </div>
         </div>
       )}

@@ -1,9 +1,10 @@
 import { useSyncExternalStore } from 'react'
 
-import type { Page } from './route'
+import { hashParts, type Page } from './route'
 
 /**
  * Подраздел раздела — второй кусок адреса: #/cash/salary, #/patients/waitlist, #/platform/tickets.
+ * «Клиника» — тоже: #/clinic/staff (старые #/settings/doctors ведут сюда, lib/route).
  * Его показывают и меню слева (дерево, лист на телефоне), и сам раздел (что рисовать).
  *
  * Последний подраздел каждого раздела запоминается (пока открыта вкладка браузера): ушли в
@@ -13,11 +14,11 @@ import type { Page } from './route'
 const last: Partial<Record<Page, string>> = {}
 const listeners = new Set<() => void>()
 
-const WITH_SUBS: readonly Page[] = ['patients', 'cash', 'stock', 'platform']
+const WITH_SUBS: readonly Page[] = ['patients', 'cash', 'stock', 'clinic', 'platform']
 
 /** Подраздел в адресе сейчас: [раздел, подраздел] или null. */
 function fromHash(): [Page, string] | null {
-  const [name = '', sub] = window.location.hash.replace(/^#\/?/, '').split('/')
+  const [name, sub] = hashParts()
   return (WITH_SUBS as readonly string[]).includes(name) && sub ? [name as Page, sub] : null
 }
 

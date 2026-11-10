@@ -1,7 +1,7 @@
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
 import { isAssistant, seesAllMoney, seesOwnEarnings } from '../lib/roles'
-import { SETTINGS_GROUPS } from '../settings/items'
+import { CLINIC_ITEMS, SETTINGS_GROUPS } from '../settings/items'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -48,9 +48,13 @@ export function subsOf(page: Page, me: Me): Sub[] {
         ...(me.owner ? [['tickets', 'Обращения'], ['outreach', 'Написать клиникам'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'],
           ['tariffs', 'Тарифы'], ['content', 'Контент'], ['materials', 'Материалы'], ['ai', 'Расход ИИ'], ['health', 'Здоровье'], ['settings', 'Настройки']]
           .map(([key, title]) => ({ key: key!, title: title! })) : [])]
+    case 'clinic':
+      // «Клиника» (с 2026-11-10 — раздел меню): о клинике, персонал, услуги, рабочее время, кресла
+      return CLINIC_ITEMS.filter((i) => !i.hidden && i.show(me)).map((i) => ({ key: i.key, title: i.title }))
     case 'settings':
+      // Пусто (у роли нет ни одного пункта) — раздела «Настройки» в меню нет (Shell)
       return SETTINGS_GROUPS.flatMap(([group, items]) => items
-        .filter((i) => !i.hidden && !i.section && i.show(me))
+        .filter((i) => !i.hidden && i.show(me))
         .map((i) => ({ key: i.key, title: i.title, group })))
     default:
       return []

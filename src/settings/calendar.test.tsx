@@ -98,6 +98,9 @@ test('без своего кресла (админ, регистратура) п
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined })))
   renderApp()
   openItem('calendar')
-  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
+  // Чужой пункт по старой ссылке — вместо него «Мой профиль»; в меню «Я» календаря нет
+  expect(await screen.findByRole('heading', { name: 'Мой профиль' })).toBeInTheDocument()
   expect(screen.queryByText('Календарь в телефоне')).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: /^Айгерим, руководитель/ }))
+  expect(within(screen.getByRole('dialog', { name: 'Я: мои настройки' })).queryByRole('button', { name: 'Календарь в телефоне' })).not.toBeInTheDocument()
 })

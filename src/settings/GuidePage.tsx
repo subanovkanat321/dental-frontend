@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
-import { openSettings } from '../lib/route'
+import { openMine } from '../lib/route'
 import { openLink } from '../lib/telegram'
 import { GUIDES, guideRole, guideUrl, ORDER, type Role } from './guides'
 import { SubHeader } from './SubHeader'
@@ -50,7 +50,7 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
       ))}
       <section className="card-block" aria-label="Не нашли ответа">
         <p>Не нашли ответа? Помощник подскажет сразу, а сложный вопрос передаст команде Tish.</p>
-        <div className="actions"><button type="button" className="btn primary" onClick={() => openSettings('help')}>💬 Спросить помощника</button></div>
+        <div className="actions"><button type="button" className="btn primary" onClick={() => openMine('help', 'chat')}>💬 Спросить помощника</button></div>
       </section>
     </div>
   )

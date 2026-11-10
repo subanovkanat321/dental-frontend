@@ -20,7 +20,7 @@ const HELP = 'help'
 
 /** Частые вопросы врачей — ответ сразу, без звонка в поддержку. */
 const FAQ: [string, string][] = [
-  ['Не появилась кнопка «Открыть»', 'Нажмите /start в чате с ботом. Если кнопки всё равно нет — попросите руководителя проверить ваш Telegram в «Настройки → Персонал».'],
+  ['Не появилась кнопка «Открыть»', 'Нажмите /start в чате с ботом. Если кнопки всё равно нет — попросите руководителя проверить ваш Telegram в «Клиника → Персонал».'],
   ['Вижу старую версию', 'Закройте приложение (свайп вниз) и откройте снова из бота; на компьютере — обновите страницу.'],
   ['Не приходят уведомления', 'Проверьте, что чат с ботом не на «Без звука» и вы нажимали /start. Уведомления приходят врачу его приёмов.'],
   ['Пациенту не дошло напоминание в Telegram', 'Пациент мог удалить чат с ботом. Напомните в WhatsApp или позвоните — кнопки в карточке приёма.'],
@@ -38,7 +38,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
   onPanel: (open: boolean) => void
   /** Кнопка бота «Открыть ответ»: сразу переписка по обращению. */
   initialTicket?: number
-  /** «Настройки → Помощь и техподдержка» и «Памятка»: сразу чат с помощником. */
+  /** «Помощь» внизу меню → «Помощь и техподдержка» и «Памятка»: сразу чат с помощником. */
   initialHelp?: boolean
 }) {
   const list = useQuery({ queryKey: ['support-tickets'], queryFn: () => unwrap(api.GET('/api/support/tickets')) })
@@ -97,7 +97,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
               {clinic.supportUrl && <a className="btn primary" href={clinic.supportUrl} target="_blank" rel="noopener noreferrer">Написать в Telegram</a>}
               {clinic.supportPhone && <a className="btn" href={`tel:+${clinic.supportPhone}`}>Позвонить: {formatPhone(clinic.supportPhone)}</a>}
             </div>
-          ) : <p className="hint">{me.admin ? 'Контакты поддержки не заданы — добавьте их в «Настройки → О клинике».' : 'Контакты поддержки пока не заданы — спросите руководителя.'}</p>}
+          ) : <p className="hint">{me.admin ? 'Контакты поддержки не заданы — добавьте их в «Клиника → О клинике».' : 'Контакты поддержки пока не заданы — спросите руководителя.'}</p>}
           <h3>Разработчики напрямую</h3>
           <DeveloperContacts />
         </section>

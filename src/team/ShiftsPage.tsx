@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { openSettings } from '../lib/route'
+import { openClinic } from '../lib/route'
 import { ask } from '../lib/confirm'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
@@ -46,7 +46,7 @@ function useShifts(from: string, to: string) {
 type Editing = { shift?: Shift; telegramId: number; day: string }
 
 /**
- * «Настройки → Рабочее время → Смены персонала»: неделя персонала без кресла (админы, регистратура, ассистенты) —
+ * «Клиника → Рабочее время → Смены персонала»: неделя персонала без кресла (админы, регистратура, ассистенты) —
  * кто в какой день и с какого по какое время. Врачей здесь нет: у них вкладка «Врачи» в «Часах и сменах». Ставит и
  * меняет админ; остальные видят график только для чтения, своя строка подсвечена. Телефон —
  * список по дням вместо таблицы.
@@ -88,8 +88,8 @@ export function ShiftsPage({ onBack, title = 'График смен', tabs }: { 
             <p>График смен — для персонала без своего кресла: регистратуры, ассистентов и руководителей, которые не лечат.
               Врачи здесь не показываются — их дни и часы настраиваются в «Часах работы».</p>
             <div className="actions">
-              <button type="button" className="btn primary" onClick={() => openSettings('hours')}>Часы работы врачей</button>
-              {canEdit && <button type="button" className="btn" onClick={() => openSettings('doctors')}>Пригласить регистратуру или ассистента</button>}
+              <button type="button" className="btn primary" onClick={() => openClinic('hours')}>Часы работы врачей</button>
+              {canEdit && <button type="button" className="btn" onClick={() => openClinic('staff')}>Пригласить регистратуру или ассистента</button>}
             </div>
           </div>
         ) : phone ? <DayList data={data} days={days} onOpen={open} /> : <WeekTable data={data} days={days} onOpen={open} />

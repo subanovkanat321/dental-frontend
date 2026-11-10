@@ -161,11 +161,16 @@ test('права в дереве: ассистент — без «Кассы» �
   await userEvent.click(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' }))
   const settings = within(nav()).getByRole('group', { name: 'Настройки' })
   expect(within(settings).getByRole('link', { name: /Памятки после процедур/ })).toBeInTheDocument()
-  expect(within(settings).queryByRole('link', { name: /Услуги и цены/ })).not.toBeInTheDocument()
   expect(within(settings).queryByRole('link', { name: /Тариф и оплата/ })).not.toBeInTheDocument()
-  // Группы — подписями внутри раздела; «Мой профиль» и «Оформление» — в «Мои настройки»
-  expect(within(settings).getByText('Мои настройки')).toBeInTheDocument()
-  expect(within(settings).getByRole('link', { name: /Оформление/ })).toHaveAttribute('href', '#/settings/appearance')
+  // Группы — подписями внутри раздела; «Аккаунт клиники» у ассистента пуст — подписи нет
+  expect(within(settings).getByText('Пациентам')).toBeInTheDocument()
+  expect(within(settings).queryByText('Аккаунт клиники')).not.toBeInTheDocument()
+  expect(within(settings).queryByText('Мои настройки')).not.toBeInTheDocument()
+  // «Клиника» — без «Услуг и цен» (цены ассистенту не показываем)
+  await userEvent.click(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Клиника' }))
+  const clinic = within(nav()).getByRole('group', { name: 'Клиника' })
+  expect(within(clinic).getByRole('link', { name: 'Персонал' })).toHaveAttribute('href', '#/clinic/staff')
+  expect(within(clinic).queryByRole('link', { name: /Услуги и цены/ })).not.toBeInTheDocument()
   first.unmount()
 
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctor: false, admin: false, platform: true, owner: false })))
@@ -176,11 +181,12 @@ test('права в дереве: ассистент — без «Кассы» �
 })
 
 test('старые адреса и кнопки бота открывают нужный подраздел', async () => {
-  // «Кто на смене» из бота — #/settings/shifts: «Рабочее время», вкладка «Смены персонала»
+  // «Кто на смене» из бота — #/settings/shifts: «Клиника → Рабочее время», вкладка «Смены персонала»
   window.location.hash = '/settings/shifts'
   const first = renderApp()
-  const settings = await within(await screen.findByRole('navigation', { name: 'Разделы' })).findByRole('group', { name: 'Настройки' })
-  expect(within(settings).getByRole('link', { name: /Рабочее время/ })).toHaveAttribute('aria-current', 'page')
+  const clinic = await within(await screen.findByRole('navigation', { name: 'Разделы' })).findByRole('group', { name: 'Клиника' })
+  expect(within(clinic).getByRole('link', { name: /Рабочее время/ })).toHaveAttribute('aria-current', 'page')
+  expect(window.location.hash).toBe('#/clinic/shifts')
   expect(await screen.findByRole('tab', { name: 'Смены персонала' })).toHaveAttribute('aria-selected', 'true')
   first.unmount()
 
@@ -190,4 +196,64 @@ test('старые адреса и кнопки бота открывают ну
   await waitFor(() => expect(window.location.hash).toBe('#/cash/earnings'))
   expect(await within(await screen.findByRole('navigation', { name: 'Разделы' })).findByRole('link', { name: 'Мой заработок' })).toHaveAttribute('aria-current', 'page')
   expect(window.location.search).toBe('')
+})
+
+test('«Клиника» — раздел меню: подразделы о клинике, персонал, услуги, рабочее время, кресла; заголовок «Клиника» мелко', async () => {
+  server.use(http.get('*/api/clinic', () => HttpResponse.json({ brandName: 'Стоматология «Тест»', workDays: [] })))
+  window.location.hash = '/schedule'
+  renderApp()
+  // Раздел — между «Складом» и «Настройками»
+  const buttons = within(await screen.findByRole('navigation', { name: 'Разделы' })).getAllByRole('button', { name: /^(Склад|Клиника|Настройки)$/ })
+  expect(buttons.map((b) => b.textContent?.trim())).toEqual(['Склад', 'Клиника', 'Настройки'])
+  await userEvent.click(within(nav()).getByRole('button', { name: 'Клиника' }))
+  expect(window.location.hash).toBe('#/clinic')
+  const clinic = within(nav()).getByRole('group', { name: 'Клиника' })
+  expect(within(clinic).getAllByRole('link').map((a) => a.textContent)).toEqual(['О клинике', 'Персонал', 'Услуги и цены', 'Рабочее время', 'Кресла'])
+  // Без пункта в адресе — первый, «О клинике»
+  expect(within(clinic).getByRole('link', { name: 'О клинике' })).toHaveAttribute('aria-current', 'page')
+  expect(await screen.findByRole('form', { name: 'О клинике' })).toBeInTheDocument()
+  expect(screen.getByText('Клиника', { selector: '.sect-crumb' })).toBeInTheDocument()
+  await userEvent.click(within(clinic).getByRole('link', { name: 'Персонал' }))
+  expect(window.location.hash).toBe('#/clinic/staff')
+  expect(await screen.findByRole('heading', { name: 'Персонал' })).toBeInTheDocument()
+  // В «Настройках» этих пунктов больше нет
+  await userEvent.click(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' }))
+  expect(within(within(nav()).getByRole('group', { name: 'Настройки' })).queryByRole('link', { name: 'Персонал' })).not.toBeInTheDocument()
+})
+
+test('старые адреса пунктов «Клиники»: #/settings/staff, /doctors, #/team → #/clinic/staff', async () => {
+  for (const old of ['/settings/staff', '/settings/doctors', '/team']) {
+    window.location.hash = old
+    const view = renderApp()
+    const clinic = await within(await screen.findByRole('navigation', { name: 'Разделы' })).findByRole('group', { name: 'Клиника' })
+    expect(window.location.hash).toBe('#/clinic/staff')
+    expect(within(clinic).getByRole('link', { name: 'Персонал' })).toHaveAttribute('aria-current', 'page')
+    expect(await screen.findByRole('heading', { name: 'Персонал' })).toBeInTheDocument()
+    view.unmount()
+  }
+})
+
+test('телефон: внизу четыре раздела и «Ещё»; в «Ещё» — свой аватар, «Клиника», «Для пациента», «Настройки», «Помощь»; «Клиника · О клинике ▾» — лист подразделов', async () => {
+  phone()
+  server.use(http.get('*/api/clinic', () => HttpResponse.json({ brandName: 'Стоматология «Тест»', workDays: [] })))
+  window.location.hash = '/schedule'
+  renderApp()
+  await screen.findByRole('navigation', { name: 'Разделы' })
+  // Видимые кнопки внизу (остальные — «extra», скрыты стилем на телефоне)
+  const bottom = [...nav().querySelectorAll<HTMLElement>('.nav-item:not(.extra) > .nav-row > .nav, .nav.more')].map((b) => b.textContent?.trim())
+  expect(bottom).toEqual(['Расписание', 'Пациенты', 'Касса', 'Склад', 'Ещё'])
+  await userEvent.click(within(nav()).getByRole('button', { name: 'Ещё' }))
+  const more = screen.getByRole('dialog', { name: 'Ещё разделы' })
+  expect(within(more).getAllByRole('button').map((b) => b.textContent?.trim())).toEqual([
+    expect.stringContaining('Айгерим Садыкова'), 'Для пациента', 'Клиника', 'Настройки', 'Помощь',
+  ])
+  await userEvent.click(within(more).getByRole('button', { name: 'Клиника' }))
+  expect(window.location.hash).toBe('#/clinic')
+  await userEvent.click(await screen.findByRole('button', { name: /Клиника.*О клинике/ }))
+  const sheet = screen.getByRole('dialog', { name: 'Подразделы: Клиника' })
+  // Подсказки про долгое нажатие нет: «Клиники» нет в нижнем меню
+  expect(within(sheet).queryByText(/долгим нажатием/)).not.toBeInTheDocument()
+  await userEvent.click(within(sheet).getByRole('link', { name: 'Рабочее время' }))
+  expect(window.location.hash).toBe('#/clinic/hours')
+  expect(await screen.findByRole('button', { name: /Клиника.*Рабочее время/ })).toBeInTheDocument()
 })

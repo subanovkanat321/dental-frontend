@@ -15,7 +15,7 @@ test('адреса кнопок бота → раздел CRM', () => {
   expect(readDeepLink('?doctor=2', '2026-11-01')).toEqual({ page: 'schedule', doctorId: 2, date: undefined })
   expect(readDeepLink('?appointment=15&v=x')).toEqual({ page: 'schedule', appointmentId: 15 })
   expect(readDeepLink('?supply=7')).toEqual({ page: 'stock', supplyId: 7 })
-  expect(readDeepLink('?screen=support&ticket=4')).toEqual({ page: 'settings', tab: 'support', ticketId: 4 })
+  expect(readDeepLink('?screen=support&ticket=4')).toEqual({ page: 'help', tab: 'support', ticketId: 4 })
   expect(readDeepLink('?screen=pay-requests')).toEqual({ page: 'platform', tab: 'clinics' })
   expect(readDeepLink('?screen=booked&day=tomorrow&unconfirmed=1&doctor=2&v=x', '2026-11-01'))
     .toEqual({ page: 'patients', tab: 'booked', date: '2026-11-02', unconfirmed: true, doctorId: 2 })

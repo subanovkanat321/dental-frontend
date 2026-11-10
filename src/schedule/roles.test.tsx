@@ -1,8 +1,8 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
-import { appointment, me, openItem, renderApp } from '../test/fixtures'
+import { appointment, findSub, me, openItem, querySub, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 /** Вымышленные сотрудники: врач Айгерим без прав админа, ассистент Дастана, регистратура. */
@@ -52,9 +52,15 @@ test('ассистент: без предоплаты и цен услуг, пе
   await userEvent.click(within(panel).getByRole('button', { name: 'Перенести' }))
   expect(within(panel).queryByRole('group', { name: 'Врач' })).not.toBeInTheDocument()
 
+  // «Клиника» в меню — без пункта «Услуги и цены»
+  act(() => {
+    window.location.hash = '/clinic'
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+  })
+  expect(await findSub('Рабочее время')).toBeInTheDocument()
+  expect(querySub(/^Услуги/)).not.toBeInTheDocument()
   openItem('')
-  expect(await screen.findByRole('button', { name: /Рабочее время/ })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /^Услуги/ })).not.toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /Памятки после процедур/ })).toBeInTheDocument()
 })
 
 test('перенос: другой врач или длительность — выбранное время сбрасывается', async () => {

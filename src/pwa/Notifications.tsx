@@ -18,7 +18,7 @@ export function Notifications() {
     return (
       <Section>
         <p>Вы в Telegram — уведомления приходят сюда, в бот. Чтобы получать их в приложении, установите его
-          (выше) и выберите там «В приложение».</p>
+          («Установить приложение» в том же меню «Я») и выберите там «В приложение».</p>
       </Section>
     )
   }
@@ -28,7 +28,6 @@ export function Notifications() {
 function Section({ children }: { children: React.ReactNode }) {
   return (
     <section className="settings-group" aria-label="Уведомления">
-      <h2>Уведомления</h2>
       <div className="card-block pwa-install">{children}</div>
     </section>
   )

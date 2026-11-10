@@ -105,5 +105,5 @@ test('подсказки нет, когда профиль заполнен; с�
   const notice = await screen.findByRole('region', { name: 'Заполните профиль' })
   expect(notice).toHaveTextContent('укажите имя')
   await user.click(within(notice).getByRole('button', { name: /укажите имя/ }))
-  expect(window.location.hash).toBe('#/settings/profile')
+  expect(window.location.hash).toBe('#/me/profile')
 })

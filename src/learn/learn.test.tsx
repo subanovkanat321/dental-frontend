@@ -370,12 +370,18 @@ test('старый адрес «Настройки → Показать паци
   expect(readDeepLink('?screen=learn')).toEqual({ page: 'learn' })
 })
 
-test('пункт «Настроек» «Для пациента» — ссылка на раздел (на телефоне его нет в нижнем меню)', async () => {
-  backend(appointment(34, 1, '12:00', 'Тест'), 403)
-  window.location.hash = '/settings'
-  renderApp()
-  await userEvent.click(await screen.findByRole('button', { name: /Для пациента.*3D-атлас и презентации/ }))
-  expect(await screen.findByRole('heading', { name: 'Для пациента' })).toBeInTheDocument()
+test('телефон: «Для пациента» — в «Ещё» (в нижнем меню его нет; пункта-дубля в «Настройках» больше нет)', async () => {
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('max-width: 760px'), addEventListener() {}, removeEventListener() {} }))
+  try {
+    backend(appointment(34, 1, '12:00', 'Тест'), 403)
+    window.location.hash = '/schedule'
+    renderApp()
+    await userEvent.click(await screen.findByRole('button', { name: 'Ещё' }))
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Ещё разделы' })).getByRole('button', { name: 'Для пациента' }))
+    expect(await screen.findByRole('heading', { name: 'Для пациента' })).toBeInTheDocument()
+  } finally {
+    vi.unstubAllGlobals()
+  }
 })
 
 test('страница /learn/<тема> без входа: язык из ссылки, название клиники по коду, «Записаться», без цен', async () => {

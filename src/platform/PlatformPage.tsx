@@ -10,8 +10,6 @@ import { FinanceTab } from './FinanceTab'
 import { HealthTab } from './HealthTab'
 import { MaterialsTab } from './MaterialsTab'
 import { OutreachTab } from './OutreachTab'
-import { useBack } from '../lib/back'
-import { openSettings } from '../lib/route'
 import { SettingsTab } from './SettingsTab'
 import { SurveysTab } from './surveys/SurveysTab'
 import { TariffsTab } from './TariffsTab'
@@ -40,12 +38,8 @@ export function PlatformPage({ me }: { me: Me }) {
     setPanelTab(tab)
     setPanel(false)
   }
-  // Сотрудник клиники на телефоне попадает сюда из «Настроек» — стрелка Telegram ведёт обратно
-  const fromSettings = Boolean(me.doctor) && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches
-  useBack(fromSettings ? () => openSettings(null) : null, { url: true })
   const header = (
     <PageHead slotRef={setSlot} title={<>
-      {fromSettings && <button type="button" className="btn ghost back" onClick={() => openSettings(null)}>‹ Настройки</button>}
       <SectionTitle page="platform" title="Платформа" subTitle={subTitle} />
     </>} />
   )

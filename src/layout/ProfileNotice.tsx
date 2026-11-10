@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { openSettings } from '../lib/route'
+import { openMine } from '../lib/route'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -20,7 +20,7 @@ function readHidden(): boolean {
 /**
  * «Заполните свой профиль» — когда своё о себе пусто: у врача нет фото или «Кратко о себе» (их видят
  * пациенты в боте), у остального персонала — нет имени. Админ только приглашает, дальше каждый заполняет
- * себя сам — подсказка ведёт в «Настройки → Изменить профиль». Не навязчиво: ✕ — и больше не покажем.
+ * себя сам — подсказка ведёт в «Мой профиль» (нажмите на себя внизу меню). Не навязчиво: ✕ — и больше не покажем.
  */
 export function ProfileNotice({ me }: { me: Me }) {
   const [hidden, setHidden] = useState(readHidden)
@@ -49,7 +49,7 @@ export function ProfileNotice({ me }: { me: Me }) {
     <section className="notices" aria-label="Заполните профиль">
       <div className="notice tone-wait">
         <span className="notice-ico" aria-hidden="true">i</span>
-        <button type="button" className="notice-text" onClick={() => openSettings('profile')}>
+        <button type="button" className="notice-text" onClick={() => openMine('me', 'profile')}>
           {text}{' '}<span className="notice-open" aria-hidden="true">Изменить профиль ›</span>
         </button>
         <button type="button" className="notice-close" aria-label="Скрыть подсказку" title="Скрыть подсказку" onClick={hide}>✕</button>

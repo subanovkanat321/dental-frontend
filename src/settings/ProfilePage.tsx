@@ -5,7 +5,7 @@ import { api, ApiError, botUsername, unwrap, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { ask, notify } from '../lib/confirm'
-import { openSettings } from '../lib/route'
+import { openClinic } from '../lib/route'
 import { DoctorPanel } from '../team/DoctorPanel'
 import { PHONE_HINT } from '../team/PhoneParts'
 import { phoneText } from '../team/texts'
@@ -50,7 +50,7 @@ export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
         <div className="card-block">
           <p>Профиль для пациентов есть у врачей: фото, имя и «о себе» видны при записи в боте.</p>
           <p className="hint">Вы и принимаете пациентов? Добавьте себя врачом в «Врачах» — «Я тоже веду приём».</p>
-          <button type="button" className="btn" onClick={() => openSettings('doctors')}>Персонал</button>
+          <button type="button" className="btn" onClick={() => openClinic('staff')}>Персонал</button>
         </div>
         </>
       ) : me.admin && admin.isPending ? <Loading />

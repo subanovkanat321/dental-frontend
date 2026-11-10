@@ -1,9 +1,9 @@
-import { act, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp } from '../test/fixtures'
+import { findSub, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { phoneFromInput, phoneToInput } from './phone'
 
@@ -13,7 +13,7 @@ const clinic: Schemas['ClinicView'] = {
 }
 
 beforeEach(() => {
-  window.location.hash = '/settings/about'
+  window.location.hash = '/clinic/about'
   server.use(
     http.get('*/api/clinic', () => HttpResponse.json(clinic)),
     http.get('*/api/clinic/deposit', () => HttpResponse.json({ mode: 'OFF', hasQr: false } satisfies Schemas['DepositsSettings'])),
@@ -104,10 +104,12 @@ test('«Часы работы»: часы клиники с субботой, о
     }),
     http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] })),
   )
+  // Старый адрес «Настройки → Рабочее время» (закладка) ведёт в «Клинику»
   window.location.hash = '/settings/hours'
   const user = userEvent.setup()
   renderApp()
   const form = await screen.findByRole('form', { name: 'Часы клиники' })
+  expect(window.location.hash).toBe('#/clinic/hours')
   await user.click(within(form).getByRole('button', { name: 'Суббота' }))
   await user.click(within(form).getByRole('button', { name: 'Сохранить часы клиники' }))
   expect(await within(form).findByText('Часы клиники сохранены')).toBeInTheDocument()
@@ -116,8 +118,10 @@ test('«Часы работы»: часы клиники с субботой, о
   // Свой врач раскрыт сразу, коллега — по нажатию
   expect(await screen.findByRole('group', { name: 'Часы работы' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Дастан Т\./ })).toHaveAttribute('aria-expanded', 'false')
-  await user.click(screen.getByRole('button', { name: '‹ Настройки' }))
-  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
+  // «Клиника» — раздел меню: мелко «Клиника» над пунктом, пункт подсвечен в меню, «‹ Настройки» нет
+  expect(screen.getByText('Клиника', { selector: '.sect-crumb' })).toBeInTheDocument()
+  expect(await findSub('Рабочее время')).toHaveAttribute('aria-current', 'page')
+  expect(screen.queryByRole('button', { name: '‹ Настройки' })).not.toBeInTheDocument()
 })
 
 test('«О клинике»: несколько телефонов (до трёх, по порядку) и WhatsApp другим номером; ошибка номера — под полем', async () => {
@@ -156,7 +160,7 @@ test('«О клинике»: несколько телефонов (до трё�
   expect(saved).toMatchObject({ phones: ['+996 555 123 456', '+996 700 111 222'] })
 })
 
-test('«Настройки → Оформление»: тёмная тема и крупный текст сразу и запоминаются', async () => {
+test('«Я → Оформление»: тёмная тема и крупный текст сразу и запоминаются (старый адрес «Настроек» ведёт сюда)', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
   window.location.hash = '/settings/appearance'
   const user = userEvent.setup()
@@ -169,6 +173,7 @@ test('«Настройки → Оформление»: тёмная тема и 
   await user.click(screen.getByRole('button', { name: 'Светлая' }))
   await user.click(screen.getByRole('button', { name: 'Обычный' }))
   expect(document.documentElement.dataset.theme).toBe('light')
+  expect(window.location.hash).toBe('#/me/appearance')
 })
 
 test('«Работать с компьютера» в Telegram на телефоне: только ссылка и «Скопировать», без встроенного браузера', async () => {
@@ -202,18 +207,20 @@ test('«О клинике»: «Сохранить» видно только с �
   const form = await screen.findByRole('form', { name: 'О клинике' })
   // Правок нет — нет и «Сохранить», которое молча ничего бы не сделало
   expect(within(form).queryByRole('button', { name: 'Сохранить' })).not.toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: '‹ Настройки' }))
+  // «Клиника» — раздел: уходят из пункта по меню слева; без правок — без вопроса
+  await user.click(await findSub('Персонал'))
   expect(confirm).not.toHaveBeenCalled()
-  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/clinic/staff')
 
-  await user.click(screen.getByRole('button', { name: /О клинике/ }))
+  await user.click(await findSub('О клинике'))
   const again = await screen.findByRole('form', { name: 'О клинике' })
   await user.type(within(again).getByRole('textbox', { name: 'Адрес' }), 'Бишкек, Чуй 1')
   expect(within(again).getByText('Есть несохранённые изменения')).toBeInTheDocument()
 
-  // Назад с несохранённым: «Отмена» — остаёмся с введённым
-  await user.click(screen.getByRole('button', { name: '‹ Настройки' }))
+  // В другой пункт с несохранённым: «Отмена» — остаёмся с введённым
+  await user.click(await findSub('Персонал'))
   expect(confirm).toHaveBeenCalledWith('Есть несохранённые изменения — выйти без сохранения?')
+  expect(window.location.hash).toBe('#/clinic/about')
   expect(within(again).getByRole('textbox', { name: 'Адрес' })).toHaveValue('Бишкек, Чуй 1')
 
   await user.click(within(again).getByRole('button', { name: 'Сохранить' }))
@@ -227,13 +234,13 @@ test('«О клинике»: «Сохранить» видно только с �
 
   // Сохранили — уходим без вопроса
   confirm.mockClear()
-  await user.click(screen.getByRole('button', { name: '‹ Настройки' }))
+  await user.click(await findSub('Персонал'))
   expect(confirm).not.toHaveBeenCalled()
-  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
+  expect(window.location.hash).toBe('#/clinic/staff')
   confirm.mockRestore()
 })
 
-test('«Часы работы» в Telegram: стрелка «назад» с несохранёнными часами спрашивает, Telegram просит подтвердить закрытие', async () => {
+test('«Часы работы» в Telegram: уход в другой пункт «Клиники» с несохранёнными часами спрашивает, Telegram просит подтвердить закрытие', async () => {
   let back: (() => void) | null = null
   const closing = { on: vi.fn(), off: vi.fn() }
   vi.stubGlobal('Telegram', { WebApp: {
@@ -247,22 +254,24 @@ test('«Часы работы» в Telegram: стрелка «назад» с н
       http.get('*/api/patient/me', () => HttpResponse.json(me)),
       http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] })),
     )
-    window.location.hash = '/settings/hours'
+    window.location.hash = '/clinic/hours'
     const user = userEvent.setup()
     renderApp()
     const form = await screen.findByRole('form', { name: 'Часы клиники' })
     expect(within(form).queryByRole('button', { name: 'Сохранить часы клиники' })).not.toBeInTheDocument()
+    // «Клиника» — раздел меню, а не пункт «Настроек»: стрелки «назад» Telegram у неё нет
+    expect(back).toBeNull()
     await user.click(within(form).getByRole('button', { name: 'Суббота' }))
     expect(within(form).getByRole('button', { name: 'Сохранить часы клиники' })).toBeInTheDocument()
     expect(closing.on).toHaveBeenCalled()
 
-    act(() => back?.())
+    await user.click(await findSub('Кресла'))
     expect(confirm).toHaveBeenCalledWith('Есть несохранённые изменения — выйти без сохранения?')
     expect(screen.getByRole('form', { name: 'Часы клиники' })).toBeInTheDocument()
 
-    act(() => back?.())
-    expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
-    expect(closing.off).toHaveBeenCalled()
+    await user.click(await findSub('Кресла'))
+    expect(window.location.hash).toBe('#/clinic/chairs')
+    await vi.waitFor(() => expect(closing.off).toHaveBeenCalled())
   } finally {
     confirm.mockRestore()
     vi.unstubAllGlobals()

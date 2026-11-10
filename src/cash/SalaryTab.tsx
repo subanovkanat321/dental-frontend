@@ -88,7 +88,7 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
       <SalaryCalc rows={rows.filter((r) => !r.former)} />
       {list.isPending ? <Loading />
         : list.error ? <p className="error">{list.error.message}</p>
-          : rows.length === 0 ? <EmptyState fill title="Врачей пока нет">Добавьте врачей в «Настройки → Персонал» — здесь появится их зарплата.</EmptyState> : (
+          : rows.length === 0 ? <EmptyState fill title="Врачей пока нет">Добавьте врачей в «Клиника → Персонал» — здесь появится их зарплата.</EmptyState> : (
             <>
               {seesAll && rows.length > 1 && <p className="total-line" aria-label="Осталось выплатить">Осталось выплатить: <b className="num">{somText(due)}</b></p>}
               {/* Ключ с месяцем: сменили месяц — открытая форма выплаты не переносит сумму прошлого */}

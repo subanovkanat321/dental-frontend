@@ -98,7 +98,7 @@ test('админ: у вошедшего врача фото, имя и «о се
   expect(within(patients).queryByLabelText('Фото врача', { selector: 'input' })).not.toBeInTheDocument()
   expect(within(patients).getByRole('img', { name: 'Фото врача' })).toBeInTheDocument()
   expect(patients).toHaveTextContent('ортодонт, брекеты')
-  expect(patients).toHaveTextContent('Фото, имя и «о себе» врач заполняет сам в «Настройки → Изменить профиль».')
+  expect(patients).toHaveTextContent('Фото, имя и «о себе» врач заполняет сам — в «Моём профиле» (нажать на себя внизу меню).')
 
   const work = within(panel).getByRole('region', { name: 'Работа' })
   expect(within(work).getByRole('checkbox', { name: 'Работает (показывать пациентам)' })).toBeChecked()
@@ -443,12 +443,12 @@ test('«Телефон» в «Персонале»: сотруднику с Tele
   // Пояснение — в «?» у названия «Персонала»
   await user.click(screen.getByRole('button', { name: 'Подсказка: Персонал' }))
   expect(screen.getByText(/По этому номеру вы входите на сайте: номер и пароль. Первый раз или забыли пароль — код в Telegram или по SMS/)).toBeInTheDocument()
-  expect(screen.getByText(/сотрудник с Telegram указывает номер для входа сам: Настройки → Изменить профиль/)).toBeInTheDocument()
+  expect(screen.getByText(/сотрудник с Telegram указывает номер для входа сам — в «Моём профиле»/)).toBeInTheDocument()
 
   // Бермет (Telegram): номер виден, но кнопок нет — только подсказка
   const bermet = (await within(table).findByText('Бермет')).closest('tr')!
   expect(bermet).toHaveTextContent('+996 700 000 041')
-  expect(within(bermet).getByTitle('Номер для входа сотрудник указывает сам: Настройки → Изменить профиль.')).toBeInTheDocument()
+  expect(within(bermet).getByTitle('Номер для входа сотрудник указывает сам — в «Моём профиле» (нажать на себя внизу меню).')).toBeInTheDocument()
   expect(within(bermet).queryByRole('button', { name: 'Изменить' })).not.toBeInTheDocument()
   expect(within(bermet).queryByRole('button', { name: 'Убрать номер' })).not.toBeInTheDocument()
 

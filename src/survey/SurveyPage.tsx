@@ -3,14 +3,14 @@ import { useState } from 'react'
 
 import { api, unwrap } from '../api/client'
 import { EmptyState } from '../layout/EmptyState'
-import { openSettings } from '../lib/route'
+import { openMine } from '../lib/route'
 import { SubHeader } from '../settings/SubHeader'
 import { CURRENT_KEY } from './keys'
 import { SurveyForm } from './SurveyForm'
 import { Loading } from '../layout/Loading'
 
 /**
- * «Настройки → Отзыв о Tish»: опрос команды Tish, который ждёт ответа этого сотрудника (сюда ведёт
+ * «Помощь → Отзыв о Tish»: опрос команды Tish, который ждёт ответа этого сотрудника (сюда ведёт
  * приглашение на «Расписании» и кнопка бота). Опроса нет — спасибо и путь в техподдержку: идея
  * не должна ждать следующего опроса.
  */
@@ -27,7 +27,7 @@ export function SurveyPage({ onBack }: { onBack: () => void }) {
         <SurveyForm key={form.id} form={form} onDone={() => setAnswered(form)} />
       ) : (
         <EmptyState title="Сейчас опросов нет — спасибо, что заглянули!"
-          action={<button type="button" className="btn" onClick={() => openSettings('support')}>Написать в техподдержку</button>}>
+          action={<button type="button" className="btn" onClick={() => openMine('help', 'support')}>Написать в техподдержку</button>}>
           Есть идея или что-то мешает в работе — напишите команде Tish, мы читаем каждое сообщение.
         </EmptyState>
       )}

@@ -25,6 +25,9 @@ const PlatformPage = lazy(() => import('./platform/PlatformPage').then((m) => ({
 const SchedulePage = lazy(() => import('./schedule/SchedulePage').then((m) => ({ default: m.SchedulePage })))
 const StockPage = lazy(() => import('./stock/StockPage').then((m) => ({ default: m.StockPage })))
 const SettingsPage = lazy(() => import('./settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+// «Клиника», «Я» и «Помощь» — экраны тех же пунктов, тот же кусочек кода, что у «Настроек»
+const ClinicSection = lazy(() => import('./settings/SettingsPage').then((m) => ({ default: m.ClinicSection })))
+const MineSection = lazy(() => import('./settings/SettingsPage').then((m) => ({ default: m.MineSection })))
 const LearnPage = lazy(() => import('./learn/LearnPage').then((m) => ({ default: m.LearnPage })))
 // Самозапись пациента — тоже отдельный чанк: персонал его не скачивает
 const PatientApp = lazy(() => import('./patient/PatientApp'))
@@ -123,7 +126,10 @@ function Screens() {
       case 'cash': return <CashPage me={me.data} onOpenPatient={openPatient} />
       case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} />
       case 'learn': return <LearnPage />
-      case 'settings': return <SettingsPage me={me.data} initialTicket={l?.ticketId} />
+      case 'settings': return <SettingsPage me={me.data} />
+      case 'clinic': return <ClinicSection me={me.data} />
+      case 'me': return <MineSection me={me.data} page="me" />
+      case 'help': return <MineSection me={me.data} page="help" initialTicket={l?.ticketId} />
       case 'platform': return me.data.platform ? <PlatformPage me={me.data} /> : null
       case 'schedule': return l?.appointmentId || l?.bookPatientId
         ? <LinkedSchedule link={l} me={me.data} onNavigate={go} onOpenPatient={openPatient} />

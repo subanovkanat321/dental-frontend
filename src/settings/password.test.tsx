@@ -149,7 +149,7 @@ test('баннер в CRM «Чтобы входить без Telegram, зада�
   renderApp()
   const banner = await screen.findByRole('button', { name: /Чтобы входить без Telegram, задайте пароль/ })
   await user.click(banner)
-  expect(window.location.hash).toBe('#/settings/profile')
+  expect(window.location.hash).toBe('#/me/profile')
   expect(await screen.findByRole('region', { name: 'Телефон' })).toBeInTheDocument()
 })
 

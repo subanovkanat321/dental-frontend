@@ -118,7 +118,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
           {page && <BookingPage url={page} />}
           <label className="check"><input type="checkbox" checked={f.listed} onChange={flag('listed')} /> Показывать клинику в общем каталоге /clinics</label>
 
-          <p className="hint">Часы клиники и каждого врача — в «Настройки → Рабочее время».</p>
+          <p className="hint">Часы клиники и каждого врача — в «Клиника → Рабочее время».</p>
         </div>
 
         <div className="about-col">

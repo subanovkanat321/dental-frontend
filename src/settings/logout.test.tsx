@@ -40,14 +40,18 @@ afterEach(() => {
   window.Telegram = undefined
 })
 
-test('«Выйти»: сервер гасит сессию, после перезагрузки — подсказка про общий компьютер', async () => {
+test('«Выйти» — в блоке «Я» внизу меню: сервер гасит сессию, после перезагрузки — подсказка про общий компьютер', async () => {
   const calls = backend()
-  window.location.hash = '/settings'
+  window.location.hash = '/schedule'
   const reload = stubReload()
   const user = userEvent.setup()
   renderApp()
 
-  await user.click(await screen.findByRole('button', { name: 'Выйти' }))
+  // Отдельной кнопки «Выйти» в меню больше нет — она внутри «Я»
+  await screen.findByRole('navigation', { name: 'Разделы' })
+  expect(screen.queryByRole('button', { name: 'Выйти' })).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: /^Айгерим Садыкова, руководитель/ }))
+  await user.click(within(screen.getByRole('dialog', { name: 'Я: мои настройки' })).getByRole('button', { name: 'Выйти' }))
 
   await vi.waitFor(() => expect(reload).toHaveBeenCalled())
   expect(calls).toEqual([{ path: 'logout', header: '1' }])
@@ -87,10 +91,10 @@ test('Обычный экран входа (не после выхода) — б
   expect(screen.queryByText(/Вы вышли из Tish/)).not.toBeInTheDocument()
 })
 
-test('«Выйти на всех устройствах» — только после подтверждения; затем экран входа с подсказкой', async () => {
+test('«Выйти на всех устройствах» (внизу «Моего профиля») — только после подтверждения; затем экран входа с подсказкой', async () => {
   const calls = backend()
   window.history.replaceState(null, '', '/')
-  window.location.hash = '/settings'
+  window.location.hash = '/me/profile'
   const reload = stubReload()
   const user = userEvent.setup()
   renderApp()
@@ -112,7 +116,7 @@ test('«Выйти на всех устройствах» — только по�
 test('В Telegram: «Выйти» нет, «Выйти на всех устройствах» закрывает входы на сайт без перезагрузки', async () => {
   const calls = backend()
   window.Telegram = { WebApp: { initData: 'signed', ready() {}, expand() {} } } as unknown as typeof window.Telegram
-  window.location.hash = '/settings'
+  window.location.hash = '/me/profile'
   const reload = stubReload()
   const user = userEvent.setup()
   renderApp()
@@ -126,4 +130,9 @@ test('В Telegram: «Выйти» нет, «Выйти на всех устро�
   expect(calls).toEqual([{ path: 'logout-all', header: '1' }])
   expect(reload).not.toHaveBeenCalled()
   expect(screen.queryByRole('button', { name: 'Выйти' })).not.toBeInTheDocument()
+  // И в блоке «Я» в Telegram «Выйти» нет: выходить не из чего
+  await user.click(screen.getByRole('button', { name: /^Айгерим Садыкова, руководитель/ }))
+  const menu = screen.getByRole('dialog', { name: 'Я: мои настройки' })
+  expect(within(menu).getByRole('button', { name: 'Мой профиль' })).toBeInTheDocument()
+  expect(within(menu).queryByRole('button', { name: 'Выйти' })).not.toBeInTheDocument()
 })

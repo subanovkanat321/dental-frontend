@@ -95,7 +95,7 @@ test('не админ: в «Настройках» нет новостей дл�
   window.location.hash = '/settings'
   renderApp()
   expect(await screen.findByRole('button', { name: /Анкета пациента/ })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Рабочее время/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Памятки после процедур/ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Новости для пациентов/ })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Тариф и оплата/ })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Сотрудники/ })).not.toBeInTheDocument()

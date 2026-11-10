@@ -2005,8 +2005,8 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 .rare > .link { justify-self: start; }
 /* «💬 Помощь»: на компьютере — пункт внизу меню (над «Выйти»), на телефоне — круглая кнопка над нижним
    меню на главных экранах; чат — поверх (панель приёма его перекрывает — так и задумано) */
-.help-nav { margin-top: auto; }
-.help-nav + .link-out { margin-top: 0; }
+.help-nav, .sidebar-toggle { margin-top: auto; }
+.help-nav + .sidebar-toggle { margin-top: 0; }
 .help-fab { position: fixed; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 12; display: grid; place-items: center;
   width: 44px; height: 44px; padding: 0; border: 1px solid var(--separator); border-radius: 50%; background: var(--card); color: var(--text);
   font: inherit; font-size: 1.15rem; box-shadow: var(--panel-shadow); cursor: pointer; }
@@ -2480,4 +2480,47 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
   .sheet-check { margin-left: 4px; }
   .sub-sheet .nav-group { margin: 10px 12px 2px; }
   .sub-sheet-tip { margin: 8px 6px 0; }
+}
+
+/* Блок «Я» внизу меню (компьютер): аватар с инициалами, имя и роль; по нажатию — меню над ним.
+   Меню «Я» и «Помощи» — карточкой у кнопки (телефон — листом снизу, как «Ещё») */
+.me-block { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 6px; padding: 10px 8px 4px; border: 0; border-top: 1px solid var(--separator);
+  border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.me-block:hover .me-text strong, .me-block.active .me-text strong { color: var(--link); }
+.me-block:hover .me-avatar, .me-block.active .me-avatar { box-shadow: 0 0 0 2px var(--accent); }
+.me-block:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-md); }
+.me-text { display: grid; min-width: 0; line-height: 1.3; }
+.me-text strong { font-weight: 600; font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me-text span { font-size: .8rem; color: var(--hint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me-avatar { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--accent-soft); color: var(--link);
+  font-size: .8rem; font-weight: 600; letter-spacing: .02em; object-fit: cover; }
+.me-avatar.lg { width: 40px; height: 40px; font-size: .95rem; }
+@media (min-width: 761px) {
+  .shell.narrow .me-block { justify-content: center; padding: 10px 0 4px; }
+  .shell.narrow .me-text { display: none; }
+}
+.pop-menu { position: fixed; z-index: 60; width: 270px; max-height: calc(100vh - 16px); overflow-y: auto; display: grid; gap: 1px; padding: 6px;
+  background: var(--card); border: 1px solid var(--separator); border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(15, 42, 48, .06), 0 8px 24px rgba(15, 42, 48, .12); }
+.menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--r-md); background: none;
+  color: var(--text); font: inherit; font-size: .93rem; text-align: left; cursor: pointer; }
+.menu-item:focus-visible { background: var(--sunken); outline: none; }
+/* Наведение — только мышью: на телефоне «залипшее» наведение после нажатия выглядело бы выбранным пунктом */
+@media (hover: hover) { .menu-item:hover { background: var(--sunken); } }
+.menu-ico { display: inline-grid; place-items: center; color: var(--hint); }
+.menu-text { display: grid; min-width: 0; line-height: 1.3; flex: 1; }
+.menu-hint { font-size: .8rem; color: var(--hint); }
+.menu-out { margin-left: auto; color: var(--hint); }
+.menu-sep { margin: 4px 6px; border: 0; border-top: 1px solid var(--separator); }
+.menu-who { display: grid; gap: 1px; min-width: 0; margin: 0; line-height: 1.3; }
+.menu-who strong { font-weight: 600; }
+@media (max-width: 760px) {
+  .menu-sheet .menu-item { min-height: 48px; padding: 0 12px; font-size: 1rem; }
+  .menu-sheet .menu-ico .icon { width: 22px; height: 22px; }
+  .menu-sheet .sub-sheet-head { margin-bottom: 8px; }
+  .more-who-btn { display: flex; align-items: center; gap: 12px; width: 100%; margin-bottom: 4px; padding: 8px 12px 12px; border: 0; border-bottom: 1px solid var(--separator);
+    border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+  .more-who-btn .more-who { margin: 0; flex: 1; min-width: 0; }
+  .more-who-btn .chev { color: var(--hint); font-size: 1.3rem; }
+  .more-who-btn.active strong { color: var(--link); }
 }

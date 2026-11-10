@@ -175,7 +175,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
 /** У услуги нет памятки — блока «Уход дома» нет; где её поставить. */
 function NoMemo() {
   return (
-    <p className="hint small">У услуги нет памятки — <a href="#/settings/services">выбрать в «Услугах и ценах»</a>.</p>
+    <p className="hint small">У услуги нет памятки — <a href="#/clinic/services">выбрать в «Услугах и ценах»</a>.</p>
   )
 }
 

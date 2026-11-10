@@ -95,6 +95,6 @@ test('не админ пункта не видит', async () => {
   backend(SETTINGS, { ...me, admin: false })
   renderApp()
   openItem('')
-  expect(await screen.findByRole('button', { name: /Рабочее время/ })).toBeInTheDocument()
+  expect(await screen.findByRole('button', { name: /Памятки после процедур/ })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Текст напоминания/ })).not.toBeInTheDocument()
 })

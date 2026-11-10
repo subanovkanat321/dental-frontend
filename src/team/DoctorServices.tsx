@@ -78,7 +78,7 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
           ))}
           <p className="hint small">Новую услугу клиники сюда нужно будет отметить отдельно.</p>
         </div>
-      ) : <EmptyState compact title="Услуг пока нет">Добавьте их в «Настройки → Услуги и цены».</EmptyState>)}
+      ) : <EmptyState compact title="Услуг пока нет">Добавьте их в «Клиника → Услуги и цены».</EmptyState>)}
       <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label="Сохранить услуги" savedText="Услуги врача сохранены"
         error={problem || (save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message))} onSave={submit} />
     </section>

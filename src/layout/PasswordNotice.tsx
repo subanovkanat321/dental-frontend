@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, unwrap } from '../api/client'
-import { openSettings } from '../lib/route'
+import { openMine } from '../lib/route'
 
 const HIDDEN = 'crm.password-notice.hidden'
 
@@ -37,8 +37,8 @@ export function PasswordNotice() {
     <div className="notices" role="status">
       <div className="notice tone-wait">
         <span className="notice-ico" aria-hidden="true">i</span>
-        <button type="button" className="notice-text" onClick={() => openSettings('profile')}>
-          Чтобы входить без Telegram, задайте пароль в Настройках.{' '}
+        <button type="button" className="notice-text" onClick={() => openMine('me', 'profile')}>
+          Чтобы входить без Telegram, задайте пароль в «Моём профиле».{' '}
           <span className="notice-open" aria-hidden="true">Задать ›</span>
         </button>
         <button type="button" className="notice-close" aria-label="Скрыть до конца сеанса" title="Скрыть до конца сеанса" onClick={hide}>✕</button>

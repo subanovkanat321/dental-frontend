@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { openSettings } from '../lib/route'
+import { openMine } from '../lib/route'
 import { SubHeader } from '../settings/SubHeader'
 import { DoctorPanel, NewDoctorPanel } from './DoctorPanel'
 import { StaffTab } from './StaffTab'
@@ -77,7 +77,7 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: 
         {tab === 'doctors' && (
           <>
             <StaffTab me={me} doctors={doctors} loading={Boolean(me.admin) && admin.isPending} error={admin.error} opened={opened}
-              onOpen={(id) => (typeof id === 'number' && id === me.doctorId && !initialOpened ? openSettings('profile') : setOpened(id))} />
+              onOpen={(id) => (typeof id === 'number' && id === me.doctorId && !initialOpened ? openMine('me', 'profile') : setOpened(id))} />
             {me.doctorId == null && (me.admin || me.reception) && <section className="card-block"><AddSelf /></section>}
           </>
         )}

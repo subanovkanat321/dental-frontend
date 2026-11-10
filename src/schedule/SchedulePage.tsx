@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Mous
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { SetupChecklist } from '../clinic/SetupChecklist'
-import { openSettings, type Page } from '../lib/route'
+import { openClinic, type Page } from '../lib/route'
 import { addDays, dateOf, dayMinutes, dayTitle, emptyDayText, minutesOf, minutesOfTime, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
@@ -573,8 +573,8 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
             onNew={(day, minutes) => setSide({ kind: 'new', slot: { doctorId: weekDoctor, date: day, minutes } })}
             onOpenDay={(day) => { setDate(day); setMode('day') }} />
         ) : doctors.length === 0 ? (
-          <EmptyState title="В клинике пока нет врачей" action={<button type="button" className="btn primary" onClick={() => openSettings('doctors')}>Добавить врача</button>}>
-            Добавьте врачей в «Настройки → Персонал» — появится расписание.
+          <EmptyState title="В клинике пока нет врачей" action={<button type="button" className="btn primary" onClick={() => openClinic('staff')}>Добавить врача</button>}>
+            Добавьте врачей в «Клиника → Персонал» — появится расписание.
           </EmptyState>
         ) : (
           <div className="grid-wrap">

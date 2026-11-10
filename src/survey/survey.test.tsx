@@ -44,11 +44,11 @@ test('приглашение над «Расписанием»: «Позже» �
   expect(invite).not.toBeInTheDocument()
 })
 
-test('приглашение открывает «Настройки → Отзыв о Tish»', async () => {
+test('приглашение открывает «Помощь → Отзыв о Tish»', async () => {
   staffBackend({ survey })
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /просит вашего мнения/ }))
-  expect(window.location.hash).toBe('#/settings/survey')
+  expect(window.location.hash).toBe('#/help/survey')
   expect(await screen.findByRole('form', { name: 'Как вам Tish?' })).toBeInTheDocument()
 })
 
@@ -121,5 +121,5 @@ test('опросов нет — спасибо и путь в техподдер
 })
 
 test('кнопка бота «Пройти опрос» (?screen=survey) открывает пункт «Настроек»', () => {
-  expect(readDeepLink('?screen=survey')).toEqual({ page: 'settings', tab: 'survey' })
+  expect(readDeepLink('?screen=survey')).toEqual({ page: 'help', tab: 'survey' })
 })

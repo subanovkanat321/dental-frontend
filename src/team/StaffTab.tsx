@@ -89,7 +89,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
       {/* Как читать список — в «?» у названия, а не абзацем на четыре строки */}
       <HeadTools>
         <HelpHint title="Персонал">Весь персонал клиники: роль — рядом с именем. «Telegram привязан» — человек вошёл и получает уведомления;
-          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT} Сотруднику без Telegram номер меняете вы; сотрудник с Telegram указывает номер для входа сам: Настройки → Изменить профиль.</>}</HelpHint>
+          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT} Сотруднику без Telegram номер меняете вы; сотрудник с Telegram указывает номер для входа сам — в «Моём профиле» (нажать на себя внизу меню).</>}</HelpHint>
       </HeadTools>
       <section className="card-block">
         {admin && (
@@ -163,7 +163,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                         Отменить</button>
                     )}
                     {r.kind === 'doctor' && admin && <button type="button" className="btn small ghost" onClick={() => onOpen(r.doctor.id!)}>{r.doctor.id === me.doctorId ? 'Мой профиль' : 'Открыть'}</button>}
-                    {/* Вход по номеру без SMS: админ даёт временный пароль (себе — нет: свой меняют в «Настройках») */}
+                    {/* Вход по номеру без SMS: админ даёт временный пароль (себе — нет: свой меняют в «Моём профиле») */}
                     {admin && r.kind === 'member' && r.member.phoneOnly && !r.member.me && <TemporaryPassword telegramId={r.member.telegramId!} name={r.name} />}
                     {admin && r.kind === 'doctor' && r.doctor.phoneOnly && r.doctor.id !== me.doctorId && <TemporaryPassword telegramId={r.doctor.telegramId!} name={r.name} />}
                   </td>

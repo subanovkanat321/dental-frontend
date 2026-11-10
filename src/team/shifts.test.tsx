@@ -7,7 +7,7 @@ import type { Schemas } from '../api/client'
 import { createQueryClient } from '../api/queryClient'
 import { readDeepLink } from '../lib/deepLink'
 import { addDays, todayIn, weekStart } from '../lib/time'
-import { me, renderApp, openItem } from '../test/fixtures'
+import { findSub, me, openItem, querySub, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { OnDuty } from './OnDuty'
 
@@ -147,8 +147,8 @@ test('«На смене» в сводке дня: имена и время ко�
   expect(screen.queryByRole('region', { name: 'На смене' })).not.toBeInTheDocument()
 })
 
-test('кнопка утренней сводки «Открыть график смен» (?screen=shifts) открывает пункт «Настроек»', () => {
-  expect(readDeepLink('?screen=shifts')).toEqual({ page: 'settings', tab: 'shifts' })
+test('кнопка утренней сводки «Открыть график смен» (?screen=shifts) открывает «Клиника → Рабочее время»', () => {
+  expect(readDeepLink('?screen=shifts')).toEqual({ page: 'clinic', tab: 'shifts' })
 })
 
 test('одни врачи — график пуст: объяснение и кнопки «Часы работы врачей» и «Пригласить…»', async () => {
@@ -161,7 +161,7 @@ test('одни врачи — график пуст: объяснение и к�
   expect(screen.getByText(/Врачи здесь не показываются/)).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Пригласить регистратуру или ассистента' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Часы работы врачей' }))
-  expect(window.location.hash).toBe('#/settings/hours')
+  expect(window.location.hash).toBe('#/clinic/hours')
 })
 
 test('«Рабочее время» — один пункт: вкладки «Врачи», «Смены персонала», «Перерывы и выходные»; старые адреса открывают свою вкладку', async () => {
@@ -169,14 +169,14 @@ test('«Рабочее время» — один пункт: вкладки «В
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/shifts', () => HttpResponse.json(schedule(true, 111))),
   )
-  window.location.hash = '/settings'
+  window.location.hash = '/clinic'
   renderApp()
-  expect(await screen.findByRole('button', { name: /Рабочее время/ })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /График смен/ })).not.toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: /Рабочее время/ }))
+  expect(await findSub('Рабочее время')).toBeInTheDocument()
+  expect(querySub(/График смен/)).not.toBeInTheDocument()
+  await userEvent.click(await findSub('Рабочее время'))
   expect(await screen.findByRole('tab', { name: 'Врачи' })).toHaveAttribute('aria-selected', 'true')
   // «Перерывы и выходные» — больше не отдельный пункт списка, а вкладка
-  expect(screen.queryByRole('button', { name: /Перерывы и выходные/ })).not.toBeInTheDocument()
+  expect(querySub(/Перерывы и выходные/)).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole('tab', { name: 'Смены персонала' }))
   expect(await screen.findByRole('table', { name: 'График смен на неделю' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('tab', { name: 'Перерывы и выходные' }))
