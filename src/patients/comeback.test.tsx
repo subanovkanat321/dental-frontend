@@ -191,7 +191,7 @@ test('«Позвать снова» → «Отменили и не записа�
     }),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const summary = await screen.findByRole('region', { name: 'Деньги на столе' })
   const group = within(summary).getByRole('button', { name: /Отменили и не записались/ })
   expect(group).toHaveTextContent('1')
@@ -230,7 +230,7 @@ test('«Отменили»: «Записать» — «Новая запись»
       { id: 10, name: 'Пломба', durationMinutes: 30, active: true }])),
   )
   renderApp()
-  await userEvent.click(await screen.findByRole('tab', { name: 'Позвать снова' }))
+  await userEvent.click(await findSub('Позвать снова'))
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   await userEvent.click(within(list).getByRole('button', { name: 'Записать' }))
   const form = await screen.findByRole('complementary', { name: 'Новая запись' })
