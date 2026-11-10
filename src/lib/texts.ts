@@ -44,8 +44,27 @@ export function smsUrl(phone: string, text: string): string {
   return `sms:${phone ? `+${phone}` : ''}?&body=${encodeURIComponent(text)}`
 }
 
-export function whatsappUrl(phone: string, text: string): string {
-  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`
+export function whatsappUrl(phone: string, text: string, windows: boolean = isWindows()): string {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(windows ? withoutEmoji(text) : text)}`
+}
+
+function isWindows(): boolean {
+  return typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent)
+}
+
+/**
+ * WhatsApp на компьютере с Windows принимает текст из ссылки wa.me с ошибкой: эмодзи (символы вне основной
+ * таблицы Юникода, 😊 👇 🙏) приходят знаком «�». Там — без них; пробелы, оставшиеся вместо эмодзи, — одним.
+ * На телефонах и Mac эмодзи доходят как есть.
+ */
+export function withoutEmoji(text: string): string {
+  return text
+    .replace(/[\u{10000}-\u{10FFFF}]/gu, '')
+    .replace(/\uFE0F|\u200D|\u20E3/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/ +([.,!?])/g, '$1')
+    .replace(/[ \t]+\n/g, '\n')
+    .trim()
 }
 
 function signed(text: string, signature?: string | null): string {
