@@ -48,7 +48,7 @@ export function whatsappUrl(phone: string, text: string, windows: boolean = isWi
   return `https://wa.me/${phone}?text=${encodeURIComponent(windows ? withoutEmoji(text) : text)}`
 }
 
-function isWindows(): boolean {
+export function isWindows(): boolean {
   return typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent)
 }
 

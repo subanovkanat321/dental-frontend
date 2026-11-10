@@ -36,6 +36,9 @@ const LOWER_ROW = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 3
  * зуба, положения зуба мудрости. three.js грузится отдельным чанком только здесь (import() в эффекте) —
  * основной бандл CRM не растёт. Без WebGL — плоская схема.
  */
+/** Подписи челюстей над формулой (ru/ky). */
+const JAWS: Record<'ru' | 'ky', [string, string]> = { ru: ['Верхняя челюсть', 'Нижняя челюсть'], ky: ['Үстүңкү жаак', 'Астыңкы жаак'] }
+
 export function Atlas({ initialView, initialMode, initialTooth, lang: initialLang = 'ru', onClose, fullscreen = false }: AtlasProps) {
   const startTooth = initialTooth != null && isFdi(initialTooth) ? initialTooth : null
   const [view, setView] = useState<AtlasView>(startTooth != null ? 'jaw' : initialView ?? 'tooth')
@@ -229,11 +232,18 @@ export function Atlas({ initialView, initialMode, initialTooth, lang: initialLan
         )}
         {view === 'jaw' && (
           <div className="atlas-fdi">
+            {/* Зубная формула как у стоматологов: верх 18…11 | 21…28, низ 48…41 | 31…38 (правая сторона пациента —
+                слева). Половины челюсти — группами по 8: на телефоне каждая своей строкой, а не «7 + 6 + 3» */}
             {[UPPER_ROW, LOWER_ROW].map((row, r) => (
-              <div key={r} className="atlas-fdi-row">
-                {row.map((code, i) => (
-                  <button key={code} type="button" className={[fdi === code ? 'active' : '', i === 8 ? 'mid' : ''].join(' ').trim()} aria-pressed={fdi === code}
-                    onClick={() => setFdi(fdi === code ? null : code)}>{code}</button>
+              <div key={r} className="atlas-fdi-row" role="group" aria-label={JAWS[lang][r]}>
+                <span className="atlas-fdi-jaw" aria-hidden="true">{JAWS[lang][r]}</span>
+                {[row.slice(0, 8), row.slice(8)].map((half, h) => (
+                  <div key={h} className={h === 1 ? 'atlas-fdi-half mid' : 'atlas-fdi-half'}>
+                    {half.map((code) => (
+                      <button key={code} type="button" className={fdi === code ? 'active' : undefined} aria-pressed={fdi === code}
+                        onClick={() => setFdi(fdi === code ? null : code)}>{code}</button>
+                    ))}
+                  </div>
                 ))}
               </div>
             ))}

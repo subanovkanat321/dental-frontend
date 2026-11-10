@@ -407,3 +407,14 @@ test('«Скачать шаблон» в окне загрузки: Excel и CSV
   await waitFor(() => expect(click).toHaveBeenCalledTimes(2))
   expect(box).toHaveTextContent('«Название, Телефон, Адрес, Ссылка, Город»')
 })
+
+test('Windows: текст с эмодзи — в буфер обмена, чат WhatsApp открывается пустым (из ссылки эмодзи приходят «�»)', async () => {
+  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130')
+  const user = await openTab()
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  await user.click(within(card).getByRole('button', { name: 'Только сообщение' }))
+  expect(open).toHaveBeenCalledWith('https://wa.me/996555000402', '_blank', 'noopener')
+  await waitFor(async () => expect(await navigator.clipboard.readText()).toBe('Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/about'))
+  expect(within(card).getByRole('status')).toHaveTextContent('Ctrl+V')
+})
