@@ -34,7 +34,7 @@ export function crownOuter(x: number, y: number, z: number): number {
   return smax(smax(body, (y - top) * 0.55, 0.06), -y - 0.3, 0.05)
 }
 
-function molarBody(x: number, y: number, z: number): number {
+export function molarBody(x: number, y: number, z: number): number {
   const t = Math.min(1, Math.max(0, y / 0.7))
   const bulgeB = 1 + 0.16 * Math.sin(Math.PI * Math.min(1, t * 1.6)) - 0.1 * t * t
   const bulgeL = 1 + 0.14 * Math.sin(Math.PI * Math.min(1, t * 1.1))
@@ -64,15 +64,19 @@ export function lowerMolarTop(x: number, z: number): number {
   top += hill(x, z, 0.34, 0.12, 0.15, 0.12, 0.12) // дистальный (пятый)
   top += hill(x, z, -0.25, -0.2, 0.27, 0.17, 0.15) // мезиально-язычный (язычные выше)
   top += hill(x, z, 0.17, -0.2, 0.25, 0.17, 0.15) // дистально-язычный
-  // Центральная фиссура зигзагом и боковые — к щеке и к языку
-  top -= groove(x, z, -0.42, 0.0, -0.12, 0.02, 0.11, 0.035)
-  top -= groove(x, z, -0.12, 0.02, 0.18, -0.01, 0.11, 0.035)
-  top -= groove(x, z, 0.18, -0.01, 0.42, 0.02, 0.1, 0.035)
-  top -= groove(x, z, -0.12, 0.02, -0.1, 0.46, 0.08, 0.03)
-  top -= groove(x, z, 0.18, -0.01, 0.24, 0.42, 0.07, 0.03)
-  top -= groove(x, z, -0.02, 0.0, -0.03, -0.44, 0.08, 0.03)
+  top -= lowerMolarGrooves(x, z)
   top += hill(x, z, -0.44, 0, 0.09, 0.06, 0.28) + hill(x, z, 0.44, 0, 0.08, 0.06, 0.28) // краевые валики
   return top
+}
+
+/** Глубина фиссур нижнего моляра: центральная зигзагом и боковые — к щеке и к языку (герметик заливает их). */
+export function lowerMolarGrooves(x: number, z: number): number {
+  return groove(x, z, -0.42, 0.0, -0.12, 0.02, 0.11, 0.035)
+    + groove(x, z, -0.12, 0.02, 0.18, -0.01, 0.11, 0.035)
+    + groove(x, z, 0.18, -0.01, 0.42, 0.02, 0.1, 0.035)
+    + groove(x, z, -0.12, 0.02, -0.1, 0.46, 0.08, 0.03)
+    + groove(x, z, 0.18, -0.01, 0.24, 0.42, 0.07, 0.03)
+    + groove(x, z, -0.02, 0.0, -0.03, -0.44, 0.08, 0.03)
 }
 
 export function rootOuter(x: number, y: number, z: number): number {
@@ -98,19 +102,19 @@ export function canals(x: number, y: number, z: number): number {
 }
 
 /** Толщина эмали: у бугров ~1,2 мм, к шейке сходит на нет. */
-const enamelThickness = (y: number) => 0.13 * smoothstep(-0.02, 0.38, y)
+export const enamelThickness = (y: number) => 0.13 * smoothstep(-0.02, 0.38, y)
 /** Цемент — тонкий слой только на корне. */
-const cementThickness = (y: number) => 0.045 * (1 - smoothstep(-0.12, 0, y))
+export const cementThickness = (y: number) => 0.045 * (1 - smoothstep(-0.12, 0, y))
 
-const boneBox = (x: number, y: number, z: number) => sdRoundBox(x, y + 1.25, z, 1.12, 1.03, 0.76, 0.1)
-const gumBox = (x: number, y: number, z: number) => sdRoundBox(x, y + 0.2, z, 1.15, 0.42, 0.79, 0.1)
+export const boneBox = (x: number, y: number, z: number) => sdRoundBox(x, y + 1.25, z, 1.12, 1.03, 0.76, 0.1)
+export const gumBox = (x: number, y: number, z: number) => sdRoundBox(x, y + 0.2, z, 1.15, 0.42, 0.79, 0.1)
 
 /**
  * Насколько далеко от шейки зуба (по горизонтали): десна у зуба выше (десневой край), дальше — ниже.
  * Гладкая формула овала вокруг шейки, а не поле зуба: то за пределами коробки зуба грубое, и на десне
  * появлялись «ступеньки».
  */
-const neckCollar = (x: number, z: number) => (Math.hypot(x / 0.56, z / 0.47) - 1) * 0.5
+export const neckCollar = (x: number, z: number) => (Math.hypot(x / 0.56, z / 0.47) - 1) * 0.5
 
 /** Убрана четверть: x > CUT_X и z > 0. */
 export const cut = (x: number, z: number) => Math.min(x - CUT_X, z)
@@ -126,7 +130,7 @@ export function cariesBlob(stage: number, x: number, y: number, z: number): numb
 /** Доступ к каналам (лечение): окно сверху через коронку в камеру пульпы. */
 const access = (x: number, y: number, z: number) => sdRoundBox(x - 0.03, y - 0.78, z, 0.31, 0.5, 0.21, 0.08)
 /** Полость под пломбу: от фиссуры до дентина, над пульпой. */
-const prep = (x: number, y: number, z: number) => sdRoundBox(x - 0.04, y - 0.82, z, 0.3, 0.3, 0.23, 0.07)
+export const prep = (x: number, y: number, z: number) => sdRoundBox(x - 0.04, y - 0.82, z, 0.3, 0.3, 0.23, 0.07)
 /** Отверстие в кости под имплант и под абатмент в десне. */
 const implantHole = (x: number, y: number, z: number) => sdCapsule(x, y, z, 0, -0.05, 0, 0, -1.24, 0, 0.2)
 const abutmentHole = (x: number, y: number, z: number) => sdCapsule(x, y, z, 0, -0.4, 0, 0, 0.42, 0, 0.15)
@@ -250,18 +254,18 @@ export function createToothBuilder(step = TOOTH_STEP) {
 
 const TOOTH_MIN = [-0.78, -2.1, -0.66] as const
 const TOOTH_MAX = [0.78, 1.06, 0.66] as const
-function inToothBox(x: number, y: number, z: number): boolean {
+export function inToothBox(x: number, y: number, z: number): boolean {
   return x > TOOTH_MIN[0] && x < TOOTH_MAX[0] && y > TOOTH_MIN[1] && y < TOOTH_MAX[1] && z > TOOTH_MIN[2] && z < TOOTH_MAX[2]
 }
 /** Вне коробки зуба формулы не считаем: расстояние до коробки — оценка снизу, знак верный. */
-function toothBoxDistance(x: number, y: number, z: number): number {
+export function toothBoxDistance(x: number, y: number, z: number): number {
   const dx = Math.max(TOOTH_MIN[0] - x, 0, x - TOOTH_MAX[0])
   const dy = Math.max(TOOTH_MIN[1] - y, 0, y - TOOTH_MAX[1])
   const dz = Math.max(TOOTH_MIN[2] - z, 0, z - TOOTH_MAX[2])
   return Math.hypot(dx, dy, dz) + 0.05
 }
 
-const toothT = (x: number, y: number, z: number) => smin(crownOuter(x, y, z), rootOuter(x, y, z), 0.12)
+export const toothT = (x: number, y: number, z: number) => smin(crownOuter(x, y, z), rootOuter(x, y, z), 0.12)
 const toothDT = (x: number, y: number, z: number) => smin(crownOuter(x, y, z) + enamelThickness(y), rootOuter(x, y, z) + cementThickness(y), 0.1)
 
 /**

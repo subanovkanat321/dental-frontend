@@ -211,7 +211,7 @@ function highlight(m: Materials, part: PartId | null, time: number): void {
 }
 
 /** Сосуды и нерв: артерия, вена и нерв идут из кости через верхушку корня по каналу в камеру пульпы. */
-function buildVessels(m: Materials, bag: THREE.BufferGeometry[]): THREE.Group {
+export function buildVessels(m: Materials, bag: THREE.BufferGeometry[]): THREE.Group {
   const group = new THREE.Group()
   const inner = new THREE.Group()
   group.add(inner)

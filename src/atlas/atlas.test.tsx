@@ -20,7 +20,7 @@ vi.mock('./engine/engine', () => ({
     engine.cb = cb
     engine.api = {
       setView: vi.fn(), setMode: vi.fn(), setCariesStage: vi.fn(), setPart: vi.fn(), setTooth: vi.fn(), setWisdom: vi.fn(),
-      setRoots: vi.fn(), setAnchors: vi.fn(), replay: vi.fn(), resetView: vi.fn(), setCameraPose: vi.fn(), dispose: vi.fn(),
+      setRoots: vi.fn(), setAnchors: vi.fn(), replay: vi.fn(), resetView: vi.fn(), setCameraPose: vi.fn(), setCustom: vi.fn(), dispose: vi.fn(),
     }
     return engine.api
   },
