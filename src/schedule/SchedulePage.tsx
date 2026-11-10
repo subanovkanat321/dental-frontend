@@ -21,12 +21,15 @@ import { useMedia } from '../lib/useMedia'
 import { DoctorPicker } from './DoctorPicker'
 import { DoctorOrderDialog } from './DoctorOrderDialog'
 import { orderDoctors, useDoctorOrder } from './doctorOrder'
+import { useHiddenDoctors, visibleDoctors } from './doctorVisibility'
+import { OffDaysHint } from './OffDaysHint'
 import './doctorChips.css'
 import { colorOf as doctorColor, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
 import { apptSpan, fromYesterday, offSpans, slotsHoursText, untilTomorrow, workSpans } from './workSpans'
 import { statusOf } from './status'
 import { PAD, PX, SHORT, useFitToWindow, useNowMinutes } from './gridScale'
+import { useToolbarFit } from './useToolbarFit'
 import { useWeekAppointments } from './week/useWeek'
 import { WeekGrid } from './week/WeekGrid'
 import { useEarnings } from '../earnings/earnings'
@@ -55,6 +58,9 @@ function isNarrow(): boolean {
 }
 
 type Mode = 'day' | 'week' | 'month'
+
+/** До стольких врачей на компьютере — ряд чипов; больше — одна кнопка «Врачи: 4 из 10 ▾» (DoctorPicker). */
+const MAX_CHIPS = 6
 
 /** «День», «Неделя» или «Месяц» — запоминается на устройстве (только слово, не личные данные). */
 function useMode(): [Mode, (mode: Mode) => void] {
@@ -168,7 +174,12 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       // приватный режим
     }
   }
-  const shown = view === 'all' ? doctors : doctors.filter((d) => d.id === view)
+  // Кто колонкой в «Все врачи»: без скрытых в окне «Врачи в расписании» (на этом устройстве) и без тех,
+  // у кого сегодня выходной и нет приёмов (ниже, когда загружены часы). Один врач — всегда он, даже скрытый
+  const [hiddenDoctors, setHiddenDoctors] = useHiddenDoctors()
+  const visible = visibleDoctors(doctors, hiddenDoctors)
+  // «показать» у подсказки «Выходной: …» — до смены дня: запоминаем день, на который нажали
+  const [offShownFor, setOffShownFor] = useState<string | null>(null)
   const narrow = useNarrow()
   // Один врач на телефоне — «День» списком (лента дней, свободные окна, «Принять сейчас»)
   // Телефон — всегда «День» списком (как в прежнем приложении): один врач или «Все врачи» вместе
@@ -177,15 +188,16 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const [mode, setMode] = useMode()
   // «Месяц» — и на компьютере, и на телефоне (на телефоне ячейка — число дня и число записей); врач — выбранный или все
   const monthMode = mode === 'month' && doctors.length > 0 && !narrow
-  const dayList = narrow && !monthMode && shown.length > 0 ? shown : null
   const desktop = useMedia('(min-width: 1024px)')
-  const weekMode = mode === 'week' && desktop && !dayList && doctors.length > 0
+  // Телефон — «День» списком (dayList ниже), «Недели» там нет
+  const weekMode = mode === 'week' && desktop && !(narrow && !monthMode) && doctors.length > 0
   const weekDoctor = typeof view === 'number' && doctors.some((d) => d.id === view) ? view
     : (doctors.find((d) => d.id === me.doctorId) ?? doctors[0])?.id ?? null
   const monday = weekStart(date)
   const week = useWeekAppointments(monday, weekDoctor, weekMode)
   const month = date.slice(0, 7)
-  const monthData = useMonthData(month, shown.map((d) => d.id!), monthMode)
+  // «Месяц» всех врачей считает записи всех, как заголовок дня, — скрытие касается только колонок «Дня»
+  const monthData = useMonthData(month, (view === 'all' ? doctors : doctors.filter((d) => d.id === view)).map((d) => d.id!), monthMode)
   const monthCount = monthData.appointments.filter((a) => a.status !== 'CANCELLED' && a.startAt && dateOf(a.startAt).startsWith(month)).length
   /** Другой месяц: сегодняшний день, если он в этом месяце, иначе 1-е число. */
   const goMonth = (m: string) => setDate(today.startsWith(m) ? today : `${m}-01`)
@@ -210,9 +222,26 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       staleTime: 60_000,
       // Свободные окна в сетке меняются вместе с приёмами — обновлять так же
       refetchInterval: REFRESH_MS,
-      enabled: !dayList && !weekMode && !monthMode,
+      // Телефон: «Все врачи» тоже — по ним видно, у кого выходной (кэш общий с «Днём» списком, лишних запросов нет)
+      enabled: !weekMode && !monthMode && (!narrow || view === 'all'),
     })),
   })
+
+  // Выходной врача — колонки нет: /api/slots говорит «не рабочий день», и приёмов у врача нет (с приёмом
+  // колонка остаётся). Пока часы или приёмы не загружены — колонка есть: лучше лишняя, чем пропавший приём
+  const dayOff = (d: (typeof doctors)[number]) => {
+    const i = doctors.indexOf(d)
+    const q = days[i]
+    return slots[i]?.data?.workingDay === false && q?.isSuccess === true && !(q.data ?? []).some((a) => a.status !== 'CANCELLED')
+  }
+  const offToday = view === 'all' && !weekMode && !monthMode ? visible.filter(dayOff) : []
+  // Выходной у всех — колонки остаются, как раньше («Выходной» в каждой): пустая сетка ничего не объяснит
+  const offHidden = offToday.length < visible.length && offShownFor !== date ? offToday : []
+  const shown = view === 'all' ? visible.filter((d) => !offHidden.includes(d)) : doctors.filter((d) => d.id === view)
+  const dayList = narrow && !monthMode && shown.length > 0 ? shown : null
+  // «показано 4 из 10» — когда колонок «Все врачи» меньше, чем врачей (скрыты или выходной)
+  const partial = view === 'all' && shown.length < doctors.length ? `показано ${shown.length} из ${doctors.length}` : null
+  const offHint = <OffDaysHint doctors={offHidden} onShow={() => setOffShownFor(date)} />
 
   // Приёмы этого дня; вчерашние через полночь — только в сетке (их считает вчерашний день)
   const withCarried = days.flatMap((q) => q.data ?? [])
@@ -254,6 +283,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const firstTop = all.length ? PAD + (Math.min(...all.map((a) => minutesOf(a.startAt!))) - from) * PX : null
   // Сетка — до низа окна, где бы она ни начиналась (напоминания, строка врачей сверху)
   useFitToWindow(grid)
+  const toolbar = useRef<HTMLElement>(null)
   // «Неделя» или «Месяц» — сетки дня нет: вернулись на «День» — сетка новая (прокрутка с 00:00), снова к «сейчас»
   const gridShown = !weekMode && !monthMode
   useEffect(() => {
@@ -334,6 +364,8 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   }
   const canSummary = wide && !dayList && !weekMode && !monthMode && doctors.length > 0
   const summary = canSummary && !side && summaryOpen
+  // Шапка перемеряется, когда меняется её содержимое (ширину окна, зум и размер текста ловит сам хук)
+  useToolbarFit(toolbar, [date, all.length, doctors.length, partial, summary, canSummary, Boolean(side), weekMode, monthMode, bookable.length, Boolean(dayList), Boolean(medical)].join('|'))
   const nowOrNull = date === today ? nowMinutes : null
   const free = shown.map((d) => {
     const sl = slots[doctors.indexOf(d)]?.data
@@ -350,10 +382,10 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
   const hover = useApptHover(me, (id) => doctors.find((d) => d.id === id)?.fullName ?? '')
 
   // Чьё расписание. Телефон: переключателя «День | Месяц» нет — месяц открывается нажатием на дату (лист снизу)
-  const doctorSwitch = doctors.length > 1 && (narrow || doctors.length > 8 ? (
-    // Телефон (и очень много врачей на компьютере): один выпадающий список вместо ряда
+  const doctorSwitch = doctors.length > 1 && (narrow || doctors.length > MAX_CHIPS ? (
+    // Телефон (и больше 6 врачей на компьютере — ряд чипов уже не помещается): одна кнопка со списком
     <DoctorPicker me={me} doctors={doctors} view={weekMode && weekDoctor != null ? weekDoctor : view} date={date} onChange={setView}
-      colorDoctors={clinicDoctors} onOrder={() => setOrdering(true)} />
+      colorDoctors={clinicDoctors} onOrder={() => setOrdering(true)} shownCount={shown.length} compact={!narrow} />
   ) : (
     // Компьютер: чипы с тем же цветным кружком, что у колонки врача, — видно, кто где
     <div className="doctor-chips" role="group" aria-label="Чьё расписание">
@@ -368,7 +400,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
         </button>
       ))}
-      <button type="button" className="doctor-chip order" title="Порядок врачей" aria-label="Порядок врачей…" onClick={() => setOrdering(true)}>⇅</button>
+      <button type="button" className="doctor-chip order" title="Врачи в расписании: кого показывать и в каком порядке" aria-label="Врачи в расписании…" onClick={() => setOrdering(true)}>⇅</button>
     </div>
   ))
 
@@ -386,7 +418,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
       <section className="schedule-main">
         {/* Телефон: без заголовка дня — день выбирают в ленте (там же месяц и «📅 другой день») */}
         {!dayList && (
-          <header className="toolbar">
+          <header ref={toolbar} className="toolbar schedule-toolbar">
             <div className="day-switch">
               <button type="button" className="btn ghost" aria-label={monthMode ? 'Предыдущий месяц' : weekMode ? 'Предыдущая неделя' : 'Предыдущий день'}
                 onClick={() => (monthMode ? goMonth(addMonths(month, -1)) : setDate(addDays(date, weekMode ? -7 : -1)))}>‹</button>
@@ -421,6 +453,7 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 <span className="hint">
                   {date === today ? 'сегодня · ' : ''}{all.length ? `Записей: ${all.length}` : 'Записей нет'}
                   {doctors.length > 1 ? ` · врачей ${doctors.length}` : ''}
+                  {partial && <span className="shown-of"> · {partial}</span>}
                 </span>
               </div>
             )}
@@ -431,19 +464,23 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 : date !== today && <button type="button" className="btn" onClick={() => setDate(today)}>Сегодня</button>}
             <ViewModes mode={monthMode ? 'month' : weekMode ? 'week' : 'day'} week={desktop} onChange={setMode} />
 
-            {bookable.length > 0 && <button type="button" className="btn primary push" onClick={newHere}>＋ Новая запись</button>}
-            {bookable.length > 0 && date === today && !monthMode && (
-              <button type="button" className="btn" onClick={walkInHere}>Принять сейчас</button>
-            )}
-            {/* Открытую сводку закрывает «×» в ней самой — в шапке кнопка только чтобы вернуть */}
-            {/* Маленькая кнопка в той же строке, что и действия: отдельной строкой она съедала высоту над сеткой.
-                На ноутбуке поуже подпись прячется — остаётся значок (имя кнопки для экранного диктора то же) */}
-            {canSummary && !summary && (
-              <button type="button" className="btn small toolbar-summary" onClick={toggleSummary} aria-label="Сводка дня"
-                title="Сводка дня: кто следующий, что требует внимания, свободное время">
-                <Icon name="summary" /><span className="toolbar-summary-label">Сводка дня</span>
-              </button>
-            )}
+            {/* Действия — одной неразрывной группой справа. Тесно (крупный текст, зум, узкое окно) — useToolbarFit
+                сначала оставляет у «Принять сейчас» только ⚡, потом у «Сводки дня» — значок; группа строки не делит */}
+            <div className="toolbar-actions push">
+              {bookable.length > 0 && <button type="button" className="btn primary" onClick={newHere}>＋ Новая запись</button>}
+              {bookable.length > 0 && date === today && !monthMode && (
+                <button type="button" className="btn toolbar-walkin" onClick={walkInHere} aria-label="Принять сейчас" title="Принять сейчас (без записи)">
+                  <span className="toolbar-walkin-icon" aria-hidden="true">⚡</span><span className="toolbar-walkin-label">Принять сейчас</span>
+                </button>
+              )}
+              {/* Открытую сводку закрывает «×» в ней самой — в шапке кнопка только чтобы вернуть */}
+              {canSummary && !summary && (
+                <button type="button" className="btn small toolbar-summary" onClick={toggleSummary} aria-label="Сводка дня"
+                  title="Сводка дня: кто следующий, что требует внимания, свободное время">
+                  <Icon name="summary" /><span className="toolbar-summary-label">Сводка дня</span>
+                </button>
+              )}
+            </div>
           </header>
         )}
 
@@ -472,21 +509,25 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
           // плашки справа): каждое отдельной строкой съедало полэкрана над расписанием
           <div className="schedule-bar">
             {doctorSwitch}
+            {offHint}
             {!summary && !weekMode && !monthMode && (
               <div className="today-strip" role="group" aria-label="Требует внимания">
                 {requests.length > 0 && (
-                  <button type="button" className="stat s-request" onClick={firstOf(requests)}>
-                    <b>{requests.length}</b> {requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить
+                  <button type="button" className="stat s-request" onClick={firstOf(requests)}
+                    aria-label={`${requests.length} ${requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить`} title="Заявки из бота — подтвердить">
+                    <b>{requests.length}</b> {requests.length === 1 ? 'заявка' : 'заявки'}
                   </button>
                 )}
                 {waiting.length > 0 && (
-                  <button type="button" className="stat s-wait" onClick={firstOf(waiting)}>
-                    <b>{waiting.length}</b> ждём ответа на напоминание
+                  <button type="button" className="stat s-wait" onClick={firstOf(waiting)}
+                    aria-label={`${waiting.length} ждём ответа на напоминание`} title="Ждём ответа на напоминание">
+                    <b>{waiting.length}</b> ждут ответа
                   </button>
                 )}
                 {(toPay.data?.length ?? 0) > 0 && (
-                  <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}>
-                    <b>{toPay.data!.length}</b> ждут оплаты на кассе
+                  <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}
+                    aria-label={`${toPay.data!.length} ждут оплаты на кассе`} title="Ждут оплаты на кассе">
+                    <b>{toPay.data!.length}</b> к оплате
                   </button>
                 )}
                 {revenue.data && (
@@ -496,8 +537,9 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
                 )}
                 {earnings.data && <EarningsChip e={earnings.data} onOpen={openEarnings} />}
                 {low > 0 && (
-                  <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}>
-                    <b>{low}</b> на складе заканчивается
+                  <button type="button" className="stat s-wait" onClick={() => onNavigate?.('stock')}
+                    aria-label={`${low} на складе заканчивается`} title="На складе заканчивается">
+                    <b>{low}</b> мало на складе
                   </button>
                 )}
                 {!requests.length && !waiting.length && !toPay.data?.length && !low && (
@@ -508,21 +550,23 @@ export function SchedulePage({ me, bookPatient = null, onBookingShown, onNavigat
             {/* Отменённые в сетке не рисуем, но и не прячем молча: «Отменено: N ›» — ссылкой в конце строки над
                 сеткой (под сеткой строка уходила за край экрана и её не замечали); раскрытый список — строкой ниже */}
             {!weekMode && !monthMode && shown.length > 0 && (
-              <CancelledList inline items={loaded.filter((a) => a.status === 'CANCELLED' && shown.some((d) => d.id === a.doctorId))}
+              <CancelledList inline items={loaded.filter((a) => a.status === 'CANCELLED' && (view === 'all' || shown.some((d) => d.id === a.doctorId)))}
                 selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
-                doctorName={shown.length > 1 ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
+                doctorName={view === 'all' ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
             )}
           </div>
         )}
         {ordering && (
-          <DoctorOrderDialog doctors={doctors} myDoctorId={me.doctorId} colorDoctors={clinicDoctors}
-            onSave={(ids) => { setDoctorOrder(ids); setOrdering(false) }}
-            onReset={() => { setDoctorOrder(null); setOrdering(false) }}
+          <DoctorOrderDialog doctors={doctors} hidden={hiddenDoctors} myDoctorId={me.doctorId} colorDoctors={clinicDoctors}
+            onSave={(ids, hidden) => { setDoctorOrder(ids); setHiddenDoctors(hidden); setOrdering(false) }}
+            onReset={() => { setDoctorOrder(null); setHiddenDoctors([]); setOrdering(false) }}
             onClose={() => setOrdering(false)} />
         )}
 
         {dayList ? (
           <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '', color: colorOf(d) }))} date={date} onDate={setDate} selectedId={selected?.id}
+            all={view === 'all' && doctors.length > 1}
+            doctorsNote={partial || offHidden.length ? <>{partial && <span className="shown-of">{partial.replace(/^./, (c) => c.toUpperCase())}</span>}{partial && offHidden.length ? ' · ' : ''}{offHint}</> : undefined}
             onNewHere={bookable.length > 0 ? newHere : undefined}
             onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
             onNew={(doctorId, minutes, walkIn) => setSide({ kind: 'new', slot: { doctorId, date: walkIn ? today : date, minutes }, walkIn })} />

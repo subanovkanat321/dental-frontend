@@ -2324,11 +2324,17 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
    1) дата, вид, действия и маленькая «Сводка дня»; 2) врачи слева, полоса «Сегодня» справа, «Отменено: N» в конце.
    Телефон (DayList и его шапка) не трогаем — всё под min-width: 761px */
 .toolbar-summary .icon { width: 16px; height: 16px; }
-@media (min-width: 761px) and (max-width: 1439px) {
-  /* Ноутбук: у «Сводки дня» только значок — иначе действия переносятся второй строкой */
-  .toolbar-summary { width: 36px; min-height: 36px; padding: 0; }
-  .toolbar-summary-label { display: none; }
-}
+/* Действия шапки — одной неразрывной группой справа (SchedulePage). Тесно — schedule/useToolbarFit.ts ставит
+   data-fit: 1 — у «Принять сейчас» только ⚡, 2 — и у «Сводки дня» только значок. Порогов в px нет: при крупном
+   тексте и зуме они другие, поэтому меряем, а не угадываем */
+.toolbar-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; }
+.toolbar-actions > .btn { flex: none; white-space: nowrap; }
+.toolbar-walkin-icon { display: none; }
+.schedule-toolbar[data-fit="1"] .toolbar-walkin, .schedule-toolbar[data-fit="2"] .toolbar-walkin { width: 40px; padding: 0; }
+.schedule-toolbar[data-fit="1"] .toolbar-walkin-icon, .schedule-toolbar[data-fit="2"] .toolbar-walkin-icon { display: inline; }
+.schedule-toolbar[data-fit="1"] .toolbar-walkin-label, .schedule-toolbar[data-fit="2"] .toolbar-walkin-label { display: none; }
+.schedule-toolbar[data-fit="2"] .toolbar-summary { width: 36px; padding: 0; }
+.schedule-toolbar[data-fit="2"] .toolbar-summary-label { display: none; }
 @media (min-width: 761px) {
   .toolbar-summary { min-height: 36px; color: var(--hint); }
   .toolbar-summary:hover:not(:disabled) { color: var(--text); }
@@ -2339,7 +2345,10 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .schedule-bar .doctor-chip { min-height: 32px; padding: 2px 12px 2px 3px; gap: 6px; font-size: .88rem; }
   .schedule-bar .doctor-chip .avatar { width: 26px; height: 26px; font-size: .68rem; }
   .schedule-bar .doctor-chip.order { padding: 2px 10px; }
-  .schedule-bar .today-strip { flex: 0 1 auto; gap: 6px; margin: 0 0 0 auto; }
+  /* Плашки — справа в строке врачей (подписи короткие: «3 ждут ответа», полный текст — в title). Не влезают
+     (крупный текст + зум на ноутбуке) — плашки и «Отменено» целиком строкой ниже, одним рядом справа. Перенос
+     внутри полосы пробовали: выходил столбик плашек и «Отменено» одно третьей строкой — хуже */
+  .schedule-bar .today-strip { flex: 0 1 auto; justify-content: flex-end; gap: 6px; margin: 0 0 0 auto; }
   .schedule-bar .stat { align-items: center; min-height: 32px; padding: 3px 10px; font-size: .85rem; }
   .schedule-bar .stat b { font-size: 1rem; }
   /* «Отменено: N ›» — маленькой ссылкой в конце строки; раскрытый список — отдельной строкой во всю ширину */
@@ -2349,6 +2358,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .cancelled.inline .cancelled-list { flex: 1 0 100%; }
   /* Полосы «Сегодня» нет (сводка открыта, она там) — ссылка всё равно в правом конце строки */
   .schedule-bar .doctor-chips + .cancelled.inline .cancelled-toggle { margin-left: auto; }
+  .schedule-bar:not(:has(.today-strip)) .cancelled.inline .cancelled-toggle { margin-left: auto; }
   /* Шапка колонки врача — две строки: аватар поменьше и имя; ниже мелко «специальность · часы · 🪑 кресло» */
   /* min-height по содержимому: у шапки overflow: hidden, и сетка с max-height иначе сжимает строку шапок
      (у «Недели» подпись «нет записей» обрезалась) — прежние 50px держали её только числом */

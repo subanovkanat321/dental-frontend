@@ -25,11 +25,11 @@ function Avatar({ doctor, color }: { doctor: Doctor; color: string }) {
 }
 
 /**
- * Чьё расписание (телефон, много врачей): кнопка с выбранным врачом, нажать — список врачей
+ * Чьё расписание (телефон; компьютер — больше 6 врачей): кнопка с выбранным врачом, нажать — список врачей
  * карточками: фото или инициалы, имя, «я», сколько записей в выбранный день, заявки из бота;
  * «Все врачи» — последним. Свой список вместо системного: у системного — только текст.
  */
-export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors = doctors, onOrder }: {
+export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors = doctors, onOrder, shownCount, compact = false }: {
   me: Me
   /** Врачи в порядке на экране (schedule/doctorOrder.ts) */
   doctors: Doctor[]
@@ -38,8 +38,12 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
   onChange: (view: View) => void
   /** Врачи клиники в исходном порядке — по ним цвет врача (colorOf), он не зависит от порядка */
   colorDoctors?: Doctor[]
-  /** «Порядок врачей…» — окно с ↑ ↓ */
+  /** «Врачи в расписании…» — окно с галочками и ↑ ↓ */
   onOrder?: () => void
+  /** Сколько врачей колонками в «Все врачи» (скрытые и выходные — не в счёт): меньше всех — «Врачи: 4 из 10» */
+  shownCount?: number
+  /** Компьютер, больше 6 врачей: кнопка в строке над сеткой вместо ряда чипов */
+  compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
@@ -74,14 +78,18 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
     setOpen(false)
   }
   const nameOf = (d: Doctor) => `${d.fullName ?? ''}${d.id === me.doctorId ? ' (я)' : ''}`
+  // Записей — по всем врачам (как в заголовке дня), а «из скольких» — сколько колонок на экране
+  const partial = shownCount != null && shownCount < doctors.length
+  const allLabel = partial ? `Врачи: ${shownCount} из ${doctors.length}` : 'Все врачи'
 
   return (
-    <div ref={root} className="doctor-picker">
-      <button type="button" className="pick-current" aria-haspopup="listbox" aria-expanded={open} aria-label={`Чьё расписание: ${current ? nameOf(current) : 'Все врачи'}`}
+    <div ref={root} className={compact ? 'doctor-picker compact' : 'doctor-picker'}>
+      <button type="button" className="pick-current" aria-haspopup="listbox" aria-expanded={open}
+        aria-label={`Чьё расписание: ${current ? nameOf(current) : `Все врачи${partial ? `, показано ${shownCount} из ${doctors.length}` : ''}`}`}
         onClick={() => setOpen(!open)}>
         {current ? <Avatar doctor={current} color={colorOf(colorDoctors, current.id)} /> : <span className="pick-avatar all" aria-hidden="true">👥</span>}
         <span className="pick-text">
-          <strong>{current ? nameOf(current) : 'Все врачи'}</strong>
+          <strong>{current ? nameOf(current) : allLabel}</strong>
           <span className="hint">{appointmentsText(current ? booked(index) : total)} {day}</span>
         </span>
         <span className="pick-caret" aria-hidden="true">{open ? '▴' : '▾'}</span>
@@ -106,14 +114,14 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
             <span className="pick-avatar all" aria-hidden="true">👥</span>
             <span className="pick-text">
               <strong>Все врачи</strong>
-              <span className="hint">{appointmentsText(total)} {day}</span>
+              <span className="hint">{appointmentsText(total)} {day}{partial ? ` · показано ${shownCount} из ${doctors.length}` : ''}</span>
             </span>
             <span className="pick-check" aria-hidden="true">{view === 'all' ? '✓' : ''}</span>
           </li>
         </ul>
         {onOrder && (
           <button type="button" className="pick-order" onClick={() => { setOpen(false); onOrder() }}>
-            <span aria-hidden="true">⇅</span> Порядок врачей…
+            <span aria-hidden="true">⇅</span> Врачи в расписании…
           </button>
         )}
         </div>

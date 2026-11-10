@@ -177,6 +177,8 @@ describe('сетка «Дня»', () => {
     screenOf('desktop')
     backend()
     await openTomorrow()
+    // У Дастана выходной без приёмов — колонки нет, пока не нажать «показать»
+    await userEvent.click(screen.getByRole('button', { name: 'Показать колонки: Дастан' }))
     const heads = document.querySelectorAll('.grid-head')
     expect(heads[0]!.querySelector('img.avatar.photo')).toHaveAttribute('src', '/api/doctors/1/photo')
     expect(heads[0]!.querySelector('.grid-head-spec')).toHaveTextContent(/^Ортодонт, брекеты$/)
@@ -190,6 +192,7 @@ describe('сетка «Дня»', () => {
     screenOf('desktop')
     backend()
     await openTomorrow()
+    await userEvent.click(screen.getByRole('button', { name: 'Показать колонки: Дастан' }))
     const own = screen.getByRole('group', { name: 'Айгерим Садыкова' })
     // До 10:00 и после 17:00 — нерабочее (сетка 10–17, приём внутри: хвостов нет), перерыв — отдельный блок
     expect(own.querySelector('.grid-break')).toHaveTextContent('🍽 Обед')

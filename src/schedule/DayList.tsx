@@ -2,7 +2,7 @@ import { ApptBadges } from './ApptBadges'
 import { contactPhone } from '../lib/guardian'
 import { CancelledList } from './CancelledList'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useReminderNotSent } from './useReminderNotSent'
@@ -57,7 +57,7 @@ function shortName(name: string): string {
  * Один врач — его день; «Все врачи» — все приёмы вместе, у строки имя врача, свободные окна
  * каждого врача отдельно. У приёма — быстрое напоминание (Telegram или WhatsApp). Завтра — «Готово X из Y».
  */
-export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, selectedId }: {
+export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, selectedId, all, doctorsNote }: {
   me: Me
   doctors: Doctor[]
   date: string
@@ -67,9 +67,13 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   /** «＋ Новая запись» на этот день (врач и время — в форме). */
   onNewHere?: () => void
   selectedId?: number
+  /** «Все врачи», даже если колонка одна (остальные скрыты или выходной): шапка врача у колонки остаётся */
+  all?: boolean
+  /** «Показано 4 из 10 · Выходной: Айгерим · показать» (SchedulePage) */
+  doctorsNote?: ReactNode
 }) {
   const today = todayIn()
-  const many = doctors.length > 1
+  const many = all ?? doctors.length > 1
   // Свайпы по строке — телефон (тач или узкий экран); у «Все врачи» колонки сами листаются вбок — без свайпов
   const touch = useMedia(SWIPE_MEDIA)
   const swipe = touch && !many
@@ -163,7 +167,8 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
             onClick={() => onNew(walkInDoctor.id, nowMinutes5(), true)}>{onNewHere ? '⚡ Без записи' : '🚶 Принять сейчас (без записи)'}</button>
         )}
       </div>
-      {note && <p className="hint day-note">{note}</p>}
+      {/* Одной строкой: «Не работают: … · Показано 6 из 10 · Выходной: … показать» */}
+      {(note || doctorsNote) && <p className="hint day-note">{note}{note && doctorsNote ? ' · ' : ''}{doctorsNote}</p>}
       {pending ? <Loading />
         : failed ? <p className="error">{failed.message}</p>
           : items.length === 0 ? (

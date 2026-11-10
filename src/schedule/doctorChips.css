@@ -10,15 +10,41 @@
 .doctor-chip[aria-pressed=true] { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 70%, var(--card)); color: var(--link); font-weight: 600; }
 .doctor-chip .avatar { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; font-size: .72rem; font-weight: 600; flex: none; }
 .doctor-chip .avatar.all { background: var(--sunken); color: var(--text); font-size: .9rem; }
-/* «Порядок врачей…» — последним в ряду чипов, только значок */
+/* «Врачи в расписании…» — последним в ряду чипов, только значок */
 .doctor-chip.order { padding: 3px 12px; color: var(--hint); font-size: 1rem; }
 
-/* Окно «Порядок врачей» (schedule/DoctorOrderDialog.tsx): строка — номер, кружок, имя, ↑ ↓ */
+/* Окно «Врачи в расписании» (schedule/DoctorOrderDialog.tsx): строка — галочка, кружок, имя, ↑ ↓ */
 .doctor-order h2 { margin: 0 0 4px; font: 600 1.15rem var(--display); }
 .doctor-order .hint { margin: 0; font-size: .88rem; }
 .doctor-order-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .doctor-order-list li { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 4px 4px 4px 8px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); }
-.doctor-order-n { flex: none; width: 1.4em; color: var(--hint); text-align: right; }
+.doctor-order-show { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.doctor-order-show input { flex: none; width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.doctor-order-show input:disabled { cursor: not-allowed; }
+/* Скрытый врач — приглушён, но ↑ ↓ работают: порядок у него тоже есть (для чипов и выбора врача) */
+.doctor-order-list li.off { background: var(--sunken); }
+.doctor-order-list li.off .avatar { opacity: .45; }
+.doctor-order-list li.off .doctor-order-name { color: var(--hint); }
+/* Много врачей — список прокручивается внутри окна, кнопки «Сохранить» всегда видны */
+.doctor-order-list { max-height: min(60vh, 560px); overflow-y: auto; }
+
+/* «Выходной: Айгерим, Дастан · показать» (schedule/OffDaysHint.tsx) — мелко, в строке врачей или под датой */
+.off-days-hint { color: var(--hint); font-size: .85rem; }
+.schedule-bar .off-days-hint { white-space: nowrap; }
+.day-note .off-days-hint, .day-note .shown-of { font-size: inherit; }
+.off-days-show { padding: 0 2px; border: 0; background: none; color: var(--link); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.off-days-show:hover { color: var(--text); }
+.shown-of { color: var(--hint); font-size: .85rem; white-space: nowrap; }
+
+/* Компьютер, больше 6 врачей: вместо ряда чипов — одна кнопка «Врачи: 4 из 10 ▾» (DoctorPicker compact) */
+.doctor-picker.compact { flex: none; margin: 0; }
+.doctor-picker.compact .pick-current { width: auto; min-height: 36px; gap: 8px; padding: 3px 12px 3px 4px; border-radius: 999px; }
+.doctor-picker.compact .pick-avatar { width: 28px; height: 28px; font-size: .72rem; }
+.doctor-picker.compact .pick-avatar.all { font-size: .9rem; }
+.doctor-picker.compact .pick-current .pick-text { display: flex; align-items: baseline; gap: 8px; }
+.doctor-picker.compact .pick-current .pick-text strong { font-size: .92rem; }
+.doctor-picker.compact .pick-current .pick-text .hint { font-size: .82rem; white-space: nowrap; }
+.doctor-picker.compact .pick-list { right: auto; width: 360px; max-height: 70vh; }
 .doctor-order-list .avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: #fff; font-size: .78rem; font-weight: 600; flex: none; }
 .doctor-order-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doctor-order-list .btn { flex: none; width: 44px; min-height: 44px; padding: 0; font-size: 1.15rem; }
