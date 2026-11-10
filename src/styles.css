@@ -1544,7 +1544,7 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .head-tools > .help-hint { margin-left: -6px; align-self: flex-end; margin-bottom: 4px; } /* на уровне крупного названия */
 .head-tools > .segments > button { padding-inline: 12px; white-space: nowrap; }
 .page-head .push, .page-head .head-end { margin-left: auto; }
-@media (min-width: 761px) { .page-head > .search { flex: 0 1 280px; min-width: 160px; } }
+@media (min-width: 761px) { .page-head > .search { flex: 1 1 160px; min-width: 160px; max-width: 280px; } }
 @media (max-width: 760px) {
   /* Телефон: заголовок, общий выбор раздела («Вся клиника»), потом инструменты подраздела — переносами, без пустых строк */
   .page-head > .head-tools > * { order: 2; }
