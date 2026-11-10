@@ -4,14 +4,21 @@ import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import './about.css'
 
 /*
- * Сайт-визитка для клиник (/about): одна длинная страница, как рекламный ролик v4 (текст —
- * e2e/promo/v4/VOICE.md бэкенда). С ней идём в клиники и даём ссылку в Instagram. Каждая часть —
- * «слайд» на весь экран компьютера; на телефоне — своей высоты. Картинки — кадры записи ролика на
- * вымышленной клинике «Демо» (public/about). Контакты владелец дал для публикации.
+ * Сайт-визитка для клиник (/about): одна длинная страница. Первый экран — текст рекламного ролика v6
+ * (docs/marketing/video/promo-v6/README.md бэкенда) и сам ролик 4:5; ниже — подробно по частям, как
+ * в ролике v4. С ней идём в клиники и даём ссылку в Instagram и в первом сообщении клинике. Каждая
+ * часть — «слайд» на весь экран компьютера; на телефоне — своей высоты. Картинки — кадры записи ролика
+ * на вымышленной клинике «Демо» (public/about). Контакты владелец дал для публикации.
  */
 
 const IMG = `${import.meta.env.BASE_URL}about/`
 const JOIN = '/join#form'
+/*
+ * Ролик v6 4:5 и его обложку отдаёт бэкенд без входа (Materials.PUBLIC → каталог MARKETING_DIR):
+ * mp4 не лежит во фронте, новый ролик — поменять путь только в бэкенде.
+ */
+const PROMO_VIDEO = '/web/materials/public/promo.mp4'
+const PROMO_POSTER = '/web/materials/public/promo.png'
 const ABOUT_CONTACTS = {
   instagram: TISH_INSTAGRAM,
   telegram: 'https://t.me/veratti_16',
@@ -34,9 +41,10 @@ const PARTS: Part[] = [
   {
     id: 'booking', nav: 'Запись', eyebrow: 'Запись и напоминания',
     title: <>Пациент записывается сам</>,
-    text: <>В Telegram или на сайте — ночью, в выходные, когда удобно ему. Видит только свободное время: двойной записи не будет.
+    text: <>В Telegram или на сайте, на русском или кыргызском — ночью, в выходные, когда удобно ему. Видит только свободное время: двойной записи не будет.
       Мама записывает ребёнка со своего Telegram.</>,
     points: [
+      'ИИ-помощник в Telegram ответит на вопрос и запишет — даже ночью',
       'Накануне бот сам напоминает о приёме',
       'Пациент нажимает «Приду» — и вы это видите',
       'Нет Telegram — напоминание уходит в WhatsApp одной кнопкой',
@@ -143,9 +151,19 @@ const PARTS: Part[] = [
   },
 ]
 
-/** Номера-«слайды» для точек справа: герой, идея, части, ролик, контакты. */
+/** Первый экран — по тексту ролика v6: что получает клиника, пятью пунктами. */
+const HERO_POINTS: ReactNode[] = [
+  <><strong>Самозапись 24/7</strong> на русском и кыргызском. Напоминания уходят сами — пустых кресел меньше</>,
+  <><strong>ИИ-помощник</strong> отвечает пациентам в Telegram и записывает их, заполняет медкарту по вашей диктовке
+    и отправляет пациенту понятный отчёт после приёма</>,
+  <><strong>Расписание, медкарта, касса, зарплата и склад</strong> — в одном приложении. С телефона и компьютера, без установки</>,
+  <><strong>Перенесём ваши данные</strong> из другой программы или Excel — ничего не потеряется</>,
+  <>Tish <strong>помогает зарабатывать больше</strong>. Чего-то не хватает — наши разработчики <strong>сделают под вас</strong></>,
+]
+
+/** Номера-«слайды» для точек справа: герой с роликом, идея, части, для кого, контакты. */
 const NAV: [string, string][] = [['start', 'Tish'], ['idea', 'Главное'], ...PARTS.map((p): [string, string] => [p.id, p.nav]),
-  ['scale', 'Для кого'], ['video', 'Ролик'], ['contacts', 'Контакты']]
+  ['scale', 'Для кого'], ['contacts', 'Контакты']]
 
 function Img({ shot, eager, className }: { shot: Shot; eager?: boolean; className?: string }) {
   return <img className={className} src={shot.src} alt={shot.alt} width={shot.w} height={shot.h}
@@ -165,6 +183,41 @@ function VisualView({ v }: { v: Visual }) {
     case 'phones': return <div className="vis vis-phones">{v.phones.map((p) => <Phone key={p.src} shot={p} />)}</div>
     case 'stack': return <div className="vis vis-stack"><Desktop shot={v.main} /><Desktop shot={v.second} /></div>
   }
+}
+
+/**
+ * Ролик 4:5 на первом экране. preload=none: мегабайты качаются, только когда нажали «смотреть»;
+ * субтитры вшиты — можно без звука. Каталог материалов не подключён (обложка не открылась) — вместо
+ * пустой рамки показываем кадры приложения, как раньше.
+ */
+function HeroVideo() {
+  const [missing, setMissing] = useState(false)
+  useEffect(() => {
+    if (typeof Image === 'undefined') return
+    const probe = new Image()
+    probe.onerror = () => setMissing(true)
+    probe.src = PROMO_POSTER
+    return () => { probe.onerror = null }
+  }, [])
+  if (missing) {
+    return (
+      <div className="vis vis-duo hero-vis" data-reveal>
+        <Desktop shot={desk('day', 'Расписание клиники на компьютере: день всех врачей, следующий пациент и «Требует внимания»')} eager />
+        <Phone shot={phone('phone-day', 'Свой день врача в телефоне')} eager />
+      </div>
+    )
+  }
+  return (
+    <figure id="video" className="hero-video" data-reveal>
+      <div className="video-frame">
+        <video controls preload="none" playsInline poster={PROMO_POSTER} width={1080} height={1350}
+          aria-label="Ролик о Tish на минуту">
+          <source src={PROMO_VIDEO} type="video/mp4" />
+        </video>
+      </div>
+      <figcaption className="about-note">Ролик на минуту. Клиника, врачи и пациенты в ролике и на картинках — вымышленные.</figcaption>
+    </figure>
+  )
 }
 
 /** Появление при прокрутке и текущий «слайд» для точек; без IntersectionObserver (тесты, старый браузер) всё видно сразу. */
@@ -219,20 +272,19 @@ export function About() {
         <section id="start" className="about-slide about-hero" aria-labelledby="about-title">
           <div className="about-inner hero-grid">
             <div className="hero-copy" data-reveal>
-              <p className="about-eyebrow">CRM для стоматологий Кыргызстана</p>
-              <h1 id="about-title">Tish — вся клиника <span className="about-hl">в одном приложении</span></h1>
-              <p className="about-lead">На компьютере у регистратуры и в телефоне у врача. На русском и кыргызском.</p>
+              <p className="about-eyebrow">Программа для стоматологий Кыргызстана</p>
+              <h1 id="about-title">Сколько пациентов вы теряете, потому что <span className="about-hl">не успели ответить?</span></h1>
+              <p className="about-lead"><strong>Tish — программа для стоматологии, которая работает за вас круглосуточно.</strong> Для
+                частного врача и для большой клиники.</p>
+              <ul className="about-points hero-points">{HERO_POINTS.map((x, i) => <li key={i}>{x}</li>)}</ul>
               <div className="about-ctas">
                 <a className="about-btn primary" href={JOIN}>Попробовать бесплатно</a>
                 <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
                   <span aria-hidden="true">💬</span> Написать в WhatsApp</a>
               </div>
-              <p className="about-note">Без предоплаты — настроим за час</p>
+              <p className="about-note">Попробуйте бесплатно — без предоплаты, настроим за час</p>
             </div>
-            <div className="vis vis-duo hero-vis" data-reveal>
-              <Desktop shot={desk('day', 'Расписание клиники на компьютере: день всех врачей, следующий пациент и «Требует внимания»')} eager />
-              <Phone shot={phone('phone-day', 'Свой день врача в телефоне')} eager />
-            </div>
+            <HeroVideo />
           </div>
           <a className="about-scroll" href="#idea" aria-label="Листайте вниз"><span aria-hidden="true">↓</span></a>
         </section>
@@ -269,21 +321,9 @@ export function About() {
               <div className="about-card"><span className="ico" aria-hidden="true">👩‍⚕️</span><strong>Частный врач</strong><span>одно кресло — запись, медкарта и касса в телефоне</span></div>
               <div className="about-card"><span className="ico" aria-hidden="true">🏥</span><strong>Большая клиника</strong><span>десятки сотрудников — у каждого свои права</span></div>
             </div>
-            <p className="about-lead">Начать можно сразу. Не хватает чего-то для вашей клиники? <strong>Просто скажите — наши разработчики сделают
-              это для вас.</strong> Многое из того, что вы видите здесь, появилось по просьбам врачей.</p>
-          </div>
-        </section>
-
-        <section id="video" className="about-slide about-video" aria-labelledby="about-video">
-          <div className="about-inner" data-reveal>
-            <h2 id="about-video">Всё это — в ролике на 4 минуты</h2>
-            <div className="video-frame">
-              {/* preload=none: 7 МБ скачиваются, только когда нажали «смотреть»; субтитры вшиты — можно без звука */}
-              <video controls preload="none" playsInline poster={`${IMG}video-poster.webp`} width={1280} height={720}>
-                <source src={`${IMG}tish-promo.mp4`} type="video/mp4" />
-              </video>
-            </div>
-            <p className="about-note">Клиника, врачи и пациенты в ролике и на картинках — вымышленные.</p>
+            <p className="about-lead">Начать можно сразу: работаете в другой программе или в Excel — <strong>перенесём пациентов и записи</strong>.
+              Не хватает чего-то для вашей клиники? <strong>Просто скажите — наши разработчики сделают это для вас.</strong> Многое из того,
+              что вы видите здесь, появилось по просьбам врачей.</p>
           </div>
         </section>
 

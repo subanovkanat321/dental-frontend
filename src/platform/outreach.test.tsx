@@ -418,3 +418,29 @@ test('Windows: текст с эмодзи — в буфер обмена, чат
   await waitFor(async () => expect(await navigator.clipboard.readText()).toBe('Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/about'))
   expect(within(card).getByRole('status')).toHaveTextContent('Ctrl+V')
 })
+
+test('шаблон: свой текст → «Вернуть текст по умолчанию» шлёт пустое значение, сервер отдаёт текст по умолчанию', async () => {
+  const DEFAULT = 'Здравствуйте, {клиника}! Если интересно — просто ответьте «+»'
+  let template: Schemas['ClinicOutreachTemplate'] = { text: 'Свой, {клиника}!', custom: true, defaultText: DEFAULT }
+  const puts: (string | undefined)[] = []
+  server.use(
+    http.get('*/api/platform/outreach', () => HttpResponse.json({ ...outreach(leads), template })),
+    http.put('*/api/platform/outreach/template', async ({ request }) => {
+      const { text } = await request.json() as { text?: string }
+      puts.push(text)
+      template = text ? { text, custom: true, defaultText: DEFAULT } : { text: DEFAULT, custom: false, defaultText: DEFAULT }
+      return HttpResponse.json(template)
+    }),
+  )
+  const user = await openTab()
+  const block = screen.getByRole('region', { name: 'Текст сообщения' })
+  await user.click(within(block).getByText('Текст сообщения (свой)'))
+  expect(within(block).getByRole('textbox', { name: 'Текст' })).toHaveValue('Свой, {клиника}!')
+
+  await user.click(within(block).getByRole('button', { name: 'Вернуть текст по умолчанию' }))
+  await waitFor(() => expect(within(block).getByRole('textbox', { name: 'Текст' })).toHaveValue(DEFAULT))
+  expect(puts).toEqual([''])
+  // Текст снова по умолчанию — кнопки «Вернуть» нет, пометки «(свой)» тоже
+  await waitFor(() => expect(within(block).queryByRole('button', { name: 'Вернуть текст по умолчанию' })).not.toBeInTheDocument())
+  expect(within(block).getByText('Текст сообщения')).toBeInTheDocument()
+})
