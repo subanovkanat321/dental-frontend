@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useBack } from '../lib/back'
 import type { Lang } from './catalog'
 import { ICONS, type IconName } from './icons.gen'
-import { UI, type ArtFn, type Photo, type Slide, type Topic } from './topics'
+import { ArtView, type Art } from './media'
+import { UI, type Photo, type Slide, type Topic } from './topics'
 import './learn.css'
 
 type Props = {
@@ -112,8 +113,8 @@ function creditText(photo: Photo, lang: Lang): string {
   return `${UI.photo[lang]}: ${c.author}, ${c.license}, ${c.source}`
 }
 
-/** Рисунок слайда или настоящее фото с подписью-атрибуцией (тогда рисунок не показываем). */
-function Visual({ art, photo, lang }: { art?: ArtFn; photo?: Photo; lang: Lang }) {
+/** Рисунок слайда (SVG, кадр или ролик 3D) или настоящее фото с подписью-атрибуцией (тогда рисунок не показываем). */
+function Visual({ art, photo, lang }: { art?: Art; photo?: Photo; lang: Lang }) {
   if (photo) {
     return (
       <figure className="lsn-art lsn-photo">
@@ -125,7 +126,7 @@ function Visual({ art, photo, lang }: { art?: ArtFn; photo?: Photo; lang: Lang }
       </figure>
     )
   }
-  return art ? <div className="lsn-art">{art(lang)}</div> : null
+  return art ? <div className={typeof art === 'function' ? 'lsn-art' : 'lsn-art lsn-art-3d'}><ArtView art={art} lang={lang} /></div> : null
 }
 
 function SlideView({ slide, lang, step, first, topicTitle }: { slide: Slide; lang: Lang; step: number; first: boolean; topicTitle: string }) {
@@ -154,7 +155,7 @@ function SlideView({ slide, lang, step, first, topicTitle }: { slide: Slide; lan
         <ol className="lsn-cards" data-n={slide.points.length}>
           {slide.points.map((p, i) => (
             <li key={i} className="lsn-card">
-              <div className="lsn-card-art">{p.art?.(lang)}</div>
+              <div className="lsn-card-art">{p.art && <ArtView art={p.art} lang={lang} place="card" />}</div>
               <p><span className="lsn-num">{i + 1}</span><span>{p.text[lang]}</span></p>
             </li>
           ))}

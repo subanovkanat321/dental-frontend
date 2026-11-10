@@ -1,14 +1,12 @@
-import type { ReactNode } from 'react'
-
 import { Extraction, Gap, Implant, Kids, Tooth, Whiten, Wisdom } from './art'
-import { TOPICS, type L, type Lang, type TopicInfo, type TopicSlug } from './catalog'
+import { TOPICS, type L, type TopicInfo, type TopicSlug } from './catalog'
 import type { IconName } from './icons.gen'
+import type { Art, ArtFn, Img3D, Part, Video3D } from './media'
 import canalsXray from './photos/canals-xray.jpg'
 import crownZirconia from './photos/crown-zirconia.jpg'
 import wisdomXray from './photos/extraction-wisdom-xray.jpg'
 import gumsScaler from './photos/gums-scaler.jpg'
 import hygieneTip from './photos/hygiene-ultrasonic.jpg'
-import implantJaw from './photos/implant-jaw.jpg'
 import kidsFissures from './photos/kids-fissures.jpg'
 import whiteningShades from './photos/whitening-shades.jpg'
 
@@ -22,27 +20,55 @@ import whiteningShades from './photos/whitening-shades.jpg'
  * больно ли и сколько времени → что делать после. Оговорка «это общая информация» — под последним.
  */
 
-export type ArtFn = (lang: Lang) => ReactNode
+export type { Art, ArtFn } from './media'
 /**
  * Настоящее фото к слайду (файл в src/learn/photos/, подключается import'ом — см. README там):
  * показывается вместо рисунка, под ним мелко — автор, лицензия и источник.
  */
 export type Credit = { author: string; license: string; source: string; url?: string }
 export type Photo = { src: string; alt: L; credit: Credit }
-export type Point = { icon?: IconName; art?: ArtFn; text: L }
+export type Point = { icon?: IconName; art?: Art; text: L }
 export type Slide =
-  | { kind: 'what'; title: L; text: L; art: ArtFn; photo?: Photo }
+  | { kind: 'what'; title: L; text: L; art: Art; photo?: Photo }
   /** Стадии карточками; text — подзаголовок, note — вывод под карточками */
   | { kind: 'stages'; title: L; text?: L; points: Point[]; note?: L; photo?: Photo }
   /** Пункты; без рисунка — карточками-фактами в сетку */
-  | { kind: 'list'; title: L; text?: L; points: Point[]; art?: ArtFn; numbered?: boolean; photo?: Photo }
+  | { kind: 'list'; title: L; text?: L; points: Point[]; art?: Art; numbered?: boolean; photo?: Photo }
 /** cover — рисунок обложки в списке тем: как на первом слайде, но без подписей */
-export type Topic = TopicInfo & { slides: Slide[]; cover: ArtFn }
+export type Topic = TopicInfo & { slides: Slide[]; cover: Art }
 
 /** Wikimedia Commons: подпись «Фото: автор, лицензия, Wikimedia Commons» со ссылкой на страницу файла */
 const commons = (file: string, author: string, license: string): Photo['credit'] => (
   { author, license, source: 'Wikimedia Commons', url: `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(file.replace(/ /g, '_'))}` }
 )
+
+/**
+ * Кадры и ролики из нашего 3D-атласа (scripts/learn-art.mjs → public/content/learn/). Подписи частей на кадре —
+ * HTML поверх картинки (media.tsx), на ru/ky. Второй аргумент — прежний SVG-рисунок: он запасной, если файл
+ * не загрузился. Каких состояний нет в 3D (камень, десна, лунка, пустое место, молочный зуб, отбеливание,
+ * трещины, погибший нерв) — остаются SVG.
+ */
+const ALT = {
+  healthy: { ru: 'Здоровый зуб в разрезе: эмаль, дентин, пульпа, десна и кость', ky: 'Дени сак тиш кесилишинде: эмаль, дентин, пульпа, бүйлө жана сөөк' },
+  'caries-3': { ru: 'Зуб в разрезе: кариес прошёл эмаль и дошёл до дентина', ky: 'Тиш кесилишинде: кариес эмалдан өтүп, дентинге жетти' },
+  'caries-4': { ru: 'Зуб в разрезе: кариес дошёл до пульпы, нерв воспалён', ky: 'Тиш кесилишинде: кариес пульпага жетти, нерв сезгенген' },
+  'caries-1-close': { ru: 'Коронка зуба: белое пятно на эмали', ky: 'Тиштин таажысы: эмалдагы ак так' },
+  'caries-2-close': { ru: 'Коронка зуба: небольшая полость в эмали', ky: 'Тиштин таажысы: эмалдагы кичине көңдөй' },
+  'caries-3-close': { ru: 'Коронка зуба: кариес в дентине', ky: 'Тиштин таажысы: кариес дентинде' },
+  'caries-4-close': { ru: 'Коронка зуба: кариес дошёл до нерва', ky: 'Тиштин таажысы: кариес нервге жетти' },
+  filling: { ru: 'Зуб в разрезе с пломбой под цвет зуба', ky: 'Тиштин түсүндөй пломбасы бар тиш кесилишинде' },
+  'crown-fit': { ru: 'Коронка опускается на обточенный зуб', ky: 'Коронка жонулган тишке кийгизилет' },
+  'implant-parts': { ru: 'Имплант в кости, на нём опора, сверху — коронка', ky: 'Сөөктөгү имплант, анын үстүндө таяныч, эң үстүндө — коронка' },
+  implant: { ru: 'Имплант в кости с опорой и коронкой', ky: 'Таянычы жана коронкасы бар сөөктөгү имплант' },
+  wisdom: { ru: 'Зуб мудрости растёт под углом и упирается в соседний зуб', ky: 'Акыл тиш кыйшык өсүп, коңшу тишке тирелет' },
+  'filling-clip': { ru: 'Как ставят пломбу: полость заполняют слоями и отверждают лампой', ky: 'Пломба кантип коюлат: көңдөйдү катмар-катмар толтуруп, лампа менен катырышат' },
+  'canals-clip': { ru: 'Как лечат каналы: убирают нерв, чистят каналы инструментом и плотно пломбируют', ky: 'Каналдар кантип дарыланат: нервди алып, каналдарды аспап менен тазалап, бекем пломбалашат' },
+  'crown-clip': { ru: 'Как ставят коронку: её надевают на обточенный зуб', ky: 'Коронка кантип коюлат: аны жонулган тишке кийгизишет' },
+  'implant-clip': { ru: 'Как ставят имплант: винт вкручивают в кость, сверху — опора и коронка', ky: 'Имплант кантип коюлат: винтти сөөккө буроп, үстүнө таяныч жана коронка коюшат' },
+} satisfies Partial<Record<Img3D['img'], L>>
+
+const img = (name: keyof typeof ALT & Img3D['img'], svg: ArtFn, labels?: Part[]): Img3D => ({ img: name, alt: ALT[name], svg, labels })
+const clip = (name: keyof typeof ALT & Video3D['video'], svg: ArtFn): Video3D => ({ video: name, alt: ALT[name], svg })
 
 const T = {
   later: { ru: 'Почему лучше не откладывать', ky: 'Эмне үчүн кечиктирбеген жакшы' },
@@ -65,15 +91,15 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
     { kind: 'what', title: { ru: 'Кариес — это полость (дырка) в зубе', ky: 'Кариес — бул тиштеги көңдөй (тешик)' },
       text: { ru: 'Бактерии зубного налёта перерабатывают сахар и выделяют кислоту. Кислота постепенно растворяет эмаль, а потом дентин — так появляется полость.',
         ky: 'Тиш кириндеги бактериялар кантты сиңирип, кислота бөлүп чыгарат. Кислота акырындап эмалды, анан дентинди эритет — ошентип көңдөй пайда болот.' },
-      art: (lang) => <Tooth caries={3} lang={lang} labels={{ caries: true, enamel: true, dentin: true, pulp: true }} title="Зуб с кариесом в разрезе" /> },
+      art: img('caries-3', (lang) => <Tooth caries={3} lang={lang} labels={{ caries: true, enamel: true, dentin: true, pulp: true }} title="Зуб с кариесом в разрезе" />, ['caries', 'enamel', 'dentin', 'pulp']) },
     { kind: 'stages', title: T.later, text: T.stagesLead, points: [
-      { art: () => <Tooth caries={1} bare />, text: { ru: 'Пятно на эмали — можно остановить без сверления', ky: 'Эмалдагы так — бургулабай эле токтотсо болот' } },
-      { art: () => <Tooth caries={2} bare />, text: { ru: 'Полость в эмали — небольшая пломба', ky: 'Эмалдагы көңдөй — кичине пломба' } },
-      { art: () => <Tooth caries={3} bare />, text: { ru: 'Кариес в дентине — зуб реагирует на холодное и сладкое', ky: 'Кариес дентинде — тиш муздакка жана таттууга сезгич' } },
-      { art: () => <Tooth caries={4} bare />, text: { ru: 'Воспалился нерв — сильная боль, нужно лечить каналы', ky: 'Нерв сезгенди — катуу оору, каналдарды дарылоо керек' } },
+      { art: img('caries-1-close', () => <Tooth caries={1} bare />), text: { ru: 'Пятно на эмали — можно остановить без сверления', ky: 'Эмалдагы так — бургулабай эле токтотсо болот' } },
+      { art: img('caries-2-close', () => <Tooth caries={2} bare />), text: { ru: 'Полость в эмали — небольшая пломба', ky: 'Эмалдагы көңдөй — кичине пломба' } },
+      { art: img('caries-3-close', () => <Tooth caries={3} bare />), text: { ru: 'Кариес в дентине — зуб реагирует на холодное и сладкое', ky: 'Кариес дентинде — тиш муздакка жана таттууга сезгич' } },
+      { art: img('caries-4-close', () => <Tooth caries={4} bare />), text: { ru: 'Воспалился нерв — сильная боль, нужно лечить каналы', ky: 'Нерв сезгенди — катуу оору, каналдарды дарылоо керек' } },
     ], note: { ru: 'Чем раньше начать, тем проще лечение: меньше визитов и больше шансов сохранить свой зуб.',
       ky: 'Канчалык эрте баштасаңыз, дарылоо ошончолук жеңил: келүү азыраак, өз тишиңизди сактап калуу мүмкүнчүлүгү көбүрөөк.' } },
-    { kind: 'list', title: T.how, numbered: true, art: (lang) => <Tooth filling="big" lang={lang} labels={{ filling: true }} title="Зуб с пломбой" />, points: [
+    { kind: 'list', title: T.how, numbered: true, art: clip('filling-clip', (lang) => <Tooth filling="big" lang={lang} labels={{ filling: true }} title="Зуб с пломбой" />), points: [
       ANESTHESIA,
       { icon: 'treat', text: { ru: 'Аккуратно убираем поражённые ткани зуба', ky: 'Тиштин бузулган жерин этият алып салабыз' } },
       { icon: 'tooth', text: { ru: 'Ставим пломбу под цвет зуба', ky: 'Тиштин түсүндөй пломба коёбуз' } },
@@ -84,7 +110,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { icon: 'time', text: { ru: 'Обычно один визит, 30–60 минут', ky: 'Көбүнчө бир келүү, 30–60 мүнөт' } },
       NUMB,
     ] },
-    { kind: 'list', title: { ru: 'Чтобы кариес не вернулся', ky: 'Кариес кайталанбашы үчүн' }, art: () => <Tooth title="Здоровый зуб" />, points: [
+    { kind: 'list', title: { ru: 'Чтобы кариес не вернулся', ky: 'Кариес кайталанбашы үчүн' }, art: img('healthy', () => <Tooth title="Здоровый зуб" />), points: [
       BRUSH, FLOSS,
       { icon: 'sugar', text: { ru: 'Сладкое — реже и не перекусывать между едой', ky: 'Таттууну азыраак жеңиз, тамактын ортосунда чайнабаңыз' } },
       CHECKUP,
@@ -95,7 +121,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
     { kind: 'what', title: { ru: 'Пульпит — воспаление нерва зуба', ky: 'Пульпит — тиштин нервинин сезгениши' },
       text: { ru: 'Внутри зуба есть мягкая ткань с нервом и сосудами — пульпа. Когда кариес доходит до неё, она воспаляется и болит: от холодного, горячего, даже ночью.',
         ky: 'Тиштин ичинде нерв жана кан тамырлары бар жумшак ткань бар — пульпа. Кариес ага жеткенде ал сезгенип ооруйт: муздактан, ысыктан, түнкүсүн да.' },
-      art: (lang) => <Tooth caries={4} lang={lang} labels={{ caries: true, enamel: true, pulp: true, canals: true, root: true }} title="Воспалённый нерв зуба" /> },
+      art: img('caries-4', (lang) => <Tooth caries={4} lang={lang} labels={{ caries: true, enamel: true, pulp: true, canals: true, root: true }} title="Воспалённый нерв зуба" />, ['caries', 'enamel', 'pulp', 'canals', 'root']) },
     { kind: 'stages', title: T.later, text: T.stagesLead, points: [
       { art: () => <Tooth caries={3} bare />, text: { ru: 'Ноет от холодного и сладкого', ky: 'Муздактан жана таттуудан сыздайт' } },
       { art: () => <Tooth caries={4} bare />, text: { ru: 'Сильная боль, ночью, отдаёт в ухо или висок', ky: 'Катуу оору, түнкүсүн, кулакка же чыкыйга берет' } },
@@ -103,7 +129,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { art: () => <Tooth caries={4} pulp="dead" abscess bare />, text: { ru: 'Воспаление уходит в кость у корня — флюс, киста', ky: 'Сезгенүү тамырдын жанындагы сөөккө өтөт — флюс, киста' } },
     ], note: { ru: 'Чем раньше лечить каналы, тем быстрее и спокойнее проходит лечение и тем больше шансов сохранить зуб.',
       ky: 'Каналдарды канчалык эрте дарыласаңыз, дарылоо ошончолук тез жана тынч өтөт, тишти сактап калуу мүмкүнчүлүгү көбүрөөк.' } },
-    { kind: 'list', title: T.how, numbered: true, art: () => <Tooth instrument caries={4} pulp="hot" title="Инструмент в канале зуба" />, points: [
+    { kind: 'list', title: T.how, numbered: true, art: clip('canals-clip', () => <Tooth instrument caries={4} pulp="hot" title="Инструмент в канале зуба" />), points: [
       ANESTHESIA,
       { icon: 'treat', text: { ru: 'Открываем зуб и убираем воспалённый нерв', ky: 'Тишти ачып, сезгенген нервди алып салабыз' } },
       { icon: 'spray', text: { ru: 'Тонкими инструментами чистим и промываем каналы до кончика корня', ky: 'Ичке аспаптар менен каналдарды тамырдын учуна чейин тазалап жуубуз' } },
@@ -181,7 +207,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { icon: 'time', text: { ru: '40–60 минут, один визит', ky: '40–60 мүнөт, бир келүү' } },
       { icon: 'calendar', text: { ru: 'Повторять раз в 6 месяцев', ky: '6 айда бир жолу кайталоо' } },
     ] },
-    { kind: 'list', title: T.care, art: () => <Tooth title="Здоровый зуб и десна" />, points: [
+    { kind: 'list', title: T.care, art: img('healthy', () => <Tooth title="Здоровый зуб и десна" />, ['gum', 'bone']), points: [
       { icon: 'no', text: { ru: '2 часа — без чая, кофе и окрашивающих продуктов', ky: '2 саат — чай, кофе жана боёктуу тамак жок' } },
       BRUSH, FLOSS,
       { icon: 'alert', text: { ru: 'Дёсны пару дней могут быть чувствительными — это пройдёт', ky: 'Бүйлө бир-эки күн сезгич болушу мүмкүн — бул өтүп кетет' } },
@@ -192,7 +218,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
     { kind: 'what', title: { ru: 'Пломба восстанавливает зуб', ky: 'Пломба тишти калыбына келтирет' },
       text: { ru: 'Врач убирает поражённую часть и заполняет полость прочным материалом под цвет зуба. Если разрушено много — делают вкладку: её изготавливают точно по форме зуба.',
         ky: 'Дарыгер бузулган жерин алып, көңдөйдү тиштин түсүндөй бекем материал менен толтурат. Көп бузулса — вкладка жасалат: ал тиштин формасы боюнча так даярдалат.' },
-      art: (lang) => <Tooth filling="big" lang={lang} labels={{ filling: true, enamel: true, dentin: true, pulp: true }} title="Зуб с пломбой" /> },
+      art: img('filling', (lang) => <Tooth filling="big" lang={lang} labels={{ filling: true, enamel: true, dentin: true, pulp: true }} title="Зуб с пломбой" />, ['filling', 'enamel', 'dentin', 'pulp']) },
     { kind: 'stages', title: T.later, text: T.stagesLead, points: [
       { art: () => <Tooth caries={2} bare />, text: { ru: 'Небольшая полость — небольшая пломба', ky: 'Кичине көңдөй — кичине пломба' } },
       { art: () => <Tooth caries={3} bare />, text: { ru: 'Полость растёт — нужна большая пломба или вкладка', ky: 'Көңдөй чоңоет — чоң пломба же вкладка керек' } },
@@ -200,7 +226,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { art: () => <Tooth caries={4} bare />, text: { ru: 'Кариес дошёл до нерва — лечение каналов', ky: 'Кариес нервге жетти — каналдарды дарылоо' } },
     ], note: { ru: 'Чем меньше полость, тем меньше пломба и тем больше своих тканей зуба остаётся.',
       ky: 'Көңдөй канчалык кичине болсо, пломба ошончолук кичине, тиштин өз ткандары көбүрөөк калат.' } },
-    { kind: 'list', title: T.how, numbered: true, art: (lang) => <Tooth filling="inlay" lang={lang} labels={{ filling: true }} title="Зуб со вкладкой" />, points: [
+    { kind: 'list', title: T.how, numbered: true, art: clip('filling-clip', (lang) => <Tooth filling="inlay" lang={lang} labels={{ filling: true }} title="Зуб со вкладкой" />), points: [
       ANESTHESIA,
       { icon: 'treat', text: { ru: 'Убираем кариес', ky: 'Кариести алып салабыз' } },
       { icon: 'tooth', text: { ru: 'Подбираем цвет и ставим пломбу слоями — каждый твердеет под лампой', ky: 'Түсүн тандап, пломбаны катмар-катмар коёбуз — ар бири лампа менен катат' } },
@@ -211,7 +237,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { icon: 'time', text: { ru: 'Пломба — один визит, 30–60 минут; вкладка — 2 визита', ky: 'Пломба — бир келүү, 30–60 мүнөт; вкладка — 2 келүү' } },
       { icon: 'cold', text: { ru: '1–2 дня зуб может реагировать на холодное — это проходит', ky: '1–2 күн тиш муздакка сезгич болушу мүмкүн — бул өтөт' } },
     ] },
-    { kind: 'list', title: T.care, art: () => <Tooth filling="small" title="Зуб с пломбой" />, points: [
+    { kind: 'list', title: T.care, art: img('filling', () => <Tooth filling="small" title="Зуб с пломбой" />), points: [
       NUMB,
       { icon: 'no', text: { ru: 'Не грызть этим зубом орехи, семечки и лёд', ky: 'Бул тиш менен жаңгак, семечке жана муз чайнабаңыз' } },
       BRUSH,
@@ -223,14 +249,14 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
     { kind: 'what', title: { ru: 'Коронка — прочный «колпачок» на зуб', ky: 'Коронка — тишке бекем «калпак»' },
       text: { ru: 'Она закрывает зуб целиком и защищает его от поломки. Ставят, когда зуб сильно разрушен или после лечения каналов. По цвету и форме — как свой зуб.',
         ky: 'Ал тишти толук жаап, сынуудан коргойт. Тиш катуу бузулганда же каналдан кийин коюлат. Түсү жана формасы — өз тишиңиздей.' },
-      art: (lang) => <Tooth crown="float" pulp="filled" lang={lang} labels={{ crown: true, root: true, gum: true }} title="Коронка надевается на зуб" /> },
+      art: img('crown-fit', (lang) => <Tooth crown="float" pulp="filled" lang={lang} labels={{ crown: true, root: true, gum: true }} title="Коронка надевается на зуб" />, ['crown', 'stump', 'gum']) },
     { kind: 'stages', title: T.later, text: { ru: 'Что бывает с ослабленным зубом без коронки', ky: 'Коронкасыз алсыз тиш менен эмне болот' }, points: [
       { art: () => <Tooth crack="line" pulp="filled" filling="big" bare />, text: { ru: 'Появляется трещина', ky: 'Жарака пайда болот' } },
       { art: () => <Tooth crack="chip" pulp="filled" bare />, text: { ru: 'Откалывается стенка', ky: 'Дубалы сынат' } },
       { art: () => <Tooth crack="split" pulp="filled" bare />, text: { ru: 'Трещина уходит в корень — такой зуб обычно удаляют', ky: 'Жарака тамырга өтөт — мындай тишти көбүнчө жулушат' } },
     ], note: { ru: 'Коронка, поставленная вовремя, помогает сохранить свой зуб на долгие годы.',
       ky: 'Өз убагында коюлган коронка өз тишиңизди көп жылга сактоого жардам берет.' } },
-    { kind: 'list', title: { ru: 'Как ставим коронку', ky: 'Коронканы кантип коёбуз' }, numbered: true, art: (lang) => <Tooth crown="on" pulp="filled" lang={lang} labels={{ crown: true }} title="Зуб под коронкой" />, points: [
+    { kind: 'list', title: { ru: 'Как ставим коронку', ky: 'Коронканы кантип коёбуз' }, numbered: true, art: clip('crown-clip', (lang) => <Tooth crown="on" pulp="filled" lang={lang} labels={{ crown: true }} title="Зуб под коронкой" />), points: [
       { icon: 'syringe', text: { ru: 'Под анестезией обтачиваем зуб под коронку', ky: 'Анестезия менен тишти коронкага ылайык жонобуз' } },
       { icon: 'camera', text: { ru: 'Снимаем точный слепок или сканируем зуб', ky: 'Так калыбын алабыз же тишти сканерлейбиз' } },
       { icon: 'shield', text: { ru: 'Ставим временную коронку', ky: 'Убактылуу коронка коёбуз' } },
@@ -255,16 +281,15 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
     { kind: 'what', title: { ru: 'Имплант — новый корень вместо потерянного зуба', ky: 'Имплант — жоголгон тиштин ордуна жаңы тамыр' },
       text: { ru: 'Это винт из титана — материала, который хорошо приживается в кости. Сверху ставят опору и коронку — выглядит и жуёт как свой зуб.',
         ky: 'Бул титандан жасалган винт — сөөккө жакшы бүтүүчү материал. Үстүнө таяныч жана коронка коюлат — өз тишиңиздей көрүнөт жана чайнайт.' },
-      art: (lang) => <Implant stage="exploded" labels lang={lang} title="Имплант: винт, опора и коронка" /> },
+      art: img('implant-parts', (lang) => <Implant stage="exploded" labels lang={lang} title="Имплант: винт, опора и коронка" />, ['crown', 'abutment', 'implant']) },
     { kind: 'stages', title: T.later, text: { ru: 'Что происходит, если оставить пустое место', ky: 'Бош орунду калтырсаңыз эмне болот' }, points: [
       { art: () => <Gap stage={1} />, text: { ru: 'Кость без нагрузки постепенно убывает', ky: 'Жүк жок сөөк акырындап азаят' } },
       { art: () => <Gap stage={2} />, text: { ru: 'Соседние зубы наклоняются в пустое место', ky: 'Коңшу тиштер бош орунга ыктайт' } },
       { art: () => <Gap stage={3} />, text: { ru: 'Зуб сверху опускается — меняется прикус', ky: 'Үстүңкү тиш ылдый түшөт — тиштешүү өзгөрөт' } },
     ], note: { ru: 'Чем раньше восполнить пустое место, тем больше своей кости и тем проще поставить имплант.',
       ky: 'Бош орунду канчалык эрте толтурсаңыз, өз сөөгүңүз ошончолук көп сакталып, имплант коюу жеңилирээк болот.' } },
-    { kind: 'list', title: T.how, numbered: true, art: (lang) => <Implant stage="full" labels lang={lang} title="Имплант с опорой и коронкой" />,
-      photo: { src: implantJaw, alt: { ru: 'Имплант с коронкой в кости среди своих зубов (медицинская иллюстрация)', ky: 'Коронкасы бар имплант сөөктө, өз тиштердин арасында (медициналык сүрөт)' },
-        credit: commons('Dental-implant-illustration.jpg', 'Alexmit art', 'CC BY-SA 4.0') }, points: [
+    // Было фото-иллюстрация с Wikimedia Commons; ролик из нашего 3D показывает сами шаги — винт, опора, коронка
+    { kind: 'list', title: T.how, numbered: true, art: clip('implant-clip', (lang) => <Implant stage="full" labels lang={lang} title="Имплант с опорой и коронкой" />), points: [
       { icon: 'scan', text: { ru: 'Осмотр и снимок (КТ) — оцениваем кость', ky: 'Текшерүү жана сүрөт (КТ) — сөөктү карайбыз' } },
       { icon: 'syringe', text: { ru: 'Под анестезией ставим имплант в кость', ky: 'Анестезия менен имплантты сөөккө коёбуз' } },
       { icon: 'calendar', text: { ru: '2–6 месяцев имплант срастается с костью', ky: '2–6 ай имплант сөөк менен бүтөт' } },
@@ -275,7 +300,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { icon: 'time', text: { ru: 'Сама установка — около часа', ky: 'Коюунун өзү — болжол менен бир саат' } },
       { icon: 'calendar', text: { ru: 'Весь путь — обычно от 3 до 6 месяцев', ky: 'Бардык жол — көбүнчө 3төн 6 айга чейин' } },
     ] },
-    { kind: 'list', title: T.care, art: () => <Implant stage="full" title="Имплант с коронкой" />, points: [
+    { kind: 'list', title: T.care, art: img('implant', () => <Implant stage="full" title="Имплант с коронкой" />), points: [
       { icon: 'cold', text: { ru: 'Первые дни — холод на щёку, мягкая тёплая еда', ky: 'Алгачкы күндөрү — жаакка муздак, жумшак жылуу тамак' } },
       { icon: 'smoking', text: { ru: 'Не курить — курение мешает приживлению', ky: 'Тамеки тартпаңыз — ал бүтүүгө тоскоол болот' } },
       { icon: 'brush', text: { ru: 'Чистить как свои зубы + ершик или ирригатор', ky: 'Өз тишиңиздей тазалаңыз + щетка же ирригатор' } },
@@ -305,7 +330,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { icon: 'cold', text: { ru: 'Не больно; 1–2 дня зубы могут реагировать на холодное', ky: 'Ооруткан жок; 1–2 күн тиштер муздакка сезгич болушу мүмкүн' } },
       { icon: 'time', text: { ru: 'Один визит — 1–1,5 часа', ky: 'Бир келүү — 1–1,5 саат' } },
     ] },
-    { kind: 'list', title: T.care, art: () => <Tooth title="Здоровый зуб" />, points: [
+    { kind: 'list', title: T.care, art: img('healthy', () => <Tooth title="Здоровый зуб" />), points: [
       { icon: 'no', text: { ru: '2 дня «белая диета»: без кофе, чая, вина, ягод, соусов и курения', ky: '2 күн «ак диета»: кофе, чай, шарап, мөмө, соус жана тамеки жок' } },
       { icon: 'brush', text: { ru: 'Если зубы чувствительны — паста для чувствительных зубов', ky: 'Тиштер сезгич болсо — сезгич тиштер үчүн паста' } },
       { icon: 'calendar', text: { ru: 'Профчистка раз в 6 месяцев — белизна держится дольше', ky: '6 айда бир кесипкөй тазалоо — агы узак сакталат' } },
@@ -337,7 +362,7 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
       { icon: 'calendar', text: { ru: 'Обычно 1–4 визита', ky: 'Көбүнчө 1–4 келүү' } },
       { icon: 'check', text: { ru: 'Обычно через 1–2 недели дёсны перестают кровить', ky: 'Көбүнчө 1–2 жумада бүйлө канабай калат' } },
     ] },
-    { kind: 'list', title: T.care, art: () => <Tooth title="Здоровая десна" />, points: [
+    { kind: 'list', title: T.care, art: img('healthy', () => <Tooth title="Здоровая десна" />, ['gum', 'bone']), points: [
       { icon: 'brush', text: { ru: 'Мягкая щётка 2 раза в день — у самого края десны', ky: 'Жумшак щетка күнүнө 2 жолу — бүйлөнүн дал четинен' } },
       FLOSS,
       { icon: 'smoking', text: { ru: 'Курение усиливает пародонтит', ky: 'Тамеки пародонтитти күчөтөт' } },
@@ -379,14 +404,14 @@ const CONTENT: Record<TopicSlug, Slide[]> = {
   ],
 }
 
-const COVERS: Record<TopicSlug, ArtFn> = {
-  caries: () => <Tooth caries={3} />,
-  canals: () => <Tooth caries={4} />,
-  extraction: () => <Wisdom state="tilt" />,
+const COVERS: Record<TopicSlug, Art> = {
+  caries: img('caries-3-close', () => <Tooth caries={3} />),
+  canals: img('caries-4', () => <Tooth caries={4} />),
+  extraction: img('wisdom', () => <Wisdom state="tilt" />),
   hygiene: () => <Tooth tartar="above" />,
-  filling: () => <Tooth filling="big" />,
-  crown: () => <Tooth crown="float" pulp="filled" />,
-  implant: () => <Implant stage="exploded" />,
+  filling: img('filling', () => <Tooth filling="big" />),
+  crown: img('crown-fit', () => <Tooth crown="float" pulp="filled" />),
+  implant: img('implant-parts', () => <Implant stage="exploded" />),
   whitening: () => <Whiten />,
   gums: () => <Tooth tartar="above" gum="red" />,
   kids: () => <Kids />,

@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from 'react'
 
 import type { Lang } from './catalog'
+import { LABEL_TEXT, type LabelKey } from './callouts'
 
 /**
  * Иллюстрации презентаций — свои SVG в стиле медицинского атласа: зуб в разрезе с объёмом (эмаль,
@@ -105,23 +106,7 @@ function Kit({ p }: { p: string }) {
   )
 }
 
-export type Labels = Partial<Record<'enamel' | 'dentin' | 'pulp' | 'root' | 'gum' | 'bone' | 'tartar' | 'filling' | 'crown' | 'sealant' | 'caries' | 'canals', boolean>>
-type LabelKey = keyof Labels
-
-const LABEL_TEXT: Record<LabelKey, Record<Lang, string>> = {
-  caries: { ru: 'Кариес', ky: 'Кариес' },
-  sealant: { ru: 'Герметик', ky: 'Герметик' },
-  filling: { ru: 'Пломба', ky: 'Пломба' },
-  crown: { ru: 'Коронка', ky: 'Коронка' },
-  enamel: { ru: 'Эмаль', ky: 'Эмаль' },
-  dentin: { ru: 'Дентин', ky: 'Дентин' },
-  pulp: { ru: 'Пульпа (нерв)', ky: 'Пульпа (нерв)' },
-  canals: { ru: 'Каналы', ky: 'Каналдар' },
-  tartar: { ru: 'Зубной камень', ky: 'Тиш ташы' },
-  gum: { ru: 'Десна', ky: 'Бүйлө' },
-  root: { ru: 'Корень', ky: 'Тамыр' },
-  bone: { ru: 'Кость', ky: 'Сөөк' },
-}
+export type Labels = Partial<Record<LabelKey, boolean>>
 
 /** Точка на рисунке, к которой ведёт выноска, и высота подписи справа. */
 const LABEL_AT: Record<LabelKey, [number, number, number]> = {

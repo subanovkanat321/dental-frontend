@@ -39,6 +39,11 @@ export interface AtlasEngine {
   setAnchors(points: readonly (readonly [number, number, number])[]): void
   replay(): void
   resetView(): void
+  /**
+   * Камера точно в позу, без подгонки под панели — для кадров слайдов (tools/learn-art). В CRM не вызывается:
+   * там камеру ставит вид и пациент пальцем.
+   */
+  setCameraPose(pos: readonly [number, number, number], target: readonly [number, number, number], fov?: number): void
   dispose(): void
 }
 
@@ -483,6 +488,14 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
       busy((TIMELINE[mode]?.total ?? 0) + 0.5)
     },
     resetView: () => placeCamera(view),
+    setCameraPose(pos, target, fov) {
+      controls.target.set(...target)
+      camera.position.set(...pos)
+      if (fov) camera.fov = fov
+      camera.updateProjectionMatrix()
+      controls.update()
+      busy(0.3)
+    },
     dispose() {
       disposed = true
       renderer.setAnimationLoop(null)

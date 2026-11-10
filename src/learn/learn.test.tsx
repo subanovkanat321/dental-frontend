@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
@@ -10,7 +13,10 @@ import { server } from '../test/server'
 import { choose } from '../test/select'
 import { readDeepLink } from '../lib/deepLink'
 import { lessonUrl, topicForService } from './catalog'
+import { placeCallouts } from './callouts'
+import type { Art, Img3D, Video3D } from './media'
 import { Presentation } from './Presentation'
+import { SHOTS } from './shots.gen'
 import { TOPIC_LIST, topicBySlug, type Topic } from './topics'
 
 type Appointment = Schemas['AppointmentView']
@@ -141,8 +147,106 @@ test('фото к слайду: вместо рисунка, с подписью
 
   render(<Presentation topic={caries} lang="ky" />)
   const plain = screen.getByRole('heading', { name: 'Кариес — бул тиштеги көңдөй (тешик)' }).closest('section')!
-  expect(within(plain).getByRole('img', { name: 'Зуб с кариесом в разрезе' })).toBeInTheDocument()
+  expect(within(plain).getByRole('img', { name: 'Тиш кесилишинде: кариес эмалдан өтүп, дентинге жетти' })).toBeInTheDocument()
   expect(within(plain).queryByText(/Сүрөт:/)).toBeNull()
+})
+
+/** Все кадры и ролики 3D из тем (слайды, карточки стадий, обложки). */
+function allMedia(): (Img3D | Video3D)[] {
+  const arts: (Art | undefined)[] = TOPIC_LIST.flatMap((t) => [t.cover, ...t.slides.flatMap((s) => [s.kind === 'stages' ? undefined : s.art, ...(s.kind === 'what' ? [] : s.points.map((p) => p.art))])])
+  return arts.filter((a): a is Img3D | Video3D => a != null && typeof a !== 'function')
+}
+
+test('3D-кадры и ролики: файлы лежат в public/content/learn, у каждого — запасной SVG, подписи — на точках кадра', () => {
+  const media = allMedia()
+  expect(media.filter((m) => 'img' in m).length).toBeGreaterThanOrEqual(15)
+  expect(new Set(media.flatMap((m) => ('video' in m ? [m.video] : [])))).toEqual(new Set(['filling-clip', 'canals-clip', 'crown-clip', 'implant-clip']))
+  const dir = resolve(import.meta.dirname, '../../public/content/learn')
+  for (const m of media) {
+    expect(m.alt.ru && m.alt.ky).toBeTruthy()
+    expect(typeof m.svg).toBe('function')
+    const files = 'img' in m ? [`${m.img}-640.webp`, `${m.img}-1280.webp`] : [`${m.video}.webm`, `${m.video}.mp4`, `${m.video}-poster.webp`]
+    for (const f of files) expect(existsSync(resolve(dir, f)), f).toBe(true)
+    if ('img' in m) {
+      const at = SHOTS[m.img].at as Record<string, unknown>
+      for (const l of m.labels ?? []) expect(at[{ root: 'cementum', canals: 'canal' }[l as string] ?? l], `${m.img}: ${l}`).toBeDefined()
+    }
+  }
+})
+
+test('слайд с 3D-кадром: <img> 640/1280 с подписью на ru и ky, выноски частей поверх; файл не загрузился — SVG', () => {
+  const { unmount } = render(<Presentation topic={topicBySlug('canals')!} lang="ky" />)
+  let slide = screen.getByRole('heading', { name: 'Пульпит — тиштин нервинин сезгениши' }).closest('section')!
+  const ky = within(slide).getByRole('img', { name: 'Тиш кесилишинде: кариес пульпага жетти, нерв сезгенген' })
+  expect(ky).toHaveAttribute('src', '/content/learn/caries-4-640.webp')
+  expect(ky.getAttribute('srcset')).toContain('/content/learn/caries-4-1280.webp 1280w')
+  expect(ky).toHaveAttribute('loading', 'lazy')
+  expect([...slide.querySelectorAll('.lsn-callout')].map((c) => c.textContent).sort()).toEqual(['Каналдар', 'Кариес', 'Пульпа (нерв)', 'Тамыр', 'Эмаль'])
+  unmount()
+
+  render(<Presentation topic={topicBySlug('caries')!} lang="ru" />)
+  slide = screen.getByRole('heading', { name: 'Кариес — это полость (дырка) в зубе' }).closest('section')!
+  const ru = within(slide).getByRole('img', { name: 'Зуб в разрезе: кариес прошёл эмаль и дошёл до дентина' })
+  expect(ru).toHaveAttribute('src', '/content/learn/caries-3-640.webp')
+  expect([...slide.querySelectorAll('.lsn-callout')].map((c) => c.textContent).sort()).toEqual(['Дентин', 'Кариес', 'Пульпа (нерв)', 'Эмаль'])
+  // Нет файла (или сеть) — прежний рисунок
+  fireEvent.error(ru)
+  expect(within(slide).getByRole('img', { name: 'Зуб с кариесом в разрезе' })).toBeInTheDocument()
+  expect(within(slide).queryByText('Пульпа (нерв)')).toBeInTheDocument()
+  expect(slide.querySelector('img')).toBeNull()
+
+  // Стадии — 3D крупно в карточках
+  fireEvent.keyDown(window, { key: 'ArrowRight' })
+  const cards = document.querySelectorAll('.lsn-card img')
+  expect([...cards].map((i) => i.getAttribute('src'))).toEqual([1, 2, 3, 4].map((n) => `/content/learn/caries-${n}-close-640.webp`))
+})
+
+test('слайд с роликом: <video> без звука, по кругу, с постером; ролик не загрузился — SVG; «меньше движения» — только постер', () => {
+  const { unmount } = render(<Presentation topic={topicBySlug('caries')!} lang="ru" />)
+  fireEvent.keyDown(window, { key: 'ArrowRight' })
+  fireEvent.keyDown(window, { key: 'ArrowRight' })
+  let slide = screen.getByRole('heading', { name: 'Как проходит лечение' }).closest('section')!
+  const video = slide.querySelector('video')!
+  expect(video).toHaveAttribute('poster', '/content/learn/filling-clip-poster.webp')
+  expect(video).toHaveAttribute('autoplay')
+  expect(video).toHaveAttribute('loop')
+  expect(video).toHaveAttribute('playsinline')
+  expect(video).toHaveAttribute('preload', 'metadata')
+  expect(video.muted).toBe(true)
+  expect(video).toHaveAccessibleName('Как ставят пломбу: полость заполняют слоями и отверждают лампой')
+  const sources = [...video.querySelectorAll('source')]
+  expect(sources.map((s) => s.getAttribute('src'))).toEqual(['/content/learn/filling-clip.webm', '/content/learn/filling-clip.mp4'])
+  fireEvent.error(sources[1]!)
+  expect(within(slide).getByRole('img', { name: 'Зуб с пломбой' })).toBeInTheDocument()
+  expect(slide.querySelector('video')).toBeNull()
+  unmount()
+
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(prefers-reduced-motion: reduce)', addEventListener() {}, removeEventListener() {} }))
+  try {
+    render(<Presentation topic={topicBySlug('implant')!} lang="ky" />)
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    fireEvent.keyDown(window, { key: 'ArrowRight' })
+    slide = screen.getByRole('heading', { name: 'Дарылоо кантип өтөт' }).closest('section')!
+    expect(slide.querySelector('video')).toBeNull()
+    expect(within(slide).getByRole('img', { name: 'Имплант кантип коюлат: винтти сөөккө буроп, үстүнө таяныч жана коронка коюшат' }))
+      .toHaveAttribute('src', '/content/learn/implant-clip-poster.webp')
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})
+
+test('выноски: колонка ближнего края, близкие по высоте раздвигаются и не уходят за край', () => {
+  const placed = placeCallouts([
+    { key: 'enamel', x: 0.7, y: 0.30 }, { key: 'dentin', x: 0.6, y: 0.32 }, { key: 'pulp', x: 0.55, y: 0.33 },
+    { key: 'gum', x: 0.2, y: 0.97 }, { key: 'bone', x: 0.1, y: 0.96 },
+  ])
+  for (const side of ['l', 'r'] as const) {
+    const ys = placed.filter((p) => p.side === side).map((p) => p.ly).sort((a, b) => a - b)
+    for (let i = 1; i < ys.length; i++) expect(ys[i]! - ys[i - 1]!).toBeGreaterThanOrEqual(0.085 - 1e-9)
+    for (const y of ys) expect(y).toBeLessThanOrEqual(0.95 + 1e-9)
+  }
+  expect(placed.find((p) => p.key === 'gum')!.side).toBe('l')
+  expect(placed.find((p) => p.key === 'enamel')!.side).toBe('r')
 })
 
 /** Карточка приёма у врача; сервер презентаций: язык пациента. Отправку из CRM не зовём — проверяем. */

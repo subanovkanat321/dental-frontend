@@ -1,4 +1,5 @@
 import type { Lang } from './catalog'
+import { ArtView } from './media'
 import { TOPIC_LIST, type Topic } from './topics'
 
 /**
@@ -11,7 +12,7 @@ export function TopicTiles({ lang, onOpen, href, action }: { lang: Lang; onOpen?
       {TOPIC_LIST.map((t) => {
         const inner = (
           <>
-            <div className="learn-art">{t.cover(lang)}</div>
+            <div className="learn-art"><ArtView art={t.cover} lang={lang} place="cover" /></div>
             <strong>{t.title[lang]}</strong>
             <span>{lang === 'ky' ? `${t.slides.length} слайд · ~1 мүнөт` : `${t.slides.length} слайдов · ~1 минута`}</span>
             {action && <span className="learn-show" aria-hidden="true">{action}</span>}

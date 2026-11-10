@@ -60,6 +60,21 @@
 .lsn-cap { font-size: clamp(14px, 1.3vw, 16px); line-height: 1.4; color: var(--lsn-muted); }
 .lsn-credit { font-size: 12px; line-height: 1.35; color: var(--lsn-faint); }
 .lsn-credit a { color: inherit; }
+/* Кадр или ролик 3D-атласа (media.tsx): рамка в пропорциях кадра (--ar), не выше --mh — подписи по процентам
+   стоят точно на тканях. Фон роликов — цвет пластины, шва не видно. */
+.lsn-art-3d { padding: clamp(6px, 1vw, 14px); }
+.lsn-3d { --mh: 60vh; position: relative; margin: 0; width: min(100%, calc(var(--mh) * var(--ar))); aspect-ratio: var(--ar); flex: none; }
+.lsn-3d img, .lsn-3d video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.lsn-3d[data-place='card'] { --mh: calc(min(26vh, 240px) - 20px); }
+.lsn-3d[data-place='cover'] { --mh: 130px; }
+.lsn-leaders { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.lsn-leaders line { stroke: var(--lsn-ink); stroke-width: 1.25; opacity: 0.7; }
+.lsn-leaders circle { fill: #fff; stroke: var(--lsn-ink); stroke-width: 0.45; }
+.lsn-callout { position: absolute; transform: translateY(-50%); max-width: 36%; padding: 3px 9px; border-radius: 10px; background: rgb(255 255 255 / 0.94);
+  border: 1px solid var(--lsn-line-strong); box-shadow: 0 1px 3px rgb(15 42 48 / 0.12); color: var(--lsn-ink);
+  font-size: clamp(12px, 1.25vw, 15px); font-weight: 500; line-height: 1.2; text-wrap: balance; }
+.lsn-callout[data-side='l'] { left: 1%; }
+.lsn-callout[data-side='r'] { right: 1%; }
 .lsn-body { min-width: 0; }
 .lsn-topic { margin: 0 0 10px; display: flex; align-items: center; gap: 10px; color: var(--lsn-teal); font-weight: 600; font-size: clamp(14px, 1.4vw, 16px); }
 .lsn-topic::before { content: ''; width: 24px; height: 2px; background: var(--lsn-teal); }
@@ -120,6 +135,9 @@
   .lsn-what .lsn-art .art { max-height: 34vh; }
   .lsn-list .lsn-art .art { max-height: 25vh; }
   .lsn-photo img { max-height: 26vh; }
+  .lsn-what .lsn-3d { --mh: 38vh; }
+  .lsn-list .lsn-3d { --mh: 25vh; }
+  .lsn-3d[data-place='card'] { --mh: calc(17vh - 20px); }
   .lsn-stages { grid-template-rows: auto auto auto auto; }
   .lsn-cards { --n: 2 !important; }
   .lsn-cards[data-n='3'] .lsn-card:last-child { grid-column: 1 / -1; flex-direction: row; align-items: center; }
