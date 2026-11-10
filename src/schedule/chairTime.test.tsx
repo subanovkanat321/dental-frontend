@@ -164,7 +164,8 @@ test('перенос «Другим временем» в часы коллег�
   server.use(http.get('*/api/appointments', ({ request }) =>
     HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '2' ? [a] : [])))
   renderApp()
-  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  // Блок приёма в сетке (у него подпись «10:00–10:30, Бакыт М.»), а не «Следующий» в полосе дня
+  await userEvent.click(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
   await userEvent.click(within(panel).getByRole('button', { name: 'Перенести или передать врачу' }))
   const form = within(panel).getByRole('form', { name: 'Перенос записи' })

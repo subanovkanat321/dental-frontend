@@ -206,7 +206,8 @@ test('телефон: у врача свой цвет — кружок в шап
   const before = { aigerim: avatar('Айгерим Садыкова').style.background, ermek: avatar('Эрмек Н.').style.background }
   expect(before.aigerim).not.toBe(before.ermek)
   expect(row().style.getPropertyValue('--doc')).toBe(AVATARS[0])
-  expect(row()).toHaveClass('s-wait') // статус — по-прежнему классом (заливка и слово)
+  // Статус — по-прежнему классом s-… (заливка и слово); какой именно — зависит от времени дня
+  expect(row().className).toMatch(/\bs-[a-z]+\b/)
 
   await userEvent.click(screen.getByRole('button', { name: /^Чьё расписание: Все врачи/ }))
   await userEvent.click(screen.getByRole('button', { name: 'Порядок врачей…' }))
