@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, type RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 
 import { minutesOf } from '../lib/time'
 
@@ -32,11 +32,28 @@ export function useNowMinutes(): number {
  * Сетка «Дня» и «Недели» — до низа окна, где бы она ни начиналась (напоминания, строка врачей сверху):
  * без двойной прокрутки страницы и сетки. Ставит сетке `--grid-top` (откуда она начинается) и
  * `--grid-below` (что под ней в разделе: «Отменено» у «Недели», легенда значков) — высоту считает CSS.
- * Пересчёт — после каждой отрисовки, при смене размера окна и раздела (строка над сеткой могла перенестись).
+ *
+ * Пересчёт — не на каждую отрисовку (getBoundingClientRect заставляет браузер считать раскладку, а
+ * сетка перерисовывается часто), а когда поменялось то, от чего зависит место сетки: `key` (день,
+ * число колонок, режим), сама сетка (появилась после загрузки), размер окна, размер раздела или
+ * страницы (ResizeObserver: догрузился шрифт, строка врачей перенеслась, появилась плашка сверху) и
+ * показ раздела (Activity снимает и снова ставит эффекты).
  */
-export function useFitToWindow(ref: RefObject<HTMLElement | null>) {
+export function useFitToWindow(ref: RefObject<HTMLElement | null>, key: string) {
+  const attached = useRef<{ el: HTMLElement; key: string; fit: () => void; detach: () => void } | null>(null)
+  // Без списка зависимостей, но дёшево: сравнили элемент и ключ — и всё, если ничего не поменялось
   useLayoutEffect(() => {
     const el = ref.current
+    const cur = attached.current
+    if (cur && cur.el === el) {
+      if (cur.key !== key) {
+        cur.key = key
+        cur.fit()
+      }
+      return
+    }
+    cur?.detach()
+    attached.current = null
     if (!el) return
     const fit = () => {
       const box = el.getBoundingClientRect()
@@ -47,17 +64,27 @@ export function useFitToWindow(ref: RefObject<HTMLElement | null>) {
     }
     fit()
     window.addEventListener('resize', fit)
-    // Высота над сеткой меняется и без новой отрисовки React: догрузился шрифт, строка врачей перенеслась
-    const main = el.closest('.schedule-main')
     // (в следующем кадре: высота сетки сама меняет размер раздела — без «ResizeObserver loop» в консоли)
     let frame = 0
-    const observer = typeof ResizeObserver === 'function' && main
+    const main = el.closest('.schedule-main')
+    const observer = typeof ResizeObserver === 'function'
       ? new ResizeObserver(() => { cancelAnimationFrame(frame); frame = requestAnimationFrame(fit) }) : null
-    if (observer && main) observer.observe(main)
-    return () => {
-      window.removeEventListener('resize', fit)
-      observer?.disconnect()
-      cancelAnimationFrame(frame)
+    if (observer) {
+      if (main) observer.observe(main)
+      observer.observe(document.body)
+    }
+    attached.current = {
+      el, key, fit,
+      detach: () => {
+        window.removeEventListener('resize', fit)
+        observer?.disconnect()
+        cancelAnimationFrame(frame)
+      },
     }
   })
+  // Ушли (или раздел скрыт — Activity): слушатели снять, при показе поставим заново
+  useLayoutEffect(() => () => {
+    attached.current?.detach()
+    attached.current = null
+  }, [])
 }

@@ -78,7 +78,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
   })
 
   // Сетка — до низа окна, как у «Дня»; открыли неделю — к «сейчас» или к первому приёму (один раз на неделю)
-  useFitToWindow(grid)
+  useFitToWindow(grid, `${monday}|${doctorId}`)
   const scrolledFor = useRef<string | null>(null)
   useEffect(() => {
     if (week.isPending || !grid.current || scrolledFor.current === monday) return

@@ -9,11 +9,11 @@ import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { MedicalRecord } from '../medical/MedicalRecord'
 import { AppointmentPanel } from './AppointmentPanel'
-import { ApptBadges, BadgesLegend } from './ApptBadges'
+import { BadgesLegend } from './ApptBadges'
+import { DayAppt } from './DayAppt'
 import { DayList } from './DayList'
 import { CancelledList } from './CancelledList'
 import { ChairTimeBands } from './ChairTimeBands'
-import { colleagueTimeOf } from './chairTime'
 import { DaySummary } from './DaySummary'
 import { freeMinutes } from './free'
 import { DateInput } from '../layout/DateInput'
@@ -26,9 +26,9 @@ import { OffDaysHint } from './OffDaysHint'
 import './doctorChips.css'
 import { colorOf as doctorColor, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
-import { apptSpan, fromYesterday, offSpans, slotsHoursText, untilTomorrow, workSpans } from './workSpans'
+import { apptSpan, fromYesterday, offSpans, slotsHoursText, workSpans } from './workSpans'
 import { statusOf } from './status'
-import { PAD, PX, SHORT, useFitToWindow, useNowMinutes } from './gridScale'
+import { PAD, PX, useFitToWindow, useNowMinutes } from './gridScale'
 import { useToolbarFit } from './useToolbarFit'
 import { useWeekAppointments } from './week/useWeek'
 import { WeekGrid } from './week/WeekGrid'
@@ -288,7 +288,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   const ready = days.length > 0 && days.every((q) => !q.isPending) && (dayList != null || slots.every((q) => !q.isPending))
   const firstTop = all.length ? PAD + (Math.min(...all.map((a) => minutesOf(a.startAt!))) - from) * PX : null
   // Сетка — до низа окна, где бы она ни начиналась (напоминания, строка врачей сверху)
-  useFitToWindow(grid)
+  useFitToWindow(grid, `${date}|${shown.length}|${weekMode ? 'week' : monthMode ? 'month' : 'day'}`)
   const toolbar = useRef<HTMLElement>(null)
   // «Неделя» или «Месяц» — сетки дня нет: вернулись на «День» — сетка новая (прокрутка с 00:00), снова к «сейчас»
   const gridShown = !weekMode && !monthMode
@@ -381,6 +381,8 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
 
   // Всплывающая карточка приёма при наведении мышью (компьютер) — общая для «Дня»
   const hover = useApptHover(me, (id) => doctors.find((d) => d.id === id)?.fullName ?? '')
+  // Нажали на блок приёма — карточка справа; стабильная функция, чтобы DayAppt (memo) не перерисовывался
+  const openAppt = useCallback((id: number) => setSide({ kind: 'appointment', id }), [])
 
   // Чьё расписание. Телефон: переключателя «День | Месяц» нет — месяц открывается нажатием на дату (лист снизу)
   const doctorSwitch = doctors.length > 1 && (narrow || doctors.length > MAX_CHIPS ? (
@@ -670,43 +672,10 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
                     {nowTop != null && <div className="grid-now" style={{ top: nowTop }} />}
                     {q?.isPending && <Loading variant="inline" className="grid-loading" />}
                     {q?.error && <div className="error grid-loading">{q.error.message}</div>}
-                    {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => {
-                      const s = statusOf(a)
-                      // Через полночь: в своём дне — до 24:00, на следующий день — с 00:00 и пометкой «со вчера»
-                      const [startMin, endMin] = apptSpan(a, date)
-                      const carried = fromYesterday(a, date)
-                      const continues = untilTomorrow(a, date)
-                      const top = PAD + (startMin - from) * PX
-                      const h = Math.max((endMin - startMin) * PX - 2, 22)
-                      const short = h < SHORT
-                      return (
-                        <button key={a.id} type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${selected?.id === a.id ? ' active' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}`}
-                          style={{ top, height: h }} {...hover.bind(a)}
-                          onClick={() => setSide({ kind: 'appointment', id: a.id! })}
-                          aria-label={`${carried ? 'со вчера ' : ''}${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
-                          {/* Обёртка — для широкого блока (один врач на экране): там она сеткой «время | имя и услуга | значки и статус»
-                              (container query в styles.css). В узком блоке она display: contents — раскладка прежняя.
-                              «wide-only» — то, что узкому блоку по высоте не влезает, а широкому влезает в ту же строку. */}
-                          <span className="appt-body">
-                            <span className="appt-time num">
-                              <span className="appt-from">{carried && <span className="appt-carried">со вчера </span>}{timeOf(a.startAt!)}</span>
-                              <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt!)}</span>
-                            </span>
-                            <span className="appt-name">{a.patient?.fullName}</span>
-                            <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} chair={colleagueTimeOf(a, sl?.chairTime)} />
-                            {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
-                            <span className={`appt-state${short || h > 56 ? '' : ' wide-only'}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>
-                            <span className="appt-sub">
-                              {a.serviceName && <span className={`appt-note${!short && h > 66 ? '' : ' wide-only'}`}>{a.serviceName}</span>}
-                              {a.comment && <span className={`appt-note${!short && h > 88 ? '' : ' wide-only'}`}>{a.comment}</span>}
-                              {a.depositStatus && seesMoneyOf(me, a.doctorId) && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
-                                <span className={`appt-note${!short && h > 80 ? '' : ' wide-only'}`}>Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>
-                              )}
-                            </span>
-                          </span>
-                        </button>
-                      )
-                    })}
+                    {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => (
+                      <DayAppt key={a.id} a={a} date={date} from={from} active={selected?.id === a.id} money={seesMoneyOf(me, a.doctorId)}
+                        chairTime={sl?.chairTime} hover={hover.bind} onOpen={openAppt} />
+                    ))}
                   </div>
                 )
               })}
