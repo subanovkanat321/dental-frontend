@@ -32,7 +32,8 @@ import { listenInstallPrompt } from './pwa/pwa'
 import './styles.css'
 
 // Регистратура держит вкладку открытой весь день: вернулись на вкладку — свежие данные
-const queryClient = createQueryClient({ queries: { staleTime: 30_000, refetchOnWindowFocus: true, retry: 1 } })
+// Повторы — retryOnce (api/queryClient.ts): 4xx не повторяем, сеть и 5xx — один раз
+const queryClient = createQueryClient({ queries: { staleTime: 30_000, refetchOnWindowFocus: true } })
 
 // Ошибки с устройств врачей — владельцу в бот (без данных пациентов); первым делом, до отрисовки
 startErrorReports()
