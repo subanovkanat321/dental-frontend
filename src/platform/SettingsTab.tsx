@@ -52,6 +52,7 @@ function InfoForm({ info }: { info: Info }) {
   const [f, setF] = useState({
     legalName: info.legalName ?? '', hosting: info.hosting ?? '', supportTelegram: info.supportTelegram ?? '',
     supportEmail: info.supportEmail ?? '', supportPhones: phonesToInput(info.supportPhones), supportWhatsapp: phoneToInput(info.supportWhatsapp),
+    doctorsGroupUrl: info.doctorsGroupUrl ?? '',
   })
   const { dirty, commit } = useDirty(f)
   const save = useMutation<Info, ApiError>({
@@ -87,6 +88,11 @@ function InfoForm({ info }: { info: Info }) {
         <label className="field"><span>WhatsApp поддержки — пусто: кнопки WhatsApp на /go и /join нет</span>
           <PhoneInput label="WhatsApp поддержки" value={f.supportWhatsapp} onChange={(v) => { save.reset(); setF({ ...f, supportWhatsapp: v }) }} /></label>
         {err('supportWhatsapp') && <p className="error">{err('supportWhatsapp')}</p>}
+        {/* Общая группа врачей Tish (V194): бот и «Помощь» показывают её только сотрудникам */}
+        <label className="field"><span>Группа врачей в Telegram — пусто: кнопок группы в боте и «Помощи» нет</span>
+          <input type="url" value={f.doctorsGroupUrl} maxLength={200} placeholder="https://t.me/+…"
+            onChange={(e) => { save.reset(); setF({ ...f, doctorsGroupUrl: e.target.value }) }} /></label>
+        {err('doctorsGroupUrl') && <p className="error">{err('doctorsGroupUrl')}</p>}
         <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="Сведения о платформе сохранены"
           error={save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message)} />
       </form>

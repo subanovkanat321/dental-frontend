@@ -39,6 +39,8 @@ export const server = setupServer(
   // «Пароль и вход»: по умолчанию вошли через Telegram — блока нет
   http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Айпери', editable: true } satisfies Schemas['StaffMembersOwnName'])),
   http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, sms: false } satisfies Schemas['PasswordControllerPasswordState'])),
+  // Сведения о платформе: по умолчанию пусто — группы врачей в «Помощи» нет (её тест — layout/helpFab.test.tsx)
+  http.get('*/api/platform-info', () => HttpResponse.json({} satisfies Schemas['PlatformInfoInfo'])),
   // Тур при первом входе: по умолчанию уже пройден — не закрывает экраны остальных тестов (тесты тура — tour/tour.test.tsx)
   http.get('*/api/me/tour', () => HttpResponse.json({ seenAt: '2026-11-01T06:00:00Z' } satisfies Schemas['StaffTourTourView'])),
   http.put('*/api/me/tour', () => HttpResponse.json({ seenAt: '2026-11-01T06:00:00Z' } satisfies Schemas['StaffTourTourView'])),
