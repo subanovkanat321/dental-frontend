@@ -140,7 +140,7 @@ test('«＋ Добавить пост»: картинки по строкам, �
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await screen.findByText(/В этом месяце постов нет/)).toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Новый пост' })).not.toBeInTheDocument()
-  expect(sent).toEqual({ date: today, kind: 'REELS', title: 'Утро в клинике', caption: '', note: 'Кофе и улыбки', images: ['/content/a.png', '/content/b.png'], story: true })
+  expect(sent).toEqual({ date: today, kind: 'REELS', title: 'Утро в клинике', caption: '', note: 'Кофе и улыбки', images: ['/content/a.png', '/content/b.png'], story: false })
 })
 
 test('Instagram подключён: «Опубликовать в Instagram» после подтверждения, бейдж со ссылкой; ошибка — текстом', async () => {
@@ -509,7 +509,7 @@ test('«Повторить сторис» снова не вышла — при�
   expect(within(card).getByRole('button', { name: 'Повторить сторис' })).toBeEnabled()
 })
 
-test('«Также в сторис» в форме — по умолчанию включена, снятая уходит на сервер; у сторис галочки нет', async () => {
+test('«Также в сторис» в форме — по умолчанию выключена, поставленная уходит на сервер; у сторис галочки нет', async () => {
   let sent: Schemas['ContentPostsDraft'] | null = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
@@ -522,19 +522,19 @@ test('«Также в сторис» в форме — по умолчанию �
   const user = await openTab()
   await user.click(await screen.findByRole('button', { name: '＋ Добавить пост' }))
   const form = screen.getByRole('form', { name: 'Новый пост' })
-  const story = within(form).getByRole('checkbox', { name: /Также в сторис/ })
-  expect(story).toBeChecked()
+  const story = within(form).getByRole('checkbox', { name: /Также в сторис \(без ссылки на пост\)/ })
+  expect(story).not.toBeChecked()
   await choose(within(form).getByRole('combobox', { name: 'Тип' }), 'Сторис')
   expect(within(form).queryByRole('checkbox', { name: /Также в сторис/ })).not.toBeInTheDocument()
   await choose(within(form).getByRole('combobox', { name: 'Тип' }), 'Пост')
   await user.click(within(form).getByRole('checkbox', { name: /Также в сторис/ }))
-  await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Без сторис')
+  await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Со сторис')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   await vi.waitFor(() => expect(sent).not.toBeNull())
-  expect(sent).toMatchObject({ kind: 'POST', title: 'Без сторис', story: false })
+  expect(sent).toMatchObject({ kind: 'POST', title: 'Со сторис', story: true })
 })
 
-test('«Сторис — автоматически»: включена по умолчанию, выключение — только своим полем', async () => {
+test('«Сторис — автоматически»: выключена по умолчанию, включение — только своим полем', async () => {
   const sent: Schemas['ContentSettingsUpdate'][] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
@@ -542,14 +542,48 @@ test('«Сторис — автоматически»: включена по у�
     http.put('*/api/platform/content/settings', async ({ request }) => {
       const body = await request.json() as Schemas['ContentSettingsUpdate']
       sent.push(body)
-      return HttpResponse.json({ reelsAuto: false, storiesAuto: body.storiesAuto ?? true } satisfies Schemas['ContentSettingsSettings'])
+      return HttpResponse.json({ reelsAuto: false, storiesAuto: body.storiesAuto ?? false } satisfies Schemas['ContentSettingsSettings'])
     }),
   )
   const user = await openTab()
   const toggle = await screen.findByRole('checkbox', { name: 'Сторис — автоматически' })
-  expect(toggle).toBeChecked()
+  expect(toggle).not.toBeChecked()
+  expect(screen.getByText(/автосторис выйдет без перехода в пост/)).toBeInTheDocument()
   await user.click(toggle)
-  expect(await screen.findByRole('checkbox', { name: 'Сторис — автоматически' })).not.toBeChecked()
-  expect(sent).toEqual([{ storiesAuto: false }])
+  expect(await screen.findByRole('checkbox', { name: 'Сторис — автоматически' })).toBeChecked()
+  expect(sent).toEqual([{ storiesAuto: true }])
   expect(screen.getByRole('checkbox', { name: 'Рилсы — автоматически' })).not.toBeChecked()
+})
+
+test('опубликованный пост со ссылкой — «📲 В сторис со ссылкой на пост» открывает пост через openLink, с подсказкой', async () => {
+  const link = 'https://www.instagram.com/p/T1/'
+  const posts = [
+    post(1, { status: 'DONE', instagramMediaId: 'm1', instagramUrl: link, kind: 'POST', title: 'Со ссылкой', images: ['/content/a.png'] }),
+    post(2, { status: 'DONE', instagramMediaId: 'm2', kind: 'POST', title: 'Без ссылки', images: ['/content/b.png'] }),
+    post(3, { status: 'DONE', instagramMediaId: 'm3', instagramUrl: 'https://www.instagram.com/stories/x/', kind: 'STORIES', title: 'Сама сторис', images: ['/content/s.png'] }),
+  ]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content', () => HttpResponse.json(posts)),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
+  )
+  const opened = vi.spyOn(window, 'open').mockReturnValue(null)
+  const user = await openTab()
+  await user.click(await screen.findByRole('button', { name: /^Все/ }))
+
+  const card = await screen.findByRole('article', { name: 'Со ссылкой' })
+  const share = within(card).getByRole('link', { name: '📲 В сторис со ссылкой на пост' })
+  expect(share).toHaveAttribute('href', link)
+  expect(card).toHaveTextContent('Чтобы сторис вела в пост: откройте пост, нажмите ➤ под ним → «Добавить в историю»')
+  await user.click(share)
+  // Вне Telegram openLink — новое окно; в Telegram — Telegram.WebApp.openLink (браузер или приложение Instagram)
+  expect(opened).toHaveBeenCalledWith(link, '_blank', 'noopener')
+
+  // Нет ссылки от Instagram или пост сам сторис — кнопки и подсказки нет
+  for (const name of ['Без ссылки', 'Сама сторис']) {
+    const other = screen.getByRole('article', { name })
+    expect(within(other).queryByRole('link', { name: /В сторис со ссылкой/ })).not.toBeInTheDocument()
+    expect(other).not.toHaveTextContent('Добавить в историю')
+  }
+  opened.mockRestore()
 })
