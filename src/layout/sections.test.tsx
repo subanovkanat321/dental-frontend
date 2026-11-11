@@ -1,7 +1,10 @@
-import { screen, within } from '@testing-library/react'
+import { focusManager, QueryClientProvider } from '@tanstack/react-query'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
+import { createQueryClient } from '../api/queryClient'
+import { App } from '../App'
 import { backDepth } from '../lib/back'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
@@ -55,5 +58,37 @@ test('скрытый раздел не перехватывает «назад»
   expect(backDepth()).toBeLessThan(withCard)
   await user.click(within(nav).getByRole('button', { name: /^Пациенты/ }))
   expect(backDepth()).toBe(withCard)
+  vi.restoreAllMocks()
+})
+
+test('скрытый раздел не опрашивает сервер и не перечитывает при фокусе; вернулись — свежие данные', async () => {
+  let dayRequests = 0
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', () => { dayRequests++; return HttpResponse.json([]) }),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/patients', () => HttpResponse.json([])),
+  )
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+  const client = createQueryClient({ queries: { retry: false, refetchOnWindowFocus: true } })
+  const user = userEvent.setup()
+  render(<QueryClientProvider client={client}><App /></QueryClientProvider>)
+  const nav = await screen.findByRole('navigation', { name: 'Разделы' })
+  const dayQueries = () => client.getQueryCache().findAll({ queryKey: ['appointments'] })
+  await waitFor(() => expect(dayQueries().some((q) => q.state.status === 'success')).toBe(true))
+  // Расписание на экране — его запросы с подписчиками (опрос раз в минуту работает)
+  expect(dayQueries().some((q) => q.getObserversCount() > 0)).toBe(true)
+  await user.click(within(nav).getByRole('button', { name: /^Пациенты/ }))
+  await screen.findByPlaceholderText('Имя или номер телефона')
+  // Скрыто — подписчиков нет: refetchInterval и фокус окна этот раздел не трогают
+  expect(dayQueries().every((q) => q.getObserversCount() === 0)).toBe(true)
+  const before = dayRequests
+  act(() => { focusManager.setFocused(false); focusManager.setFocused(true) })
+  await act(() => new Promise((r) => setTimeout(r, 50)))
+  expect(dayRequests).toBe(before)
+  // Вернулись в «Расписание» — данные перечитаны (устарели, пока раздел был скрыт)
+  await user.click(within(nav).getByRole('button', { name: /Расписание/ }))
+  await waitFor(() => expect(dayRequests).toBeGreaterThan(before))
+  act(() => focusManager.setFocused(undefined))
   vi.restoreAllMocks()
 })

@@ -2,7 +2,7 @@ import { api, ApiError, unwrap } from './api/client'
 import { ConfirmHost } from './layout/Confirm'
 import { useMe } from './api/me'
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Activity, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import type { Schemas } from './api/client'
 import { DownloadPage } from './pwa/DownloadPage'
@@ -156,7 +156,7 @@ function Screens() {
 /**
  * Открытые разделы: показан один, остальные скрыты, но живы — вернулись, и всё как было. У каждого
  * своя прокрутка страницы: ушли — запомнили, вернулись — на то же место; новый раздел — с начала.
- * Скрытый раздел не слушает «назад» Telegram и Esc (SectionActive).
+ * Скрытый раздел не слушает «назад» Telegram и Esc (SectionActive) и не ходит на сервер (Activity).
  */
 function Sections({ shown, sections, onVisit, children }: {
   shown: Page
@@ -186,7 +186,12 @@ function Sections({ shown, sections, onVisit, children }: {
     <>
       {sections.map((p) => (
         <div key={p} className="section" hidden={p !== shown}>
-          <SectionActive.Provider value={p === shown}>{children(p)}</SectionActive.Provider>
+          {/* Activity: скрытый раздел сохраняет состояние, но его эффекты сняты — подписки React Query
+              отключены, и он не опрашивает сервер (refetchInterval) и не перечитывает при фокусе окна.
+              Вернулись — подписки снова, устаревшие данные (staleTime) перечитываются сами */}
+          <Activity mode={p === shown ? 'visible' : 'hidden'}>
+            <SectionActive.Provider value={p === shown}>{children(p)}</SectionActive.Provider>
+          </Activity>
         </div>
       ))}
     </>
