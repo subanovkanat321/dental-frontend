@@ -142,9 +142,10 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     setToggled({})
   }
   // С 2026-11-11 подразделы открытого раздела — вкладками над страницей (layout/section.tsx), поэтому в
-  // дереве он сам не раскрыт: меню короче и не дублирует вкладки. Исключение — «Настройки»: вкладок
-  // у них нет, пункты — только в меню и на главной «Настроек»
-  const expanded = (key: Page) => toggled[key] ?? (key === page && key === 'settings')
+  // дереве он сам не раскрыт: меню короче и не дублирует вкладки. «Настройки» — так же (с 2026-11-12):
+  // их пункты — списком на главной «Настроек», из пункта назад — «‹ Настройки» над названием; раскрытые
+  // 10 пунктов выталкивали «Помощь» и «Я» за низ экрана 1366×768. Стрелка › раскрывает любой раздел
+  const expanded = (key: Page) => toggled[key] ?? false
   // Свёрнутое меню: панель подразделов у раздела под мышью (или нажатого пальцем)
   const [fly, setFly] = useState<{ key: Page; top: number; left: number } | null>(null)
   const flyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)

@@ -264,3 +264,15 @@ test('телефон: внизу четыре раздела и «Ещё»; в �
   expect(within(await screen.findByRole('navigation', { name: 'Подразделы: Клиника' })).getByRole('link', { name: 'Рабочее время' }))
     .toHaveAttribute('aria-current', 'page')
 })
+
+test('компьютер, «Настройки»: в меню свёрнуты, как другие разделы; в пункте — ссылка «‹ Настройки» к списку', async () => {
+  window.location.hash = '/settings/memos'
+  renderApp()
+  expect(await screen.findByRole('heading', { name: 'Памятки после процедур' })).toBeInTheDocument()
+  expect(within(nav()).queryByRole('group', { name: 'Настройки' })).not.toBeInTheDocument()
+  expect(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' })).toHaveAttribute('aria-expanded', 'false')
+  await userEvent.click(screen.getByRole('button', { name: '‹ Настройки' }))
+  expect(window.location.hash).toBe('#/settings')
+  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Памятки после процедур/ })).toBeInTheDocument()
+})
