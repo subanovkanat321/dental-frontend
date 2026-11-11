@@ -31,8 +31,8 @@ function LoggedOutHint({ onClose }: { onClose: () => void }) {
 }
 
 /**
- * Страница входа на сайт: номер телефона и пароль или «Войти через Telegram» — ссылка в бота и «Подтвердить
- * вход» там (TelegramLogin; прежний Telegram Login Widget убран — сервер отвечает на него 410). Нет пароля —
+ * Страница входа на сайт: сверху «Войти через Telegram» (быстрее всего) — ссылка в бота и «Подтвердить
+ * вход» там; ниже «Нет Telegram?» — номер телефона и пароль (TelegramLogin; прежний Telegram Login Widget убран — сервер отвечает на него 410). Нет пароля —
  * «Забыли пароль? / Первый вход»: код в Telegram (бот сотрудников) или по SMS. В Telegram (Mini App) вход сам,
  * по initData — кнопку «Войти через Telegram» там не показываем.
  */
@@ -65,13 +65,16 @@ export function Login() {
       <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
       {loggedOut && <LoggedOutHint onClose={() => setLoggedOut(false)} />}
       <h1>Вход для клиники</h1>
-      <p className="hint">Врачи, регистратура и руководители — по номеру телефона и паролю{viaTelegram ? ' или через Telegram' : ''}.</p>
+      <p className="hint">Врачи, регистратура и руководители — {viaTelegram ? 'через Telegram в одно нажатие или по номеру телефона и паролю' : 'по номеру телефона и паролю'}.</p>
       {bot.isPending && <Loading />}
       {bot.isSuccess && !config && <p className="error">Вход сейчас недоступен: сервер не настроен или не отвечает. Обновите страницу через минуту.</p>}
-      {config && !tgWaiting && (
-        <PhoneLogin onDone={entered} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin} />
-      )}
       {viaTelegram && <TelegramLogin onDone={entered} onWaiting={onWaiting} />}
+      {config && !tgWaiting && (
+        <>
+          {viaTelegram && <p className="login-or"><span>Нет Telegram? Войдите по номеру и паролю</span></p>}
+          <PhoneLogin onDone={entered} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin} />
+        </>
+      )}
       <InstallHint />
       <p className="hint small">В Telegram приложение открывается кнопкой «Открыть» в боте клиники — там пароль не нужен.</p>
       <p className="hint small">📲 <a href="/app">Скачать Tish на телефон или компьютер</a> — как приложение, со своим значком</p>

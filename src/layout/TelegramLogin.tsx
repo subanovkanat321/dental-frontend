@@ -125,12 +125,11 @@ export function TelegramLogin({ onDone, onWaiting }: { onDone: () => void; onWai
 
   return (
     <div className="telegram-login">
-      <p className="login-or" aria-hidden="true"><span>или</span></p>
       <button type="button" className="btn tg-login" disabled={busy} onClick={() => void start()}>
         {busy ? <><Spinner />Открываем…</> : 'Войти через Telegram'}</button>
       {view.note && <p className="hint" role="status">{view.note}</p>}
       {error && <p className="error" role="alert">{error}</p>}
-      <p className="hint small">Без номера и пароля: подтвердите вход в боте Tish.</p>
+      <p className="hint small">Быстрее всего: без номера и пароля — нажмите «Подтвердить вход» в боте Tish, и вы сразу в приложении.</p>
     </div>
   )
 }
