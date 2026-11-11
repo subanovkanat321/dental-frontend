@@ -1,13 +1,12 @@
-import { useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 import type { Page } from '../lib/route'
+import { useSectionActive } from '../lib/section'
 import { subHref } from '../lib/sub'
-import { useMedia } from '../lib/useMedia'
-import { countOf, LOUD, sumOf, type Sub } from './nav'
+import { matches, useMedia } from '../lib/useMedia'
+import { countOf, LOUD, type Sub } from './nav'
 import { NavContext, type NavApi } from './useSection'
-
-/** Таблетки под строкой — только у коротких списков: у Кассы (8) и Платформы (14) хватит листа. */
-export const PILLS_MAX = 5
 
 /** Подсказку «здесь переключаются разделы» показали и закрыли — только флаг, без данных. */
 export const SUB_HINT_KEY = 'crm.subSwitchHint'
@@ -30,14 +29,25 @@ function markHintSeen(): void {
 
 /**
  * Заголовок раздела с подразделами. Компьютер: мелко «Раздел», крупно — подраздел (подразделы — в
- * меню слева). Телефон: строка-переключатель во всю ширину (`SubSwitch`). Без подразделов — просто
- * заголовок раздела.
+ * меню слева). Телефон: панель вкладок под верхним краем (`SubTabs`, порталом в место от Shell —
+ * вне шапки страницы, чтобы она могла прилипать при прокрутке всей страницы); `h1` остаётся для
+ * читалок экрана, но не виден: подраздел подсвечен во вкладках, раздел — в нижнем меню.
+ * Без подразделов — просто заголовок раздела.
  */
 export function SectionTitle({ page, title, subTitle, hint }: { page: Page; title: string; subTitle?: string | null; hint?: ReactNode }) {
   const nav = useContext(NavContext)
   const phone = useMedia('(max-width: 760px)')
+  // Разделы, где уже были, остаются на странице скрытыми (App): вкладки — только у видимого
+  const visible = useSectionActive()
   if (!subTitle) return <div className="with-hint"><h1>{title}</h1>{hint}</div>
-  if (phone && nav) return <SubSwitch nav={nav} page={page} title={title} subTitle={subTitle} hint={hint} />
+  if (phone && nav && nav.subs(page).length > 1) {
+    return (
+      <>
+        <h1 className="sr-only sect-h1">{subTitle}</h1>
+        {visible && nav.tabsSlot && createPortal(<SubTabs nav={nav} page={page} title={title} hint={hint} />, nav.tabsSlot)}
+      </>
+    )
+  }
   return (
     <div className="with-hint sect-title">
       <div className="sect-titles"><span className="sect-crumb">{title}</span><h1>{subTitle}</h1></div>
@@ -47,52 +57,179 @@ export function SectionTitle({ page, title, subTitle, hint }: { page: Page; titl
 }
 
 /**
- * Телефон: подразделы — заметным переключателем, а не текстом заголовка (владелец: «вкладки сверху
- * легко не заметить»). Строка на мягком фоне акцента, высотой с палец: мелко раздел, крупно
- * подраздел, справа — число нового в других подразделах (как у свёрнутого раздела в меню) и
- * пилюля «Разделы · 5 ⌄». Нажимается вся строка — лист снизу. У коротких списков (≤ 5) под ней
- * таблетки: видны сразу, нажал — переключился. Первый раз — пузырь-подсказка у строки.
- *
- * Заголовок `h1` — подраздел, как на компьютере; кнопка растянута на всю строку поверх (`::after`),
- * поэтому внутри кнопки нет заголовка, а у «?» свой слой выше.
+ * Где была полоска и прокрутка вкладок раздела. Платформа и Клиника рисуют шапку заново в каждом
+ * подразделе — без этого вкладки при переключении прыгали бы в начало, а полоска не переезжала.
  */
-function SubSwitch({ nav, page, title, subTitle, hint }: { nav: NavApi; page: Page; title: string; subTitle: string; hint?: ReactNode }) {
+const lastPos = new Map<Page, { ink: Ink; scroll: number; active: string | null }>()
+type Ink = { left: number; width: number }
+type Edges = { start: boolean; end: boolean; more: boolean; newRight: 0 | 1 | 2 }
+const NO_EDGES: Edges = { start: false, end: false, more: false, newRight: 0 }
+/** Полоска под текстом, а не под всей кнопкой: от края кнопки до текста — её отступ */
+const INK_INSET = 12
+
+/**
+ * Телефон: подразделы — привычной панелью вкладок (как папки Telegram, YouTube): все подразделы
+ * в строку во всю ширину, открытый — цветом акцента с полоской снизу, полоска переезжает при
+ * переключении. Не влезли — строка листается вбок (с привязкой к вкладке), у краёв со скрытыми
+ * вкладками — затухание, справа — «⌄»: лист со всеми подразделами (тот же, что долгим нажатием на
+ * раздел внизу). Новое во вкладках, скрытых справа, — точкой на «⌄». «?» раздела — в конце строки.
+ * Первый раз — пузырь-подсказка под панелью.
+ *
+ * Ссылки с `aria-current`, а не `role=tab`: каждая — свой адрес (#/раздел/подраздел), «назад»
+ * браузера возвращает в прежний подраздел.
+ */
+function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: string; hint?: ReactNode }) {
   const subs = nav.subs(page)
   const active = nav.active(page)
-  const others = subs.filter((s) => s.key !== active)
-  const { total, loud } = sumOf(nav.counts, page, others)
-  const pills = subs.length > 1 && subs.length <= PILLS_MAX
-  const [tip, setTip] = useState(() => subs.length > 1 && !hintSeen())
+  const bar = useRef<HTMLElement>(null)
+  const scroller = useRef<HTMLDivElement>(null)
+  const list = useRef<HTMLDivElement>(null)
+  const helpBox = useRef<HTMLSpanElement>(null)
+  const [ink, setInk] = useState<Ink | null>(() => lastPos.get(page)?.ink ?? null)
+  const [edges, setEdges] = useState<Edges>(NO_EDGES)
+  const [stuck, setStuck] = useState(false)
+  const [tip, setTip] = useState(() => !hintSeen())
+  const mounted = useRef(false)
+
+  const activeTab = useCallback(() => list.current?.querySelector<HTMLElement>('[aria-current="page"]') ?? null, [])
+
+  /** Края, «⌄» и полоска — из размеров. «⌄» нужна, если вкладки не влезают в строку без неё:
+   *  ширина содержимого не зависит от того, видна ли кнопка, — показ кнопки не «дёргает» сам себя. */
+  const measure = useCallback(() => {
+    const el = scroller.current
+    const row = list.current
+    const box = bar.current
+    if (!el || !row || !box) return
+    const room = box.clientWidth - (helpBox.current?.offsetWidth ?? 0)
+    const more = row.offsetWidth > room + 1
+    const right = el.scrollLeft + el.clientWidth
+    let newRight: 0 | 1 | 2 = 0
+    for (const a of row.querySelectorAll<HTMLElement>('[data-count]')) {
+      // Больше половины вкладки за правым краем — её число не видно
+      if (a.offsetLeft + a.offsetWidth / 2 > right) newRight = Math.max(newRight, a.dataset.count === 'loud' ? 2 : 1) as 0 | 1 | 2
+    }
+    const next: Edges = { start: el.scrollLeft > 1, end: right < el.scrollWidth - 1, more, newRight }
+    setEdges((p) => (p.start === next.start && p.end === next.end && p.more === next.more && p.newRight === next.newRight ? p : next))
+    const tab = activeTab()
+    if (tab) {
+      const nextInk = { left: tab.offsetLeft + INK_INSET, width: Math.max(0, tab.offsetWidth - 2 * INK_INSET) }
+      setInk((p) => (p && p.left === nextInk.left && p.width === nextInk.width ? p : nextInk))
+      lastPos.set(page, { ink: nextInk, scroll: el.scrollLeft, active })
+    }
+  }, [activeTab, page, active])
+
+  /** Открытая вкладка — по центру строки (только вбок: страница по вертикали не двигается, поэтому
+   *  не scrollIntoView). */
+  const center = useCallback((smooth: boolean) => {
+    const el = scroller.current
+    const tab = activeTab()
+    if (!el || !tab) return
+    const left = Math.max(0, tab.offsetLeft - (el.clientWidth - tab.offsetWidth) / 2)
+    const behavior = smooth && !matches('(prefers-reduced-motion: reduce)') ? 'smooth' : 'auto'
+    if (typeof el.scrollTo === 'function') el.scrollTo({ left, behavior })
+    else el.scrollLeft = left
+  }, [activeTab])
+  /** Человек сам листал вкладки — не возвращать их к открытой при пересчёте размеров */
+  const touched = useRef(false)
+
+  // Открыли раздел или сменили подраздел: открытая вкладка — в поле зрения, полоска переезжает
+  useLayoutEffect(() => {
+    const el = scroller.current
+    if (!el) return
+    const saved = lastPos.get(page)
+    if (!mounted.current && saved) el.scrollLeft = saved.scroll
+    // Переключили подраздел, пролистав страницу вниз (панель прилипла) — новый подраздел с начала
+    if (saved && saved.active !== active && window.scrollY > 0) window.scrollTo(0, 0)
+    touched.current = false
+    center(mounted.current || saved != null)
+    mounted.current = true
+    measure()
+  }, [active, page, center, measure])
+
+  // Появилась «⌄» — строка стала уже: открытая вкладка (например, последняя) могла уйти под неё
+  useLayoutEffect(() => {
+    if (!touched.current) center(false)
+  }, [edges.more, center])
+
+  // Повернули телефон, догрузился шрифт, появилось число — пересчитать и, если сами не листали, снова к открытой
+  useEffect(() => {
+    const el = scroller.current
+    if (!el) return
+    // Только если размеры правда поменялись: первый вызов наблюдателя сразу после открытия не должен
+    // обрывать плавный переезд к открытой вкладке
+    let size = `${bar.current?.clientWidth}:${list.current?.offsetWidth}`
+    const onResize = () => {
+      const now = `${bar.current?.clientWidth}:${list.current?.offsetWidth}`
+      if (now === size) return
+      size = now
+      measure()
+      if (!touched.current) center(false)
+    }
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(onResize) : null
+    if (bar.current) observer?.observe(bar.current)
+    if (list.current) observer?.observe(list.current)
+    window.addEventListener('resize', onResize)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', onResize)
+    }
+  }, [measure, center])
+
+  // Страницу прокрутили — панель прилипла к верху: лёгкая тень под ней
+  useEffect(() => {
+    const onScroll = () => setStuck(window.scrollY > 4)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   const closeTip = () => {
+    if (!tip) return
     markHintSeen()
     setTip(false)
   }
   const open = () => {
-    if (tip) closeTip()
+    closeTip()
     nav.openSheet(page)
   }
-  const label = `Подразделы: ${title} · ${subTitle}${total > 0 ? `; новое в других — ${total}` : ''}`
+  const others = subs.filter((s) => s.key !== active)
   return (
-    <div className="sect-phone">
-      <div className="sect-bar">
-        <div className="sect-titles"><span className="sect-crumb">{title}</span><h1>{subTitle}</h1></div>
-        {hint && <span className="sect-bar-hint">{hint}</span>}
-        <button type="button" className="sect-open" aria-haspopup="dialog" aria-label={label} onClick={open}>
-          {total > 0 && <span className={loud ? 'nav-count' : 'nav-count quiet'} aria-hidden="true">{total}</span>}
-          <span className="sect-pill" aria-hidden="true">
-            Разделы · {subs.length}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
-          </span>
-        </button>
+    <nav ref={bar} className="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
+      <div ref={scroller} className="sub-tabs-scroll" onScroll={measure}
+        onPointerDown={() => { touched.current = true }} onWheel={() => { touched.current = true }}
+        data-fade-start={edges.start || undefined} data-fade-end={edges.end || undefined}>
+        <div ref={list} className="sub-tabs-list">
+          {subs.map((s) => {
+            const on = s.key === active
+            const n = countOf(nav.counts, page, s.key)
+            const loud = LOUD.has(`${page}/${s.key}`)
+            return (
+              <a key={s.key} className={on ? 'sub-tab active' : 'sub-tab'} href={subHref(page, s.key)} aria-current={on ? 'page' : undefined}
+                aria-label={n ? `${s.title} · ${n}` : undefined} data-count={n > 0 ? (loud ? 'loud' : 'quiet') : undefined}
+                onClick={(e) => { e.preventDefault(); closeTip(); if (!on) nav.go(page, s.key) }}>
+                {s.title}
+                {n > 0 && <span className={loud ? 'nav-count' : 'nav-count quiet'} aria-hidden="true">{n}</span>}
+              </a>
+            )
+          })}
+          {ink && <span className="sub-tabs-ink" aria-hidden="true" style={{ left: ink.left, width: ink.width }} />}
+        </div>
       </div>
-      {pills && <SubPills nav={nav} page={page} title={title} subs={subs} active={active} onPick={tip ? closeTip : undefined} />}
+      {hint && <span ref={helpBox} className="sub-tabs-help">{hint}</span>}
+      {edges.more && (
+        <button type="button" className="sub-tabs-more" aria-haspopup="dialog" onClick={open}
+          aria-label={`Все подразделы: ${title}${edges.newRight ? ' (есть новое)' : ''}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+          {edges.newRight > 0 && <span className={edges.newRight === 2 ? 'sub-tabs-dot' : 'sub-tabs-dot quiet'} aria-hidden="true" />}
+        </button>
+      )}
       {tip && (
         <div className="sect-tip" role="note" onClick={closeTip}>
-          <span>Здесь переключаются разделы: {tipNames(nav, page, others)}</span>
+          <span>Здесь переключаются разделы: {tipNames(nav, page, others)}{edges.more ? ' Листайте вбок или нажмите ⌄ — весь список.' : ''}</span>
           <button type="button" className="sect-tip-close" aria-label="Закрыть подсказку" onClick={(e) => { e.stopPropagation(); closeTip() }}>✕</button>
         </div>
       )}
-    </div>
+    </nav>
   )
 }
 
@@ -100,32 +237,5 @@ function SubSwitch({ nav, page, title, subTitle, hint }: { nav: NavApi; page: Pa
 function tipNames(nav: NavApi, page: Page, others: Sub[]): string {
   const counted = (s: Sub) => (`${page}/${s.key}` in nav.counts ? 0 : 1)
   const names = [...others].sort((a, b) => counted(a) - counted(b)).slice(0, 2).map((s) => s.title)
-  return `${names.join(', ')}${others.length > 2 ? '…' : ''}`
-}
-
-/** Таблетки подразделов: прокрутка вбок, открытый — выделен и виден (прокручен в поле зрения). */
-function SubPills({ nav, page, title, subs, active, onPick }: {
-  nav: NavApi; page: Page; title: string; subs: Sub[]; active: string | null; onPick?: () => void
-}) {
-  const row = useRef<HTMLElement>(null)
-  useEffect(() => {
-    const el = row.current?.querySelector<HTMLElement>('[aria-current="page"]')
-    if (el && row.current && typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-  }, [active])
-  return (
-    <nav ref={row} className="sect-pills" aria-label={`Подразделы раздела «${title}»`}>
-      {subs.map((s) => {
-        const on = s.key === active
-        const n = countOf(nav.counts, page, s.key)
-        return (
-          <a key={s.key} className={on ? 'sect-chip active' : 'sect-chip'} href={subHref(page, s.key)} aria-current={on ? 'page' : undefined}
-            aria-label={n ? `${s.title} · ${n}` : undefined}
-            onClick={(e) => { e.preventDefault(); onPick?.(); if (!on) nav.go(page, s.key) }}>
-            {s.title}
-            {n > 0 && <span className={LOUD.has(`${page}/${s.key}`) ? 'nav-count' : 'nav-count quiet'} aria-hidden="true">{n}</span>}
-          </a>
-        )
-      })}
-    </nav>
-  )
+  return `${names.join(', ')}${others.length > 2 ? '…' : '.'}`
 }

@@ -92,8 +92,8 @@ function useSettingsItem(): string | null {
  * уведомления, календарь, установить приложение, «Выйти» (DESIGN.md → Layout).
  *
  * Телефон: меню — полоса внизу (расписание, пациенты, касса, склад и «Ещё» — остальные разделы, свой
- * аватар и «Помощь»). Подразделы — листом снизу: из строки-переключателя под шапкой раздела
- * (layout/section.tsx; у коротких списков под ней ещё таблетки) или долгим нажатием на кнопку раздела внизу. «Я» и «Помощь» — тоже листом.
+ * аватар и «Помощь»). Подразделы — панелью вкладок вверху (layout/section.tsx, место — `tabsSlot`),
+ * весь список — листом снизу: из «⌄» в конце панели или долгим нажатием на кнопку раздела внизу. «Я» и «Помощь» — тоже листом.
  */
 export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; onNavigate: (page: Page) => void; children: ReactNode }) {
   const clinic = me.doctor ? me.clinic?.brandName || me.clinic?.name || 'Клиника' : 'Команда Tish'
@@ -126,6 +126,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   // Лист подразделов (телефон): «назад» закрывает его
   const [sheet, setSheet] = useState<Page | null>(null)
   useBack(sheet ? () => setSheet(null) : null)
+  // Место панели вкладок подразделов (телефон): раздел кладёт её туда порталом
+  const [tabsSlot, setTabsSlot] = useState<HTMLElement | null>(null)
   const [help, setHelp] = useState(false)
   const phone = useMedia('(max-width: 760px)')
   // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается)
@@ -242,7 +244,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       )
     })
   }
-  const nav: NavApi = { openSheet: setSheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts }
+  const nav: NavApi = { openSheet: setSheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts, tabsSlot }
   const sheetSection = sheet ? sections.find((s) => s.key === sheet) : undefined
   const { name } = whoAmI(me)
   const meHead = <><Avatar me={me} size="lg" /><p className="menu-who"><strong>{name}</strong><span className="hint">{role} · {clinic}</span></p></>
@@ -368,7 +370,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </div>
       )}
       {/* Напоминания админу и приглашение в опрос — на главном экране, чтобы не занимать место в каждом разделе */}
-      <main ref={workspace} className="workspace"><NavContext.Provider value={nav}>{page === 'schedule' && <><PasswordNotice /><ProfileNotice me={me} /><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</NavContext.Provider></main>
+      <main ref={workspace} className="workspace"><NavContext.Provider value={nav}><div className="sub-tabs-slot" ref={setTabsSlot} />{page === 'schedule' && <><PasswordNotice /><ProfileNotice me={me} /><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</NavContext.Provider></main>
       {/* «💬 Помощь» — спросить помощника Tish, не уходя с экрана (ИИ по базе знаний; не знает — команде Tish) */}
       {me.doctor && phone && HELP_PAGES.includes(page) && !help && (
         <button type="button" className="help-fab" onClick={() => setHelp(true)} aria-label="Помощь: спросить помощника Tish">

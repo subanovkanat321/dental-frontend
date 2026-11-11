@@ -82,7 +82,9 @@ function ItemScreen({ host, item, me, back, ticketId }: { host: ItemHostKind; it
   return (
     <ItemHost.Provider value={host}>
       <div key={item.key} className="settings-item">
-        <Suspense fallback={<Loading />}>{RENDER[item.key]!(item.title)(me, back, { ticketId })}</Suspense>
+        {/* «Клиника»: пока грузится кусочек кода пункта — уже его шапка, чтобы вкладки подразделов на телефоне
+            не пропадали на миг (страница под ними прыгала бы на их высоту) */}
+        <Suspense fallback={host === 'clinic' ? <><SubHeader title={item.title} onBack={back} /><Loading /></> : <Loading />}>{RENDER[item.key]!(item.title)(me, back, { ticketId })}</Suspense>
       </div>
     </ItemHost.Provider>
   )

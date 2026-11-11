@@ -8,8 +8,8 @@ import { currentSub, subsOf, type Counts, type Sub } from './nav'
 type Me = Schemas['BookingViewsMe']
 
 /**
- * Меню (Shell) даёт разделам свои подразделы на телефоне: строка-переключатель под шапкой
- * (layout/section.tsx) открывает лист, таблетки переключают сразу, числа — те же, что в меню.
+ * Меню (Shell) даёт разделам свои подразделы на телефоне: панель вкладок (layout/section.tsx)
+ * переключает сразу, «⌄» открывает лист, числа — те же, что в меню.
  */
 export type NavApi = {
   openSheet: (page: Page) => void
@@ -21,6 +21,8 @@ export type NavApi = {
   go: (page: Page, sub: string) => void
   /** Числа у подразделов: вопросы, лист ожидания */
   counts: Counts
+  /** Место панели вкладок (телефон) — первым в рабочей области, вне шапки страницы: так она прилипает к верху */
+  tabsSlot: HTMLElement | null
 }
 export const NavContext = createContext<NavApi | null>(null)
 
