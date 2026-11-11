@@ -8,7 +8,7 @@ import { matches, useMedia } from '../lib/useMedia'
 import { countOf, LOUD, type Sub } from './nav'
 import { NavContext, type NavApi } from './useSection'
 
-/** Подсказку «здесь переключаются разделы» показали и закрыли — только флаг, без данных. */
+/** Подсказку «здесь переключаются разделы» показали и закрыли (или про вкладки рассказал тур — tour/Tour.tsx) — только флаг, без данных. */
 export const SUB_HINT_KEY = 'crm.subSwitchHint'
 
 function hintSeen(): boolean {
@@ -214,7 +214,7 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
   }
   const others = subs.filter((s) => s.key !== active)
   return (
-    <nav ref={bar} className="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
+    <nav ref={bar} className="sub-tabs" data-tour="sub-tabs" aria-label={`Подразделы: ${title}`} data-stuck={stuck || undefined}>
       <div ref={scroller} className="sub-tabs-scroll" onScroll={measure}
         onPointerDown={() => { touched.current = true }} onWheel={() => { touched.current = true }}
         data-fade-start={edges.start || undefined} data-fade-end={edges.end || undefined}>

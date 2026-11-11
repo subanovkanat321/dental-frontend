@@ -7,6 +7,7 @@ import { useBack } from '../lib/back'
 import { openMine } from '../lib/route'
 import { openLink, telegram } from '../lib/telegram'
 import { HELP_ITEMS, ME_ITEMS } from '../settings/items'
+import { startTour } from '../tour/state'
 import { Icon } from './Icon'
 import { initials, whoAmI } from './me'
 
@@ -110,6 +111,7 @@ const ME_ICON: Record<string, ReactNode> = {
   support: <MiniIcon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM5.6 5.6l4.3 4.3M14.1 14.1l4.3 4.3M18.4 5.6l-4.3 4.3M9.9 14.1l-4.3 4.3" />,
   survey: <MiniIcon d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3" />,
   privacy: <MiniIcon d="M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3" />,
+  tour: <MiniIcon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM15.5 8.5l-2 5-5 2 2-5z" />,
   instagram: <MiniIcon d="M4 4h16v16H4zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM17 7h.01" />,
 }
 
@@ -141,7 +143,7 @@ export function MeMenuItems({ me, onPick }: { me: Me; onPick: () => void }) {
 
 /**
  * Пункты «Помощи»: первым — чат с помощником (окно поверх, не уводит с экрана), затем руководство,
- * техподдержка (обращения), отзыв, конфиденциальность и Instagram Tish (ссылка наружу).
+ * техподдержка (обращения), отзыв, конфиденциальность, «Пройти тур ещё раз» и Instagram Tish (ссылка наружу).
  */
 export function HelpMenuItems({ me, onChat, onPick }: { me: Me; onChat: () => void; onPick: () => void }) {
   return (
@@ -150,6 +152,8 @@ export function HelpMenuItems({ me, onChat, onPick }: { me: Me; onChat: () => vo
       {HELP_ITEMS.filter((i) => !i.hidden && i.show(me)).map((i) => (
         <Item key={i.key} icon={ME_ICON[i.key]} title={i.title} onClick={() => { onPick(); openMine('help', i.key) }} />
       ))}
+      {/* Тот же тур, что при первом входе: 4–6 подсказок по главным местам */}
+      <Item icon={ME_ICON.tour} title="Пройти тур ещё раз" hint="Подсказки по главным местам Tish" onClick={() => { onPick(); startTour() }} />
       <Item icon={ME_ICON.instagram} title="Tish в Instagram" hint={`${TISH_INSTAGRAM_NAME} — видео-инструкции`} external
         onClick={() => { onPick(); openLink(TISH_INSTAGRAM) }} />
     </>
