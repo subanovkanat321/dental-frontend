@@ -157,16 +157,16 @@ test('телефон, регистратура: нижнее меню — «Ка
   expect(within(d).getByRole('button', { name: 'Готово' })).toBeInTheDocument()
 })
 
-test('не поверх других первых экранов: пока видна плашка «Заполните профиль» — тура нет; закрыли — тур', async () => {
+test('тур — первым: плашки «Заполните профиль» нет, пока тур не пройден; прошли — плашка появилась', async () => {
   localStorage.removeItem('crm.profile-notice.hidden')
   unseen(reception)
   server.use(http.get('*/api/me/name', () => HttpResponse.json({ fullName: '', editable: true } satisfies Schemas['StaffMembersOwnName'])))
   renderApp()
-  const notice = await screen.findByRole('region', { name: 'Заполните профиль' })
-  await new Promise((r) => setTimeout(r, 1200))
-  expect(screen.queryByRole('dialog', { description: /./ })).not.toBeInTheDocument()
-  await userEvent.click(within(notice).getByRole('button', { name: 'Скрыть подсказку' }))
-  expect(titleOf(await dialog())).toBe('Расписание — здесь день клиники')
+  const d = await dialog()
+  expect(titleOf(d)).toBe('Расписание — здесь день клиники')
+  expect(screen.queryByRole('region', { name: 'Заполните профиль' })).not.toBeInTheDocument()
+  await userEvent.click(within(d).getByRole('button', { name: 'Пропустить' }))
+  expect(await screen.findByRole('region', { name: 'Заполните профиль' })).toBeInTheDocument()
 })
 
 test('команде платформы без клиники тур не показываем', async () => {

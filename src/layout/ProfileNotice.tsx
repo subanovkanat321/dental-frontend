@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { openMine } from '../lib/route'
-import { useFirstScreen } from '../tour/state'
+import { TOUR_KEY, useFirstScreen } from '../tour/state'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -33,11 +33,21 @@ export function ProfileNotice({ me }: { me: Me }) {
     enabled: me.doctorId == null && !hidden,
     staleTime: 10 * 60_000,
   })
-  const text = hidden ? false : doctor
+  // Сначала тур при первом входе, плашка — после него: пока тур не пройден (или ответ ещё не пришёл), её нет.
+  // Ошибка запроса тура — плашку не прячем
+  const tour = useQuery({
+    queryKey: TOUR_KEY,
+    queryFn: () => unwrap(api.GET('/api/me/tour')),
+    enabled: Boolean(me.doctor),
+    staleTime: Infinity,
+    retry: false,
+  })
+  const tourFirst = Boolean(me.doctor) && (tour.isPending || (tour.isSuccess && !tour.data.seenAt))
+  const text = hidden || tourFirst ? false : doctor
     ? (!doctor.photoUrl || !doctor.about?.trim()) && 'Заполните свой профиль — его видят пациенты: фото и пару слов о себе.'
     : name.data?.editable && !name.data.fullName?.trim() && 'Заполните свой профиль — укажите имя: так вас видят коллеги.'
-  // Тур при первом входе ждёт, пока плашки нет (и пока не ясно, будет ли она)
-  useFirstScreen('profile', !hidden && (name.isLoading || Boolean(text)))
+  // Тур идёт первым — плашка его не задерживает; отметка остаётся на случай, если тур запустят снова
+  useFirstScreen('profile', !hidden && !tourFirst && (name.isLoading || Boolean(text)))
   if (!text) return null
   const hide = () => {
     setHidden(true)
