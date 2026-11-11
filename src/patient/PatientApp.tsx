@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { formatPhone, slotInstant, todayIn, ZONE } from '../lib/time'
+import { OfflineNotice } from '../layout/OfflineNotice'
 import { haptic, openLink, telegram } from '../lib/telegram'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { launchSearch } from '../lib/deepLink'
@@ -187,6 +188,7 @@ export default function PatientApp({ me }: { me: Me }) {
   return (
     <div className="patient">
       {current.name !== 'privacy' && <LangSwitch lang={lang} onChange={setLang} />}
+      <OfflineNotice text={t('offline')} />
       {notice && <p className="notice tone-ok" role="status">{notice}</p>}
       {me.elsewhere?.booking?.startAt && current.name !== 'privacy' && current.name !== 'clinics' && <Elsewhere ctx={ctx} />}
       {current.name === 'clinics' && <ClinicsScreen ctx={ctx} back={current.back} />}
@@ -322,7 +324,7 @@ function ClinicsScreen({ ctx, back }: { ctx: Ctx; back: Screen | null }) {
       <BackButton onBack={back ? () => ctx.go(back) : null} />
       <Hero t={t} title={t('chooseClinic')} subtitle={t('chooseClinicSub')} />
       {list.error && <p className="error">{errorText(t, list.error, ctx.me.clinicContact)}</p>}
-      {list.isFetching && !choices.length && <Loading text={t('loading')} />}
+      {list.isFetching && !choices.length && <Loading text={t('loading')} offlineText={t('offlineWait')} />}
       <ClinicFilters filter={filter} lang={ctx.lang} texts={{ search: t('clinicSearch'), cities: t('cities'), allCities: t('allCities') }} />
       {choices.length > 0 && !filter.shown.length && (
         <div className="empty-filter">
@@ -853,7 +855,7 @@ function RescheduleScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
         <DayStrip t={t} lang={lang} length={daysOf(me)} date={date} onPick={(d) => { setDate(d); setChosen(''); setError('') }} /></div>
       <div className="field"><span>{t('time')}</span>
         {error && <p className="error" role="alert">{error}</p>}
-        {slots.isPending ? <Loading text={t('loading')} /> : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
+        {slots.isPending ? <Loading text={t('loading')} offlineText={t('offlineWait')} /> : slots.error ? <p className="error">{errorText(t, slots.error, ctx.me.clinicContact)}</p>
           : <SlotGrid t={t} lang={lang} slots={slots.data} chosen={chosen} onPick={(time) => { setChosen(time); setError('') }}
             empty={slots.data.dayOff ? t('otherDay') : slots.data.workingDay ? t('noFree') : t('dayOff')} />}
       </div>

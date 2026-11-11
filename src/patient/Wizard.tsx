@@ -216,7 +216,7 @@ export function BookingWizard({ t, lang, services, doctors, doctorServices, leng
       )}
       {current === 'doctor' && <DoctorStep t={t} doctors={eligible} chosen={doc} onPick={pickDoctor} />}
       {current === 'date' && (
-        free === 'loading' || !free ? <Loading text={t('loading')} />
+        free === 'loading' || !free ? <Loading text={t('loading')} offlineText={t('offlineWait')} />
           : !free.ok ? <p className="error" role="alert">{errorText(free.error)}</p>
             : !free.value.length ? <p className="hint" role="status">{noneSoon}</p>
               : <Calendar t={t} lang={lang} length={length} free={free.value} chosen={date} onPick={pickDate} />
@@ -225,7 +225,7 @@ export function BookingWizard({ t, lang, services, doctors, doctorServices, leng
         <div className="wiz-time">
           <DayNav t={t} lang={lang} date={date} freeDays={freeDays} onPick={pickDate} />
           {notice && <p className="error" role="alert">{notice}</p>}
-          {slots === 'loading' || !slots ? <Loading text={t('loading')} />
+          {slots === 'loading' || !slots ? <Loading text={t('loading')} offlineText={t('offlineWait')} />
             : !slots.ok ? <p className="error" role="alert">{errorText(slots.error)}</p>
               : <SlotGrid t={t} lang={lang} slots={slots.value} chosen={time} onPick={pickTime}
                 empty={slots.value.dayOff ? t('otherDay') : slots.value.workingDay ? t('noFree') : t('dayOff')} />}

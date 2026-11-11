@@ -1,5 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 
+import { useOnline } from '../lib/online'
+
 /** Сколько ждём, прежде чем показать «Загрузка…»: быстрый ответ не успевает мигнуть спиннером. */
 export const LOADING_DELAY_MS = 300
 
@@ -18,15 +20,20 @@ export function Spinner({ size }: { size?: number }) {
  * {@link LOADING_DELAY_MS}: ответ за 0,1 с не мигает. `role="status"` — экранный диктор скажет
  * текст, не перебивая. Вид: `block` — по центру блока (список, карточка), `inline` — в строку
  * (подсказка под полем), `overlay` — поверх области (3D-атлас, `tone="dark"` — на тёмном фоне).
+ * Без сети запросы React Query на паузе (fetchStatus 'paused') и ждут связь — тогда текст про связь,
+ * а не вечная «Загрузка…».
  */
-export function Loading({ text = 'Загрузка…', variant = 'block', tone, delay = LOADING_DELAY_MS, className }: {
+export function Loading({ text = 'Загрузка…', offlineText = 'Нет интернета — ждём связь…', variant = 'block', tone, delay = LOADING_DELAY_MS, className }: {
   text?: string
+  /** Что писать без сети (Mini App пациента — на его языке). */
+  offlineText?: string
   variant?: 'block' | 'inline' | 'overlay'
   tone?: 'dark'
   delay?: number
   className?: string
 }) {
   const [shown, setShown] = useState(delay <= 0)
+  const online = useOnline()
   useEffect(() => {
     if (delay <= 0) return
     const timer = setTimeout(() => setShown(true), delay)
@@ -38,7 +45,7 @@ export function Loading({ text = 'Загрузка…', variant = 'block', tone,
   return (
     <Tag className={cls} role="status" aria-live="polite">
       <Spinner />
-      <span className="loading-text">{text}</span>
+      <span className="loading-text">{online ? text : offlineText}</span>
     </Tag>
   )
 }

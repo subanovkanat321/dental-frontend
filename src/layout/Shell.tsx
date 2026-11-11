@@ -11,6 +11,7 @@ import { CLINIC_ALIAS, SETTINGS_ALIAS } from '../settings/items'
 import { countOf, currentSub, LOUD, subsOf, sumOf, type Counts, type Sub } from './nav'
 import { NavContext, type NavApi } from './useSection'
 import { AdminNotices } from './AdminNotices'
+import { OfflineNotice } from './OfflineNotice'
 import { PasswordNotice } from './PasswordNotice'
 import { ProfileNotice } from './ProfileNotice'
 import { Icon } from './Icon'
@@ -375,7 +376,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </div>
       )}
       {/* Напоминания админу и приглашение в опрос — на главном экране, чтобы не занимать место в каждом разделе */}
-      <main ref={workspace} className="workspace"><NavContext.Provider value={nav}><div className="sub-tabs-slot" ref={setTabsSlot} />{page === 'schedule' && <><PasswordNotice /><ProfileNotice me={me} /><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</NavContext.Provider></main>
+      <main ref={workspace} className="workspace"><NavContext.Provider value={nav}><div className="sub-tabs-slot" ref={setTabsSlot} /><OfflineNotice />{page === 'schedule' && <><PasswordNotice /><ProfileNotice me={me} /><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</NavContext.Provider></main>
       {/* «💬 Помощь» — спросить помощника Tish, не уходя с экрана (ИИ по базе знаний; не знает — команде Tish) */}
       {me.doctor && phone && HELP_PAGES.includes(page) && !help && (
         <button type="button" className="help-fab" onClick={() => setHelp(true)} aria-label="Помощь: спросить помощника Tish">

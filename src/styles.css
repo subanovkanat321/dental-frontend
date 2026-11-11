@@ -1783,6 +1783,8 @@ input.ui-select-proxy, .field input.ui-select-proxy { position: absolute; width:
 /* Приглашение — спокойная плашка цвета «выбрано», не тревожная: это просьба, а не дело на сегодня */
 .notice.tone-info { background: color-mix(in srgb, var(--accent-soft) 70%, var(--card)); color: var(--text); border-color: color-mix(in srgb, var(--accent) 25%, transparent); }
 .notice.tone-info .notice-ico { background: none; font-size: 1rem; }
+/* «Нет интернета» (layout/OfflineNotice) — текст, не кнопка */
+.offline-notice .notice-text { cursor: default; }
 .survey-page, .survey-view { max-width: 860px; }
 .survey-form { gap: 16px; }
 .survey-form h2 { margin: 0; }
