@@ -262,6 +262,7 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
       </form>
       {s && <ServiceSupplies serviceId={s.id!} />}
       {s && <ServiceMemo serviceId={s.id!} />}
+      {s && me.admin && <MergeService service={s} onMerged={onClose} />}
       {s && me.admin && (
         <div className="danger-zone">
           <button type="button" className="btn danger" disabled={remove.isPending}
@@ -270,6 +271,65 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
         </div>
       )}
     </aside>
+  )
+}
+
+/**
+ * «Объединить с…» (руководитель): лишняя услуга-дубль сливается с основной — приёмы, план лечения,
+ * «врач оказывает», материалы и памятка переходят на основную, лишняя исчезает из прайса. Цена и
+ * длительность — основной; суммы прошлых приёмов хранятся в самих приёмах. Отменить нельзя — поэтому
+ * сначала выбор, потом подтверждение. Основная — только из показываемых пациентам (скрытую сервер не примет).
+ */
+function MergeService({ service: s, onMerged }: { service: Service; onMerged: () => void }) {
+  const client = useQueryClient()
+  const refresh = useRefreshServices()
+  const all = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')) })
+  const [open, setOpen] = useState(false)
+  const [into, setInto] = useState('')
+  const choices = (all.data ?? []).filter((x) => x.id !== s.id && x.active !== false)
+  const target = choices.find((x) => String(x.id) === into)
+  const merge = useMutation<Service, ApiError, number>({
+    mutationFn: (intoId) => unwrap(api.POST('/api/service-types/{id}/merge/{intoId}', { params: { path: { id: s.id!, intoId } } })),
+    onSuccess: () => {
+      refresh()
+      // Приёмы, план лечения и отчёты показывают название услуги — теперь основной
+      for (const key of ['appointments', 'plan', 'patient-card', 'service-popular', 'doctors-admin', 'report', 'revenue']) {
+        void client.invalidateQueries({ queryKey: [key] })
+      }
+      onMerged()
+    },
+  })
+  const confirm = () => {
+    if (!target) return
+    void ask(`Все приёмы и записи «${s.name}» перейдут на «${target.name}», «${s.name}» исчезнет из прайса. Отменить нельзя.`,
+      { ok: 'Объединить', danger: true }).then((ok) => ok && merge.mutate(target.id!))
+  }
+  if (!open) {
+    return (
+      <div className="merge-zone">
+        <button type="button" className="btn" disabled={!choices.length} onClick={() => setOpen(true)}>Объединить с…</button>
+        <p className="hint small">Дубль другой услуги? Его приёмы перейдут на основную, а он исчезнет из прайса.</p>
+      </div>
+    )
+  }
+  return (
+    <div className="merge-zone" role="group" aria-label="Объединить с другой услугой">
+      <div className="field"><span>{`Основная услуга — на неё перейдёт «${s.name}»`}</span>
+        <Select aria-label="Основная услуга" value={into} onChange={(e) => { merge.reset(); setInto(e.target.value) }}>
+          <option value="" disabled>Выберите услугу</option>
+          {groupServices(choices).map(({ group: g, items }) => (
+            <optgroup key={g} label={groupLabel(g)}>
+              {items.map((x) => <option key={x.id} value={x.id}>{x.name}{priceText(x.priceSom) ? ` · ${priceText(x.priceSom)}` : ''}</option>)}
+            </optgroup>
+          ))}
+        </Select>
+      </div>
+      <span className="actions">
+        <button type="button" className="btn" disabled={!target || merge.isPending} onClick={confirm}>Объединить</button>
+        <button type="button" className="btn ghost" onClick={() => { setOpen(false); setInto(''); merge.reset() }}>Отмена</button>
+      </span>
+      {merge.error && <p className="error" role="alert">{Object.values(merge.error.fieldErrors)[0] ?? merge.error.message}</p>}
+    </div>
   )
 }
 

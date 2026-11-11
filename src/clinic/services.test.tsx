@@ -416,3 +416,59 @@ test('«Услуги и цены»: раздел сворачивается и �
   await user.click(surgery)
   expect(within(table).getByRole('button', { name: 'Удаление зуба простое' })).toBeInTheDocument()
 })
+
+test('«Объединить с…»: руководитель выбирает основную, подтверждает — дубль уходит из прайса', async () => {
+  let list: Schemas['ServiceTypeView'][] = [
+    { id: 1, name: 'Консультация', group: 'EXAM', durationMinutes: 30, priceSom: 500, active: true },
+    { id: 2, name: 'Первичная консультация', group: 'EXAM', durationMinutes: 30, priceSom: 400, active: true },
+    { id: 3, name: 'Профилактический осмотр', group: 'EXAM', durationMinutes: 20, active: false },
+    { id: 4, name: 'Лечение кариеса', group: 'THERAPY', durationMinutes: 60, active: true },
+  ]
+  const merged: string[] = []
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json(list)),
+    http.post('*/api/service-types/:id/merge/:intoId', ({ params }) => {
+      merged.push(`${String(params.id)}→${String(params.intoId)}`)
+      list = list.filter((s) => String(s.id) !== params.id)
+      return HttpResponse.json(list.find((s) => String(s.id) === params.intoId)!)
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Услуги' })
+  await user.click(within(table).getByRole('button', { name: 'Первичная консультация' }))
+  const panel = await screen.findByRole('complementary', { name: 'Услуга' })
+  await user.click(within(panel).getByRole('button', { name: 'Объединить с…' }))
+  const merge = within(panel).getByRole('group', { name: 'Объединить с другой услугой' })
+  expect(within(merge).getByRole('button', { name: 'Объединить' })).toBeDisabled()
+  // В списке — другие показываемые услуги: ни самой услуги, ни скрытой
+  await user.click(within(merge).getByRole('combobox', { name: 'Основная услуга' }))
+  const options = within(await screen.findByRole('listbox')).getAllByRole('option').map((o) => o.textContent)
+  expect(options.some((t) => t?.includes('Консультация'))).toBe(true)
+  expect(options.some((t) => t?.includes('Первичная'))).toBe(false)
+  expect(options.some((t) => t?.includes('Профилактический'))).toBe(false)
+  await user.keyboard('{Escape}')
+  await choose(within(merge).getByRole('combobox', { name: 'Основная услуга' }), 'Консультация')
+  await user.click(within(merge).getByRole('button', { name: 'Объединить' }))
+  const dialog = await screen.findByRole('alertdialog')
+  expect(dialog).toHaveTextContent('Все приёмы и записи «Первичная консультация» перейдут на «Консультация», «Первичная консультация» исчезнет из прайса. Отменить нельзя.')
+  await user.click(within(dialog).getByRole('button', { name: 'Объединить' }))
+  await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Услуга' })).not.toBeInTheDocument())
+  expect(merged).toEqual(['2→1'])
+  expect(within(await screen.findByRole('table', { name: 'Услуги' })).queryByRole('button', { name: 'Первичная консультация' })).not.toBeInTheDocument()
+})
+
+test('«Объединить с…» — только руководителю: врач кнопки не видит', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false })),
+    http.get('*/api/service-types', () => HttpResponse.json([
+      { id: 1, name: 'Консультация', group: 'EXAM', durationMinutes: 30, active: true },
+      { id: 2, name: 'Первичная консультация', group: 'EXAM', durationMinutes: 30, active: true },
+    ] satisfies Schemas['ServiceTypeView'][])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(within(await screen.findByRole('table', { name: 'Услуги' })).getByRole('button', { name: 'Первичная консультация' }))
+  const panel = await screen.findByRole('complementary', { name: 'Услуга' })
+  expect(within(panel).queryByRole('button', { name: 'Объединить с…' })).not.toBeInTheDocument()
+})

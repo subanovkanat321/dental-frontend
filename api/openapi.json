@@ -4258,6 +4258,41 @@
         }
       }
     },
+    "/api/service-types/{id}/merge/{intoId}" : {
+      "post" : {
+        "tags" : [ "service-type-controller" ],
+        "operationId" : "merge",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "intoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ServiceTypeView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/service-types/catalog" : {
       "get" : {
         "tags" : [ "service-type-controller" ],

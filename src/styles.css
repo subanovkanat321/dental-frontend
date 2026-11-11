@@ -355,6 +355,9 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .empty p { margin: 0; }
 .stock-big { font-size: 1.15rem; font-weight: 600; }
 .danger-zone { padding-top: 10px; border-top: 1px solid var(--separator); }
+/* «Объединить с…» в карточке услуги — над «Удалить услугу», не главная кнопка */
+.merge-zone { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
+.merge-zone .hint { margin: 0; }
 
 /*
  * Телефон и узкое окно: меню — панель внизу (как в приложениях), карточка справа — на весь
