@@ -9,6 +9,25 @@ import { PhoneLogin } from './PhoneLogin'
 import { Loading } from './Loading'
 import { TelegramLogin } from './TelegramLogin'
 
+/** Как человек входил в прошлый раз на этом устройстве: 'phone' — форму номера сразу открытой. Только метка, без данных. */
+const METHOD = 'crm.login.method'
+
+function readMethod(): string | null {
+  try {
+    return localStorage.getItem(METHOD)
+  } catch {
+    return null
+  }
+}
+
+function saveMethod(m: 'phone' | 'telegram') {
+  try {
+    localStorage.setItem(METHOD, m)
+  } catch {
+    // приватный режим — в следующий раз снова начнём с Telegram
+  }
+}
+
 /** Только что нажали «Выйти» в этой вкладке? Флаг читаем при открытии экрана, стираем после показа. */
 function justLoggedOut(): boolean {
   try {
@@ -43,6 +62,9 @@ export function Login() {
   /** Ждём «Подтвердить вход» в боте — форму номера и пароля прячем, чтобы не путать. */
   const [tgWaiting, setTgWaiting] = useState(false)
   const onWaiting = useCallback((w: boolean) => setTgWaiting(w), [])
+  // С Telegram форма номера и пароля свёрнута: новый врач видел поля пароля и не понимал, какой пароль вводить.
+  // Входил по номеру на этом устройстве — открыта сразу
+  const [byPhone, setByPhone] = useState(() => readMethod() === 'phone')
   // Показали один раз: обновили страницу или вошли снова — подсказки уже нет
   useEffect(() => {
     try {
@@ -65,14 +87,18 @@ export function Login() {
       <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="Тишка — талисман Tish" width={147} height={140} />
       {loggedOut && <LoggedOutHint onClose={() => setLoggedOut(false)} />}
       <h1>Вход для клиники</h1>
-      <p className="hint">Врачи, регистратура и руководители — {viaTelegram ? 'через Telegram в одно нажатие или по номеру телефона и паролю' : 'по номеру телефона и паролю'}.</p>
+      <p className="hint">Врачи, регистратура и руководители — {viaTelegram ? 'нажмите «Войти через Telegram» и подтвердите в боте — пароль не нужен' : 'по номеру телефона и паролю'}.</p>
       {bot.isPending && <Loading />}
       {bot.isSuccess && !config && <p className="error">Вход сейчас недоступен: сервер не настроен или не отвечает. Обновите страницу через минуту.</p>}
-      {viaTelegram && <TelegramLogin onDone={entered} onWaiting={onWaiting} />}
-      {config && !tgWaiting && (
+      {viaTelegram && <TelegramLogin onDone={() => { saveMethod('telegram'); entered() }} onWaiting={onWaiting} />}
+      {config && !tgWaiting && viaTelegram && !byPhone && (
+        <button type="button" className="link login-phone-open" onClick={() => setByPhone(true)}>
+          Нет Telegram? Войти по номеру телефона</button>
+      )}
+      {config && !tgWaiting && (!viaTelegram || byPhone) && (
         <>
           {viaTelegram && <p className="login-or"><span>Нет Telegram? Войдите по номеру и паролю</span></p>}
-          <PhoneLogin onDone={entered} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin} />
+          <PhoneLogin onDone={() => { saveMethod('phone'); entered() }} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin} />
         </>
       )}
       <InstallHint />
