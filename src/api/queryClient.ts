@@ -23,6 +23,11 @@ export function retryOnce(failureCount: number, error: unknown): boolean {
  *   (ApiError 0), а не ждёт молча, пока связь вернётся, с вечным «Сохраняем…».
  */
 export function createQueryClient(defaultOptions: DefaultOptions = {}): QueryClient {
+  // Перечитать «кто вошёл» — только если сейчас вошли (на экране входа 401 — норма) и он уже не перечитывается
+  const sessionExpired = () => {
+    if (client.getQueryState(['me'])?.status !== 'success' || client.isFetching({ queryKey: ['me'] }) > 0) return
+    void client.invalidateQueries({ queryKey: ['me'] })
+  }
   const client: QueryClient = new QueryClient({
     defaultOptions: {
       ...defaultOptions,
@@ -32,18 +37,14 @@ export function createQueryClient(defaultOptions: DefaultOptions = {}): QueryCli
     queryCache: new QueryCache({
       onError: (error, query) => {
         if (!(error instanceof ApiError) || error.status !== 401) return
-        // Сам «кто вошёл» с 401 — это и есть экран входа; и не дёргаем его, пока он уже перечитывается
-        if (query.queryKey[0] === 'me' || client.isFetching({ queryKey: ['me'] }) > 0) return
-        void client.invalidateQueries({ queryKey: ['me'] })
+        if (query.queryKey[0] !== 'me') sessionExpired()
       },
     }),
     mutationCache: new MutationCache({
       onError: (error) => {
         if (error instanceof ApiError && error.code === 'stale') void client.invalidateQueries()
         // Действие с 401 — сессия кончилась: так же на вход
-        else if (error instanceof ApiError && error.status === 401 && client.isFetching({ queryKey: ['me'] }) === 0) {
-          void client.invalidateQueries({ queryKey: ['me'] })
-        }
+        else if (error instanceof ApiError && error.status === 401) sessionExpired()
       },
     }),
   })
