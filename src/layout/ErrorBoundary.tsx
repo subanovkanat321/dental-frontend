@@ -1,14 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
 import { reportError } from '../lib/clientErrors'
-
-const RELOADED = 'crm.reloadedForUpdate'
-
-/** Куска кода старой версии больше нет на сервере (обновили, пока вкладка была открыта). */
-function isStaleChunk(error: unknown): boolean {
-  const text = error instanceof Error ? `${error.name} ${error.message}` : String(error)
-  return /dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i.test(text)
-}
+import { isStaleChunk, reloadForStaleChunk } from '../lib/staleChunk'
 
 /**
  * Предохранитель раздела: если экран упал, вместо белого экрана — «Что-то пошло не так» и
@@ -23,16 +16,10 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: u
   }
 
   componentDidCatch(error: unknown, info: ErrorInfo) {
-    // Нет сети — это не новая версия: не перезагружаемся в офлайн, показываем «Обновить»
+    // Новая версия, кусок кода старой пропал — один раз перезагрузка (lib/staleChunk); уже перезагружались —
+    // «Обновить». Нет сети — это не новая версия: не перезагружаемся в офлайн, показываем «Обновить»
     if (isStaleChunk(error) && navigator.onLine !== false) {
-      let already = false
-      try {
-        already = sessionStorage.getItem(RELOADED) === '1'
-        sessionStorage.setItem(RELOADED, '1')
-      } catch {
-        // приватный режим — перезагрузимся один раз без отметки
-      }
-      if (!already) window.location.reload()
+      reloadForStaleChunk(error)
       return
     }
     // Без данных пациентов: только текст ошибки и где она случилась

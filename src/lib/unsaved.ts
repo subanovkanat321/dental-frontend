@@ -60,6 +60,11 @@ export function useUnsaved(dirty: boolean): void {
   }, [on])
 }
 
+/** Есть ли несохранённые правки в разделе на экране (без вопроса): тихое обновление их ждёт. */
+export function hasUnsaved(): boolean {
+  return dirtyForms.size > 0
+}
+
 /** Можно уходить: правок нет или человек согласился их бросить. */
 export function confirmLeave(): boolean {
   return dirtyForms.size === 0 || window.confirm(LEAVE_TEXT)

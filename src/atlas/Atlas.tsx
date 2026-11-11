@@ -11,6 +11,7 @@ import { Schematic } from './Schematic'
 import { hasWebGL } from './webgl'
 import { telegram } from '../lib/telegram'
 import { Loading } from '../layout/Loading'
+import { reloadForStaleChunk } from '../lib/staleChunk'
 import './atlas.css'
 
 export interface AtlasProps {
@@ -102,6 +103,9 @@ export function Atlas({ initialView, initialMode, initialTooth, lang: initialLan
       })
       .catch((e: unknown) => {
         if (cancelled) return
+        // Вышла новая версия, а вкладка старая: кусок three.js старой сборки пропал — один раз
+        // перезагрузиться, как ErrorBoundary (lib/staleChunk); не вышло — ошибка на экране
+        if (reloadForStaleChunk(e)) return
         setError(e instanceof Error ? e.message : String(e))
         setStatus('error')
       })

@@ -26,6 +26,44 @@ function serviceWorker(): Plugin {
   }
 }
 
+/** Версия сборки для pwa/version.ts: хеш имён JS и CSS сборки (в них хеш содержимого). */
+function buildVersion(bundle: Record<string, unknown>): string {
+  const files = Object.keys(bundle).filter((name) => /^assets\/.+\.(js|css)$/.test(name)).sort()
+  return createHash('sha256').update(files.join('\n')).digest('hex').slice(0, 12)
+}
+
+/**
+ * Версия сборки → dist/version.json и `<meta name="tish-version">` в index.html (одна и та же: считается
+ * из одних файлов). Открытая вкладка, PWA и Mini App в Telegram сверяют их (pwa/version.ts) и тихо
+ * обновляются на новую версию. nginx отдаёт version.json без кэша.
+ */
+function versionFile(): Plugin {
+  const PLACEHOLDER = '__TISH_VERSION__'
+  return {
+    name: 'tish-version',
+    apply: 'build',
+    // После плагина HTML Vite: в generateBundle index.html уже в сборке
+    enforce: 'post',
+    // Мета — с меткой: в момент обработки HTML ещё не все файлы сборки известны, версию ставим в generateBundle
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        if (!ctx.filename.endsWith('/index.html') || ctx.filename.includes('/site/')) return html
+        return { html, tags: [{ tag: 'meta', attrs: { name: 'tish-version', content: PLACEHOLDER }, injectTo: 'head' }] }
+      },
+    },
+    generateBundle(_options, bundle) {
+      const version = buildVersion(bundle)
+      const index = bundle['index.html']
+      if (index?.type !== 'asset' || typeof index.source !== 'string' || !index.source.includes(PLACEHOLDER)) {
+        this.error('tish-version: нет index.html с меткой версии')
+      }
+      index.source = index.source.replace(PLACEHOLDER, version)
+      this.emitFile({ type: 'asset', fileName: 'version.json', source: `${JSON.stringify({ version })}\n` })
+    },
+  }
+}
+
 /**
  * Запасной цвет для старых браузеров: color-mix() — с Chrome 111, а на Windows 7/8.1 последний Chrome —
  * 109 (у клиник такие компьютеры есть). Без запаса браузер выбрасывает правило целиком: пропадают
@@ -53,7 +91,7 @@ export default defineConfig({
   // Весь фронт — с корня домена (ADR 0002 бэкенда, этап 5): CRM и Mini App — index.html, страницы
   // сайта — site/*.html; nginx раскладывает адреса (deploy/nginx/default.conf.template бэкенда)
   base: '/',
-  plugins: [react(), serviceWorker()],
+  plugins: [react(), serviceWorker(), versionFile()],
   css: { postcss: { plugins: [colorMixPostcss] } },
   build: {
     rollupOptions: {

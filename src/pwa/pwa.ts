@@ -136,6 +136,11 @@ export function applyUpdate(): void {
   worker.postMessage({ type: 'SKIP_WAITING' })
 }
 
+/** Новая версия service worker скачана и ждёт (pwa/version.ts включает её сама в безопасный момент). */
+export function hasWaitingUpdate(): boolean {
+  return state.waiting != null
+}
+
 /** «Позже» — скрыть до следующей новой версии. */
 export function dismissUpdate(): void {
   set({ waiting: null })

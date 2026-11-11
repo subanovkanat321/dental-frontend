@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { formatPhone, slotInstant, todayIn, ZONE } from '../lib/time'
 import { OfflineNotice } from '../layout/OfflineNotice'
+import { updateAtSafeMoment } from '../pwa/version'
 import { haptic, openLink, telegram } from '../lib/telegram'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { launchSearch } from '../lib/deepLink'
@@ -171,6 +172,8 @@ export default function PatientApp({ me }: { me: Me }) {
       setScreen(s)
       setNotice(done)
       window.scrollTo(0, 0)
+      // Другой экран — безопасный момент для тихого обновления (после отрисовки: проверит, что ничего не вводят)
+      setTimeout(updateAtSafeMoment, 0)
     },
     // Запись или клиника поменялись — свежий me, и экран заново по нему
     reload: (done = '') => {

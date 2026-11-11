@@ -14,6 +14,8 @@ import { isDownloadPath, isInvitePath, isLoginPath, usePage, type Page } from '.
 import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
 import { launchedAsApp } from './pwa/pwa'
+import { noteSectionLeft, updateAtSafeMoment } from './pwa/version'
+import { hasUnsaved } from './lib/unsaved'
 import { UpdateToast } from './pwa/UpdateToast'
 import { closeAtlas, useAtlasRoute } from './atlas/route'
 import { AtlasBoot, Loading } from './layout/Loading'
@@ -166,6 +168,15 @@ function Sections({ shown, sections, onVisit, children }: {
 }) {
   const scroll = useRef<Partial<Record<Page, number>>>({})
   const current = useRef(shown)
+  // Раздел уходит в фон: были несохранённые правки — помним (pwa/version.ts не перезагрузит поверх них).
+  // В отрисовке, пока эффекты ушедшего раздела ещё не сняты и lib/unsaved видит его формы
+  const [left, setLeft] = useState(shown)
+  if (left !== shown) {
+    noteSectionLeft(left, hasUnsaved())
+    setLeft(shown)
+  }
+  // Сменили раздел — безопасный момент для тихого обновления на новую версию (если ничего не вводят)
+  useEffect(() => { updateAtSafeMoment() }, [shown])
   useEffect(() => {
     if (sections.length) onVisit(sections)
   }, [sections, onVisit])

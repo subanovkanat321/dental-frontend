@@ -29,6 +29,7 @@ import { startTableLabels } from './lib/tableLabels'
 import { startVisualViewport } from './lib/visualViewport'
 import { applyLook } from './lib/theme'
 import { listenInstallPrompt } from './pwa/pwa'
+import { startVersionCheck } from './pwa/version'
 import './styles.css'
 
 // Регистратура держит вкладку открытой весь день: вернулись на вкладку — свежие данные
@@ -40,6 +41,8 @@ startErrorReports()
 startTelegram()
 // «Можно установить» (PWA) браузер присылает один раз и рано — ловим до первой отрисовки
 listenInstallPrompt()
+// Новая версия на сервере — тихо обновиться в безопасный момент (везде, и в Telegram: pwa/version.ts)
+startVersionCheck()
 // Тема и размер текста — до первой отрисовки; «как в Telegram/системе» следит за сменой
 applyLook()
 telegram()?.onEvent?.('themeChanged', applyLook)
