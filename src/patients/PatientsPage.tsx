@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { rowClick } from '../lib/rowClick'
 import { api, unwrap, type Schemas } from '../api/client'
@@ -15,6 +15,7 @@ import { SectionTitle } from '../layout/section'
 import { useSection } from '../layout/useSection'
 import { canEditServices, isAssistant } from '../lib/roles'
 import { HeadSlotProvider, PageHead } from '../layout/PageHead'
+import { useDebounced } from '../lib/useDebounced'
 import { useHeadSlot } from '../layout/headSlot'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
@@ -26,16 +27,6 @@ type Row = Schemas['PatientListControllerPatientRow']
 type Patient = Schemas['PatientView']
 
 type SortKey = 'name' | 'last' | 'next'
-
-/** Пауза перед поиском на сервере: не дёргать его на каждую букву. */
-function useDebounced(value: string, ms = 300): string {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), ms)
-    return () => clearTimeout(t)
-  }, [value, ms])
-  return debounced
-}
 
 /** Строка поиска как цифры номера: «0555 12» → «55512» (без 0 и кода страны). */
 function phoneDigits(text: string): string {
@@ -89,16 +80,21 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
     || p.fullName?.toLowerCase().includes(text)
     || (digits.length >= 3 && p.phone?.includes(digits))), [recent.data, text, digits])
 
-  // Среди последних 300 нет — спросить сервер (он ищет по всей клинике)
+  // Сервер ищет по всей клинике: в списке только последние 300 — «Бакыт» из списка не значит, что
+  // других Бакытов нет. От 2 символов спрашиваем всегда (с паузой — не на каждую букву); совпадения из
+  // списка видны сразу, ответ сервера добавляется к ним (без повторов по id)
   const search = useDebounced(text)
   const remote = useQuery({
     queryKey: ['patients', 'search', search],
     queryFn: () => unwrap(api.POST('/api/patients/search', { body: { query: search } })),
-    // Среди списка (или пациентов врача — их там до 300) не нашли — ищем по всей клинике: иначе
-    // старого пациента врача не найти ни по имени, ни по телефону
-    enabled: search.length >= 2 && recent.isSuccess && local.length === 0,
+    enabled: search.length >= 2,
   })
-  const rows: Row[] = local.length || !text ? local : (remote.data ?? []).map((p) => ({ ...p }))
+  const extra = useMemo(() => {
+    if (!text || search !== text) return []
+    const seen = new Set(local.map((p) => p.id))
+    return (remote.data ?? []).filter((p) => !seen.has(p.id)).map((p): Row => ({ ...p }))
+  }, [text, search, local, remote.data])
+  const rows: Row[] = useMemo(() => (extra.length ? [...local, ...extra] : local), [local, extra])
 
   const sorted = useMemo(() => {
     const value = (r: Row) => (sort.key === 'name' ? r.fullName ?? '' : sort.key === 'last' ? r.lastVisit ?? '' : r.nextVisit ?? '')
@@ -147,7 +143,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
                   </Select>
                 )}
                 <span className="hint">
-                  {recent.isPending ? <><Spinner />Загрузка…</> : text ? `Найдено: ${sorted.length}${doctorId != null && !local.length && sorted.length ? ' — по всей клинике' : ''}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
+                  {recent.isPending ? <><Spinner />Загрузка…</> : text ? `Найдено: ${sorted.length}${doctorId != null && extra.length ? ' — по всей клинике' : ''}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
                 </span>
               </div>
               <button type="button" className="btn primary head-action" onClick={() => setSelected('new')}>＋ Новый пациент</button>

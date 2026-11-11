@@ -22,6 +22,8 @@ function backend(extra: Parameters<typeof server.use> = []) {
     http.get('*/api/patients/recent', () => HttpResponse.json(rows)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
     ...extra,
+    // Поиск от 2 символов всегда спрашивает и сервер: по умолчанию сверх списка никого (после extra — свой у теста главнее)
+    http.post('*/api/patients/search', () => HttpResponse.json([])),
   )
 }
 
@@ -68,6 +70,19 @@ test('нет среди последних — ищем по всей клини
   await userEvent.type(screen.getByLabelText('Поиск пациента'), 'Эрмек')
   expect(await screen.findByText('Эрмек Давний')).toBeInTheDocument()
   expect(asked).toEqual({ query: 'эрмек' })
+})
+
+test('есть совпадение в списке — всё равно спрашиваем сервер и добавляем остальных без повторов', async () => {
+  backend([http.post('*/api/patients/search', () => HttpResponse.json([
+    { id: 1, fullName: 'Бакыт М.', phone: '996555111222' },
+    { id: 9, fullName: 'Бакыт Давний', phone: '996555999000' },
+  ]))])
+  renderApp()
+  await screen.findByText('Айгуль Т.')
+  await userEvent.type(screen.getByLabelText('Поиск пациента'), 'бакыт')
+  // Из списка — сразу, с сервера — следом; Бакыт М. один раз
+  expect(await screen.findByText('Бакыт Давний')).toBeInTheDocument()
+  expect(names()).toEqual(['Бакыт М.', 'Бакыт Давний'])
 })
 
 test('карточка пациента: визиты, неявки, долг; «Записать» — в «Расписание» с ним в «Новой записи»', async () => {
