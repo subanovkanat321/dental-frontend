@@ -116,7 +116,7 @@ test('«Только сообщение» открывает wa.me с номер
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
   await user.click(within(card).getByRole('button', { name: 'Только сообщение' }))
   const text = 'Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/about'
-  expect(open).toHaveBeenCalledWith(`https://wa.me/996555000402?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
+  expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555000402&text=${encodeURIComponent(text)}`, '_blank', 'noopener')
 
   const ask = within(card).getByRole('group', { name: 'Отправили?' })
   // «Нет» — ничего не отмечаем
@@ -307,7 +307,7 @@ test('«📨 Отправить сообщение и ролик»: ① wa.me �
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
   await user.click(within(card).getByRole('button', { name: '📨 Отправить сообщение и ролик' }))
   const text = 'Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/about'
-  expect(open).toHaveBeenCalledWith(`https://wa.me/996555000402?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
+  expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555000402&text=${encodeURIComponent(text)}`, '_blank', 'noopener')
   expect(within(card).getByText(/Текст открыт в WhatsApp/)).toBeInTheDocument()
   expect(within(card).queryByRole('group', { name: 'Шаг 2: ролик' })).not.toBeInTheDocument()
   // Пока владелец в WhatsApp, ролик уже качается в память
@@ -414,7 +414,7 @@ test('Windows: текст сразу в поле чата, без эмодзи (
   const user = await openTab()
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
   await user.click(within(card).getByRole('button', { name: 'Только сообщение' }))
-  expect(open).toHaveBeenCalledWith(`https://wa.me/996555000402?text=${encodeURIComponent('Здравствуйте, Тест-Дент!\nМы — Tish. Подробнее: https://tish.kg/about')}`, '_blank', 'noopener')
+  expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555000402&text=${encodeURIComponent('Здравствуйте, Тест-Дент!\nМы — Tish. Подробнее: https://tish.kg/about')}`, '_blank', 'noopener')
 })
 
 test('шаблон: свой текст → «Вернуть текст по умолчанию» шлёт пустое значение, сервер отдаёт текст по умолчанию', async () => {

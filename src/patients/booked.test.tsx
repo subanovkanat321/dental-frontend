@@ -112,7 +112,7 @@ test('«WhatsApp» в строке неподтверждённого: гото�
   expect(within(list).queryByRole('button', { name: /WhatsApp: Нурлан/ })).toBeNull()
   await vi.waitFor(() => expect(wa).toBeEnabled()) // ждёт настройки: без них в тексте нет подписи
   await userEvent.click(wa)
-  expect(opened[0]).toContain('wa.me/996700111222')
+  expect(opened[0]).toContain('phone=996700111222')
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
   await vi.waitFor(() => expect(calls).toEqual(['opened:1']))
   vi.restoreAllMocks()

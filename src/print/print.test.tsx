@@ -131,7 +131,7 @@ test('квитанция: платежи, кто принял, долг, «Не 
   await userEvent.click(within(sheet).getByRole('button', { name: 'Закрыть' }))
 
   await userEvent.click(within(panel).getByRole('button', { name: 'Отправить пациенту в WhatsApp: квитанция' }))
-  expect(open).toHaveBeenCalledWith(`https://wa.me/996555123456?text=${encodeURIComponent(RECEIPT.text)}`, '_blank', 'noopener')
+  expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555123456&text=${encodeURIComponent(RECEIPT.text)}`, '_blank', 'noopener')
 })
 
 test('ассистент: памятка есть, квитанции нет — денег ему не показываем', async () => {
@@ -164,7 +164,7 @@ test('бот не доставил — ошибка и «Отправить в W
   await userEvent.click(await within(panel).findByRole('button', { name: /Отправить пациенту в Telegram: памятка/ }))
   expect(await within(panel).findByRole('alert')).toHaveTextContent('Не доставлено')
   await userEvent.click(within(panel).getByRole('button', { name: 'Отправить в WhatsApp' }))
-  expect(open).toHaveBeenCalledWith(`https://wa.me/996555123456?text=${encodeURIComponent(MEMO.text)}`, '_blank', 'noopener')
+  expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555123456&text=${encodeURIComponent(MEMO.text)}`, '_blank', 'noopener')
 })
 
 test('у услуги нет памятки — выбрать из списка', async () => {
@@ -206,5 +206,5 @@ test('памятка по-кыргызски: язык пациента по у�
   await userEvent.click(within(langs).getByRole('button', { name: 'Русский' }))
   expect(await within(panel).findByText('После удаления зуба', { selector: 'b' })).toBeInTheDocument()
   await userEvent.click(within(panel).getByRole('button', { name: 'Отправить пациенту в WhatsApp: памятка «После удаления зуба»' }))
-  expect(open).toHaveBeenCalledWith(`https://wa.me/996555123456?text=${encodeURIComponent(MEMO.text)}`, '_blank', 'noopener')
+  expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555123456&text=${encodeURIComponent(MEMO.text)}`, '_blank', 'noopener')
 })

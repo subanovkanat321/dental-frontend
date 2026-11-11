@@ -12,3 +12,13 @@ test('Windows: эмодзи убраны совсем (из ссылки они 
 test('телефон и Mac: эмодзи остаются', () => {
   expect(decodeURIComponent(whatsappUrl('996555000111', text, false).split('text=')[1]!)).toBe(text)
 })
+
+test('«+» доходит: на компьютере ссылка сразу на api.whatsapp.com (wa.me при переадресации делает из «+» пробел)', () => {
+  const plus = 'Если интересно — просто ответьте «+»'
+  const desktop = whatsappUrl('996555000111', plus, false, false)
+  expect(desktop).toMatch(/^https:\/\/api\.whatsapp\.com\/send\/\?phone=996555000111&text=/)
+  expect(desktop).toContain('%2B')
+  expect(decodeURIComponent(desktop.split('text=')[1]!)).toBe(plus)
+  expect(whatsappUrl('', plus, false, false)).toMatch(/^https:\/\/api\.whatsapp\.com\/send\/\?text=/)
+  expect(whatsappUrl('996555000111', plus, false, true)).toBe(`https://wa.me/996555000111?text=${encodeURIComponent(plus)}`)
+})
