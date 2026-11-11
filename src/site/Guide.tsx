@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { ROLES, chaptersFor, imageSize, type GuideImage, type GuideRole } from './guide/content'
+import { ROLES, chaptersFor, howToUrl, imageSize, type GuideImage, type GuideRole } from './guide/content'
 import { SiteHeader } from './SiteHeader'
 import './guide/guide.css'
 
@@ -105,6 +105,8 @@ export function Guide() {
                   <h3>{s.title}</h3>
                   {s.text && <p>{s.text}</p>}
                   {s.steps.length > 0 && <ol className="manual-steps">{s.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
+                  {/* Видео-инструкция к разделу — ролик бэкенда (docs/marketing/howto), откроется в новой вкладке */}
+                  {s.video && <p className="manual-video"><a href={howToUrl(s.video)} target="_blank" rel="noopener">🎬 Видео: как это сделать (до 40 секунд)</a></p>}
                   {s.image && <Figure image={s.image} />}
                   {s.tip && <p className="manual-tip"><strong>Совет.</strong> {s.tip}</p>}
                 </article>

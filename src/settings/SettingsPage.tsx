@@ -23,6 +23,7 @@ const ClinicPage = lazy(() => import('../clinic/ClinicPage').then((m) => ({ defa
 const TeamPage = lazy(() => import('../team/TeamPage').then((m) => ({ default: m.TeamPage })))
 const WorkTimePage = lazy(() => import('./WorkTimePage').then((m) => ({ default: m.WorkTimePage })))
 const GuidePage = lazy(() => import('./GuidePage').then((m) => ({ default: m.GuidePage })))
+const HowToPage = lazy(() => import('./HowToPage').then((m) => ({ default: m.HowToPage })))
 const CalendarPage = lazy(() => import('./CalendarPage').then((m) => ({ default: m.CalendarPage })))
 const ProfilePage = lazy(() => import('./ProfilePage').then((m) => ({ default: m.ProfilePage })))
 const ReminderTextPage = lazy(() => import('./ReminderTextPage').then((m) => ({ default: m.ReminderTextPage })))
@@ -71,6 +72,7 @@ const RENDER: Record<string, (title: string) => Render> = {
   install: (t) => (_me, back) => <div className="settings mine-page"><SubHeader title={t} onBack={back} /><InstallApp /></div>,
   calendar: () => (_me, back) => <CalendarPage onBack={back} />,
   guide: () => (me, back) => <GuidePage me={me} onBack={back} />,
+  videos: () => (_me, back) => <HowToPage onBack={back} />,
   support: (t) => account('support', t),
   chat: (t) => (me, back) => <AccountPage me={me} only="support" title={t} onBack={back} initialHelp />,
   survey: () => (_me, back) => <SurveyPage onBack={back} />,

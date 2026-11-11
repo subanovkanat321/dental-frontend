@@ -25,6 +25,7 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
           <div>
             <h2>Видео: Tish на телефоне за 20 секунд</h2>
             <p className="hint">iPhone и Android: значок Tish на экране — открывается как приложение. И как включить уведомления. Видео можно развернуть на весь экран.</p>
+            <p><button type="button" className="link" onClick={() => openMine('help', 'videos')}>🎬 Все видео: как записать, перенести, принять оплату…</button></p>
             <p className="hint">Другие видео и советы — в Instagram{' '}
               <a href={TISH_INSTAGRAM} target="_blank" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); openLink(TISH_INSTAGRAM) }}>{TISH_INSTAGRAM_NAME}</a></p>
           </div>

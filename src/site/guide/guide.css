@@ -79,3 +79,7 @@
   .manual.print .manual-figure.phone img { max-height: 120mm; }
   .manual.print .manual-tip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Ссылка на видео-инструкцию под шагами раздела */
+.manual .manual-video { margin: 0; font-weight: 600; }
+.manual .manual-video a { color: var(--link); text-underline-offset: 3px; }

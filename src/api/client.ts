@@ -152,6 +152,18 @@ export async function botConfig(): Promise<LoginConfig | null> {
 }
 
 /**
+ * Видео-инструкции «Как сделать в Tish» (GET /web/materials/howto — вне контракта /api, как /web/materials/public
+ * для /join): ролик и обложка — открытые адреса /web/materials/howto/<id>.mp4|.webp (белый список бэкенда).
+ */
+export type HowToVideo = { id: string; title: string; video: string; poster: string | null }
+
+export async function howToVideos(): Promise<HowToVideo[]> {
+  const response = await globalThis.fetch(new Request(new URL('/web/materials/howto', window.location.origin), { credentials: 'same-origin' }))
+  if (!response.ok) throw new ApiError(response.status, 'Не удалось загрузить список видео')
+  return (await response.json()) as HowToVideo[]
+}
+
+/**
  * POST на адрес входа /web/… (вне контракта /api): с заголовком сайта; ошибка — {@link ApiError}.
  * Ответ 204 — null, с телом — его JSON.
  */

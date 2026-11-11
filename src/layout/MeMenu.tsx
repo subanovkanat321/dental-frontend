@@ -107,6 +107,7 @@ const ME_ICON: Record<string, ReactNode> = {
   logout: <MiniIcon d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10" />,
   chat: <Icon name="help" />,
   guide: <MiniIcon d="M12 6.5C10 5 7.2 4.5 3 5v13.5c4.2-.5 7 0 9 1.5 2-1.5 4.8-2 9-1.5V5c-4.2-.5-7 0-9 1.5zM12 6.5V20" />,
+  videos: <span className="icon emoji-icon" aria-hidden="true">🎬</span>,
   support: <MiniIcon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM5.6 5.6l4.3 4.3M14.1 14.1l4.3 4.3M18.4 5.6l-4.3 4.3M9.9 14.1l-4.3 4.3" />,
   survey: <MiniIcon d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3" />,
   privacy: <MiniIcon d="M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3" />,
