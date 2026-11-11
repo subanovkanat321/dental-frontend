@@ -75,25 +75,31 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
 
   const debt = debtLine(a)
   const list = history.data ?? []
+  // Запись на 0 сом («всё в долг», бесплатно) — не платёж: в истории её не показываем, но доплаты после неё считаем
+  const shown = list.filter((e) => (e.amountSom ?? 0) > 0)
   const split = list.length > 1 && a.chargeSom == null
   // Доплаты (платежи в разное время): «оплату заново» сервер не примет (409 has-installments) — меняют доплатой
   const installments = new Set(list.map((e) => e.paidAt)).size > 1
+  // «Сейчас ничего — всё в долг»: 0 сом со стоимостью — не «Бесплатно» и без способа оплаты
+  const allInDebt = a.paidSom === 0 && (a.chargeSom ?? 0) > 0
   return (
     <div className="payment">
       <p className="payment-done">
-        <span>{a.paidSom === 0 && !a.chargeSom ? (a.freeReason === 'PREPAID' ? '✅ Оплачено заранее' : '🎁 Бесплатно') : a.chargeSom != null ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
+        <span>{a.paidSom === 0 && !a.chargeSom ? (a.freeReason === 'PREPAID' ? '✅ Оплачено заранее' : '🎁 Бесплатно')
+          : allInDebt ? `Всё в долг · ${somText(a.chargeSom ?? 0)}`
+          : a.chargeSom != null ? `${somText(a.paidSom ?? 0)} из ${somText(a.chargeSom)}`
           : split ? somText(a.paidSom ?? 0) : `${somText(a.paidSom ?? 0)} · ${methodName(a.paymentMethod)}`}</span>
         {!installments && <button type="button" className="link" onClick={() => setView('edit')}>Изменить</button>}
       </p>
-      {a.paidSom === 0 && a.freeComment && <p className="hint small payment-note">{a.freeComment}</p>}
+      {a.paidSom === 0 && !allInDebt && a.freeComment && <p className="hint small payment-note">{a.freeComment}</p>}
       <EarningsGain a={a} me={me} />
       {installments && <p className="hint small">Есть доплаты — сумму меняют доплатой; ошиблись в платеже — напишите в техподдержку.</p>}
       {debt ? <p className={`tone-${debt.tone} payment-debt`}>{debt.text}</p>
         : a.chargeSom != null ? <p className="tone-ok">✅ Оплачено полностью</p> : null}
-      {list.length > 1 && (
+      {shown.length > 1 && (
         <p className="hint payment-history">
-          {split ? list.map((e) => `${methodName(e.method)} ${somText(e.amountSom ?? 0)}`).join(' + ')
-            : list.map((e) => `${e.paidAt ? shortDate(e.paidAt) : ''} — ${somText(e.amountSom ?? 0)}, ${methodName(e.method)}`).join(' · ')}
+          {split ? shown.map((e) => `${methodName(e.method)} ${somText(e.amountSom ?? 0)}`).join(' + ')
+            : shown.map((e) => `${e.paidAt ? shortDate(e.paidAt) : ''} — ${somText(e.amountSom ?? 0)}, ${methodName(e.method)}`).join(' · ')}
         </p>
       )}
       {a.depositStatus === 'RECEIVED' && a.chargeSom == null && (
@@ -250,6 +256,8 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   const paid = whole ? costNum : paidNow === '' ? null : Number(paidNow)
   const rest = costNum != null && paid != null ? costNum - paid : null
   const splitSum = METHODS.reduce((sum, [m]) => sum + (Number(split[m]) || 0), 0)
+  // «Сейчас ничего — всё в долг»: шаг «Чем заплатил» не нужен
+  const nothingNow = !whole && paid === 0
 
   const pick = (price: number, add: boolean) => setCost(String(add ? (Number(cost) || 0) + price : price))
 
@@ -260,7 +268,8 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
       return
     }
     if (!whole) {
-      if (paid == null || paid < 1) {
+      // 0 — «сейчас ничего, всё в долг»
+      if (paid == null || paid < 0) {
         setProblem('Впишите, сколько заплатил сейчас')
         return
       }
@@ -272,7 +281,7 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
     const amount = paid!
     let parts: { amountSom: number; method: Method }[] | undefined
     let method: Method = how === 'SPLIT' ? 'CASH' : how
-    if (how === 'SPLIT') {
+    if (how === 'SPLIT' && !nothingNow) {
       parts = METHODS.filter(([m]) => Number(split[m]) > 0).map(([m]) => ({ amountSom: Number(split[m]), method: m }))
       if (splitSum !== amount) {
         setProblem(`По способам вышло ${somText(splitSum)}, а заплатил ${somText(amount)} — поправьте суммы`)
@@ -288,7 +297,9 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
     const charge = !whole || (a.chargeSom != null && amount < a.chargeSom) ? costNum : undefined
     action.mutate({
       kind: 'payment',
-      body: { amountSom: amount, method, chargeSom: charge, dueOn: !whole && due ? due : undefined, parts },
+      // Всё в долг — денег не было: способ не отправляем (сервер его и не спросит)
+      body: nothingNow ? { amountSom: 0, chargeSom: costNum, dueOn: due || undefined }
+        : { amountSom: amount, method, chargeSom: charge, dueOn: !whole && due ? due : undefined, parts },
     })
   }
   const unmark = async () => {
@@ -355,7 +366,10 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
           {!whole && (
             <div className="payment-part">
               <label className="field"><span>Заплатил сейчас, сом</span>
-                <input type="number" min={1} inputMode="numeric" value={paidNow} onChange={(e) => setPaidNow(e.target.value)} /></label>
+                <input type="number" min={0} inputMode="numeric" value={paidNow} onChange={(e) => setPaidNow(e.target.value)} /></label>
+              {!nothingNow && (
+                <button type="button" className="link" onClick={() => setPaidNow('0')}>Сейчас ничего — всё в долг</button>
+              )}
               {rest != null && rest > 0 && <p className="pay-rest">Остальное потом: <b className="num">{somText(rest)}</b> — станет долгом пациента</p>}
               <label className="field"><span>Доплатит до (можно не указывать)</span>
                 <DateInput min={todayIn()} value={due} onChange={(e) => setDue(e.target.value)} /></label>
@@ -364,7 +378,7 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
         </div>
       </div>
 
-      <div className="pay-step">
+      {!nothingNow && <div className="pay-step">
         <span className="pay-step-n" aria-hidden="true">3</span>
         <div className="pay-step-body">
           <span className="pay-step-title">Чем заплатил</span>
@@ -387,11 +401,12 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
       {error && <p className="error" role="alert">{error}</p>}
       <button type="submit" className="btn primary" disabled={action.isPending}>
-        {waiting ? 'Принять оплату' : 'Сохранить оплату'}{paid ? ` · ${somText(paid)}` : ''}</button>
+        {nothingNow ? `Сохранить — всё в долг${costNum ? ` · ${somText(costNum)}` : ''}`
+          : `${waiting ? 'Принять оплату' : 'Сохранить оплату'}${paid ? ` · ${somText(paid)}` : ''}`}</button>
       {cashierButton && <p className="hint small">Пациент платит в регистратуре? Впишите стоимость и передайте на кассу:</p>}
       {cashierButton}
       {a.paidSom != null && <button type="button" className="link danger-link" disabled={action.isPending} onClick={unmark}>Снять отметку оплаты</button>}

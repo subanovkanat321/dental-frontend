@@ -95,6 +95,60 @@ test('«часть»: заплатил не меньше стоимости — 
   expect(sent).toEqual([])
 })
 
+test('«Сейчас ничего — всё в долг»: 0 сом, без способа, долг и срок; в карточке — долг, а не «Бесплатно»', async () => {
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', servicePriceSom: 2000, version: 1 }),
+    (_, b) => ({ paidSom: b.amountSom as number, paymentMethod: 'CASH', chargeSom: b.chargeSom as number,
+      debtSom: (b.chargeSom as number) - (b.amountSom as number), dueOn: b.dueOn as string }),
+    { payments: [{ id: 1, amountSom: 0, method: 'CASH', paidAt: '2099-06-01T05:00:00Z' }] })
+  renderApp()
+  const panel = await card()
+  const form = await openPay(panel)
+  await userEvent.click(within(form).getByRole('button', { name: 'Часть, остальное потом' }))
+  expect(within(form).getByRole('group', { name: 'Как заплатили' })).toBeInTheDocument()
+  await userEvent.click(within(form).getByRole('button', { name: 'Сейчас ничего — всё в долг' }))
+  expect(within(form).getByLabelText('Заплатил сейчас, сом')).toHaveValue(0)
+  // Денег не было — «Чем заплатил» не спрашиваем; остаток и срок видны
+  expect(within(form).queryByRole('group', { name: 'Как заплатили' })).not.toBeInTheDocument()
+  expect(within(form).getByText(/Остальное потом:/)).toHaveTextContent(/2\s000 сом/)
+  const due = addDays(todayIn(), 10)
+  await pickDate(within(form).getByLabelText(/Доплатит до/), due)
+  await userEvent.click(within(form).getByRole('button', { name: /^Сохранить — всё в долг · 2\s000 сом/ }))
+
+  expect(await within(panel).findByText(/^Всё в долг · 2\s000 сом$/)).toBeInTheDocument()
+  expect(within(panel).getByText(/Долг 2\s000 сом · доплатит до/)).toBeInTheDocument()
+  expect(within(panel).queryByText(/Бесплатно|наличные|0 сом из/)).not.toBeInTheDocument()
+  expect(within(panel).getByRole('button', { name: 'Принять доплату' })).toBeInTheDocument()
+  expect(sent).toEqual([{ path: 'payment', body: { amountSom: 0, chargeSom: 2000, dueOn: due } }])
+})
+
+test('«часть»: 0 вписали руками — тоже всё в долг; пусто — подсказка, запрос не уходит', async () => {
+  const sent = backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', servicePriceSom: 2000, version: 1 }), () => ({}))
+  renderApp()
+  const form = await openPay(await card())
+  await userEvent.click(within(form).getByRole('button', { name: 'Часть, остальное потом' }))
+  await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату/ }))
+  expect(within(form).getByRole('alert')).toHaveTextContent('Впишите, сколько заплатил сейчас')
+  expect(sent).toEqual([])
+  await userEvent.type(within(form).getByLabelText('Заплатил сейчас, сом'), '0')
+  await userEvent.click(within(form).getByRole('button', { name: /^Сохранить — всё в долг/ }))
+  expect(sent).toEqual([{ path: 'payment', body: { amountSom: 0, chargeSom: 2000 } }])
+})
+
+test('всё в долг, потом доплата: история без записи 0 сом, «Изменить» уже нельзя', async () => {
+  backend(appointment(10, 1, '10:00', 'Бакыт М.', {
+    status: 'DONE', paidSom: 500, paymentMethod: 'TRANSFER', chargeSom: 2000, debtSom: 1500, version: 1,
+  }), () => ({}), { payments: [
+    { id: 1, amountSom: 0, method: 'CASH', paidAt: '2099-06-01T05:00:00Z' },
+    { id: 2, amountSom: 500, method: 'TRANSFER', paidAt: '2099-06-03T05:00:00Z' },
+  ] })
+  renderApp()
+  const panel = await card()
+  expect(await within(panel).findByText(/500 сом из 2\s000 сом/)).toBeInTheDocument()
+  expect(await within(panel).findByText(/Есть доплаты/)).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Изменить' })).not.toBeInTheDocument()
+  expect(within(panel).queryByText(/0 сом, наличные/)).not.toBeInTheDocument()
+})
+
 test('оплачено разными способами: история, «Изменить» открывает форму с суммами по способам', async () => {
   backend(appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', paidSom: 5000, paymentMethod: 'CASH', version: 2 }), () => ({}), {
     payments: [{ id: 1, amountSom: 3000, method: 'CASH' }, { id: 2, amountSom: 2000, method: 'TRANSFER' }],

@@ -185,7 +185,8 @@ function ReceiptSheet({ r, narrow }: { r: Receipt; narrow: boolean }) {
         {r.chargeSom != null && <><dt>Стоимость</dt><dd>{somText(r.chargeSom)}</dd></>}
       </dl>
       {/* Чек 80 мм — платежи строками: таблица в четыре колонки там не помещается */}
-      {narrow ? (
+      {/* «Всё в долг» — платежей ещё нет: пустой таблицы не рисуем */}
+      {!r.payments?.length ? null : narrow ? (
         <ul className="payments" aria-label="Платежи">
           {(r.payments ?? []).map((p, i) => (
             <li key={i}>{docDate(p.paidAt!)} · {METHODS[p.method ?? ''] ?? p.method} · {somText(p.amountSom ?? 0)}{p.takenBy ? ` · принял(а) ${p.takenBy}` : ''}</li>
