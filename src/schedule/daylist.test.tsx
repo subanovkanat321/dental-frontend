@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -194,4 +194,19 @@ test('телефон: короткая полоса «Сегодня» над д
   expect(within(strip).queryByRole('button', { name: /склад/ })).not.toBeInTheDocument()
   await userEvent.click(within(strip).getByRole('button', { name: /1 заявка/ }))
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Бакыт М.')
+})
+
+test('телефон: день врача запрашивается один раз — сетка и список берут один ответ', async () => {
+  backend()
+  const days: string[] = []
+  server.use(http.get('*/api/appointments', ({ request }) => {
+    const url = new URL(request.url)
+    days.push(`${url.searchParams.get('doctorId')}:${url.searchParams.get('overnight') ?? ''}`)
+    return HttpResponse.json([appointment(10, 1, '10:00', 'Бакыт М.')])
+  }))
+  renderApp()
+  expect(await screen.findByRole('button', { name: /10:00–10:30, Бакыт М\./ })).toBeInTheDocument()
+  await act(() => new Promise((r) => setTimeout(r, 100)))
+  // Без хвостов ночной смены (overnight) — тот же запрос, что у «Дня» списком, по одному на врача
+  expect(days.filter((d) => d.startsWith('1:'))).toEqual(['1:'])
 })

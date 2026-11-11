@@ -209,9 +209,11 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   const days = useQueries({
     queries: doctors.map((d) => ({
       // overnight — и приёмы со вчера, которые идут после полуночи (ночная смена): сетка рисует их хвост.
-      // Свой ключ: «День» списком на телефоне берёт день без них (тот же префикс — действия обновляют оба)
-      queryKey: ['appointments', date, d.id, 'overnight'],
-      queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: { date, doctorId: d.id!, overnight: true } } })),
+      // Свой ключ: «День» списком на телефоне берёт день без них (тот же префикс — действия обновляют оба).
+      // Телефон — сетки нет, а «День» списком (DayList) просит день без хвостов: тот же запрос и ключ,
+      // что у него, — один запрос на врача вместо двух
+      queryKey: narrow ? ['appointments', date, d.id] : ['appointments', date, d.id, 'overnight'],
+      queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: narrow ? { date, doctorId: d.id! } : { date, doctorId: d.id!, overnight: true } } })),
       refetchInterval: REFRESH_MS,
       // В «Неделе» и «Месяце» дни не нужны: у них свой запрос на несколько дней
       enabled: !weekMode && !monthMode,
