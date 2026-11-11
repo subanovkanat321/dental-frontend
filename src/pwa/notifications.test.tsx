@@ -64,12 +64,14 @@ test('в Telegram — только «уведомления приходят в 
   expect(screen.queryByRole('group', { name: 'Куда присылать уведомления' })).not.toBeInTheDocument()
 })
 
-test('на сервере не включено — блока нет', async () => {
+test('на сервере не включено — выбора нет, коротко: всё приходит в Telegram (а не пустая страница)', async () => {
   const seen = vi.fn()
   server.use(http.get('*/api/push', () => { seen(); return HttpResponse.json(view({ enabled: false, publicKey: undefined })) }))
   renderBlock()
   await waitFor(() => expect(seen).toHaveBeenCalled())
-  expect(screen.queryByRole('region', { name: 'Уведомления' })).not.toBeInTheDocument()
+  const block = await screen.findByRole('region', { name: 'Уведомления' })
+  expect(block).toHaveTextContent('приходят в Telegram')
+  expect(screen.queryByRole('group', { name: 'Куда присылать уведомления' })).not.toBeInTheDocument()
 })
 
 test('браузер без push — «не умеет уведомления», «В приложение» недоступно', async () => {

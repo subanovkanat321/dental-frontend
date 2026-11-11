@@ -879,8 +879,18 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-day { display: grid; gap: 6px; margin-top: 12px; }
 .doctor-day-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 4px; background: var(--page); font-size: 1.05rem; }
 .doctor-day-head .avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .9rem; }
-.doctor-inline { display: grid; gap: 10px; max-width: 640px; }
-.doctor-inline .panel-head { margin-bottom: 4px; }
+/* «Мой профиль» (settings/ProfilePage): разделы — подпись над карточкой, одной колонкой 880px, шаг 16px */
+.profile-page, .doctor-inline { display: grid; gap: 16px; align-content: start; }
+.profile-page > .toolbar.sticky-head, .profile-page > .toolbar { margin-bottom: 0; }
+.settings-item:has(> .profile-page) { display: grid; gap: 16px; }
+/* Поля и переключатели профиля — шириной формы, а не во всю карточку */
+.doctor-inline .field { max-width: 640px; }
+.doctor-inline .segments { max-width: 480px; }
+.profile-photo-side { display: grid; gap: 8px; justify-items: start; }
+.profile-who { display: grid; gap: 2px; margin: 0; line-height: 1.3; }
+.profile-who strong { font: 600 1.1rem var(--display); }
+.doctor-inline .card-block h4 { margin: 6px 0 0; font-size: .92rem; color: var(--hint); font-weight: 600; }
+.doctor-work > :is(.form, section) + :is(.form, section, div) { padding-top: 12px; border-top: 1px solid var(--separator); }
 /* Телефон, «Все врачи»: списки врачей рядом, компактные строки (время сверху, имя под ним).
    Две колонки — ровно по половине экрана; три и больше — следующая выглядывает краем (--peek)
    и колонки листаются вбок с прилипанием (scroll-snap). Ширина колонки задана треком сетки,
@@ -1601,7 +1611,7 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .settings-item:is([data-host=settings], [data-host=me], [data-host=help]) { max-width: 880px; }
 /* Карточка и узкая форма — сетки с шагом 10px: у абзацев внутри свои поля не нужны, иначе дыры по 26px
    (в пунктах «Настроек» абзацы стояли то плотно, то с дырами) */
-.form.narrow > p, .settings-item .card-block > p { margin: 0; }
+.form.narrow > p, .settings-item :is(.card-block, .form, fieldset, .about-col, .doctor-group) > p { margin: 0; }
 /* Подзаголовок внутри карточки пункта — мельче заголовка карточки, а не крупнее (у h3 браузера 1.17em) */
 .settings-item .card-block h3 { margin: 6px 0 0; font-size: .95rem; }
 /* Поле файла — шириной обычной формы, а не во всю карточку */
@@ -1611,7 +1621,7 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .medical { max-width: 1480px; }
 .cash > p.hint, .cash > .hint { max-width: 920px; margin: 0; }
 /* Пункты «Настроек»: короткие поля и переключатели не растягиваются на всю ширину */
-.settings-item .card-block > .row, .settings-item form > .row { max-width: 640px; }
+.settings-item :is(.card-block, form, fieldset) > .row { max-width: 640px; }
 .settings-item .hours-doctor .segments { max-width: 480px; }
 
 /* «Настройки»: группы двумя ровными колонками без дыр, подсказки в одну строку */
@@ -1655,6 +1665,7 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .invite-page .invite-form .btn.primary { width: 100%; }
 /* «Настройки»: «Выйти» и «Выйти на всех устройствах» рядом */
 .logout-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.card-block.logout-actions > .btn { justify-self: auto; }
 /* «Вы вышли из Tish» над формой входа: один раз после «Выйти» (Login.tsx) */
 .logged-out { display: grid; gap: 6px; width: 100%; text-align: left; font-size: .92rem; background: var(--accent-soft); }
 .logged-out p { margin: 0; }

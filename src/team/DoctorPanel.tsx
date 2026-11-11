@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
@@ -45,12 +45,14 @@ export const SELF_PROFILE_HINT = 'Фото, имя и «о себе» врач �
  * </ul>
  * Telegram id руками не вписывают: привязка — ссылкой-приглашением или номером. Те же права проверяет сервер.
  */
-export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
+export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfile }: {
   doctor: Doctor
   me: Me
   onClose: () => void
-  /** «Мой профиль»: карточка во всю рабочую область, а не панель справа */
+  /** «Мой профиль»: разделы — карточками во всю рабочую область, а не панель справа */
   inline?: boolean
+  /** «Мой профиль»: что поставить сразу под «Для пациентов» (телефон) */
+  afterProfile?: ReactNode
 }) {
   // Встроена в «Мой профиль»: «назад» и Esc — у страницы, иначе Esc уводит с несохранённым текстом
   const close = useClose(onClose, !inline)
@@ -63,44 +65,80 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
   const editsProfile = self || (admin && !linked)
   // Услуги — сам врач или админ; регистратура — только часы работы
   const editsWork = self || admin
+  const who = [self ? 'это вы' : null, d.role === 'ADMIN' ? 'и руководитель' : null, d.active === false ? 'скрыт' : null,
+    admin && !linked ? 'ждём входа' : null].filter(Boolean).join(' · ') || 'Врач'
+  // Свой профиль: «Работает» и «Удалить врача» — не здесь (снять с себя «Работает» — закрыть себе вход),
+  // а у чужих врачей в «Персонале»
+  const own = inline && self
+
+  const forPatients = editsProfile
+    ? <ProfileForm key={d.id} doctor={d} draft={!self} onSaved={refresh} who={inline ? <><strong>{d.fullName}</strong><span className="hint">{who}</span></> : undefined} />
+    : <ProfileView doctor={d} />
+  const work = (
+    <>
+      {!own && <ActiveSwitch doctor={d} admin={admin} onSaved={refresh} />}
+      {editsWork && <DoctorServices key={d.id} doctorId={d.id!} me={me} />}
+      <section className="form">
+        <h4>Часы работы</h4>
+        <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — во вкладке «Перерывы».</p>
+        <HoursEditor doctorId={d.id!} doctorName={d.fullName ?? ''} />
+        <ChairHoursHint doctorId={d.id!} me={me} />
+      </section>
+      <ChairField key={`chair-${d.id}`} doctorId={d.id!} me={me} />
+    </>
+  )
+  const access = admin ? <AccessAdmin doctor={d} self={self} inline={inline} onDone={refresh} />
+    : <p className="hint">Телефон — в «Телефон» выше; пароль нужен только для входа без Telegram — «Пароль и вход» внизу. Права: врач — своё расписание,
+      пациенты и медкарты; сделать руководителем может руководитель клиники.</p>
+
+  if (inline) {
+    // «Мой профиль»: каждый раздел — подпись над карточкой, как «Телефон» и «Пароль и вход» на той же странице
+    return (
+      <aside className="doctor-inline" aria-label="Врач">
+        <section className="settings-group" aria-label="Для пациентов">
+          <h2>Для пациентов</h2>
+          <div className="card-block">{forPatients}</div>
+        </section>
+        {afterProfile}
+        <section className="settings-group" aria-label="Работа">
+          <h2>Работа</h2>
+          <div className="card-block doctor-work">{work}</div>
+        </section>
+        {(admin || self) && (
+          <section className="settings-group" aria-label="Вход и права">
+            <h2>Вход и права</h2>
+            <div className="card-block">{access}</div>
+          </section>
+        )}
+        {admin && !own && <RemoveDoctor doctor={d} onDone={() => { refresh(); onClose() }} />}
+      </aside>
+    )
+  }
 
   return (
-    <aside className={inline ? 'card-block doctor-inline' : 'panel'} aria-label="Врач">
+    <aside className="panel" aria-label="Врач">
       <header className="panel-head">
         <div>
           <h2>{d.fullName}</h2>
-          <span className="hint">{[self ? 'это вы' : null, d.role === 'ADMIN' ? 'и руководитель' : null, d.active === false ? 'скрыт' : null,
-            admin && !linked ? 'ждём входа' : null].filter(Boolean).join(' · ') || 'Врач'}</span>
+          <span className="hint">{who}</span>
         </div>
-        {!inline && <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>}
+        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>
       </header>
 
       <section className="doctor-group" aria-label="Для пациентов">
         <h3 className="group-title">Для пациентов</h3>
-        {editsProfile
-          ? <ProfileForm key={d.id} doctor={d} draft={!self} onSaved={refresh} />
-          : <ProfileView doctor={d} />}
+        {forPatients}
       </section>
 
       <section className="doctor-group" aria-label="Работа">
         <h3 className="group-title">Работа</h3>
-        <ActiveSwitch doctor={d} admin={admin} onSaved={refresh} />
-        {editsWork && <DoctorServices key={d.id} doctorId={d.id!} me={me} />}
-        <section className="form">
-          <h4>Часы работы</h4>
-          <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — во вкладке «Перерывы».</p>
-          <HoursEditor doctorId={d.id!} doctorName={d.fullName ?? ''} />
-          <ChairHoursHint doctorId={d.id!} me={me} />
-        </section>
-        <ChairField key={`chair-${d.id}`} doctorId={d.id!} me={me} />
+        {work}
       </section>
 
       {(admin || self) && (
         <section className="doctor-group" aria-label="Вход и права">
           <h3 className="group-title">Вход и права</h3>
-          {admin ? <AccessAdmin doctor={d} self={self} inline={inline} onDone={refresh} />
-            : <p className="hint">Телефон — в «Телефон» выше; пароль нужен только для входа без Telegram — «Пароль и вход» внизу. Права: врач — своё расписание,
-              пациенты и медкарты; сделать руководителем может руководитель клиники.</p>}
+          {access}
         </section>
       )}
 
@@ -110,7 +148,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
 }
 
 /** «Для пациентов» — форма: фото, имя, «Кратко». draft — админ заполняет за врача, который ещё не вошёл. */
-function ProfileForm({ doctor: d, draft, onSaved }: { doctor: Doctor; draft: boolean; onSaved: () => void }) {
+function ProfileForm({ doctor: d, draft, onSaved, who }: { doctor: Doctor; draft: boolean; onSaved: () => void; who?: ReactNode }) {
   const [form, setForm] = useState({ fullName: d.fullName ?? '', about: d.about ?? '' })
   const { dirty, commit } = useDirty(form)
   const [photoError, setPhotoError] = useState('')
@@ -153,12 +191,15 @@ function ProfileForm({ doctor: d, draft, onSaved }: { doctor: Doctor; draft: boo
       {draft && <p className="hint">Врач ещё не вошёл — можно заполнить черновик, чтобы пациенты не видели пустую карточку. Войдёт — поправит сам.</p>}
       <div className="profile-photo">
         {d.photoUrl ? <img src={d.photoUrl} alt="Фото врача" /> : <span className="photo-empty" aria-hidden="true">{(d.fullName ?? '?').slice(0, 1)}</span>}
+        <div className="profile-photo-side">
+        {who && <p className="profile-who">{who}</p>}
         <div className="actions">
           <label className="btn">
             {photo.isPending ? <><Spinner />Загружаем…</> : d.photoUrl ? 'Сменить фото' : 'Загрузить фото'}
             <input type="file" accept="image/*" className="sr-only" aria-label="Фото врача" disabled={photo.isPending} onChange={pick} />
           </label>
           {d.photoUrl && <button type="button" className="btn ghost" disabled={removePhoto.isPending} onClick={() => removePhoto.mutate()}>Удалить фото</button>}
+        </div>
         </div>
       </div>
       {(photoError || removePhoto.error) && <p className="error" role="alert">{photoError || removePhoto.error?.message}</p>}

@@ -50,8 +50,16 @@ function NotificationsBody() {
     return () => { alive = false }
   }, [])
 
-  // Ключей нет на сервере (или ещё грузим) — выбора нет, всё в Telegram: блок не показываем
-  if (!view.data?.enabled || !view.data.publicKey) return null
+  if (view.isPending) return null
+  // Ключей нет на сервере — выбора нет, всё в Telegram: так и говорим, а не пустая страница с одним заголовком
+  if (!view.data?.enabled || !view.data.publicKey) {
+    return (
+      <Section>
+        <p>Уведомления о записях, переносах и вопросах пациентов приходят в Telegram — от бота клиники.</p>
+        <p className="hint">Уведомления в установленное приложение здесь пока не включены.</p>
+      </Section>
+    )
+  }
   const data = view.data
   const publicKey = view.data.publicKey
   const app = data.channel === 'APP'

@@ -21,7 +21,7 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-test('«Мой профиль» у регистратуры: сверху «Телефон», ниже своё «Имя» — меняет сама, «Пароль и вход» — в самом низу', async () => {
+test('«Мой профиль» у регистратуры: сверху своё «Имя» — меняет сама, ниже «Телефон», «Пароль и вход» — в самом низу', async () => {
   let sent: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(reception)),
@@ -37,7 +37,7 @@ test('«Мой профиль» у регистратуры: сверху «Те
   renderApp()
 
   const nameBlock = await screen.findByRole('region', { name: 'Имя' })
-  const order = await Promise.all(['Телефон', 'Имя', 'Пароль и вход'].map((name) => screen.findByRole('region', { name })))
+  const order = await Promise.all(['Имя', 'Телефон', 'Пароль и вход'].map((name) => screen.findByRole('region', { name })))
   expect(order[0]!.compareDocumentPosition(order[1]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(order[1]!.compareDocumentPosition(order[2]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 
@@ -106,4 +106,21 @@ test('подсказки нет, когда профиль заполнен; с�
   expect(notice).toHaveTextContent('укажите имя')
   await user.click(within(notice).getByRole('button', { name: /укажите имя/ }))
   expect(window.location.hash).toBe('#/me/profile')
+})
+
+test('«Мой профиль» у врача: сверху «Для пациентов» (фото и имя), ниже «Телефон» и «Работа»; «Удалить врача» и «Работает» у себя — нет', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json([{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramId: 111, role: 'ADMIN' }] satisfies Schemas['DoctorAdminView'][])),
+    http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
+  )
+  window.location.hash = '/settings/profile'
+  renderApp()
+  const card = await screen.findByRole('complementary', { name: 'Врач' })
+  const order = await Promise.all(['Для пациентов', 'Телефон', 'Работа', 'Вход и права'].map((name) => within(card).findByRole('region', { name })))
+  for (let i = 1; i < order.length; i++) expect(order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(within(order[0]!).getByText('Айгерим Садыкова', { selector: 'strong' })).toBeInTheDocument()
+  expect(within(card).queryByRole('button', { name: 'Удалить врача' })).not.toBeInTheDocument()
+  expect(within(card).queryByRole('checkbox', { name: /Работает/ })).not.toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Выход' })).toBeInTheDocument()
 })

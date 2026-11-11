@@ -218,9 +218,12 @@ function LogoutSection() {
     }
   }
   return (
-    <section className="settings-group logout-actions">
-      {!inTelegram && <button type="button" className="btn danger" onClick={() => void logout()}>Выйти</button>}
-      <button type="button" className="btn danger" disabled={busy} onClick={() => void everywhere()}>Выйти на всех устройствах</button>
+    <section className="settings-group" aria-label="Выход">
+      <h2>Выход</h2>
+      <div className="card-block logout-actions">
+        {!inTelegram && <button type="button" className="btn danger" onClick={() => void logout()}>Выйти</button>}
+        <button type="button" className="btn danger" disabled={busy} onClick={() => void everywhere()}>Выйти на всех устройствах</button>
+      </div>
     </section>
   )
 }

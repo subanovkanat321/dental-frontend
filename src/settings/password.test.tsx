@@ -158,7 +158,8 @@ test('с Telegram «Пароль и вход» — внизу профиля, т
   expect(section).not.toHaveTextContent(/задайте/i)
   expect(within(section).getByRole('button', { name: 'Задать пароль' })).toHaveClass('ghost')
   // После «Телефона» и всего профиля — последним блоком
-  const groups = screen.getAllByRole('region').filter((r) => r.classList.contains('settings-group'))
+  // Последний раздел профиля — «Пароль и вход»; ниже только «Выход»
+  const groups = screen.getAllByRole('region').filter((r) => r.classList.contains('settings-group') && r.getAttribute('aria-label') !== 'Выход')
   expect(groups.at(-1)).toBe(section)
 })
 
