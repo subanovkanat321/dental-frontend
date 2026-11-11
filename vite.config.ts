@@ -94,6 +94,10 @@ export default defineConfig({
   plugins: [react(), serviceWorker(), versionFile()],
   css: { postcss: { plugins: [colorMixPostcss] } },
   build: {
+    // Самый большой чанк — three.js 3D-атласа (engine, около 615 КБ, 160 КБ gzip): грузится только
+    // при открытии атласа и дробить его незачем. Порог выше него, чтобы предупреждение ловило новые
+    // разросшиеся чанки, а не этот
+    chunkSizeWarningLimit: 650,
     rollupOptions: {
       // CRM и Mini App — index.html; страницы сайта — свои HTML с og:-тегами и лёгкими скриптами
       input: {

@@ -6,8 +6,6 @@ import { Activity, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState 
 
 import type { Schemas } from './api/client'
 import { DownloadPage } from './pwa/DownloadPage'
-import { Login } from './layout/Login'
-import { Shell } from './layout/Shell'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { linkHash, readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
 import { isDownloadPath, isInvitePath, isLoginPath, usePage, type Page } from './lib/route'
@@ -20,6 +18,9 @@ import { UpdateToast } from './pwa/UpdateToast'
 import { closeAtlas, useAtlasRoute } from './atlas/route'
 import { AtlasBoot, Loading } from './layout/Loading'
 
+// Оболочка CRM (меню, плашки) и вход — своими чанками: Mini App пациента их не скачивает
+const Shell = lazy(() => import('./layout/Shell').then((m) => ({ default: m.Shell })))
+const Login = lazy(() => import('./layout/Login').then((m) => ({ default: m.Login })))
 // Разделы — отдельными чанками: пациент не скачивает CRM, сотрудник — только открытый раздел
 const CashPage = lazy(() => import('./cash/CashPage').then((m) => ({ default: m.CashPage })))
 const PatientsPage = lazy(() => import('./patients/PatientsPage').then((m) => ({ default: m.PatientsPage })))
@@ -101,7 +102,7 @@ function Screens() {
         window.location.replace('/clinics')
         return <Loading className="screen" />
       }
-      return <><Login /><UpdateToast /></>
+      return <><Suspense fallback={<Loading className="screen" />}><Login /></Suspense><UpdateToast /></>
     }
     return <div className="center error">Нет связи с сервером: {me.error.message}</div>
   }
@@ -141,17 +142,19 @@ function Screens() {
     }
   }
   return (
-    <Shell me={me.data} page={shown} onNavigate={go}>
-      <Sections shown={shown} sections={sections} onVisit={setVisited}>
-        {(p) => (
-          // Предохранитель на раздел: упал один экран — остальное работает
-          <ErrorBoundary key={`${p}:${keys[p] ?? 0}`}>
-            <Suspense fallback={<Loading />}>{section(p)}</Suspense>
-          </ErrorBoundary>
-        )}
-      </Sections>
-      <UpdateToast />
-    </Shell>
+    <Suspense fallback={<Loading className="screen" />}>
+      <Shell me={me.data} page={shown} onNavigate={go}>
+        <Sections shown={shown} sections={sections} onVisit={setVisited}>
+          {(p) => (
+            // Предохранитель на раздел: упал один экран — остальное работает
+            <ErrorBoundary key={`${p}:${keys[p] ?? 0}`}>
+              <Suspense fallback={<Loading />}>{section(p)}</Suspense>
+            </ErrorBoundary>
+          )}
+        </Sections>
+        <UpdateToast />
+      </Shell>
+    </Suspense>
   )
 }
 
