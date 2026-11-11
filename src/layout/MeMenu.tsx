@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } fr
 import { createPortal } from 'react-dom'
 
 import { logout, type Schemas } from '../api/client'
+import { usePlatformInfo } from '../api/platform'
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { useBack } from '../lib/back'
 import { openMine } from '../lib/route'
@@ -113,6 +114,8 @@ const ME_ICON: Record<string, ReactNode> = {
   privacy: <MiniIcon d="M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3" />,
   tour: <MiniIcon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM15.5 8.5l-2 5-5 2 2-5z" />,
   instagram: <MiniIcon d="M4 4h16v16H4zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM17 7h.01" />,
+  // «👥» — линией, как остальные значки меню
+  group: <MiniIcon d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.3a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.5 3.5 5.2" />,
 }
 
 function MiniIcon({ d }: { d: string }) {
@@ -143,7 +146,7 @@ export function MeMenuItems({ me, onPick }: { me: Me; onPick: () => void }) {
 
 /**
  * Пункты «Помощи»: первым — чат с помощником (окно поверх, не уводит с экрана), затем руководство,
- * техподдержка (обращения), отзыв, конфиденциальность, «Пройти тур ещё раз» и Instagram Tish (ссылка наружу).
+ * техподдержка (обращения), отзыв, конфиденциальность, «Пройти тур ещё раз», группа врачей Tish и Instagram Tish (ссылки наружу).
  */
 export function HelpMenuItems({ me, onChat, onPick }: { me: Me; onChat: () => void; onPick: () => void }) {
   return (
@@ -154,8 +157,22 @@ export function HelpMenuItems({ me, onChat, onPick }: { me: Me; onChat: () => vo
       ))}
       {/* Тот же тур, что при первом входе: 4–6 подсказок по главным местам */}
       <Item icon={ME_ICON.tour} title="Пройти тур ещё раз" hint="Подсказки по главным местам Tish" onClick={() => { onPick(); startTour() }} />
+      <DoctorsGroupItem onPick={onPick} />
       <Item icon={ME_ICON.instagram} title="Tish в Instagram" hint={`${TISH_INSTAGRAM_NAME} — видео-инструкции`} external
         onClick={() => { onPick(); openLink(TISH_INSTAGRAM) }} />
     </>
+  )
+}
+
+/**
+ * «👥 Группа врачей Tish» — общая Telegram-группа сотрудников клиник (ссылка из «Сведений о платформе», V194).
+ * Ссылки нет (или сведения не загрузились) — пункта нет. «Помощь» — только у сотрудников, пациентам её не видно.
+ */
+function DoctorsGroupItem({ onPick }: { onPick: () => void }) {
+  const url = usePlatformInfo().data?.doctorsGroupUrl
+  if (!url) return null
+  return (
+    <Item icon={ME_ICON.group} title="Группа врачей Tish" hint="Новости, короткие видео «Как сделать», ответы на вопросы" external
+      onClick={() => { onPick(); openLink(url) }} />
   )
 }

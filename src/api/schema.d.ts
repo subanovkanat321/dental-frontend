@@ -6169,6 +6169,7 @@ export interface components {
             supportEmail?: string;
             supportPhones?: string[];
             supportWhatsapp?: string;
+            doctorsGroupUrl?: string;
         };
         PlatformInfoInfo: {
             legalName?: string;
@@ -6182,6 +6183,7 @@ export interface components {
             accessRequiresGrant?: boolean;
             supportPhones?: string[];
             supportWhatsapp?: string;
+            doctorsGroupUrl?: string;
         };
         PlatformInfoControllerAccess: {
             log?: boolean;

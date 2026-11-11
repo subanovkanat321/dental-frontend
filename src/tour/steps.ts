@@ -64,13 +64,13 @@ export function tourSteps(me: Me, phone: boolean, telegramApp = false): TourStep
     steps.push({
       id: 'more', target: ['more'],
       title: 'Ещё: профиль и Помощь',
-      text: `Здесь ваш профиль${telegramApp ? '' : ' и выход'}, другие разделы и «Помощь» — там короткие видео «Как сделать в Tish».`,
+      text: `Здесь ваш профиль${telegramApp ? '' : ' и выход'}, другие разделы и «Помощь» — там короткие видео «Как сделать в Tish» и группа врачей Tish.`,
     })
   } else {
     steps.push({
       id: 'help', target: ['help', 'me'],
       title: 'Помощь — если что-то непонятно',
-      text: `Там короткие видео «Как сделать в Tish», руководство и чат. Ниже — ваш профиль${telegramApp ? '' : ' и выход'}.`,
+      text: `Там короткие видео «Как сделать в Tish», группа врачей Tish, руководство и чат. Ниже — ваш профиль${telegramApp ? '' : ' и выход'}.`,
     })
   }
   return steps

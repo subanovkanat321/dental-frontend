@@ -84,7 +84,7 @@ test('новый сотрудник (компьютер, руководител�
   d = await dialog()
   expect(titleOf(d)).toBe('Помощь — если что-то непонятно')
   expect(d).toHaveTextContent('6 из 6')
-  expect(d).toHaveTextContent('короткие видео «Как сделать в Tish»')
+  expect(d).toHaveTextContent('короткие видео «Как сделать в Tish», группа врачей Tish')
   expect(within(d).queryByRole('button', { name: 'Пропустить' })).not.toBeInTheDocument()
   expect(marks).toEqual([])
   await userEvent.click(within(d).getByRole('button', { name: 'Готово' }))
