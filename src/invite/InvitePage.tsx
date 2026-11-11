@@ -79,7 +79,7 @@ function Invalid({ text }: { text: string }) {
     <>
       <h1>Ссылка не работает</h1>
       <p className="error" role="alert">{text}</p>
-      <p className="hint small">Уже зарегистрировались? <a href="/login">Войти по номеру и паролю</a></p>
+      <p className="hint small">Уже зарегистрировались? <a href="/login">Войти в Tish</a> — через Telegram или по номеру телефона</p>
     </>
   )
 }

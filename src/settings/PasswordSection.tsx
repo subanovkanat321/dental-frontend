@@ -12,12 +12,16 @@ import { Spinner } from '../layout/Loading'
 
 type Mode = 'current' | 'code'
 
+/** Сотруднику с Telegram: пароль — только запасной вход по номеру. */
+const OPTIONAL_HINT = 'Необязательно. Пароль нужен, только если вы входите без Telegram — по номеру телефона.'
+
 /** Путь «по коду»: «Получить код» → код → «Подтвердить» (пропуск) → новый пароль. */
 type CodeStep = 'send' | 'code' | 'new'
 
 /**
- * «Пароль и вход» в «Изменить профиль» — у всех, у кого указан телефон. На сайт теперь входят только по
- * номеру и паролю, поэтому и сотруднику с Telegram пароль нужен (в самом Telegram — не нужен).
+ * «Пароль и вход» внизу «Моего профиля» — у всех, у кого указан телефон. Сотрудник с Telegram входит через
+ * Telegram (на сайте — «Войти через Telegram» и подтвердить в боте), пароль ему не нужен: блок — с тихой
+ * подписью «Необязательно…», кнопка неброская. Без Telegram пароль — его вход по номеру.
  * Сменить — по текущему паролю. Не помню текущий или пароля ещё нет — «Получить код» (сервер шлёт в
  * Telegram, если номер привязан к вашему Telegram, иначе SMS) → код → «Подтвердить» → только потом новый
  * пароль: сервер выдаёт одноразовый пропуск на 10 минут, с ним и сохраняем. После смены другие
@@ -133,17 +137,22 @@ export function PasswordSection() {
     || sendCode.error?.message
   const passwordStep = mode === 'current' || step === 'new'
   if (!s?.phoneLogin) return null
+  // С Telegram пароль не нужен: тихая подпись «необязательно», а не «надо сделать» (временный — всё же сменить)
+  const optional = Boolean(s.telegram) && !s.temporary
 
   return (
     <section className="settings-group" aria-label="Пароль и вход">
       <h2>Пароль и вход</h2>
       <div className="card-block">
-        <p>{s.passwordSet
-          ? s.temporary ? 'Сейчас пароль временный — придумайте свой.' : `Вы входите по номеру и паролю.${s.setAt ? ` Пароль задан ${shortDate(s.setAt)}.` : ''}`
-          : s.telegram ? 'Пароль ещё не задан. На сайт теперь входят только по номеру и паролю — задайте его (в Telegram пароль не нужен).'
+        {optional ? (
+          <p className="hint">{OPTIONAL_HINT}{s.passwordSet && s.setAt ? ` Пароль задан ${shortDate(s.setAt)}.` : ''}</p>
+        ) : (
+          <p>{s.passwordSet
+            ? s.temporary ? 'Сейчас пароль временный — придумайте свой.' : `Вы входите по номеру и паролю.${s.setAt ? ` Пароль задан ${shortDate(s.setAt)}.` : ''}`
             : 'Пароль ещё не задан — задайте его по коду.'}</p>
+        )}
         {!open ? (
-          <button type="button" className="btn" onClick={start}>{s.passwordSet ? 'Сменить пароль' : 'Задать пароль'}</button>
+          <button type="button" className={optional ? 'btn ghost' : 'btn'} onClick={start}>{s.passwordSet ? 'Сменить пароль' : 'Задать пароль'}</button>
         ) : (
           <form className="form narrow" aria-label="Сменить пароль" onSubmit={(e) => {
             e.preventDefault()
