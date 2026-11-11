@@ -1116,7 +1116,7 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .telegram-login { width: 100%; max-width: 360px; justify-self: center; display: grid; gap: 10px; justify-items: center; text-align: center; }
 .telegram-login .btn.tg-login { width: 100%; text-decoration: none; }
 .telegram-login.waiting p:first-child { font-weight: 600; }
-.login-or { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--faint); font-size: .9rem; }
+.login-or { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 360px; justify-self: center; margin: 6px 0 0; white-space: nowrap; color: var(--faint); font-size: .9rem; }
 .login-or::before, .login-or::after { content: ''; flex: 1; border-top: 1px solid var(--separator); }
 /* Вход по номеру и SMS (без Telegram): форма в карточке входа — по ширине кнопки, слева направо */
 .phone-login { width: 100%; max-width: 360px; justify-self: center; text-align: left; }

@@ -57,9 +57,12 @@ test('«Войти через Telegram» → открывает бота, ждё
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
   const user = userEvent.setup()
   renderApp()
-  // Форма номера и пароля — на месте, кнопка Telegram — под ней
-  expect(await screen.findByRole('textbox', { name: 'Номер телефона' })).toBeInTheDocument()
-  expect(screen.getByText(/по номеру телефона и паролю или через Telegram/)).toBeInTheDocument()
+  // Кнопка Telegram — первой, под ней «Нет Telegram?» и форма номера и пароля
+  const phone = await screen.findByRole('textbox', { name: 'Номер телефона' })
+  expect(screen.getByText(/через Telegram в одно нажатие или по номеру телефона и паролю/)).toBeInTheDocument()
+  const tg = await screen.findByRole('button', { name: 'Войти через Telegram' })
+  expect(tg.compareDocumentPosition(phone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.getByText('Нет Telegram? Войдите по номеру и паролю')).toBeInTheDocument()
 
   await user.click(await screen.findByRole('button', { name: 'Войти через Telegram' }))
 
@@ -121,5 +124,6 @@ test('внутри Telegram (Mini App) кнопки «Войти через Tele
 
   expect(await screen.findByRole('textbox', { name: 'Номер телефона' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Войти через Telegram' })).not.toBeInTheDocument()
-  expect(screen.queryByText(/или через Telegram/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/через Telegram/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/Нет Telegram\?/)).not.toBeInTheDocument()
 })

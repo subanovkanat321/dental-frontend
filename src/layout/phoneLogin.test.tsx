@@ -66,7 +66,7 @@ test('страница входа — сразу «номер + пароль», 
   renderApp()
   await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '0700 000 031')
   expect(screen.queryByRole('button', { name: 'Войти через Telegram' })).not.toBeInTheDocument()
-  expect(screen.getByText(/Нет пароля\? Нажмите «Забыли пароль\? \/ Первый вход» — пришлём код в Telegram или по SMS/)).toBeInTheDocument()
+  expect(screen.getByText(/Нет пароля или забыли\? Нажмите «Забыли пароль\? \/ Первый вход» — код придёт по SMS/)).toBeInTheDocument()
   const password = screen.getByLabelText('Пароль')
   expect(password).toHaveAttribute('type', 'password')
   expect(password).toHaveAttribute('autocomplete', 'current-password')

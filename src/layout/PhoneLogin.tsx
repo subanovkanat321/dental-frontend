@@ -199,7 +199,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
         {canRecover ? (
           <>
             <button type="button" className={error ? 'btn' : 'link'} onClick={() => go('phone')}>{FORGOT}</button>
-            {telegram && <p className="hint">Нет пароля? Нажмите «{FORGOT}» — пришлём код {sms ? 'в Telegram или по SMS' : 'в Telegram'}.</p>}
+            {(telegram || sms) && <p className="hint small">Нет пароля или забыли? Нажмите «{FORGOT}» — код придёт {sms ? 'по SMS (или в Telegram, если номер к нему привязан)' : 'в Telegram'}.</p>}
           </>
         ) : (
           <p className="hint">Первый вход или забыли пароль? Попросите руководителя клиники задать временный пароль
