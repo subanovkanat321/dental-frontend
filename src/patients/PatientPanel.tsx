@@ -22,6 +22,7 @@ import { contactPhone } from '../lib/guardian'
 import { PatientExpenses } from './PatientExpenses'
 import { ContractBox } from '../contract/ContractBox'
 import { Loading } from '../layout/Loading'
+import { OpeningDebtsBox } from '../cash/OpeningDebts'
 import { EmptyState } from '../layout/EmptyState'
 
 type Me = Schemas['BookingViewsMe']
@@ -211,6 +212,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       {shown === 'money' && (
         <section className="patient-money">
           {debtRows.length === 0 && <EmptyState compact title="Долгов нет" />}
+          {staff && patient?.id != null && <OpeningDebtsBox patientId={patient.id} />}
           {debtRows.map((d) => {
             const debt = debtLine(d)!
             const text = `🧾 ${debt.text} — приём ${d.startAt ? shortDate(d.startAt) : ''}`

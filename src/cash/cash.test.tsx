@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -139,6 +139,29 @@ test('«Должники»: по пациентам — кто сколько д
   expect(items[0]).toHaveTextContent(/Бакыт М\.8\s000 сом/)
   expect(items[1]).toHaveTextContent('приёмов: 2')
   expect(items[1]).toHaveTextContent('обещал оплатить до')
+})
+
+test('«Должники»: долг из прежней программы — отдельным блоком, «Погашен» → как отдали', async () => {
+  let debts: Schemas['OpeningDebtsView'][] = [{ id: 7, patientId: 9, patient: 'Пример Старый', amountSom: 2500, createdAt: '2026-11-10T06:00:00Z' }]
+  const paid: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([] satisfies Schemas['PaymentQueryDebt'][])),
+    http.get('*/api/opening-debts', () => HttpResponse.json(debts)),
+    http.post('*/api/opening-debts/:id/paid', async ({ request, params }) => {
+      paid.push({ id: params.id, ...(await request.json() as object) })
+      debts = []
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  renderApp()
+  await userEvent.click(await findSub('Должники'))
+  const box = await screen.findByRole('region', { name: 'Долги из прежней программы' })
+  expect(box).toHaveTextContent(/Пример Старый · 2\s500 сом/)
+  await userEvent.click(within(box).getByRole('button', { name: 'Погашен' }))
+  await userEvent.click(within(box).getByRole('button', { name: 'Переводом' }))
+  await waitFor(() => expect(screen.queryByRole('region', { name: 'Долги из прежней программы' })).not.toBeInTheDocument())
+  expect(paid).toEqual([{ id: '7', method: 'TRANSFER' }])
 })
 
 test('«Должники»: семья — одной строкой, «Семьи вместе» можно выключить', async () => {

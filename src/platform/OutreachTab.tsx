@@ -12,7 +12,7 @@ import { CITIES } from '../lib/clinicSearch'
 import { haptic, openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
-import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, prepareVideo, sendVideo, videoWay, type Group, type OutreachLead, type VideoResult } from './outreach'
+import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, prepareVideo, sendVideo, templateMessage, videoWay, type Group, type OutreachLead, type VideoResult } from './outreach'
 import { HeadTools } from '../layout/PageHead'
 import { HelpHint } from '../help/HelpHint'
 
@@ -195,6 +195,8 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
   // Текст — сразу в поле чата и на телефоне, и на компьютере (whatsappUrl на Windows сам убирает эмодзи: из ссылки
   // они приходят «�»). Копировать-вставлять не нужно (владелец: «и так два шага — текст и ролик»)
   const openMessage = () => openLink(whatsappUrl(l.phone!, text))
+  // Третьим (после текста и ролика) — шаблон переезда: «заполните, и мы всё перенесём»
+  const openTemplate = () => openLink(whatsappUrl(l.phone!, templateMessage()))
   const both = () => {
     onActive()
     openMessage()
@@ -250,6 +252,10 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
           <button type="button" className="btn small ghost" disabled={video === 'pending'} onClick={() => shareVideo(false)}>
             {video === 'pending' && step !== 'video' ? 'Готовлю ролик…' : 'Только ролик'}</button>
           <button type="button" className="btn small ghost" onClick={() => void copy()}>Скопировать текст</button>
+          {l.phone && (
+            <button type="button" className="btn small ghost" onClick={() => { onActive(); openTemplate(); setStep('ask') }}>
+              Шаблон Excel</button>
+          )}
         </div>
       )}
       {step === 'message' && (
@@ -286,6 +292,10 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
           <span className="actions">
             <button type="button" className="btn primary small" disabled={sent.isPending} onClick={() => sent.mutate()}>Да</button>
             <button type="button" className="btn small" onClick={() => setStep(null)}>Нет</button>
+            {l.phone && (
+              <button type="button" className="btn small ghost" onClick={openTemplate}
+                title="Вторым сообщением: «Вот шаблон — заполните, и мы всё перенесём»">📥 Ещё и шаблон Excel</button>
+            )}
           </span>
         </div>
       )}

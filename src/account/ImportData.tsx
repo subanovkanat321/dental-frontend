@@ -5,6 +5,7 @@ import { ApiError, upload, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
 import { download } from '../lib/download'
+import { WorkbookImport } from './WorkbookImport'
 import './import.css'
 
 type Report = Schemas['DataImportReport']
@@ -31,6 +32,8 @@ const SHOWN_ERRORS = 10
 export function ImportData() {
   const client = useQueryClient()
   const [kind, setKind] = useState<Kind>('PATIENTS')
+  // «Шаблон Tish» — всё одним файлом (переезд клиники); иначе — отдельные таблицы пациентов или прайса
+  const [workbook, setWorkbook] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [columns, setColumns] = useState<Columns | null>(null)
   const input = useRef<HTMLInputElement>(null)
@@ -61,6 +64,7 @@ export function ImportData() {
     apply.reset()
     if (input.current) input.current.value = ''
     if (next) setKind(next)
+    setWorkbook(false)
   }
   const choose = (f: File | undefined) => {
     apply.reset()
@@ -84,12 +88,14 @@ export function ImportData() {
   return (
     <section className="card-block import-data" aria-label="Загрузить из Excel">
       <h2>Загрузить из Excel</h2>
-      <p>Перенесите базу из таблицы: пациентов (ФИО, телефон, дата рождения) или прайс услуг (название, цена, длительность, раздел).
-        Подойдёт .xlsx или .csv до 5 МБ и 10 000 строк. Первая строка — заголовки колонок.</p>
+      <p>Перенесите базу из таблицы: всё сразу по шаблону Tish или отдельно — пациентов (ФИО, телефон, дата рождения) или прайс услуг
+        (название, цена, длительность, раздел). Подойдёт .xlsx до 5 МБ и 10 000 строк на лист (отдельные таблицы — и .csv).</p>
       <div className="segments" role="group" aria-label="Что загружаем">
-        <button type="button" aria-pressed={kind === 'PATIENTS'} onClick={() => reset('PATIENTS')}>Пациенты</button>
-        <button type="button" aria-pressed={kind === 'SERVICES'} onClick={() => reset('SERVICES')}>Прайс услуг</button>
+        <button type="button" aria-pressed={workbook} onClick={() => { reset(); setWorkbook(true) }}>Шаблон Tish (всё)</button>
+        <button type="button" aria-pressed={!workbook && kind === 'PATIENTS'} onClick={() => reset('PATIENTS')}>Пациенты</button>
+        <button type="button" aria-pressed={!workbook && kind === 'SERVICES'} onClick={() => reset('SERVICES')}>Прайс услуг</button>
       </div>
+      {workbook ? <WorkbookImport /> : <>
       <p className="hint small">Скачать пример:{' '}
         <button type="button" className="link" onClick={() => void download(`/api/clinic/import/template?kind=${kind}&format=xlsx`, `${exampleName}.xlsx`)}>Excel (.xlsx)</button>
         {' · '}
@@ -146,6 +152,7 @@ export function ImportData() {
           )}
         </>
       )}
+      </>}
     </section>
   )
 }

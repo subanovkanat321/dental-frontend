@@ -1,6 +1,6 @@
 /* «Загрузить из Excel» (ImportData): колонки сеткой, первые строки и ошибки — прокручиваемые таблицы */
 .import-data h3 { margin: 6px 0 0; font-size: .95rem; }
-.import-data .segments { max-width: 360px; }
+.import-data .segments { max-width: 520px; }
 .import-columns { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px 12px; }
 .import-sample { overflow-x: auto; border: 1px solid var(--line-strong); border-radius: var(--r-md); }
 .import-data table { width: 100%; border-collapse: collapse; font-size: .85rem; }
@@ -13,3 +13,17 @@
 .import-errors { background: var(--card); border-radius: var(--r-sm); }
 .import-errors td:last-child { white-space: normal; }
 .import-done { display: grid; gap: 8px; justify-items: start; }
+/* Шаблон Tish: всё одним файлом — по листам таблицей, итог строкой над ней */
+.import-workbook { display: grid; gap: 10px; min-width: 0; }
+.import-workbook > *, .import-workbook .import-summary > * { min-width: 0; }
+.import-workbook .import-summary { overflow-x: auto; }
+.import-data .import-workbook th, .import-data .import-workbook td { white-space: normal; }
+.import-workbook > p { margin: 0; }
+.import-sheets { background: var(--card); border-radius: var(--r-sm); }
+.import-data .import-sheets td.num, .import-data .import-sheets th.num { text-align: right; }
+.import-sheets td:first-child { white-space: normal; }
+@media (max-width: 600px) {
+  .import-data .segments { flex-wrap: wrap; }
+  .import-workbook .import-errors th:nth-child(3), .import-workbook .import-errors td:nth-child(3) { display: none; }
+  .import-data .import-workbook th, .import-data .import-workbook td { padding: 6px 5px; }
+}

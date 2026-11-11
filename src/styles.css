@@ -2603,3 +2603,10 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 }
 /* Компьютер: заголовок подраздела скрыт (он во вкладках) — «?» подраздела первым в строке инструментов, по центру строки */
 @media (min-width: 761px) { .page-head:has(> .sect-h1) > .head-tools > .help-hint { order: -1; margin: 0; align-self: center; } }
+
+/* Долги из прежней программы (шаблон переезда): «Касса → Должники» и карточка пациента */
+.opening-debts { display: grid; gap: 6px; padding: 10px 12px; margin-bottom: 12px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--text); }
+.opening-debts h3 { margin: 0; font-size: .95rem; }
+.opening-debts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.opening-debts li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.opening-debts p { margin: 0; }

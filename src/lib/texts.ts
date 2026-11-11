@@ -171,3 +171,6 @@ export function reminderText(a: ReminderAppointment, settings?: ReminderSettings
   const text = lines.join('\n')
   return usesVariable(template, 'бот') ? text : invite(text)
 }
+
+/** Пустой шаблон переезда в Tish — открытая ссылка бэкенда (данных клиники в нём нет): один .xlsx на все данные. */
+export const MOVE_TEMPLATE_PATH = '/web/import/tish-perenos.xlsx'
