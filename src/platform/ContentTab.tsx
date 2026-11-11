@@ -12,7 +12,7 @@ import { TimeInput } from '../layout/TimeInput'
 import { MonthPicker } from '../layout/MonthPicker'
 import { Select } from '../layout/Select'
 import { Loading, Spinner } from '../layout/Loading'
-import { inTelegram } from '../lib/telegram'
+import { inTelegram, openLink } from '../lib/telegram'
 import { HeadTools } from '../layout/PageHead'
 import { HelpHint } from '../help/HelpHint'
 
@@ -43,8 +43,10 @@ function weekStart(date: string): string {
  * выкладывает). Рилсы — готовые ролики из docs/marketing/reels на сервере: «Добавить рилсы в план»
  * ставит их по одному в день на 19:30 вперемешку с уже запланированными; бот пришлёт видео и кнопку в
  * это время. «Рилсы — автоматически» — новые ролики встают в план сами, а рилс в 19:30 сам выходит в Instagram.
- * После публикации пост или рилс сразу уходит и в сторис (галочка «Также в сторис» у поста и «Сторис —
- * автоматически»); не вышла — причина под постом и «Повторить сторис».
+ * Автосторис (галочка «Также в сторис» у поста и «Сторис — автоматически», обе по умолчанию выключены):
+ * после публикации то же медиа уходит в сторис; не вышла — причина под постом и «Повторить сторис».
+ * Такая сторис без перехода в пост (Graph API не ставит стикер поста) — поэтому у опубликованного поста
+ * «📲 В сторис со ссылкой на пост»: открывает пост в Instagram, там ➤ → «Добавить в историю».
  */
 export function ContentTab() {
   const client = useQueryClient()
@@ -210,8 +212,8 @@ function ReelsAuto({ instagram, instagramKnown, onChanged }: { instagram: boolea
   if (settings.isPending) return null
   if (settings.error) return <p className="error">{settings.error.message}</p>
   const on = Boolean(settings.data.reelsAuto)
-  // Нет поля (старый сервер) — как по умолчанию на сервере: включено
-  const stories = settings.data.storiesAuto !== false
+  // Нет поля (старый сервер) — как по умолчанию на сервере: выключено
+  const stories = settings.data.storiesAuto === true
   return (
     <div className="content-reels-auto">
       <label className="check"><input type="checkbox" checked={on} disabled={save.isPending}
@@ -225,7 +227,8 @@ function ReelsAuto({ instagram, instagramKnown, onChanged }: { instagram: boolea
       <label className="check"><input type="checkbox" checked={stories} disabled={save.isPending}
         onChange={(e) => save.mutate({ storiesAuto: e.target.checked })} /> Сторис — автоматически</label>
       <p className="hint">Опубликованный в Instagram пост или рилс сразу уходит и в сторис — той же картинкой (у карусели — первой) или видео.
-        Подписи и ссылки на пост у сторис нет — так устроен Instagram. Для одного поста можно снять галочку «Также в сторис».</p>
+        Instagram не даёт программам ставить ссылку на пост в сторис — автосторис выйдет без перехода в пост.
+        Чтобы сторис вела в пост, выложите её кнопкой «📲 В сторис» после публикации (3 нажатия).</p>
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </div>
   )
@@ -300,6 +303,8 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
   const storyable = !!post.instagramMediaId && post.kind !== 'STORIES' && (post.kind === 'REELS' ? reel : images.length > 0)
   const storyBusy = post.storyPublishing || story.isPending
   const canStory = instagram && storyable && !post.storyMediaId && !storyBusy
+  // Сторис со ссылкой на пост — только руками в приложении Instagram: открываем пост, там ➤ → «Добавить в историю»
+  const shareUrl = post.kind !== 'STORIES' && /^https?:\/\//i.test(post.instagramUrl ?? '') ? post.instagramUrl! : null
   return (
     <article className={date === today ? 'content-post today' : 'content-post'} aria-label={post.title}>
       <header className="content-head">
@@ -352,6 +357,10 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
             {publish.isPending ? <><Spinner />Публикую…</> : 'Опубликовать в Instagram'}
           </button>
         )}
+        {shareUrl && (
+          <a className="btn small" href={shareUrl} target="_blank" rel="noreferrer"
+            onClick={(e) => { e.preventDefault(); openLink(shareUrl) }}>📲 В сторис со ссылкой на пост</a>
+        )}
         {canStory && (
           <button type="button" className="btn small" onClick={() => story.mutate()}>
             {post.storyError ? 'Повторить сторис' : '📤 В сторис'}
@@ -371,6 +380,7 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
         <button type="button" className="btn small danger" disabled={action.isPending}
           onClick={() => void ask(`Удалить «${post.title}» из плана?`).then((ok) => ok && action.mutate('delete'))}>Удалить</button>
       </div>
+      {shareUrl && <p className="hint">Чтобы сторис вела в пост: откройте пост, нажмите ➤ под ним → «Добавить в историю»</p>}
       {action.error && <p className="error" role="alert">{action.error.message}</p>}
       {publish.error && <p className="error" role="alert">{publish.error.message}</p>}
       {story.error && story.error.code !== 'instagram-story-failed' && <p className="error" role="alert">{story.error.message}</p>}
@@ -413,7 +423,7 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
   const [caption, setCaption] = useState(post?.caption ?? '')
   const [images, setImages] = useState((post?.images ?? []).join('\n'))
   const [note, setNote] = useState(post?.note ?? '')
-  const [story, setStory] = useState(post?.story ?? true)
+  const [story, setStory] = useState(post?.story ?? false)
   const { dirty } = useDirty({ date, time, kind, title, caption, images, note, story })
   const save = useMutation<Post, ApiError>({
     mutationFn: () => {
@@ -456,7 +466,7 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
           <textarea rows={2} maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} /></label>
         {errors.note && <p className="error">{errors.note}</p>}
         {kind !== 'STORIES' && (
-          <label className="check"><input type="checkbox" checked={story} onChange={(e) => setStory(e.target.checked)} /> Также в сторис
+          <label className="check"><input type="checkbox" checked={story} onChange={(e) => setStory(e.target.checked)} /> Также в сторис (без ссылки на пост)
             <span className="hint"> — после публикации в Instagram та же картинка (видео рилса) сразу уйдёт в сторис</span></label>
         )}
         <div className="actions">
