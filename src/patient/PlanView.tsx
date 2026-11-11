@@ -1,13 +1,10 @@
 import type { Schemas } from '../api/client'
 import { ContactLinks } from '../lib/ContactLinks'
-import { ZONE } from '../lib/time'
+import { somText, ZONE } from '../lib/time'
 import type { T } from './i18n'
 import './planView.css'
 
 type Plan = Schemas['PlanOffersPatientPlan']
-
-/** «12 500 сом» — и на кыргызском так же. */
-const som = (n: number) => `${new Intl.NumberFormat('ru-RU').format(n)} сом`
 
 /** '2026-12-03' → «03.12.2026». */
 const day = (date: string) => date.split('-').reverse().join('.')
@@ -47,14 +44,14 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
             {(st.items ?? []).map((item, i) => (
               <li key={i}>
                 <span>{item.tooth ? <b>{t('planTooth', { n: item.tooth })} · </b> : null}{item.title}</span>
-                <span className="num nowrap">{item.priceSom != null ? som(item.priceSom) : <span className="hint">{t('planPriceLater')}</span>}</span>
+                <span className="num nowrap">{item.priceSom != null ? somText(item.priceSom) : <span className="hint">{t('planPriceLater')}</span>}</span>
               </li>
             ))}
           </ul>
-          {many && (st.totalSom ?? 0) > 0 && <p className="plan-view-sub">{t('planStageTotal')}: <b className="num">{som(st.totalSom!)}</b></p>}
+          {many && (st.totalSom ?? 0) > 0 && <p className="plan-view-sub">{t('planStageTotal')}: <b className="num">{somText(st.totalSom!)}</b></p>}
         </section>
       ))}
-      {(plan.totalSom ?? 0) > 0 && <p className="plan-view-total">{t('planTotal')}: <b className="num">{som(plan.totalSom!)}</b></p>}
+      {(plan.totalSom ?? 0) > 0 && <p className="plan-view-total">{t('planTotal')}: <b className="num">{somText(plan.totalSom!)}</b></p>}
       {plan.duration && <p>{t('planDuration', { d: plan.duration })}</p>}
       {plan.validUntil && <p>{t('planValid', { date: day(plan.validUntil) })}</p>}
       <p className="hint small">{t('planNote')}</p>

@@ -17,7 +17,7 @@ import { bookedByText } from '../lib/relations'
 import { useClose } from '../lib/useClose'
 import { useFullView } from '../lib/fullView'
 import { useNowMinutes } from './gridScale'
-import { addDays, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn, ZONE } from '../lib/time'
+import { addDays, dateOf, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
 import { CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { ContactButtons } from './Contact'
 import { ContinueTreatment } from './ContinueTreatment'
@@ -41,11 +41,6 @@ type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 type Patient = Schemas['PatientView']
 type Status = NonNullable<Schemas['AppointmentRequestsChangeStatus']['status']>
-
-/** День приёма по Бишкеку: 'YYYY-MM-DD'. */
-function dateOf(instant: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
-}
 
 /**
  * Карточка приёма — сверху вниз: шапка (время, врач, статус; 📖 «Показать пациенту») → пациент

@@ -1,6 +1,6 @@
 import type { Schemas } from '../api/client'
 import { applyTemplate, usesVariable } from './reminderTemplate'
-import { addDays, timeOf, todayIn, ZONE } from './time'
+import { addDays, dateOf, timeOf, todayIn } from './time'
 
 /**
  * Тексты пациентам в WhatsApp — те же, что в приложении (static/js/state.js бэкенда): одна клиника
@@ -9,10 +9,6 @@ import { addDays, timeOf, todayIn, ZONE } from './time'
  */
 
 const WEEKDAY_ON = ['в воскресенье', 'в понедельник', 'во вторник', 'в среду', 'в четверг', 'в пятницу', 'в субботу']
-
-function dateOf(instant: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
-}
 
 /** «сегодня», «завтра» или «в пятницу, 7 ноября» — по Бишкеку. */
 function whenText(startAt: string, now = new Date()): string {

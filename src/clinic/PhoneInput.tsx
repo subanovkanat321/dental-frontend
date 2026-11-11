@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 
 import { Select } from '../layout/Select'
-import { focusNext, phoneDigits } from '../lib/advance'
+import { digitCount, focusNext } from '../lib/advance'
 import { OTHER_COUNTRY, PHONE_COUNTRIES } from '../lib/phone'
 import { cleanPhone, joinPhone, maskLocal, phoneCountry, splitPhone } from './phone'
 
@@ -38,7 +38,7 @@ export function PhoneInput({ label, value, onChange, mask = false }: { label: st
     // Набрали номер целиком — в форме с data-advance сразу к следующему полю
     // Номер считаем без «0» и «996» в начале: «0772 666 666» — это 9 цифр номера, а не «полный» на
     // девятой цифре (иначе фокус уходил дальше, последняя цифра терялась, сервер номер отклонял)
-    const need = phoneDigits(phoneCountry(next.country).example)
+    const need = digitCount(phoneCountry(next.country).example)
     const digits = numberDigits(next.country, next.local)
     if (need > 0 && digits === need && numberDigits(country, local) < need) focusNext(input.current)
   }

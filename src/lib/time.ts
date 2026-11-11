@@ -1,9 +1,13 @@
 /** Время клиник — по Бишкеку (UTC+6, без перехода на летнее); в API — UTC ISO-8601. */
 export const ZONE = 'Asia/Bishkek'
 
+// Форматтеры — один раз на модуль: создавать Intl.DateTimeFormat дорого, а сетка дня зовёт их сотни раз
+const DAY = new Intl.DateTimeFormat('en-CA', { timeZone: ZONE })
+const TIME = new Intl.DateTimeFormat('ru-RU', { timeZone: ZONE, hour: '2-digit', minute: '2-digit' })
+
 /** Сегодня по Бишкеку: 'YYYY-MM-DD'. */
 export function todayIn(now = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(now)
+  return DAY.format(now)
 }
 
 export function addDays(date: string, days: number): string {
@@ -14,12 +18,12 @@ export function addDays(date: string, days: number): string {
 
 /** '2026-10-31T04:30:00Z' → '10:30' по Бишкеку. */
 export function timeOf(instant: string): string {
-  return new Intl.DateTimeFormat('ru-RU', { timeZone: ZONE, hour: '2-digit', minute: '2-digit' }).format(new Date(instant))
+  return TIME.format(new Date(instant))
 }
 
-/** День по Бишкеку: '2026-10-31T20:30:00Z' → '2026-11-01'. */
+/** День по Бишкеку: '2026-10-31T20:30:00Z' → '2026-11-01'. Единственный — не копировать в файлы. */
 export function dateOf(instant: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
+  return DAY.format(new Date(instant))
 }
 
 /** Минуты от полуночи по Бишкеку: для места приёма в сетке дня. */

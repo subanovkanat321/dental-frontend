@@ -45,7 +45,7 @@ export function advanceOnEnter(e: { key: string; target: EventTarget; preventDef
 }
 
 /** Сколько цифр в полном номере по примеру страны: «555 123 456» → 9. */
-export function phoneDigits(example: string): number {
+export function digitCount(example: string): number {
   return example.replace(/\D/g, '').length
 }
 

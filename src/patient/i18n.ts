@@ -1,4 +1,4 @@
-import { addDays, timeOf, todayIn, ZONE } from '../lib/time'
+import { addDays, dateOf, timeOf, todayIn } from '../lib/time'
 
 /**
  * Язык экранов пациента: русский или кыргызский (персонал — на русском). Все тексты — здесь, в
@@ -525,10 +525,6 @@ export type T = (key: string, vars?: Record<string, string | number>) => string
 /** Тексты языка; {name} — подстановки. Нет перевода — русский (лучше, чем пустая строка). */
 export function translator(lang: Lang): T {
   return (key, vars = {}) => (TEXTS[lang][key] ?? TEXTS.ru[key] ?? key).replace(/\{(\w+)\}/g, (_, name: string) => String(vars[name] ?? ''))
-}
-
-function dateOf(instant: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
 }
 
 /** «сегодня» / «в среду, 3 июня» — и «бүгүн» / «3-июнь, шаршемби». */

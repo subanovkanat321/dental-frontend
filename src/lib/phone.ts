@@ -41,3 +41,20 @@ export function formatPhone(digits: string): string {
   const head = digits.length - 7
   return `+${digits.slice(0, head)} ${digits.slice(head, head + 3)} ${digits.slice(head + 3, head + 5)} ${digits.slice(head + 5)}`
 }
+
+/**
+ * Номер как цифры с кодом страны (wa.me, sms:): «0555 123 456», «555123456», «+996 555 123 456» →
+ * «996555123456»; пусто — undefined. Единственный такой помощник — не копировать в файлы.
+ */
+export function phoneDigits(input: string): string | undefined {
+  const d = input.replace(/\D/g, '')
+  if (!d) return undefined
+  if (/^0\d{9}$/.test(d)) return `996${d.slice(1)}`
+  if (/^\d{9}$/.test(d)) return `996${d}`
+  return d
+}
+
+/** Строка поиска как цифры номера: «0555 12» → «55512» (без 0 и кода страны: ищем по части номера). */
+export function phoneSearchDigits(text: string): string {
+  return text.replace(/\D/g, '').replace(/^(00|996|0)/, '')
+}

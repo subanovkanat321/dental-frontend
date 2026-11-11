@@ -18,6 +18,7 @@ import { Select } from '../layout/Select'
 import { adminsLine, remindedText } from './agreementTarget'
 import { StockClearBox } from './StockClearBox'
 import { templateUrl } from './outreach'
+import { phoneDigits } from '../lib/phone'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -355,15 +356,6 @@ function ContactBox({ name, phone, telegram }: { name?: string | null; phone: st
       </div>
     </section>
   )
-}
-
-/** «0555 123 456», «555123456», «+996 555 123 456» → «996555123456» (для wa.me и sms:); пусто — undefined. */
-function phoneDigits(input: string): string | undefined {
-  const d = input.replace(/\D/g, '')
-  if (!d) return undefined
-  if (/^0\d{9}$/.test(d)) return `996${d.slice(1)}`
-  if (/^\d{9}$/.test(d)) return `996${d}`
-  return d
 }
 
 /**

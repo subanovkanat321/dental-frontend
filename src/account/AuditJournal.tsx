@@ -6,7 +6,7 @@ import { DateInput } from '../layout/DateInput'
 import { Icon } from '../layout/Icon'
 import { Select } from '../layout/Select'
 import { ask, notify } from '../lib/confirm'
-import { addDays, dayTitle, timeOf, todayIn, ZONE } from '../lib/time'
+import { addDays, dateOf, dayTitle, timeOf, todayIn } from '../lib/time'
 import { Loading, Spinner } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 
@@ -37,7 +37,6 @@ function rangeOf(period: Period, custom: { from: string; to: string }): { from?:
   return {}
 }
 
-const dateOf = (instant: string) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
 const PAGE = 50
 
 /**

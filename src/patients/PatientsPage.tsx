@@ -16,6 +16,7 @@ import { useSection } from '../layout/useSection'
 import { canEditServices, isAssistant } from '../lib/roles'
 import { HeadSlotProvider, PageHead } from '../layout/PageHead'
 import { useDebounced } from '../lib/useDebounced'
+import { phoneSearchDigits } from '../lib/phone'
 import { useHeadSlot } from '../layout/headSlot'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
@@ -27,11 +28,6 @@ type Row = Schemas['PatientListControllerPatientRow']
 type Patient = Schemas['PatientView']
 
 type SortKey = 'name' | 'last' | 'next'
-
-/** Строка поиска как цифры номера: «0555 12» → «55512» (без 0 и кода страны). */
-function phoneDigits(text: string): string {
-  return text.replace(/\D/g, '').replace(/^(00|996|0)/, '')
-}
 
 /**
  * «Пациенты»: таблица с поиском и сортировкой, карточка — справа. Список — последние 300 по
@@ -75,7 +71,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   })
 
   const text = query.trim().toLowerCase()
-  const digits = phoneDigits(text)
+  const digits = phoneSearchDigits(text)
   const local = useMemo(() => (recent.data ?? []).filter((p) => !text
     || p.fullName?.toLowerCase().includes(text)
     || (digits.length >= 3 && p.phone?.includes(digits))), [recent.data, text, digits])

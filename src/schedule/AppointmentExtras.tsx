@@ -7,7 +7,7 @@ import { useReminderText } from '../api/settings'
 import { smsUrl, whatsappUrl } from '../lib/texts'
 import { isMobile } from '../pwa/pwa'
 import { openLink, telegram } from '../lib/telegram'
-import { minutesOf, slotInstant, timeOf, todayIn, ZONE } from '../lib/time'
+import { dateOf, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
 import { Dictation } from './Dictation'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
@@ -24,10 +24,6 @@ import { expired, usePromoCodes } from '../lib/promo'
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 
-
-function dateOf(instant: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
-}
 
 function errorText(e: ApiError | null): string | null {
   if (!e) return null
@@ -122,7 +118,7 @@ export function ServiceEdit({ appointment: a, me, onDone, prices = true }: { app
       <label className="field"><span>Услуга</span>
         <Select value={chosen} onChange={(e) => setServiceId(e.target.value === '' ? '' : Number(e.target.value))}>
           <option value="">—</option>
-          {offered.map((s) => <option key={s.id} value={s.id}>{s.name}{prices && s.priceSom != null ? ` · ${s.priceSom} сом` : ''}</option>)}
+          {offered.map((s) => <option key={s.id} value={s.id}>{s.name}{prices && s.priceSom != null ? ` · ${somText(s.priceSom)}` : ''}</option>)}
         </Select>
       </label>
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}

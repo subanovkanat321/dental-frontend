@@ -5,7 +5,7 @@ import { seesToPay, seesAllMoney } from '../lib/roles'
 import { EarningsTab } from '../earnings/EarningsTab'
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf, datesText, periodText, previousRange } from '../lib/compare'
-import { addDays, periodOf, shortDate, somText, todayIn, ZONE } from '../lib/time'
+import { addDays, dateOf, periodOf, shortDate, somText, todayIn } from '../lib/time'
 import { AppointmentPanel } from '../schedule/AppointmentPanel'
 import { AnalyticsTab } from './Analytics'
 import { SalaryTab } from './SalaryTab'
@@ -37,11 +37,6 @@ function monthsOf(from: string, to: string): string[] {
     m = mm === 12 ? `${y! + 1}-01` : `${y}-${String(mm! + 1).padStart(2, '0')}`
   }
   return out
-}
-
-/** День приёма по Бишкеку. */
-function dayOf(instant: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
 }
 
 const METHODS: Record<string, string> = { CASH: 'Наличные', TRANSFER: 'Перевод', CARD: 'Карта' }
@@ -112,7 +107,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
     })),
   })
   const payments = reports.flatMap((q) => q.data ?? [])
-    .filter((x) => x.startAt && dayOf(x.startAt) >= range.from && dayOf(x.startAt) <= range.to)
+    .filter((x) => x.startAt && dateOf(x.startAt) >= range.from && dateOf(x.startAt) <= range.to)
     .filter((x) => x.paidSom != null || (x.debtSom ?? 0) > 0)
 
   const [slot, setSlot] = useHeadSlot()

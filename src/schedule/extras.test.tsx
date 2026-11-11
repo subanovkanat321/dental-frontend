@@ -95,7 +95,7 @@ test('услуга и комментарий меняются прямо в ка
   const panel = await openCard(/Бакыт М\./)
   await userEvent.click(within(panel).getAllByRole('button', { name: 'изменить' })[0]!)
   const service = within(panel).getByRole('form', { name: 'Услуга приёма' })
-  await choose(within(service).getByLabelText('Услуга'), 'Чистка · 3000 сом')
+  await choose(within(service).getByLabelText('Услуга'), 'Чистка · 3 000 сом')
   await userEvent.click(within(service).getByRole('button', { name: 'Сохранить' }))
   expect(await within(panel).findByText('Чистка')).toBeInTheDocument()
 

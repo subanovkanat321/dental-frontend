@@ -1,5 +1,5 @@
 import type { Schemas } from '../api/client'
-import { todayIn } from '../lib/time'
+import { somText, todayIn } from '../lib/time'
 
 export { textMatches as nameMatches } from '../lib/search'
 
@@ -31,7 +31,7 @@ export function groupLabel(group: ServiceGroup | null | undefined, lang: 'ru' | 
 
 /** «от 2 000 сом»; цены нет — null (пациентам не показываем). */
 export function priceText(som?: number | null): string | null {
-  return som == null ? null : `от ${new Intl.NumberFormat('ru-RU').format(som)} сом`
+  return som == null ? null : `от ${somText(som)}`
 }
 
 /**

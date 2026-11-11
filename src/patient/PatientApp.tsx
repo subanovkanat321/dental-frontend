@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
-import { formatPhone, slotInstant, todayIn, ZONE } from '../lib/time'
+import { dateOf, formatPhone, slotInstant, todayIn } from '../lib/time'
 import { OfflineNotice } from '../layout/OfflineNotice'
 import { updateAtSafeMoment } from '../pwa/version'
 import { haptic, openLink, telegram } from '../lib/telegram'
@@ -41,7 +41,6 @@ type Screen =
 /** go и reload — с подтверждением что вышло («Запись отменена»): без него экран просто сменился, и непонятно, получилось ли. */
 type Ctx = { me: Me; t: T; lang: Lang; go: (s: Screen, notice?: string) => void; reload: (notice?: string) => void; screen: Screen }
 
-const dateOf = (instant: string) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONE }).format(new Date(instant))
 
 /** «Мои записи»: свои и родственников, ближайшие первыми (старый сервер присылал только booking). */
 function bookingsOf(me: Me): Booking[] {
