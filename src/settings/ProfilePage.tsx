@@ -24,10 +24,11 @@ type Me = Schemas['BookingViewsMe']
 type Doctor = Schemas['DoctorAdminView']
 
 /**
- * «Мой профиль» — всё о себе заполняет сам сотрудник (админ только приглашает): сверху «Телефон» и
- * «Пароль и вход» — у всех, и владельца платформы тоже. Врачу — своя карточка во всю ширину: «Для
- * пациентов» (фото, имя, «о себе» — их видят в боте), «Работа», «Вход и права». Остальным (админ без
- * кресла, регистратура, ассистент) — «Имя»: как его видят коллеги в «Персонале» и журнале.
+ * «Мой профиль» — всё о себе заполняет сам сотрудник (админ только приглашает): сверху «Телефон» — у всех,
+ * и владельца платформы тоже. Врачу — своя карточка во всю ширину: «Для пациентов» (фото, имя, «о себе» —
+ * их видят в боте), «Работа», «Вход и права». Остальным (админ без кресла, регистратура, ассистент) —
+ * «Имя»: как его видят коллеги в «Персонале» и журнале. В самом низу — «Пароль и вход»: с Telegram он
+ * необязателен (только для входа по номеру).
  */
 export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
   const admin = useQuery({
@@ -43,7 +44,6 @@ export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
     <section className="schedule-main">
       <SubHeader title="Мой профиль" onBack={onBack} />
       <MyPhone />
-      <PasswordSection />
       {me.doctorId == null ? (
         <>
         <MyName />
@@ -57,6 +57,8 @@ export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
         : admin.error ? <p className="error">{admin.error.message}</p>
           : own ? <DoctorPanel key={own.id} doctor={own} me={me} onClose={onBack} inline />
             : <p className="hint">Профиль не найден — обновите страницу.</p>}
+      {/* Внизу, не «надо сделать»: с Telegram пароль не нужен — только для входа по номеру */}
+      <PasswordSection />
     </section>
   )
 }
@@ -294,7 +296,7 @@ function useTelegramShare(current: string | null, refresh: () => void) {
             client.setQueryData(['me-phone'], fresh)
             refresh()
             setBusy(false)
-            void notify('Номер подтверждён через Telegram. Теперь задайте пароль для входа на сайте — ниже, в «Пароль и вход».')
+            void notify('Номер подтверждён через Telegram.')
             return
           }
         }

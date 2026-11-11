@@ -92,7 +92,7 @@ export const SETTINGS_ALIAS: Record<string, string> = { promo: 'sources' }
  */
 export const ME_ITEMS: SettingsItem[] = [
   // Имя, телефон и пароль; врачу ещё фото и «о себе»; там же «Выйти на всех устройствах»
-  item('profile', 'Мой профиль', 'Имя, телефон и пароль; врачу — фото и «о себе»', all),
+  item('profile', 'Мой профиль', 'Имя и телефон; врачу — фото и «о себе»', all),
   // Тема и размер текста — на этом устройстве
   item('appearance', 'Оформление', 'Тема и размер текста на этом устройстве', all),
   item('notifications', 'Уведомления', 'Telegram и уведомления приложения', all),

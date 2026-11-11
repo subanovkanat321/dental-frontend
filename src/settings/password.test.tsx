@@ -117,7 +117,7 @@ test('сотрудник с Telegram без пароля: одна кнопка 
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderApp()
     const section = await screen.findByRole('region', { name: 'Пароль и вход' })
-    expect(section).toHaveTextContent('На сайт теперь входят только по номеру и паролю')
+    expect(section).toHaveTextContent('Необязательно. Пароль нужен, только если вы входите без Telegram')
     await user.click(within(section).getByRole('button', { name: 'Задать пароль' }))
     expect(within(section).queryByRole('button', { name: 'Код в Telegram' })).not.toBeInTheDocument()
     expect(within(section).queryByRole('button', { name: 'Код по SMS' })).not.toBeInTheDocument()
@@ -142,23 +142,24 @@ test('сотрудник с Telegram без пароля: одна кнопка 
   }
 })
 
-test('баннер в CRM «Чтобы входить без Telegram, задайте пароль» — у сотрудника с Telegram без пароля; «Задать» → профиль', async () => {
-  backend({ phoneLogin: false, passwordSet: false, temporary: false, sms: false, telegram: true })
-  window.location.hash = ''
-  const user = userEvent.setup()
-  renderApp()
-  const banner = await screen.findByRole('button', { name: /Чтобы входить без Telegram, задайте пароль/ })
-  await user.click(banner)
-  expect(window.location.hash).toBe('#/me/profile')
-  expect(await screen.findByRole('region', { name: 'Телефон' })).toBeInTheDocument()
-})
-
-test('баннера нет, если пароль задан', async () => {
-  backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: false, telegram: true })
+test('сотруднику с Telegram без пароля в CRM ничего про пароль не показываем (плашки «задайте пароль» нет)', async () => {
+  backend({ phoneLogin: true, passwordSet: false, temporary: false, sms: false, telegram: true, telegramCode: true })
   window.location.hash = ''
   renderApp()
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /Задайте пароль/ })).not.toBeInTheDocument()
+  expect(screen.queryByText(/задайте пароль/i)).not.toBeInTheDocument()
+})
+
+test('с Telegram «Пароль и вход» — внизу профиля, тихой подписью «Необязательно…», кнопка неброская', async () => {
+  backend({ phoneLogin: true, passwordSet: false, temporary: false, sms: false, telegram: true, telegramCode: true })
+  renderApp()
+  const section = await screen.findByRole('region', { name: 'Пароль и вход' })
+  expect(section).toHaveTextContent('Необязательно. Пароль нужен, только если вы входите без Telegram — по номеру телефона.')
+  expect(section).not.toHaveTextContent(/задайте/i)
+  expect(within(section).getByRole('button', { name: 'Задать пароль' })).toHaveClass('ghost')
+  // После «Телефона» и всего профиля — последним блоком
+  const groups = screen.getAllByRole('region').filter((r) => r.classList.contains('settings-group'))
+  expect(groups.at(-1)).toBe(section)
 })
 
 test('перезагрузили, пока ходили за кодом в Telegram, — «Пароль и вход» сразу на шаге кода', async () => {

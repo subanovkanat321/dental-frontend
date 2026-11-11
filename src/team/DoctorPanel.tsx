@@ -99,7 +99,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false }: {
         <section className="doctor-group" aria-label="Вход и права">
           <h3 className="group-title">Вход и права</h3>
           {admin ? <AccessAdmin doctor={d} self={self} inline={inline} onDone={refresh} />
-            : <p className="hint">Телефон и пароль для входа — в «Телефон» и «Пароль и вход» выше. Права: врач — своё расписание,
+            : <p className="hint">Телефон — в «Телефон» выше; пароль нужен только для входа без Telegram — «Пароль и вход» внизу. Права: врач — своё расписание,
               пациенты и медкарты; сделать руководителем может руководитель клиники.</p>}
         </section>
       )}
