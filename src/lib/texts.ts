@@ -44,8 +44,20 @@ export function smsUrl(phone: string, text: string): string {
   return `sms:${phone ? `+${phone}` : ''}?&body=${encodeURIComponent(text)}`
 }
 
-export function whatsappUrl(phone: string, text: string, windows: boolean = isWindows()): string {
-  return `https://wa.me/${phone}?text=${encodeURIComponent(windows ? withoutEmoji(text) : text)}`
+/**
+ * На телефоне — wa.me: ссылку сразу берёт приложение WhatsApp. На компьютере wa.me сначала переадресует на
+ * api.whatsapp.com и при этом раскодирует «+» в пробел («ответьте «+»» приходило «ответьте « »»), поэтому
+ * там ссылка сразу на api.whatsapp.com/send — без переадресации «+» доходит как есть.
+ */
+export function whatsappUrl(phone: string, text: string, windows: boolean = isWindows(), mobile: boolean = isMobile()): string {
+  const body = encodeURIComponent(windows ? withoutEmoji(text) : text)
+  return mobile
+    ? `https://wa.me/${phone}?text=${body}`
+    : `https://api.whatsapp.com/send/?${phone ? `phone=${phone}&` : ''}text=${body}`
+}
+
+export function isMobile(): boolean {
+  return typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
 }
 
 export function isWindows(): boolean {

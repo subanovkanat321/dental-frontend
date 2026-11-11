@@ -28,7 +28,7 @@ function backend(clinics: Schemas['PlatformServiceClinicRow'][]) {
     http.get('*/api/platform/pay-requests', () => HttpResponse.json([])),
     http.get('*/api/platform/clinics/:id/agreement', () => HttpResponse.json({ scans: [] })),
     http.get('*/api/platform/clinics/:id/plan', () => HttpResponse.json({
-      billing: { state: 'ACTIVE', paidUntil: '2026-11-10', daysLeft: 10 }, doctors: 2, tariff: { name: 'Клиника', monthSom: 3490, yearSom: 34900 }, payments: [],
+      billing: { state: 'ACTIVE', paidUntil: '2099-11-10', daysLeft: 10 }, doctors: 2, tariff: { name: 'Клиника', monthSom: 3490, yearSom: 34900 }, payments: [],
     } satisfies Schemas['ClinicPaymentsPlan'])),
   )
 }
@@ -116,7 +116,7 @@ test('заявка с /join: одобрить — новая клиника с �
   await user.click(within(panel).getByRole('button', { name: 'Создать ссылку' }))
   await user.click(await within(panel).findByRole('button', { name: 'Отправить в WhatsApp' }))
   const url = String(open.mock.calls.at(-1)?.[0])
-  expect(url).toMatch(/^https:\/\/wa\.me\/996700111222\?text=/)
+  expect(url).toMatch(/^https:\/\/api\.whatsapp\.com\/send\/\?phone=996700111222&text=/)
   expect(decodeURIComponent(url)).toContain(`${window.location.origin}/invite#staff_adm9`)
   // Клинике без WhatsApp и Telegram — SMS с телефона владельца, тот же текст со ссылкой
   const sms = within(panel).getByRole('link', { name: 'Отправить SMS' }).getAttribute('href')!
