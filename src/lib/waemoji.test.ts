@@ -17,8 +17,10 @@ test('«+» доходит: на компьютере ссылка сразу н
   const plus = 'Если интересно — просто ответьте «+»'
   const desktop = whatsappUrl('996555000111', plus, false, false)
   expect(desktop).toMatch(/^https:\/\/api\.whatsapp\.com\/send\/\?phone=996555000111&text=/)
-  expect(desktop).toContain('%2B')
-  expect(decodeURIComponent(desktop.split('text=')[1]!)).toBe(plus)
+  expect(desktop).not.toContain('%2B')
+  expect(decodeURIComponent(desktop.split('text=')[1]!)).toBe('Если интересно — просто ответьте «＋»')
   expect(whatsappUrl('', plus, false, false)).toMatch(/^https:\/\/api\.whatsapp\.com\/send\/\?text=/)
-  expect(whatsappUrl('996555000111', plus, false, true)).toBe(`https://wa.me/996555000111?text=${encodeURIComponent(plus)}`)
+  expect(whatsappUrl('996555000111', plus, false, true)).toBe(`https://wa.me/996555000111?text=${encodeURIComponent('Если интересно — просто ответьте «＋»')}`)
+  // номер с кодом страны остаётся обычным «+996»
+  expect(decodeURIComponent(whatsappUrl('', 'Звоните: +996 555 000 111', false, true).split('text=')[1]!)).toBe('Звоните: +996 555 000 111')
 })

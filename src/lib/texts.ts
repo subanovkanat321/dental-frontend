@@ -50,10 +50,19 @@ export function smsUrl(phone: string, text: string): string {
  * там ссылка сразу на api.whatsapp.com/send — без переадресации «+» доходит как есть.
  */
 export function whatsappUrl(phone: string, text: string, windows: boolean = isWindows(), mobile: boolean = isMobile()): string {
-  const body = encodeURIComponent(windows ? withoutEmoji(text) : text)
+  const body = encodeURIComponent(safePlus(windows ? withoutEmoji(text) : text))
   return mobile
     ? `https://wa.me/${phone}?text=${body}`
     : `https://api.whatsapp.com/send/?${phone ? `phone=${phone}&` : ''}text=${body}`
+}
+
+/**
+ * Одиночный «+» («ответьте «+»») WhatsApp по дороге превращает в пробел — и с телефона (wa.me), и с компьютера:
+ * ссылка проходит через переадресации, где «+» в адресе значит «пробел». Такой «+» заменяем на «＋» (U+FF0B) —
+ * выглядит так же, но в адресе это обычная буква. «+996…» в номерах не трогаем: там важна ссылка-номер.
+ */
+export function safePlus(text: string): string {
+  return text.replace(/\+(?!\d)/g, '\uFF0B')
 }
 
 export function isMobile(): boolean {
