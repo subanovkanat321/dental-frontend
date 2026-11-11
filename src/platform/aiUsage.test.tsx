@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/platform'
@@ -74,12 +75,12 @@ test('владелец: «Расход ИИ» — итог в $ и сомах, �
   await user.clear(input)
   await user.type(input, '1000')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
-  await vi.waitFor(() => expect(limits).toEqual([['1', { monthly: 1000 }]]))
+  await waitForSlow(() => expect(limits).toEqual([['1', { monthly: 1000 }]]))
 
   // Свой лимит — вернуть «по умолчанию»
   await user.click(within(pilot).getByRole('button', { name: 'Изменить лимит' }))
   await user.click(within(pilot).getByRole('button', { name: 'По умолчанию' }))
-  await vi.waitFor(() => expect(limits).toHaveLength(2))
+  await waitForSlow(() => expect(limits).toHaveLength(2))
   expect(limits[1]).toEqual(['2', {}])
 })
 

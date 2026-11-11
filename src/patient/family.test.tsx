@@ -8,6 +8,7 @@ import { renderApp } from '../test/fixtures'
 import { pickDate } from '../test/date'
 import { server } from '../test/server'
 import { pickSlot } from '../test/wizard'
+import { waitForSlow } from '../test/wait'
 
 /**
  * Мама записывает детей из своего Telegram: «Кого записываем?», новый ребёнок, «Мои записи» с
@@ -123,7 +124,7 @@ test('первая запись — сразу ребёнка: спрашива�
   await user.type(screen.getByRole('textbox', { name: /Его телефон/ }), '0700 11 22 33')
   await user.click(screen.getByRole('checkbox'))
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
-  await vi.waitFor(() => expect(booked).not.toBeNull())
+  await waitForSlow(() => expect(booked).not.toBeNull())
   expect(booked!.fullName).toBe('Жылдыз Асанова')
   expect(booked!.relative).toEqual({ fullName: 'Аружан', relation: 'SIBLING', phone: '0700 11 22 33' })
 })
@@ -145,7 +146,7 @@ test('по-кыргызски: «Кимди жаздырабыз?» — бала
   expect(screen.queryAllByRole('textbox')).toHaveLength(0) // ни имени, ни комментария (он свёрнут)
   await user.click(screen.getByRole('checkbox', { name: /Мен мыйзамдуу өкүлмүн: Аружан Асанова/ }))
   await user.click(screen.getByRole('button', { name: 'Жазылуу' }))
-  await vi.waitFor(() => expect(booked).not.toBeNull())
+  await waitForSlow(() => expect(booked).not.toBeNull())
   expect(booked!.patientId).toBe(41)
   expect(booked!).not.toHaveProperty('relative')
 })

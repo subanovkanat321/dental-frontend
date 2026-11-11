@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { appointment, me, renderApp, openMore, openPay } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -79,12 +80,12 @@ test('владелец удаляет и приём с оплатой или з�
   await openMore(paid)
   await userEvent.click(within(paid).getByRole('button', { name: 'Удалить запись' }))
   expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/У записи есть оплата 2\s000 сом\. Удалить всё вместе с ней\?.*Вернуть нельзя/))
-  await vi.waitFor(() => expect(deleted).toContain('10:true'))
+  await waitForSlow(() => expect(deleted).toContain('10:true'))
   // Без денег, но с заметкой: обычный вопрос → 409 → второй вопрос → force
   const noted = await card(/Нурлан К\./)
   await openMore(noted)
   await userEvent.click(within(noted).getByRole('button', { name: 'Удалить запись' }))
-  await vi.waitFor(() => expect(deleted).toEqual(['10:true', '11:false', '11:true']))
+  await waitForSlow(() => expect(deleted).toEqual(['10:true', '11:false', '11:true']))
   expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/заметка о приёме или отметки зубов/))
   confirm.mockRestore()
 })
@@ -112,7 +113,7 @@ test('409 stale — текст сервера и расписание переч
   const before = asked.filter((x) => x === 'day').length
   await userEvent.click(within(panel).getByRole('button', { name: 'Отменить запись' }))
   expect(await within(panel).findByRole('alert')).toHaveTextContent('Данные только что изменились')
-  await vi.waitFor(() => expect(asked.filter((x) => x === 'day').length).toBeGreaterThan(before))
+  await waitForSlow(() => expect(asked.filter((x) => x === 'day').length).toBeGreaterThan(before))
 })
 
 test('регистратура: «Услуги» только списком — без «Добавить» и справочника', async () => {

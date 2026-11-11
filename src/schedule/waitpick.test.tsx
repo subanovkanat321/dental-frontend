@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { slotInstant, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Entry = Schemas['WaitlistView']
 
@@ -98,7 +99,7 @@ test('никто из листа не помещается — блока нет
   await userEvent.click(await screen.findByRole('button', { name: /Свободно с 10:00 до 12:00, записать/ }))
   const panel = screen.getByRole('complementary', { name: 'Новая запись' })
   expect(await within(panel).findByRole('group', { name: 'Свободное время' })).toBeInTheDocument()
-  await vi.waitFor(() => expect(asked).toBeGreaterThan(0))
+  await waitForSlow(() => expect(asked).toBeGreaterThan(0))
   expect(within(panel).queryByRole('region', { name: 'Подходит из листа ожидания' })).not.toBeInTheDocument()
   expect(panel).not.toHaveTextContent(/Чынара|Дина/)
 })

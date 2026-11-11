@@ -6,6 +6,7 @@ import type { Schemas } from '../../api/client'
 import { me, renderApp, findSub } from '../../test/fixtures'
 import { choose } from '../../test/select'
 import { server } from '../../test/server'
+import { waitForSlow } from '../../test/wait'
 
 const owner = { ...me, owner: true, platform: true }
 
@@ -154,5 +155,5 @@ test('итоги: NPS, распределения, ответы текстом �
   expect(roles).toEqual([null, 'RECEPTION'])
 
   await userEvent.click(screen.getByRole('button', { name: 'Скачать CSV' }))
-  await vi.waitFor(() => expect(csv).toBe(true))
+  await waitForSlow(() => expect(csv).toBe(true))
 })

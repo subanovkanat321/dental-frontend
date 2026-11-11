@@ -19,4 +19,16 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // vi.waitFor по умолчанию ждёт 1 с — под нагрузкой (CI, параллельные прогоны) тесты падали без
+    // причины. Ждём через waitForSlow (src/test/wait.ts, 5 с) или waitFor из Testing Library
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/test/wait.ts'],
+    rules: {
+      'no-restricted-syntax': ['error', {
+        selector: "CallExpression[callee.object.name='vi'][callee.property.name='waitFor'][arguments.length<2]",
+        message: 'vi.waitFor ждёт только 1 с — используйте waitForSlow из src/test/wait.ts (5 с) или waitFor из Testing Library.',
+      }],
+    },
+  },
 ])

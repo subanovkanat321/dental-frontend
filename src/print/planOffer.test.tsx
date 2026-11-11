@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
 import { me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Step = Schemas['TreatmentStepView']
 type Offer = Schemas['PlanOffersOfferView']
@@ -92,7 +93,7 @@ test('план по этапам: заголовки «Этап 1 · 10 500 со
   await userEvent.click(screen.getByRole('combobox', { name: 'Этап лечения этого шага' }))
   await userEvent.click(screen.getByRole('option', { name: 'Этап 2' }))
   await userEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
-  await vi.waitFor(() => expect(calls).toContainEqual({ put: 2, stage: 2 }))
+  await waitForSlow(() => expect(calls).toContainEqual({ put: 2, stage: 2 }))
 
   const form = screen.getByRole('form', { name: 'Новый этап' })
   await userEvent.click(within(form).getByRole('combobox', { name: 'Услуга из прайса' }))
@@ -103,7 +104,7 @@ test('план по этапам: заголовки «Этап 1 · 10 500 со
   await userEvent.click(within(form).getByRole('combobox', { name: 'Этап лечения' }))
   await userEvent.click(screen.getByRole('option', { name: 'Этап 3' }))
   await userEvent.click(within(form).getByRole('button', { name: '＋ Добавить в план' }))
-  await vi.waitFor(() => expect(calls).toContainEqual({ add: { title: 'Имплант', tooth: 46, priceSom: 30000, stage: 3, serviceTypeId: 7 } }))
+  await waitForSlow(() => expect(calls).toContainEqual({ add: { title: 'Имплант', tooth: 46, priceSom: 30000, stage: 3, serviceTypeId: 7 } }))
 })
 
 test('«Отправить план пациенту»: предпросмотр с итогами по этапам, срок, цены до…, в Telegram — статус', async () => {

@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
 import { byHealth, extendPaid, noShowShare } from './health'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/platform'
@@ -232,7 +233,7 @@ test('владелец: нажать в любом месте строки кл�
   const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
   expect(within(panel).getAllByRole('heading', { level: 3 })[0]).toHaveTextContent('Войти в клинику')
   await user.click(within(panel).getByRole('button', { name: 'Войти как руководитель' }))
-  await vi.waitFor(() => expect(entered).toEqual({ reception: false }))
+  await waitForSlow(() => expect(entered).toEqual({ reception: false }))
   expect(reload).toHaveBeenCalled()
   vi.unstubAllGlobals()
 })
@@ -334,5 +335,5 @@ test('новая клиника: название и город из справ�
   await user.click(within(form).getByRole('combobox', { name: /Город/ }))
   await user.click(await screen.findByRole('option', { name: 'Ош' }))
   await user.click(within(form).getByRole('button', { name: 'Создать клинику' }))
-  await vi.waitFor(() => expect(sent).toEqual([{ name: 'Стоматология Тест', city: 'Ош' }]))
+  await waitForSlow(() => expect(sent).toEqual([{ name: 'Стоматология Тест', city: 'Ош' }]))
 })

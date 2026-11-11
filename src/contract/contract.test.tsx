@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { BLANK, fillContract, unknownContractVariables } from './template'
+import { waitForSlow } from '../test/wait'
 
 // Договор с пациентом (V181 бэкенда). Пациенты, клиника и реквизиты — вымышленные
 type Contract = Schemas['PatientContractsView']
@@ -100,14 +101,14 @@ test('врач в договоре: врач приёма пациента, ин
   server.use(http.get('*/api/appointments/by-patient/:id', () => HttpResponse.json({ patient: PATIENT, done: 1, noShow: 0, cancelled: 0,
     upcoming: [], past: [{ id: 5, doctorId: 2, patientId: 9, startAt: '2026-11-01T04:00:00Z', endAt: '2026-11-01T04:30:00Z', status: 'DONE' }] })))
   await openContract({ expand: false })
-  await vi.waitFor(() => expect(queries.at(-1)).toContain('doctorId=2'))
+  await waitForSlow(() => expect(queries.at(-1)).toContain('doctorId=2'))
 })
 
 test('не врач и приёмов нет — договор без врача (линия на листе)', async () => {
   const { queries } = backend()
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined })))
   await openContract({ expand: false })
-  await vi.waitFor(() => expect(queries.length).toBeGreaterThan(0))
+  await waitForSlow(() => expect(queries.length).toBeGreaterThan(0))
   expect(queries.at(-1)).not.toContain('doctorId')
 })
 

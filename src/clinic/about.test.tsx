@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { findSub, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { phoneFromInput, phoneToInput } from './phone'
+import { waitForSlow } from '../test/wait'
 
 const clinic: Schemas['ClinicView'] = {
   brandName: 'Стоматология «Тест»', phones: ['996555123456'], whatsappPhone: '996555123456', code: 'test1', workStart: '09:00:00', workEnd: '18:00:00',
@@ -271,7 +272,7 @@ test('«Часы работы» в Telegram: уход в другой пункт
 
     await user.click(await findSub('Кресла'))
     expect(window.location.hash).toBe('#/clinic/chairs')
-    await vi.waitFor(() => expect(closing.off).toHaveBeenCalled())
+    await waitForSlow(() => expect(closing.off).toHaveBeenCalled())
   } finally {
     confirm.mockRestore()
     vi.unstubAllGlobals()
@@ -304,5 +305,5 @@ test('«О клинике»: город подставляется из адре
   await user.type(address, 'Бишкек, Манаса 1')
   expect(city).toHaveTextContent('Каракол')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
-  await vi.waitFor(() => expect(saved).toMatchObject({ address: 'Бишкек, Манаса 1', city: 'Каракол' }))
+  await waitForSlow(() => expect(saved).toMatchObject({ address: 'Бишкек, Манаса 1', city: 'Каракол' }))
 })

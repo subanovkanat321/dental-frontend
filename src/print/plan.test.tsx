@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp, medTab, openMedicalTab } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -72,7 +73,7 @@ test('план лечения на печать: пациент, врач, эт�
   expect(sheet).toHaveTextContent('План может меняться по результатам лечения.')
   await userEvent.type(within(sheet).getByLabelText('Примечание на листе'), 'Следующий визит через неделю')
   expect(sheet).toHaveTextContent('Примечание: Следующий визит через неделю')
-  await vi.waitFor(() => expect(window.print).toHaveBeenCalled())
+  await waitForSlow(() => expect(window.print).toHaveBeenCalled())
 })
 
 test('«🖨 План лечения»: этапы с итогом за этап, выполнено и осталось, долг за лечение, подписи с датой', async () => {

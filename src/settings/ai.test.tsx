@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Setting = Schemas['VisitReportControllerAiSetting']
 type Change = Schemas['VisitReportControllerAiChange']
@@ -42,18 +43,18 @@ test('«ИИ-помощник»: диктовка включается отде�
   const reports = screen.getByRole('region', { name: 'ИИ пишет отчёты пациенту' })
   expect(dictation).toHaveTextContent('В ИИ уходит текст диктовки — без имени и телефона пациента')
   const reportBox = within(reports).getByRole('checkbox')
-  await vi.waitFor(() => expect(reportBox).toBeChecked())
+  await waitForSlow(() => expect(reportBox).toBeChecked())
   const box = within(dictation).getByRole('checkbox')
   expect(box).not.toBeChecked()
 
   await userEvent.click(box)
-  await vi.waitFor(() => expect(box).toBeChecked())
+  await waitForSlow(() => expect(box).toBeChecked())
   expect(puts).toEqual([['dictation-ai', { on: true }]])
   // Отчёты не тронуты
   expect(reportBox).toBeChecked()
 
   await userEvent.click(reportBox)
-  await vi.waitFor(() => expect(reportBox).not.toBeChecked())
+  await waitForSlow(() => expect(reportBox).not.toBeChecked())
   expect(box).toBeChecked()
   expect(puts).toEqual([['dictation-ai', { on: true }], ['visit-report-ai', { on: false }]])
 })
@@ -66,10 +67,10 @@ test('«ИИ для постов «до / после»» — отдельный 
   expect(post).toHaveTextContent('ИИ не меняет фото — только подбирает кадр и пишет текст')
   expect(post).toHaveTextContent('В ИИ уходят уменьшенные копии двух выбранных фото')
   const box = within(post).getByRole('checkbox')
-  await vi.waitFor(() => expect(box).toBeEnabled())
+  await waitForSlow(() => expect(box).toBeEnabled())
   expect(box).not.toBeChecked()
   await userEvent.click(box)
-  await vi.waitFor(() => expect(box).toBeChecked())
+  await waitForSlow(() => expect(box).toBeChecked())
   expect(puts).toEqual([['post-ai', { on: true }]])
   expect(within(screen.getByRole('region', { name: 'ИИ разбирает голосовую диктовку' })).getByRole('checkbox')).not.toBeChecked()
 })
@@ -79,7 +80,7 @@ test('ИИ на сервере не подключён — переключат�
   renderApp()
   openItem('ai')
   const dictation = await screen.findByRole('region', { name: 'ИИ разбирает голосовую диктовку' })
-  await vi.waitFor(() => expect(dictation).toHaveTextContent('ИИ на сервере не подключён'))
+  await waitForSlow(() => expect(dictation).toHaveTextContent('ИИ на сервере не подключён'))
   expect(within(dictation).getByRole('checkbox')).toBeDisabled()
 })
 
@@ -108,16 +109,16 @@ test('«ИИ отвечает пациентам в боте»: предупре
   expect(bot).toHaveTextContent('без имени, телефона и медкарты')
   expect(bot).toHaveTextContent('без проверки сотрудником')
   const box = within(bot).getByRole('checkbox')
-  await vi.waitFor(() => expect(bot).toHaveTextContent('Сначала включите «ИИ пишет отчёты пациенту»'))
+  await waitForSlow(() => expect(bot).toHaveTextContent('Сначала включите «ИИ пишет отчёты пациенту»'))
   expect(box).toBeDisabled()
 
   const reportBox = within(screen.getByRole('region', { name: 'ИИ пишет отчёты пациенту' })).getByRole('checkbox')
   await userEvent.click(reportBox)
-  await vi.waitFor(() => expect(box).toBeEnabled())
+  await waitForSlow(() => expect(box).toBeEnabled())
   await userEvent.click(box)
-  await vi.waitFor(() => expect(box).toBeChecked())
+  await waitForSlow(() => expect(box).toBeChecked())
 
   await userEvent.click(reportBox)
-  await vi.waitFor(() => expect(box).not.toBeChecked())
+  await waitForSlow(() => expect(box).not.toBeChecked())
   expect(puts).toEqual([['visit-report-ai', { on: true }], ['bot-ai', { on: true }], ['visit-report-ai', { on: false }]])
 })

@@ -10,6 +10,7 @@ import { addDays, todayIn, weekStart } from '../lib/time'
 import { findSub, me, openItem, querySub, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { OnDuty } from './OnDuty'
+import { waitForSlow } from '../test/wait'
 
 // Вымышленные сотрудники клиники
 const people: Schemas['ShiftServicePerson'][] = [
@@ -72,13 +73,13 @@ test('админ: неделя таблицей, добавить смену в 
   await user.clear(end)
   await user.type(end, '16:00')
   await user.click(within(form).getByRole('button', { name: 'Добавить смену' }))
-  await vi.waitFor(() => expect(sent).toEqual([{ telegramId: 502, day: tuesday, startTime: '10:00', endTime: '16:00' }]))
+  await waitForSlow(() => expect(sent).toEqual([{ telegramId: 502, day: tuesday, startTime: '10:00', endTime: '16:00' }]))
   expect(screen.queryByRole('form', { name: 'Новая смена' })).not.toBeInTheDocument()
 
   await user.click(within(aiperi).getByRole('button', { name: /09:00–15:00/ }))
   const edit = await screen.findByRole('form', { name: 'Изменить смену' })
   await user.click(within(edit).getByRole('button', { name: 'Удалить' }))
-  await vi.waitFor(() => expect(sent).toContain('delete 1'))
+  await waitForSlow(() => expect(sent).toContain('delete 1'))
 })
 
 test('пересечение: текст ошибки сервера под временем', async () => {

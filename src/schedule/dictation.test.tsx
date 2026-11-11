@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 // Вымышленный пациент
 const visit: Schemas['AppointmentView'] = appointment(10, 1, '00:05', 'Бакыт М.', { status: 'DONE', version: 1 })
@@ -128,7 +129,7 @@ test('без распознавания речи — поле для текст�
   expect(within(review).queryByRole('checkbox')).not.toBeInTheDocument()
   expect(within(review).getByRole('textbox', { name: 'Заметка из диктовки' })).toHaveValue('Анестезия без реакции\nПломба на 36')
   await userEvent.click(within(review).getByRole('button', { name: 'Сохранить' }))
-  await vi.waitFor(() => expect(calls.apply).toEqual([{ teeth: [], plan: [], note: 'Анестезия без реакции\nПломба на 36' }]))
+  await waitForSlow(() => expect(calls.apply).toEqual([{ teeth: [], plan: [], note: 'Анестезия без реакции\nПломба на 36' }]))
 })
 
 test('регистратуре кнопки нет: заметка о приёме ей закрыта (403)', async () => {
@@ -138,6 +139,6 @@ test('регистратуре кнопки нет: заметка о приём
     { status: 403, headers: { 'Content-Type': 'application/problem+json' } })))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
-  await vi.waitFor(() => expect(screen.queryByText('Заметка о приёме')).not.toBeInTheDocument())
+  await waitForSlow(() => expect(screen.queryByText('Заметка о приёме')).not.toBeInTheDocument())
   expect(screen.queryByRole('button', { name: '🎤 Надиктовать приём' })).not.toBeInTheDocument()
 })

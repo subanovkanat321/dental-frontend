@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -59,7 +60,7 @@ test('напомнить в WhatsApp — текст с подписью клин
   await userEvent.click(within(replies).getByRole('button', { name: 'Придёт' }))
   expect(await within(replies).findByRole('button', { name: 'Придёт', pressed: true })).toBeInTheDocument()
   await userEvent.click(within(replies).getByRole('button', { name: 'Придёт' }))
-  await vi.waitFor(() => expect(calls).toEqual(['opened', 'reply:CONFIRMED:v0', 'reply:NONE:v1']))
+  await waitForSlow(() => expect(calls).toEqual(['opened', 'reply:CONFIRMED:v0', 'reply:NONE:v1']))
   vi.restoreAllMocks()
 })
 
@@ -100,7 +101,7 @@ test('карточка приёма: «Откуда узнал» — под «Е
   // В приёме варианты свёрнуты, чтобы не сдвигать кнопки приёма: «выбрать» — раскрыть
   await userEvent.click(within(source).getByRole('button', { name: 'выбрать' }))
   await userEvent.click(within(source).getByRole('button', { name: '📱 Instagram' }))
-  await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', sourceId: expect.any(Number) }))
+  await waitForSlow(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', sourceId: expect.any(Number) }))
 })
 
 test('телефон: «Напомнить по SMS» — «Сообщения» с номером пациента, текстом напоминания и ссылкой на бота', async () => {
@@ -117,7 +118,7 @@ test('телефон: «Напомнить по SMS» — «Сообщения»
   expect(decodeURIComponent(href)).toContain('в Telegram: https://t.me/test_bot?start=c_test')
   sms.addEventListener('click', (e) => e.preventDefault())
   await userEvent.click(sms)
-  await vi.waitFor(() => expect(calls).toContain('opened'))
+  await waitForSlow(() => expect(calls).toContain('opened'))
   vi.restoreAllMocks()
 })
 

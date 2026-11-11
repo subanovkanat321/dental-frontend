@@ -7,6 +7,7 @@ import { addDays, slotInstant, todayIn } from '../lib/time'
 import { renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { pickSlot } from '../test/wizard'
+import { waitForSlow } from '../test/wait'
 
 type Me = Schemas['BookingViewsMe']
 type Book = Schemas['PatientBookingControllerBook']
@@ -100,6 +101,6 @@ test('промокод из ссылки клиники подставлен; н
 
   await user.click(screen.getByRole('button', { name: 'Алып салуу' }))
   await user.click(screen.getByRole('button', { name: 'Жазылуу' }))
-  await vi.waitFor(() => expect(sent).toHaveLength(2))
+  await waitForSlow(() => expect(sent).toHaveLength(2))
   expect(sent[1]!.promoCode).toBeUndefined()
 })

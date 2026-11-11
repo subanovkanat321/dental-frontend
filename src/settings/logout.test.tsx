@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import { LOGGED_OUT } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Call = { path: string; header: string | null }
 
@@ -53,7 +54,7 @@ test('«Выйти» — в блоке «Я» внизу меню: сервер 
   await user.click(screen.getByRole('button', { name: /^Айгерим Садыкова, руководитель/ }))
   await user.click(within(screen.getByRole('dialog', { name: 'Я: мои настройки' })).getByRole('button', { name: 'Выйти' }))
 
-  await vi.waitFor(() => expect(reload).toHaveBeenCalled())
+  await waitForSlow(() => expect(reload).toHaveBeenCalled())
   expect(calls).toEqual([{ path: 'logout', header: '1' }])
   expect(sessionStorage.getItem(LOGGED_OUT)).toBe('1')
 })
@@ -108,7 +109,7 @@ test('«Выйти на всех устройствах» (внизу «Моег
   await user.click(screen.getByRole('button', { name: 'Выйти на всех устройствах' }))
   await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Выйти' }))
 
-  await vi.waitFor(() => expect(reload).toHaveBeenCalled())
+  await waitForSlow(() => expect(reload).toHaveBeenCalled())
   expect(calls).toEqual([{ path: 'logout-all', header: '1' }])
   expect(sessionStorage.getItem(LOGGED_OUT)).toBe('1')
 })

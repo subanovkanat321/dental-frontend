@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { appointment, findSub, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 type Code = Schemas['PromoCodesCode']
 type Report = Schemas['PromoReportControllerPromoReport']
@@ -66,7 +67,7 @@ test('«Промокоды»: отчёт по коду, новый промок�
 
   // Период отчёта — переключатель
   await user.click(screen.getByRole('button', { name: '90 дней' }))
-  await vi.waitFor(() => expect(new Set(periods).size).toBe(2))
+  await waitForSlow(() => expect(new Set(periods).size).toBe(2))
 
   await user.click(screen.getByRole('button', { name: '+ Промокод' }))
   const panel = await screen.findByRole('complementary', { name: 'Новый промокод' })

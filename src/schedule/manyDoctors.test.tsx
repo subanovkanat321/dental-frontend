@@ -7,6 +7,7 @@ import { slotInstant } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { DOCTOR_HIDDEN_KEY, visibleDoctors } from './doctorVisibility'
+import { waitForSlow } from '../test/wait'
 
 /** Вымышленная клиника: врачей — сколько нужно тесту; входит админ-врач Айгерим (id 1). */
 const NAMES = ['Айгерим Садыкова', 'Дастан Т.', 'Эрмек Н.', 'Жылдыз К.', 'Бакыт А.', 'Нурлан С.', 'Гульнара М.', 'Тимур Ж.', 'Асель Б.', 'Улан Р.']
@@ -153,7 +154,7 @@ test('выходной у всех — колонки остаются, как �
   backend(clinic(2), { off: [1, 2] })
   renderApp()
   await screen.findByRole('group', { name: 'Дастан Т.' })
-  await vi.waitFor(() => expect(document.querySelectorAll('.grid-off')).toHaveLength(2))
+  await waitForSlow(() => expect(document.querySelectorAll('.grid-off')).toHaveLength(2))
   expect(gridColumns()).toEqual(['Айгерим Садыкова', 'Дастан Т.'])
   expect(screen.queryByRole('button', { name: /^Показать колонки/ })).not.toBeInTheDocument()
 })
@@ -166,7 +167,7 @@ test('телефон: выходной без приёмов — колонки 
   await userEvent.click(await screen.findByRole('button', { name: /^Чьё расписание: Айгерим Садыкова \(я\)/ }))
   await userEvent.click(within(screen.getByRole('listbox', { name: 'Чьё расписание' })).getByRole('option', { name: /Все врачи/ }))
   await screen.findByRole('region', { name: 'Эрмек Н.' })
-  await vi.waitFor(() => expect(phoneColumns()).toEqual(['Айгерим Садыкова', 'Эрмек Н.']))
+  await waitForSlow(() => expect(phoneColumns()).toEqual(['Айгерим Садыкова', 'Эрмек Н.']))
   await userEvent.click(screen.getByRole('button', { name: 'Показать колонки: Дастан' }))
   expect(phoneColumns()).toEqual(['Айгерим Садыкова', 'Дастан Т.', 'Эрмек Н.'])
 })

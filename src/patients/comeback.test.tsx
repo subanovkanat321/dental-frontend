@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 /** Вымышленные пациенты: у Айгуль незаконченный план, Бакыт не пришёл. */
 /** Как сервер: фильтр и страница — по запросу, счётчики — по всему списку. */
@@ -145,7 +146,7 @@ test('«Позвать снова»: по 50 за раз — «Показать 
   const list = await screen.findByRole('list', { name: 'Кого вернуть' })
   expect(within(list).getAllByRole('listitem')).toHaveLength(50)
   await userEvent.click(screen.getByRole('button', { name: 'Показать ещё (10 из 10)' }))
-  await vi.waitFor(() => expect(within(screen.getByRole('list', { name: 'Кого вернуть' })).getAllByRole('listitem')).toHaveLength(60))
+  await waitForSlow(() => expect(within(screen.getByRole('list', { name: 'Кого вернуть' })).getAllByRole('listitem')).toHaveLength(60))
   expect(screen.queryByRole('button', { name: /Показать ещё/ })).not.toBeInTheDocument()
 })
 
@@ -214,7 +215,7 @@ test('«Позвать снова» → «Отменили и не записа�
   await userEvent.click(screen.getByRole('button', { name: 'Готово' }))
 
   await userEvent.click(within(screen.getByRole('list', { name: 'Кого вернуть' })).getByRole('button', { name: 'Не звать' }))
-  await vi.waitFor(() => expect(skipped).toEqual([5]))
+  await waitForSlow(() => expect(skipped).toEqual([5]))
   expect(await screen.findByText('Звать некого')).toBeInTheDocument()
 })
 

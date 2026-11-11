@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -91,8 +92,8 @@ test('одно сообщение вместо отчёта и памятки: �
 
   // ИИ на сервере есть, клиника не включила — админу кнопка «Включить», после неё черновик заново
   await userEvent.click(within(b).getByRole('button', { name: 'Включить ИИ для отчётов клиники' }))
-  await vi.waitFor(() => expect(calls).toContainEqual({ on: true }))
-  await vi.waitFor(() => expect(calls.filter((c) => c === 'draft')).toHaveLength(2))
+  await waitForSlow(() => expect(calls).toContainEqual({ on: true }))
+  await waitForSlow(() => expect(calls.filter((c) => c === 'draft')).toHaveLength(2))
 })
 
 test('уход можно поправить в этом сообщении и вернуть текст памятки; печать — с уходом', async () => {
@@ -152,7 +153,7 @@ test('у услуги нет памятки — блока ухода нет, п
   await within(b).findByRole('textbox', { name: 'Текст сообщения' })
   expect(within(b).queryByRole('textbox', { name: 'Уход дома' })).not.toBeInTheDocument()
   await userEvent.click(within(b).getByRole('button', { name: 'WhatsApp' }))
-  await vi.waitFor(() => expect(calls).toContainEqual({ text: 'Здравствуйте!', ai: false, via: 'WHATSAPP' }))
+  await waitForSlow(() => expect(calls).toContainEqual({ text: 'Здравствуйте!', ai: false, via: 'WHATSAPP' }))
 
   await choose(within(b).getByRole('combobox', { name: 'Уход дома из памятки' }), 'После чистки')
   expect(await within(b).findByRole('textbox', { name: 'Уход дома' })).toHaveValue('Не пейте кофе.')

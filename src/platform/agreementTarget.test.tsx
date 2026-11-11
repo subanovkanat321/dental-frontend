@@ -8,6 +8,7 @@ import { me, renderApp, findSub } from '../test/fixtures'
 import { choose } from '../test/select'
 import { server } from '../test/server'
 import { adminsLine, remindedText, statusText } from './agreementTarget'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/platform'
@@ -148,5 +149,5 @@ test('версия договора: опубликовать выбранным
   await user.click(within(panel).getByRole('checkbox', { name: 'Улыбка' }))
   await user.click(within(panel).getByRole('button', { name: 'Опубликовать — клиникам: 1' }))
   await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Опубликовать' }))
-  await vi.waitFor(() => expect(published).toEqual({ all: false, clinicIds: [2] }))
+  await waitForSlow(() => expect(published).toEqual({ all: false, clinicIds: [2] }))
 })

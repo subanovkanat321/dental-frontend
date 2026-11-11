@@ -7,6 +7,7 @@ import { todayIn } from '../lib/time'
 import { appointment, expand, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -48,7 +49,7 @@ test('перенести на другое время у того же врач�
   await userEvent.type(within(form).getByLabelText('Время'), '16:30')
   await userEvent.click(within(form).getByRole('button', { name: 'Перенести' }))
 
-  await vi.waitFor(() => expect(sent).toHaveLength(1))
+  await waitForSlow(() => expect(sent).toHaveLength(1))
   expect(sent[0]).toEqual({ path: 'reschedule', body: { version: 2, startAt: new Date(`${todayIn()}T16:30:00+06:00`).toISOString(), durationMinutes: 30 } })
   expect(await screen.findByRole('button', { name: /16:30/ })).toBeInTheDocument()
 })
@@ -85,7 +86,7 @@ test('передать другому врачу — /transfer с врачом',
   // Другой врач — время выбирают заново, по его сетке свободного
   await userEvent.click(await within(form).findByRole('button', { name: '15:00' }))
   await userEvent.click(within(form).getByRole('button', { name: 'Передать' }))
-  await vi.waitFor(() => expect(sent.map((x) => x.path)).toEqual(['transfer']))
+  await waitForSlow(() => expect(sent.map((x) => x.path)).toEqual(['transfer']))
   expect(sent[0]!.body).toMatchObject({ doctorId: 2, durationMinutes: 30 })
 })
 
@@ -127,7 +128,7 @@ test('материалы на приёме: списать со склада, е
   expect(await within(box).findByText(/Анестетик — /)).toHaveTextContent('Анестетик — 1 карп.')
   await userEvent.click(within(box).getByRole('button', { name: 'Списать ещё 1: Анестетик' }))
   await userEvent.click(await within(box).findByRole('button', { name: 'Вернуть 1: Анестетик' }))
-  await vi.waitFor(() => expect(moves).toEqual([-1, -1, 1]))
+  await waitForSlow(() => expect(moves).toEqual([-1, -1, 1]))
 })
 
 test('материалы услуги: «Обычно уходит» — поправить, убрать лишнее и «Списать всё» одним запросом', async () => {

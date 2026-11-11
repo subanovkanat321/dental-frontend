@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
 import { me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Finance = Schemas['PlatformFinanceFinance']
 
@@ -334,14 +335,14 @@ test('«каждый месяц» по факту: блок «Ожидаются
 
   // «Не в этом месяце» — пропущено за прошлый месяц
   await user.click(within(block).getByRole('button', { name: /^Не в этом месяце: Сервер и домен/ }))
-  await vi.waitFor(() => expect(calls).toHaveLength(2))
+  await waitForSlow(() => expect(calls).toHaveLength(2))
   expect(calls[1]).toEqual([`PUT 6 ${prev}`, { status: 'SKIPPED' }])
 
   // Отметка в записях — «снять»: месяц снова ожидается
   const marks = screen.getByRole('list', { name: 'Отметки: Сервер и домен' })
   expect(marks).toHaveTextContent('оплачено 1 208 сом')
   await user.click(within(marks).getByRole('button', { name: /^Снять отметку: Сервер и домен/ }))
-  await vi.waitFor(() => expect(calls).toHaveLength(3))
+  await waitForSlow(() => expect(calls).toHaveLength(3))
   expect(calls[2]).toEqual([`DELETE 6 ${current}`, null])
 })
 

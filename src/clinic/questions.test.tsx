@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/settings/questions'
@@ -87,7 +88,7 @@ test('новости: опубликовать с подтверждением �
 
   const old = (await screen.findByText('Работаем в субботу')).closest('li')!
   await user.click(within(old as HTMLElement).getByRole('button', { name: 'Убрать из приложения' }))
-  await vi.waitFor(() => expect(screen.queryByText('Работаем в субботу')).not.toBeInTheDocument())
+  await waitForSlow(() => expect(screen.queryByText('Работаем в субботу')).not.toBeInTheDocument())
 })
 
 test('не админ: в «Настройках» нет новостей для пациентов, тарифа и сотрудников', async () => {

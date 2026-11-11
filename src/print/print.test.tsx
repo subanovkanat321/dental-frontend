@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { appointment, me, renderApp, openMore } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 type Me = Schemas['BookingViewsMe']
@@ -100,7 +101,7 @@ test('печать памятки: лист с клиникой, текстом 
   expect(sheet).toHaveTextContent('Стоматология «Тест»')
   expect(sheet).toHaveTextContent('Бакыт М.')
   expect(sheet).toHaveTextContent('Держите тампон 20–30 минут.')
-  await vi.waitFor(() => expect(window.print).toHaveBeenCalled())
+  await waitForSlow(() => expect(window.print).toHaveBeenCalled())
   expect(document.body).toHaveClass('printing')
 
   await userEvent.click(within(sheet).getByRole('button', { name: 'Закрыть' }))

@@ -7,6 +7,7 @@ import { me, openItem, renderApp } from '../test/fixtures'
 import { choose } from '../test/select'
 import { server } from '../test/server'
 import type { Weekday } from './texts'
+import { waitForSlow } from '../test/wait'
 
 type TimeOff = Schemas['TimeOffView']
 
@@ -59,7 +60,7 @@ test('часы врача: день с еженедельным выходным
   const state = backend([fridayOff])
   const { user, hours } = await openHours()
   const friday = await within(hours).findByRole('checkbox', { name: 'Пятница' })
-  await vi.waitFor(() => expect(friday).not.toBeChecked())
+  await waitForSlow(() => expect(friday).not.toBeChecked())
   expect(within(hours).getByRole('checkbox', { name: 'Четверг' })).toBeChecked()
   expect(within(hours).getByText('⏸️ Выходной — из «Перерывы и выходные»')).toBeInTheDocument()
   // Вместо часов — подпись: полей времени у пятницы нет
@@ -79,7 +80,7 @@ test('часы врача: галочка на день с выходным → 
   const state = backend([fridayOff, { id: 8, doctorId: 2, weekday: 'MONDAY', title: 'Выходной', emoji: '⏸️' }])
   const { user, hours } = await openHours()
   const friday = await within(hours).findByRole('checkbox', { name: 'Пятница' })
-  await vi.waitFor(() => expect(friday).not.toBeChecked())
+  await waitForSlow(() => expect(friday).not.toBeChecked())
   // Выходной другого врача на часы Айгерим не влияет
   expect(within(hours).getByRole('checkbox', { name: 'Понедельник' })).toBeChecked()
 
@@ -88,7 +89,7 @@ test('часы врача: галочка на день с выходным → 
   expect(await within(hours).findByText('Часы работы сохранены')).toBeInTheDocument()
   expect(state.deleted).toEqual(['7'])
   expect(state.hours).toEqual([{ days: WEEKDAYS.map((weekday) => ({ weekday, start: '09:00', end: '18:00' })) }])
-  await vi.waitFor(() => expect(friday).toBeChecked())
+  await waitForSlow(() => expect(friday).toBeChecked())
   expect(within(hours).queryByText(/из «Перерывы и выходные»/)).not.toBeInTheDocument()
 })
 
@@ -96,7 +97,7 @@ test('часы врача: выходной всей клиники — объя
   const state = backend([{ id: 9, weekday: 'SATURDAY', title: 'Выходной', emoji: '⏸️' }], { 1: hoursOf([...WEEKDAYS, 'SATURDAY']) })
   const { user, hours } = await openHours()
   const saturday = await within(hours).findByRole('checkbox', { name: 'Суббота' })
-  await vi.waitFor(() => expect(saturday).not.toBeChecked())
+  await waitForSlow(() => expect(saturday).not.toBeChecked())
   expect(within(hours).getByText('⏸️ Выходной — из «Перерывы и выходные» (вся клиника)')).toBeInTheDocument()
   // В часах клиники суббота тоже нерабочая — серым, с подписью
   const clinic = screen.getByRole('group', { name: 'Рабочие дни клиники' })

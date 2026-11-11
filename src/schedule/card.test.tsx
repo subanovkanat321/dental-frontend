@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
 import { appointment, me, openMore, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -73,7 +74,7 @@ test('отменённую запись — «Восстановить»; уда
   expect(await within(panel).findByRole('button', { name: 'Отменить запись' })).toBeInTheDocument()
   await openMore(panel)
   await userEvent.click(within(panel).getByRole('button', { name: 'Удалить запись' }))
-  await vi.waitFor(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
+  await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
   expect(sent).toEqual([{ status: 'SCHEDULED' }, 'delete'])
   window.history.replaceState(null, '', '/')
 })

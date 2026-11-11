@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { parseTime, suggestTime } from '../lib/time'
 import { TimeInput } from './TimeInput'
+import { waitForSlow } from '../test/wait'
 
 function Field({ initial = '', step, disabled, min, max, onChange }: {
   initial?: string; step?: number; disabled?: boolean; min?: string; max?: string; onChange?: (v: string) => void
@@ -107,11 +108,11 @@ test('клавиатура: ↓ открывает панель, стрелки 
   field.focus()
   await user.keyboard('{ArrowDown}')
   const panel = await screen.findByRole('dialog', { name: 'Выбор времени' })
-  await vi.waitFor(() => expect(within(panel).getByRole('button', { name: '09 ч' })).toHaveFocus())
+  await waitForSlow(() => expect(within(panel).getByRole('button', { name: '09 ч' })).toHaveFocus())
   await user.keyboard('{ArrowRight}{ArrowDown}')
   expect(within(panel).getByRole('button', { name: '16 ч' })).toHaveFocus()
   await user.keyboard('{Enter}')
-  await vi.waitFor(() => expect(within(panel).getByRole('button', { name: '16:00' })).toHaveFocus())
+  await waitForSlow(() => expect(within(panel).getByRole('button', { name: '16:00' })).toHaveFocus())
   await user.keyboard('{ArrowRight}{Enter}')
   expect(screen.getByRole('status')).toHaveTextContent('16:05')
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()

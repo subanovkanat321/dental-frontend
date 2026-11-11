@@ -7,6 +7,7 @@ import { addDays, todayIn } from '../lib/time'
 import { appointment, me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 /** Приём через n дней в time — вымышленный пациент. */
 function later(id: number, doctorId: number, days: number, time: string, name: string, extra: Partial<Schemas['AppointmentView']> = {}) {
@@ -110,10 +111,10 @@ test('«WhatsApp» в строке неподтверждённого: гото�
   const wa = await within(list).findByRole('button', { name: /Напомнить в WhatsApp: Бакыт М\., 10:00/ })
   expect(within(list).queryByRole('button', { name: /WhatsApp: Айгуль/ })).toBeNull()
   expect(within(list).queryByRole('button', { name: /WhatsApp: Нурлан/ })).toBeNull()
-  await vi.waitFor(() => expect(wa).toBeEnabled()) // ждёт настройки: без них в тексте нет подписи
+  await waitForSlow(() => expect(wa).toBeEnabled()) // ждёт настройки: без них в тексте нет подписи
   await userEvent.click(wa)
   expect(opened[0]).toContain('phone=996700111222')
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
-  await vi.waitFor(() => expect(calls).toEqual(['opened:1']))
+  await waitForSlow(() => expect(calls).toEqual(['opened:1']))
   vi.restoreAllMocks()
 })

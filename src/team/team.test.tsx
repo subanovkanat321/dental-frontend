@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/settings/doctors'
@@ -64,7 +65,7 @@ test('админ: врачи таблицей; карточка врача, ко
 
   // «Работает» — сразу, без «Сохранить»
   await user.click(within(panel).getByRole('checkbox', { name: 'Работает (показывать пациентам)' }))
-  await vi.waitFor(() => expect(saved.active).toEqual({ active: false }))
+  await waitForSlow(() => expect(saved.active).toEqual({ active: false }))
 
   await user.click(await within(panel).findByRole('button', { name: 'Свои часы' }))
   await user.click(within(panel).getByRole('checkbox', { name: 'Понедельник' }))
@@ -163,7 +164,7 @@ test('персонал: роли рядом, кто вошёл — «Telegram п
   expect(pending).toHaveTextContent('ждём входа · ссылка до 1 янв, 12:00')
   expect(pending).toHaveTextContent('ссылка истекла — нужна новая')
   await user.click(within(pending).getAllByRole('button', { name: 'Отменить' })[1]!)
-  await vi.waitFor(() => expect(pending).not.toHaveTextContent('Опоздавшая'))
+  await waitForSlow(() => expect(pending).not.toHaveTextContent('Опоздавшая'))
   // Фильтр «Регистратура» — только Айпери (приглашена регистратором)
   await user.click(within(screen.getByRole('group', { name: 'Показать роль' })).getByRole('button', { name: /^Регистратура/ }))
   expect(pending).toHaveTextContent('Айпери')
@@ -281,7 +282,7 @@ test('карточка врача: «Услуги врача» — все или
 
   await user.click(within(box).getByRole('button', { name: 'Все услуги клиники' }))
   await user.click(within(box).getByRole('button', { name: 'Сохранить услуги' }))
-  await vi.waitFor(() => expect(sent).toEqual([{ serviceTypeIds: [6] }, { serviceTypeIds: [] }]))
+  await waitForSlow(() => expect(sent).toEqual([{ serviceTypeIds: [6] }, { serviceTypeIds: [] }]))
 })
 
 test('регистратура открывает врача ради часов — «Услуги врача» не видит', async () => {
@@ -354,7 +355,7 @@ test('«Пригласить по номеру»: без Telegram — сотру
   await user.click(within(form).getByRole('button', { name: 'Добавить' }))
   expect(await screen.findByText(/Нурия — в персонале/)).toBeInTheDocument()
   expect(invited).toEqual({ phone: '+996 700000011', role: 'RECEPTION', fullName: 'Нурия', alsoDoctor: false })
-  await vi.waitFor(() => expect(table).toHaveTextContent('✓ по номеру'))
+  await waitForSlow(() => expect(table).toHaveTextContent('✓ по номеру'))
   expect(table).toHaveTextContent('+996 700 000 011')
 
   // SMS не доходят — админ задаёт временный пароль (себе — нет: у своей строки кнопки нет)
@@ -377,7 +378,7 @@ test('«Пригласить по номеру»: без Telegram — сотру
   expect(await within(tempForm).findByRole('alert')).toHaveTextContent('не короче 8 символов')
   await user.type(within(tempForm).getByLabelText('Временный пароль'), 'ий-1')
   await user.click(within(tempForm).getByRole('button', { name: 'Задать' }))
-  await vi.waitFor(() => expect(shown).toHaveBeenCalledWith(expect.stringContaining('Временный пароль для «Нурия» задан')))
+  await waitForSlow(() => expect(shown).toHaveBeenCalledWith(expect.stringContaining('Временный пароль для «Нурия» задан')))
   expect(temporary).toEqual({ id: '-1000000000000001', body: { password: 'короткий-1' } })
 })
 

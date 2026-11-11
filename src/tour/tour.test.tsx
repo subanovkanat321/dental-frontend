@@ -7,6 +7,7 @@ import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { Tour } from './Tour'
 import { tourSteps } from './steps'
+import { waitForSlow } from '../test/wait'
 
 /**
  * Тур при первом входе: показан тому, кто его не видел (сервер: seenAt = null), не показан тому, кто
@@ -73,7 +74,7 @@ test('новый сотрудник (компьютер, руководител�
   expect(titleOf(await dialog())).toBe('Пациенты')
   await userEvent.click(within(await dialog()).getByRole('button', { name: 'Дальше' }))
   // Вкладки подразделов — тур сам открыл «Пациентов»
-  await vi.waitFor(() => expect(titleOf(screen.getByRole('dialog', { description: /./ }))).toBe('Вкладки подразделов'), { timeout: 5000 })
+  await waitForSlow(() => expect(titleOf(screen.getByRole('dialog', { description: /./ }))).toBe('Вкладки подразделов'), { timeout: 5000 })
   expect(window.location.hash).toBe('#/patients')
   expect(screen.getByRole('navigation', { name: 'Подразделы: Пациенты' })).toBeInTheDocument()
   await userEvent.keyboard('{ArrowRight}')
@@ -89,7 +90,7 @@ test('новый сотрудник (компьютер, руководител�
   expect(marks).toEqual([])
   await userEvent.click(within(d).getByRole('button', { name: 'Готово' }))
   expect(screen.queryByRole('dialog', { description: /./ })).not.toBeInTheDocument()
-  await vi.waitFor(() => expect(marks).toEqual(['seen']))
+  await waitForSlow(() => expect(marks).toEqual(['seen']))
   // Вернулись туда, где были до тура
   expect(window.location.hash).toBe('#/schedule')
 })
@@ -100,7 +101,7 @@ test('«Пропустить» закрывает тур и шлёт отмет�
   const d = await dialog()
   await userEvent.click(within(d).getByRole('button', { name: 'Пропустить' }))
   expect(screen.queryByRole('dialog', { description: /./ })).not.toBeInTheDocument()
-  await vi.waitFor(() => expect(marks).toEqual(['seen']))
+  await waitForSlow(() => expect(marks).toEqual(['seen']))
   view.unmount()
 
   // Новый запуск, снова «не видел» — Esc
@@ -109,7 +110,7 @@ test('«Пропустить» закрывает тур и шлёт отмет�
   await dialog()
   await userEvent.keyboard('{Escape}')
   expect(screen.queryByRole('dialog', { description: /./ })).not.toBeInTheDocument()
-  await vi.waitFor(() => expect(marks2).toEqual(['seen']))
+  await waitForSlow(() => expect(marks2).toEqual(['seen']))
 })
 
 test('кто уже прошёл тур — не видит его; «Помощь → Пройти тур ещё раз» показывает снова, отметку повторно не шлёт', async () => {
@@ -147,7 +148,7 @@ test('телефон, регистратура: нижнее меню — «Ка
   const titles = [titleOf(d)]
   for (let i = 0; i < 5; i++) {
     await userEvent.click(within(d).getByRole('button', { name: 'Дальше' }))
-    await vi.waitFor(() => expect(titleOf(screen.getByRole('dialog', { description: /./ }))).not.toBe(titles.at(-1)), { timeout: 5000 })
+    await waitForSlow(() => expect(titleOf(screen.getByRole('dialog', { description: /./ }))).not.toBe(titles.at(-1)), { timeout: 5000 })
     d = screen.getByRole('dialog', { description: /./ })
     titles.push(titleOf(d)!)
   }
@@ -229,7 +230,7 @@ test('шаг без элемента на экране пропускается;
   expect(d).toHaveTextContent('1 из 3')
   await userEvent.keyboard('{Enter}')
   // «Скрытый» не нашёлся — тур идёт к третьему, счётчик уменьшился
-  await vi.waitFor(() => expect(titleOf(screen.getByRole('dialog', { description: /./ }))).toBe('Третий'), { timeout: 5000 })
+  await waitForSlow(() => expect(titleOf(screen.getByRole('dialog', { description: /./ }))).toBe('Третий'), { timeout: 5000 })
   d = screen.getByRole('dialog', { description: /./ })
   expect(d).toHaveTextContent('2 из 2')
   expect(screen.getByText(/Подсказка 2 из 2: Третий/)).toHaveAttribute('aria-live', 'polite')

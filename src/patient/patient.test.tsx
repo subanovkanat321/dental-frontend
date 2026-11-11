@@ -8,6 +8,7 @@ import { renderApp } from '../test/fixtures'
 import { pickSlot, stepText } from '../test/wizard'
 import { server } from '../test/server'
 import { bookingDays, breakNote, dayLong, priceText, whenAt } from './i18n'
+import { waitForSlow } from '../test/wait'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -120,7 +121,7 @@ test('в Telegram — своя кнопка «Записаться» внизу,
   expect(native.hide).toHaveBeenCalled()
   expect(native.show).not.toHaveBeenCalled()
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
-  await vi.waitFor(() => expect(booked).not.toBeNull())
+  await waitForSlow(() => expect(booked).not.toBeNull())
 })
 
 /** Новый пациент: «Откуда вы о нас узнали?» — чипсы с эмодзи на его языке; без ответа запись тоже идёт. */
@@ -148,7 +149,7 @@ async function bookAsNewPatient(lang: 'ru' | 'ky', pick: (user: ReturnType<typeo
   await pick(user)
   await user.click(screen.getByRole('checkbox'))
   await user.click(screen.getByRole('button', { name: lang === 'ky' ? 'Жазылуу' : 'Записаться' }))
-  await vi.waitFor(() => expect(booked).not.toBeNull())
+  await waitForSlow(() => expect(booked).not.toBeNull())
   return booked!
 }
 
@@ -324,7 +325,7 @@ test('клиник несколько — сначала выбрать клин
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: /Улыбка/ }))
-  await vi.waitFor(() => expect(chosen).toEqual({ clinicId: 3 }))
+  await waitForSlow(() => expect(chosen).toEqual({ clinicId: 3 }))
 })
 
 test('выбор клиники: по городу и поиск по названию — по-кыргызски', async () => {
@@ -448,7 +449,7 @@ test('перенос: запись дальше ленты — выбран пе
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Перенести запись' })).toBeInTheDocument()
   expect(screen.getByRole('group', { name: 'День' }).querySelector('[aria-pressed=true]')).toHaveTextContent('Сегодня')
-  await vi.waitFor(() => expect(asked).toEqual([todayIn()]))
+  await waitForSlow(() => expect(asked).toEqual([todayIn()]))
   window.history.replaceState(null, '', '/')
 })
 
@@ -468,7 +469,7 @@ test('запись в другой клинике — карточка и «От
   renderApp()
   expect(await screen.findByText('📅 У вас запись в «Улыбка»: Завтра, в 10:00')).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Открыть эту клинику' }))
-  await vi.waitFor(() => expect(chosen).toEqual({ clinicId: 3 }))
+  await waitForSlow(() => expect(chosen).toEqual({ clinicId: 3 }))
 })
 
 test('клиника на паузе (clinic-paused) и гонка (stale) — свои тексты; номер клиники — если известен', async () => {

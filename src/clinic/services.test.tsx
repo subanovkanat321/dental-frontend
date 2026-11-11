@@ -7,6 +7,7 @@ import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { groupServices, nameMatches } from './services'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/settings/services'
@@ -261,7 +262,7 @@ test('«Заполнить по умолчанию»: что поставим, �
   expect(sent).toEqual(['memos', { stock: true }])
   await userEvent.click(await within(panel).findByText('Закрыть', { selector: 'button' }))
   // Заполнили — плашки больше нет
-  await vi.waitFor(() => expect(screen.queryByRole('region', { name: 'Стартовая настройка' })).not.toBeInTheDocument())
+  await waitForSlow(() => expect(screen.queryByRole('region', { name: 'Стартовая настройка' })).not.toBeInTheDocument())
 })
 
 test('«Заполнить по умолчанию»: админ видит недостающее из стандартного набора, снимает лишнее и добавляет', async () => {
@@ -361,7 +362,7 @@ test('«Профосмотр через»: свой срок услуги сох
   // Обратно «Как в клинике» — recallMonths не шлём, сервер ставит null
   await choose(field, 'Как в клинике (12 мес.)')
   await user.click(within(panel).getByRole('button', { name: 'Сохранить' }))
-  await vi.waitFor(() => expect(bodies).toHaveLength(2))
+  await waitForSlow(() => expect(bodies).toHaveLength(2))
   expect(bodies[1]).not.toHaveProperty('recallMonths')
 })
 
@@ -382,11 +383,11 @@ test('«Профосмотр по умолчанию»: админ меняет 
   const box = await screen.findByLabelText('Профосмотр по умолчанию', { selector: 'div' })
   expect(box).toHaveTextContent('Для приёмов без услуги и услуг без своего срока')
   const field = within(box).getByRole('combobox', { name: 'Профосмотр по умолчанию' })
-  await vi.waitFor(() => expect(field).toHaveTextContent('6 мес.'))
+  await waitForSlow(() => expect(field).toHaveTextContent('6 мес.'))
   await choose(field, '9 мес.')
   expect(await within(box).findByText('Срок сохранён')).toBeInTheDocument()
   expect(saved).toEqual([{ recallMonths: 9 }])
-  await vi.waitFor(() => expect(field).toHaveTextContent('9 мес.'))
+  await waitForSlow(() => expect(field).toHaveTextContent('9 мес.'))
 })
 
 test('«Профосмотр по умолчанию»: не админ только видит срок', async () => {
@@ -397,7 +398,7 @@ test('«Профосмотр по умолчанию»: не админ толь
   )
   renderApp()
   const box = await screen.findByLabelText('Профосмотр по умолчанию', { selector: 'div' })
-  await vi.waitFor(() => expect(box).toHaveTextContent('Профосмотр по умолчанию: через 4 мес.'))
+  await waitForSlow(() => expect(box).toHaveTextContent('Профосмотр по умолчанию: через 4 мес.'))
   expect(within(box).queryByRole('combobox')).not.toBeInTheDocument()
 })
 

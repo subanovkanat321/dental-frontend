@@ -7,6 +7,7 @@ import { addDays, dayTitle, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { pickDate } from '../test/date'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -46,7 +47,7 @@ test('перенос на другой день: карточка остаётс
 
   expect(await within(panel).findByRole('status')).toHaveTextContent('напомните пациенту заново')
   // День сегодня перечитан — приёма в нём больше нет, а карточка всё равно свежая
-  await vi.waitFor(() => expect(screen.getAllByRole('button', { name: /Бакыт М\./ })).toHaveLength(1))
+  await waitForSlow(() => expect(screen.getAllByRole('button', { name: /Бакыт М\./ })).toHaveLength(1))
   const heading = within(panel).getByRole('heading', { level: 2 })
   expect(heading).toHaveTextContent('11:00–11:30')
   expect(panel).toHaveTextContent(dayTitle(tomorrow))

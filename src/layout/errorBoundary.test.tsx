@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 
 import { ErrorBoundary } from './ErrorBoundary'
+import { waitForSlow } from '../test/wait'
 
 function Broken(): never {
   throw new Error('сломалось')
@@ -44,7 +45,7 @@ test('упал экран — отчёт владельцу: текст ошиб
     throw new Error(phone ? 'карточка сломалась' : 'нет номера')
   }
   render(<ErrorBoundary><Card phone="0555 000 111" /></ErrorBoundary>)
-  await vi.waitFor(() => expect(bodies).toHaveLength(1))
+  await waitForSlow(() => expect(bodies).toHaveLength(1))
   expect(bodies[0]!.message).toBe('Error: карточка сломалась')
   expect(bodies[0]!.stack).toContain('in Card')
   expect(JSON.stringify(bodies)).not.toContain('0555')

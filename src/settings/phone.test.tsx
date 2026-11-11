@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Phone = Schemas['MyPhoneControllerMyPhone']
 
@@ -87,7 +88,7 @@ test('«Мой профиль»: номер по SMS — «Получить ко
 
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   await user.click(within(section).getByRole('button', { name: 'Убрать номер' }))
-  await vi.waitFor(() => expect(removed()).toBe(1))
+  await waitForSlow(() => expect(removed()).toBe(1))
   expect(await within(section).findByText('Телефон не указан.')).toBeInTheDocument()
 })
 
@@ -106,7 +107,7 @@ test('«Мой профиль»: шаг пароля после подтверж
   await user.click(await within(section).findByRole('button', { name: 'Пропустить' }))
   expect(await within(section).findByText('+996 700 000 051')).toBeInTheDocument()
   expect(passwords).toEqual([])
-  await vi.waitFor(() => expect(asked).toHaveBeenCalledWith(expect.stringContaining('можно задать позже')))
+  await waitForSlow(() => expect(asked).toHaveBeenCalledWith(expect.stringContaining('можно задать позже')))
 })
 
 test('«Мой профиль»: SMS не подключены — номер для входа не задать', async () => {
@@ -158,7 +159,7 @@ test('«Подтвердить через Telegram» на сайте — ссы�
   const section = await screen.findByRole('region', { name: 'Телефон' })
   expect(within(section).queryByText(/SMS не подключены/)).not.toBeInTheDocument()
   const button = await within(section).findByRole('button', { name: 'Подтвердить через Telegram' })
-  await vi.waitFor(async () => {
+  await waitForSlow(async () => {
     await user.click(button)
     expect(open).toHaveBeenCalledWith('https://t.me/tish_test_bot?start=phone', '_blank', 'noopener,noreferrer')
   })

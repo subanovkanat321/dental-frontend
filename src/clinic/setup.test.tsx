@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 const clinic = { brandName: 'Новая', listed: false, settingUp: true, ownHours: false } satisfies Schemas['ClinicView']
 
@@ -32,9 +33,9 @@ test('новая клиника: чек-лист настройки над ра�
   // Врачи есть — показать можно, но предупреждаем про часы и цены по умолчанию
   expect(within(card).getByText(/часы или цены ещё по умолчанию/)).toBeInTheDocument()
   await user.click(within(card).getByRole('button', { name: 'Показать пациентам' }))
-  await vi.waitFor(() => expect(sent.body?.listed).toBe(true))
+  await waitForSlow(() => expect(sent.body?.listed).toBe(true))
   expect(sent.body?.brandName).toBe('Новая')
-  await vi.waitFor(() => expect(screen.queryByRole('region', { name: 'Настройка клиники' })).not.toBeInTheDocument())
+  await waitForSlow(() => expect(screen.queryByRole('region', { name: 'Настройка клиники' })).not.toBeInTheDocument())
 })
 
 test('без работающего врача «Показать пациентам» выключена; не админу и открытой клинике чек-листа нет', async () => {
@@ -64,5 +65,5 @@ test('часы новой клиники уже стоят (пн–сб) — ч�
   )
   renderApp()
   const card = await screen.findByRole('region', { name: 'Настройка клиники' })
-  await vi.waitFor(() => expect(within(card).getAllByRole('listitem')[0]).toHaveTextContent('✓Часы работы — Пн–Сб, 09:00–18:00 — поменяйте, если работаете иначе'))
+  await waitForSlow(() => expect(within(card).getAllByRole('listitem')[0]).toHaveTextContent('✓Часы работы — Пн–Сб, 09:00–18:00 — поменяйте, если работаете иначе'))
 })

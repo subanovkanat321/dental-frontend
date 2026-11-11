@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 afterEach(() => {
   window.location.hash = ''
@@ -34,7 +35,7 @@ test('«Помощь» внизу меню (компьютер): список �
   const chat = await screen.findByRole('complementary', { name: 'Помощь' })
   expect(await within(chat).findByText(/Спросите, как что-то сделать в Tish/)).toBeInTheDocument()
   await userEvent.click(within(chat).getAllByRole('button', { name: 'Закрыть' }).at(-1)!)
-  await vi.waitFor(() => expect(screen.queryByRole('complementary', { name: 'Помощь' })).not.toBeInTheDocument())
+  await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Помощь' })).not.toBeInTheDocument())
 
   // Пункт списка — свой экран (#/help/…), «Помощь» подсвечена; Esc закрывает список
   await userEvent.click(item)

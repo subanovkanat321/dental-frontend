@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 /** Фальшивый Telegram.WebApp: подпись запуска и системная кнопка «Назад». */
 function fakeTelegram() {
@@ -36,7 +37,7 @@ test('в Telegram: запросы с подписью initData, «Назад» T
   expect(tg.back.visible).toBe(true)
 
   tg.press()
-  await vi.waitFor(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
+  await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
   expect(tg.back.visible).toBe(false)
 })
 

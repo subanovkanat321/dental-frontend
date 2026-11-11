@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/patients'
@@ -102,7 +103,7 @@ test('карточка пациента: «откуда узнал» — во в
   const source = await within(panel).findByRole('group', { name: 'Откуда узнал о клинике' })
   expect(source).toHaveTextContent('Откуда узнал о клинике?')
   await user.click(within(source).getByRole('button', { name: '📱 Instagram' }))
-  await vi.waitFor(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', phone: '+996700555666', workplace: 'школа №5', sourceId: 11 }))
+  await waitForSlow(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', phone: '+996700555666', workplace: 'школа №5', sourceId: 11 }))
   // Указано — коротко и «изменить», кнопки-варианты спрятаны
   expect(await within(panel).findByRole('button', { name: 'изменить' })).toBeInTheDocument()
   expect(within(panel).getByRole('group', { name: 'Откуда узнал о клинике' })).toHaveTextContent('📱 Instagram')
@@ -134,6 +135,6 @@ test('админ: «＋ Свой вариант» в «Откуда узнал»
   await user.click(await within(panel).findByRole('button', { name: '＋ Свой вариант' }))
   await user.type(within(panel).getByRole('textbox', { name: 'Название варианта' }), 'Ярмарка здоровья')
   await user.click(within(panel).getByRole('button', { name: 'Добавить' }))
-  await vi.waitFor(() => expect(added).toMatchObject({ title: 'Ярмарка здоровья' }))
-  await vi.waitFor(() => expect(saved).toMatchObject({ sourceId: 77 }))
+  await waitForSlow(() => expect(added).toMatchObject({ title: 'Ярмарка здоровья' }))
+  await waitForSlow(() => expect(saved).toMatchObject({ sourceId: 77 }))
 })

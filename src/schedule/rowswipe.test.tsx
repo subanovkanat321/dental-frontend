@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { todayIn } from '../lib/time'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -80,7 +81,7 @@ test('свайп вправо за порог — напоминание в What
   expect(decodeURIComponent(opened[0]!)).toContain('Ответьте 1 — приду, 2 — перенести')
   fireEvent.click(button)
   expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument()
-  await vi.waitFor(() => expect(calls).toEqual(['opened']))
+  await waitForSlow(() => expect(calls).toEqual(['opened']))
   expect(await within(row).findByText('✓ отправлено')).toBeInTheDocument()
 })
 
@@ -114,7 +115,7 @@ test('свайп влево у начавшегося приёма — «При�
   expect(undo).toHaveTextContent('Приём состоялся: Бакыт М.')
   expect(calls).toEqual(['status:DONE:v0'])
   await userEvent.click(within(undo).getByRole('button', { name: 'Вернуть' }))
-  await vi.waitFor(() => expect(calls).toEqual(['status:DONE:v0', 'undo:SCHEDULED:v1']))
+  await waitForSlow(() => expect(calls).toEqual(['status:DONE:v0', 'undo:SCHEDULED:v1']))
   expect(within(row).queryByRole('status')).not.toBeInTheDocument()
 })
 

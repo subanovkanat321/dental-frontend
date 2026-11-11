@@ -10,6 +10,7 @@ import { makeGrid, sample, surfaceNets } from './geometry/mesher'
 import { sdSphere } from './geometry/sdf'
 import { CUT_X, TISSUES, type Tissue } from './geometry/toothModel'
 import { readAtlasRoute } from './route'
+import { waitForSlow } from '../test/wait'
 
 // WebGL в jsdom нет: проверку подменяем, а движок three.js — фальшивкой, которая запоминает вызовы
 const webgl = vi.hoisted(() => ({ ok: true }))
@@ -147,7 +148,7 @@ describe('<Atlas />', () => {
 
   it('кнопки режимов, стадии кариеса и выбор зуба уходят в 3D-движок; закрыли — движок освобождён', async () => {
     const { unmount } = render(<Atlas />)
-    await vi.waitFor(() => expect(engine.api).not.toBeNull())
+    await waitForSlow(() => expect(engine.api).not.toBeNull())
     const api = engine.api!
     fireEvent.click(screen.getByRole('tab', { name: 'Кариес' }))
     expect(api.setMode).toHaveBeenLastCalledWith('caries')
@@ -172,7 +173,7 @@ describe('<Atlas />', () => {
 
   it('initialTooth открывает челюсть с выделенным зубом; кыргызский язык', async () => {
     render(<Atlas initialTooth={46} lang="ky" />)
-    await vi.waitFor(() => expect(engine.api).not.toBeNull())
+    await waitForSlow(() => expect(engine.api).not.toBeNull())
     expect(engine.api!.setView).toHaveBeenLastCalledWith('jaw')
     expect(engine.api!.setTooth).toHaveBeenLastCalledWith(46)
     expect(screen.getByRole('tab', { name: 'Жаак' })).toHaveAttribute('aria-selected', 'true')
@@ -180,7 +181,7 @@ describe('<Atlas />', () => {
 
   it('метки двигаются по кадрам движка, невидимые скрыты', async () => {
     render(<Atlas />)
-    await vi.waitFor(() => expect(engine.cb).not.toBeNull())
+    await waitForSlow(() => expect(engine.cb).not.toBeNull())
     act(() => engine.cb!.onFrame([{ x: 100, y: 50, visible: true }, { x: 0, y: 0, visible: false }], 0))
     const dots = document.querySelectorAll<HTMLButtonElement>('.atlas-dot')
     expect(dots[0]!.style.transform).toContain('translate(100.0px, 50.0px)')

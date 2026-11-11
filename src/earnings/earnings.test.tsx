@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { appointment, me, renderApp, findSub, querySub } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Earnings = Schemas['EarningsView']
 type Me = Schemas['BookingViewsMe']
@@ -77,7 +78,7 @@ test('«Касса → Мой заработок»: сегодня, за мес�
   expect(await within(goal).findByLabelText('До цели')).toHaveTextContent(/114\s000 сом/)
 
   await user.click(within(goal).getByRole('checkbox', { name: 'Присылать итог дня в вечерней сводке' }))
-  await vi.waitFor(() => expect(within(goal).getByRole('checkbox', { name: 'Присылать итог дня в вечерней сводке' })).not.toBeChecked())
+  await waitForSlow(() => expect(within(goal).getByRole('checkbox', { name: 'Присылать итог дня в вечерней сводке' })).not.toBeChecked())
   expect(sent).toEqual([{ path: 'goal', body: { goalSom: 300000 } }, { path: 'evening', body: { eveningSummary: false } }])
 })
 

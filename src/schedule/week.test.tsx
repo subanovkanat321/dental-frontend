@@ -7,6 +7,7 @@ import { addDays, dayTitle, slotInstant, todayIn, weekStart } from '../lib/time'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { PAD, PX } from './gridScale'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -130,7 +131,7 @@ test('перетащить приём на другой день: блок ср�
   const thu = screen.getByRole('group', { name: dayTitle(thursday) })
   expect(await within(thu).findByRole('button', { name: /11:00–11:30, Бакыт М\./ })).toBeInTheDocument()
   expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument()
-  await vi.waitFor(() => expect(moves).toEqual([{ version: 4, startAt: slotInstant(thursday, 660), durationMinutes: 30 }]))
+  await waitForSlow(() => expect(moves).toEqual([{ version: 4, startAt: slotInstant(thursday, 660), durationMinutes: 30 }]))
   release()
   const notice = await screen.findByRole('status')
   expect(notice).toHaveTextContent('Перенесено')

@@ -7,6 +7,7 @@ import { todayIn } from '../lib/time'
 import { appointment, me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 type Entry = Schemas['WaitlistView']
 
@@ -160,7 +161,7 @@ test('«Новая запись»: выбрали время в сетке — �
   const opened: string[] = []
   vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
   const wa = within(box).getByRole('button', { name: 'WhatsApp' })
-  await vi.waitFor(() => expect(wa).toBeEnabled())
+  await waitForSlow(() => expect(wa).toBeEnabled())
   await userEvent.click(wa)
   expect(opened[0]).toContain('phone=996700333444')
   vi.restoreAllMocks()

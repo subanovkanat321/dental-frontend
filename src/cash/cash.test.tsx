@@ -8,6 +8,7 @@ import { addDays, periodOf, todayIn } from '../lib/time'
 import { appointment, me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/cash'
@@ -72,7 +73,7 @@ test('админ: выручка за месяц, по способам; выб�
   // Любой день: «Вчера» — выручка за вчера и сравнение с тем же днём прошлой недели
   await userEvent.click(screen.getByRole('button', { name: 'Вчера' }))
   const yesterday = addDays(todayIn(), -1)
-  await vi.waitFor(() => expect(asked).toContain(`${yesterday}..${yesterday} 2`))
+  await waitForSlow(() => expect(asked).toContain(`${yesterday}..${yesterday} 2`))
   expect(asked).toContain(`${addDays(yesterday, -7)}..${addDays(yesterday, -7)} 2`)
 
   const debts = screen.getByRole('table', { name: 'Долги пациентов' })

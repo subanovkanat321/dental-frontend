@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { choose } from '../test/select'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/platform'
@@ -55,7 +56,7 @@ test('владелец создаёт демо-клинику, обновляе�
 
   await user.click(within(block).getByRole('button', { name: 'Обновить демо-данные' }))
   await user.click(await screen.findByRole('button', { name: 'Пересоздать' }))
-  await vi.waitFor(() => expect(refreshed).toBe(true))
+  await waitForSlow(() => expect(refreshed).toBe(true))
 
   await user.click(within(block).getByText('Показать клиенту: ссылка гостю на сутки'))
   await user.type(within(block).getByRole('textbox', { name: /Кому/ }), 'Клиника Улыбка')
@@ -107,7 +108,7 @@ test('воронка: счётчики с конверсией, фильтр п�
   expect(within(block).getByText(/Дальше: позвонить · 10\.01 \(просрочено\)/)).toBeInTheDocument()
 
   await user.click(within(tabs).getByRole('button', { name: /Демо показали/ }))
-  await vi.waitFor(() => expect(filter).toBe('DEMO'))
+  await waitForSlow(() => expect(filter).toBe('DEMO'))
   expect(await within(block).findByRole('listitem', { name: 'Лид: Дент' })).toBeInTheDocument()
   expect(within(block).queryByRole('listitem', { name: 'Лид: Улыбка' })).not.toBeInTheDocument()
 
@@ -119,7 +120,7 @@ test('воронка: счётчики с конверсией, фильтр п�
   await user.clear(within(card).getByLabelText('Когда'))
   await user.type(within(card).getByLabelText('Когда'), '2026-11-12')
   await user.click(within(card).getByRole('button', { name: 'Сохранить' }))
-  await vi.waitFor(() => expect(saved).toEqual({ stage: 'CONTACTED', nextStep: 'показать демо', nextStepOn: '2026-11-12' }))
+  await waitForSlow(() => expect(saved).toEqual({ stage: 'CONTACTED', nextStep: 'показать демо', nextStepOn: '2026-11-12' }))
 })
 
 test('воронка: вернуться ко всем лидам после фильтра', async () => {
@@ -137,7 +138,7 @@ test('воронка: вернуться ко всем лидам после ф�
   const block = await screen.findByRole('region', { name: 'Воронка продаж' })
   const tabs = await within(block).findByRole('group', { name: 'Этап' })
   await user.click(within(tabs).getByRole('button', { name: /Демо показали/ }))
-  await vi.waitFor(() => expect(within(block).queryByRole('listitem', { name: 'Лид: Улыбка' })).not.toBeInTheDocument())
+  await waitForSlow(() => expect(within(block).queryByRole('listitem', { name: 'Лид: Улыбка' })).not.toBeInTheDocument())
   await user.click(within(tabs).getByRole('button', { name: /^Все/ }))
   expect(await within(block).findByRole('listitem', { name: 'Лид: Улыбка' }, { timeout: 3000 })).toBeInTheDocument()
 })

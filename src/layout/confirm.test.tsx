@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 
 import { ask } from '../lib/confirm'
 import { ConfirmHost } from './Confirm'
+import { waitForSlow } from '../test/wait'
 
 function Page({ question, onAnswer }: { question: string; onAnswer: (ok: boolean) => void }) {
   return <><ConfirmHost /><button type="button" onClick={() => void ask(question).then(onAnswer)}>Действие</button></>
@@ -55,5 +56,5 @@ test('notify — сообщение своим окном с одной кноп
   const dialog = screen.getByRole('alertdialog')
   expect(within(dialog).queryByRole('button', { name: 'Отмена' })).toBeNull()
   await userEvent.click(within(dialog).getByRole('button', { name: 'Понятно' }))
-  await vi.waitFor(() => expect(done).toBe(true))
+  await waitForSlow(() => expect(done).toBe(true))
 })

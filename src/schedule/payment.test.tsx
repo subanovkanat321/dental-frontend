@@ -8,6 +8,7 @@ import { addDays, todayIn } from '../lib/time'
 import { pickDate } from '../test/date'
 import { choose } from '../test/select'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -211,7 +212,7 @@ test('«Снять отметку оплаты» — отдельной кноп
   expect(confirm).toHaveBeenLastCalledWith(expect.stringMatching(/Снять отметку оплаты 1\s500 сом/))
   expect(sent).toEqual([])
   await userEvent.click(within(form).getByRole('button', { name: 'Снять отметку оплаты' }))
-  await vi.waitFor(() => expect(sent).toEqual([{ path: 'payment', body: { method: 'CASH' } }]))
+  await waitForSlow(() => expect(sent).toEqual([{ path: 'payment', body: { method: 'CASH' } }]))
   confirm.mockRestore()
 })
 
@@ -272,7 +273,7 @@ test('карточка приёма: расход техника отметил�
 
   await userEvent.click(within(within(panel).getByRole('list', { name: 'Расходы по пациенту' })).getByRole('button', { name: 'изменить' }))
   await userEvent.click(within(within(panel).getByRole('form', { name: 'Исправить расход' })).getByRole('button', { name: 'Удалить расход' }))
-  await vi.waitFor(() => expect(within(panel).queryByText(/Расходы по пациенту:/)).not.toBeInTheDocument())
+  await waitForSlow(() => expect(within(panel).queryByText(/Расходы по пациенту:/)).not.toBeInTheDocument())
   vi.restoreAllMocks()
 })
 
@@ -286,7 +287,7 @@ test('не оплачено — одна строка: «Бесплатно» о
   expect(within(panel).queryByRole('form', { name: 'Оплата' })).not.toBeInTheDocument()
   expect(within(panel).getByText('Оплата не отмечена')).toBeInTheDocument()
   await userEvent.click(within(panel).getByRole('button', { name: 'Бесплатно' }))
-  await vi.waitFor(() => expect(sent).toContainEqual(expect.objectContaining({ body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'FREE' } })))
+  await waitForSlow(() => expect(sent).toContainEqual(expect.objectContaining({ body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'FREE' } })))
   expect(await within(panel).findByText('🎁 Бесплатно')).toBeInTheDocument()
   vi.restoreAllMocks()
 })
@@ -306,7 +307,7 @@ test('«Оплачено заранее»: 0 сом в кассу, с комме
   expect(sent).toHaveLength(0)
   confirm.mockReturnValue(true)
   await userEvent.click(within(form).getByRole('button', { name: 'Отметить «Оплачено заранее»' }))
-  await vi.waitFor(() => expect(sent).toContainEqual({ path: 'payment',
+  await waitForSlow(() => expect(sent).toContainEqual({ path: 'payment',
     body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'PREPAID', freeComment: 'оплатил 12.10 вместе с лечением' } }))
   expect(await within(panel).findByText('✅ Оплачено заранее')).toBeInTheDocument()
   expect(within(panel).getByText('оплатил 12.10 вместе с лечением')).toBeInTheDocument()
@@ -324,7 +325,7 @@ test('«Оплачено заранее» без комментария; «От�
   expect(within(panel).queryByRole('form', { name: 'Оплачено заранее' })).not.toBeInTheDocument()
   await userEvent.click(within(panel).getByRole('button', { name: 'Оплачено заранее' }))
   await userEvent.click(within(panel).getByRole('button', { name: 'Отметить «Оплачено заранее»' }))
-  await vi.waitFor(() => expect(sent).toContainEqual({ path: 'payment', body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'PREPAID' } }))
+  await waitForSlow(() => expect(sent).toContainEqual({ path: 'payment', body: { amountSom: 0, method: 'CASH', chargeSom: 0, freeReason: 'PREPAID' } }))
   vi.restoreAllMocks()
 })
 
@@ -341,7 +342,7 @@ test('оплачено заранее — «Изменить» открывае�
   await userEvent.clear(within(form).getByLabelText('Сумма, сом'))
   await userEvent.type(within(form).getByLabelText('Сумма, сом'), '1500')
   await userEvent.click(within(form).getByRole('button', { name: /^Сохранить оплату/ }))
-  await vi.waitFor(() => expect(sent).toContainEqual(expect.objectContaining({ body: expect.objectContaining({ amountSom: 1500 }) })))
+  await waitForSlow(() => expect(sent).toContainEqual(expect.objectContaining({ body: expect.objectContaining({ amountSom: 1500 }) })))
   expect(await within(panel).findByText(/1\s500 сом · наличные/)).toBeInTheDocument()
   expect(within(panel).queryByText('✅ Оплачено заранее')).not.toBeInTheDocument()
 })

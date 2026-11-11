@@ -7,6 +7,7 @@ import { findSub, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { todayIn } from '../lib/time'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 type Supply = Schemas['SupplyView']
 
@@ -116,7 +117,7 @@ test('новый материал: «свой склад у каждого вр�
   await choose(within(panel).getByLabelText('Чей склад'), 'Дастан Т.')
   await userEvent.click(within(panel).getByRole('button', { name: 'Добавить' }))
 
-  await vi.waitFor(() => expect(created).toEqual({ name: 'Композит', unit: 'шпр', quantity: 4, minQuantity: 2, doctorId: 2 }))
+  await waitForSlow(() => expect(created).toEqual({ name: 'Композит', unit: 'шпр', quantity: 4, minQuantity: 2, doctorId: 2 }))
 })
 
 test('«−1» в списке списывает одну штуку; «Расходы на склад» — покупки месяца и по материалам', async () => {
@@ -166,7 +167,7 @@ test('«Расходы на склад» за месяц — с первого �
   }
   expect(year).toBeGreaterThanOrEqual(2026)
   await userEvent.click(within(picker).getByRole('button', { name: 'Февраль 2026' }))
-  await vi.waitFor(() => expect(periods).toContain('2026-02-01..2026-02-28'))
+  await waitForSlow(() => expect(periods).toContain('2026-02-01..2026-02-28'))
 })
 
 test('«Чей склад» в карточке: админ переносит общий материал врачу одним выбором, список обновляется', async () => {

@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { readDeepLink } from '../lib/deepLink'
 import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Question = Schemas['PatientQuestionsQuestionView']
 
@@ -72,7 +73,7 @@ test('«Вопросы»: бейдж, список, черновик ИИ пра
   expect(await within(panel).findByText(/Сколько стоит чистка/)).toBeInTheDocument()
   await userEvent.click(within(panel).getByRole('button', { name: '✨ Черновик ответа' }))
   const field = within(panel).getByLabelText('Ответ пациенту')
-  await vi.waitFor(() => expect(field).toHaveValue('Здравствуйте! Чистка — от 2500 сом, точная стоимость — после осмотра.'))
+  await waitForSlow(() => expect(field).toHaveValue('Здравствуйте! Чистка — от 2500 сом, точная стоимость — после осмотра.'))
   expect(within(panel).getByText(/проверьте и поправьте/)).toBeInTheDocument()
   // Сотрудник правит черновик — уходит его текст, а не текст ИИ
   await userEvent.type(field, ' Ждём вас!')
@@ -146,7 +147,7 @@ test('ИИ-администратор бота: «🤖 Ответил ИИ» с 
   await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }))
   await userEvent.click(screen.getByRole('tab', { name: 'Отвеченные' }))
   const done = await screen.findByRole('table', { name: 'Вопросы пациентов' })
-  await vi.waitFor(() => expect(done).toHaveTextContent('🤖 Ответил ИИ'))
+  await waitForSlow(() => expect(done).toHaveTextContent('🤖 Ответил ИИ'))
   await userEvent.click(within(done).getByRole('button', { name: 'Нет в базе клиники' }))
   panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
   const answer = await within(panel).findByRole('region', { name: 'Ответ ИИ' })
@@ -176,7 +177,7 @@ test('ИИ записал по «Да» пациента — пометка в �
   await userEvent.click(await findSub(/Вопросы/))
   await userEvent.click(await screen.findByRole('tab', { name: 'Отвеченные' }))
   const done = await screen.findByRole('table', { name: 'Вопросы пациентов' })
-  await vi.waitFor(() => expect(done).toHaveTextContent('🤖 ИИ записал (пациент подтвердил)'))
+  await waitForSlow(() => expect(done).toHaveTextContent('🤖 ИИ записал (пациент подтвердил)'))
   await userEvent.click(within(done).getByRole('button', { name: 'Айпери Вымышленная' }))
   const panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
   const answer = await within(panel).findByRole('region', { name: 'Ответ ИИ' })

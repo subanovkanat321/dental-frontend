@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, renderApp, findSub } from '../test/fixtures'
 import { server } from '../test/server'
 import { daysText } from './daysText'
+import { waitForSlow } from '../test/wait'
 
 // «Оклад по табелю» (V182 бэкенда). Сотрудники вымышленные; считает сервер — тест отвечает его числами
 type Row = Schemas['SalaryControllerSalaryRow']
@@ -77,7 +78,7 @@ test('оклад по табелю: расшифровка в карточке, 
 
   await user.type(within(card).getByLabelText('Норма дней в месяце'), '21')
   await user.click(within(card).getByRole('button', { name: 'Задать норму' }))
-  await vi.waitFor(() => expect(within(card).getByLabelText('Норма дней в месяце')).toHaveValue('21'))
+  await waitForSlow(() => expect(within(card).getByLabelText('Норма дней в месяце')).toHaveValue('21'))
   expect(sent[1]).toEqual({ telegramId: 7303, month: expect.stringMatching(/^\d{4}-\d{2}$/), days: 21 })
 })
 
@@ -103,5 +104,5 @@ test('условия: галочка «оклад по табелю» уходи
   await user.type(within(card).getByLabelText('Оклад в месяц, сом'), '30000')
   await user.click(within(card).getByRole('checkbox', { name: /Оклад по табелю/ }))
   await user.click(within(card).getByRole('button', { name: 'Сохранить' }))
-  await vi.waitFor(() => expect(sent).toMatchObject({ baseSom: 30000, byTimesheet: true, percent: 0 }))
+  await waitForSlow(() => expect(sent).toMatchObject({ baseSom: 30000, byTimesheet: true, percent: 0 }))
 })

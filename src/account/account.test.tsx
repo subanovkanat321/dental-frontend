@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
 import { agreementBlocks, billingLine, fillAgreement } from './texts'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/settings/plan'
@@ -51,7 +52,7 @@ test('админ: тариф, оплата за 3 месяца с отметко
   await user.click(screen.getByRole('button', { name: '3 месяца' }))
   expect(screen.getByText(/К оплате: 4\s500 сом/)).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Я оплатил(а)' }))
-  await vi.waitFor(() => expect(paid).toBe('3'))
+  await waitForSlow(() => expect(paid).toBe('3'))
   expect(screen.getByRole('table', { name: 'Оплаты' })).toBeInTheDocument()
 })
 

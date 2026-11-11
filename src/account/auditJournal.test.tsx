@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 type Entry = Schemas['AuditLogEntry']
 
@@ -68,11 +69,11 @@ test('журнал: фильтры уходят на сервер, «Показ�
   const filters = screen.getByRole('group', { name: 'Фильтры журнала' })
   await user.click(within(filters).getByRole('combobox', { name: 'Сотрудник' }))
   await user.click(await screen.findByRole('option', { name: 'Жылдыз' }))
-  await vi.waitFor(() => expect(requests.at(-1)!.get('who')).toBe('22'))
+  await waitForSlow(() => expect(requests.at(-1)!.get('who')).toBe('22'))
   expect(requests.at(-1)!.get('cursor')).toBeNull()
 
   await user.click(within(filters).getByRole('button', { name: 'Сегодня' }))
-  await vi.waitFor(() => expect(requests.at(-1)!.get('from')).toMatch(/^\d{4}-\d{2}-\d{2}$/))
+  await waitForSlow(() => expect(requests.at(-1)!.get('from')).toMatch(/^\d{4}-\d{2}-\d{2}$/))
   expect(requests.at(-1)!.get('from')).toBe(requests.at(-1)!.get('to'))
   expect(requests.at(-1)!.get('who')).toBe('22')
 
@@ -82,7 +83,7 @@ test('журнал: фильтры уходят на сервер, «Показ�
   expect(requests.at(-1)!.get('category')).toBe('MONEY')
 
   await user.click(screen.getByRole('button', { name: 'Сбросить фильтры' }))
-  await vi.waitFor(() => expect(requests.at(-1)!.get('category')).toBeNull())
+  await waitForSlow(() => expect(requests.at(-1)!.get('category')).toBeNull())
   expect(requests.at(-1)!.get('who')).toBeNull()
   expect(requests.at(-1)!.get('from')).toBeNull()
 })
@@ -109,7 +110,7 @@ test('«Настроить журнал»: обязательные — с за�
   const dialog = await screen.findByRole('alertdialog')
   expect(dialog).toHaveTextContent('Выключить запись: «Не пришёл»?')
   await user.click(within(dialog).getByRole('button', { name: 'Выключить' }))
-  await vi.waitFor(() => expect(saved).toEqual({ disabled: ['appointment.no-show'] }))
+  await waitForSlow(() => expect(saved).toEqual({ disabled: ['appointment.no-show'] }))
 })
 
 test('сервер отклонил настройку — текст ошибки под галочками', async () => {

@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import { slotInstant, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 /** Телефон: экран уже 760px — «День» списком. */
 beforeEach(() => {
@@ -159,7 +160,7 @@ test('телефон: «WA» — WhatsApp с подписью клиники, з
   vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
   renderApp()
   const wa = await screen.findByRole('button', { name: /Напомнить в WhatsApp: Бакыт М\./ })
-  await vi.waitFor(() => expect(wa).toBeEnabled()) // ждёт настройки: без них в тексте нет подписи
+  await waitForSlow(() => expect(wa).toBeEnabled()) // ждёт настройки: без них в тексте нет подписи
   await userEvent.click(wa)
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
   expect(await screen.findByRole('button', { name: /Напоминание отправлено: Бакыт М\./ })).toBeInTheDocument()

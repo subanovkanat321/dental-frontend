@@ -9,6 +9,7 @@ import { addDays, todayIn } from '../lib/time'
 import { me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { datesText, groupOf, rowsOf, timeOffWhen, titleFor, toRanges, weekdaysText, BREAK_KINDS } from './timeOffTexts'
+import { waitForSlow } from '../test/wait'
 
 type TimeOff = Schemas['TimeOffView']
 type Body = Schemas['TimeOffControllerRequest']
@@ -96,7 +97,7 @@ test('«＋ Перерыв»: тип чипом, несколько дней —
   // Форма закрылась, в «Перерывах» — одна строка на оба дня
   expect(screen.queryByRole('form', { name: 'Новый перерыв' })).not.toBeInTheDocument()
   const list = await screen.findByRole('list', { name: 'Перерывы' })
-  await vi.waitFor(() => expect(lines(list)).toEqual(['Пт, сб, 13:00–14:00 — 🕌 Намаз']))
+  await waitForSlow(() => expect(lines(list)).toEqual(['Пт, сб, 13:00–14:00 — 🕌 Намаз']))
 })
 
 test('«＋ Перерыв»: «Другое» без названия — «Перерыв»; без дней — подсказка, запроса нет', async () => {
@@ -190,8 +191,8 @@ test('списки по группам; строка из нескольких �
   expect(lines(screen.getByRole('list', { name: 'Отпуска и больничные' }))).toEqual(['12–20 ноября — 🏖️ Отпуск'])
 
   await user.click(within(breaks).getByRole('button', { name: 'Удалить: Обед' }))
-  await vi.waitFor(() => expect(state.deleted).toEqual(['2', '3']))
-  await vi.waitFor(() => expect(screen.queryByText('🍽️ Обед')).not.toBeInTheDocument())
+  await waitForSlow(() => expect(state.deleted).toEqual(['2', '3']))
+  await waitForSlow(() => expect(screen.queryByText('🍽️ Обед')).not.toBeInTheDocument())
 })
 
 test('ассистент: перерывы и выходные только смотрит — без кнопок и «Удалить»', async () => {

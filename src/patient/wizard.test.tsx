@@ -8,6 +8,7 @@ import { renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { pickService, pickSlot, stepText } from '../test/wizard'
 import { dayLong } from './i18n'
+import { waitForSlow } from '../test/wait'
 
 /**
  * Пошаговая запись в Telegram: шаги и «Назад», «Любой свободный врач», «Изменить» в итоге,
@@ -185,7 +186,7 @@ test('«Изменить» в итоге: другая дата — осталь
   expect(await screen.findByRole('heading', { name: 'Проверьте и подтвердите' })).toBeInTheDocument()
   await user.click(screen.getByRole('checkbox'))
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
-  await vi.waitFor(() => expect(booked).toMatchObject({ doctorId: 2, serviceTypeId: 5, startAt: slotInstant(later, 780) }))
+  await waitForSlow(() => expect(booked).toMatchObject({ doctorId: 2, serviceTypeId: 5, startAt: slotInstant(later, 780) }))
 })
 
 test('время заняли (409) — понятное сообщение, шаг «Время» и свежая сетка; согласие не теряется', async () => {
@@ -206,12 +207,12 @@ test('время заняли (409) — понятное сообщение, ш�
 
   expect(await screen.findByRole('heading', { name: 'Выберите время' })).toBeInTheDocument()
   expect(screen.getByRole('alert')).toHaveTextContent('Это время уже заняли — выберите другое')
-  await vi.waitFor(() => expect(asked.slots.length).toBeGreaterThan(before))
+  await waitForSlow(() => expect(asked.slots.length).toBeGreaterThan(before))
   expect(await screen.findByRole('button', { name: '10:00' })).toHaveAttribute('aria-pressed', 'false')
   await user.click(screen.getByRole('button', { name: '13:00' }))
   expect(screen.getByRole('checkbox')).toBeChecked()
   await user.click(screen.getByRole('button', { name: 'Записаться' }))
-  await vi.waitFor(() => expect(tries).toHaveLength(2))
+  await waitForSlow(() => expect(tries).toHaveLength(2))
   expect(tries[1]!.startAt).toBe(slotInstant(tomorrow, 780))
 })
 

@@ -9,6 +9,7 @@ import { todayIn } from '../lib/time'
 // Настоящий готовый план из сборки (public/content/plan.json) — формат должен совпадать с контрактом импорта
 import realPlan from '../../public/content/plan.json?raw'
 import { choose } from '../test/select'
+import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/platform'
@@ -72,7 +73,7 @@ test('владелец: пост дня с картинками, текст ко
   expect(within(reels).queryByRole('button', { name: 'Опубликовал' })).not.toBeInTheDocument()
 
   await user.click(within(card).getByRole('button', { name: 'На завтра' }))
-  await vi.waitFor(() => expect(calls).toHaveLength(1))
+  await waitForSlow(() => expect(calls).toHaveLength(1))
   await user.click(within(card).getByRole('button', { name: 'Опубликовал' }))
   expect(await within(card).findByText('Опубликован')).toBeInTheDocument()
   expect(calls).toEqual(['1 postpone', '1 done'])
@@ -313,7 +314,7 @@ test('«Рилсы — автоматически»: переключатель 
   expect(screen.getByRole('alert')).toHaveTextContent('Instagram не подключён — рилсы будут вставать в план, но публиковать их придётся вручную')
 
   await user.click(screen.getByRole('checkbox', { name: 'Рилсы — автоматически' }))
-  await vi.waitFor(() => expect(sent).toEqual([true, false]))
+  await waitForSlow(() => expect(sent).toEqual([true, false]))
   expect(screen.queryByText(/Instagram не подключён — рилсы будут вставать в план/)).not.toBeInTheDocument()
 })
 
@@ -354,7 +355,7 @@ test('изменить рилс: время и подпись уходят на 
   await user.clear(caption)
   await user.type(caption, 'Новая подпись')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
-  await vi.waitFor(() => expect(sent).not.toBeNull())
+  await waitForSlow(() => expect(sent).not.toBeNull())
   expect(sent).toMatchObject({ date: today, kind: 'REELS', title: 'Миф или правда', caption: 'Новая подпись', time: '18:15' })
 })
 
@@ -530,7 +531,7 @@ test('«Также в сторис» в форме — по умолчанию �
   await user.click(within(form).getByRole('checkbox', { name: /Также в сторис/ }))
   await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Со сторис')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
-  await vi.waitFor(() => expect(sent).not.toBeNull())
+  await waitForSlow(() => expect(sent).not.toBeNull())
   expect(sent).toMatchObject({ kind: 'POST', title: 'Со сторис', story: true })
 })
 

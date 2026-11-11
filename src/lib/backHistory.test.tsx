@@ -6,6 +6,7 @@ import { backDepth, enableBackHistory, useBack } from './back'
 import { openSettings } from './route'
 import { useClose } from './useClose'
 import { useUnsaved } from './unsaved'
+import { waitForSlow } from '../test/wait'
 
 /** Глубина нашей записи истории (0 — не наша). */
 const depth = () => (window.history.state as { tishBack?: number } | null)?.tishBack ?? 0
@@ -15,7 +16,7 @@ async function pressBack() {
   const before = window.location.href + JSON.stringify(window.history.state)
   await act(async () => {
     window.history.back()
-    await vi.waitFor(() => expect(window.location.href + JSON.stringify(window.history.state)).not.toBe(before))
+    await waitForSlow(() => expect(window.location.href + JSON.stringify(window.history.state)).not.toBe(before))
   })
 }
 
@@ -58,7 +59,7 @@ test('карточка кладёт шаг в историю; «Назад» т�
   render(<Page />)
   const start = window.history.length
   await userEvent.click(screen.getByRole('button', { name: 'Открыть приём' }))
-  await vi.waitFor(() => expect(depth()).toBe(1))
+  await waitForSlow(() => expect(depth()).toBe(1))
   expect(window.history.length).toBe(start + 1)
 
   await pressBack()
@@ -71,7 +72,7 @@ test('карточка и лист в ней: первый «Назад» зак
   render(<Page />)
   await userEvent.click(screen.getByRole('button', { name: 'Открыть приём' }))
   await userEvent.click(screen.getByRole('button', { name: 'Выбрать врача' }))
-  await vi.waitFor(() => expect(depth()).toBe(2))
+  await waitForSlow(() => expect(depth()).toBe(2))
 
   await pressBack()
   expect(screen.queryByRole('dialog', { name: 'Лист' })).not.toBeInTheDocument()
@@ -85,16 +86,16 @@ test('карточка и лист в ней: первый «Назад» зак
 test('✕ убирает запись карточки из истории: лишнего шага «Назад» не остаётся', async () => {
   render(<Page />)
   await userEvent.click(screen.getByRole('button', { name: 'Открыть приём' }))
-  await vi.waitFor(() => expect(depth()).toBe(1))
+  await waitForSlow(() => expect(depth()).toBe(1))
   const opened = window.history.length
 
   await userEvent.click(screen.getByRole('button', { name: '✕' }))
   expect(screen.queryByRole('complementary', { name: 'Карточка' })).not.toBeInTheDocument()
-  await vi.waitFor(() => expect(depth()).toBe(0))
+  await waitForSlow(() => expect(depth()).toBe(0))
 
   // Открыли снова — запись встала на место прежней, история не растёт
   await userEvent.click(screen.getByRole('button', { name: 'Открыть приём' }))
-  await vi.waitFor(() => expect(depth()).toBe(1))
+  await waitForSlow(() => expect(depth()).toBe(1))
   expect(window.history.length).toBe(opened)
 })
 
@@ -102,14 +103,14 @@ test('несохранённые правки: «Назад» спрашивае
   const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
   render(<Page dirty />)
   await userEvent.click(screen.getByRole('button', { name: 'Открыть приём' }))
-  await vi.waitFor(() => expect(depth()).toBe(1))
+  await waitForSlow(() => expect(depth()).toBe(1))
 
   await act(async () => {
     window.history.back()
-    await vi.waitFor(() => expect(confirm).toHaveBeenCalled())
+    await waitForSlow(() => expect(confirm).toHaveBeenCalled())
   })
   expect(screen.getByRole('complementary', { name: 'Карточка' })).toBeInTheDocument()
-  await vi.waitFor(() => expect(depth()).toBe(1))
+  await waitForSlow(() => expect(depth()).toBe(1))
   confirm.mockRestore()
 })
 
@@ -138,7 +139,7 @@ test('подэкран «Настроек» и лист: первый «Наза
   await userEvent.click(screen.getByRole('button', { name: 'Текст напоминания' }))
   expect(await screen.findByRole('heading', { name: 'Пункт' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Выбрать' }))
-  await vi.waitFor(() => expect(depth()).toBe(1))
+  await waitForSlow(() => expect(depth()).toBe(1))
 
   await pressBack()
   expect(screen.queryByRole('dialog', { name: 'Лист' })).not.toBeInTheDocument()

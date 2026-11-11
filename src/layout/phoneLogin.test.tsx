@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { waitForSlow } from '../test/wait'
 
 /** Номер и пароли — вымышленные. */
 const WRONG = 'Неверный номер или пароль. Пароль ещё не задан или забыли — нажмите «Забыли пароль? / Первый вход»'
@@ -305,7 +306,7 @@ test('перезагрузили на шаге пароля — сразу «П�
   await user.type(screen.getByLabelText('Новый пароль'), 'Тишина2026')
   await user.type(screen.getByLabelText('Повторите пароль'), 'Тишина2026')
   await user.click(screen.getByRole('button', { name: 'Сохранить и войти' }))
-  await vi.waitFor(() => expect(posts).toEqual([{ path: 'new', body: { password: 'Тишина2026' }, header: '1' }]))
+  await waitForSlow(() => expect(posts).toEqual([{ path: 'new', body: { password: 'Тишина2026' }, header: '1' }]))
 })
 
 test('«Другой номер» после перезагрузки гасит незаконченный вход на сервере', async () => {
@@ -317,7 +318,7 @@ test('«Другой номер» после перезагрузки гасит
   await user.click(screen.getByRole('button', { name: 'Другой номер' }))
   expect(screen.getByRole('form', { name: 'Код для входа' })).toBeInTheDocument()
   expect((screen.getByRole('textbox', { name: 'Номер телефона' }) as HTMLInputElement).value).toBe('')
-  await vi.waitFor(() => expect(forgotten).toEqual(['1']))
+  await waitForSlow(() => expect(forgotten).toEqual(['1']))
 })
 
 test('время на код вышло после перезагрузки — понятная ошибка и снова номер', async () => {
