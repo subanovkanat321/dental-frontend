@@ -788,6 +788,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/tour": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tourState"];
+        put: operations["tourSeen"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/phone": {
         parameters: {
             query?: never;
@@ -6687,6 +6703,10 @@ export interface components {
         StaffMembersControllerAssistantDoctors: {
             doctorIds?: number[];
         };
+        StaffTourTourView: {
+            /** Format: date-time */
+            seenAt?: string;
+        };
         MyPhoneControllerPhoneConfirm: {
             phone?: string;
             code?: string;
@@ -11361,6 +11381,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    tourState: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffTourTourView"];
+                };
+            };
+        };
+    };
+    tourSeen: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffTourTourView"];
+                };
             };
         };
     };

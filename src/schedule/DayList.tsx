@@ -160,7 +160,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
       {monthOpen && <MonthSheet date={date} today={today} doctorIds={doctors.map((d) => d.id)} onPick={onDate} onClose={() => setMonthOpen(false)} />}
       {single && !canEditDoctor(single.id) && <p className="readonly-note">Расписание коллеги — только просмотр</p>}
       {/* Пришёл без записи — та же «Новая запись», в ней «⚡ Сейчас» */}
-      {onNewHere && <div className="day-actions"><button type="button" className="btn primary" onClick={onNewHere}>＋ Новая запись</button></div>}
+      {onNewHere && <div className="day-actions"><button type="button" className="btn primary" data-tour="new-appointment" onClick={onNewHere}>＋ Новая запись</button></div>}
       {/* Одной строкой: «Не работают: … · Показано 6 из 10 · Выходной: … показать» */}
       {(note || doctorsNote) && <p className="hint day-note">{note}{note && doctorsNote ? ' · ' : ''}{doctorsNote}</p>}
       {pending ? <Loading />

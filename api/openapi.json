@@ -2135,6 +2135,40 @@
         }
       }
     },
+    "/api/me/tour" : {
+      "get" : {
+        "tags" : [ "staff-tour-controller" ],
+        "operationId" : "tourState",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffTourTourView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "staff-tour-controller" ],
+        "operationId" : "tourSeen",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffTourTourView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/phone" : {
       "get" : {
         "tags" : [ "my-phone-controller" ],
@@ -15302,6 +15336,14 @@
               "type" : "integer",
               "format" : "int64"
             }
+          }
+        }
+      },
+      "StaffTourTourView" : {
+        "properties" : {
+          "seenAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },
