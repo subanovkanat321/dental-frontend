@@ -295,6 +295,20 @@ test('«Удалить из списка» — после подтвержден
   await waitFor(() => expect(deleted).toEqual(['2']))
 })
 
+test('«Шаблон Excel» — вторым сообщением: «Вот шаблон — заполните, и мы всё перенесём» со ссылкой', async () => {
+  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+  const user = await openTab()
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  await user.click(within(card).getByRole('button', { name: 'Шаблон Excel' }))
+  const text = `Вот шаблон — заполните, и мы всё перенесём: ${window.location.origin}/web/import/tish-perenos.xlsx\n`
+    + 'Пациенты, прайс, врачи, склад, будущие записи и долги — каждое на своём листе. Пустые листы можно не трогать.'
+  expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555000402&text=${encodeURIComponent(text)}`, '_blank', 'noopener')
+  // И после ролика, в «Отправили?» — та же кнопка
+  const ask = within(card).getByRole('group', { name: 'Отправили?' })
+  await user.click(within(ask).getByRole('button', { name: '📥 Ещё и шаблон Excel' }))
+  expect(open).toHaveBeenCalledTimes(2)
+})
+
 test('«📨 Отправить сообщение и ролик»: ① wa.me → возврат в приложение → ② «Поделиться» роликом → «Отправили?» → «Следующая»', async () => {
   const open = vi.spyOn(window, 'open').mockImplementation(() => null)
   const shared: File[][] = []

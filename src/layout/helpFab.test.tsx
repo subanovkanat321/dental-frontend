@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
+import type { Schemas } from '../api/client'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
@@ -26,7 +27,7 @@ test('«Помощь» внизу меню (компьютер): список �
   const menu = screen.getByRole('dialog', { name: 'Помощь' })
   expect(item).toHaveAttribute('aria-expanded', 'true')
   expect(within(menu).getAllByRole('button').map((b) => b.querySelector('.menu-title')?.textContent)).toEqual([
-    'Спросить помощника', 'Руководство', 'Видео: как сделать', 'Помощь и техподдержка', 'Отзыв о Tish', 'Конфиденциальность', 'Tish в Instagram',
+    'Спросить помощника', 'Руководство', 'Видео: как сделать', 'Помощь и техподдержка', 'Отзыв о Tish', 'Конфиденциальность', 'Пройти тур ещё раз', 'Tish в Instagram',
   ])
   await userEvent.click(within(menu).getByRole('button', { name: /^Спросить помощника/ }))
   expect(screen.queryByRole('dialog', { name: 'Помощь' })).not.toBeInTheDocument()
@@ -83,4 +84,35 @@ test('телефон: «Ещё → Помощь» — тот же список �
   await userEvent.click(within(sheet).getByRole('button', { name: 'Конфиденциальность' }))
   expect(window.location.hash).toBe('#/help/privacy')
   expect(screen.queryByRole('dialog', { name: 'Помощь' })).not.toBeInTheDocument()
+})
+
+test('«Помощь → Группа врачей Tish»: ссылка из «Сведений о платформе» открывается наружу; без ссылки пункта нет', async () => {
+  const group = 'https://t.me/+tYKBuv9OgZ40YTky'
+  let info: Schemas['PlatformInfoInfo'] = { doctorsGroupUrl: group }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+    http.get('*/api/platform-info', () => HttpResponse.json(info)),
+  )
+  const open = vi.fn()
+  vi.stubGlobal('open', open)
+  const view = renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Помощь' }))
+  const menu = screen.getByRole('dialog', { name: 'Помощь' })
+  const item = await within(menu).findByRole('button', { name: /^Группа врачей Tish/ })
+  // Перед Instagram: обе — ссылки наружу
+  expect(within(menu).getAllByRole('button').map((b) => b.querySelector('.menu-title')?.textContent).slice(-2))
+    .toEqual(['Группа врачей Tish', 'Tish в Instagram'])
+  await userEvent.click(item)
+  expect(open).toHaveBeenCalledWith(group, '_blank', 'noopener')
+  expect(screen.queryByRole('dialog', { name: 'Помощь' })).not.toBeInTheDocument()
+  view.unmount()
+
+  // Владелец очистил поле — пункта нет
+  info = {}
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Помощь' }))
+  const empty = screen.getByRole('dialog', { name: 'Помощь' })
+  expect(await within(empty).findByRole('button', { name: /^Tish в Instagram/ })).toBeInTheDocument()
+  expect(within(empty).queryByRole('button', { name: /Группа врачей/ })).not.toBeInTheDocument()
 })

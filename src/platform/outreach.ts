@@ -1,4 +1,5 @@
 import { fetchBlob, type Schemas } from '../api/client'
+import { MOVE_TEMPLATE_PATH } from '../lib/texts'
 import { openLink, telegram } from '../lib/telegram'
 
 export type OutreachLead = Schemas['SalesFunnelLead']
@@ -41,6 +42,17 @@ export function nextLead(leads: OutreachLead[], currentId: number | null): Outre
   return leads.slice(from + 1).find(writable) ?? candidates.find((l) => l.id !== currentId) ?? null
 }
 
+
+/** Открытая ссылка на шаблон переезда — для сообщений клиникам и инструкций. */
+export function templateUrl(origin: string = window.location.origin): string {
+  return `${origin}${MOVE_TEMPLATE_PATH}`
+}
+
+/** Второе сообщение клинике — после ролика: шаблон, который мы перенесём за неё. */
+export function templateMessage(origin?: string): string {
+  return `Вот шаблон — заполните, и мы всё перенесём: ${templateUrl(origin)}\n`
+    + 'Пациенты, прайс, врачи, склад, будущие записи и долги — каждое на своём листе. Пустые листы можно не трогать.'
+}
 
 /** Публичный промо-ролик (бэкенд, /web/materials/public — без входа) — под этим именем уходит клинике. */
 export const PROMO_VIDEO = '/web/materials/public/promo.mp4'

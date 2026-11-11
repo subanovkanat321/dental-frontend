@@ -1,0 +1,37 @@
+/* Тур при первом входе (tour/Tour.tsx): затемнение с окном вокруг элемента и пузырь рядом. */
+.tour { --tour-dim: rgba(8, 26, 30, .58); position: fixed; inset: 0; z-index: 1000; }
+:root[data-theme=dark] .tour { --tour-dim: rgba(0, 0, 0, .66); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .tour { --tour-dim: rgba(0, 0, 0, .66); }
+}
+/* Окно: прозрачный прямоугольник, тень вокруг — затемнение; рамка акцентом. Клики ловит сам слой .tour */
+.tour-dim { position: absolute; inset: 0; background: var(--tour-dim); }
+.tour-hole { position: absolute; border-radius: var(--radius); pointer-events: none;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px color-mix(in srgb, var(--accent) 28%, transparent), 0 0 0 200vmax var(--tour-dim);
+  transition: top .25s ease, left .25s ease, width .25s ease, height .25s ease; }
+.tour-pop { position: fixed; width: min(340px, calc(100vw - 24px)); padding: 14px 16px 12px; border: 1px solid var(--separator);
+  border-radius: var(--radius); background: var(--card); color: var(--text); box-shadow: 0 12px 32px rgba(8, 26, 30, .28);
+  animation: tour-in .18s ease-out; }
+.tour-pop[hidden] { display: block; visibility: hidden; }
+.tour-pop h2 { margin: 0 0 4px; font-family: var(--display); font-size: 1.05rem; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; }
+.tour-pop p { margin: 0; }
+#tour-text { color: var(--hint); font-size: .92rem; line-height: 1.45; }
+.tour-count { margin-bottom: 4px !important; color: var(--accent); font-size: .78rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tour-actions { display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 12px; }
+.tour-skip { margin-right: auto; padding: 6px 4px; border: 0; border-radius: var(--r-sm); background: none; color: var(--hint); font: inherit; font-size: .85rem; cursor: pointer; }
+.tour-skip:hover { color: var(--text); text-decoration: underline; }
+.tour-skip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Стрелка к элементу: квадрат под углом, цвет и рамка — как у пузыря */
+.tour-arrow { position: absolute; width: 12px; height: 12px; margin-left: -6px; background: var(--card); border: 1px solid var(--separator); transform: rotate(45deg); }
+.tour-pop[data-side=below] .tour-arrow { top: -7px; border-right: 0; border-bottom: 0; }
+.tour-pop[data-side=above] .tour-arrow { bottom: -7px; border-left: 0; border-top: 0; }
+.tour-pop[data-side=right] .tour-arrow { left: -1px; margin-left: -6px; margin-top: -6px; border-top: 0; border-right: 0; }
+@keyframes tour-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (max-width: 760px) {
+  .tour-pop { padding: 14px 14px 12px; }
+  .tour-actions .btn { min-height: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-hole { transition: none; }
+  .tour-pop { animation: none; }
+}

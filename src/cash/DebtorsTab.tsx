@@ -8,6 +8,7 @@ import { HeadTools } from '../layout/PageHead'
 import { shortDate, somText } from '../lib/time'
 import { debtorsOf, type FamilyOf } from './debtors'
 import { Loading } from '../layout/Loading'
+import { OpeningDebtsBox } from './OpeningDebts'
 
 type Debt = Schemas['PaymentQueryDebt']
 
@@ -30,11 +31,14 @@ export function DebtorsTab({ rows, pending, error, onOpen, onOpenPatient }: {
   if (pending) return <section className="card-block"><Loading /></section>
   if (error) return <section className="card-block"><p className="error">{error}</p></section>
   const list = debtorsOf(rows ?? [], undefined, grouped ? familyOf : undefined)
-  if (!list.length) return <EmptyState fill title="Должников нет">Все приёмы оплачены полностью.</EmptyState>
+  // Долги из прежней программы (шаблон переезда) — без приёма, отдельным блоком; их видит руководитель
+  const opening = <OpeningDebtsBox onOpenPatient={onOpenPatient} />
+  if (!list.length) return <>{opening}<EmptyState fill title="Должников нет">Все приёмы оплачены полностью.</EmptyState></>
   const total = list.reduce((s, x) => s + x.total, 0)
   const overdue = list.filter((x) => x.overdue)
   return (
     <section className="card-block debtors" aria-label="Должники">
+      {opening}
       {familyOf.size > 0 && (
         <HeadTools>
           <label className="check"><input type="checkbox" checked={byFamily} onChange={(e) => setByFamily(e.target.checked)} /> Семьи вместе</label>

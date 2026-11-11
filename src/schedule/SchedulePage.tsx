@@ -466,7 +466,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
             {/* Действия — одной неразрывной группой справа. Тесно (крупный текст, зум, узкое окно) — useToolbarFit
                 оставляет у «Сводки дня» только значок; группа строки не делит. Пришёл без записи — «⚡ Сейчас» в «Новой записи» */}
             <div className="toolbar-actions push">
-              {bookable.length > 0 && <button type="button" className="btn primary" onClick={newHere}>＋ Новая запись</button>}
+              {bookable.length > 0 && <button type="button" className="btn primary" data-tour="new-appointment" onClick={newHere}>＋ Новая запись</button>}
               {/* Открытую сводку закрывает «×» в ней самой — в шапке кнопка только чтобы вернуть */}
               {canSummary && !summary && (
                 <button type="button" className="btn small toolbar-summary" onClick={toggleSummary} aria-label="Сводка дня"

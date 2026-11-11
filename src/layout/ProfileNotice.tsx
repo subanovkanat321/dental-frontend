@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { openMine } from '../lib/route'
+import { useFirstScreen } from '../tour/state'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -32,10 +33,11 @@ export function ProfileNotice({ me }: { me: Me }) {
     enabled: me.doctorId == null && !hidden,
     staleTime: 10 * 60_000,
   })
-  if (hidden) return null
-  const text = doctor
+  const text = hidden ? false : doctor
     ? (!doctor.photoUrl || !doctor.about?.trim()) && 'Заполните свой профиль — его видят пациенты: фото и пару слов о себе.'
     : name.data?.editable && !name.data.fullName?.trim() && 'Заполните свой профиль — укажите имя: так вас видят коллеги.'
+  // Тур при первом входе ждёт, пока плашки нет (и пока не ясно, будет ли она)
+  useFirstScreen('profile', !hidden && (name.isLoading || Boolean(text)))
   if (!text) return null
   const hide = () => {
     setHidden(true)

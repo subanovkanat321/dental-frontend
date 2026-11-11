@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { billingLine } from '../account/texts'
 import { openLink } from '../lib/telegram'
-import { whatsappUrl } from '../lib/texts'
+import { MOVE_TEMPLATE_PATH, whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate, somText, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { PhoneInput } from '../clinic/PhoneInput'
@@ -17,6 +17,7 @@ import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { adminsLine, remindedText } from './agreementTarget'
 import { StockClearBox } from './StockClearBox'
+import { templateUrl } from './outreach'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -62,6 +63,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
       {/* «Войти в клинику» — первым: ради этого карточку чаще всего и открывают; в свою — незачем */}
       {owner && !here && <EnterBox id={c.id!} />}
       {owner && here && <p className="hint">Это ваша текущая клиника.</p>}
+      {owner && <MoveBox here={here} />}
       {owner && <BillingBox id={c.id!} />}
       <AgreementBox id={c.id!} owner={owner} />
       {page && (
@@ -243,6 +245,27 @@ function AgreementBox({ id, owner }: { id: number; owner: boolean }) {
           {done && <p className="tone-ok" role="status">{done}</p>}
         </>
       )}
+    </section>
+  )
+}
+
+/**
+ * Переезд клиники из Excel: пустой шаблон (открытая ссылка — можно переслать) и как загрузить файл за
+ * клинику: войти руководителем — загрузка та же, что у самой клиники (пациенты видны только внутри неё).
+ */
+function MoveBox({ here }: { here: boolean }) {
+  const [copied, setCopied] = useState(false)
+  const copy = () => navigator.clipboard?.writeText(templateUrl()).then(() => setCopied(true), () => setCopied(false))
+  return (
+    <section className="form">
+      <h3>Перенос из Excel</h3>
+      <p className="hint">Клиника заполняет шаблон — пациенты, прайс, сотрудники, склад, будущие записи и долги — и присылает вам.
+        Загрузить за неё: {here ? '' : '«Войти как руководитель» выше → '}«Настройки → Данные → Загрузить из Excel → Шаблон Tish (всё)».
+        Сначала будет предпросмотр по листам, потом одна кнопка; повторная загрузка не задваивает.</p>
+      <div className="actions">
+        <a className="btn" href={MOVE_TEMPLATE_PATH} download="tish-perenos.xlsx">Скачать шаблон</a>
+        <button type="button" className="btn ghost" onClick={() => void copy()}>{copied ? 'Ссылка скопирована' : 'Скопировать ссылку'}</button>
+      </div>
     </section>
   )
 }

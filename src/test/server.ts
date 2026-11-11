@@ -20,6 +20,8 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // Долги из прежней программы (шаблон переезда): по умолчанию нет — блока в «Должниках» и карточке пациента нет
+  http.get('*/api/opening-debts', () => HttpResponse.json([] satisfies Schemas['OpeningDebtsView'][])),
   // Подсказка «🪑 время коллеги по креслу» в «Новой записи» и переносе: по умолчанию коллеги в это время нет
   http.get('*/api/appointments/chair-check', () => HttpResponse.json({ strict: false } satisfies Schemas['ChairCheckView'])),
   // Кейс на /join не заполнен — блока нет
@@ -39,6 +41,11 @@ export const server = setupServer(
   // «Пароль и вход»: по умолчанию вошли через Telegram — блока нет
   http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Айпери', editable: true } satisfies Schemas['StaffMembersOwnName'])),
   http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, sms: false } satisfies Schemas['PasswordControllerPasswordState'])),
+  // Сведения о платформе: по умолчанию пусто — группы врачей в «Помощи» нет (её тест — layout/helpFab.test.tsx)
+  http.get('*/api/platform-info', () => HttpResponse.json({} satisfies Schemas['PlatformInfoInfo'])),
+  // Тур при первом входе: по умолчанию уже пройден — не закрывает экраны остальных тестов (тесты тура — tour/tour.test.tsx)
+  http.get('*/api/me/tour', () => HttpResponse.json({ seenAt: '2026-11-01T06:00:00Z' } satisfies Schemas['StaffTourTourView'])),
+  http.put('*/api/me/tour', () => HttpResponse.json({ seenAt: '2026-11-01T06:00:00Z' } satisfies Schemas['StaffTourTourView'])),
   // Код на свой номер не ждём (шаг «Код» в «Пароль и вход» после перезагрузки — свои тесты)
   http.get('*/api/me/password/code', () => HttpResponse.json({ pending: false, secondsLeft: 0, resendSeconds: 0 } satisfies Schemas['PasswordControllerCodePending'])),
   // Экран входа: незаконченного входа нет (шаг после перезагрузки — свои тесты)

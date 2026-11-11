@@ -2135,6 +2135,40 @@
         }
       }
     },
+    "/api/me/tour" : {
+      "get" : {
+        "tags" : [ "staff-tour-controller" ],
+        "operationId" : "tourState",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffTourTourView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "staff-tour-controller" ],
+        "operationId" : "tourSeen",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffTourTourView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/phone" : {
       "get" : {
         "tags" : [ "my-phone-controller" ],
@@ -7252,6 +7286,35 @@
         }
       }
     },
+    "/api/opening-debts/{id}/paid" : {
+      "post" : {
+        "tags" : [ "opening-debt-controller" ],
+        "operationId" : "paid",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OpeningDebtControllerPayRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/news" : {
       "get" : {
         "tags" : [ "news-controller" ],
@@ -8131,10 +8194,78 @@
         }
       }
     },
+    "/api/clinic/import/workbook" : {
+      "post" : {
+        "tags" : [ "workbook-controller" ],
+        "operationId" : "apply_4",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WorkbookImportReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/import/workbook/preview" : {
+      "post" : {
+        "tags" : [ "workbook-controller" ],
+        "operationId" : "preview_3",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WorkbookImportReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/import/preview" : {
       "post" : {
         "tags" : [ "import-controller" ],
-        "operationId" : "preview_3",
+        "operationId" : "preview_4",
         "parameters" : [ {
           "name" : "kind",
           "in" : "query",
@@ -9395,7 +9526,7 @@
     "/api/appointments/{id}/dictation/apply" : {
       "post" : {
         "tags" : [ "visit-dictation-controller" ],
-        "operationId" : "apply_4",
+        "operationId" : "apply_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11391,10 +11522,40 @@
         }
       }
     },
+    "/api/opening-debts" : {
+      "get" : {
+        "tags" : [ "opening-debt-controller" ],
+        "operationId" : "list_13",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/OpeningDebtsView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_13",
+        "operationId" : "list_14",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12070,7 +12231,7 @@
     "/api/appointments/{id}/teeth" : {
       "get" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "list_14",
+        "operationId" : "list_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -13869,6 +14030,9 @@
           },
           "supportWhatsapp" : {
             "type" : "string"
+          },
+          "doctorsGroupUrl" : {
+            "type" : "string"
           }
         }
       },
@@ -13908,6 +14072,9 @@
             }
           },
           "supportWhatsapp" : {
+            "type" : "string"
+          },
+          "doctorsGroupUrl" : {
             "type" : "string"
           }
         }
@@ -15175,6 +15342,14 @@
               "type" : "integer",
               "format" : "int64"
             }
+          }
+        }
+      },
+      "StaffTourTourView" : {
+        "properties" : {
+          "seenAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },
@@ -17820,6 +17995,14 @@
           }
         }
       },
+      "OpeningDebtControllerPayRequest" : {
+        "properties" : {
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+          }
+        }
+      },
       "NewsControllerCreate" : {
         "properties" : {
           "text" : {
@@ -18211,6 +18394,90 @@
             "format" : "int32"
           },
           "group" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "WorkbookImportReport" : {
+        "properties" : {
+          "sheets" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WorkbookImportSheetReport"
+            }
+          },
+          "skipped" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "extraPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "errorCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WorkbookImportSheetError"
+            }
+          },
+          "applied" : {
+            "type" : "boolean"
+          },
+          "summary" : {
+            "type" : "string"
+          }
+        }
+      },
+      "WorkbookImportSheetError" : {
+        "properties" : {
+          "sheet" : {
+            "type" : "string"
+          },
+          "row" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "column" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        }
+      },
+      "WorkbookImportSheetReport" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "PATIENTS", "SERVICES", "STAFF", "SUPPLY", "APPOINTMENTS", "DEBTS" ]
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "rows" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "added" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "updated" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "unchanged" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "errorCount" : {
             "type" : "integer",
             "format" : "int32"
           }
@@ -21240,6 +21507,29 @@
           "count" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "OpeningDebtsView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },

@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, unwrap } from '../api/client'
 import { openMine } from '../lib/route'
+import { useFirstScreen } from '../tour/state'
 
 const HIDDEN = 'crm.password-notice.hidden'
 
@@ -24,7 +25,10 @@ export function PasswordNotice() {
   const state = useQuery({ queryKey: ['me-password'], queryFn: () => unwrap(api.GET('/api/me/password')), staleTime: 10 * 60_000 })
   const [hidden, setHidden] = useState(readHidden)
   const s = state.data
-  if (!s || !s.telegram || s.passwordSet || hidden) return null
+  const shown = Boolean(s && s.telegram && !s.passwordSet && !hidden)
+  // Тур при первом входе ждёт, пока плашки нет (и пока не ясно, будет ли она)
+  useFirstScreen('password', state.isLoading || shown)
+  if (!s || !shown) return null
   const hide = () => {
     setHidden(true)
     try {

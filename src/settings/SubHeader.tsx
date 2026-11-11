@@ -1,6 +1,7 @@
 import { useContext } from 'react'
 
 import { useBack } from '../lib/back'
+import { useMedia } from '../lib/useMedia'
 import { guarded } from '../lib/unsaved'
 import { SectionTitle } from '../layout/section'
 import { stickyHead } from '../layout/stickyHead'
@@ -23,16 +24,23 @@ export function SubHeader({ title, onBack, slotRef, children }: {
 }) {
   const host = useContext(ItemHost)
   const back = guarded(onBack)
+  // «‹ Настройки» — одна кнопка: на телефоне строкой над названием, на компьютере мелкой ссылкой
+  const phone = useMedia('(max-width: 760px)')
   // Пункт записан в адресе (#/settings/…): «назад» браузера ведёт в список и так
   useBack(host === 'clinic' ? null : back, { url: true })
   return (
     <header ref={stickyHead} className="toolbar sticky-head page-head">
       {host === 'clinic' ? <SectionTitle page="clinic" title="Клиника" subTitle={title} /> : (
         <>
-          {/* Телефон: «‹ Настройки» назад к списку. Компьютер: пункты — в меню слева, назад не нужно —
-              мелко «Настройки» над названием пункта, как у подразделов других разделов */}
-          <button type="button" className="btn ghost back settings-back" onClick={back}>{host === 'settings' ? '‹ Настройки' : '‹ Назад'}</button>
-          <div className="sect-titles sub-titles"><span className="sect-crumb">{CRUMB[host]}</span><h1>{title}</h1></div>
+          {/* Телефон: «‹ Настройки» назад к списку. Компьютер: мелко над названием пункта — у «Настроек»
+              ссылкой «‹ Настройки» к списку пунктов (в меню слева они свёрнуты), у «Я» и «Помощи» — подписью */}
+          {(host !== 'settings' || phone) && <button type="button" className="btn ghost back settings-back" onClick={back}>{host === 'settings' ? '‹ Настройки' : '‹ Назад'}</button>}
+          <div className="sect-titles sub-titles">
+            {host === 'settings' && !phone
+              ? <button type="button" className="sect-crumb crumb-link" onClick={back}>‹ {CRUMB[host]}</button>
+              : <span className="sect-crumb">{CRUMB[host]}</span>}
+            <h1>{title}</h1>
+          </div>
         </>
       )}
       {slotRef && <div className="head-tools" ref={slotRef} />}

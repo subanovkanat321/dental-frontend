@@ -20,6 +20,7 @@ import { useFitPanels } from './fitPanels'
 import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
+import { TourHost } from '../tour/Tour'
 import { useFullView } from '../lib/fullView'
 import { confirmLeave } from '../lib/unsaved'
 
@@ -141,9 +142,10 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     setToggled({})
   }
   // С 2026-11-11 подразделы открытого раздела — вкладками над страницей (layout/section.tsx), поэтому в
-  // дереве он сам не раскрыт: меню короче и не дублирует вкладки. Исключение — «Настройки»: вкладок
-  // у них нет, пункты — только в меню и на главной «Настроек»
-  const expanded = (key: Page) => toggled[key] ?? (key === page && key === 'settings')
+  // дереве он сам не раскрыт: меню короче и не дублирует вкладки. «Настройки» — так же (с 2026-11-12):
+  // их пункты — списком на главной «Настроек», из пункта назад — «‹ Настройки» над названием; раскрытые
+  // 10 пунктов выталкивали «Помощь» и «Я» за низ экрана 1366×768. Стрелка › раскрывает любой раздел
+  const expanded = (key: Page) => toggled[key] ?? false
   // Свёрнутое меню: панель подразделов у раздела под мышью (или нажатого пальцем)
   const [fly, setFly] = useState<{ key: Page; top: number; left: number } | null>(null)
   const flyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -277,7 +279,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
               <div key={s.key} className={['nav-item', open ? 'open' : '', extra.includes(s) ? 'extra' : '', s.key === page && activeSub(s.key) ? 'sub-active' : ''].join(' ').trim()}
                 onMouseEnter={(e) => enter(s.key, e.currentTarget)} onMouseLeave={leave}>
                 <div className="nav-row">
-                  <button type="button" className={['nav', s.key === page ? 'active' : ''].join(' ').trim()} data-section={s.key}
+                  <button type="button" className={['nav', s.key === page ? 'active' : ''].join(' ').trim()} data-section={s.key} data-tour={`nav-${s.key}`}
                     aria-current={s.key === page ? 'page' : undefined} title={narrow ? s.title : undefined}
                     onPointerDown={(e) => pressStart(s.key, e)} onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
                     onContextMenu={(e) => { if (subs.length && matches('(max-width: 760px)')) e.preventDefault() }}
@@ -303,13 +305,13 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           })}
           {/* Телефон: «Ещё» — остальные разделы, свой аватар и «Помощь» (на компьютере кнопки нет) */}
           <button type="button" className={extra.some((s) => s.key === page) || page === 'me' || page === 'help' || more ? 'nav more active' : 'nav more'}
-            aria-expanded={more} onClick={() => { setMenu(null); setMore(!more) }}>
+            aria-expanded={more} data-tour="more" onClick={() => { setMenu(null); setMore(!more) }}>
             <Icon name="more" /> <span>Ещё</span>
           </button>
         </nav>
         {me.doctor && !phone && (
           <button ref={helpButton} type="button" className={help || menu === 'help' || page === 'help' ? 'nav help-nav active' : 'nav help-nav'}
-            aria-haspopup="dialog" aria-expanded={menu === 'help'} title={narrow ? 'Помощь' : undefined}
+            aria-haspopup="dialog" aria-expanded={menu === 'help'} title={narrow ? 'Помощь' : undefined} data-tour="help"
             aria-label="Помощь" onClick={() => openMenu('help')}>
             <Icon name="help" /> <span>Помощь</span>
           </button>
@@ -320,7 +322,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </button>
         {!phone && (
           <button ref={meButton} type="button" className={menu === 'me' || page === 'me' ? 'me-block active' : 'me-block'}
-            aria-haspopup="dialog" aria-expanded={menu === 'me'} aria-label={`${name}, ${role}: профиль, оформление, выход`}
+            aria-haspopup="dialog" aria-expanded={menu === 'me'} data-tour="me" aria-label={`${name}, ${role}: профиль, оформление, выход`}
             title={narrow ? `${name} · ${role}` : undefined} onClick={() => openMenu('me')}>
             <Avatar me={me} />
             <span className="me-text"><strong>{name}</strong><span>{role}</span></span>
@@ -385,6 +387,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           <Suspense fallback={null}><HelpChatPanel onClose={() => setHelp(false)} /></Suspense>
         </div>
       )}
+      {/* Тур при первом входе (один раз на человека) и «Пройти тур ещё раз» из «Помощи» */}
+      <TourHost me={me} page={page} />
     </div>
   )
 }
