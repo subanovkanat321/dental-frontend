@@ -89,8 +89,8 @@ test('полоса «Сегодня»: заявки — открыть перв�
   expect(await screen.findByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Бакыт М.')
 
   await userEvent.click(await within(strip).findByRole('button', { name: /на складе заканчивается/ }))
-  // Руководителю — «Склад → Материалы»: мелко раздел, крупно подраздел
+  // Руководителю — «Склад → Материалы»: подраздел — открытой вкладкой и заголовком
   expect(await screen.findByRole('heading', { name: 'Материалы' })).toBeInTheDocument()
-  expect(screen.getByText('Склад', { selector: '.sect-crumb' })).toBeInTheDocument()
+  expect(within(await screen.findByRole('navigation', { name: 'Подразделы: Склад' })).getByRole('link', { name: 'Материалы' })).toHaveAttribute('aria-current', 'page')
   window.location.hash = ''
 })

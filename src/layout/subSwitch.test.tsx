@@ -182,3 +182,26 @@ test('подсказка закрывается тапом по ней, нажа
   expect(screen.queryByText(/Здесь переключаются разделы/)).not.toBeInTheDocument()
   expect(localStorage.getItem(SUB_HINT_KEY)).toBe('seen')
 })
+
+test('компьютер: те же вкладки над страницей; «⌄» — список под кнопкой (Esc закрывает), подсказки нет', async () => {
+  vi.unstubAllGlobals()
+  localStorage.removeItem(SUB_HINT_KEY)
+  layout(false)
+  window.location.hash = '/cash'
+  renderApp()
+  const row = await tabs('Касса')
+  expect(names(row)).toHaveLength(8)
+  // На компьютере вкладки и так на виду — пузыря «здесь переключаются разделы» нет
+  expect(screen.queryByText(/Здесь переключаются разделы/)).not.toBeInTheDocument()
+  const more = within(row).getByRole('button', { name: 'Все подразделы: Касса' })
+  await userEvent.click(more)
+  expect(more).toHaveAttribute('aria-expanded', 'true')
+  expect(screen.queryByRole('dialog', { name: /Подразделы/ })).not.toBeInTheDocument()
+  await userEvent.keyboard('{Escape}')
+  expect(screen.queryByRole('group', { name: 'Все подразделы: Касса' })).not.toBeInTheDocument()
+  await userEvent.click(more)
+  await userEvent.click(within(screen.getByRole('group', { name: 'Все подразделы: Касса' })).getByRole('link', { name: 'Отчёт' }))
+  expect(window.location.hash).toBe('#/cash/report')
+  expect(screen.queryByRole('group', { name: 'Все подразделы: Касса' })).not.toBeInTheDocument()
+  expect(within(await tabs('Касса')).getByRole('link', { name: 'Отчёт' })).toHaveAttribute('aria-current', 'page')
+})

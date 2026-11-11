@@ -118,8 +118,8 @@ test('«Часы работы»: часы клиники с субботой, о
   // Свой врач раскрыт сразу, коллега — по нажатию
   expect(await screen.findByRole('group', { name: 'Часы работы' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Дастан Т\./ })).toHaveAttribute('aria-expanded', 'false')
-  // «Клиника» — раздел меню: мелко «Клиника» над пунктом, пункт подсвечен в меню, «‹ Настройки» нет
-  expect(screen.getByText('Клиника', { selector: '.sect-crumb' })).toBeInTheDocument()
+  // «Клиника» — раздел меню: пункт — открытой вкладкой «Клиники», «‹ Настройки» нет
+  expect(screen.getByRole('navigation', { name: 'Подразделы: Клиника' })).toBeInTheDocument()
   expect(await findSub('Рабочее время')).toHaveAttribute('aria-current', 'page')
   expect(screen.queryByRole('button', { name: '‹ Настройки' })).not.toBeInTheDocument()
 })

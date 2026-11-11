@@ -132,15 +132,18 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const phone = useMedia('(max-width: 760px)')
   // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается)
   const [narrow, toggleNarrow] = useFullView('sidebar-narrow')
-  // Раскрыт открытый раздел; стрелкой можно раскрыть другой или свернуть открытый. Не запоминаем:
-  // перешли в другой раздел — снова раскрыт только он
+  // Стрелкой › можно раскрыть любой раздел (и открытый — быстрый переход в подраздел другого раздела без
+  // ухода с экрана). Не запоминаем: перешли в другой раздел — снова всё свёрнуто (кроме «Настроек»)
   const [toggled, setToggled] = useState<Partial<Record<Page, boolean>>>({})
   const [toggledFor, setToggledFor] = useState(page)
   if (toggledFor !== page) {
     setToggledFor(page)
     setToggled({})
   }
-  const expanded = (key: Page) => toggled[key] ?? key === page
+  // С 2026-11-11 подразделы открытого раздела — вкладками над страницей (layout/section.tsx), поэтому в
+  // дереве он сам не раскрыт: меню короче и не дублирует вкладки. Исключение — «Настройки»: вкладок
+  // у них нет, пункты — только в меню и на главной «Настроек»
+  const expanded = (key: Page) => toggled[key] ?? (key === page && key === 'settings')
   // Свёрнутое меню: панель подразделов у раздела под мышью (или нажатого пальцем)
   const [fly, setFly] = useState<{ key: Page; top: number; left: number } | null>(null)
   const flyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)

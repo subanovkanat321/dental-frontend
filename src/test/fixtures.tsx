@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 
@@ -28,19 +28,22 @@ export function renderApp() {
   return render(<QueryClientProvider client={client}><App /></QueryClientProvider>)
 }
 
-/** Меню слева — подразделы открытого раздела (бывшие вкладки сверху: «Касса → Зарплата»). */
-function sections() {
-  return screen.getByRole('navigation', { name: 'Разделы' })
+/**
+ * Подразделы открытого раздела: вкладки над страницей («Касса → Зарплата», с 2026-11-11); у «Настроек»
+ * вкладок нет — их пункты в меню слева.
+ */
+function subsArea() {
+  return screen.queryByRole('navigation', { name: /^Подразделы: / }) ?? screen.getByRole('navigation', { name: 'Разделы' })
 }
 
-/** Подраздел в меню слева — ссылка; число у подраздела — в имени: «Вопросы · 2». */
+/** Подраздел — ссылка; число у подраздела — в имени: «Вопросы · 2». */
 export async function findSub(name: string | RegExp) {
   await screen.findByRole('navigation', { name: 'Разделы' })
-  return within(sections()).findByRole('link', { name })
+  return waitFor(() => within(subsArea()).getByRole('link', { name }))
 }
 
 export function querySub(name: string | RegExp) {
-  return within(sections()).queryByRole('link', { name })
+  return within(subsArea()).queryByRole('link', { name })
 }
 
 /** Пункт «Настроек» (#/settings/<item>) — как нажать его в списке. */

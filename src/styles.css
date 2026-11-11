@@ -272,10 +272,15 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 .emoji-picker .btn { min-width: 2.5rem; font-size: 1.1rem; }
 .emoji-picker .btn[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); }
 .check { display: flex; gap: 8px; align-items: center; font-size: .9rem; }
-.segments { display: flex; border: 1px solid var(--line-strong); border-radius: var(--r-md); overflow: hidden; }
-.segments button { flex: 1; padding: 7px 4px; border: 0; background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
-.segments button + button { border-left: 1px solid var(--separator); }
-.segments button[aria-pressed=true] { background: var(--accent-soft); color: var(--link); font-weight: 600; }
+/* Переключатели внутри страницы (День / Неделя / Месяц, вкладки карточки) — залитые таблетки на утопленной
+   дорожке: выбранная — белая с тенью. Подразделы раздела — другим видом, подчёркнутыми вкладками
+   (layout/section.tsx): два уровня не путаются */
+.segments { display: flex; gap: 2px; padding: 3px; border-radius: var(--radius); background: var(--sunken); }
+.segments button { flex: 1; min-height: 30px; padding: 4px 10px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--hint); font: inherit; cursor: pointer;
+  transition: background-color .15s ease-out, color .15s ease-out; }
+.segments button:hover:not([aria-pressed=true]):not(:disabled) { color: var(--text); background: color-mix(in srgb, var(--card) 55%, transparent); }
+.segments button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.segments button[aria-pressed=true] { background: var(--card); color: var(--link); font-weight: 600; box-shadow: 0 1px 3px rgba(15, 42, 48, .14), 0 0 0 1px var(--separator); }
 /* Телефон: страна (флаг и код) слева, номер справа — одной рамкой. Номер в разметке первый (PhoneInput.tsx) */
 .phone { display: flex; align-items: stretch; padding: 0; }
 .phone:focus-within { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
@@ -1242,10 +1247,8 @@ button.timesheet-day:hover { border-color: var(--accent); }
 @media (max-width: 760px) {
   /* Переключатели внутри страницы (День / Неделя / Месяц) — залитые таблетки на утопленной дорожке, а не
      подчёркивание: так они не похожи на вкладки подразделов сверху (layout/section.tsx) */
-  .segments { flex-wrap: wrap; gap: 2px; padding: 3px; border: 0; border-radius: var(--radius); background: var(--sunken); overflow: visible; }
-  .segments button { flex: 1 0 auto; min-width: 30%; min-height: 38px; border-left: 0 !important; border-radius: var(--r-md); background: transparent;
-    color: var(--hint); white-space: nowrap; padding: 8px 10px; }
-  .segments button[aria-pressed=true] { background: var(--card); color: var(--link); box-shadow: 0 1px 3px rgba(15, 42, 48, .14), 0 0 0 1px var(--separator); }
+  .segments { flex-wrap: wrap; overflow: visible; }
+  .segments button { flex: 1 0 auto; min-width: 30%; min-height: 38px; white-space: nowrap; padding: 8px 10px; }
 }
 
 /*
@@ -1558,8 +1561,6 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .page-head > .head-tools > .help-hint { order: 1; margin: 0; align-self: center; }
   .page-head:has(> .head-tools > .help-hint) > :is(.with-hint, .sect-titles) { flex: 1 1 calc(100% - 40px); }
   .page-head:has(> .head-tools > .help-hint) > :not(.with-hint, .sect-titles, .sect-h1, .head-tools, .back) { order: 2; }
-  /* Подразделы — вкладками, заголовок скрыт: шапка без инструментов не оставляет пустого места */
-  .page-head:not(:has(> :not(.sect-h1, .head-tools:empty))) { margin: 0; min-height: 0; }
   /* Период в шапке — одной строкой во всю ширину, кнопки поровну: «День | Неделя | Месяц | Период» влезают и в 360px */
   .head-tools > .segments { flex: 1 1 100%; display: flex; flex-wrap: nowrap; min-width: 0; }
   .head-tools > .segments > button { flex: 1 1 0; min-width: 0; padding-inline: 4px; white-space: nowrap; }
@@ -1574,7 +1575,7 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   }
   .schedule:not(.with-panel) .toolbar.sticky-head { margin-right: -20px; padding-right: 20px; }
   .toolbar.sticky-head.stuck { box-shadow: 0 1px 0 var(--separator), 0 8px 16px -10px rgba(15, 42, 48, .22); }
-  .schedule-main .table th { top: var(--head-h, 0px); }
+  .schedule-main .table th { top: calc(var(--head-h, 0px) + var(--tabs-h, 0px)); }
   /* Таблица в своём блоке прокрутки (.table-scroll): шапка липнет к нему, а не к окну — отступ под
      шапку раздела сдвинул бы её на строки и закрыл их */
   .schedule-main .table-scroll .table th { top: 0; }
@@ -2265,8 +2266,6 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .patient-summary .tone-wait dt, .patient-summary .tone-wait dd { color: var(--wait-ink); }
 .patient-card .segments.tabs { justify-self: stretch; flex-wrap: nowrap; overflow: visible; }
 .patient-card .segments.tabs button { flex: 1 1 0; min-width: 0; padding-inline: 6px; }
-.patient-card .segments.tabs button + button { border-left: 1px solid var(--separator) !important; }
-@media (max-width: 760px) { .patient-card .segments.tabs button + button { border-left: 0 !important; } }
 .patient-card .patient-medical, .patient-card .patient-money, .patient-card .patient-more { gap: 10px; }
 .patient-medical .btn, .patient-more > .link { justify-self: start; }
 .price-pick { display: grid; gap: 4px; margin-top: 6px; }
@@ -2436,7 +2435,9 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .nav-chev:focus-visible, .nav-subitem:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .nav .nav-badge.quiet, .nav-count.quiet { background: var(--sunken); color: var(--hint); }
 /* Открытый раздел: выделен подраздел, сам раздел — просто тёмным текстом */
-.nav-item.sub-active > .nav-row > .nav.active { background: none; color: var(--text); }
+.nav-item.sub-active.open > .nav-row > .nav.active { background: none; color: var(--text); }
+/* Телефон: кнопка раздела внизу — без заливки, как и было (подраздел — вкладкой сверху) */
+@media (max-width: 760px) { .nav-item.sub-active > .nav-row > .nav.active { background: none; color: var(--text); } }
 .nav-sub { display: grid; gap: 1px; margin: 2px 0 6px 18px; padding-left: 8px; border-left: 1px solid var(--separator); }
 .nav-subitem { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 6px 10px; border-radius: var(--r-md); color: var(--rail-text); font-size: .93rem; text-decoration: none; cursor: pointer; }
 .nav-subitem:hover { background: var(--sunken); color: var(--text); }
@@ -2470,7 +2471,8 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
    отступов рабочей области), фон карточки, снизу линия; прокрутили — лёгкая тень */
 .sub-tabs-slot:empty { display: none; }
 .sub-tabs-slot { position: sticky; top: 0; z-index: 13; margin: -10px -10px 10px; }
-@media (min-width: 761px) { .sub-tabs-slot { display: none; } }
+/* Подразделы — вкладками, заголовок скрыт: шапка без инструментов не оставляет пустого места */
+.page-head:not(:has(> :not(.sect-h1, .head-tools:empty))) { margin: 0 !important; padding: 0 !important; min-height: 0; box-shadow: none !important; }
 .sub-tabs { position: relative; display: flex; align-items: stretch; height: 46px; background: var(--card); border-bottom: 1px solid var(--separator);
   transition: box-shadow .15s ease-out; }
 .sub-tabs[data-stuck] { box-shadow: 0 8px 16px -12px rgba(15, 42, 48, .35); }
@@ -2508,6 +2510,26 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .sub-tabs-more:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
 .sub-tabs-dot { position: absolute; top: 8px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--card); }
 .sub-tabs-dot.quiet { background: var(--hint); }
+/* Компьютер (с 2026-11-11): та же панель над страницей во всю ширину рабочей области; под ней прилипает
+   шапка страницы (инструменты подраздела), под шапкой — шапки таблиц. Тень при прокрутке — у шапки */
+@media (min-width: 761px) {
+  :root:has(.sub-tabs-slot:not(:empty)) { --tabs-h: 46px; }
+  .sub-tabs-slot { margin: -16px -20px 16px; }
+  .sub-tabs { padding-inline: 8px; }
+  .sub-tabs[data-stuck] { box-shadow: none; }
+  .sub-tab:hover:not(.active) { color: var(--text); }
+  .sub-tab:active { background: none; }
+  .sub-tabs-more { width: 48px; }
+  .sub-tabs-more:hover svg, .sub-tabs-more[aria-expanded=true] svg { background: var(--accent); color: var(--accent-text); }
+  .toolbar.sticky-head { top: var(--tabs-h, 0px); }
+  :root:has(.sub-tabs-slot:not(:empty)) .toolbar.sticky-head { padding-top: 12px; }
+  .panel { top: calc(16px + var(--tabs-h, 0px)); }
+}
+.sub-tabs-more-box { position: relative; flex: none; display: flex; }
+/* «⌄» на компьютере — список всех подразделов под кнопкой, как панель подразделов у свёрнутого меню */
+.sub-tabs-menu { position: absolute; top: calc(100% + 4px); right: 4px; z-index: 30; width: 260px; max-height: min(70vh, 560px); overflow-y: auto; display: grid; gap: 1px;
+  padding: 6px; background: var(--card); border: 1px solid var(--separator); border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgba(15, 42, 48, .06), 0 8px 24px rgba(15, 42, 48, .12); }
 @media (prefers-reduced-motion: reduce) {
   .sub-tabs-ink, .sub-tab, .sub-tabs { transition: none; }
 }
@@ -2579,3 +2601,5 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
   .more-who-btn .chev { color: var(--hint); font-size: 1.3rem; }
   .more-who-btn.active strong { color: var(--link); }
 }
+/* Компьютер: заголовок подраздела скрыт (он во вкладках) — «?» подраздела первым в строке инструментов, по центру строки */
+@media (min-width: 761px) { .page-head:has(> .sect-h1) > .head-tools > .help-hint { order: -1; margin: 0; align-self: center; } }

@@ -28,19 +28,18 @@ function markHintSeen(): void {
 }
 
 /**
- * Заголовок раздела с подразделами. Компьютер: мелко «Раздел», крупно — подраздел (подразделы — в
- * меню слева). Телефон: панель вкладок под верхним краем (`SubTabs`, порталом в место от Shell —
- * вне шапки страницы, чтобы она могла прилипать при прокрутке всей страницы); `h1` остаётся для
- * читалок экрана, но не виден: подраздел подсвечен во вкладках, раздел — в нижнем меню.
- * Без подразделов — просто заголовок раздела.
+ * Заголовок раздела с подразделами. Подразделы — панелью вкладок над страницей (`SubTabs`, порталом
+ * в место от Shell — вне шапки страницы, чтобы панель прилипала при прокрутке всей страницы), и на
+ * телефоне, и на компьютере (с 2026-11-11). `h1` подраздела остаётся для читалок экрана, но не
+ * виден: подраздел подсвечен во вкладках, раздел — в меню. Без подразделов (или один) — обычный
+ * заголовок; вне Shell (тесты страниц) — мелко «Раздел», крупно подраздел.
  */
 export function SectionTitle({ page, title, subTitle, hint }: { page: Page; title: string; subTitle?: string | null; hint?: ReactNode }) {
   const nav = useContext(NavContext)
-  const phone = useMedia('(max-width: 760px)')
   // Разделы, где уже были, остаются на странице скрытыми (App): вкладки — только у видимого
   const visible = useSectionActive()
   if (!subTitle) return <div className="with-hint"><h1>{title}</h1>{hint}</div>
-  if (phone && nav && nav.subs(page).length > 1) {
+  if (nav && nav.subs(page).length > 1) {
     return (
       <>
         <h1 className="sr-only sect-h1">{subTitle}</h1>
@@ -68,12 +67,12 @@ const NO_EDGES: Edges = { start: false, end: false, more: false, newRight: 0 }
 const INK_INSET = 12
 
 /**
- * Телефон: подразделы — привычной панелью вкладок (как папки Telegram, YouTube): все подразделы
+ * Подразделы — привычной панелью вкладок (как папки Telegram, YouTube), на телефоне и на компьютере: все подразделы
  * в строку во всю ширину, открытый — цветом акцента с полоской снизу, полоска переезжает при
  * переключении. Не влезли — строка листается вбок (с привязкой к вкладке), у краёв со скрытыми
- * вкладками — затухание, справа — «⌄»: лист со всеми подразделами (тот же, что долгим нажатием на
- * раздел внизу). Новое во вкладках, скрытых справа, — точкой на «⌄». «?» раздела — в конце строки.
- * Первый раз — пузырь-подсказка под панелью.
+ * вкладками — затухание, справа — «⌄»: на телефоне лист со всеми подразделами (тот же, что долгим
+ * нажатием на раздел внизу), на компьютере — список под кнопкой. Новое во вкладках, скрытых справа, —
+ * точкой на «⌄». «?» раздела — в конце строки. Телефон, первый раз — пузырь-подсказка под панелью.
  *
  * Ссылки с `aria-current`, а не `role=tab`: каждая — свой адрес (#/раздел/подраздел), «назад»
  * браузера возвращает в прежний подраздел.
@@ -88,7 +87,12 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
   const [ink, setInk] = useState<Ink | null>(() => lastPos.get(page)?.ink ?? null)
   const [edges, setEdges] = useState<Edges>(NO_EDGES)
   const [stuck, setStuck] = useState(false)
-  const [tip, setTip] = useState(() => !hintSeen())
+  const phone = useMedia('(max-width: 760px)')
+  // Подсказка «здесь переключаются разделы» — только телефону: на компьютере вкладки и так на виду
+  const [tip, setTip] = useState(() => phone && !hintSeen())
+  // Компьютер: «⌄» — список всех подразделов под кнопкой (на телефоне — лист снизу от Shell)
+  const [menu, setMenu] = useState(false)
+  const moreBox = useRef<HTMLDivElement>(null)
   const mounted = useRef(false)
 
   const activeTab = useCallback(() => list.current?.querySelector<HTMLElement>('[aria-current="page"]') ?? null, [])
@@ -190,7 +194,23 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
   }
   const open = () => {
     closeTip()
-    nav.openSheet(page)
+    if (phone) nav.openSheet(page)
+    else setMenu((v) => !v)
+  }
+  useEffect(() => {
+    if (!menu) return
+    const onDown = (e: PointerEvent) => { if (!moreBox.current?.contains(e.target as Node)) setMenu(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(false) }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [menu])
+  const pick = (key: string) => {
+    setMenu(false)
+    if (key !== active) nav.go(page, key)
   }
   const others = subs.filter((s) => s.key !== active)
   return (
@@ -217,11 +237,28 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
       </div>
       {hint && <span ref={helpBox} className="sub-tabs-help">{hint}</span>}
       {edges.more && (
-        <button type="button" className="sub-tabs-more" aria-haspopup="dialog" onClick={open}
-          aria-label={`Все подразделы: ${title}${edges.newRight ? ' (есть новое)' : ''}`}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-          {edges.newRight > 0 && <span className={edges.newRight === 2 ? 'sub-tabs-dot' : 'sub-tabs-dot quiet'} aria-hidden="true" />}
-        </button>
+        <div ref={moreBox} className="sub-tabs-more-box">
+          <button type="button" className="sub-tabs-more" aria-haspopup={phone ? 'dialog' : 'true'} aria-expanded={phone ? undefined : menu} onClick={open}
+            aria-label={`Все подразделы: ${title}${edges.newRight ? ' (есть новое)' : ''}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            {edges.newRight > 0 && <span className={edges.newRight === 2 ? 'sub-tabs-dot' : 'sub-tabs-dot quiet'} aria-hidden="true" />}
+          </button>
+          {menu && !phone && (
+            <div className="sub-tabs-menu" role="group" aria-label={`Все подразделы: ${title}`}>
+              {subs.map((s) => {
+                const on = s.key === active
+                const n = countOf(nav.counts, page, s.key)
+                return (
+                  <a key={s.key} className={on ? 'nav-subitem active' : 'nav-subitem'} href={subHref(page, s.key)} aria-current={on ? 'page' : undefined}
+                    aria-label={n ? `${s.title} · ${n}` : undefined} onClick={(e) => { e.preventDefault(); pick(s.key) }}>
+                    <span className="nav-sub-title">{s.title}</span>
+                    {n > 0 && <span className={LOUD.has(`${page}/${s.key}`) ? 'nav-count' : 'nav-count quiet'} aria-hidden="true">{n}</span>}
+                  </a>
+                )
+              })}
+            </div>
+          )}
+        </div>
       )}
       {tip && (
         <div className="sect-tip" role="note" onClick={closeTip}>
