@@ -101,6 +101,7 @@ export function Select({ value, defaultValue, onChange, children, name, required
   const [place, setPlace] = useState<{ left: number; width: number; top?: number; bottom?: number; maxHeight: number } | null>(null)
   const button = useRef<HTMLButtonElement>(null)
   const list = useRef<HTMLDivElement>(null)
+  const swipeFrom = useRef<number | null>(null)
   const listId = useId()
   const auto = useId()
 
@@ -238,7 +239,19 @@ export function Select({ value, defaultValue, onChange, children, name, required
   const options = (
     <div ref={list} className={`ui-select-pop${sheet ? ' sheet' : ''}`} onKeyDown={onKey}
       style={sheet || !place ? undefined : { left: place.left, width: place.width, top: place.top, bottom: place.bottom, maxHeight: place.maxHeight }}>
-      {sheet && title && <p className="ui-select-title">{title}</p>}
+      {sheet && (
+        // Шапка листа: заголовок и «✕» — на iPhone нажатие на тёмный фон не всегда закрывало лист.
+        // Потянуть шапку вниз — тоже закрыть
+        <div className="ui-select-head" onTouchStart={(e) => { swipeFrom.current = e.touches[0]?.clientY ?? null }}
+          onTouchEnd={(e) => {
+            const from = swipeFrom.current
+            swipeFrom.current = null
+            if (from != null && (e.changedTouches[0]?.clientY ?? from) - from > 50) close(false)
+          }}>
+          <p className="ui-select-title">{title}</p>
+          <button type="button" className="ui-select-close" aria-label="Закрыть" onClick={() => close(false)}>✕</button>
+        </div>
+      )}
       {searchable && (
         <input type="search" className="ui-select-search" placeholder="Поиск…" aria-label="Поиск в списке" value={query} autoFocus={!sheet}
           aria-controls={listId} aria-activedescendant={shown[active] ? `${auto}-${active}` : undefined}

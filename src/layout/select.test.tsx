@@ -87,6 +87,10 @@ test('телефон — лист снизу с заголовком из под
   expect(screen.getByText('Чья касса', { selector: '.ui-select-title' })).toBeInTheDocument()
   await userEvent.click(document.querySelector('.ui-select-backdrop')!)
   expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  // «✕» в шапке листа — тоже закрывает (на iPhone нажатие на фон не всегда срабатывало)
+  await userEvent.click(screen.getByRole('combobox'))
+  await userEvent.click(screen.getByRole('button', { name: 'Закрыть' }))
+  expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
 })
 
 test('группы (<optgroup>): заголовки с role="group", стрелки их пропускают, поиск — без «ё/е» и по названию группы', async () => {

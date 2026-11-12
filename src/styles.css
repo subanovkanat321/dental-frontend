@@ -1714,6 +1714,10 @@ input.ui-select-proxy, .field input.ui-select-proxy { position: absolute; width:
 .ui-select-pop li[aria-selected=true]::after { content: "✓"; }
 .ui-select-search { flex: none; margin: 2px 2px 6px; padding: 8px 10px; font: inherit; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--page); color: var(--text); }
 .ui-select-title { margin: 4px 8px 8px; font: 600 1.05rem var(--display); }
+.ui-select-head { display: flex; align-items: center; gap: 8px; }
+.ui-select-head .ui-select-title { flex: 1; min-width: 0; }
+.ui-select-close { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -6px -4px 0 0; border: 0; border-radius: 50%; background: transparent; color: var(--hint); font-size: 1.15rem; cursor: pointer; }
+.ui-select-close:active { background: var(--sunken); }
 .ui-select-empty { color: var(--hint); }
 /* Группы (<optgroup>): подпись мелко и серым, пункты под ней; группа не выбирается */
 .ui-select-pop li.ui-select-group { display: block; min-height: 0; padding: 0; border-radius: 0; cursor: default; background: none; }
@@ -1732,8 +1736,8 @@ input.ui-select-proxy, .field input.ui-select-proxy { position: absolute; width:
 .ui-select-group.fold.open > .ui-select-fold { color: var(--accent); }
 .ui-select-pop.sheet .ui-select-fold { min-height: 50px; font-size: 1.05rem; }
 /* Телефон и Telegram — лист снизу экрана, пункты крупнее: удобно большим пальцем */
-.ui-select-backdrop { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; background: rgba(10, 25, 30, .38); animation: sheet-fade .15s ease-out; }
-.ui-select-pop.sheet { position: static; width: 100%; max-height: 75vh; max-height: 75dvh; padding: 10px 10px calc(14px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0;
+.ui-select-backdrop { position: fixed; inset: 0; z-index: 1000; cursor: pointer; /* iOS: без cursor нажатие на фон не даёт click */ display: flex; align-items: flex-end; background: rgba(10, 25, 30, .38); animation: sheet-fade .15s ease-out; }
+.ui-select-pop.sheet { cursor: auto; position: static; width: 100%; max-height: 75vh; max-height: 75dvh; padding: 10px 10px calc(14px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0;
   animation: sheet-up .2s ease-out; }
 .ui-select-pop.sheet::before { content: ""; align-self: center; flex: none; width: 40px; height: 4px; margin-bottom: 8px; border-radius: 2px; background: var(--line-strong); }
 .ui-select-pop.sheet li { min-height: 50px; padding: 10px 12px; font-size: 1.05rem; }
