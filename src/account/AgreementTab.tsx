@@ -140,7 +140,7 @@ function SignForm({ a, pdf, sent }: { a: Agreement; pdf: ReactNode; sent: string
                 <input value={f[key]} maxLength={max} placeholder={placeholder} onChange={(e) => setF({ ...f, [key]: e.target.value })} /></label>
               {CHIPS[key] && (
                 <div className="chips-pick">
-                  {CHIPS[key]!.map((o) => <button key={o} type="button" className="chip" aria-pressed={f[key] === o} onClick={() => setF({ ...f, [key]: o })}>{o}</button>)}
+                  {CHIPS[key].map((o) => <button key={o} type="button" className="chip" aria-pressed={f[key] === o} onClick={() => setF({ ...f, [key]: o })}>{o}</button>)}
                 </div>
               )}
               {err(key) && <p className="error">{err(key)}</p>}
@@ -192,11 +192,11 @@ function Scans({ scans }: { scans: Schemas['AgreementsScan'][] }) {
             {scans.map((x) => (
               <tr key={x.id}>
                 <td className="strong">{x.fileName}</td>
-                <td className="hint nowrap">{Math.max(1, Math.round((x.sizeBytes ?? 0) / 1024))} КБ · {x.createdAt ? shortDate(x.createdAt) : ''}</td>
+                <td className="hint nowrap">{Math.max(1, Math.round(x.sizeBytes / 1024))} КБ · {x.createdAt ? shortDate(x.createdAt) : ''}</td>
                 <td className="r nowrap">
-                  <button type="button" className="btn small" disabled={send.isPending} onClick={() => send.mutate(x.id!)}>В бот</button>{' '}
+                  <button type="button" className="btn small" disabled={send.isPending} onClick={() => send.mutate(x.id)}>В бот</button>{' '}
                   <button type="button" className="btn small ghost" disabled={remove.isPending}
-                    onClick={() => void ask(`Удалить скан «${x.fileName}»?`).then((ok) => ok && remove.mutate(x.id!))}>Удалить</button>
+                    onClick={() => void ask(`Удалить скан «${x.fileName}»?`).then((ok) => ok && remove.mutate(x.id))}>Удалить</button>
                 </td>
               </tr>
             ))}

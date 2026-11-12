@@ -31,7 +31,7 @@ export function SurveyInvite({ me }: { me: Me }) {
         <button type="button" className="notice-text" onClick={() => openMine('help', 'survey')}>
           Команда Tish просит вашего мнения: «{survey.title}». 2–3 минуты. <span className="notice-open" aria-hidden="true">Пройти опрос ›</span>
         </button>
-        <button type="button" className="btn ghost small" disabled={later.isPending} title="Скрыть на 3 дня" onClick={() => later.mutate(survey.id!)}>Позже</button>
+        <button type="button" className="btn ghost small" disabled={later.isPending} title="Скрыть на 3 дня" onClick={() => later.mutate(survey.id)}>Позже</button>
       </div>
     </div>
   )

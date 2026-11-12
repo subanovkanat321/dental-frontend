@@ -25,13 +25,13 @@ function backend(a: Appointment, who: Schemas['BookingViewsMe'] = me) {
     http.post('*/api/appointments/:id/status', async ({ request }) => {
       const body = await request.json() as { status: Appointment['status'] }
       sent.push({ status: body.status })
-      current = { ...current, status: body.status, version: current.version! + 1 }
+      current = { ...current, status: body.status, version: current.version + 1 }
       return HttpResponse.json(current)
     }),
     http.post('*/api/appointments/:id/undo', async ({ request }) => {
       const body = await request.json() as { previousStatus: Appointment['status'] }
       sent.push({ undo: body.previousStatus })
-      current = { ...current, status: body.previousStatus, version: current.version! + 1 }
+      current = { ...current, status: body.previousStatus, version: current.version + 1 }
       return HttpResponse.json(current)
     }),
     http.delete('*/api/appointments/:id', () => {

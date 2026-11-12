@@ -77,7 +77,7 @@ function HoursForm({ doctorId, doctorName, onTimeOff, loaded }: {
       setDays(week)
       setError('')
       save.reset()
-      dropOff.mutate({ id: t.id!, week })
+      dropOff.mutate({ id: t.id, week })
     })
   }
   const submit = () => {

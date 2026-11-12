@@ -13,7 +13,7 @@ afterEach(() => {
 const anamnesis: Schemas['AnamnesisView'] = {
   items: [
     { questionId: 1, code: 'ALLERGY', section: 'QUESTION', kind: 'CHECK_TEXT', title: 'Есть аллергия?', label: 'Аллергия', alert: true, yes: true, text: 'лидокаин' },
-    { questionId: 2, section: 'QUESTION', kind: 'TEXT', title: 'Заметки', alert: false, text: '' },
+    { questionId: 2, section: 'QUESTION', kind: 'TEXT', title: 'Заметки', alert: false, text: '', yes: false },
     { questionId: 3, section: 'DISEASE', kind: 'CHECK', title: 'Диабет', alert: true, yes: false },
   ],
 }

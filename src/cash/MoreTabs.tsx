@@ -33,7 +33,7 @@ function errorText(e: ApiError | null): string | null {
 const scope = (doctorId: number | null) => (doctorId == null ? {} : { doctorId })
 
 /** Прибыль клиники: выручка + аренда кресла, полученная от врачей, − склад − расходы. */
-const profitOf = (s: Schemas['SpendingView']) => (s.revenueSom ?? 0) + (s.rentSom ?? 0) - (s.purchasedSom ?? 0) - (s.expensesSom ?? 0)
+const profitOf = (s: Schemas['SpendingView']) => (s.revenueSom ?? 0) + (s.rentSom ?? 0) - s.purchasedSom - (s.expensesSom ?? 0)
 
 /**
  * «Расходы»: аренда, зарплаты, техник, свои статьи — за месяц, по статьям; добавить и удалить.
@@ -93,8 +93,8 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
   const expenseValue = useCallback((x: Expense, key: ExpenseKey) => ({ when: x.spentOn, category: x.category, sum: x.amountSom })[key], [])
   const visible = (list.data ?? []).filter((x) => !category || x.category === category)
   const { sorted, sort, toggle } = useSort<Expense, ExpenseKey>(visible, expenseValue, { key: 'when', desc: true })
-  const total = (list.data ?? []).reduce((s, x) => s + (x.amountSom ?? 0), 0)
-  const byCategory = Object.entries((list.data ?? []).reduce<Record<string, number>>((acc, x) => ({ ...acc, [x.category ?? '—']: (acc[x.category ?? '—'] ?? 0) + (x.amountSom ?? 0) }), {}))
+  const total = (list.data ?? []).reduce((s, x) => s + x.amountSom, 0)
+  const byCategory = Object.entries((list.data ?? []).reduce<Record<string, number>>((acc, x) => ({ ...acc, [x.category ?? '—']: (acc[x.category ?? '—'] ?? 0) + x.amountSom }), {}))
     .sort((a, b) => b[1] - a[1])
   const cats = [...(categories.data?.standard ?? []), ...(categories.data?.own ?? [])]
   const sp = spending.data
@@ -126,7 +126,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
           <div className="methods profit" aria-label="Прибыль за месяц">
             <div>Получено<b>{somText(sp.revenueSom ?? 0)}</b></div>
             {(sp.rentSom ?? 0) > 0 && <div>Аренда от врачей<b>{somText(sp.rentSom ?? 0)}</b></div>}
-            <div>Склад<b>{somText(sp.purchasedSom ?? 0)}</b></div>
+            <div>Склад<b>{somText(sp.purchasedSom)}</b></div>
             <div>Расходы<b>{somText(sp.expensesSom ?? 0)}</b></div>
             <div className={profit < 0 ? 'tone-bad' : 'tone-ok'}>Прибыль<b>{somText(profit)}</b></div>
           </div>
@@ -191,12 +191,12 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
                   <td>{x.category}</td>
                   <td className="hint">{[x.comment, x.patient ? `пациент: ${x.patient}` : null].filter(Boolean).join(' · ') || '—'}</td>
                   {seesAll && (me.doctors?.length ?? 0) > 1 && <td>{x.doctor ?? 'клиника'}</td>}
-                  <td className="r nowrap num strong">{somText(x.amountSom ?? 0)}</td>
+                  <td className="r nowrap num strong">{somText(x.amountSom)}</td>
                   <td className="r nowrap">
                     <button type="button" className="btn small ghost" aria-label={`Исправить расход: ${x.category} ${x.amountSom}`}
-                      onClick={() => setEditing(editing === x.id ? null : x.id!)}>✎</button>
+                      onClick={() => setEditing(editing === x.id ? null : x.id)}>✎</button>
                     <button type="button" className="btn small ghost" aria-label={`Удалить расход: ${x.category} ${x.amountSom}`}
-                      disabled={remove.isPending} onClick={() => void ask('Удалить расход?').then((ok) => ok && remove.mutate(x.id!))}>✕</button></td>
+                      disabled={remove.isPending} onClick={() => void ask('Удалить расход?').then((ok) => ok && remove.mutate(x.id))}>✕</button></td>
                 </tr>
               )).flatMap((row, i) => {
                 const x = sorted[i]!
@@ -230,9 +230,9 @@ export function StatsTab({ doctorId }: { doctorId: number | null }) {
   })
   const weeks = stats.data ?? []
   // Среднее неявок — по прошедшим неделям, где были приёмы (текущая ещё идёт)
-  const past = weeks.slice(1).filter((w) => (w.booked ?? 0) > 0)
-  const average = past.length ? past.reduce((s, w) => s + (w.noShow ?? 0), 0) / past.length : null
-  const unmarked = weeks.reduce((s, w) => s + (w.unmarked ?? 0), 0)
+  const past = weeks.slice(1).filter((w) => w.booked > 0)
+  const average = past.length ? past.reduce((s, w) => s + w.noShow, 0) / past.length : null
+  const unmarked = weeks.reduce((s, w) => s + w.unmarked, 0)
   const r = ratings.data
   const max = Math.max(1, ...(r?.byStars ?? []))
 
@@ -311,7 +311,7 @@ export function ReportTab({ doctorId, onOpen, active }: { doctorId: number | nul
         <div className="card-block money-pair" aria-label="Итоги месяца">
           <p className="money-cell"><span>Касса: <b className="num">{somText(sums.data.cash?.totalSom ?? 0)}</b></span>
             <span className="hint small">деньги, полученные за период</span></p>
-          <p className="money-cell"><span>По приёмам: <b className="num">{somText(sums.data.totalSom ?? 0)}</b></span>
+          <p className="money-cell"><span>По приёмам: <b className="num">{somText(sums.data.totalSom)}</b></span>
             <span className="hint small">стоимость состоявшихся приёмов периода</span></p>
         </div>
       )}
@@ -349,7 +349,7 @@ function PatientPick({ value, onChange }: { value: { id: number; fullName: strin
       {found.data && found.data.length > 0 && (
         <ul className="found">
           {found.data.slice(0, 6).map((p) => (
-            <li key={p.id}><button type="button" onClick={() => { onChange({ id: p.id!, fullName: p.fullName ?? '' }); setQuery('') }}>{p.fullName}</button></li>
+            <li key={p.id}><button type="button" onClick={() => { onChange({ id: p.id, fullName: p.fullName }); setQuery('') }}>{p.fullName}</button></li>
           ))}
         </ul>
       )}

@@ -29,7 +29,7 @@ const board: Schemas['ComebacksBoard'] = {
       plan: ['зуб 36 — Коронка', 'Чистка'], lastVisit: '2026-10-10T04:00:00Z' },
     { patientId: 3, fullName: 'Бакыт М.', phone: '996555111222', telegram: false, reason: 'NO_SHOW', planSom: 0, plan: [] },
   ],
-  planSom: 18000, planPatients: 1, noShows: 1, recalls: 0,
+  planSom: 18000, planPatients: 1, noShows: 1, recalls: 0, total: 0, sent: 0, agreed: 0, cancelled: 0
 }
 
 beforeEach(() => {
@@ -79,7 +79,7 @@ test('«Позвать снова»: «пора на осмотр» — посл
   const recallBoard: Schemas['ComebacksBoard'] = {
     patients: [{ patientId: 4, fullName: 'Нурлан К.', phone: '996555000283', telegram: false, reason: 'RECALL', planSom: 0, plan: [],
       lastVisit: '2026-04-03T04:00:00Z', recallMonths: 6, recallService: 'Профессиональная чистка', recallDueOn: '2026-10-03' }],
-    planSom: 0, planPatients: 0, noShows: 0, recalls: 1,
+    planSom: 0, planPatients: 0, noShows: 0, recalls: 1, total: 0, sent: 0, agreed: 0, cancelled: 0
   }
   let services: Schemas['ServiceTypeView'][] = [{ id: 1, name: 'Профессиональная чистка', durationMinutes: 60, active: true }]
   server.use(
@@ -133,7 +133,7 @@ test('«Позвать снова»: по 50 за раз — «Показать 
   const many: Schemas['ComebacksBoard'] = {
     patients: Array.from({ length: 60 }, (_, i) => ({ patientId: 100 + i, fullName: `Пациент ${i + 1}`, phone: '996555000000',
       telegram: false, reason: 'RECALL' as const, planSom: 0, plan: [] })),
-    planSom: 0, planPatients: 0, noShows: 0, recalls: 60,
+    planSom: 0, planPatients: 0, noShows: 0, recalls: 60, total: 0, sent: 0, agreed: 0, cancelled: 0
   }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -157,7 +157,7 @@ function cancelledBoard(): Schemas['ComebacksBoard'] {
     patients: [{ patientId: 5, fullName: 'Динара Ж.', phone: '996555000295', telegram: false, reason: 'CANCELLED', planSom: 0, plan: [],
       doctorId: 2, cancelled: { at: new Date(Date.now() - 3 * day).toISOString(), source: 'PATIENT', serviceId: 9, service: 'Чистка',
         doctorId: 2, doctor: 'Дастан Т.', startAt: '2026-11-08T05:00:00Z', minutes: 60 } }],
-    planSom: 0, planPatients: 0, noShows: 0, recalls: 0, cancelled: 1,
+    planSom: 0, planPatients: 0, noShows: 0, recalls: 0, cancelled: 1, total: 0, sent: 0, agreed: 0
   }
 }
 

@@ -17,7 +17,7 @@ function backend(start: Appointment) {
     http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [a] : [])),
     http.post('*/api/appointments/:id/remind-telegram', () => {
       calls.push('telegram')
-      a = { ...a, reminderOpenedAt: new Date().toISOString(), version: a.version! + 1 }
+      a = { ...a, reminderOpenedAt: new Date().toISOString(), version: a.version + 1 }
       return HttpResponse.json(a)
     }),
     http.post('*/api/appointments/:id/reminder-opened', () => {
@@ -28,7 +28,7 @@ function backend(start: Appointment) {
     http.post('*/api/appointments/:id/reply', async ({ request }) => {
       const body = (await request.json()) as { reply: Appointment['reply']; version: number }
       calls.push(`reply:${body.reply}:v${body.version}`)
-      a = { ...a, reply: body.reply, version: a.version! + 1 }
+      a = { ...a, reply: body.reply, version: a.version + 1 }
       return HttpResponse.json(a)
     }),
   )

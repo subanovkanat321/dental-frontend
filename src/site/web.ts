@@ -3,69 +3,39 @@ import { useEffect, useState } from 'react'
 import type { Schemas } from '../api/client'
 
 /**
- * Ответы открытых адресов /web/* (страницы сайта без входа). Они не входят в контракт /api
- * (docs/api/openapi.json), поэтому типы — здесь, по записям контроллеров бэкенда:
- * ClinicPageController.Page, DirectoryController.Clinic, LinksController.Links.
+ * Ответы открытых адресов /web/* (страницы сайта без входа) — из контракта docs/api/openapi.json, как и /api.
+ * ClinicPage: phones — номера для звонка (первый — главный), whatsapp — свой номер или null: тогда кнопки
+ * WhatsApp нет; settingUp — новая клиника ещё настраивается (V95): записи нет, telegramUrl пуст; bookingUrl —
+ * запись на сайте без Telegram (/c/<код>#book), null — самозапись выключена или клиника настраивается.
  */
-export type SiteDoctor = { fullName: string; about?: string | null; photoUrl?: string | null }
-
-/** phones — номера для звонка (первый — главный), whatsapp — свой номер или null: тогда кнопки WhatsApp нет. */
-export type ClinicPage = {
-  name?: string | null; address?: string | null; mapUrl?: string | null; phones?: string[] | null
-  whatsapp?: string | null; telegramUrl?: string | null; doctors: SiteDoctor[]
-  services: { name: string; durationMinutes: number; priceSom?: number | null }[]
-  /** Новая клиника ещё настраивается (V95): записи нет, telegramUrl пуст */
-  settingUp?: boolean
-  /** Запись на сайте без Telegram (/c/<код>#book); null — самозапись выключена или клиника настраивается */
-  bookingUrl?: string | null
-}
+export type ClinicPage = Schemas['ClinicPageControllerPage']
+export type SiteDoctor = Schemas['ClinicPageControllerDoctor']
 
 /** city — город из списка (V121), по нему фильтр «по городам»; null — не указан. */
-export type DirectoryClinic = {
-  name?: string | null; address?: string | null; city?: string | null; mapUrl?: string | null; pageUrl: string; telegramUrl?: string | null; doctors: SiteDoctor[]
-  /** Запись на сайте без Telegram (/c/<код>#book); null — самозапись выключена */
-  bookingUrl?: string | null
-}
+export type DirectoryClinic = Schemas['DirectoryControllerClinic']
 
 /**
- * Запись на сайте без Telegram — WebBookingService.Info бэкенда (GET /web/booking?code=). available —
- * можно записаться; нет — unavailable: off, setting-up или paused (тогда «позвоните»).
+ * Запись на сайте без Telegram (GET /web/booking?code=). available — можно записаться; нет — unavailable:
+ * off, setting-up или paused (тогда «позвоните»). telegramUrl — мягкая подсказка «там бот напомнит»,
+ * whatsapp — «Удобнее в WhatsApp?».
  */
-export type WebBookingInfo = {
-  clinicName?: string | null; legalName?: string | null; address?: string | null; mapUrl?: string | null; phones?: string[] | null
-  available: boolean; unavailable?: 'off' | 'setting-up' | 'paused' | null; daysAhead: number
-  doctors: { id: number; fullName: string; about?: string | null; photoUrl?: string | null }[]
-  services: Schemas['ServiceTypeView'][]
-  doctorServices?: Schemas['DoctorServicesView'][] | null
-  sources?: Schemas['PatientSourcesChoice'][] | null
-  /** Запись в боте — мягкая подсказка «там бот напомнит» */
-  telegramUrl?: string | null
-  /** WhatsApp клиники цифрами — «Удобнее в WhatsApp?»; null — не задан */
-  whatsapp?: string | null
-}
+export type WebBookingInfo = Schemas['WebBookingServiceInfo']
 
-/** Заявка принята (WebBookingService.Booked): что показать на экране «Заявка отправлена». */
-export type WebBooked = {
-  startAt: string; endAt: string; doctorName: string; serviceName: string; clinicName?: string | null
-  address?: string | null; mapUrl?: string | null; phones?: string[] | null; telegramUrl?: string | null
-  /** WhatsApp клиники — «Отправить запись в WhatsApp клиники» с готовым текстом (без имени и телефона) */
-  whatsapp?: string | null
-}
+/** Заявка принята: что показать на экране «Заявка отправлена» (whatsapp — готовый текст без имени и телефона). */
+export type WebBooked = Schemas['WebBookingServiceBooked']
 
 /** Ответ-ошибка открытого адреса (Problem Details): code — для своих слов, errors — под полями. */
 export type SiteProblem = { code?: string; detail?: string; errors?: { field: string; message: string }[] }
 
 /** Контакты платформы: supportPhones — телефоны по порядку, supportWhatsapp — свой номер или null. */
-export type Links = {
-  supportTelegram?: string | null; supportUrl?: string | null; supportPhones?: string[] | null; supportWhatsapp?: string | null; botUrl?: string | null
-}
+export type Links = Schemas['LinksControllerLinks']
 
 export type Tariffs = Schemas['Tariffs']
 /**
- * Ролик и презентация для /join (/web/materials/public — вне контракта /api, отдаёт бэкенд из MARKETING_DIR).
+ * Ролик и презентация для /join (/web/materials/public, файлы бэкенд отдаёт из MARKETING_DIR).
  * null — файла нет (каталог не подключён), блок не показываем.
  */
-export type PublicMaterials = { video?: string | null; poster?: string | null; presentation?: string | null }
+export type PublicMaterials = Schemas['MaterialsPublicMaterials']
 /** Кейс на /join (/web/case): shown — заголовок и текст заполнены, блок показываем. */
 export type JoinCase = Schemas['JoinCaseCase']
 

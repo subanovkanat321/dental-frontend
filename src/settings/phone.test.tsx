@@ -52,7 +52,7 @@ afterEach(() => {
 })
 
 test('«Мой профиль»: номер по SMS — «Получить код» → код → «Подтвердить» → потом «Придумайте пароль»; убрать — без кода', async () => {
-  const { codes, confirms, passwords, removed } = backend({ phoneOnly: false, sms: true })
+  const { codes, confirms, passwords, removed } = backend({ phoneOnly: false, sms: true, telegram: false })
   const user = userEvent.setup()
   renderApp()
   const section = await screen.findByRole('region', { name: 'Телефон' })
@@ -93,7 +93,7 @@ test('«Мой профиль»: номер по SMS — «Получить ко
 })
 
 test('«Мой профиль»: шаг пароля после подтверждения номера можно пропустить', async () => {
-  const { passwords } = backend({ phoneOnly: false, sms: true })
+  const { passwords } = backend({ phoneOnly: false, sms: true, telegram: false })
   // Сообщения (notify) отвечаются через подменённый window.confirm (test/setup.ts)
   const asked = vi.spyOn(window, 'confirm').mockReturnValue(true)
   const user = userEvent.setup()
@@ -111,7 +111,7 @@ test('«Мой профиль»: шаг пароля после подтверж
 })
 
 test('«Мой профиль»: SMS не подключены — номер для входа не задать', async () => {
-  backend({ phoneOnly: false, sms: false })
+  backend({ phoneOnly: false, sms: false, telegram: false })
   renderApp()
   const section = await screen.findByRole('region', { name: 'Телефон' })
   expect(await within(section).findByText('SMS не подключены — номер для входа сейчас не задать.')).toBeInTheDocument()
@@ -119,7 +119,7 @@ test('«Мой профиль»: SMS не подключены — номер д
 })
 
 test('«Мой профиль»: без Telegram номер — единственный вход: сменить можно, убрать нельзя', async () => {
-  backend({ phone: '+996700000052', phoneOnly: true, sms: true })
+  backend({ phone: '+996700000052', phoneOnly: true, sms: true, telegram: false })
   renderApp()
   const section = await screen.findByRole('region', { name: 'Телефон' })
   expect(await within(section).findByText('+996 700 000 052')).toBeInTheDocument()

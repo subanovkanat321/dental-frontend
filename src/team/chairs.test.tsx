@@ -17,8 +17,8 @@ afterEach(() => {
 })
 
 const doctors: Schemas['DoctorAdminView'][] = [
-  { id: 1, fullName: 'Айгерим Садыкова', about: 'терапевт', active: true, telegramId: 111, role: 'ADMIN' },
-  { id: 2, fullName: 'Дастан Т.', about: '', active: true },
+  { id: 1, fullName: 'Айгерим Садыкова', about: 'терапевт', active: true, telegramId: 111, role: 'ADMIN', phoneOnly: false },
+  { id: 2, fullName: 'Дастан Т.', about: '', active: true, phoneOnly: false },
 ]
 
 function backend(chairs: Schemas['ChairOverview'][], who: Schemas['BookingViewsMe'] = me) {

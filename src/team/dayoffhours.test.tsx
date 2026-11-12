@@ -24,7 +24,7 @@ function backend(timeOff: TimeOff[], hours: Partial<Record<number, Schemas['Doct
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/doctors/admin', () => HttpResponse.json([])),
-    http.get('*/api/clinic', () => HttpResponse.json({ workStart: '09:00:00', workEnd: '18:00:00', workDays: [...WEEKDAYS, 'SATURDAY'] } satisfies Schemas['ClinicView'])),
+    http.get('*/api/clinic', () => HttpResponse.json({ workStart: '09:00:00', workEnd: '18:00:00', workDays: [...WEEKDAYS, 'SATURDAY'], independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 } satisfies Schemas['ClinicView'])),
     http.get('*/api/time-off', () => HttpResponse.json(state.list)),
     http.post('*/api/time-off', async ({ request }) => {
       state.posted.push(await request.json())

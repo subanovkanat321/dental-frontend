@@ -114,7 +114,7 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
               <span className="hint">{f.takenOn ? shortDate(`${f.takenOn}T12:00:00Z`) : ''}{f.createdBy ? ` · ${f.createdBy}` : ''}</span>
               {f.postText && <PostTextCopy text={f.postText} />}
               {f.canDelete && (
-                <button type="button" className="link danger-link" onClick={() => void ask('Удалить снимок?').then((ok) => ok && remove.mutate(f.id!))}>Удалить</button>
+                <button type="button" className="link danger-link" onClick={() => void ask('Удалить снимок?').then((ok) => ok && remove.mutate(f.id))}>Удалить</button>
               )}
             </li>
           ))}
@@ -155,7 +155,7 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
                   <span className="hint">{f.takenOn ? shortDate(`${f.takenOn}T12:00:00Z`) : ''}{f.createdBy ? ` · ${f.createdBy}` : ''}</span>
                   {f.postText && <PostTextCopy text={f.postText} />}
                   {f.canDelete && (
-                    <button type="button" className="link danger-link" onClick={() => void ask('Удалить картинку «до / после»?').then((ok) => ok && remove.mutate(f.id!))}>Удалить</button>
+                    <button type="button" className="link danger-link" onClick={() => void ask('Удалить картинку «до / после»?').then((ok) => ok && remove.mutate(f.id))}>Удалить</button>
                   )}
                 </li>
               ))}

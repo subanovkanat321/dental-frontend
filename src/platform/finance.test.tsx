@@ -38,9 +38,9 @@ const current = todayIn().slice(0, 7)
 function history(month: string): Schemas['PlatformFinanceMonthTotal'][] {
   return Array.from({ length: 12 }, (_, k) => {
     const m = shift(month, k - 11)
-    return k === 11 ? { month: m, incomeSom: 10470, expenseSom: 3055, profitSom: 7415 }
-      : k === 10 ? { month: m, incomeSom: 0, expenseSom: 1200, profitSom: -1200 }
-        : { month: m, incomeSom: 0, expenseSom: 0, profitSom: 0 }
+    return k === 11 ? { month: m, incomeSom: 10470, expenseSom: 3055, profitSom: 7415, pendingSom: 0 }
+      : k === 10 ? { month: m, incomeSom: 0, expenseSom: 1200, profitSom: -1200, pendingSom: 0 }
+        : { month: m, incomeSom: 0, expenseSom: 0, profitSom: 0, pendingSom: 0 }
   })
 }
 
@@ -60,7 +60,7 @@ function finance(month: string): Finance {
     ],
     history: history(month),
     settings: { lastUsdRate: 87.5 },
-    categories: ['Claude (разработка)', 'Реклама', 'Сервер и домен', 'SMS-провайдер (пополнение)', 'Прочее'],
+    categories: ['Claude (разработка)', 'Реклама', 'Сервер и домен', 'SMS-провайдер (пополнение)', 'Прочее'], pendingSom: 0, topupSom: 0
   }
 }
 
@@ -68,8 +68,8 @@ const emptyMonth = (month: string): Finance => ({
   month, incomeSom: 0, expenseSom: 0, profitSom: 0,
   expenses: [{ key: 'AI', label: 'ИИ в приложении', som: 0, auto: true, count: 0, needsPrice: false },
     { key: 'SMS', label: 'SMS', som: 0, auto: true, count: 0, needsPrice: true }],
-  income: [], entries: [], history: history(month).map((m) => ({ ...m, incomeSom: 0, expenseSom: 0, profitSom: 0 })),
-  settings: { lastUsdRate: 87 }, categories: [],
+  income: [], entries: [], history: history(month).map((m) => ({ ...m, incomeSom: 0, expenseSom: 0, profitSom: 0, pendingSom: 0 })),
+  settings: { lastUsdRate: 87 }, categories: [], pendingSom: 0, topupSom: 0
 })
 
 test('владелец: «Финансы» — итог, авто-расходы, доходы по клиникам, переключение месяца', async () => {
@@ -124,7 +124,7 @@ test('добавить расход в долларах, исправить (о�
     }),
     http.put('*/api/platform/finance/expenses/:id', async ({ params, request }) => {
       calls.push([`PUT ${String(params.id)}`, await request.json()])
-      const updated: Schemas['PlatformExpensesExpense'] = { id: 6 }
+      const updated: Schemas['PlatformExpensesExpense'] = { id: 6, amountSom: 0, monthly: false }
       return HttpResponse.json(updated)
     }),
     http.delete('*/api/platform/finance/expenses/:id', ({ params }) => {
@@ -199,9 +199,9 @@ test('ошибка сервера под полем: курс', async () => {
 test('период: квартал, год, всё время и свой — итоги, таблица по месяцам и запросы к серверу', async () => {
   const queries: string[] = []
   const months: Schemas['PlatformFinanceMonthTotal'][] = [
-    { month: '2026-01', incomeSom: 0, expenseSom: 1200, profitSom: -1200 },
-    { month: '2026-02', incomeSom: 2000, expenseSom: 1249, profitSom: 751 },
-    { month: '2026-03', incomeSom: 10470, expenseSom: 3047, profitSom: 7423 },
+    { month: '2026-01', incomeSom: 0, expenseSom: 1200, profitSom: -1200, pendingSom: 0 },
+    { month: '2026-02', incomeSom: 2000, expenseSom: 1249, profitSom: 751, pendingSom: 0 },
+    { month: '2026-03', incomeSom: 10470, expenseSom: 3047, profitSom: 7423, pendingSom: 0 },
   ]
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
@@ -411,9 +411,9 @@ test('балансы ИИ и SMS: пополнено, израсходовано
 test('баланс в минусе — красный остаток; без пополнений — подсказка', async () => {
   const f = withTopups(current)
   f.balances = [
-    { service: 'AI', label: 'ИИ', topupTotalSom: 0, topupPeriodSom: 0, spentSinceSom: 0, spentPeriodSom: 97, balanceSom: 0, low: false },
+    { service: 'AI', label: 'ИИ', topupTotalSom: 0, topupPeriodSom: 0, spentSinceSom: 0, spentPeriodSom: 97, balanceSom: 0, low: false, lastTopupSom: 0, needsPrice: false },
     { service: 'SMS', label: 'SMS', topupTotalSom: 500, topupPeriodSom: 0, since: '2026-03-10', spentSinceSom: 520, spentPeriodSom: 60,
-      balanceSom: -20, lastTopupSom: 500, low: true },
+      balanceSom: -20, lastTopupSom: 500, low: true, needsPrice: false },
   ]
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
@@ -437,12 +437,12 @@ test('пополнение: добавить в долларах, исправи
     http.get('*/api/platform/finance', () => HttpResponse.json(withTopups(current))),
     http.post('*/api/platform/finance/topups', async ({ request }) => {
       calls.push(['POST', await request.json()])
-      const created: Schemas['PlatformTopupsTopup'] = { id: 9, service: 'AI', amountSom: 4375 }
+      const created: Schemas['PlatformTopupsTopup'] = { id: 9, service: 'AI', amountSom: 4375, createdBy: 0 }
       return HttpResponse.json(created, { status: 201 })
     }),
     http.put('*/api/platform/finance/topups/:id', async ({ params, request }) => {
       calls.push([`PUT ${String(params.id)}`, await request.json()])
-      const updated: Schemas['PlatformTopupsTopup'] = { id: 3 }
+      const updated: Schemas['PlatformTopupsTopup'] = { id: 3, amountSom: 0, createdBy: 0 }
       return HttpResponse.json(updated)
     }),
     http.delete('*/api/platform/finance/topups/:id', ({ params }) => {

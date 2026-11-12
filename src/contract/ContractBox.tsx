@@ -44,7 +44,7 @@ export function ContractBox({ patient, me, defaultDoctorId }: { patient: Patient
   const [signedOn, setSignedOn] = useState(todayIn())
   const [scanStatus, setScanStatus] = useState('')
   const scanInput = useRef<HTMLInputElement>(null)
-  const id = patient.id!
+  const id = patient.id
   const contract = useQuery({
     queryKey: ['contract', id, doctorId ?? null],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/contract', { params: { path: { patientId: id }, query: { doctorId } } })),

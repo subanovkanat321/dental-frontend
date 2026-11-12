@@ -13,7 +13,7 @@ type Lead = Schemas['SalesFunnelLead']
 /** Вымышленные клиники — настоящих в тестах не бывает. */
 function lead(id: number, clinicName: string, extra: Partial<Lead> = {}): Lead {
   return {
-    id, clinicName, phone: `99655500040${id}`, city: 'Бишкек', stage: 'LEAD', source: 'LIST',
+    id, clinicName, phone: `99655500040${id}`, city: 'Бишкек', stage: 'LEAD', source: 'LIST', solo: false,
     createdAt: '2026-11-08T05:00:00Z', stageAt: '2026-11-08T05:00:00Z', ...extra,
   }
 }
@@ -109,7 +109,7 @@ test('«Только сообщение» открывает wa.me с номер
   server.use(http.post('*/api/platform/outreach/:id/sent', ({ params }) => {
     marked = String(params.id)
     leads = leads.map((l) => l.id === 2 ? { ...l, stage: 'CONTACTED', contactedAt: '2026-11-08T06:00:00Z' } : l)
-    return HttpResponse.json(leads.find((l) => l.id === 2)!)
+    return HttpResponse.json(leads.find((l) => l.id === 2))
   }))
   const user = await openTab()
 
@@ -315,7 +315,7 @@ test('«📨 Отправить сообщение и ролик»: ① wa.me �
   phoneShare(shared)
   server.use(http.post('*/api/platform/outreach/:id/sent', () => {
     leads = leads.map((l) => l.id === 2 ? { ...l, stage: 'CONTACTED', contactedAt: '2026-11-08T06:00:00Z' } : l)
-    return HttpResponse.json(leads.find((l) => l.id === 2)!)
+    return HttpResponse.json(leads.find((l) => l.id === 2))
   }))
   const user = await openTab()
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
@@ -373,7 +373,7 @@ test('«Изменить» клинику: страна и номер, 409 — �
       return HttpResponse.json({ status: 409, detail: 'Этот номер уже у клиники «Тест-Улыбка» — у одной клиники один номер' }, { status: 409 })
     }
     leads = leads.map((l) => l.id === 2 ? { ...l, clinicName: body.clinicName, phone: '77010000003', address: body.address } : l)
-    return HttpResponse.json(leads.find((l) => l.id === 2)!)
+    return HttpResponse.json(leads.find((l) => l.id === 2))
   }))
   leads = leads.map((l) => l.id === 5 ? { ...l, clinicId: 9 } : l)
   const user = await openTab()

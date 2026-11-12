@@ -28,7 +28,7 @@ function backend(initial: Tooth[] = []) {
     http.put('*/api/patients/7/dentition', async ({ request }) => {
       const body = (await request.json()) as Schemas['ChartControllerDentitionRequest']
       dentitionCalls.push(body)
-      return HttpResponse.json({ id: 7, fullName: 'Вымышленная Аружан', dentition: body.dentition } satisfies Patient)
+      return HttpResponse.json({ id: 7, fullName: 'Вымышленная Аружан', dentition: body.dentition, telegram: false } satisfies Patient)
     }),
     http.get('*/api/patients/7/plan', () => HttpResponse.json([])),
     http.get('*/api/patients/7/teeth/history', () => HttpResponse.json([])),
@@ -93,7 +93,7 @@ test('молочный зуб рисуется меньше и формой бл
 
 test('ребёнок 4 лет: карта открывается молочными зубами, по возрасту', async () => {
   backend([{ number: 54, state: 'CARIES', surfaces: ['O'] }])
-  open({ id: 7, fullName: 'Вымышленная Аружан', birthDate: bornYearsAgo(4) })
+  open({ id: 7, fullName: 'Вымышленная Аружан', birthDate: bornYearsAgo(4), telegram: false })
   expect(await screen.findByRole('button', { name: 'Зуб 54: Кариес (О)' })).toBeInTheDocument()
   expect(screen.getAllByRole('button', { name: /^Зуб \d+:/ })).toHaveLength(20)
   expect(screen.queryByRole('button', { name: /^Зуб 16:/ })).not.toBeInTheDocument()
@@ -103,7 +103,7 @@ test('ребёнок 4 лет: карта открывается молочны�
 
 test('переключатель: «Сменный» сохраняется у пациента; выпавший молочный — постоянный на его месте; «↺ по возрасту»', async () => {
   const calls = backend([{ number: 51, state: 'MISSING' }])
-  open({ id: 7, fullName: 'Вымышленная Аружан', birthDate: bornYearsAgo(4) })
+  open({ id: 7, fullName: 'Вымышленная Аружан', birthDate: bornYearsAgo(4), telegram: false })
   await screen.findByRole('button', { name: /^Зуб 55:/ })
   await userEvent.click(screen.getByRole('button', { name: 'Сменный' }))
   await waitFor(() => expect(calls).toEqual([{ dentition: 'MIXED' }]))
@@ -121,7 +121,7 @@ test('переключатель: «Сменный» сохраняется у �
 
 test('сохранённый прикус важнее возраста; ассистент переключает только у себя', async () => {
   const calls = backend()
-  open({ id: 7, fullName: 'Вымышленный Эмир', birthDate: bornYearsAgo(9), dentition: 'PERMANENT' }, true)
+  open({ id: 7, fullName: 'Вымышленный Эмир', birthDate: bornYearsAgo(9), dentition: 'PERMANENT', telegram: false }, true)
   expect(await screen.findByRole('button', { name: /^Зуб 18:/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Постоянные' })).toHaveAttribute('aria-pressed', 'true')
   await userEvent.click(screen.getByRole('button', { name: 'Молочные' }))

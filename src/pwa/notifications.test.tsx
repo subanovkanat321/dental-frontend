@@ -14,7 +14,7 @@ const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebK
 const ENDPOINT = 'https://fcm.googleapis.com/fcm/send/test-device'
 
 function view(patch: Partial<Schemas['PushControllerPushView']> = {}): Schemas['PushControllerPushView'] {
-  return { enabled: true, publicKey: KEY, channel: 'TELEGRAM', devices: [], ...patch }
+  return { enabled: true, publicKey: KEY, channel: 'TELEGRAM', devices: [], noTelegram: false, ...patch }
 }
 
 function subscription(): PushSubscription {

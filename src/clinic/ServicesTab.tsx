@@ -23,7 +23,7 @@ type Service = Schemas['ServiceTypeView']
 /** Срок профосмотра клиники по умолчанию (V136); undefined — ещё загружается. */
 function useClinicRecall(): number | undefined {
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
-  return clinic.data ? clinic.data.recallMonths ?? 6 : undefined
+  return clinic.data ? clinic.data.recallMonths : undefined
 }
 
 function useRefreshServices() {
@@ -52,9 +52,9 @@ function useEnableService() {
   const refresh = useRefreshServices()
   return useMutation<Service, ApiError, Service>({
     mutationFn: (s) => unwrap(api.PUT('/api/service-types/{id}', {
-      params: { path: { id: s.id! } },
+      params: { path: { id: s.id } },
       body: {
-        name: s.name!, group: s.group, durationMinutes: s.durationMinutes!, active: true,
+        name: s.name, group: s.group, durationMinutes: s.durationMinutes, active: true,
         priceSom: s.priceSom ?? undefined, recallMonths: s.recallMonths ?? undefined,
       },
     })),
@@ -156,7 +156,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
                   </tr>
                   {isOpen(g) && items.map((s) => (
                     <tr key={s.id} className={s.id === opened ? 'active' : undefined}>
-                      <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(s.id!)}>{s.name}</button> : s.name}</td>
+                      <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(s.id)}>{s.name}</button> : s.name}</td>
                       <td className="r num nowrap">{s.durationMinutes} мин</td>
                       <td className="r num nowrap">{priceText(s.priceSom) ?? '—'}</td>
                       <td className="r num nowrap">{s.recallMonths ? `через ${monthsText(s.recallMonths)}` : <span className="hint">как в клинике</span>}</td>
@@ -214,12 +214,12 @@ function ClinicCatalog({ services, total, editable, opened, searching, onOpen }:
           {services.map((s) => (
             <li key={s.id} className={s.id === opened ? 'active' : undefined}>
               <span className="clinic-catalog-name">
-                {editable ? <button type="button" className="row-link" onClick={() => onOpen(s.id!)}>{s.name}</button> : s.name}
+                {editable ? <button type="button" className="row-link" onClick={() => onOpen(s.id)}>{s.name}</button> : s.name}
                 <span className="hint"> · {s.durationMinutes} мин{priceText(s.priceSom) ? ` · ${priceText(s.priceSom)}` : ''}</span>
               </span>
               {editable && (
                 <button type="button" className="btn small" aria-label={`Включить: ${s.name}`} disabled={enable.isPending}
-                  onClick={() => enable.mutate(s, { onSuccess: () => setEnabled(s.name ?? '') })}>Включить</button>
+                  onClick={() => enable.mutate(s, { onSuccess: () => setEnabled(s.name) })}>Включить</button>
               )}
             </li>
           ))}
@@ -262,7 +262,7 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
         recallMonths: form.recall === '' ? undefined : Number(form.recall),
       }
       return unwrap(s
-        ? api.PUT('/api/service-types/{id}', { params: { path: { id: s.id! } }, body })
+        ? api.PUT('/api/service-types/{id}', { params: { path: { id: s.id } }, body })
         : api.POST('/api/service-types', { body }))
     },
     onSuccess: () => {
@@ -273,7 +273,7 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
     },
   })
   const remove = useMutation<Schemas['ServiceTypeControllerDeleted'], ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/service-types/{id}', { params: { path: { id: s!.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/service-types/{id}', { params: { path: { id: s!.id } } })),
     onSuccess: (r) => {
       refresh()
       if (r.deleted) onClose()
@@ -339,8 +339,8 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
         <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label={s ? 'Сохранить' : 'Добавить'} savedText="Услуга сохранена"
           error={save.error && (['name', 'group', 'durationMinutes', 'priceSom', 'recallMonths'].map((k) => error(k)).find(Boolean) ?? save.error.message)} />
       </form>
-      {s && <ServiceSupplies serviceId={s.id!} />}
-      {s && <ServiceMemo serviceId={s.id!} />}
+      {s && <ServiceSupplies serviceId={s.id} />}
+      {s && <ServiceMemo serviceId={s.id} />}
       {s && me.admin && <MergeService service={s} onMerged={onClose} />}
       {s && me.admin && (
         <div className="danger-zone">
@@ -368,7 +368,7 @@ function MergeService({ service: s, onMerged }: { service: Service; onMerged: ()
   const choices = (all.data ?? []).filter((x) => x.id !== s.id && x.active !== false)
   const target = choices.find((x) => String(x.id) === into)
   const merge = useMutation<Service, ApiError, number>({
-    mutationFn: (intoId) => unwrap(api.POST('/api/service-types/{id}/merge/{intoId}', { params: { path: { id: s.id!, intoId } } })),
+    mutationFn: (intoId) => unwrap(api.POST('/api/service-types/{id}/merge/{intoId}', { params: { path: { id: s.id, intoId } } })),
     onSuccess: () => {
       refresh()
       // Приёмы, план лечения и отчёты показывают название услуги — теперь основной
@@ -381,7 +381,7 @@ function MergeService({ service: s, onMerged }: { service: Service; onMerged: ()
   const confirm = () => {
     if (!target) return
     void ask(`Все приёмы и записи «${s.name}» перейдут на «${target.name}», «${s.name}» исчезнет из прайса. Отменить нельзя.`,
-      { ok: 'Объединить', danger: true }).then((ok) => ok && merge.mutate(target.id!))
+      { ok: 'Объединить', danger: true }).then((ok) => ok && merge.mutate(target.id))
   }
   if (!open) {
     return (
@@ -463,7 +463,7 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
     })),
     onSuccess: (r) => {
       setPicked({})
-      setDone(`Добавлено услуг: ${r.added ?? 0}`)
+      setDone(`Добавлено услуг: ${r.added}`)
       refresh()
     },
   })

@@ -27,7 +27,7 @@ export function FamilyBox({ patient, me, onOpenPatient }: { patient: Patient; me
   const key = ['family', patient.id]
   const family = useQuery({
     queryKey: key,
-    queryFn: async () => (await unwrap(api.GET('/api/patients/{id}/family', { params: { path: { id: patient.id! } } }))) ?? null,
+    queryFn: async () => (await unwrap(api.GET('/api/patients/{id}/family', { params: { path: { id: patient.id } } }))) ?? null,
   })
   const money = !isAssistant(me) && Boolean(me.reception || seesAllMoney(me) || me.doctorId != null)
   const familyId = family.data?.id
@@ -43,13 +43,13 @@ export function FamilyBox({ patient, me, onOpenPatient }: { patient: Patient; me
     void client.invalidateQueries({ queryKey: ['families'] })
   }
   const leave = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/patients/{id}/family', { params: { path: { id: patient.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/patients/{id}/family', { params: { path: { id: patient.id } } })),
     onSuccess: refresh,
   })
   if (family.isPending) return null
   const f = family.data
   const others = (f?.members ?? []).filter((m) => m.id !== patient.id)
-  const total = (debts.data ?? []).reduce((s, d) => s + (d.debtSom ?? 0), 0)
+  const total = (debts.data ?? []).reduce((s, d) => s + d.debtSom, 0)
 
   return (
     <section className="family-box" aria-label="Семья">
@@ -61,7 +61,7 @@ export function FamilyBox({ patient, me, onOpenPatient }: { patient: Patient; me
               // Добавлен родителем из бота — кем приходится: «Аружан · ребёнок»
               const label = m.relation ? `${m.fullName} · ${RELATION[m.relation]}` : m.fullName
               return onOpenPatient
-                ? <button key={m.id} type="button" className="chip" onClick={() => onOpenPatient(m.id!)}>{label}</button>
+                ? <button key={m.id} type="button" className="chip" onClick={() => onOpenPatient(m.id)}>{label}</button>
                 : <span key={m.id} className="chip">{label}</span>
             })}
           </div>
@@ -101,7 +101,7 @@ function AddRelative({ patient, onDone }: { patient: Patient; onDone: () => void
   })
   const join = useMutation<unknown, ApiError, number>({
     mutationFn: (relativeId) => unwrap(api.POST('/api/patients/{id}/family', {
-      params: { path: { id: patient.id! } }, body: { relativeId },
+      params: { path: { id: patient.id } }, body: { relativeId },
     })),
     onSuccess: onDone,
   })
@@ -113,7 +113,7 @@ function AddRelative({ patient, onDone }: { patient: Patient; onDone: () => void
       {list.length > 0 && (
         <ul className="found">
           {list.map((p) => (
-            <li key={p.id}><button type="button" disabled={join.isPending} onClick={() => join.mutate(p.id!)}>{p.fullName}</button></li>
+            <li key={p.id}><button type="button" disabled={join.isPending} onClick={() => join.mutate(p.id)}>{p.fullName}</button></li>
           ))}
         </ul>
       )}
@@ -143,8 +143,8 @@ function FamilyPay({ familyId, total, onDone }: { familyId: number; total: numbe
     return (
       <div className="family-paid" role="status">
         <p className="tone-ok">✅ Оплачено {somText(Number(amount))}:</p>
-        <ul>{(pay.data.applied ?? []).map((x) => <li key={x.appointmentId}>{x.patient} — {somText(x.amountSom ?? 0)}</li>)}</ul>
-        {(pay.data.leftDebtSom ?? 0) > 0 && <p className="hint">Осталось долга: {somText(pay.data.leftDebtSom ?? 0)}</p>}
+        <ul>{(pay.data.applied ?? []).map((x) => <li key={x.appointmentId}>{x.patient} — {somText(x.amountSom)}</li>)}</ul>
+        {pay.data.leftDebtSom > 0 && <p className="hint">Осталось долга: {somText(pay.data.leftDebtSom)}</p>}
         <button type="button" className="btn" onClick={onDone}>Готово</button>
       </div>
     )

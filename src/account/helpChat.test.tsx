@@ -13,10 +13,10 @@ const INFO: Schemas['SupportBotInfo'] = { ai: true, dailyLimit: 30, usedToday: 2
 /** Вымышленная переписка: вопрос сотрудника и ответ бота (или «передал команде»). */
 function thread(answer: string, extra: Partial<Schemas['SupportTicketsTicket']> = {}): Thread {
   return {
-    ticket: { id: 9, kind: 'QUESTION', status: extra.escalated ? 'OPEN' : 'ANSWERED', viaBot: true, escalated: false, ...extra },
+    ticket: { id: 9, clinicId: 1, kind: 'QUESTION', status: extra.escalated ? 'OPEN' : 'ANSWERED', viaBot: true, escalated: false, ...extra },
     messages: [
-      { id: 1, fromPlatform: false, fromBot: false, author: 'Айгерим', text: 'Как принять доплату?', createdAt: '2026-11-02T05:00:00Z' },
-      { id: 2, fromPlatform: true, fromBot: true, author: 'Помощник Tish', text: answer, createdAt: '2026-11-02T05:00:05Z' },
+      { id: 1, fromPlatform: false, fromBot: false, author: 'Айгерим', text: 'Как принять доплату?', createdAt: '2026-11-02T05:00:00Z', hasImage: false },
+      { id: 2, fromPlatform: true, fromBot: true, author: 'Помощник Tish', text: answer, createdAt: '2026-11-02T05:00:05Z', hasImage: false },
     ],
   }
 }
@@ -102,7 +102,7 @@ test('«Техподдержка»: кнопка «Спросить помощн
     http.get('*/api/support/chat', () => HttpResponse.json(INFO)),
     http.get('*/api/clinic', () => HttpResponse.json({})),
     http.get('*/api/support/tickets', () => HttpResponse.json([
-      { id: 9, kind: 'QUESTION', status: 'ANSWERED', viaBot: true, escalated: false, preview: 'Как принять доплату?' },
+      { id: 9, kind: 'QUESTION', status: 'ANSWERED', viaBot: true, escalated: false, preview: 'Как принять доплату?', clinicId: 0 },
     ] satisfies Schemas['SupportTicketsTicket'][])),
     http.get('*/api/support/tickets/9', () => HttpResponse.json(thread('Карточка приёма → «Принять доплату».'))),
   )

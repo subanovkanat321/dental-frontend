@@ -73,7 +73,7 @@ function LeadCard({ lead: l, today }: { lead: Lead; today: string }) {
   const [nextStepOn, setNextStepOn] = useState(l.nextStepOn ?? '')
   const save = useMutation<Lead, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/funnel/{id}', {
-      params: { path: { id: l.id! } },
+      params: { path: { id: l.id } },
       body: { stage, note: note || undefined, nextStep: nextStep || undefined, nextStepOn: nextStepOn || undefined },
     })),
     onSuccess: () => {

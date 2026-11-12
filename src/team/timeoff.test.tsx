@@ -54,9 +54,9 @@ async function openTab() {
 }
 
 test('подписи: когда, дни недели, даты, периоды, название по умолчанию, группа', () => {
-  expect(timeOffWhen({ weekday: 'FRIDAY', startTime: '12:00:00', endTime: '14:00:00' })).toBe('Каждую пятницу, 12:00–14:00')
-  expect(timeOffWhen({ weekday: 'FRIDAY' })).toBe('Каждую пятницу, весь день')
-  expect(timeOffWhen({ firstDay: '2026-11-12', lastDay: '2026-11-20' })).toBe('12–20 ноября')
+  expect(timeOffWhen({ weekday: 'FRIDAY', startTime: '12:00:00', endTime: '14:00:00', id: 0 })).toBe('Каждую пятницу, 12:00–14:00')
+  expect(timeOffWhen({ weekday: 'FRIDAY', id: 0 })).toBe('Каждую пятницу, весь день')
+  expect(timeOffWhen({ firstDay: '2026-11-12', lastDay: '2026-11-20', id: 0 })).toBe('12–20 ноября')
   expect(datesText('2026-10-28', '2026-11-03')).toBe('28 октября – 3 ноября')
   expect(datesText('2026-03-21', '2026-03-21')).toBe('21 марта')
   expect(weekdaysText(['FRIDAY', 'MONDAY', 'WEDNESDAY'])).toBe('Пн, ср, пт')
@@ -64,10 +64,10 @@ test('подписи: когда, дни недели, даты, периоды,
   expect(toRanges(['2026-03-23', '2026-03-21', '2026-03-22', '2026-05-01'])).toEqual([['2026-03-21', '2026-03-23'], ['2026-05-01', '2026-05-01']])
   expect(titleFor(BREAK_KINDS[0]!, '  ', 'Перерыв')).toBe('Обед')
   expect(titleFor(BREAK_KINDS[3]!, '', 'Перерыв')).toBe('Перерыв')
-  expect(groupOf({ weekday: 'FRIDAY', startTime: '12:00:00', endTime: '13:00:00' })).toBe('break')
-  expect(groupOf({ weekday: 'SUNDAY' })).toBe('dayOff')
-  expect(groupOf({ firstDay: '2026-03-21', lastDay: '2026-03-21', emoji: '🎉' })).toBe('dayOff')
-  expect(groupOf({ firstDay: '2026-11-12', lastDay: '2026-11-20', emoji: '🏖️' })).toBe('leave')
+  expect(groupOf({ weekday: 'FRIDAY', startTime: '12:00:00', endTime: '13:00:00', id: 0 })).toBe('break')
+  expect(groupOf({ weekday: 'SUNDAY', id: 0 })).toBe('dayOff')
+  expect(groupOf({ firstDay: '2026-03-21', lastDay: '2026-03-21', emoji: '🎉', id: 0 })).toBe('dayOff')
+  expect(groupOf({ firstDay: '2026-11-12', lastDay: '2026-11-20', emoji: '🏖️', id: 0 })).toBe('leave')
   // Обед пн и вт — одна строка; у другого врача — своя
   const rows = rowsOf([
     { id: 1, weekday: 'TUESDAY', startTime: '13:00:00', endTime: '14:00:00', title: 'Обед', emoji: '🍽️', doctorId: 1 },

@@ -50,15 +50,15 @@ function ChairRow({ chair, nameOf }: { chair: Chair; nameOf: (id: number) => str
     void client.invalidateQueries({ queryKey: ['slots'] })
   }
   const rename = useMutation<Schemas['ChairsChair'], ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/chairs/{id}', { params: { path: { id: chair.id! } }, body: { name } })),
+    mutationFn: () => unwrap(api.PUT('/api/chairs/{id}', { params: { path: { id: chair.id } }, body: { name } })),
     onSuccess: refresh,
   })
   const mode = useMutation<Schemas['ChairsChair'], ApiError, Mode>({
-    mutationFn: (value) => unwrap(api.PUT('/api/chairs/{id}/mode', { params: { path: { id: chair.id! } }, body: { mode: value } })),
+    mutationFn: (value) => unwrap(api.PUT('/api/chairs/{id}/mode', { params: { path: { id: chair.id } }, body: { mode: value } })),
     onSuccess: refresh,
   })
   const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/chairs/{id}', { params: { path: { id: chair.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/chairs/{id}', { params: { path: { id: chair.id } } })),
     onSuccess: refresh,
   })
   const submit = (e: FormEvent) => {

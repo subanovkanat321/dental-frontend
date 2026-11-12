@@ -130,10 +130,10 @@ export function Dictation({ appointment: a, note, onActive }: {
   }
 
   const parse = useMutation<Proposal, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/dictation/parse', { params: { path: { id: a.id! } }, body: { text: text.trim() } })),
+    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/dictation/parse', { params: { path: { id: a.id } }, body: { text: text.trim() } })),
     onSuccess: (p) => {
       setReview({
-        teeth: (p.teeth ?? []).map((t) => ({ on: true, tooth: String(t.tooth ?? ''), state: t.state ?? 'HEALTHY', surfaces: t.surfaces ?? [], note: t.note ?? '', was: t.was })),
+        teeth: (p.teeth ?? []).map((t) => ({ on: true, tooth: String(t.tooth), state: t.state ?? 'HEALTHY', surfaces: t.surfaces ?? [], note: t.note ?? '', was: t.was })),
         plan: (p.plan ?? []).map((s) => ({ on: true, tooth: s.tooth != null ? String(s.tooth) : '', title: s.title ?? '' })),
         note: joinNote(note, p.note ?? ''),
         next: nextText(p.next),
@@ -158,7 +158,7 @@ export function Dictation({ appointment: a, note, onActive }: {
     mutationFn: () => {
       const r = review!
       return unwrap(api.POST('/api/appointments/{id}/dictation/apply', {
-        params: { path: { id: a.id! } },
+        params: { path: { id: a.id } },
         body: {
           teeth: r.teeth.filter((t) => t.on).map((t) => ({
             tooth: Number(t.tooth), state: t.state, surfaces: hasSurfaces(t.state) ? t.surfaces : [], note: t.note.trim() || undefined,
@@ -170,7 +170,7 @@ export function Dictation({ appointment: a, note, onActive }: {
     },
     onSuccess: (done) => {
       haptic('success')
-      const patientId = a.patient?.id
+      const patientId = a.patient.id
       client.setQueryData(['note', a.id], { note: done.note })
       if (patientId != null) {
         client.setQueryData(['teeth', patientId], done.teeth)

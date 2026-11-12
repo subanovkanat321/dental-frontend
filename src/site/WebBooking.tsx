@@ -199,7 +199,7 @@ function WebContacts({ chosen, active, onTaken, t, lang, code, info, onBooked }:
           <div className="source-chips" role="group" aria-label={t('sourceQuestion')}>
             {(info.sources ?? []).map((c) => (
               <button key={c.id} type="button" className="source-chip" aria-pressed={sourceId === c.id}
-                onClick={() => setSourceId(sourceId === c.id ? null : c.id!)}>
+                onClick={() => setSourceId(sourceId === c.id ? null : c.id)}>
                 <span aria-hidden="true">{c.emoji}</span> {(lang === 'ky' && c.titleKy) || c.title}
               </button>
             ))}

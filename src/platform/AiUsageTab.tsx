@@ -45,8 +45,8 @@ export function AiUsageTab() {
         {report.error && <p className="error" role="alert">{report.error.message}</p>}
         {report.isPending ? <Loading /> : r && (
           <>
-            <p className="strong">Всего: <span className="num">{usdText(r.usd ?? 0)}</span> · <span className="num">{somText(r.som ?? 0)}</span>
-              <span className="hint"> · {r.actions ?? 0} запросов к ИИ</span></p>
+            <p className="strong">Всего: <span className="num">{usdText(r.usd ?? 0)}</span> · <span className="num">{somText(r.som)}</span>
+              <span className="hint"> · {r.actions} запросов к ИИ</span></p>
             <p className="hint small">В сомах — по курсу {r.settings?.somPerUsd} сом за $1 и с НДС {r.settings?.vatPercent}%.
               {(r.platformUsd ?? 0) > 0 && ` Помощник техподдержки платформы: ${usdText(r.platformUsd ?? 0)}.`}</p>
           </>
@@ -57,14 +57,14 @@ export function AiUsageTab() {
         <section className="card-block">
           <h2>По видам действий</h2>
           <HBars label="Расход ИИ по видам действий" format={usdText}
-            rows={(r.kinds ?? []).map((k) => ({ name: k.label ?? '', value: k.usd ?? 0, note: `${k.actions ?? 0} запросов` }))} />
+            rows={(r.kinds ?? []).map((k) => ({ name: k.label ?? '', value: k.usd ?? 0, note: `${k.actions} запросов` }))} />
         </section>
       )}
       {r && (r.days?.length ?? 0) > 0 && (
         <section className="card-block">
           <h2>По дням</h2>
           <HBars label="Расход ИИ по дням" format={usdText}
-            rows={(r.days ?? []).map((d) => ({ name: (d.date ?? '').slice(8, 10) + '.' + (d.date ?? '').slice(5, 7), value: d.usd ?? 0, note: `${d.actions ?? 0} запросов` }))} />
+            rows={(r.days ?? []).map((d) => ({ name: (d.date ?? '').slice(8, 10) + '.' + (d.date ?? '').slice(5, 7), value: d.usd ?? 0, note: `${d.actions} запросов` }))} />
         </section>
       )}
       {r?.settings && <SettingsForm key={JSON.stringify(r.settings)} settings={r.settings} />}
@@ -86,15 +86,15 @@ function ClinicsTable({ rows }: { rows: ClinicRow[] }) {
           <tbody>
             {rows.map((c) => (
               <tr key={c.clinicId}>
-                <td>{c.name}{(c.errors ?? 0) > 0 && <span className="hint small"> · ошибок {c.errors}</span>}</td>
-                <td className="r num">{c.used ?? 0} / {c.limit ?? 0}{c.customLimit != null && <span className="hint"> (свой)</span>}</td>
-                <td className="r num">{tokensText(c.inputTokens ?? 0)} / {tokensText(c.outputTokens ?? 0)}</td>
+                <td>{c.name}{c.errors > 0 && <span className="hint small"> · ошибок {c.errors}</span>}</td>
+                <td className="r num">{c.used} / {c.limit}{c.customLimit != null && <span className="hint"> (свой)</span>}</td>
+                <td className="r num">{tokensText(c.inputTokens)} / {tokensText(c.outputTokens)}</td>
                 <td className="r num">{usdText(c.usd ?? 0)}</td>
-                <td className="r num">{somText(c.som ?? 0)}</td>
-                <td className="r num">{c.free ? <span className="hint">пилот, 0 сом</span> : somText(c.tariffSom ?? 0)}</td>
+                <td className="r num">{somText(c.som)}</td>
+                <td className="r num">{c.free ? <span className="hint">пилот, 0 сом</span> : somText(c.tariffSom)}</td>
                 <td>{editing === c.clinicId
                   ? <LimitForm clinic={c} onDone={() => setEditing(null)} />
-                  : <button type="button" className="btn ghost small" onClick={() => setEditing(c.clinicId ?? null)}>Изменить лимит</button>}</td>
+                  : <button type="button" className="btn ghost small" onClick={() => setEditing(c.clinicId)}>Изменить лимит</button>}</td>
               </tr>
             ))}
           </tbody>
@@ -110,7 +110,7 @@ function LimitForm({ clinic, onDone }: { clinic: ClinicRow; onDone: () => void }
   const [value, setValue] = useState(String(clinic.customLimit ?? clinic.limit ?? ''))
   const save = useMutation<unknown, ApiError, number | null>({
     mutationFn: (monthly) => unwrap(api.PUT('/api/platform/ai-usage/clinics/{id}/limit', {
-      params: { path: { id: clinic.clinicId! } }, body: { monthly: monthly ?? undefined },
+      params: { path: { id: clinic.clinicId } }, body: { monthly: monthly ?? undefined },
     })),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['platform-ai-usage'] })
@@ -139,7 +139,7 @@ function LimitForm({ clinic, onDone }: { clinic: ClinicRow; onDone: () => void }
 function SettingsForm({ settings }: { settings: Settings }) {
   const client = useQueryClient()
   const [f, setF] = useState({
-    perDoctor: String(settings.perDoctor ?? 300), somPerUsd: String(settings.somPerUsd ?? 87), vatPercent: String(settings.vatPercent ?? 12),
+    perDoctor: String(settings.perDoctor), somPerUsd: String(settings.somPerUsd ?? 87), vatPercent: String(settings.vatPercent ?? 12),
   })
   const save = useMutation<Settings, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/ai-usage/settings', {

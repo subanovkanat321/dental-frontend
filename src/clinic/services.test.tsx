@@ -19,8 +19,8 @@ afterEach(() => {
 
 test('услуги по разделам: в порядке разделов, без раздела — «Другое», пустых групп нет', () => {
   const groups = groupServices<Schemas['ServiceTypeView']>([
-    { id: 1, name: 'А', group: 'SURGERY' }, { id: 2, name: 'Б' }, { id: 3, name: 'В', group: 'EXAM' },
-    { id: 4, name: 'Г', group: 'THERAPY' }, { id: 5, name: 'Д', group: 'SURGERY' },
+    { id: 1, name: 'А', group: 'SURGERY', durationMinutes: 0, active: true }, { id: 2, name: 'Б', durationMinutes: 0, active: true }, { id: 3, name: 'В', group: 'EXAM', durationMinutes: 0, active: true },
+    { id: 4, name: 'Г', group: 'THERAPY', durationMinutes: 0, active: true }, { id: 5, name: 'Д', group: 'SURGERY', durationMinutes: 0, active: true },
   ])
   expect(groups.map((g) => g.group)).toEqual(['EXAM', 'THERAPY', 'SURGERY', 'OTHER'])
   expect(groups[2]!.items.map((s) => s.id)).toEqual([1, 5])
@@ -54,7 +54,7 @@ test('услуги: таблица по группам, правка и нова
     http.post('*/api/service-types', async ({ request }) => {
       const body = await request.json() as Schemas['ServiceTypeControllerRequest']
       bodies.push(body)
-      list = [...list, { id: 3, ...body, group: body.group ?? 'OTHER' }]
+      list = [...list, { id: 3, active: true, ...body, group: body.group ?? 'OTHER' }]
       return HttpResponse.json(list[2], { status: 201 })
     }),
   )
@@ -94,7 +94,7 @@ const PRICE_LIST: Schemas['ServiceTypeView'][] = [
   ['Лечение кариеса', 'THERAPY'], ['Лечение пульпита, 1 канал', 'THERAPY'], ['Пломба светового отверждения', 'THERAPY'],
   ['Удаление зуба мудрости', 'SURGERY'], ['Удаление зуба простое', 'SURGERY'], ['Лечение молочного зуба', 'KIDS'],
   ['Осмотр ребёнка', 'KIDS'], ['Серебрение молочных зубов', 'KIDS'], ['Анестезия', 'OTHER'],
-].map(([name, group], i) => ({ id: i + 1, name, group: group as Schemas['ServiceTypeView']['group'], durationMinutes: 30, active: true }))
+].map(([name, group], i) => ({ id: i + 1, name: name ?? '', group: group as Schemas['ServiceTypeView']['group'], durationMinutes: 30, active: true }))
 
 test('«Услуги и цены»: поиск без регистра и «ё/е», чипы разделов с количеством, список по разделам', async () => {
   server.use(http.get('*/api/service-types', () => HttpResponse.json(PRICE_LIST)))
@@ -200,7 +200,7 @@ test('услуга: материалы по умолчанию — добави�
     http.put('*/api/service-types/:id/supplies', async ({ request }) => {
       saved = await request.json() as Schemas['ServiceSupplyControllerLines']
       return HttpResponse.json((saved.items ?? []).map((i) => ({
-        supplyId: i.supplyId, name: i.supplyId === 3 ? 'Анестетик' : 'Композит', unit: 'шт', quantity: i.quantity, inStock: 5,
+        supplyId: i.supplyId ?? 0, name: i.supplyId === 3 ? 'Анестетик' : 'Композит', unit: 'шт', quantity: i.quantity ?? 1, inStock: 5,
       })) satisfies Schemas['ServiceSuppliesItem'][])
     }),
   )
@@ -432,7 +432,7 @@ test('«Объединить с…»: руководитель выбирает 
     http.post('*/api/service-types/:id/merge/:intoId', ({ params }) => {
       merged.push(`${String(params.id)}→${String(params.intoId)}`)
       list = list.filter((s) => String(s.id) !== params.id)
-      return HttpResponse.json(list.find((s) => String(s.id) === params.intoId)!)
+      return HttpResponse.json(list.find((s) => String(s.id) === params.intoId))
     }),
   )
   const user = userEvent.setup()
@@ -489,7 +489,7 @@ test('«Ещё в справочнике клиники»: скрытые свё
       const body = await request.json() as Schemas['ServiceTypeControllerRequest']
       bodies.push(body)
       list = list.map((s) => (String(s.id) === params.id ? { ...s, ...body } : s))
-      return HttpResponse.json(list.find((s) => String(s.id) === params.id)!)
+      return HttpResponse.json(list.find((s) => String(s.id) === params.id))
     }),
   )
   const user = userEvent.setup()
@@ -530,7 +530,7 @@ test('справочник: услуга уже есть у клиники, но
     http.put('*/api/service-types/:id', async ({ request }) => {
       enabled = await request.json()
       list = [{ ...list[0]!, active: true }]
-      return HttpResponse.json(list[0]!)
+      return HttpResponse.json(list[0])
     }),
   )
   const user = userEvent.setup()

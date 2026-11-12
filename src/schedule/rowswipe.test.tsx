@@ -44,13 +44,13 @@ function backend(start: Appointment) {
     http.post('*/api/appointments/:id/status', async ({ request }) => {
       const body = (await request.json()) as Schemas['AppointmentRequestsChangeStatus']
       calls.push(`status:${body.status}:v${body.version}`)
-      a = { ...a, status: body.status, version: a.version! + 1 }
+      a = { ...a, status: body.status, version: a.version + 1 }
       return HttpResponse.json(a)
     }),
     http.post('*/api/appointments/:id/undo', async ({ request }) => {
       const body = (await request.json()) as Schemas['AppointmentRequestsUndo']
       calls.push(`undo:${body.previousStatus}:v${body.version}`)
-      a = { ...a, status: body.previousStatus, version: a.version! + 1 }
+      a = { ...a, status: body.previousStatus, version: a.version + 1 }
       return HttpResponse.json(a)
     }),
   )

@@ -18,10 +18,10 @@ afterEach(() => {
 
 test('зарплата: условия 30% + оклад, к выплате, выплатить — расход', async () => {
   // Вымышленные врачи; сервер считает сам, тест только отвечает тем, что сервер бы вернул
-  let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0 }
-  const aigerim: Row = { doctorId: 1, doctor: 'Айгерим Садыкова', percent: 40, baseSom: 0, revenueSom: 20000, dueSom: 8000, paidSom: 8000 }
-  const asel: Row = { assistantId: 7201, doctor: 'Асель', position: 'ассистент', percent: 10, baseSom: 5000, revenueSom: 70000, dueSom: 12000, paidSom: 0 }
-  const zhamila: Row = { assistantId: 7203, doctor: 'Жамиля', position: 'регистратура', percent: 0, baseSom: 20000, revenueSom: 90000, dueSom: 20000, paidSom: 20000 }
+  let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0, former: false, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
+  const aigerim: Row = { doctorId: 1, doctor: 'Айгерим Садыкова', percent: 40, baseSom: 0, revenueSom: 20000, dueSom: 8000, paidSom: 8000, former: false, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
+  const asel: Row = { assistantId: 7201, doctor: 'Асель', position: 'ассистент', percent: 10, baseSom: 5000, revenueSom: 70000, dueSom: 12000, paidSom: 0, former: false, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
+  const zhamila: Row = { assistantId: 7203, doctor: 'Жамиля', position: 'регистратура', percent: 0, baseSom: 20000, revenueSom: 90000, dueSom: 20000, paidSom: 20000, former: false, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
   const sent: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -77,7 +77,7 @@ test('зарплата: условия 30% + оклад, к выплате, вы
 })
 
 test('бывший сотрудник: выплата месяца осталась в истории, без «Условий» и «Выплатить»', async () => {
-  const former: Row = { assistantId: 7202, doctor: 'Бермет (больше не работает)', percent: 0, baseSom: 0, revenueSom: 0, dueSom: 0, paidSom: 8000, former: true }
+  const former: Row = { assistantId: 7202, doctor: 'Бермет (больше не работает)', percent: 0, baseSom: 0, revenueSom: 0, dueSom: 0, paidSom: 8000, former: true, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments/debts', () => HttpResponse.json([])),
@@ -96,7 +96,7 @@ test('бывший сотрудник: выплата месяца остала�
 })
 
 test('калькулятор зарплаты: свои цифры, минус материалы, выручка из строки — ничего не отправляет', async () => {
-  const aigerim: Row = { doctorId: 1, doctor: 'Айгерим Садыкова', percent: 40, baseSom: 5000, revenueSom: 20000, dueSom: 13000, paidSom: 0 }
+  const aigerim: Row = { doctorId: 1, doctor: 'Айгерим Садыкова', percent: 40, baseSom: 5000, revenueSom: 20000, dueSom: 13000, paidSom: 0, former: false, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
   const sent: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -132,7 +132,7 @@ test('калькулятор зарплаты: свои цифры, минус �
 })
 
 test('условия у каждого свои: «Вся выручка — врачу (100%)» и «Только оклад» одной кнопкой', async () => {
-  let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0 }
+  let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0, former: false, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
   const sent: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -158,7 +158,7 @@ test('условия у каждого свои: «Вся выручка — в�
 })
 
 test('аренда кресла: пресет «частный врач», сумма в месяц — «к выплате» за вычетом аренды', async () => {
-  let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0 }
+  let dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 50000, dueSom: 0, paidSom: 0, former: false, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
   const sent: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -191,7 +191,7 @@ test('аренда кресла: пресет «частный врач», су�
 test('аренда процентом в форме; аренда больше заработка — «врач должен клинике», получено от врача', async () => {
   let dastan: Row = {
     doctorId: 2, doctor: 'Дастан Т.', percent: 50, baseSom: 0, revenueSom: 50000, earnedSom: 25000,
-    rentFixedSom: 40000, rentPercent: 0, rentSom: 40000, dueSom: 0, owesSom: 15000, rentReceivedSom: 0, paidSom: 0,
+    rentFixedSom: 40000, rentPercent: 0, rentSom: 40000, dueSom: 0, owesSom: 15000, rentReceivedSom: 0, paidSom: 0, former: false, byTimesheet: false, baseAccruedSom: 0
   }
   const sent: unknown[] = []
   server.use(

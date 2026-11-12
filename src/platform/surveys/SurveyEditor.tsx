@@ -22,7 +22,7 @@ function draftOf(q: Question): Draft {
 }
 
 function headOf(s: Details) {
-  return { title: s.title ?? '', intro: s.intro ?? '', roles: s.roles ?? [], startsOn: s.startsOn ?? '', endsOn: s.endsOn ?? '', announce: s.announce ?? true }
+  return { title: s.title ?? '', intro: s.intro ?? '', roles: s.roles ?? [], startsOn: s.startsOn ?? '', endsOn: s.endsOn ?? '', announce: s.announce }
 }
 
 /**
@@ -32,7 +32,7 @@ function headOf(s: Details) {
  */
 export function SurveyEditor({ survey }: { survey: Details }) {
   const client = useQueryClient()
-  const locked = (survey.responses ?? 0) > 0
+  const locked = survey.responses > 0
   const [head, setHead] = useState(() => headOf(survey))
   const [questions, setQuestions] = useState<Draft[]>(() => (survey.questions ?? []).map(draftOf))
   const body = definitionOf(head, questions)
@@ -45,7 +45,7 @@ export function SurveyEditor({ survey }: { survey: Details }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- commit — новая функция на каждый рендер, нужен только счётчик
   }, [saves])
   const save = useMutation<Details, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/platform/surveys/{id}', { params: { path: { id: survey.id! } }, body })),
+    mutationFn: () => unwrap(api.PUT('/api/platform/surveys/{id}', { params: { path: { id: survey.id } }, body })),
     onSuccess: (saved) => {
       // Новые вопросы получили id — сохранённые варианты теперь защищены от удаления
       setHead(headOf(saved))

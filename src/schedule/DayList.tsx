@@ -109,21 +109,21 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
   const nameOf = new Map(doctors.map((d) => [d.id, shortName(d.name)]))
   // Строки одного врача по времени: приёмы, свободные окна, перерывы
   const itemsOf = (d: Doctor, i: number): Item[] => [
-    ...list.filter((a) => a.doctorId === d.id).map((a) => ({ kind: 'appointment' as const, at: a.startAt!, a, chair: colleagueTimeOf(a, slots[i]?.data?.chairTime) })),
-    ...(slots[i]?.data?.free ?? []).map((w) => ({ kind: 'free' as const, at: w.start!, end: w.end!, doctorId: d.id })),
+    ...list.filter((a) => a.doctorId === d.id).map((a) => ({ kind: 'appointment' as const, at: a.startAt, a, chair: colleagueTimeOf(a, slots[i]?.data?.chairTime) })),
+    ...(slots[i]?.data?.free ?? []).map((w) => ({ kind: 'free' as const, at: w.start, end: w.end, doctorId: d.id })),
     ...(slots[i]?.data?.breaks ?? []).map((b) => ({ kind: 'pause' as const, at: b.start!, end: b.end!, title: b.title ?? '', emoji: b.emoji ?? '', doctorId: d.id })),
     // Часы коллеги по креслу (V187): записать можно, сервер спросит «Коллега предупреждён?». В часах врача — всегда,
     // вне их и в выходной — только если там его приём (listedChairTime): без шума от пустого вечера коллеги
     ...listedChairTime(slots[i]?.data, date, list.filter((a) => a.doctorId === d.id))
-      .map((t) => ({ kind: 'colleague' as const, at: t.start!, end: t.end!, name: t.doctorName ?? '', doctorId: d.id })),
+      .map((t) => ({ kind: 'colleague' as const, at: t.start, end: t.end, name: t.doctorName ?? '', doctorId: d.id })),
   ].sort((x, y) => x.at.localeCompare(y.at))
   const groups = doctors.map((d, i) => ({ doctor: d, items: itemsOf(d, i), booked: list.filter((a) => a.doctorId === d.id).length }))
   const items = groups.flatMap((g) => g.items)
   const scheduled = list.filter((a) => a.status === 'SCHEDULED')
   const ready = scheduled.filter((a) => a.reminderOpenedAt || (a.reply && a.reply !== 'NONE')).length
   const now = new Date().toISOString()
-  const next = date === today ? [...list].sort((x, y) => x.startAt!.localeCompare(y.startAt!)).find((a) => a.status === 'SCHEDULED' && a.startAt! > now) : undefined
-  const off = doctors.filter((_, i) => slots[i]?.data && !slots[i]!.data!.workingDay)
+  const next = date === today ? [...list].sort((x, y) => x.startAt.localeCompare(y.startAt)).find((a) => a.status === 'SCHEDULED' && a.startAt > now) : undefined
+  const off = doctors.filter((_, i) => slots[i]?.data && !slots[i].data.workingDay)
   const offText = single ? (off.length ? (slots[0]!.data!.dayOff ? `${slots[0]!.data!.dayOff.emoji ?? ''} ${slots[0]!.data!.dayOff.title ?? ''}` : 'Выходной') : null)
     : off.length ? `Не работают: ${off.map((d) => nameOf.get(d.id)).join(', ')}` : null
   const note = [
@@ -178,7 +178,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                   <ul className="rows">
                     {g.items.map((item) => item.kind === 'appointment'
                       ? <Row key={`a${item.a.id}`} a={item.a} color={g.doctor.color} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
-                          canEdit={canEditDoctor(item.a.doctorId!)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} swipe={swipe} />
+                          canEdit={canEditDoctor(item.a.doctorId)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} swipe={swipe} />
                       : item.kind === 'colleague' ? (
                         <li key={`c${item.at}`} className="row pause colleague" role="note" aria-label={`${timeOf(item.at)}–${timeOf(item.end)}: время ${item.name}`}>
                           <span className="time num">{timeOf(item.at)}</span>
@@ -279,12 +279,12 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
   const li = useRef<HTMLLIElement>(null)
   const text = useReminderText()
   const opened = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
   })
   const s = statusOf(a)
   const canRemind = canEdit && a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
-  const viaBot = Boolean(a.patient?.telegram)
+  const viaBot = Boolean(a.patient.telegram)
   const notSent = useReminderNotSent(a)
   // После «не ушло» — снова кнопка, даже если успех нажатия ещё в памяти
   const sent = !notSent.undo.isSuccess && (Boolean(a.reminderOpenedAt) || action.isSuccess || opened.isSuccess)
@@ -302,9 +302,9 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
   // Свайп вправо — то же, что быстрая кнопка; есть, пока она есть (не отправлено, есть номер или бот)
   const canSwipeRemind = canRemind && !sent && !busy && (viaBot || Boolean(contactPhone(a.patient)))
   // Свайп влево — «Приём состоялся»: свой/доступный приём, запланирован и уже начался
-  const canSwipeDone = canEdit && a.status === 'SCHEDULED' && new Date(a.startAt!) <= new Date() && !status.isPending
-  const done = () => status.mutate({ kind: 'status', body: { version: a.version ?? 0, status: 'DONE' } }, { onSuccess: (updated) => setUndo(updated) })
-  const back = () => undo && status.mutate({ kind: 'undo', body: { version: undo.version ?? 0, previousStatus: 'SCHEDULED' } },
+  const canSwipeDone = canEdit && a.status === 'SCHEDULED' && new Date(a.startAt) <= new Date() && !status.isPending
+  const done = () => status.mutate({ kind: 'status', body: { version: a.version, status: 'DONE' } }, { onSuccess: (updated) => setUndo(updated) })
+  const back = () => undo && status.mutate({ kind: 'undo', body: { version: undo.version, previousStatus: 'SCHEDULED' } },
     { onSuccess: () => setUndo(null) })
   useRowSwipe(li, swipe, { right: canSwipeRemind ? () => { hideSwipeHint(); remind() } : undefined, left: canSwipeDone ? () => { hideSwipeHint(); done() } : undefined })
   // «Вернуть» — недолго, как тост
@@ -322,10 +322,10 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
       {swipe && canSwipeDone && <span className="swipe-under swipe-left" aria-hidden="true">Состоялся ✅</span>}
       <div className="row-slide">
         <button type="button" className="row-button" onClick={() => onOpen(a)}
-          aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}${chair ? `. ${colleagueMarkText(chair)}` : ''}`}>
-          <span className="time num">{timeOf(a.startAt!)}</span>
-          <span className="name">{a.patient?.fullName} <ApptBadges appointment={a} money={money} /></span>
-          <span className="end num hint">{timeOf(a.endAt!)}</span>
+          aria-label={`${timeOf(a.startAt)}–${timeOf(a.endAt)}, ${a.patient.fullName}: ${s.label}${chair ? `. ${colleagueMarkText(chair)}` : ''}`}>
+          <span className="time num">{timeOf(a.startAt)}</span>
+          <span className="name">{a.patient.fullName} <ApptBadges appointment={a} money={money} /></span>
+          <span className="end num hint">{timeOf(a.endAt)}</span>
           <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {a.serviceName}</span> : null}</span>
           {chair && (
             <span className="row-note chair-mark" title={colleagueMarkText(chair)}>
@@ -333,7 +333,7 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
             </span>
           )}
           {a.comment && <span className="row-note">{a.comment}</span>}
-          {a.depositStatus && money && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
+          {a.depositStatus && money && ['REQUESTED', 'SCHEDULED'].includes(a.status) && (
             <span className={`row-note tone-${a.depositStatus === 'RECEIVED' ? 'ok' : 'wait'}`}>
               Предоплата {somText(a.depositSom ?? 0)} · {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? 'пациент оплатил — проверьте' : 'ждём'}
             </span>
@@ -341,10 +341,10 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
         </button>
         {canRemind && (sent ? (
           <button type="button" className="remind-sent tone-ok" disabled={notSent.undo.isPending} onClick={notSent.run}
-            aria-label={`Напоминание отправлено: ${a.patient?.fullName}. Не ушло? Снять отметку`}>✓ отправлено</button>
+            aria-label={`Напоминание отправлено: ${a.patient.fullName}. Не ушло? Снять отметку`}>✓ отправлено</button>
         ) : (
           <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={busy}
-            aria-label={`${viaBot ? 'Напомнить в Telegram' : 'Напомнить в WhatsApp'}: ${a.patient?.fullName}, ${timeOf(a.startAt!)}`}
+            aria-label={`${viaBot ? 'Напомнить в Telegram' : 'Напомнить в WhatsApp'}: ${a.patient.fullName}, ${timeOf(a.startAt)}`}
             onClick={remind}>{viaBot ? 'TG' : 'WA'}</button>
         ))}
       </div>

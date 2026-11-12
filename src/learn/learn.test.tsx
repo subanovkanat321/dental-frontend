@@ -67,7 +67,7 @@ test('у каждой темы 4–5 слайдов: что это → … → �
     for (const lang of ['ru', 'ky'] as const) {
       const { unmount } = render(<Presentation topic={t} lang={lang} />)
       for (let i = 0; i < t.slides.length; i++) {
-        const text = document.querySelector('.lsn-stage')!.textContent!
+        const text = document.querySelector('.lsn-stage')!.textContent
         expect(text).not.toMatch(/\d\s?сом|сомдон|Цена ожидания|Күтүүнүн баасы|Тишка/i)
         fireEvent.keyDown(window, { key: 'ArrowRight' })
       }
@@ -421,8 +421,8 @@ test('страница /learn/<тема> без входа: язык из ссы
   server.use(http.get('*/web/clinic', ({ request }) => {
     asked = new URL(request.url).search
     return HttpResponse.json({
-      name: 'Улыбка', doctors: [], services: PRICES.filter((s) => s.active).map((s) => ({ name: s.name!, durationMinutes: 30, priceSom: s.priceSom })),
-      bookingUrl: '/c/abc123#book',
+      name: 'Улыбка', doctors: [], services: PRICES.filter((s) => s.active).map((s) => ({ name: s.name, durationMinutes: 30, priceSom: s.priceSom })),
+      bookingUrl: '/c/abc123#book', settingUp: false
     } satisfies ClinicPage)
   }))
   render(<LearnSite />)

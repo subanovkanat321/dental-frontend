@@ -135,7 +135,7 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false,
             {sorted.map((r) => (
               <tr key={r.id} className={r.id === active ? 'active' : undefined}>
                 <td className="nowrap num">{r.startAt ? shortDate(r.startAt, true) : ''}</td>
-                <td>{onOpen ? <button type="button" className="row-link" onClick={() => onOpen(r.id!)}>{r.patient}</button> : r.patient}</td>
+                <td>{onOpen ? <button type="button" className="row-link" onClick={() => onOpen(r.id)}>{r.patient}</button> : r.patient}</td>
                 <td>{r.doctor}</td>
                 <td className="hint">{r.service ?? '—'}</td>
                 {withStatus && <td><span className={`chip small ${STATUS_TEXT[r.status ?? '']?.[1] ?? 's-quiet'}`}>{STATUS_TEXT[r.status ?? '']?.[0] ?? r.status}</span></td>}

@@ -14,7 +14,7 @@ export type Span = [number, number]
  */
 export function workSpans(sl: Slots | undefined, date: string): Span[] {
   if (!sl?.workingDay) return []
-  if (sl.work?.length) return sl.work.map((w) => [dayMinutes(w.start!, date), dayMinutes(w.end!, date)] as Span).filter(([s, e]) => e > s)
+  if (sl.work?.length) return sl.work.map((w) => [dayMinutes(w.start, date), dayMinutes(w.end, date)] as Span).filter(([s, e]) => e > s)
   if (!sl.workStart || !sl.workEnd) return []
   const start = minutesOfTime(sl.workStart)
   const end = minutesOfTime(sl.workEnd)
@@ -45,20 +45,20 @@ export function slotsHoursText(sl: Slots | undefined): string {
 
 /** Приём задевает день {@code date}: начался в нём или идёт в него из прошлого дня через полночь. */
 export function touchesDay(a: Appointment, date: string): boolean {
-  return Boolean(a.startAt && a.endAt) && dayMinutes(a.startAt!, date) < 24 * 60 && dayMinutes(a.endAt!, date) > 0
+  return Boolean(a.startAt && a.endAt) && dayMinutes(a.startAt, date) < 24 * 60 && dayMinutes(a.endAt, date) > 0
 }
 
 /** Приём начался накануне — в сетке видна только его часть после полуночи. */
 export function fromYesterday(a: Appointment, date: string): boolean {
-  return Boolean(a.startAt) && dateOf(a.startAt!) < date
+  return Boolean(a.startAt) && dateOf(a.startAt) < date
 }
 
 /** Место приёма в сетке дня: минуты начала и конца, обрезанные полуночью. */
 export function apptSpan(a: Appointment, date: string): Span {
-  return [dayMinutes(a.startAt!, date), dayMinutes(a.endAt!, date)]
+  return [dayMinutes(a.startAt, date), dayMinutes(a.endAt, date)]
 }
 
 /** Приём идёт дальше полуночи — в сетке этого дня виден только до 24:00. */
 export function untilTomorrow(a: Appointment, date: string): boolean {
-  return Boolean(a.endAt) && new Date(a.endAt!) > new Date(`${addDays(date, 1)}T00:00:00+06:00`)
+  return Boolean(a.endAt) && new Date(a.endAt) > new Date(`${addDays(date, 1)}T00:00:00+06:00`)
 }

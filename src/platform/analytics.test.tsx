@@ -35,7 +35,7 @@ const report = (days: number): Schemas['PlatformAnalyticsAnalytics'] => ({
   geography: [{ city: 'Бишкек', clinics: 2, working: 2, paying: 1, patients: 300, applications: 1 }, { city: 'Талас', clinics: 0, working: 0, paying: 0, patients: 0, applications: 2 }],
   money: {
     months: months(10).map((m) => ({ month: m, paidSom: m === '2026-10' ? 7470 : 0, payments: m === '2026-10' ? 1 : 0, mrrSom: 2490 })),
-    due: [{ clinicId: 2, name: 'Жемчуг', city: 'Ош', date: '2026-11-20', kind: 'PILOT_ENDS', daysLeft: 17, tariff: 'Клиника', monthSom: 2490, appointments: 30 }],
+    due: [{ clinicId: 2, name: 'Жемчуг', city: 'Ош', date: '2026-11-20', kind: 'PILOT_ENDS', daysLeft: 17, tariff: 'Клиника', monthSom: 2490, appointments: 30, payPending: false }],
   },
   risks: [{ clinicId: 3, name: 'Белый зуб', city: 'Бишкек', plan: 'OVERDUE', last14: 2, prev14: 12, reasons: [{ code: 'FALLING', text: 'Приёмов меньше на 83%: 2 против 12' }] }],
   cohorts: [{ month: '2026-08', clinics: 2, after: [{ eligible: 2, active: 1 }, { eligible: 2, active: 1 }, { eligible: 0, active: 0 }] }],

@@ -79,14 +79,14 @@ function Sections({ h }: { h: Health }) {
         <table className="table" aria-label="Приложение и база">
           <tbody>
             {app && <>
-              <Row name="Работает">{uptimeText(app.uptimeSeconds ?? 0)} · с {when(app.startedAt)}</Row>
+              <Row name="Работает">{uptimeText(app.uptimeSeconds)} · с {when(app.startedAt)}</Row>
               <Row name="Версия">{app.version ?? '—'} · коммит {app.commit ?? 'не указан'}{app.builtAt ? ` · собрано ${when(app.builtAt)}` : ''}</Row>
               <Row name="Java">{app.java}</Row>
               <Row name="Память и процессор">
                 куча {app.heapUsedMb} из {app.heapMaxMb} МБ · процессор {app.cpuPercent != null ? `${app.cpuPercent}%` : '—'} · ядер {app.processors}
               </Row>
-              <Row name="Диск" tone={app.disk ? (app.disk.usedPercent! > 85 ? 'bad' : 'ok') : undefined}>
-                {app.disk ? `занято ${app.disk.usedPercent}% · свободно ${mbText(app.disk.freeMb ?? 0)} из ${mbText(app.disk.totalMb ?? 0)}` : 'не узнать'}
+              <Row name="Диск" tone={app.disk ? (app.disk.usedPercent > 85 ? 'bad' : 'ok') : undefined}>
+                {app.disk ? `занято ${app.disk.usedPercent}% · свободно ${mbText(app.disk.freeMb)} из ${mbText(app.disk.totalMb)}` : 'не узнать'}
               </Row>
             </>}
             {db && (db.up ? (
@@ -122,8 +122,8 @@ function Sections({ h }: { h: Health }) {
               </Row>
             )}
             {h.ai && (
-              <Row name="ИИ" tone={!h.ai.configured ? undefined : (h.ai.errors24h ?? 0) > 0 ? 'wait' : 'ok'}>
-                {h.ai.configured ? 'ключ есть' : 'ключа нет — ИИ выключен'} · удачный вызов {when(h.ai.lastOkAt)} · ошибок за сутки {h.ai.errors24h ?? 0}
+              <Row name="ИИ" tone={!h.ai.configured ? undefined : h.ai.errors24h > 0 ? 'wait' : 'ok'}>
+                {h.ai.configured ? 'ключ есть' : 'ключа нет — ИИ выключен'} · удачный вызов {when(h.ai.lastOkAt)} · ошибок за сутки {h.ai.errors24h}
                 {h.ai.lastErrorAt && ` · последняя ${when(h.ai.lastErrorAt)}${h.ai.lastError ? ` (${h.ai.lastError})` : ''}`}
               </Row>
             )}
@@ -132,7 +132,7 @@ function Sections({ h }: { h: Health }) {
       </section>
       {h.errors && (
         <section className="card-block">
-          <h2>Ошибки сервера за сутки: {h.errors.total24h ?? 0}</h2>
+          <h2>Ошибки сервера за сутки: {h.errors.total24h}</h2>
           {(h.errors.top?.length ?? 0) > 0 ? (
             <table className="table" aria-label="Ошибки сервера за сутки">
               <thead><tr><th>Эндпоинт</th><th>Исключение</th><th>Раз</th><th>Последняя</th><th>Номер запроса</th></tr></thead>

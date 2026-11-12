@@ -36,10 +36,11 @@ const childBooking: Booking = { id: 12, startAt: slotInstant(addDays(todayIn(), 
 
 const mom = (extra: Partial<Me> = {}): Me => ({
   doctor: false, platform: false, bookingEnabled: true, lang: 'ru', daysAhead: 14, fullName: 'Жылдыз Асанова', phone: '996700112233',
-  doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }],
-  services: [{ id: 5, name: 'Осмотр', durationMinutes: 30 }],
-  clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест' },
+  doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }],
+  services: [{ id: 5, name: 'Осмотр', durationMinutes: 30, active: true }],
+  clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
   hasCard: true, maxRelatives: 6, relatives: [{ id: 41, fullName: 'Аружан Асанова', relation: 'CHILD' }],
+  admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false,
   ...extra,
 })
 

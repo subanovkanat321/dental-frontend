@@ -134,11 +134,11 @@ function Register({ token, onDone }: { token: string; onDone: (d: Done) => void 
  * одном экране → «Зарегистрироваться». Номер занят — сервер скажет до отправки SMS. После перезагрузки
  * страницы (pending от сервера) — сразу второй шаг: номер тогда только маской, набранного нет.
  */
-function RegisterWithCode({ token, pending, onDone }: { token: string; pending: InviteCodeStep | null; onDone: (d: Done) => void }) {
+function RegisterWithCode({ token, pending, onDone }: { token: string; pending?: InviteCodeStep; onDone: (d: Done) => void }) {
   const client = useQueryClient()
   const [step, setStep] = useState<'phone' | 'code'>(pending ? 'code' : 'phone')
   const [phone, setPhone] = useState('')
-  const [sent, setSent] = useState<InviteCodeStep | null>(pending)
+  const [sent, setSent] = useState<InviteCodeStep | null>(pending ?? null)
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
   const [repeat, setRepeat] = useState('')

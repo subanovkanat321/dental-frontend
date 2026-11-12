@@ -32,7 +32,7 @@ export function HelpChatPanel({ ticketId, onClose }: {
   const ask = useMutation<Thread, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/support/chat', { body: { ticketId: id, text: text.trim() } })),
     onSuccess: (t) => {
-      const newId = t.ticket!.id!
+      const newId = t.ticket!.id
       client.setQueryData(['support-ticket', '/api/support', newId], t)
       void client.invalidateQueries({ queryKey: ['support-tickets'] })
       void client.invalidateQueries({ queryKey: ['support-chat'] })
@@ -44,7 +44,7 @@ export function HelpChatPanel({ ticketId, onClose }: {
   const messages = id == null ? [] : thread.data?.messages ?? []
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => { end.current?.scrollIntoView?.({ block: 'end' }) }, [messages.length, ask.isPending])
-  const left = info.data ? Math.max(0, (info.data.dailyLimit ?? 0) - (info.data.usedToday ?? 0)) : null
+  const left = info.data ? Math.max(0, info.data.dailyLimit - info.data.usedToday) : null
   const closed = t?.status === 'CLOSED'
   const submit = (e: FormEvent) => {
     e.preventDefault()

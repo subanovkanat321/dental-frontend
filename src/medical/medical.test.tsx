@@ -18,7 +18,7 @@ type Step = Schemas['TreatmentStepView']
 /** Вымышленный пациент; медкарта меняется, как на сервере. */
 function backend(options: { forbidden?: boolean } = {}) {
   let teeth: Schemas['ToothView'][] = [{ number: 16, state: 'CARIES', note: 'глубокий', doctorName: 'Айгерим Садыкова', updatedAt: '2026-10-20T05:00:00Z' }]
-  let plan: Step[] = [{ id: 1, tooth: 16, title: 'Пломба', priceSom: 3000 }]
+  let plan: Step[] = [{ id: 1, tooth: 16, title: 'Пломба', priceSom: 3000, stage: 1 }]
   const sent: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

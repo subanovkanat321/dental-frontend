@@ -24,7 +24,7 @@ const RECEIPT = {
 
 const MEMO = {
   memoId: 3, title: 'После удаления зуба', body: '• Держите тампон 20–30 минут.\n\nЗвоните в клинику: +996 555 000 000.',
-  text: '📋 Памятка после приёма\n\nПосле удаления зуба', telegram: true,
+  text: '📋 Памятка после приёма\n\nПосле удаления зуба', telegram: true, ky: false
 } satisfies Schemas['CareMemosAppointmentMemo']
 
 /** Регистратура: личного «Сообщения после приёма» нет (сервер — 403), памятка на карточке — как раньше. */
@@ -41,7 +41,7 @@ function backend(a: Appointment, who: Me = me, memo: Schemas['CareMemosAppointme
       return HttpResponse.json(chosen ? { ...memo, memoId: Number(chosen), title: 'После чистки' } : memo)
     }),
     http.get('*/api/care-memos', () => HttpResponse.json([
-      { id: 3, title: 'После удаления зуба', active: true }, { id: 4, title: 'После чистки', active: true },
+      { id: 3, title: 'После удаления зуба', active: true, standard: false, kyStandard: false }, { id: 4, title: 'После чистки', active: true, standard: false, kyStandard: false },
     ] satisfies Schemas['CareMemosCareMemoView'][])),
     http.get('*/api/appointments/:id/visit-report', () => who === me ? new HttpResponse(null, { status: 204 })
       : HttpResponse.json({ status: 403, detail: 'Нет доступа' }, { status: 403 })),
@@ -169,7 +169,7 @@ test('бот не доставил — ошибка и «Отправить в W
 })
 
 test('у услуги нет памятки — выбрать из списка', async () => {
-  backend(done(), reception, { telegram: false })
+  backend(done(), reception, { telegram: false, ky: false })
   renderApp()
   const panel = await card(/Бакыт М\./)
   expect(await within(panel).findByText(/У услуги нет памятки/)).toBeInTheDocument()

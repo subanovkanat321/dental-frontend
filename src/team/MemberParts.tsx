@@ -20,8 +20,8 @@ function DoctorChecks({ me, value, onChange }: { me: Me; value: number[]; onChan
       <legend>Каким врачам помогает</legend>
       {doctors.map((d) => (
         <label key={d.id} className="check">
-          <input type="checkbox" checked={value.includes(d.id!)}
-            onChange={(e) => onChange(e.target.checked ? [...value, d.id!] : value.filter((x) => x !== d.id))} /> {d.fullName}
+          <input type="checkbox" checked={value.includes(d.id)}
+            onChange={(e) => onChange(e.target.checked ? [...value, d.id] : value.filter((x) => x !== d.id))} /> {d.fullName}
         </label>
       ))}
     </fieldset>
@@ -38,7 +38,7 @@ export function AssistantDoctors({ me, member }: { me: Me; member: Member }) {
   useUnsaved(dirty)
   const names = (member.doctorIds ?? []).map((id) => me.doctors?.find((d) => d.id === id)?.fullName).filter(Boolean)
   const save = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/members/{telegramId}/doctors', { params: { path: { telegramId: member.telegramId! } }, body: { doctorIds: ids } })),
+    mutationFn: () => unwrap(api.PUT('/api/members/{telegramId}/doctors', { params: { path: { telegramId: member.telegramId } }, body: { doctorIds: ids } })),
     onSuccess: () => {
       setEditing(false)
       void client.invalidateQueries({ queryKey: ['members'] })
@@ -78,7 +78,7 @@ export function ChangeRole({ me, member }: { me: Me; member: Member }) {
   const [ids, setIds] = useState<number[]>(member.doctorIds ?? [])
   const save = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/members/{telegramId}/role', {
-      params: { path: { telegramId: member.telegramId! } },
+      params: { path: { telegramId: member.telegramId } },
       body: role === 'ASSISTANT' ? { role, doctorIds: ids } : { role },
     })),
     onSuccess: () => {

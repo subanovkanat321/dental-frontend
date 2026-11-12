@@ -16,8 +16,8 @@ afterEach(() => {
 })
 
 const doctors: Schemas['DoctorAdminView'][] = [
-  { id: 1, fullName: 'Айгерим Садыкова', about: 'терапевт', active: true, telegramId: 111, role: 'ADMIN' },
-  { id: 2, fullName: 'Дастан Т.', about: '', active: true },
+  { id: 1, fullName: 'Айгерим Садыкова', about: 'терапевт', active: true, telegramId: 111, role: 'ADMIN', phoneOnly: false },
+  { id: 2, fullName: 'Дастан Т.', about: '', active: true, phoneOnly: false },
 ]
 
 test('админ: врачи таблицей; карточка врача, который ещё не вошёл, — черновик профиля, «Работает», свои часы, ссылка-приглашение', async () => {
@@ -82,7 +82,7 @@ test('админ: врачи таблицей; карточка врача, ко
 })
 
 test('админ: у вошедшего врача фото, имя и «о себе» — только посмотреть; работа и права — можно', async () => {
-  const linked: Schemas['DoctorAdminView'] = { id: 3, fullName: 'Бермет К.', about: 'ортодонт, брекеты', active: true, telegramId: 333, photoUrl: '/doctors/3/photo?v=1' }
+  const linked: Schemas['DoctorAdminView'] = { id: 3, fullName: 'Бермет К.', about: 'ортодонт, брекеты', active: true, telegramId: 333, photoUrl: '/doctors/3/photo?v=1', phoneOnly: false }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/doctors/admin', () => HttpResponse.json([...doctors, linked])),
@@ -116,7 +116,7 @@ test('сотрудники: пригласить регистратора ссы
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
     http.get('*/api/members', () => HttpResponse.json([
-      { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true },
+      { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true, phoneOnly: false },
     ] satisfies Schemas['StaffMembersMemberView'][])),
     http.post('*/api/members/invite', async ({ request }) => {
       invited = await request.json()
@@ -146,7 +146,7 @@ test('персонал: роли рядом, кто вошёл — «Telegram п
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
     http.get('*/api/members', () => HttpResponse.json([
-      { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true },
+      { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true, phoneOnly: false },
     ] satisfies Schemas['StaffMembersMemberView'][])),
     http.get('*/api/members/invites', () => HttpResponse.json(invites)),
     http.delete('*/api/members/invites/bb', () => {
@@ -178,8 +178,8 @@ test('сотрудники: ассистент — выбрать врача, п
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
     http.get('*/api/members', () => HttpResponse.json([
-      { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true },
-      { telegramId: 7201, fullName: 'Асель', role: 'ASSISTANT', doctorIds: [2] },
+      { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true, phoneOnly: false },
+      { telegramId: 7201, fullName: 'Асель', role: 'ASSISTANT', doctorIds: [2], me: false, doctor: false, phoneOnly: false },
     ] satisfies Schemas['StaffMembersMemberView'][])),
     http.post('*/api/members/invite', async ({ request }) => {
       sent.push(await request.json())
@@ -301,7 +301,7 @@ test('регистратура открывает врача ради часов
 test('«Сменить роль»: регистратор → ассистент (с врачами), без новой ссылки', async () => {
   // Сотрудники вымышленные
   let members: Schemas['StaffMembersMemberView'][] = [
-    { telegramId: 501, fullName: 'Айпери', role: 'RECEPTION', me: false, doctor: false, doctorIds: [] },
+    { telegramId: 501, fullName: 'Айпери', role: 'RECEPTION', me: false, doctor: false, doctorIds: [], phoneOnly: false },
   ]
   const sent: unknown[] = []
   server.use(
@@ -333,14 +333,14 @@ test('«Сменить роль»: регистратор → ассистент
 
 test('«Пригласить по номеру»: без Telegram — сотрудник сразу в персонале, вход «по SMS» с номером', async () => {
   let invited: unknown = null
-  let members: Schemas['StaffMembersMemberView'][] = [{ telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true }]
+  let members: Schemas['StaffMembersMemberView'][] = [{ telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true, phoneOnly: false }]
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
     http.get('*/api/members', () => HttpResponse.json(members)),
     http.post('*/api/members/invite-phone', async ({ request }) => {
       invited = await request.json()
-      members = [...members, { telegramId: -1000000000000001, fullName: 'Нурия', role: 'RECEPTION', phone: '+996700000011', phoneOnly: true, doctor: false }]
+      members = [...members, { telegramId: -1000000000000001, fullName: 'Нурия', role: 'RECEPTION', phone: '+996700000011', phoneOnly: true, doctor: false, me: false }]
       return HttpResponse.json({ telegramId: -1000000000000001 } satisfies Schemas['StaffMembersControllerPhoneInvited'], { status: 201 })
     }),
   )
@@ -418,9 +418,9 @@ test('карточка врача без Telegram: привязать номер
 test('«Телефон» в «Персонале»: сотруднику с Telegram — только показать (номер он задаёт сам); без Telegram — админ меняет, чужой номер — 409', async () => {
   const puts: unknown[] = []
   let members: Schemas['StaffMembersMemberView'][] = [
-    { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true },
-    { telegramId: 5001, fullName: 'Бермет', role: 'RECEPTION', doctor: false, phoneOnly: false, phone: '+996700000041' },
-    { telegramId: -1000000000000001, fullName: 'Нурия', role: 'RECEPTION', doctor: false, phoneOnly: true, phone: '+996700000011' },
+    { telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true, phoneOnly: false },
+    { telegramId: 5001, fullName: 'Бермет', role: 'RECEPTION', doctor: false, phoneOnly: false, phone: '+996700000041', me: false },
+    { telegramId: -1000000000000001, fullName: 'Нурия', role: 'RECEPTION', doctor: false, phoneOnly: true, phone: '+996700000011', me: false },
   ]
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

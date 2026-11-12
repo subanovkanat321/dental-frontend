@@ -107,7 +107,7 @@ export function AnalyticsTab() {
 }
 
 function Report({ a }: { a: Analytics }) {
-  const s = a.summary ?? {}
+  const s: Partial<NonNullable<Analytics['summary']>> = a.summary ?? {}
   const period = a.days === 365 ? 'за год' : `за ${a.days} дней`
   const change = changeOf(s.appointments ?? 0, s.appointmentsBefore ?? 0)
   if (!s.clinics) return <EmptyState fill title={a.city ? 'В этом городе клиник нет' : 'Клиник пока нет'} />
@@ -115,7 +115,7 @@ function Report({ a }: { a: Analytics }) {
     <>
       <section className="card-block" aria-label="Сводка">
         <div className="survey-tiles">
-          <Tile title="Клиник" value={s.clinics ?? 0} />
+          <Tile title="Клиник" value={s.clinics} />
           <Tile title="Работают" value={s.working ?? 0} note="приёмы за 7 дней" />
           <Tile title="В пилоте" value={s.pilot ?? 0} />
           <Tile title="Платят" value={s.paying ?? 0} />
@@ -148,7 +148,7 @@ function Tile({ title, value, note, tone, hero }: { title: string; value: ReactN
 }
 
 function dueText(d: Schemas['PlatformAnalyticsDue']): string {
-  const left = d.daysLeft ?? 0
+  const left = d.daysLeft
   return left < 0 ? `${-left} дн. назад` : left === 0 ? 'сегодня' : `через ${left} дн.`
 }
 
@@ -156,7 +156,7 @@ function dueText(d: Schemas['PlatformAnalyticsDue']): string {
 function DueBlock({ a }: { a: Analytics }) {
   const due = a.money?.due ?? []
   const csv = () => saveCsv('оплата-кому-звонить', [['Клиника', 'Город', 'Что', 'Дата', 'Тариф', 'Сом в месяц', 'Приёмов за период'],
-    ...due.map((d) => [d.name ?? '', d.city ?? '', DUE[d.kind ?? '']?.[0] ?? '', d.date ?? '', d.tariff ?? '', d.monthSom ?? 0, d.appointments ?? 0])])
+    ...due.map((d) => [d.name ?? '', d.city ?? '', DUE[d.kind ?? '']?.[0] ?? '', d.date ?? '', d.tariff ?? '', d.monthSom, d.appointments])])
   return (
     <Block title="Кому звонить про оплату" label="Кому звонить про оплату" csv={due.length ? csv : undefined}
       hint="Пилот или оплата заканчиваются в ближайшие 30 дней, или срок уже прошёл. Пилот без даты — по акции с подключения.">
@@ -172,7 +172,7 @@ function DueBlock({ a }: { a: Analytics }) {
                     <td>{d.name}<span className="hint"> · {d.city}</span></td>
                     <td className={tone}>{title}{d.payPending ? <span className="hint"> · сообщила об оплате</span> : null}</td>
                     <td className="nowrap">{d.date ? shortDate(d.date) : ''}<span className="hint"> · {dueText(d)}</span></td>
-                    <td className="nowrap">{d.tariff}<span className="hint"> · {somText(d.monthSom ?? 0)}</span></td>
+                    <td className="nowrap">{d.tariff}<span className="hint"> · {somText(d.monthSom)}</span></td>
                     <td className="num">{d.appointments}</td>
                     <td className="hint nowrap">{d.staffSeenAt ? shortDate(d.staffSeenAt) : 'ни разу'}</td>
                   </tr>
@@ -190,7 +190,7 @@ function DueBlock({ a }: { a: Analytics }) {
 function RiskBlock({ a }: { a: Analytics }) {
   const risks = a.risks ?? []
   const csv = () => saveCsv('клиники-риск', [['Клиника', 'Город', 'Оплата', 'Приёмов 2 недели', 'Приёмов 2 недели до', 'Причины'],
-    ...risks.map((r) => [r.name ?? '', r.city ?? '', PLAN[r.plan ?? ''] ?? '', r.last14 ?? 0, r.prev14 ?? 0, (r.reasons ?? []).map((x) => x.text).join('; ')])])
+    ...risks.map((r) => [r.name ?? '', r.city ?? '', PLAN[r.plan ?? ''] ?? '', r.last14, r.prev14, (r.reasons ?? []).map((x) => x.text).join('; ')])])
   return (
     <Block title="Кто может уйти" label="Риск ухода" csv={risks.length ? csv : undefined}
       hint="Клиники старше двух недель: не заходят неделю, не было приёмов, приёмов заметно меньше, чем две недели назад.">
@@ -217,7 +217,7 @@ function RiskBlock({ a }: { a: Analytics }) {
 /** Воронка клиник, заведённых за период: где теряем новых. */
 function FunnelBlock({ a, period }: { a: Analytics; period: string }) {
   const steps = a.funnel?.steps ?? []
-  const apps = a.funnel?.applications ?? {}
+  const apps: Partial<NonNullable<NonNullable<Analytics['funnel']>['applications']>> = a.funnel?.applications ?? {}
   const first = steps[0]?.clinics ?? 0
   return (
     <Block title="Где теряем новые клиники" label="Воронка клиник"
@@ -226,7 +226,7 @@ function FunnelBlock({ a, period }: { a: Analytics; period: string }) {
       {first ? (
         <ul className="hbars" aria-label="Шаги воронки">
           {steps.map((step, i) => {
-            const n = step.clinics ?? 0
+            const n = step.clinics
             const prev = i ? steps[i - 1]?.clinics ?? 0 : n
             return (
               <li key={step.key} title={`${STEPS[step.key ?? '']}: ${n}`}>
@@ -245,7 +245,7 @@ function FunnelBlock({ a, period }: { a: Analytics; period: string }) {
 function GeoBlock({ a, period }: { a: Analytics; period: string }) {
   const rows = a.geography ?? []
   const csv = () => saveCsv('клиники-по-городам', [['Город', 'Клиник', 'Работают', 'Платят', 'Пациентов', `Заявок ${period}`],
-    ...rows.map((r) => [r.city ?? '', r.clinics ?? 0, r.working ?? 0, r.paying ?? 0, r.patients ?? 0, r.applications ?? 0])])
+    ...rows.map((r) => [r.city ?? '', r.clinics, r.working, r.paying, r.patients, r.applications])])
   return (
     <Block title="Города" label="Клиники по городам" csv={csv}
       hint="Все города, без фильтра. Заявки из города без клиник — спрос, куда идти дальше.">
@@ -269,27 +269,27 @@ function GeoBlock({ a, period }: { a: Analytics; period: string }) {
 /** Оплаты по месяцам — столбики; MRR на конец месяца — подписью. */
 function MoneyBlock({ a }: { a: Analytics }) {
   const months = a.money?.months ?? []
-  const max = Math.max(1, ...months.map((m) => m.paidSom ?? 0))
+  const max = Math.max(1, ...months.map((m) => m.paidSom))
   const [picked, setPicked] = useState(months.length - 1)
   const m = months[picked]
   const csv = () => saveCsv('оплаты-по-месяцам', [['Месяц', 'Оплачено, сом', 'Оплат', 'MRR, сом'],
-    ...months.map((x) => [x.month ?? '', x.paidSom ?? 0, x.payments ?? 0, x.mrrSom ?? 0])])
+    ...months.map((x) => [x.month ?? '', x.paidSom, x.payments, x.mrrSom])])
   return (
     <Block title="Деньги по месяцам" label="Оплаты по месяцам" csv={csv}
       hint="Столбик — сколько клиники заплатили в месяце. MRR — сколько в месяц приносят оплаты, срок которых идёт: годовая оплата — 1/12 в каждый месяц.">
       {!months.some((x) => x.paidSom) ? <EmptyState compact title="Оплат за год ещё не было" /> : <>
-      <div className="vbars" role="img" aria-label={months.map((x) => `${longMonth(x.month ?? '')}: ${somText(x.paidSom ?? 0)}`).join('; ')}>
+      <div className="vbars" role="img" aria-label={months.map((x) => `${longMonth(x.month ?? '')}: ${somText(x.paidSom)}`).join('; ')}>
         {months.map((x, k) => (
           <button key={x.month} type="button" className={k === picked ? 'vbar picked' : 'vbar'} onClick={() => setPicked(k)}
-            title={`${longMonth(x.month ?? '')}: ${somText(x.paidSom ?? 0)}`}>
+            title={`${longMonth(x.month ?? '')}: ${somText(x.paidSom)}`}>
             <span className="vbar-value num">{x.paidSom ? Math.round((x.paidSom) / 1000) || '<1' : ''}</span>
-            <span className="vbar-fill" style={{ height: `${((x.paidSom ?? 0) / max) * 100}%` }} />
+            <span className="vbar-fill" style={{ height: `${(x.paidSom / max) * 100}%` }} />
             <span className="vbar-label">{shortMonth(x.month ?? '')}</span>
           </button>
         ))}
       </div>
-      {m && <p className="hint small">{longMonth(m.month ?? '')}: оплачено <b className="num">{somText(m.paidSom ?? 0)}</b>
-        {m.payments ? ` · оплат ${m.payments}` : ''} · MRR <b className="num">{somText(m.mrrSom ?? 0)}</b> · подписи столбиков — тыс. сом</p>}
+      {m && <p className="hint small">{longMonth(m.month ?? '')}: оплачено <b className="num">{somText(m.paidSom)}</b>
+        {m.payments ? ` · оплат ${m.payments}` : ''} · MRR <b className="num">{somText(m.mrrSom)}</b> · подписи столбиков — тыс. сом</p>}
       </>}
     </Block>
   )
@@ -299,9 +299,9 @@ function MoneyBlock({ a }: { a: Analytics }) {
 function CohortBlock({ a }: { a: Analytics }) {
   const rows = a.cohorts ?? []
   if (!rows.length) return null
-  const cell = (c?: Schemas['PlatformAnalyticsCell']) => (c?.eligible ? `${pct(c.active ?? 0, c.eligible)} (${c.active} из ${c.eligible})` : '—')
+  const cell = (c?: Schemas['PlatformAnalyticsCell']) => (c?.eligible ? `${pct(c.active, c.eligible)} (${c.active} из ${c.eligible})` : '—')
   const csv = () => saveCsv('когорты', [['Подключились', 'Клиник', 'Через 1 мес', 'Через 2 мес', 'Через 3 мес'],
-    ...rows.map((r) => [r.month ?? '', r.clinics ?? 0, ...[0, 1, 2].map((k) => cell(r.after?.[k]))])])
+    ...rows.map((r) => [r.month ?? '', r.clinics, ...[0, 1, 2].map((k) => cell(r.after?.[k]))])])
   return (
     <Block title="Держатся ли клиники" label="Когорты клиник" csv={csv}
       hint="Месяц подключения и доля клиник, у которых были приёмы через 1, 2 и 3 месяца. «—» — ещё не дожили.">
@@ -324,9 +324,9 @@ function CohortBlock({ a }: { a: Analytics }) {
 
 /** Чем пользуются: доля клиник с приёмами за период. */
 function FeaturesBlock({ a, period }: { a: Analytics; period: string }) {
-  const f = a.features ?? {}
+  const f: Partial<NonNullable<Analytics['features']>> = a.features ?? {}
   const active = f.activeClinics ?? 0
-  const items = [...(f.items ?? [])].sort((x, y) => (y.clinics ?? 0) - (x.clinics ?? 0))
+  const items = [...(f.items ?? [])].sort((x, y) => y.clinics - x.clinics)
   return (
     <Block title="Чем пользуются" label="Использование функций"
       hint={<>Из {active} клиник с приёмами {period}. Пациенты записались сами (бот и сайт): <b>{pct(f.selfBooked ?? 0, f.appointments ?? 0)}</b> приёмов.{f.aiBooked ? <> ИИ записал: <b>{f.aiBooked}</b>.</> : null}</>}>
@@ -335,8 +335,8 @@ function FeaturesBlock({ a, period }: { a: Analytics; period: string }) {
           {items.map((x) => (
             <li key={x.key} title={`${FEATURES[x.key ?? '']}: ${x.clinics} из ${active}`}>
               <span className="hbar-name">{FEATURES[x.key ?? ''] ?? x.key}</span>
-              <span className="hbar-track" aria-hidden="true"><span className="hbar-fill" style={{ width: `${((x.clinics ?? 0) / active) * 100}%` }} /></span>
-              <span className="hbar-value num">{pct(x.clinics ?? 0, active)}<span className="hint"> · {x.clinics}</span></span>
+              <span className="hbar-track" aria-hidden="true"><span className="hbar-fill" style={{ width: `${(x.clinics / active) * 100}%` }} /></span>
+              <span className="hbar-value num">{pct(x.clinics, active)}<span className="hint"> · {x.clinics}</span></span>
             </li>
           ))}
         </ul>
@@ -346,9 +346,9 @@ function FeaturesBlock({ a, period }: { a: Analytics; period: string }) {
 }
 
 function PatientsBlock({ a, period }: { a: Analytics; period: string }) {
-  const p = a.patients ?? {}
+  const p: Partial<NonNullable<Analytics['patients']>> = a.patients ?? {}
   const months = p.newByMonth ?? []
-  const max = Math.max(1, ...months.map((m) => m.count ?? 0))
+  const max = Math.max(1, ...months.map((m) => m.count))
   const visits = (p.done ?? 0) + (p.noShow ?? 0)
   return (
     <Block title="Пациенты платформы" label="Пациенты платформы"
@@ -363,7 +363,7 @@ function PatientsBlock({ a, period }: { a: Analytics; period: string }) {
         {months.map((m) => (
           <span key={m.month} className="vbar" title={`${longMonth(m.month ?? '')}: ${m.count}`}>
             <span className="vbar-value num">{m.count || ''}</span>
-            <span className="vbar-fill" style={{ height: `${((m.count ?? 0) / max) * 100}%` }} />
+            <span className="vbar-fill" style={{ height: `${(m.count / max) * 100}%` }} />
             <span className="vbar-label">{shortMonth(m.month ?? '')}</span>
           </span>
         ))}

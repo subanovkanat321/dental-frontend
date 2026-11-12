@@ -257,22 +257,22 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
   // Публикация — секунды: Instagram скачивает картинки. Рилс — в фоне (ответ 202, итог — в Telegram).
   // Повторное нажатие сервер второй раз не выложит
   const publish = useMutation<Post, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/publish', { params: { path: { id: post.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/publish', { params: { path: { id: post.id } } })),
     onSuccess: onChanged,
   })
   // «📤 В сторис» / «Повторить сторис»: картинка — сразу (200), видео рилса — в фоне (202, итог в Telegram)
   const story = useMutation<Post, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/story', { params: { path: { id: post.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/story', { params: { path: { id: post.id } } })),
     onSuccess: onChanged,
     onError: onChanged,
   })
   // «📲 Прислать в бот»: видео/картинки и подпись — в Telegram сейчас, чтобы сохранить и выложить вручную
   const toBot = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/to-telegram', { params: { path: { id: post.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/content/{id}/to-telegram', { params: { path: { id: post.id } } })),
   })
   const action = useMutation<unknown, ApiError, 'done' | 'skip' | 'postpone' | 'plan' | 'delete'>({
     mutationFn: (what) => {
-      const params = { params: { path: { id: post.id! } } }
+      const params = { params: { path: { id: post.id } } }
       switch (what) {
         case 'done': return unwrap(api.POST('/api/platform/content/{id}/done', params))
         case 'skip': return unwrap(api.POST('/api/platform/content/{id}/skip', params))
@@ -429,7 +429,7 @@ function PostForm({ post, today, onDone, onCancel }: { post: Post | null; today:
     mutationFn: () => {
       const body: Draft = { date, kind, title, caption, note, images: images.split('\n').map((s) => s.trim()).filter(Boolean), ...(time ? { time } : {}), story }
       return post
-        ? unwrap(api.PUT('/api/platform/content/{id}', { params: { path: { id: post.id! } }, body }))
+        ? unwrap(api.PUT('/api/platform/content/{id}', { params: { path: { id: post.id } }, body }))
         : unwrap(api.POST('/api/platform/content', { body }))
     },
     onSuccess: onDone,

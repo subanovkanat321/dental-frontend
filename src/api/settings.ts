@@ -22,7 +22,7 @@ export function useReminderText(): ((a: Schemas['AppointmentView']) => string) |
   const me = useMe()
   const data = settings.data
   if (!data) return null
-  return (a) => reminderText({ startAt: a.startAt!, serviceName: a.serviceName, patient: a.patient ?? {} }, data,
+  return (a) => reminderText({ startAt: a.startAt, serviceName: a.serviceName, patient: a.patient }, data,
     me.data?.doctors?.find((d) => d.id === a.doctorId)?.fullName)
 }
 

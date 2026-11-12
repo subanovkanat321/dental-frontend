@@ -63,7 +63,7 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
   const counts = useQueries({
     queries: doctors.map((d) => ({
       queryKey: ['counts', d.id, date, 1],
-      queryFn: () => unwrap(api.GET('/api/appointments/counts', { params: { query: { from: date, days: 1, doctorId: d.id! } } })),
+      queryFn: () => unwrap(api.GET('/api/appointments/counts', { params: { query: { from: date, days: 1, doctorId: d.id } } })),
       staleTime: 60_000,
     })),
   })
@@ -98,8 +98,8 @@ export function DoctorPicker({ me, doctors, view, date, onChange, colorDoctors =
         <div className="pick-list">
         <ul role="listbox" aria-label="Чьё расписание">
           {doctors.map((d, i) => (
-            <li key={d.id} role="option" aria-selected={view === d.id} onClick={() => pick(d.id!)}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && pick(d.id!)} tabIndex={0}>
+            <li key={d.id} role="option" aria-selected={view === d.id} onClick={() => pick(d.id)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && pick(d.id)} tabIndex={0}>
               <Avatar doctor={d} color={colorOf(colorDoctors, d.id)} />
               <span className="pick-text">
                 <strong>{nameOf(d)}</strong>

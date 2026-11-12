@@ -210,7 +210,7 @@ function Managers() {
             <tr key={m.telegramId}>
               <td className="strong">{m.fullName || `Telegram ${m.telegramId}`}</td>
               <td className="r"><button type="button" className="btn small ghost" disabled={remove.isPending}
-                onClick={() => void ask(`Убрать менеджера «${m.fullName ?? m.telegramId}»?`).then((ok) => ok && remove.mutate(m.telegramId!))}>Убрать</button></td>
+                onClick={() => void ask(`Убрать менеджера «${m.fullName ?? m.telegramId}»?`).then((ok) => ok && remove.mutate(m.telegramId))}>Убрать</button></td>
             </tr>
           ))}</tbody>
         </table>
@@ -240,8 +240,8 @@ function TariffsBox() {
           <div key={x.code} className="tariff">
             <strong>{x.name}</strong>
             <span className="hint">{x.who}</span>
-            <span className="tariff-price num">{somText(x.monthSom ?? 0)}<span className="hint"> / месяц</span></span>
-            <span className="hint">за год — {somText(x.yearSom ?? 0)}</span>
+            <span className="tariff-price num">{somText(x.monthSom)}<span className="hint"> / месяц</span></span>
+            <span className="hint">за год — {somText(x.yearSom)}</span>
           </div>
         ))}
       </div>

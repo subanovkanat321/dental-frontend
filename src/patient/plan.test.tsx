@@ -24,9 +24,10 @@ const TOKEN = 'A'.repeat(43)
 
 const patient = (extra: Partial<Me> = {}): Me => ({
   doctor: false, platform: false, bookingEnabled: true, lang: 'ru', daysAhead: 14, fullName: 'Айгуль',
-  doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }],
-  services: [{ id: 5, name: 'Лечение кариеса', durationMinutes: 60, priceSom: 2500 }],
-  clinic: { brandName: 'Стоматология «Тест»' },
+  doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }],
+  services: [{ id: 5, name: 'Лечение кариеса', durationMinutes: 60, priceSom: 2500, active: true }],
+  clinic: { brandName: 'Стоматология «Тест»', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
+  admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6,
   ...extra,
 })
 

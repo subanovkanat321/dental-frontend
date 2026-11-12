@@ -51,9 +51,9 @@ export function TopupsBlock({ f, single }: { f: Finance; single: boolean }) {
                       <b>{serviceName(t.service)}</b>{t.comment && <> — {t.comment}</>}
                       <div className="hint small">{shortDate(t.paidOn ?? '')}{t.amountUsd != null ? ` · $${decimal(t.amountUsd)} × ${decimal(t.usdRate ?? 0)}` : ''}</div>
                     </div>
-                    <span className="num strong nowrap">{somText(t.amountSom ?? 0)}</span>
+                    <span className="num strong nowrap">{somText(t.amountSom)}</span>
                     <button type="button" className="btn ghost small" aria-label={`Исправить пополнение: ${serviceName(t.service)}, ${shortDate(t.paidOn ?? '')}`}
-                      onClick={() => { setEditing(t.id ?? null); setAdding(false) }}>Исправить</button>
+                      onClick={() => { setEditing(t.id); setAdding(false) }}>Исправить</button>
                   </div>
                 )}
               </li>
@@ -67,7 +67,7 @@ export function TopupsBlock({ f, single }: { f: Finance; single: boolean }) {
 
 function BalanceCard({ b, scope }: { b: Balance; scope: string }) {
   const name = serviceName(b.service)
-  const balance = b.balanceSom ?? 0
+  const balance = b.balanceSom
   return (
     <div className={`fin-balance${b.low ? ' low' : ''}`} role="group" aria-label={`Баланс ${name}`}>
       <div className="fin-balance-head">
@@ -76,14 +76,14 @@ function BalanceCard({ b, scope }: { b: Balance; scope: string }) {
       </div>
       {b.since ? (
         <dl className="net-lines">
-          <div><dt>Пополнено <span className="hint small">· {scope}: {somText(b.topupPeriodSom ?? 0)}</span></dt><dd className="num">{somText(b.topupTotalSom ?? 0)}</dd></div>
-          <div><dt>Израсходовано <span className="hint small">· с {shortDate(b.since)} · {scope}: {somText(b.spentPeriodSom ?? 0)}</span></dt>
-            <dd className="num">{somText(b.spentSinceSom ?? 0)}</dd></div>
+          <div><dt>Пополнено <span className="hint small">· {scope}: {somText(b.topupPeriodSom)}</span></dt><dd className="num">{somText(b.topupTotalSom)}</dd></div>
+          <div><dt>Израсходовано <span className="hint small">· с {shortDate(b.since)} · {scope}: {somText(b.spentPeriodSom)}</span></dt>
+            <dd className="num">{somText(b.spentSinceSom)}</dd></div>
           <div className="net-total"><dt>Остаток ≈</dt>
             <dd className={`num${balance < 0 ? ' tone-bad' : b.low ? ' tone-wait' : ''}`} aria-label={`Остаток ${name}`}>{signed(balance)}</dd></div>
         </dl>
       ) : (
-        <p className="hint small">Пополнений ещё не было — остаток посчитаем с первого. Израсходовано {scope}: <span className="num nowrap">{somText(b.spentPeriodSom ?? 0)}</span></p>
+        <p className="hint small">Пополнений ещё не было — остаток посчитаем с первого. Израсходовано {scope}: <span className="num nowrap">{somText(b.spentPeriodSom)}</span></p>
       )}
       {b.needsPrice && <p className="hint small tone-wait">Цена SMS не указана — израсходованное считается как 0.</p>}
     </div>
@@ -111,12 +111,12 @@ function TopupForm({ topup: t, rate, onDone }: { topup?: Topup; rate?: number; o
   })
   const save = useMutation<Topup, ApiError>({
     mutationFn: () => (t
-      ? unwrap(api.PUT('/api/platform/finance/topups/{id}', { params: { path: { id: t.id! } }, body: body() }))
+      ? unwrap(api.PUT('/api/platform/finance/topups/{id}', { params: { path: { id: t.id } }, body: body() }))
       : unwrap(api.POST('/api/platform/finance/topups', { body: body() }))),
     onSuccess: done,
   })
   const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/platform/finance/topups/{id}', { params: { path: { id: t!.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/platform/finance/topups/{id}', { params: { path: { id: t!.id } } })),
     onSuccess: done,
   })
   const submit = (e: FormEvent) => {

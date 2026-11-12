@@ -104,7 +104,7 @@ export function rowsOf(list: TimeOff[]): Row[] {
   const sortKey = (t: TimeOff) => t.weekday ? `0|${t.startTime ?? ''}|${ORDER.indexOf(t.weekday)}` : `1|${t.firstDay ?? ''}|${t.startTime ?? ''}`
   return [...groups.values()].map((items) => {
     const sorted = [...items].sort((a, b) => byWeek(a.weekday, b.weekday))
-    return { ids: sorted.map((i) => i.id!), first: sorted[0]!, when: whenOf(sorted), weekdays: sorted.flatMap((i) => (i.weekday ? [i.weekday] : [])) }
+    return { ids: sorted.map((i) => i.id), first: sorted[0]!, when: whenOf(sorted), weekdays: sorted.flatMap((i) => (i.weekday ? [i.weekday] : [])) }
   }).sort((a, b) => sortKey(a.first).localeCompare(sortKey(b.first)))
 }
 

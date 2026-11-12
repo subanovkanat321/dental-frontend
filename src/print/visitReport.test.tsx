@@ -16,7 +16,7 @@ const visit: Appointment = appointment(10, 1, '00:05', 'Бакыт М.', { statu
 const CARE = '• Не ешьте 2 часа.\n\nЗвоните в клинику: +996 555 000 000.'
 
 const MEMO = {
-  memoId: 3, title: 'После пломбы', body: CARE, text: '📋 Памятка после приёма\n\nПосле пломбы', telegram: false,
+  memoId: 3, title: 'После пломбы', body: CARE, text: '📋 Памятка после приёма\n\nПосле пломбы', telegram: false, ky: false
 } satisfies Schemas['CareMemosAppointmentMemo']
 
 function backend(draft: Schemas['VisitReportsDraft'], memo: Schemas['CareMemosAppointmentMemo'] = MEMO) {
@@ -30,7 +30,7 @@ function backend(draft: Schemas['VisitReportsDraft'], memo: Schemas['CareMemosAp
       return HttpResponse.json(chosen ? { memoId: Number(chosen), title: 'После чистки', body: 'Не пейте кофе.', telegram: false } : memo)
     }),
     http.get('*/api/care-memos', () => HttpResponse.json([
-      { id: 3, title: 'После пломбы', active: true }, { id: 4, title: 'После чистки', active: true },
+      { id: 3, title: 'После пломбы', active: true, standard: false, kyStandard: false }, { id: 4, title: 'После чистки', active: true, standard: false, kyStandard: false },
     ] satisfies Schemas['CareMemosCareMemoView'][])),
     http.post('*/api/appointments/:id/visit-report/draft', () => {
       calls.push('draft')
@@ -142,7 +142,7 @@ test('распечатать только памятку — лист на ру�
 })
 
 test('у услуги нет памятки — блока ухода нет, подсказка и можно взять уход из другой памятки', async () => {
-  const calls = backend({ text: 'Здравствуйте!', ai: false, aiAvailable: false, lang: 'RU', telegram: false }, { telegram: false })
+  const calls = backend({ text: 'Здравствуйте!', ai: false, aiAvailable: false, lang: 'RU', telegram: false }, { telegram: false, ky: false })
   renderApp()
   const b = await box()
   expect(await within(b).findByText(/У услуги нет памятки/)).toBeInTheDocument()

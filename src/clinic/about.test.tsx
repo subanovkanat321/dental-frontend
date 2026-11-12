@@ -10,7 +10,7 @@ import { waitForSlow } from '../test/wait'
 
 const clinic: Schemas['ClinicView'] = {
   brandName: 'Стоматология «Тест»', phones: ['996555123456'], whatsappPhone: '996555123456', code: 'test1', workStart: '09:00:00', workEnd: '18:00:00',
-  workDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'], listed: true,
+  workDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'], listed: true, independentDoctors: false, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6
 }
 
 beforeEach(() => {

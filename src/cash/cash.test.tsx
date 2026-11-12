@@ -18,7 +18,7 @@ afterEach(() => {
 })
 
 const debt = (id: number, patient: string, extra: Partial<Schemas['PaymentQueryDebt']> = {}) => ({
-  appointmentId: id, patient, doctorId: 1, doctor: 'Айгерим Садыкова', startAt: `${todayIn()}T04:00:00Z`, ...extra,
+  appointmentId: id, patientId: id, patient, doctorId: 1, doctor: 'Айгерим Садыкова', startAt: `${todayIn()}T04:00:00Z`, chargeSom: 0, paidSom: 0, debtSom: 0, ...extra,
 }) satisfies Schemas['PaymentQueryDebt']
 
 test('периоды: неделя — с понедельника, месяц — с 1-го', () => {
@@ -126,9 +126,9 @@ test('«Должники»: по пациентам — кто сколько д
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments/debts', () => HttpResponse.json([
-      { appointmentId: 1, startAt: '2026-10-01T04:00:00Z', patientId: 5, patient: 'Айгуль С.', doctor: 'Айгерим', service: 'Пломба', chargeSom: 5000, paidSom: 2000, debtSom: 3000, dueOn: '2026-10-10' },
-      { appointmentId: 2, startAt: '2026-10-20T04:00:00Z', patientId: 5, patient: 'Айгуль С.', doctor: 'Айгерим', chargeSom: 2000, paidSom: 0, debtSom: 2000 },
-      { appointmentId: 3, startAt: '2026-10-25T04:00:00Z', patientId: 6, patient: 'Бакыт М.', doctor: 'Айгерим', chargeSom: 8000, paidSom: 0, debtSom: 8000, dueOn: '2099-01-01' },
+      { appointmentId: 1, startAt: '2026-10-01T04:00:00Z', patientId: 5, patient: 'Айгуль С.', doctor: 'Айгерим', service: 'Пломба', chargeSom: 5000, paidSom: 2000, debtSom: 3000, dueOn: '2026-10-10', doctorId: 0 },
+      { appointmentId: 2, startAt: '2026-10-20T04:00:00Z', patientId: 5, patient: 'Айгуль С.', doctor: 'Айгерим', chargeSom: 2000, paidSom: 0, debtSom: 2000, doctorId: 0 },
+      { appointmentId: 3, startAt: '2026-10-25T04:00:00Z', patientId: 6, patient: 'Бакыт М.', doctor: 'Айгерим', chargeSom: 8000, paidSom: 0, debtSom: 8000, dueOn: '2099-01-01', doctorId: 0 },
     ] satisfies Schemas['PaymentQueryDebt'][])),
   )
   renderApp()
@@ -170,8 +170,8 @@ test('«Должники»: семья — одной строкой, «Семь
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/families', () => HttpResponse.json([{ id: 9, name: 'Семья Садыкова', members: [{ id: 5, fullName: 'Айгуль С.' }, { id: 6, fullName: 'Эрлан С.' }] }])),
     http.get('*/api/appointments/debts', () => HttpResponse.json([
-      { appointmentId: 1, startAt: '2026-10-01T04:00:00Z', patientId: 5, patient: 'Айгуль С.', debtSom: 3000 },
-      { appointmentId: 2, startAt: '2026-10-02T04:00:00Z', patientId: 6, patient: 'Эрлан С.', debtSom: 2000 },
+      { appointmentId: 1, startAt: '2026-10-01T04:00:00Z', patientId: 5, patient: 'Айгуль С.', debtSom: 3000, doctorId: 0, chargeSom: 0, paidSom: 0 },
+      { appointmentId: 2, startAt: '2026-10-02T04:00:00Z', patientId: 6, patient: 'Эрлан С.', debtSom: 2000, doctorId: 0, chargeSom: 0, paidSom: 0 },
     ] satisfies Schemas['PaymentQueryDebt'][])),
   )
   renderApp()

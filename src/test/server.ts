@@ -40,9 +40,9 @@ export const server = setupServer(
   http.get('*/api/push', () => HttpResponse.json({ enabled: false, channel: 'TELEGRAM', devices: [] })),
   // «Пароль и вход»: по умолчанию вошли через Telegram — блока нет
   http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Айпери', editable: true } satisfies Schemas['StaffMembersOwnName'])),
-  http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, sms: false } satisfies Schemas['PasswordControllerPasswordState'])),
+  http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, sms: false, telegram: false, telegramCode: false } satisfies Schemas['PasswordControllerPasswordState'])),
   // Сведения о платформе: по умолчанию пусто — группы врачей в «Помощи» нет (её тест — layout/helpFab.test.tsx)
-  http.get('*/api/platform-info', () => HttpResponse.json({} satisfies Schemas['PlatformInfoInfo'])),
+  http.get('*/api/platform-info', () => HttpResponse.json({ accessLog: false, accessNotify: false, accessRequiresGrant: false } satisfies Schemas['PlatformInfoInfo'])),
   // Тур при первом входе: по умолчанию уже пройден — не закрывает экраны остальных тестов (тесты тура — tour/tour.test.tsx)
   http.get('*/api/me/tour', () => HttpResponse.json({ seenAt: '2026-11-01T06:00:00Z' } satisfies Schemas['StaffTourTourView'])),
   http.put('*/api/me/tour', () => HttpResponse.json({ seenAt: '2026-11-01T06:00:00Z' } satisfies Schemas['StaffTourTourView'])),
@@ -100,7 +100,7 @@ export const server = setupServer(
   // Согласие на публикацию фото (V139): по умолчанию его нет — «До / после» выключена
   http.get('*/api/patients/:id/files', () => HttpResponse.json([] satisfies Schemas['PatientFilesView'][])),
   // Договор с пациентом (V181): по умолчанию не подписан
-  http.get('*/api/patients/:id/contract', () => HttpResponse.json({ signed: false, title: 'Договор', text: 'Текст договора', canSign: true } satisfies Schemas['PatientContractsView'])),
+  http.get('*/api/patients/:id/contract', () => HttpResponse.json({ signed: false, title: 'Договор', text: 'Текст договора', canSign: true, hasSignature: false, hasScan: false } satisfies Schemas['PatientContractsView'])),
   http.get('*/api/patients/:id/publication-consent', () => HttpResponse.json({} satisfies Schemas['PublicationConsentsView'])),
   // Опрос команды Tish (src/survey): по умолчанию ответа никто не ждёт — приглашения нет
   http.get('*/api/surveys/current', () => HttpResponse.json({} satisfies Schemas['SurveyAnswersCurrent'])),
@@ -114,10 +114,10 @@ export const server = setupServer(
     .map((weekday) => ({ weekday, start: '09:00:00', end: '18:00:00' })) } satisfies Schemas['DoctorHoursView'])),
   http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»' })),
   // Документы приёма и плана (src/print): по умолчанию у услуги памятки нет, квитанция пустая
-  http.get('*/api/appointments/:id/care-memo', () => HttpResponse.json({ telegram: false } satisfies Schemas['CareMemosAppointmentMemo'])),
+  http.get('*/api/appointments/:id/care-memo', () => HttpResponse.json({ telegram: false, ky: false } satisfies Schemas['CareMemosAppointmentMemo'])),
   http.get('*/api/care-memos', () => HttpResponse.json([] satisfies Schemas['CareMemosCareMemoView'][])),
   http.get('*/api/care-memos/links', () => HttpResponse.json([] satisfies Schemas['CareMemosLink'][])),
-  http.get('*/api/appointments/:id/receipt', () => HttpResponse.json({ payments: [], text: '', telegram: false } satisfies Schemas['ReceiptsReceiptView'])),
+  http.get('*/api/appointments/:id/receipt', () => HttpResponse.json({ payments: [], text: '', telegram: false, appointmentId: 0, paidSom: 0, debtSom: 0 } satisfies Schemas['ReceiptsReceiptView'])),
   // План с ценами (V140): по умолчанию не отправляли, у пациента в Mini App плана нет
   http.get('*/api/patients/:id/plan/offers', () => HttpResponse.json([] satisfies Schemas['PlanOffersOfferView'][])),
   http.get('*/api/patient/plans', () => HttpResponse.json([] satisfies Schemas['PlanOffersPatientPlan'][])),

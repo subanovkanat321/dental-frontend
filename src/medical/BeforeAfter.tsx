@@ -163,7 +163,7 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
       const a = images[ids.after]
       if (!b || !a || !found.before || !found.after) return
       const f = frames(design)
-      const box = (r: Schemas['BeforeAfterAiRect']): Box => ({ x: r.x ?? 0, y: r.y ?? 0, w: r.w ?? 0, h: r.h ?? 0 })
+      const box = (r: Schemas['BeforeAfterAiRect']): Box => ({ x: r.x, y: r.y, w: r.w, h: r.h })
       const [cb, ca] = fitSmiles([
         { frame: f.before, image: b, smile: box(found.before) },
         { frame: f.after, image: a, smile: box(found.after) },
@@ -293,7 +293,7 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
       form.append('takenOn', todayIn())
       if (postText.current.trim()) form.append('postText', postText.current.trim())
       const saved = await upload<FileView>(`/api/patients/${patientId}/files`, form)
-      savedFile.current = saved.id ?? null
+      savedFile.current = saved.id
       void client.invalidateQueries({ queryKey: ['files', patientId] })
       setStatus((s) => `${s ? `${s} · ` : ''}сохранено в «Снимки и фото»`)
     }
@@ -370,7 +370,7 @@ function BeforeAfter({ patientId, files, scope, onClose }: { patientId: number; 
                 <legend>{side === 'before' ? 'Фото «до»' : 'Фото «после»'}</legend>
                 <div className="ba-thumbs" role="group" aria-label={side === 'before' ? 'Фото до' : 'Фото после'}>
                   {files.map((f) => (
-                    <button key={f.id} type="button" aria-pressed={ids[side] === f.id} onClick={() => pick(side, f.id!)}
+                    <button key={f.id} type="button" aria-pressed={ids[side] === f.id} onClick={() => pick(side, f.id)}
                       aria-label={`${f.caption ?? 'Снимок'}${f.takenOn ? `, ${shortDate(`${f.takenOn}T12:00:00Z`)}` : ''}`}>
                       <Thumb path={`/api/patients/${patientId}/files/${f.id}?thumb=true`} alt="" />
                     </button>

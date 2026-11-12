@@ -96,7 +96,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     const note = noteOf.get(a.id)
     const body = (
       <>
-        <span className="nowrap num">{shortDate(a.startAt!, true)}</span>
+        <span className="nowrap num">{shortDate(a.startAt, true)}</span>
         {' '}<span className={`chip small s-${s.kind}`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
         {a.serviceName && <span className="hint"> · {a.serviceName}</span>}
         {many && <span className="hint"> · {doctorName(a.doctorId)}</span>}
@@ -105,10 +105,10 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
     )
     return (
       <li key={a.id} className={a.status === 'NO_SHOW' || a.status === 'CANCELLED' ? 'struck' : undefined}>
-        {onOpenAppointment ? <button type="button" className="visit-link" onClick={() => onOpenAppointment(a.id!)}>{body}</button> : body}
+        {onOpenAppointment ? <button type="button" className="visit-link" onClick={() => onOpenAppointment(a.id)}>{body}</button> : body}
         {a.status === 'DONE' && canEditDoctor(me, a.doctorId) && (
           <button type="button" className="link small" aria-expanded={docsOf === a.id}
-            onClick={() => setDocsOf(docsOf === a.id ? null : a.id!)}>
+            onClick={() => setDocsOf(docsOf === a.id ? null : a.id)}>
             {seesMoneyOf(me, a.doctorId) && (a.paidSom != null || a.chargeSom != null) ? '📋 Памятка и квитанция' : '📋 Памятка'}</button>
         )}
         {docsOf === a.id && <VisitDocs appointment={a} me={me} />}
@@ -135,9 +135,9 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const shownPast = allPast ? past : past.slice(0, PAST)
   // Сводка: ближайшая запись и общий долг — с одного взгляда, подробности во вкладках
   const next = upcoming.filter((a) => a.status === 'SCHEDULED' || a.status === 'REQUESTED')
-    .sort((x, y) => Date.parse(x.startAt!) - Date.parse(y.startAt!))[0]
+    .sort((x, y) => Date.parse(x.startAt) - Date.parse(y.startAt))[0]
   const debtRows = (debts.data ?? []).filter((d) => debtLine(d))
-  const debtTotal = debtRows.reduce((sum, d) => sum + (d.debtSom ?? 0), 0)
+  const debtTotal = debtRows.reduce((sum, d) => sum + d.debtSom, 0)
   const overdue = debtRows.some((d) => debtLine(d)?.tone === 'bad')
   const tabs: [Tab, string][] = [
     ['visits', 'Визиты'],
@@ -177,7 +177,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       <dl className="patient-summary">
         <div><dt>Визитов</dt><dd><span className="num">{done ?? 0}</span>
           {(noShow ?? 0) > 0 && <span className="summary-bad">не пришёл <span className="num">{noShow}</span></span>}</dd></div>
-        <div><dt>Следующий</dt><dd>{next ? <span className="num">{shortDate(next.startAt!, true)}</span> : 'не записан'}</dd></div>
+        <div><dt>Следующий</dt><dd>{next ? <span className="num">{shortDate(next.startAt, true)}</span> : 'не записан'}</dd></div>
         {debtTotal > 0 && <div className={overdue ? 'tone-bad' : 'tone-wait'}><dt>Долг</dt><dd className="num">{somText(debtTotal)}</dd></div>}
       </dl>
 
@@ -217,7 +217,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
             const debt = debtLine(d)!
             const text = `🧾 ${debt.text} — приём ${d.startAt ? shortDate(d.startAt) : ''}`
             return onOpenAppointment
-              ? <button key={d.appointmentId} type="button" className={`btn debt-line tone-${debt.tone}`} onClick={() => onOpenAppointment(d.appointmentId!)}>{text}</button>
+              ? <button key={d.appointmentId} type="button" className={`btn debt-line tone-${debt.tone}`} onClick={() => onOpenAppointment(d.appointmentId)}>{text}</button>
               : <p key={d.appointmentId} className={`tone-${debt.tone}`}>{text}</p>
           })}
           {staff && patient && <PatientExpenses patient={patient} me={me} />}

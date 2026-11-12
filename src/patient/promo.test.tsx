@@ -25,10 +25,10 @@ function backend(extra: Partial<Me>, onBook: (body: Book) => Response) {
   const tomorrow = addDays(todayIn(), 1)
   let me: Me = {
     doctor: false, platform: false, bookingEnabled: true, lang: 'ru', daysAhead: 14, fullName: 'Айгуль', phone: '996700111222',
-    doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }],
-    services: [{ id: 5, name: 'Лечение кариеса', durationMinutes: 60 }],
-    clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест' },
-    ...extra,
+    doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }],
+    services: [{ id: 5, name: 'Лечение кариеса', durationMinutes: 60, active: true }],
+    clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
+    admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 0, ...extra,
   }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -59,7 +59,7 @@ test('промокод при записи: «Проверить» показы�
   let booked: Book | null = null
   backend({}, (body) => {
     booked = body
-    return HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: 1, promoCode: 'ZUBY10' } satisfies Schemas['BookingViewsBooking'], { status: 201 })
+    return HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: 1, promoCode: 'ZUBY10', patientId: 0, self: true, waiting: false } satisfies Schemas['BookingViewsBooking'], { status: 201 })
   })
   const user = userEvent.setup()
   renderApp()
@@ -88,7 +88,7 @@ test('промокод из ссылки клиники подставлен; н
     sent.push(body)
     return body.promoCode
       ? HttpResponse.json({ title: 'Ошибка', errors: [{ field: 'promoCode', message: 'Срок промокода закончился' }] }, { status: 422 })
-      : HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: 1 } satisfies Schemas['BookingViewsBooking'], { status: 201 })
+      : HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: 1, patientId: 0, self: true, waiting: false } satisfies Schemas['BookingViewsBooking'], { status: 201 })
   })
   const user = userEvent.setup()
   renderApp()

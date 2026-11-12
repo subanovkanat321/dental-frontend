@@ -86,10 +86,10 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
   if (board.isPending) return <Loading />
   if (board.error) return <p className="error">{board.error.message}</p>
   const shown = board.data.patients ?? []
-  const everyone = (board.data.planPatients ?? 0) + (board.data.noShows ?? 0) + (board.data.recalls ?? 0) + (board.data.cancelled ?? 0)
+  const everyone = board.data.planPatients + board.data.noShows + board.data.recalls + board.data.cancelled
   const total = board.data.total ?? shown.length
-  const sent = board.data.sent ?? 0
-  const agreed = board.data.agreed ?? 0
+  const sent = board.data.sent
+  const agreed = board.data.agreed
   const r = result.data
 
   return (
@@ -98,17 +98,17 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
       <section className="comeback-summary" aria-label="Деньги на столе">
         <button type="button" className="comeback-money" aria-pressed={filter === 'PLAN'} onClick={() => setFilter(filter === 'PLAN' ? 'ALL' : 'PLAN')}>
           <span className="hint">Незаконченные планы лечения</span>
-          <b className="num">{somText(board.data.planSom ?? 0)}</b>
-          <span className="hint">· пациентов: {board.data.planPatients ?? 0}</span>
+          <b className="num">{somText(board.data.planSom)}</b>
+          <span className="hint">· пациентов: {board.data.planPatients}</span>
         </button>
         <button type="button" aria-pressed={filter === 'CANCELLED'} onClick={() => setFilter(filter === 'CANCELLED' ? 'ALL' : 'CANCELLED')}>
-          <span className="hint">Отменили и не записались</span><b className="num">{board.data.cancelled ?? 0}</b>
+          <span className="hint">Отменили и не записались</span><b className="num">{board.data.cancelled}</b>
         </button>
         <button type="button" aria-pressed={filter === 'NO_SHOW'} onClick={() => setFilter(filter === 'NO_SHOW' ? 'ALL' : 'NO_SHOW')}>
-          <span className="hint">Не пришли и не перезаписались</span><b className="num">{board.data.noShows ?? 0}</b>
+          <span className="hint">Не пришли и не перезаписались</span><b className="num">{board.data.noShows}</b>
         </button>
         <button type="button" aria-pressed={filter === 'RECALL'} onClick={() => setFilter(filter === 'RECALL' ? 'ALL' : 'RECALL')}>
-          <span className="hint">Пора на осмотр</span><b className="num">{board.data.recalls ?? 0}</b>
+          <span className="hint">Пора на осмотр</span><b className="num">{board.data.recalls}</b>
         </button>
       </section>
       </HeadTools>
@@ -118,14 +118,14 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
           Отправили план, не записались: {sent}{agreed > 0 ? ` · согласились: ${agreed}` : ''}
         </button>
       )}
-      {r && (r.invited ?? 0) > 0 && (
+      {r && r.invited > 0 && (
         <p className="comeback-result" aria-label="Tish вернул">
           ✅ За 30 дней вернулись <b>{r.returned} из {r.invited}</b> приглашённых
-          {(r.returnedPlanSom ?? 0) > 0 && <> · в их планах <b className="num">{somText(r.returnedPlanSom!)}</b></>}
-          {(r.paidSom ?? 0) > 0 && <> · уже оплачено <b className="num">{somText(r.paidSom!)}</b></>}
+          {r.returnedPlanSom > 0 && <> · в их планах <b className="num">{somText(r.returnedPlanSom)}</b></>}
+          {r.paidSom > 0 && <> · уже оплачено <b className="num">{somText(r.paidSom)}</b></>}
         </p>
       )}
-      {noServiceTerms && (board.data.recalls ?? 0) > 0 && (filter === 'ALL' || filter === 'RECALL') && (
+      {noServiceTerms && board.data.recalls > 0 && (filter === 'ALL' || filter === 'RECALL') && (
         <p className="hint small">Пора на осмотр — по сроку клиники. Сроки по услугам — в{' '}
           <a href="#/clinic/services">Клиника → Услуги и цены</a>.</p>
       )}
@@ -136,9 +136,9 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
           {shown.map((c) => (
             <li key={c.patientId}>
               <div className="comeback-head">
-                <button type="button" className="row-link" onClick={() => onOpen(c.patientId!)}>{c.fullName}</button>
+                <button type="button" className="row-link" onClick={() => onOpen(c.patientId)}>{c.fullName}</button>
                 <span className={`chip small comeback-${REASONS[c.reason!].tone}`}>{REASONS[c.reason!].label}</span>
-                {(c.planSom ?? 0) > 0 && <b className="num comeback-sum">{somText(c.planSom!)}</b>}
+                {c.planSom > 0 && <b className="num comeback-sum">{somText(c.planSom)}</b>}
               </div>
               {(c.plan ?? []).length > 0 && <p className="comeback-plan">{c.plan!.join(' · ')}</p>}
               {c.planSentAt && (
@@ -168,15 +168,15 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
                 <InviteForm candidate={c} onDone={() => setInviting(null)} />
               ) : (
                 <div className="actions">
-                  <button type="button" className={c.invitedAt ? 'btn small' : 'btn small primary'} onClick={() => setInviting(c.patientId!)}>
+                  <button type="button" className={c.invitedAt ? 'btn small' : 'btn small primary'} onClick={() => setInviting(c.patientId)}>
                     {c.reason === 'CANCELLED' ? 'Напомнить' : 'Пригласить'}</button>
                   <button type="button" className="btn small ghost"
-                    onClick={() => onBook({ id: c.patientId, fullName: c.fullName, phone: c.phone, telegram: c.telegram },
+                    onClick={() => onBook({ id: c.patientId, fullName: c.fullName ?? '', phone: c.phone, telegram: c.telegram },
                       c.cancelled ? { doctorId: c.cancelled.doctorId, serviceId: c.cancelled.serviceId, duration: c.cancelled.minutes } : undefined)}>
                     Записать</button>
                   {c.reason === 'CANCELLED' && (
                     <button type="button" className="btn small ghost" disabled={skip.isPending && skip.variables === c.patientId}
-                      onClick={() => skip.mutate(c.patientId!)}>Не звать</button>
+                      onClick={() => skip.mutate(c.patientId)}>Не звать</button>
                   )}
                 </div>
               )}
@@ -198,7 +198,7 @@ function InviteForm({ candidate: c, onDone }: { candidate: Candidate; onDone: ()
   const client = useQueryClient()
   const draft = useQuery({
     queryKey: ['comebacks', 'draft', c.patientId],
-    queryFn: () => unwrap(api.POST('/api/comebacks/{patientId}/draft', { params: { path: { patientId: c.patientId! } } })),
+    queryFn: () => unwrap(api.POST('/api/comebacks/{patientId}/draft', { params: { path: { patientId: c.patientId } } })),
     gcTime: 0,
   })
   const [text, setText] = useState<string | null>(null)
@@ -206,7 +206,7 @@ function InviteForm({ candidate: c, onDone }: { candidate: Candidate; onDone: ()
   const [sent, setSent] = useState('')
   const send = useMutation<Schemas['PatientMessage'] | undefined, ApiError, 'TELEGRAM' | 'WHATSAPP'>({
     mutationFn: (channel) => unwrap(api.POST('/api/comebacks/{patientId}/invite', {
-      params: { path: { patientId: c.patientId! } }, body: { text: value, channel },
+      params: { path: { patientId: c.patientId } }, body: { text: value, channel },
     })),
     onSuccess: (message, channel) => {
       haptic('success')

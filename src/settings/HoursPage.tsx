@@ -26,7 +26,7 @@ export function HoursPage({ me, onBack, title = 'Часы работы', tabs, o
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
     .filter((d) => me.admin || me.reception || d.id === me.doctorId)
-  const [open, setOpen] = useState<number | null>(doctors.length === 1 ? doctors[0]!.id! : me.doctorId ?? null)
+  const [open, setOpen] = useState<number | null>(doctors.length === 1 ? doctors[0]!.id : me.doctorId ?? null)
   return (
     <section className="schedule-main">
       <SubHeader title={title} onBack={onBack}>{tabs}</SubHeader>
@@ -40,10 +40,10 @@ export function HoursPage({ me, onBack, title = 'Часы работы', tabs, o
         <p className="hint">У каждого врача свои дни и часы: по ним свободное время в боте и в «Новой записи». Не задал — работает по часам клиники. Обед и намаз — в «Перерывах и выходных».</p>
         {doctors.map((d) => (
           <div key={d.id} className="hours-doctor">
-            <button type="button" className="hours-toggle" aria-expanded={open === d.id} onClick={() => setOpen(open === d.id ? null : d.id!)}>
+            <button type="button" className="hours-toggle" aria-expanded={open === d.id} onClick={() => setOpen(open === d.id ? null : d.id)}>
               <strong>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</strong><span aria-hidden="true">{open === d.id ? '▴' : '▾'}</span>
             </button>
-            {open === d.id && <HoursEditor doctorId={d.id!} doctorName={d.fullName ?? ''} onTimeOff={onTimeOff} />}
+            {open === d.id && <HoursEditor doctorId={d.id} doctorName={d.fullName ?? ''} onTimeOff={onTimeOff} />}
           </div>
         ))}
       </section>
@@ -87,7 +87,7 @@ function ClinicHours({ clinic: c, canEdit, admin, onTimeOff }: { clinic: Clinic;
       void askMakeWorkday({ day: code, off: t, who: 'всей клиники', doctorHours: false, onTimeOff }).then((ok) => {
         if (!ok) return
         setDays(next)
-        dropOff.mutate({ id: t.id!, week: next })
+        dropOff.mutate({ id: t.id, week: next })
       })
       return
     }

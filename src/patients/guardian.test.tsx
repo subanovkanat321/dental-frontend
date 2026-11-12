@@ -45,7 +45,7 @@ afterEach(() => {
 
 test('карточка ребёнка: бейдж по дате рождения и строка представителя', async () => {
   backend({ id: 5, fullName: 'Аружан Вымышленная', phone: '996700164001', birthDate: birthYearsAgo(7),
-    guardian: { fullName: 'Айгуль', relation: 'MOTHER' } })
+    guardian: { fullName: 'Айгуль', relation: 'MOTHER' }, telegram: false })
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Аружан Вымышленная' }))
   const card = await screen.findByRole('complementary', { name: 'Карточка пациента' })
@@ -54,7 +54,7 @@ test('карточка ребёнка: бейдж по дате рождения
 })
 
 test('добавить представителя: имя, кем приходится, свой номер', async () => {
-  const sent = backend({ id: 5, fullName: 'Эмир Вымышленный', phone: '996700164001', birthDate: birthYearsAgo(9) })
+  const sent = backend({ id: 5, fullName: 'Эмир Вымышленный', phone: '996700164001', birthDate: birthYearsAgo(9), telegram: false })
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Эмир Вымышленный' }))
   await userEvent.click(await screen.findByRole('tab', { name: 'Прочее' }))
@@ -70,7 +70,7 @@ test('добавить представителя: имя, кем приходи
 })
 
 test('напоминание в WhatsApp ребёнку — представителю: его номер, обращение к нему, «Запись ребёнка»', () => {
-  const patient: Patient = { fullName: 'Аружан', phone: '996555000001', guardian: { fullName: 'Айгуль', relation: 'MOTHER', phone: '996700164001' } }
+  const patient: Patient = { fullName: 'Аружан', phone: '996555000001', guardian: { fullName: 'Айгуль', relation: 'MOTHER', phone: '996700164001' }, id: 0, telegram: false }
   expect(contactPhone(patient)).toBe('996700164001')
   expect(contactPhone({ ...patient, guardian: { fullName: 'Айгуль', relation: 'MOTHER' } })).toBe('996555000001')
   expect(guardianLine({ phone: '996555000001' })).toBeNull()

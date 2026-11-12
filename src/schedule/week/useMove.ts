@@ -21,9 +21,9 @@ export function useMove(monday: string, doctorId: number) {
   const client = useQueryClient()
   const key = weekKey(monday, doctorId)
   return useMutation<Appointment, ApiError, Move, Snapshot>({
-    mutationFn: ({ appointment: a, date, minutes }) => sendAppointmentAction(a.id!, {
+    mutationFn: ({ appointment: a, date, minutes }) => sendAppointmentAction(a.id, {
       kind: 'reschedule',
-      body: { version: a.version ?? 0, startAt: slotInstant(date, minutes), durationMinutes: durationOf(a) },
+      body: { version: a.version, startAt: slotInstant(date, minutes), durationMinutes: durationOf(a) },
     }),
     onMutate: async ({ appointment: a, date, minutes }) => {
       // Автообновление раз в минуту не должно вернуть старое место поверх нового

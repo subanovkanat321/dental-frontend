@@ -15,7 +15,7 @@ type Row = { code: string; name: string; who: string; maxDoctors: string; monthS
 
 const toRow = (t: Tariff): Row => ({
   code: t.code ?? '', name: t.name ?? '', who: t.who ?? '', maxDoctors: t.maxDoctors != null ? String(t.maxDoctors) : '',
-  monthSom: String(t.monthSom ?? ''), yearSom: String(t.yearSom ?? ''),
+  monthSom: String(t.monthSom), yearSom: String(t.yearSom),
 })
 
 /**
@@ -35,7 +35,7 @@ export function TariffsTab() {
 function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
   const client = useQueryClient()
   const [rows, setRows] = useState<Row[]>((tariffs.tariffs ?? []).map(toRow))
-  const [pilot, setPilot] = useState(String(tariffs.pilotMonths ?? 0))
+  const [pilot, setPilot] = useState(String(tariffs.pilotMonths))
   const { dirty, commit } = useDirty({ rows, pilot })
   const save = useMutation<Tariffs, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/tariffs', {

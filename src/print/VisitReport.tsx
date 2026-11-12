@@ -33,7 +33,7 @@ function errorText(e: ApiError | null): string | null {
 export function AfterVisit({ appointment: a, me }: { appointment: Appointment; me: Me }) {
   const last = useQuery<Schemas['VisitReportsSent'] | null, ApiError>({
     queryKey: ['visit-report', a.id],
-    queryFn: async () => (await unwrap(api.GET('/api/appointments/{id}/visit-report', { params: { path: { id: a.id! } } }))) ?? null,
+    queryFn: async () => (await unwrap(api.GET('/api/appointments/{id}/visit-report', { params: { path: { id: a.id } } }))) ?? null,
     retry: false,
     enabled: !isAssistant(me),
   })
@@ -51,7 +51,7 @@ export function AfterVisit({ appointment: a, me }: { appointment: Appointment; m
 
 function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointment; me: Me; last: Schemas['VisitReportsSent'] | null }) {
   const client = useQueryClient()
-  const id = a.id!
+  const id = a.id
   // Памятка услуги — до черновика: показать, что уйдёт в «Уход дома», и распечатать её отдельно
   const memo = useQuery({
     queryKey: ['care-memo', id, null],
@@ -126,14 +126,14 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
               <p className="hint small">Правка — только в этом сообщении; текст памятки клиники не меняется.</p>
             </div>
           ) : (
-            <OtherMemo appointment={a} onPick={(title, body) => { setCareTitle(title); setCare(body); setDraft({ ...draft, care: { title, text: body } }) }} />
+            <OtherMemo appointment={a} onPick={(memoId, title, body) => { setCareTitle(title); setCare(body); setDraft({ ...draft, care: { memoId, title, text: body } }) }} />
           )}
           <div className="actions">
             {draft.telegram && (
               <button type="button" className="btn primary" disabled={send.isPending || !text.trim()} onClick={() => send.mutate('TELEGRAM')}>
                 📤 Отправить в Telegram</button>
             )}
-            {a.patient?.phone && (
+            {a.patient.phone && (
               <button type="button" className={draft.telegram ? 'btn' : 'btn primary'} disabled={send.isPending || !text.trim()}
                 onClick={() => send.mutate('WHATSAPP')}>WhatsApp</button>
             )}
@@ -151,8 +151,8 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
             <>
               <h1>После приёма</h1>
               <dl>
-                <dt>Пациент</dt><dd>{a.patient?.fullName}</dd>
-                <dt>Приём</dt><dd>{docDate(a.startAt!)}</dd>
+                <dt>Пациент</dt><dd>{a.patient.fullName}</dd>
+                <dt>Приём</dt><dd>{docDate(a.startAt)}</dd>
               </dl>
               <div className="memo-body">{text}</div>
               {care.trim() && (
@@ -180,14 +180,14 @@ function NoMemo() {
 }
 
 /** Нет памятки у услуги — можно взять другую для этого сообщения. */
-function OtherMemo({ appointment: a, onPick }: { appointment: Appointment; onPick: (title: string, body: string) => void }) {
+function OtherMemo({ appointment: a, onPick }: { appointment: Appointment; onPick: (memoId: number, title: string, body: string) => void }) {
   const all = useQuery({ queryKey: ['care-memos'], queryFn: () => unwrap(api.GET('/api/care-memos')) })
   const [error, setError] = useState<string | null>(null)
   const pick = async (memoId: number) => {
     try {
       // Текст — с сервера: в нём телефон клиники вместо {телефон}
-      const m = await unwrap(api.GET('/api/appointments/{id}/care-memo', { params: { path: { id: a.id! }, query: { memoId } } }))
-      if (m.memoId != null) onPick(m.title!, m.body!)
+      const m = await unwrap(api.GET('/api/appointments/{id}/care-memo', { params: { path: { id: a.id }, query: { memoId } } }))
+      if (m.memoId != null) onPick(m.memoId, m.title!, m.body!)
     }
     catch (e) {
       setError(e instanceof ApiError ? e.message : 'Не получилось')

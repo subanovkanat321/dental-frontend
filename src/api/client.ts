@@ -121,41 +121,37 @@ export async function fetchBlob(path: string): Promise<Blob> {
 }
 
 /**
- * Имя бота клиники — для ссылок-приглашений (t.me/<бот>?start=…). /web/config — не часть
- * REST-контракта /api (его отдаёт вход сайта), поэтому тип — здесь, а не из schema.d.ts.
+ * Настройки входа на сайт (GET /web/config) — один запрос и один ключ кэша на всё приложение: экран входа
+ * (loginConfig) и ссылки-приглашения (botUsername — имя бота для t.me/<бот>?start=…). Ошибка — null.
  */
-/**
- * Вход на сайт: бот (имя и числовой id — окно входа Telegram.Login.auth), включён ли вход по SMS
- * (smsLogin) и «номер + пароль» (passwordLogin — работает и без SMS). null — не настроено ничего.
- */
-/**
- * Настройки страницы входа (/web/config, вне контракта /api). Вход на сайт — только по номеру и паролю;
- * telegramCode — код в Telegram (бот настроен), smsLogin — SMS подключены. Кнопка «Получить код» одна: канал
- * выбирает сервер (сначала Telegram, иначе SMS); smsLogin — показать «Не пришло? Отправить по SMS».
- * null — вход на сайт не настроен (нет токена бота).
- */
-export type LoginConfig = {
-  username: string; smsLogin: boolean; passwordLogin: boolean; telegramCode: boolean
-  /** «Войти через Telegram» — ссылка в бота и «Подтвердить вход» там (TelegramLoginController бэкенда) */
-  telegramLogin: boolean
-}
+export type WebConfig = Schemas['WebAuthControllerConfig']
 
-export async function botConfig(): Promise<LoginConfig | null> {
+export const WEB_CONFIG_KEY = ['web-config'] as const
+
+export async function webConfig(): Promise<WebConfig | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
   if (!response.ok) return null
-  const body = await response.json().catch(() => null) as
-    { botUsername?: string | null; smsLogin?: boolean; passwordLogin?: boolean; telegramCode?: boolean; telegramLogin?: boolean } | null
-  return body?.passwordLogin || body?.smsLogin
-    ? { username: body.botUsername ?? '', smsLogin: body.smsLogin === true, passwordLogin: body.passwordLogin === true,
-        telegramCode: body.telegramCode === true, telegramLogin: body.telegramLogin === true }
-    : null
+  return await response.json().catch(() => null) as WebConfig | null
 }
 
 /**
- * Видео-инструкции «Как сделать в Tish» (GET /web/materials/howto — вне контракта /api, как /web/materials/public
- * для /join): ролик и обложка — открытые адреса /web/materials/howto/<id>.mp4|.webp (белый список бэкенда).
+ * Вход на сайт: только по номеру и паролю (passwordLogin) или с кодом по SMS (smsLogin); telegramCode — код в
+ * Telegram (бот настроен); telegramLogin — «Войти через Telegram». Кнопка «Получить код» одна: канал выбирает
+ * сервер (сначала Telegram, иначе SMS); smsLogin — показать «Не пришло? Отправить по SMS». null — вход на сайт
+ * не настроен (нет токена бота).
  */
-export type HowToVideo = { id: string; title: string; video: string; poster: string | null }
+/** Имя бота из настроек входа — для ссылок t.me/<бот>?start=…; бот не настроен — null. */
+export const botUsername = (config: WebConfig | null): string | null => config?.botUsername ?? null
+
+export function loginConfig(config: WebConfig | null | undefined): WebConfig | null {
+  return config?.passwordLogin || config?.smsLogin ? config : null
+}
+
+/**
+ * Видео-инструкции «Как сделать в Tish» (GET /web/materials/howto): ролик и обложка — открытые адреса
+ * /web/materials/howto/<id>.mp4|.webp (белый список бэкенда).
+ */
+export type HowToVideo = Schemas['MaterialsHowToVideo']
 
 export async function howToVideos(): Promise<HowToVideo[]> {
   const response = await globalThis.fetch(new Request(new URL('/web/materials/howto', window.location.origin), { credentials: 'same-origin' }))
@@ -164,7 +160,7 @@ export async function howToVideos(): Promise<HowToVideo[]> {
 }
 
 /**
- * POST на адрес входа /web/… (вне контракта /api): с заголовком сайта; ошибка — {@link ApiError}.
+ * POST на адрес входа /web/…: с заголовком сайта; ошибка — {@link ApiError}.
  * Ответ 204 — null, с телом — его JSON.
  */
 async function webPost<T = void>(path: string, body: unknown): Promise<T | null> {
@@ -185,7 +181,7 @@ async function webRequest<T = void>(method: 'GET' | 'POST' | 'DELETE', path: str
  * Пропуск «код подтверждён»: одноразовый, 10 минут — с ним задают пароль. temporary — вошли
  * временным паролем от админа. Пропуск держим только в памяти страницы, не в localStorage.
  */
-export type SetupToken = { setupToken: string; temporary: boolean }
+export type SetupToken = Schemas['PhoneLoginControllerSetupToken']
 
 /**
  * Как прислать код: «auto» — канал выбирает сервер (Telegram, если номер к нему привязан и бот доставил,
@@ -233,9 +229,7 @@ export async function setNewPassword(token: string, password: string): Promise<v
  * Telegram). Сам шаг помнит сервер — в HttpOnly-cookie: номер там зашифрован, скрипту страницы недоступен.
  * Номер в ответе — только маской. step «code» — ввести код, «password» — придумать пароль.
  */
-export type LoginPending = {
-  step: 'code' | 'password'; phoneMasked: string; secondsLeft: number; resendSeconds: number; temporary: boolean
-}
+export type LoginPending = Schemas['PhoneLoginControllerPending']
 
 /** На каком шаге продолжить вход; ничего не ждём или ошибка — null (тогда обычный экран входа). */
 export async function loginPending(): Promise<LoginPending | null> {
@@ -253,16 +247,16 @@ export async function forgetLoginPending(): Promise<void> {
 
 /**
  * «Войти через Telegram»: сервер дал одноразовую ссылку в бота (t.me/<бот>?start=weblogin_…) и поставил
- * HttpOnly-cookie, которая привязывает вход к этому браузеру. Адреса вне контракта /api — типы здесь.
+ * HttpOnly-cookie, которая привязывает вход к этому браузеру.
  */
-export type TelegramLoginStarted = { link: string; secondsLeft: number }
+export type TelegramLoginStarted = Schemas['TelegramLoginControllerStarted']
 
 /**
  * Как дела у входа через Telegram: none — не ждём (нет, истёк, уже вошли); waiting — ждём «Подтвердить вход»
  * в боте (link — та же ссылка, после перезагрузки страницы); cancelled — в боте нажали «Нет»; done — вошли,
  * cookie-сессия уже в ответе.
  */
-export type TelegramLoginStatus = { state: 'none' | 'waiting' | 'cancelled' | 'done'; secondsLeft: number; link: string | null }
+export type TelegramLoginStatus = Schemas['TelegramLoginControllerStatus']
 
 /** Начать вход через Telegram. 429 — много попыток с адреса, 503 — вход через Telegram не настроен. */
 export async function startTelegramLogin(): Promise<TelegramLoginStarted> {
@@ -273,7 +267,7 @@ export async function startTelegramLogin(): Promise<TelegramLoginStarted> {
 
 /** Опрос входа через Telegram (раз в 2 секунды и при открытии экрана входа). */
 export async function telegramLoginStatus(): Promise<TelegramLoginStatus> {
-  return await webRequest<TelegramLoginStatus>('GET', '/web/login/telegram/status') ?? { state: 'none', secondsLeft: 0, link: null }
+  return await webRequest<TelegramLoginStatus>('GET', '/web/login/telegram/status') ?? { state: 'none', secondsLeft: 0 }
 }
 
 /** «Отмена»: сервер забывает вход и гасит cookie. */
@@ -283,18 +277,15 @@ export async function forgetTelegramLogin(): Promise<void> {
 
 /**
  * Ссылка-приглашение на сайт (/invite#join_… врачу, /invite#staff_… сотруднику): что за приглашение.
- * Адрес вне контракта /api (как вход) — тип здесь. kind — DOCTOR или STAFF; botUsername — для
+ * kind — DOCTOR или STAFF; botUsername — для
  * «Открыть в Telegram», бот не настроен — null. codeRequired — регистрация по номеру с кодом из SMS (SMS
  * на сервере подключены); false — номер и пароль без кода. pending — код по этой ссылке уже отправлен и ещё
  * действует (страницу перезагрузили): сразу шаг кода.
  */
-export type InviteInfo = {
-  kind: 'DOCTOR' | 'STAFF'; clinicName: string; fullName: string; role: string | null; roleText: string
-  expiresAt: string; botUsername: string | null; codeRequired: boolean; pending: InviteCodeStep | null
-}
+export type InviteInfo = Schemas['InviteControllerInviteView']
 
 /** Шаг «Код из SMS»: номер маской, сколько ещё действует код и через сколько можно отправить ещё раз (с). */
-export type InviteCodeStep = { phoneMasked: string; secondsLeft: number; resendSeconds: number }
+export type InviteCodeStep = Schemas['InviteControllerCodeStep']
 
 /** Код ссылки — только в теле: 404 — ссылка недействительна или истекла, 429 — много неверных кодов. */
 export async function inviteInfo(token: string): Promise<InviteInfo> {
@@ -326,16 +317,9 @@ export async function forgetInviteCode(): Promise<void> {
  * теле, нигде не сохраняем.
  */
 export async function inviteRegister(token: string, fields: { phone?: string; code?: string; password: string }):
-Promise<{ fullName: string; roleText: string }> {
-  const done = await webPost<{ fullName: string; roleText: string }>('/web/invite/register', { token, ...fields })
+Promise<Schemas['InviteControllerRegistered']> {
+  const done = await webPost<Schemas['InviteControllerRegistered']>('/web/invite/register', { token, ...fields })
   return done ?? { fullName: '', roleText: '' }
-}
-
-export async function botUsername(): Promise<string | null> {
-  const response = await globalThis.fetch(new Request(new URL('/web/config', window.location.origin), { credentials: 'same-origin' }))
-  if (!response.ok) return null
-  const body = await response.json().catch(() => null) as { botUsername?: string | null } | null
-  return body?.botUsername ?? null
 }
 
 /**
@@ -397,13 +381,13 @@ async function forgetPushSubscription(): Promise<void> {
   }
 }
 
-/** Тарифы, как их видят клиники на /join. /web/tariffs — не часть контракта /api; форма — Tariffs. */
+/** Тарифы, как их видят клиники на /join (GET /web/tariffs). */
 export async function webTariffs(): Promise<Schemas['Tariffs'] | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/tariffs', window.location.origin), { credentials: 'same-origin' }))
   return response.ok ? (await response.json()) as Schemas['Tariffs'] : null
 }
 
-/** Кейс на /join («Как работает в клинике»): /web/case — не часть контракта /api; форма — JoinCaseCase. */
+/** Кейс на /join («Как работает в клинике», GET /web/case). */
 export async function webCase(): Promise<Schemas['JoinCaseCase'] | null> {
   const response = await globalThis.fetch(new Request(new URL('/web/case', window.location.origin), { credentials: 'same-origin' }))
   return response.ok ? (await response.json()) as Schemas['JoinCaseCase'] : null

@@ -107,7 +107,7 @@ function NotificationsBody() {
       const result = await unwrap(api.POST('/api/push/test'))
       // Куда ушло — по именам устройств: сразу видно, подключён ли, например, ноутбук
       const where = devices.length ? `: ${devices.join(', ')}` : ''
-      const count = result.sent ?? 0
+      const count = result.sent
       setTest(count ? `Отправили на ${count} ${plural(count, 'устройство', 'устройства', 'устройств')}${where} — уведомление придёт через пару секунд. Нет на каком-то — подключите его в этом разделе на нём самом.`
         : 'Не дошло ни на одно устройство. Подключите это устройство ещё раз.')
     } catch (e) {

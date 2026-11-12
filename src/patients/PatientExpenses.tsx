@@ -24,7 +24,7 @@ export function PatientExpenses({ patient, me, doctorId }: {
   const client = useQueryClient()
   const list = useQuery({
     queryKey: ['expenses', 'patient', patient.id],
-    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/expenses', { params: { path: { patientId: patient.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/expenses', { params: { path: { patientId: patient.id } } })),
     retry: false,
   })
   const [open, setOpen] = useState(false)
@@ -52,7 +52,7 @@ export function PatientExpenses({ patient, me, doctorId }: {
     add.mutate()
   }
   const items = list.data ?? []
-  const total = items.reduce((sum, x) => sum + (x.amountSom ?? 0), 0)
+  const total = items.reduce((sum, x) => sum + x.amountSom, 0)
   return (
     <div className="patient-expenses">
       {items.length > 0 && (
@@ -63,9 +63,9 @@ export function PatientExpenses({ patient, me, doctorId }: {
               <li key={x.id}>
                 {editing === x.id ? <ExpenseEdit expense={x} onDone={() => setEditing(null)} /> : (
                   <>
-                    <span>{x.category} · <b className="num">{somText(x.amountSom ?? 0)}</b>
+                    <span>{x.category} · <b className="num">{somText(x.amountSom)}</b>
                       <span className="hint"> · {x.spentOn ? shortDate(`${x.spentOn}T12:00:00Z`) : ''}{x.comment ? ` · ${x.comment}` : ''}</span></span>
-                    <button type="button" className="link" onClick={() => setEditing(x.id!)}>изменить</button>
+                    <button type="button" className="link" onClick={() => setEditing(x.id)}>изменить</button>
                   </>
                 )}
               </li>

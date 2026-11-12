@@ -89,7 +89,7 @@ test('телефон: «Ещё → Помощь» — тот же список �
 
 test('«Помощь → Группа врачей Tish»: ссылка из «Сведений о платформе» открывается наружу; без ссылки пункта нет', async () => {
   const group = 'https://t.me/+tYKBuv9OgZ40YTky'
-  let info: Schemas['PlatformInfoInfo'] = { doctorsGroupUrl: group }
+  let info: Schemas['PlatformInfoInfo'] = { doctorsGroupUrl: group, accessLog: false, accessNotify: false, accessRequiresGrant: false }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
@@ -110,7 +110,7 @@ test('«Помощь → Группа врачей Tish»: ссылка из «�
   view.unmount()
 
   // Владелец очистил поле — пункта нет
-  info = {}
+  info = { accessLog: false, accessNotify: false, accessRequiresGrant: false }
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Помощь' }))
   const empty = screen.getByRole('dialog', { name: 'Помощь' })

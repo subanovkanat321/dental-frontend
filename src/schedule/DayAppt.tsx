@@ -40,24 +40,24 @@ export const DayAppt = memo(function DayAppt({ a, date, from, active, money, cha
   return (
     <button type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${active ? ' active' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}`}
       style={{ top, height: h }} {...hover(a)}
-      onClick={() => onOpen(a.id!)}
-      aria-label={`${carried ? 'со вчера ' : ''}${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
+      onClick={() => onOpen(a.id)}
+      aria-label={`${carried ? 'со вчера ' : ''}${timeOf(a.startAt)}–${timeOf(a.endAt)}, ${a.patient.fullName}: ${s.label}`}>
       {/* Обёртка — для широкого блока (один врач на экране): там она сеткой «время | имя и услуга | значки и статус»
           (container query в crm.css). В узком блоке она display: contents — раскладка прежняя.
           «wide-only» — то, что узкому блоку по высоте не влезает, а широкому влезает в ту же строку. */}
       <span className="appt-body">
         <span className="appt-time num">
-          <span className="appt-from">{carried && <span className="appt-carried">со вчера </span>}{timeOf(a.startAt!)}</span>
-          <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt!)}</span>
+          <span className="appt-from">{carried && <span className="appt-carried">со вчера </span>}{timeOf(a.startAt)}</span>
+          <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt)}</span>
         </span>
-        <span className="appt-name">{a.patient?.fullName}</span>
+        <span className="appt-name">{a.patient.fullName}</span>
         <ApptBadges appointment={a} money={money} chair={colleagueTimeOf(a, chairTime)} />
         {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
         <span className={`appt-state${short || h > 56 ? '' : ' wide-only'}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>
         <span className="appt-sub">
           {a.serviceName && <span className={`appt-note${!short && h > 66 ? '' : ' wide-only'}`}>{a.serviceName}</span>}
           {a.comment && <span className={`appt-note${!short && h > 88 ? '' : ' wide-only'}`}>{a.comment}</span>}
-          {a.depositStatus && money && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '') && (
+          {a.depositStatus && money && ['REQUESTED', 'SCHEDULED'].includes(a.status) && (
             <span className={`appt-note${!short && h > 80 ? '' : ' wide-only'}`}>Предоплата {a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}</span>
           )}
         </span>

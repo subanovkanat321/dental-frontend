@@ -25,7 +25,7 @@ export function SurveyResults({ survey }: { survey: Details }) {
   const results = useQuery({
     queryKey: ['platform-survey-results', survey.id, role, clinicId],
     queryFn: () => unwrap(api.GET('/api/platform/surveys/{id}/results', {
-      params: { path: { id: survey.id! }, query: { role: role || undefined, clinicId: clinicId ?? undefined } },
+      params: { path: { id: survey.id }, query: { role: role || undefined, clinicId: clinicId ?? undefined } },
     })),
   })
   const csv = useMutation<void, ApiError>({ mutationFn: () => download(`/api/platform/surveys/${survey.id}/results.csv`, `опрос-${survey.id}.csv`) })
@@ -57,7 +57,7 @@ export function SurveyResults({ survey }: { survey: Details }) {
               {(r.byRole ?? []).map((x) => <div key={x.role} className="survey-tile"><span className="hint">{ROLE_ONE[x.role!]}</span><b>{x.count}</b></div>)}
             </div>
             {(r.byClinic?.length ?? 0) > 1 && (
-              <Bars label="По клиникам" total={r.responses} rows={(r.byClinic ?? []).map((c) => [c.clinicName ?? 'Клиника удалена', c.count ?? 0])} />
+              <Bars label="По клиникам" total={r.responses} rows={(r.byClinic ?? []).map((c) => [c.clinicName ?? 'Клиника удалена', c.count])} />
             )}
           </section>
           {(r.questions ?? []).map((q, i) => <QuestionResult key={q.questionId} q={q} number={i + 1} />)}
@@ -82,14 +82,14 @@ export function SurveyResults({ survey }: { survey: Details }) {
 
 function QuestionResult({ q, number }: { q: Result; number: number }) {
   const counts = q.counts ?? []
-  const answered = q.answered ?? 0
+  const answered = q.answered
   return (
     <section className="card-block survey-q-result" aria-label={`Итоги: ${q.text}`}>
       <h3>{number}. {q.text}</h3>
       <p className="hint">Ответили: {answered}</p>
       {q.type === 'NPS' && q.nps && (
         <div className="survey-tiles">
-          <div className="survey-tile hero"><span className="hint">NPS</span><b>{q.nps.score! > 0 ? `+${q.nps.score}` : q.nps.score}</b></div>
+          <div className="survey-tile hero"><span className="hint">NPS</span><b>{q.nps.score > 0 ? `+${q.nps.score}` : q.nps.score}</b></div>
           <div className="survey-tile"><span className="hint">Порекомендуют (9–10)</span><b>{q.nps.promoters}</b></div>
           <div className="survey-tile"><span className="hint">Нейтральны (7–8)</span><b>{q.nps.passives}</b></div>
           <div className="survey-tile"><span className="hint">Не порекомендуют (0–6)</span><b>{q.nps.detractors}</b></div>

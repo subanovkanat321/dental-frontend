@@ -11,12 +11,11 @@ import { ChairField, ChairHoursHint } from './ChairField'
 import { HoursEditor } from './HoursEditor'
 import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
-import { DoctorPhone, StaffPhone } from './PhoneParts'
+import { DoctorPhone, StaffPhone, type Doctor } from './PhoneParts'
 import { isPhoneLogin } from './texts'
 import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
-type Doctor = Schemas['DoctorAdminView']
 
 /** Врачи нужны почти везде (переключатель в «Расписании», «Касса», склад) — перечитать и me. */
 function useRefreshDoctors() {
@@ -77,14 +76,14 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
   const work = (
     <>
       {!own && <ActiveSwitch doctor={d} admin={admin} onSaved={refresh} />}
-      {editsWork && <DoctorServices key={d.id} doctorId={d.id!} me={me} />}
+      {editsWork && <DoctorServices key={d.id} doctorId={d.id} me={me} />}
       <section className="form">
         <h4>Часы работы</h4>
         <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — во вкладке «Перерывы».</p>
-        <HoursEditor doctorId={d.id!} doctorName={d.fullName ?? ''} />
-        <ChairHoursHint doctorId={d.id!} me={me} />
+        <HoursEditor doctorId={d.id} doctorName={d.fullName ?? ''} />
+        <ChairHoursHint doctorId={d.id} me={me} />
       </section>
-      <ChairField key={`chair-${d.id}`} doctorId={d.id!} me={me} />
+      <ChairField key={`chair-${d.id}`} doctorId={d.id} me={me} />
     </>
   )
   const access = admin ? <AccessAdmin doctor={d} self={self} inline={inline} onDone={refresh} />
@@ -153,7 +152,7 @@ function ProfileForm({ doctor: d, draft, onSaved, who }: { doctor: Doctor; draft
   const { dirty, commit } = useDirty(form)
   const [photoError, setPhotoError] = useState('')
   const save = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/profile', { params: { path: { id: d.id! } }, body: form })),
+    mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/profile', { params: { path: { id: d.id } }, body: form })),
     onSuccess: () => {
       commit()
       onSaved()
@@ -169,7 +168,7 @@ function ProfileForm({ doctor: d, draft, onSaved, who }: { doctor: Doctor; draft
     onError: (e) => setPhotoError(e instanceof ApiError ? e.fieldErrors.photo ?? e.message : 'Не получилось открыть фото — выберите другое'),
   })
   const removePhoto = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/doctors/{id}/photo', { params: { path: { id: d.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/doctors/{id}/photo', { params: { path: { id: d.id } } })),
     onSuccess: onSaved,
   })
   const pick = (e: ChangeEvent<HTMLInputElement>) => {
@@ -236,7 +235,7 @@ function ProfileView({ doctor: d }: { doctor: Doctor }) {
 function ActiveSwitch({ doctor: d, admin, onSaved }: { doctor: Doctor; admin: boolean; onSaved: () => void }) {
   const active = d.active !== false
   const save = useMutation<unknown, ApiError, boolean>({
-    mutationFn: (next) => unwrap(api.PUT('/api/doctors/{id}/active', { params: { path: { id: d.id! } }, body: { active: next } })),
+    mutationFn: (next) => unwrap(api.PUT('/api/doctors/{id}/active', { params: { path: { id: d.id } }, body: { active: next } })),
     onSuccess: onSaved,
   })
   if (!admin) {
@@ -261,11 +260,11 @@ function AccessAdmin({ doctor: d, self, inline, onDone }: { doctor: Doctor; self
   const linked = d.telegramId != null
   const isAdmin = d.role === 'ADMIN'
   const makeInvite = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/doctors/{id}/invite', { params: { path: { id: d.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/doctors/{id}/invite', { params: { path: { id: d.id } } })),
     onSuccess: (i) => setInvite(i.token ?? null),
   })
   const rights = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/admin', { params: { path: { id: d.id! } }, body: { admin: !isAdmin } })),
+    mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/admin', { params: { path: { id: d.id } }, body: { admin: !isAdmin } })),
     onSuccess: () => {
       // Свои права поменялись — меню и доступы другие: проще начать заново
       if (self) window.location.reload()
@@ -311,7 +310,7 @@ function AccessAdmin({ doctor: d, self, inline, onDone }: { doctor: Doctor; self
 
 function RemoveDoctor({ doctor: d, onDone }: { doctor: Doctor; onDone: () => void }) {
   const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/doctors/{id}', { params: { path: { id: d.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/doctors/{id}', { params: { path: { id: d.id } } })),
     onSuccess: onDone,
   })
   return (

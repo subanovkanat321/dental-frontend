@@ -24,7 +24,7 @@ export function GuardianBox({ patient, canEdit }: { patient: Patient; canEdit: b
     for (const key of ['patient-card', 'appointments', 'patients']) void client.invalidateQueries({ queryKey: [key] })
   }
   const remove = useMutation<Patient, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/patients/{id}/guardian', { params: { path: { id: patient.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/patients/{id}/guardian', { params: { path: { id: patient.id } } })),
     onSuccess: refresh,
   })
   const line = guardianLine(patient)
@@ -58,7 +58,7 @@ function GuardianForm({ patient, onDone, onCancel }: { patient: Patient; onDone:
   const [f, setF] = useState({ fullName: g?.fullName ?? '', relation: g?.relation ?? 'MOTHER', phone: phoneToInput(g?.phone) })
   const save = useMutation<Patient, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/patients/{id}/guardian', {
-      params: { path: { id: patient.id! } },
+      params: { path: { id: patient.id } },
       body: { fullName: f.fullName.trim(), relation: f.relation, phone: phoneFromInput(f.phone) || undefined },
     })),
     onSuccess: onDone,

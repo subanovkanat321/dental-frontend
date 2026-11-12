@@ -40,7 +40,7 @@ export function PlanDocs({ patient, steps }: { patient: Patient; steps: Step[] }
 }
 
 function PlainPlanDocs({ patient, steps }: { patient: Patient; steps: Step[] }) {
-  const patientId = patient.id!
+  const patientId = patient.id
   const [printing, setPrinting] = useState(false)
   // Текст для WhatsApp — заранее: окно WhatsApp браузер откроет только сразу по нажатию
   const version = steps.map((s) => [s.id, s.tooth, s.title, s.priceSom, s.doneAt].join(':')).join('|')
@@ -72,14 +72,14 @@ function PlanPrint({ patient, steps, onClose }: { patient: Patient; steps: Step[
   const [note, setNote] = useState('')
   const money = Boolean(me && !isAssistant(me))
   const prices = money && steps.some((s) => s.priceSom != null)
-  const patientId = patient.id!
+  const patientId = patient.id
   const debts = useQuery({
     queryKey: ['debts', 'patient', patientId],
     queryFn: () => unwrap(api.GET('/api/appointments/debts', { params: { query: { patientId } } })),
     enabled: money,
     retry: false,
   })
-  const debt = (debts.data ?? []).reduce((sum, d) => sum + (d.debtSom ?? 0), 0)
+  const debt = (debts.data ?? []).reduce((sum, d) => sum + d.debtSom, 0)
   const doctor = (me?.doctors ?? []).find((d) => d.id === me?.doctorId)?.fullName
   const stages = stagesOf(steps)
   const left = steps.filter((s) => !s.doneAt).reduce((sum, s) => sum + (s.priceSom ?? 0), 0)

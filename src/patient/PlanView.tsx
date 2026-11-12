@@ -38,8 +38,8 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
       {plan.forName && <p className="hint">{t('planFor', { name: plan.forName })}</p>}
       <p className="hint">{[plan.clinicName, plan.doctorName ? t('planDoctor', { name: plan.doctorName }) : null].filter(Boolean).join(' · ')}</p>
       {stages.map((st) => (
-        <section key={st.stage} className="plan-view-stage" aria-label={many ? t('planStage', { n: st.stage ?? 1 }) : t('planWhat')}>
-          <h2>{many ? t('planStage', { n: st.stage ?? 1 }) : t('planWhat')}</h2>
+        <section key={st.stage} className="plan-view-stage" aria-label={many ? t('planStage', { n: st.stage }) : t('planWhat')}>
+          <h2>{many ? t('planStage', { n: st.stage }) : t('planWhat')}</h2>
           <ul>
             {(st.items ?? []).map((item, i) => (
               <li key={i}>
@@ -48,10 +48,10 @@ export function PlanView({ plan, t, onAgree, onAsk, onBook, busy = false, error 
               </li>
             ))}
           </ul>
-          {many && (st.totalSom ?? 0) > 0 && <p className="plan-view-sub">{t('planStageTotal')}: <b className="num">{somText(st.totalSom!)}</b></p>}
+          {many && st.totalSom > 0 && <p className="plan-view-sub">{t('planStageTotal')}: <b className="num">{somText(st.totalSom)}</b></p>}
         </section>
       ))}
-      {(plan.totalSom ?? 0) > 0 && <p className="plan-view-total">{t('planTotal')}: <b className="num">{somText(plan.totalSom!)}</b></p>}
+      {plan.totalSom > 0 && <p className="plan-view-total">{t('planTotal')}: <b className="num">{somText(plan.totalSom)}</b></p>}
       {plan.duration && <p>{t('planDuration', { d: plan.duration })}</p>}
       {plan.validUntil && <p>{t('planValid', { date: day(plan.validUntil) })}</p>}
       <p className="hint small">{t('planNote')}</p>

@@ -61,7 +61,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
 
   // Чьи пациенты: все или одного врача (у кого был или будет приём у него)
   // Ассистенту — только его врачи
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
+  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id)))
   // Ассистент сразу видит пациентов своего врача
   const [doctorId, setDoctorId] = useState<number | null>(() => (me.assistantOf?.length === 1 ? me.assistantOf[0]! : null))
   const [slot, setSlot] = useHeadSlot()
@@ -116,7 +116,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   if (medical) {
     return (
       <div className="schedule">
-        <MedicalRecord patient={medical} readOnly={isAssistant(me)} onBack={() => { setSelected(medical.id!); setMedical(null) }} />
+        <MedicalRecord patient={medical} readOnly={isAssistant(me)} onBack={() => { setSelected(medical.id); setMedical(null) }} />
       </div>
     )
   }
@@ -169,9 +169,9 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
             </thead>
             <tbody>
               {sorted.map((p) => (
-                <tr key={p.id} className={['clickable', p.id === selected ? 'active' : ''].join(' ').trim()} onClick={rowClick(() => setSelected(p.id!))}>
+                <tr key={p.id} className={['clickable', p.id === selected ? 'active' : ''].join(' ').trim()} onClick={rowClick(() => setSelected(p.id))}>
                   <td>
-                    <button type="button" className="row-link" onClick={() => setSelected(p.id!)}>{p.fullName}</button>
+                    <button type="button" className="row-link" onClick={() => setSelected(p.id)}>{p.fullName}</button>
                     {p.telegram && <span className="tg" title="Пишет боту в Telegram — напоминания придут туда">Telegram</span>}
                   </td>
                   <td className="nowrap num">{p.phone ? formatPhone(p.phone) : '—'}</td>

@@ -14,10 +14,10 @@ type Me = Schemas['BookingViewsMe']
  * данные и ключ, что у карточки пациента (['patient-card', id]).
  */
 export function PatientHistory({ appointment: a, me }: { appointment: Appointment; me: Me }) {
-  const patientId = a.patient?.id
+  const patientId = a.patient.id
   const card = useQuery({
     queryKey: ['patient-card', patientId],
-    queryFn: () => unwrap(api.GET('/api/appointments/by-patient/{patientId}', { params: { path: { patientId: patientId! } } })),
+    queryFn: () => unwrap(api.GET('/api/appointments/by-patient/{patientId}', { params: { path: { patientId: patientId } } })),
     enabled: patientId != null,
     retry: false,
   })
@@ -26,7 +26,7 @@ export function PatientHistory({ appointment: a, me }: { appointment: Appointmen
   const before = a.startAt ? Date.parse(a.startAt) : Infinity
   const earlier = (card.data.past ?? [])
     .filter((v) => v.id !== a.id && v.startAt && Date.parse(v.startAt) < before)
-    .sort((x, y) => Date.parse(y.startAt!) - Date.parse(x.startAt!))
+    .sort((x, y) => Date.parse(y.startAt) - Date.parse(x.startAt))
   const visits = earlier.filter((v) => v.status === 'DONE')
   const noShows = earlier.filter((v) => v.status === 'NO_SHOW').length
   const last = visits[0]
@@ -37,8 +37,8 @@ export function PatientHistory({ appointment: a, me }: { appointment: Appointmen
     <p className="history-line" aria-label="История пациента">
       {!last ? <>Впервые в клинике</> : (
         <>
-          Визитов: <b className="num">{visits.length}</b> · последний <span className="nowrap">{shortDate(last.startAt!)}</span>
-          <span className="hint"> ({agoText(last.startAt!)})</span>
+          Визитов: <b className="num">{visits.length}</b> · последний <span className="nowrap">{shortDate(last.startAt)}</span>
+          <span className="hint"> ({agoText(last.startAt)})</span>
           {last.serviceName && <>, {last.serviceName}</>}
           {lastDoctor && <span className="hint"> · {lastDoctor}</span>}
         </>

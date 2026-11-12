@@ -23,9 +23,10 @@ afterEach(() => {
 
 const patient = (extra: Partial<Me> = {}): Me => ({
   doctor: false, platform: false, bookingEnabled: true, lang: 'ru', daysAhead: 14, fullName: 'Айгуль', phone: '996700111222',
-  doctors: [{ id: 1, fullName: 'Айгерим Садыкова', about: 'терапевт' }, { id: 2, fullName: 'Дастан Т.' }],
-  services: [{ id: 5, name: 'Лечение кариеса', durationMinutes: 60, priceSom: 2500, category: 'Терапия' }],
-  clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест', address: 'Бишкек, Шевченко 6' },
+  doctors: [{ id: 1, fullName: 'Айгерим Садыкова', about: 'терапевт', active: true, telegramLinked: false }, { id: 2, fullName: 'Дастан Т.', active: true, telegramLinked: false }],
+  services: [{ id: 5, name: 'Лечение кариеса', durationMinutes: 60, priceSom: 2500, category: 'Терапия', active: true }],
+  clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест', address: 'Бишкек, Шевченко 6', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
+  admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6,
   ...extra,
 })
 
@@ -56,7 +57,7 @@ test('запись: врач → дата (свободные дни) → вре
     }),
     http.post('*/api/patient/booking', async ({ request }) => {
       booked = await request.json() as Schemas['PatientBookingControllerBook']
-      const booking = { id: 9, startAt: booked.startAt, status: 'REQUESTED', doctorId: 1, serviceName: 'Лечение кариеса' } satisfies Schemas['BookingViewsBooking']
+      const booking = { id: 9, startAt: booked.startAt, status: 'REQUESTED', doctorId: 1, serviceName: 'Лечение кариеса', patientId: 0, self: true, waiting: false } satisfies Schemas['BookingViewsBooking']
       me = { ...me, booking }
       return HttpResponse.json(booking)
     }),
@@ -102,12 +103,12 @@ test('в Telegram — своя кнопка «Записаться» внизу,
   const tomorrow = addDays(todayIn(), 1)
   let booked: unknown = null
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(patient({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }] }))),
     http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
     http.post('*/api/patient/booking', async ({ request }) => {
       booked = await request.json()
-      return HttpResponse.json({ id: 9, startAt: slotInstant(tomorrow, 600), status: 'REQUESTED', doctorId: 1 } satisfies Schemas['BookingViewsBooking'])
+      return HttpResponse.json({ id: 9, startAt: slotInstant(tomorrow, 600), status: 'REQUESTED', doctorId: 1, patientId: 0, self: true, waiting: false } satisfies Schemas['BookingViewsBooking'])
     }),
   )
   const user = userEvent.setup()
@@ -135,12 +136,12 @@ async function bookAsNewPatient(lang: 'ru' | 'ky', pick: (user: ReturnType<typeo
   ]
   let booked: Schemas['PatientBookingControllerBook'] | null = null
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(patient({ lang, sourceChoices, doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ lang, sourceChoices, doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }] }))),
     http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
     http.post('*/api/patient/booking', async ({ request }) => {
       booked = await request.json() as Schemas['PatientBookingControllerBook']
-      return HttpResponse.json({ id: 9, startAt: booked.startAt, status: 'REQUESTED', doctorId: 1 } satisfies Schemas['BookingViewsBooking'])
+      return HttpResponse.json({ id: 9, startAt: booked.startAt, status: 'REQUESTED', doctorId: 1, patientId: 0, self: true, waiting: false } satisfies Schemas['BookingViewsBooking'])
     }),
   )
   const user = userEvent.setup()
@@ -182,7 +183,7 @@ test('новый пациент: вопрос необязательный — �
 
 test('«Ваша запись» по-кыргызски: хочу раньше и отмена вторым нажатием', async () => {
   fakeTelegram()
-  let me = patient({ lang: 'ky', booking: { id: 9, startAt: slotInstant(addDays(todayIn(), 1), 600), status: 'SCHEDULED', doctorId: 1, serviceName: 'Лечение кариеса' } })
+  let me = patient({ lang: 'ky', booking: { id: 9, startAt: slotInstant(addDays(todayIn(), 1), 600), status: 'SCHEDULED', doctorId: 1, serviceName: 'Лечение кариеса', patientId: 0, self: true, waiting: false } })
   const calls: string[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -215,11 +216,11 @@ test('«Ваша запись» по-кыргызски: хочу раньше �
 test('своя запись: «Позвонить» на каждый номер клиники и WhatsApp своим номером; без WhatsApp — без кнопки', async () => {
   const openLink = vi.fn()
   fakeTelegram({ openLink })
-  const booking = { id: 9, startAt: slotInstant(addDays(todayIn(), 2), 600), status: 'SCHEDULED' as const, doctorId: 1 }
+  const booking = { id: 9, startAt: slotInstant(addDays(todayIn(), 2), 600), status: 'SCHEDULED' as const, doctorId: 1, patientId: 1, self: true, waiting: false }
   let whatsappPhone: string | undefined = '996700999888'
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(patient({
     booking, clinicContact: '+996 555 000 111, +7 701 234 56 78',
-    clinic: { brandName: 'Стоматология «Тест»', phones: ['996555000111', '77012345678'], whatsappPhone },
+    clinic: { brandName: 'Стоматология «Тест»', phones: ['996555000111', '77012345678'], whatsappPhone, independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
   }))))
   const user = userEvent.setup()
   const first = renderApp()
@@ -241,7 +242,7 @@ test('перенос: занятое время — заново выбрать'
   fakeTelegram()
   const day = addDays(todayIn(), 2)
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(patient({ booking: { id: 9, startAt: slotInstant(day, 600), status: 'SCHEDULED', doctorId: 1 } }))),
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ booking: { id: 9, startAt: slotInstant(day, 600), status: 'SCHEDULED', doctorId: 1, patientId: 0, self: true, waiting: false } }))),
     http.get('*/api/patient/booking/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(day, 720)], taken: [], breaks: [] })),
     http.post('*/api/patient/booking/reschedule', () => HttpResponse.json({ status: 409, code: 'time-taken', detail: 'Время занято' }, { status: 409 })),
   )
@@ -258,14 +259,14 @@ test('перенос: занятое время — заново выбрать'
 test('перенос удался — «Ваша запись» с подтверждением; в отпуск врача — «выберите другой день»', async () => {
   fakeTelegram()
   const day = addDays(todayIn(), 2)
-  let me = patient({ booking: { id: 9, startAt: slotInstant(day, 600), status: 'SCHEDULED', doctorId: 1 } })
+  let me = patient({ booking: { id: 9, startAt: slotInstant(day, 600), status: 'SCHEDULED', doctorId: 1, patientId: 0, self: true, waiting: false } })
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/patient/booking/slots', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('date') === day
       ? { workingDay: true, starts: [slotInstant(day, 720)], taken: [], breaks: [] }
       : { workingDay: false, starts: [], taken: [], breaks: [], dayOff: { title: 'Отпуск', emoji: '🏖' } })),
     http.post('*/api/patient/booking/reschedule', () => {
-      const booking = { id: 9, startAt: slotInstant(day, 720), status: 'REQUESTED', doctorId: 1 } satisfies Schemas['BookingViewsBooking']
+      const booking = { id: 9, startAt: slotInstant(day, 720), status: 'REQUESTED', doctorId: 1, patientId: 0, self: true, waiting: false } satisfies Schemas['BookingViewsBooking']
       me = { ...me, booking }
       return HttpResponse.json(booking)
     }),
@@ -290,7 +291,7 @@ test('в сетке дня свободного не осталось — одн
   const soon = addDays(today, 1)
   const later = addDays(today, 3)
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(patient({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }] }))),
     // Календарь думал, что завтра свободно, но пока выбирали — заняли
     http.get('*/api/patient/free-days', () => HttpResponse.json([soon, later])),
     http.get('*/api/patient/slots', ({ request }) => {
@@ -356,7 +357,7 @@ test('выбор клиники: по городу и поиск по назва
 test('новая клиника ещё настраивается: «запись скоро» и телефон, без экранов записи', async () => {
   fakeTelegram()
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(patient({
-    clinicContact: '+996 555 000 111', clinic: { brandName: 'Новая', settingUp: true },
+    clinicContact: '+996 555 000 111', clinic: { brandName: 'Новая', settingUp: true, independentDoctors: false, listed: true, separateSupplies: false, ownHours: false, recallMonths: 6 },
   }))))
   renderApp()
   expect(await screen.findByRole('status')).toHaveTextContent('Клиника ещё настраивается — запись скоро')
@@ -376,7 +377,7 @@ test('календарь — столько дней, на сколько мож
   const free = [addDays(today, 3), addDays(today, 5)]
   const asked: string[] = []
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(patient({ daysAhead: 30, doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ daysAhead: 30, doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }] }))),
     http.get('*/api/patient/free-days', ({ request }) => {
       asked.push(new URL(request.url).search)
       return HttpResponse.json(free)
@@ -402,7 +403,7 @@ test('ошибка записи по коду — текст на языке п�
   fakeTelegram()
   const tomorrow = addDays(todayIn(), 1)
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(patient({ lang: 'ky', doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ lang: 'ky', doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }] }))),
     http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
     http.post('*/api/patient/booking', () => HttpResponse.json({ status: 409, code: 'subscription-paused', detail: 'Оплата клиники закончилась — новые записи на паузе.' }, { status: 409 })),
@@ -422,7 +423,7 @@ test('старый Telegram без requestContact 6.9 — подсказка о�
   fakeTelegram({ requestContact, isVersionAtLeast: (v: string) => v <= '6.0' })
   const tomorrow = addDays(todayIn(), 1)
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(patient({ phone: undefined, doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ phone: undefined, doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }] }))),
     http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
   )
@@ -439,7 +440,7 @@ test('перенос: запись дальше ленты — выбран пе
   const far = addDays(todayIn(), 40)
   const asked: string[] = []
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(patient({ booking: { id: 9, startAt: slotInstant(far, 600), status: 'SCHEDULED', doctorId: 1 } }))),
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ booking: { id: 9, startAt: slotInstant(far, 600), status: 'SCHEDULED', doctorId: 1, patientId: 0, self: true, waiting: false } }))),
     http.get('*/api/patient/booking/slots', ({ request }) => {
       asked.push(new URL(request.url).searchParams.get('date')!)
       return HttpResponse.json({ workingDay: true, starts: [], taken: [], breaks: [] })
@@ -458,7 +459,7 @@ test('запись в другой клинике — карточка и «От
   let chosen: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({
-      elsewhere: { clinicId: 3, clinicName: 'Улыбка', booking: { id: 7, startAt: slotInstant(addDays(todayIn(), 1), 600), status: 'SCHEDULED' } },
+      elsewhere: { clinicId: 3, clinicName: 'Улыбка', booking: { id: 7, startAt: slotInstant(addDays(todayIn(), 1), 600), status: 'SCHEDULED', doctorId: 0, patientId: 0, self: true, waiting: false } },
     }))),
     http.put('*/api/patient/clinic', async ({ request }) => {
       chosen = await request.json()
@@ -477,7 +478,7 @@ test('клиника на паузе (clinic-paused) и гонка (stale) — �
   const tomorrow = addDays(todayIn(), 1)
   let code = 'clinic-paused'
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(patient({ clinicContact: '+996 555 000 111', doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }))),
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ clinicContact: '+996 555 000 111', doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }] }))),
     http.get('*/api/patient/free-days', () => HttpResponse.json([tomorrow])),
     http.get('*/api/patient/slots', () => HttpResponse.json({ workingDay: true, starts: [slotInstant(tomorrow, 600)], taken: [], breaks: [] })),
     http.post('*/api/patient/booking', () => HttpResponse.json({ status: 409, code, detail: 'серверный текст' }, { status: 409 })),
@@ -498,8 +499,8 @@ test('у врача выбраны услуги: услуга, которую д
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(patient({
       services: [
-        { id: 5, name: 'Лечение кариеса', durationMinutes: 60, category: 'Терапия' },
-        { id: 6, name: 'Удаление зуба', durationMinutes: 45, category: 'Хирургия' },
+        { id: 5, name: 'Лечение кариеса', durationMinutes: 60, category: 'Терапия', active: true },
+        { id: 6, name: 'Удаление зуба', durationMinutes: 45, category: 'Хирургия', active: true },
       ],
       doctorServices: [{ doctorId: 2, serviceTypeIds: [6] }],
     }))),

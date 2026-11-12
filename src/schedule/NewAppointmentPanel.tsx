@@ -154,7 +154,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
       const created = await withChairConfirm((confirm) => unwrap(api.POST('/api/appointments', {
         body: {
           doctorId,
-          patientId: p.id!,
+          patientId: p.id,
           startAt: startAt!,
           durationMinutes: duration,
           serviceTypeId: serviceId === '' ? undefined : serviceId,
@@ -167,7 +167,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
       // «Хочет раньше»: запись есть, а освободится время раньше — предложим (лист ожидания).
       // Запись уже создана — не проваливаем её, но и не молчим: скажем, что в лист не попал
       if (wantsEarlier) {
-        await unwrap(api.POST('/api/waitlist', { body: { patientId: p.id!, doctorId, durationMinutes: duration } })).catch((error: unknown) => {
+        await unwrap(api.POST('/api/waitlist', { body: { patientId: p.id, doctorId, durationMinutes: duration } })).catch((error: unknown) => {
           void notify(`Запись создана, но в лист ожидания пациент не попал${error instanceof Error && error.message ? `: ${error.message}` : ''}.`
             + ' Добавьте его из карточки приёма — «В лист ожидания».')
         })
@@ -262,10 +262,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
   const many = activeServices.length > 8
   const popularIds = usePopularServices(many)
   const chipServices = many
-    ? activeServices.filter((sv) => popularIds.slice(0, 5).includes(sv.id!) || sv.id === serviceId)
+    ? activeServices.filter((sv) => popularIds.slice(0, 5).includes(sv.id) || sv.id === serviceId)
     : activeServices
   const pickService = (sv: Service | undefined) => {
-    const next = !sv || sv.id === serviceId ? '' : sv.id!
+    const next = !sv || sv.id === serviceId ? '' : sv.id
     setServiceId(next)
     if (sv && next !== '' && sv.durationMinutes) setDuration(sv.durationMinutes)
     // Выбрали услугу — дальше время (на телефоне сам прокрутим к нему)
@@ -450,7 +450,7 @@ type WaitlistEntry = Schemas['WaitlistView']
 /** Конец свободного окна (/api/slots, free), в котором начинается приём; не в свободном окне — null. */
 function windowEnd(free: Schemas['TimeRange'][] | undefined, startAt: string): string | null {
   const at = Date.parse(startAt)
-  const w = (free ?? []).find((r) => Date.parse(r.start!) <= at && at < Date.parse(r.end!))
+  const w = (free ?? []).find((r) => Date.parse(r.start) <= at && at < Date.parse(r.end))
   return w?.end ?? null
 }
 
@@ -463,7 +463,7 @@ function fitsWindow(e: WaitlistEntry, doctorId: number, startAt: string, end: st
   if (e.doctorId != null && e.doctorId !== doctorId) return false
   const sameDoctor = !e.upcoming || e.upcoming.doctorId === doctorId
   const earlier = !e.upcoming?.startAt || !sameDoctor || Date.parse(startAt) < Date.parse(e.upcoming.startAt)
-  return earlier && (e.durationMinutes ?? 30) * 60_000 <= Date.parse(end) - Date.parse(startAt)
+  return earlier && e.durationMinutes * 60_000 <= Date.parse(end) - Date.parse(startAt)
 }
 
 /**
@@ -489,7 +489,7 @@ function WaitlistCandidates({ date, doctorId, startAt, onPick, onBooked }: {
   })
   const move = useMutation<Appointment, ApiError, WaitlistEntry>({
     mutationFn: (e) => withChairConfirm((confirm) => unwrap(api.POST('/api/waitlist/{id}/book',
-      { params: { path: { id: e.id! } }, body: { doctorId, startAt, confirmChairTime: confirm || undefined } }))),
+      { params: { path: { id: e.id } }, body: { doctorId, startAt, confirmChairTime: confirm || undefined } }))),
     onSuccess: (a) => {
       // Перенесли — окна, счётчики и карточка пациента тоже меняются
       refreshAppointmentData(client, ['waitlist', 'patients', 'recall'])

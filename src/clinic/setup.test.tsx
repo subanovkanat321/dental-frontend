@@ -7,7 +7,7 @@ import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
-const clinic = { brandName: 'Новая', listed: false, settingUp: true, ownHours: false } satisfies Schemas['ClinicView']
+const clinic = { brandName: 'Новая', listed: false, settingUp: true, ownHours: false, independentDoctors: false, separateSupplies: false, recallMonths: 6 } satisfies Schemas['ClinicView']
 
 test('новая клиника: чек-лист настройки над расписанием и «Показать пациентам»', async () => {
   const sent: { body?: Schemas['ClinicControllerRequest'] } = {}

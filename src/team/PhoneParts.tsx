@@ -10,7 +10,8 @@ import { phoneText, ROLE_TEXT } from './texts'
 
 type Role = NonNullable<Schemas['StaffMembersControllerPhoneInviteRequest']['role']>
 type Me = Schemas['BookingViewsMe']
-type Doctor = Schemas['DoctorAdminView']
+// Админу — DoctorAdminView, остальным — DoctorView из me (без Telegram, роли и телефона)
+export type Doctor = Schemas['DoctorAdminView'] | (Schemas['DoctorView'] & Partial<Schemas['DoctorAdminView']>)
 
 /**
  * «Пригласить по номеру (без Telegram)» в «Персонале»: номер, имя и роль — сотрудник сразу в списке.
@@ -69,8 +70,8 @@ export function InviteByPhone({ me }: { me: Me }) {
               <legend>Каким врачам помогает</legend>
               {doctors.map((d) => (
                 <label key={d.id} className="check">
-                  <input type="checkbox" checked={doctorIds.includes(d.id!)}
-                    onChange={(e) => setDoctorIds(e.target.checked ? [...doctorIds, d.id!] : doctorIds.filter((x) => x !== d.id))} /> {d.fullName}
+                  <input type="checkbox" checked={doctorIds.includes(d.id)}
+                    onChange={(e) => setDoctorIds(e.target.checked ? [...doctorIds, d.id] : doctorIds.filter((x) => x !== d.id))} /> {d.fullName}
                 </label>
               ))}
             </fieldset>
@@ -96,7 +97,7 @@ export function DoctorPhone({ doctor: d, onDone }: { doctor: Doctor; onDone: () 
   const [open, setOpen] = useState(false)
   const [phone, setPhone] = useState('')
   const bind = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/doctors/{id}/phone', { params: { path: { id: d.id! } }, body: { phone: phoneFromInput(phone) } })),
+    mutationFn: () => unwrap(api.POST('/api/doctors/{id}/phone', { params: { path: { id: d.id } }, body: { phone: phoneFromInput(phone) } })),
     onSuccess: () => {
       setOpen(false)
       onDone()

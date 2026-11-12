@@ -69,7 +69,7 @@ function ClearAll() {
         <label className="field"><span>Впишите УДАЛИТЬ</span>
           <input value={word} maxLength={20} autoComplete="off" placeholder="УДАЛИТЬ" onChange={(e) => { run.reset(); setWord(e.target.value) }} /></label>
         {run.error && <p className="error" role="alert">{run.error.fieldErrors.confirm ?? run.error.message}</p>}
-        {run.isSuccess && <p className="tone-ok" role="status">Удалено записей: {run.data.deleted ?? 0}</p>}
+        {run.isSuccess && <p className="tone-ok" role="status">Удалено записей: {run.data.deleted}</p>}
         <button type="button" className="btn danger" disabled={run.isPending || !word} onClick={() => run.mutate()}>Удалить все записи</button>
       </div>
     </section>

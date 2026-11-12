@@ -34,7 +34,7 @@ function visit(id: number, date: string, minutes: number, name: string, extra: P
   const startAt = slotInstant(date, minutes)
   return {
     id, doctorId: 1, startAt, endAt: new Date(new Date(startAt).getTime() + 30 * 60_000).toISOString(), status: 'SCHEDULED',
-    reply: 'NONE', version: 4, patient: { id, fullName: name, phone: '996555000111' }, ...extra,
+    reply: 'NONE', version: 4, source: 'DOCTOR', debtSom: 0, firstVisit: false, patient: { id, fullName: name, phone: '996555000111', telegram: false }, ...extra,
   }
 }
 

@@ -12,7 +12,8 @@ import { SlotGrid } from './SlotPicker'
 import { aboutParts, minutesOf } from './slots'
 
 type Slots = Schemas['BookingViewsSlots']
-export type WizardService = Schemas['ServiceTypeView']
+/** Услуга в мастере: и из /api/patient/me (ServiceTypeView), и из /web/booking (без active и recallMonths). */
+export type WizardService = Schemas['ServiceTypeView'] | Schemas['WebBookingServiceService']
 /** Врач в мастере: и из /api/patient/me (DoctorView), и из /web/booking. */
 export type WizardDoctor = { id?: number; fullName?: string | null; about?: string | null; photoUrl?: string | null }
 
@@ -120,9 +121,9 @@ export function BookingWizard({ t, lang, services, doctors, doctorServices, leng
   }, [current])
 
   const freeKey = svc && doc != null ? `${svc.id}|${doc}|${reload}` : null
-  const free = useLoad(freeKey, () => loadFreeDays(doctorId, svc!.id!))
+  const free = useLoad(freeKey, () => loadFreeDays(doctorId, svc!.id))
   const slotsKey = svc && doc != null && date ? `${svc.id}|${doc}|${date}|${reload}` : null
-  const slots = useLoad(slotsKey, () => loadSlots(date, doctorId, svc!.id!))
+  const slots = useLoad(slotsKey, () => loadSlots(date, doctorId, svc!.id))
   const freeDays = free && free !== 'loading' && free.ok ? free.value : null
 
   const go = (next: Step | null) => {

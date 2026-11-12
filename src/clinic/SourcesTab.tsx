@@ -24,8 +24,8 @@ export function SourcesTab({ me, header, onPanel }: { me: Me; header: ReactNode;
   const client = useQueryClient()
   const list = useSources()
   const editable = Boolean(me.admin)
-  const [opened, setOpenedState] = useState<SourceOption | null>(null)
-  const setOpened = useCallback((o: SourceOption | null) => {
+  const [opened, setOpenedState] = useState<Partial<SourceOption> | null>(null)
+  const setOpened = useCallback((o: Partial<SourceOption> | null) => {
     setOpenedState(o)
     onPanel(o != null)
   }, [onPanel])
@@ -58,13 +58,13 @@ export function SourcesTab({ me, header, onPanel }: { me: Me; header: ReactNode;
                   <tr key={o.id} className={[o.id === opened?.id ? 'active' : '', o.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
                     <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(o)}>{sourceLabel(o)}</button> : sourceLabel(o)}
                       {o.active === false && <span className="hint"> · скрыт</span>}</td>
-                    <td className="num">{o.patients ?? 0}</td>
+                    <td className="num">{o.patients}</td>
                     <td className="r nowrap">{editable && (
                       <>
                         <button type="button" className="btn small ghost" aria-label={`Выше: ${o.title}`} disabled={i === 0 || move.isPending}
-                          onClick={() => move.mutate({ id: o.id!, direction: -1 })}>↑</button>
+                          onClick={() => move.mutate({ id: o.id, direction: -1 })}>↑</button>
                         <button type="button" className="btn small ghost" aria-label={`Ниже: ${o.title}`} disabled={i === options.length - 1 || move.isPending}
-                          onClick={() => move.mutate({ id: o.id!, direction: 1 })}>↓</button>
+                          onClick={() => move.mutate({ id: o.id, direction: 1 })}>↓</button>
                       </>
                     )}</td>
                   </tr>
@@ -80,7 +80,7 @@ export function SourcesTab({ me, header, onPanel }: { me: Me; header: ReactNode;
 }
 
 /** Вариант: новый (без id) или существующий. Не удаляется — скрывается: история пациентов остаётся. */
-function SourcePanel({ option: o, onClose }: { option: SourceOption; onClose: () => void }) {
+function SourcePanel({ option: o, onClose }: { option: Partial<SourceOption>; onClose: () => void }) {
   const close = useClose(onClose)
   const client = useQueryClient()
   const [f, setF] = useState({ emoji: o.emoji ?? '', title: o.title ?? '', titleKy: o.titleKy ?? '', active: o.active !== false })

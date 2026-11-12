@@ -28,10 +28,10 @@ const STATES: ToothState[] = ['TREATING', 'FILLING', 'CROWN', 'MISSING', 'IMPLAN
  */
 export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointment: Appointment; readOnly: boolean; onMedical?: () => void }) {
   const client = useQueryClient()
-  const patientId = a.patient?.id
+  const patientId = a.patient.id
   const teeth = useQuery({
     queryKey: ['visit-teeth', a.id],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/teeth', { params: { path: { id: a.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/teeth', { params: { path: { id: a.id } } })),
     retry: false,
   })
   const [picking, setPicking] = useState(false)
@@ -43,20 +43,20 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
   // Что сейчас на карте пациента — подсказка в редакторе («На карте: кариес») и «На весь экран»; тот же ключ, что у медкарты
   const chart = useQuery({
     queryKey: ['teeth', patientId],
-    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth', { params: { path: { patientId: patientId! } } })),
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth', { params: { path: { patientId: patientId } } })),
     // Сменный прикус: какие зубы ещё молочные — по карте, поэтому и при выборе зуба
     enabled: patientId != null && (open != null || full || picking),
     retry: false,
   })
   const many = useMutation<VisitTooth[], ApiError, { state: ToothState; surfaces: Surface[] }>({
     mutationFn: ({ state, surfaces }) => unwrap(api.POST('/api/appointments/{id}/teeth/batch', {
-      params: { path: { id: a.id! } }, body: { numbers: picked, state, surfaces },
+      params: { path: { id: a.id } }, body: { numbers: picked, state, surfaces },
     })),
     onSuccess: (fresh) => saved(fresh),
   })
   // «убрать» прямо из списка — отметили не тот зуб
   const unmark = useMutation<VisitTooth[], ApiError, number>({
-    mutationFn: (number) => unwrap(api.DELETE('/api/appointments/{id}/teeth/{number}', { params: { path: { id: a.id!, number } } })),
+    mutationFn: (number) => unwrap(api.DELETE('/api/appointments/{id}/teeth/{number}', { params: { path: { id: a.id, number } } })),
     onSuccess: (fresh) => saved(fresh),
   })
   if (teeth.error || !teeth.data) return null
@@ -113,11 +113,11 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
               <span>{visitToothText(t)}</span>
               {!readOnly && (
                 <button type="button" className="link" aria-label={`Изменить зуб ${t.number}`}
-                  onClick={() => { setPicking(true); setOpen(t.number!) }}>изменить</button>
+                  onClick={() => { setPicking(true); setOpen(t.number) }}>изменить</button>
               )}
               {!readOnly && (
                 <button type="button" className="link" aria-label={`Убрать зуб ${t.number} из приёма`} disabled={unmark.isPending}
-                  onClick={() => unmark.mutate(t.number!)}>убрать</button>
+                  onClick={() => unmark.mutate(t.number)}>убрать</button>
               )}
             </li>
           ))}
@@ -144,13 +144,13 @@ export function VisitTeeth({ appointment: a, readOnly, onMedical }: { appointmen
         </>
       )}
       {!readOnly && open != null && (
-        <VisitToothEditor key={open} appointmentId={a.id!} number={open} marked={byNumber.get(open)}
+        <VisitToothEditor key={open} appointmentId={a.id} number={open} marked={byNumber.get(open)}
           onChart={chart.data?.find((t) => t.number === open)?.state}
           onSaved={saved} onCancel={() => { setOpen(null); setPicking(false) }} />
       )}
       {onMedical && <button type="button" className="link" onClick={onMedical}>Карта зубов и план лечения ›</button>}
       {full && (
-        <ToothFullscreen teeth={chart.data ?? marked} dentition={dentition} highlight={marked.map((t) => t.number!)} patientName={a.patient?.fullName}
+        <ToothFullscreen teeth={chart.data ?? marked} dentition={dentition} highlight={marked.map((t) => t.number)} patientName={a.patient.fullName}
           onClose={() => setFull(false)} />
       )}
     </div>

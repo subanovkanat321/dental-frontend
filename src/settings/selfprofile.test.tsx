@@ -25,7 +25,7 @@ test('«Мой профиль» у регистратуры: сверху сво
   let sent: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(reception)),
-    http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: true, passwordSet: true, temporary: false, sms: false } satisfies Schemas['PasswordControllerPasswordState'])),
+    http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: true, passwordSet: true, temporary: false, sms: false, telegram: false, telegramCode: false } satisfies Schemas['PasswordControllerPasswordState'])),
     http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Айпери', editable: true } satisfies Schemas['StaffMembersOwnName'])),
     http.put('*/api/me/name', async ({ request }) => {
       sent = await request.json()
@@ -55,7 +55,7 @@ test('«Мой профиль» у регистратуры: сверху сво
 test('«Мой профиль» у врача: карточка с разделами, своё фото и «о себе» — можно менять', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
-    http.get('*/api/doctors/admin', () => HttpResponse.json([{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramId: 111, role: 'ADMIN' }] satisfies Schemas['DoctorAdminView'][])),
+    http.get('*/api/doctors/admin', () => HttpResponse.json([{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramId: 111, role: 'ADMIN', phoneOnly: false }] satisfies Schemas['DoctorAdminView'][])),
     http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
   )
   window.location.hash = '/settings/profile'
@@ -111,7 +111,7 @@ test('подсказки нет, когда профиль заполнен; с�
 test('«Мой профиль» у врача: сверху «Для пациентов» (фото и имя), ниже «Телефон» и «Работа»; «Удалить врача» и «Работает» у себя — нет', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
-    http.get('*/api/doctors/admin', () => HttpResponse.json([{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramId: 111, role: 'ADMIN' }] satisfies Schemas['DoctorAdminView'][])),
+    http.get('*/api/doctors/admin', () => HttpResponse.json([{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramId: 111, role: 'ADMIN', phoneOnly: false }] satisfies Schemas['DoctorAdminView'][])),
     http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
   )
   window.location.hash = '/settings/profile'

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { botUsername } from '../api/client'
+import { botUsername, WEB_CONFIG_KEY, webConfig } from '../api/client'
 import { openLink, telegram } from '../lib/telegram'
 import { smsUrl, whatsappUrl } from '../lib/texts'
 import { inviteText, siteInviteText } from './texts'
@@ -22,7 +22,7 @@ function siteInvite(start: string): boolean {
  */
 export function InviteLink({ start, name, toWhom, phone, sms = false }: { start: string; name: string; toWhom: string; phone?: string | null; sms?: boolean }) {
   const site = siteInvite(start)
-  const bot = useQuery({ queryKey: ['bot-username'], queryFn: botUsername, staleTime: Infinity, enabled: !site })
+  const bot = useQuery({ queryKey: WEB_CONFIG_KEY, queryFn: webConfig, staleTime: Infinity, enabled: !site, select: botUsername })
   const [copied, setCopied] = useState('')
   if (!site && bot.isPending) return <Loading text="Готовим ссылку…" />
   if (!site && !bot.data) return <p className="error">Бот не отвечает — попробуйте через минуту.</p>

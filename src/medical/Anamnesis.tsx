@@ -54,7 +54,7 @@ function AnamnesisForm({ patientId, an, readOnly }: { patientId: number; an: Ana
       params: { path: { patientId } },
       body: {
         answers: items.map((i) => {
-          const a = answers[i.questionId!]!
+          const a = answers[i.questionId]!
           return { questionId: i.questionId, yes: i.kind === 'TEXT' ? false : a.yes, text: i.kind === 'CHECK' ? undefined : a.text }
         }),
       },
@@ -72,19 +72,19 @@ function AnamnesisForm({ patientId, an, readOnly }: { patientId: number; an: Ana
   if (!items.length) return <p className="hint">В анкете клиники нет вопросов — добавьте их в «Настройки → Анкета пациента».</p>
 
   const field = (i: Item) => {
-    const a = answers[i.questionId!]!
+    const a = answers[i.questionId]!
     if (i.kind === 'TEXT') {
       return (
         <label key={i.questionId} className="field"><span>{i.title}</span>
-          <textarea rows={2} maxLength={500} placeholder={i.hint ?? ''} value={a.text} onChange={(e) => set(i.questionId!, { text: e.target.value })} /></label>
+          <textarea rows={2} maxLength={500} placeholder={i.hint ?? ''} value={a.text} onChange={(e) => set(i.questionId, { text: e.target.value })} /></label>
       )
     }
     return (
       <div key={i.questionId} className="question">
-        <label className="check"><input type="checkbox" checked={a.yes} onChange={(e) => set(i.questionId!, { yes: e.target.checked })} /> {i.title}</label>
+        <label className="check"><input type="checkbox" checked={a.yes} onChange={(e) => set(i.questionId, { yes: e.target.checked })} /> {i.title}</label>
         {i.kind === 'CHECK_TEXT' && a.yes && (
           <input aria-label={`${i.title} — что именно`} placeholder={i.hint || 'Что именно'} maxLength={500} value={a.text}
-            onChange={(e) => set(i.questionId!, { text: e.target.value })} />
+            onChange={(e) => set(i.questionId, { text: e.target.value })} />
         )}
       </div>
     )

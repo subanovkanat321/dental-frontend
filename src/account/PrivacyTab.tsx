@@ -13,7 +13,7 @@ type Me = Schemas['BookingViewsMe']
  * Админу — доступ поддержки и журнал входов платформы в клинику.
  */
 export function PrivacyTab({ me }: { me: Me }) {
-  const info = usePlatformInfo().data ?? {}
+  const info: Partial<Schemas['PlatformInfoInfo']> = usePlatformInfo().data ?? {}
   const access = useQuery({
     queryKey: ['platform-access'],
     queryFn: () => unwrap(api.GET('/api/clinic/platform-access')),

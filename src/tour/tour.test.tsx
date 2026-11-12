@@ -150,7 +150,7 @@ test('телефон, регистратура: нижнее меню — «Ка
     await userEvent.click(within(d).getByRole('button', { name: 'Дальше' }))
     await waitForSlow(() => expect(titleOf(screen.getByRole('dialog', { description: /./ }))).not.toBe(titles.at(-1)), { timeout: 5000 })
     d = screen.getByRole('dialog', { description: /./ })
-    titles.push(titleOf(d)!)
+    titles.push(titleOf(d))
   }
   expect(titles).toEqual(['Расписание — здесь день клиники', '＋ Новая запись', 'Пациенты', 'Вкладки подразделов', 'Касса', 'Ещё: профиль и Помощь'])
   expect(d).toHaveTextContent('6 из 6')
@@ -173,7 +173,7 @@ test('тур — первым: плашки «Заполните профиль�
 test('команде платформы без клиники тур не показываем', async () => {
   const marks: string[] = []
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: true, fullName: 'Команда' } satisfies Me)),
+    http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false, platform: true, owner: true, fullName: 'Команда', admin: false, reception: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6 } satisfies Me)),
     http.get('*/api/me/tour', () => { marks.push('get'); return HttpResponse.json({}) }),
     http.get('*/api/platform/*', () => HttpResponse.json([])),
   )

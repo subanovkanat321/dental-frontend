@@ -39,8 +39,8 @@ export function PlanTab() {
               {x.code === p.tariff?.code && <span className="chip small s-ok">ваш тариф</span>}
               <strong>{x.name}</strong>
               <span className="hint">{x.who}</span>
-              <span className="tariff-price num">{somText(x.monthSom ?? 0)}<span className="hint"> / месяц</span></span>
-              <span className="hint">за год — {somText(x.yearSom ?? 0)} (2 месяца в подарок)</span>
+              <span className="tariff-price num">{somText(x.monthSom)}<span className="hint"> / месяц</span></span>
+              <span className="hint">за год — {somText(x.yearSom)} (2 месяца в подарок)</span>
             </div>
           ))}
         </div>
@@ -60,7 +60,7 @@ export function PlanTab() {
             <thead><tr><th>Когда</th><th className="r">Сумма</th><th className="r">Срок</th><th>Оплачено до</th></tr></thead>
             <tbody>
               {p.payments!.map((x) => (
-                <tr key={x.id}><td>{day(x.paidOn)}</td><td className="r num">{somText(x.amountSom ?? 0)}</td><td className="r">{x.months} мес</td><td>{day(x.paidUntil)}</td></tr>
+                <tr key={x.id}><td>{day(x.paidOn)}</td><td className="r num">{somText(x.amountSom)}</td><td className="r">{x.months} мес</td><td>{day(x.paidUntil)}</td></tr>
               ))}
             </tbody>
           </table>
@@ -85,7 +85,7 @@ function PayBox({ pay }: { pay: Pay }) {
     void client.invalidateQueries({ queryKey: ['clinic-pay'] })
     void client.invalidateQueries({ queryKey: ['clinic-plan'] })
   }
-  const s = pay.settings ?? {}
+  const s: Partial<NonNullable<Pay['settings']>> = pay.settings ?? {}
   const [months, setMonths] = useState(pay.periods?.[0]?.months ?? 1)
   const [file, setFile] = useState<File | null>(null)
   const [sent, setSent] = useState('')
@@ -112,11 +112,11 @@ function PayBox({ pay }: { pay: Pay }) {
     return (
       <div className="form narrow">
         <p className="chip s-wait">Оплата на проверке</p>
-        <p className="hint">{somText(r.amountSom ?? 0)} за {(PAY_PERIOD_TEXT[r.months ?? 1] ?? '').toLowerCase()} · отправлено {r.createdAt ? shortDate(r.createdAt) : ''}{r.hasReceipt ? ' · с чеком' : ''}</p>
+        <p className="hint">{somText(r.amountSom)} за {(PAY_PERIOD_TEXT[r.months] ?? '').toLowerCase()} · отправлено {r.createdAt ? shortDate(r.createdAt) : ''}{r.hasReceipt ? ' · с чеком' : ''}</p>
         <p className="hint">Разработчики сверят перевод с банком — срок продлится сам, бот пришлёт «оплата получена». Пока проверяем, новые записи работают.</p>
         {cancel.error && <p className="error" role="alert">{cancel.error.message}</p>}
         <button type="button" className="btn" disabled={cancel.isPending}
-          onClick={() => void ask('Отменить отправленную оплату?').then((ok) => ok && cancel.mutate(r.id!))}>Отменить — нажал(а) по ошибке</button>
+          onClick={() => void ask('Отменить отправленную оплату?').then((ok) => ok && cancel.mutate(r.id))}>Отменить — нажал(а) по ошибке</button>
       </div>
     )
   }
@@ -125,11 +125,11 @@ function PayBox({ pay }: { pay: Pay }) {
   return (
     <div className="form narrow">
       {pay.last?.status === 'REJECTED' && (
-        <p className="tone-bad">Прошлую оплату ({somText(pay.last.amountSom ?? 0)}) не нашли{pay.last.comment ? `: ${pay.last.comment}` : ''}. Если вы уже заплатили — напишите разработчикам.</p>
+        <p className="tone-bad">Прошлую оплату ({somText(pay.last.amountSom)}) не нашли{pay.last.comment ? `: ${pay.last.comment}` : ''}. Если вы уже заплатили — напишите разработчикам.</p>
       )}
       <div className="segments" role="group" aria-label="Срок оплаты">
         {(pay.periods ?? []).map((x) => (
-          <button key={x.months} type="button" aria-pressed={x.months === months} onClick={() => { setMonths(x.months!); setSent('') }}>{PAY_PERIOD_TEXT[x.months!] ?? `${x.months} мес`}</button>
+          <button key={x.months} type="button" aria-pressed={x.months === months} onClick={() => { setMonths(x.months); setSent('') }}>{PAY_PERIOD_TEXT[x.months] ?? `${x.months} мес`}</button>
         ))}
       </div>
       <p><strong className="num">К оплате: {somText(period?.amountSom ?? 0)}</strong>{months === 12 && <span className="hint"> — 2 месяца в подарок</span>}</p>

@@ -42,7 +42,7 @@ export function VisitDocs({ appointment: a, me, memo = true }: { appointment: Ap
  * «Сообщение после приёма» не положено (регистратура, ассистент): памятку они отправляют, как раньше.
  */
 export function MemoDocs({ appointment: a }: { appointment: Appointment }) {
-  const id = a.id!
+  const id = a.id
   const [chosen, setChosen] = useState<number | null>(null)
   // Язык памятки: не выбран — язык пациента в боте (сервер); выбран — для WhatsApp, бота и печати
   const [lang, setLang] = useState<MemoLang | null>(null)
@@ -122,7 +122,7 @@ export function MemoSheet({ appointment: a, memo, onClose }: { appointment: Appo
   const [lang, setLang] = useState<MemoLang>(first)
   const sheet = useQuery({
     queryKey: ['care-memo', a.id, memo.memoId, lang],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/care-memo', { params: { path: { id: a.id! }, query: { memoId: memo.memoId, lang } } })),
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/care-memo', { params: { path: { id: a.id }, query: { memoId: memo.memoId, lang } } })),
     // Первый язык — текст с карточки, без запроса; другой — с сервера (телефон клиники подставлен там)
     enabled: lang !== first,
     placeholderData: (prev) => prev,
@@ -137,8 +137,8 @@ export function MemoSheet({ appointment: a, memo, onClose }: { appointment: Appo
         <>
           <h1>{m.title}</h1>
           <dl>
-            <dt>{words.patient}</dt><dd>{a.patient?.fullName}</dd>
-            <dt>{words.visit}</dt><dd>{docDate(a.startAt!)}</dd>
+            <dt>{words.patient}</dt><dd>{a.patient.fullName}</dd>
+            <dt>{words.visit}</dt><dd>{docDate(a.startAt)}</dd>
           </dl>
           <div className="memo-body">{m.body}</div>
         </>
@@ -148,7 +148,7 @@ export function MemoSheet({ appointment: a, memo, onClose }: { appointment: Appo
 }
 
 function ReceiptDocs({ appointment: a }: { appointment: Appointment }) {
-  const id = a.id!
+  const id = a.id
   const [printing, setPrinting] = useState(false)
   const receipt = useQuery({
     // Ключ — по деньгам приёма: доплатили — квитанция перечитается
@@ -188,26 +188,26 @@ function ReceiptSheet({ r, narrow }: { r: Receipt; narrow: boolean }) {
       {/* «Всё в долг» — платежей ещё нет: пустой таблицы не рисуем */}
       {!r.payments?.length ? null : narrow ? (
         <ul className="payments" aria-label="Платежи">
-          {(r.payments ?? []).map((p, i) => (
-            <li key={i}>{docDate(p.paidAt!)} · {METHODS[p.method ?? ''] ?? p.method} · {somText(p.amountSom ?? 0)}{p.takenBy ? ` · принял(а) ${p.takenBy}` : ''}</li>
+          {r.payments.map((p, i) => (
+            <li key={i}>{docDate(p.paidAt!)} · {METHODS[p.method ?? ''] ?? p.method} · {somText(p.amountSom)}{p.takenBy ? ` · принял(а) ${p.takenBy}` : ''}</li>
           ))}
         </ul>
       ) : (
         <table aria-label="Платежи">
           <thead><tr><th>Дата</th><th>Способ</th><th>Принял</th><th className="r">Сумма</th></tr></thead>
           <tbody>
-            {(r.payments ?? []).map((p, i) => (
+            {r.payments.map((p, i) => (
               <tr key={i}>
                 <td>{docDate(p.paidAt!)}</td>
                 <td>{METHODS[p.method ?? ''] ?? p.method}</td>
                 <td>{p.takenBy ?? '—'}</td>
-                <td className="r">{somText(p.amountSom ?? 0)}</td>
+                <td className="r">{somText(p.amountSom)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
-      <p className="total">Оплачено: {somText(r.paidSom ?? 0)}</p>
+      <p className="total">Оплачено: {somText(r.paidSom)}</p>
       <p className="total">{r.debtSom ? `Осталось оплатить: ${somText(r.debtSom)}` : 'Оплачено полностью'}</p>
       <div className="signatures"><span>Принял ____________________</span></div>
       <p className="fiscal">Не является фискальным чеком</p>

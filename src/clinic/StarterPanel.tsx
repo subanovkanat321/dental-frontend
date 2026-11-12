@@ -90,12 +90,12 @@ export function StarterPanel({ admin, onClose }: { admin: boolean; onClose: () =
       }
       if (withMemos && memos.data?.length) {
         const r = await unwrap(api.POST('/api/care-memos/starter'))
-        parts.push(`памятки поставлены (услуг: ${r.services ?? 0})`)
+        parts.push(`памятки поставлены (услуг: ${r.services})`)
       }
       if (withSupplies && (supplies.data?.services?.length || supplies.data?.missing?.length)) {
         const r = await unwrap(api.POST('/api/supplies/starter', { body: { stock: withStock } }))
         if (r.created) parts.push(`новых материалов на складе: ${r.created}`)
-        parts.push(`«что обычно уходит» задано (услуг: ${r.services ?? 0})`)
+        parts.push(`«что обычно уходит» задано (услуг: ${r.services})`)
       }
       return parts.join(', ')
     },

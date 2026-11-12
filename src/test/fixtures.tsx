@@ -11,15 +11,15 @@ import { todayIn } from '../lib/time'
 /** Вымышленная клиника и пациенты — настоящих данных в тестах не бывает. */
 export const me: Schemas['BookingViewsMe'] = {
   doctor: true, admin: true, reception: false, doctorId: 1, fullName: 'Айгерим',
-  clinic: { brandName: 'Стоматология «Тест»', workStart: '09:00:00', workEnd: '18:00:00' },
-  doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true }, { id: 2, fullName: 'Дастан Т.', active: true }],
+  clinic: { brandName: 'Стоматология «Тест»', workStart: '09:00:00', workEnd: '18:00:00', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
+  doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }, { id: 2, fullName: 'Дастан Т.', active: true, telegramLinked: false }], owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6
 }
 
 export function appointment(id: number, doctorId: number, time: string, name: string, extra: Partial<Schemas['AppointmentView']> = {}) {
   const start = new Date(`${todayIn()}T${time}:00+06:00`)
   return {
     id, doctorId, startAt: start.toISOString(), endAt: new Date(start.getTime() + 30 * 60000).toISOString(),
-    status: 'SCHEDULED', reply: 'NONE', version: 0, patient: { id, fullName: name, phone: '996555123456' }, ...extra,
+    status: 'SCHEDULED', reply: 'NONE', version: 0, source: 'DOCTOR', debtSom: 0, firstVisit: false, patient: { id, fullName: name, phone: '996555123456', telegram: false }, ...extra,
   } satisfies Schemas['AppointmentView']
 }
 

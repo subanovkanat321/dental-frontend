@@ -27,7 +27,7 @@ function badgesOf(a: Appointment, money: boolean, chair: ChairTime | undefined):
   }
   if (a.firstVisit && a.status !== 'CANCELLED') list.push({ icon: '⭐', text: 'Первый визит', short: 'Новый', long: 'Первый визит' })
   if (a.comment?.trim()) list.push({ icon: '💬', text: `Комментарий: ${a.comment.trim()}`, long: 'Комментарий' })
-  if (money && (a.debtSom ?? 0) > 0) list.push({ icon: '🧾', text: `Долг ${somText(a.debtSom!)}`, long: `Долг ${somText(a.debtSom!)}` })
+  if (money && a.debtSom > 0) list.push({ icon: '🧾', text: `Долг ${somText(a.debtSom)}`, long: `Долг ${somText(a.debtSom)}` })
   return list
 }
 

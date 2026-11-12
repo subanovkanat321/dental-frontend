@@ -10,8 +10,8 @@ import { waitForSlow } from '../test/wait'
 type Me = Schemas['BookingViewsMe']
 
 const PLAN = [
-  { id: 1, tooth: 36, title: 'Лечение каналов', priceSom: 8000 },
-  { id: 2, title: 'Профчистка', priceSom: 2500, doneAt: '2026-10-20T05:00:00Z' },
+  { id: 1, tooth: 36, title: 'Лечение каналов', priceSom: 8000, stage: 1 },
+  { id: 2, title: 'Профчистка', priceSom: 2500, doneAt: '2026-10-20T05:00:00Z', stage: 1 },
 ] satisfies Schemas['TreatmentStepView'][]
 
 /** Вымышленный пациент с планом лечения; у ассистента сервер присылает план без цен. */
@@ -88,7 +88,7 @@ test('«🖨 План лечения»: этапы с итогом за этап
       { id: 3, tooth: 36, title: 'Коронка', priceSom: 15000, stage: 2 },
     ] satisfies Schemas['TreatmentStepView'][])),
     http.get('*/api/appointments/debts', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('patientId') === '2'
-      ? [{ appointmentId: 7, patientId: 2, chargeSom: 2500, paidSom: 1000, debtSom: 1500 }] satisfies Schemas['PaymentQueryDebt'][] : [])),
+      ? [{ appointmentId: 7, patientId: 2, chargeSom: 2500, paidSom: 1000, debtSom: 1500, doctorId: 0 }] satisfies Schemas['PaymentQueryDebt'][] : [])),
   )
   await openMedical()
   await userEvent.click(await screen.findByRole('button', { name: 'Печать: план лечения' }))
@@ -128,13 +128,13 @@ test('ассистент печатает план без цен', async () => {
 test('история визитов: «📋 Памятка и квитанция» у состоявшегося приёма', async () => {
   backend(me, false)
   const visit = { id: 9, doctorId: 1, startAt: '2026-10-20T04:00:00Z', endAt: '2026-10-20T04:30:00Z', status: 'DONE', version: 1,
-    paidSom: 1500, serviceName: 'Профчистка', patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444' } } satisfies Schemas['AppointmentView']
+    paidSom: 1500, serviceName: 'Профчистка', patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }, source: 'DOCTOR', debtSom: 0, firstVisit: false } satisfies Schemas['AppointmentView']
   server.use(
     http.get('*/api/appointments/by-patient/2', () => HttpResponse.json({
       patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444' }, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [visit],
     })),
     http.get('*/api/appointments/9/care-memo', () => HttpResponse.json(
-      { memoId: 4, title: 'После чистки', body: '• 2 часа не ешьте.', text: 'Памятка', telegram: false } satisfies Schemas['CareMemosAppointmentMemo'])),
+      { memoId: 4, title: 'После чистки', body: '• 2 часа не ешьте.', text: 'Памятка', telegram: false, ky: false } satisfies Schemas['CareMemosAppointmentMemo'])),
   )
   window.location.hash = '/patients'
   renderApp()

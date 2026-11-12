@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { AssistantDoctors, ChangeRole, InviteMember } from './MemberParts'
-import { InviteByPhone, PHONE_HINT, StaffPhone, TemporaryPassword } from './PhoneParts'
+import { InviteByPhone, PHONE_HINT, StaffPhone, TemporaryPassword, type Doctor } from './PhoneParts'
 import { phoneText, ROLE_TEXT } from './texts'
 import { Loading } from '../layout/Loading'
 import { ChairBadge } from './ChairBadge'
@@ -15,7 +15,6 @@ import { HeadTools } from '../layout/PageHead'
 import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
-type Doctor = Schemas['DoctorAdminView']
 type Member = Schemas['StaffMembersMemberView']
 type Invite = Schemas['StaffMembersInviteView']
 
@@ -56,7 +55,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
   const nameOf = (id: number) => doctors.find((d) => d.id === id)?.fullName ?? ''
 
   const remove = useMutation<unknown, ApiError, Member>({
-    mutationFn: (m) => unwrap(api.DELETE('/api/members/{telegramId}', { params: { path: { telegramId: m.telegramId! } } })),
+    mutationFn: (m) => unwrap(api.DELETE('/api/members/{telegramId}', { params: { path: { telegramId: m.telegramId } } })),
     onSuccess: (_r, m) => {
       // Ушли из администраторов сами — доступы другие: начать заново
       if (m.me) window.location.reload()
@@ -114,7 +113,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                         ? <img className="avatar" src={r.doctor.photoUrl} alt="" />
                         : <span className="avatar" aria-hidden="true">{(r.name || '?').slice(0, 1)}</span>}
                       {r.kind === 'doctor' && (me.admin || me.reception || r.doctor.id === me.doctorId)
-                        ? <button type="button" className="row-link" onClick={() => onOpen(r.doctor.id!)}>{r.name}</button>
+                        ? <button type="button" className="row-link" onClick={() => onOpen(r.doctor.id)}>{r.name}</button>
                         : <span className="strong">{r.name}</span>}
                     </span>
                     {r.kind === 'doctor' && <ChairBadge chairs={chairs.data} doctorId={r.doctor.id} nameOf={nameOf} />}
@@ -144,7 +143,7 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                   )}
                   {admin && (
                     <td>
-                      {r.kind === 'member' && <StaffPhone compact telegramId={r.member.telegramId!} phone={r.member.phone}
+                      {r.kind === 'member' && <StaffPhone compact telegramId={r.member.telegramId} phone={r.member.phone}
                         phoneOnly={r.member.phoneOnly} name={r.name} />}
                       {r.kind === 'doctor' && r.doctor.telegramId != null && <StaffPhone compact telegramId={r.doctor.telegramId}
                         phone={r.doctor.phone} phoneOnly={r.doctor.phoneOnly} name={r.name} />}
@@ -162,9 +161,9 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
                         onClick={() => void ask(`Отменить приглашение «${r.name}»? Ссылка перестанет работать.`).then((ok) => ok && cancel.mutate(r.invite))}>
                         Отменить</button>
                     )}
-                    {r.kind === 'doctor' && admin && <button type="button" className="btn small ghost" onClick={() => onOpen(r.doctor.id!)}>{r.doctor.id === me.doctorId ? 'Мой профиль' : 'Открыть'}</button>}
+                    {r.kind === 'doctor' && admin && <button type="button" className="btn small ghost" onClick={() => onOpen(r.doctor.id)}>{r.doctor.id === me.doctorId ? 'Мой профиль' : 'Открыть'}</button>}
                     {/* Вход по номеру без SMS: админ даёт временный пароль (себе — нет: свой меняют в «Моём профиле») */}
-                    {admin && r.kind === 'member' && r.member.phoneOnly && !r.member.me && <TemporaryPassword telegramId={r.member.telegramId!} name={r.name} />}
+                    {admin && r.kind === 'member' && r.member.phoneOnly && !r.member.me && <TemporaryPassword telegramId={r.member.telegramId} name={r.name} />}
                     {admin && r.kind === 'doctor' && r.doctor.phoneOnly && r.doctor.id !== me.doctorId && <TemporaryPassword telegramId={r.doctor.telegramId!} name={r.name} />}
                   </td>
                 </tr>

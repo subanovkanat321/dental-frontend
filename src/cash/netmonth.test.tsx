@@ -44,7 +44,7 @@ function backend(who: Me, mine: Schemas['NetMonthMine']) {
     http.get('*/api/me/net-month', () => HttpResponse.json(mine)),
     http.get('*/api/expenses', () => HttpResponse.json([])),
     http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: [], own: [] })),
-    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 90000, purchasedSom: 1000, expensesSom: 56000 } satisfies Schemas['SpendingView'])),
+    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 90000, purchasedSom: 1000, expensesSom: 56000, usedSom: 0, unpricedUsed: 0, unpricedDeliveries: 0 } satisfies Schemas['SpendingView'])),
     http.get('*/api/finance/net-month', () => HttpResponse.json(REPORT)),
   )
 }

@@ -15,7 +15,7 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-const aigul = { id: 2, fullName: 'Айгуль Т.', phone: '996700333444' }
+const aigul = { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }
 
 function backend(start: Entry[] = []) {
   let list = [...start]

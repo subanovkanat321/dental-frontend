@@ -21,19 +21,19 @@ export function NetMonthBlock({ me }: { me: Me }) {
   })
   const r = q.data?.row
   if (!r) return null
-  const revenue = r.revenueSom ?? 0
-  const earned = r.earnedSom ?? 0
+  const revenue = r.revenueSom
+  const earned = r.earnedSom
   const net = r.doctorNetSom ?? 0
-  const unpriced = r.unpricedMaterials ?? 0
+  const unpriced = r.unpricedMaterials
   return (
     <section className="card-block net-month" aria-label="Чистыми за месяц">
       <h2>Чистыми за {monthName(q.data?.month)}</h2>
       <dl className="net-lines">
         <div><dt>Выручка</dt><dd className="num">{somText(revenue)}</dd></div>
         {earned !== revenue && <div><dt>Клинике по условиям (процент)</dt><dd className="num">{signedSom(earned - revenue)}</dd></div>}
-        {(r.rentSom ?? 0) > 0 && <div><dt>Аренда кресла</dt><dd className="num">−{somText(r.rentSom ?? 0)}</dd></div>}
-        <div><dt>Материалы ≈</dt><dd className="num">−{somText(r.materialsSom ?? 0)}</dd></div>
-        <div><dt>Техник и лаборатория</dt><dd className="num">−{somText(r.expensesSom ?? 0)}</dd></div>
+        {r.rentSom > 0 && <div><dt>Аренда кресла</dt><dd className="num">−{somText(r.rentSom)}</dd></div>}
+        <div><dt>Материалы ≈</dt><dd className="num">−{somText(r.materialsSom)}</dd></div>
+        <div><dt>Техник и лаборатория</dt><dd className="num">−{somText(r.expensesSom)}</dd></div>
         <div className="net-total"><dt>Чистыми</dt>
           <dd className={`num strong${net < 0 ? ' tone-bad' : ''}`} aria-label="Чистыми">{signedSom(net)}</dd></div>
       </dl>

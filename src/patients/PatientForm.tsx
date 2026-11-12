@@ -32,7 +32,7 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
     mutationFn: (allowDuplicate) => {
       const body = { fullName: f.fullName, phone: phoneFromInput(f.phone), allowDuplicate, birthDate: f.birthDate || undefined, workplace: f.workplace,
         sourceId: f.source ? Number(f.source) : undefined }
-      return unwrap(p ? api.PUT('/api/patients/{id}', { params: { path: { id: p.id! } }, body }) : api.POST('/api/patients', { body }))
+      return unwrap(p ? api.PUT('/api/patients/{id}', { params: { path: { id: p.id } }, body }) : api.POST('/api/patients', { body }))
     },
     onSuccess: (saved) => {
       for (const key of ['patients', 'patient-card', 'appointments']) void client.invalidateQueries({ queryKey: [key] })
@@ -75,7 +75,7 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
         <div className="duplicate" role="alert">
           <p>{save.error?.message}: {other.fullName}, {other.phone ? formatPhone(other.phone) : ''}</p>
           <div className="actions">
-            {onOpenOther && other.id != null && <button type="button" className="btn" onClick={() => onOpenOther(other.id!)}>Открыть его</button>}
+            {onOpenOther && other.id != null && <button type="button" className="btn" onClick={() => onOpenOther(other.id)}>Открыть его</button>}
             <button type="button" className="btn" onClick={() => save.mutate(true)}>Это другой человек — {p ? 'сохранить' : 'создать'}</button>
           </div>
         </div>
@@ -100,7 +100,7 @@ export function NewPatientPanel({ onClose, onCreated }: { onClose: () => void; o
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
-      <PatientForm onSaved={(p) => onCreated(p.id!)} onOpenOther={onCreated} />
+      <PatientForm onSaved={(p) => onCreated(p.id)} onOpenOther={onCreated} />
     </aside>
   )
 }

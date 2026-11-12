@@ -83,9 +83,9 @@ export function QuestionsTab({ selected, onOpen }: { selected: number | null; on
           <thead><tr><th>Пациент</th><th>Когда</th><th>Вопрос</th></tr></thead>
           <tbody>
             {list.data.questions!.map((q) => (
-              <tr key={q.id} className={['clickable', q.id === selected ? 'active' : ''].join(' ').trim()} onClick={rowClick(() => onOpen(q.id!))}>
+              <tr key={q.id} className={['clickable', q.id === selected ? 'active' : ''].join(' ').trim()} onClick={rowClick(() => onOpen(q.id))}>
                 <td>
-                  <button type="button" className="row-link" onClick={() => onOpen(q.id!)}>{who(q)}</button>
+                  <button type="button" className="row-link" onClick={() => onOpen(q.id)}>{who(q)}</button>
                   {q.status === 'CLOSED' && <span className="hint small"> · без ответа</span>}
                   {aiMark(q) && <span className="hint small"> · {aiMark(q)}</span>}
                 </td>

@@ -3658,6 +3658,417 @@
         }
       }
     },
+    "/web/plan/{token}/question" : {
+      "post" : {
+        "tags" : [ "plan-page-controller" ],
+        "operationId" : "question",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanOffersPatientPlan"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/plan/{token}/agree" : {
+      "post" : {
+        "tags" : [ "plan-page-controller" ],
+        "operationId" : "agree",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanOffersPatientPlan"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/logout" : {
+      "post" : {
+        "tags" : [ "web-auth-controller" ],
+        "operationId" : "logout",
+        "parameters" : [ {
+          "name" : "dental_session",
+          "in" : "cookie",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/web/login" : {
+      "post" : {
+        "tags" : [ "web-auth-controller" ],
+        "operationId" : "login",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/telegram/start" : {
+      "post" : {
+        "tags" : [ "telegram-login-controller" ],
+        "operationId" : "start",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TelegramLoginControllerStarted"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/phone" : {
+      "post" : {
+        "tags" : [ "phone-login-controller" ],
+        "operationId" : "login_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PhoneLoginControllerLoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PhoneLoginControllerSetupToken"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/phone/password" : {
+      "post" : {
+        "tags" : [ "phone-login-controller" ],
+        "operationId" : "password",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PhoneLoginControllerPasswordLogin"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PhoneLoginControllerSetupToken"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/phone/password/new" : {
+      "post" : {
+        "tags" : [ "phone-login-controller" ],
+        "operationId" : "newPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PhoneLoginControllerNewPassword"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/phone/code" : {
+      "post" : {
+        "tags" : [ "phone-login-controller" ],
+        "operationId" : "code",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PhoneLoginControllerCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/invite" : {
+      "post" : {
+        "tags" : [ "invite-controller" ],
+        "operationId" : "view_2",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InviteControllerTokenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InviteControllerInviteView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/invite/register" : {
+      "post" : {
+        "tags" : [ "invite-controller" ],
+        "operationId" : "register",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InviteControllerRegisterRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InviteControllerRegistered"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/invite/code" : {
+      "post" : {
+        "tags" : [ "invite-controller" ],
+        "operationId" : "code_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InviteControllerCodeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InviteControllerCodeStep"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/clinic-applications" : {
+      "post" : {
+        "tags" : [ "join-controller" ],
+        "operationId" : "submit",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicApplicationsForm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/web/client-error" : {
+      "post" : {
+        "tags" : [ "client-error-controller" ],
+        "operationId" : "report",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/booking" : {
+      "get" : {
+        "tags" : [ "web-booking-controller" ],
+        "operationId" : "info",
+        "parameters" : [ {
+          "name" : "code",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WebBookingServiceInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "web-booking-controller" ],
+        "operationId" : "book",
+        "parameters" : [ {
+          "name" : "code",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WebBookingControllerForm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WebBookingServiceBooked"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/waitlist" : {
       "get" : {
         "tags" : [ "waitlist-controller" ],
@@ -3708,7 +4119,7 @@
     "/api/waitlist/{id}/book" : {
       "post" : {
         "tags" : [ "waitlist-controller" ],
-        "operationId" : "book",
+        "operationId" : "book_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4692,7 +5103,7 @@
     "/api/platform/surveys/{id}/start" : {
       "post" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "start",
+        "operationId" : "start_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6978,7 +7389,7 @@
     "/api/patient/plans/{id}/question" : {
       "post" : {
         "tags" : [ "plan-offer-controller" ],
-        "operationId" : "question",
+        "operationId" : "question_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7005,7 +7416,7 @@
     "/api/patient/plans/{id}/agree" : {
       "post" : {
         "tags" : [ "plan-offer-controller" ],
-        "operationId" : "agree",
+        "operationId" : "agree_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -7067,7 +7478,7 @@
     "/api/patient/booking" : {
       "post" : {
         "tags" : [ "patient-booking-controller" ],
-        "operationId" : "book_1",
+        "operationId" : "book_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7453,7 +7864,7 @@
     "/api/me/phone/code" : {
       "post" : {
         "tags" : [ "my-phone-controller" ],
-        "operationId" : "code",
+        "operationId" : "code_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7518,7 +7929,7 @@
       },
       "post" : {
         "tags" : [ "password-controller" ],
-        "operationId" : "code_1",
+        "operationId" : "code_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9665,7 +10076,7 @@
     "/api/appointments/report" : {
       "get" : {
         "tags" : [ "report-controller" ],
-        "operationId" : "view_2",
+        "operationId" : "view_3",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -9700,7 +10111,7 @@
       },
       "post" : {
         "tags" : [ "report-controller" ],
-        "operationId" : "report",
+        "operationId" : "report_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9836,6 +10247,570 @@
         }
       }
     },
+    "/web/tariffs" : {
+      "get" : {
+        "tags" : [ "billing-controller" ],
+        "operationId" : "tariffs",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Tariffs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/plan/{token}" : {
+      "get" : {
+        "tags" : [ "plan-page-controller" ],
+        "operationId" : "plan_2",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PlanOffersPatientPlan"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/materials/reel/{dir}/{file}" : {
+      "get" : {
+        "tags" : [ "reel-files-controller" ],
+        "operationId" : "file",
+        "parameters" : [ {
+          "name" : "dir",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "file",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "exp",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "sig",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "download",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/materials/public" : {
+      "get" : {
+        "tags" : [ "materials-controller" ],
+        "operationId" : "publicMaterials",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MaterialsPublicMaterials"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/materials/public/{name}" : {
+      "get" : {
+        "tags" : [ "materials-controller" ],
+        "operationId" : "publicFile",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/materials/howto" : {
+      "get" : {
+        "tags" : [ "materials-controller" ],
+        "operationId" : "howTo",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MaterialsHowToVideo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/materials/howto/{name}" : {
+      "get" : {
+        "tags" : [ "materials-controller" ],
+        "operationId" : "howToFile",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/materials/file" : {
+      "get" : {
+        "tags" : [ "materials-controller" ],
+        "operationId" : "signed",
+        "parameters" : [ {
+          "name" : "path",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "exp",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "sig",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "download",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/telegram/status" : {
+      "get" : {
+        "tags" : [ "telegram-login-controller" ],
+        "operationId" : "status_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TelegramLoginControllerStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/phone/pending" : {
+      "get" : {
+        "tags" : [ "phone-login-controller" ],
+        "operationId" : "pending",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PhoneLoginControllerPending"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "phone-login-controller" ],
+        "operationId" : "forget",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/links" : {
+      "get" : {
+        "tags" : [ "links-controller" ],
+        "operationId" : "data",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LinksControllerLinks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/import/tish-perenos.xlsx" : {
+      "get" : {
+        "tags" : [ "workbook-controller" ],
+        "operationId" : "template_2",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/content-jpeg/{file}" : {
+      "get" : {
+        "tags" : [ "content-jpeg" ],
+        "operationId" : "file_1",
+        "parameters" : [ {
+          "name" : "file",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/config" : {
+      "get" : {
+        "tags" : [ "web-auth-controller" ],
+        "operationId" : "config",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WebAuthControllerConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/clinics" : {
+      "get" : {
+        "tags" : [ "directory-controller" ],
+        "operationId" : "data_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DirectoryControllerClinic"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/clinic" : {
+      "get" : {
+        "tags" : [ "clinic-page-controller" ],
+        "operationId" : "data_2",
+        "parameters" : [ {
+          "name" : "code",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicPageControllerPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/case" : {
+      "get" : {
+        "tags" : [ "join-case" ],
+        "operationId" : "get_3",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JoinCaseCase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/calendar/{token}.ics" : {
+      "get" : {
+        "tags" : [ "calendar-feed-file-controller" ],
+        "operationId" : "feed",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/booking/slots" : {
+      "get" : {
+        "tags" : [ "web-booking-controller" ],
+        "operationId" : "slots",
+        "parameters" : [ {
+          "name" : "code",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "date",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "serviceTypeId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BookingViewsSlots"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/booking/free-days" : {
+      "get" : {
+        "tags" : [ "web-booking-controller" ],
+        "operationId" : "freeDays",
+        "parameters" : [ {
+          "name" : "code",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "serviceTypeId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string",
+                    "format" : "date"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/surveys/current" : {
       "get" : {
         "tags" : [ "survey-controller" ],
@@ -9922,7 +10897,7 @@
     "/api/slots" : {
       "get" : {
         "tags" : [ "slot-controller" ],
-        "operationId" : "slots",
+        "operationId" : "slots_1",
         "parameters" : [ {
           "name" : "date",
           "in" : "query",
@@ -10065,7 +11040,7 @@
     "/api/salaries/timesheet" : {
       "get" : {
         "tags" : [ "timesheet-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -10107,7 +11082,7 @@
     "/api/push" : {
       "get" : {
         "tags" : [ "push-controller" ],
-        "operationId" : "view_3",
+        "operationId" : "view_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10196,7 +11171,7 @@
     "/api/platform/surveys/template" : {
       "get" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "template_2",
+        "operationId" : "template_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10235,7 +11210,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_4",
+        "operationId" : "get_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10262,7 +11237,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10446,7 +11421,7 @@
     "/api/platform/materials/file" : {
       "get" : {
         "tags" : [ "materials-controller" ],
-        "operationId" : "file",
+        "operationId" : "file_2",
         "parameters" : [ {
           "name" : "path",
           "in" : "query",
@@ -10502,7 +11477,7 @@
     "/api/platform/health" : {
       "get" : {
         "tags" : [ "health-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10783,7 +11758,7 @@
     "/api/platform/ai-usage" : {
       "get" : {
         "tags" : [ "ai-usage-controller" ],
-        "operationId" : "report_1",
+        "operationId" : "report_2",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -10809,7 +11784,7 @@
     "/api/platform/agreements/template" : {
       "get" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "template_3",
+        "operationId" : "template_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10848,7 +11823,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11110,7 +12085,7 @@
     "/api/patients/{patientId}/contract" : {
       "get" : {
         "tags" : [ "contract-controller" ],
-        "operationId" : "get_8",
+        "operationId" : "get_9",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -11221,7 +12196,7 @@
     "/api/patient/slots" : {
       "get" : {
         "tags" : [ "patient-booking-controller" ],
-        "operationId" : "slots_1",
+        "operationId" : "slots_2",
         "parameters" : [ {
           "name" : "date",
           "in" : "query",
@@ -11347,7 +12322,7 @@
     "/api/patient/free-days" : {
       "get" : {
         "tags" : [ "patient-booking-controller" ],
-        "operationId" : "freeDays",
+        "operationId" : "freeDays_1",
         "parameters" : [ {
           "name" : "doctorId",
           "in" : "query",
@@ -11515,7 +12490,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_9",
+        "operationId" : "get_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11650,7 +12625,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_10",
+        "operationId" : "get_11",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11885,7 +12860,7 @@
     "/api/clinic/plan" : {
       "get" : {
         "tags" : [ "billing-controller" ],
-        "operationId" : "plan_2",
+        "operationId" : "plan_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11903,7 +12878,7 @@
     "/api/clinic/pay" : {
       "get" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "view_4",
+        "operationId" : "view_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11968,7 +12943,7 @@
     "/api/clinic/import/template" : {
       "get" : {
         "tags" : [ "import-controller" ],
-        "operationId" : "template_4",
+        "operationId" : "template_5",
         "parameters" : [ {
           "name" : "kind",
           "in" : "query",
@@ -12186,7 +13161,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_11",
+        "operationId" : "get_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12730,7 +13705,7 @@
     "/api/appointments/promo-codes" : {
       "get" : {
         "tags" : [ "promo-report-controller" ],
-        "operationId" : "report_2",
+        "operationId" : "report_3",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -12918,6 +13893,42 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PatientCard"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/telegram" : {
+      "delete" : {
+        "tags" : [ "telegram-login-controller" ],
+        "operationId" : "forget_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/invite/pending" : {
+      "delete" : {
+        "tags" : [ "invite-controller" ],
+        "operationId" : "forget_2",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
                 }
               }
             }
@@ -13215,7 +14226,8 @@
           "doctorName" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "id", "low", "minQuantity", "quantity" ]
       },
       "SupplyControllerOwner" : {
         "properties" : {
@@ -13286,7 +14298,8 @@
           "note" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "id", "telegramId" ]
       },
       "ServiceTypeControllerRequest" : {
         "properties" : {
@@ -13359,7 +14372,8 @@
             "type" : "string",
             "enum" : [ "EXAM", "HYGIENE", "THERAPY", "SURGERY", "PROSTHETICS", "ORTHODONTICS", "IMPLANTS", "AESTHETICS", "KIDS", "XRAY", "OTHER" ]
           }
-        }
+        },
+        "required" : [ "active", "durationMinutes", "id", "name" ]
       },
       "ServiceSuppliesLine" : {
         "properties" : {
@@ -13410,7 +14424,8 @@
           "doctorName" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "inStock", "quantity", "supplyId" ]
       },
       "SalaryControllerTerms" : {
         "properties" : {
@@ -13509,7 +14524,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "baseAccruedSom", "baseSom", "byTimesheet", "dueSom", "earnedSom", "former", "owesSom", "paidSom", "rentFixedSom", "rentReceivedSom", "rentSom", "revenueSom" ]
       },
       "TimesheetControllerNormRequest" : {
         "properties" : {
@@ -13575,7 +14591,8 @@
               "$ref" : "#/components/schemas/TimesheetsDay"
             }
           }
-        }
+        },
+        "required" : [ "accruedSom", "baseSom", "byTimesheet", "normDays", "normManual", "plannedDays", "workedDays" ]
       },
       "TimesheetsDay" : {
         "properties" : {
@@ -13596,7 +14613,8 @@
           "note" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "manual", "planned" ]
       },
       "TimesheetControllerDayRequest" : {
         "properties" : {
@@ -13645,7 +14663,8 @@
           "noTelegram" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "enabled", "noTelegram" ]
       },
       "PromoCodesRequest" : {
         "properties" : {
@@ -13701,7 +14720,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "active", "appointments", "id" ]
       },
       "BillingControllerTariffsRequest" : {
         "properties" : {
@@ -13740,7 +14760,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "monthSom", "yearSom" ]
       },
       "Tariffs" : {
         "properties" : {
@@ -13757,7 +14778,8 @@
               "$ref" : "#/components/schemas/TariffsTariff"
             }
           }
-        }
+        },
+        "required" : [ "pilotMonths" ]
       },
       "TariffsPromo" : {
         "properties" : {
@@ -13894,7 +14916,8 @@
               "$ref" : "#/components/schemas/SurveyQuestion"
             }
           }
-        }
+        },
+        "required" : [ "active", "announce", "id", "invited", "responses" ]
       },
       "PayControllerSettingsRequest" : {
         "properties" : {
@@ -13920,7 +14943,8 @@
           "hasQr" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "hasQr", "hasRequisites" ]
       },
       "ClinicOutreachChangeRequest" : {
         "properties" : {
@@ -14018,7 +15042,8 @@
           "lostReason" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "id", "solo" ]
       },
       "ClinicOutreachTemplateRequest" : {
         "properties" : {
@@ -14038,7 +15063,8 @@
           "defaultText" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "custom" ]
       },
       "PlatformInfoControllerRequest" : {
         "properties" : {
@@ -14112,7 +15138,8 @@
           "doctorsGroupUrl" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "accessLog", "accessNotify", "accessRequiresGrant" ]
       },
       "PlatformInfoControllerAccess" : {
         "properties" : {
@@ -14203,7 +15230,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "amountSom", "createdBy", "id" ]
       },
       "PlatformFinanceControllerSettingsRequest" : {
         "properties" : {
@@ -14276,7 +15304,8 @@
           "comment" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "amountSom", "id", "monthly" ]
       },
       "PlatformFinanceMarkForm" : {
         "properties" : {
@@ -14328,7 +15357,8 @@
             "type" : "string",
             "format" : "date"
           }
-        }
+        },
+        "required" : [ "expenseId" ]
       },
       "ContentPostsDraft" : {
         "properties" : {
@@ -14456,7 +15486,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "id", "instagramPublishing", "story", "storyPublishing" ]
       },
       "ContentSettingsUpdate" : {
         "properties" : {
@@ -14476,7 +15507,8 @@
           "storiesAuto" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "reelsAuto", "storiesAuto" ]
       },
       "BillingControllerPaidUntil" : {
         "properties" : {
@@ -14511,7 +15543,8 @@
           "hidden" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "hidden" ]
       },
       "PlatformServiceClinicRow" : {
         "properties" : {
@@ -14600,7 +15633,8 @@
           "demo" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "appointments", "bookedWeek", "demo", "doctors", "done30", "hidden", "id", "listed", "noShow30", "patients", "selfBooked30", "settingUp", "staff", "unmarked" ]
       },
       "AgreementControllerAssignment" : {
         "properties" : {
@@ -14647,7 +15681,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "version" ]
       },
       "AgreementsAdminChannels" : {
         "properties" : {
@@ -14663,7 +15698,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "phone", "push", "telegram" ]
       },
       "AgreementsChoice" : {
         "properties" : {
@@ -14688,7 +15724,8 @@
           "signed" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "forAll", "id", "signed", "version" ]
       },
       "AgreementsClinicAgreement" : {
         "properties" : {
@@ -14744,7 +15781,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "id", "sizeBytes" ]
       },
       "AgreementsTargeting" : {
         "properties" : {
@@ -14808,7 +15846,8 @@
               "format" : "int64"
             }
           }
-        }
+        },
+        "required" : [ "acceptances", "forAll", "id", "version" ]
       },
       "JoinCaseMetric" : {
         "properties" : {
@@ -14853,7 +15892,8 @@
           "shown" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "shown" ]
       },
       "AiUsageControllerSettingsRequest" : {
         "properties" : {
@@ -14881,7 +15921,8 @@
           "vatPercent" : {
             "type" : "number"
           }
-        }
+        },
+        "required" : [ "perDoctor" ]
       },
       "AiUsageControllerLimitRequest" : {
         "properties" : {
@@ -14959,7 +16000,8 @@
           "doctorName" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "number" ]
       },
       "PublicationConsentsRequest" : {
         "properties" : {
@@ -15039,7 +16081,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "id", "stage" ]
       },
       "MedicalRecordControllerPostText" : {
         "properties" : {
@@ -15082,7 +16125,8 @@
           "postText" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "canDelete", "id", "sizeBytes" ]
       },
       "ChartControllerDentitionRequest" : {
         "properties" : {
@@ -15139,7 +16183,8 @@
           "guardian" : {
             "$ref" : "#/components/schemas/Guardian"
           }
-        }
+        },
+        "required" : [ "fullName", "id", "telegram" ]
       },
       "AnamnesisAnswer" : {
         "properties" : {
@@ -15198,7 +16243,8 @@
           "text" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "alert", "questionId", "yes" ]
       },
       "AnamnesisView" : {
         "properties" : {
@@ -15245,7 +16291,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "fullName", "phone" ]
+        "required" : [ "allowDuplicate", "fullName", "phone" ]
       },
       "PatientControllerGuardianRequest" : {
         "properties" : {
@@ -15266,7 +16312,8 @@
           "subscribed" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "subscribed" ]
       },
       "PatientBookingControllerLanguage" : {
         "properties" : {
@@ -15328,7 +16375,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "active", "id", "patients", "position" ]
       },
       "PasswordControllerTemporaryPassword" : {
         "properties" : {
@@ -15367,7 +16415,8 @@
           "phoneOnly" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "phoneOnly" ]
       },
       "StaffMembersControllerAssistantDoctors" : {
         "properties" : {
@@ -15412,7 +16461,8 @@
           "telegram" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "phoneOnly", "sms", "telegram" ]
       },
       "MyPhoneControllerPhoneConfirmed" : {
         "properties" : {
@@ -15452,7 +16502,8 @@
           "editable" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "editable" ]
       },
       "EarningsControllerGoal" : {
         "properties" : {
@@ -15528,7 +16579,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "baseSom", "eveningSummary", "hasTerms", "monthRevenueSom", "monthSom", "previousMonthSom", "rentSom", "todayRevenueSom", "todaySom", "workDaysLeft" ]
       },
       "EarningsControllerEvening" : {
         "properties" : {
@@ -15559,7 +16611,8 @@
               "$ref" : "#/components/schemas/FamiliesMember"
             }
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "FamiliesMember" : {
         "properties" : {
@@ -15574,7 +16627,8 @@
             "type" : "string",
             "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "ExpensesDraft" : {
         "properties" : {
@@ -15636,7 +16690,8 @@
           "patient" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "amountSom", "id" ]
       },
       "DoctorServicesControllerRequest" : {
         "properties" : {
@@ -15665,7 +16720,8 @@
               "format" : "int64"
             }
           }
-        }
+        },
+        "required" : [ "doctorId" ]
       },
       "DoctorControllerProfileRequest" : {
         "properties" : {
@@ -15698,7 +16754,8 @@
           "telegramLinked" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "active", "id", "telegramLinked" ]
       },
       "DoctorHoursControllerRequest" : {
         "properties" : {
@@ -15737,7 +16794,8 @@
               "$ref" : "#/components/schemas/DoctorHoursViewDay"
             }
           }
-        }
+        },
+        "required" : [ "custom" ]
       },
       "ChairAssignmentControllerChairRequest" : {
         "properties" : {
@@ -15773,7 +16831,8 @@
             "type" : "string",
             "enum" : [ "WARN", "STRICT" ]
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "ChairOverviewHoursOverlap" : {
         "properties" : {
@@ -15797,7 +16856,8 @@
             "type" : "string",
             "format" : "time-local"
           }
-        }
+        },
+        "required" : [ "doctorId", "otherDoctorId" ]
       },
       "DoctorControllerAdminRole" : {
         "properties" : {
@@ -15844,7 +16904,8 @@
           "phoneOnly" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "active", "id", "phoneOnly" ]
       },
       "ClinicControllerRequest" : {
         "properties" : {
@@ -15979,7 +17040,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "independentDoctors", "listed", "ownHours", "recallMonths", "separateSupplies", "settingUp" ]
       },
       "VisitReportControllerAiChange" : {
         "properties" : {
@@ -15996,7 +17058,8 @@
           "on" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "available", "on" ]
       },
       "ClinicControllerReminderRequest" : {
         "properties" : {
@@ -16032,7 +17095,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "recallMonths" ]
       },
       "DepositControllerSettingsRequest" : {
         "properties" : {
@@ -16065,7 +17129,8 @@
           "hasQr" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "hasQr" ]
       },
       "ContractControllerTemplateRequest" : {
         "properties" : {
@@ -16106,7 +17171,8 @@
           "defaultBody" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "custom" ]
       },
       "AuditControllerSettingsChange" : {
         "properties" : {
@@ -16147,7 +17213,8 @@
           "enabled" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "enabled", "mandatory" ]
       },
       "ChairControllerNameRequest" : {
         "properties" : {
@@ -16176,7 +17243,8 @@
             "type" : "string",
             "enum" : [ "WARN", "STRICT" ]
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "ChairControllerModeRequest" : {
         "properties" : {
@@ -16239,7 +17307,8 @@
           "kyStandard" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "active", "id", "kyStandard", "standard" ]
       },
       "CareMemoControllerLinkRequest" : {
         "properties" : {
@@ -16259,7 +17328,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "serviceTypeId" ]
       },
       "CalendarFeedControllerNames" : {
         "properties" : {
@@ -16287,7 +17357,8 @@
           "webcalUrl" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "enabled", "showPatientNames" ]
       },
       "VisitTeethControllerMark" : {
         "properties" : {
@@ -16333,7 +17404,8 @@
           "doctorName" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "number" ]
       },
       "AppointmentRequestsService" : {
         "properties" : {
@@ -16451,7 +17523,8 @@
           "freeComment" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
       },
       "FamiliesBooker" : {
         "properties" : {
@@ -16497,7 +17570,8 @@
           "doctorName" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "editable" ]
       },
       "AppointmentRequestsComment" : {
         "properties" : {
@@ -16571,7 +17645,405 @@
             "type" : "integer",
             "format" : "int64"
           }
+        },
+        "required" : [ "active", "alert", "answers", "id", "position" ]
+      },
+      "PlanOffersItem" : {
+        "properties" : {
+          "tooth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
         }
+      },
+      "PlanOffersPatientPlan" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "sentAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "validUntil" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "duration" : {
+            "type" : "string"
+          },
+          "stages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlanOffersStage"
+            }
+          },
+          "totalSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "agreedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "questionAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "forName" : {
+            "type" : "string"
+          },
+          "phones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "whatsappPhone" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "totalSom" ]
+      },
+      "PlanOffersStage" : {
+        "properties" : {
+          "stage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlanOffersItem"
+            }
+          },
+          "totalSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "stage", "totalSom" ]
+      },
+      "ProblemDetail" : {
+        "properties" : {
+          "type" : {
+            "type" : "string",
+            "format" : "uri"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "detail" : {
+            "type" : "string"
+          },
+          "instance" : {
+            "type" : "string",
+            "format" : "uri"
+          },
+          "properties" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "object"
+            }
+          }
+        },
+        "required" : [ "status" ]
+      },
+      "TelegramLoginControllerStarted" : {
+        "properties" : {
+          "link" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "link", "secondsLeft" ]
+      },
+      "PhoneLoginControllerLoginRequest" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PhoneLoginControllerSetupToken" : {
+        "properties" : {
+          "setupToken" : {
+            "type" : "string"
+          },
+          "temporary" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "setupToken", "temporary" ]
+      },
+      "PhoneLoginControllerPasswordLogin" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PhoneLoginControllerNewPassword" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PhoneLoginControllerCodeRequest" : {
+        "properties" : {
+          "phone" : {
+            "type" : "string"
+          },
+          "channel" : {
+            "type" : "string"
+          }
+        }
+      },
+      "InviteControllerTokenRequest" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          }
+        }
+      },
+      "InviteControllerCodeStep" : {
+        "properties" : {
+          "phoneMasked" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "resendSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "phoneMasked", "resendSeconds", "secondsLeft" ]
+      },
+      "InviteControllerInviteView" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "DOCTOR", "STAFF" ]
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "roleText" : {
+            "type" : "string"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "botUsername" : {
+            "type" : "string"
+          },
+          "codeRequired" : {
+            "type" : "boolean"
+          },
+          "pending" : {
+            "$ref" : "#/components/schemas/InviteControllerCodeStep"
+          }
+        },
+        "required" : [ "clinicName", "codeRequired", "expiresAt", "fullName", "kind", "roleText" ]
+      },
+      "InviteControllerRegisterRequest" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          }
+        }
+      },
+      "InviteControllerRegistered" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "roleText" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "fullName", "roleText" ]
+      },
+      "InviteControllerCodeRequest" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ClinicApplicationsForm" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "contactName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "doctors" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "consent" : {
+            "type" : "boolean"
+          },
+          "website" : {
+            "type" : "string"
+          },
+          "solo" : {
+            "type" : "boolean"
+          },
+          "telegram" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "consent" ]
+      },
+      "WebBookingControllerForm" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceTypeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "fullName" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "phone" : {
+            "type" : "string",
+            "maxLength" : 24,
+            "minLength" : 0
+          },
+          "comment" : {
+            "type" : "string",
+            "maxLength" : 500,
+            "minLength" : 0
+          },
+          "consent" : {
+            "type" : "boolean"
+          },
+          "sourceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "website" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "consent", "serviceTypeId", "startAt" ]
+      },
+      "WebBookingServiceBooked" : {
+        "properties" : {
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "endAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "serviceName" : {
+            "type" : "string"
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "mapUrl" : {
+            "type" : "string"
+          },
+          "phones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "whatsapp" : {
+            "type" : "string"
+          },
+          "telegramUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "doctorName", "endAt", "serviceName", "startAt" ]
       },
       "WaitlistControllerAdd" : {
         "properties" : {
@@ -16616,7 +18088,8 @@
           "upcoming" : {
             "$ref" : "#/components/schemas/AppointmentView"
           }
-        }
+        },
+        "required" : [ "durationMinutes", "id" ]
       },
       "WaitlistControllerBook" : {
         "properties" : {
@@ -16704,7 +18177,8 @@
           "emoji" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "SurveyAnswersAnswer" : {
         "properties" : {
@@ -16726,7 +18200,8 @@
           "text" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "questionId" ]
       },
       "SurveyControllerResponses" : {
         "properties" : {
@@ -16771,7 +18246,8 @@
           "fromBot" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "fromBot", "fromPlatform", "hasImage", "id" ]
       },
       "SupportTicketsThread" : {
         "properties" : {
@@ -16827,7 +18303,8 @@
           "escalated" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "clinicId", "escalated", "id", "viaBot" ]
       },
       "SupportControllerChatQuestion" : {
         "properties" : {
@@ -16879,7 +18356,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "delta" ]
       },
       "SupplyStarterControllerApply" : {
         "properties" : {
@@ -16898,7 +18376,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "created", "services" ]
       },
       "SupplyControllerAdded" : {
         "properties" : {
@@ -16906,7 +18385,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "added" ]
       },
       "ShiftControllerCopyRequest" : {
         "properties" : {
@@ -16930,7 +18410,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "created", "skipped" ]
       },
       "ServiceTypeControllerPick" : {
         "properties" : {
@@ -16966,7 +18447,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "added" ]
       },
       "SalaryControllerPayout" : {
         "properties" : {
@@ -16992,7 +18474,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "sent" ]
       },
       "PushControllerSubscriptionForm" : {
         "properties" : {
@@ -17060,7 +18543,8 @@
             "type" : "string",
             "format" : "date"
           }
-        }
+        },
+        "required" : [ "amountSom", "clinicId", "hasReceipt", "id", "months" ]
       },
       "ClinicOutreachDeclineRequest" : {
         "properties" : {
@@ -17097,7 +18581,8 @@
               "$ref" : "#/components/schemas/ClinicOutreachImportRow"
             }
           }
-        }
+        },
+        "required" : [ "added", "duplicates", "errors", "fresh", "total" ]
       },
       "ClinicOutreachImportRow" : {
         "properties" : {
@@ -17127,7 +18612,8 @@
           "message" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "line" ]
       },
       "PlatformControllerPerson" : {
         "properties" : {
@@ -17207,7 +18693,8 @@
               "type" : "string"
             }
           }
-        }
+        },
+        "required" : [ "appointments", "doctors", "patients" ]
       },
       "DemoControllerGuest" : {
         "properties" : {
@@ -17261,7 +18748,8 @@
               "$ref" : "#/components/schemas/ContentPostsPlannedReel"
             }
           }
-        }
+        },
+        "required" : [ "added", "already", "moved" ]
       },
       "ContentPostsImported" : {
         "properties" : {
@@ -17281,7 +18769,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "added", "removed", "unchanged", "updated" ]
       },
       "PlatformControllerName" : {
         "properties" : {
@@ -17335,7 +18824,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "amountSom", "id", "months" ]
       },
       "ClinicPaymentsPlan" : {
         "properties" : {
@@ -17358,7 +18848,8 @@
               "$ref" : "#/components/schemas/ClinicPaymentsPayment"
             }
           }
-        }
+        },
+        "required" : [ "doctors" ]
       },
       "ExportControllerPlatformExport" : {
         "properties" : {
@@ -17381,7 +18872,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "filesIncluded", "filesSkipped", "patients" ]
       },
       "PlatformControllerEnter" : {
         "properties" : {
@@ -17415,7 +18907,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "bannerOnly", "clinics", "push", "skipped", "telegram" ]
       },
       "PlatformControllerBroadcastRequest" : {
         "properties" : {
@@ -17456,7 +18949,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "clinics", "delivered", "id", "recipients" ]
       },
       "ClinicApplicationsApproved" : {
         "properties" : {
@@ -17475,7 +18969,8 @@
           "solo" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "solo" ]
       },
       "ChartControllerMany" : {
         "properties" : {
@@ -17556,7 +19051,8 @@
           "active" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "active", "id", "totalSom" ]
       },
       "PlanOffersSent" : {
         "properties" : {
@@ -17635,7 +19131,8 @@
           "canSign" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "canSign", "hasScan", "hasSignature", "signed" ]
       },
       "BeforeAfterAiTextRequest" : {
         "properties" : {
@@ -17720,7 +19217,8 @@
             "type" : "number",
             "format" : "double"
           }
-        }
+        },
+        "required" : [ "h", "w", "x", "y" ]
       },
       "FamilyControllerJoin" : {
         "properties" : {
@@ -17734,97 +19232,6 @@
         "properties" : {
           "query" : {
             "type" : "string"
-          }
-        }
-      },
-      "PlanOffersItem" : {
-        "properties" : {
-          "tooth" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "priceSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        }
-      },
-      "PlanOffersPatientPlan" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "clinicName" : {
-            "type" : "string"
-          },
-          "doctorName" : {
-            "type" : "string"
-          },
-          "sentAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "validUntil" : {
-            "type" : "string",
-            "format" : "date"
-          },
-          "duration" : {
-            "type" : "string"
-          },
-          "stages" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/PlanOffersStage"
-            }
-          },
-          "totalSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "agreedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "questionAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "forName" : {
-            "type" : "string"
-          },
-          "phones" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "whatsappPhone" : {
-            "type" : "string"
-          },
-          "address" : {
-            "type" : "string"
-          }
-        }
-      },
-      "PlanOffersStage" : {
-        "properties" : {
-          "stage" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "items" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/PlanOffersItem"
-            }
-          },
-          "totalSom" : {
-            "type" : "integer",
-            "format" : "int32"
           }
         }
       },
@@ -17868,7 +19275,7 @@
             "$ref" : "#/components/schemas/RelativesNewRelative"
           }
         },
-        "required" : [ "serviceTypeId", "startAt" ]
+        "required" : [ "consent", "serviceTypeId", "startAt" ]
       },
       "RelativesNewRelative" : {
         "properties" : {
@@ -17942,7 +19349,8 @@
           "waiting" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "doctorId", "id", "patientId", "self", "waiting" ]
       },
       "PatientBookingControllerReschedule" : {
         "properties" : {
@@ -18021,7 +19429,8 @@
             "type" : "string",
             "enum" : [ "BOOKED", "RESCHEDULED", "CANCELLED" ]
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "QuestionControllerAnswer" : {
         "properties" : {
@@ -18066,7 +19475,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "delivered", "id", "recipients" ]
       },
       "StaffMembersControllerInviteRequest" : {
         "properties" : {
@@ -18119,7 +19529,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "telegramId" ]
       },
       "MyPhoneControllerCodeRequest" : {
         "properties" : {
@@ -18174,7 +19585,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "amountSom", "appointmentId" ]
       },
       "FamilyMoneyControllerPaid" : {
         "properties" : {
@@ -18188,7 +19600,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "leftDebtSom" ]
       },
       "DoctorControllerCreateRequest" : {
         "properties" : {
@@ -18233,7 +19646,8 @@
           "telegram" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "telegram" ]
       },
       "ComebacksDraft" : {
         "properties" : {
@@ -18250,7 +19664,8 @@
           "telegram" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "ai", "telegram" ]
       },
       "PlatformControllerGrant" : {
         "properties" : {
@@ -18269,7 +19684,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "required" ]
       },
       "StarterControllerRequest" : {
         "properties" : {
@@ -18308,7 +19724,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "memos", "questions", "services", "sources" ]
       },
       "DataImportReport" : {
         "properties" : {
@@ -18370,7 +19787,8 @@
           "summary" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "added", "applied", "errorCount", "rows", "sharedPhone", "unchanged", "updated" ]
       },
       "DataImportRowError" : {
         "properties" : {
@@ -18384,7 +19802,8 @@
           "message" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "row" ]
       },
       "ImportColumns" : {
         "properties" : {
@@ -18468,7 +19887,8 @@
           "summary" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "applied", "errorCount", "extraPatients" ]
       },
       "WorkbookImportSheetError" : {
         "properties" : {
@@ -18485,7 +19905,8 @@
           "message" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "row" ]
       },
       "WorkbookImportSheetReport" : {
         "properties" : {
@@ -18516,7 +19937,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "added", "errorCount", "rows", "unchanged", "updated" ]
       },
       "AgreementControllerAccept" : {
         "properties" : {
@@ -18572,7 +19994,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "services" ]
       },
       "AppointmentRequestsCreate" : {
         "properties" : {
@@ -18645,7 +20068,8 @@
           "text" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "memoId" ]
       },
       "VisitReportsDraft" : {
         "properties" : {
@@ -18668,7 +20092,8 @@
           "telegram" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "ai", "aiAvailable", "telegram" ]
       },
       "AppointmentRequestsUndo" : {
         "properties" : {
@@ -18746,7 +20171,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "supplyId", "used" ]
       },
       "SupplyControllerOnAppointment" : {
         "properties" : {
@@ -18754,7 +20180,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "delta" ]
       },
       "SupplyControllerSpent" : {
         "properties" : {
@@ -18862,7 +20289,8 @@
             "type" : "string",
             "enum" : [ "CASH", "TRANSFER", "CARD" ]
           }
-        }
+        },
+        "required" : [ "amountSom" ]
       },
       "AppointmentControllerExtra" : {
         "properties" : {
@@ -18959,7 +20387,8 @@
             "type" : "string",
             "enum" : [ "HEALTHY", "CARIES", "TREATING", "FILLING", "CROWN", "IMPLANT", "MISSING" ]
           }
-        }
+        },
+        "required" : [ "tooth" ]
       },
       "VisitDictationApply" : {
         "properties" : {
@@ -19050,13 +20479,430 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "deleted" ]
       },
       "MedicalRecordControllerMove" : {
         "properties" : {
           "direction" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "MaterialsPublicMaterials" : {
+        "properties" : {
+          "video" : {
+            "type" : "string"
+          },
+          "poster" : {
+            "type" : "string"
+          },
+          "presentation" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MaterialsHowToVideo" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "video" : {
+            "type" : "string"
+          },
+          "poster" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "title", "video" ]
+      },
+      "TelegramLoginControllerStatus" : {
+        "properties" : {
+          "state" : {
+            "type" : "string",
+            "enum" : [ "none", "waiting", "cancelled", "done" ]
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "link" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "secondsLeft", "state" ]
+      },
+      "PhoneLoginControllerPending" : {
+        "properties" : {
+          "step" : {
+            "type" : "string",
+            "enum" : [ "code", "password" ]
+          },
+          "phoneMasked" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "resendSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "temporary" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "phoneMasked", "resendSeconds", "secondsLeft", "step", "temporary" ]
+      },
+      "LinksControllerLinks" : {
+        "properties" : {
+          "supportTelegram" : {
+            "type" : "string"
+          },
+          "supportUrl" : {
+            "type" : "string"
+          },
+          "supportPhone" : {
+            "type" : "string"
+          },
+          "botUrl" : {
+            "type" : "string"
+          },
+          "supportPhones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "supportWhatsapp" : {
+            "type" : "string"
+          }
+        }
+      },
+      "WebAuthControllerConfig" : {
+        "properties" : {
+          "botUsername" : {
+            "type" : "string"
+          },
+          "smsLogin" : {
+            "type" : "boolean"
+          },
+          "passwordLogin" : {
+            "type" : "boolean"
+          },
+          "telegramCode" : {
+            "type" : "boolean"
+          },
+          "telegramLogin" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "passwordLogin", "smsLogin", "telegramCode", "telegramLogin" ]
+      },
+      "DirectoryControllerClinic" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "mapUrl" : {
+            "type" : "string"
+          },
+          "pageUrl" : {
+            "type" : "string"
+          },
+          "telegramUrl" : {
+            "type" : "string"
+          },
+          "doctors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DirectoryControllerDoctor"
+            }
+          },
+          "bookingUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "doctors", "pageUrl" ]
+      },
+      "DirectoryControllerDoctor" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "about" : {
+            "type" : "string"
+          },
+          "photoUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "fullName" ]
+      },
+      "ClinicPageControllerDoctor" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "about" : {
+            "type" : "string"
+          },
+          "photoUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "fullName" ]
+      },
+      "ClinicPageControllerPage" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "mapUrl" : {
+            "type" : "string"
+          },
+          "phones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "whatsapp" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "phoneText" : {
+            "type" : "string"
+          },
+          "telegramUrl" : {
+            "type" : "string"
+          },
+          "doctors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ClinicPageControllerDoctor"
+            }
+          },
+          "services" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ClinicPageControllerService"
+            }
+          },
+          "settingUp" : {
+            "type" : "boolean"
+          },
+          "bookingUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "doctors", "services", "settingUp" ]
+      },
+      "ClinicPageControllerService" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "durationMinutes", "name" ]
+      },
+      "PatientSourcesChoice" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "emoji" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "titleKy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id" ]
+      },
+      "WebBookingServiceDoctor" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "about" : {
+            "type" : "string"
+          },
+          "photoUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "fullName", "id" ]
+      },
+      "WebBookingServiceInfo" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "legalName" : {
+            "type" : "string"
+          },
+          "address" : {
+            "type" : "string"
+          },
+          "mapUrl" : {
+            "type" : "string"
+          },
+          "phones" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "whatsapp" : {
+            "type" : "string"
+          },
+          "available" : {
+            "type" : "boolean"
+          },
+          "unavailable" : {
+            "type" : "string",
+            "enum" : [ "off", "setting-up", "paused" ]
+          },
+          "daysAhead" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "doctors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WebBookingServiceDoctor"
+            }
+          },
+          "services" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WebBookingServiceService"
+            }
+          },
+          "doctorServices" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DoctorServicesView"
+            }
+          },
+          "sources" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PatientSourcesChoice"
+            }
+          },
+          "telegramUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "available", "daysAhead", "doctors", "services" ]
+      },
+      "WebBookingServiceService" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "group" : {
+            "type" : "string",
+            "enum" : [ "EXAM", "HYGIENE", "THERAPY", "SURGERY", "PROSTHETICS", "ORTHODONTICS", "IMPLANTS", "AESTHETICS", "KIDS", "XRAY", "OTHER" ]
+          }
+        },
+        "required" : [ "durationMinutes", "id", "name" ]
+      },
+      "BookingViewsSlots" : {
+        "properties" : {
+          "workingDay" : {
+            "type" : "boolean"
+          },
+          "starts" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "date-time"
+            }
+          },
+          "breaks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SlotsViewBreak"
+            }
+          },
+          "dayOff" : {
+            "$ref" : "#/components/schemas/SlotsViewBreak"
+          },
+          "taken" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "date-time"
+            }
+          }
+        },
+        "required" : [ "workingDay" ]
+      },
+      "SlotsViewBreak" : {
+        "properties" : {
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "emoji" : {
+            "type" : "string"
           }
         }
       },
@@ -19089,7 +20935,8 @@
               "$ref" : "#/components/schemas/SurveyQuestion"
             }
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "SupportBotInfo" : {
         "properties" : {
@@ -19108,7 +20955,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "ai", "dailyLimit", "maxLength", "usedToday" ]
       },
       "MovementView" : {
         "properties" : {
@@ -19130,7 +20978,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "delta" ]
       },
       "SupplyStarterLine" : {
         "properties" : {
@@ -19144,7 +20993,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "quantity" ]
       },
       "SupplyStarterMissing" : {
         "properties" : {
@@ -19187,7 +21037,8 @@
               "$ref" : "#/components/schemas/SupplyStarterLine"
             }
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "SpendingView" : {
         "properties" : {
@@ -19239,7 +21090,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "purchasedSom", "unpricedDeliveries", "unpricedUsed", "usedSom" ]
       },
       "SpendingViewItem" : {
         "properties" : {
@@ -19276,7 +21128,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "archived", "bought", "boughtSom", "supplyId", "unpricedDeliveries", "used" ]
       },
       "SpendingViewMonth" : {
         "properties" : {
@@ -19288,7 +21141,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "purchasedSom" ]
       },
       "SlotsView" : {
         "properties" : {
@@ -19350,25 +21204,8 @@
               "$ref" : "#/components/schemas/SlotsViewChairTime"
             }
           }
-        }
-      },
-      "SlotsViewBreak" : {
-        "properties" : {
-          "start" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "end" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "emoji" : {
-            "type" : "string"
-          }
-        }
+        },
+        "required" : [ "workingDay" ]
       },
       "SlotsViewChairBusy" : {
         "properties" : {
@@ -19390,7 +21227,8 @@
           "doctorName" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "doctorId", "end", "start" ]
       },
       "SlotsViewChairTime" : {
         "properties" : {
@@ -19412,7 +21250,8 @@
           "chairName" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "doctorId", "end", "start" ]
       },
       "TimeRange" : {
         "properties" : {
@@ -19424,7 +21263,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "end", "start" ]
       },
       "ShiftControllerSchedule" : {
         "properties" : {
@@ -19447,7 +21287,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "canEdit", "me" ]
       },
       "ShiftServicePerson" : {
         "properties" : {
@@ -19462,7 +21303,8 @@
             "type" : "string",
             "enum" : [ "ADMIN", "RECEPTION", "ASSISTANT" ]
           }
-        }
+        },
+        "required" : [ "telegramId" ]
       },
       "SettingsControllerSettings" : {
         "properties" : {
@@ -19528,7 +21370,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "added", "durationMinutes" ]
       },
       "ServiceTypeServiceCatalogSection" : {
         "properties" : {
@@ -19584,7 +21427,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "id", "responses" ]
       },
       "SurveyResultsClinicCount" : {
         "properties" : {
@@ -19599,7 +21443,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "count" ]
       },
       "SurveyResultsContact" : {
         "properties" : {
@@ -19641,7 +21486,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "detractors", "passives", "promoters", "score" ]
       },
       "SurveyResultsQuestionResult" : {
         "properties" : {
@@ -19685,7 +21531,8 @@
               "$ref" : "#/components/schemas/SurveyResultsTextAnswer"
             }
           }
-        }
+        },
+        "required" : [ "answered", "questionId" ]
       },
       "SurveyResultsResults" : {
         "properties" : {
@@ -19721,7 +21568,8 @@
               "$ref" : "#/components/schemas/SurveyResultsContact"
             }
           }
-        }
+        },
+        "required" : [ "responses", "surveyId" ]
       },
       "SurveyResultsRoleCount" : {
         "properties" : {
@@ -19733,7 +21581,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "count" ]
       },
       "SurveyResultsTextAnswer" : {
         "properties" : {
@@ -19775,7 +21624,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "declined", "fresh", "further", "sent" ]
       },
       "ClinicOutreachOutreach" : {
         "properties" : {
@@ -19804,7 +21654,8 @@
               "$ref" : "#/components/schemas/MaterialsMaterial"
             }
           }
-        }
+        },
+        "required" : [ "configured" ]
       },
       "MaterialsMaterial" : {
         "properties" : {
@@ -19837,7 +21688,8 @@
           "downloadUrl" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "size" ]
       },
       "PlatformMembersManagerView" : {
         "properties" : {
@@ -19852,7 +21704,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "telegramId" ]
       },
       "ErrorJournalTop" : {
         "properties" : {
@@ -19876,7 +21729,8 @@
           "lastRequestId" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "count" ]
       },
       "HealthServiceAi" : {
         "properties" : {
@@ -19898,7 +21752,8 @@
           "lastError" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "configured", "errors24h" ]
       },
       "HealthServiceApp" : {
         "properties" : {
@@ -19942,7 +21797,8 @@
           "disk" : {
             "$ref" : "#/components/schemas/HealthServiceDisk"
           }
-        }
+        },
+        "required" : [ "heapMaxMb", "heapUsedMb", "processors", "uptimeSeconds" ]
       },
       "HealthServiceBackup" : {
         "properties" : {
@@ -19964,7 +21820,8 @@
           "stale" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "stale" ]
       },
       "HealthServiceDb" : {
         "properties" : {
@@ -19994,7 +21851,8 @@
           "error" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "up" ]
       },
       "HealthServiceDisk" : {
         "properties" : {
@@ -20013,7 +21871,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "freeMb", "totalMb", "usedPercent" ]
       },
       "HealthServiceErrors" : {
         "properties" : {
@@ -20027,7 +21886,8 @@
               "$ref" : "#/components/schemas/ErrorJournalTop"
             }
           }
-        }
+        },
+        "required" : [ "total24h" ]
       },
       "HealthServiceHealth" : {
         "properties" : {
@@ -20123,7 +21983,8 @@
           "lastError" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "configured" ]
       },
       "HealthServiceTelegram" : {
         "properties" : {
@@ -20197,7 +22058,8 @@
               "type" : "string"
             }
           }
-        }
+        },
+        "required" : [ "available", "truncated" ]
       },
       "SalesFunnelFunnel" : {
         "properties" : {
@@ -20217,7 +22079,8 @@
               "$ref" : "#/components/schemas/SalesFunnelLead"
             }
           }
-        }
+        },
+        "required" : [ "total" ]
       },
       "SalesFunnelStageCount" : {
         "properties" : {
@@ -20237,7 +22100,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "conversion", "current", "reached" ]
       },
       "PlatformExpensesClinicIncome" : {
         "properties" : {
@@ -20256,7 +22120,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "clinicId", "payments", "som" ]
       },
       "PlatformFinanceBalance" : {
         "properties" : {
@@ -20300,7 +22165,8 @@
           "needsPrice" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "balanceSom", "lastTopupSom", "low", "needsPrice", "spentPeriodSom", "spentSinceSom", "topupPeriodSom", "topupTotalSom" ]
       },
       "PlatformFinanceDue" : {
         "properties" : {
@@ -20331,7 +22197,8 @@
           "overdue" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "amountSom", "day", "expenseId", "overdue" ]
       },
       "PlatformFinanceFinance" : {
         "properties" : {
@@ -20433,7 +22300,8 @@
               "$ref" : "#/components/schemas/PlatformTopupsTopup"
             }
           }
-        }
+        },
+        "required" : [ "expenseSom", "incomeSom", "pendingSom", "profitSom", "topupSom" ]
       },
       "PlatformFinanceLine" : {
         "properties" : {
@@ -20457,7 +22325,8 @@
           "needsPrice" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "auto", "count", "needsPrice", "som" ]
       },
       "PlatformFinanceMonthTotal" : {
         "properties" : {
@@ -20480,7 +22349,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "expenseSom", "incomeSom", "pendingSom", "profitSom" ]
       },
       "PlatformFinanceSettings" : {
         "properties" : {
@@ -20505,7 +22375,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "enabled" ]
       },
       "StockCleanupCounts" : {
         "properties" : {
@@ -20521,7 +22392,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "movements", "serviceNorms", "supplies" ]
       },
       "ClinicApplicationsApplicationView" : {
         "properties" : {
@@ -20565,7 +22437,8 @@
           "telegram" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "id", "solo" ]
       },
       "PlatformAnalyticsAnalytics" : {
         "properties" : {
@@ -20615,7 +22488,8 @@
           "patients" : {
             "$ref" : "#/components/schemas/PlatformAnalyticsPatients"
           }
-        }
+        },
+        "required" : [ "days" ]
       },
       "PlatformAnalyticsApplications" : {
         "properties" : {
@@ -20635,7 +22509,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "approved", "rejected", "total", "waiting" ]
       },
       "PlatformAnalyticsCell" : {
         "properties" : {
@@ -20647,7 +22522,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "active", "eligible" ]
       },
       "PlatformAnalyticsCityRow" : {
         "properties" : {
@@ -20674,7 +22550,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "applications", "clinics", "patients", "paying", "working" ]
       },
       "PlatformAnalyticsCohort" : {
         "properties" : {
@@ -20691,7 +22568,8 @@
               "$ref" : "#/components/schemas/PlatformAnalyticsCell"
             }
           }
-        }
+        },
+        "required" : [ "clinics" ]
       },
       "PlatformAnalyticsDue" : {
         "properties" : {
@@ -20734,7 +22612,8 @@
           "payPending" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "appointments", "clinicId", "daysLeft", "monthSom", "payPending" ]
       },
       "PlatformAnalyticsFeature" : {
         "properties" : {
@@ -20745,7 +22624,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "clinics" ]
       },
       "PlatformAnalyticsFeatures" : {
         "properties" : {
@@ -20771,7 +22651,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "activeClinics", "aiBooked", "appointments", "selfBooked" ]
       },
       "PlatformAnalyticsFunnel" : {
         "properties" : {
@@ -20811,7 +22692,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "count" ]
       },
       "PlatformAnalyticsMonthMoney" : {
         "properties" : {
@@ -20830,7 +22712,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "mrrSom", "paidSom", "payments" ]
       },
       "PlatformAnalyticsPatients" : {
         "properties" : {
@@ -20856,7 +22739,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "done", "noShow", "total", "withBot" ]
       },
       "PlatformAnalyticsReason" : {
         "properties" : {
@@ -20902,7 +22786,8 @@
               "$ref" : "#/components/schemas/PlatformAnalyticsReason"
             }
           }
-        }
+        },
+        "required" : [ "clinicId", "last14", "prev14" ]
       },
       "PlatformAnalyticsStep" : {
         "properties" : {
@@ -20913,7 +22798,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "clinics" ]
       },
       "PlatformAnalyticsSummary" : {
         "properties" : {
@@ -20949,7 +22835,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "appointments", "appointmentsBefore", "clinics", "mrrSom", "overdue", "paying", "pilot", "working" ]
       },
       "AiUsageStoreClinicRow" : {
         "properties" : {
@@ -21014,7 +22901,8 @@
           "free" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "actions", "cacheReadTokens", "cacheWriteTokens", "clinicId", "doctors", "errors", "free", "inputTokens", "limit", "outputTokens", "som", "tariffSom", "used" ]
       },
       "AiUsageStoreDayRow" : {
         "properties" : {
@@ -21033,7 +22921,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "actions", "som" ]
       },
       "AiUsageStoreKindRow" : {
         "properties" : {
@@ -21067,7 +22956,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "actions", "errors", "inputTokens", "outputTokens", "som" ]
       },
       "AiUsageStoreReport" : {
         "properties" : {
@@ -21109,7 +22999,8 @@
               "$ref" : "#/components/schemas/AiUsageStoreDayRow"
             }
           }
-        }
+        },
+        "required" : [ "actions", "som" ]
       },
       "AgreementControllerTemplate" : {
         "properties" : {
@@ -21156,7 +23047,8 @@
           "admins" : {
             "$ref" : "#/components/schemas/AgreementsAdminChannels"
           }
-        }
+        },
+        "required" : [ "assigned", "scans", "signed" ]
       },
       "VisitTeethView" : {
         "properties" : {
@@ -21177,7 +23069,8 @@
               "$ref" : "#/components/schemas/VisitToothView"
             }
           }
-        }
+        },
+        "required" : [ "appointmentId" ]
       },
       "VisitNoteView" : {
         "properties" : {
@@ -21205,7 +23098,8 @@
           "editable" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "appointmentId", "editable" ]
       },
       "LessonsTarget" : {
         "properties" : {
@@ -21216,7 +23110,8 @@
             "type" : "string",
             "enum" : [ "RU", "KY" ]
           }
-        }
+        },
+        "required" : [ "telegram" ]
       },
       "PatientListControllerPatientRow" : {
         "properties" : {
@@ -21241,37 +23136,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
-      },
-      "BookingViewsSlots" : {
-        "properties" : {
-          "workingDay" : {
-            "type" : "boolean"
-          },
-          "starts" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "format" : "date-time"
-            }
-          },
-          "breaks" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/SlotsViewBreak"
-            }
-          },
-          "dayOff" : {
-            "$ref" : "#/components/schemas/SlotsViewBreak"
-          },
-          "taken" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "format" : "date-time"
-            }
-          }
-        }
+        },
+        "required" : [ "id", "telegram" ]
       },
       "BookingViewsPromo" : {
         "properties" : {
@@ -21298,7 +23164,8 @@
           "subscribed" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "subscribed" ]
       },
       "NewsControllerPatientNewsItem" : {
         "properties" : {
@@ -21313,7 +23180,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "BookingViewsElsewhere" : {
         "properties" : {
@@ -21327,7 +23195,8 @@
           "booking" : {
             "$ref" : "#/components/schemas/BookingViewsBooking"
           }
-        }
+        },
+        "required" : [ "clinicId" ]
       },
       "BookingViewsMe" : {
         "properties" : {
@@ -21446,7 +23315,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "admin", "bookingEnabled", "canChangeClinic", "daysAhead", "doctor", "hasCard", "hasReception", "maxRelatives", "owner", "platform", "reception", "waiting" ]
       },
       "ClinicLinksChoice" : {
         "properties" : {
@@ -21463,24 +23333,8 @@
           "city" : {
             "type" : "string"
           }
-        }
-      },
-      "PatientSourcesChoice" : {
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "emoji" : {
-            "type" : "string"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "titleKy" : {
-            "type" : "string"
-          }
-        }
+        },
+        "required" : [ "id" ]
       },
       "RelativesRelative" : {
         "properties" : {
@@ -21499,7 +23353,8 @@
             "type" : "string",
             "enum" : [ "CHILD", "SPOUSE", "PARENT", "SIBLING", "OTHER" ]
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "DepositsForPatient" : {
         "properties" : {
@@ -21520,7 +23375,8 @@
           "hasQr" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "amountSom", "appointmentId", "hasQr" ]
       },
       "QuestionControllerQuestionList" : {
         "properties" : {
@@ -21539,7 +23395,8 @@
           "botAi" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "ai", "aiAvailable", "botAi" ]
       },
       "QuestionControllerNewCount" : {
         "properties" : {
@@ -21547,7 +23404,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "count" ]
       },
       "OpeningDebtsView" : {
         "properties" : {
@@ -21570,7 +23428,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "amountSom", "id", "patientId" ]
       },
       "NewsControllerStaffNews" : {
         "properties" : {
@@ -21584,7 +23443,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "subscribers" ]
       },
       "StaffMembersMemberView" : {
         "properties" : {
@@ -21622,7 +23482,8 @@
           "phoneOnly" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "doctor", "me", "phoneOnly", "telegramId" ]
       },
       "StaffMembersInviteView" : {
         "properties" : {
@@ -21643,7 +23504,8 @@
           "expired" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "expired" ]
       },
       "PasswordControllerPasswordState" : {
         "properties" : {
@@ -21669,7 +23531,8 @@
           "telegramCode" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "passwordSet", "phoneLogin", "sms", "telegram", "telegramCode", "temporary" ]
       },
       "PasswordControllerCodePending" : {
         "properties" : {
@@ -21684,7 +23547,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "pending", "resendSeconds", "secondsLeft" ]
       },
       "NetMonthMine" : {
         "properties" : {
@@ -21756,7 +23620,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "clinicSom", "earnedSom", "expensesSom", "materialsSom", "rentSom", "revenueSom", "selfEmployed", "unpricedMaterials" ]
       },
       "NetMonthReport" : {
         "properties" : {
@@ -21824,7 +23689,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "accruedSom", "clinicMaterialsSom", "generalExpensesSom", "otherSom", "paidSom", "payoutsSom", "profitSom", "purchasedSom", "rentReceivedSom", "selfEmployedExpensesSom", "supplySom" ]
       },
       "PaymentQueryDebt" : {
         "properties" : {
@@ -21869,7 +23735,8 @@
             "type" : "string",
             "format" : "date"
           }
-        }
+        },
+        "required" : [ "appointmentId", "chargeSom", "debtSom", "doctorId", "paidSom", "patientId" ]
       },
       "ExpenseControllerCategories" : {
         "properties" : {
@@ -21927,7 +23794,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "agreed", "cancelled", "noShows", "planPatients", "planSom", "recalls", "sent", "total" ]
       },
       "ComebacksCancelled" : {
         "properties" : {
@@ -21964,7 +23832,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "doctorId", "minutes" ]
       },
       "ComebacksCandidate" : {
         "properties" : {
@@ -22029,7 +23898,8 @@
           "cancelled" : {
             "$ref" : "#/components/schemas/ComebacksCancelled"
           }
-        }
+        },
+        "required" : [ "patientId", "planSom", "telegram" ]
       },
       "ComebacksResult" : {
         "properties" : {
@@ -22049,7 +23919,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "invited", "paidSom", "returned", "returnedPlanSom" ]
       },
       "ClinicStarterPreview" : {
         "properties" : {
@@ -22099,7 +23970,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "durationMinutes" ]
       },
       "PlatformAccessLogEntry" : {
         "properties" : {
@@ -22141,7 +24013,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "amountSom", "months" ]
       },
       "AuditLogEntry" : {
         "properties" : {
@@ -22170,7 +24043,8 @@
           "action" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "id", "telegramId" ]
       },
       "AuditLogPage" : {
         "properties" : {
@@ -22198,7 +24072,8 @@
           "name" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "telegramId" ]
       },
       "AiUsageStoreCounter" : {
         "properties" : {
@@ -22213,7 +24088,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "limit", "used" ]
       },
       "CareMemosSuggested" : {
         "properties" : {
@@ -22231,7 +24107,8 @@
           "memo" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "memoId", "serviceId" ]
       },
       "VisitReportsSent" : {
         "properties" : {
@@ -22249,7 +24126,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "ai" ]
       },
       "ReceiptsPayment" : {
         "properties" : {
@@ -22268,7 +24146,8 @@
           "takenBy" : {
             "type" : "string"
           }
-        }
+        },
+        "required" : [ "amountSom" ]
       },
       "ReceiptsReceiptView" : {
         "properties" : {
@@ -22313,7 +24192,8 @@
           "telegram" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "appointmentId", "debtSom", "paidSom", "telegram" ]
       },
       "PaymentQueryEntry" : {
         "properties" : {
@@ -22333,7 +24213,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "amountSom", "id" ]
       },
       "CareMemosAppointmentMemo" : {
         "properties" : {
@@ -22364,7 +24245,8 @@
           "ky" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "ky", "telegram" ]
       },
       "WeekStats" : {
         "properties" : {
@@ -22396,7 +24278,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "booked", "cancelled", "done", "noShow", "reminded", "unmarked" ]
       },
       "SourcesControllerSourceCount" : {
         "properties" : {
@@ -22417,7 +24300,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "active", "patients" ]
       },
       "SourcesControllerSourcesView" : {
         "properties" : {
@@ -22435,7 +24319,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "firstVisits", "repeatVisits" ]
       },
       "RevenueView" : {
         "properties" : {
@@ -22483,7 +24368,8 @@
           "cash" : {
             "$ref" : "#/components/schemas/RevenueViewCash"
           }
-        }
+        },
+        "required" : [ "freeCount", "paidCount", "prepaidCount", "totalSom", "unpaidCount" ]
       },
       "RevenueViewCash" : {
         "properties" : {
@@ -22512,7 +24398,8 @@
               "$ref" : "#/components/schemas/RevenueViewDay"
             }
           }
-        }
+        },
+        "required" : [ "depositsSom", "paymentsCount", "totalSom" ]
       },
       "RevenueViewDay" : {
         "properties" : {
@@ -22524,7 +24411,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "totalSom" ]
       },
       "AppointmentServiceReportRow" : {
         "properties" : {
@@ -22559,7 +24447,8 @@
             "type" : "integer",
             "format" : "int32"
           }
-        }
+        },
+        "required" : [ "id" ]
       },
       "RecallView" : {
         "properties" : {
@@ -22585,7 +24474,8 @@
             "type" : "string",
             "format" : "date"
           }
-        }
+        },
+        "required" : [ "months" ]
       },
       "RatingSummary" : {
         "properties" : {
@@ -22603,7 +24493,8 @@
               "format" : "int64"
             }
           }
-        }
+        },
+        "required" : [ "count" ]
       },
       "PromoReportControllerPromoReport" : {
         "properties" : {
@@ -22616,7 +24507,8 @@
           "money" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "money" ]
       },
       "PromoReportControllerRow" : {
         "properties" : {
@@ -22649,7 +24541,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "active", "bookings", "newPatients", "promoCodeId", "visits" ]
       },
       "DayCount" : {
         "properties" : {
@@ -22665,7 +24558,8 @@
             "type" : "integer",
             "format" : "int64"
           }
-        }
+        },
+        "required" : [ "booked", "requested" ]
       },
       "ChairCheckView" : {
         "properties" : {
@@ -22675,7 +24569,8 @@
           "strict" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "strict" ]
       },
       "ChairCheckViewColleague" : {
         "properties" : {
@@ -22697,7 +24592,8 @@
             "type" : "string",
             "format" : "date-time"
           }
-        }
+        },
+        "required" : [ "doctorId" ]
       },
       "PatientCard" : {
         "properties" : {
@@ -22728,14 +24624,16 @@
               "$ref" : "#/components/schemas/AppointmentView"
             }
           }
-        }
+        },
+        "required" : [ "cancelled", "done", "noShow" ]
       },
       "ServiceTypeControllerDeleted" : {
         "properties" : {
           "deleted" : {
             "type" : "boolean"
           }
-        }
+        },
+        "required" : [ "deleted" ]
       },
       "PlatformControllerConfirm" : {
         "properties" : {

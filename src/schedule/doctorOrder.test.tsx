@@ -13,9 +13,9 @@ import { DOCTOR_ORDER_KEY, orderDoctors } from './doctorOrder'
 const three: Schemas['BookingViewsMe'] = {
   ...me, doctorId: 3, fullName: 'Эрмек',
   doctors: [
-    { id: 1, fullName: 'Айгерим Садыкова', active: true },
-    { id: 2, fullName: 'Дастан Т.', active: true },
-    { id: 3, fullName: 'Эрмек Н.', active: true },
+    { id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false },
+    { id: 2, fullName: 'Дастан Т.', active: true, telegramLinked: false },
+    { id: 3, fullName: 'Эрмек Н.', active: true, telegramLinked: false },
   ],
 }
 

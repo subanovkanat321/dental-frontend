@@ -71,7 +71,7 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
     queryFn: () => unwrap(api.GET('/api/salaries', { params: { query: { month } } })),
   })
   const rows = list.data ?? []
-  const due = rows.reduce((s, r) => s + Math.max(0, (r.dueSom ?? 0) - (r.paidSom ?? 0)), 0)
+  const due = rows.reduce((s, r) => s + Math.max(0, r.dueSom - r.paidSom), 0)
   return (
     <>
       {/* Месяц — «‹ Октябрь 2026 ›»; по умолчанию прошлый (его зарплату выплачивают), «Этот месяц» — одним нажатием */}
@@ -107,11 +107,11 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   const [sheetOpen, setSheetOpen] = useState(false)
   // Форма условий после «Сохранить» закрывается — подтверждение показывает карточка
   const [termsSaved, setTermsSaved] = useState(false)
-  const left = Math.max(0, (r.dueSom ?? 0) - (r.paidSom ?? 0))
+  const left = Math.max(0, r.dueSom - r.paidSom)
   const noTerms = !Number(r.percent ?? 0) && !r.baseSom && !hasRent(r)
   // Аренда больше заработка: врач должен клинике; сколько ещё не принёс
-  const owes = r.owesSom ?? 0
-  const owesLeft = Math.max(0, owes - (r.rentReceivedSom ?? 0))
+  const owes = r.owesSom
+  const owesLeft = Math.max(0, owes - r.rentReceivedSom)
   const cancelRent = useMutation<Row, ApiError>({
     mutationFn: () => unwrap(api.DELETE('/api/salaries/{doctorId}/rent', { params: { path: { doctorId: r.doctorId! }, query: { month } } })),
     onSuccess: () => refresh(),
@@ -126,23 +126,23 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
     <section className="card-block salary" aria-label={`Зарплата: ${r.doctor}`}>
       <div className="salary-head">
         <h2>{r.doctor}{isEmployee(r) && !r.former && r.position && <span className="hint"> · {r.position}</span>}</h2>
-        {left === 0 && (r.dueSom ?? 0) > 0 && <span className="badge-ok">✅ Выплачено</span>}
+        {left === 0 && r.dueSom > 0 && <span className="badge-ok">✅ Выплачено</span>}
         {owes > 0 && owesLeft === 0 && <span className="badge-ok">✅ Аренда получена</span>}
       </div>
       <dl className="salary-sums">
-        <div><dt>{!isEmployee(r) ? 'Выручка' : isAssistantRow(r) ? 'Выручка врачей' : 'Выручка клиники'}</dt><dd className="num">{somText(r.revenueSom ?? 0)}</dd></div>
-        {(r.rentSom ?? 0) > 0 && <div><dt>Аренда кресла</dt><dd className="num">−{somText(r.rentSom ?? 0)}</dd></div>}
+        <div><dt>{!isEmployee(r) ? 'Выручка' : isAssistantRow(r) ? 'Выручка врачей' : 'Выручка клиники'}</dt><dd className="num">{somText(r.revenueSom)}</dd></div>
+        {r.rentSom > 0 && <div><dt>Аренда кресла</dt><dd className="num">−{somText(r.rentSom)}</dd></div>}
         {owes > 0
           ? <div><dt>Врач должен клинике</dt><dd className="num strong tone-bad" aria-label="Врач должен клинике">{somText(owes)}</dd></div>
-          : <div><dt>К выплате</dt><dd className="num strong">{somText(r.dueSom ?? 0)}</dd></div>}
+          : <div><dt>К выплате</dt><dd className="num strong">{somText(r.dueSom)}</dd></div>}
         {owes > 0
-          ? <div><dt>Получено от врача</dt><dd className="num">{somText(r.rentReceivedSom ?? 0)}</dd></div>
-          : <div><dt>Выплачено</dt><dd className="num">{somText(r.paidSom ?? 0)}</dd></div>}
+          ? <div><dt>Получено от врача</dt><dd className="num">{somText(r.rentReceivedSom)}</dd></div>
+          : <div><dt>Выплачено</dt><dd className="num">{somText(r.paidSom)}</dd></div>}
       </dl>
       {owes > 0 && (
         <p className="tone-wait" role="note">
-          Аренда кресла ({somText(r.rentSom ?? 0)}) больше заработка врача за месяц ({somText(r.earnedSom ?? 0)}) — выплаты нет,
-          врач должен клинике {somText(owes)}.{(r.rentReceivedSom ?? 0) > 0 && owesLeft > 0 && ` Осталось получить ${somText(owesLeft)}.`}
+          Аренда кресла ({somText(r.rentSom)}) больше заработка врача за месяц ({somText(r.earnedSom)}) — выплаты нет,
+          врач должен клинике {somText(owes)}.{r.rentReceivedSom > 0 && owesLeft > 0 && ` Осталось получить ${somText(owesLeft)}.`}
         </p>
       )}
       {r.former
@@ -154,7 +154,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
       {r.byTimesheet && !r.former && (
         <p className="salary-timesheet" aria-label="Оклад по табелю">
           📅 Отработано <b className="num">{r.workedDays}</b> из <b className="num">{r.normDays}</b> {daysText(r.normDays ?? 0)} →{' '}
-          <b className="num">{somText(r.baseAccruedSom ?? 0)}</b> из оклада {somText(r.baseSom ?? 0)}
+          <b className="num">{somText(r.baseAccruedSom)}</b> из оклада {somText(r.baseSom)}
           {' '}<button type="button" className="link" aria-expanded={sheetOpen} onClick={() => setSheetOpen(!sheetOpen)}>
             {sheetOpen ? 'Скрыть табель' : seesAll ? 'Табель — отметить дни' : 'Табель'}</button>
         </p>
@@ -167,7 +167,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
         <div className="actions">
           {left > 0 && <button type="button" className="btn primary" onClick={() => setPaying(true)}>Выплатить {somText(left)}</button>}
           {owesLeft > 0 && <button type="button" className="btn primary" onClick={() => setReceiving(true)}>Получено от врача…</button>}
-          {(r.rentReceivedSom ?? 0) > 0 && (
+          {r.rentReceivedSom > 0 && (
             <button type="button" className="btn quiet" disabled={cancelRent.isPending} onClick={() => cancelRent.mutate()}>Отменить «получено»</button>
           )}
           <button type="button" className={noTerms ? 'btn primary' : 'btn'} onClick={() => { setTermsSaved(false); setEditing(true) }}>
@@ -194,7 +194,7 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
   const { dirty } = useDirty({ percent, base, rentKind, rent, byTimesheet })
   // Пример на выручке этого месяца — подсказка; настоящую сумму считает сервер после «Сохранить»
   const p = Number(percent.replace(',', '.') || 0)
-  const revenue = r.revenueSom ?? 0
+  const revenue = r.revenueSom
   const earned = Number(base || 0) + Math.round(revenue * p / 100)
   const rentValue = Number(rent.replace(',', '.') || 0)
   const rentSom = rentKind === 'fixed' ? rentValue : rentKind === 'percent' ? Math.round(revenue * rentValue / 100) : 0
@@ -393,7 +393,7 @@ function SalaryCalc({ rows }: { rows: Row[] }) {
         <label className="field"><span>Взять выручку и условия</span>
           <Select aria-label="Взять выручку и условия" value={from} onChange={(e) => pick(e.target.value)}>
             <option value="">Свои цифры</option>
-            {rows.map((r) => <option key={keyOf(r)} value={keyOf(r)}>{`${r.doctor} · ${somText(r.revenueSom ?? 0)}`}</option>)}
+            {rows.map((r) => <option key={keyOf(r)} value={keyOf(r)}>{`${r.doctor} · ${somText(r.revenueSom)}`}</option>)}
           </Select>
         </label>
       )}

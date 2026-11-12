@@ -175,7 +175,7 @@ function VideoCard({ file, onExpired }: { file: Material; onExpired: () => void 
       <video controls preload="metadata" playsInline src={file.url} aria-label={label} onError={() => setFailed(true)} />
       <figcaption>
         <span className="strong">{label}</span>
-        <span className="hint small">{file.name} · <span className="num">{sizeText(file.size ?? 0)}</span></span>
+        <span className="hint small">{file.name} · <span className="num">{sizeText(file.size)}</span></span>
         {failed && (
           <span className="error small" role="alert">Ролик не проигрывается здесь: ссылка могла устареть (обновите) или браузер
             не знает этот формат — тогда «Открыть» или «Скачать».{' '}
@@ -204,7 +204,7 @@ function FileRow({ file, label }: { file: Material; label: string }) {
     <li>
       <span className="materials-name">
         <span className="strong">{label}</span>
-        <span className="hint small">{file.name} · <span className="num">{sizeText(file.size ?? 0)}</span>
+        <span className="hint small">{file.name} · <span className="num">{sizeText(file.size)}</span>
           {file.modified && <> · {shortDate(file.modified)}</>}</span>
       </span>
       <Buttons file={file} label={label} />

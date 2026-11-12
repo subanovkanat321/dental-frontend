@@ -128,14 +128,14 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   // Медкарта пациента во всю рабочую область — открыта с приёма; «Назад» вернёт к этому приёму
   const [medical, setMedical] = useState<{ patient: Schemas['PatientView']; from: number } | null>(null)
   const [side, setSide] = useState<Side>(() => {
-    if (openAppointment) return { kind: 'appointment', id: openAppointment.id!, fallback: openAppointment }
+    if (openAppointment) return { kind: 'appointment', id: openAppointment.id, fallback: openAppointment }
     // Врач отменённой записи (если к нему можно записать), иначе — свой
     const doctor = (me.doctors ?? []).find((d) => d.id === bookPreset?.doctorId && d.active !== false && canEditDoctor(me, d.id))
       ?? (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
       ?? (me.doctors ?? []).find((d) => d.active !== false && canEditDoctor(me, d.id))
     return bookPatient && doctor
       // Время не подставляем: открытие клиники могло пройти или быть занято — сетка свободного покажет, что есть
-      ? { kind: 'new', patient: bookPatient, slot: { doctorId: doctor.id!, date: today, minutes: null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId } }
+      ? { kind: 'new', patient: bookPatient, slot: { doctorId: doctor.id, date: today, minutes: null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId } }
       : null
   })
   // Пациента для записи взяли — забыть, чтобы при следующем заходе «Расписание» открылось как обычно
@@ -144,7 +144,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   }, [bookPatient, onBookingShown])
   const close = useCallback(() => setSide(null), [])
   // Ассистент видит только своих врачей (V68): чужие расписания ему не нужны
-  const clinicDoctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
+  const clinicDoctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id)))
   // Порядок колонок, чипов и выбора врача: свой на устройстве (окно «Порядок врачей»), а если его нет —
   // свой врач первым: третьему врачу на телефоне не листать вбок до своей колонки
   const [doctorOrder, setDoctorOrder] = useDoctorOrder()
@@ -158,7 +158,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
     if (initialDoctor && doctors.some((d) => d.id === initialDoctor)) return initialDoctor
     // Телефон — как в прежнем приложении: каждый раз открывается свой день
     if (isNarrow() && doctors.some((d) => d.id === me.doctorId)) return me.doctorId!
-    if (isNarrow() && isAssistant(me) && doctors[0]) return doctors[0].id!
+    if (isNarrow() && isAssistant(me) && doctors[0]) return doctors[0].id
     try {
       const saved = localStorage.getItem('crm.schedule.view')
       if (saved === 'all') return 'all'
@@ -201,7 +201,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   const week = useWeekAppointments(monday, weekDoctor, weekMode)
   const month = date.slice(0, 7)
   // «Месяц» всех врачей считает записи всех, как заголовок дня, — скрытие касается только колонок «Дня»
-  const monthData = useMonthData(month, (view === 'all' ? doctors : doctors.filter((d) => d.id === view)).map((d) => d.id!), monthMode)
+  const monthData = useMonthData(month, (view === 'all' ? doctors : doctors.filter((d) => d.id === view)).map((d) => d.id), monthMode)
   const monthCount = monthData.appointments.filter((a) => a.status !== 'CANCELLED' && a.startAt && dateOf(a.startAt).startsWith(month)).length
   /** Другой месяц: сегодняшний день, если он в этом месяце, иначе 1-е число. */
   const goMonth = (m: string) => setDate(today.startsWith(m) ? today : `${m}-01`)
@@ -213,7 +213,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
       // Телефон — сетки нет, а «День» списком (DayList) просит день без хвостов: тот же запрос и ключ,
       // что у него, — один запрос на врача вместо двух
       queryKey: narrow ? ['appointments', date, d.id] : ['appointments', date, d.id, 'overnight'],
-      queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: narrow ? { date, doctorId: d.id! } : { date, doctorId: d.id!, overnight: true } } })),
+      queryFn: () => unwrap(api.GET('/api/appointments', { params: { query: narrow ? { date, doctorId: d.id } : { date, doctorId: d.id, overnight: true } } })),
       refetchInterval: REFRESH_MS,
       // В «Неделе» и «Месяце» дни не нужны: у них свой запрос на несколько дней
       enabled: !weekMode && !monthMode,
@@ -224,7 +224,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   const slots = useQueries({
     queries: doctors.map((d) => ({
       queryKey: ['slots', date, d.id],
-      queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId: d.id! } } })),
+      queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId: d.id } } })),
       staleTime: 60_000,
       // Свободные окна в сетке меняются вместе с приёмами — обновлять так же
       refetchInterval: REFRESH_MS,
@@ -286,7 +286,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   const grid = useRef<HTMLDivElement>(null)
   const scrolledFor = useRef<string | null>(null)
   const ready = days.length > 0 && days.every((q) => !q.isPending) && (dayList != null || slots.every((q) => !q.isPending))
-  const firstTop = all.length ? PAD + (Math.min(...all.map((a) => minutesOf(a.startAt!))) - from) * PX : null
+  const firstTop = all.length ? PAD + (Math.min(...all.map((a) => minutesOf(a.startAt))) - from) * PX : null
   // Сетка — до низа окна, где бы она ни начиналась (напоминания, строка врачей сверху)
   useFitToWindow(grid, `${date}|${shown.length}|${weekMode ? 'week' : monthMode ? 'month' : 'day'}`)
   const toolbar = useRef<HTMLElement>(null)
@@ -325,8 +325,8 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   const waiting = all.filter((a) => a.status === 'SCHEDULED' && statusOf(a).kind === 'wait')
   const low = (supplies.data ?? []).filter((x) => x.low).length
   const firstOf = (list: Appointment[]) => () => {
-    const first = [...list].sort((a, b) => (a.startAt! < b.startAt! ? -1 : 1))[0]
-    if (first) setSide({ kind: 'appointment', id: first.id! })
+    const first = [...list].sort((a, b) => (a.startAt < b.startAt ? -1 : 1))[0]
+    if (first) setSide({ kind: 'appointment', id: first.id })
   }
 
   /** Пустое место в колонке врача → «Новая запись» на это время, вниз до 15 минут. */
@@ -344,7 +344,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   const newHere = () => {
     const first = firstBookable()
     // Без времени: в форме — сетка свободного, а не 09:00, которое могло пройти или быть занято
-    if (first) setSide({ kind: 'new', slot: { doctorId: first.id!, date, minutes: null } })
+    if (first) setSide({ kind: 'new', slot: { doctorId: first.id, date, minutes: null } })
   }
 
   // Широкий экран: справа от сетки — сводка дня (кто следующий, что требует внимания, свободное время).
@@ -371,7 +371,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   const free = shown.map((d) => {
     const sl = slots[doctors.indexOf(d)]?.data
     const f = sl?.workingDay ? freeMinutes(sl.free ?? [], nowOrNull) : { minutes: 0, first: null }
-    return { doctorId: d.id!, name: d.fullName ?? '', color: colorOf(d), canBook: canEditDoctor(me, d.id), ...f }
+    return { doctorId: d.id, name: d.fullName ?? '', color: colorOf(d), canBook: canEditDoctor(me, d.id), ...f }
   })
   const bookAt = (doctorId: number, minutes: number) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })
 
@@ -398,7 +398,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
         </button>
       )}
       {doctors.map((d) => (
-        <button key={d.id} type="button" className="doctor-chip" aria-pressed={(weekMode ? weekDoctor : view) === d.id} onClick={() => setView(d.id!)}>
+        <button key={d.id} type="button" className="doctor-chip" aria-pressed={(weekMode ? weekDoctor : view) === d.id} onClick={() => setView(d.id)}>
           <span className="avatar" style={{ background: colorOf(d) }} aria-hidden="true">{initials(d.fullName)}</span>
           {d.fullName}{d.id === me.doctorId ? ' (я)' : ''}
         </button>
@@ -530,7 +530,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
                 )}
                 {revenue.data && (
                   <button type="button" className="stat s-quiet" onClick={() => onNavigate?.('cash')}>
-                    <b>{somText(revenue.data.totalSom ?? 0).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
+                    <b>{somText(revenue.data.totalSom).replace(' сом', '')}</b> сом {date === today ? 'сегодня' : 'за день'}
                   </button>
                 )}
                 {earnings.data && <EarningsChip e={earnings.data} onOpen={openEarnings} />}
@@ -549,7 +549,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
                 сеткой (под сеткой строка уходила за край экрана и её не замечали); раскрытый список — строкой ниже */}
             {!weekMode && !monthMode && shown.length > 0 && (
               <CancelledList inline items={loaded.filter((a) => a.status === 'CANCELLED' && (view === 'all' || shown.some((d) => d.id === a.doctorId)))}
-                selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
+                selectedId={selected?.id} onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })}
                 doctorName={view === 'all' ? (id) => doctors.find((d) => d.id === id)?.fullName ?? '' : undefined} />
             )}
           </div>
@@ -562,18 +562,18 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
         )}
 
         {dayList ? (
-          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id!, name: d.fullName ?? '', color: colorOf(d) }))} date={date} onDate={setDate} selectedId={selected?.id}
+          <DayList me={me} doctors={dayList.map((d) => ({ id: d.id, name: d.fullName ?? '', color: colorOf(d) }))} date={date} onDate={setDate} selectedId={selected?.id}
             all={view === 'all' && doctors.length > 1}
             doctorsNote={partial || offHidden.length ? <>{partial && <span className="shown-of">{partial.replace(/^./, (c) => c.toUpperCase())}</span>}{partial && offHidden.length ? ' · ' : ''}{offHint}</> : undefined}
             onNewHere={bookable.length > 0 ? newHere : undefined}
-            onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
+            onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })}
             onNew={(doctorId, minutes) => setSide({ kind: 'new', slot: { doctorId, date, minutes } })} />
         ) : monthMode ? (
           <MonthGrid month={month} today={today} selected={date} data={monthData} compact={narrow}
             onOpenDay={(day) => { setDate(day); setMode('day') }} />
         ) : weekMode && weekDoctor != null ? (
           <WeekGrid me={me} doctorId={weekDoctor} monday={monday} today={today} selectedId={selected?.id}
-            onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })}
+            onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })}
             onNew={(day, minutes) => setSide({ kind: 'new', slot: { doctorId: weekDoctor, date: day, minutes } })}
             onOpenDay={(day) => { setDate(day); setMode('day') }} />
         ) : doctors.length === 0 ? (
@@ -591,7 +591,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
                 const hoursText = slotsHoursText(sl)
                 return (
                   <button key={d.id} type="button" className="grid-head" title={`Только ${d.fullName}`} disabled={shown.length === 1}
-                    style={{ '--doc': color } as CSSProperties} onClick={() => setView(d.id!)}>
+                    style={{ '--doc': color } as CSSProperties} onClick={() => setView(d.id)}>
                     {d.photoUrl
                       ? <img className="avatar photo" src={d.photoUrl} alt="" />
                       : <span className="avatar" style={{ background: color }} aria-hidden="true">{initials(d.fullName)}</span>}
@@ -621,7 +621,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
                 const off = sl?.workingDay ? offSpans(workSpans(sl, date), from, to) : []
                 return (
                   <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
-                    title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id!)}>
+                    title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id)}>
                     {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
                     {nowTop != null && <div className="grid-past" style={{ height: nowTop }} />}
                     {sl && !sl.workingDay && (
@@ -639,28 +639,28 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
                     ))}
                     {/* Кресло врача занято другим врачом (общее кресло, V185): не свободно, нажатие не создаёт запись */}
                     {sl?.workingDay && (sl.chairBusy ?? []).map((b) => {
-                      const top = y(dayMinutes(b.start!, date))
-                      const text = `${timeOf(b.start!)}–${timeOf(b.end!)}: кресло занято (${b.doctorName})`
+                      const top = y(dayMinutes(b.start, date))
+                      const text = `${timeOf(b.start)}–${timeOf(b.end)}: кресло занято (${b.doctorName})`
                       return (
                         <div key={`chair-${b.start}`} className="grid-break grid-chair" role="note" aria-label={text}
                           title={`${text} — «${b.chairName}» в это время у другого врача`}
-                          style={{ top, height: Math.max(y(dayMinutes(b.end!, date)) - top, 14) }}>
+                          style={{ top, height: Math.max(y(dayMinutes(b.end, date)) - top, 14) }}>
                           <span>🪑 кресло занято ({b.doctorName})</span>
                         </div>
                       )
                     })}
                     {sl?.workingDay && (sl.free ?? []).map((w) => {
                       // Свободное окно — светлый блок «Свободно 13:00–18:00 · ＋ записать»; сегодня — только то, что впереди
-                      const start = Math.max(dayMinutes(w.start!, date), nowOrNull ?? 0, from)
-                      const end = Math.min(dayMinutes(w.end!, date), to)
+                      const start = Math.max(dayMinutes(w.start, date), nowOrNull ?? 0, from)
+                      const end = Math.min(dayMinutes(w.end, date), to)
                       if (end - start < 15) return null
-                      const text = `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}–${timeOf(w.end!)}`
+                      const text = `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}–${timeOf(w.end)}`
                       const h = (end - start) * PX - 4
                       const style = { top: PAD + (start - from) * PX + 2, height: h }
                       if (!canEditDoctor(me, d.id)) return <div key={w.start} className="grid-free readonly" style={style}><span className="num">{text}</span> свободно</div>
                       return (
                         <button key={w.start} type="button" className={`grid-free${h < 52 ? ' short' : ''}`} style={style}
-                          aria-label={`Свободно с ${text.replace('–', ' до ')}, записать`} onClick={() => bookAt(d.id!, Math.ceil(start / 5) * 5)}>
+                          aria-label={`Свободно с ${text.replace('–', ' до ')}, записать`} onClick={() => bookAt(d.id, Math.ceil(start / 5) * 5)}>
                           <span className="grid-free-text">Свободно <span className="num">{text}</span></span>
                           <span className="grid-free-add">＋ записать</span>
                         </button>
@@ -694,17 +694,17 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
       </section>
       {summary && (
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}
-          revenueSom={revenue.data ? revenue.data.totalSom ?? 0 : null} earnings={earnings.data ?? null} onOpenEarnings={openEarnings} low={low} free={shown.length > 0 && date >= today ? free : []}
+          revenueSom={revenue.data ? revenue.data.totalSom : null} earnings={earnings.data ?? null} onOpenEarnings={openEarnings} low={low} free={shown.length > 0 && date >= today ? free : []}
           doctorName={(id) => doctors.find((d) => d.id === id)?.fullName ?? ''}
-          onOpen={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} onBook={bookAt} onNavigate={onNavigate} onClose={toggleSummary} />
+          onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onBook={bookAt} onNavigate={onNavigate} onClose={toggleSummary} />
       )}
       {/* key: другой приём — новая карточка, формы и «Вернуть» прежнего не переносятся */}
       {selected && <AppointmentPanel key={selected.id} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
-        onMedical={(patient) => setMedical({ patient, from: selected.id! })}
+        onMedical={(patient) => setMedical({ patient, from: selected.id })}
         onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />}
       {side?.kind === 'new' && (
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} nowDoctorId={firstBookable()?.id} onClose={close}
-          onCreated={(a) => setSide({ kind: 'appointment', id: a.id!, fallback: a })} />
+          onCreated={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} />
       )}
     </div>
   )

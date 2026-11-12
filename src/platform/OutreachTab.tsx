@@ -41,7 +41,7 @@ export function OutreachTab() {
   // Открытая карточка остаётся на месте, даже когда после отметки ушла из фильтра «Не писали», — до «Следующей»
   const shown = leads.filter((l) => l.id === selected || ((group == null || groupOf(l) === group)
     && (!q || (l.clinicName ?? '').toLowerCase().replace(/ё/g, 'е').includes(q))))
-  const counts = data?.counts ?? {}
+  const counts: Partial<NonNullable<NonNullable<typeof data>['counts']>> = data?.counts ?? {}
   const countOf: Record<Group, number> = { FRESH: counts.fresh ?? 0, SENT: counts.sent ?? 0, FURTHER: counts.further ?? 0, DECLINED: counts.declined ?? 0 }
 
   const next = () => {
@@ -53,7 +53,7 @@ export function OutreachTab() {
       setGroup('FRESH')
       setQuery('')
     }
-    setSelected(lead.id!)
+    setSelected(lead.id)
     setTimeout(() => document.getElementById(`outreach-${lead.id}`)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' }), 0)
   }
 
@@ -94,7 +94,7 @@ export function OutreachTab() {
                   <div role="list" className="funnel-list" aria-label="Клиники">
                     {shown.map((l) => (
                       <LeadRow key={l.id} lead={l} template={data.template?.text ?? ''} selected={l.id === selected}
-                        onSelect={() => setSelected(l.id === selected ? null : l.id!)} onActive={() => setSelected(l.id!)} onNext={next} />
+                        onSelect={() => setSelected(l.id === selected ? null : l.id)} onActive={() => setSelected(l.id)} onNext={next} />
                     ))}
                   </div>
                 )}
@@ -128,7 +128,7 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
     void client.invalidateQueries({ queryKey: ['platform-funnel'] })
   }
   const sent = useMutation<OutreachLead, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/outreach/{id}/sent', { params: { path: { id: l.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/outreach/{id}/sent', { params: { path: { id: l.id } } })),
     onSuccess: () => {
       setStep('done')
       haptic('success')
@@ -136,7 +136,7 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
     },
   })
   const decline = useMutation<OutreachLead, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/outreach/{id}/decline', { params: { path: { id: l.id! } }, body: { reason: reason || undefined } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/outreach/{id}/decline', { params: { path: { id: l.id } }, body: { reason: reason || undefined } })),
     onSuccess: () => {
       setDeclining(false)
       refresh()
@@ -144,7 +144,7 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
   })
   // «Удалить из списка» — клиника исчезает из рассылки и воронки совсем (подключённую — нельзя, 409 с текстом)
   const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/platform/outreach/{id}', { params: { path: { id: l.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/platform/outreach/{id}', { params: { path: { id: l.id } } })),
     onSuccess: refresh,
   })
   const text = messageFor(template, l.clinicName ?? '')
@@ -355,7 +355,7 @@ function EditClinic({ lead: l, onClose }: { lead: OutreachLead; onClose: () => v
   const [f, setF] = useState({ name: l.clinicName ?? '', phone: phoneToInput(l.phone), address: l.address ?? '', link: l.link ?? '', city: l.city || 'Бишкек' })
   const save = useMutation<OutreachLead, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/outreach/{id}', {
-      params: { path: { id: l.id! } },
+      params: { path: { id: l.id } },
       body: { clinicName: f.name, phone: phoneFromInput(f.phone), address: f.address, link: f.link, city: f.city },
     })),
     onSuccess: () => {
@@ -504,11 +504,11 @@ function ListUpload({ onClose }: { onClose: () => void }) {
         <>
           <p className="stats" aria-label="Итог проверки">
             <span className="chip small s-ok">Новых: <b className="num">{r.fresh}</b></span>
-            {(r.duplicates ?? 0) > 0 && <span className="chip small s-quiet">уже в списке — пропустим: <b className="num">{r.duplicates}</b></span>}
-            {(r.errors ?? 0) > 0 && <span className="chip small s-bad">С ошибкой — не добавим: <b className="num">{r.errors}</b></span>}
+            {r.duplicates > 0 && <span className="chip small s-quiet">уже в списке — пропустим: <b className="num">{r.duplicates}</b></span>}
+            {r.errors > 0 && <span className="chip small s-bad">С ошибкой — не добавим: <b className="num">{r.errors}</b></span>}
           </p>
-          {(r.errors ?? 0) > 0 && (r.fresh ?? 0) > 0 && <p className="hint">Строки с ошибкой загрузке не мешают: добавим остальные, а эти можно поправить и загрузить потом.</p>}
-          {(r.fresh ?? 0) === 0 && <p className="hint">Новых клиник нет — добавлять нечего.</p>}
+          {r.errors > 0 && r.fresh > 0 && <p className="hint">Строки с ошибкой загрузке не мешают: добавим остальные, а эти можно поправить и загрузить потом.</p>}
+          {r.fresh === 0 && <p className="hint">Новых клиник нет — добавлять нечего.</p>}
           <table className="table" aria-label="Проверка списка">
             <thead><tr><th className="r">Строка</th><th>Клиника</th><th>Телефон</th><th>Итог</th></tr></thead>
             <tbody>
@@ -526,7 +526,7 @@ function ListUpload({ onClose }: { onClose: () => void }) {
         </>
       ) : null}
       <div className="actions">
-        {!done && (r && (r.fresh ?? 0) > 0
+        {!done && (r && r.fresh > 0
           ? <button type="button" className="btn primary" disabled={apply.isPending} onClick={() => apply.mutate()}>Добавить клиник: {r.fresh}</button>
           : <button type="button" className="btn primary" disabled={preview.isPending || (!file && !text.trim())} onClick={() => preview.mutate()}>Проверить</button>)}
         <button type="button" className="btn ghost" onClick={onClose}>{done ? 'Закрыть' : 'Отмена'}</button>

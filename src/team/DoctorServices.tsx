@@ -71,7 +71,7 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
               <legend>{groupLabel(group)}</legend>
               {items.map((s) => (
                 <label key={s.id} className="check">
-                  <input type="checkbox" checked={picked.includes(s.id!)} onChange={(e) => toggle(s.id!, e.target.checked)} /> {s.name}
+                  <input type="checkbox" checked={picked.includes(s.id)} onChange={(e) => toggle(s.id, e.target.checked)} /> {s.name}
                 </label>
               ))}
             </fieldset>

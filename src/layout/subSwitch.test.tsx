@@ -61,7 +61,7 @@ const names = (row: HTMLElement) => within(row).getAllByRole('link').map((a) => 
 test('Пациенты: все подразделы вкладками, открытый отмечен, числа — бейджами; нажатие переключает без листа', async () => {
   server.use(
     http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 2 } satisfies Schemas['QuestionControllerNewCount'])),
-    http.get('*/api/waitlist', () => HttpResponse.json([{ id: 1 }, { id: 2 }, { id: 3 }] satisfies Schemas['WaitlistView'][])),
+    http.get('*/api/waitlist', () => HttpResponse.json([{ id: 1, durationMinutes: 0 }, { id: 2, durationMinutes: 0 }, { id: 3, durationMinutes: 0 }] satisfies Schemas['WaitlistView'][])),
   )
   window.location.hash = '/patients/booked'
   renderApp()

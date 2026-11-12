@@ -15,7 +15,7 @@ type Expense = Schemas['ExpensesExpense']
  */
 export function ExpenseEdit({ expense: x, onDone }: { expense: Expense; onDone: () => void }) {
   const client = useQueryClient()
-  const [amount, setAmount] = useState(String(x.amountSom ?? ''))
+  const [amount, setAmount] = useState(String(x.amountSom))
   const [category, setCategory] = useState(x.category ?? '')
   const [spentOn, setSpentOn] = useState(x.spentOn ?? todayIn())
   const [comment, setComment] = useState(x.comment ?? '')
@@ -26,13 +26,13 @@ export function ExpenseEdit({ expense: x, onDone }: { expense: Expense; onDone: 
   }
   const save = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/expenses/{id}', {
-      params: { path: { id: x.id! } },
+      params: { path: { id: x.id } },
       body: { amountSom: Number(amount), category: category.trim(), spentOn, comment: comment.trim() || undefined },
     })),
     onSuccess: done,
   })
   const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/expenses/{id}', { params: { path: { id: x.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/expenses/{id}', { params: { path: { id: x.id } } })),
     onSuccess: done,
   })
   const submit = (e: FormEvent) => {

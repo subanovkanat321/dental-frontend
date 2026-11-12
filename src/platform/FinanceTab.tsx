@@ -119,17 +119,17 @@ export function FinanceTab() {
           <>
             {!single && f.from && f.to && <p className="hint fin-scope" aria-live="polite">{rangeText(f.from, f.to)}{f.to === current ? ' (по текущий месяц)' : ''}</p>}
             <div className="survey-tiles fin-tiles">
-              <div className="survey-tile"><span className="hint">Доход</span><b className="num" aria-label={`Доход ${scope}`}>{somText(f.incomeSom ?? 0)}</b></div>
-              <div className="survey-tile"><span className="hint">Расход</span><b className="num" aria-label={`Расход ${scope}`}>{somText(f.expenseSom ?? 0)}</b>
+              <div className="survey-tile"><span className="hint">Доход</span><b className="num" aria-label={`Доход ${scope}`}>{somText(f.incomeSom)}</b></div>
+              <div className="survey-tile"><span className="hint">Расход</span><b className="num" aria-label={`Расход ${scope}`}>{somText(f.expenseSom)}</b>
                 {pending > 0 && <span className="hint small fin-pending-note">ещё ожидается: <span className="num nowrap">{somText(pending)}</span></span>}</div>
-              <div className="survey-tile hero"><span className="hint">{(f.profitSom ?? 0) < 0 ? 'Убыток' : 'Прибыль'}</span>
-                <b className={`num ${tone(f.profitSom ?? 0) ?? ''}`.trim()} aria-label={`Прибыль ${scope}`}>{signed(f.profitSom ?? 0)}</b>
-                {pending > 0 && <span className="hint small fin-pending-note">если оплатить всё ожидаемое: <span className="num nowrap">{signed((f.profitSom ?? 0) - pending)}</span></span>}</div>
+              <div className="survey-tile hero"><span className="hint">{f.profitSom < 0 ? 'Убыток' : 'Прибыль'}</span>
+                <b className={`num ${tone(f.profitSom) ?? ''}`.trim()} aria-label={`Прибыль ${scope}`}>{signed(f.profitSom)}</b>
+                {pending > 0 && <span className="hint small fin-pending-note">если оплатить всё ожидаемое: <span className="num nowrap">{signed(f.profitSom - pending)}</span></span>}</div>
             </div>
             {pending > 0 && <p className="hint small">Расход и прибыль — только оплаченное. «Каждый месяц» без отметки не считается, пока не отметите «Оплачено».</p>}
             {(f.topups?.length ?? 0) > 0 && (
               <p className="hint small fin-topup-note">
-                Оплачено пополнениями: <b className="num nowrap">{somText(f.topupSom ?? 0)}</b> — в расход не входит: ИИ и SMS уже посчитаны в расходе по использованию.
+                Оплачено пополнениями: <b className="num nowrap">{somText(f.topupSom)}</b> — в расход не входит: ИИ и SMS уже посчитаны в расходе по использованию.
               </p>
             )}
           </>
@@ -149,7 +149,7 @@ export function FinanceTab() {
 const monthName = (m: string) => MONTH_NAME.format(new Date(`${m}-01T00:00:00Z`))
 
 /** «1 750 сом» или «$20 × 87,5 ≈ 1 750 сом» — сумма шаблона по умолчанию. */
-const dueAmount = (d: Due) => (d.amountUsd != null ? `$${decimal(d.amountUsd)} × ${decimal(d.usdRate ?? 0)} ≈ ${somText(d.amountSom ?? 0)}` : somText(d.amountSom ?? 0))
+const dueAmount = (d: Due) => (d.amountUsd != null ? `$${decimal(d.amountUsd)} × ${decimal(d.usdRate ?? 0)} ≈ ${somText(d.amountSom)}` : somText(d.amountSom))
 
 /**
  * «Ожидаются в этом месяце»: шаблоны «каждый месяц» без отметки — текущий месяц и прошлые
@@ -162,7 +162,7 @@ function DueBlock({ due, current, rate }: { due: Due[]; current: string; rate?: 
   const key = (d: Due) => `${d.expenseId}-${d.month}`
   const skip = useMutation<Mark, ApiError, Due>({
     mutationFn: (d) => unwrap(api.PUT('/api/platform/finance/expenses/{id}/months/{month}', {
-      params: { path: { id: d.expenseId!, month: d.month! } }, body: { status: 'SKIPPED' },
+      params: { path: { id: d.expenseId, month: d.month! } }, body: { status: 'SKIPPED' },
     })),
     onSuccess: () => void client.invalidateQueries({ queryKey: ['platform-finance'] }),
   })
@@ -205,14 +205,14 @@ function DueBlock({ due, current, rate }: { due: Due[]; current: string; rate?: 
 function PayForm({ due: d, rate, onDone }: { due: Due; rate?: number; onDone: () => void }) {
   const client = useQueryClient()
   const today = todayIn()
-  const lastDay = (m: string) => { const [y, mo] = m.split('-').map(Number); return `${m}-${String(new Date(Date.UTC(y!, mo!, 0)).getUTCDate()).padStart(2, '0')}` }
+  const lastDay = (m: string) => { const [y, mo] = m.split('-').map(Number); return `${m}-${String(new Date(Date.UTC(y!, mo, 0)).getUTCDate()).padStart(2, '0')}` }
   const [usd, setUsd] = useState(d.amountUsd != null)
   const [amount, setAmount] = useState(String(d.amountUsd ?? d.amountSom ?? ''))
   const [usdRate, setUsdRate] = useState(String(d.usdRate ?? rate ?? ''))
   const [paidOn, setPaidOn] = useState(today.startsWith(d.month ?? '') || !d.month ? today : lastDay(d.month))
   const save = useMutation<Mark, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/finance/expenses/{id}/months/{month}', {
-      params: { path: { id: d.expenseId!, month: d.month! } },
+      params: { path: { id: d.expenseId, month: d.month! } },
       body: { status: 'PAID', paidOn, ...(usd ? { amountUsd: Number(amount), usdRate: Number(usdRate) } : { amountSom: Number(amount) }) },
     })),
     onSuccess: () => {
@@ -279,10 +279,10 @@ function Stepper({ label, text, onPrev, onNext }: { label: string; text: string;
 function lineNote(l: Line, price?: number): string {
   if (l.key === 'AI') return l.count ? `${l.count} запросов к ИИ · как во вкладке «Расход ИИ»` : 'запросов к ИИ не было'
   if (l.key === 'SMS') {
-    if (l.needsPrice) return `${l.count ?? 0} SMS · укажите цену SMS ниже`
-    return `${l.count ?? 0} SMS × ${decimal(price ?? 0)} сом`
+    if (l.needsPrice) return `${l.count} SMS · укажите цену SMS ниже`
+    return `${l.count} SMS × ${decimal(price ?? 0)} сом`
   }
-  return (l.count ?? 0) > 1 ? `записей: ${l.count}` : ''
+  return l.count > 1 ? `записей: ${l.count}` : ''
 }
 
 function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
@@ -298,8 +298,8 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
         {!adding && <button type="button" className="btn primary small" onClick={() => { setAdding(true); setEditing(null) }}>Добавить расход</button>}
       </div>
       {/* Структура расходов месяца — бублик; ниже те же статьи списком с пометками «считается само» */}
-      <Donut parts={lines.filter((l) => !l.needsPrice && (l.som ?? 0) > 0).map((l) => ({ key: l.key ?? l.label ?? '', name: l.label ?? '', value: l.som ?? 0 }))}
-        label={single ? 'Структура расходов за месяц' : 'Структура расходов за период'} format={somText} center={somText(f.expenseSom ?? 0)}
+      <Donut parts={lines.filter((l) => !l.needsPrice && l.som > 0).map((l) => ({ key: l.key ?? l.label ?? '', name: l.label ?? '', value: l.som }))}
+        label={single ? 'Структура расходов за месяц' : 'Структура расходов за период'} format={somText} center={somText(f.expenseSom)}
         caption={single ? 'расходы месяца' : 'расходы за период'} empty={single ? 'Расходов за этот месяц нет.' : 'Расходов за этот период нет.'} />
       <dl className="net-lines fin-lines" aria-label="Расходы по статьям">
         {lines.map((l) => (
@@ -310,10 +310,10 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
                 <span className={`hint small${l.needsPrice ? ' tone-wait' : ''}`}> · {lineNote(l, f.settings?.smsPriceSom)}</span>
               )}
             </dt>
-            <dd className="num">{l.needsPrice ? '—' : somText(l.som ?? 0)}</dd>
+            <dd className="num">{l.needsPrice ? '—' : somText(l.som)}</dd>
           </div>
         ))}
-        <div className="net-total"><dt>Всего расходов</dt><dd className="num">{somText(f.expenseSom ?? 0)}</dd></div>
+        <div className="net-total"><dt>Всего расходов</dt><dd className="num">{somText(f.expenseSom)}</dd></div>
       </dl>
       {adding && (
         <ExpenseForm categories={f.categories ?? []} rate={f.settings?.lastUsdRate} month={f.to ?? f.month ?? ''} onDone={() => setAdding(false)} />
@@ -338,9 +338,9 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
                     <div className="hint small">{entryNote(x)}</div>
                     {x.monthly && <MarkList marks={marks.filter((k) => k.expenseId === x.id)} category={x.category ?? ''} />}
                   </div>
-                  <span className="num strong nowrap">{somText(x.amountSom ?? 0)}{x.monthly && <span className="hint small"> / мес</span>}</span>
+                  <span className="num strong nowrap">{somText(x.amountSom)}{x.monthly && <span className="hint small"> / мес</span>}</span>
                   <button type="button" className="btn ghost small" aria-label={`Исправить: ${x.category}`}
-                    onClick={() => { setEditing(x.id ?? null); setAdding(false) }}>Исправить</button>
+                    onClick={() => { setEditing(x.id); setAdding(false) }}>Исправить</button>
                 </div>
               )}
             </li>
@@ -356,7 +356,7 @@ function MarkList({ marks, category }: { marks: Mark[]; category: string }) {
   const client = useQueryClient()
   const unmark = useMutation<unknown, ApiError, Mark>({
     mutationFn: (k) => unwrap(api.DELETE('/api/platform/finance/expenses/{id}/months/{month}', {
-      params: { path: { id: k.expenseId!, month: k.month! } },
+      params: { path: { id: k.expenseId, month: k.month! } },
     })),
     onSuccess: () => void client.invalidateQueries({ queryKey: ['platform-finance'] }),
   })
@@ -425,12 +425,12 @@ function ExpenseForm({ expense: x, categories, rate, month, onDone }: {
   })
   const save = useMutation<Expense, ApiError>({
     mutationFn: () => (x
-      ? unwrap(api.PUT('/api/platform/finance/expenses/{id}', { params: { path: { id: x.id! } }, body: body() }))
+      ? unwrap(api.PUT('/api/platform/finance/expenses/{id}', { params: { path: { id: x.id } }, body: body() }))
       : unwrap(api.POST('/api/platform/finance/expenses', { body: body() }))),
     onSuccess: done,
   })
   const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/platform/finance/expenses/{id}', { params: { path: { id: x!.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/platform/finance/expenses/{id}', { params: { path: { id: x!.id } } })),
     onSuccess: done,
   })
   const submit = (e: FormEvent) => {
@@ -530,10 +530,10 @@ function IncomeBlock({ f, single }: { f: Finance; single: boolean }) {
                 <tr key={r.clinicId}>
                   <td>{r.name}</td>
                   <td className="r num">{r.payments}</td>
-                  <td className="r num nowrap">{somText(r.som ?? 0)}</td>
+                  <td className="r num nowrap">{somText(r.som)}</td>
                 </tr>
               ))}
-              <tr className="strong"><td>Всего</td><td /><td className="r num nowrap">{somText(f.incomeSom ?? 0)}</td></tr>
+              <tr className="strong"><td>Всего</td><td /><td className="r num nowrap">{somText(f.incomeSom)}</td></tr>
             </tbody>
           </table>
         </div>
@@ -542,7 +542,7 @@ function IncomeBlock({ f, single }: { f: Finance; single: boolean }) {
   )
 }
 
-const monthText = (m: MonthTotal) => `${longMonth(m.month ?? '')}: доход ${somText(m.incomeSom ?? 0)}, расход ${somText(m.expenseSom ?? 0)}, прибыль ${signed(m.profitSom ?? 0)}${(m.pendingSom ?? 0) > 0 ? `, ещё ожидается ${somText(m.pendingSom ?? 0)}` : ''}`
+const monthText = (m: MonthTotal) => `${longMonth(m.month ?? '')}: доход ${somText(m.incomeSom)}, расход ${somText(m.expenseSom)}, прибыль ${signed(m.profitSom)}${m.pendingSom > 0 ? `, ещё ожидается ${somText(m.pendingSom)}` : ''}`
 
 /**
  * Столбики по месяцам: доход и расход — парой от общей нулевой линии (dataviz: два ряда во времени,
@@ -551,9 +551,9 @@ const monthText = (m: MonthTotal) => `${longMonth(m.month ?? '')}: доход ${
  * несколько, январь — годом, чтобы было видно, где какой год.
  */
 function MonthBars({ rows, picked, onPick }: { rows: MonthTotal[]; picked?: string; onPick: (m: string) => void }) {
-  const max = Math.max(1, ...rows.flatMap((m) => [m.incomeSom ?? 0, (m.expenseSom ?? 0) + (m.pendingSom ?? 0)]))
-  const anyPending = rows.some((m) => (m.pendingSom ?? 0) > 0)
-  const maxProfit = Math.max(1, ...rows.map((m) => Math.abs(m.profitSom ?? 0)))
+  const max = Math.max(1, ...rows.flatMap((m) => [m.incomeSom, m.expenseSom + m.pendingSom]))
+  const anyPending = rows.some((m) => m.pendingSom > 0)
+  const maxProfit = Math.max(1, ...rows.map((m) => Math.abs(m.profitSom)))
   const step = Math.ceil(rows.length / 12)
   const label = (m: string) => (rows.length > 12 && m.endsWith('-01') ? m.slice(0, 4) : shortMonth(m))
   return (
@@ -568,16 +568,16 @@ function MonthBars({ rows, picked, onPick }: { rows: MonthTotal[]; picked?: stri
             <button key={m.month} type="button" className={m.month === picked ? 'fin-month picked' : 'fin-month'} title={monthText(m)}
               aria-label={longMonth(m.month ?? '')} onClick={() => m.month && onPick(m.month)}>
               <span className="fin-pair">
-                <span className="fin-in" style={{ height: `${((m.incomeSom ?? 0) / max) * 100}%` }} />
+                <span className="fin-in" style={{ height: `${(m.incomeSom / max) * 100}%` }} />
                 {/* Прогноз пунктиром поверх расхода: шаблоны «каждый месяц» без отметки */}
-                <span className="fin-stack" style={{ height: `${(((m.expenseSom ?? 0) + (m.pendingSom ?? 0)) / max) * 100}%` }}>
-                  {(m.pendingSom ?? 0) > 0 && <span className="fin-pending" style={{ flexGrow: m.pendingSom ?? 0 }} />}
-                  <span className="fin-out" style={{ flexGrow: Math.max(m.expenseSom ?? 0, (m.pendingSom ?? 0) > 0 ? 0 : 1) }} />
+                <span className="fin-stack" style={{ height: `${((m.expenseSom + m.pendingSom) / max) * 100}%` }}>
+                  {m.pendingSom > 0 && <span className="fin-pending" style={{ flexGrow: m.pendingSom }} />}
+                  <span className="fin-out" style={{ flexGrow: Math.max(m.expenseSom, m.pendingSom > 0 ? 0 : 1) }} />
                 </span>
               </span>
               <span className="fin-profit" aria-hidden="true">
-                <span className={(m.profitSom ?? 0) < 0 ? 'fin-down' : 'fin-up'}
-                  style={{ height: `${(Math.abs(m.profitSom ?? 0) / maxProfit) * 50}%` }} />
+                <span className={m.profitSom < 0 ? 'fin-down' : 'fin-up'}
+                  style={{ height: `${(Math.abs(m.profitSom) / maxProfit) * 50}%` }} />
               </span>
               {/* Подписи через step месяцев; на телефоне — ещё через одну: в 360px иначе слипаются */}
               <span className={back % step ? 'vbar-label fin-skip' : (back / step) % 2 ? 'vbar-label fin-odd' : 'vbar-label'}>{label(m.month ?? '')}</span>
@@ -600,9 +600,9 @@ function HistoryBlock({ history, month, onPick }: { history: MonthTotal[]; month
         <>
           <MonthBars rows={history} picked={month} onPick={onPick} />
           {picked && (
-            <p className="hint small">{longMonth(picked.month ?? '')}: доход <b className="num">{somText(picked.incomeSom ?? 0)}</b>,
-              расход <b className="num">{somText(picked.expenseSom ?? 0)}</b>,
-              {' '}{(picked.profitSom ?? 0) < 0 ? 'убыток' : 'прибыль'} <b className={`num ${tone(picked.profitSom ?? 0) ?? ''}`.trim()}>{signed(picked.profitSom ?? 0)}</b></p>
+            <p className="hint small">{longMonth(picked.month ?? '')}: доход <b className="num">{somText(picked.incomeSom)}</b>,
+              расход <b className="num">{somText(picked.expenseSom)}</b>,
+              {' '}{picked.profitSom < 0 ? 'убыток' : 'прибыль'} <b className={`num ${tone(picked.profitSom) ?? ''}`.trim()}>{signed(picked.profitSom)}</b></p>
           )}
         </>
       )}
@@ -625,10 +625,10 @@ function MonthsBlock({ months, onPick }: { months: MonthTotal[]; onPick: (m: str
             {[...months].reverse().map((m) => (
               <tr key={m.month}>
                 <td><button type="button" className="link" onClick={() => m.month && onPick(m.month)}>{longMonth(m.month ?? '')}</button></td>
-                <td className="r num nowrap">{somText(m.incomeSom ?? 0)}</td>
-                <td className="r num nowrap">{somText(m.expenseSom ?? 0)}
-                  {(m.pendingSom ?? 0) > 0 && <div className="hint small">+ {somText(m.pendingSom ?? 0)} ожидается</div>}</td>
-                <td className={`r num nowrap ${tone(m.profitSom ?? 0) ?? ''}`.trim()}>{signed(m.profitSom ?? 0)}</td>
+                <td className="r num nowrap">{somText(m.incomeSom)}</td>
+                <td className="r num nowrap">{somText(m.expenseSom)}
+                  {m.pendingSom > 0 && <div className="hint small">+ {somText(m.pendingSom)} ожидается</div>}</td>
+                <td className={`r num nowrap ${tone(m.profitSom) ?? ''}`.trim()}>{signed(m.profitSom)}</td>
               </tr>
             ))}
             <tr className="strong">

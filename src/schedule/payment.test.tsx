@@ -355,7 +355,7 @@ test('«Выбрать из прайса…»: длинный прайс — «�
   ]
   server.use(
     http.get('*/api/service-types', () => HttpResponse.json(list.map(([name, group], i) => ({
-      id: i + 1, name, group, active: true, priceSom: (i + 1) * 1000,
+      id: i + 1, name, group, active: true, priceSom: (i + 1) * 1000, durationMinutes: 30,
     })) satisfies Schemas['ServiceTypeView'][])),
     http.get('*/api/service-types/popular', () => HttpResponse.json({ ids: [4] } satisfies Schemas['ServiceTypeControllerPopular'])),
   )

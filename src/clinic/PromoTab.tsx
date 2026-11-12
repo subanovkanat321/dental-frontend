@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState, type FormEvent, type ReactNode } from 'react'
 
-import { api, ApiError, botUsername, unwrap, type Schemas } from '../api/client'
+import { api, ApiError, botUsername, unwrap, WEB_CONFIG_KEY, webConfig, type Schemas } from '../api/client'
 import { DateInput } from '../layout/DateInput'
 import { SaveBar } from '../layout/SaveBar'
 import { discountText, expired, linkable, usePromoCodes, type PromoCode } from '../lib/promo'
@@ -37,8 +37,8 @@ export function PromoTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
     queryKey: ['promo-report', from, to],
     queryFn: () => unwrap(api.GET('/api/appointments/promo-codes', { params: { query: { from, to } } })),
   })
-  const [opened, setOpenedState] = useState<PromoCode | null>(null)
-  const setOpened = useCallback((p: PromoCode | null) => {
+  const [opened, setOpenedState] = useState<Partial<PromoCode> | null>(null)
+  const setOpened = useCallback((p: Partial<PromoCode> | null) => {
     setOpenedState(p)
     onPanel(p != null)
   }, [onPanel])
@@ -116,7 +116,7 @@ function PromoTable({ codes, report, error, today, opened, onOpen }: {
 }
 
 /** Промокод: новый (без id) или существующий. Удалить можно только неиспользованный — иначе выключают. */
-function PromoPanel({ promo: p, me, onClose }: { promo: PromoCode; me: Me; onClose: () => void }) {
+function PromoPanel({ promo: p, me, onClose }: { promo: Partial<PromoCode>; me: Me; onClose: () => void }) {
   const close = useClose(onClose)
   const client = useQueryClient()
   const [f, setF] = useState({
@@ -209,7 +209,7 @@ function PromoPanel({ promo: p, me, onClose }: { promo: PromoCode; me: Me; onClo
  * кодов латиницей: ссылка Telegram не пропускает кириллицу.
  */
 function ShareLinks({ code, clinicCode }: { code: string; clinicCode?: string }) {
-  const bot = useQuery({ queryKey: ['bot-username'], queryFn: botUsername, staleTime: Infinity })
+  const bot = useQuery({ queryKey: WEB_CONFIG_KEY, queryFn: webConfig, staleTime: Infinity, select: botUsername })
   const [copied, setCopied] = useState('')
   if (!clinicCode) return null
   if (!linkable(code)) return <p className="hint">Ссылку с кодом можно сделать для промокода латиницей и цифрами — кириллицу Telegram в ссылке не пропускает.</p>

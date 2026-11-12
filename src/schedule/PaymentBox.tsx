@@ -40,7 +40,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   const [view, setView] = useState<View>(a.paidSom != null ? 'show' : a.chargeSom != null && !me.reception ? 'billed' : a.chargeSom != null ? 'edit' : 'unpaid')
   const history = useQuery({
     queryKey: ['payments', a.id, a.version, a.paidSom],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/payments', { params: { path: { id: a.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/payments', { params: { path: { id: a.id } } })),
     enabled: a.paidSom != null,
   })
   const back = () => setView(a.paidSom != null ? 'show' : a.chargeSom != null ? 'billed' : 'unpaid')
@@ -76,7 +76,7 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
   const debt = debtLine(a)
   const list = history.data ?? []
   // Запись на 0 сом («всё в долг», бесплатно) — не платёж: в истории её не показываем, но доплаты после неё считаем
-  const shown = list.filter((e) => (e.amountSom ?? 0) > 0)
+  const shown = list.filter((e) => e.amountSom > 0)
   const split = list.length > 1 && a.chargeSom == null
   // Доплаты (платежи в разное время): «оплату заново» сервер не примет (409 has-installments) — меняют доплатой
   const installments = new Set(list.map((e) => e.paidAt)).size > 1
@@ -98,8 +98,8 @@ export function PaymentBox({ appointment: a, me }: { appointment: Appointment; m
         : a.chargeSom != null ? <p className="tone-ok">✅ Оплачено полностью</p> : null}
       {shown.length > 1 && (
         <p className="hint payment-history">
-          {split ? shown.map((e) => `${methodName(e.method)} ${somText(e.amountSom ?? 0)}`).join(' + ')
-            : shown.map((e) => `${e.paidAt ? shortDate(e.paidAt) : ''} — ${somText(e.amountSom ?? 0)}, ${methodName(e.method)}`).join(' · ')}
+          {split ? shown.map((e) => `${methodName(e.method)} ${somText(e.amountSom)}`).join(' + ')
+            : shown.map((e) => `${e.paidAt ? shortDate(e.paidAt) : ''} — ${somText(e.amountSom)}, ${methodName(e.method)}`).join(' · ')}
         </p>
       )}
       {a.depositStatus === 'RECEIVED' && a.chargeSom == null && (
@@ -161,7 +161,7 @@ function PriceChips({ onPick }: { onPick: (price: number, add: boolean) => void 
         const s = list.find((x) => String(x.id) === e.target.value)
         if (!s) return
         onPick(s.priceSom!, picked.length > 0)
-        setPicked([...picked, s.name ?? ''])
+        setPicked([...picked, s.name])
       }}>
         <option value="">{picked.length ? '＋ Прибавить ещё услугу…' : 'Выбрать из прайса…'}</option>
         {serviceOptions(list, popularIds, (s) => `${serviceEmoji(s.name)} ${s.name} · ${somText(s.priceSom!)}`)}
@@ -236,7 +236,7 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   onCancel?: () => void
 }) {
   const action = useAppointmentAction(a)
-  const hadDebt = (a.debtSom ?? 0) > 0
+  const hadDebt = a.debtSom > 0
   const [cost, setCost] = useState(String(a.chargeSom ?? a.paidSom ?? a.servicePriceSom ?? ''))
   const [whole, setWhole] = useState(!hadDebt)
   const [paidNow, setPaidNow] = useState(hadDebt ? String(a.paidSom ?? '') : '')
@@ -246,7 +246,7 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
   const [split, setSplit] = useState<Split>(() => {
     if (!startSplit) return NO_SPLIT
     const sums = { ...NO_SPLIT }
-    for (const e of initialParts) if (e.method) sums[e.method] = String((Number(sums[e.method]) || 0) + (e.amountSom ?? 0))
+    for (const e of initialParts) if (e.method) sums[e.method] = String((Number(sums[e.method]) || 0) + e.amountSom)
     return sums
   })
   const [problem, setProblem] = useState('')
@@ -418,14 +418,14 @@ function PayForm({ a, me, billOnly, parts: initialParts, onCancel }: {
 /** Доплата долга: сумма (не больше долга) и способ. */
 function ExtraForm({ a, onCancel }: { a: Appointment; onCancel: () => void }) {
   const action = useAppointmentAction(a)
-  const [amount, setAmount] = useState(String(a.debtSom ?? ''))
+  const [amount, setAmount] = useState(String(a.debtSom))
   const [method, setMethod] = useState<Method>(a.paymentMethod ?? 'CASH')
   return (
     <form className="pay-form" aria-label="Доплата" onSubmit={(e) => {
       e.preventDefault()
       action.mutate({ kind: 'extra', body: { amountSom: amount === '' ? undefined : Number(amount), method } })
     }}>
-      <label className="field"><span>Доплата (долг {somText(a.debtSom ?? 0)})</span>
+      <label className="field"><span>Доплата (долг {somText(a.debtSom)})</span>
         <input type="number" min={1} max={a.debtSom} inputMode="numeric" aria-label="Доплата, сом" autoFocus
           value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
       <MethodButtons value={method} onChange={setMethod} />

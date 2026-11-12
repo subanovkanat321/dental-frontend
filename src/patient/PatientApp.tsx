@@ -62,13 +62,13 @@ function firstScreen(me: Me): Screen {
   const params = new URLSearchParams(launchSearch())
   const again = (me.doctors ?? []).find((d) => d.id === Number(params.get('doctor')))
   const nearest = bookingsOf(me)[0]
-  const home: Screen = nearest ? { name: 'booking' } : again ? { name: 'book', doctorId: again.id! } : bookStart()
+  const home: Screen = nearest ? { name: 'booking' } : again ? { name: 'book', doctorId: again.id } : bookStart()
   if (params.get('screen') === 'plan') return { name: 'plan', back: home }
   // «📅 Записаться на 1-й этап» под планом — сразу запись, даже если уже есть другая
   if (params.get('screen') === 'book') return bookStart()
-  if (nearest && params.get('screen') === 'reschedule') return { name: 'reschedule', id: nearest.id! }
+  if (nearest && params.get('screen') === 'reschedule') return { name: 'reschedule', id: nearest.id }
   if (nearest) return { name: 'booking' }
-  if (again) return { name: 'book', doctorId: again.id! }
+  if (again) return { name: 'book', doctorId: again.id }
   return bookStart()
 }
 
@@ -213,7 +213,7 @@ function Elsewhere({ ctx }: { ctx: Ctx }) {
   const { me, t, lang } = ctx
   const e = me.elsewhere!
   const open = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/patient/clinic', { body: { clinicId: e.clinicId! } })),
+    mutationFn: () => unwrap(api.PUT('/api/patient/clinic', { body: { clinicId: e.clinicId } })),
     onSuccess: () => {
       haptic('success')
       ctx.reload()
@@ -346,7 +346,7 @@ function ClinicsScreen({ ctx, back }: { ctx: Ctx; back: Screen | null }) {
       )}
       {filter.shown.map((c) => (
         <button key={c.id} type="button" className={c.name === currentName ? 'doctor-card current' : 'doctor-card'} disabled={choose.isPending}
-          onClick={() => choose.mutate(c.id!)}>
+          onClick={() => choose.mutate(c.id)}>
           <span className="doctor-initials" aria-hidden="true">🏥</span>
           <span className="doctor-card-text"><strong>{c.name}</strong>{(c.address || c.city) && <span className="hint">📍 {withCity(c.address, c.city)}</span>}</span>
           <span className="chevron" aria-hidden="true">›</span>
@@ -424,7 +424,7 @@ function BookContacts({ ctx, chosen, active, onTaken }: { ctx: Ctx } & ContactsA
 
   const book = useMutation<Schemas['BookingViewsBooking'], ApiError, Chosen>({
     mutationFn: (c) => unwrap(api.POST('/api/patient/booking', {
-      body: { ...(c.doctorId == null ? {} : { doctorId: c.doctorId }), serviceTypeId: c.service.id!, startAt: c.startAt, fullName: name, consent: true,
+      body: { ...(c.doctorId == null ? {} : { doctorId: c.doctorId }), serviceTypeId: c.service.id, startAt: c.startAt, fullName: name, consent: true,
         comment, sourceId: sourceId ?? undefined,
         promoCode: promo.trim() || undefined,
         patientId: typeof who === 'number' ? who : undefined,
@@ -556,7 +556,7 @@ function BookContacts({ ctx, chosen, active, onTaken }: { ctx: Ctx } & ContactsA
           <div className="source-chips" role="group" aria-label={t('sourceQuestion')}>
             {(me.sourceChoices ?? []).map((c) => (
               <button key={c.id} type="button" className="source-chip" aria-pressed={sourceId === c.id}
-                onClick={() => setSourceId(sourceId === c.id ? null : c.id!)}>
+                onClick={() => setSourceId(sourceId === c.id ? null : c.id)}>
                 <span aria-hidden="true">{c.emoji}</span> {(lang === 'ky' && c.titleKy) || c.title}
               </button>
             ))}
@@ -593,8 +593,8 @@ function WhoField({ ctx, who, onChange }: { ctx: Ctx; who: Who; onChange: (w: Wh
       <span id="who-title">{t('whoTitle')}</span>
       <div className="source-chips" role="group" aria-labelledby="who-title">
         {chip('self', t('whoSelf'), selfBooked)}
-        {relatives.map((r) => chip(r.id!, r.fullName ?? '', booked.has(r.id)))}
-        {relatives.length < (me.maxRelatives ?? 6) && chip('new', t('whoAdd'), false)}
+        {relatives.map((r) => chip(r.id, r.fullName ?? '', booked.has(r.id)))}
+        {relatives.length < me.maxRelatives && chip('new', t('whoAdd'), false)}
       </div>
     </div>
   )
@@ -719,7 +719,7 @@ function BookingScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
   const client = useQueryClient()
   const doctor = (me.doctors ?? []).find((d) => d.id === b.doctorId)
   const many = bookingsOf(me).length > 1
-  const query = { params: { query: { appointmentId: b.id! } } }
+  const query = { params: { query: { appointmentId: b.id } } }
   // Старый сервер: «в листе ожидания» — общий флаг me.waiting
   const waiting = b.waiting ?? me.waiting
   const [sure, setSure] = useState(false)
@@ -746,7 +746,7 @@ function BookingScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
     mutationFn: (join) => unwrap(join ? api.POST('/api/patient/waitlist', query) : api.DELETE('/api/patient/waitlist', query)),
     onSuccess: (_r, join) => {
       haptic('success')
-      client.setQueryData<Me>(['me'], (old) => (old ? { ...patchBooking(old, b.id!, (x) => ({ ...x, waiting: join })),
+      client.setQueryData<Me>(['me'], (old) => (old ? { ...patchBooking(old, b.id, (x) => ({ ...x, waiting: join })),
         waiting: old.booking?.id === b.id ? join : old.waiting } : old))
     },
   })
@@ -766,7 +766,7 @@ function BookingScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
         <p><span className={b.status === 'SCHEDULED' ? 'status tone-ok' : 'status tone-wait'}>{STATUS[b.status ?? ''] ? t(STATUS[b.status!]!) : b.status}</span></p>
       </div>
       {b.depositStatus && <PatientDeposit ctx={ctx} b={b} />}
-      <button type="button" className="btn" onClick={() => ctx.go({ name: 'reschedule', id: b.id! })}><span aria-hidden="true">🗓️ </span>{t('moveOther')}</button>
+      <button type="button" className="btn" onClick={() => ctx.go({ name: 'reschedule', id: b.id })}><span aria-hidden="true">🗓️ </span>{t('moveOther')}</button>
       {waiting ? (
         <div className="waitlist-on">
           <p className="hint">{t('waitlistOn')}</p>
@@ -795,7 +795,7 @@ function PatientDeposit({ ctx, b }: { ctx: Ctx; b: Booking }) {
   const asked = b.depositStatus !== 'RECEIVED' && b.depositStatus !== 'REPORTED'
   const info = useQuery({
     queryKey: ['patient-deposit', b.id],
-    queryFn: () => unwrap(api.GET('/api/patient/deposit', { params: { query: { appointmentId: b.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/patient/deposit', { params: { query: { appointmentId: b.id } } })),
     enabled: asked,
   })
   const qr = useBlobUrl(asked && info.data?.hasQr ? '/api/patient/deposit/qr' : null)
@@ -808,7 +808,7 @@ function PatientDeposit({ ctx, b }: { ctx: Ctx; b: Booking }) {
     },
     onSuccess: () => {
       haptic('success')
-      client.setQueryData<Me>(['me'], (old) => (old ? patchBooking(old, b.id!, (x) => ({ ...x, depositStatus: 'REPORTED' })) : old))
+      client.setQueryData<Me>(['me'], (old) => (old ? patchBooking(old, b.id, (x) => ({ ...x, depositStatus: 'REPORTED' })) : old))
     },
   })
   if (b.depositStatus === 'RECEIVED') return <div className="deposit-card tone-ok">✅ {t('depositReceived', { sum })}</div>
@@ -841,14 +841,14 @@ function RescheduleScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
   const [error, setError] = useState('')
   const slots = useQuery({
     queryKey: ['patient-reschedule-slots', b.id, date],
-    queryFn: () => unwrap(api.GET('/api/patient/booking/slots', { params: { query: { date, appointmentId: b.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/patient/booking/slots', { params: { query: { date, appointmentId: b.id } } })),
   })
   const move = useMutation<Booking, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/patient/booking/reschedule', { body: { startAt: slotInstant(date, minutesOf(chosen)), appointmentId: b.id! } })),
+    mutationFn: () => unwrap(api.POST('/api/patient/booking/reschedule', { body: { startAt: slotInstant(date, minutesOf(chosen)), appointmentId: b.id } })),
     onSuccess: (moved) => {
       haptic('success')
-      client.setQueryData<Me>(['me'], (old) => (old ? patchBooking(old, b.id!, () => moved) : old))
-      ctx.go({ name: 'booking', id: b.id! }, t('moved'))
+      client.setQueryData<Me>(['me'], (old) => (old ? patchBooking(old, b.id, () => moved) : old))
+      ctx.go({ name: 'booking', id: b.id }, t('moved'))
     },
     onError: (e) => {
       haptic('error')
@@ -861,7 +861,7 @@ function RescheduleScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
   })
   return (
     <section className="screen">
-      <BackButton onBack={() => ctx.go({ name: 'booking', id: b.id! })} />
+      <BackButton onBack={() => ctx.go({ name: 'booking', id: b.id })} />
       <h1>{t('moveTitle')}</h1>
       {b.self === false && <p className="who-line">👤 {b.patientName}</p>}
       <p className="hint">{t('moveNow', { when: whenAt(lang, b.startAt!) })}</p>
@@ -889,8 +889,8 @@ function PlanScreen({ ctx, back }: { ctx: Ctx; back: Screen }) {
   const plan = plans.data?.[0]
   const answer = useMutation<Schemas['PlanOffersPatientPlan'], ApiError, 'agree' | 'question'>({
     mutationFn: (kind) => unwrap(kind === 'agree'
-      ? api.POST('/api/patient/plans/{id}/agree', { params: { path: { id: plan!.id! } } })
-      : api.POST('/api/patient/plans/{id}/question', { params: { path: { id: plan!.id! } } })),
+      ? api.POST('/api/patient/plans/{id}/agree', { params: { path: { id: plan!.id } } })
+      : api.POST('/api/patient/plans/{id}/question', { params: { path: { id: plan!.id } } })),
     onSuccess: (fresh) => {
       haptic('success')
       client.setQueryData(['patient-plans'], (old?: Schemas['PlanOffersPatientPlan'][]) => (old ?? []).map((p) => (p.id === fresh.id ? fresh : p)))
@@ -950,7 +950,7 @@ function NewsScreen({ ctx, back }: { ctx: Ctx; back: Screen }) {
 /** Политика обработки данных: кто отвечает, какие данные, зачем, где, права — простыми словами. */
 function PrivacyScreen({ ctx, back }: { ctx: Ctx; back: Screen }) {
   const { me, t } = ctx
-  const c = me.clinic ?? {}
+  const c: Partial<NonNullable<Me['clinic']>> = me.clinic ?? {}
   const holder = [c.legalName || t('holderDefault'), c.address].filter(Boolean).join(', ')
   const section = (title: string, text: ReactNode) => <><h2>{title}</h2><p>{text}</p></>
   return (

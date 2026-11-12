@@ -31,23 +31,23 @@ export function ApptHoverCard({ id, a, rect, me, doctor }: { id: string; a: Appo
   const s = statusOf(a)
   const phone = contactPhone(a.patient)
   const money = seesMoneyOf(me, a.doctorId)
-  const deposit = money && a.depositStatus && ['REQUESTED', 'SCHEDULED'].includes(a.status ?? '')
+  const deposit = money && a.depositStatus && ['REQUESTED', 'SCHEDULED'].includes(a.status)
     ? `${a.depositSom ? somText(a.depositSom) : ''} ${a.depositStatus === 'RECEIVED' ? 'получена' : a.depositStatus === 'REPORTED' ? '— проверьте' : '— ждём'}`.trim()
     : null
   const rows: [string, string | null | undefined][] = [
-    ['Пациент', a.patient?.fullName],
+    ['Пациент', a.patient.fullName],
     ['Телефон', phone ? formatPhone(phone) : null],
     ['Врач', doctor],
     ['Услуга', a.serviceName],
     ['Комментарий', a.comment?.trim()],
     ['Предоплата', deposit],
-    ['Долг', money && (a.debtSom ?? 0) > 0 ? somText(a.debtSom!) : null],
+    ['Долг', money && a.debtSom > 0 ? somText(a.debtSom) : null],
   ]
   return (
     <div ref={ref} id={id} role="tooltip" className={`appt-hover s-${s.kind}`} style={{ left: pos.left, top: pos.top }}>
       <div className="appt-hover-head">
-        <span className="num">{timeOf(a.startAt!)}–{timeOf(a.endAt!)}</span>
-        <span className="hint">{dayTitle(dateOf(a.startAt!))}</span>
+        <span className="num">{timeOf(a.startAt)}–{timeOf(a.endAt)}</span>
+        <span className="hint">{dayTitle(dateOf(a.startAt))}</span>
       </div>
       <span className={`appt-hover-status chip s-${s.kind}`}><span aria-hidden="true">{s.icon}</span> {s.label}</span>
       <dl>

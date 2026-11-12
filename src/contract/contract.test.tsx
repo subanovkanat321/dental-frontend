@@ -12,11 +12,11 @@ import { waitForSlow } from '../test/wait'
 type Contract = Schemas['PatientContractsView']
 type Patient = Schemas['PatientView']
 
-const PATIENT: Patient = { id: 9, fullName: 'Айжан Вымышленная', phone: '996700181009', birthDate: '1990-04-15' }
+const PATIENT: Patient = { id: 9, fullName: 'Айжан Вымышленная', phone: '996700181009', birthDate: '1990-04-15', telegram: false }
 
 const UNSIGNED: Contract = {
   signed: false, canSign: true, title: 'Договор на оказание стоматологических услуг',
-  text: 'Айжан Вымышленная, дата рождения 15.04.1990, телефон +996 700 181 009. Врач Айгерим Садыкова.',
+  text: 'Айжан Вымышленная, дата рождения 15.04.1990, телефон +996 700 181 009. Врач Айгерим Садыкова.', hasSignature: false, hasScan: false
 }
 
 function backend(start: Contract = UNSIGNED) {

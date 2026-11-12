@@ -22,24 +22,24 @@ const STEPS = 4
  * или отметили этап — блок обновится сам.
  */
 export function ContinueTreatment({ appointment: a, onMedical, open = false }: { appointment: Appointment; onMedical?: () => void; open?: boolean }) {
-  const patientId = a.patient?.id
+  const patientId = a.patient.id
   const enabled = patientId != null && a.status !== 'CANCELLED'
   const notes = useQuery({
     queryKey: ['notes', patientId],
-    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/notes', { params: { path: { patientId: patientId! } } })),
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/notes', { params: { path: { patientId: patientId } } })),
     enabled,
     retry: false,
   })
   const plan = useQuery({
     queryKey: ['plan', patientId],
-    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan', { params: { path: { patientId: patientId! } } })),
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan', { params: { path: { patientId: patientId } } })),
     enabled,
     retry: false,
   })
   // Зубы прошлого визита («Зубы этого приёма») — тот же ключ, что у истории в медкарте
   const history = useQuery({
     queryKey: ['teeth-history', patientId],
-    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth/history', { params: { path: { patientId: patientId! } } })),
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/teeth/history', { params: { path: { patientId: patientId } } })),
     enabled,
     retry: false,
   })

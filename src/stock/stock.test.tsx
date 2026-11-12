@@ -32,8 +32,8 @@ function backend(list: Supply[], who: Schemas['BookingViewsMe'] = me) {
       const body = (await request.json()) as { delta: number }
       moves.push(body)
       const s = stock.find((x) => x.id === Number(params.id))!
-      s.quantity = s.quantity! + body.delta
-      s.low = s.quantity <= s.minQuantity!
+      s.quantity = s.quantity + body.delta
+      s.low = s.quantity <= s.minQuantity
       return HttpResponse.json(s)
     }),
   )
@@ -97,7 +97,7 @@ test('пустой склад — «Добавить типовой набор»
 test('новый материал: «свой склад у каждого врача» — админ выбирает, чей', async () => {
   let created: unknown
   server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, clinic: { ...me.clinic, separateSupplies: true } })),
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, clinic: { ...me.clinic!, separateSupplies: true } })),
     http.get('*/api/supplies', () => HttpResponse.json([])),
     http.post('*/api/supplies', async ({ request }) => {
       created = await request.json()
@@ -125,7 +125,7 @@ test('«−1» в списке списывает одну штуку; «Рас�
   server.use(http.get('*/api/supplies/spending', () => HttpResponse.json({
     purchasedSom: 5000, usedSom: 1200, revenueSom: 50000, unpricedDeliveries: 1, unpricedUsed: 0,
     months: [{ month: '2026-09-01', purchasedSom: 3000 }, { month: '2026-10-01', purchasedSom: 5000 }],
-    items: [{ supplyId: 1, name: 'Перчатки', unit: 'уп', bought: 10, boughtSom: 5000, used: 2, usedSom: 1000 }],
+    items: [{ supplyId: 1, name: 'Перчатки', unit: 'уп', bought: 10, boughtSom: 5000, used: 2, usedSom: 1000, archived: false, unpricedDeliveries: 0 }],
   } satisfies Schemas['SpendingView'])))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Списать 1: Перчатки' }))
@@ -154,7 +154,7 @@ test('«Расходы на склад» за месяц — с первого �
   server.use(http.get('*/api/supplies/spending', ({ request }) => {
     const url = new URL(request.url)
     periods.push(`${url.searchParams.get('from')}..${url.searchParams.get('to')}`)
-    return HttpResponse.json({ purchasedSom: 0, usedSom: 0, months: [], items: [] } satisfies Schemas['SpendingView'])
+    return HttpResponse.json({ purchasedSom: 0, usedSom: 0, months: [], items: [], unpricedUsed: 0, unpricedDeliveries: 0 } satisfies Schemas['SpendingView'])
   }))
   renderApp()
   await userEvent.click(await findSub('Расходы на склад'))
@@ -171,7 +171,7 @@ test('«Расходы на склад» за месяц — с первого �
 })
 
 test('«Чей склад» в карточке: админ переносит общий материал врачу одним выбором, список обновляется', async () => {
-  const separate = { ...me, clinic: { ...me.clinic, separateSupplies: true } }
+  const separate = { ...me, clinic: { ...me.clinic!, separateSupplies: true } }
   backend([anesthetic], separate)
   const sent: unknown[] = []
   let moved: Supply = anesthetic
@@ -200,7 +200,7 @@ test('«Чей склад» в карточке: админ переносит �
 })
 
 test('«Чей склад»: дубль названия у врача — текст ошибки 409', async () => {
-  backend([anesthetic], { ...me, clinic: { ...me.clinic, separateSupplies: true } })
+  backend([anesthetic], { ...me, clinic: { ...me.clinic!, separateSupplies: true } })
   server.use(http.put('*/api/supplies/:id/owner', () => HttpResponse.json(
     { status: 409, code: 'name-taken', detail: 'У врача Дастан Т. уже есть «Анестетик» — спишите остаток или переименуйте один из них' },
     { status: 409, headers: { 'Content-Type': 'application/problem+json' } },
@@ -222,7 +222,7 @@ test('«Чей склад» не видно: один склад на всех �
   expect(screen.queryByRole('group', { name: 'Чей склад' })).not.toBeInTheDocument()
   unmount()
 
-  backend([anesthetic], { ...me, admin: false, clinic: { ...me.clinic, separateSupplies: true } })
+  backend([anesthetic], { ...me, admin: false, clinic: { ...me.clinic!, separateSupplies: true } })
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Анестетик' }))
   expect(screen.getByRole('complementary', { name: 'Материал' })).toBeInTheDocument()

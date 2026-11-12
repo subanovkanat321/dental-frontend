@@ -40,7 +40,7 @@ function denied(error: unknown): string | null {
 export function MedicalRecord({ patient, onBack, backLabel = '← К списку', readOnly = false }: {
   patient: Patient; onBack: () => void; backLabel?: string; readOnly?: boolean
 }) {
-  const id = patient.id!
+  const id = patient.id
   // Стрелка Telegram — туда же, откуда пришли (к приёму или к списку пациентов)
   useBack(onBack)
   const teeth = useQuery({
@@ -112,7 +112,7 @@ const ALL_STATES = Object.keys(TOOTH_STATES) as State[]
 function ToothChart({ patient, teeth, error, onPlan, readOnly }: {
   patient: Patient; teeth?: Tooth[]; error?: string; onPlan: (tooth: number) => void; readOnly: boolean
 }) {
-  const patientId = patient.id!
+  const patientId = patient.id
   const patientName = patient.fullName
   const client = useQueryClient()
   // Прикус (V163): выбранный у пациента, иначе по возрасту. Ассистент переключает только у себя на экране
@@ -139,7 +139,7 @@ function ToothChart({ patient, teeth, error, onPlan, readOnly }: {
   const [full, setFull] = useState(false)
   const byNumber = new Map((teeth ?? []).map((t) => [t.number, t]))
   // Отмеченные зубы списком — заметки видно сразу, без нажатия на каждый (на телефоне подсказки нет)
-  const marked = (teeth ?? []).filter((t) => t.state !== 'HEALTHY' || t.note).sort((x, y) => (x.number ?? 0) - (y.number ?? 0))
+  const marked = (teeth ?? []).filter((t) => t.state !== 'HEALTHY' || t.note).sort((x, y) => x.number - y.number)
   const counts = (teeth ?? []).reduce<Record<string, number>>((acc, t) => ({ ...acc, [t.state!]: (acc[t.state!] ?? 0) + 1 }), {})
   const many = useMutation<Tooth[], ApiError, { state: State; surfaces: Surface[] }>({
     mutationFn: ({ state, surfaces }) => unwrap(api.POST('/api/patients/{patientId}/teeth/batch', {
@@ -217,11 +217,11 @@ function ToothChart({ patient, teeth, error, onPlan, readOnly }: {
       {marked.length > 0 && (
         <ul className="marked-teeth" aria-label="Отмеченные зубы">
           {marked.map((t) => {
-            const text = <><b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {stateText(t.number ?? 0, t.state ?? 'HEALTHY', t.surfaces)}</>
+            const text = <><b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {stateText(t.number, t.state ?? 'HEALTHY', t.surfaces)}</>
             return (
               <li key={t.number}>
                 {readOnly ? <span>{text}</span> : (
-                  <button type="button" className="row-link" onClick={() => { setMulti(false); setPicked([]); setOpen(t.number!) }}>{text}</button>
+                  <button type="button" className="row-link" onClick={() => { setMulti(false); setPicked([]); setOpen(t.number) }}>{text}</button>
                 )}
                 {t.note && <span className="hint"> — {t.note}</span>}
               </li>
@@ -282,7 +282,7 @@ function ToothEditor({ patientId, number, tooth, onSaved, onCancel, onPlan }: {
 type Step = Schemas['TreatmentStepView']
 
 function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { tooth: number; n: number } | null; readOnly: boolean }) {
-  const patientId = patient.id!
+  const patientId = patient.id
   const client = useQueryClient()
   const plan = useQuery({
     queryKey: ['plan', patientId],
@@ -326,7 +326,7 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
   })
   const toggle = useMutation<Schemas['TreatmentStepView'][], ApiError, Schemas['TreatmentStepView']>({
     mutationFn: (s) => unwrap(api.PUT('/api/patients/{patientId}/plan/{stepId}', {
-      params: { path: { patientId, stepId: s.id! } }, body: { tooth: s.tooth, title: s.title, priceSom: s.priceSom, stage: s.stage, done: !s.doneAt },
+      params: { path: { patientId, stepId: s.id } }, body: { tooth: s.tooth, title: s.title, priceSom: s.priceSom, stage: s.stage, done: !s.doneAt },
     })),
     onSuccess: saved,
   })
@@ -374,12 +374,12 @@ function Plan({ patient, prefill, readOnly }: { patient: Patient; prefill: { too
                     <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}</span>
                   </label>
                   <span className="nowrap">{s.priceSom != null ? somText(s.priceSom) : ''}</span>
-                  {!readOnly && <button type="button" className="btn ghost small" aria-label={`Изменить этап: ${s.title}`} onClick={() => setEditing(s.id!)}>✏️</button>}
+                  {!readOnly && <button type="button" className="btn ghost small" aria-label={`Изменить этап: ${s.title}`} onClick={() => setEditing(s.id)}>✏️</button>}
                 </>
               )}
               {!readOnly && (
                 <button type="button" className="btn ghost small" aria-label={`Удалить этап: ${s.title}`}
-                  onClick={() => void ask(`Удалить этап «${s.title}»?`).then((ok) => ok && remove.mutate(s.id!))}>✕</button>
+                  onClick={() => void ask(`Удалить этап «${s.title}»?`).then((ok) => ok && remove.mutate(s.id))}>✕</button>
               )}
             </li>
             </Fragment>
@@ -427,10 +427,10 @@ function stageTotal(stages: ReturnType<typeof stagesOf<Step>>, stage?: number): 
 /** Правка этапа: зуб, что сделать, цена и этап; отметка «сделано» остаётся как была. */
 function StepEdit({ patientId, step, onDone }: { patientId: number; step: Step; onDone: (steps?: Step[]) => void }) {
   const [f, setF] = useState({ tooth: step.tooth != null ? String(step.tooth) : '', title: step.title ?? '', price: step.priceSom != null ? String(step.priceSom) : '',
-    stage: String(step.stage ?? 1) })
+    stage: String(step.stage) })
   const save = useMutation<Step[], ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/patients/{patientId}/plan/{stepId}', {
-      params: { path: { patientId, stepId: step.id! } },
+      params: { path: { patientId, stepId: step.id } },
       body: { tooth: f.tooth ? Number(f.tooth) : undefined, title: f.title.trim(), priceSom: f.price ? Number(f.price) : undefined,
         stage: Number(f.stage), done: Boolean(step.doneAt) },
     })),

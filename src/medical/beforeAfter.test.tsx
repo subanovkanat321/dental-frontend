@@ -10,8 +10,8 @@ import { buildPost, durationBetween, hashtags } from './postText'
 
 /** Вымышленный пациент и два «фото» — байты-заглушки, картинку подменяет createImageBitmap. */
 const FILES: Schemas['PatientFilesView'][] = [
-  { id: 8, kind: 'PHOTO', caption: 'После', takenOn: '2026-10-30', canDelete: true },
-  { id: 7, kind: 'PHOTO', caption: 'До', takenOn: '2026-10-01', canDelete: true },
+  { id: 8, kind: 'PHOTO', caption: 'После', takenOn: '2026-10-30', canDelete: true, sizeBytes: 0 },
+  { id: 7, kind: 'PHOTO', caption: 'До', takenOn: '2026-10-01', canDelete: true, sizeBytes: 0 },
 ]
 
 function backend(consent: Schemas['PublicationConsentsView'] = {}, files = FILES, postAi = false) {
@@ -347,7 +347,7 @@ test('подгонка: улыбки разного размера — одно�
 
 test('готовая «до / после» в «Снимках и фото»: шаг 3 отмечен, исходными фото она не считается', async () => {
   const made: Schemas['PatientFilesView'] = { id: 9, kind: 'OTHER', caption: 'До / после · Instagram', takenOn: '2026-11-04', canDelete: true,
-    postText: 'Отбеливание — до и после. #бишкек' }
+    postText: 'Отбеливание — до и после. #бишкек', sizeBytes: 0 }
   backend({ scope: 'WITH_FACE', givenAt: '2026-11-03T05:00:00Z' }, [FILES[0]!, made])
   await openMedical()
   // Одно настоящее фото + готовая картинка — для новой картинки фото всё ещё мало

@@ -20,13 +20,13 @@ afterEach(() => {
 
 const owner = { ...me, owner: true, platform: true }
 const clinic = (id: number, name: string) => ({
-  id, name, code: `c${id}`, doctors: 1, staff: 1, patients: 3, appointments: 4, done30: 4, noShow30: 0, health: 'OK', billing: { state: 'FREE' },
+  id, name, code: `c${id}`, doctors: 1, staff: 1, patients: 3, appointments: 4, done30: 4, noShow30: 0, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, demo: false
 }) satisfies Schemas['PlatformServiceClinicRow']
 
 const statuses: Record<string, Schemas['AgreementsStatus']> = {
-  1: { requiredVersion: 2, signed: true, signedAt: '2026-11-01T06:00:00Z', scans: 0, admins: { telegram: 1, phone: 0, push: 0 } },
+  1: { requiredVersion: 2, signed: true, signedAt: '2026-11-01T06:00:00Z', scans: 0, admins: { telegram: 1, phone: 0, push: 0 }, assigned: false },
   2: { requiredVersion: 3, assigned: true, signed: false, scans: 0, admins: { telegram: 2, phone: 1, push: 1 } },
-  3: { scans: 0, admins: { telegram: 0, phone: 0, push: 0 } },
+  3: { scans: 0, admins: { telegram: 0, phone: 0, push: 0 }, assigned: false, signed: false },
 }
 
 function backend() {
@@ -82,7 +82,7 @@ test('карточка клиники: назначить версию для п
   let remindCalls = 0
   server.use(
     http.get('*/api/platform/clinics/:id/agreement', () => HttpResponse.json({
-      current: { id: 13, version: 3, title: 'Договор' },
+      current: { id: 13, version: 3, title: 'Договор', acceptances: 0, forAll: true },
       targeting: {
         assignedVersionId: undefined,
         choices: [
@@ -125,13 +125,13 @@ test('версия договора: опубликовать выбранным
   let published: unknown = 'none'
   server.use(
     http.get('*/api/platform/agreements', () => HttpResponse.json([
-      { id: 5, version: 2, title: 'Договор', body: 'Текст', forAll: true, clinicIds: [] },
+      { id: 5, version: 2, title: 'Договор', body: 'Текст', forAll: true, clinicIds: [], acceptances: 0 },
       { id: 4, version: 1, title: 'Договор', body: 'Текст', publishedAt: '2026-10-01T06:00:00Z', acceptances: 1, forAll: false, clinicIds: [1, 2] },
     ] satisfies Schemas['AgreementsVersion'][])),
-    http.put('*/api/platform/agreements/:id', () => HttpResponse.json({ id: 5 } satisfies Schemas['AgreementsVersion'])),
+    http.put('*/api/platform/agreements/:id', () => HttpResponse.json({ id: 5, version: 0, acceptances: 0, forAll: true } satisfies Schemas['AgreementsVersion'])),
     http.post('*/api/platform/agreements/:id/publish', async ({ request }) => {
       published = await request.json()
-      return HttpResponse.json({ id: 5 } satisfies Schemas['AgreementsVersion'])
+      return HttpResponse.json({ id: 5, version: 0, acceptances: 0, forAll: true } satisfies Schemas['AgreementsVersion'])
     }),
   )
   const user = userEvent.setup()

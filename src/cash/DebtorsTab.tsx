@@ -26,7 +26,7 @@ export function DebtorsTab({ rows, pending, error, onOpen, onOpenPatient }: {
   const families = useQuery({ queryKey: ['families'], queryFn: () => unwrap(api.GET('/api/families')) })
   const [byFamily, setByFamily] = useState(true)
   const familyOf: FamilyOf = new Map()
-  for (const f of families.data ?? []) for (const m of f.members ?? []) familyOf.set(m.id!, { id: f.id!, name: f.name ?? 'Семья' })
+  for (const f of families.data ?? []) for (const m of f.members ?? []) familyOf.set(m.id, { id: f.id, name: f.name ?? 'Семья' })
   const grouped = byFamily && familyOf.size > 0
   if (pending) return <section className="card-block"><Loading /></section>
   if (error) return <section className="card-block"><p className="error">{error}</p></section>
@@ -65,8 +65,8 @@ export function DebtorsTab({ rows, pending, error, onOpen, onOpenPatient }: {
             </p>
             <div className="debtor-visits">
               {x.visits.map((v) => (
-                <button key={v.appointmentId} type="button" className="chip" onClick={() => onOpen(v.appointmentId!)}>
-                  {shortDate(v.startAt!)}{v.service ? ` · ${v.service}` : ''} · {somText(v.debtSom ?? 0)}
+                <button key={v.appointmentId} type="button" className="chip" onClick={() => onOpen(v.appointmentId)}>
+                  {shortDate(v.startAt!)}{v.service ? ` · ${v.service}` : ''} · {somText(v.debtSom)}
                 </button>
               ))}
             </div>

@@ -30,7 +30,7 @@ test('«Откуда узнают о клинике»: админ меняет �
     }),
     http.post('*/api/patient-sources', async ({ request }) => {
       created = await request.json()
-      list = [...list, { id: 30, active: true, patients: 0, ...(created as Schemas['PatientSourcesRequest']) }]
+      list = [...list, { id: 30, active: true, patients: 0, position: 3, ...(created as Schemas['PatientSourcesRequest']) }]
       return HttpResponse.json(list, { status: 201 })
     }),
     http.put('*/api/patient-sources/:id', async ({ request }) => {

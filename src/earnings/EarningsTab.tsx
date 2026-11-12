@@ -47,8 +47,8 @@ export function EarningsTab({ me }: { me: Me }) {
 function EarningsView({ e }: { e: Earnings }) {
   const percent = Number(e.percent ?? 0)
   const month = monthName(e.month)
-  const rent = e.rentSom ?? 0
-  const monthSom = e.monthSom ?? 0
+  const rent = e.rentSom
+  const monthSom = e.monthSom
   return (
     <>
       <section className="card-block earnings" aria-label="Мой заработок">
@@ -65,13 +65,13 @@ function EarningsView({ e }: { e: Earnings }) {
         </dl>
         {!e.hasTerms ? (
           <>
-            <p className="hint">Принято от ваших пациентов: сегодня {somText(e.todayRevenueSom ?? 0)}, за {month} {somText(e.monthRevenueSom ?? 0)}.</p>
+            <p className="hint">Принято от ваших пациентов: сегодня {somText(e.todayRevenueSom)}, за {month} {somText(e.monthRevenueSom)}.</p>
             <p className="hint small">Процент задаёт руководитель в «Касса → Зарплата» — тогда здесь будет ваш заработок.</p>
           </>
         ) : (
           <p className="hint">
-            {percent > 0 ? `Сегодня — ${percentText(e.percent)} от принятых ${somText(e.todayRevenueSom ?? 0)}. ` : 'Оклад — в итоге месяца, по дням его не делим. '}
-            За {month} — {[e.baseSom ? `оклад ${somText(e.baseSom)}` : '', percent > 0 ? `${percentText(e.percent)} от ${somText(e.monthRevenueSom ?? 0)}` : '']
+            {percent > 0 ? `Сегодня — ${percentText(e.percent)} от принятых ${somText(e.todayRevenueSom)}. ` : 'Оклад — в итоге месяца, по дням его не делим. '}
+            За {month} — {[e.baseSom ? `оклад ${somText(e.baseSom)}` : '', percent > 0 ? `${percentText(e.percent)} от ${somText(e.monthRevenueSom)}` : '']
               .filter(Boolean).join(' + ')}{rent > 0 ? ` − аренда кресла ${somText(rent)}` : ''}, как «к выплате» в «Зарплате».
           </p>
         )}
@@ -84,7 +84,7 @@ function EarningsView({ e }: { e: Earnings }) {
         {e.changePercent != null && (
           <p className="compare" aria-label="Сравнение с прошлым месяцем">
             Как в прошлом месяце к этой дате: <b className={e.changePercent > 0 ? 'tone-ok' : 'tone-quiet'}>{changeText(e.changePercent)}</b>
-            <span className="hint"> · было {somText(e.previousMonthSom ?? 0)}</span>
+            <span className="hint"> · было {somText(e.previousMonthSom)}</span>
           </p>
         )}
       </section>
@@ -122,13 +122,13 @@ function GoalBlock({ e }: { e: Earnings }) {
       <h2>Цель на месяц</h2>
       {e.goalSom ? (
         <>
-          <p className="earn-goal-line"><b className="num">{somText(e.monthSom ?? 0)}</b> <span className="hint">из {somText(e.goalSom)}</span></p>
+          <p className="earn-goal-line"><b className="num">{somText(e.monthSom)}</b> <span className="hint">из {somText(e.goalSom)}</span></p>
           <GoalBar e={e} />
           {left > 0 ? (
             <p aria-label="До цели">
               До цели осталось <b className="num">{somText(left)}</b>
               {e.perDayNeededSom != null
-                ? <> · в день нужно ≈ <b className="num">{somText(e.perDayNeededSom)}</b> <span className="hint">на {workDays(e.workDaysLeft ?? 0)}, считая сегодня</span></>
+                ? <> · в день нужно ≈ <b className="num">{somText(e.perDayNeededSom)}</b> <span className="hint">на {workDays(e.workDaysLeft)}, считая сегодня</span></>
                 : <span className="hint"> · рабочих дней в этом месяце больше нет</span>}
             </p>
           ) : <p className="tone-ok" aria-label="До цели">Цель месяца достигнута</p>}

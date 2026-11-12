@@ -28,7 +28,7 @@ test('аналитика: выручка по месяцам, по врачам,
       const cash = total + 5000
       return HttpResponse.json({
         totalSom: total, paidCount: 5, unpaidCount: 0, byMethod: doctor ? {} : { CASH: total * 0.6, TRANSFER: total * 0.4 }, days: [],
-        cash: { totalSom: cash, paymentsCount: 6, depositsSom: 0, byMethod: doctor ? {} : { CASH: cash * 0.6, TRANSFER: cash * 0.4 }, days: [] },
+        cash: { totalSom: cash, paymentsCount: 6, depositsSom: 0, byMethod: doctor ? {} : { CASH: cash * 0.6, TRANSFER: cash * 0.4 }, days: [] }, freeCount: 0, prepaidCount: 0
       } satisfies Schemas['RevenueView'])
     }),
     // Отчёт — по месяцам: строки только за запрошенный месяц (30 дней могут захватить два)
@@ -41,8 +41,8 @@ test('аналитика: выручка по месяцам, по врачам,
       newPatients: [{ sourceId: 11, emoji: '📱', title: 'Instagram', active: true, patients: 3 }, { sourceId: 19, emoji: '📣', title: 'Реклама', active: false, patients: 2 }, { active: true, patients: 1 }], firstVisits: 4, repeatVisits: 12,
     } satisfies Schemas['SourcesControllerSourcesView'])),
     http.get('*/api/appointments/stats', () => HttpResponse.json([
-      { weekStart: '2026-10-26', booked: 10, done: 9, noShow: 1, cancelled: 0 },
-      { weekStart: '2026-10-19', booked: 10, done: 7, noShow: 3, cancelled: 1 },
+      { weekStart: '2026-10-26', booked: 10, done: 9, noShow: 1, cancelled: 0, unmarked: 0, reminded: 0 },
+      { weekStart: '2026-10-19', booked: 10, done: 7, noShow: 3, cancelled: 1, unmarked: 0, reminded: 0 },
     ] satisfies Schemas['WeekStats'][])),
   )
   const user = userEvent.setup()
@@ -126,7 +126,7 @@ test('аналитика: выручка по дням — среднее, лу�
     // Сервер отдаёт только дни с оплатами (вымышленные суммы)
     http.get('*/api/appointments/revenue', () => HttpResponse.json({
       totalSom: 17000, paidCount: 4, unpaidCount: 0, byMethod: { CASH: 17000 },
-      days: [{ date: best, totalSom: 12000 }, { date: addDays(today, -1), totalSom: 5000 }],
+      days: [{ date: best, totalSom: 12000 }, { date: addDays(today, -1), totalSom: 5000 }], freeCount: 0, prepaidCount: 0
     } satisfies Schemas['RevenueView'])),
   )
   const user = userEvent.setup()

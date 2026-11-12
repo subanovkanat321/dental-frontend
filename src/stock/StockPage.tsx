@@ -51,14 +51,14 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   // Списали не то — «Вернуть» несколько секунд (пересчёт +1, как «вернуть» на приёме)
   const [taken, setTaken] = useState<Supply | null>(null)
   const take = useMutation<Supply, ApiError, Supply>({
-    mutationFn: (s) => unwrap(api.POST('/api/supplies/{id}/move', { params: { path: { id: s.id! } }, body: { delta: -1 } })),
+    mutationFn: (s) => unwrap(api.POST('/api/supplies/{id}/move', { params: { path: { id: s.id } }, body: { delta: -1 } })),
     onSuccess: (_, s) => {
       setTaken(s)
       void client.invalidateQueries({ queryKey: ['supplies'] })
     },
   })
   const giveBack = useMutation<Supply, ApiError, Supply>({
-    mutationFn: (s) => unwrap(api.POST('/api/supplies/{id}/move', { params: { path: { id: s.id! } }, body: { delta: 1, reason: 'CORRECTION' } })),
+    mutationFn: (s) => unwrap(api.POST('/api/supplies/{id}/move', { params: { path: { id: s.id } }, body: { delta: 1, reason: 'CORRECTION' } })),
     onSuccess: () => {
       setTaken(null)
       void client.invalidateQueries({ queryKey: ['supplies'] })
@@ -164,7 +164,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
             <tbody>
               {shown.map((s: Supply) => (
                 <tr key={s.id} className={selected?.id === s.id ? 'active' : undefined}>
-                  <td><button type="button" className="row-link" onClick={() => setSide({ kind: 'supply', id: s.id! })}>{s.name}</button></td>
+                  <td><button type="button" className="row-link" onClick={() => setSide({ kind: 'supply', id: s.id })}>{s.name}</button></td>
                   {/* Остаток 0 и не «заканчивается» — материал из стартового набора, остаток ещё не вносили (сервер: fresh) */}
                   <td className={`nowrap strong ${s.quantity === 0 && !s.low ? 'hint' : s.quantity === 0 ? 'tone-bad' : s.low ? 'tone-wait' : ''}`}>
                     {s.quantity === 0 && !s.low ? 'не внесён' : s.quantity === 0 ? 'закончился' : `${s.quantity} ${s.unit}${s.low ? ' · мало' : ''}`}
@@ -173,7 +173,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
                   {separate && <td className="hint">{s.doctorName ?? 'общий'}</td>}
                   <td className="hint">{s.orderedAt ? `заказан ${shortDate(s.orderedAt)}${s.orderedBy ? ` · ${s.orderedBy}` : ''}` : s.low ? 'нужно заказать' : ''}</td>
                   <td className="r">
-                    {(s.quantity ?? 0) > 0 && (
+                    {s.quantity > 0 && (
                       <button type="button" className="btn small" aria-label={`Списать 1: ${s.name}`} disabled={take.isPending}
                         onClick={() => take.mutate(s)}>−1</button>
                     )}
@@ -189,7 +189,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
         if ((doctorId != null && s.doctorId !== doctorId) || (owner === 'shared' && s.doctorId != null)) setOwner('')
       }} />}
       {side?.kind === 'new' && (
-        <NewSupplyPanel me={me} doctorId={doctorId} onClose={close} onCreated={(s) => setSide({ kind: 'supply', id: s.id! })} />
+        <NewSupplyPanel me={me} doctorId={doctorId} onClose={close} onCreated={(s) => setSide({ kind: 'supply', id: s.id })} />
       )}
     </div>
   )

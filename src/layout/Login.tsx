@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useState } from 'react'
 
-import { botConfig, LOGGED_OUT } from '../api/client'
+import { LOGGED_OUT, loginConfig, WEB_CONFIG_KEY, webConfig } from '../api/client'
 import { isLoginPath } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { InstallHint } from '../pwa/InstallHint'
@@ -57,7 +57,7 @@ function LoggedOutHint({ onClose }: { onClose: () => void }) {
  */
 export function Login() {
   const client = useQueryClient()
-  const bot = useQuery({ queryKey: ['bot-config'], queryFn: botConfig, staleTime: Infinity })
+  const bot = useQuery({ queryKey: WEB_CONFIG_KEY, queryFn: webConfig, staleTime: Infinity })
   const [loggedOut, setLoggedOut] = useState(justLoggedOut)
   /** Ждём «Подтвердить вход» в боте — форму номера и пароля прячем, чтобы не путать. */
   const [tgWaiting, setTgWaiting] = useState(false)
@@ -79,7 +79,7 @@ export function Login() {
     if (isLoginPath() || window.location.search) window.history.replaceState(null, '', `/${window.location.hash}`)
     void client.invalidateQueries({ queryKey: ['me'] })
   }
-  const config = bot.data
+  const config = loginConfig(bot.data)
   const viaTelegram = !!config?.telegramLogin && !telegram()
   return (
     <div className="center login">

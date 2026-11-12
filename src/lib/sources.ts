@@ -26,5 +26,5 @@ export function sourceText(list: SourceOption[] | undefined, id: number | null |
  */
 export function sourceChoices(list: SourceOption[] | undefined, current?: number | null): { id: number; label: string }[] {
   return (list ?? []).filter((o) => o.active !== false || o.id === current)
-    .map((o) => ({ id: o.id!, label: `${sourceLabel(o)}${o.active === false ? ' (скрыт)' : ''}` }))
+    .map((o) => ({ id: o.id, label: `${sourceLabel(o)}${o.active === false ? ' (скрыт)' : ''}` }))
 }

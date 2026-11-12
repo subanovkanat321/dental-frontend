@@ -43,7 +43,7 @@ export function NewsTab() {
             <textarea rows={5} maxLength={1000} required value={text} placeholder="Например: в субботу принимаем с 10:00 до 15:00. Скидка 10% на чистку до конца месяца."
               onChange={(e) => { publish.reset(); setText(e.target.value) }} /></label>
           {publish.error && <p className="error" role="alert">{publish.error.fieldErrors.text ?? publish.error.message}</p>}
-          {publish.isSuccess && <p className="tone-ok" role="status">Опубликовано · в бот — {publish.data.recipients ?? 0} подписчикам</p>}
+          {publish.isSuccess && <p className="tone-ok" role="status">Опубликовано · в бот — {publish.data.recipients} подписчикам</p>}
           <button type="submit" className="btn primary" disabled={publish.isPending || !text.trim()}>Опубликовать и разослать</button>
         </form>
       </section>
@@ -54,10 +54,10 @@ export function NewsTab() {
           <ul className="news-list">
             {data.data.news.map((n) => (
               <li key={n.id} className="news-item">
-                <p className="hint">{n.createdAt ? shortDate(n.createdAt, true) : ''} · в бот: {n.delivered ?? 0} из {n.recipients ?? 0}</p>
+                <p className="hint">{n.createdAt ? shortDate(n.createdAt, true) : ''} · в бот: {n.delivered} из {n.recipients}</p>
                 <p>{n.text}</p>
                 <button type="button" className="btn small ghost" disabled={remove.isPending}
-                  onClick={() => void ask('Убрать новость из приложения?').then((ok) => ok && remove.mutate(n.id!))}>Убрать из приложения</button>
+                  onClick={() => void ask('Убрать новость из приложения?').then((ok) => ok && remove.mutate(n.id))}>Убрать из приложения</button>
               </li>
             ))}
           </ul>

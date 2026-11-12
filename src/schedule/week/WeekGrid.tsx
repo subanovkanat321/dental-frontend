@@ -65,11 +65,11 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
     onDrop: (m) => {
       setNotice(null)
       // Откуда тащили — чтобы «Вернуть как было» одним нажатием, если перетащили случайно
-      const was = m.appointment.startAt!
+      const was = m.appointment.startAt
       move.mutate(m, {
         onSuccess: (a) => setNotice({
           tone: 'ok',
-          text: `Перенесено: ${dayTitle(m.date)}, ${timeOf(a.startAt!)} (было: ${dayTitle(dateOf(was))}, ${timeOf(was)}) — напомните пациенту заново`,
+          text: `Перенесено: ${dayTitle(m.date)}, ${timeOf(a.startAt)} (было: ${dayTitle(dateOf(was))}, ${timeOf(was)}) — напомните пациенту заново`,
           undo: { appointment: a, date: dateOf(was), minutes: minutesOf(was) },
         }),
         onError: (e) => setNotice({ tone: 'error', text: `Не перенесли: ${e.message}` }),
@@ -83,7 +83,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
   useEffect(() => {
     if (week.isPending || !grid.current || scrolledFor.current === monday) return
     scrolledFor.current = monday
-    const first = list.length ? Math.min(...list.map((a) => minutesOf(a.startAt!))) : null
+    const first = list.length ? Math.min(...list.map((a) => minutesOf(a.startAt))) : null
     const target = days.includes(today) ? nowMinutes : first
     if (target != null) grid.current.scrollTop = Math.max(0, y(target) - 80)
   })
@@ -112,7 +112,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
               const back = notice.undo!
               setNotice(null)
               move.mutate(back, {
-                onSuccess: (a) => setNotice({ tone: 'ok', text: `Вернули как было: ${dayTitle(back.date)}, ${timeOf(a.startAt!)}` }),
+                onSuccess: (a) => setNotice({ tone: 'ok', text: `Вернули как было: ${dayTitle(back.date)}, ${timeOf(a.startAt)}` }),
                 onError: (e) => setNotice({ tone: 'error', text: `Не вернули: ${e.message}` }),
               })
             }}>↩ Вернуть как было</button>
@@ -153,8 +153,8 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
               {past > 0 && <div className="grid-past" style={{ height: past }} />}
               <Hours slots={sl} date={date} from={from} to={to} height={height} y={y} />
               {editable && date >= today && sl?.workingDay && (sl.free ?? []).map((w) => {
-                const start = Math.max(dayMinutes(w.start!, date), date === today ? nowMinutes : 0, from)
-                const end = Math.min(dayMinutes(w.end!, date), to)
+                const start = Math.max(dayMinutes(w.start, date), date === today ? nowMinutes : 0, from)
+                const end = Math.min(dayMinutes(w.end, date), to)
                 if (end - start < 30) return null
                 const text = `${hhmm(start)}–${hhmm(end)}`
                 return (
@@ -238,15 +238,15 @@ function Block({ a, date, me, y, selected, moving, drag, hover, onClick, chair }
   const h = Math.max((end - start) * PX - 2, 22)
   // Колонка недели уже, чем у «Дня»: приём на 30 минут — время и имя в две строки, статус — от 45 минут
   const short = h < WEEK_SHORT
-  const range = `${timeOf(a.startAt!)}–${timeOf(a.endAt!)}`
+  const range = `${timeOf(a.startAt)}–${timeOf(a.endAt)}`
   return (
     <button type="button" {...drag} {...hover} onClick={onClick}
       onPointerDown={(e) => { hover.onPointerDown(); drag?.onPointerDown(e) }}
       className={`appt s-${s.kind}${short ? ' short' : ''}${selected ? ' active' : ''}${drag ? ' can-drag' : ''}${moving ? ' moving' : ''}${carried ? ' carried' : ''}${untilTomorrow(a, date) ? ' continues' : ''}`}
-      style={{ top: y(start), height: h }} aria-label={`${carried ? 'со вчера ' : ''}${range}, ${a.patient?.fullName}: ${s.label}`}
+      style={{ top: y(start), height: h }} aria-label={`${carried ? 'со вчера ' : ''}${range}, ${a.patient.fullName}: ${s.label}`}
       title={drag ? 'Перетащите мышью на другое время или день' : canEditPast(a, me) ? 'Прошедший приём не переносят' : undefined}>
-      <span className="appt-time num">{short ? timeOf(a.startAt!) : range}</span>
-      <span className="appt-name">{a.patient?.fullName}</span>
+      <span className="appt-time num">{short ? timeOf(a.startAt) : range}</span>
+      <span className="appt-name">{a.patient.fullName}</span>
       <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} chair={chair} />
       {short && <span className="ico" aria-hidden="true">{s.icon}</span>}
       {h > 56 && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}

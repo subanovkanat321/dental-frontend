@@ -29,12 +29,12 @@ async function card() {
 
 test('следующий визит: что сделали в прошлый раз и что осталось по плану', async () => {
   setup([
-    { appointmentId: 7, startAt: ago(10), note: 'Старая заметка', doctorName: 'Асель' },
-    { appointmentId: 8, startAt: ago(3), note: 'Удалили нерв 36, временная пломба. Через 3 дня — каналы', doctorName: 'Асель' },
+    { appointmentId: 7, startAt: ago(10), note: 'Старая заметка', doctorName: 'Асель', editable: true },
+    { appointmentId: 8, startAt: ago(3), note: 'Удалили нерв 36, временная пломба. Через 3 дня — каналы', doctorName: 'Асель', editable: true },
   ], [
-    { id: 1, tooth: 36, title: 'Пульпит: удалить нерв', doneAt: ago(3) },
-    { id: 2, tooth: 36, title: 'Пломбировать каналы' },
-    { id: 3, tooth: 36, title: 'Постоянная пломба' },
+    { id: 1, tooth: 36, title: 'Пульпит: удалить нерв', doneAt: ago(3), stage: 1 },
+    { id: 2, tooth: 36, title: 'Пломбировать каналы', stage: 1 },
+    { id: 3, tooth: 36, title: 'Постоянная пломба', stage: 1 },
   ])
   renderApp()
   const block = await expand(await within(await card()).findByRole('region', { name: 'Продолжение лечения' }))

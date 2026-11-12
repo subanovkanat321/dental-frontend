@@ -19,7 +19,7 @@ export function SurveyForm({ form, preview, onDone }: { form: Form; preview?: bo
   const [missing, setMissing] = useState<Record<string, string>>({})
   const questions = form.questions ?? []
   const send = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/surveys/{id}/responses', { params: { path: { id: form.id! } }, body: { answers: Object.values(answers) } })),
+    mutationFn: () => unwrap(api.POST('/api/surveys/{id}/responses', { params: { path: { id: form.id } }, body: { answers: Object.values(answers) } })),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: CURRENT_KEY })
       onDone?.()

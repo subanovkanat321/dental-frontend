@@ -24,7 +24,7 @@ afterEach(() => {
 })
 
 const at = (time: string) => slotInstant(todayIn(), Number(time.slice(0, 2)) * 60 + Number(time.slice(3)))
-const person = (id: number, fullName: string) => ({ id, fullName, phone: '996700000' + String(id).padStart(3, '0') })
+const person = (id: number, fullName: string) => ({ id, fullName, phone: '996700000' + String(id).padStart(3, '0'), telegram: false })
 
 const aigul: Entry = { id: 1, doctorId: 1, patient: person(21, 'Айгуль Т.'), durationMinutes: 45, createdAt: '2026-10-20T04:00:00Z' }
 /** Записан позже в этот же день к этому врачу — хочет раньше */

@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { api, ApiError, botUsername, unwrap, type Schemas } from '../api/client'
+import { api, ApiError, botUsername, unwrap, WEB_CONFIG_KEY, webConfig, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { ask, notify } from '../lib/confirm'
 import { openClinic } from '../lib/route'
 import { DoctorPanel } from '../team/DoctorPanel'
-import { PHONE_HINT } from '../team/PhoneParts'
+import { PHONE_HINT, type Doctor } from '../team/PhoneParts'
 import { phoneText } from '../team/texts'
 import { SubHeader } from './SubHeader'
 import { Loading, Spinner } from '../layout/Loading'
@@ -21,7 +21,6 @@ import { SaveBar } from '../layout/SaveBar'
 import { useDirty } from '../lib/unsaved'
 
 type Me = Schemas['BookingViewsMe']
-type Doctor = Schemas['DoctorAdminView']
 
 /**
  * «Мой профиль» — всё о себе заполняет сам сотрудник (админ только приглашает). Разделы — подпись над
@@ -266,7 +265,7 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
  */
 function useTelegramShare(current: string | null, refresh: () => void) {
   const client = useQueryClient()
-  const bot = useQuery({ queryKey: ['bot-username'], queryFn: botUsername, staleTime: Infinity, enabled: !telegram() })
+  const bot = useQuery({ queryKey: WEB_CONFIG_KEY, queryFn: webConfig, staleTime: Infinity, enabled: !telegram(), select: botUsername })
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
   const start = () => {

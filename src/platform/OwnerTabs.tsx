@@ -45,7 +45,7 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
                   const [status, cls] = TICKET_STATUS[t.status ?? 'OPEN'] ?? ['', 's-quiet']
                   return (
                     <tr key={t.id} className={t.id === opened ? 'active' : undefined}>
-                      <td><button type="button" className="row-link" onClick={() => setOpened(t.id!)}>{t.clinicName}</button></td>
+                      <td><button type="button" className="row-link" onClick={() => setOpened(t.id)}>{t.clinicName}</button></td>
                       <td>{t.viaBot ? (t.escalated ? '💬 Помощь — бот передал вам' : '💬 Помощь — ответил бот') : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}<span className="hint"> · {t.preview}</span></td>
                       <td><span className={`chip small ${cls}`}>{status}</span></td>
                       <td className="hint nowrap">{t.updatedAt ? shortDate(t.updatedAt) : ''} · {t.author}</td>
@@ -103,7 +103,7 @@ export function BroadcastTab() {
           </div>
           {!all && (
             <div className="checks">
-              {list.map((c) => <label key={c.id} className="check"><input type="checkbox" checked={chosen.has(c.id!)} onChange={() => toggle(c.id!)} /> {c.name}</label>)}
+              {list.map((c) => <label key={c.id} className="check"><input type="checkbox" checked={chosen.has(c.id)} onChange={() => toggle(c.id)} /> {c.name}</label>)}
             </div>
           )}
           {send.error && <p className="error" role="alert">{send.error.fieldErrors.text ?? send.error.fieldErrors.clinicIds ?? send.error.message}</p>}
@@ -150,7 +150,7 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
       const base = versions.find((v) => v.publishedAt) ?? await unwrap(api.GET('/api/platform/agreements/template'))
       return unwrap(api.POST('/api/platform/agreements', { body: { title: base.title, body: base.body } }))
     },
-    onSuccess: (v) => void client.invalidateQueries({ queryKey: ['platform-agreements'] }).then(() => setOpened(v.id!)),
+    onSuccess: (v) => void client.invalidateQueries({ queryKey: ['platform-agreements'] }).then(() => setOpened(v.id)),
   })
   const openedVersion = versions.find((v) => v.id === opened)
   return (
@@ -169,7 +169,7 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
               <tbody>
                 {versions.map((v) => (
                   <tr key={v.id} className={v.id === opened ? 'active' : undefined}>
-                    <td><button type="button" className="row-link" onClick={() => setOpened(v.id!)}>Версия {v.version} · {v.title}</button></td>
+                    <td><button type="button" className="row-link" onClick={() => setOpened(v.id)}>Версия {v.version} · {v.title}</button></td>
                     <td className={v.publishedAt ? 'tone-ok' : 'tone-wait'}>{v.publishedAt ? `опубликована ${shortDate(v.publishedAt)} · ${audienceText(v)} · подписали: ${v.acceptances}` : 'не опубликована — клиники не видят'}</td>
                   </tr>
                 ))}
@@ -199,7 +199,7 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
   const [audience, setAudience] = useState<Audience>({ all: v.forAll !== false, clinicIds: v.clinicIds ?? [] })
   const { dirty, commit } = useDirty({ title, body })
   const save = useMutation<Version, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/platform/agreements/{id}', { params: { path: { id: v.id! } }, body: { title, body } })),
+    mutationFn: () => unwrap(api.PUT('/api/platform/agreements/{id}', { params: { path: { id: v.id } }, body: { title, body } })),
     onSuccess: () => {
       commit()
       void refresh()
@@ -207,8 +207,8 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
   })
   const publish = useMutation<Version, ApiError>({
     mutationFn: async () => {
-      await unwrap(api.PUT('/api/platform/agreements/{id}', { params: { path: { id: v.id! } }, body: { title, body } }))
-      return unwrap(api.POST('/api/platform/agreements/{id}/publish', { params: { path: { id: v.id! } }, body: audience }))
+      await unwrap(api.PUT('/api/platform/agreements/{id}', { params: { path: { id: v.id } }, body: { title, body } }))
+      return unwrap(api.POST('/api/platform/agreements/{id}/publish', { params: { path: { id: v.id } }, body: audience }))
     },
     onSuccess: () => {
       // Публикация сохранила и текст
@@ -217,7 +217,7 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
     },
   })
   const saveAudience = useMutation<Version, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/platform/agreements/{id}/audience', { params: { path: { id: v.id! } }, body: audience })),
+    mutationFn: () => unwrap(api.PUT('/api/platform/agreements/{id}/audience', { params: { path: { id: v.id } }, body: audience })),
     onSuccess: () => {
       setDone('Адресаты версии сохранены')
       void refresh()
@@ -225,11 +225,11 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
     },
   })
   const pdf = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/agreements/{id}/pdf/send', { params: { path: { id: v.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/agreements/{id}/pdf/send', { params: { path: { id: v.id } } })),
     onSuccess: () => setDone('PDF отправлен в чат с ботом'),
   })
   const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/platform/agreements/{id}', { params: { path: { id: v.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/platform/agreements/{id}', { params: { path: { id: v.id } } })),
     onSuccess: () => {
       void refresh()
       onClose()
@@ -287,7 +287,7 @@ function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {
       {error && <p className="error" role="alert">{error.message}</p>}
       {done && <p className="tone-ok" role="status">{done}</p>}
       <div className="danger-zone">
-        {(v.acceptances ?? 0) > 0 && <p className="hint">Её подписали клиник: {v.acceptances} — отметки о подписи удалятся вместе с ней.</p>}
+        {v.acceptances > 0 && <p className="hint">Её подписали клиник: {v.acceptances} — отметки о подписи удалятся вместе с ней.</p>}
         <button type="button" className="btn danger" disabled={remove.isPending}
           onClick={() => void ask(`Удалить версию ${v.version}?`).then((ok) => ok && remove.mutate())}>Удалить эту версию</button>
       </div>

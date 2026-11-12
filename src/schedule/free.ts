@@ -6,8 +6,8 @@ export function freeMinutes(windows: Schemas['TimeRange'][], nowMinutes: number 
   let minutes = 0
   let first: number | null = null
   for (const w of windows) {
-    const start = Math.max(minutesOf(w.start!), nowMinutes ?? 0)
-    const end = minutesOf(w.end!) || 24 * 60
+    const start = Math.max(minutesOf(w.start), nowMinutes ?? 0)
+    const end = minutesOf(w.end) || 24 * 60
     if (end - start < 15) continue
     minutes += end - start
     if (first == null) first = start

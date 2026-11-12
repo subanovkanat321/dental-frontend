@@ -36,7 +36,7 @@ export async function withChairConfirm<T>(send: (confirm: boolean) => Promise<T>
 
 /** Подпись полосы «время коллеги»: «15:00–19:00: время Айгерим С.». */
 export function chairTimeText(t: Schemas['SlotsViewChairTime']): string {
-  return `${timeOf(t.start!)}–${timeOf(t.end!)}: время ${t.doctorName}`
+  return `${timeOf(t.start)}–${timeOf(t.end)}: время ${t.doctorName}`
 }
 
 type ChairTime = Schemas['SlotsViewChairTime']

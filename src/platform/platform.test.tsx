@@ -18,7 +18,7 @@ afterEach(() => {
 
 const owner = { ...me, owner: true, platform: true }
 const clinic = (id: number, name: string, extra: Partial<Schemas['PlatformServiceClinicRow']> = {}) => ({
-  id, name, code: `c${id}`, doctors: 2, staff: 1, patients: 30, appointments: 40, done30: 18, noShow30: 2, health: 'OK', billing: { state: 'FREE' }, ...extra,
+  id, name, code: `c${id}`, doctors: 2, staff: 1, patients: 30, appointments: 40, done30: 18, noShow30: 2, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, demo: false, ...extra,
 }) satisfies Schemas['PlatformServiceClinicRow']
 
 function backend(clinics: Schemas['PlatformServiceClinicRow'][]) {
@@ -247,7 +247,7 @@ test('выгрузка клиники: доступ поддержке не от
       const body = await request.json().catch(() => null) as { emergency?: boolean } | null
       sent.push(body)
       return body?.emergency
-        ? HttpResponse.json({ patients: 30, filesIncluded: 4 } satisfies Schemas['ExportControllerResult'])
+        ? HttpResponse.json({ patients: 30, filesIncluded: 4, filesSkipped: 0 } satisfies Schemas['ExportControllerResult'])
         : HttpResponse.json({ status: 409, code: 'support-access-required', detail: 'Клиника не открыла доступ поддержке' }, { status: 409 })
     }),
   )
@@ -268,7 +268,7 @@ test('выгрузка клиники: доступ поддержке не от
 
 test('«Сведения о платформе»: несколько телефонов поддержки и WhatsApp своим номером', async () => {
   let saved: Schemas['PlatformInfoControllerRequest'] | null = null
-  const info: Schemas['PlatformInfoInfo'] = { supportTelegram: 'tish_help', supportPhone: '996555000111', supportPhones: ['996555000111'] }
+  const info: Schemas['PlatformInfoInfo'] = { supportTelegram: 'tish_help', supportPhone: '996555000111', supportPhones: ['996555000111'], accessLog: false, accessNotify: false, accessRequiresGrant: false }
   backend([])
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
@@ -297,7 +297,7 @@ test('«Сведения о платформе»: несколько телеф�
 })
 
 test('«Сведения о платформе»: группа врачей — текущая ссылка в поле, неверный адрес — ошибка сервера под полем', async () => {
-  const info: Schemas['PlatformInfoInfo'] = { doctorsGroupUrl: 'https://t.me/+tYKBuv9OgZ40YTky' }
+  const info: Schemas['PlatformInfoInfo'] = { doctorsGroupUrl: 'https://t.me/+tYKBuv9OgZ40YTky', accessLog: false, accessNotify: false, accessRequiresGrant: false }
   backend([])
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),

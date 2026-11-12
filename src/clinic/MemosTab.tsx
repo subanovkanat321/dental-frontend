@@ -50,7 +50,7 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
             <ul className="memo-list" aria-label="Памятки">
               {(memos.data ?? []).map((m) => (
                 <li key={m.id} className={m.active === false ? 'inactive' : undefined}>
-                  <button type="button" className="row-link" onClick={() => setOpened(m.id!)}>📋 {m.title}</button>
+                  <button type="button" className="row-link" onClick={() => setOpened(m.id)}>📋 {m.title}</button>
                   <span className="hint small">
                     {m.active === false ? 'скрыта' : (m.serviceIds ?? []).map((id) => nameOf.get(id)).filter(Boolean).join(', ') || 'ни у одной услуги'}
                   </span>
@@ -86,7 +86,7 @@ function MemoPanel({ memo: m, editable, onClose }: { memo?: Memo; editable: bool
   const ky = { titleKy: form.titleKy.trim() || undefined, bodyKy: form.bodyKy.trim() || undefined }
   const save = useMutation<Memo, ApiError>({
     mutationFn: () => unwrap(m
-      ? api.PUT('/api/care-memos/{id}', { params: { path: { id: m.id! } }, body: { title: form.title, body: form.body, active: form.active, ...ky } })
+      ? api.PUT('/api/care-memos/{id}', { params: { path: { id: m.id } }, body: { title: form.title, body: form.body, active: form.active, ...ky } })
       : api.POST('/api/care-memos', { body: { title: form.title, body: form.body, ...ky } })),
     onSuccess: () => {
       commit()

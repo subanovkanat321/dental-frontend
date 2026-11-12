@@ -38,7 +38,7 @@ export function overlapTexts(chair: Chair | null, doctorId: number | undefined, 
   return (chair?.overlaps ?? [])
     .filter((o) => o.doctorId === doctorId || o.otherDoctorId === doctorId)
     .map((o) => {
-      const other = o.doctorId === doctorId ? o.otherDoctorId! : o.doctorId!
+      const other = o.doctorId === doctorId ? o.otherDoctorId : o.doctorId
       const day = (WEEK.find(([code]) => code === o.weekday)?.[2] ?? '').toLowerCase()
       return `часы пересекаются с ${nameOf(other)} по ${day} ${o.start!.slice(0, 5)}–${o.end!.slice(0, 5)}`
     })

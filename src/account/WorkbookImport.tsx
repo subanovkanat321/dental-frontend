@@ -58,7 +58,7 @@ export function WorkbookImport() {
   const done = apply.data
   const fileError = preview.error?.fieldErrors.file ?? preview.error?.message
   const applyError = apply.error ? Object.values(apply.error.fieldErrors)[0] ?? apply.error.message : null
-  const changes = (r?.sheets ?? []).some((s) => (s.added ?? 0) + (s.updated ?? 0) > 0) || (r?.extraPatients ?? 0) > 0
+  const changes = (r?.sheets ?? []).some((s) => s.added + s.updated > 0) || (r?.extraPatients ?? 0) > 0
   return (
     <div className="import-workbook" aria-label="Шаблон Tish">
       <p>Один файл на всё: пациенты, услуги и цены, врачи и сотрудники, склад, будущие записи и долги — каждое на своём листе.
@@ -96,9 +96,9 @@ export function WorkbookImport() {
 
 /** «248 пациентов, 35 услуг, 2 сотрудника» — что добавим (добавили) по всем листам. */
 function added(r: Report): string {
-  const parts = (r.sheets ?? []).filter((s) => (s.added ?? 0) > 0 || (s.kind === 'PATIENTS' && (r.extraPatients ?? 0) > 0))
-    .map((s) => counted((s.added ?? 0) + (s.kind === 'PATIENTS' ? r.extraPatients ?? 0 : 0), s.kind!))
-  if (!(r.sheets ?? []).some((s) => s.kind === 'PATIENTS') && (r.extraPatients ?? 0) > 0) parts.unshift(counted(r.extraPatients!, 'PATIENTS'))
+  const parts = (r.sheets ?? []).filter((s) => s.added > 0 || (s.kind === 'PATIENTS' && r.extraPatients > 0))
+    .map((s) => counted(s.added + (s.kind === 'PATIENTS' ? r.extraPatients : 0), s.kind!))
+  if (!(r.sheets ?? []).some((s) => s.kind === 'PATIENTS') && r.extraPatients > 0) parts.unshift(counted(r.extraPatients, 'PATIENTS'))
   return parts.join(', ')
 }
 
@@ -113,7 +113,7 @@ function Preview({ report: r }: { report: Report }) {
     <div className="import-summary" aria-label="Предпросмотр">
       {sheets.length === 0 ? <p className="tone-wait" role="note">Листы пустые — заполните шаблон (строку-пример можно оставить: её пропустим).</p> : (
         <p><b>{total ? `Добавим ${total}` : 'Нового нет — всё уже в Tish'}</b>
-          {(r.errorCount ?? 0) > 0 && <span className="tone-bad">; строк с ошибкой: <b className="num">{r.errorCount}</b> — их не загрузим</span>}</p>
+          {r.errorCount > 0 && <span className="tone-bad">; строк с ошибкой: <b className="num">{r.errorCount}</b> — их не загрузим</span>}</p>
       )}
       {sheets.length > 0 && (
         <table className="import-sheets" aria-label="По листам">
@@ -121,18 +121,18 @@ function Preview({ report: r }: { report: Report }) {
           <tbody>
             {sheets.map((s) => (
               <tr key={s.kind}>
-                <td>{s.title}{(s.updated ?? 0) > 0 && UPDATED[s.kind!] && <span className="hint small"> · {UPDATED[s.kind!]}: {s.updated}</span>}</td>
+                <td>{s.title}{s.updated > 0 && UPDATED[s.kind!] && <span className="hint small"> · {UPDATED[s.kind!]}: {s.updated}</span>}</td>
                 <td className="num">{s.rows}</td>
-                <td className="num">{(s.added ?? 0) + (s.kind === 'PATIENTS' ? r.extraPatients ?? 0 : 0)}</td>
+                <td className="num">{s.added + (s.kind === 'PATIENTS' ? r.extraPatients : 0)}</td>
                 <td className="num">{s.unchanged}</td>
-                <td className={`num${(s.errorCount ?? 0) > 0 ? ' tone-bad' : ''}`}>{s.errorCount}</td>
+                <td className={`num${s.errorCount > 0 ? ' tone-bad' : ''}`}>{s.errorCount}</td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
-      {(r.extraPatients ?? 0) > 0 && (
-        <p className="hint small" role="note">Из них {counted(r.extraPatients!, 'PATIENTS')} — из записей и долгов: их нет на листе «Пациенты», заведём по имени и номеру.</p>
+      {r.extraPatients > 0 && (
+        <p className="hint small" role="note">Из них {counted(r.extraPatients, 'PATIENTS')} — из записей и долгов: их нет на листе «Пациенты», заведём по имени и номеру.</p>
       )}
       {(r.skipped ?? []).length > 0 && (
         <p className="hint small">Пропустим незнакомые листы: {(r.skipped ?? []).map((s) => `«${s}»`).join(', ')}.</p>
@@ -146,7 +146,7 @@ function Preview({ report: r }: { report: Report }) {
             </tbody>
           </table>
           {!all && errors.length > SHOWN_ERRORS && (
-            <button type="button" className="link" onClick={() => setAll(true)}>Показать все ошибки ({errors.length}{(r.errorCount ?? 0) > errors.length ? ` из ${r.errorCount}` : ''})</button>
+            <button type="button" className="link" onClick={() => setAll(true)}>Показать все ошибки ({errors.length}{r.errorCount > errors.length ? ` из ${r.errorCount}` : ''})</button>
           )}
           <p className="hint small">Исправьте эти строки в файле и загрузите его ещё раз — уже загруженное не задвоится.</p>
         </>

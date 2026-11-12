@@ -7,7 +7,7 @@ import { GuidePage } from './GuidePage'
 import { GUIDES, ownRole } from './guides'
 
 type Me = Schemas['BookingViewsMe']
-const me = (over: Partial<Me>): Me => ({ admin: false, reception: false, doctors: [], ...over }) as Me
+const me = (over: Partial<Me>): Me => ({ admin: false, reception: false, doctors: [], doctor: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 0, ...over }) as Me
 
 test('своя роль первой: ассистент, врач, регистратура, администратор', () => {
   expect(ownRole(me({ assistantOf: [1], doctorId: 2 }))).toBe('assistant')

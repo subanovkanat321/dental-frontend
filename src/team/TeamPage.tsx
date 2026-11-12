@@ -5,13 +5,13 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { openMine } from '../lib/route'
 import { SubHeader } from '../settings/SubHeader'
 import { DoctorPanel, NewDoctorPanel } from './DoctorPanel'
+import type { Doctor } from './PhoneParts'
 import { StaffTab } from './StaffTab'
 import { TimeOffTab } from './TimeOffTab'
 import { HeadSlotProvider } from '../layout/PageHead'
 import { useHeadSlot } from '../layout/headSlot'
 
 type Me = Schemas['BookingViewsMe']
-type Doctor = Schemas['DoctorAdminView']
 /** doctors — «Персонал» (врачи и сотрудники вместе; адрес прежний, закладки работают). */
 export type TeamTab = 'doctors' | 'timeoff'
 type Tab = TeamTab
@@ -84,7 +84,7 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: 
         {tab === 'timeoff' && <TimeOffTab me={me} />}
       </section>
       </HeadSlotProvider>
-      {opened === 'new' && <NewDoctorPanel onClose={close} onCreated={(d) => setOpened(d.id!)} />}
+      {opened === 'new' && <NewDoctorPanel onClose={close} onCreated={(d) => setOpened(d.id)} />}
       {openedDoctor && <DoctorPanel key={openedDoctor.id} doctor={openedDoctor} me={me} onClose={close} />}
     </div>
   )

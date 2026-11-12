@@ -14,7 +14,7 @@ type Me = Schemas['BookingViewsMe']
 const NOVEMBER: Earnings = {
   date: '2026-11-18', month: '2026-11', hasTerms: true, percent: 30, baseSom: 10000, todaySom: 12400, todayRevenueSom: 41333,
   monthSom: 186000, monthRevenueSom: 586667, previousMonthSom: 170000, changePercent: 12, goalSom: 250000, goalLeftSom: 64000,
-  workDaysLeft: 15, perDayNeededSom: 4267, eveningSummary: true,
+  workDaysLeft: 15, perDayNeededSom: 4267, eveningSummary: true, rentSom: 0
 }
 
 const doctorOnly: Me = { ...me, admin: false }

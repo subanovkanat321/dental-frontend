@@ -20,8 +20,8 @@ export function SourceLine({ patient: p, canEdit, compact = false, admin = false
   const sources = useSources()
   const save = useMutation<Schemas['PatientView'], ApiError, string>({
     mutationFn: (source) => unwrap(api.PUT('/api/patients/{id}', {
-      params: { path: { id: p.id! } },
-      body: { fullName: p.fullName ?? '', phone: p.phone ? `+${p.phone}` : '', allowDuplicate: true, birthDate: p.birthDate || undefined, workplace: p.workplace ?? '', sourceId: source ? Number(source) : undefined },
+      params: { path: { id: p.id } },
+      body: { fullName: p.fullName, phone: p.phone ? `+${p.phone}` : '', allowDuplicate: true, birthDate: p.birthDate || undefined, workplace: p.workplace ?? '', sourceId: source ? Number(source) : undefined },
     })),
     onSuccess: () => { for (const key of ['patients', 'patient-card', 'appointments', 'appointment', 'sources']) void client.invalidateQueries({ queryKey: [key] }) },
   })
@@ -36,7 +36,7 @@ export function SourceLine({ patient: p, canEdit, compact = false, admin = false
       client.setQueryData(['patient-sources'], list)
       setAdding(false)
       setTitle('')
-      const created = list.filter((o) => o.title === t).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0]
+      const created = list.filter((o) => o.title === t).sort((a, b) => b.id - a.id)[0]
       if (created?.id != null) pick(created.id)
     },
   })

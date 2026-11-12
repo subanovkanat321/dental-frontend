@@ -64,9 +64,9 @@ export function Timesheet({ whose, month, name, canEdit, onChanged, showSum = tr
   return (
     <section className="timesheet" aria-label={`Табель: ${name}`}>
       {showSum && <p className="timesheet-sum" aria-label="Итог табеля">
-        Отработано <b className="num">{s.workedDays}</b> из <b className="num">{s.normDays}</b> {daysText(s.normDays ?? 0)}
+        Отработано <b className="num">{s.workedDays}</b> из <b className="num">{s.normDays}</b> {daysText(s.normDays)}
         {s.normManual ? ' (норма вручную)' : ' по графику'}
-        {(s.baseSom ?? 0) > 0 && <> → <b className="num">{somText(s.accruedSom ?? 0)}</b> из оклада {somText(s.baseSom ?? 0)}</>}
+        {s.baseSom > 0 && <> → <b className="num">{somText(s.accruedSom)}</b> из оклада {somText(s.baseSom)}</>}
       </p>}
       {canEdit && (
         <div className="day-quick wrap" role="group" aria-label="Что ставить">

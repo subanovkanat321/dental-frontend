@@ -112,7 +112,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
 
   const [slot, setSlot] = useHeadSlot()
   const r = revenue.data
-  const max = Math.max(1, ...(r?.days ?? []).map((d) => d.totalSom ?? 0))
+  const max = Math.max(1, ...(r?.days ?? []).map((d) => d.totalSom))
 
   return (
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
@@ -192,10 +192,10 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                   </div>
                   <div className="money-cell">
                     <h3>По приёмам</h3>
-                    <p className="total" aria-label="Выручка за период">{somText(r.totalSom ?? 0)}</p>
+                    <p className="total" aria-label="Выручка за период">{somText(r.totalSom)}</p>
                     <p className="hint small">По приёмам — стоимость состоявшихся приёмов периода</p>
                     <p className="hint">
-                      Оплачено приёмов: {r.paidCount ?? 0}
+                      Оплачено приёмов: {r.paidCount}
                       {r.unpaidCount ? <span className="tone-wait"> · без оплаты: {r.unpaidCount}</span> : null}
                       {r.freeCount ? ` · бесплатно: ${r.freeCount}` : ''}
                       {r.prepaidCount ? ` · оплачено заранее: ${r.prepaidCount}` : ''}
@@ -204,7 +204,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                   </div>
                 </div>
                 {before.data && (() => {
-                  const c = changeOf(r.totalSom ?? 0, before.data.totalSom ?? 0)
+                  const c = changeOf(r.totalSom, before.data.totalSom)
                   // Период включает сегодня — день ещё идёт, а сравниваем с полным: утром «▼ 80%»
                   // не тревога, поэтому без красного и с пометкой
                   const ongoing = range.to >= todayIn()
@@ -212,15 +212,15 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                     <p className="compare" aria-label="Сравнение выручки">
                       По приёмам: <b className={`tone-${ongoing && c.tone === 'bad' ? 'quiet' : c.tone}`}>{c.text}</b> {prev.label}
                       {ongoing && <span className="hint"> (сегодня ещё идёт)</span>}
-                      <span className="hint"> ({datesText(prev)}) · было {somText(before.data.totalSom ?? 0)}, оплат {before.data.paidCount ?? 0}</span>
+                      <span className="hint"> ({datesText(prev)}) · было {somText(before.data.totalSom)}, оплат {before.data.paidCount}</span>
                     </p>
                   )
                 })()}
                 {(r.days?.length ?? 0) > 1 && (
                   <div className="bars" role="img" aria-label="Выручка по дням">
                     {r.days!.map((d) => (
-                      <div key={d.date} className="bar" title={`${shortDate(`${d.date}T12:00:00Z`)}: ${somText(d.totalSom ?? 0)}`}>
-                        <span style={{ height: `${((d.totalSom ?? 0) / max) * 100}%` }} />
+                      <div key={d.date} className="bar" title={`${shortDate(`${d.date}T12:00:00Z`)}: ${somText(d.totalSom)}`}>
+                        <span style={{ height: `${(d.totalSom / max) * 100}%` }} />
                       </div>
                     ))}
                   </div>
@@ -240,7 +240,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
 
         {money && (
           <section className="card-block">
-            <h2>Долги пациентов {debts.data?.length ? `· ${somText(debts.data.reduce((s, d) => s + (d.debtSom ?? 0), 0))}` : ''}</h2>
+            <h2>Долги пациентов {debts.data?.length ? `· ${somText(debts.data.reduce((s, d) => s + d.debtSom, 0))}` : ''}</h2>
             {debts.data?.length ? (
               <p className="hint">
                 Пациентов: {new Set(debts.data.map((d) => d.patientId ?? d.patient)).size}
@@ -312,7 +312,7 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
         <tbody>
           {sorted.map((d) => (
             <tr key={d.appointmentId} className={d.appointmentId === active ? 'active' : undefined}>
-              <td><button type="button" className="row-link" onClick={() => onOpen(d.appointmentId!)}>{d.patient}</button></td>
+              <td><button type="button" className="row-link" onClick={() => onOpen(d.appointmentId)}>{d.patient}</button></td>
               <td className="nowrap">{d.startAt ? shortDate(d.startAt, true) : ''}</td>
               <td>{d.doctor}</td>
               <td className="hint">{d.service ?? '—'}</td>

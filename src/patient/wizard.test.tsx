@@ -31,14 +31,15 @@ const later = addDays(todayIn(), 4)
 const me = (extra: Partial<Me> = {}): Me => ({
   doctor: false, platform: false, bookingEnabled: true, lang: 'ru', daysAhead: 14, fullName: 'Айгуль', phone: '996700111222',
   doctors: [
-    { id: 1, fullName: 'Айгерим Садыкова', about: 'Терапевт\nЛечит без боли, 8 лет практики', photoUrl: '/doctors/1/photo?v=1' },
-    { id: 2, fullName: 'Дастан Т.', about: 'Хирург' },
+    { id: 1, fullName: 'Айгерим Садыкова', about: 'Терапевт\nЛечит без боли, 8 лет практики', photoUrl: '/doctors/1/photo?v=1', active: true, telegramLinked: false },
+    { id: 2, fullName: 'Дастан Т.', about: 'Хирург', active: true, telegramLinked: false },
   ],
   services: [
-    { id: 5, name: 'Лечение кариеса', durationMinutes: 60, priceSom: 2500, group: 'THERAPY' },
-    { id: 6, name: 'Удаление зуба', durationMinutes: 45, priceSom: 1500, group: 'SURGERY' },
+    { id: 5, name: 'Лечение кариеса', durationMinutes: 60, priceSom: 2500, group: 'THERAPY', active: true },
+    { id: 6, name: 'Удаление зуба', durationMinutes: 45, priceSom: 1500, group: 'SURGERY', active: true },
   ],
-  clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест' },
+  clinic: { brandName: 'Стоматология «Тест»', legalName: 'ИП Тест', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
+  admin: false, reception: false, owner: false, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6,
   ...extra,
 })
 
@@ -110,7 +111,7 @@ test('шаги и «Назад»: услуга → врач → дата → в�
 
 test('один врач — шага врача нет; время — «Утро / День / Вечер»', async () => {
   fakeTelegram()
-  backend(me({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }] }), () => HttpResponse.json({}))
+  backend(me({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }] }), () => HttpResponse.json({}))
   const user = userEvent.setup()
   renderApp()
   await pickService(user, 'Хирургия', /Удаление зуба/)
@@ -128,7 +129,7 @@ test('«Любой свободный врач»: сетка и запись б�
   let booked: Book | null = null
   const asked = backend(me(), (body) => {
     booked = body
-    return HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: 2, doctorName: 'Дастан Т.', serviceName: 'Удаление зуба' } satisfies Schemas['BookingViewsBooking'], { status: 201 })
+    return HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: 2, doctorName: 'Дастан Т.', serviceName: 'Удаление зуба', patientId: 0, self: true, waiting: false } satisfies Schemas['BookingViewsBooking'], { status: 201 })
   })
   const user = userEvent.setup()
   renderApp()
@@ -153,7 +154,7 @@ test('«Изменить» в итоге: другая дата — осталь
   let booked: Book | null = null
   backend(me(), (body) => {
     booked = body
-    return HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: body.doctorId ?? 0 } satisfies Schemas['BookingViewsBooking'], { status: 201 })
+    return HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: body.doctorId ?? 0, patientId: 0, self: true, waiting: false } satisfies Schemas['BookingViewsBooking'], { status: 201 })
   })
   const user = userEvent.setup()
   renderApp()
@@ -192,11 +193,11 @@ test('«Изменить» в итоге: другая дата — осталь
 test('время заняли (409) — понятное сообщение, шаг «Время» и свежая сетка; согласие не теряется', async () => {
   fakeTelegram()
   const tries: Book[] = []
-  const asked = backend(me({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова' }], services: [{ id: 5, name: 'Лечение кариеса', durationMinutes: 60 }] }), (body) => {
+  const asked = backend(me({ doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }], services: [{ id: 5, name: 'Лечение кариеса', durationMinutes: 60, active: true }] }), (body) => {
     tries.push(body)
     return tries.length === 1
       ? HttpResponse.json({ status: 409, code: 'time-taken', detail: 'Время занято' }, { status: 409 })
-      : HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: 1 } satisfies Schemas['BookingViewsBooking'], { status: 201 })
+      : HttpResponse.json({ id: 9, startAt: body.startAt, status: 'REQUESTED', doctorId: 1, patientId: 0, self: true, waiting: false } satisfies Schemas['BookingViewsBooking'], { status: 201 })
   })
   const user = userEvent.setup()
   renderApp()
@@ -219,7 +220,7 @@ test('время заняли (409) — понятное сообщение, ш�
 test('услуг много — поиск; по-кыргызски', async () => {
   fakeTelegram()
   const names = ['Осмотр', 'Чистка зубов', 'Лечение кариеса', 'Пломба', 'Удаление зуба', 'Коронка', 'Брекеты', 'Отбеливание']
-  backend(me({ lang: 'ky', services: names.map((name, i) => ({ id: 10 + i, name, durationMinutes: 30 })) }), () => HttpResponse.json({}))
+  backend(me({ lang: 'ky', services: names.map((name, i) => ({ id: 10 + i, name, durationMinutes: 30, active: true })) }), () => HttpResponse.json({}))
   const user = userEvent.setup()
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Кызматты тандаңыз' })).toBeInTheDocument()

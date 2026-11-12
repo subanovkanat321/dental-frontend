@@ -12,7 +12,7 @@ import { waitForSlow } from '../test/wait'
 /** Вымышленная клиника: врачей — сколько нужно тесту; входит админ-врач Айгерим (id 1). */
 const NAMES = ['Айгерим Садыкова', 'Дастан Т.', 'Эрмек Н.', 'Жылдыз К.', 'Бакыт А.', 'Нурлан С.', 'Гульнара М.', 'Тимур Ж.', 'Асель Б.', 'Улан Р.']
 const clinic = (n: number): Schemas['BookingViewsMe'] => ({
-  ...me, doctors: NAMES.slice(0, n).map((fullName, i) => ({ id: i + 1, fullName, active: true })),
+  ...me, doctors: NAMES.slice(0, n).map((fullName, i) => ({ id: i + 1, fullName, active: true, telegramLinked: false })),
 })
 
 function screenSize(phone: boolean) {

@@ -22,7 +22,7 @@ test('страница клиники: запись в Telegram, WhatsApp, зв�
     asked = new URL(request.url).search
     return HttpResponse.json({
       name: 'Улыбка', address: 'Бишкек, Шевченко 6', phones: ['996555000111', '77012345678'], whatsapp: '996700999888', telegramUrl: 'https://t.me/tish_bot?start=c_abc123',
-      doctors: [{ fullName: 'Айгерим Садыкова', about: 'терапевт' }], services: [{ name: 'Чистка', durationMinutes: 60, priceSom: 2000 }],
+      doctors: [{ fullName: 'Айгерим Садыкова', about: 'терапевт' }], services: [{ name: 'Чистка', durationMinutes: 60, priceSom: 2000 }], settingUp: false
     } satisfies ClinicPage)
   }))
   const user = userEvent.setup()
@@ -42,7 +42,7 @@ test('страница клиники: запись в Telegram, WhatsApp, зв�
 
 test('страница клиники с ?promo= из рекламы: код уходит в ссылку бота, кириллица и мусор — нет', async () => {
   server.use(http.get('*/web/clinic', () => HttpResponse.json({
-    name: 'Улыбка', telegramUrl: 'https://t.me/tish_bot?start=c_abc123', doctors: [], services: [],
+    name: 'Улыбка', telegramUrl: 'https://t.me/tish_bot?start=c_abc123', doctors: [], services: [], settingUp: false
   } satisfies ClinicPage)))
   window.history.replaceState(null, '', '/c/abc123?promo=zuby10')
   const { unmount } = render(<ClinicSite />)
@@ -76,7 +76,7 @@ test('каталог: поиск по врачу без учёта «ё» и р�
 })
 
 test('каталог: клиник мало — ни поиска, ни городов; два города — выбор города, он запоминается', async () => {
-  const clinic = (name: string, city: string | null, address?: string) => ({ name, city, address, pageUrl: `/c/${name}`, doctors: [] } satisfies DirectoryClinic)
+  const clinic = (name: string, city: string | undefined, address?: string) => ({ name, city, address, pageUrl: `/c/${name}`, doctors: [] } satisfies DirectoryClinic)
   let list = [clinic('Улыбка', 'Бишкек'), clinic('Дент', 'Бишкек')]
   server.use(http.get('*/web/clinics', () => HttpResponse.json(list)))
   const { unmount } = render(<Directory />)
@@ -85,7 +85,7 @@ test('каталог: клиник мало — ни поиска, ни горо
   expect(screen.queryByRole('group', { name: 'Город' })).not.toBeInTheDocument()
   unmount()
 
-  list = [...list, clinic('Ак-Тиш', 'Ош', 'ул. Ленина 1'), clinic('Без города', null)]
+  list = [...list, clinic('Ак-Тиш', 'Ош', 'ул. Ленина 1'), clinic('Без города', undefined)]
   const user = userEvent.setup()
   const second = render(<Directory />)
   const cities = await screen.findByRole('group', { name: 'Город' })
@@ -166,7 +166,7 @@ test('/go и страница клиники: нет WhatsApp — нет и кн
   server.use(
     http.get('*/web/links', () => HttpResponse.json({ supportPhones: ['996555000111'] } satisfies Links)),
     http.get('*/web/tariffs', () => HttpResponse.json(null, { status: 500 })),
-    http.get('*/web/clinic', () => HttpResponse.json({ name: 'Улыбка', phones: ['996555000111'], whatsapp: null, doctors: [], services: [] } satisfies ClinicPage)),
+    http.get('*/web/clinic', () => HttpResponse.json({ name: 'Улыбка', phones: ['996555000111'], doctors: [], services: [], settingUp: false } satisfies ClinicPage)),
   )
   const go = render(<Go />)
   expect(await screen.findByRole('link', { name: /Позвонить/ })).toHaveAttribute('href', 'tel:+996555000111')
@@ -235,7 +235,7 @@ test('Instagram: подсказка «⋮ → Открыть в браузере
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone) Instagram 300.0')
   window.history.replaceState(null, '', '/c/abc123')
   server.use(http.get('*/web/clinic', () => HttpResponse.json({
-    name: 'Улыбка', telegramUrl: 'https://t.me/tish_bot?start=c_abc123', doctors: [], services: [],
+    name: 'Улыбка', telegramUrl: 'https://t.me/tish_bot?start=c_abc123', doctors: [], services: [], settingUp: false
   } satisfies ClinicPage)))
   render(<ClinicSite />)
   expect(await screen.findByText(/Открыть в браузере/)).toBeInTheDocument()
@@ -246,7 +246,7 @@ test('Instagram: подсказка «⋮ → Открыть в браузере
 test('новая клиника ещё настраивается: «запись скоро» вместо кнопки записи', async () => {
   window.history.replaceState(null, '', '/c/new123')
   server.use(http.get('*/web/clinic', () => HttpResponse.json({
-    name: 'Новая', telegramUrl: null, settingUp: true, doctors: [], services: [{ name: 'Осмотр', durationMinutes: 30 }],
+    name: 'Новая', settingUp: true, doctors: [], services: [{ name: 'Осмотр', durationMinutes: 30 }],
   } satisfies ClinicPage)))
   render(<ClinicSite />)
   expect(await screen.findByRole('status')).toHaveTextContent('Клиника ещё настраивается — запись скоро')

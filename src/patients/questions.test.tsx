@@ -32,9 +32,9 @@ function backend({ ai }: { ai: boolean }) {
     http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: questions.filter((q) => q.status === 'NEW').length })),
     http.get('*/api/patient-questions', ({ request }) => {
       const done = new URL(request.url).searchParams.get('done') === 'true'
-      return HttpResponse.json({ questions: questions.filter((q) => (q.status !== 'NEW') === done), ai, aiAvailable: ai } satisfies Schemas['QuestionControllerQuestionList'])
+      return HttpResponse.json({ questions: questions.filter((q) => (q.status !== 'NEW') === done), ai, aiAvailable: ai, botAi: false } satisfies Schemas['QuestionControllerQuestionList'])
     }),
-    http.get('*/api/patient-questions/:id', ({ params }) => HttpResponse.json(questions.find((q) => q.id === Number(params.id))!)),
+    http.get('*/api/patient-questions/:id', ({ params }) => HttpResponse.json(questions.find((q) => q.id === Number(params.id)))),
     http.post('*/api/patient-questions/:id/draft', () => {
       drafts++
       return ai
@@ -46,11 +46,11 @@ function backend({ ai }: { ai: boolean }) {
       answers.push(body)
       questions = questions.map((q) => (q.id === Number(params.id)
         ? { ...q, status: 'ANSWERED', answer: body.text, answeredAt: '2026-11-03T06:00:00Z' } : q))
-      return HttpResponse.json(questions.find((q) => q.id === Number(params.id))!)
+      return HttpResponse.json(questions.find((q) => q.id === Number(params.id)))
     }),
     http.post('*/api/patient-questions/:id/close', ({ params }) => {
       questions = questions.map((q) => (q.id === Number(params.id) ? { ...q, status: 'CLOSED', answeredAt: '2026-11-03T06:00:00Z' } : q))
-      return HttpResponse.json(questions.find((q) => q.id === Number(params.id))!)
+      return HttpResponse.json(questions.find((q) => q.id === Number(params.id)))
     }),
   )
   return { answers, drafts: () => drafts }
@@ -130,7 +130,7 @@ test('ИИ-администратор бота: «🤖 Ответил ИИ» с 
       const done = new URL(request.url).searchParams.get('done') === 'true'
       return HttpResponse.json({ questions: questions.filter((q) => (q.status !== 'NEW') === done), ai: true, aiAvailable: true, botAi: true } satisfies Schemas['QuestionControllerQuestionList'])
     }),
-    http.get('*/api/patient-questions/:id', ({ params }) => HttpResponse.json(questions.find((q) => q.id === Number(params.id))!)),
+    http.get('*/api/patient-questions/:id', ({ params }) => HttpResponse.json(questions.find((q) => q.id === Number(params.id)))),
   )
   renderApp()
   await userEvent.click(await findSub(/Вопросы/))

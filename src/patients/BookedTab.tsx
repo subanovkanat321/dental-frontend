@@ -41,7 +41,7 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
   initial?: BookedFilter
   onOpenAppointment?: (id: number) => void
 }) {
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!)))
+  const doctors = (me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id)))
   const today = todayIn()
   // Врач из ссылки — если он в списке (скрытого врача или чужого ассистенту не выбираем)
   const [doctorId, setDoctorId] = useState<number | null>(() =>
@@ -57,7 +57,7 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
   const lists = useQueries({
     queries: shown.map((d) => ({
       queryKey: ['appointments', 'range', from, days, d.id],
-      queryFn: () => unwrap(api.GET('/api/appointments/range', { params: { query: { from, days, doctorId: d.id! } } })),
+      queryFn: () => unwrap(api.GET('/api/appointments/range', { params: { query: { from, days, doctorId: d.id } } })),
     })),
   })
   const nameOf = new Map(doctors.map((d) => [d.id, d.fullName ?? '']))
@@ -65,10 +65,10 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
     // Будущие: заявки и запланированные, ещё не закончившиеся
     .filter((a) => (a.status === 'SCHEDULED' || a.status === 'REQUESTED') && (!a.endAt || Date.parse(a.endAt) >= now))
     .filter((a) => !onlyUnconfirmed || (a.status === 'REQUESTED' || a.reply !== 'CONFIRMED'))
-    .sort((x, y) => Date.parse(x.startAt!) - Date.parse(y.startAt!))
+    .sort((x, y) => Date.parse(x.startAt) - Date.parse(y.startAt))
   const byDay = new Map<string, Appointment[]>()
   for (const a of all) {
-    const day = dateOf(a.startAt!)
+    const day = dateOf(a.startAt)
     byDay.set(day, [...(byDay.get(day) ?? []), a])
   }
   const pending = lists.some((q) => q.isPending)
@@ -131,11 +131,11 @@ function BookedRow({ a, doctor, canEdit, onOpen }: {
   const client = useQueryClient()
   const text = useReminderText()
   const opened = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
   })
   const s = statusOf(a)
-  const canRemind = canEdit && a.status === 'SCHEDULED' && a.reply !== 'CONFIRMED' && Boolean(a.patient?.phone)
+  const canRemind = canEdit && a.status === 'SCHEDULED' && a.reply !== 'CONFIRMED' && Boolean(a.patient.phone)
   const whatsapp = () => {
     if (!text) return
     opened.mutate()
@@ -144,10 +144,10 @@ function BookedRow({ a, doctor, canEdit, onOpen }: {
   }
   return (
     <li className={canRemind ? 'booked-item with-action' : 'booked-item'}>
-      <button type="button" className="booked-row" onClick={() => onOpen?.(a.id!)}>
-        <span className="num booked-time">{timeOf(a.startAt!)}</span>
+      <button type="button" className="booked-row" onClick={() => onOpen?.(a.id)}>
+        <span className="num booked-time">{timeOf(a.startAt)}</span>
         <span className="booked-main">
-          <strong>{a.patient?.fullName}</strong>
+          <strong>{a.patient.fullName}</strong>
           <span className="hint small">
             {a.serviceName ? `${serviceEmoji(a.serviceName)} ${a.serviceName}` : 'Услуга не выбрана'}
             {doctor ? ` · ${doctor}` : ''}
@@ -157,7 +157,7 @@ function BookedRow({ a, doctor, canEdit, onOpen }: {
       </button>
       {canRemind && (
         <button type="button" className="btn booked-wa" disabled={!text || opened.isPending} onClick={whatsapp}
-          aria-label={`Напомнить в WhatsApp: ${a.patient?.fullName}, ${timeOf(a.startAt!)}`}>WhatsApp</button>
+          aria-label={`Напомнить в WhatsApp: ${a.patient.fullName}, ${timeOf(a.startAt)}`}>WhatsApp</button>
       )}
       {opened.error && <p className="error" role="alert">{opened.error.message}</p>}
     </li>

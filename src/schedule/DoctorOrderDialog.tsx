@@ -31,7 +31,7 @@ export function DoctorOrderDialog({ doctors, hidden = [], myDoctorId, colorDocto
   const [list, setList] = useState(doctors)
   // Скрытых, которых нет в списке (врача удалили), не тащим; все скрыты (старый выбор) — показываем всех
   const [off, setOff] = useState<Set<number>>(() => {
-    const set = new Set(doctors.map((d) => d.id!).filter((id) => hidden.includes(id)))
+    const set = new Set(doctors.map((d) => d.id).filter((id) => hidden.includes(id)))
     return set.size >= doctors.length ? new Set() : set
   })
   const shownCount = list.length - off.size
@@ -74,13 +74,13 @@ export function DoctorOrderDialog({ doctors, hidden = [], myDoctorId, colorDocto
         </div>
         <ol className="doctor-order-list" aria-label="Врачи в расписании">
           {list.map((d, i) => {
-            const shown = !off.has(d.id!)
+            const shown = !off.has(d.id)
             const last = shown && shownCount === 1
             return (
             <li key={d.id} className={shown ? undefined : 'off'}>
               {/* label вокруг галочки, кружка и имени — нажать можно на всю строку слева от ↑ ↓ */}
               <label className="doctor-order-show" title={last ? 'Хотя бы один врач должен быть в «Все врачи»' : undefined}>
-                <input type="checkbox" checked={shown} disabled={last} aria-label={`Показывать: ${d.fullName}`} onChange={() => toggle(d.id!)} />
+                <input type="checkbox" checked={shown} disabled={last} aria-label={`Показывать: ${d.fullName}`} onChange={() => toggle(d.id)} />
                 <span className="avatar" style={{ background: colorOf(colorDoctors, d.id) }} aria-hidden="true">{initials(d.fullName)}</span>
                 <span className="doctor-order-name">{nameOf(d)}{shown ? '' : <span className="hint"> · скрыт</span>}</span>
               </label>
@@ -93,7 +93,7 @@ export function DoctorOrderDialog({ doctors, hidden = [], myDoctorId, colorDocto
         <div className="confirm-actions">
           <button type="button" className="btn ghost" onClick={onReset}>Как было</button>
           <button type="button" className="btn" onClick={onClose}>Отмена</button>
-          <button ref={saveRef} type="button" className="btn primary" onClick={() => onSave(list.map((d) => d.id!), list.map((d) => d.id!).filter((id) => off.has(id)))}>Сохранить</button>
+          <button ref={saveRef} type="button" className="btn primary" onClick={() => onSave(list.map((d) => d.id), list.map((d) => d.id).filter((id) => off.has(id)))}>Сохранить</button>
         </div>
       </div>
     </div>,

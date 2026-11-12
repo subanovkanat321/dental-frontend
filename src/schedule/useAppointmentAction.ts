@@ -79,7 +79,7 @@ export function refreshAppointmentData(client: QueryClient, extra: string[] = []
 export function useAppointmentAction(a: Appointment) {
   const client = useQueryClient()
   return useMutation<Appointment, ApiError, Action>({
-    mutationFn: (action) => sendAppointmentAction(a.id!, action),
+    mutationFn: (action) => sendAppointmentAction(a.id, action),
     onSuccess: (updated) => applyUpdatedAppointment(client, updated),
     onError: (error) => rereadOnConflict(client, error),
   })

@@ -24,7 +24,7 @@ export function CancelledList({ items, onOpen, selectedId, doctorName, withDate,
 }) {
   const [open, setOpen] = useState(false)
   if (!items.length) return null
-  const sorted = [...items].sort((x, y) => (x.startAt ?? '').localeCompare(y.startAt ?? ''))
+  const sorted = [...items].sort((x, y) => x.startAt.localeCompare(y.startAt))
   return (
     <div className={inline ? 'cancelled inline' : 'cancelled'}>
       <button type="button" className="cancelled-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -37,7 +37,7 @@ export function CancelledList({ items, onOpen, selectedId, doctorName, withDate,
               <button type="button" className={`cancelled-row${a.id === selectedId ? ' active' : ''}`} onClick={() => onOpen(a)}>
                 <span className="time num">{withDate && a.startAt ? `${dayTitle(dateOf(a.startAt))}, ` : ''}{a.startAt ? timeOf(a.startAt) : ''}</span>
                 <span className="name">
-                  {a.patient?.fullName}
+                  {a.patient.fullName}
                   {doctorName && a.doctorId != null && <span className="hint"> · {doctorName(a.doctorId)}</span>}
                 </span>
                 <span className="cancelled-who hint">{cancelledText(a)}</span>

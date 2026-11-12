@@ -72,7 +72,7 @@ test('стрелка › раскрывает подразделы соседн�
 })
 
 test('числа: у вкладок «Вопросы» и «Лист ожидания», у свёрнутого раздела в меню — сумма', async () => {
-  const waiting: Schemas['WaitlistView'][] = [1, 2].map((id) => ({ id, doctorId: 1, patient: { id, fullName: `Ожидает ${id}` } }))
+  const waiting: Schemas['WaitlistView'][] = [1, 2].map((id) => ({ id, doctorId: 1, patient: { id, fullName: `Ожидает ${id}`, telegram: false }, durationMinutes: 30 }))
   server.use(
     http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 3 })),
     http.get('*/api/waitlist', () => HttpResponse.json(waiting)),

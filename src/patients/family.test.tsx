@@ -58,8 +58,8 @@ test('семья: общий долг и «Оплатить за семью» о
   backend([
     http.get('*/api/patients/2/family', () => HttpResponse.json(family)),
     http.get('*/api/families/9/debts', () => HttpResponse.json([
-      { appointmentId: 1, patientId: 4, patient: 'Эрлан Т.', debtSom: 3000, startAt: '2026-09-01T04:00:00Z', doctorId: 1 },
-      { appointmentId: 2, patientId: 2, patient: 'Айгуль Т.', debtSom: 5000, startAt: '2026-10-01T04:00:00Z', doctorId: 1 },
+      { appointmentId: 1, patientId: 4, patient: 'Эрлан Т.', debtSom: 3000, startAt: '2026-09-01T04:00:00Z', doctorId: 1, chargeSom: 0, paidSom: 0 },
+      { appointmentId: 2, patientId: 2, patient: 'Айгуль Т.', debtSom: 5000, startAt: '2026-10-01T04:00:00Z', doctorId: 1, chargeSom: 0, paidSom: 0 },
     ] satisfies Schemas['PaymentQueryDebt'][])),
     http.post('*/api/families/9/pay', async ({ request }) => {
       sent = await request.json()

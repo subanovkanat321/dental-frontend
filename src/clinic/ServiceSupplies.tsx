@@ -12,7 +12,7 @@ type Item = Schemas['ServiceSuppliesItem']
 type Row = { supplyId: number; name: string; unit: string; quantity: string; owner?: string | null }
 
 function rowOf(i: Item): Row {
-  return { supplyId: i.supplyId!, name: i.name ?? '', unit: i.unit ?? '', quantity: String(i.quantity ?? 1), owner: i.doctorName }
+  return { supplyId: i.supplyId, name: i.name ?? '', unit: i.unit ?? '', quantity: String(i.quantity), owner: i.doctorName }
 }
 
 /**
@@ -47,7 +47,7 @@ export function ServiceSupplies({ serviceId }: { serviceId: number }) {
   const add = () => {
     const s = stock.data?.find((x) => x.id === pick)
     if (!s) return
-    change([...rows, { supplyId: s.id!, name: s.name ?? '', unit: s.unit ?? '', quantity: '1', owner: s.doctorName }])
+    change([...rows, { supplyId: s.id, name: s.name ?? '', unit: s.unit ?? '', quantity: '1', owner: s.doctorName }])
     setPick('')
   }
   const free = (stock.data ?? []).filter((x) => !rows.some((r) => r.supplyId === x.id))

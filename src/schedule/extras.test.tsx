@@ -18,7 +18,7 @@ function backend(start: Appointment) {
   const save = async (path: string, request: Request, change: (body: Record<string, unknown>) => Partial<Appointment>) => {
     const body = (await request.json()) as Record<string, unknown>
     sent.push({ path, body })
-    a = { ...a, ...change(body), version: a.version! + 1 }
+    a = { ...a, ...change(body), version: a.version + 1 }
     return HttpResponse.json(a)
   }
   server.use(

@@ -31,7 +31,7 @@ function backend(initial: Tooth[] = []) {
       const body = (await request.json()) as Schemas['ChartControllerMany']
       calls.batch.push(body)
       const numbers = body.numbers ?? []
-      teeth = [...teeth.filter((t) => !numbers.includes(t.number!)),
+      teeth = [...teeth.filter((t) => !numbers.includes(t.number)),
         ...numbers.map((n) => ({ number: n, state: body.state, surfaces: body.surfaces as Tooth['surfaces'] }))]
       return HttpResponse.json(teeth)
     }),
@@ -39,7 +39,7 @@ function backend(initial: Tooth[] = []) {
     http.post('*/api/patients/2/plan/batch', async ({ request }) => {
       const body = (await request.json()) as Schemas['ChartControllerSteps']
       calls.plan.push(body)
-      plan = (body.teeth ?? []).map((tooth, i) => ({ id: i + 1, tooth, title: body.title, priceSom: body.priceSom, stage: body.stage }))
+      plan = (body.teeth ?? []).map((tooth, i) => ({ id: i + 1, tooth, title: body.title, priceSom: body.priceSom, stage: body.stage ?? 1 }))
       return HttpResponse.json(plan)
     }),
     http.get('*/api/patients/2/teeth/history', () => HttpResponse.json([])),
@@ -57,7 +57,7 @@ function backend(initial: Tooth[] = []) {
 function open(readOnly = false) {
   const client = createQueryClient({ queries: { retry: false } })
   render(<QueryClientProvider client={client}>
-    <MedicalRecord patient={{ id: 2, fullName: 'Вымышленная Пациентка' }} onBack={() => {}} readOnly={readOnly} />
+    <MedicalRecord patient={{ id: 2, fullName: 'Вымышленная Пациентка', telegram: false }} onBack={() => {}} readOnly={readOnly} />
   </QueryClientProvider>)
 }
 

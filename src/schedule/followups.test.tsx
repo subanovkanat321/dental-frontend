@@ -38,7 +38,7 @@ async function card(name: RegExp) {
 
 test('«независимый» админ-врач: у приёма коллеги нет оплаты и предоплаты, у своего — есть', async () => {
   // Админ со своим приёмом (врач 1) в «независимом» кабинете: деньги коллеги (врач 2) не видит
-  const independent = { ...me, hasReception: true, doctorId: 1, platform: false, clinic: { ...me.clinic, independentDoctors: true } }
+  const independent = { ...me, hasReception: true, doctorId: 1, platform: false, clinic: { ...me.clinic!, independentDoctors: true } }
   const asked = day([appointment(10, 2, '10:00', 'Бакыт М.', { status: 'DONE', version: 1 })], independent)
   renderApp()
   const panel = await card(/Бакыт М\./)
@@ -93,7 +93,7 @@ test('владелец удаляет и приём с оплатой или з�
 test('есть доплаты — «Изменить» оплату не предлагаем', async () => {
   day([appointment(10, 1, '10:00', 'Бакыт М.', { status: 'DONE', version: 1, paidSom: 3000, chargeSom: 5000, debtSom: 2000, paymentMethod: 'CASH' })])
   server.use(http.get('*/api/appointments/:id/payments', () => HttpResponse.json([
-    { amountSom: 1000, method: 'CASH', paidAt: '2026-10-01T05:00:00Z' }, { amountSom: 2000, method: 'CASH', paidAt: '2026-10-15T05:00:00Z' },
+    { amountSom: 1000, method: 'CASH', paidAt: '2026-10-01T05:00:00Z', id: 0 }, { amountSom: 2000, method: 'CASH', paidAt: '2026-10-15T05:00:00Z', id: 0 },
   ] satisfies Schemas['PaymentQueryEntry'][])))
   renderApp()
   const panel = await card(/Бакыт М\./)

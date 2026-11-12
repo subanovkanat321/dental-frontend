@@ -40,7 +40,7 @@ export function DepositBox({ appointment: a }: { appointment: Appointment }) {
       <div className="sub-form form" role="group" aria-label="Предоплата">
         <label className="field"><span>Сколько предоплаты, сом</span>
           <input type="number" min={1} inputMode="numeric" value={shownAmount} onChange={(e) => setAmount(e.target.value)} /></label>
-        <p className="hint">{a.patient?.telegram ? 'Пациенту в бот уйдёт сообщение: сумма, QR и «Я оплатил(а)».'
+        <p className="hint">{a.patient.telegram ? 'Пациенту в бот уйдёт сообщение: сумма, QR и «Я оплатил(а)».'
           : 'У пациента нет бота — отправьте ему реквизиты сами (WhatsApp) и отметьте, когда деньги придут.'}</p>
         {error}
         <div className="actions">
@@ -58,7 +58,7 @@ export function DepositBox({ appointment: a }: { appointment: Appointment }) {
   return (
     <div className="sub-form form" role="group" aria-label="Предоплата">
       <strong className={`tone-${tone}`}>Предоплата {somText(a.depositSom ?? 0)}: {text}</strong>
-      {a.depositStatus === 'REPORTED' && <Receipt id={a.id!} />}
+      {a.depositStatus === 'REPORTED' && <Receipt id={a.id} />}
       <div className="segments" role="group" aria-label="Как получена предоплата">
         {METHODS.map(([code, name]) => <button key={code} type="button" aria-pressed={method === code} onClick={() => setMethod(code)}>{name}</button>)}
       </div>

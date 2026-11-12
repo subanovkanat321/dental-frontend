@@ -28,14 +28,14 @@ function backend(list: Appointment[], who: Schemas['BookingViewsMe'] = me) {
       const body = (await request.json()) as Record<string, unknown>
       sent.push({ path: String(params.action), body })
       const a = day.find((x) => x.id === Number(params.id))!
-      if (params.action === 'status') return replace({ ...a, status: body.status as Appointment['status'], version: a.version! + 1 })
-      return replace({ ...a, paidSom: body.amountSom as number, paymentMethod: body.method as Appointment['paymentMethod'], version: a.version! + 1 })
+      if (params.action === 'status') return replace({ ...a, status: body.status as Appointment['status'], version: a.version + 1 })
+      return replace({ ...a, paidSom: body.amountSom as number, paymentMethod: body.method as Appointment['paymentMethod'], version: a.version + 1 })
     }),
     http.post('*/api/appointments/:id/payment/bill', async ({ request, params }) => {
       const body = (await request.json()) as { chargeSom: number }
       sent.push({ path: 'bill', body })
       const a = day.find((x) => x.id === Number(params.id))!
-      return replace({ ...a, chargeSom: body.chargeSom, version: a.version! + 1 })
+      return replace({ ...a, chargeSom: body.chargeSom, version: a.version + 1 })
     }),
   )
   return sent

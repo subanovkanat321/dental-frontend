@@ -18,8 +18,8 @@ export function adminsLine(a?: Channels): string {
 
 /** Ответ кнопки «Напомнить»: куда дошло. */
 export function remindedText(r: Reminded): string {
-  const parts = [`в Telegram — ${r.telegram ?? 0}`, `в приложение — ${r.push ?? 0}`, `только баннер — ${r.bannerOnly ?? 0}`]
-  const head = (r.clinics ?? 0) === 0 ? 'Никому не напомнили' : `Напомнили клиникам: ${r.clinics}. Руководителям ${parts.join(', ')}`
+  const parts = [`в Telegram — ${r.telegram}`, `в приложение — ${r.push}`, `только баннер — ${r.bannerOnly}`]
+  const head = r.clinics === 0 ? 'Никому не напомнили' : `Напомнили клиникам: ${r.clinics}. Руководителям ${parts.join(', ')}`
   return (r.skipped ? `${head}. Уже напоминали за сутки — пропущено: ${r.skipped}` : head) + '.'
 }
 

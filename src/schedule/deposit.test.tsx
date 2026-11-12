@@ -14,7 +14,7 @@ function backend(a: Appointment) {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', ({ request }) => HttpResponse.json(new URL(request.url).searchParams.get('doctorId') === '1' ? [current] : [])),
-    http.get('*/api/clinic/deposit', () => HttpResponse.json({ mode: 'NEW', amountSom: 1000 } satisfies Schemas['DepositsSettings'])),
+    http.get('*/api/clinic/deposit', () => HttpResponse.json({ mode: 'NEW', amountSom: 1000, hasQr: false } satisfies Schemas['DepositsSettings'])),
     http.get('*/api/appointments/:id/deposit/receipt', () => new HttpResponse(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/png' } })),
     http.post('*/api/appointments/:id/deposit', async ({ request }) => {
       const body = await request.json() as Schemas['DepositControllerAction']

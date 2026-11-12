@@ -12,7 +12,7 @@ import { HELP_ITEMS } from './items'
 
 const VIDEOS: HowToVideo[] = [
   { id: 'zapis', title: 'Записать пациента', video: '/web/materials/howto/zapis.mp4', poster: '/web/materials/howto/zapis.webp' },
-  { id: 'kassa', title: 'Касса: принять оплату', video: '/web/materials/howto/kassa.mp4', poster: null },
+  { id: 'kassa', title: 'Касса: принять оплату', video: '/web/materials/howto/kassa.mp4' },
 ]
 
 function renderPage(onBack = vi.fn()) {

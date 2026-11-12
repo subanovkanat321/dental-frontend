@@ -12,8 +12,8 @@ type Memo = Schemas['CareMemosCareMemoView']
 
 function backend(who: Schemas['BookingViewsMe'] = me) {
   let memos: Memo[] = [
-    { id: 1, title: 'После удаления зуба', body: '• Держите тампон.\n\nЗвоните в клинику: {телефон}.', active: true, standard: true, serviceIds: [5] },
-    { id: 2, title: 'После отбеливания', body: '• Белая диета 48 часов.', active: true, standard: true, serviceIds: [] },
+    { id: 1, title: 'После удаления зуба', body: '• Держите тампон.\n\nЗвоните в клинику: {телефон}.', active: true, standard: true, serviceIds: [5], kyStandard: false },
+    { id: 2, title: 'После отбеливания', body: '• Белая диета 48 часов.', active: true, standard: true, serviceIds: [], kyStandard: false },
   ]
   let links: Schemas['CareMemosLink'][] = [{ serviceTypeId: 5, memoId: 1 }]
   const sent: unknown[] = []
@@ -33,7 +33,7 @@ function backend(who: Schemas['BookingViewsMe'] = me) {
     http.post('*/api/care-memos', async ({ request }) => {
       const body = (await request.json()) as Schemas['CareMemoControllerMemo']
       sent.push({ created: body })
-      const memo = { id: 3, title: body.title, body: body.body, active: true, standard: false, serviceIds: [] }
+      const memo = { id: 3, title: body.title, body: body.body, active: true, standard: false, serviceIds: [], kyStandard: false }
       memos = [...memos, memo]
       return HttpResponse.json(memo)
     }),
@@ -110,7 +110,7 @@ test('вкладка «Кыргызский»: перевод Tish, «✨ Пер
     http.get('*/api/care-memos', () => HttpResponse.json([
       { id: 1, title: 'После удаления зуба', body: '• Держите тампон.', active: true, standard: true, serviceIds: [5],
         titleKy: 'Тиш жулдургандан кийин', bodyKy: '• Тампонду кармаңыз.', kyStandard: true },
-      { id: 2, title: 'После отбеливания', body: '• Белая диета 48 часов.', active: true, standard: false, serviceIds: [] },
+      { id: 2, title: 'После отбеливания', body: '• Белая диета 48 часов.', active: true, standard: false, serviceIds: [], kyStandard: false },
     ] satisfies Memo[])),
     http.get('*/api/clinic/visit-report-ai', () => HttpResponse.json({ available: true, on: true })),
     http.post('*/api/care-memos/translate', async ({ request }) => {

@@ -120,7 +120,7 @@ function remindBackend(start: ReturnType<typeof appointment>, fail = false) {
     http.post('*/api/appointments/:id/remind-telegram', () => {
       calls.push('telegram')
       if (fail) return HttpResponse.json({ title: 'Bad Gateway', status: 502, detail: 'Telegram не ответил, попробуйте ещё раз' }, { status: 502 })
-      a = { ...a, reminderOpenedAt: new Date().toISOString(), version: a.version! + 1 }
+      a = { ...a, reminderOpenedAt: new Date().toISOString(), version: a.version + 1 }
       return HttpResponse.json(a)
     }),
     http.post('*/api/appointments/:id/reminder-opened', () => {

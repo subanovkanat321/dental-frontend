@@ -53,7 +53,7 @@ export function useDrag({ days, from, to, columns, scroller, onDrop }: {
     if (!point) return null
     const minutes = snapInto(point.minutes - p.grab, durationOf(p.appointment), from, to)
     const date = days[point.day]!
-    const same = slotInstant(date, minutes) === new Date(p.appointment.startAt!).toISOString()
+    const same = slotInstant(date, minutes) === new Date(p.appointment.startAt).toISOString()
     return { appointment: p.appointment, day: point.day, minutes, allowed: !same && new Date(slotInstant(date, minutes)) > new Date() }
   }
 
@@ -77,7 +77,7 @@ export function useDrag({ days, from, to, columns, scroller, onDrop }: {
       press.current = {
         appointment: a, pointerId: e.pointerId, x: e.clientX, y: e.clientY, dragging: false,
         // За какое место блока взялись: середину приёма тащим за середину, а не за верх
-        grab: point ? point.minutes - minutesOf(a.startAt!) : 0,
+        grab: point ? point.minutes - minutesOf(a.startAt) : 0,
       }
       // Все движения — этому блоку, даже когда курсор ушёл в соседний день
       e.currentTarget.setPointerCapture?.(e.pointerId)

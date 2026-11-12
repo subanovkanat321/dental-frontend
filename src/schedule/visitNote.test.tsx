@@ -10,7 +10,7 @@ import { VisitNote } from './AppointmentExtras'
 function renderNote(note: Schemas['ChartControllerNoteView']) {
   server.use(http.get('*/api/appointments/:id/note', () => HttpResponse.json(note)))
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const a = appointment(10, 2, '10:00', 'Вымышленный П.', { status: 'DONE', patient: { id: 10, fullName: 'Вымышленный П.', phone: '996555000111' } })
+  const a = appointment(10, 2, '10:00', 'Вымышленный П.', { status: 'DONE', patient: { id: 10, fullName: 'Вымышленный П.', phone: '996555000111', telegram: false } })
   render(<QueryClientProvider client={client}><VisitNote appointment={a} /></QueryClientProvider>)
 }
 

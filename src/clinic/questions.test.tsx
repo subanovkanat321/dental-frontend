@@ -20,8 +20,8 @@ afterEach(() => {
 
 test('анкета: разделы, порядок, новый вопрос с плашкой', async () => {
   let list: Schemas['AnamnesisQuestion'][] = [
-    { id: 1, section: 'QUESTION', kind: 'CHECK', title: 'Аллергия?', alert: true, active: true, answers: 4 },
-    { id: 2, section: 'QUESTION', kind: 'TEXT', title: 'Принимает лекарства?', active: true },
+    { id: 1, section: 'QUESTION', kind: 'CHECK', title: 'Аллергия?', alert: true, active: true, answers: 4, position: 0 },
+    { id: 2, section: 'QUESTION', kind: 'TEXT', title: 'Принимает лекарства?', active: true, alert: false, position: 0, answers: 0 },
   ]
   let moved: unknown = null
   let created: unknown = null
@@ -34,7 +34,7 @@ test('анкета: разделы, порядок, новый вопрос с �
     }),
     http.post('*/api/anamnesis/questions', async ({ request }) => {
       created = await request.json()
-      list = [...list, { id: 3, ...(created as Schemas['AnamnesisQuestionRequest']) }]
+      list = [...list, { id: 3, position: 3, answers: 0, alert: false, active: true, ...(created as Schemas['AnamnesisQuestionRequest']) }]
       return HttpResponse.json(list)
     }),
   )

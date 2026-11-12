@@ -62,11 +62,11 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
       {/* Только что одобрили заявку или создали клинику — приглашение админу сразу под контактом */}
       {inviteFirst && <AdminInvite clinic={c} initial={invite} owner={owner} />}
       {/* «Войти в клинику» — первым: ради этого карточку чаще всего и открывают; в свою — незачем */}
-      {owner && !here && <EnterBox id={c.id!} />}
+      {owner && !here && <EnterBox id={c.id} />}
       {owner && here && <p className="hint">Это ваша текущая клиника.</p>}
       {owner && <MoveBox here={here} />}
-      {owner && <BillingBox id={c.id!} />}
-      <AgreementBox id={c.id!} owner={owner} />
+      {owner && <BillingBox id={c.id} />}
+      <AgreementBox id={c.id} owner={owner} />
       {page && (
         <section className="form">
           <h3>Ссылка для пациентов</h3>
@@ -75,8 +75,8 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
         </section>
       )}
       {!inviteFirst && <AdminInvite clinic={c} initial={invite} owner={owner} />}
-      {owner && <ExportBox id={c.id!} />}
-      {owner && <StockClearBox id={c.id!} name={c.name ?? ''} />}
+      {owner && <ExportBox id={c.id} />}
+      {owner && <StockClearBox id={c.id} name={c.name ?? ''} />}
       {owner && <HideBox clinic={c} />}
       {owner && c.id !== 1 && <DeleteBox clinic={c} onDeleted={onClose} />}
     </aside>
@@ -151,7 +151,7 @@ function BillingForm({ id, plan }: { id: number; plan: Plan }) {
       {(plan.payments?.length ?? 0) > 0 && (
         <>
           <ul className="visits">
-            {plan.payments!.map((p) => <li key={p.id}><b className="num">{somText(p.amountSom ?? 0)}</b> · {p.months} мес <span className="hint">· {day(p.paidOn)} → до {day(p.paidUntil)}</span></li>)}
+            {plan.payments!.map((p) => <li key={p.id}><b className="num">{somText(p.amountSom)}</b> · {p.months} мес <span className="hint">· {day(p.paidOn)} → до {day(p.paidUntil)}</span></li>)}
           </ul>
           <button type="button" className="btn small" disabled={undo.isPending}
             onClick={() => void ask('Отменить последнюю оплату?').then((ok) => ok && undo.mutate())}>Отменить последнюю оплату</button>
@@ -239,7 +239,7 @@ function AgreementBox({ id, owner }: { id: number; owner: boolean }) {
             {accepted ? 'Подписанный договор — PDF в бот' : 'PDF для подписи — в бот'}</button>}
           {owner ? (d.scans?.length ? (
             <ul className="visits">{d.scans.map((x) => (
-              <li key={x.id}>{x.fileName} <button type="button" className="btn small ghost" disabled={scan.isPending} onClick={() => scan.mutate(x.id!)}>В бот</button></li>
+              <li key={x.id}>{x.fileName} <button type="button" className="btn small ghost" disabled={scan.isPending} onClick={() => scan.mutate(x.id)}>В бот</button></li>
             ))}</ul>
           ) : <EmptyState compact title="Сканов нет" />) : <p className="hint">Сканов: {d.scans?.length ?? 0}</p>}
           {(pdf.error ?? scan.error ?? assign.error ?? remind.error) && <p className="error" role="alert">{(pdf.error ?? scan.error ?? assign.error ?? remind.error)!.message}</p>}
@@ -316,7 +316,7 @@ function AdminInvite({ clinic: c, initial, owner }: { clinic: Row; initial?: { n
   // Клинику завели без заявки — номер админа можно вписать здесь (только для WhatsApp и SMS, не сохраняется)
   const [phone, setPhone] = useState('')
   const make = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/clinics/{id}/admin-invite', { params: { path: { id: c.id! } }, body: { fullName: name, alsoDoctor } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/clinics/{id}/admin-invite', { params: { path: { id: c.id } }, body: { fullName: name, alsoDoctor } })),
   })
   const form = make.data?.token ? <InviteLink start={`staff_${make.data.token}`} name={name.trim()} toWhom="руководителю клиники" phone={c.contactPhone ?? phoneDigits(phone)} sms={owner} /> : (
     <form className="form" aria-label="Пригласить руководителя клиники" onSubmit={(e) => { e.preventDefault(); make.mutate() }}>
@@ -387,7 +387,7 @@ function ExportBox({ id }: { id: number }) {
 function HideBox({ clinic: c }: { clinic: Row }) {
   const client = useQueryClient()
   const hide = useMutation<Row, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/platform/clinics/{id}/hidden', { params: { path: { id: c.id! } }, body: { hidden: !c.hidden } })),
+    mutationFn: () => unwrap(api.PUT('/api/platform/clinics/{id}/hidden', { params: { path: { id: c.id } }, body: { hidden: !c.hidden } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['platform-clinics'] }),
   })
   return (
@@ -404,7 +404,7 @@ function DeleteBox({ clinic: c, onDeleted }: { clinic: Row; onDeleted: () => voi
   const client = useQueryClient()
   const [word, setWord] = useState('')
   const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/platform/clinics/{id}', { params: { path: { id: c.id! } }, body: { confirm: word } })),
+    mutationFn: () => unwrap(api.DELETE('/api/platform/clinics/{id}', { params: { path: { id: c.id } }, body: { confirm: word } })),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['platform-clinics'] })
       void client.invalidateQueries({ queryKey: ['me'] })

@@ -37,13 +37,13 @@ export function useEarnings(me: Me, enabled = true) {
 
 /** Главная сумма дня: с процентом — заработок, без условий — принятое от пациентов. */
 export function todayOf(e: Earnings): number {
-  return Number(e.percent ?? 0) > 0 || !e.hasTerms ? e.todaySom ?? 0 : e.todayRevenueSom ?? 0
+  return Number(e.percent ?? 0) > 0 || !e.hasTerms ? e.todaySom : e.todayRevenueSom
 }
 
 /** Доля пути к цели, 0–1; цели нет — null. */
 export function goalShare(e: Earnings): number | null {
   if (!e.goalSom) return null
-  return Math.min(1, Math.max(0, (e.monthSom ?? 0) / e.goalSom))
+  return Math.min(1, Math.max(0, e.monthSom / e.goalSom))
 }
 
 /** «−1 200 сом» / «1 200 сом» — минус, когда сумма ниже нуля. */

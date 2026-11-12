@@ -39,11 +39,11 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
   const action = useAppointmentAction(a)
   // Передать можно только врачу, чьё расписание мне можно менять (ассистенту — его врачи)
   const doctors = editableDoctors(me, (me.doctors ?? []).filter((d) => d.active !== false))
-  const minutes = (minutesOf(a.endAt!) - minutesOf(a.startAt!) + 24 * 60) % (24 * 60) || 30
-  const [date, setDate] = useState(dateOf(a.startAt!))
-  const [time, setTime] = useState(timeOf(a.startAt!))
+  const minutes = (minutesOf(a.endAt) - minutesOf(a.startAt) + 24 * 60) % (24 * 60) || 30
+  const [date, setDate] = useState(dateOf(a.startAt))
+  const [time, setTime] = useState(timeOf(a.startAt))
   const [duration, setDuration] = useState(minutes)
-  const [doctorId, setDoctorId] = useState(a.doctorId!)
+  const [doctorId, setDoctorId] = useState(a.doctorId)
   const [problem, setProblem] = useState('')
 
   const submit = (e: FormEvent) => {
@@ -55,7 +55,7 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
     setProblem('')
     const [h, m] = time.split(':').map(Number)
     const startAt = slotInstant(date, (h ?? 0) * 60 + (m ?? 0))
-    const body = { version: a.version ?? 0, startAt, durationMinutes: duration }
+    const body = { version: a.version, startAt, durationMinutes: duration }
     const other = doctors.find((d) => d.id === doctorId)
     if (doctorId === a.doctorId) action.mutate({ kind: 'reschedule', body }, { onSuccess: () => onDone('Время изменилось — напомните пациенту заново') })
     else action.mutate({ kind: 'transfer', body: { ...body, doctorId } }, { onSuccess: () => onDone(`Приём передан: ${other?.fullName ?? 'другой врач'}`) })
@@ -67,7 +67,7 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
         <div className="field"><span>Врач</span>
           <div className="segments wrap" role="group" aria-label="Врач">
             {doctors.map((d) => (
-              <button key={d.id} type="button" aria-pressed={d.id === doctorId} onClick={() => { if (d.id !== doctorId) setTime(''); setDoctorId(d.id!) }}>
+              <button key={d.id} type="button" aria-pressed={d.id === doctorId} onClick={() => { if (d.id !== doctorId) setTime(''); setDoctorId(d.id) }}>
                 {d.fullName}{d.id === a.doctorId ? ' (сейчас)' : ''}
               </button>
             ))}
@@ -191,7 +191,7 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
   const client = useQueryClient()
   const used = useQuery({
     queryKey: ['appointment-supplies', a.id],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/supplies', { params: { path: { id: a.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/supplies', { params: { path: { id: a.id } } })),
   })
   const stock = useQuery({
     queryKey: ['supplies', a.doctorId],
@@ -201,7 +201,7 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
   // Ничего не предложено: подсказать, где задать «Обычно уходит» для услуги приёма
   const suggested = useQuery({
     queryKey: ['appointment-supplies-suggested', a.id],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/supplies/suggested', { params: { path: { id: a.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/supplies/suggested', { params: { path: { id: a.id } } })),
     enabled: !!a.serviceName && canEditServices(me),
   })
   const services = useQuery({
@@ -213,7 +213,7 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
   const serviceId = services.data?.find((s) => s.name === a.serviceName)?.id
   const move = useMutation<Schemas['SupplyControllerSpent'], ApiError, { supplyId: number; delta: number }>({
     mutationFn: ({ supplyId, delta }) => unwrap(api.POST('/api/appointments/{id}/supplies/{supplyId}', {
-      params: { path: { id: a.id!, supplyId } }, body: { delta },
+      params: { path: { id: a.id, supplyId } }, body: { delta },
     })),
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: ['appointment-supplies', a.id] })
@@ -237,9 +237,9 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
               <span>{u.name} — <b className="num">{u.used}</b> {u.unit}</span>
               <span className="actions">
                 <button type="button" className="btn small" disabled={move.isPending} aria-label={`Списать ещё 1: ${u.name}`}
-                  onClick={() => move.mutate({ supplyId: u.supplyId!, delta: -1 })}>−1</button>
+                  onClick={() => move.mutate({ supplyId: u.supplyId, delta: -1 })}>−1</button>
                 <button type="button" className="btn small ghost" disabled={move.isPending} aria-label={`Вернуть 1: ${u.name}`}
-                  onClick={() => move.mutate({ supplyId: u.supplyId!, delta: 1 })}>вернуть</button>
+                  onClick={() => move.mutate({ supplyId: u.supplyId, delta: 1 })}>вернуть</button>
               </span>
             </li>
           ))}
@@ -248,7 +248,7 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
       <div className="row add-supply">
         <Select aria-label="Материал со склада" value={pick} onChange={(e) => setPick(e.target.value === '' ? '' : Number(e.target.value))}>
           <option value="">Материал со склада…</option>
-          {stock.data?.filter((x) => (x.quantity ?? 0) > 0).map((x) => (
+          {stock.data?.filter((x) => x.quantity > 0).map((x) => (
             <option key={x.id} value={x.id}>{x.name} · осталось {x.quantity} {x.unit}</option>
           ))}
         </Select>
@@ -272,16 +272,16 @@ function SuggestedSupplies({ appointment: a }: { appointment: Appointment }) {
   const client = useQueryClient()
   const suggested = useQuery({
     queryKey: ['appointment-supplies-suggested', a.id],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/supplies/suggested', { params: { path: { id: a.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/supplies/suggested', { params: { path: { id: a.id } } })),
   })
   const [draft, setDraft] = useState<SuggestedRow[] | null>(null)
   const [hidden, setHidden] = useState(false)
   const rows = draft ?? (suggested.data ?? []).map((i) => ({
-    supplyId: i.supplyId!, name: i.name ?? '', unit: i.unit ?? '', quantity: String(i.quantity ?? 1), inStock: i.inStock ?? 0,
+    supplyId: i.supplyId, name: i.name ?? '', unit: i.unit ?? '', quantity: String(i.quantity), inStock: i.inStock,
   }))
   const spend = useMutation<Schemas['SupplyQueryUsed'][], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/supplies', {
-      params: { path: { id: a.id! } },
+      params: { path: { id: a.id } },
       body: { items: rows.map((r) => ({ supplyId: r.supplyId, quantity: Number(r.quantity) })) },
     })),
     onSuccess: (used) => {
@@ -339,7 +339,7 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
   const action = useAppointmentAction(a)
   const text = useReminderText()
   const opened = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
   })
   const smsText = text?.(a) ?? ''
@@ -353,7 +353,7 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
     <section className="remind" aria-label="Напоминание">
       {canRemind && (
         <div className="actions">
-          {a.patient?.telegram && (
+          {a.patient.telegram && (
             <button type="button" className="btn" disabled={action.isPending} onClick={() => action.mutate({ kind: 'remindTelegram' })}>
               Напомнить в Telegram
             </button>
@@ -377,7 +377,7 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
       <div className="segments" role="group" aria-label="Ответ пациента">
         {REPLIES.map(([reply, title]) => (
           <button key={reply} type="button" aria-pressed={a.reply === reply} disabled={action.isPending}
-            onClick={() => action.mutate({ kind: 'reply', body: { version: a.version ?? 0, reply: a.reply === reply ? 'NONE' : reply } })}>
+            onClick={() => action.mutate({ kind: 'reply', body: { version: a.version, reply: a.reply === reply ? 'NONE' : reply } })}>
             {title}
           </button>
         ))}
@@ -396,12 +396,12 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
   const client = useQueryClient()
   const note = useQuery({
     queryKey: ['note', a.id],
-    queryFn: () => unwrap(api.GET('/api/appointments/{id}/note', { params: { path: { id: a.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/appointments/{id}/note', { params: { path: { id: a.id } } })),
     retry: false,
   })
   const [text, setText] = useState<string | null>(null)
   const save = useMutation<Schemas['ChartControllerNoteView'], ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/appointments/{id}/note', { params: { path: { id: a.id! } }, body: { note: (text ?? '').trim() } })),
+    mutationFn: () => unwrap(api.PUT('/api/appointments/{id}/note', { params: { path: { id: a.id } }, body: { note: (text ?? '').trim() } })),
     onSuccess: (saved) => {
       client.setQueryData(['note', a.id], saved)
       void client.invalidateQueries({ queryKey: ['notes'] })
@@ -426,7 +426,7 @@ export function VisitNote({ appointment: a }: { appointment: Appointment }) {
   return (
     <>
     {/* Диктовка — первой: врач говорит, ИИ раскладывает по зубам, плану и заметке */}
-    {a.patient?.id != null && <Dictation appointment={a} note={value} onActive={setDictating} />}
+    {a.patient.id != null && <Dictation appointment={a} note={value} onActive={setDictating} />}
     {!dictating && <form className="form" aria-label="Заметка о приёме" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
       <label className="field"><span>Заметка о приёме</span>
         <textarea rows={3} maxLength={2000} value={value} placeholder="Что сделали, что дальше — видят врач и руководитель"

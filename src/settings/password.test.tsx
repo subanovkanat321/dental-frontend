@@ -48,7 +48,7 @@ afterEach(() => {
 })
 
 test('«Пароль и вход»: сменить по текущему паролю; неверный текущий — ошибка под формой', async () => {
-  const { changes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true, setAt: '2026-11-01T06:00:00Z' })
+  const { changes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true, setAt: '2026-11-01T06:00:00Z', telegram: false, telegramCode: false })
   const user = userEvent.setup()
   renderApp()
   const section = await screen.findByRole('region', { name: 'Пароль и вход' })
@@ -68,7 +68,7 @@ test('«Пароль и вход»: сменить по текущему пар�
 })
 
 test('«Не помню текущий» — «Получить код» → код → «Подтвердить» → только потом новый пароль (с пропуском)', async () => {
-  const { changes, codes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true })
+  const { changes, codes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true, telegram: false, telegramCode: false })
   const user = userEvent.setup()
   renderApp()
   const section = await screen.findByRole('region', { name: 'Пароль и вход' })
@@ -104,7 +104,7 @@ test('«Не помню текущий» — «Получить код» → к�
 })
 
 test('телефон не указан — блока «Пароль и вход» нет', async () => {
-  backend({ phoneLogin: false, passwordSet: false, temporary: false, sms: false })
+  backend({ phoneLogin: false, passwordSet: false, temporary: false, sms: false, telegram: false, telegramCode: false })
   renderApp()
   expect(await screen.findByRole('region', { name: 'Телефон' })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Пароль и вход' })).not.toBeInTheDocument()
@@ -164,7 +164,7 @@ test('с Telegram «Пароль и вход» — внизу профиля, т
 })
 
 test('перезагрузили, пока ходили за кодом в Telegram, — «Пароль и вход» сразу на шаге кода', async () => {
-  const { changes, codes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true })
+  const { changes, codes } = backend({ phoneLogin: true, passwordSet: true, temporary: false, sms: true, telegram: false, telegramCode: false })
   server.use(http.get('*/api/me/password/code', () => HttpResponse.json(
     { pending: true, secondsLeft: 200, resendSeconds: 20 } satisfies Schemas['PasswordControllerCodePending'])))
   const user = userEvent.setup()

@@ -37,7 +37,7 @@ function visit(id: number, doctorId: number, date: string, minutes: number, name
   const startAt = slotInstant(date, minutes)
   return {
     id, doctorId, startAt, endAt: new Date(new Date(startAt).getTime() + 30 * 60_000).toISOString(), status: 'SCHEDULED',
-    reply: 'NONE', version: 1, patient: { id, fullName: name, phone: '996555000111' }, ...extra,
+    reply: 'NONE', version: 1, source: 'DOCTOR', debtSom: 0, firstVisit: false, patient: { id, fullName: name, phone: '996555000111', telegram: false }, ...extra,
   }
 }
 
@@ -151,7 +151,7 @@ describe('сетка «Дня»', () => {
         const q = new URL(request.url).searchParams
         if (q.get('date') !== tomorrow || q.get('doctorId') !== '1') return HttpResponse.json([])
         return HttpResponse.json([visit(10, 1, tomorrow, 600, 'Бакыт М.', {
-          serviceName: 'Чистка', comment: 'Боится уколов', debtSom: 1500, patient: { id: 10, fullName: 'Бакыт М.', phone: '996555000111' },
+          serviceName: 'Чистка', comment: 'Боится уколов', debtSom: 1500, patient: { id: 10, fullName: 'Бакыт М.', phone: '996555000111', telegram: false },
         })])
       }),
       http.get('*/api/slots', ({ request }) => {

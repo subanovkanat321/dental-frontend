@@ -105,7 +105,7 @@ export function surfaceNets(g: Grid, field: Float32Array, opts: { lo?: [number, 
           const da = d[a]!, db = d[b]!
           if (da < 0 === db < 0) continue
           const t = da / (da - db)
-          const oa = CORNERS[a]!, ob = CORNERS[b]!
+          const oa = CORNERS[a], ob = CORNERS[b]
           sx += oa[0] + (ob[0] - oa[0]) * t
           sy += oa[1] + (ob[1] - oa[1]) * t
           sz += oa[2] + (ob[2] - oa[2]) * t

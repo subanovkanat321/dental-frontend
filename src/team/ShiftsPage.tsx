@@ -123,19 +123,19 @@ function WeekTable({ data, days, onOpen }: { data: Schedule; days: string[]; onO
             <tr key={p.telegramId} className={p.telegramId === data.me ? 'mine' : undefined} aria-current={p.telegramId === data.me ? 'true' : undefined}>
               <th scope="row"><PersonName person={p} me={data.me} /></th>
               {days.map((d) => {
-                const list = shiftsOf(data, p.telegramId!, d)
+                const list = shiftsOf(data, p.telegramId, d)
                 return (
                   <td key={d} className={d === today ? 'today' : undefined}>
                     {list.map((s) => onOpen ? (
                       <button key={s.id} type="button" className="shift-chip num" title={s.note}
                         aria-label={`${p.fullName}, ${dayLong(d)}: ${shiftHours(s)} — изменить`}
-                        onClick={() => onOpen({ shift: s, telegramId: p.telegramId!, day: d })}>{shiftHours(s)}</button>
+                        onClick={() => onOpen({ shift: s, telegramId: p.telegramId, day: d })}>{shiftHours(s)}</button>
                     ) : (
                       <span key={s.id} className="shift-chip num" title={s.note}>{shiftHours(s)}</span>
                     ))}
                     {onOpen && (
                       <button type="button" className="shift-add" aria-label={`Добавить смену: ${p.fullName}, ${dayLong(d)}`}
-                        onClick={() => onOpen({ telegramId: p.telegramId!, day: d })}>+</button>
+                        onClick={() => onOpen({ telegramId: p.telegramId, day: d })}>+</button>
                     )}
                   </td>
                 )
@@ -182,14 +182,14 @@ function DayList({ data, days, onOpen }: { data: Schedule; days: string[]; onOpe
                 return (
                   <li key={s.id} className={p.telegramId === data.me ? 'mine' : undefined}>
                     {onOpen ? (
-                      <button type="button" className="shift-line" onClick={() => onOpen({ shift: s, telegramId: s.telegramId!, day: d })}>{body}</button>
+                      <button type="button" className="shift-line" onClick={() => onOpen({ shift: s, telegramId: s.telegramId, day: d })}>{body}</button>
                     ) : <div className="shift-line">{body}</div>}
                   </li>
                 )
               })}
             </ul>
             {onOpen && (
-              <button type="button" className="btn small" onClick={() => onOpen({ telegramId: people[0]!.telegramId!, day: d })}>+ Смена</button>
+              <button type="button" className="btn small" onClick={() => onOpen({ telegramId: people[0]!.telegramId, day: d })}>+ Смена</button>
             )}
           </section>
         )

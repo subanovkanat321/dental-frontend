@@ -35,7 +35,7 @@ function offerStatus(o: Offer): string {
  * страницу плана) или печать. Отправляет сервер; здесь — только то, что увидит пациент.
  */
 export function PlanOffer({ patient, steps }: { patient: Patient; steps: Step[] }) {
-  const patientId = patient.id!
+  const patientId = patient.id
   const offers = useQuery({
     queryKey: ['plan-offers', patientId],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/plan/offers', { params: { path: { patientId } } })),
@@ -53,7 +53,7 @@ export function PlanOffer({ patient, steps }: { patient: Patient; steps: Step[] 
 }
 
 function OfferPanel({ patient, steps, onClose }: { patient: Patient; steps: Step[]; onClose: () => void }) {
-  const patientId = patient.id!
+  const patientId = patient.id
   const client = useQueryClient()
   const today = todayIn()
   const [validUntil, setValidUntil] = useState(addDays(today, 30))

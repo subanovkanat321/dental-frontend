@@ -25,8 +25,8 @@ export function SpendingBlock() {
     queryFn: () => unwrap(api.GET('/api/supplies/spending', { params: { query: { from, to } } })),
   })
   const r = data.data
-  const share = r?.revenueSom ? Math.round(((r.purchasedSom ?? 0) / r.revenueSom) * 100) : null
-  const max = Math.max(1, ...(r?.months ?? []).map((m) => m.purchasedSom ?? 0))
+  const share = r?.revenueSom ? Math.round((r.purchasedSom / r.revenueSom) * 100) : null
+  const max = Math.max(1, ...(r?.months ?? []).map((m) => m.purchasedSom))
   return (
     <section className="card-block spending" aria-label="Расходы на склад">
       {/* Месяц — в строку шапки «Склада» */}
@@ -38,21 +38,21 @@ export function SpendingBlock() {
       {r && (
         <>
           <div className="methods">
-            <div>Заплатили за поставки<b>{somText(r.purchasedSom ?? 0)}</b>{share != null && <span className="hint">{share}% выручки</span>}</div>
-            <div>Ушло на приёмы<b>≈ {somText(r.usedSom ?? 0)}</b><span className="hint">по цене покупки</span></div>
+            <div>Заплатили за поставки<b>{somText(r.purchasedSom)}</b>{share != null && <span className="hint">{share}% выручки</span>}</div>
+            <div>Ушло на приёмы<b>≈ {somText(r.usedSom)}</b><span className="hint">по цене покупки</span></div>
           </div>
-          {(r.unpricedDeliveries ?? 0) > 0 && (
+          {r.unpricedDeliveries > 0 && (
             <p className="tone-bad">Поставок без суммы: {r.unpricedDeliveries} — расходы занижены. Вводите сумму при «Пришла поставка».</p>
           )}
-          {(r.unpricedUsed ?? 0) > 0 && <p className="hint">Без цены: {r.unpricedUsed} — их цену ни разу не вводили, в сумму не вошли.</p>}
+          {r.unpricedUsed > 0 && <p className="hint">Без цены: {r.unpricedUsed} — их цену ни разу не вводили, в сумму не вошли.</p>}
           {(r.months?.length ?? 0) > 1 && (
             <>
               <h3>За полгода</h3>
               <div className="bars months" role="list" aria-label="Покупки склада по месяцам">
                 {r.months!.map((m) => (
-                  <div key={m.month} className="bar" role="listitem" aria-label={`${monthTitle(m.month!)}: ${somText(m.purchasedSom ?? 0)}`}
-                    title={`${monthTitle(m.month!)}: ${somText(m.purchasedSom ?? 0)}`}>
-                    <span style={{ height: `${((m.purchasedSom ?? 0) / max) * 100}%` }} />
+                  <div key={m.month} className="bar" role="listitem" aria-label={`${monthTitle(m.month!)}: ${somText(m.purchasedSom)}`}
+                    title={`${monthTitle(m.month!)}: ${somText(m.purchasedSom)}`}>
+                    <span style={{ height: `${(m.purchasedSom / max) * 100}%` }} />
                     <small className="hint">{MONTH_SHORT.format(new Date(`${m.month}T00:00:00Z`))}</small>
                   </div>
                 ))}

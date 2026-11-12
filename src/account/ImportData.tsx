@@ -104,7 +104,7 @@ export function ImportData() {
       {done ? (
         <div className="import-done" role="status">
           <p className="tone-ok">✅ Загружено: добавлено {done.added}, {kind === 'PATIENTS' ? 'дополнено' : 'поставлено цен'} {done.updated},
-            {' '}пропущено {(done.unchanged ?? 0) + (done.errorCount ?? 0)}{done.errorCount ? ` (с ошибками ${done.errorCount})` : ''}</p>
+            {' '}пропущено {done.unchanged + done.errorCount}{done.errorCount ? ` (с ошибками ${done.errorCount})` : ''}</p>
           <button type="button" className="btn" onClick={() => reset()}>Загрузить ещё файл</button>
         </div>
       ) : (
@@ -168,15 +168,15 @@ function Summary({ kind, report: r }: { kind: Kind; report: Report }) {
       <p>Строк в файле: <b className="num">{r.rows}</b></p>
       <ul className="import-counts">
         <li className="tone-ok">Будет добавлено: <b className="num">{r.added}</b></li>
-        {(r.updated ?? 0) > 0 && (
+        {r.updated > 0 && (
           <li>{patients ? 'Уже есть — дополним пустую дату рождения или место работы' : 'Уже есть без цены — поставим цену'}: <b className="num">{r.updated}</b></li>
         )}
-        {(r.unchanged ?? 0) > 0 && (
+        {r.unchanged > 0 && (
           <li className="hint">{patients ? 'Уже есть (тот же номер и имя) — пропустим' : 'Уже есть — пропустим, цену не меняем'}: <b className="num">{r.unchanged}</b></li>
         )}
-        {(r.errorCount ?? 0) > 0 && <li className="tone-bad">С ошибками — не загрузим: <b className="num">{r.errorCount}</b></li>}
+        {r.errorCount > 0 && <li className="tone-bad">С ошибками — не загрузим: <b className="num">{r.errorCount}</b></li>}
       </ul>
-      {patients && (r.sharedPhone ?? 0) > 0 && (
+      {patients && r.sharedPhone > 0 && (
         <p className="hint small" role="note">Из новых {r.sharedPhone} — на номере, где уже есть другой человек (семья на одном номере):
           заведём отдельные карточки.</p>
       )}
@@ -189,7 +189,7 @@ function Summary({ kind, report: r }: { kind: Kind; report: Report }) {
             </tbody>
           </table>
           {!all && errors.length > SHOWN_ERRORS && (
-            <button type="button" className="link" onClick={() => setAll(true)}>Показать все ошибки ({errors.length}{(r.errorCount ?? 0) > errors.length ? ` из ${r.errorCount}` : ''})</button>
+            <button type="button" className="link" onClick={() => setAll(true)}>Показать все ошибки ({errors.length}{r.errorCount > errors.length ? ` из ${r.errorCount}` : ''})</button>
           )}
           <p className="hint small">Исправьте эти строки в таблице и загрузите файл ещё раз — уже загруженные не задвоятся.</p>
         </>

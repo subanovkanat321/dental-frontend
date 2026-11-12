@@ -45,16 +45,16 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
   const refresh = useRefresh()
   const [amount, setAmount] = useState('1')
   const [cost, setCost] = useState('')
-  const [settings, setSettings] = useState({ name: s.name ?? '', unit: s.unit ?? '', minQuantity: String(s.minQuantity ?? 0) })
+  const [settings, setSettings] = useState({ name: s.name ?? '', unit: s.unit ?? '', minQuantity: String(s.minQuantity) })
   const [done, setDone] = useState('')
 
   const history = useQuery({
     queryKey: ['supply-history', s.id],
-    queryFn: () => unwrap(api.GET('/api/supplies/{id}/history', { params: { path: { id: s.id! } } })),
+    queryFn: () => unwrap(api.GET('/api/supplies/{id}/history', { params: { path: { id: s.id } } })),
   })
   const move = useMutation<Supply, ApiError, number>({
     mutationFn: (delta) => unwrap(api.POST('/api/supplies/{id}/move', {
-      params: { path: { id: s.id! } },
+      params: { path: { id: s.id } },
       body: { delta, reason: delta < 0 ? 'USE' : 'DELIVERY', costSom: delta > 0 && cost ? Number(cost) : undefined },
     })),
     onSuccess: (_updated, delta) => {
@@ -65,7 +65,7 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
   })
   const save = useMutation<Supply, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/supplies/{id}', {
-      params: { path: { id: s.id! } },
+      params: { path: { id: s.id } },
       body: { name: settings.name.trim(), unit: settings.unit.trim(), minQuantity: Number(settings.minQuantity) },
     })),
     onSuccess: () => {
@@ -74,7 +74,7 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
     },
   })
   const remove = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.DELETE('/api/supplies/{id}', { params: { path: { id: s.id! } } })),
+    mutationFn: () => unwrap(api.DELETE('/api/supplies/{id}', { params: { path: { id: s.id } } })),
     onSuccess: () => {
       refresh()
       onClose()
@@ -162,9 +162,9 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
           <ul className="visits">
             {history.data.map((m, i) => (
               <li key={i}>
-                <b className={(m.delta ?? 0) < 0 ? 'tone-bad' : 'tone-ok'}>{(m.delta ?? 0) > 0 ? '+' : '−'}{Math.abs(m.delta ?? 0)}</b>
+                <b className={m.delta < 0 ? 'tone-bad' : 'tone-ok'}>{m.delta > 0 ? '+' : '−'}{Math.abs(m.delta)}</b>
                 {' '}{REASONS[m.reason ?? ''] ?? ''}{m.doctorName ? ` · ${m.doctorName}` : ''}
-                {m.costSom != null && !isAssistant(me) && <span> · {somText(m.costSom)}<span className="hint">{unitPrice(m.costSom, m.delta ?? 0, s.unit)}</span></span>}
+                {m.costSom != null && !isAssistant(me) && <span> · {somText(m.costSom)}<span className="hint">{unitPrice(m.costSom, m.delta, s.unit)}</span></span>}
                 {m.createdAt && <span className="hint"> · {shortDate(m.createdAt, true)}</span>}
               </li>
             ))}
@@ -195,7 +195,7 @@ function OwnerField({ supply: s, me, onMoved }: { supply: Supply; me: Me; onMove
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false || d.id === s.doctorId)
   const change = useMutation<Schemas['SupplyControllerOwnerChanged'], ApiError, string>({
     mutationFn: (to) => unwrap(api.PUT('/api/supplies/{id}/owner', {
-      params: { path: { id: s.id! } },
+      params: { path: { id: s.id } },
       body: { doctorId: to ? Number(to) : undefined },
     })),
     onSuccess: ({ supply, services }) => {
@@ -292,7 +292,7 @@ export function NewSupplyPanel({ me, doctorId, onClose, onCreated }: {
           <label className="field"><span>Чей склад</span>
             <Select value={form.doctorId} onChange={set('doctorId')}>
               <option value="">Общий</option>
-              {(me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id!))).map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
+              {(me.doctors ?? []).filter((d) => d.active !== false && (!isAssistant(me) || me.assistantOf!.includes(d.id))).map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
             </Select>
           </label>
         )}

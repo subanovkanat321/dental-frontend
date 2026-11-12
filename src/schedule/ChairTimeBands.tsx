@@ -27,8 +27,8 @@ export function ChairTimeBands({ slots, date, y, from, to, appointments }: {
   if (!slots) return null
   const list = slots.workingDay ? slots.chairTime ?? [] : listedChairTime(slots, date, appointments)
   return list.map((t) => {
-    const start = Math.max(dayMinutes(t.start!, date), from)
-    const end = Math.min(dayMinutes(t.end!, date), to)
+    const start = Math.max(dayMinutes(t.start, date), from)
+    const end = Math.min(dayMinutes(t.end, date), to)
     if (end <= start) return null
     const top = y(start)
     const text = chairTimeText(t)

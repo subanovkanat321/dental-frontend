@@ -17,7 +17,7 @@ export function weekDays(monday: string): string[] {
 
 /** Длительность приёма в минутах (приём до полуночи — тоже верно). */
 export function durationOf(a: Appointment): number {
-  return (minutesOf(a.endAt!) - minutesOf(a.startAt!) + 24 * 60) % (24 * 60) || 30
+  return (minutesOf(a.endAt) - minutesOf(a.startAt) + 24 * 60) % (24 * 60) || 30
 }
 
 /**

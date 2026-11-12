@@ -54,14 +54,14 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
   const onBook = (doctorId: number, minutes: number) => { setFull(false); bookProp(doctorId, minutes) }
   const onNavigate = navigateProp && ((page: Page) => { setFull(false); navigateProp(page) })
   const now = new Date().toISOString()
-  const sorted = [...all].sort((a, b) => a.startAt!.localeCompare(b.startAt!))
+  const sorted = [...all].sort((a, b) => a.startAt.localeCompare(b.startAt))
   const isToday = date === today
   const open = sorted.filter((a) => a.status === 'SCHEDULED' || a.status === 'REQUESTED')
-  const next = isToday ? open.find((a) => a.startAt! > now) : open[0]
-  const current = isToday ? sorted.filter((a) => a.status === 'SCHEDULED' && a.startAt! <= now && a.endAt! > now) : []
+  const next = isToday ? open.find((a) => a.startAt > now) : open[0]
+  const current = isToday ? sorted.filter((a) => a.status === 'SCHEDULED' && a.startAt <= now && a.endAt > now) : []
   const done = all.filter((a) => a.status === 'DONE').length
   const first = (list: Appointment[]) => () => {
-    const a = [...list].sort((x, y) => x.startAt!.localeCompare(y.startAt!))[0]
+    const a = [...list].sort((x, y) => x.startAt.localeCompare(y.startAt))[0]
     if (a) onOpen(a)
   }
   const calm = !requests.length && !waiting.length && !toPay && !low
@@ -79,15 +79,15 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
         <h2 className="ds-title">{isToday ? 'Следующий пациент' : 'Первый приём'}</h2>
         {current.map((a) => (
           <button key={a.id} type="button" className="ds-next now" onClick={() => onOpen(a)}>
-            <span className="ds-next-time num">сейчас · до {timeOf(a.endAt!)}</span>
-            <span className="ds-next-name">{a.patient?.fullName}</span>
+            <span className="ds-next-time num">сейчас · до {timeOf(a.endAt)}</span>
+            <span className="ds-next-name">{a.patient.fullName}</span>
             <span className="hint small">{doctorName(a.doctorId)}{a.serviceName ? ` · ${a.serviceName}` : ''}</span>
           </button>
         ))}
         {next ? (
           <button type="button" className={`ds-next s-${statusOf(next).kind}`} onClick={() => onOpen(next)}>
-            <span className="ds-next-time num">{timeOf(next.startAt!)}–{timeOf(next.endAt!)}</span>
-            <span className="ds-next-name">{next.patient?.fullName}</span>
+            <span className="ds-next-time num">{timeOf(next.startAt)}–{timeOf(next.endAt)}</span>
+            <span className="ds-next-name">{next.patient.fullName}</span>
             <span className="ds-next-meta">{doctorName(next.doctorId)}{next.serviceName ? ` · ${next.serviceName}` : ''}</span>
             <span className="ds-next-state"><span aria-hidden="true">{statusOf(next).icon}</span> {statusOf(next).label}</span>
           </button>
@@ -97,7 +97,7 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
         <dl className="ds-counts">
           <div><dt>Записей</dt><dd className="num">{all.length}</dd></div>
           <div><dt>Состоялось</dt><dd className="num">{done}</dd></div>
-          <div><dt>Впереди</dt><dd className="num">{isToday ? open.filter((a) => a.startAt! > now).length : open.length}</dd></div>
+          <div><dt>Впереди</dt><dd className="num">{isToday ? open.filter((a) => a.startAt > now).length : open.length}</dd></div>
         </dl>
       </section>
       <OnDuty date={date} />

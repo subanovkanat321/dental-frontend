@@ -28,8 +28,8 @@ export function QuestionsTab({ me, header, onPanel }: { me: Me; header: ReactNod
   const client = useQueryClient()
   const list = useQuery({ queryKey: ['anamnesis-questions'], queryFn: () => unwrap(api.GET('/api/anamnesis/questions')) })
   const editable = Boolean(me.admin || me.doctorId != null)
-  const [opened, setOpenedState] = useState<Question | null>(null)
-  const setOpened = useCallback((q: Question | null) => {
+  const [opened, setOpenedState] = useState<Partial<Question> | null>(null)
+  const setOpened = useCallback((q: Partial<Question> | null) => {
     setOpenedState(q)
     onPanel(q != null)
   }, [onPanel])
@@ -69,9 +69,9 @@ export function QuestionsTab({ me, header, onPanel }: { me: Me; header: ReactNod
                           <td className="r nowrap">{editable && (
                             <>
                               <button type="button" className="btn small ghost" aria-label={`Выше: ${q.title}`} disabled={i === 0 || move.isPending}
-                                onClick={() => move.mutate({ id: q.id!, direction: -1 })}>↑</button>
+                                onClick={() => move.mutate({ id: q.id, direction: -1 })}>↑</button>
                               <button type="button" className="btn small ghost" aria-label={`Ниже: ${q.title}`} disabled={i === items.length - 1 || move.isPending}
-                                onClick={() => move.mutate({ id: q.id!, direction: 1 })}>↓</button>
+                                onClick={() => move.mutate({ id: q.id, direction: 1 })}>↓</button>
                             </>
                           )}</td>
                         </tr>
@@ -91,7 +91,7 @@ export function QuestionsTab({ me, header, onPanel }: { me: Me; header: ReactNod
 }
 
 /** Вопрос: новый (без id) или существующий. Удалить — пока никто не ответил; иначе только скрыть. */
-function QuestionPanel({ question: q, onClose }: { question: Question; onClose: () => void }) {
+function QuestionPanel({ question: q, onClose }: { question: Partial<Question>; onClose: () => void }) {
   const close = useClose(onClose)
   const client = useQueryClient()
   const [f, setF] = useState({ title: q.title ?? '', label: q.label ?? '', hint: q.hint ?? '', kind: q.kind ?? 'CHECK', alert: Boolean(q.alert), active: q.active !== false })

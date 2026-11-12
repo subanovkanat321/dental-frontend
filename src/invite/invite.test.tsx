@@ -8,8 +8,8 @@ import { server } from '../test/server'
 
 /** Ссылка-приглашение на сайт: /invite#join_… — имена и номера вымышленные. */
 const DOCTOR: InviteInfo = {
-  kind: 'DOCTOR', clinicName: 'Стоматология «Тест»', fullName: 'Бакыт Тестов', role: null, roleText: 'врач',
-  expiresAt: '2026-11-09T10:00:00Z', botUsername: 'tish_test_bot', codeRequired: false, pending: null,
+  kind: 'DOCTOR', clinicName: 'Стоматология «Тест»', fullName: 'Бакыт Тестов', roleText: 'врач',
+  expiresAt: '2026-11-09T10:00:00Z', botUsername: 'tish_test_bot', codeRequired: false,
 }
 
 /** SMS на сервере подключены — номер подтверждается кодом. */

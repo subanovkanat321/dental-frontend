@@ -92,15 +92,15 @@ test('id глав и названия разделов не повторяютс
 type Me = Schemas['BookingViewsMe']
 
 test('ссылка из CRM — на роль сотрудника; админ, который и врач, получает главы администратора', () => {
-  expect(guideRole({ admin: true, doctorId: 1 } as Me)).toBe('admin')
-  expect(guideRole({ doctorId: 1 } as Me)).toBe('doctor')
-  expect(guideRole({ reception: true } as Me)).toBe('reception')
-  expect(guideRole({ assistantOf: [1] } as Me)).toBe('assistant')
+  expect(guideRole({ admin: true, doctorId: 1, doctor: false, reception: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6 } as Me)).toBe('admin')
+  expect(guideRole({ doctorId: 1, doctor: false, admin: false, reception: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6 } as Me)).toBe('doctor')
+  expect(guideRole({ reception: true, doctor: false, admin: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6 } as Me)).toBe('reception')
+  expect(guideRole({ assistantOf: [1], doctor: false, admin: false, reception: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6 } as Me)).toBe('assistant')
 })
 
 test('«Руководство» в CRM: «Открыть полное руководство» — для выбранной роли, с from=app (кнопка «Вернуться в Tish»)', async () => {
   const open = vi.spyOn(window, 'open').mockImplementation(() => null)
-  render(<GuidePage me={{ assistantOf: [1], doctors: [] } as Me} onBack={vi.fn()} />)
+  render(<GuidePage me={{ assistantOf: [1], doctors: [], doctor: false, admin: false, reception: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6 } as Me} onBack={vi.fn()} />)
   expect(screen.getByRole('heading', { name: 'Руководство' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: /Открыть полное руководство/ }))
   expect(open).toHaveBeenLastCalledWith(`${window.location.origin}/guide?role=assistant&from=app`, '_blank', 'noopener')

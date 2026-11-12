@@ -29,7 +29,7 @@ export function EarningsSummary({ e, onOpen }: { e: Earnings; onOpen?: () => voi
       <span className="ds-title">Мой заработок</span>
       <span className="ds-money-sum">{somText(todayOf(e))}</span>
       <span className="hint small">{byPercent(e) ? 'сегодня' : 'сегодня принято от ваших пациентов'}</span>
-      <span className="earn-month">За {monthName(e.month)}: <b className="num">{somText(e.monthSom ?? 0)}</b></span>
+      <span className="earn-month">За {monthName(e.month)}: <b className="num">{somText(e.monthSom)}</b></span>
       <GoalBar e={e} />
       {left != null && <span className="hint small">{left > 0 ? `до цели ${somText(left)}` : 'цель месяца достигнута'}</span>}
     </button>
@@ -40,8 +40,8 @@ export function EarningsSummary({ e, onOpen }: { e: Earnings; onOpen?: () => voi
 export function EarningsChip({ e, onOpen, compact }: { e: Earnings; onOpen?: () => void; compact?: boolean }) {
   return (
     <button type="button" className="stat s-quiet" onClick={onOpen}
-      title={`Мой заработок: за ${monthName(e.month)} ${somText(e.monthSom ?? 0)}`} aria-label={`Мой заработок сегодня: ${somText(todayOf(e))}`}>
-      <b>{number(todayOf(e))}</b> {compact ? 'сом мой день' : `сом мой день · ${monthName(e.month)} ${number(e.monthSom ?? 0)}`}
+      title={`Мой заработок: за ${monthName(e.month)} ${somText(e.monthSom)}`} aria-label={`Мой заработок сегодня: ${somText(todayOf(e))}`}>
+      <b>{number(todayOf(e))}</b> {compact ? 'сом мой день' : `сом мой день · ${monthName(e.month)} ${number(e.monthSom)}`}
     </button>
   )
 }

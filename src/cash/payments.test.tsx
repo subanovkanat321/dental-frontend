@@ -60,7 +60,7 @@ test('касса: последние оплаты — новые сверху; �
 test('долги: по умолчанию новые сверху, нажать «Долг» — большие сверху', async () => {
   window.location.hash = '/cash'
   const debt = (id: number, patient: string, day: string, sum: number) => ({
-    appointmentId: id, patient, doctor: 'Айгерим Садыкова', startAt: slotInstant(day, 600), debtSom: sum,
+    appointmentId: id, patient, doctor: 'Айгерим Садыкова', startAt: slotInstant(day, 600), debtSom: sum, patientId: 0, doctorId: 0, chargeSom: 0, paidSom: 0
   }) satisfies Schemas['PaymentQueryDebt']
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

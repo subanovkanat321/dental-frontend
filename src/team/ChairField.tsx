@@ -42,7 +42,7 @@ export function ChairField({ doctorId, me }: { doctorId: number; me: Me }) {
     onSuccess: (chair) => {
       setAdding(false)
       setName('')
-      assign.mutate(chair.id!)
+      assign.mutate(chair.id)
     },
   })
   const pick = (value: string) => {

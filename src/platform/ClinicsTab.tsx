@@ -69,9 +69,9 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
           const share = noShowShare(c.noShow30, c.done30)
           return (
             // Вся строка нажимается — карточка клиники (оплата, договор, «Войти в клинику»)
-            <tr key={c.id} className={['clickable', c.id === opened?.id ? 'active' : ''].join(' ').trim()} onClick={() => setOpened({ id: c.id! })}>
+            <tr key={c.id} className={['clickable', c.id === opened?.id ? 'active' : ''].join(' ').trim()} onClick={() => setOpened({ id: c.id })}>
               <td>
-                <button type="button" className="row-link open-link" onClick={(e) => { e.stopPropagation(); setOpened({ id: c.id! }) }}>{c.name}<span aria-hidden="true"> ›</span></button>
+                <button type="button" className="row-link open-link" onClick={(e) => { e.stopPropagation(); setOpened({ id: c.id }) }}>{c.name}<span aria-hidden="true"> ›</span></button>
                 {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
                 {c.demo && <span className="chip small s-quiet"> демо</span>}
                 <div><span className={`chip small ${hl.chip}`}>{hl.label}</span>
@@ -163,7 +163,7 @@ function NewClinic({ onCreated }: { onCreated: (id: number, solo: boolean) => vo
     onSuccess: (c) => {
       setName('')
       setCity('')
-      void client.invalidateQueries({ queryKey: ['platform-clinics'] }).then(() => onCreated(c.id!, solo))
+      void client.invalidateQueries({ queryKey: ['platform-clinics'] }).then(() => onCreated(c.id, solo))
     },
   })
   return (
@@ -195,22 +195,22 @@ function PayRequest({ r }: { r: Schemas['PayRequestsRequest'] }) {
     void client.invalidateQueries({ queryKey: ['platform-clinics'] })
   }
   const confirm = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/pay-requests/{id}/confirm', { params: { path: { id: r.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/pay-requests/{id}/confirm', { params: { path: { id: r.id } } })),
     onSuccess: refresh,
   })
   const reject = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/pay-requests/{id}/reject', { params: { path: { id: r.id! } }, body: { comment: reason } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/pay-requests/{id}/reject', { params: { path: { id: r.id } }, body: { comment: reason } })),
     onSuccess: refresh,
   })
   const receipt = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/pay-requests/{id}/receipt/send', { params: { path: { id: r.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/pay-requests/{id}/receipt/send', { params: { path: { id: r.id } } })),
     onSuccess: () => setDone('Чек отправлен в чат с ботом'),
   })
   const error = confirm.error ?? reject.error ?? receipt.error
   return (
     <div className="sub-form form" role="group" aria-label={`Оплата: ${r.clinicName}`}>
       <strong>{r.clinicName}</strong>
-      <span>{somText(r.amountSom ?? 0)} за {(PAY_PERIOD_TEXT[r.months ?? 1] ?? `${r.months} мес`).toLowerCase()} · тариф «{r.tariff}»</span>
+      <span>{somText(r.amountSom)} за {(PAY_PERIOD_TEXT[r.months] ?? `${r.months} мес`).toLowerCase()} · тариф «{r.tariff}»</span>
       <span className="hint">Сообщили {r.createdAt ? `${shortDate(r.createdAt)} в ${timeOf(r.createdAt)}` : ''}{r.hasReceipt ? '' : ' · без чека'}</span>
       <div className="actions">
         <button type="button" className="btn primary" disabled={confirm.isPending} onClick={() => confirm.mutate()}>Деньги пришли — подтвердить</button>
@@ -238,11 +238,11 @@ function Application({ a, onApproved }: { a: Schemas['ClinicApplicationsApplicat
     client.invalidateQueries({ queryKey: ['platform-clinics'] }),
   ])
   const approve = useMutation<Schemas['ClinicApplicationsApproved'], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/applications/{id}/approve', { params: { path: { id: a.id! } } })),
-    onSuccess: (r) => void refresh().then(() => onApproved(r.clinic!.id!, { name: r.contactName ?? '', solo: Boolean(r.solo) })),
+    mutationFn: () => unwrap(api.POST('/api/platform/applications/{id}/approve', { params: { path: { id: a.id } } })),
+    onSuccess: (r) => void refresh().then(() => onApproved(r.clinic!.id, { name: r.contactName ?? '', solo: Boolean(r.solo) })),
   })
   const reject = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/applications/{id}/reject', { params: { path: { id: a.id! } } })),
+    mutationFn: () => unwrap(api.POST('/api/platform/applications/{id}/reject', { params: { path: { id: a.id } } })),
     onSuccess: () => void refresh(),
   })
   const error = approve.error ?? reject.error

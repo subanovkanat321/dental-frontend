@@ -72,7 +72,7 @@ export function stateText(n: number, state: ToothState, surfaces?: readonly Surf
 
 /** Что сделали с зубом на приёме: «36 · Пломба (МО) · светоотверждаемая» — в карточке приёма, истории и «Продолжении лечения». */
 export function visitToothText(t: Schemas['VisitToothView'], withNote = true): string {
-  const n = t.number ?? 0
+  const n = t.number
   return [t.number, stateText(n, t.state ?? 'HEALTHY', t.surfaces), withNote ? t.note : null].filter(Boolean).join(' · ')
 }
 

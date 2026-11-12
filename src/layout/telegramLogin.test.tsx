@@ -34,7 +34,7 @@ function backend(statuses: TelegramLoginStatus['state'][], { telegramLogin = tru
       calls.push({ method: 'GET', path: 'status', header: request.headers.get('X-Dental-Web') })
       const state = statuses[Math.min(i++, statuses.length - 1)]!
       if (state === 'done') session = true
-      const body: TelegramLoginStatus = { state, secondsLeft: state === 'waiting' ? 280 : 0, link: state === 'waiting' ? LINK : null }
+      const body: TelegramLoginStatus = { state, secondsLeft: state === 'waiting' ? 280 : 0, link: state === 'waiting' ? LINK : undefined }
       return HttpResponse.json(body)
     }),
     http.delete('*/web/login/telegram', ({ request }) => {

@@ -113,7 +113,7 @@ export function monthStats(days: string[], doctors: { id: number; hours?: Hours 
     }
     const work = doctors.map((d) => workDayOf(date, d.id, d.hours, timeOff))
     const known = work.every((w) => w != null)
-    const off = known && work.length > 0 && work.every((w) => w!.off)
+    const off = known && work.length > 0 && work.every((w) => w.off)
     const workMinutes = work.reduce((sum, w) => sum + (w?.minutes ?? 0), 0)
     const busy = list.reduce((sum, a) => sum + durationOf(a), 0)
     const load = !known ? null : workMinutes > 0 ? Math.min(busy / workMinutes, 1) : busy > 0 ? 1 : 0

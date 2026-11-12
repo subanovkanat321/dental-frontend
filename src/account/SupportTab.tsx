@@ -78,7 +78,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
                   const [status, cls] = TICKET_STATUS[t.status ?? 'OPEN'] ?? ['', 's-quiet']
                   return (
                     <tr key={t.id} className={t.id === opened ? 'active' : undefined}>
-                      <td><button type="button" className="row-link" onClick={() => setOpened(t.id!)}>{t.viaBot ? '💬 Помощь' : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}</button>
+                      <td><button type="button" className="row-link" onClick={() => setOpened(t.id)}>{t.viaBot ? '💬 Помощь' : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}</button>
                         <span className="hint"> · {t.preview}</span></td>
                       <td><span className={`chip small ${cls}`}>{status}</span></td>
                       <td className="hint nowrap">{t.updatedAt ? shortDate(t.updatedAt) : ''}{t.author ? ` · ${t.author}` : ''}</td>
@@ -125,7 +125,7 @@ function NewTicketPanel({ kind, onClose, onSent }: { kind: string; onClose: () =
     mutationFn: async () => upload('/api/support/tickets', await ticketForm({ kind, text }, file)),
     onSuccess: (t) => {
       void client.invalidateQueries({ queryKey: ['support-tickets'] })
-      onSent(t.ticket!.id!)
+      onSent(t.ticket!.id)
     },
   })
   const submit = (e: FormEvent) => {

@@ -134,14 +134,14 @@ function MonthsChart({ month, scope }: { month: string; scope: { doctorId?: numb
             {months.map((m, k) => (
               <button key={m} type="button" className={['vbar', k === 5 && current ? 'partial' : '', k === i ? 'picked' : ''].join(' ').trim()}
                 title={`${longMonth(m)}: ${somText(values[k] ?? 0)}`} onClick={() => setPicked(k)}>
-                <span className="vbar-value num">{values[k] ? short(values[k]!) : ''}</span>
+                <span className="vbar-value num">{values[k] ? short(values[k]) : ''}</span>
                 <span className="vbar-fill" style={{ height: `${((values[k] ?? 0) / max) * 100}%` }} />
                 <span className="vbar-label">{shortMonth(m)}</span>
               </button>
             ))}
           </div>
           <p className="hint small">{longMonth(months[i]!)}: <b className="num">{somText(values[i] ?? 0)}</b>
-            {data[i]?.data?.paidCount ? ` · оплат ${data[i]!.data!.paidCount}` : ''}{i === 5 && current ? ' · по сегодня' : ''}</p>
+            {data[i]?.data?.paidCount ? ` · оплат ${data[i].data.paidCount}` : ''}{i === 5 && current ? ' · по сегодня' : ''}</p>
         </>
       )}
     </section>
@@ -169,7 +169,7 @@ function DaysChart({ period, scope }: { period: Period; scope: { doctorId?: numb
     queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { from: period.from, to: period.to, ...scope } } })),
   })
   // Сервер отдаёт только дни с оплатами — пустые дни дорисовываем нулём
-  const byDate = new Map((data.data?.days ?? []).map((d) => [d.date, d.totalSom ?? 0]))
+  const byDate = new Map((data.data?.days ?? []).map((d) => [d.date, d.totalSom]))
   const dates: string[] = []
   for (let d = period.from; d <= period.to && dates.length < 62; d = addDays(d, 1)) dates.push(d)
   const values = dates.map((d) => byDate.get(d) ?? 0)
@@ -227,7 +227,7 @@ function DoctorsChart({ me, period }: { me: Me; period: Period }) {
   const data = useQueries({
     queries: doctors.map((d) => ({
       queryKey: ['revenue', range.from, range.to, d.id],
-      queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { ...range, doctorId: d.id! } } })),
+      queryFn: () => unwrap(api.GET('/api/appointments/revenue', { params: { query: { ...range, doctorId: d.id } } })),
     })),
   })
   const rows = doctors.map((d, k) => ({ name: d.fullName ?? '', value: data[k]?.data?.totalSom ?? 0, note: `оплат ${data[k]?.data?.paidCount ?? 0}` }))
@@ -411,7 +411,7 @@ function SourcesChart({ period, scope }: { period: Period; scope: { doctorId?: n
   const data = useSources(period, scope)
   // Названия — с сервера, из списка клиники; скрытый вариант тоже: история не пропадает
   const parts: DonutPart[] = (data.data?.newPatients ?? []).map((s, k) => ({
-    key: s.sourceId == null ? `none-${k}` : String(s.sourceId), name: `${sourceLabel(s)}${s.active === false ? ' (скрыт)' : ''}`, value: s.patients ?? 0,
+    key: s.sourceId == null ? `none-${k}` : String(s.sourceId), name: `${sourceLabel(s)}${s.active === false ? ' (скрыт)' : ''}`, value: s.patients,
   }))
   const total = parts.reduce((sum, r) => sum + r.value, 0)
   const unknown = parts.find((r) => r.name === 'Не указано')?.value ?? 0
@@ -469,7 +469,7 @@ function PromoChart({ period, scope }: { period: Period; scope: { doctorId?: num
     queryKey: ['promo-report', period.from, period.to, scope.doctorId ?? null],
     queryFn: () => unwrap(api.GET('/api/appointments/promo-codes', { params: { query: { from: period.from, to: period.to, ...scope } } })),
   })
-  const rows = (data.data?.rows ?? []).filter((r) => (r.bookings ?? 0) > 0)
+  const rows = (data.data?.rows ?? []).filter((r) => r.bookings > 0)
   const money = Boolean(data.data?.money)
   return (
     <section className="card-block chart" aria-label="Промокоды">
@@ -488,8 +488,8 @@ function PromoChart({ period, scope }: { period: Period; scope: { doctorId?: num
                   <tr key={r.promoCodeId}>
                     <td>{r.code}{r.description && <span className="hint"> · {r.description}</span>}</td>
                     <td className="num">{r.bookings}</td>
-                    <td className="num">{r.visits ?? 0}</td>
-                    <td className="num">{r.newPatients ?? 0}</td>
+                    <td className="num">{r.visits}</td>
+                    <td className="num">{r.newPatients}</td>
                     {money && <td className="num">{somText(r.revenueSom ?? 0)}</td>}
                   </tr>
                 ))}
@@ -507,10 +507,10 @@ function NoShowChart({ scope }: { scope: { doctorId?: number } }) {
     queryFn: () => unwrap(api.GET('/api/appointments/stats', { params: { query: { weeks: 12, ...scope } } })),
   })
   const weeks = [...(stats.data ?? [])].reverse() // сервер — новые сверху, на графике — слева направо
-  const done = weeks.reduce((s, w) => s + (w.done ?? 0), 0)
-  const noShow = weeks.reduce((s, w) => s + (w.noShow ?? 0), 0)
+  const done = weeks.reduce((s, w) => s + w.done, 0)
+  const noShow = weeks.reduce((s, w) => s + w.noShow, 0)
   const share = done + noShow ? Math.round((noShow / (done + noShow)) * 100) : null
-  const max = Math.max(1, ...weeks.map((w) => (w.done ?? 0) + (w.noShow ?? 0)))
+  const max = Math.max(1, ...weeks.map((w) => w.done + w.noShow))
   return (
     <section className="card-block chart" aria-label="Неявки по неделям">
       <h2>Сколько теряем на неявках</h2>
@@ -518,12 +518,12 @@ function NoShowChart({ scope }: { scope: { doctorId?: number } }) {
         <>
           <p className="chart-headline"><b>{share}%</b> приёмов — неявка<span className="hint"> · {noShow} из {done + noShow} за 12 недель</span></p>
           <div className="legend" aria-hidden="true"><span className="key done" /> состоялось <span className="key bad" /> неявка</div>
-          <div className="vbars stacked" role="img" aria-label={weeks.map((w) => `${w.weekStart ? weekLabel(w.weekStart) : ''}: состоялось ${w.done ?? 0}, неявок ${w.noShow ?? 0}`).join('; ')}>
+          <div className="vbars stacked" role="img" aria-label={weeks.map((w) => `${w.weekStart ? weekLabel(w.weekStart) : ''}: состоялось ${w.done}, неявок ${w.noShow}`).join('; ')}>
             {weeks.map((w) => (
-              <div key={w.weekStart} className="vbar" title={`${w.weekStart ? weekLabel(w.weekStart) : ''}: состоялось ${w.done ?? 0}, неявок ${w.noShow ?? 0}`}>
-                <span className="vbar-stack" style={{ height: `${(((w.done ?? 0) + (w.noShow ?? 0)) / max) * 100}%` }}>
-                  {(w.noShow ?? 0) > 0 && <span className="seg bad" style={{ flexGrow: w.noShow }} />}
-                  {(w.done ?? 0) > 0 && <span className="seg done" style={{ flexGrow: w.done }} />}
+              <div key={w.weekStart} className="vbar" title={`${w.weekStart ? weekLabel(w.weekStart) : ''}: состоялось ${w.done}, неявок ${w.noShow}`}>
+                <span className="vbar-stack" style={{ height: `${((w.done + w.noShow) / max) * 100}%` }}>
+                  {w.noShow > 0 && <span className="seg bad" style={{ flexGrow: w.noShow }} />}
+                  {w.done > 0 && <span className="seg done" style={{ flexGrow: w.done }} />}
                 </span>
                 <span className="vbar-label">{w.weekStart ? Number(w.weekStart.slice(8)) : ''}</span>
               </div>

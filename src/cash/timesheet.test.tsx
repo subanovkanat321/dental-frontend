@@ -37,7 +37,7 @@ test('склонение дней', () => {
 
 test('оклад по табелю: расшифровка в карточке, табель, больничный кистью, норма вручную', async () => {
   let row: Row = { assistantId: 7303, doctor: 'Айпери', position: 'регистратура', percent: 0, baseSom: 30000, revenueSom: 0,
-    dueSom: 30000, paidSom: 0, byTimesheet: true, workedDays: 22, normDays: 22, baseAccruedSom: 30000 }
+    dueSom: 30000, paidSom: 0, byTimesheet: true, workedDays: 22, normDays: 22, baseAccruedSom: 30000, former: false, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0 }
   let sheet: Sheet = { month: '2026-03', telegramId: 7303, baseSom: 30000, byTimesheet: true, accruedSom: 30000, normDays: 22,
     normManual: false, plannedDays: 22, workedDays: 22, days: march() }
   const sent: unknown[] = []
@@ -83,7 +83,7 @@ test('оклад по табелю: расшифровка в карточке, 
 })
 
 test('условия: галочка «оклад по табелю» уходит на сервер', async () => {
-  const row: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 0, dueSom: 0, paidSom: 0 }
+  const row: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 0, baseSom: 0, revenueSom: 0, dueSom: 0, paidSom: 0, former: false, earnedSom: 0, rentFixedSom: 0, rentSom: 0, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
   let sent: unknown = null
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

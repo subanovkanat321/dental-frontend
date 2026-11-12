@@ -85,7 +85,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   // Этап приёма: заметка, материалы и диктовка — когда приём начинается (за 15 минут) или прошёл;
   // утром карточка дневного приёма короткая: напомнить, перенести, связаться. «Показать сейчас» — если начали раньше
   const nowMinutes = useNowMinutes()
-  const inChair = date < todayIn() || (date === todayIn() && nowMinutes >= minutesOf(a.startAt!) - 15)
+  const inChair = date < todayIn() || (date === todayIn() && nowMinutes >= minutesOf(a.startAt) - 15)
   const [early, setEarly] = useState(false)
   const visitTools = a.status === 'DONE' || (a.status === 'SCHEDULED' && started && (inChair || early))
   const future = a.startAt ? new Date(a.startAt) > new Date() : false
@@ -98,7 +98,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     active && seesMoneyOf(me, a.doctorId) && !a.depositStatus ? 'deposit' : null,
     active && future && a.patient ? 'waitlist' : null,
     // Откуда узнал о клинике — тоже под «Ещё»: в шапке занимал много места
-    a.patient?.id != null ? 'source' : null,
+    a.patient.id != null ? 'source' : null,
   ] as const).filter((x): x is Rare => x != null)
   // Подпись «Ещё»: что внутри, кратко
   const more = [
@@ -112,13 +112,13 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   // …и ассистенту этого врача (смотрит медкарту, как сервер — ChartService)
   const clinical = seesAllMoney(me) || a.doctorId === me.doctorId
     || Boolean(a.doctorId != null && me.assistantOf?.includes(a.doctorId))
-  const anamnesis = useAnamnesis(a.patient?.id, clinical && a.status !== 'CANCELLED')
+  const anamnesis = useAnamnesis(a.patient.id, clinical && a.status !== 'CANCELLED')
   // «Карта зубов и план лечения ›» — вся медкарта пациента; «Назад» — к приёму
-  const medical = clinical && onMedical && a.patient ? () => onMedical(a.patient!) : undefined
+  const medical = clinical && onMedical && a.patient ? () => onMedical(a.patient) : undefined
   const length = a.startAt && a.endAt ? (Date.parse(a.endAt) - Date.parse(a.startAt)) / 60_000 : 30
   // force — вместе с заметкой и оплатой (только владелец Tish; спрашиваем отдельно, что пропадёт)
   const remove = useMutation<unknown, ApiError, boolean>({
-    mutationFn: (force) => unwrap(api.DELETE('/api/appointments/{id}', { params: { path: { id: a.id! }, query: { force } } })),
+    mutationFn: (force) => unwrap(api.DELETE('/api/appointments/{id}', { params: { path: { id: a.id }, query: { force } } })),
     onSuccess: () => {
       // С записью удаляются её оплата и долг — «Касса» и отчёт тоже перечитываются
       refreshAppointmentData(client)
@@ -157,7 +157,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const setStatus = async (status: Status, opts: { question?: string; undo?: string } = {}) => {
     if (opts.question && !await ask(opts.question)) return
     const previous = a.status as Status
-    action.mutate({ kind: 'status', body: { version: a.version ?? 0, status } }, {
+    action.mutate({ kind: 'status', body: { version: a.version, status } }, {
       onSuccess: () => setUndo(opts.undo ? { label: opts.undo, previous } : null),
     })
   }
@@ -165,16 +165,16 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const reopen = async (current: Appointment) => {
     if (!await ask(current.status === 'DONE' ? 'Вернуть приём в запланированные? Отметка «Приём состоялся» снимется.'
       : 'Вернуть приём в запланированные? Отметка «Неявка» снимется.')) return
-    action.mutate({ kind: 'undo', body: { version: current.version ?? 0, previousStatus: 'SCHEDULED' } })
+    action.mutate({ kind: 'undo', body: { version: current.version, previousStatus: 'SCHEDULED' } })
   }
-  const back = (updated: Appointment) => action.mutate({ kind: 'undo', body: { version: updated.version ?? 0, previousStatus: undo!.previous } },
+  const back = (updated: Appointment) => action.mutate({ kind: 'undo', body: { version: updated.version, previousStatus: undo!.previous } },
     { onSuccess: () => setUndo(null) })
   // То же время, что у этого приёма, — если оно ещё не прошло; иначе форма откроется без времени (сетка свободного)
   const bookAgain = (day: string) => {
     if (!a.patient) return
-    const minutes = minutesOf(a.startAt!)
+    const minutes = minutesOf(a.startAt)
     const past = Date.parse(slotInstant(day, minutes)) < Date.now()
-    onBook?.({ doctorId: a.doctorId!, date: day, minutes: past ? null : minutes, duration: length }, a.patient)
+    onBook?.({ doctorId: a.doctorId, date: day, minutes: past ? null : minutes, duration: length }, a.patient)
   }
 
   // Главная кнопка — одна на карточку (DESIGN.md): после приёма, пока не оплачено, это «Принять оплату»
@@ -182,7 +182,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   // Приём в рабочих часах коллеги по креслу (V187): слоты дня врача (те же, что у сетки и списка — обычно из кэша)
   const daySlots = useQuery({
     queryKey: ['slots', date, a.doctorId],
-    queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId: a.doctorId! } } })),
+    queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId: a.doctorId } } })),
     enabled: a.doctorId != null && a.status !== 'CANCELLED',
   })
   const colleague = colleagueTimeOf(a, daySlots.data?.chairTime)
@@ -197,7 +197,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {/* Шапка: когда, у кого и статус; справа — показать пациенту, на весь экран, закрыть */}
       <header className="panel-head">
         <div className="appt-when">
-          <div className="with-hint"><h2>{timeOf(a.startAt!)}–{timeOf(a.endAt!)}</h2><HelpHint hint="appointment" /></div>
+          <div className="with-hint"><h2>{timeOf(a.startAt)}–{timeOf(a.endAt)}</h2><HelpHint hint="appointment" /></div>
           <span className="hint">{dayTitle(date)}{doctors.length > 1 && doctor ? ` · ${doctor.fullName}` : ''}</span>
         </div>
         <div className="panel-head-actions">
@@ -222,10 +222,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {/* Пациент: имя (→ его карточка), телефон, история одной строкой и важное из анкеты */}
       <section className="appt-patient" aria-label="Пациент">
         <div className="appt-who">
-          {onOpenPatient && a.patient?.id
-            ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient!.id!)}>{a.patient.fullName} ›</button>
-            : <strong className="patient-name">{a.patient?.fullName}</strong>}
-          {a.patient?.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
+          {onOpenPatient && a.patient.id
+            ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient.id)}>{a.patient.fullName} ›</button>
+            : <strong className="patient-name">{a.patient.fullName}</strong>}
+          {a.patient.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
         </div>
         <KidInfo patient={a.patient} />
         <PatientHistory appointment={a} me={me} />
@@ -329,12 +329,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {clinical && <ContinueTreatment appointment={a} open={visitTools && a.status === 'SCHEDULED'} onMedical={medical} />}
           {canEdit && (visitTools || a.status === 'NO_SHOW') && <VisitNote appointment={a} />}
           {/* Зубы этого приёма: врач приёма и админ отмечают, ассистент видит; «Карта зубов и план лечения ›» — вся медкарта */}
-          {canEdit && visitTools && clinical && a.patient?.id != null && (
+          {canEdit && visitTools && clinical && a.patient.id != null && (
             <VisitTeeth appointment={a} onMedical={medical}
               readOnly={!(seesAllMoney(me) || (a.doctorId != null && a.doctorId === me.doctorId))} />
           )}
           {canEdit && visitTools && <Supplies appointment={a} me={me} />}
-          {canEdit && visitTools && clinical && a.patient?.id != null && (
+          {canEdit && visitTools && clinical && a.patient.id != null && (
             <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
           )}
           {canEdit && a.status === 'SCHEDULED' && started && !visitTools && (
@@ -362,7 +362,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           )}
           {a.status === 'SCHEDULED' && (
             <button type="button" className="btn danger" disabled={action.isPending}
-              onClick={() => setStatus('CANCELLED', { question: `Отменить запись ${a.patient?.fullName ?? ''}? Время освободится.`, undo: 'Запись отменена' })}>Отменить запись</button>
+              onClick={() => setStatus('CANCELLED', { question: `Отменить запись ${a.patient.fullName}? Время освободится.`, undo: 'Запись отменена' })}>Отменить запись</button>
           )}
         </div>
       )}
@@ -377,7 +377,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             {rare.includes('deposit') && <DepositBox key="none" appointment={a} />}
             {rare.includes('waitlist') && a.patient && <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>}
             {/* Откуда узнал — пациент не ответил в боте, отметят здесь */}
-            {rare.includes('source') && a.patient?.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
+            {rare.includes('source') && a.patient.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
             {/* Расход по пациенту (техник, лаборатория); регистратуре и ассистенту нет (у них нет своих расходов) */}
             {a.status === 'DONE' && seesMoney && a.patient && (me.admin || me.doctorId != null) && <PatientExpenses patient={a.patient} me={me} doctorId={a.doctorId} />}
             {/* Квитанция: печать и «Отправить пациенту» — только по нажатию */}

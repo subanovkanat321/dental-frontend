@@ -44,7 +44,7 @@ function backend({ telegram = true, plan = PLAN }: { telegram?: boolean; plan?: 
     http.put('*/api/patients/2/plan/:stepId', async ({ request, params }) => {
       const body = await request.json() as Schemas['ChartControllerStep']
       calls.push({ put: Number(params.stepId), stage: body.stage })
-      steps = steps.map((s) => (s.id === Number(params.stepId) ? { ...s, stage: body.stage } : s))
+      steps = steps.map((s) => (s.id === Number(params.stepId) ? { ...s, stage: body.stage ?? s.stage } : s))
       return HttpResponse.json(steps)
     }),
     http.get('*/api/patients/2/plan/offers', () => HttpResponse.json(offers)),

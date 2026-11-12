@@ -23,7 +23,7 @@ const owner = { ...me, owner: true, platform: true }
 const today = todayIn()
 
 const post = (id: number, extra: Partial<Schemas['ContentPostsPost']> = {}) => ({
-  id, publishOn: today, kind: 'CAROUSEL', title: `Пост ${id}`, caption: '', images: [], note: '', status: 'PLANNED', ...extra,
+  id, publishOn: today, kind: 'CAROUSEL', title: `Пост ${id}`, caption: '', images: [], note: '', status: 'PLANNED', instagramPublishing: false, story: false, storyPublishing: false, ...extra,
 }) satisfies Schemas['ContentPostsPost']
 
 async function openTab() {
@@ -163,7 +163,7 @@ test('Instagram подключён: «Опубликовать в Instagram» п
           detail: 'Токен Instagram истёк или отозван — получите новый и пропишите INSTAGRAM_TOKEN в .env' }, { status: 409 })
       }
       posts = posts.map((p) => (p.id === 1 ? { ...p, status: 'DONE', instagramMediaId: 'm1', instagramUrl: 'https://www.instagram.com/p/T1/' } : p))
-      return HttpResponse.json(posts[0]!)
+      return HttpResponse.json(posts[0])
     }),
   )
   const user = await openTab()
@@ -229,7 +229,7 @@ test('рилс в плане: плеер с обложкой, время; пуб
     http.post('*/api/platform/content/:id/publish', ({ params }) => {
       published.push(String(params.id))
       posts = posts.map((p) => (p.id === 7 ? { ...p, instagramPublishing: true } : p))
-      return HttpResponse.json(posts[0]!, { status: 202 })
+      return HttpResponse.json(posts[0], { status: 202 })
     }),
   )
   const user = await openTab()
@@ -323,7 +323,7 @@ test('«Рилсы — автоматически» с подключённым 
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
     http.get('*/api/platform/content', () => HttpResponse.json([])),
     http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
-    http.get('*/api/platform/content/settings', () => HttpResponse.json({ reelsAuto: true } satisfies Schemas['ContentSettingsSettings'])),
+    http.get('*/api/platform/content/settings', () => HttpResponse.json({ reelsAuto: true, storiesAuto: false } satisfies Schemas['ContentSettingsSettings'])),
   )
   await openTab()
   expect(await screen.findByRole('checkbox', { name: 'Рилсы — автоматически' })).toBeChecked()
@@ -461,7 +461,7 @@ test('сторис после поста: «✓ в сторис», ошибка 
       const id = Number(params.id)
       calls.push(String(id))
       posts = posts.map((p) => (p.id === id ? { ...p, storyMediaId: `s${id}`, storyError: undefined, storyErrorAt: undefined } : p))
-      return HttpResponse.json(posts.find((p) => p.id === id)!)
+      return HttpResponse.json(posts.find((p) => p.id === id))
     }),
   )
   const user = await openTab()

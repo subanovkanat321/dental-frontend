@@ -1364,6 +1364,246 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/plan/{token}/question": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["question"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/plan/{token}/agree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["agree"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login/telegram/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["login_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login/phone/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["password"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login/phone/password/new": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["newPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login/phone/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["view_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/invite/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/invite/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["code_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/clinic-applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/client-error": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/booking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["info"];
+        put?: never;
+        post: operations["book"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/waitlist": {
         parameters: {
             query?: never;
@@ -1389,7 +1629,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["book"];
+        post: operations["book_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1773,7 +2013,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["start"];
+        post: operations["start_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2781,7 +3021,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["question"];
+        post: operations["question_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2797,7 +3037,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["agree"];
+        post: operations["agree_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2829,7 +3069,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["book_1"];
+        post: operations["book_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3021,7 +3261,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["code"];
+        post: operations["code_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3053,7 +3293,7 @@ export interface paths {
         };
         get: operations["codePending"];
         put?: never;
-        post: operations["code_1"];
+        post: operations["code_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3899,9 +4139,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_2"];
+        get: operations["view_3"];
         put?: never;
-        post: operations["report"];
+        post: operations["report_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3950,6 +4190,326 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["moveQuestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/tariffs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tariffs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/plan/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["plan_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/materials/reel/{dir}/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/materials/public": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["publicMaterials"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/materials/public/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["publicFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/materials/howto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["howTo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/materials/howto/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["howToFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/materials/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["signed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login/telegram/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login/phone/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["pending"];
+        put?: never;
+        post?: never;
+        delete: operations["forget"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["data"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/import/tish-perenos.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["template_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/content-jpeg/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["file_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["config"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/clinics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["data_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/clinic": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["data_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/case": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/calendar/{token}.ics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["feed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/booking/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["slots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/booking/free-days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["freeDays"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4011,7 +4571,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["slots"];
+        get: operations["slots_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4091,7 +4651,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_3"];
+        get: operations["get_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4107,7 +4667,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_3"];
+        get: operations["view_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4155,7 +4715,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template_2"];
+        get: operations["template_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4187,7 +4747,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_4"];
+        get: operations["get_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4203,7 +4763,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4315,7 +4875,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["file"];
+        get: operations["file_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4347,7 +4907,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4491,7 +5051,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_1"];
+        get: operations["report_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4507,7 +5067,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template_3"];
+        get: operations["template_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4539,7 +5099,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
+        get: operations["get_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4667,7 +5227,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_8"];
+        get: operations["get_9"];
         put?: never;
         post?: never;
         delete: operations["unsign"];
@@ -4715,7 +5275,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["slots_1"];
+        get: operations["slots_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4795,7 +5355,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["freeDays"];
+        get: operations["freeDays_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4891,7 +5451,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_9"];
+        get: operations["get_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4987,7 +5547,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_10"];
+        get: operations["get_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5131,7 +5691,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["plan_2"];
+        get: operations["plan_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5147,7 +5707,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["view_4"];
+        get: operations["view_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5195,7 +5755,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["template_4"];
+        get: operations["template_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5323,7 +5883,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_11"];
+        get: operations["get_12"];
         put?: never;
         post?: never;
         delete: operations["delete_13"];
@@ -5563,7 +6123,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["report_2"];
+        get: operations["report_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5631,6 +6191,38 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/login/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["forget_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/invite/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["forget_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5824,14 +6416,14 @@ export interface components {
         };
         SupplyView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             name?: string;
             unit?: string;
             /** Format: int32 */
-            quantity?: number;
+            quantity: number;
             /** Format: int32 */
-            minQuantity?: number;
-            low?: boolean;
+            minQuantity: number;
+            low: boolean;
             /** Format: date-time */
             orderedAt?: string;
             orderedBy?: string;
@@ -5860,9 +6452,9 @@ export interface components {
         };
         ShiftServiceShiftView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
-            telegramId?: number;
+            telegramId: number;
             /** Format: date */
             day?: string;
             /** Format: time-local */
@@ -5886,11 +6478,11 @@ export interface components {
         };
         ServiceTypeView: {
             /** Format: int64 */
-            id?: number;
-            name?: string;
+            id: number;
+            name: string;
             /** Format: int32 */
-            durationMinutes?: number;
-            active?: boolean;
+            durationMinutes: number;
+            active: boolean;
             /** Format: int32 */
             priceSom?: number;
             category?: string;
@@ -5910,13 +6502,13 @@ export interface components {
         };
         ServiceSuppliesItem: {
             /** Format: int64 */
-            supplyId?: number;
+            supplyId: number;
             name?: string;
             unit?: string;
             /** Format: int32 */
-            quantity?: number;
+            quantity: number;
             /** Format: int32 */
-            inStock?: number;
+            inStock: number;
             /** Format: int64 */
             doctorId?: number;
             doctorName?: string;
@@ -5939,32 +6531,32 @@ export interface components {
             position?: string;
             percent?: number;
             /** Format: int64 */
-            baseSom?: number;
+            baseSom: number;
             /** Format: int64 */
-            revenueSom?: number;
+            revenueSom: number;
             /** Format: int64 */
-            dueSom?: number;
+            dueSom: number;
             /** Format: int64 */
-            paidSom?: number;
-            former?: boolean;
+            paidSom: number;
+            former: boolean;
             /** Format: int64 */
-            earnedSom?: number;
+            earnedSom: number;
             /** Format: int64 */
-            rentFixedSom?: number;
+            rentFixedSom: number;
             rentPercent?: number;
             /** Format: int64 */
-            rentSom?: number;
+            rentSom: number;
             /** Format: int64 */
-            owesSom?: number;
+            owesSom: number;
             /** Format: int64 */
-            rentReceivedSom?: number;
-            byTimesheet?: boolean;
+            rentReceivedSom: number;
+            byTimesheet: boolean;
             /** Format: int32 */
             workedDays?: number;
             /** Format: int32 */
             normDays?: number;
             /** Format: int64 */
-            baseAccruedSom?: number;
+            baseAccruedSom: number;
         };
         TimesheetControllerNormRequest: {
             /** Format: int64 */
@@ -5982,26 +6574,26 @@ export interface components {
             /** Format: int64 */
             telegramId?: number;
             /** Format: int64 */
-            baseSom?: number;
-            byTimesheet?: boolean;
+            baseSom: number;
+            byTimesheet: boolean;
             /** Format: int64 */
-            accruedSom?: number;
+            accruedSom: number;
             /** Format: int32 */
-            normDays?: number;
-            normManual?: boolean;
+            normDays: number;
+            normManual: boolean;
             /** Format: int32 */
-            plannedDays?: number;
+            plannedDays: number;
             /** Format: int32 */
-            workedDays?: number;
+            workedDays: number;
             days?: components["schemas"]["TimesheetsDay"][];
         };
         TimesheetsDay: {
             /** Format: date */
             date?: string;
-            planned?: boolean;
+            planned: boolean;
             /** @enum {string} */
             mark?: "WORKED" | "OFF" | "SICK" | "VACATION";
-            manual?: boolean;
+            manual: boolean;
             note?: string;
         };
         TimesheetControllerDayRequest: {
@@ -6018,11 +6610,11 @@ export interface components {
             channel?: string;
         };
         PushControllerPushView: {
-            enabled?: boolean;
+            enabled: boolean;
             publicKey?: string;
             channel?: string;
             devices?: string[];
-            noTelegram?: boolean;
+            noTelegram: boolean;
         };
         PromoCodesRequest: {
             code?: string;
@@ -6036,17 +6628,17 @@ export interface components {
         };
         PromoCodesCode: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             code?: string;
             description?: string;
             /** Format: int32 */
             discountPercent?: number;
             discountText?: string;
-            active?: boolean;
+            active: boolean;
             /** Format: date */
             validUntil?: string;
             /** Format: int64 */
-            appointments?: number;
+            appointments: number;
         };
         BillingControllerTariffsRequest: {
             /** Format: int32 */
@@ -6060,13 +6652,13 @@ export interface components {
             /** Format: int32 */
             maxDoctors?: number;
             /** Format: int64 */
-            monthSom?: number;
+            monthSom: number;
             /** Format: int64 */
-            yearSom?: number;
+            yearSom: number;
         };
         Tariffs: {
             /** Format: int32 */
-            pilotMonths?: number;
+            pilotMonths: number;
             promo?: components["schemas"]["TariffsPromo"];
             tariffs?: components["schemas"]["TariffsTariff"][];
         };
@@ -6097,7 +6689,7 @@ export interface components {
         };
         SurveyDetails: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             title?: string;
             intro?: string;
             roles?: ("ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT")[];
@@ -6105,16 +6697,16 @@ export interface components {
             startsOn?: string;
             /** Format: date */
             endsOn?: string;
-            active?: boolean;
-            announce?: boolean;
+            active: boolean;
+            announce: boolean;
             /** Format: date-time */
             announcedAt?: string;
             /** Format: int32 */
-            invited?: number;
+            invited: number;
             /** @enum {string} */
             status?: "DRAFT" | "SCHEDULED" | "OPEN" | "FINISHED" | "STOPPED";
             /** Format: int32 */
-            responses?: number;
+            responses: number;
             /** Format: date-time */
             createdAt?: string;
             questions?: components["schemas"]["SurveyQuestion"][];
@@ -6126,8 +6718,8 @@ export interface components {
         PayRequestsSettings: {
             details?: string;
             requisites?: string;
-            hasRequisites?: boolean;
-            hasQr?: boolean;
+            hasRequisites: boolean;
+            hasQr: boolean;
         };
         ClinicOutreachChangeRequest: {
             clinicName?: string;
@@ -6138,7 +6730,7 @@ export interface components {
         };
         SalesFunnelLead: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             clinicName?: string;
             contactName?: string;
             phone?: string;
@@ -6152,7 +6744,7 @@ export interface components {
             clinicId?: number;
             /** Format: date-time */
             createdAt?: string;
-            solo?: boolean;
+            solo: boolean;
             /** @enum {string} */
             stage?: "LEAD" | "CONTACTED" | "DEMO" | "TRIAL" | "PAYING" | "LOST";
             /** Format: date-time */
@@ -6174,7 +6766,7 @@ export interface components {
         };
         ClinicOutreachTemplate: {
             text?: string;
-            custom?: boolean;
+            custom: boolean;
             defaultText?: string;
         };
         PlatformInfoControllerRequest: {
@@ -6194,9 +6786,9 @@ export interface components {
             supportUrl?: string;
             supportPhone?: string;
             supportEmail?: string;
-            accessLog?: boolean;
-            accessNotify?: boolean;
-            accessRequiresGrant?: boolean;
+            accessLog: boolean;
+            accessNotify: boolean;
+            accessRequiresGrant: boolean;
             supportPhones?: string[];
             supportWhatsapp?: string;
             doctorsGroupUrl?: string;
@@ -6226,17 +6818,17 @@ export interface components {
         };
         PlatformTopupsTopup: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             service?: string;
             /** Format: int64 */
-            amountSom?: number;
+            amountSom: number;
             amountUsd?: number;
             usdRate?: number;
             /** Format: date */
             paidOn?: string;
             comment?: string;
             /** Format: int64 */
-            createdBy?: number;
+            createdBy: number;
             /** Format: date-time */
             createdAt?: string;
         };
@@ -6258,15 +6850,15 @@ export interface components {
         };
         PlatformExpensesExpense: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             category?: string;
             /** Format: int64 */
-            amountSom?: number;
+            amountSom: number;
             amountUsd?: number;
             usdRate?: number;
             /** Format: date */
             spentOn?: string;
-            monthly?: boolean;
+            monthly: boolean;
             /** Format: date */
             endedOn?: string;
             comment?: string;
@@ -6282,7 +6874,7 @@ export interface components {
         };
         PlatformExpensesMark: {
             /** Format: int64 */
-            expenseId?: number;
+            expenseId: number;
             category?: string;
             month?: string;
             status?: string;
@@ -6307,7 +6899,7 @@ export interface components {
         };
         ContentPostsPost: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: date */
             publishOn?: string;
             /** @enum {string} */
@@ -6330,15 +6922,15 @@ export interface components {
             cover?: string;
             videoUrl?: string;
             coverUrl?: string;
-            instagramPublishing?: boolean;
+            instagramPublishing: boolean;
             instagramError?: string;
             /** Format: date-time */
             instagramErrorAt?: string;
-            story?: boolean;
+            story: boolean;
             storyMediaId?: string;
             /** Format: date-time */
             storyAt?: string;
-            storyPublishing?: boolean;
+            storyPublishing: boolean;
             storyError?: string;
             /** Format: date-time */
             storyErrorAt?: string;
@@ -6348,8 +6940,8 @@ export interface components {
             storiesAuto?: boolean;
         };
         ContentSettingsSettings: {
-            reelsAuto?: boolean;
-            storiesAuto?: boolean;
+            reelsAuto: boolean;
+            storiesAuto: boolean;
         };
         BillingControllerPaidUntil: {
             /** Format: date */
@@ -6366,46 +6958,46 @@ export interface components {
             pausesOn?: string;
         };
         PlatformControllerHidden: {
-            hidden?: boolean;
+            hidden: boolean;
         };
         PlatformServiceClinicRow: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             name?: string;
             code?: string;
             /** Format: date-time */
             createdAt?: string;
             /** Format: int64 */
-            doctors?: number;
+            doctors: number;
             /** Format: int64 */
-            staff?: number;
+            staff: number;
             /** Format: int64 */
-            patients?: number;
+            patients: number;
             /** Format: int64 */
-            appointments?: number;
+            appointments: number;
             /** Format: date-time */
             staffSeenAt?: string;
             /** Format: int64 */
-            bookedWeek?: number;
+            bookedWeek: number;
             /** Format: int64 */
-            selfBooked30?: number;
+            selfBooked30: number;
             /** Format: int64 */
-            noShow30?: number;
+            noShow30: number;
             /** Format: int64 */
-            done30?: number;
+            done30: number;
             /** Format: int64 */
-            unmarked?: number;
+            unmarked: number;
             /** @enum {string} */
             health?: "OK" | "QUIET" | "ASLEEP" | "NEW";
             billing?: components["schemas"]["ClinicBillingBilling"];
             admins?: string;
-            hidden?: boolean;
+            hidden: boolean;
             contactName?: string;
             contactPhone?: string;
             contactTelegram?: string;
-            listed?: boolean;
-            settingUp?: boolean;
-            demo?: boolean;
+            listed: boolean;
+            settingUp: boolean;
+            demo: boolean;
         };
         AgreementControllerAssignment: {
             /** Format: int64 */
@@ -6413,7 +7005,7 @@ export interface components {
         };
         AgreementsAcceptance: {
             /** Format: int32 */
-            version?: number;
+            version: number;
             textSha256?: string;
             clinicLegalName?: string;
             clinicInn?: string;
@@ -6428,22 +7020,22 @@ export interface components {
         };
         AgreementsAdminChannels: {
             /** Format: int32 */
-            telegram?: number;
+            telegram: number;
             /** Format: int32 */
-            phone?: number;
+            phone: number;
             /** Format: int32 */
-            push?: number;
+            push: number;
         };
         AgreementsChoice: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int32 */
-            version?: number;
+            version: number;
             title?: string;
             /** Format: date-time */
             publishedAt?: string;
-            forAll?: boolean;
-            signed?: boolean;
+            forAll: boolean;
+            signed: boolean;
         };
         AgreementsClinicAgreement: {
             current?: components["schemas"]["AgreementsVersion"];
@@ -6459,11 +7051,11 @@ export interface components {
         };
         AgreementsScan: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             fileName?: string;
             contentType?: string;
             /** Format: int32 */
-            sizeBytes?: number;
+            sizeBytes: number;
             /** Format: date-time */
             createdAt?: string;
         };
@@ -6477,9 +7069,9 @@ export interface components {
         };
         AgreementsVersion: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int32 */
-            version?: number;
+            version: number;
             title?: string;
             body?: string;
             sha256?: string;
@@ -6488,8 +7080,8 @@ export interface components {
             /** Format: date-time */
             publishedAt?: string;
             /** Format: int32 */
-            acceptances?: number;
-            forAll?: boolean;
+            acceptances: number;
+            forAll: boolean;
             clinicIds?: number[];
         };
         JoinCaseMetric: {
@@ -6505,7 +7097,7 @@ export interface components {
             title?: string;
             text?: string;
             metrics?: components["schemas"]["JoinCaseMetric"][];
-            shown?: boolean;
+            shown: boolean;
         };
         AiUsageControllerSettingsRequest: {
             /** Format: int32 */
@@ -6515,7 +7107,7 @@ export interface components {
         };
         AiUsageStoreSettings: {
             /** Format: int32 */
-            perDoctor?: number;
+            perDoctor: number;
             somPerUsd?: number;
             vatPercent?: number;
         };
@@ -6539,7 +7131,7 @@ export interface components {
         };
         ToothView: {
             /** Format: int32 */
-            number?: number;
+            number: number;
             /** @enum {string} */
             state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
             surfaces?: ("M" | "O" | "D" | "B" | "L")[];
@@ -6573,7 +7165,7 @@ export interface components {
         };
         TreatmentStepView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int32 */
             tooth?: number;
             title?: string;
@@ -6582,7 +7174,7 @@ export interface components {
             /** Format: date-time */
             doneAt?: string;
             /** Format: int32 */
-            stage?: number;
+            stage: number;
             /** Format: int64 */
             serviceTypeId?: number;
         };
@@ -6591,18 +7183,18 @@ export interface components {
         };
         PatientFilesView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** @enum {string} */
             kind?: "XRAY" | "PHOTO" | "OTHER";
             caption?: string;
             /** Format: date */
             takenOn?: string;
             /** Format: int32 */
-            sizeBytes?: number;
+            sizeBytes: number;
             /** Format: date-time */
             createdAt?: string;
             createdBy?: string;
-            canDelete?: boolean;
+            canDelete: boolean;
             postText?: string;
         };
         ChartControllerDentitionRequest: {
@@ -6617,10 +7209,10 @@ export interface components {
         };
         PatientView: {
             /** Format: int64 */
-            id?: number;
-            fullName?: string;
+            id: number;
+            fullName: string;
             phone?: string;
-            telegram?: boolean;
+            telegram: boolean;
             workplace?: string;
             /** Format: date */
             birthDate?: string;
@@ -6641,15 +7233,15 @@ export interface components {
         };
         AnamnesisItem: {
             /** Format: int64 */
-            questionId?: number;
+            questionId: number;
             code?: string;
             section?: string;
             kind?: string;
             title?: string;
             label?: string;
             hint?: string;
-            alert?: boolean;
-            yes?: boolean;
+            alert: boolean;
+            yes: boolean;
             text?: string;
         };
         AnamnesisView: {
@@ -6661,7 +7253,7 @@ export interface components {
         PatientRequest: {
             fullName: string;
             phone: string;
-            allowDuplicate?: boolean;
+            allowDuplicate: boolean;
             workplace?: string;
             /** Format: date */
             birthDate?: string;
@@ -6675,7 +7267,7 @@ export interface components {
             phone?: string;
         };
         NewsControllerSubscription: {
-            subscribed?: boolean;
+            subscribed: boolean;
         };
         PatientBookingControllerLanguage: {
             lang?: string;
@@ -6692,16 +7284,16 @@ export interface components {
         };
         PatientSourcesOption: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             code?: string;
             emoji?: string;
             title?: string;
             titleKy?: string;
-            active?: boolean;
+            active: boolean;
             /** Format: int32 */
-            position?: number;
+            position: number;
             /** Format: int64 */
-            patients?: number;
+            patients: number;
         };
         PasswordControllerTemporaryPassword: {
             password?: string;
@@ -6716,7 +7308,7 @@ export interface components {
         };
         StaffPhonesPhoneView: {
             phone?: string;
-            phoneOnly?: boolean;
+            phoneOnly: boolean;
         };
         StaffMembersControllerAssistantDoctors: {
             doctorIds?: number[];
@@ -6731,9 +7323,9 @@ export interface components {
         };
         MyPhoneControllerMyPhone: {
             phone?: string;
-            phoneOnly?: boolean;
-            sms?: boolean;
-            telegram?: boolean;
+            phoneOnly: boolean;
+            sms: boolean;
+            telegram: boolean;
         };
         MyPhoneControllerPhoneConfirmed: {
             state?: components["schemas"]["MyPhoneControllerMyPhone"];
@@ -6749,7 +7341,7 @@ export interface components {
         };
         StaffMembersOwnName: {
             fullName?: string;
-            editable?: boolean;
+            editable: boolean;
         };
         EarningsControllerGoal: {
             /** Format: int64 */
@@ -6759,20 +7351,20 @@ export interface components {
             /** Format: date */
             date?: string;
             month?: string;
-            hasTerms?: boolean;
+            hasTerms: boolean;
             percent?: number;
             /** Format: int64 */
-            baseSom?: number;
+            baseSom: number;
             /** Format: int64 */
-            todaySom?: number;
+            todaySom: number;
             /** Format: int64 */
-            todayRevenueSom?: number;
+            todayRevenueSom: number;
             /** Format: int64 */
-            monthSom?: number;
+            monthSom: number;
             /** Format: int64 */
-            monthRevenueSom?: number;
+            monthRevenueSom: number;
             /** Format: int64 */
-            previousMonthSom?: number;
+            previousMonthSom: number;
             /** Format: int32 */
             changePercent?: number;
             /** Format: int64 */
@@ -6780,12 +7372,12 @@ export interface components {
             /** Format: int64 */
             goalLeftSom?: number;
             /** Format: int32 */
-            workDaysLeft?: number;
+            workDaysLeft: number;
             /** Format: int64 */
             perDayNeededSom?: number;
-            eveningSummary?: boolean;
+            eveningSummary: boolean;
             /** Format: int64 */
-            rentSom?: number;
+            rentSom: number;
         };
         EarningsControllerEvening: {
             eveningSummary?: boolean;
@@ -6795,13 +7387,13 @@ export interface components {
         };
         FamiliesFamily: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             name?: string;
             members?: components["schemas"]["FamiliesMember"][];
         };
         FamiliesMember: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             fullName?: string;
             /** @enum {string} */
             relation?: "CHILD" | "SPOUSE" | "PARENT" | "SIBLING" | "OTHER";
@@ -6820,11 +7412,11 @@ export interface components {
         };
         ExpensesExpense: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: date */
             spentOn?: string;
             /** Format: int64 */
-            amountSom?: number;
+            amountSom: number;
             category?: string;
             comment?: string;
             /** Format: int64 */
@@ -6839,7 +7431,7 @@ export interface components {
         };
         DoctorServicesView: {
             /** Format: int64 */
-            doctorId?: number;
+            doctorId: number;
             serviceTypeIds?: number[];
         };
         DoctorControllerProfileRequest: {
@@ -6848,12 +7440,12 @@ export interface components {
         };
         DoctorView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             fullName?: string;
             about?: string;
             photoUrl?: string;
-            active?: boolean;
-            telegramLinked?: boolean;
+            active: boolean;
+            telegramLinked: boolean;
         };
         DoctorHoursControllerRequest: {
             days?: components["schemas"]["DoctorHoursViewDay"][];
@@ -6867,7 +7459,7 @@ export interface components {
             end?: string;
         };
         DoctorHoursView: {
-            custom?: boolean;
+            custom: boolean;
             days?: components["schemas"]["DoctorHoursViewDay"][];
         };
         ChairAssignmentControllerChairRequest: {
@@ -6876,7 +7468,7 @@ export interface components {
         };
         ChairOverview: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             name?: string;
             doctorIds?: number[];
             overlaps?: components["schemas"]["ChairOverviewHoursOverlap"][];
@@ -6885,9 +7477,9 @@ export interface components {
         };
         ChairOverviewHoursOverlap: {
             /** Format: int64 */
-            doctorId?: number;
+            doctorId: number;
             /** Format: int64 */
-            otherDoctorId?: number;
+            otherDoctorId: number;
             /** @enum {string} */
             weekday?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
             /** Format: time-local */
@@ -6903,16 +7495,16 @@ export interface components {
         };
         DoctorAdminView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             fullName?: string;
             about?: string;
             photoUrl?: string;
-            active?: boolean;
+            active: boolean;
             /** Format: int64 */
             telegramId?: number;
             role?: string;
             phone?: string;
-            phoneOnly?: boolean;
+            phoneOnly: boolean;
         };
         ClinicControllerRequest: {
             brandName?: string;
@@ -6948,23 +7540,23 @@ export interface components {
             /** Format: time-local */
             workEnd?: string;
             workDays?: ("MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY")[];
-            independentDoctors?: boolean;
-            listed?: boolean;
-            separateSupplies?: boolean;
+            independentDoctors: boolean;
+            listed: boolean;
+            separateSupplies: boolean;
             name?: string;
-            settingUp?: boolean;
-            ownHours?: boolean;
+            settingUp: boolean;
+            ownHours: boolean;
             city?: string;
             phones?: string[];
             /** Format: int32 */
-            recallMonths?: number;
+            recallMonths: number;
         };
         VisitReportControllerAiChange: {
             on?: boolean;
         };
         VisitReportControllerAiSetting: {
-            available?: boolean;
-            on?: boolean;
+            available: boolean;
+            on: boolean;
         };
         ClinicControllerReminderRequest: {
             reminderTemplate?: string;
@@ -6980,7 +7572,7 @@ export interface components {
         };
         ClinicControllerRecallMonths: {
             /** Format: int32 */
-            recallMonths?: number;
+            recallMonths: number;
         };
         DepositControllerSettingsRequest: {
             /** @enum {string} */
@@ -6995,7 +7587,7 @@ export interface components {
             /** Format: int32 */
             amountSom?: number;
             details?: string;
-            hasQr?: boolean;
+            hasQr: boolean;
         };
         ContractControllerTemplateRequest: {
             title?: string;
@@ -7006,7 +7598,7 @@ export interface components {
             title?: string;
             body?: string;
             requisites?: string;
-            custom?: boolean;
+            custom: boolean;
             variables?: string[];
             defaultTitle?: string;
             defaultBody?: string;
@@ -7022,15 +7614,15 @@ export interface components {
             /** @enum {string} */
             category?: "APPOINTMENTS" | "MONEY" | "STAFF" | "PATIENTS" | "CATALOG" | "SETTINGS" | "OTHER";
             title?: string;
-            mandatory?: boolean;
-            enabled?: boolean;
+            mandatory: boolean;
+            enabled: boolean;
         };
         ChairControllerNameRequest: {
             name?: string;
         };
         ChairsChair: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             name?: string;
             doctorIds?: number[];
             /** @enum {string} */
@@ -7049,15 +7641,15 @@ export interface components {
         };
         CareMemosCareMemoView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             title?: string;
             body?: string;
-            active?: boolean;
-            standard?: boolean;
+            active: boolean;
+            standard: boolean;
             serviceIds?: number[];
             titleKy?: string;
             bodyKy?: string;
-            kyStandard?: boolean;
+            kyStandard: boolean;
         };
         CareMemoControllerLinkRequest: {
             /** Format: int64 */
@@ -7065,7 +7657,7 @@ export interface components {
         };
         CareMemosLink: {
             /** Format: int64 */
-            serviceTypeId?: number;
+            serviceTypeId: number;
             /** Format: int64 */
             memoId?: number;
         };
@@ -7073,8 +7665,8 @@ export interface components {
             showPatientNames: boolean;
         };
         CalendarFeedControllerFeedView: {
-            enabled?: boolean;
-            showPatientNames?: boolean;
+            enabled: boolean;
+            showPatientNames: boolean;
             /** Format: date-time */
             createdAt?: string;
             httpsUrl?: string;
@@ -7088,7 +7680,7 @@ export interface components {
         };
         VisitToothView: {
             /** Format: int32 */
-            number?: number;
+            number: number;
             /** @enum {string} */
             state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
             surfaces?: ("M" | "O" | "D" | "B" | "L")[];
@@ -7103,24 +7695,24 @@ export interface components {
         };
         AppointmentView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
-            doctorId?: number;
-            patient?: components["schemas"]["PatientView"];
+            doctorId: number;
+            patient: components["schemas"]["PatientView"];
             /** Format: date-time */
-            startAt?: string;
+            startAt: string;
             /** Format: date-time */
-            endAt?: string;
+            endAt: string;
             /** @enum {string} */
-            status?: "REQUESTED" | "SCHEDULED" | "CANCELLED" | "DONE" | "NO_SHOW";
+            status: "REQUESTED" | "SCHEDULED" | "CANCELLED" | "DONE" | "NO_SHOW";
             /** @enum {string} */
             reply?: "NONE" | "CONFIRMED" | "RESCHEDULE" | "NO_ANSWER";
             /** Format: date-time */
             reminderOpenedAt?: string;
             /** Format: int64 */
-            version?: number;
+            version: number;
             /** @enum {string} */
-            source?: "DOCTOR" | "PATIENT" | "WEB";
+            source: "DOCTOR" | "PATIENT" | "WEB";
             serviceName?: string;
             /** Format: int32 */
             servicePriceSom?: number;
@@ -7133,7 +7725,7 @@ export interface components {
             /** Format: int32 */
             chargeSom?: number;
             /** Format: int32 */
-            debtSom?: number;
+            debtSom: number;
             /** Format: date */
             dueOn?: string;
             /** Format: int32 */
@@ -7143,7 +7735,7 @@ export interface components {
             comment?: string;
             promoCode?: string;
             bookedBy?: components["schemas"]["FamiliesBooker"];
-            firstVisit?: boolean;
+            firstVisit: boolean;
             /** Format: date-time */
             cancelledAt?: string;
             cancelledBy?: string;
@@ -7168,7 +7760,7 @@ export interface components {
         };
         ChartControllerNoteView: {
             note?: string;
-            editable?: boolean;
+            editable: boolean;
             doctorName?: string;
         };
         AppointmentRequestsComment: {
@@ -7185,19 +7777,172 @@ export interface components {
         };
         AnamnesisQuestion: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             code?: string;
             section?: string;
             kind?: string;
             title?: string;
             label?: string;
             hint?: string;
-            alert?: boolean;
-            active?: boolean;
+            alert: boolean;
+            active: boolean;
             /** Format: int32 */
-            position?: number;
+            position: number;
             /** Format: int64 */
-            answers?: number;
+            answers: number;
+        };
+        PlanOffersItem: {
+            /** Format: int32 */
+            tooth?: number;
+            title?: string;
+            /** Format: int32 */
+            priceSom?: number;
+        };
+        PlanOffersPatientPlan: {
+            /** Format: int64 */
+            id: number;
+            clinicName?: string;
+            doctorName?: string;
+            /** Format: date-time */
+            sentAt?: string;
+            /** Format: date */
+            validUntil?: string;
+            duration?: string;
+            stages?: components["schemas"]["PlanOffersStage"][];
+            /** Format: int32 */
+            totalSom: number;
+            /** Format: date-time */
+            agreedAt?: string;
+            /** Format: date-time */
+            questionAt?: string;
+            forName?: string;
+            phones?: string[];
+            whatsappPhone?: string;
+            address?: string;
+        };
+        PlanOffersStage: {
+            /** Format: int32 */
+            stage: number;
+            items?: components["schemas"]["PlanOffersItem"][];
+            /** Format: int32 */
+            totalSom: number;
+        };
+        ProblemDetail: {
+            /** Format: uri */
+            type?: string;
+            title?: string;
+            /** Format: int32 */
+            status: number;
+            detail?: string;
+            /** Format: uri */
+            instance?: string;
+            properties?: {
+                [key: string]: Record<string, never>;
+            };
+        };
+        TelegramLoginControllerStarted: {
+            link: string;
+            /** Format: int64 */
+            secondsLeft: number;
+        };
+        PhoneLoginControllerLoginRequest: {
+            phone?: string;
+            code?: string;
+        };
+        PhoneLoginControllerSetupToken: {
+            setupToken: string;
+            temporary: boolean;
+        };
+        PhoneLoginControllerPasswordLogin: {
+            phone?: string;
+            password?: string;
+        };
+        PhoneLoginControllerNewPassword: {
+            token?: string;
+            password?: string;
+        };
+        PhoneLoginControllerCodeRequest: {
+            phone?: string;
+            channel?: string;
+        };
+        InviteControllerTokenRequest: {
+            token?: string;
+        };
+        InviteControllerCodeStep: {
+            phoneMasked: string;
+            /** Format: int64 */
+            secondsLeft: number;
+            /** Format: int64 */
+            resendSeconds: number;
+        };
+        InviteControllerInviteView: {
+            /** @enum {string} */
+            kind: "DOCTOR" | "STAFF";
+            clinicName: string;
+            fullName: string;
+            role?: string;
+            roleText: string;
+            /** Format: date-time */
+            expiresAt: string;
+            botUsername?: string;
+            codeRequired: boolean;
+            pending?: components["schemas"]["InviteControllerCodeStep"];
+        };
+        InviteControllerRegisterRequest: {
+            token?: string;
+            phone?: string;
+            password?: string;
+            code?: string;
+        };
+        InviteControllerRegistered: {
+            fullName: string;
+            roleText: string;
+        };
+        InviteControllerCodeRequest: {
+            token?: string;
+            phone?: string;
+        };
+        ClinicApplicationsForm: {
+            clinicName?: string;
+            contactName?: string;
+            phone?: string;
+            city?: string;
+            /** Format: int32 */
+            doctors?: number;
+            message?: string;
+            consent: boolean;
+            website?: string;
+            solo?: boolean;
+            telegram?: string;
+        };
+        WebBookingControllerForm: {
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            serviceTypeId: number;
+            /** Format: date-time */
+            startAt: string;
+            fullName?: string;
+            phone?: string;
+            comment?: string;
+            consent: boolean;
+            /** Format: int64 */
+            sourceId?: number;
+            website?: string;
+        };
+        WebBookingServiceBooked: {
+            /** Format: date-time */
+            startAt: string;
+            /** Format: date-time */
+            endAt: string;
+            doctorName: string;
+            serviceName: string;
+            clinicName?: string;
+            address?: string;
+            mapUrl?: string;
+            phones?: string[];
+            whatsapp?: string;
+            telegramUrl?: string;
         };
         WaitlistControllerAdd: {
             /** Format: int64 */
@@ -7209,12 +7954,12 @@ export interface components {
         };
         WaitlistView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
             doctorId?: number;
             patient?: components["schemas"]["PatientView"];
             /** Format: int32 */
-            durationMinutes?: number;
+            durationMinutes: number;
             /** Format: date-time */
             createdAt?: string;
             upcoming?: components["schemas"]["AppointmentView"];
@@ -7244,7 +7989,7 @@ export interface components {
         };
         TimeOffView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
             doctorId?: number;
             /** @enum {string} */
@@ -7262,7 +8007,7 @@ export interface components {
         };
         SurveyAnswersAnswer: {
             /** Format: int64 */
-            questionId?: number;
+            questionId: number;
             /** Format: int32 */
             number?: number;
             choices?: number[];
@@ -7277,14 +8022,14 @@ export interface components {
         };
         SupportTicketsMessage: {
             /** Format: int64 */
-            id?: number;
-            fromPlatform?: boolean;
+            id: number;
+            fromPlatform: boolean;
             author?: string;
             text?: string;
-            hasImage?: boolean;
+            hasImage: boolean;
             /** Format: date-time */
             createdAt?: string;
-            fromBot?: boolean;
+            fromBot: boolean;
         };
         SupportTicketsThread: {
             ticket?: components["schemas"]["SupportTicketsTicket"];
@@ -7292,9 +8037,9 @@ export interface components {
         };
         SupportTicketsTicket: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
-            clinicId?: number;
+            clinicId: number;
             clinicName?: string;
             /** @enum {string} */
             kind?: "QUESTION" | "IDEA" | "PROBLEM";
@@ -7306,8 +8051,8 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             updatedAt?: string;
-            viaBot?: boolean;
-            escalated?: boolean;
+            viaBot: boolean;
+            escalated: boolean;
         };
         SupportControllerChatQuestion: {
             /** Format: int64 */
@@ -7328,7 +8073,7 @@ export interface components {
         };
         SupplyControllerMove: {
             /** Format: int32 */
-            delta?: number;
+            delta: number;
             reason?: string;
             /** Format: int32 */
             costSom?: number;
@@ -7338,13 +8083,13 @@ export interface components {
         };
         SupplyStarterApplied: {
             /** Format: int32 */
-            created?: number;
+            created: number;
             /** Format: int32 */
-            services?: number;
+            services: number;
         };
         SupplyControllerAdded: {
             /** Format: int32 */
-            added?: number;
+            added: number;
         };
         ShiftControllerCopyRequest: {
             /** Format: date */
@@ -7354,9 +8099,9 @@ export interface components {
         };
         ShiftServiceCopyResult: {
             /** Format: int32 */
-            created?: number;
+            created: number;
             /** Format: int32 */
-            skipped?: number;
+            skipped: number;
         };
         ServiceTypeControllerPick: {
             name: string;
@@ -7368,7 +8113,7 @@ export interface components {
         };
         ServiceTypeControllerAdded: {
             /** Format: int32 */
-            added?: number;
+            added: number;
         };
         SalaryControllerPayout: {
             month?: string;
@@ -7380,7 +8125,7 @@ export interface components {
         };
         PushControllerTestResult: {
             /** Format: int32 */
-            sent?: number;
+            sent: number;
         };
         PushControllerSubscriptionForm: {
             endpoint?: string;
@@ -7392,18 +8137,18 @@ export interface components {
         };
         PayRequestsRequest: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
-            clinicId?: number;
+            clinicId: number;
             clinicName?: string;
             /** Format: int32 */
-            months?: number;
+            months: number;
             /** Format: int64 */
-            amountSom?: number;
+            amountSom: number;
             tariff?: string;
             /** @enum {string} */
             status?: "PENDING" | "CONFIRMED" | "REJECTED" | "CANCELLED";
-            hasReceipt?: boolean;
+            hasReceipt: boolean;
             comment?: string;
             /** Format: date-time */
             createdAt?: string;
@@ -7417,20 +8162,20 @@ export interface components {
         };
         ClinicOutreachImportReport: {
             /** Format: int32 */
-            total?: number;
+            total: number;
             /** Format: int32 */
-            fresh?: number;
+            fresh: number;
             /** Format: int32 */
-            duplicates?: number;
+            duplicates: number;
             /** Format: int32 */
-            errors?: number;
+            errors: number;
             /** Format: int32 */
-            added?: number;
+            added: number;
             rows?: components["schemas"]["ClinicOutreachImportRow"][];
         };
         ClinicOutreachImportRow: {
             /** Format: int32 */
-            line?: number;
+            line: number;
             clinicName?: string;
             phone?: string;
             address?: string;
@@ -7466,11 +8211,11 @@ export interface components {
             clinicId?: number;
             name?: string;
             /** Format: int64 */
-            doctors?: number;
+            doctors: number;
             /** Format: int64 */
-            patients?: number;
+            patients: number;
             /** Format: int64 */
-            appointments?: number;
+            appointments: number;
             guests?: string[];
         };
         DemoControllerGuest: {
@@ -7483,11 +8228,11 @@ export interface components {
         };
         ContentPostsReelsAdded: {
             /** Format: int32 */
-            added?: number;
+            added: number;
             /** Format: int32 */
-            already?: number;
+            already: number;
             /** Format: int32 */
-            moved?: number;
+            moved: number;
             missing?: string[];
             /** Format: date */
             from?: string;
@@ -7497,13 +8242,13 @@ export interface components {
         };
         ContentPostsImported: {
             /** Format: int32 */
-            added?: number;
+            added: number;
             /** Format: int32 */
-            updated?: number;
+            updated: number;
             /** Format: int32 */
-            unchanged?: number;
+            unchanged: number;
             /** Format: int32 */
-            removed?: number;
+            removed: number;
         };
         PlatformControllerName: {
             name?: string;
@@ -7519,13 +8264,13 @@ export interface components {
         };
         ClinicPaymentsPayment: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: date */
             paidOn?: string;
             /** Format: int64 */
-            amountSom?: number;
+            amountSom: number;
             /** Format: int32 */
-            months?: number;
+            months: number;
             /** Format: date */
             paidUntil?: string;
             /** Format: date-time */
@@ -7534,7 +8279,7 @@ export interface components {
         ClinicPaymentsPlan: {
             billing?: components["schemas"]["ClinicBillingBilling"];
             /** Format: int64 */
-            doctors?: number;
+            doctors: number;
             tariff?: components["schemas"]["TariffsTariff"];
             tariffs?: components["schemas"]["Tariffs"];
             payments?: components["schemas"]["ClinicPaymentsPayment"][];
@@ -7544,11 +8289,11 @@ export interface components {
         };
         ExportControllerResult: {
             /** Format: int32 */
-            patients?: number;
+            patients: number;
             /** Format: int32 */
-            filesIncluded?: number;
+            filesIncluded: number;
             /** Format: int32 */
-            filesSkipped?: number;
+            filesSkipped: number;
         };
         PlatformControllerEnter: {
             reception?: boolean;
@@ -7556,15 +8301,15 @@ export interface components {
         };
         AgreementRemindersReminded: {
             /** Format: int32 */
-            clinics?: number;
+            clinics: number;
             /** Format: int32 */
-            skipped?: number;
+            skipped: number;
             /** Format: int32 */
-            telegram?: number;
+            telegram: number;
             /** Format: int32 */
-            push?: number;
+            push: number;
             /** Format: int32 */
-            bannerOnly?: number;
+            bannerOnly: number;
         };
         PlatformControllerBroadcastRequest: {
             text?: string;
@@ -7572,14 +8317,14 @@ export interface components {
         };
         PlatformBroadcastsBroadcast: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             text?: string;
             /** Format: int32 */
-            clinics?: number;
+            clinics: number;
             /** Format: int32 */
-            recipients?: number;
+            recipients: number;
             /** Format: int32 */
-            delivered?: number;
+            delivered: number;
             /** Format: date-time */
             sentAt?: string;
         };
@@ -7588,7 +8333,7 @@ export interface components {
             contactName?: string;
             phone?: string;
             telegram?: string;
-            solo?: boolean;
+            solo: boolean;
         };
         ChartControllerMany: {
             numbers?: number[];
@@ -7605,13 +8350,13 @@ export interface components {
         };
         PlanOffersOfferView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: date-time */
             sentAt?: string;
             /** @enum {string} */
             channel?: "TELEGRAM" | "WHATSAPP";
             /** Format: int32 */
-            totalSom?: number;
+            totalSom: number;
             /** Format: date */
             validUntil?: string;
             duration?: string;
@@ -7622,7 +8367,7 @@ export interface components {
             /** Format: date-time */
             questionAt?: string;
             doctorName?: string;
-            active?: boolean;
+            active: boolean;
         };
         PlanOffersSent: {
             offer?: components["schemas"]["PlanOffersOfferView"];
@@ -7640,7 +8385,7 @@ export interface components {
             serviceTypeId?: number;
         };
         PatientContractsView: {
-            signed?: boolean;
+            signed: boolean;
             /** Format: date */
             signedOn?: string;
             /** Format: date-time */
@@ -7648,12 +8393,12 @@ export interface components {
             signedBy?: string;
             /** Format: int64 */
             doctorId?: number;
-            hasSignature?: boolean;
-            hasScan?: boolean;
+            hasSignature: boolean;
+            hasScan: boolean;
             scanType?: string;
             title?: string;
             text?: string;
-            canSign?: boolean;
+            canSign: boolean;
         };
         BeforeAfterAiTextRequest: {
             procedure?: string;
@@ -7684,13 +8429,13 @@ export interface components {
         };
         BeforeAfterAiRect: {
             /** Format: double */
-            x?: number;
+            x: number;
             /** Format: double */
-            y?: number;
+            y: number;
             /** Format: double */
-            w?: number;
+            w: number;
             /** Format: double */
-            h?: number;
+            h: number;
         };
         FamilyControllerJoin: {
             /** Format: int64 */
@@ -7698,42 +8443,6 @@ export interface components {
         };
         SearchPatientsRequest: {
             query?: string;
-        };
-        PlanOffersItem: {
-            /** Format: int32 */
-            tooth?: number;
-            title?: string;
-            /** Format: int32 */
-            priceSom?: number;
-        };
-        PlanOffersPatientPlan: {
-            /** Format: int64 */
-            id?: number;
-            clinicName?: string;
-            doctorName?: string;
-            /** Format: date-time */
-            sentAt?: string;
-            /** Format: date */
-            validUntil?: string;
-            duration?: string;
-            stages?: components["schemas"]["PlanOffersStage"][];
-            /** Format: int32 */
-            totalSom?: number;
-            /** Format: date-time */
-            agreedAt?: string;
-            /** Format: date-time */
-            questionAt?: string;
-            forName?: string;
-            phones?: string[];
-            whatsappPhone?: string;
-            address?: string;
-        };
-        PlanOffersStage: {
-            /** Format: int32 */
-            stage?: number;
-            items?: components["schemas"]["PlanOffersItem"][];
-            /** Format: int32 */
-            totalSom?: number;
         };
         PatientBookingControllerBook: {
             /** Format: int64 */
@@ -7743,7 +8452,7 @@ export interface components {
             /** Format: date-time */
             startAt: string;
             fullName?: string;
-            consent?: boolean;
+            consent: boolean;
             comment?: string;
             /** Format: int64 */
             sourceId?: number;
@@ -7762,7 +8471,7 @@ export interface components {
         };
         BookingViewsBooking: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: date-time */
             startAt?: string;
             /** Format: date-time */
@@ -7771,7 +8480,7 @@ export interface components {
             /** @enum {string} */
             status?: "REQUESTED" | "SCHEDULED" | "CANCELLED" | "DONE" | "NO_SHOW";
             /** Format: int64 */
-            doctorId?: number;
+            doctorId: number;
             doctorName?: string;
             comment?: string;
             /** Format: int32 */
@@ -7779,10 +8488,10 @@ export interface components {
             depositStatus?: string;
             promoCode?: string;
             /** Format: int64 */
-            patientId?: number;
+            patientId: number;
             patientName?: string;
-            self?: boolean;
-            waiting?: boolean;
+            self: boolean;
+            waiting: boolean;
         };
         PatientBookingControllerReschedule: {
             /** Format: date-time */
@@ -7799,7 +8508,7 @@ export interface components {
         };
         PatientQuestionsQuestionView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
             patientId?: number;
             patientName?: string;
@@ -7832,14 +8541,14 @@ export interface components {
         };
         NewsServiceNews: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             text?: string;
             /** Format: date-time */
             createdAt?: string;
             /** Format: int32 */
-            recipients?: number;
+            recipients: number;
             /** Format: int32 */
-            delivered?: number;
+            delivered: number;
         };
         StaffMembersControllerInviteRequest: {
             /** @enum {string} */
@@ -7858,7 +8567,7 @@ export interface components {
         };
         StaffMembersControllerPhoneInvited: {
             /** Format: int64 */
-            telegramId?: number;
+            telegramId: number;
         };
         MyPhoneControllerCodeRequest: {
             phone?: string;
@@ -7880,15 +8589,15 @@ export interface components {
         };
         FamilyMoneyControllerApplied: {
             /** Format: int64 */
-            appointmentId?: number;
+            appointmentId: number;
             patient?: string;
             /** Format: int32 */
-            amountSom?: number;
+            amountSom: number;
         };
         FamilyMoneyControllerPaid: {
             applied?: components["schemas"]["FamilyMoneyControllerApplied"][];
             /** Format: int32 */
-            leftDebtSom?: number;
+            leftDebtSom: number;
         };
         DoctorControllerCreateRequest: {
             fullName?: string;
@@ -7907,21 +8616,21 @@ export interface components {
         };
         PatientMessage: {
             text?: string;
-            telegram?: boolean;
+            telegram: boolean;
         };
         ComebacksDraft: {
             text?: string;
-            ai?: boolean;
+            ai: boolean;
             /** @enum {string} */
             lang?: "RU" | "KY";
-            telegram?: boolean;
+            telegram: boolean;
         };
         PlatformControllerGrant: {
             /** Format: int32 */
             hours?: number;
         };
         PlatformControllerSupportAccess: {
-            required?: boolean;
+            required: boolean;
             /** Format: date-time */
             grantedUntil?: string;
         };
@@ -7933,13 +8642,13 @@ export interface components {
         };
         ClinicStarterApplied: {
             /** Format: int32 */
-            services?: number;
+            services: number;
             /** Format: int32 */
-            memos?: number;
+            memos: number;
             /** Format: int32 */
-            questions?: number;
+            questions: number;
             /** Format: int32 */
-            sources?: number;
+            sources: number;
         };
         DataImportReport: {
             /** @enum {string} */
@@ -7947,25 +8656,25 @@ export interface components {
             headers?: string[];
             sample?: string[][];
             /** Format: int32 */
-            rows?: number;
+            rows: number;
             columns?: components["schemas"]["ImportColumns"];
             /** Format: int32 */
-            added?: number;
+            added: number;
             /** Format: int32 */
-            updated?: number;
+            updated: number;
             /** Format: int32 */
-            unchanged?: number;
+            unchanged: number;
             /** Format: int32 */
-            sharedPhone?: number;
+            sharedPhone: number;
             /** Format: int32 */
-            errorCount?: number;
+            errorCount: number;
             errors?: components["schemas"]["DataImportRowError"][];
-            applied?: boolean;
+            applied: boolean;
             summary?: string;
         };
         DataImportRowError: {
             /** Format: int32 */
-            row?: number;
+            row: number;
             column?: string;
             message?: string;
         };
@@ -7997,17 +8706,17 @@ export interface components {
             sheets?: components["schemas"]["WorkbookImportSheetReport"][];
             skipped?: string[];
             /** Format: int32 */
-            extraPatients?: number;
+            extraPatients: number;
             /** Format: int32 */
-            errorCount?: number;
+            errorCount: number;
             errors?: components["schemas"]["WorkbookImportSheetError"][];
-            applied?: boolean;
+            applied: boolean;
             summary?: string;
         };
         WorkbookImportSheetError: {
             sheet?: string;
             /** Format: int32 */
-            row?: number;
+            row: number;
             column?: string;
             message?: string;
         };
@@ -8016,15 +8725,15 @@ export interface components {
             kind?: "PATIENTS" | "SERVICES" | "STAFF" | "SUPPLY" | "APPOINTMENTS" | "DEBTS";
             title?: string;
             /** Format: int32 */
-            rows?: number;
+            rows: number;
             /** Format: int32 */
-            added?: number;
+            added: number;
             /** Format: int32 */
-            updated?: number;
+            updated: number;
             /** Format: int32 */
-            unchanged?: number;
+            unchanged: number;
             /** Format: int32 */
-            errorCount?: number;
+            errorCount: number;
         };
         AgreementControllerAccept: {
             sha256?: string;
@@ -8046,7 +8755,7 @@ export interface components {
         };
         CareMemoControllerLinked: {
             /** Format: int32 */
-            services?: number;
+            services: number;
         };
         AppointmentRequestsCreate: {
             /** Format: int64 */
@@ -8074,18 +8783,18 @@ export interface components {
         };
         VisitReportsCare: {
             /** Format: int64 */
-            memoId?: number;
+            memoId: number;
             title?: string;
             text?: string;
         };
         VisitReportsDraft: {
             text?: string;
             care?: components["schemas"]["VisitReportsCare"];
-            ai?: boolean;
-            aiAvailable?: boolean;
+            ai: boolean;
+            aiAvailable: boolean;
             /** @enum {string} */
             lang?: "RU" | "KY";
-            telegram?: boolean;
+            telegram: boolean;
         };
         AppointmentRequestsUndo: {
             /** Format: int64 */
@@ -8112,15 +8821,15 @@ export interface components {
         };
         SupplyQueryUsed: {
             /** Format: int64 */
-            supplyId?: number;
+            supplyId: number;
             name?: string;
             unit?: string;
             /** Format: int32 */
-            used?: number;
+            used: number;
         };
         SupplyControllerOnAppointment: {
             /** Format: int32 */
-            delta?: number;
+            delta: number;
         };
         SupplyControllerSpent: {
             supply?: components["schemas"]["SupplyView"];
@@ -8163,7 +8872,7 @@ export interface components {
         };
         PaymentQueryPart: {
             /** Format: int32 */
-            amountSom?: number;
+            amountSom: number;
             /** @enum {string} */
             method?: "CASH" | "TRANSFER" | "CARD";
         };
@@ -8198,7 +8907,7 @@ export interface components {
         };
         VisitDictationToothChange: {
             /** Format: int32 */
-            tooth?: number;
+            tooth: number;
             /** @enum {string} */
             state?: "HEALTHY" | "CARIES" | "TREATING" | "FILLING" | "CROWN" | "IMPLANT" | "MISSING";
             surfaces?: ("M" | "O" | "D" | "B" | "L")[];
@@ -8239,11 +8948,154 @@ export interface components {
         };
         AppointmentControllerDeleted: {
             /** Format: int32 */
-            deleted?: number;
+            deleted: number;
         };
         MedicalRecordControllerMove: {
             /** Format: int32 */
             direction?: number;
+        };
+        MaterialsPublicMaterials: {
+            video?: string;
+            poster?: string;
+            presentation?: string;
+        };
+        MaterialsHowToVideo: {
+            id: string;
+            title: string;
+            video: string;
+            poster?: string;
+        };
+        TelegramLoginControllerStatus: {
+            /** @enum {string} */
+            state: "none" | "waiting" | "cancelled" | "done";
+            /** Format: int64 */
+            secondsLeft: number;
+            link?: string;
+        };
+        PhoneLoginControllerPending: {
+            /** @enum {string} */
+            step: "code" | "password";
+            phoneMasked: string;
+            /** Format: int64 */
+            secondsLeft: number;
+            /** Format: int64 */
+            resendSeconds: number;
+            temporary: boolean;
+        };
+        LinksControllerLinks: {
+            supportTelegram?: string;
+            supportUrl?: string;
+            supportPhone?: string;
+            botUrl?: string;
+            supportPhones?: string[];
+            supportWhatsapp?: string;
+        };
+        WebAuthControllerConfig: {
+            botUsername?: string;
+            smsLogin: boolean;
+            passwordLogin: boolean;
+            telegramCode: boolean;
+            telegramLogin: boolean;
+        };
+        DirectoryControllerClinic: {
+            name?: string;
+            address?: string;
+            city?: string;
+            mapUrl?: string;
+            pageUrl: string;
+            telegramUrl?: string;
+            doctors: components["schemas"]["DirectoryControllerDoctor"][];
+            bookingUrl?: string;
+        };
+        DirectoryControllerDoctor: {
+            fullName: string;
+            about?: string;
+            photoUrl?: string;
+        };
+        ClinicPageControllerDoctor: {
+            fullName: string;
+            about?: string;
+            photoUrl?: string;
+        };
+        ClinicPageControllerPage: {
+            name?: string;
+            address?: string;
+            mapUrl?: string;
+            phones?: string[];
+            whatsapp?: string;
+            phone?: string;
+            phoneText?: string;
+            telegramUrl?: string;
+            doctors: components["schemas"]["ClinicPageControllerDoctor"][];
+            services: components["schemas"]["ClinicPageControllerService"][];
+            settingUp: boolean;
+            bookingUrl?: string;
+        };
+        ClinicPageControllerService: {
+            name: string;
+            /** Format: int32 */
+            durationMinutes: number;
+            /** Format: int32 */
+            priceSom?: number;
+        };
+        PatientSourcesChoice: {
+            /** Format: int64 */
+            id: number;
+            emoji?: string;
+            title?: string;
+            titleKy?: string;
+        };
+        WebBookingServiceDoctor: {
+            /** Format: int64 */
+            id: number;
+            fullName: string;
+            about?: string;
+            photoUrl?: string;
+        };
+        WebBookingServiceInfo: {
+            clinicName?: string;
+            legalName?: string;
+            address?: string;
+            mapUrl?: string;
+            phones?: string[];
+            whatsapp?: string;
+            available: boolean;
+            /** @enum {string} */
+            unavailable?: "off" | "setting-up" | "paused";
+            /** Format: int32 */
+            daysAhead: number;
+            doctors: components["schemas"]["WebBookingServiceDoctor"][];
+            services: components["schemas"]["WebBookingServiceService"][];
+            doctorServices?: components["schemas"]["DoctorServicesView"][];
+            sources?: components["schemas"]["PatientSourcesChoice"][];
+            telegramUrl?: string;
+        };
+        WebBookingServiceService: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            /** Format: int32 */
+            durationMinutes: number;
+            /** Format: int32 */
+            priceSom?: number;
+            category?: string;
+            /** @enum {string} */
+            group?: "EXAM" | "HYGIENE" | "THERAPY" | "SURGERY" | "PROSTHETICS" | "ORTHODONTICS" | "IMPLANTS" | "AESTHETICS" | "KIDS" | "XRAY" | "OTHER";
+        };
+        BookingViewsSlots: {
+            workingDay: boolean;
+            starts?: string[];
+            breaks?: components["schemas"]["SlotsViewBreak"][];
+            dayOff?: components["schemas"]["SlotsViewBreak"];
+            taken?: string[];
+        };
+        SlotsViewBreak: {
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            title?: string;
+            emoji?: string;
         };
         SurveyAnswersCurrent: {
             survey?: components["schemas"]["SurveyForm"];
@@ -8252,23 +9104,23 @@ export interface components {
         };
         SurveyForm: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             title?: string;
             intro?: string;
             questions?: components["schemas"]["SurveyQuestion"][];
         };
         SupportBotInfo: {
-            ai?: boolean;
+            ai: boolean;
             /** Format: int32 */
-            dailyLimit?: number;
+            dailyLimit: number;
             /** Format: int32 */
-            usedToday?: number;
+            usedToday: number;
             /** Format: int32 */
-            maxLength?: number;
+            maxLength: number;
         };
         MovementView: {
             /** Format: int32 */
-            delta?: number;
+            delta: number;
             reason?: string;
             doctorName?: string;
             /** Format: date-time */
@@ -8280,7 +9132,7 @@ export interface components {
             name?: string;
             unit?: string;
             /** Format: int32 */
-            quantity?: number;
+            quantity: number;
         };
         SupplyStarterMissing: {
             name?: string;
@@ -8292,7 +9144,7 @@ export interface components {
         };
         SupplyStarterServiceLines: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             name?: string;
             items?: components["schemas"]["SupplyStarterLine"][];
         };
@@ -8302,13 +9154,13 @@ export interface components {
             /** Format: date */
             to?: string;
             /** Format: int64 */
-            purchasedSom?: number;
+            purchasedSom: number;
             /** Format: int64 */
-            usedSom?: number;
+            usedSom: number;
             /** Format: int64 */
-            unpricedUsed?: number;
+            unpricedUsed: number;
             /** Format: int64 */
-            unpricedDeliveries?: number;
+            unpricedDeliveries: number;
             items?: components["schemas"]["SpendingViewItem"][];
             months?: components["schemas"]["SpendingViewMonth"][];
             /** Format: int64 */
@@ -8320,18 +9172,18 @@ export interface components {
         };
         SpendingViewItem: {
             /** Format: int64 */
-            supplyId?: number;
+            supplyId: number;
             name?: string;
             unit?: string;
-            archived?: boolean;
+            archived: boolean;
             /** Format: int32 */
-            bought?: number;
+            bought: number;
             /** Format: int64 */
-            boughtSom?: number;
+            boughtSom: number;
             /** Format: int64 */
-            unpricedDeliveries?: number;
+            unpricedDeliveries: number;
             /** Format: int32 */
-            used?: number;
+            used: number;
             /** Format: int64 */
             usedSom?: number;
         };
@@ -8339,10 +9191,10 @@ export interface components {
             /** Format: date */
             month?: string;
             /** Format: int64 */
-            purchasedSom?: number;
+            purchasedSom: number;
         };
         SlotsView: {
-            workingDay?: boolean;
+            workingDay: boolean;
             /** Format: time-local */
             workStart?: string;
             /** Format: time-local */
@@ -8356,50 +9208,42 @@ export interface components {
             work?: components["schemas"]["TimeRange"][];
             chairTime?: components["schemas"]["SlotsViewChairTime"][];
         };
-        SlotsViewBreak: {
-            /** Format: date-time */
-            start?: string;
-            /** Format: date-time */
-            end?: string;
-            title?: string;
-            emoji?: string;
-        };
         SlotsViewChairBusy: {
             /** Format: date-time */
-            start?: string;
+            start: string;
             /** Format: date-time */
-            end?: string;
+            end: string;
             chairName?: string;
             /** Format: int64 */
-            doctorId?: number;
+            doctorId: number;
             doctorName?: string;
         };
         SlotsViewChairTime: {
             /** Format: date-time */
-            start?: string;
+            start: string;
             /** Format: date-time */
-            end?: string;
+            end: string;
             /** Format: int64 */
-            doctorId?: number;
+            doctorId: number;
             doctorName?: string;
             chairName?: string;
         };
         TimeRange: {
             /** Format: date-time */
-            start?: string;
+            start: string;
             /** Format: date-time */
-            end?: string;
+            end: string;
         };
         ShiftControllerSchedule: {
             people?: components["schemas"]["ShiftServicePerson"][];
             shifts?: components["schemas"]["ShiftServiceShiftView"][];
-            canEdit?: boolean;
+            canEdit: boolean;
             /** Format: int64 */
-            me?: number;
+            me: number;
         };
         ShiftServicePerson: {
             /** Format: int64 */
-            telegramId?: number;
+            telegramId: number;
             fullName?: string;
             /** @enum {string} */
             role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
@@ -8423,8 +9267,8 @@ export interface components {
         ServiceTypeServiceCatalogItem: {
             name?: string;
             /** Format: int32 */
-            durationMinutes?: number;
-            added?: boolean;
+            durationMinutes: number;
+            added: boolean;
             /** Format: int32 */
             typicalPriceSom?: number;
             /** Format: int64 */
@@ -8438,7 +9282,7 @@ export interface components {
         };
         SurveySummary: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             title?: string;
             roles?: ("ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT")[];
             /** Format: date */
@@ -8448,7 +9292,7 @@ export interface components {
             /** @enum {string} */
             status?: "DRAFT" | "SCHEDULED" | "OPEN" | "FINISHED" | "STOPPED";
             /** Format: int32 */
-            responses?: number;
+            responses: number;
             /** Format: date-time */
             createdAt?: string;
         };
@@ -8457,7 +9301,7 @@ export interface components {
             clinicId?: number;
             clinicName?: string;
             /** Format: int32 */
-            count?: number;
+            count: number;
         };
         SurveyResultsContact: {
             name?: string;
@@ -8468,23 +9312,23 @@ export interface components {
         };
         SurveyResultsNps: {
             /** Format: int32 */
-            score?: number;
+            score: number;
             /** Format: int32 */
-            promoters?: number;
+            promoters: number;
             /** Format: int32 */
-            passives?: number;
+            passives: number;
             /** Format: int32 */
-            detractors?: number;
+            detractors: number;
         };
         SurveyResultsQuestionResult: {
             /** Format: int64 */
-            questionId?: number;
+            questionId: number;
             /** @enum {string} */
             type?: "RATING" | "NPS" | "SINGLE" | "MULTI" | "TEXT" | "CONTACT";
             text?: string;
             options?: string[];
             /** Format: int32 */
-            answered?: number;
+            answered: number;
             average?: number;
             nps?: components["schemas"]["SurveyResultsNps"];
             counts?: number[];
@@ -8492,9 +9336,9 @@ export interface components {
         };
         SurveyResultsResults: {
             /** Format: int64 */
-            surveyId?: number;
+            surveyId: number;
             /** Format: int32 */
-            responses?: number;
+            responses: number;
             byRole?: components["schemas"]["SurveyResultsRoleCount"][];
             byClinic?: components["schemas"]["SurveyResultsClinicCount"][];
             questions?: components["schemas"]["SurveyResultsQuestionResult"][];
@@ -8504,7 +9348,7 @@ export interface components {
             /** @enum {string} */
             role?: "ADMIN" | "DOCTOR" | "RECEPTION" | "ASSISTANT";
             /** Format: int32 */
-            count?: number;
+            count: number;
         };
         SurveyResultsTextAnswer: {
             text?: string;
@@ -8515,13 +9359,13 @@ export interface components {
         };
         ClinicOutreachCounts: {
             /** Format: int64 */
-            fresh?: number;
+            fresh: number;
             /** Format: int64 */
-            sent?: number;
+            sent: number;
             /** Format: int64 */
-            further?: number;
+            further: number;
             /** Format: int64 */
-            declined?: number;
+            declined: number;
         };
         ClinicOutreachOutreach: {
             counts?: components["schemas"]["ClinicOutreachCounts"];
@@ -8529,7 +9373,7 @@ export interface components {
             template?: components["schemas"]["ClinicOutreachTemplate"];
         };
         MaterialsListing: {
-            configured?: boolean;
+            configured: boolean;
             files?: components["schemas"]["MaterialsMaterial"][];
         };
         MaterialsMaterial: {
@@ -8539,7 +9383,7 @@ export interface components {
             folder?: string;
             kind?: string;
             /** Format: int64 */
-            size?: number;
+            size: number;
             /** Format: date-time */
             modified?: string;
             url?: string;
@@ -8547,7 +9391,7 @@ export interface components {
         };
         PlatformMembersManagerView: {
             /** Format: int64 */
-            telegramId?: number;
+            telegramId: number;
             fullName?: string;
             /** Format: date-time */
             createdAt?: string;
@@ -8557,19 +9401,19 @@ export interface components {
             path?: string;
             exception?: string;
             /** Format: int64 */
-            count?: number;
+            count: number;
             /** Format: date-time */
             lastAt?: string;
             lastRequestId?: string;
         };
         HealthServiceAi: {
-            configured?: boolean;
+            configured: boolean;
             /** Format: date-time */
             lastOkAt?: string;
             /** Format: date-time */
             lastErrorAt?: string;
             /** Format: int64 */
-            errors24h?: number;
+            errors24h: number;
             lastError?: string;
         };
         HealthServiceApp: {
@@ -8580,16 +9424,16 @@ export interface components {
             /** Format: date-time */
             startedAt?: string;
             /** Format: int64 */
-            uptimeSeconds?: number;
+            uptimeSeconds: number;
             java?: string;
             /** Format: int64 */
-            heapUsedMb?: number;
+            heapUsedMb: number;
             /** Format: int64 */
-            heapMaxMb?: number;
+            heapMaxMb: number;
             /** Format: int32 */
             cpuPercent?: number;
             /** Format: int32 */
-            processors?: number;
+            processors: number;
             disk?: components["schemas"]["HealthServiceDisk"];
         };
         HealthServiceBackup: {
@@ -8600,10 +9444,10 @@ export interface components {
             offsite?: boolean;
             /** Format: int64 */
             ageHours?: number;
-            stale?: boolean;
+            stale: boolean;
         };
         HealthServiceDb: {
-            up?: boolean;
+            up: boolean;
             /** Format: int64 */
             queryMs?: number;
             /** Format: int64 */
@@ -8619,15 +9463,15 @@ export interface components {
         HealthServiceDisk: {
             path?: string;
             /** Format: int64 */
-            totalMb?: number;
+            totalMb: number;
             /** Format: int64 */
-            freeMb?: number;
+            freeMb: number;
             /** Format: int32 */
-            usedPercent?: number;
+            usedPercent: number;
         };
         HealthServiceErrors: {
             /** Format: int64 */
-            total24h?: number;
+            total24h: number;
             top?: components["schemas"]["ErrorJournalTop"][];
         };
         HealthServiceHealth: {
@@ -8659,7 +9503,7 @@ export interface components {
             text?: string;
         };
         HealthServiceSms: {
-            configured?: boolean;
+            configured: boolean;
             /** Format: date-time */
             lastSentAt?: string;
             /** Format: date-time */
@@ -8686,15 +9530,15 @@ export interface components {
             stack?: string;
         };
         LogSearchResult: {
-            available?: boolean;
+            available: boolean;
             requestId?: string;
             lines?: components["schemas"]["LogSearchLine"][];
-            truncated?: boolean;
+            truncated: boolean;
             files?: string[];
         };
         SalesFunnelFunnel: {
             /** Format: int64 */
-            total?: number;
+            total: number;
             stages?: components["schemas"]["SalesFunnelStageCount"][];
             leads?: components["schemas"]["SalesFunnelLead"][];
         };
@@ -8702,53 +9546,53 @@ export interface components {
             /** @enum {string} */
             stage?: "LEAD" | "CONTACTED" | "DEMO" | "TRIAL" | "PAYING" | "LOST";
             /** Format: int64 */
-            current?: number;
+            current: number;
             /** Format: int64 */
-            reached?: number;
+            reached: number;
             /** Format: int32 */
-            conversion?: number;
+            conversion: number;
         };
         PlatformExpensesClinicIncome: {
             /** Format: int64 */
-            clinicId?: number;
+            clinicId: number;
             name?: string;
             /** Format: int64 */
-            som?: number;
+            som: number;
             /** Format: int32 */
-            payments?: number;
+            payments: number;
         };
         PlatformFinanceBalance: {
             service?: string;
             label?: string;
             /** Format: int64 */
-            topupTotalSom?: number;
+            topupTotalSom: number;
             /** Format: int64 */
-            topupPeriodSom?: number;
+            topupPeriodSom: number;
             /** Format: date */
             since?: string;
             /** Format: int64 */
-            spentSinceSom?: number;
+            spentSinceSom: number;
             /** Format: int64 */
-            spentPeriodSom?: number;
+            spentPeriodSom: number;
             /** Format: int64 */
-            balanceSom?: number;
+            balanceSom: number;
             /** Format: int64 */
-            lastTopupSom?: number;
-            low?: boolean;
-            needsPrice?: boolean;
+            lastTopupSom: number;
+            low: boolean;
+            needsPrice: boolean;
         };
         PlatformFinanceDue: {
             /** Format: int64 */
-            expenseId?: number;
+            expenseId: number;
             category?: string;
             month?: string;
             /** Format: int64 */
-            amountSom?: number;
+            amountSom: number;
             amountUsd?: number;
             usdRate?: number;
             /** Format: int32 */
-            day?: number;
-            overdue?: boolean;
+            day: number;
+            overdue: boolean;
         };
         PlatformFinanceFinance: {
             period?: string;
@@ -8756,11 +9600,11 @@ export interface components {
             to?: string;
             month?: string;
             /** Format: int64 */
-            incomeSom?: number;
+            incomeSom: number;
             /** Format: int64 */
-            expenseSom?: number;
+            expenseSom: number;
             /** Format: int64 */
-            profitSom?: number;
+            profitSom: number;
             expenses?: components["schemas"]["PlatformFinanceLine"][];
             income?: components["schemas"]["PlatformExpensesClinicIncome"][];
             entries?: components["schemas"]["PlatformExpensesExpense"][];
@@ -8769,12 +9613,12 @@ export interface components {
             settings?: components["schemas"]["PlatformFinanceSettings"];
             categories?: string[];
             /** Format: int64 */
-            pendingSom?: number;
+            pendingSom: number;
             due?: components["schemas"]["PlatformFinanceDue"][];
             marks?: components["schemas"]["PlatformExpensesMark"][];
             factFrom?: string;
             /** Format: int64 */
-            topupSom?: number;
+            topupSom: number;
             balances?: components["schemas"]["PlatformFinanceBalance"][];
             topups?: components["schemas"]["PlatformTopupsTopup"][];
         };
@@ -8782,29 +9626,29 @@ export interface components {
             key?: string;
             label?: string;
             /** Format: int64 */
-            som?: number;
-            auto?: boolean;
+            som: number;
+            auto: boolean;
             /** Format: int64 */
-            count?: number;
-            needsPrice?: boolean;
+            count: number;
+            needsPrice: boolean;
         };
         PlatformFinanceMonthTotal: {
             month?: string;
             /** Format: int64 */
-            incomeSom?: number;
+            incomeSom: number;
             /** Format: int64 */
-            expenseSom?: number;
+            expenseSom: number;
             /** Format: int64 */
-            profitSom?: number;
+            profitSom: number;
             /** Format: int64 */
-            pendingSom?: number;
+            pendingSom: number;
         };
         PlatformFinanceSettings: {
             smsPriceSom?: number;
             lastUsdRate?: number;
         };
         InstagramTokensState: {
-            enabled?: boolean;
+            enabled: boolean;
             /** Format: date-time */
             expiresAt?: string;
             /** Format: date-time */
@@ -8812,15 +9656,15 @@ export interface components {
         };
         StockCleanupCounts: {
             /** Format: int64 */
-            supplies?: number;
+            supplies: number;
             /** Format: int64 */
-            movements?: number;
+            movements: number;
             /** Format: int64 */
-            serviceNorms?: number;
+            serviceNorms: number;
         };
         ClinicApplicationsApplicationView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             clinicName?: string;
             contactName?: string;
             phone?: string;
@@ -8833,12 +9677,12 @@ export interface components {
             clinicId?: number;
             /** Format: date-time */
             createdAt?: string;
-            solo?: boolean;
+            solo: boolean;
             telegram?: string;
         };
         PlatformAnalyticsAnalytics: {
             /** Format: int32 */
-            days?: number;
+            days: number;
             city?: string;
             cities?: string[];
             summary?: components["schemas"]["PlatformAnalyticsSummary"];
@@ -8852,73 +9696,73 @@ export interface components {
         };
         PlatformAnalyticsApplications: {
             /** Format: int64 */
-            total?: number;
+            total: number;
             /** Format: int64 */
-            approved?: number;
+            approved: number;
             /** Format: int64 */
-            rejected?: number;
+            rejected: number;
             /** Format: int64 */
-            waiting?: number;
+            waiting: number;
         };
         PlatformAnalyticsCell: {
             /** Format: int64 */
-            eligible?: number;
+            eligible: number;
             /** Format: int64 */
-            active?: number;
+            active: number;
         };
         PlatformAnalyticsCityRow: {
             city?: string;
             /** Format: int64 */
-            clinics?: number;
+            clinics: number;
             /** Format: int64 */
-            working?: number;
+            working: number;
             /** Format: int64 */
-            paying?: number;
+            paying: number;
             /** Format: int64 */
-            patients?: number;
+            patients: number;
             /** Format: int64 */
-            applications?: number;
+            applications: number;
         };
         PlatformAnalyticsCohort: {
             month?: string;
             /** Format: int64 */
-            clinics?: number;
+            clinics: number;
             after?: components["schemas"]["PlatformAnalyticsCell"][];
         };
         PlatformAnalyticsDue: {
             /** Format: int64 */
-            clinicId?: number;
+            clinicId: number;
             name?: string;
             city?: string;
             /** Format: date */
             date?: string;
             kind?: string;
             /** Format: int64 */
-            daysLeft?: number;
+            daysLeft: number;
             tariff?: string;
             /** Format: int64 */
-            monthSom?: number;
+            monthSom: number;
             /** Format: int64 */
-            appointments?: number;
+            appointments: number;
             /** Format: date-time */
             staffSeenAt?: string;
-            payPending?: boolean;
+            payPending: boolean;
         };
         PlatformAnalyticsFeature: {
             key?: string;
             /** Format: int64 */
-            clinics?: number;
+            clinics: number;
         };
         PlatformAnalyticsFeatures: {
             /** Format: int64 */
-            activeClinics?: number;
+            activeClinics: number;
             items?: components["schemas"]["PlatformAnalyticsFeature"][];
             /** Format: int64 */
-            appointments?: number;
+            appointments: number;
             /** Format: int64 */
-            selfBooked?: number;
+            selfBooked: number;
             /** Format: int64 */
-            aiBooked?: number;
+            aiBooked: number;
         };
         PlatformAnalyticsFunnel: {
             applications?: components["schemas"]["PlatformAnalyticsApplications"];
@@ -8931,27 +9775,27 @@ export interface components {
         PlatformAnalyticsMonthCount: {
             month?: string;
             /** Format: int64 */
-            count?: number;
+            count: number;
         };
         PlatformAnalyticsMonthMoney: {
             month?: string;
             /** Format: int64 */
-            paidSom?: number;
+            paidSom: number;
             /** Format: int64 */
-            payments?: number;
+            payments: number;
             /** Format: int64 */
-            mrrSom?: number;
+            mrrSom: number;
         };
         PlatformAnalyticsPatients: {
             /** Format: int64 */
-            total?: number;
+            total: number;
             /** Format: int64 */
-            withBot?: number;
+            withBot: number;
             newByMonth?: components["schemas"]["PlatformAnalyticsMonthCount"][];
             /** Format: int64 */
-            done?: number;
+            done: number;
             /** Format: int64 */
-            noShow?: number;
+            noShow: number;
         };
         PlatformAnalyticsReason: {
             code?: string;
@@ -8959,15 +9803,15 @@ export interface components {
         };
         PlatformAnalyticsRiskRow: {
             /** Format: int64 */
-            clinicId?: number;
+            clinicId: number;
             name?: string;
             city?: string;
             /** @enum {string} */
             plan?: "PILOT" | "PAYING" | "OVERDUE";
             /** Format: int64 */
-            last14?: number;
+            last14: number;
             /** Format: int64 */
-            prev14?: number;
+            prev14: number;
             /** Format: date-time */
             staffSeenAt?: string;
             reasons?: components["schemas"]["PlatformAnalyticsReason"][];
@@ -8975,90 +9819,90 @@ export interface components {
         PlatformAnalyticsStep: {
             key?: string;
             /** Format: int64 */
-            clinics?: number;
+            clinics: number;
         };
         PlatformAnalyticsSummary: {
             /** Format: int64 */
-            clinics?: number;
+            clinics: number;
             /** Format: int64 */
-            working?: number;
+            working: number;
             /** Format: int64 */
-            pilot?: number;
+            pilot: number;
             /** Format: int64 */
-            paying?: number;
+            paying: number;
             /** Format: int64 */
-            overdue?: number;
+            overdue: number;
             /** Format: int64 */
-            mrrSom?: number;
+            mrrSom: number;
             /** Format: int64 */
-            appointments?: number;
+            appointments: number;
             /** Format: int64 */
-            appointmentsBefore?: number;
+            appointmentsBefore: number;
         };
         AiUsageStoreClinicRow: {
             /** Format: int64 */
-            clinicId?: number;
+            clinicId: number;
             name?: string;
             /** Format: int64 */
-            actions?: number;
+            actions: number;
             /** Format: int64 */
-            errors?: number;
+            errors: number;
             /** Format: int64 */
-            inputTokens?: number;
+            inputTokens: number;
             /** Format: int64 */
-            outputTokens?: number;
+            outputTokens: number;
             /** Format: int64 */
-            cacheReadTokens?: number;
+            cacheReadTokens: number;
             /** Format: int64 */
-            cacheWriteTokens?: number;
+            cacheWriteTokens: number;
             usd?: number;
             /** Format: int64 */
-            som?: number;
+            som: number;
             /** Format: int64 */
-            used?: number;
+            used: number;
             /** Format: int64 */
-            limit?: number;
+            limit: number;
             /** Format: int32 */
             customLimit?: number;
             /** Format: int64 */
-            doctors?: number;
+            doctors: number;
             /** Format: int64 */
-            tariffSom?: number;
-            free?: boolean;
+            tariffSom: number;
+            free: boolean;
         };
         AiUsageStoreDayRow: {
             /** Format: date */
             date?: string;
             /** Format: int64 */
-            actions?: number;
+            actions: number;
             usd?: number;
             /** Format: int64 */
-            som?: number;
+            som: number;
         };
         AiUsageStoreKindRow: {
             /** @enum {string} */
             kind?: "VISIT_REPORT" | "DICTATION" | "QUESTION_DRAFT" | "POST_TEXT" | "PHOTO_FRAME" | "COMEBACK" | "BOT_ANSWER" | "MEMO_TRANSLATION" | "SUPPORT" | "OTHER";
             label?: string;
             /** Format: int64 */
-            actions?: number;
+            actions: number;
             /** Format: int64 */
-            errors?: number;
+            errors: number;
             /** Format: int64 */
-            inputTokens?: number;
+            inputTokens: number;
             /** Format: int64 */
-            outputTokens?: number;
+            outputTokens: number;
             usd?: number;
             /** Format: int64 */
-            som?: number;
+            som: number;
         };
         AiUsageStoreReport: {
             month?: string;
             settings?: components["schemas"]["AiUsageStoreSettings"];
             /** Format: int64 */
-            actions?: number;
+            actions: number;
             usd?: number;
             /** Format: int64 */
-            som?: number;
+            som: number;
             platformUsd?: number;
             clinics?: components["schemas"]["AiUsageStoreClinicRow"][];
             kinds?: components["schemas"]["AiUsageStoreKindRow"][];
@@ -9074,11 +9918,11 @@ export interface components {
             /** Format: date-time */
             acceptedAt?: string;
             /** Format: int32 */
-            scans?: number;
+            scans: number;
             /** Format: int32 */
             requiredVersion?: number;
-            assigned?: boolean;
-            signed?: boolean;
+            assigned: boolean;
+            signed: boolean;
             /** Format: date-time */
             signedAt?: string;
             /** Format: date-time */
@@ -9087,7 +9931,7 @@ export interface components {
         };
         VisitTeethView: {
             /** Format: int64 */
-            appointmentId?: number;
+            appointmentId: number;
             /** Format: date-time */
             startAt?: string;
             doctorName?: string;
@@ -9095,7 +9939,7 @@ export interface components {
         };
         VisitNoteView: {
             /** Format: int64 */
-            appointmentId?: number;
+            appointmentId: number;
             /** Format: date-time */
             startAt?: string;
             note?: string;
@@ -9103,30 +9947,23 @@ export interface components {
             updatedAt?: string;
             doctorName?: string;
             visitDoctorName?: string;
-            editable?: boolean;
+            editable: boolean;
         };
         LessonsTarget: {
-            telegram?: boolean;
+            telegram: boolean;
             /** @enum {string} */
             lang?: "RU" | "KY";
         };
         PatientListControllerPatientRow: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             fullName?: string;
             phone?: string;
-            telegram?: boolean;
+            telegram: boolean;
             /** Format: date-time */
             lastVisit?: string;
             /** Format: date-time */
             nextVisit?: string;
-        };
-        BookingViewsSlots: {
-            workingDay?: boolean;
-            starts?: string[];
-            breaks?: components["schemas"]["SlotsViewBreak"][];
-            dayOff?: components["schemas"]["SlotsViewBreak"];
-            taken?: string[];
         };
         BookingViewsPromo: {
             code?: string;
@@ -9136,44 +9973,44 @@ export interface components {
         };
         NewsControllerPatientNews: {
             news?: components["schemas"]["NewsControllerPatientNewsItem"][];
-            subscribed?: boolean;
+            subscribed: boolean;
         };
         NewsControllerPatientNewsItem: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             text?: string;
             /** Format: date-time */
             createdAt?: string;
         };
         BookingViewsElsewhere: {
             /** Format: int64 */
-            clinicId?: number;
+            clinicId: number;
             clinicName?: string;
             booking?: components["schemas"]["BookingViewsBooking"];
         };
         BookingViewsMe: {
-            doctor?: boolean;
-            admin?: boolean;
-            reception?: boolean;
-            owner?: boolean;
-            platform?: boolean;
+            doctor: boolean;
+            admin: boolean;
+            reception: boolean;
+            owner: boolean;
+            platform: boolean;
             /** Format: int64 */
             doctorId?: number;
-            bookingEnabled?: boolean;
+            bookingEnabled: boolean;
             fullName?: string;
             phone?: string;
             booking?: components["schemas"]["BookingViewsBooking"];
             services?: components["schemas"]["ServiceTypeView"][];
             clinicContact?: string;
             /** Format: int32 */
-            daysAhead?: number;
+            daysAhead: number;
             doctors?: components["schemas"]["DoctorView"][];
             clinic?: components["schemas"]["ClinicView"];
             lang?: string;
             clinicChoices?: components["schemas"]["ClinicLinksChoice"][];
-            canChangeClinic?: boolean;
-            waiting?: boolean;
-            hasReception?: boolean;
+            canChangeClinic: boolean;
+            waiting: boolean;
+            hasReception: boolean;
             assistantOf?: number[];
             elsewhere?: components["schemas"]["BookingViewsElsewhere"];
             doctorServices?: components["schemas"]["DoctorServicesView"][];
@@ -9181,27 +10018,20 @@ export interface components {
             promoCode?: string;
             bookings?: components["schemas"]["BookingViewsBooking"][];
             relatives?: components["schemas"]["RelativesRelative"][];
-            hasCard?: boolean;
+            hasCard: boolean;
             /** Format: int32 */
-            maxRelatives?: number;
+            maxRelatives: number;
         };
         ClinicLinksChoice: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             name?: string;
             address?: string;
             city?: string;
         };
-        PatientSourcesChoice: {
-            /** Format: int64 */
-            id?: number;
-            emoji?: string;
-            title?: string;
-            titleKy?: string;
-        };
         RelativesRelative: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             fullName?: string;
             /** Format: date */
             birthDate?: string;
@@ -9210,52 +10040,52 @@ export interface components {
         };
         DepositsForPatient: {
             /** Format: int64 */
-            appointmentId?: number;
+            appointmentId: number;
             /** Format: int32 */
-            amountSom?: number;
+            amountSom: number;
             status?: string;
             details?: string;
-            hasQr?: boolean;
+            hasQr: boolean;
         };
         QuestionControllerQuestionList: {
             questions?: components["schemas"]["PatientQuestionsQuestionView"][];
-            ai?: boolean;
-            aiAvailable?: boolean;
-            botAi?: boolean;
+            ai: boolean;
+            aiAvailable: boolean;
+            botAi: boolean;
         };
         QuestionControllerNewCount: {
             /** Format: int32 */
-            count?: number;
+            count: number;
         };
         OpeningDebtsView: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int64 */
-            patientId?: number;
+            patientId: number;
             patient?: string;
             /** Format: int32 */
-            amountSom?: number;
+            amountSom: number;
             /** Format: date-time */
             createdAt?: string;
         };
         NewsControllerStaffNews: {
             news?: components["schemas"]["NewsServiceNews"][];
             /** Format: int32 */
-            subscribers?: number;
+            subscribers: number;
         };
         StaffMembersMemberView: {
             /** Format: int64 */
-            telegramId?: number;
+            telegramId: number;
             fullName?: string;
             /** @enum {string} */
             role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
             /** Format: date-time */
             createdAt?: string;
-            me?: boolean;
-            doctor?: boolean;
+            me: boolean;
+            doctor: boolean;
             doctorIds?: number[];
             phone?: string;
-            phoneOnly?: boolean;
+            phoneOnly: boolean;
         };
         StaffMembersInviteView: {
             id?: string;
@@ -9264,24 +10094,24 @@ export interface components {
             role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
             /** Format: date-time */
             expiresAt?: string;
-            expired?: boolean;
+            expired: boolean;
         };
         PasswordControllerPasswordState: {
-            phoneLogin?: boolean;
-            passwordSet?: boolean;
-            temporary?: boolean;
+            phoneLogin: boolean;
+            passwordSet: boolean;
+            temporary: boolean;
             /** Format: date-time */
             setAt?: string;
-            sms?: boolean;
-            telegram?: boolean;
-            telegramCode?: boolean;
+            sms: boolean;
+            telegram: boolean;
+            telegramCode: boolean;
         };
         PasswordControllerCodePending: {
-            pending?: boolean;
+            pending: boolean;
             /** Format: int64 */
-            secondsLeft?: number;
+            secondsLeft: number;
             /** Format: int64 */
-            resendSeconds?: number;
+            resendSeconds: number;
         };
         NetMonthMine: {
             month?: string;
@@ -9295,23 +10125,23 @@ export interface components {
             /** Format: int64 */
             doctorId?: number;
             doctor?: string;
-            selfEmployed?: boolean;
+            selfEmployed: boolean;
             /** Format: int64 */
-            revenueSom?: number;
+            revenueSom: number;
             /** Format: int64 */
-            earnedSom?: number;
+            earnedSom: number;
             /** Format: int64 */
-            rentSom?: number;
+            rentSom: number;
             /** Format: int64 */
-            materialsSom?: number;
+            materialsSom: number;
             /** Format: int32 */
-            unpricedMaterials?: number;
+            unpricedMaterials: number;
             /** Format: int64 */
-            expensesSom?: number;
+            expensesSom: number;
             /** Format: int64 */
             doctorNetSom?: number;
             /** Format: int64 */
-            clinicSom?: number;
+            clinicSom: number;
             /** Format: int64 */
             sharedSom?: number;
             /** Format: int64 */
@@ -9326,46 +10156,46 @@ export interface components {
             rows?: components["schemas"]["NetMonthRow"][];
             total?: components["schemas"]["NetMonthRow"];
             /** Format: int64 */
-            generalExpensesSom?: number;
+            generalExpensesSom: number;
             /** Format: int64 */
-            purchasedSom?: number;
+            purchasedSom: number;
             /** Format: int64 */
-            clinicMaterialsSom?: number;
+            clinicMaterialsSom: number;
             /** Format: int64 */
-            supplySom?: number;
+            supplySom: number;
             /** Format: int64 */
-            selfEmployedExpensesSom?: number;
+            selfEmployedExpensesSom: number;
             /** Format: int64 */
-            accruedSom?: number;
+            accruedSom: number;
             /** Format: int64 */
-            paidSom?: number;
+            paidSom: number;
             /** Format: int64 */
-            rentReceivedSom?: number;
+            rentReceivedSom: number;
             /** Format: int64 */
-            payoutsSom?: number;
+            payoutsSom: number;
             /** Format: int64 */
-            otherSom?: number;
+            otherSom: number;
             /** Format: int64 */
-            profitSom?: number;
+            profitSom: number;
         };
         PaymentQueryDebt: {
             /** Format: int64 */
-            appointmentId?: number;
+            appointmentId: number;
             /** Format: date-time */
             startAt?: string;
             /** Format: int64 */
-            patientId?: number;
+            patientId: number;
             patient?: string;
             /** Format: int64 */
-            doctorId?: number;
+            doctorId: number;
             doctor?: string;
             service?: string;
             /** Format: int32 */
-            chargeSom?: number;
+            chargeSom: number;
             /** Format: int32 */
-            paidSom?: number;
+            paidSom: number;
             /** Format: int32 */
-            debtSom?: number;
+            debtSom: number;
             /** Format: date */
             dueOn?: string;
         };
@@ -9376,21 +10206,21 @@ export interface components {
         ComebacksBoard: {
             patients?: components["schemas"]["ComebacksCandidate"][];
             /** Format: int32 */
-            planSom?: number;
+            planSom: number;
             /** Format: int32 */
-            planPatients?: number;
+            planPatients: number;
             /** Format: int32 */
-            noShows?: number;
+            noShows: number;
             /** Format: int32 */
-            recalls?: number;
+            recalls: number;
             /** Format: int32 */
-            total?: number;
+            total: number;
             /** Format: int32 */
-            sent?: number;
+            sent: number;
             /** Format: int32 */
-            agreed?: number;
+            agreed: number;
             /** Format: int32 */
-            cancelled?: number;
+            cancelled: number;
         };
         ComebacksCancelled: {
             /** Format: date-time */
@@ -9402,23 +10232,23 @@ export interface components {
             serviceId?: number;
             service?: string;
             /** Format: int64 */
-            doctorId?: number;
+            doctorId: number;
             doctor?: string;
             /** Format: date-time */
             startAt?: string;
             /** Format: int32 */
-            minutes?: number;
+            minutes: number;
         };
         ComebacksCandidate: {
             /** Format: int64 */
-            patientId?: number;
+            patientId: number;
             fullName?: string;
             phone?: string;
-            telegram?: boolean;
+            telegram: boolean;
             /** @enum {string} */
             reason?: "PLAN" | "CANCELLED" | "NO_SHOW" | "RECALL";
             /** Format: int32 */
-            planSom?: number;
+            planSom: number;
             plan?: string[];
             /** Format: date-time */
             lastVisit?: string;
@@ -9439,13 +10269,13 @@ export interface components {
         };
         ComebacksResult: {
             /** Format: int32 */
-            invited?: number;
+            invited: number;
             /** Format: int32 */
-            returned?: number;
+            returned: number;
             /** Format: int32 */
-            returnedPlanSom?: number;
+            returnedPlanSom: number;
             /** Format: int32 */
-            paidSom?: number;
+            paidSom: number;
         };
         ClinicStarterPreview: {
             services?: components["schemas"]["ServiceTypeServiceStarterService"][];
@@ -9457,7 +10287,7 @@ export interface components {
             name?: string;
             category?: string;
             /** Format: int32 */
-            durationMinutes?: number;
+            durationMinutes: number;
             /** Format: int32 */
             priceSom?: number;
             /** Format: int32 */
@@ -9476,16 +10306,16 @@ export interface components {
         };
         PayRequestsPeriod: {
             /** Format: int32 */
-            months?: number;
+            months: number;
             /** Format: int64 */
-            amountSom?: number;
+            amountSom: number;
         };
         AuditLogEntry: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             who?: string;
             /** Format: int64 */
-            telegramId?: number;
+            telegramId: number;
             text?: string;
             /** Format: date-time */
             at?: string;
@@ -9501,27 +10331,27 @@ export interface components {
         };
         AuditLogPerson: {
             /** Format: int64 */
-            telegramId?: number;
+            telegramId: number;
             name?: string;
         };
         AiUsageStoreCounter: {
             month?: string;
             /** Format: int64 */
-            used?: number;
+            used: number;
             /** Format: int64 */
-            limit?: number;
+            limit: number;
         };
         CareMemosSuggested: {
             /** Format: int64 */
-            serviceId?: number;
+            serviceId: number;
             service?: string;
             /** Format: int64 */
-            memoId?: number;
+            memoId: number;
             memo?: string;
         };
         VisitReportsSent: {
             text?: string;
-            ai?: boolean;
+            ai: boolean;
             /** @enum {string} */
             via?: "TELEGRAM" | "WHATSAPP" | "PRINT";
             /** Format: date-time */
@@ -9531,14 +10361,14 @@ export interface components {
             /** Format: date-time */
             paidAt?: string;
             /** Format: int32 */
-            amountSom?: number;
+            amountSom: number;
             /** @enum {string} */
             method?: "CASH" | "TRANSFER" | "CARD";
             takenBy?: string;
         };
         ReceiptsReceiptView: {
             /** Format: int64 */
-            appointmentId?: number;
+            appointmentId: number;
             /** Format: date-time */
             startAt?: string;
             doctor?: string;
@@ -9547,18 +10377,18 @@ export interface components {
             /** Format: int32 */
             chargeSom?: number;
             /** Format: int32 */
-            paidSom?: number;
+            paidSom: number;
             /** Format: int32 */
-            debtSom?: number;
+            debtSom: number;
             payments?: components["schemas"]["ReceiptsPayment"][];
             text?: string;
-            telegram?: boolean;
+            telegram: boolean;
         };
         PaymentQueryEntry: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: int32 */
-            amountSom?: number;
+            amountSom: number;
             /** @enum {string} */
             method?: "CASH" | "TRANSFER" | "CARD";
             /** Format: date-time */
@@ -9570,44 +10400,44 @@ export interface components {
             title?: string;
             body?: string;
             text?: string;
-            telegram?: boolean;
+            telegram: boolean;
             /** @enum {string} */
             lang?: "RU" | "KY";
             /** @enum {string} */
             patientLang?: "RU" | "KY";
-            ky?: boolean;
+            ky: boolean;
         };
         WeekStats: {
             /** Format: date */
             weekStart?: string;
             /** Format: int64 */
-            booked?: number;
+            booked: number;
             /** Format: int64 */
-            done?: number;
+            done: number;
             /** Format: int64 */
-            noShow?: number;
+            noShow: number;
             /** Format: int64 */
-            cancelled?: number;
+            cancelled: number;
             /** Format: int64 */
-            unmarked?: number;
+            unmarked: number;
             /** Format: int64 */
-            reminded?: number;
+            reminded: number;
         };
         SourcesControllerSourceCount: {
             /** Format: int64 */
             sourceId?: number;
             emoji?: string;
             title?: string;
-            active?: boolean;
+            active: boolean;
             /** Format: int32 */
-            patients?: number;
+            patients: number;
         };
         SourcesControllerSourcesView: {
             newPatients?: components["schemas"]["SourcesControllerSourceCount"][];
             /** Format: int32 */
-            firstVisits?: number;
+            firstVisits: number;
             /** Format: int32 */
-            repeatVisits?: number;
+            repeatVisits: number;
         };
         RevenueView: {
             /** Format: date */
@@ -9615,15 +10445,15 @@ export interface components {
             /** Format: date */
             to?: string;
             /** Format: int64 */
-            totalSom?: number;
+            totalSom: number;
             /** Format: int64 */
-            paidCount?: number;
+            paidCount: number;
             /** Format: int64 */
-            unpaidCount?: number;
+            unpaidCount: number;
             /** Format: int64 */
-            freeCount?: number;
+            freeCount: number;
             /** Format: int64 */
-            prepaidCount?: number;
+            prepaidCount: number;
             byMethod?: {
                 [key: string]: number;
             };
@@ -9632,25 +10462,25 @@ export interface components {
         };
         RevenueViewCash: {
             /** Format: int64 */
-            totalSom?: number;
+            totalSom: number;
             byMethod?: {
                 [key: string]: number;
             };
             /** Format: int64 */
-            depositsSom?: number;
+            depositsSom: number;
             /** Format: int64 */
-            paymentsCount?: number;
+            paymentsCount: number;
             days?: components["schemas"]["RevenueViewDay"][];
         };
         RevenueViewDay: {
             /** Format: date */
             date?: string;
             /** Format: int64 */
-            totalSom?: number;
+            totalSom: number;
         };
         AppointmentServiceReportRow: {
             /** Format: int64 */
-            id?: number;
+            id: number;
             /** Format: date-time */
             startAt?: string;
             doctor?: string;
@@ -9671,32 +10501,32 @@ export interface components {
             invitedAt?: string;
             serviceName?: string;
             /** Format: int32 */
-            months?: number;
+            months: number;
             /** Format: date */
             dueOn?: string;
         };
         RatingSummary: {
             /** Format: int64 */
-            count?: number;
+            count: number;
             average?: number;
             byStars?: number[];
         };
         PromoReportControllerPromoReport: {
             rows?: components["schemas"]["PromoReportControllerRow"][];
-            money?: boolean;
+            money: boolean;
         };
         PromoReportControllerRow: {
             /** Format: int64 */
-            promoCodeId?: number;
+            promoCodeId: number;
             code?: string;
             description?: string;
-            active?: boolean;
+            active: boolean;
             /** Format: int32 */
-            bookings?: number;
+            bookings: number;
             /** Format: int32 */
-            visits?: number;
+            visits: number;
             /** Format: int32 */
-            newPatients?: number;
+            newPatients: number;
             /** Format: int64 */
             revenueSom?: number;
         };
@@ -9704,17 +10534,17 @@ export interface components {
             /** Format: date */
             date?: string;
             /** Format: int64 */
-            booked?: number;
+            booked: number;
             /** Format: int64 */
-            requested?: number;
+            requested: number;
         };
         ChairCheckView: {
             colleague?: components["schemas"]["ChairCheckViewColleague"];
-            strict?: boolean;
+            strict: boolean;
         };
         ChairCheckViewColleague: {
             /** Format: int64 */
-            doctorId?: number;
+            doctorId: number;
             doctorName?: string;
             chairName?: string;
             /** Format: date-time */
@@ -9725,16 +10555,16 @@ export interface components {
         PatientCard: {
             patient?: components["schemas"]["PatientView"];
             /** Format: int64 */
-            done?: number;
+            done: number;
             /** Format: int64 */
-            noShow?: number;
+            noShow: number;
             /** Format: int64 */
-            cancelled?: number;
+            cancelled: number;
             upcoming?: components["schemas"]["AppointmentView"][];
             past?: components["schemas"]["AppointmentView"][];
         };
         ServiceTypeControllerDeleted: {
-            deleted?: boolean;
+            deleted: boolean;
         };
         PlatformControllerConfirm: {
             confirm?: string;
@@ -12686,6 +13516,372 @@ export interface operations {
             };
         };
     };
+    question: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOffersPatientPlan"];
+                };
+            };
+        };
+    };
+    agree: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOffersPatientPlan"];
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                dental_session?: string;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramLoginControllerStarted"];
+                };
+            };
+        };
+    };
+    login_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneLoginControllerLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneLoginControllerSetupToken"];
+                };
+            };
+        };
+    };
+    password: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneLoginControllerPasswordLogin"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneLoginControllerSetupToken"];
+                };
+            };
+        };
+    };
+    newPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneLoginControllerNewPassword"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PhoneLoginControllerCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    view_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteControllerTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteControllerInviteView"];
+                };
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteControllerRegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteControllerRegistered"];
+                };
+            };
+        };
+    };
+    code_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InviteControllerCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteControllerCodeStep"];
+                };
+            };
+        };
+    };
+    submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicApplicationsForm"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": string;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    info: {
+        parameters: {
+            query?: {
+                code?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebBookingServiceInfo"];
+                };
+            };
+        };
+    };
+    book: {
+        parameters: {
+            query?: {
+                code?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WebBookingControllerForm"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebBookingServiceBooked"];
+                };
+            };
+        };
+    };
     list: {
         parameters: {
             query?: never;
@@ -12730,7 +13926,7 @@ export interface operations {
             };
         };
     };
-    book: {
+    book_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -13542,7 +14738,7 @@ export interface operations {
             };
         };
     };
-    start: {
+    start_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -15379,7 +16575,7 @@ export interface operations {
             };
         };
     };
-    question: {
+    question_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -15401,7 +16597,7 @@ export interface operations {
             };
         };
     };
-    agree: {
+    agree_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -15450,7 +16646,7 @@ export interface operations {
             };
         };
     };
-    book_1: {
+    book_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -15774,7 +16970,7 @@ export interface operations {
             };
         };
     };
-    code: {
+    code_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -15840,7 +17036,7 @@ export interface operations {
             };
         };
     };
-    code_1: {
+    code_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -17479,7 +18675,7 @@ export interface operations {
             };
         };
     };
-    view_2: {
+    view_3: {
         parameters: {
             query: {
                 month: string;
@@ -17502,7 +18698,7 @@ export interface operations {
             };
         };
     };
-    report: {
+    report_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -17618,6 +18814,459 @@ export interface operations {
             };
         };
     };
+    tariffs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tariffs"];
+                };
+            };
+        };
+    };
+    plan_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanOffersPatientPlan"];
+                };
+            };
+        };
+    };
+    file: {
+        parameters: {
+            query: {
+                exp: number;
+                sig: string;
+                download?: boolean;
+            };
+            header?: never;
+            path: {
+                dir: string;
+                file: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    publicMaterials: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialsPublicMaterials"];
+                };
+            };
+        };
+    };
+    publicFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    howTo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialsHowToVideo"][];
+                };
+            };
+        };
+    };
+    howToFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    signed: {
+        parameters: {
+            query: {
+                path: string;
+                exp: number;
+                sig: string;
+                download?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    status_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramLoginControllerStatus"];
+                };
+            };
+        };
+    };
+    pending: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhoneLoginControllerPending"];
+                };
+            };
+        };
+    };
+    forget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    data: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinksControllerLinks"];
+                };
+            };
+        };
+    };
+    template_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    file_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    config: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebAuthControllerConfig"];
+                };
+            };
+        };
+    };
+    data_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DirectoryControllerClinic"][];
+                };
+            };
+        };
+    };
+    data_2: {
+        parameters: {
+            query?: {
+                code?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicPageControllerPage"];
+                };
+            };
+        };
+    };
+    get_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JoinCaseCase"];
+                };
+            };
+        };
+    };
+    feed: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    slots: {
+        parameters: {
+            query: {
+                code?: string;
+                date: string;
+                doctorId?: number;
+                serviceTypeId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingViewsSlots"];
+                };
+            };
+        };
+    };
+    freeDays: {
+        parameters: {
+            query: {
+                code?: string;
+                doctorId?: number;
+                serviceTypeId: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string[];
+                };
+            };
+        };
+    };
     current: {
         parameters: {
             query?: never;
@@ -17683,7 +19332,7 @@ export interface operations {
             };
         };
     };
-    slots: {
+    slots_1: {
         parameters: {
             query: {
                 date: string;
@@ -17792,7 +19441,7 @@ export interface operations {
             };
         };
     };
-    get_3: {
+    get_4: {
         parameters: {
             query: {
                 month: string;
@@ -17816,7 +19465,7 @@ export interface operations {
             };
         };
     };
-    view_3: {
+    view_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -17883,7 +19532,7 @@ export interface operations {
             };
         };
     };
-    template_2: {
+    template_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -17923,7 +19572,7 @@ export interface operations {
             };
         };
     };
-    get_4: {
+    get_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -17945,7 +19594,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -18096,7 +19745,7 @@ export interface operations {
             };
         };
     };
-    file: {
+    file_2: {
         parameters: {
             query: {
                 path: string;
@@ -18139,7 +19788,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -18361,7 +20010,7 @@ export interface operations {
             };
         };
     };
-    report_1: {
+    report_2: {
         parameters: {
             query?: {
                 month?: string;
@@ -18383,7 +20032,7 @@ export interface operations {
             };
         };
     };
-    template_3: {
+    template_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -18425,7 +20074,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -18623,7 +20272,7 @@ export interface operations {
             };
         };
     };
-    get_8: {
+    get_9: {
         parameters: {
             query?: {
                 doctorId?: number;
@@ -18711,7 +20360,7 @@ export interface operations {
             };
         };
     };
-    slots_1: {
+    slots_2: {
         parameters: {
             query: {
                 date: string;
@@ -18817,7 +20466,7 @@ export interface operations {
             };
         };
     };
-    freeDays: {
+    freeDays_1: {
         parameters: {
             query: {
                 doctorId?: number;
@@ -18947,7 +20596,7 @@ export interface operations {
             };
         };
     };
-    get_9: {
+    get_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -19071,7 +20720,7 @@ export interface operations {
             };
         };
     };
-    get_10: {
+    get_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -19262,7 +20911,7 @@ export interface operations {
             };
         };
     };
-    plan_2: {
+    plan_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -19282,7 +20931,7 @@ export interface operations {
             };
         };
     };
-    view_4: {
+    view_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -19344,7 +20993,7 @@ export interface operations {
             };
         };
     };
-    template_4: {
+    template_5: {
         parameters: {
             query: {
                 kind: "PATIENTS" | "SERVICES";
@@ -19514,7 +21163,7 @@ export interface operations {
             };
         };
     };
-    get_11: {
+    get_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -19877,7 +21526,7 @@ export interface operations {
             };
         };
     };
-    report_2: {
+    report_3: {
         parameters: {
             query: {
                 from: string;
@@ -19990,6 +21639,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PatientCard"];
+                };
+            };
+        };
+    };
+    forget_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    forget_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
                 };
             };
         };

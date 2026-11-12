@@ -50,7 +50,7 @@ function useCreate(onSaved: (count: number, skipped: number) => void) {
 function useWho(me: Me) {
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   const choices: [number | null, string][] = [...(me.admin ? [[null, 'Все врачи'] as [null, string]] : []),
-    ...(me.admin || me.reception ? doctors.map((d) => [d.id!, d.fullName ?? ''] as [number, string]) : [])]
+    ...(me.admin || me.reception ? doctors.map((d) => [d.id, d.fullName ?? ''] as [number, string]) : [])]
   const initial = me.reception ? doctors[0]?.id ?? null : !me.admin ? me.doctorId ?? null
     : doctors.length > 1 ? me.doctorId ?? doctors[0]?.id ?? null : null
   const [who, setWho] = useState<number | null>(initial)

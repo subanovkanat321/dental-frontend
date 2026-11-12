@@ -13,7 +13,7 @@ import type { ClinicPage, DirectoryClinic, SiteProblem, WebBooked, WebBookingInf
 /** Пациенты и клиника — вымышленные. */
 const PAGE: ClinicPage = {
   name: 'Улыбка', address: 'Бишкек, Шевченко 6', phones: ['996555000111'], telegramUrl: 'https://t.me/tish_bot?start=c_abc123',
-  doctors: [{ fullName: 'Айгерим Садыкова' }, { fullName: 'Бакыт Маматов' }], services: [], bookingUrl: '/c/abc123#book',
+  doctors: [{ fullName: 'Айгерим Садыкова' }, { fullName: 'Бакыт Маматов' }], services: [], bookingUrl: '/c/abc123#book', settingUp: false
 }
 
 const INFO: WebBookingInfo = {

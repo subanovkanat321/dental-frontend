@@ -32,7 +32,7 @@ test('новый пациент: такой номер уже есть — «э�
       }
       return HttpResponse.json({ id: 9, fullName: body.fullName, phone: '996700111222' }, { status: 201 })
     }),
-    http.get('*/api/appointments/by-patient/9', () => HttpResponse.json(card({ id: 9, fullName: 'Айгуль Т.', phone: '996700111222' }))),
+    http.get('*/api/appointments/by-patient/9', () => HttpResponse.json(card({ id: 9, fullName: 'Айгуль Т.', phone: '996700111222', telegram: false }))),
   )
   const user = userEvent.setup()
   renderApp()
@@ -49,7 +49,7 @@ test('новый пациент: такой номер уже есть — «э�
 
 test('карточка пациента: изменить место работы и откуда узнал', async () => {
   let saved: unknown = null
-  const p = { id: 2, fullName: 'Айгуль Т.', phone: '996700333444' }
+  const p = { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/patients/recent', () => HttpResponse.json([p])),
@@ -81,7 +81,7 @@ test('карточка пациента: изменить место работ�
 
 test('карточка пациента: «откуда узнал» — во вкладке «Прочее», не в шапке; выбирается одним нажатием', async () => {
   let saved: Record<string, unknown> | null = null
-  const p = { id: 3, fullName: 'Бакыт М.', phone: '996700555666', workplace: 'школа №5' }
+  const p = { id: 3, fullName: 'Бакыт М.', phone: '996700555666', workplace: 'школа №5', telegram: false }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/patients/recent', () => HttpResponse.json([p])),
@@ -112,7 +112,7 @@ test('карточка пациента: «откуда узнал» — во в
 test('админ: «＋ Свой вариант» в «Откуда узнал» — вариант добавлен в список клиники и сразу выбран пациенту', async () => {
   let saved: Record<string, unknown> | null = null
   let added: Record<string, unknown> | null = null
-  const p = { id: 3, fullName: 'Бакыт М.', phone: '996700555666' }
+  const p = { id: 3, fullName: 'Бакыт М.', phone: '996700555666', telegram: false }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: true })),
     http.get('*/api/patients/recent', () => HttpResponse.json([p])),

@@ -34,7 +34,7 @@ export function SurveysTab() {
     onSuccess: (s) => {
       client.setQueryData(['platform-survey', s.id], s)
       void client.invalidateQueries({ queryKey: ['platform-surveys'] })
-      setOpened(s.id!)
+      setOpened(s.id)
     },
   })
   if (opened != null) {
@@ -56,7 +56,7 @@ export function SurveysTab() {
               const [status, cls] = STATUS[s.status ?? 'DRAFT']
               return (
                 <tr key={s.id}>
-                  <td><button type="button" className="row-link" onClick={() => setOpened(s.id!)}>{s.title}</button></td>
+                  <td><button type="button" className="row-link" onClick={() => setOpened(s.id)}>{s.title}</button></td>
                   <td>{rolesText(s.roles)}</td>
                   <td><span className={`chip small ${cls}`}>{status}</span></td>
                   <td className="num">{s.responses}</td>
@@ -96,7 +96,7 @@ function SurveyView({ id, onBack, onOpen }: { id: number; onBack: () => void; on
     onSuccess: (s) => {
       client.setQueryData(['platform-survey', s.id], s)
       void client.invalidateQueries({ queryKey: ['platform-surveys'] })
-      onOpen(s.id!)
+      onOpen(s.id)
     },
   })
   const remove = useMutation<unknown, ApiError>({
@@ -115,7 +115,7 @@ function SurveyView({ id, onBack, onOpen }: { id: number; onBack: () => void; on
       </section>
     )
   }
-  const view = chosen ?? ((s.responses ?? 0) > 0 ? 'results' : 'edit')
+  const view = chosen ?? (s.responses > 0 ? 'results' : 'edit')
   const [status, cls] = STATUS[s.status ?? 'DRAFT']
   const error = start.error ?? stop.error ?? copy.error ?? remove.error
   return (

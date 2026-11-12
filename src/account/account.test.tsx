@@ -10,7 +10,7 @@ import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
   window.location.hash = '/settings/plan'
-  server.use(http.get('*/api/platform-info', () => HttpResponse.json({ supportUrl: 'https://t.me/tish_support' } satisfies Schemas['PlatformInfoInfo'])))
+  server.use(http.get('*/api/platform-info', () => HttpResponse.json({ supportUrl: 'https://t.me/tish_support', accessLog: false, accessNotify: false, accessRequiresGrant: false } satisfies Schemas['PlatformInfoInfo'])))
 })
 afterEach(() => {
   window.location.hash = ''
@@ -32,7 +32,7 @@ test('админ: тариф, оплата за 3 месяца с отметко
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/clinic/plan', () => HttpResponse.json({
       billing: { state: 'ACTIVE', paidUntil: '2026-12-01', daysLeft: 30 }, doctors: 2,
-      tariff: { code: 'SMALL', name: 'Кабинет', monthSom: 1500 },
+      tariff: { code: 'SMALL', name: 'Кабинет', monthSom: 1500, yearSom: 0 },
       tariffs: { pilotMonths: 3, tariffs: [{ code: 'SMALL', name: 'Кабинет', who: '1–2 врача', monthSom: 1500, yearSom: 15000 }] },
       payments: [{ id: 1, paidOn: '2026-11-01', amountSom: 1500, months: 1, paidUntil: '2026-12-01' }],
     } satisfies Schemas['ClinicPaymentsPlan'])),
@@ -42,7 +42,7 @@ test('админ: тариф, оплата за 3 месяца с отметко
     } satisfies Schemas['PayRequestsClinicView'])),
     http.post('*/api/clinic/pay/requests', ({ request }) => {
       paid = new URL(request.url).searchParams.get('months')
-      return HttpResponse.json({ id: 5, months: 3, amountSom: 4500, status: 'PENDING' } satisfies Schemas['PayRequestsRequest'])
+      return HttpResponse.json({ id: 5, months: 3, amountSom: 4500, status: 'PENDING', clinicId: 0, hasReceipt: false } satisfies Schemas['PayRequestsRequest'])
     }),
   )
   const user = userEvent.setup()
@@ -59,7 +59,7 @@ test('админ: тариф, оплата за 3 месяца с отметко
 test('договор: реквизиты подставляются в текст, подписать', async () => {
   let accepted: Schemas['AgreementControllerAccept'] | null = null
   const agreement: Schemas['AgreementsClinicAgreement'] = {
-    current: { id: 1, version: 2, title: 'Договор-оферта', body: '# Стороны\nКлиника {{clinic.name}} в лице {{signer.name}}', sha256: 'abc123' },
+    current: { id: 1, version: 2, title: 'Договор-оферта', body: '# Стороны\nКлиника {{clinic.name}} в лице {{signer.name}}', sha256: 'abc123', acceptances: 0, forAll: true },
     legalName: 'ИП Тест', scans: [],
   }
   server.use(
@@ -147,7 +147,7 @@ test('«Данные» (владелец Tish): под выгрузкой — «
 test('«Конфиденциальность»: в журнале платформы — входы и «выгрузил данные»', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
-    http.get('*/api/platform-info', () => HttpResponse.json({ accessLog: true } satisfies Schemas['PlatformInfoInfo'])),
+    http.get('*/api/platform-info', () => HttpResponse.json({ accessLog: true, accessNotify: false, accessRequiresGrant: false } satisfies Schemas['PlatformInfoInfo'])),
     http.get('*/api/clinic/support-access', () => HttpResponse.json({ required: false })),
     http.get('*/api/clinic/platform-access', () => HttpResponse.json([
       { role: 'EXPORT', enteredAt: '2026-11-01T05:00:00Z' }, { role: 'ADMIN', enteredAt: '2026-10-30T05:00:00Z' },

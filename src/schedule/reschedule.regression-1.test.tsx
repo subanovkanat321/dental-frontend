@@ -17,7 +17,7 @@ type Appointment = Schemas['AppointmentView']
 test('перенос на другой день: карточка остаётся открытой и показывает новый день и время', async () => {
   const tomorrow = addDays(todayIn(), 1)
   let a: Appointment = appointment(10, 1, '15:00', 'Бакыт М.', { version: 2 })
-  const dayOf = (x: Appointment) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bishkek' }).format(new Date(x.startAt!))
+  const dayOf = (x: Appointment) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bishkek' }).format(new Date(x.startAt))
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     // Как на сервере: приём только в списке своего дня
@@ -28,7 +28,7 @@ test('перенос на другой день: карточка остаётс
     http.post('*/api/appointments/:id/reschedule', async ({ request }) => {
       const body = (await request.json()) as { startAt: string }
       const start = new Date(body.startAt)
-      a = { ...a, startAt: start.toISOString(), endAt: new Date(start.getTime() + 30 * 60000).toISOString(), version: a.version! + 1 }
+      a = { ...a, startAt: start.toISOString(), endAt: new Date(start.getTime() + 30 * 60000).toISOString(), version: a.version + 1 }
       return HttpResponse.json(a)
     }),
   )
