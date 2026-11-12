@@ -526,3 +526,17 @@ test('у врача выбраны услуги: услуга, которую д
   expect(screen.getByRole('button', { name: /Айгерим Садыкова/ })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Любой свободный врач/ })).toBeInTheDocument()
 })
+
+test('«Другая клиника» — вверху экрана записи, над заголовком, и открывает выбор клиники', async () => {
+  fakeTelegram()
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(patient({ canChangeClinic: true }))),
+    http.get('*/api/patient/clinics', () => HttpResponse.json([])),
+  )
+  renderApp()
+  const sw = await screen.findByRole('button', { name: /Стоматология «Тест».*другая клиника/ })
+  const title = screen.getByRole('heading', { level: 1 })
+  expect(sw.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  await userEvent.click(sw)
+  expect(await screen.findByRole('heading', { level: 1 })).not.toBe(title)
+})

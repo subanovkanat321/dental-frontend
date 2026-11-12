@@ -185,3 +185,8 @@
 .success-mark { width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; background: var(--ok-bg); color: var(--ok-ink); font: 600 1.6rem var(--display); }
 /* «Нет интернета» (layout/OfflineNotice) — красной плашкой, как в CRM, а не зелёной «готово» */
 .patient .notice.tone-bad { display: flex; align-items: center; gap: 10px; background: var(--bad-bg); color: var(--bad-ink); }
+
+/* «🏥 Клиника · другая клиника ›» — вверху экрана (внизу её не замечали), тихая строка-кнопка */
+.clinic-switch { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--separator); border-radius: 14px; background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.clinic-switch-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.clinic-switch-other { flex: none; color: var(--link); font-size: .92rem; }

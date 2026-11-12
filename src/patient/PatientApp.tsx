@@ -278,7 +278,21 @@ function ClinicContacts({ ctx }: { ctx: Ctx }) {
   return <ContactLinks phones={c.phones} whatsapp={c.whatsappPhone} texts={{ call: t('call'), whatsapp: t('writeWhatsapp') }} />
 }
 
-/** Низ экрана: новости клиники, другая клиника, техподдержка. */
+/** Вверху экрана: в какой клинике записываемся и «другая клиника» — внизу её не замечали. */
+function ClinicSwitch({ ctx }: { ctx: Ctx }) {
+  const { me, t } = ctx
+  if (!me.canChangeClinic) return null
+  const c = me.clinic
+  return (
+    <button type="button" className="clinic-switch" onClick={() => ctx.go({ name: 'clinics', back: ctx.screen })}>
+      <span aria-hidden="true">🏥</span>
+      <span className="clinic-switch-name">{c?.brandName || c?.name || ''}</span>
+      <span className="clinic-switch-other">{t('otherClinic')} ›</span>
+    </button>
+  )
+}
+
+/** Низ экрана: новости клиники, техподдержка. */
 function Footer({ ctx }: { ctx: Ctx }) {
   const { me, t } = ctx
   const c = me.clinic
@@ -290,10 +304,6 @@ function Footer({ ctx }: { ctx: Ctx }) {
         <button type="button" className="btn" onClick={() => ctx.go({ name: 'plan', back: ctx.screen })}><span aria-hidden="true">📋 </span>{t('planMy')}</button>
       )}
       <button type="button" className="btn" onClick={() => ctx.go({ name: 'news', back: ctx.screen })}><span aria-hidden="true">📰 </span>{t('news')}</button>
-      {me.canChangeClinic && (
-        <button type="button" className="link other-clinic" onClick={() => ctx.go({ name: 'clinics', back: ctx.screen })}>
-          🏥 {c?.brandName || c?.name || ''} · {t('otherClinic')}</button>
-      )}
       {(c?.supportUrl || c?.supportPhone) && (
         <p className="support-footer">{t('cantBook')}
           <button type="button" className="link" onClick={() => openLink(c.supportUrl || `${window.location.origin}/call.html#${c.supportPhone}`)}>{t('support')}</button>
@@ -380,7 +390,7 @@ function BookScreen({ ctx, initialDoctor }: { ctx: Ctx; initialDoctor?: number }
     <BookingWizard t={t} lang={lang} services={me.services ?? []} doctors={doctors} doctorServices={me.doctorServices}
       length={daysOf(me)} initialDoctor={initialDoctor} loadFreeDays={loadFreeDays} loadSlots={loadSlots}
       noneSoon={`${t('noFreeSoon')} ${callText(t, me.clinicContact)}`} errorText={(e) => errorText(t, e, me.clinicContact)}
-      intro={<><Hero t={t} title={t('bookTitle')} subtitle={doctors.length > 1 ? t('pickDoctorSub') : t('pickServiceSub')}
+      intro={<><ClinicSwitch ctx={ctx} /><Hero t={t} title={t('bookTitle')} subtitle={doctors.length > 1 ? t('pickDoctorSub') : t('pickServiceSub')}
         doctor={doctors.length === 1 ? doctors[0] : undefined} />{doctors.length === 1 && <ClinicCard ctx={ctx} />}</>}
       outro={<>{doctors.length > 1 && <ClinicCard ctx={ctx} />}<Footer ctx={ctx} /></>}
       contacts={(args) => <BookContacts ctx={ctx} {...args} />} />
@@ -677,6 +687,7 @@ function MyBookingsScreen({ ctx, bookings }: { ctx: Ctx; bookings: Booking[] }) 
   return (
     <section className="screen">
       <BackButton onBack={null} />
+      <ClinicSwitch ctx={ctx} />
       <Hero t={t} title={t('myBookings')} subtitle={t('waitingYou')} />
       <ul className="my-bookings">
         {bookings.map((b) => (
@@ -744,6 +755,7 @@ function BookingScreen({ ctx, b }: { ctx: Ctx; b: Booking }) {
     <section className="screen">
       <BackButton onBack={many ? () => ctx.go({ name: 'booking' }) : null} />
       {many && <button type="button" className="link" onClick={() => ctx.go({ name: 'booking' })}>{t('allBookings')}</button>}
+      <ClinicSwitch ctx={ctx} />
       <Hero t={t} title={b.self === false ? t('bookingOf', { name: b.patientName ?? '' }) : t('yourBooking')} subtitle={t('waitingYou')}
         doctor={doctor ?? { fullName: b.doctorName }} />
       <div className="booking-card">
