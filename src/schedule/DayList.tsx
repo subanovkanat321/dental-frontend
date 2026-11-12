@@ -318,8 +318,8 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
   return (
     <li ref={li} className={['row', `s-${s.kind}`, next ? 'next' : '', active ? 'active' : '', a.status === 'NO_SHOW' ? 'struck' : '', swipe ? 'swipe' : '', color ? 'doc' : ''].join(' ').trim()}
       style={color ? { '--doc': color } as CSSProperties : undefined}>
-      {swipe && canSwipeRemind && <span className="swipe-under swipe-right" aria-hidden="true">💬 {viaBot ? 'Напомнить в Telegram' : 'Напомнить в WhatsApp'}</span>}
-      {swipe && canSwipeDone && <span className="swipe-under swipe-left" aria-hidden="true">Приём состоялся ✅</span>}
+      {swipe && canSwipeRemind && <span className="swipe-under swipe-right" aria-hidden="true">💬 {viaBot ? 'Telegram' : 'WhatsApp'}</span>}
+      {swipe && canSwipeDone && <span className="swipe-under swipe-left" aria-hidden="true">Состоялся ✅</span>}
       <div className="row-slide">
         <button type="button" className="row-button" onClick={() => onOpen(a)}
           aria-label={`${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}${chair ? `. ${colleagueMarkText(chair)}` : ''}`}>
