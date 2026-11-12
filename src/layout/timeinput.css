@@ -15,18 +15,37 @@
 /* Панель: компьютер — карточка под полем, телефон — лист снизу (как календарь DateInput) */
 .ti-pop { position: fixed; z-index: 1000; width: 300px; max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 6px; padding: 12px;
   border: 1px solid var(--separator); border-radius: 16px; background: var(--card); color: var(--text); box-shadow: 0 12px 32px rgba(15, 42, 48, .18); animation: pick-in .12s ease-out; }
-.ti-pop.sheet { position: static; width: 100%; padding: 12px 14px calc(16px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0; animation: sheet-up .2s ease-out;
+/* Лист: не выше ~60% экрана (часы работы и четверти помещаются без прокрутки); раскрыли «Другие часы» или
+   «Точнее…» — выше, с прокруткой, «Готово» прилипает к низу. Шапка и «✕» — стили листа Select (ui-select-head) */
+.ti-pop.sheet { cursor: auto; position: static; width: 100%; max-height: 60vh; max-height: 60dvh; gap: 4px; padding: 8px 14px 0; border: 0; border-radius: 20px 20px 0 0; animation: sheet-up .2s ease-out;
   /* жест по листу — не прокрутка и не «закрыть» Telegram */
   touch-action: manipulation; }
+.ti-pop.sheet.more { max-height: 88vh; max-height: 88dvh; }
 .ti-pop.sheet::before { content: ""; justify-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); }
-.ti-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.ti-preview { font: 600 1.25rem var(--display, inherit); letter-spacing: -.01em; }
+.ti-head { min-height: 32px; }
+.ti-pop.sheet .ti-head { margin-bottom: 2px; }
+.ti-preview { flex: 1; font: 600 1.25rem var(--display, inherit); letter-spacing: -.01em; }
+.ti-pop.sheet .ti-preview { font-size: 1.75rem; line-height: 1.2; }
+.ti-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ti-more { font-size: .85rem; padding: 0; }
+.ti-pop.sheet .ti-more { min-height: 32px; padding: 0 2px; font-size: .9rem; }
+/* «Свободно» — строка чипов, не влезла — листается вбок */
+.ti-free { display: flex; gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding-bottom: 2px; }
+.ti-free::-webkit-scrollbar { display: none; }
+.ti-free .ti-chip { flex: none; padding: 0 10px; border-color: var(--accent-soft); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.ti-free .ti-chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+.ti-actions { position: sticky; bottom: 0; display: grid; margin-top: 6px; padding: 8px 0 calc(12px + env(safe-area-inset-bottom)); background: var(--card); }
+.ti-actions .btn { min-height: 46px; font-size: 1rem; }
 .ti-label { margin-top: 4px; color: var(--hint); font-size: .8rem; }
 .ti-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
 .ti-chip { min-height: 36px; padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text);
   font: inherit; font-variant-numeric: tabular-nums; cursor: pointer; }
-.ti-chip:hover:not(:disabled):not([aria-pressed=true]) { background: var(--sunken); }
+/* Наведение — только мышью: на телефоне подсветка «залипала» на последнем нажатом чипе */
+@media (hover: hover) { .ti-chip:hover:not(:disabled):not([aria-pressed=true]) { background: var(--sunken); } }
 .ti-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .ti-chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); font-weight: 600; }
 .ti-chip:disabled { opacity: .4; cursor: default; }
 .ti-pop.sheet .ti-chip { min-height: 44px; font-size: 1.05rem; }
+/* Основные минуты (00, 15, 30, 45) — крупнее: их выбирают чаще всего */
+.ti-main .ti-chip { min-height: 40px; font-size: 1.05rem; }
+.ti-pop.sheet .ti-main .ti-chip { min-height: 50px; font-size: 1.2rem; }

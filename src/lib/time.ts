@@ -160,3 +160,15 @@ export function shiftText(start?: string | null, end?: string | null): string {
   if (!start || !end) return ''
   return `${start.slice(0, 5)}–${end.slice(0, 5)}${isNightShift(start, end) ? ' (ночь)' : ''}`
 }
+
+/**
+ * Часы работы врача → часы для выбора времени (TimeInput `hours`): с часа начала по последний час, в
+ * котором ещё идёт работа, оба включительно. 08:00–20:00 → 8…19; 08:00–20:30 → 8…20; до полуночи
+ * (09:00–00:00) → 9…23; ночная смена 18:00–08:00 (V186) → from > to: 18…23 и 0…7. Часов нет — undefined.
+ */
+export function workHours(start?: string | null, end?: string | null): { from: number; to: number } | undefined {
+  if (!start || !end) return undefined
+  const s = minutesOfTime(start)
+  const e = minutesOfTime(end)
+  return { from: Math.floor(s / 60), to: (Math.ceil(e / 60) + 23) % 24 }
+}

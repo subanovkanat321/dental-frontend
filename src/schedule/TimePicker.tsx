@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
 import { api, unwrap } from '../api/client'
-import { suggestTime, timeOf } from '../lib/time'
+import { suggestTime, timeOf, workHours } from '../lib/time'
 import { Loading } from '../layout/Loading'
 import { TimeInput } from '../layout/TimeInput'
 
@@ -14,7 +14,8 @@ function endText(time: string, duration: number): string {
 
 /**
  * Время приёма — как в прежнем приложении: сетка свободных начал (/api/slots) под длительность,
- * нажать — выбрать; «Другое время» — ввести руками (например, вне часов работы). При переносе
+ * нажать — выбрать; «Другое время» — ввести руками (например, вне часов работы): в листе сразу часы
+ * врача в этот день и строка «Свободно» с теми же началами. При переносе
  * старое время самого приёма считается свободным (exclude). Время из сетки не помещается —
  * сразу ручной ввод с этим временем. «Время занято» (error) — сетка перечитывается.
  */
@@ -59,7 +60,9 @@ export function TimePicker({ date, doctorId, duration, exclude, value, onChange,
             )
       )}
       {manual && (
-        <TimeInput aria-label="Время" value={value} required onChange={onChange} />
+        // Часы врача в этот день — сразу, остальные — «Другие часы»; свободные начала — чипами сверху листа
+        <TimeInput aria-label="Время" value={value} required onChange={onChange}
+          hours={slots.data?.workingDay === false ? undefined : workHours(slots.data?.workStart, slots.data?.workEnd)} free={starts} />
       )}
       <button type="button" className="link" onClick={() => {
         // Своё время, а поле пустое — не текущая минута (как у системного поля: «22:43»), а ближайшие

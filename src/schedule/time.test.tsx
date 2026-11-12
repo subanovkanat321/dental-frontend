@@ -19,13 +19,13 @@ afterEach(() => {
   localStorage.clear()
 })
 
-function backend(starts: string[] = ['11:00', '11:30']) {
+function backend(starts: string[] = ['11:00', '11:30'], hours: { workStart?: string; workEnd?: string } = {}) {
   const created: unknown[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
     http.get('*/api/slots', () => HttpResponse.json({
-      workingDay: true, breaks: [], free: [],
+      workingDay: true, breaks: [], free: [], ...hours,
       starts: starts.map((t) => slotInstant(todayIn(), Number(t.slice(0, 2)) * 60 + Number(t.slice(3)))),
     })),
     http.post('*/api/patients/search', () => HttpResponse.json([{ id: 7, fullName: 'Нурлан К.', phone: '996700111222' }])),
@@ -116,4 +116,35 @@ test('время не кратно 5 (окно после приёма в 10:47)
   expect(time).toHaveValue('12:47')
   expect(time.checkValidity()).toBe(true)
   expect(within(panel).getByText(/Приём: 12:47–/)).toBeInTheDocument()
+})
+
+test('«Другое время»: в листе часы врача в этот день (08:00–20:00 → 08…19) и «Свободно» — те же начала, что в сетке', async () => {
+  backend(['11:00', '11:30'], { workStart: '08:00:00', workEnd: '20:00:00' })
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Другое время' }))
+  await userEvent.click(within(panel).getByLabelText('Время', { selector: 'input' }))
+  const pick = screen.getByRole('dialog', { name: 'Время: выбор времени' })
+  expect(within(within(pick).getByRole('group', { name: 'Час' })).getAllByRole('button').map((b) => b.textContent)).toEqual(
+    ['08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19'])
+  const free = within(pick).getByRole('group', { name: 'Свободно' })
+  expect(within(free).getAllByRole('button').map((b) => b.textContent)).toEqual(['11:00', '11:30'])
+  await userEvent.click(within(free).getByRole('button', { name: '11:30' }))
+  expect(screen.queryByRole('dialog', { name: 'Время: выбор времени' })).not.toBeInTheDocument()
+  expect(within(panel).getByLabelText('Время', { selector: 'input' })).toHaveValue('11:30')
+  expect(within(panel).getByText('Приём: 11:30–12:00')).toBeInTheDocument()
+})
+
+test('«Другое время» у ночной смены 18:00–08:00: часы 18…23 и 00…07', async () => {
+  backend([], { workStart: '18:00:00', workEnd: '08:00:00' })
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: '＋ Новая запись' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Другое время' }))
+  await userEvent.click(within(panel).getByLabelText('Время', { selector: 'input' }))
+  const pick = screen.getByRole('dialog', { name: 'Время: выбор времени' })
+  expect(within(within(pick).getByRole('group', { name: 'Час' })).getAllByRole('button').map((b) => b.textContent)).toEqual(
+    ['18', '19', '20', '21', '22', '23', '00', '01', '02', '03', '04', '05', '06', '07'])
+  expect(within(pick).queryByRole('group', { name: 'Свободно' })).not.toBeInTheDocument()
 })
