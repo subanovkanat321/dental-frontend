@@ -124,8 +124,8 @@ test('регистратура: «Услуги» только списком —
   window.location.hash = '/settings/services'
   renderApp()
   expect(await screen.findByRole('cell', { name: 'Чистка' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: '+ Добавить услугу' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: 'Из справочника' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '＋ Своя услуга' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '＋ Добавить услугу из справочника' })).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Чистка' })).not.toBeInTheDocument()
 })
 

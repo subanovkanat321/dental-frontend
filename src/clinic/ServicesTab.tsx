@@ -44,8 +44,29 @@ function useRefreshServices() {
 }
 
 /**
- * «Услуги»: их видят пациенты, когда записываются сами, — группами по категориям. Длительность —
- * сколько займёт приём, цена «от» — необязательно. «Из справочника» — отметить типовые и вписать цены.
+ * Включить услугу из «справочника клиники» (active = false → true): она снова в прайсе — её видят пациент
+ * при самозаписи и сотрудник в «Новой записи», плане лечения и оплате. Остальные поля — как были
+ * (старую категорию не шлём — сервер её оставит).
+ */
+function useEnableService() {
+  const refresh = useRefreshServices()
+  return useMutation<Service, ApiError, Service>({
+    mutationFn: (s) => unwrap(api.PUT('/api/service-types/{id}', {
+      params: { path: { id: s.id! } },
+      body: {
+        name: s.name!, group: s.group, durationMinutes: s.durationMinutes!, active: true,
+        priceSom: s.priceSom ?? undefined, recallMonths: s.recallMonths ?? undefined,
+      },
+    })),
+    onSuccess: refresh,
+  })
+}
+
+/**
+ * «Услуги и цены»: сверху прайс — показываемые услуги (их выбирают пациент при самозаписи и сотрудники
+ * в записи, плане и оплате), группами по разделам. Ниже свёрнуто «Ещё в справочнике клиники» — скрытые
+ * (active = false): не в прайсе, но на месте, «Включить» возвращает. «＋ Добавить услугу из справочника» —
+ * полный справочник Tish: отметить типовые и вписать цены.
  */
 /** header — шапка страницы «Клиника» (вкладки): карточка справа — соседняя колонка сетки. */
 export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode; onPanel: (open: boolean) => void }) {
@@ -62,11 +83,15 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
     clearServiceToOpen()
     onPanel(true)
   }, [onPanel])
-  const services = list.data ?? []
+  const everything = list.data ?? []
+  // Прайс — показываемые; скрытые — ниже, в «Ещё в справочнике клиники»
+  const services = everything.filter((s) => s.active !== false)
+  const hidden = everything.filter((s) => s.active === false)
   // Поиск и раздел — мгновенно, на фронте: услуг у клиники десятки, а не тысячи
   const [query, setQuery] = useState('')
   const [group, setGroup] = useState<ServiceGroup | ''>('')
   const found = services.filter((s) => nameMatches(s.name, query))
+  const hiddenFound = hidden.filter((s) => nameMatches(s.name, query) && (!group || (s.group ?? 'OTHER') === group))
   const counts = new Map(groupServices(found).map((g) => [g.group, g.items.length]))
   const shown = group ? found.filter((s) => (s.group ?? 'OTHER') === group) : found
   // Разделы сворачиваются: услуг десятки — без этого до нужного раздела долго листать. Сначала свёрнуты, если
@@ -81,21 +106,24 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
     return next
   })
   const editable = canEditServices(me)
-  const openedService = typeof opened === 'number' ? services.find((s) => s.id === opened) : undefined
+  const openedService = typeof opened === 'number' ? everything.find((s) => s.id === opened) : undefined
 
   return (
     <>
       <section className="schedule-main">
       {header}
-      {editable && (services.length > 0 || Boolean(me.admin)) && <StarterCard admin={Boolean(me.admin)} onOpen={() => setOpened('starter')} />}
+      {editable && (everything.length > 0 || Boolean(me.admin)) && <StarterCard admin={Boolean(me.admin)} onOpen={() => setOpened('starter')} />}
       <section className="card-block">
         <div className="block-head">
-          <p className="hint">Их видят пациенты, когда записываются сами в боте. Длительность — сколько времени займёт приём.</p>
+          <div>
+            <p className="price-lead">В прайсе — основные услуги. Делаете что-то ещё — включите из справочника.</p>
+            <p className="hint small">Из прайса выбирают пациенты в боте и на сайте и вы — в записи, плане лечения и оплате.</p>
+          </div>
           {/* Менять услуги — админ и врачи; регистратуре и ассистенту сервер ответит 403: только список */}
           {editable && (
             <span className="actions">
-              <button type="button" className="btn" onClick={() => setOpened('catalog')}>Из справочника</button>
-              <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить услугу</button>
+              <button type="button" className="btn primary" onClick={() => setOpened('catalog')}>＋ Добавить услугу из справочника</button>
+              <button type="button" className="btn" onClick={() => setOpened('new')}>＋ Своя услуга</button>
             </span>
           )}
         </div>
@@ -115,36 +143,40 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
         )}
         {list.isPending ? <Loading /> : services.length ? shown.length ? (
           <table className="table services-table" aria-label="Услуги">
-            <thead><tr><th>Услуга</th><th className="r">Длительность</th><th className="r">Цена</th><th className="r">Профосмотр</th><th /></tr></thead>
+            <thead><tr><th>Услуга</th><th className="r">Длительность</th><th className="r">Цена</th><th className="r">Профосмотр</th></tr></thead>
             <tbody>
               {groupServices(shown).map(({ group: g, items }) => (
                 <Fragment key={g}>
                   <tr className="group-row">
-                    <th colSpan={5} scope="colgroup">
+                    <th colSpan={4} scope="colgroup">
                       <button type="button" className="group-toggle" aria-expanded={isOpen(g)} onClick={() => toggle(g)}>
                         <span className="group-chev" aria-hidden="true">{isOpen(g) ? '▾' : '▸'}</span> {`${groupLabel(g)} · ${items.length}`}
                       </button>
                     </th>
                   </tr>
                   {isOpen(g) && items.map((s) => (
-                    <tr key={s.id} className={[s.id === opened ? 'active' : '', s.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
+                    <tr key={s.id} className={s.id === opened ? 'active' : undefined}>
                       <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(s.id!)}>{s.name}</button> : s.name}</td>
                       <td className="r num nowrap">{s.durationMinutes} мин</td>
                       <td className="r num nowrap">{priceText(s.priceSom) ?? '—'}</td>
                       <td className="r num nowrap">{s.recallMonths ? `через ${monthsText(s.recallMonths)}` : <span className="hint">как в клинике</span>}</td>
-                      <td className="hint">{s.active === false ? 'скрыта' : ''}</td>
                     </tr>
                   ))}
                 </Fragment>
               ))}
             </tbody>
           </table>
-        ) : (
+        ) : hiddenFound.length ? <p className="hint">В прайсе не нашли — есть ниже, в справочнике клиники.</p> : (
           <EmptyState title="Ничего не нашлось">
             {query.trim() ? `Нет услуг со словами «${query.trim()}»${group ? ` в разделе «${groupLabel(group)}»` : ''}.` : 'В этом разделе услуг нет.'}{' '}
             <button type="button" className="link" onClick={() => { setQuery(''); setGroup('') }}>Показать все</button>
           </EmptyState>
-        ) : <EmptyState title="Услуг пока нет">Добавьте свои или отметьте типовые в справочнике.</EmptyState>}
+        ) : hidden.length ? <EmptyState title="В прайсе пока пусто">Включите услуги ниже или добавьте из справочника.</EmptyState>
+          : <EmptyState title="Услуг пока нет">Добавьте свои или отметьте типовые в справочнике.</EmptyState>}
+        {hidden.length > 0 && (
+          <ClinicCatalog services={hiddenFound} total={hidden.length} editable={editable} opened={opened}
+            searching={Boolean(query.trim() || group)} onOpen={(id) => setOpened(id)} />
+        )}
         {/* Срок по умолчанию — под списком: сверху поиск и разделы, услуги находятся быстрее */}
         <RecallDefault admin={Boolean(me.admin)} />
       </section>
@@ -154,6 +186,46 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
       {opened === 'catalog' && <CatalogPanel onClose={close} />}
       {opened === 'starter' && <StarterPanel admin={Boolean(me.admin)} onClose={close} />}
     </>
+  )
+}
+
+/**
+ * «Ещё в справочнике клиники»: скрытые услуги (active = false) — не в прайсе, но не удалены: прошлые приёмы
+ * и цены на месте. Свёрнуто — прайс сверху остаётся коротким; при поиске и выбранном разделе раскрыто.
+ * «Включить» — обратно в прайс одним нажатием.
+ */
+function ClinicCatalog({ services, total, editable, opened, searching, onOpen }: {
+  services: Service[]; total: number; editable: boolean; opened: unknown; searching: boolean; onOpen: (id: number) => void
+}) {
+  const enable = useEnableService()
+  const [open, setOpen] = useState(false)
+  const [enabled, setEnabled] = useState('')
+  const shown = open || (searching && services.length > 0)
+  return (
+    <section className="clinic-catalog" aria-label="Ещё в справочнике клиники">
+      <button type="button" className="group-toggle clinic-catalog-head" aria-expanded={shown} onClick={() => setOpen(!shown)}>
+        <span className="group-chev" aria-hidden="true">{shown ? '▾' : '▸'}</span>{' '}
+        <span>Ещё в справочнике клиники: <b className="num">{total}</b> <span className="hint">— включить, если делаете</span></span>
+      </button>
+      {enabled && <p className="tone-ok small" role="status">{`«${enabled}» — снова в прайсе`}</p>}
+      {enable.error && <p className="error" role="alert">{Object.values(enable.error.fieldErrors)[0] ?? enable.error.message}</p>}
+      {shown && (
+        <ul className="clinic-catalog-list">
+          {services.map((s) => (
+            <li key={s.id} className={s.id === opened ? 'active' : undefined}>
+              <span className="clinic-catalog-name">
+                {editable ? <button type="button" className="row-link" onClick={() => onOpen(s.id!)}>{s.name}</button> : s.name}
+                <span className="hint"> · {s.durationMinutes} мин{priceText(s.priceSom) ? ` · ${priceText(s.priceSom)}` : ''}</span>
+              </span>
+              {editable && (
+                <button type="button" className="btn small" aria-label={`Включить: ${s.name}`} disabled={enable.isPending}
+                  onClick={() => enable.mutate(s, { onSuccess: () => setEnabled(s.name ?? '') })}>Включить</button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 
@@ -205,7 +277,7 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
     onSuccess: (r) => {
       refresh()
       if (r.deleted) onClose()
-      else setDone('Услуга есть в записях — её скрыли от пациентов')
+      else setDone('Услуга есть в записях — её убрали из прайса в «Ещё в справочнике клиники»')
     },
   })
   const error = (key: string) => save.error?.fieldErrors[key]
@@ -255,7 +327,14 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
           <span className="hint small">Через сколько месяцев после этой услуги позвать пациента снова</span>
         </div>
         {error('recallMonths') && <p className="error">{error('recallMonths')}</p>}
-        {s && <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { setDone(''); save.reset(); setForm({ ...form, active: e.target.checked }) }} /> Показывать пациентам</label>}
+        {s && (
+          <div className="field">
+            <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { setDone(''); save.reset(); setForm({ ...form, active: e.target.checked }) }} /> В прайсе</label>
+            <span className="hint small">{form.active
+              ? 'Её выбирают пациенты при записи и сотрудники — в записи, плане и оплате'
+              : 'Не в прайсе — в справочнике клиники: при записи не предлагается, прошлые приёмы на месте'}</span>
+          </div>
+        )}
         {done && <p className="tone-ok" role="status">{done}</p>}
         <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label={s ? 'Сохранить' : 'Добавить'} savedText="Услуга сохранена"
           error={save.error && (['name', 'group', 'durationMinutes', 'priceSom', 'recallMonths'].map((k) => error(k)).find(Boolean) ?? save.error.message)} />
@@ -374,6 +453,8 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
   useClose(onClose)
   const refresh = useRefreshServices()
   const sections = useQuery({ queryKey: ['service-catalog'], queryFn: () => unwrap(api.GET('/api/service-types/catalog')) })
+  const own = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')) })
+  const enable = useEnableService()
   const [picked, setPicked] = useState<Record<string, string>>({})
   const [done, setDone] = useState('')
   const add = useMutation<Schemas['ServiceTypeControllerAdded'], ApiError>({
@@ -401,7 +482,7 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
       <header className="panel-head">
         <div>
           <h2>Справочник услуг</h2>
-          <span className="hint">Отметьте услуги клиники и проверьте цену «от»: где знаем, подставили обычную по Бишкеку.</span>
+          <span className="hint">Отметьте, что делаете, и проверьте цену «от»: где знаем, подставили обычную по Бишкеку. Отмеченные сразу встанут в прайс.</span>
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
@@ -412,7 +493,14 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
         return (
           <details key={sec.category} className="catalog-section">
             <summary>{sec.category} <span className="hint">· {fresh ? `${fresh} новых` : 'всё есть'}</span></summary>
-            {(sec.items ?? []).map((item) => item.added ? (
+            {(sec.items ?? []).map((item) => {
+              // Такая услуга у клиники есть, но не в прайсе — вернуть её, а не заводить вторую
+              const off = item.hiddenId == null ? undefined : own.data?.find((x) => x.id === item.hiddenId)
+              return off ? (
+              <div key={item.name} className="catalog-row"><span>{item.name} <span className="hint">· не в прайсе</span></span>
+                <button type="button" className="btn small" aria-label={`Включить: ${item.name}`} disabled={enable.isPending}
+                  onClick={() => enable.mutate(off, { onSuccess: () => setDone(`«${off.name}» — снова в прайсе`) })}>Включить</button></div>
+            ) : item.added ? (
               <div key={item.name} className="catalog-row"><span>{item.name} <span className="hint">· {item.durationMinutes} мин</span></span><span className="hint tone-ok">есть</span></div>
             ) : (
               <div key={item.name} className="catalog-row">
@@ -423,10 +511,12 @@ function CatalogPanel({ onClose }: { onClose: () => void }) {
                     value={picked[item.name!]} onChange={(e) => setPicked({ ...picked, [item.name!]: e.target.value })} />
                 )}
               </div>
-            ))}
+            )
+            })}
           </details>
         )
       })}
+      {enable.error && <p className="error" role="alert">{enable.error.message}</p>}
       {add.error && <p className="error" role="alert">{Object.values(add.error.fieldErrors)[0] ?? add.error.message}</p>}
       {done && <p className="tone-ok" role="status">{done}</p>}
       <button type="button" className="btn primary" disabled={!count || add.isPending} onClick={() => add.mutate()}>

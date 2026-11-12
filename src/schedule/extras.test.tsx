@@ -107,6 +107,29 @@ test('услуга и комментарий меняются прямо в ка
   expect(sent[0]!.body).toEqual({ serviceTypeId: 5 })
 })
 
+test('услуга приёма убрана из прайса — остаётся текущим значением, другие скрытые не предлагаются', async () => {
+  const sent = backend(appointment(10, 1, '15:00', 'Бакыт М.', { serviceName: 'Синус-лифтинг' }))
+  server.use(http.get('*/api/service-types', () => HttpResponse.json([
+    { id: 5, name: 'Чистка', durationMinutes: 60, active: true, priceSom: 3000 },
+    { id: 7, name: 'Синус-лифтинг', durationMinutes: 120, active: false, priceSom: 30000 },
+    { id: 8, name: 'Костная пластика', durationMinutes: 120, active: false },
+  ] satisfies Schemas['ServiceTypeView'][])))
+  const panel = await openCard(/Бакыт М\./)
+  expect(within(panel).getByText('Синус-лифтинг')).toBeInTheDocument()
+  await userEvent.click(within(panel).getAllByRole('button', { name: 'изменить' })[0]!)
+  const service = within(panel).getByRole('form', { name: 'Услуга приёма' })
+  const select = await within(service).findByLabelText('Услуга')
+  await waitForSlow(() => expect(select).toHaveTextContent('Синус-лифтинг'))
+  await userEvent.click(select)
+  const options = within(screen.getByRole('listbox')).getAllByRole('option').map((o) => o.textContent?.replace(/\s/g, ' '))
+  expect(options).toEqual(['—', 'Чистка · 3 000 сом', 'Синус-лифтинг · 30 000 сом · не в прайсе'])
+  await userEvent.keyboard('{Escape}')
+  // Сохранили, ничего не меняя, — уходит та же услуга, а не «без услуги»
+  await userEvent.click(within(service).getByRole('button', { name: 'Сохранить' }))
+  await waitForSlow(() => expect(sent).toHaveLength(1))
+  expect(sent[0]!.body).toEqual({ serviceTypeId: 7 })
+})
+
 test('материалы на приёме: списать со склада, ещё −1, вернуть', async () => {
   backend(appointment(10, 1, '09:00', 'Бакыт М.', { status: 'DONE', paidSom: 1000, paymentMethod: 'CASH' }))
   let used = 0

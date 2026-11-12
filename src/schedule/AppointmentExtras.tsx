@@ -104,12 +104,14 @@ export function ServiceEdit({ appointment: a, me, onDone, prices = true }: { app
     queryKey: ['service-types'],
     queryFn: () => unwrap(api.GET('/api/service-types')),
     staleTime: 5 * 60_000,
-    select: (list) => list.filter((s) => s.active !== false),
   })
-  const current = services.data?.find((s) => s.name === a.serviceName)?.id ?? ''
+  // Текущая услуга приёма — и если её уже убрали из прайса: остаётся в списке текущим значением
+  const all = services.data ?? []
+  const current = (all.find((s) => s.name === a.serviceName && s.active !== false) ?? all.find((s) => s.name === a.serviceName))?.id ?? ''
   const [serviceId, setServiceId] = useState<number | ''>('')
   const chosen = serviceId === '' ? current : serviceId
-  const offered = servicesOfDoctor(services.data ?? [], me.doctorServices, a.doctorId, current)
+  // Выбрать — только из прайса (скрытые — «в справочнике клиники»)
+  const offered = servicesOfDoctor(all.filter((s) => s.active !== false || s.id === current), me.doctorServices, a.doctorId, current)
   return (
     <form className="form sub-form" aria-label="Услуга приёма" onSubmit={(e) => {
       e.preventDefault()
@@ -118,7 +120,7 @@ export function ServiceEdit({ appointment: a, me, onDone, prices = true }: { app
       <label className="field"><span>Услуга</span>
         <Select value={chosen} onChange={(e) => setServiceId(e.target.value === '' ? '' : Number(e.target.value))}>
           <option value="">—</option>
-          {offered.map((s) => <option key={s.id} value={s.id}>{s.name}{prices && s.priceSom != null ? ` · ${somText(s.priceSom)}` : ''}</option>)}
+          {offered.map((s) => <option key={s.id} value={s.id}>{s.name}{prices && s.priceSom != null ? ` · ${somText(s.priceSom)}` : ''}{s.active === false ? ' · не в прайсе' : ''}</option>)}
         </Select>
       </label>
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}

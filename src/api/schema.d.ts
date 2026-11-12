@@ -8427,6 +8427,8 @@ export interface components {
             added?: boolean;
             /** Format: int32 */
             typicalPriceSom?: number;
+            /** Format: int64 */
+            hiddenId?: number;
         };
         ServiceTypeServiceCatalogSection: {
             category?: string;

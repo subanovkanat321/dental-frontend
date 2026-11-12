@@ -649,6 +649,15 @@ p.hours-off { margin: 4px 0 0; font-size: .9rem; }
 .catalog-section summary { cursor: pointer; font-weight: 600; }
 .catalog-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0 4px 4px; }
 .catalog-row input[type=number] { width: 96px; font: inherit; height: 32px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
+/* «Услуги и цены»: подсказка над прайсом и свёрнутое «Ещё в справочнике клиники» (скрытые услуги) */
+.price-lead { margin: 0; font-weight: 600; }
+.clinic-catalog { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--separator); }
+.clinic-catalog-head { display: flex; align-items: baseline; gap: 4px; width: 100%; padding: 4px 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.clinic-catalog-list { list-style: none; margin: 6px 0 0; padding: 0; }
+.clinic-catalog-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0 6px 4px; border-bottom: 1px solid var(--separator); min-width: 0; }
+.clinic-catalog-list li:last-child { border-bottom: 0; }
+.clinic-catalog-list li.active { background: var(--accent-soft); }
+.clinic-catalog-name { min-width: 0; overflow-wrap: anywhere; }
 /* «Профосмотр по умолчанию» над списком услуг: подпись и короткий список в одну строку */
 .recall-default { margin: 10px 0 12px; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); }
 .recall-default p { margin: 0; }

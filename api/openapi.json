@@ -19523,6 +19523,10 @@
           "typicalPriceSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "hiddenId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },

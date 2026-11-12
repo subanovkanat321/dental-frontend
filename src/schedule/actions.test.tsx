@@ -311,6 +311,33 @@ test('новая запись: у врача выбраны услуги — т�
   expect(within(chips()).getByRole('button', { name: /Удаление зуба/ })).toHaveAttribute('aria-pressed', 'false')
 })
 
+test('новая запись: услуги не из прайса (скрытые) не предлагаются — ни кнопкой, ни в «Все услуги…»', async () => {
+  backend([], me)
+  const names = ['Консультация', 'Снимок зуба', 'Лечение кариеса', 'Лечение каналов', 'Удаление зуба', 'Профчистка', 'Отбеливание',
+    'Коронка', 'Имплант']
+  server.use(
+    http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [new Date(`${todayIn()}T09:00:00+06:00`).toISOString()] })),
+    http.get('*/api/service-types', () => HttpResponse.json([
+      ...names.map((name, i) => ({ id: i + 1, name, durationMinutes: 30, active: true })),
+      { id: 20, name: 'Синус-лифтинг', durationMinutes: 120, active: false },
+      { id: 21, name: 'Повторная консультация', durationMinutes: 20, active: false },
+    ] satisfies Schemas['ServiceTypeView'][])),
+    http.get('*/api/service-types/popular', () => HttpResponse.json({ ids: [20, 1] } satisfies Schemas['ServiceTypeControllerPopular'])),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('group', { name: 'Дастан Т.' }))
+  const panel = screen.getByRole('complementary', { name: 'Новая запись' })
+  // Частая, но скрытая — не кнопкой
+  const chips = await within(panel).findByRole('group', { name: 'Частые услуги' })
+  expect(within(chips).getAllByRole('button').map((b) => b.textContent)).toEqual([expect.stringContaining('Консультация')])
+  await userEvent.click(within(panel).getByRole('combobox', { name: 'Все услуги' }))
+  await userEvent.type(within(document.body).getByRole('searchbox', { name: 'Поиск в списке' }), 'консультац')
+  const options = within(screen.getByRole('listbox')).getAllByRole('option').map((o) => o.textContent)
+  // «Часто» и раздел — та же «Консультация»; «Повторной» (скрыта) нет
+  expect(options.length).toBeGreaterThan(0)
+  expect(options.every((o) => o?.startsWith('Консультация ·'))).toBe(true)
+})
+
 test('новая запись: услуг много — частые кнопками, остальные списком с поиском и разделами', async () => {
   backend([], me)
   const names: [string, Schemas['ServiceTypeView']['group']][] = [

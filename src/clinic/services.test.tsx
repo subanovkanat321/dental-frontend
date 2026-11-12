@@ -62,9 +62,11 @@ test('услуги: таблица по группам, правка и нова
   renderApp()
   const table = await screen.findByRole('table', { name: 'Услуги' })
   expect(within(table).getByRole('columnheader', { name: 'Терапия · 1' })).toBeInTheDocument()
-  expect(within(table).getByRole('columnheader', { name: 'Другое · 1' })).toBeInTheDocument()
+  expect(within(table).queryByRole('columnheader', { name: /Другое/ })).not.toBeInTheDocument()
   expect(within(table).getByText('от 2 500 сом')).toBeInTheDocument()
-  expect(within(table).getByText('скрыта')).toBeInTheDocument()
+  // Скрытая — не в прайсе, а ниже, в «Ещё в справочнике клиники»
+  expect(within(table).queryByText('Консультация')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Ещё в справочнике клиники: 1/ })).toBeInTheDocument()
 
   await user.click(within(table).getByRole('button', { name: 'Лечение кариеса' }))
   const panel = await screen.findByRole('complementary', { name: 'Услуга' })
@@ -75,7 +77,7 @@ test('услуги: таблица по группам, правка и нова
   // Старую категорию не шлём — сервер её оставит; раздел — как был
   expect(bodies[0]).toEqual({ name: 'Лечение кариеса', group: 'THERAPY', durationMinutes: 60, active: true, priceSom: 3000 })
 
-  await user.click(screen.getByRole('button', { name: '+ Добавить услугу' }))
+  await user.click(screen.getByRole('button', { name: '＋ Своя услуга' }))
   const fresh = await screen.findByRole('complementary', { name: 'Новая услуга' })
   await user.type(within(fresh).getByRole('textbox', { name: 'Название' }), 'Удаление зуба')
   // Раздел подобрал сервер по названию — подсказка и значение в списке
@@ -104,7 +106,7 @@ test('«Услуги и цены»: поиск без регистра и «ё/�
     'Все · 12', 'Осмотр и консультация · 1', 'Профилактика и гигиена · 2', 'Терапия · 3', 'Хирургия · 2',
     'Детская стоматология · 3', 'Другое · 1',
   ])
-  expect(within(table).getAllByRole('columnheader').slice(5).map((h) => h.textContent?.replace(/^[▾▸] /, ''))).toEqual([
+  expect(within(table).getAllByRole('columnheader').slice(4).map((h) => h.textContent?.replace(/^[▾▸] /, ''))).toEqual([
     'Осмотр и консультация · 1', 'Профилактика и гигиена · 2', 'Терапия · 3', 'Хирургия · 2', 'Детская стоматология · 3', 'Другое · 1',
   ])
 
@@ -167,7 +169,7 @@ test('справочник: отметить типовые с ценой и д�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: 'Из справочника' }))
+  await user.click(await screen.findByRole('button', { name: '＋ Добавить услугу из справочника' }))
   const panel = await screen.findByRole('complementary', { name: 'Справочник услуг' })
   await user.click(await within(panel).findByText('Терапия'))
   expect(within(panel).getByText('есть')).toBeInTheDocument()
@@ -471,4 +473,73 @@ test('«Объединить с…» — только руководителю: 
   await user.click(within(await screen.findByRole('table', { name: 'Услуги' })).getByRole('button', { name: 'Первичная консультация' }))
   const panel = await screen.findByRole('complementary', { name: 'Услуга' })
   expect(within(panel).queryByRole('button', { name: 'Объединить с…' })).not.toBeInTheDocument()
+})
+
+test('«Ещё в справочнике клиники»: скрытые свёрнуты под прайсом, «Включить» возвращает в прайс', async () => {
+  let list: Schemas['ServiceTypeView'][] = [
+    { id: 1, name: 'Консультация', group: 'EXAM', durationMinutes: 30, priceSom: 500, active: true },
+    { id: 2, name: 'Лечение кариеса', group: 'THERAPY', durationMinutes: 60, priceSom: 1500, active: true },
+    { id: 3, name: 'Синус-лифтинг', group: 'IMPLANTS', durationMinutes: 120, priceSom: 30000, recallMonths: 6, active: false },
+    { id: 4, name: 'Повторная консультация', group: 'EXAM', durationMinutes: 20, active: false },
+  ]
+  const bodies: unknown[] = []
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json(list)),
+    http.put('*/api/service-types/:id', async ({ request, params }) => {
+      const body = await request.json() as Schemas['ServiceTypeControllerRequest']
+      bodies.push(body)
+      list = list.map((s) => (String(s.id) === params.id ? { ...s, ...body } : s))
+      return HttpResponse.json(list.find((s) => String(s.id) === params.id)!)
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Услуги' })
+  expect(screen.getByText('В прайсе — основные услуги. Делаете что-то ещё — включите из справочника.')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '＋ Добавить услугу из справочника' })).toBeInTheDocument()
+  expect(within(table).queryByRole('button', { name: 'Синус-лифтинг' })).not.toBeInTheDocument()
+  const block = screen.getByRole('region', { name: 'Ещё в справочнике клиники' })
+  const head = within(block).getByRole('button', { name: /Ещё в справочнике клиники: 2 — включить, если делаете/ })
+  expect(head).toHaveAttribute('aria-expanded', 'false')
+  expect(within(block).queryByRole('button', { name: 'Включить: Синус-лифтинг' })).not.toBeInTheDocument()
+
+  // Поиск находит и скрытую — блок раскрыт
+  await user.type(screen.getByRole('searchbox', { name: 'Найти услугу' }), 'синус')
+  expect(screen.getByText('В прайсе не нашли — есть ниже, в справочнике клиники.')).toBeInTheDocument()
+  expect(within(block).getByRole('button', { name: 'Включить: Синус-лифтинг' })).toBeInTheDocument()
+  await user.clear(screen.getByRole('searchbox', { name: 'Найти услугу' }))
+
+  await user.click(head)
+  expect(within(block).getByText(/120 мин · от 30 000 сом/)).toBeInTheDocument()
+  await user.click(within(block).getByRole('button', { name: 'Включить: Синус-лифтинг' }))
+  expect(await within(block).findByText('«Синус-лифтинг» — снова в прайсе')).toBeInTheDocument()
+  // Остальное — как было: только active
+  expect(bodies).toEqual([{ name: 'Синус-лифтинг', group: 'IMPLANTS', durationMinutes: 120, active: true, priceSom: 30000, recallMonths: 6 }])
+  expect(await within(screen.getByRole('table', { name: 'Услуги' })).findByRole('button', { name: 'Синус-лифтинг' })).toBeInTheDocument()
+  expect(within(block).getByRole('button', { name: /Ещё в справочнике клиники: 1/ })).toBeInTheDocument()
+})
+
+test('справочник: услуга уже есть у клиники, но не в прайсе — «Включить», а не вторая такая же', async () => {
+  let list: Schemas['ServiceTypeView'][] = [{ id: 9, name: 'Синус-лифтинг', group: 'IMPLANTS', durationMinutes: 120, active: false }]
+  let enabled: unknown = null
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json(list)),
+    http.get('*/api/service-types/catalog', () => HttpResponse.json([
+      { category: 'Имплантация', items: [{ name: 'Синус-лифтинг', durationMinutes: 120, added: true, hiddenId: 9 }] },
+    ] satisfies Schemas['ServiceTypeServiceCatalogSection'][])),
+    http.put('*/api/service-types/:id', async ({ request }) => {
+      enabled = await request.json()
+      list = [{ ...list[0]!, active: true }]
+      return HttpResponse.json(list[0]!)
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: '＋ Добавить услугу из справочника' }))
+  const panel = await screen.findByRole('complementary', { name: 'Справочник услуг' })
+  await user.click(await within(panel).findByText('Имплантация'))
+  expect(within(panel).getByText('· не в прайсе')).toBeInTheDocument()
+  await user.click(await within(panel).findByRole('button', { name: 'Включить: Синус-лифтинг' }))
+  expect(await within(panel).findByText('«Синус-лифтинг» — снова в прайсе')).toBeInTheDocument()
+  expect(enabled).toMatchObject({ name: 'Синус-лифтинг', active: true })
 })
