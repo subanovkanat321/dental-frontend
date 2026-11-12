@@ -206,7 +206,7 @@ test('ассистент: перерывы и выходные только см
 })
 
 test('телефон 390px: поля «С/До» не шире колонки, кнопки-действия в столбик', () => {
-  const styles = readFileSync('src/styles.css', 'utf8')
+  const styles = readFileSync('src/tokens.css', 'utf8') + readFileSync('src/crm.css', 'utf8')
   const timeoffCss = readFileSync('src/team/timeoff.css', 'utf8')
   // jsdom не считает раскладку — проверяем правила, из-за которых «До» вылезало за карточку
   expect(styles).toMatch(/\.row \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/)

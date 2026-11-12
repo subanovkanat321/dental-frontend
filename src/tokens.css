@@ -1,0 +1,411 @@
+/*
+ * tokens.css — общее для сайта (/about, /clinics, /join, /c/…, /guide) и CRM: переменные и тема,
+ * базовые элементы, кнопки, чипы статусов, поля формы (.field, .phone, Select), переключатели
+ * (.segments), пустое состояние и «Загрузка…», фильтр клиник. Сайт грузит только его (site/mount.tsx),
+ * CRM и Mini App — его и crm.css (main.tsx). Класс нужен странице сайта — правило живёт здесь.
+ */
+/*
+ * Дизайн-система «Пульт клиники» — DESIGN.md. Старые имена переменных (--card, --hint, --accent…)
+ * оставлены: на них держатся все разделы; значения — из DESIGN.md.
+ */
+:root {
+  color-scheme: light;
+  --page: #F3F6F6;
+  --card: #FFFFFF;
+  --sunken: #E9EFEF;
+  --text: #0F2A30;
+  --hint: #4C6268;
+  --faint: #75898E;
+  --link: #0E8A80;
+  --separator: #DCE4E5;
+  --line-strong: #C8D3D5;
+  --destructive: #C02626;
+  --accent: #0E8A80;
+  --accent-hover: #0B746C;
+  --accent-text: #FFFFFF;
+  --accent-soft: #E0F2EF;
+  --status-ok: #11683A;
+  --status-wait: #8A5200;
+  --now: #E8573F;
+  /* Меню — светлое, как сайт: та же поверхность, что у карточек (2026-11-03) */
+  --rail: #FFFFFF;
+  --rail-text: #4C6268;
+  /* Статусы приёма: заливка + текст (DESIGN.md → Colors) */
+  --req-bg: #DCE7FF; --req-ink: #1642A6;
+  --ok-bg: #D3F0DE; --ok-ink: #11683A;
+  --wait-bg: #FFEAC0; --wait-ink: #7A4600;
+  --bad-bg: #FFDCDC; --bad-ink: #A11F1F;
+  --done-bg: #E9EEEF; --done-ink: #4D6268;
+  --cash-bg: #FFE3CC; --cash-ink: #8A3605;
+  /* «Не напомнили» и прочее тихое: заливка светлее/темнее поля, чтобы блок не сливался с сеткой */
+  --quiet-bg: #E9EFEF;
+  /* Штриховка «записать нельзя» (нерабочее время, перерыв, выходной; «Месяц» — нерабочий день): тонкие
+     диагональные линии цвета рамок поля. Объявлена на :root — в тёмной теме берёт её --line-strong */
+  --hatch: repeating-linear-gradient(135deg, var(--line-strong) 0 1.5px, transparent 1.5px 8px);
+  --shadow: 0 1px 2px rgba(15, 42, 48, .06), 0 2px 8px rgba(15, 42, 48, .05);
+  --panel-shadow: -8px 0 24px rgba(15, 42, 48, .08);
+  --radius: 10px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --display: 'Geologica', 'Golos Text', sans-serif;
+  --ui: 'Golos Text', sans-serif;
+  /* Время, телефоны, суммы — тем же Golos Text, полужирнее: моноширинный выглядел как код */
+  --mono: 'Golos Text', sans-serif;
+  font-family: var(--ui);
+  font-size: calc(15px * var(--text-scale, 1));
+  line-height: 1.5;
+}
+/* Тёмная тема: выбор в «Настройки → Оформление» (data-theme на <html>, lib/theme.ts) */
+:root[data-theme=dark] {
+  color-scheme: dark;
+  --page: #0D1A1D; --card: #13252A; --sunken: #0F1F23; --text: #E4EFEF; --hint: #93AAB0; --faint: #6C858B;
+  --separator: #21383E; --line-strong: #2C4850; --link: #2BB5A8; --destructive: #FF9C9C;
+  --accent: #2BB5A8; --accent-hover: #3CC6B9; --accent-text: #06201E; --accent-soft: #133B39;
+  --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #13252A; --rail-text: #93AAB0;
+  --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
+  --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
+  --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A; --quiet-bg: #1F343A;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3); --panel-shadow: -8px 0 24px rgba(0, 0, 0, .35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --page: #0D1A1D; --card: #13252A; --sunken: #0F1F23; --text: #E4EFEF; --hint: #93AAB0; --faint: #6C858B;
+    --separator: #21383E; --line-strong: #2C4850; --link: #2BB5A8; --destructive: #FF9C9C;
+    --accent: #2BB5A8; --accent-hover: #3CC6B9; --accent-text: #06201E; --accent-soft: #133B39;
+    --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #13252A; --rail-text: #93AAB0;
+    --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
+    --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
+    --done-bg: #1A2B2F; --done-ink: #93AAB0; --cash-bg: #4F2F16; --cash-ink: #FFB27A; --quiet-bg: #1F343A;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3); --panel-shadow: -8px 0 24px rgba(0, 0, 0, .35);
+  }
+}
+:root[data-text-size=large] { --text-scale: 1.15; }
+* { box-sizing: border-box; }
+html { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--page); color: var(--text); }
+a { color: var(--link); }
+h1, h2, h3 { font-family: var(--display); letter-spacing: -.01em; }
+h1 { font-size: 1.43rem; font-weight: 600; margin: 0; }
+h2 { font-size: 1.15rem; font-weight: 600; margin: 0; }
+button, input, select, textarea { font-family: inherit; }
+/* Галочки и переключатели — в цвет Tish; в тёмной теме не белые квадраты браузера */
+input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
+/* Время, телефоны, суммы в таблицах — цифры столбиком */
+.num { font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+.hint { color: var(--hint); }
+.small { font-size: .9rem; }
+.error { color: var(--destructive); }
+.tone-ok { color: var(--status-ok); }
+.tone-wait { color: var(--status-wait); }
+.tone-bad { color: var(--destructive); }
+.tone-quiet { color: var(--hint); }
+.tone-hint { color: var(--hint); }
+.center { max-width: 420px; margin: 12vh auto; padding: 0 16px; text-align: center; display: grid; gap: 12px; justify-items: center; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 0 14px;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text);
+  font: inherit; font-weight: 500; cursor: pointer; text-decoration: none; transition: background .15s, border-color .15s;
+}
+.btn:hover:not(:disabled) { background: var(--sunken); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn:focus-visible, .nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+.btn.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn.ghost { border-color: transparent; background: none; }
+
+/* Чип статуса: заливка + слово + точка (DESIGN.md → Components) */
+.chip.small { padding: 1px 8px; font-size: .86rem; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--r-sm); font-size: .93rem; font-weight: 500; justify-self: start; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.s-request { background: var(--req-bg); color: var(--req-ink); }
+.s-wait { background: var(--wait-bg); color: var(--wait-ink); }
+.s-ok { background: var(--ok-bg); color: var(--ok-ink); }
+.s-done { background: var(--done-bg); color: var(--done-ink); }
+.s-cashier { background: var(--cash-bg); color: var(--cash-ink); }
+.s-bad { background: var(--bad-bg); color: var(--bad-ink); }
+.s-quiet { background: var(--quiet-bg); color: var(--hint); }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn.small { min-height: 30px; padding: 0 10px; font-size: .85rem; }
+.link { padding: 0; border: 0; background: none; color: var(--link); font: inherit; cursor: pointer; text-align: left; }
+/* Телефон: кнопки и ссылки-действия — не ниже 44px, чтобы попадать пальцем (ссылки внутри текста не трогаем) */
+@media (max-width: 760px) {
+  .btn, .btn.small { min-height: 44px; }
+  .btn.small { padding: 0 14px; }
+  :where(.panel, .form, .sub-form, .pay-form, .field, .actions, .line-edit, .payment-done, .waitlist-box, .chosen, .card-block, .day-actions, .undo) > .link {
+    display: inline-flex; align-items: center; min-height: 44px;
+  }
+}
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; max-height: 240px; overflow-y: auto; padding: 2px; }
+.slot { padding: 8px 0; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--card); color: var(--text); font: inherit; font-size: .92rem; cursor: pointer; }
+.slot[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: var(--accent-text); font-weight: 600; }
+.field > .link { justify-self: start; }
+.pay-form, .form { display: grid; gap: 10px; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.field > span, .field > legend { font-size: .85rem; color: var(--hint); padding: 0; }
+.field input, .field select, .field textarea, .phone, .field .ui-select {
+  width: 100%; font: inherit; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text);
+}
+.field input:focus, .field select:focus, .field textarea:focus, .field .ui-select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+/* Поле не шире своей колонки: у time/date на телефоне свой минимальный размер, иначе «До» вылезает за карточку (390px) */
+.field input { min-width: 0; max-width: 100%; }
+.check { display: flex; gap: 8px; align-items: center; font-size: .9rem; }
+/* Переключатели внутри страницы (День / Неделя / Месяц, вкладки карточки) — залитые таблетки на утопленной
+   дорожке: выбранная — белая с тенью. Подразделы раздела — другим видом, подчёркнутыми вкладками
+   (layout/section.tsx): два уровня не путаются */
+.segments { display: flex; gap: 2px; padding: 3px; border-radius: var(--radius); background: var(--sunken); }
+.segments button { flex: 1; min-height: 30px; padding: 4px 10px; border: 0; border-radius: var(--r-md); background: transparent; color: var(--hint); font: inherit; cursor: pointer;
+  transition: background-color .15s ease-out, color .15s ease-out; }
+.segments button:hover:not([aria-pressed=true]):not(:disabled) { color: var(--text); background: color-mix(in srgb, var(--card) 55%, transparent); }
+.segments button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.segments button[aria-pressed=true] { background: var(--card); color: var(--link); font-weight: 600; box-shadow: 0 1px 3px rgba(15, 42, 48, .14), 0 0 0 1px var(--separator); }
+/* Телефон: страна (флаг и код) слева, номер справа — одной рамкой. Номер в разметке первый (PhoneInput.tsx) */
+.phone { display: flex; align-items: stretch; padding: 0; }
+.phone:focus-within { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.phone > input { order: 1; flex: 1; min-width: 0; border: 0; padding-left: 8px; }
+.phone > input:focus { outline: none; }
+.nowrap { white-space: nowrap; }
+
+/*
+ * Телефон и узкое окно: меню — панель внизу (как в приложениях), карточка справа — на весь
+ * экран поверх (✕ закрывает), таблицы и колонки врачей прокручиваются вбок.
+ */
+@media (max-width: 760px) {
+  /* Телефон: текст крупнее; поля не мельче 16px — иначе iPhone приближает страницу при вводе */
+  :root { font-size: calc(16px * var(--text-scale, 1)); }
+  input, select, textarea { font-size: max(16px, 1rem) !important; }
+  /* iPhone: «резинка» в конце страницы тянула всю страницу — нижнее меню уезжало вверх, а под ним
+     просвечивал список. Резинку у страницы выключаем (у прокручиваемых блоков она своя), а фон меню
+     продлеваем вниз — даже если старый iOS всё же потянет, под меню будет его фон, а не контент */
+  /* Только на html: на body (и на html, и на body вместе) iPhone в установленном на экран приложении
+     «заклинивал» прокрутку длинных списков — страница переставала листаться вниз */
+  html { overscroll-behavior-y: none; }
+}
+
+/* Зуб рисунком (ToothGlyph): эмаль, корень, пульпа; состояние — цветом на самом рисунке */
+:root {
+  --tooth-enamel: #FFFFFF; --tooth-root: #F3F0E9; --tooth-line: #8A9DA2;
+  --tooth-pulp: #F6D3CF; --tooth-canal: #D08A84;
+  --tooth-caries: #5E3714; --tooth-filling: #3D6FD6; --tooth-filling-line: #1642A6;
+  --tooth-crown: #F3D9A4; --tooth-crown-line: #9A6A12;
+  --tooth-metal: #C5D0D3; --tooth-metal-line: #5F7378; --tooth-treat: #C77700;
+}
+:root[data-theme=dark] {
+  --tooth-enamel: #DDE7E6; --tooth-root: #A9BABB; --tooth-line: #DDE7E6;
+  --tooth-pulp: #E7AFA9; --tooth-canal: #B5524B;
+  --tooth-caries: #3D2208; --tooth-filling: #5C8BF0; --tooth-filling-line: #2552B8;
+  --tooth-crown: #E9C47A; --tooth-crown-line: #FFD58A;
+  --tooth-metal: #8FA2A7; --tooth-metal-line: #C9D6D8; --tooth-treat: #F2C46D;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --tooth-enamel: #DDE7E6; --tooth-root: #A9BABB; --tooth-line: #DDE7E6;
+    --tooth-pulp: #E7AFA9; --tooth-canal: #B5524B;
+    --tooth-caries: #3D2208; --tooth-filling: #5C8BF0; --tooth-filling-line: #2552B8;
+    --tooth-crown: #E9C47A; --tooth-crown-line: #FFD58A;
+    --tooth-metal: #8FA2A7; --tooth-metal-line: #C9D6D8; --tooth-treat: #F2C46D;
+  }
+}
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.form.narrow { max-width: 520px; }
+.about > .btn { justify-self: start; margin-top: 12px; }
+.card-block > .btn, .card-block > label.btn, .form.narrow > label.btn { justify-self: start; }
+fieldset.form { margin: 0; padding: 0; border: 0; min-width: 0; }
+/* Эмодзи у кнопок (lib/buttonIcons.ts): «/ ""» — скринридер читает только подпись */
+.btn[data-ico]::before, .segments button[data-ico]::before { content: attr(data-ico); content: attr(data-ico) / ""; font-size: 1.05em; line-height: 1; margin-right: 6px; }
+.btn[data-ico]::before { margin-right: 0; }
+/* Вкладки и переключатели — без эмодзи: выбор читается словом и заливкой (DESIGN.md → эмодзи) */
+.segments button[data-ico]::before { content: none; }
+.ico { font-style: normal; }
+
+/* Диаграммы «Аналитики» (dataviz): цвета прошли проверку validate_palette — свет и тьма */
+:root { --chart-1: #0B9488; --chart-bad: #D03A3A; }
+:root[data-theme=dark] { --chart-1: #23A99A; --chart-bad: #D9534F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --chart-1: #23A99A; --chart-bad: #D9534F; } }
+input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
+
+/* Категориальные цвета диаграмм (dataviz: шесть слотов по порядку прошли validate_palette — светлая
+   тема на #FFFFFF, тёмная на #13252A; у трёх светлых контраст < 3:1 — поэтому у бублика всегда легенда
+   с суммами текстом). «Другое» — нейтральный серый, не седьмой цвет. */
+:root { --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100; --series-5: #e87ba4; --series-6: #008300; --chart-other: #9AABAF; }
+:root[data-theme=dark] { --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500; --series-5: #d55181; --series-6: #008300; --chart-other: #5B7379; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500; --series-5: #d55181; --series-6: #008300; --chart-other: #5B7379; } }
+
+/*
+ * Кнопки — нейтральные (2026-11-03, минимализм): цвет у одной главной кнопки экрана (.primary),
+ * значок-эмодзи остаётся. data-tone (lib/buttonIcons.ts) красит только опасное — красным текстом.
+ */
+.btn[data-tone=bad]:not(.primary) { color: var(--destructive); }
+
+/*
+ * Телефон: ряды вкладок и переключателей не уезжают за край — переносятся на вторую строку.
+ * Раньше лишние вкладки («Контент» на «Платформе», «Отчёт» в «Кассе») прятались справа и их не находили.
+ * Линии между кнопками — фоном через зазор 1px: так они ровные и при переносе.
+ */
+@media (max-width: 760px) {
+  /* Переключатели внутри страницы (День / Неделя / Месяц) — залитые таблетки на утопленной дорожке, а не
+     подчёркивание: так они не похожи на вкладки подразделов сверху (layout/section.tsx) */
+  .segments { flex-wrap: wrap; overflow: visible; }
+  .segments button { flex: 1 0 auto; min-width: 30%; min-height: 38px; white-space: nowrap; padding: 8px 10px; }
+}
+.source-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.source-chip { min-height: 34px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .85rem; cursor: pointer; }
+.source-chip:hover:not(:disabled) { border-color: var(--accent); }
+.source-chip[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
+
+/* ===================================================================================
+ * Компьютер (2026-11-02, обзор дизайна): сводка дня и свободные окна в расписании, липкие шапки
+ * разделов и таблиц, свои поля даты и месяца, списки вместо системных, пустые состояния,
+ * спокойные напоминания, ровные «Настройки». Телефон (≤760px) — как был: правила либо общие и
+ * безопасные, либо только для min-width: 761px.
+ * =================================================================================== */
+
+/* Выпадающие списки CRM — в стиле полей: своя стрелка вместо системной, одна высота */
+:root { --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%234C6268' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+:root[data-theme=dark] { --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%2393AAB0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%2393AAB0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); } }
+
+/* Пустое состояние: полупрозрачный Тишка, фраза, подсказка, действие (layout/EmptyState.tsx).
+   Обычное — по центру блока, Тишка крупно «водяным знаком»; compact — строкой внутри карточки. */
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 32px 20px; text-align: center; color: var(--text); }
+.empty-mark { flex: none; width: 72px; height: 112px; color: var(--accent); opacity: .22; }
+.empty-body { display: grid; gap: 4px; max-width: 420px; min-width: 0; }
+.empty-state .empty-body p { margin: 0; } /* сильнее «.panel p», «.card-block > p» из crm.css — пустое состояние внутри карточки */
+.empty-title { font-family: var(--display); font-weight: 600; font-size: 1.05rem; letter-spacing: -.01em; }
+.empty-action { flex: none; margin-top: 4px; }
+/* Пустой подраздел целиком: на фоне страницы, по центру свободного места от шапки (--head-h, layout/stickyHead)
+   до низа окна. Блок — прямо в секции страницы: секция столбиком на высоту окна, блок забирает остаток
+   (над ним может быть что-то ещё — всё равно без лишней прокрутки) */
+.empty-state.fill { flex: 1 1 auto; justify-content: center; min-height: max(240px, calc(100dvh - var(--head-h, 72px) - 44px)); padding: 24px 16px; background: none; }
+.empty-state.fill .empty-mark { opacity: .4; }
+@media (max-width: 760px) {
+  .empty-state.fill { min-height: max(200px, calc(100dvh - var(--head-h, 90px) - 104px - env(safe-area-inset-bottom))); }
+}
+.empty-state.compact { flex-direction: row; flex-wrap: wrap; gap: 8px 12px; padding: 10px 12px; text-align: left; border-radius: var(--r-md); background: var(--sunken); }
+.empty-state.compact .empty-mark { width: 18px; height: 28px; opacity: .45; }
+.empty-state.compact .empty-body { flex: 1 1 200px; max-width: none; gap: 0; }
+.empty-state.compact .empty-title { font-family: var(--ui); font-size: 1rem; letter-spacing: 0; }
+.empty-state.compact .empty-action { margin-top: 0; }
+:root[data-theme=dark] .empty-mark { color: #CFEDEA; opacity: .38; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) .empty-mark { color: #CFEDEA; opacity: .38; } }
+:root[data-theme=dark] .empty-state.compact .empty-mark { opacity: .5; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) .empty-state.compact .empty-mark { opacity: .5; } }
+
+/* Загрузка: спиннер + текст, появляется через 300 мс (layout/Loading.tsx). Спиннер — currentColor,
+   у «Загрузка…» — бирюзовый; без анимаций (reduced motion) — пульсирует, а не вращается. */
+.spinner { display: inline-block; flex: none; width: 1em; height: 1em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: tish-spin .8s linear infinite; vertical-align: -.125em; box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: tish-pulse 1.6s ease-in-out infinite; border-right-color: currentColor; border-style: dotted; }
+}
+.loading { display: flex; align-items: center; gap: 10px; color: var(--hint); }
+.loading .spinner { color: var(--accent); width: 20px; height: 20px; border-width: 2.5px; }
+.loading.block { justify-content: center; padding: 24px 16px; }
+.loading.inline { display: inline-flex; gap: 8px; }
+.loading.inline .spinner { width: 1em; height: 1em; border-width: 2px; }
+.loading.overlay { position: absolute; inset: 0; z-index: 5; flex-direction: column; justify-content: center; gap: 14px; background: color-mix(in srgb, var(--page) 70%, transparent); font-size: 1.05rem; }
+.loading.overlay .spinner { width: 36px; height: 36px; border-width: 3px; }
+.loading.overlay.dark { background: rgba(18, 26, 34, .72); color: #eef3f6; }
+.loading.overlay.dark .spinner { color: #3cbfb2; }
+.loading.screen { min-height: 60vh; }
+.atlas-boot { position: fixed; inset: 0; z-index: 1000; background: #121a22; }
+.atlas-boot .loading.overlay.dark { background: transparent; }
+/* Спиннер в кнопке и строке: рядом с текстом «Сохраняем…», размер — по шрифту */
+.spinner { margin-right: .45em; }
+.loading .spinner { margin-right: 0; }
+/* Карточка и узкая форма — сетки с шагом 10px: у абзацев внутри свои поля не нужны, иначе дыры по 26px
+   (в пунктах «Настроек» абзацы стояли то плотно, то с дырами) */
+.form.narrow > p, .settings-item :is(.card-block, .form, fieldset, .about-col, .doctor-group) > p { margin: 0; }
+
+/* Свой выпадающий список (layout/Select.tsx) вместо системного: поле — как прежний select */
+.ui-select { display: flex; align-items: center; min-width: 0; max-width: 100%; min-height: 36px; padding: 6px 34px 6px 10px; font: inherit; text-align: left;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); color: var(--text); cursor: pointer;
+  background: var(--card) var(--chev) no-repeat right 12px center / 11px 8px !important; padding-right: 34px !important; }
+.ui-select:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong)); }
+.ui-select:focus-visible, .ui-select[aria-expanded=true] { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.ui-select:disabled { opacity: .6; cursor: default; }
+.ui-select.placeholder .ui-select-value { color: var(--hint); }
+.ui-select-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-select-value .hint { font-size: .9em; }
+/* Страна в поле телефона: в поле — только флаг и код, название — в списке */
+/* :root впереди — не для смысла, а для веса: в CRM crm.css идёт после tokens.css, и правило вида «.shell .ui-select» без этого перебивало бы поле страны. Раньше это решал порядок в общем styles.css */
+:root .phone .ui-select { order: 0; flex: none; width: auto; min-height: 0; border: 0; border-right: 1px solid var(--line); border-radius: var(--r-md) 0 0 var(--r-md);
+  padding: 6px 26px 6px 10px !important; background-color: transparent !important; background-position: right 8px center !important; color: var(--text); }
+:root .phone .ui-select:focus-visible, :root .phone .ui-select[aria-expanded=true] { outline: none; background-color: var(--sunken) !important; }
+.phone .ui-select-value .hint { display: none; }
+/* Скрытое поле значения для форм (Select, DateInput). Селектор с input — сильнее «.field input { width: 100% }»:
+   иначе у поля без позиционированного предка ширина 100% окна от левого края поля — и вся страница листается вбок */
+:root input.ui-select-proxy, :root .field input.ui-select-proxy { position: absolute; width: 1px; height: 1px; min-width: 0; margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; overflow: hidden; clip-path: inset(50%); }
+.ui-select-pop { position: fixed; z-index: 1000; display: flex; flex-direction: column; padding: 6px; border: 1px solid var(--separator); border-radius: 14px;
+  background: var(--card); color: var(--text); box-shadow: 0 12px 32px rgba(15, 42, 48, .18); animation: pick-in .12s ease-out; }
+.ui-select-pop ul { margin: 0; padding: 0; list-style: none; overflow-y: auto; overscroll-behavior: contain; outline: none; }
+.ui-select-pop li { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
+.ui-select-pop li.active { background: var(--sunken); }
+.ui-select-pop li[aria-selected=true] { background: var(--accent-soft); color: var(--link); font-weight: 600; }
+.ui-select-pop li[aria-disabled=true] { color: var(--hint); cursor: default; background: none; }
+.ui-select-text { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ui-select-text .hint { font-size: .85rem; font-weight: 400; }
+.ui-select-pop li::after { content: ""; flex: none; width: 18px; color: var(--link); font-weight: 700; text-align: center; }
+.ui-select-pop li[aria-selected=true]::after { content: "✓"; }
+.ui-select-search { flex: none; margin: 2px 2px 6px; padding: 8px 10px; font: inherit; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--page); color: var(--text); }
+.ui-select-title { margin: 4px 8px 8px; font: 600 1.05rem var(--display); }
+.ui-select-head { display: flex; align-items: center; gap: 8px; }
+.ui-select-head .ui-select-title { flex: 1; min-width: 0; }
+.ui-select-close { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -6px -4px 0 0; border: 0; border-radius: 50%; background: transparent; color: var(--hint); font-size: 1.15rem; cursor: pointer; }
+.ui-select-close:active { background: var(--sunken); }
+.ui-select-empty { color: var(--hint); }
+/* Группы (<optgroup>): подпись мелко и серым, пункты под ней; группа не выбирается */
+.ui-select-pop li.ui-select-group { display: block; min-height: 0; padding: 0; border-radius: 0; cursor: default; background: none; }
+.ui-select-pop li.ui-select-group::after { content: none; }
+.ui-select-pop li.ui-select-group + li.ui-select-group { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--separator); }
+.ui-select-pop .ui-select-group ul { overflow: visible; }
+.ui-select-pop li.ui-select-group-title { min-height: 0; padding: 6px 10px 2px; color: var(--hint); font-size: .78rem; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; cursor: default; }
+.ui-select-pop li.ui-select-group-title::after { content: none; }
+.ui-select-pop.sheet li.ui-select-group { min-height: 0; padding: 0; }
+.ui-select-pop.sheet li.ui-select-group-title { min-height: 0; padding: 8px 12px 2px; font-size: .8rem; }
+/* Свёрнутые группы (Select collapsible): заголовок — кнопка «Раздел · N ▸», раскрыт — пункты под ним */
+.ui-select-pop li.ui-select-group.fold { padding: 0; min-height: 0; border-bottom: 1px solid var(--separator); }
+.ui-select-fold { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 10px 12px;
+  border: 0; background: none; color: var(--text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.ui-select-fold:hover, .ui-select-fold:focus-visible { background: var(--sunken); }
+.ui-select-group.fold.open > .ui-select-fold { color: var(--accent); }
+.ui-select-pop.sheet .ui-select-fold { min-height: 50px; font-size: 1.05rem; }
+/* Телефон и Telegram — лист снизу экрана, пункты крупнее: удобно большим пальцем */
+.ui-select-backdrop { position: fixed; inset: 0; z-index: 1000; cursor: pointer; /* iOS: без cursor нажатие на фон не даёт click */ display: flex; align-items: flex-end; background: rgba(10, 25, 30, .38); animation: sheet-fade .15s ease-out; }
+.ui-select-pop.sheet { cursor: auto; position: static; width: 100%; max-height: 75vh; max-height: 75dvh; padding: 10px 10px calc(14px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0;
+  animation: sheet-up .2s ease-out; }
+.ui-select-pop.sheet::before { content: ""; align-self: center; flex: none; width: 40px; height: 4px; margin-bottom: 8px; border-radius: 2px; background: var(--line-strong); }
+.ui-select-pop.sheet li { min-height: 50px; padding: 10px 12px; font-size: 1.05rem; }
+.ui-select-pop.sheet .ui-select-search { font-size: max(16px, 1rem); }
+/* Поиск клиники и города (src/lib/ClinicFilters.tsx): каталог /clinics и выбор клиники в Mini App */
+.clinic-filters { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--separator); border-radius: 18px; background: var(--card);
+  box-shadow: 0 1px 2px rgba(16, 40, 44, .04); }
+.clinic-search-box { position: relative; display: block; }
+.clinic-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1rem; opacity: .55; pointer-events: none; }
+.clinic-search { width: 100%; height: 48px; padding: 0 14px 0 42px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--page);
+  color: var(--text); font: inherit; font-size: 16px; transition: border-color .15s, box-shadow .15s, background .15s; }
+.clinic-search:focus { outline: none; border-color: var(--accent); background: var(--card); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.city-filter { display: grid; gap: 8px; }
+.city-filter-label { font-size: .82rem; font-weight: 600; color: var(--hint); letter-spacing: .02em; }
+.city-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.city-chips button { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px 0 14px; border: 1px solid var(--line-strong);
+  border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .92rem; font-weight: 500; cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s; }
+.city-chips button:hover { border-color: var(--accent); }
+.city-chips button[aria-pressed=true] { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 600; }
+/* Число клиник — маленький кружок, а не цифра вплотную к названию */
+.city-chips .count { min-width: 22px; height: 22px; padding: 0 6px; display: inline-grid; place-items: center; border-radius: 999px;
+  background: var(--sunken); color: var(--hint); font-size: .78rem; font-weight: 600; }
+.city-chips button[aria-pressed=true] .count { background: rgba(255, 255, 255, .25); color: #fff; }
+/* «Платформа → Финансы»: доход — бирюзовый, расход — нейтральный, прибыль — зелёным вверх, убыток — красным вниз */
+:root { --chart-exp: #9AABB0; }
+:root[data-theme=dark] { --chart-exp: #5E757B; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) { --chart-exp: #5E757B; } }
+
+/* Строка-раскрывашка (layout/Fold): «Зубы · 14, 36 ›», нажали — открылось */
+.fold { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; border-bottom: 1px solid var(--separator); }
+@keyframes pick-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes tish-spin { to { transform: rotate(360deg); } }
+@keyframes tish-pulse { 50% { opacity: .35; } }
+@keyframes sheet-up { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }

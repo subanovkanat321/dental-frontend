@@ -8,7 +8,7 @@ export const LOADING_DELAY_MS = 300
 /**
  * Кружок-спиннер — только картинка (aria-hidden): в кнопке «Сохраняем…» имя кнопки остаётся её
  * текстом. Цвет — `currentColor` (в залитой кнопке белый, в обычной — цвет текста); в
- * `prefers-reduced-motion` не вращается, а мягко пульсирует (styles.css).
+ * `prefers-reduced-motion` не вращается, а мягко пульсирует (tokens.css).
  */
 export function Spinner({ size }: { size?: number }) {
   const style: CSSProperties | undefined = size ? { width: size, height: size } : undefined

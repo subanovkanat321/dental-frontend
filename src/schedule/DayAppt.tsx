@@ -43,7 +43,7 @@ export const DayAppt = memo(function DayAppt({ a, date, from, active, money, cha
       onClick={() => onOpen(a.id!)}
       aria-label={`${carried ? 'со вчера ' : ''}${timeOf(a.startAt!)}–${timeOf(a.endAt!)}, ${a.patient?.fullName}: ${s.label}`}>
       {/* Обёртка — для широкого блока (один врач на экране): там она сеткой «время | имя и услуга | значки и статус»
-          (container query в styles.css). В узком блоке она display: contents — раскладка прежняя.
+          (container query в crm.css). В узком блоке она display: contents — раскладка прежняя.
           «wide-only» — то, что узкому блоку по высоте не влезает, а широкому влезает в ту же строку. */}
       <span className="appt-body">
         <span className="appt-time num">

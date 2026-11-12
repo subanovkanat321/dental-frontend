@@ -17,6 +17,9 @@ import '@fontsource/golos-text/cyrillic-600.css'
 import '@fontsource/golos-text/latin-600.css'
 import '@fontsource/golos-text/cyrillic-700.css'
 import '@fontsource/golos-text/latin-700.css'
+// Стили — до компонентов: их собственные .css (pwa.css, timeinput.css…) должны идти после общих, как раньше
+import './tokens.css'
+import './crm.css'
 
 import { createQueryClient } from './api/queryClient'
 import { App } from './App'
@@ -30,7 +33,6 @@ import { startVisualViewport } from './lib/visualViewport'
 import { applyLook } from './lib/theme'
 import { listenInstallPrompt } from './pwa/pwa'
 import { startVersionCheck } from './pwa/version'
-import './styles.css'
 
 // Регистратура держит вкладку открытой весь день: вернулись на вкладку — свежие данные
 // Повторы — retryOnce (api/queryClient.ts): 4xx не повторяем, сеть и 5xx — один раз

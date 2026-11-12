@@ -12,7 +12,7 @@ import { server } from '../test/server'
 import { addMonths, daysInMonth, weekdayOf } from './month/monthModel'
 
 /** Стили — текстом: jsdom не применяет CSS, а штриховку и полоску задаёт именно он. */
-const styles = readFileSync('src/styles.css', 'utf8')
+const styles = readFileSync('src/tokens.css', 'utf8') + readFileSync('src/crm.css', 'utf8')
 
 type Appointment = Schemas['AppointmentView']
 

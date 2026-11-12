@@ -10,7 +10,7 @@ import { server } from '../test/server'
 
 // CSS читаем файлом: в тестах Vite отдаёт .css (и ?raw) пустыми
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
-const styles = read('../styles.css')
+const styles = read('../tokens.css') + read('../crm.css')
 const learn = read('../learn/learn.css')
 const teeth = read('../medical/toothChart.css')
 
