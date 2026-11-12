@@ -203,3 +203,21 @@ test('подсказка про свайпы — один раз: закрыли
   await rowOf('Бакыт М.')
   expect(screen.queryByText(/Подсказка: свайп/)).not.toBeInTheDocument()
 })
+
+test('«Уменьшение движения» на iPhone: строка всё равно едет за пальцем (это не анимация)', async () => {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('max-width') || query.includes('coarse') || query.includes('reduce'),
+    media: query, addEventListener() {}, removeEventListener() {}, onchange: null,
+    addListener() {}, removeListener() {}, dispatchEvent: () => false,
+  }))
+  backend(appointment(10, 1, '23:30', 'Бакыт М.'))
+  renderApp()
+  const row = await rowOf('Бакыт М.')
+  await screen.findByRole('button', { name: /Напомнить в WhatsApp/ })
+  const at = (cx: number) => [{ identifier: 1, clientX: cx, clientY: 300 }]
+  fireEvent.touchStart(row, { touches: at(100), changedTouches: at(100) })
+  fireEvent.touchMove(row, { touches: at(115), changedTouches: at(115) })
+  fireEvent.touchMove(row, { touches: at(160), changedTouches: at(160) })
+  expect(row.style.getPropertyValue('--swipe-x')).toBe('60px')
+  fireEvent.touchEnd(row, { touches: [], changedTouches: at(160) })
+})

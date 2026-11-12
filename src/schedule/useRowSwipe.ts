@@ -1,6 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react'
 
-import { matches } from '../lib/useMedia'
 
 /**
  * Свайп по строке приёма в «Дне» на телефоне: вправо — одно действие, влево — другое.
@@ -46,8 +45,9 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
       else delete el.dataset.swipe
       if (armed) el.dataset.swipeArmed = ''
       else delete el.dataset.swipeArmed
-      // Без анимаций — строка не едет, но подложка и «порог пройден» видны
-      el.style.setProperty('--swipe-x', matches('(prefers-reduced-motion: reduce)') ? '0px' : `${dx}px`)
+      // Строка едет за пальцем всегда, и при «Уменьшении движения» на iPhone: это прямое управление,
+      // а не анимация (раньше там строка стояла — свайп был «незаметен»). Без анимаций — только без плавного возврата
+      el.style.setProperty('--swipe-x', `${dx}px`)
     }
     const release = () => {
       el.classList.remove('swiping')

@@ -627,8 +627,8 @@ button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family:
 .row-undo { flex-basis: 100%; margin: 0 8px 8px; }
 .swipe-hint { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 6px; padding: 4px 4px 4px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .88rem; }
 @media (prefers-reduced-motion: reduce) {
-  /* Строка не едет; пройден порог — рамка цвета действия */
-  .day-list .row.swipe > .row-slide { transition: none; transform: none; }
+  /* Строка едет за пальцем (это не анимация), но без плавного возврата; пройден порог — рамка цвета действия */
+  .day-list .row.swipe > .row-slide { transition: none; }
   .row[data-swipe=right][data-swipe-armed] { box-shadow: inset 0 0 0 2px var(--link); }
   .row[data-swipe=left][data-swipe-armed] { box-shadow: inset 0 0 0 2px var(--ok-ink); }
 }
