@@ -8,13 +8,15 @@ import { matches } from '../lib/useMedia'
  * Жест: палец лёг на строку (не у левого края — там свайп «назад», lib/edgeSwipe.ts) и сдвинулся на
  * SLOP. Пошёл больше по вертикали — это прокрутка, отпускаем. Пошёл вбок в сторону, где действия нет,
  * — тоже отпускаем. Иначе строка едет за пальцем (CSS-переменная --swipe-x), под ней подложка
- * стороны (атрибут data-swipe), за порогом — data-swipe-armed. Отпустили за порогом — действие;
+ * стороны (атрибут data-swipe), за порогом (35% ширины или 90px) — data-swipe-armed. Отпустили за порогом — действие;
  * строка в любом случае пружинит на место. Клик после жеста глушим — карточка не откроется.
  */
 export const EDGE = 20
 const SLOP = 10
-/** Порог действия — доля ширины строки */
+/** Порог действия — 35% ширины строки, но не больше 90px: на широкой строке палец не тянется через пол-экрана */
 const PART = 0.35
+const MAX_PX = 90
+const armedAt = (width: number) => Math.min(width * PART, MAX_PX)
 
 export type SwipeActions = {
   /** Нет — жест вправо неактивен */
@@ -82,7 +84,7 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
       if (e.cancelable) e.preventDefault()
       // Только в сторону действия и не дальше ширины строки
       g.dx = g.side === 'right' ? Math.min(Math.max(0, dx), g.width) : Math.max(Math.min(0, dx), -g.width)
-      paint(g.dx, g.side, Math.abs(g.dx) >= g.width * PART)
+      paint(g.dx, g.side, Math.abs(g.dx) >= armedAt(g.width))
     }
 
     const onEnd = (e: TouchEvent) => {
@@ -96,7 +98,7 @@ export function useRowSwipe(ref: RefObject<HTMLElement | null>, enabled: boolean
       }
       swallowUntil = Date.now() + 400
       release()
-      if (Math.abs(gesture.dx) >= gesture.width * PART) latest.current[gesture.side]?.()
+      if (Math.abs(gesture.dx) >= armedAt(gesture.width)) latest.current[gesture.side]?.()
     }
 
     const onCancel = () => {

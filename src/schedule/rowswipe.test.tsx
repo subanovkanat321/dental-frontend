@@ -21,7 +21,7 @@ function screenOf(kind: 'phone' | 'desktop') {
 
 beforeEach(() => {
   screenOf('phone')
-  vi.stubGlobal('innerWidth', 390) // ширина строки в jsdom 0 — порог от ширины экрана: 35% ≈ 137 px
+  vi.stubGlobal('innerWidth', 390) // ширина строки в jsdom 0 — порог от ширины экрана: min(35% ≈ 137, 90) = 90 px
   localStorage.setItem('crm.schedule.view', '1')
 })
 afterEach(() => {
@@ -98,7 +98,7 @@ test('во время жеста строка едет за пальцем, по
   expect(row).toHaveAttribute('data-swipe', 'right')
   expect(row).not.toHaveAttribute('data-swipe-armed')
   expect(row.style.getPropertyValue('--swipe-x')).toBe('60px')
-  expect(within(row).getByText('💬 Напомнить')).toBeInTheDocument()
+  expect(within(row).getByText('💬 Напомнить в WhatsApp')).toBeInTheDocument()
   fireEvent.touchEnd(row, { touches: [], changedTouches: at(160) })
   expect(row).not.toHaveAttribute('data-swipe')
   expect(row.style.getPropertyValue('--swipe-x')).toBe('0px')
@@ -112,11 +112,23 @@ test('свайп влево у начавшегося приёма — «При�
   const row = await rowOf('Бакыт М.')
   swipe(row, 300, 300, -200)
   const undo = await within(row).findByRole('status')
-  expect(undo).toHaveTextContent('Приём состоялся: Бакыт М.')
+  expect(undo).toHaveTextContent('Приём отмечен состоявшимся')
   expect(calls).toEqual(['status:DONE:v0'])
   await userEvent.click(within(undo).getByRole('button', { name: 'Вернуть' }))
   await waitForSlow(() => expect(calls).toEqual(['status:DONE:v0', 'undo:SCHEDULED:v1']))
   expect(within(row).queryByRole('status')).not.toBeInTheDocument()
+})
+
+test('порог — 35% ширины, но не больше 90px: 95px на строке 390px уже действие, 80px — ещё нет', async () => {
+  const calls = backend(appointment(10, 1, '00:00', 'Бакыт М.'))
+  renderApp()
+  const row = await rowOf('Бакыт М.')
+  swipe(row, 300, 300, -80)
+  expect(within(row).queryByRole('status')).not.toBeInTheDocument()
+  expect(calls).toEqual([])
+  swipe(row, 300, 300, -95)
+  expect(await within(row).findByRole('status')).toHaveTextContent('Приём отмечен состоявшимся')
+  expect(calls).toEqual(['status:DONE:v0'])
 })
 
 test('будущий приём: влево неактивно (не начался), вправо — напоминание', async () => {
@@ -129,7 +141,7 @@ test('будущий приём: влево неактивно (не начал�
     renderApp()
     const row = await rowOf('Бакыт М.')
     await screen.findByRole('button', { name: /Напомнить в WhatsApp/ })
-    expect(within(row).queryByText('✅ Состоялся')).not.toBeInTheDocument()
+    expect(within(row).queryByText('Приём состоялся ✅')).not.toBeInTheDocument()
     swipe(row, 300, 300, -250)
     expect(row).not.toHaveAttribute('data-swipe')
     expect(open).not.toHaveBeenCalled()
