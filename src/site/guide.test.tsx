@@ -48,7 +48,7 @@ test('?role=assistant — без «Кассы» и «Настроек клини
   await userEvent.click(within(screen.getByRole('group', { name: 'Для кого' })).getByRole('button', { name: 'Руководитель' }))
   expect(window.location.search).toBe('?role=admin')
   expect(chapterTitles()).toContain('Настройки клиники')
-  expect(screen.getByRole('article', { name: 'Персонал: все сотрудники и их роли' })).toBeInTheDocument()
+  expect(screen.getByRole('article', { name: 'Добавить сотрудника: одна кнопка' })).toBeInTheDocument()
 
   await userEvent.click(within(screen.getByRole('group', { name: 'Для кого' })).getByRole('button', { name: 'Все главы' }))
   expect(window.location.search).toBe('')

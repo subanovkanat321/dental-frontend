@@ -13,6 +13,7 @@ import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
 import { DoctorPhone, StaffPhone, type Doctor } from './PhoneParts'
 import { isPhoneLogin } from './texts'
+import { RolesEditor } from './RolesEditor'
 import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
@@ -34,13 +35,15 @@ function firstError(e: ApiError | null): string | null {
 export const SELF_PROFILE_HINT = 'Фото, имя и «о себе» врач заполняет сам — в «Моём профиле» (нажать на себя внизу меню).'
 
 /**
- * Карточка врача (панель справа в «Персонале» или во всю ширину в «Моём профиле») — три раздела:
+ * Карточка врача (панель справа в «Персонале» или во всю ширину в «Моём профиле»). Руководителю сверху —
+ * «Роли» (флажок «Врач» и роль в клинике, {@link RolesEditor}: снять «Врач» — врач скрыт, история остаётся;
+ * у себя — «Веду приём»). Дальше три раздела:
  * <ul>
  * <li>«Для пациентов» — фото, имя, «Кратко»: их видят пациенты в боте, ведёт сам врач. Админ у чужого
  * вошедшего врача видит их только для чтения; пока врач не вошёл («ждём входа») — заполняет черновик,
  * иначе бот покажет пациентам пустую карточку;</li>
- * <li>«Работа» — «Работает» (админ), услуги (админ или сам врач), часы работы (и регистратура);</li>
- * <li>«Вход и права» — Telegram подключён или «ждём входа», приглашение, телефон, права администратора.</li>
+ * <li>«Работа» — услуги (админ или сам врач), часы работы (и регистратура), кресло;</li>
+ * <li>«Вход» — Telegram подключён или «ждём входа», приглашение, телефон.</li>
  * </ul>
  * Telegram id руками не вписывают: привязка — ссылкой-приглашением или номером. Те же права проверяет сервер.
  */
@@ -75,7 +78,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
     : <ProfileView doctor={d} />
   const work = (
     <>
-      {!own && <ActiveSwitch doctor={d} admin={admin} onSaved={refresh} />}
+      {!own && <ActiveSwitch doctor={d} admin={admin} />}
       {editsWork && <DoctorServices key={d.id} doctorId={d.id} me={me} />}
       <section className="form">
         <h4>Часы работы</h4>
@@ -86,7 +89,12 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
       <ChairField key={`chair-${d.id}`} doctorId={d.id} me={me} />
     </>
   )
-  const access = admin ? <AccessAdmin doctor={d} self={self} inline={inline} onDone={refresh} />
+  // «Врач» = работает: снять флажок — врач скрыт (как прежний «Работает»), вернуть — снова виден пациентам
+  const roles = admin && (
+    <RolesEditor key={`${d.active}-${d.role}`} me={me} doctorId={d.id} telegramId={d.telegramId} doctor={d.active !== false}
+      role={(d.role as 'ADMIN' | 'RECEPTION' | undefined) ?? null} self={self} hasLogin={linked} name={d.fullName ?? ''} />
+  )
+  const access = admin ? <AccessAdmin doctor={d} inline={inline} onDone={refresh} />
     : <p className="hint">Телефон — в «Телефон» выше; пароль нужен только для входа без Telegram — «Пароль и вход» внизу. Права: врач — своё расписание,
       пациенты и медкарты; сделать руководителем может руководитель клиники.</p>
 
@@ -99,13 +107,19 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
           <div className="card-block">{forPatients}</div>
         </section>
         {afterProfile}
+        {roles && (
+          <section className="settings-group" aria-label="Роли">
+            <h2>Роли</h2>
+            <div className="card-block">{roles}</div>
+          </section>
+        )}
         <section className="settings-group" aria-label="Работа">
           <h2>Работа</h2>
           <div className="card-block doctor-work">{work}</div>
         </section>
         {(admin || self) && (
-          <section className="settings-group" aria-label="Вход и права">
-            <h2>Вход и права</h2>
+          <section className="settings-group" aria-label="Вход">
+            <h2>Вход</h2>
             <div className="card-block">{access}</div>
           </section>
         )}
@@ -124,6 +138,13 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>
       </header>
 
+      {roles && (
+        <section className="doctor-group" aria-label="Роли">
+          <h3 className="group-title">Роли</h3>
+          {roles}
+        </section>
+      )}
+
       <section className="doctor-group" aria-label="Для пациентов">
         <h3 className="group-title">Для пациентов</h3>
         {forPatients}
@@ -135,8 +156,8 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
       </section>
 
       {(admin || self) && (
-        <section className="doctor-group" aria-label="Вход и права">
-          <h3 className="group-title">Вход и права</h3>
+        <section className="doctor-group" aria-label="Вход">
+          <h3 className="group-title">Вход</h3>
           {access}
         </section>
       )}
@@ -231,45 +252,21 @@ function ProfileView({ doctor: d }: { doctor: Doctor }) {
   )
 }
 
-/** «Работает (показывать пациентам)»: меняет админ сразу, без «Сохранить»; остальным — как есть. */
-function ActiveSwitch({ doctor: d, admin, onSaved }: { doctor: Doctor; admin: boolean; onSaved: () => void }) {
-  const active = d.active !== false
-  const save = useMutation<unknown, ApiError, boolean>({
-    mutationFn: (next) => unwrap(api.PUT('/api/doctors/{id}/active', { params: { path: { id: d.id } }, body: { active: next } })),
-    onSuccess: onSaved,
-  })
-  if (!admin) {
-    return <p className="hint">{active ? 'Работает — пациенты видят врача в боте.' : 'Скрыт — пациенты врача не видят.'}</p>
-  }
-  return (
-    <div className="form">
-      <label className="check">
-        <input type="checkbox" checked={save.isPending ? !active : active} disabled={save.isPending}
-          onChange={(e) => save.mutate(e.target.checked)} /> Работает (показывать пациентам)
-      </label>
-      <p className="hint small">Снимите, когда врач ушёл: пациенты его не увидят, а вход врача в приложение закроется. История приёмов останется.</p>
-      {save.error && <p className="error" role="alert">{save.error.message}</p>}
-    </div>
-  )
+/** «Работает» — текстом для не-руководителя; руководитель меняет флажком «Врач» в «Ролях». */
+function ActiveSwitch({ doctor: d, admin }: { doctor: Doctor; admin: boolean }) {
+  // Руководителю «Работает» — флажок «Врач» в «Ролях» выше
+  if (admin) return null
+  return <p className="hint">{d.active !== false ? 'Работает — пациенты видят врача в боте.' : 'Скрыт — пациенты врача не видят.'}</p>
 }
 
-/** «Вход и права» для админа: Telegram подключён или «ждём входа», приглашение, телефон, права администратора. */
-function AccessAdmin({ doctor: d, self, inline, onDone }: { doctor: Doctor; self: boolean; inline: boolean; onDone: () => void }) {
+/** «Вход» для руководителя: Telegram подключён или «ждём входа», приглашение, телефон. Права — в «Ролях». */
+function AccessAdmin({ doctor: d, inline, onDone }: { doctor: Doctor; inline: boolean; onDone: () => void }) {
   const [invite, setInvite] = useState<string | null>(null)
   const byPhone = isPhoneLogin(d.telegramId)
   const linked = d.telegramId != null
-  const isAdmin = d.role === 'ADMIN'
   const makeInvite = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/doctors/{id}/invite', { params: { path: { id: d.id } } })),
     onSuccess: (i) => setInvite(i.token ?? null),
-  })
-  const rights = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/admin', { params: { path: { id: d.id } }, body: { admin: !isAdmin } })),
-    onSuccess: () => {
-      // Свои права поменялись — меню и доступы другие: проще начать заново
-      if (self) window.location.reload()
-      else onDone()
-    },
   })
   return (
     <>
@@ -287,23 +284,6 @@ function AccessAdmin({ doctor: d, self, inline, onDone }: { doctor: Doctor; self
       <DoctorPhone doctor={d} onDone={onDone} />
       {linked && !inline && <StaffPhone telegramId={d.telegramId!} phone={d.phone} phoneOnly={d.phoneOnly} name={d.fullName} />}
 
-      <h4>Права</h4>
-      {/* Права дают тому, кто вошёл: администратор — это Telegram врача. Не вошёл — объясняем, что сделать */}
-      {!linked ? (
-        <p className="hint">Сделать врача руководителем можно, когда он войдёт: нажмите выше «Пригласить по ссылке»,
-          отправьте ему — он откроет ссылку и нажмёт «Начать» в Telegram. После этого здесь появится кнопка
-          «Сделать руководителем клиники».</p>
-      ) : (
-        <>
-          <p className="hint">{isAdmin
-            ? 'Этот врач — и руководитель: ведёт «О клинике», врачей, сотрудников, видит выручку клиники.'
-            : 'Врач сможет вести клинику вместе с вами: «О клинике», врачи, сотрудники, выручка клиники. Лечить и вести своё расписание он продолжит.'}</p>
-          <button type="button" className="btn" disabled={rights.isPending}
-            onClick={() => void (!isAdmin || !self ? Promise.resolve(true) : ask('Снять с себя права руководителя?')).then((ok) => ok && rights.mutate())}>
-            {isAdmin ? 'Снять права руководителя' : 'Сделать руководителем клиники'}</button>
-          {rights.error && <p className="error" role="alert">{rights.error.message}</p>}
-        </>
-      )}
     </>
   )
 }
@@ -315,44 +295,10 @@ function RemoveDoctor({ doctor: d, onDone }: { doctor: Doctor; onDone: () => voi
   })
   return (
     <div className="danger-zone">
-      <p className="hint">Удалить можно врача без приёмов — например, заведённого для пробы. Ушедшего врача скройте: снимите «Работает».</p>
+      <p className="hint">Удалить можно врача без приёмов — например, заведённого для пробы. Ушедшего врача скройте: снимите роль «Врач» — история останется.</p>
       <button type="button" className="btn danger" disabled={remove.isPending}
         onClick={() => void ask(`Удалить врача «${d.fullName}»?`).then((ok) => ok && remove.mutate())}>Удалить врача</button>
       {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
     </div>
-  )
-}
-
-/** Новый врач: имя и «кратко» — черновик до входа; Telegram — потом, ссылкой-приглашением из его карточки. */
-export function NewDoctorPanel({ onClose, onCreated }: { onClose: () => void; onCreated: (d: Doctor) => void }) {
-  useClose(onClose)
-  const refresh = useRefreshDoctors()
-  const [form, setForm] = useState({ fullName: '', about: '' })
-  const create = useMutation<Doctor, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/doctors', { body: { fullName: form.fullName, about: form.about, active: true } })),
-    onSuccess: (d) => {
-      refresh()
-      onCreated(d)
-    },
-  })
-  return (
-    <aside className="panel" aria-label="Новый врач">
-      <header className="panel-head">
-        <h2>Новый врач</h2>
-        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
-      </header>
-      <form className="form" onSubmit={(e) => { e.preventDefault(); create.mutate() }}>
-        <label className="field"><span>Имя</span>
-          <input value={form.fullName} required maxLength={100} autoFocus placeholder="Например: Айгерим Садыкова" onChange={(e) => setForm({ ...form, fullName: e.target.value })} />
-        </label>
-        <label className="field"><span>Кратко о себе — видят пациенты в боте</span>
-          <input value={form.about} maxLength={300} placeholder="Например: ортодонт, брекеты" onChange={(e) => setForm({ ...form, about: e.target.value })} />
-        </label>
-        <p className="hint">Имя и «кратко» — черновик: войдёт врач — поправит сам, вместе с фото. После «Добавить» откроется карточка врача:
-          там ссылка-приглашение и часы работы.</p>
-        {create.error && <p className="error" role="alert">{firstError(create.error)}</p>}
-        <button type="submit" className="btn primary" disabled={create.isPending}>Добавить</button>
-      </form>
-    </aside>
   )
 }

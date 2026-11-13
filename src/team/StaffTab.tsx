@@ -1,11 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
-import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import type { Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
-import { AssistantDoctors, ChangeRole, InviteMember } from './MemberParts'
-import { InviteByPhone, PHONE_HINT, StaffPhone, TemporaryPassword, type Doctor } from './PhoneParts'
+import { PHONE_HINT, type Doctor } from './PhoneParts'
 import { phoneText, ROLE_TEXT } from './texts'
 import { Loading } from '../layout/Loading'
 import { ChairBadge } from './ChairBadge'
@@ -17,76 +14,91 @@ type Me = Schemas['BookingViewsMe']
 type Member = Schemas['StaffMembersMemberView']
 type Invite = Schemas['StaffMembersInviteView']
 
+/** Чья карточка открыта: врача, сотрудника, приглашённого или форма «+ Добавить сотрудника». */
+export type Opened = { kind: 'new' } | { kind: 'doctor'; id: number } | { kind: 'member'; telegramId: number } | { kind: 'invite'; id: string }
+
 /** Фильтр списка по роли: «Все» — весь персонал одной таблицей. */
 type Filter = 'all' | 'DOCTOR' | 'ADMIN' | 'RECEPTION' | 'ASSISTANT'
 const FILTERS: [Filter, string][] = [['all', 'Все'], ['DOCTOR', 'Врачи'], ['ADMIN', 'Руководители'], ['RECEPTION', 'Регистратура'], ['ASSISTANT', 'Ассистенты']]
 
 /**
- * Строка «Персонала»: врач (из «Врачей», роль админа или регистратора — рядом), сотрудник без
- * кресла (админ, регистратура, ассистент) или приглашённый, который ещё не вошёл.
+ * Строка «Персонала» — один человек: врач (роль руководителя или регистратуры — рядом), сотрудник без
+ * кресла (в том числе скрытый врач, который остался сотрудником) или приглашённый, который ещё не вошёл.
  */
-type Row =
-  | { kind: 'doctor'; key: string; name: string; roles: Filter[]; doctor: Doctor }
-  | { kind: 'member'; key: string; name: string; roles: Filter[]; member: Member }
-  | { kind: 'invite'; key: string; name: string; roles: Filter[]; invite: Invite }
+type Row = {
+  key: string
+  name: string
+  roles: Filter[]
+  open: Opened
+  doctor?: Doctor
+  member?: Member
+  invite?: Invite
+  /** «это вы», «скрыт», «врач скрыт» */
+  notes: string[]
+}
 
 const ROLE_CHIP: Record<Exclude<Filter, 'all'>, string> = { DOCTOR: 'Врач', ADMIN: 'Руководитель', RECEPTION: 'Регистратура', ASSISTANT: 'Ассистент' }
 
+/** Один человек — одна строка: врач и его строка сотрудника (тот же Telegram) — вместе. */
+function staffRows(me: Me, doctors: Doctor[], members: Member[], invites: Invite[]): Row[] {
+  const memberOf = (d: Doctor) => (d.telegramId == null ? undefined : members.find((m) => m.telegramId === d.telegramId))
+  return [
+    // Скрытый врач, который остался сотрудником, — строкой сотрудника ниже
+    ...doctors.filter((d) => d.active !== false || !memberOf(d)).map((d): Row => ({
+      key: `d${d.id}`, name: d.fullName ?? '', doctor: d, open: { kind: 'doctor', id: d.id },
+      roles: [...(d.active !== false ? ['DOCTOR' as Filter] : []), ...(d.role ? [d.role as Filter] : [])],
+      notes: [d.id === me.doctorId ? 'это вы' : null, d.active === false ? 'скрыт' : null].filter((x): x is string => Boolean(x)),
+    })),
+    ...members.filter((m) => !m.doctor).map((m): Row => {
+      const hidden = doctors.find((d) => d.telegramId === m.telegramId)
+      return {
+        key: `m${m.telegramId}`, name: m.fullName || (m.phone ? phoneText(m.phone) : `Telegram ${m.telegramId}`), member: m,
+        open: { kind: 'member', telegramId: m.telegramId }, roles: [m.role as Filter],
+        notes: [m.me ? 'это вы' : null, hidden ? 'врач скрыт' : null].filter((x): x is string => Boolean(x)),
+      }
+    }),
+    ...invites.map((i): Row => ({
+      key: `i${i.id}`, name: i.fullName ?? '', invite: i, open: { kind: 'invite', id: i.id ?? '' }, roles: [i.role as Filter], notes: [],
+    })),
+  ]
+}
+
+function isOpened(row: Row, opened: Opened | null): boolean {
+  if (!opened) return false
+  return (opened.kind === 'doctor' && row.doctor?.id === opened.id) || (opened.kind === 'member' && row.member?.telegramId === opened.telegramId)
+    || (opened.kind === 'invite' && row.invite?.id === opened.id)
+}
+
 /**
  * «Персонал»: все, кто работает в клинике, — одной таблицей с ролями рядом с именем и тем, вошёл ли
- * человек (Telegram привязан). Админ видит всех и приглашения без входа; остальные — только врачей
- * (сотрудников и их Telegram отдаёт сервер только админу).
+ * человек. Нажали на имя — его карточка (одна на человека). Руководитель видит всех и приглашения без
+ * входа; остальные — только врачей (сотрудников и их Telegram сервер отдаёт только руководителю).
  */
-export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
+export function StaffTab({ me, doctors, members, invites, loading, error, opened, onOpen }: {
   me: Me
   doctors: Doctor[]
+  members: Member[]
+  invites: Invite[]
   loading: boolean
   error: Error | null
-  opened: number | 'new' | null
-  onOpen: (doctorId: number) => void
+  opened: Opened | null
+  onOpen: (o: Opened) => void
 }) {
-  const client = useQueryClient()
   const admin = Boolean(me.admin)
-  const members = useQuery({ queryKey: ['members'], queryFn: () => unwrap(api.GET('/api/members')), enabled: admin })
-  const invites = useQuery({ queryKey: ['member-invites'], queryFn: () => unwrap(api.GET('/api/members/invites')), enabled: admin })
   const [filter, setFilter] = useState<Filter>('all')
   const chairs = useChairs()
   const nameOf = (id: number) => doctors.find((d) => d.id === id)?.fullName ?? ''
-
-  const remove = useMutation<unknown, ApiError, Member>({
-    mutationFn: (m) => unwrap(api.DELETE('/api/members/{telegramId}', { params: { path: { telegramId: m.telegramId } } })),
-    onSuccess: (_r, m) => {
-      // Ушли из администраторов сами — доступы другие: начать заново
-      if (m.me) window.location.reload()
-      else void client.invalidateQueries({ queryKey: ['members'] })
-    },
-  })
-  const cancel = useMutation<unknown, ApiError, Invite>({
-    mutationFn: (i) => unwrap(api.DELETE('/api/members/invites/{id}', { params: { path: { id: i.id! } } })),
-    onSuccess: () => void client.invalidateQueries({ queryKey: ['member-invites'] }),
-  })
-
-  const rows: Row[] = [
-    ...doctors.map((d): Row => ({
-      kind: 'doctor', key: `d${d.id}`, name: d.fullName ?? '', doctor: d,
-      roles: ['DOCTOR', ...(d.role ? [d.role as Filter] : [])],
-    })),
-    // Админ или регистратор, который сам ведёт приём, — уже строкой врача
-    ...(members.data ?? []).filter((m) => !m.doctor).map((m): Row => ({
-      kind: 'member', key: `m${m.telegramId}`, name: m.fullName || (m.phone ? phoneText(m.phone) : `Telegram ${m.telegramId}`), member: m, roles: [m.role as Filter],
-    })),
-    ...(invites.data ?? []).map((i): Row => ({
-      kind: 'invite', key: `i${i.id}`, name: i.fullName ?? '', invite: i, roles: [i.role as Filter],
-    })),
-  ]
+  const rows = staffRows(me, doctors, members, invites)
   const shown = filter === 'all' ? rows : rows.filter((r) => r.roles.includes(filter))
   const count = (f: Filter) => (f === 'all' ? rows.length : rows.filter((r) => r.roles.includes(f)).length)
+  const canOpen = (r: Row) => admin || (r.doctor != null && (me.reception || r.doctor.id === me.doctorId))
 
   return (
     <>
       {/* Как читать список — в «?» у названия, а не абзацем на четыре строки */}
-      <SubHelp title="Персонал">Весь персонал клиники: роль — рядом с именем. «Telegram привязан» — человек вошёл и получает уведомления;
-          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT} Сотруднику без Telegram номер меняете вы; сотрудник с Telegram указывает номер для входа сам — в «Моём профиле» (нажать на себя внизу меню).</>}</SubHelp>
+      <SubHelp title="Персонал">Весь персонал клиники: роль — рядом с именем. Нажмите на имя — откроется карточка: роли, вход, часы{admin ? ', услуги и кресло врача' : ''}.
+        «Telegram привязан» — человек вошёл и получает уведомления; «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.
+        {admin && <> Новый человек — «+ Добавить сотрудника»: имя, роль и вход. {PHONE_HINT}</>}</SubHelp>
       <section className="card-block">
         {admin && (
           <div className="segments wrap" role="group" aria-label="Показать роль">
@@ -95,83 +107,56 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
             ))}
           </div>
         )}
-        {(error ?? members.error) && <p className="error">{(error ?? members.error)!.message}</p>}
-        {loading || (admin && members.isPending) ? <Loading /> : shown.length ? (
+        {error && <p className="error">{error.message}</p>}
+        {loading ? <Loading /> : shown.length ? (
           <table className="table staff-table" aria-label="Персонал">
             <thead><tr><th>Имя</th><th>Роль</th>{admin && <th>Вход</th>}{admin && <th>Телефон</th>}<th /></tr></thead>
             <tbody>
               {shown.map((r) => (
-                <tr key={r.key} className={r.kind === 'doctor'
-                  ? [r.doctor.id === opened ? 'active' : '', r.doctor.active === false ? 'inactive' : ''].join(' ').trim() || undefined
-                  : r.kind === 'invite' ? 'inactive' : undefined}>
+                <tr key={r.key} className={[isOpened(r, opened) ? 'active' : '', r.invite || r.doctor?.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
                   <td>
                     <span className="who">
-                      {r.kind === 'doctor' && r.doctor.photoUrl
+                      {r.doctor?.photoUrl
                         ? <img className="avatar" src={r.doctor.photoUrl} alt="" />
                         : <span className="avatar" aria-hidden="true">{(r.name || '?').slice(0, 1)}</span>}
-                      {r.kind === 'doctor' && (me.admin || me.reception || r.doctor.id === me.doctorId)
-                        ? <button type="button" className="row-link" onClick={() => onOpen(r.doctor.id)}>{r.name}</button>
+                      {canOpen(r)
+                        ? <button type="button" className="row-link" onClick={() => onOpen(r.open)}>{r.name}</button>
                         : <span className="strong">{r.name}</span>}
                     </span>
-                    {r.kind === 'doctor' && <ChairBadge chairs={chairs.data} doctorId={r.doctor.id} nameOf={nameOf} />}
-                    {r.kind === 'member' && r.member.role === 'ASSISTANT' && <AssistantDoctors me={me} member={r.member} />}
+                    {r.doctor && <ChairBadge chairs={chairs.data} doctorId={r.doctor.id} nameOf={nameOf} />}
+                    {r.member?.role === 'ASSISTANT' && (
+                      <div className="hint small">Помогает: {(r.member.doctorIds ?? []).map(nameOf).filter(Boolean).join(', ') || '—'}</div>
+                    )}
                   </td>
                   <td>
                     <span className="role-chips">
                       {r.roles.map((role) => <span key={role} className={`role-chip role-${role.toLowerCase()}`}>{ROLE_CHIP[role as Exclude<Filter, 'all'>] ?? ROLE_TEXT[role]}</span>)}
                     </span>
-                    <span className="hint small"> {[
-                      (r.kind === 'doctor' && r.doctor.id === me.doctorId) || (r.kind === 'member' && r.member.me) ? 'это вы' : null,
-                      r.kind === 'doctor' && r.doctor.active === false ? 'скрыт' : null,
-                    ].filter(Boolean).join(' · ')}</span>
+                    {r.notes.length > 0 && <span className="hint small"> {r.notes.join(' · ')}</span>}
                   </td>
                   {admin && (
                     <td>
-                      {r.kind === 'invite'
+                      {r.invite
                         ? r.invite.expired
                           ? <span className="tone-wait">ссылка истекла — нужна новая</span>
                           : <span className="tone-wait">ждём входа · ссылка до {shortDate(r.invite.expiresAt!, true)}</span>
-                        : r.kind === 'doctor' && !r.doctor.telegramId
+                        : r.doctor && !r.doctor.telegramId
                           ? <span className="tone-wait">ждём входа — пригласите в карточке</span>
-                          : (r.kind === 'doctor' ? r.doctor.phoneOnly : r.member.phoneOnly)
+                          : (r.doctor ? r.doctor.phoneOnly : r.member?.phoneOnly)
                             ? <span className="tone-ok">✓ по номеру</span>
                             : <span className="tone-ok">✓ Telegram привязан</span>}
                     </td>
                   )}
-                  {admin && (
-                    <td>
-                      {r.kind === 'member' && <StaffPhone compact telegramId={r.member.telegramId} phone={r.member.phone}
-                        phoneOnly={r.member.phoneOnly} name={r.name} />}
-                      {r.kind === 'doctor' && r.doctor.telegramId != null && <StaffPhone compact telegramId={r.doctor.telegramId}
-                        phone={r.doctor.phone} phoneOnly={r.doctor.phoneOnly} name={r.name} />}
-                    </td>
-                  )}
+                  {admin && <td className="staff-phone">{(r.doctor?.phone ?? r.member?.phone) ? phoneText((r.doctor?.phone ?? r.member?.phone)!) : ''}</td>}
                   <td className="r">
-                    {r.kind === 'member' && <ChangeRole me={me} member={r.member} />}
-                    {r.kind === 'member' && (
-                      <button type="button" className="btn small ghost" disabled={remove.isPending}
-                        onClick={() => void ask(r.member.me ? 'Выйти из руководителей клиники?' : `Убрать «${r.name}» из клиники? Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.`).then((ok) => ok && remove.mutate(r.member))}>
-                        {r.member.me ? 'Выйти из руководителей' : 'Убрать'}</button>
-                    )}
-                    {r.kind === 'invite' && (
-                      <button type="button" className="btn small ghost" disabled={cancel.isPending}
-                        onClick={() => void ask(`Отменить приглашение «${r.name}»? Ссылка перестанет работать.`).then((ok) => ok && cancel.mutate(r.invite))}>
-                        Отменить</button>
-                    )}
-                    {r.kind === 'doctor' && admin && <button type="button" className="btn small ghost" onClick={() => onOpen(r.doctor.id)}>{r.doctor.id === me.doctorId ? 'Мой профиль' : 'Открыть'}</button>}
-                    {/* Вход по номеру без SMS: админ даёт временный пароль (себе — нет: свой меняют в «Моём профиле») */}
-                    {admin && r.kind === 'member' && r.member.phoneOnly && !r.member.me && <TemporaryPassword telegramId={r.member.telegramId} name={r.name} />}
-                    {admin && r.kind === 'doctor' && r.doctor.phoneOnly && r.doctor.id !== me.doctorId && <TemporaryPassword telegramId={r.doctor.telegramId!} name={r.name} />}
+                    {canOpen(r) && <button type="button" className="btn small ghost" onClick={() => onOpen(r.open)}>Открыть</button>}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : <EmptyState title={filter === 'all' ? 'Персонала пока нет' : 'С этой ролью пока никого'} />}
-        {(remove.error ?? cancel.error) && <p className="error" role="alert">{(remove.error ?? cancel.error)!.message}</p>}
       </section>
-      {admin && <InviteMember me={me} />}
-      {admin && <InviteByPhone me={me} />}
     </>
   )
 }
