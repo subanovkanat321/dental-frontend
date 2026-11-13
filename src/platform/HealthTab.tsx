@@ -35,6 +35,12 @@ function Row({ name, children, tone }: { name: string; children: React.ReactNode
  * задачи по расписанию, Telegram, SMS, ИИ и ошибки 5xx за сутки; ниже — строки лога по номеру запроса из
  * оповещения. Данных пациентов тут нет: только числа, времена, классы ошибок и шаблоны путей.
  */
+/** Режим бота словами: «режим off» владельцу ничего не говорит. */
+const TG_MODE: Record<string, string> = {
+  off: 'бот выключен (режим off) — сообщения не принимаются и не уходят',
+  polling: 'бот спрашивает Telegram сам (polling), без webhook',
+}
+
 export function HealthTab() {
   const health = useQuery<Health, ApiError>({
     queryKey: ['platform-health'],
@@ -107,7 +113,7 @@ function Sections({ h }: { h: Health }) {
         <h2>Связи</h2>
         <table className="table" aria-label="Связи">
           <tbody>
-            {tg && (tg.mode !== 'webhook' ? <Row name="Telegram">режим {tg.mode}</Row> : tg.error
+            {tg && (tg.mode !== 'webhook' ? <Row name="Telegram" tone={tg.mode === 'off' ? 'wait' : undefined}>{TG_MODE[tg.mode ?? ''] ?? `режим ${tg.mode}`}</Row> : tg.error
               ? <Row name="Telegram" tone="wait">не удалось спросить Telegram ({tg.error})</Row>
               : (
                 <Row name="Telegram" tone={tg.webhookSet === false ? 'bad' : 'ok'}>

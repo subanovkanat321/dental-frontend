@@ -92,7 +92,7 @@ function ClinicsTable({ rows }: { rows: ClinicRow[] }) {
                 <td className="r num">{usdText(c.usd ?? 0)}</td>
                 <td className="r num">{somText(c.som)}</td>
                 <td className="r num">{c.free ? <span className="hint">пилот, 0 сом</span> : somText(c.tariffSom)}</td>
-                <td>{editing === c.clinicId
+                <td className={editing === c.clinicId ? undefined : 'nowrap'}>{editing === c.clinicId
                   ? <LimitForm clinic={c} onDone={() => setEditing(null)} />
                   : <button type="button" className="btn ghost small" onClick={() => setEditing(c.clinicId)}>Изменить лимит</button>}</td>
               </tr>

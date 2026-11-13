@@ -146,7 +146,7 @@ export function AuditJournal() {
         </>
       ) : filtered ? (
         <EmptyState title="По фильтру ничего" action={<button type="button" className="btn" onClick={reset}>Сбросить фильтры</button>} />
-      ) : <EmptyState title="Журнал пока пуст">Здесь появятся действия сотрудников: записи, оплаты, изменения в медкартах.</EmptyState>}
+      ) : <EmptyState title="Журнал пока пуст">Здесь появятся действия сотрудников: записи, оплаты, персонал, цены, удаления.</EmptyState>}
     </section>
   )
 }

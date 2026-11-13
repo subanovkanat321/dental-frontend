@@ -56,7 +56,7 @@ test('сетка обложек; нажал — плеер на весь экр�
 
 test('видео ещё нет — так и пишем; сервер не ответил — ошибка', async () => {
   const { unmount } = renderPage()
-  expect(await screen.findByText('Видео пока нет.')).toBeInTheDocument()
+  expect(await screen.findByText('Видео пока нет')).toBeInTheDocument()
   unmount()
   server.use(http.get('*/web/materials/howto', () => new HttpResponse(null, { status: 500 })))
   renderPage()

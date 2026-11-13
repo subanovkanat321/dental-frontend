@@ -52,7 +52,7 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
                 <li key={m.id} className={m.active === false ? 'inactive' : undefined}>
                   <button type="button" className="row-link" onClick={() => setOpened(m.id)}>📋 {m.title}</button>
                   <span className="hint small">
-                    {m.active === false ? 'скрыта' : (m.serviceIds ?? []).map((id) => nameOf.get(id)).filter(Boolean).join(', ') || 'ни у одной услуги'}
+                    {m.active === false ? 'скрыта' : (m.serviceIds ?? []).map((id) => nameOf.get(id)).filter(Boolean).join(', ') || 'не привязана к услуге'}
                   </span>
                 </li>
               ))}

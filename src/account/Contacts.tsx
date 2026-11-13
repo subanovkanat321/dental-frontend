@@ -1,11 +1,11 @@
 import { usePlatformInfo } from '../api/platform'
 import { ContactLinks } from '../lib/ContactLinks'
 
-/** Связаться с разработчиками: Telegram, телефоны, WhatsApp (если задан), почта — из «Сведений о платформе». */
+/** Связаться с командой Tish: Telegram, телефоны, WhatsApp (если задан), почта — из «Сведений о платформе». */
 export function DeveloperContacts() {
   const info = usePlatformInfo().data
   if (!info?.supportUrl && !info?.supportPhones?.length && !info?.supportWhatsapp && !info?.supportEmail) {
-    return <p className="hint">Контакты разработчиков пока не заданы.</p>
+    return <p className="hint">Контакты команды Tish пока не заданы — напишите обращение: «Помощь и техподдержка» → «Написать команде Tish».</p>
   }
   return (
     <div className="actions">

@@ -57,7 +57,7 @@ test('«Памятки после процедур»: у какой услуги
   renderApp()
   const list = await screen.findByRole('list', { name: 'Памятки' })
   expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('После удаления зубаУдаление зуба')
-  expect(within(list).getAllByRole('listitem')[1]).toHaveTextContent('ни у одной услуги')
+  expect(within(list).getAllByRole('listitem')[1]).toHaveTextContent('не привязана к услуге')
 
   await userEvent.click(within(list).getByRole('button', { name: '📋 После отбеливания' }))
   const panel = screen.getByRole('complementary', { name: 'Памятка' })

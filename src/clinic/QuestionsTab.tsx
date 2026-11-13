@@ -50,7 +50,7 @@ export function QuestionsTab({ me, header, onPanel }: { me: Me; header: ReactNod
           {move.error && <p className="error" role="alert">{move.error.message}</p>}
           {list.isPending ? <Loading /> : (
             <table className="table" aria-label="Анкета пациента">
-              <thead><tr><th>Вопрос</th><th>Как отвечают</th><th /><th /></tr></thead>
+              <thead><tr><th>Вопрос</th><th>Как отвечают</th><th>Отметки</th><th /></tr></thead>
               <tbody>
                 {SECTIONS.map(([code, name]) => {
                   const items = questions.filter((q) => q.section === code)

@@ -47,7 +47,7 @@ export function SurveyResults({ survey }: { survey: Details }) {
       {results.error && <p className="error">{results.error.message}</p>}
       {results.isPending ? <Loading /> : !r?.responses ? (
         <EmptyState title={role || clinicId ? 'С такими условиями ответов нет' : 'Ответов пока нет'}>
-          {survey.status === 'DRAFT' ? 'Опрос не запущен — сотрудники его не видят.' : 'Сотрудники видят приглашение на «Расписании» и в «Настройках».'}
+          {survey.status === 'DRAFT' ? 'Опрос не запущен — сотрудники его не видят.' : 'Сотрудники видят приглашение на «Расписании» и в «Помощи → Отзыв о Tish».'}
         </EmptyState>
       ) : (
         <>
