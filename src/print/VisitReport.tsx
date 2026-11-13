@@ -227,7 +227,7 @@ function AiSwitch({ me, onOn }: { me: Me; onOn: () => void }) {
   return (
     <div className="ai-switch">
       <p className="hint small">✨ ИИ напишет понятнее и на языке пациента. В ИИ уходят только данные приёма — без имени и
-        телефона пациента; уход дома — всегда ваша памятка. Разбор диктовки включается отдельно: «Настройки → ИИ-помощник».</p>
+        телефона пациента; уход дома — всегда ваша памятка. Разбор диктовки включается отдельно: «Настройки → ИИ в клинике».</p>
       <button type="button" className="btn small" disabled={turn.isPending} onClick={() => turn.mutate()}>Включить ИИ для отчётов клиники</button>
       {turn.error && <p className="error small" role="alert">{turn.error.message}</p>}
     </div>

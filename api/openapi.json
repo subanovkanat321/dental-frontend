@@ -9702,6 +9702,46 @@
         }
       }
     },
+    "/api/appointments/{id}/plan-done" : {
+      "post" : {
+        "tags" : [ "chart-controller" ],
+        "operationId" : "planDone",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChartControllerPlanDone"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TreatmentStepView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/payment" : {
       "post" : {
         "tags" : [ "appointment-controller" ],
@@ -16047,6 +16087,10 @@
           "serviceTypeId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "doneAppointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "id", "stage" ]
@@ -20234,6 +20278,17 @@
         },
         "required" : [ "reply", "version" ]
       },
+      "ChartControllerPlanDone" : {
+        "properties" : {
+          "stepIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        }
+      },
       "AppointmentControllerPayment" : {
         "properties" : {
           "amountSom" : {
@@ -23943,6 +23998,10 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "invites" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "doctorId" : {
             "type" : "integer",
             "format" : "int64"
@@ -23970,7 +24029,7 @@
             "$ref" : "#/components/schemas/ComebacksCancelled"
           }
         },
-        "required" : [ "patientId", "planSom", "telegram" ]
+        "required" : [ "invites", "patientId", "planSom", "telegram" ]
       },
       "ComebacksResult" : {
         "properties" : {

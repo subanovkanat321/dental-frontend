@@ -6,7 +6,8 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useReminderNotSent } from './useReminderNotSent'
-import { useReminderText } from '../api/settings'
+import { useReminderText, useRepeatReminderText } from '../api/settings'
+import { confirmRemind, remindedText } from './remindAgain'
 import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { addDays, emptyDayText, minutesOf, somText, timeOf, todayIn } from '../lib/time'
@@ -15,6 +16,7 @@ import { MonthSheet } from './month/MonthSheet'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
 import { colleagueMarkText, colleagueTimeOf, listedChairTime } from './chairTime'
+import { askPlanDone, canMarkPlan, useAskPlanDone, usePlanLeft } from './planDoneStore'
 import { useRowSwipe } from './useRowSwipe'
 import { useMedia } from '../lib/useMedia'
 import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
@@ -177,7 +179,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                   {swipe && g.items.some((i) => i.kind === 'appointment') && <SwipeHint />}
                   <ul className="rows">
                     {g.items.map((item) => item.kind === 'appointment'
-                      ? <Row key={`a${item.a.id}`} a={item.a} color={g.doctor.color} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
+                      ? <Row key={`a${item.a.id}`} a={item.a} me={me} color={g.doctor.color} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
                           canEdit={canEditDoctor(item.a.doctorId)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} swipe={swipe} />
                       : item.kind === 'colleague' ? (
                         <li key={`c${item.at}`} className="row pause colleague" role="note" aria-label={`${timeOf(item.at)}–${timeOf(item.end)}: время ${item.name}`}>
@@ -256,8 +258,9 @@ function FreeRow({ start, end, canEdit, doctor, onPick }: {
  * Ошибка — под строкой. WhatsApp — только когда загружены настройки (подпись клиники и ссылка на бота).
  * Телефон (swipe): свайп вправо — то же напоминание, влево — «Приём состоялся» с «Вернуть» (useRowSwipe).
  */
-function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = false }: {
+function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe = false }: {
   a: Appointment
+  me: Me
   /** Цвет врача — полоска слева; статус остаётся заливкой строки и словом (DESIGN.md) */
   color?: string
   /** Часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — бейдж «🪑 время Айгерим» */
@@ -278,6 +281,7 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
   const [undo, setUndo] = useState<Appointment | null>(null)
   const li = useRef<HTMLLIElement>(null)
   const text = useReminderText()
+  const repeatText = useRepeatReminderText()
   const opened = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
@@ -299,11 +303,32 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
     opened.mutate()
     openLink(whatsappUrl(contactPhone(a.patient) ?? '', text?.(a) ?? ''))
   }
+  // «↻ ещё раз» у «✓ отправлено»: тем же путём, с вопросом «Уже напоминали в 10:15. Отправить ещё раз?» и текстом
+  // повтора (бот выбирает его сам по отметке; WhatsApp — useRepeatReminderText). Отметку «не ушло» снимать не нужно
+  const canAgain = canRemind && sent && (viaBot || Boolean(contactPhone(a.patient)))
+  const remindAgain = async () => {
+    if (action.isPending || opened.isPending || (!viaBot && !repeatText)) return
+    if (!(await confirmRemind(a))) return
+    notSent.undo.reset()
+    if (viaBot) {
+      action.mutate({ kind: 'remindTelegram' })
+      return
+    }
+    opened.mutate()
+    openLink(whatsappUrl(contactPhone(a.patient) ?? '', (a.reminderOpenedAt ? repeatText : text)?.(a) ?? ''))
+  }
   // Свайп вправо — то же, что быстрая кнопка; есть, пока она есть (не отправлено, есть номер или бот)
   const canSwipeRemind = canRemind && !sent && !busy && (viaBot || Boolean(contactPhone(a.patient)))
   // Свайп влево — «Приём состоялся»: свой/доступный приём, запланирован и уже начался
   const canSwipeDone = canEdit && a.status === 'SCHEDULED' && new Date(a.startAt) <= new Date() && !status.isPending
-  const done = () => status.mutate({ kind: 'status', body: { version: a.version, status: 'DONE' } }, { onSuccess: (updated) => setUndo(updated) })
+  const done = () => status.mutate({ kind: 'status', body: { version: a.version, status: 'DONE' } }, {
+    onSuccess: (updated) => { setUndo(updated); askPlanDone(updated.id) },
+  })
+  // После свайпа «состоялся» жест не прерываем окном: под строкой — «Этапы плана ›», если в плане есть несделанное;
+  // он открывает карточку приёма с блоком «Что сделали сегодня?»
+  const planAllowed = undo != null && canMarkPlan(me, undo)
+  const planAsked = useAskPlanDone(a.id)
+  const planLeft = usePlanLeft(a, planAllowed && planAsked)
   const back = () => undo && status.mutate({ kind: 'undo', body: { version: undo.version, previousStatus: 'SCHEDULED' } },
     { onSuccess: () => setUndo(null) })
   useRowSwipe(li, swipe, { right: canSwipeRemind ? () => { hideSwipeHint(); remind() } : undefined, left: canSwipeDone ? () => { hideSwipeHint(); done() } : undefined })
@@ -340,8 +365,15 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
           )}
         </button>
         {canRemind && (sent ? (
-          <button type="button" className="remind-sent tone-ok" disabled={notSent.undo.isPending} onClick={notSent.run}
-            aria-label={`Напоминание отправлено: ${a.patient.fullName}. Не ушло? Снять отметку`}>✓ отправлено</button>
+          <span className="remind-sent-box">
+            <button type="button" className="remind-sent tone-ok" disabled={notSent.undo.isPending} onClick={notSent.run}
+              aria-label={`Напоминание отправлено: ${a.patient.fullName}. Не ушло? Снять отметку`}
+              title={a.reminderOpenedAt ? `Напоминали ${remindedText(a.reminderOpenedAt)}` : undefined}>✓ отправлено</button>
+            {canAgain && (
+              <button type="button" className="remind-again" disabled={action.isPending || opened.isPending}
+                aria-label={`Напомнить ещё раз: ${a.patient.fullName}`} onClick={() => void remindAgain()}>↻ ещё раз</button>
+            )}
+          </span>
         ) : (
           <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={busy}
             aria-label={`${viaBot ? 'Напомнить в Telegram' : 'Напомнить в WhatsApp'}: ${a.patient.fullName}, ${timeOf(a.startAt)}`}
@@ -353,6 +385,9 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
       {undo && (
         <div className="undo row-undo" role="status">
           <span>Приём отмечен состоявшимся</span>
+          {planAllowed && planAsked && planLeft.length > 0 && (
+            <button type="button" className="link" onClick={() => onOpen(undo)}>Этапы плана ›</button>
+          )}
           <button type="button" className="btn small" disabled={status.isPending} onClick={back}>Вернуть</button>
         </div>
       )}

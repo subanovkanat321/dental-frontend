@@ -154,7 +154,7 @@ test('браузер отказал — понятный текст и где в
   expect(calls.bodies).toEqual([])
 })
 
-test('ошибка подписки — текст ошибки и подсказка про «Настройки → Уведомления»', async () => {
+test('ошибка подписки — текст ошибки и подсказка, где включить потом (блок «Я» → «Уведомления»)', async () => {
   pushBrowser()
   server.use(
     http.get('*/api/push', () => HttpResponse.json(view())),
@@ -163,7 +163,7 @@ test('ошибка подписки — текст ошибки и подска�
   renderPrompt()
   await userEvent.click(await screen.findByRole('button', { name: 'В приложение' }, WAIT))
   expect(await screen.findByRole('alert')).toBeInTheDocument()
-  expect(screen.getByRole('dialog')).toHaveTextContent('Включить можно потом: «Настройки» → «Уведомления».')
+  expect(screen.getByRole('dialog')).toHaveTextContent('Включить можно потом: нажмите на своё имя внизу меню → «Уведомления».')
 })
 
 test('не установлено (вкладка браузера) — окна нет', async () => {

@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { EmptyState } from '../layout/EmptyState'
 import { haptic, openLink } from '../lib/telegram'
-import { agoText, whatsappUrl } from '../lib/texts'
+import { agoText, recentlyInvited, whatsappUrl } from '../lib/texts'
+import { ask } from '../lib/confirm'
 import { addDays, shortDate, somText, todayIn } from '../lib/time'
 import { dueText, monthsText } from '../clinic/services'
 import './comeback.css'
@@ -32,6 +33,14 @@ function cancelledText(c: Cancelled): string {
     : c.source === 'STAFF' ? `отменили в клинике${c.by ? ` (${c.by})` : ''}`
       : c.source === 'SYSTEM' ? 'отменено автоматически' : 'отменено'
   return c.at ? `${who} · ${agoText(c.at)}` : who
+}
+
+/** «звали 3 дня назад · всего 2 раза» / «ещё не звали»: когда последний раз и сколько раз (comeback_invite). */
+function invitedText(c: Candidate, verb: 'звали' | 'напоминали'): string {
+  if (!c.invitedAt) return `ещё не ${verb}`
+  const n = c.invites ?? 0
+  const times = n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'раза' : 'раз'
+  return `${verb} ${agoText(c.invitedAt)}${n > 1 ? ` · всего ${n} ${times}` : ''}`
 }
 
 function errorText(e: ApiError | null): string | null {
@@ -148,7 +157,7 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
               )}
               {c.reason === 'CANCELLED' && c.cancelled ? (
                 <>
-                  <p className="hint small">{cancelledText(c.cancelled)} · {c.invitedAt ? `напоминали ${agoText(c.invitedAt)}` : 'ещё не напоминали'}</p>
+                  <p className="hint small">{cancelledText(c.cancelled)} · {invitedText(c, 'напоминали')}</p>
                   <p className="comeback-plan">
                     был записан: {[c.cancelled.service, c.cancelled.doctor, c.cancelled.startAt && shortDate(c.cancelled.startAt, true)].filter(Boolean).join(' · ')}
                   </p>
@@ -157,18 +166,18 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
                 <p className="hint small">
                   последний визит: {c.lastVisit ? shortDate(c.lastVisit) : '—'}{c.recallService ? ` · ${c.recallService}` : ''}
                   {' '}· пора с {dueText(c.recallDueOn)}{c.recallMonths ? ` (через ${monthsText(c.recallMonths)})` : ''}
-                  {' '}· {c.invitedAt ? `звали ${agoText(c.invitedAt)}` : 'ещё не звали'}
+                  {' '}· {invitedText(c, 'звали')}
                 </p>
               ) : (
                 <p className="hint small">
-                  {c.lastVisit ? `был ${agoText(c.lastVisit)}` : 'ещё не был'} · {c.invitedAt ? `звали ${agoText(c.invitedAt)}` : 'ещё не звали'}
+                  {c.lastVisit ? `был ${agoText(c.lastVisit)}` : 'ещё не был'} · {invitedText(c, 'звали')}
                 </p>
               )}
               {inviting === c.patientId ? (
                 <InviteForm candidate={c} onDone={() => setInviting(null)} />
               ) : (
                 <div className="actions">
-                  <button type="button" className={c.invitedAt ? 'btn small' : 'btn small primary'} onClick={() => setInviting(c.patientId)}>
+                  <button type="button" className={c.invitedAt ? 'btn small' : 'btn small primary'} onClick={() => void again(c).then((ok) => ok && setInviting(c.patientId))}>
                     {c.reason === 'CANCELLED' ? 'Напомнить' : 'Пригласить'}</button>
                   <button type="button" className="btn small ghost"
                     onClick={() => onBook({ id: c.patientId, fullName: c.fullName ?? '', phone: c.phone, telegram: c.telegram },
@@ -191,6 +200,14 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
       )}
     </div>
   )
+}
+
+/** Звали на этой неделе — сначала спросить: второе приглашение подряд раздражает пациента. */
+function again(c: Candidate): Promise<boolean> {
+  if (!c.invitedAt || !recentlyInvited(c.invitedAt)) return Promise.resolve(true)
+  const verb = c.reason === 'CANCELLED' ? 'Напоминали' : 'Звали'
+  return ask(`${verb} ${agoText(c.invitedAt)}. ${c.reason === 'CANCELLED' ? 'Напомнить' : 'Позвать'} ещё раз?`,
+    { ok: c.reason === 'CANCELLED' ? 'Напомнить ещё раз' : 'Позвать ещё раз' })
 }
 
 /** Текст приглашения (ИИ или шаблон) → правка → в Telegram с кнопкой «Записаться» или в WhatsApp. */
@@ -223,7 +240,8 @@ function InviteForm({ candidate: c, onDone }: { candidate: Candidate; onDone: ()
   }
   return (
     <form className="form comeback-invite" aria-label={`Приглашение: ${c.fullName}`} onSubmit={(e) => e.preventDefault()}>
-      <p className="hint small">{draft.data?.ai ? '✨ Написал ИИ — проверьте' : c.reason === 'CANCELLED' ? 'Готовый текст — можно поправить' : 'Текст по плану лечения — можно поправить'}
+      <p className="hint small">{draft.data?.ai ? '✨ Написал ИИ — проверьте' : c.invitedAt ? 'Повторное приглашение — короче первого, можно поправить'
+        : c.reason === 'CANCELLED' ? 'Готовый текст — можно поправить' : 'Текст по плану лечения — можно поправить'}
         {draft.data?.lang === 'KY' ? ' · на кыргызском' : ''}</p>
       <textarea aria-label="Текст приглашения" rows={6} maxLength={2000} value={value} onChange={(e) => setText(e.target.value)} />
       <div className="actions">

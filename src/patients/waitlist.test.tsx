@@ -135,6 +135,12 @@ test('ассистент — «Профосмотр»: WhatsApp — отметк
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
   expect(await within(table).findByText('сегодня')).toBeInTheDocument()
   expect(invited).toBe(1)
+  // Звали меньше недели назад — сначала вопрос, потом текст повтора
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  await userEvent.click(within(table).getByRole('button', { name: 'WhatsApp' }))
+  expect(confirm.mock.calls[0]![0]).toBe('Звали сегодня. Позвать ещё раз?')
+  await waitForSlow(() => expect(opened).toHaveLength(2))
+  expect(decodeURIComponent(opened[1]!)).toContain('Мы писали вам сегодня — напоминаем ещё раз: пора на профилактический осмотр')
 
   server.use(http.get('*/api/service-types', () => HttpResponse.json([])))
   await userEvent.click(within(table).getByRole('button', { name: 'Записать' }))

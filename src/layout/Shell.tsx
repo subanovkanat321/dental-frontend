@@ -53,8 +53,8 @@ const CLINIC_SECTIONS = [
 const PLATFORM = { key: 'platform', title: 'Платформа' } as const
 
 function sectionsOf(me: Me): readonly { key: Page; title: string }[] {
-  // Ассистенту — без «Кассы»: денег он не видит. Раздел без единого пункта по правам роли
-  // («Настройки» — все пункты только руководителю) не показываем
+  // Ассистенту — без «Кассы»: денег он не видит. Раздел без единого пункта по правам роли не показываем
+  // (страховка: сейчас «Памятки» и «Откуда приходят пациенты» в «Настройках» видны всем ролям)
   const clinic = CLINIC_SECTIONS.filter((s) => !(s.key === 'cash' && isAssistant(me))
     && !((s.key === 'settings' || s.key === 'clinic') && subsOf(s.key, me).length === 0))
   return [...(me.doctor ? clinic : []), ...(me.platform ? [PLATFORM] : [])]

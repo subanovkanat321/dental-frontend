@@ -3940,6 +3940,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/plan-done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["planDone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/payment": {
         parameters: {
             query?: never;
@@ -7134,6 +7150,8 @@ export interface components {
             stage: number;
             /** Format: int64 */
             serviceTypeId?: number;
+            /** Format: int64 */
+            doneAppointmentId?: number;
         };
         MedicalRecordControllerPostText: {
             text?: string;
@@ -8821,6 +8839,9 @@ export interface components {
             /** @enum {string} */
             reply: "NONE" | "CONFIRMED" | "RESCHEDULE" | "NO_ANSWER";
         };
+        ChartControllerPlanDone: {
+            stepIds?: number[];
+        };
         AppointmentControllerPayment: {
             /** Format: int32 */
             amountSom?: number;
@@ -10254,6 +10275,8 @@ export interface components {
             lastVisit?: string;
             /** Format: date-time */
             invitedAt?: string;
+            /** Format: int32 */
+            invites: number;
             /** Format: int64 */
             doctorId?: number;
             /** Format: int32 */
@@ -18368,6 +18391,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    planDone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChartControllerPlanDone"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TreatmentStepView"][];
+                };
             };
         };
     };
