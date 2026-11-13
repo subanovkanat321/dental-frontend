@@ -102,6 +102,27 @@
         }
       }
     },
+    "/api/staff/roles" : {
+      "put" : {
+        "tags" : [ "staff-controller" ],
+        "operationId" : "setRoles",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffControllerRolesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/shifts/{id}" : {
       "put" : {
         "tags" : [ "shift-controller" ],
@@ -153,6 +174,68 @@
         "responses" : {
           "204" : {
             "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/shifts/weekly/{telegramId}" : {
+      "get" : {
+        "tags" : [ "shift-controller" ],
+        "operationId" : "weekly",
+        "parameters" : [ {
+          "name" : "telegramId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShiftServiceWeekly"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "shift-controller" ],
+        "operationId" : "setWeekly",
+        "parameters" : [ {
+          "name" : "telegramId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ShiftControllerWeeklyRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShiftServiceWeekly"
+                }
+              }
+            }
           }
         }
       }
@@ -4533,6 +4616,34 @@
         }
       }
     },
+    "/api/staff" : {
+      "post" : {
+        "tags" : [ "staff-controller" ],
+        "operationId" : "add_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffControllerAddRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffRolesAdded"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/shifts" : {
       "get" : {
         "tags" : [ "shift-controller" ],
@@ -4998,7 +5109,7 @@
       },
       "post" : {
         "tags" : [ "promo-code-controller" ],
-        "operationId" : "add_1",
+        "operationId" : "add_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5671,7 +5782,7 @@
       },
       "post" : {
         "tags" : [ "sales-controller" ],
-        "operationId" : "add_2",
+        "operationId" : "add_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7491,7 +7602,7 @@
       },
       "post" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "add_3",
+        "operationId" : "add_4",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7716,6 +7827,68 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/NewsServiceNews"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/members/invites/{id}/renew" : {
+      "post" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "renewInvite",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DoctorInvitesInvite"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/members/invites/{id}/phone" : {
+      "post" : {
+        "tags" : [ "staff-members-controller" ],
+        "operationId" : "inviteToPhone",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffMembersControllerPhoneChange"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffMembersControllerPhoneInvited"
                 }
               }
             }
@@ -7959,7 +8132,7 @@
       },
       "post" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "add_4",
+        "operationId" : "add_5",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -14208,6 +14381,32 @@
           }
         }
       },
+      "StaffControllerRolesRequest" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctor" : {
+            "type" : "boolean"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "ADMIN", "RECEPTION", "ASSISTANT" ]
+          },
+          "doctorIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        }
+      },
       "ShiftControllerRequest" : {
         "properties" : {
           "telegramId" : {
@@ -14258,6 +14457,50 @@
           }
         },
         "required" : [ "id", "telegramId" ]
+      },
+      "ShiftControllerWeeklyRequest" : {
+        "properties" : {
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ShiftServiceWeekDay"
+            }
+          }
+        }
+      },
+      "ShiftServiceWeekDay" : {
+        "properties" : {
+          "weekday" : {
+            "type" : "string",
+            "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "time-local"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "time-local"
+          }
+        }
+      },
+      "ShiftServiceWeekly" : {
+        "properties" : {
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "custom" : {
+            "type" : "boolean"
+          },
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ShiftServiceWeekDay"
+            }
+          }
+        },
+        "required" : [ "custom", "telegramId" ]
       },
       "ServiceTypeControllerRequest" : {
         "properties" : {
@@ -18361,6 +18604,59 @@
         },
         "required" : [ "added" ]
       },
+      "StaffControllerAddRequest" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string",
+            "enum" : [ "DOCTOR", "ADMIN", "RECEPTION", "ASSISTANT" ]
+          },
+          "alsoDoctor" : {
+            "type" : "boolean"
+          },
+          "doctorIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          },
+          "login" : {
+            "type" : "string",
+            "enum" : [ "LINK", "PHONE", "LATER" ]
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StaffRolesAdded" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "start" : {
+            "type" : "string"
+          },
+          "expiresAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "inviteId" : {
+            "type" : "string"
+          },
+          "summary" : {
+            "type" : "string"
+          }
+        }
+      },
       "ShiftControllerCopyRequest" : {
         "properties" : {
           "weekStart" : {
@@ -19414,6 +19710,15 @@
         },
         "required" : [ "delivered", "id", "recipients" ]
       },
+      "StaffMembersControllerPhoneInvited" : {
+        "properties" : {
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "telegramId" ]
+      },
       "StaffMembersControllerInviteRequest" : {
         "properties" : {
           "role" : {
@@ -19458,15 +19763,6 @@
             }
           }
         }
-      },
-      "StaffMembersControllerPhoneInvited" : {
-        "properties" : {
-          "telegramId" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        },
-        "required" : [ "telegramId" ]
       },
       "MyPhoneControllerCodeRequest" : {
         "properties" : {
@@ -21225,6 +21521,12 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/ShiftServiceShiftView"
+            }
+          },
+          "weekly" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ShiftServiceWeekly"
             }
           },
           "canEdit" : {
