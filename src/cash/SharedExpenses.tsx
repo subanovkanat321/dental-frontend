@@ -7,6 +7,7 @@ import { monthRange, shortDate, somText } from '../lib/time'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 import { splitTitle } from './expenses'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Expense = Schemas['ExpensesExpense']
@@ -45,7 +46,7 @@ export function SharedExpenses({ month, me }: { month: string; me: Me }) {
       ) : (
         <ul className="shared-list" aria-label="Общие расходы">
           {rows.map((x) => (
-            <li key={x.id}>
+            <li key={x.id} {...rowOpen(editing !== x.id && (() => setEditing(x.id)))}>
               <div className="shared-head">
                 <span><b>{x.category}</b> · <b className="num">{somText(x.amountSom)}</b>
                   <span className="hint"> · {x.spentOn ? shortDate(`${x.spentOn}T12:00:00Z`) : ''} · {splitTitle(x.splitKey).toLowerCase()}

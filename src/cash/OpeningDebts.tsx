@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate, somText } from '../lib/time'
+import { rowOpen } from '../lib/rowClick'
 
 type Method = NonNullable<Schemas['OpeningDebtControllerPayRequest']['method']>
 
@@ -36,7 +37,7 @@ export function OpeningDebtsBox({ patientId, onOpenPatient }: { patientId?: numb
       <h3>Долги из прежней программы{rows.length > 1 ? ` · ${somText(total)}` : ''}</h3>
       <ul>
         {rows.map((d) => (
-          <li key={d.id}>
+          <li key={d.id} {...rowOpen(!patientId && onOpenPatient && (() => onOpenPatient(d.patientId)))}>
             <span>
               {!patientId && (onOpenPatient
                 ? <button type="button" className="row-link" onClick={() => onOpenPatient(d.patientId)}>{d.patient}</button>

@@ -437,3 +437,30 @@ test('карточка сотрудника по номеру: телефон м
   expect(await within(table).findByText('+996 700 000 012')).toBeInTheDocument()
   expect(puts).toEqual([{ id: '-1000000000000001', phone: '+996 700000041' }, { id: '-1000000000000001', phone: '+996 700000012' }])
 })
+
+test('«Персонал»: вся строка открывает карточку — человека и приглашения; чужой врач у не-админа — обычная строка', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
+    http.get('*/api/members/invites', () => HttpResponse.json([
+      { id: 'aa', fullName: 'Айпери', role: 'RECEPTION', expiresAt: '2099-01-01T06:00:00Z', expired: false },
+    ] satisfies Schemas['StaffMembersInviteView'][])),
+  )
+  const user = userEvent.setup()
+  const view = renderApp()
+  openItem('members')
+  const table = await screen.findByRole('table', { name: 'Персонал' })
+  const invite = within(table).getByText(/ждём входа · ссылка до/).closest('tr')!
+  expect(invite).toHaveClass('clickable', 'inactive')
+  await user.click(within(invite).getByText(/ждём входа · ссылка до/))
+  expect(await screen.findByRole('complementary', { name: 'Приглашение' })).toBeInTheDocument()
+  expect(invite).toHaveClass('active')
+  view.unmount()
+
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false })))
+  renderApp()
+  const own = await screen.findByRole('table', { name: 'Персонал' })
+  const other = within(own).getByText('Дастан Т.').closest('tr')!
+  expect(other).not.toHaveClass('clickable')
+  expect(within(own).getByRole('button', { name: 'Айгерим Садыкова' }).closest('tr')).toHaveClass('clickable')
+})

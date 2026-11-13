@@ -9,6 +9,7 @@ import { shortDate, somText } from '../lib/time'
 import { debtorsOf, type FamilyOf } from './debtors'
 import { Loading } from '../layout/Loading'
 import { OpeningDebtsBox } from './OpeningDebts'
+import { rowOpen } from '../lib/rowClick'
 
 type Debt = Schemas['PaymentQueryDebt']
 
@@ -52,7 +53,7 @@ export function DebtorsTab({ rows, pending, error, onOpen, onOpenPatient }: {
       </div>
       <ul className="debtors-list">
         {list.map((x) => (
-          <li key={x.key} className={x.overdue ? 'overdue' : undefined}>
+          <li key={x.key} {...rowOpen(x.patientId != null && onOpenPatient && (() => onOpenPatient(x.patientId!)), x.overdue && 'overdue')}>
             <div className="debtor-head">
               {x.patientId != null && onOpenPatient
                 ? <button type="button" className="row-link" onClick={() => onOpenPatient(x.patientId!)}>{x.patient}</button>
