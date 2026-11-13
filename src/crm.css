@@ -2324,7 +2324,7 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .opening-debts li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
 .opening-debts p { margin: 0; }
 /* Общие расходы (V207): форма с ключом деления, окно «＋ Расход», доли врачей, приход/расход/итог в «Деньгах» */
-.expense-form .expense-kind, .expense-form .split-box, .expense-form .expense-hint, .expense-form .error { grid-column: 1 / -1; }
+.expense-form .expense-kind, .expense-form .split-box, .expense-form .expense-owner, .expense-form .expense-hint, .expense-form .error { grid-column: 1 / -1; }
 .expense-form .expense-kind button { flex: 1; white-space: normal; line-height: 1.2; }
 .expense-dialog .expense-form { grid-template-columns: 1fr; }
 .expense-form input[type="checkbox"] { height: auto; padding: 0; }
@@ -2431,3 +2431,7 @@ dd[aria-label="Чистыми"]:not(.tone-bad) { color: var(--accent-ink); }
 .sub-ico { color: var(--sub-ico, var(--hint)); }
 .nav-subitem.active > .sub-ico, .sheet-item.active > .sub-ico { color: var(--accent-ink); }
 .sheet-item > .sub-ico { width: 22px; height: 22px; }
+/* «Чей расход» у обычного расхода: выбор (руководитель) или «Запишется на вас» (врач), подпись под полем */
+.expense-owner { display: grid; gap: 4px; }
+.expense-owner .hint, p.expense-owner { margin: 0; }
+p.expense-owner { display: block; }

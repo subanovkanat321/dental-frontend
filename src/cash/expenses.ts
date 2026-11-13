@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 
-import { api, unwrap } from '../api/client'
+import { api, unwrap, type Schemas } from '../api/client'
+import { seesAllMoney } from '../lib/roles'
 
 /** Как делить общий расход; первый — по умолчанию (сервер — Expenses.SPLIT_KEYS). */
 export const SPLIT_KEYS: [string, string, string][] = [
@@ -21,3 +23,20 @@ export function useCategories() {
   return useQuery({ queryKey: ['expense-categories'], queryFn: () => unwrap(api.GET('/api/expenses/categories')), staleTime: 10 * 60_000 })
 }
 
+
+/**
+ * Значение поля «Чей расход»: '' — клиника, иначе id врача. По умолчанию — fallback (врач из фильтра кассы
+ * или врач приёма); сменился он — поле следует за ним (без эффекта: сравниваем при отрисовке).
+ */
+export function useExpenseOwner(fallback: number | null | undefined) {
+  const initial = fallback == null ? '' : String(fallback)
+  const [state, setState] = useState({ from: initial, value: initial })
+  const value = state.from === initial ? state.value : initial
+  return [value, (v: string) => setState({ from: initial, value: v })] as const
+}
+
+/** id врача для тела запроса: кто видит всех — выбранный ('' — клиника); врач — он сам (сервер всё равно ставит его). */
+export function ownerDoctorId(me: Schemas['BookingViewsMe'], owner: string): number | undefined {
+  if (!seesAllMoney(me)) return me.doctorId ?? undefined
+  return owner ? Number(owner) : undefined
+}
