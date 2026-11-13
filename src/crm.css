@@ -2435,3 +2435,6 @@ dd[aria-label="Чистыми"]:not(.tone-bad) { color: var(--accent-ink); }
 .expense-owner { display: grid; gap: 4px; }
 .expense-owner .hint, p.expense-owner { margin: 0; }
 p.expense-owner { display: block; }
+
+/* «Откуда приходят пациенты»: «＋ Свой вариант» над таблицей (на телефоне шапка таблицы скрыта) */
+.sources-add { margin: 0 0 12px; }

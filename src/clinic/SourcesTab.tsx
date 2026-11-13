@@ -46,11 +46,14 @@ export function SourcesTab({ me, header, onPanel }: { me: Me; header: ReactNode;
         <section className="card-block">
           {list.error && <p className="error">{list.error.message}</p>}
           {move.error && <p className="error" role="alert">{move.error.message}</p>}
+          {/* Кнопка — над таблицей, не в её шапке: на телефоне таблица становится карточками и шапка прячется (2026-11-14) */}
+          {editable && (
+            <p className="sources-add"><button type="button" className="btn primary" onClick={() => setOpened({ emoji: '', title: '', active: true })}>
+              ＋ Свой вариант с эмодзи</button></p>
+          )}
           {list.isPending ? <Loading /> : (
             <table className="table" aria-label="Откуда узнают о клинике">
-              <thead><tr><th>Вариант</th><th>Пациентов</th><th className="r">
-                {editable && <button type="button" className="btn small" onClick={() => setOpened({ emoji: '', title: '', active: true })}>+ Добавить</button>}
-              </th></tr></thead>
+              <thead><tr><th>Вариант</th><th>Пациентов</th><th className="r"><span className="sr-only">Действия</span></th></tr></thead>
               <tbody>
                 {options.map((o, i) => (
                   <tr key={o.id} {...rowOpen(editable && (() => setOpened(o)), o.id === opened?.id && 'active', o.active === false && 'inactive')}>
