@@ -6,7 +6,8 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useReminderNotSent } from './useReminderNotSent'
-import { useReminderText } from '../api/settings'
+import { useReminderText, useRepeatReminderText } from '../api/settings'
+import { confirmRemind, remindedText } from './remindAgain'
 import { whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { addDays, emptyDayText, minutesOf, somText, timeOf, todayIn } from '../lib/time'
@@ -280,6 +281,7 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
   const [undo, setUndo] = useState<Appointment | null>(null)
   const li = useRef<HTMLLIElement>(null)
   const text = useReminderText()
+  const repeatText = useRepeatReminderText()
   const opened = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id } } })),
     onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
@@ -300,6 +302,20 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
     }
     opened.mutate()
     openLink(whatsappUrl(contactPhone(a.patient) ?? '', text?.(a) ?? ''))
+  }
+  // «↻ ещё раз» у «✓ отправлено»: тем же путём, с вопросом «Уже напоминали в 10:15. Отправить ещё раз?» и текстом
+  // повтора (бот выбирает его сам по отметке; WhatsApp — useRepeatReminderText). Отметку «не ушло» снимать не нужно
+  const canAgain = canRemind && sent && (viaBot || Boolean(contactPhone(a.patient)))
+  const remindAgain = async () => {
+    if (action.isPending || opened.isPending || (!viaBot && !repeatText)) return
+    if (!(await confirmRemind(a))) return
+    notSent.undo.reset()
+    if (viaBot) {
+      action.mutate({ kind: 'remindTelegram' })
+      return
+    }
+    opened.mutate()
+    openLink(whatsappUrl(contactPhone(a.patient) ?? '', (a.reminderOpenedAt ? repeatText : text)?.(a) ?? ''))
   }
   // Свайп вправо — то же, что быстрая кнопка; есть, пока она есть (не отправлено, есть номер или бот)
   const canSwipeRemind = canRemind && !sent && !busy && (viaBot || Boolean(contactPhone(a.patient)))
@@ -349,8 +365,15 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
           )}
         </button>
         {canRemind && (sent ? (
-          <button type="button" className="remind-sent tone-ok" disabled={notSent.undo.isPending} onClick={notSent.run}
-            aria-label={`Напоминание отправлено: ${a.patient.fullName}. Не ушло? Снять отметку`}>✓ отправлено</button>
+          <span className="remind-sent-box">
+            <button type="button" className="remind-sent tone-ok" disabled={notSent.undo.isPending} onClick={notSent.run}
+              aria-label={`Напоминание отправлено: ${a.patient.fullName}. Не ушло? Снять отметку`}
+              title={a.reminderOpenedAt ? `Напоминали ${remindedText(a.reminderOpenedAt)}` : undefined}>✓ отправлено</button>
+            {canAgain && (
+              <button type="button" className="remind-again" disabled={action.isPending || opened.isPending}
+                aria-label={`Напомнить ещё раз: ${a.patient.fullName}`} onClick={() => void remindAgain()}>↻ ещё раз</button>
+            )}
+          </span>
         ) : (
           <button type="button" className={viaBot ? 'remind-quick tg' : 'remind-quick'} disabled={busy}
             aria-label={`${viaBot ? 'Напомнить в Telegram' : 'Напомнить в WhatsApp'}: ${a.patient.fullName}, ${timeOf(a.startAt)}`}

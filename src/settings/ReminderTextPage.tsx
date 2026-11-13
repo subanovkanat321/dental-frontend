@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings } from '../api/settings'
 import { SaveBar } from '../layout/SaveBar'
 import { applyTemplate, MAX_LENGTH, unknownVariables, usesVariable, VARIABLES, type Variable } from '../lib/reminderTemplate'
-import { reminderText, type ReminderSettings } from '../lib/texts'
+import { reminderText, repeatReminderText, soonText, type ReminderSettings } from '../lib/texts'
 import { addDays, todayIn } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
 import { SubHeader } from './SubHeader'
@@ -63,7 +63,7 @@ function botPreview(lang: Lang, ru: string | null, ky: string | null, s: Reminde
 }
 
 /**
- * «Настройки» → «Текст напоминания» (только админ): свой текст напоминания о приёме — для бота и
+ * «Настройки» → «Напоминание о приёме» (только админ): свой текст напоминания о приёме — для бота и
  * WhatsApp/SMS из карточки приёма. Переменные — кнопками в позицию курсора, предпросмотр на
  * вымышленном пациенте, ru и ky.
  */
@@ -71,7 +71,7 @@ export function ReminderTextPage({ me, onBack }: { me: Me; onBack: () => void })
   const settings = useSettings()
   return (
     <section className="schedule-main">
-      <SubHeader title="Текст напоминания" onBack={onBack} />
+      <SubHeader title="Напоминание о приёме" onBack={onBack} />
       {settings.isPending ? <Loading />
         : settings.error ? <p className="error">{settings.error.message}</p>
           : <Editor me={me} settings={settings.data} />}
@@ -131,7 +131,9 @@ function Editor({ me, settings }: { me: Me; settings: Settings }) {
         <p className="hint">
           Это сообщение получает пациент перед приёмом: от бота клиники — накануне или по кнопке «Напомнить в Telegram», и из
           карточки приёма — в WhatsApp и SMS. Кнопки «Приду» и «Нужно перенести» бот добавит сам, в WhatsApp и SMS — строку
-          «Ответьте 1 — приду, 2 — перенести» и ссылку на бота.
+          «Ответьте 1 — приду, 2 — перенести» и ссылку на бота. Это текст первого напоминания: нажали «Напомнить» ещё раз —
+          уходит стандартный текст повтора. А за 2 часа до приёма бот сам пишет записавшимся через него короткое «⏰ Ждём вас» —
+          этот текст не меняется (он ниже, для справки).
         </p>
         <div className="segments" role="group" aria-label="Язык текста">
           <button type="button" aria-pressed={lang === 'ru'} onClick={() => setLang('ru')}>Русский</button>
@@ -179,6 +181,21 @@ function Editor({ me, settings }: { me: Me; settings: Settings }) {
             <figcaption>WhatsApp и SMS</figcaption>
             <p className="reminder-bubble">{whatsapp}</p>
             {lang === 'ky' && <p className="hint">В WhatsApp и SMS уходит русский текст: язык пациента CRM не знает.</p>}
+          </figure>
+        </div>
+      </section>
+      <section className="card-block" aria-label="Другие сообщения о приёме">
+        <h2>Другие сообщения о приёме</h2>
+        <p className="hint">Их клиника не меняет — показаны по-русски на том же вымышленном пациенте.</p>
+        <div className="reminder-previews">
+          <figure className="reminder-preview" aria-label="Повторное напоминание">
+            <figcaption>Повторное напоминание — если нажать «Напомнить» ещё раз</figcaption>
+            <p className="reminder-bubble">{repeatReminderText({ startAt: tomorrow10, patient: { fullName: SAMPLE.name, telegram: true } }, settings, doctor)
+              .split('\n')[0]}</p>
+          </figure>
+          <figure className="reminder-preview" aria-label="За 2 часа до приёма">
+            <figcaption>За 2 часа до приёма — в Telegram</figcaption>
+            <p className="reminder-bubble">{soonText(`${todayIn()}T06:00:00Z`, settings)}</p>
           </figure>
         </div>
       </section>

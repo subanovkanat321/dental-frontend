@@ -608,6 +608,12 @@ details.agreement-box { max-height: none; }
 /* Напоминание ушло — вместо кнопки отметка; ошибка — отдельной строкой под приёмом */
 .remind-sent { flex: none; align-self: center; margin-right: 8px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
 button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+/* «✓ отправлено» и под ним «↻ ещё раз» — столбиком, чтобы строка дня не стала шире */
+.remind-sent-box { flex: none; align-self: center; display: flex; flex-direction: column; align-items: flex-end; margin-right: 8px; }
+.remind-sent-box .remind-sent { margin-right: 0; padding-bottom: 2px; }
+.remind-again { background: none; border: 0; padding: 4px; font-family: inherit; font-size: .8rem; font-weight: 500; color: var(--link); cursor: pointer; white-space: nowrap; }
+.remind-again:disabled { opacity: .5; cursor: default; }
+.doctor-columns .remind-sent-box { align-self: flex-start; align-items: flex-start; margin: -4px 0 4px 4px; }
 .day-list .row:has(.row-error) { flex-wrap: wrap; }
 .day-list .row:has(.row-error) .row-button { flex-basis: 0; }
 .row-error { flex-basis: 100%; margin: 0 10px 8px; font-size: .85rem; }

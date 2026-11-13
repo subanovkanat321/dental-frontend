@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
+import { todayIn } from '../lib/time'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -61,6 +62,47 @@ test('напомнить в WhatsApp — текст с подписью клин
   expect(await within(replies).findByRole('button', { name: 'Придёт', pressed: true })).toBeInTheDocument()
   await userEvent.click(within(replies).getByRole('button', { name: 'Придёт' }))
   await waitForSlow(() => expect(calls).toEqual(['opened', 'reply:CONFIRMED:v0', 'reply:NONE:v1']))
+  vi.restoreAllMocks()
+})
+
+test('уже напоминали — «Уже напоминали: сегодня в 10:15», повтор после вопроса и другим текстом', async () => {
+  const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.', { reminderOpenedAt: `${todayIn()}T04:15:00Z` }))
+  const opened: string[] = []
+  vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  const remind = within(panel).getByRole('region', { name: 'Напоминание' })
+  expect(remind).toHaveTextContent('Уже напоминали: сегодня в 10:15')
+  const wa = within(remind).getByRole('button', { name: 'Напомнить в WhatsApp' })
+  await waitForSlow(() => expect(wa).toBeEnabled())
+
+  await userEvent.click(wa)
+  expect(confirm.mock.calls[0]![0]).toBe('Уже напоминали в 10:15. Отправить ещё раз?')
+  expect(opened).toEqual([])
+
+  await userEvent.click(wa)
+  const text = decodeURIComponent(opened[0]!)
+  expect(text).toContain('Напоминаем ещё раз: сегодня в 23:30 у вас приём у врача')
+  expect(text).toContain('Пожалуйста, ответьте, придёте ли — так мы сможем отдать время другому пациенту')
+  expect(text).toContain('Ответьте 1 — приду, 2 — перенести')
+  await waitForSlow(() => expect(calls).toEqual(['opened']))
+  vi.restoreAllMocks()
+})
+
+test('пациент уже ответил «Приду» — «Всё равно напомнить?»; нет — ничего не уходит', async () => {
+  const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.', { reply: 'CONFIRMED',
+    patient: { id: 10, fullName: 'Бакыт М.', phone: '996555123456', telegram: true } }))
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  await userEvent.click(within(panel).getByRole('button', { name: 'Напомнить в Telegram' }))
+  expect(confirm.mock.calls[0]![0]).toBe('Пациент уже ответил „Приду“. Всё равно напомнить?')
+  expect(calls).toEqual([])
+  await userEvent.click(within(panel).getByRole('button', { name: 'Напомнить в Telegram' }))
+  await waitForSlow(() => expect(calls).toEqual(['telegram']))
   vi.restoreAllMocks()
 })
 

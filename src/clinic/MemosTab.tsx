@@ -192,7 +192,7 @@ function KyFields({ form, memo: m, onChange, titleError, bodyError }: {
             onClick={() => translate.mutate()}>{translate.isPending ? 'Переводим…' : '✨ Перевести с ИИ'}</button>
         </div>
       ) : ai.data?.available ? (
-        <p className="hint small">✨ Перевести с ИИ — когда руководитель включит ИИ клиники в «Настройки → ИИ-помощник».</p>
+        <p className="hint small">✨ Перевести с ИИ — когда руководитель включит ИИ клиники в «Настройки → ИИ в клинике».</p>
       ) : null}
       {translate.isSuccess && <p className="hint small" role="status">Перевод ИИ — в полях выше. Проверьте и сохраните.</p>}
       {translate.error && <p className="error small" role="alert">{translate.error.message}</p>}

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { rowClick } from '../lib/rowClick'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
-import { agoText, recallText, whatsappUrl } from '../lib/texts'
+import { agoText, recallText, recentlyInvited, whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
 import { openLink } from '../lib/telegram'
 import { isAssistant } from '../lib/roles'
@@ -81,7 +81,9 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
     queryFn: () => unwrap(api.GET('/api/appointments/recall', { params: { query: { limit: limit + 1 } } })),
     placeholderData: keepPreviousData,
   })
-  const invite = (p: Patient, months?: number) => {
+  const invite = async (p: Patient, months?: number, invitedAt?: string) => {
+    // Звали на этой неделе — сначала спросить: второе сообщение подряд раздражает пациента
+    if (invitedAt && recentlyInvited(invitedAt) && !(await ask(`Звали ${agoText(invitedAt)}. Позвать ещё раз?`, { ok: 'Позвать ещё раз' }))) return
     // Отметка «позвали» — не ждём ответа: WhatsApp открывается сразу, как в приложении
     void api.POST('/api/patients/{id}/recall-invited', { params: { path: { id: p.id } } })
       // Только эта строка — «позвали сейчас»: весь список (у большой клиники — тысячи) заново не качаем
@@ -91,7 +93,7 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
         client.setQueriesData<Schemas['RecallView'][]>({ queryKey: ['recall'] }, (list) =>
           list?.map((r) => (r.patient?.id === p.id ? { ...r, invitedAt: now } : r)))
       })
-    openLink(whatsappUrl(p.phone!, recallText(p.fullName, settings.data?.clinicSignature, months)))
+    openLink(whatsappUrl(p.phone!, recallText(p.fullName, settings.data?.clinicSignature, months, { invitedAt })))
   }
 
   if (due.isPending) return <Loading />
@@ -112,7 +114,7 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
             <td className="nowrap">{r.dueOn ? dueText(r.dueOn) : '—'}{r.months != null && <span className="hint small"> · через {monthsText(r.months)}</span>}</td>
             <td className="nowrap hint">{r.invitedAt ? agoText(r.invitedAt) : 'ещё не звали'}</td>
             <td className="r nowrap">
-              <button type="button" className="btn small" onClick={() => invite(r.patient!, r.months)}>WhatsApp</button>{' '}
+              <button type="button" className="btn small" onClick={() => void invite(r.patient!, r.months, r.invitedAt)}>WhatsApp</button>{' '}
               <button type="button" className="btn small primary" onClick={() => onBook(r.patient!)}>Записать</button>
             </td>
           </tr>

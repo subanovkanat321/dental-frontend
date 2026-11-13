@@ -23849,6 +23849,10 @@
             "type" : "string",
             "format" : "date-time"
           },
+          "invites" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "doctorId" : {
             "type" : "integer",
             "format" : "int64"
@@ -23876,7 +23880,7 @@
             "$ref" : "#/components/schemas/ComebacksCancelled"
           }
         },
-        "required" : [ "patientId", "planSom", "telegram" ]
+        "required" : [ "invites", "patientId", "planSom", "telegram" ]
       },
       "ComebacksResult" : {
         "properties" : {

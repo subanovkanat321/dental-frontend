@@ -10214,6 +10214,8 @@ export interface components {
             lastVisit?: string;
             /** Format: date-time */
             invitedAt?: string;
+            /** Format: int32 */
+            invites: number;
             /** Format: int64 */
             doctorId?: number;
             /** Format: int32 */

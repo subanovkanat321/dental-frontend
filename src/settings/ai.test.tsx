@@ -35,13 +35,15 @@ function backend(reports: Setting, dictation: Setting, who: Schemas['BookingView
 
 afterEach(() => { window.location.hash = '' })
 
-test('«ИИ-помощник»: диктовка включается отдельно от отчётов, с подписью, что уходит в ИИ', async () => {
+test('«ИИ в клинике»: диктовка включается отдельно от отчётов, с подписью, что уходит в ИИ', async () => {
   const puts = backend({ available: true, on: true }, { available: true, on: false })
   renderApp()
   openItem('ai')
   const dictation = await screen.findByRole('region', { name: 'ИИ разбирает голосовую диктовку' })
   const reports = screen.getByRole('region', { name: 'ИИ пишет отчёты пациенту' })
   expect(dictation).toHaveTextContent('В ИИ уходит текст диктовки — без имени и телефона пациента')
+  // Тот же переключатель — и ИИ-черновики приглашений «Позвать снова»
+  expect(reports).toHaveTextContent('приглашений «Позвать снова»')
   const reportBox = within(reports).getByRole('checkbox')
   await waitForSlow(() => expect(reportBox).toBeChecked())
   const box = within(dictation).getByRole('checkbox')
@@ -84,12 +86,12 @@ test('ИИ на сервере не подключён — переключат�
   expect(within(dictation).getByRole('checkbox')).toBeDisabled()
 })
 
-test('пункт «ИИ-помощник» — только у администратора', async () => {
+test('пункт «ИИ в клинике» — только у администратора', async () => {
   backend({ available: true, on: false }, { available: true, on: false }, { ...me, admin: false })
   renderApp()
   openItem('')
   expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /ИИ-помощник/ })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /ИИ в клинике/ })).not.toBeInTheDocument()
 })
 
 test('лимит ИИ клинике пока не показываем: счётчика «N из M» нет', async () => {

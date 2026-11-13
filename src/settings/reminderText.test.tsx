@@ -59,6 +59,19 @@ test('«Текст напоминания»: стандартный текст, 
   expect(saved).toEqual([{ reminderTemplate: 'Ждём вас {когда} у врача {врач}.' }])
 })
 
+test('«Напоминание о приёме»: для справки — повтор и «⏰ Ждём вас» за 2 часа (их клиника не меняет)', async () => {
+  backend()
+  renderApp()
+  openItem('reminder')
+  expect(await screen.findByRole('heading', { name: 'Напоминание о приёме' })).toBeInTheDocument()
+  expect(await screen.findByText(/за 2 часа до приёма бот сам пишет/)).toBeInTheDocument()
+  const others = screen.getByRole('region', { name: 'Другие сообщения о приёме' })
+  expect(within(others).getByRole('figure', { name: 'За 2 часа до приёма' }))
+    .toHaveTextContent('⏰ Ждём вас сегодня в 12:00 на приёме у стоматолога 😊 📍 Адрес: Бишкек, ул. Тестовая 1')
+  expect(within(others).getByRole('figure', { name: 'Повторное напоминание' }))
+    .toHaveTextContent('Здравствуйте, Айгуль! Напоминаем ещё раз: завтра в 10:00 у вас приём у врача')
+})
+
 test('неизвестная переменная — ошибка и сохранить нельзя; без {когда} — предупреждение', async () => {
   backend({ ...SETTINGS, reminderTemplate: 'Ждём {когда}' })
   renderApp()

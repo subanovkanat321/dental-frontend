@@ -172,7 +172,7 @@ test('права в дереве: ассистент — без «Кассы» �
   expect(within(settings).getByRole('link', { name: /Памятки после процедур/ })).toBeInTheDocument()
   expect(within(settings).queryByRole('link', { name: /Тариф и оплата/ })).not.toBeInTheDocument()
   // Группы — подписями внутри раздела; «Аккаунт клиники» у ассистента пуст — подписи нет
-  expect(within(settings).getByText('Пациентам')).toBeInTheDocument()
+  expect(within(settings).getByText('Что получают пациенты')).toBeInTheDocument()
   expect(within(settings).queryByText('Аккаунт клиники')).not.toBeInTheDocument()
   expect(within(settings).queryByText('Мои настройки')).not.toBeInTheDocument()
   // «Клиника» — без «Услуг и цен» (цены ассистенту не показываем)
