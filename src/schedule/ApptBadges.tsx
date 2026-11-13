@@ -1,6 +1,7 @@
 import type { Schemas } from '../api/client'
 import { somText } from '../lib/time'
 import { colleagueMarkText } from './chairTime'
+import { useChairs } from '../team/chairs'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -18,8 +19,10 @@ type Appointment = Schemas['AppointmentView']
 type Badge = { icon: string; text: string; short?: string; long: string }
 type ChairTime = Schemas['SlotsViewChairTime']
 
-function badgesOf(a: Appointment, money: boolean, chair: ChairTime | undefined): Badge[] {
+function badgesOf(a: Appointment, money: boolean, chair: ChairTime | undefined, otherChair: string | null): Badge[] {
   const list: Badge[] = []
+  // Кресло выбрано не кресло врача (V210): «🪑 Кресло 2» — где искать пациента
+  if (otherChair) list.push({ icon: '🪑', text: `В кресле «${otherChair}» (не кресло врача)`, short: otherChair, long: otherChair })
   // Приём в рабочих часах коллеги по креслу (V187; colleagueTimeOf) — первым: это про само время приёма
   if (chair) {
     const name = chair.doctorName ?? 'коллеги'
@@ -38,12 +41,16 @@ function firstName(name: string): string {
 
 /** @param chair часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — значок 🪑 */
 export function ApptBadges({ appointment, money, chair }: { appointment: Appointment; money: boolean; chair?: ChairTime }) {
-  const list = badgesOf(appointment, money, chair)
+  // Кэш кресел общий с расписанием — без лишних запросов
+  const chairs = useChairs(Boolean(appointment.chairManual))
+  const otherChair = appointment.chairManual && appointment.status !== 'CANCELLED'
+    ? chairs.data?.find((c) => c.id === appointment.chairId)?.name ?? null : null
+  const list = badgesOf(appointment, money, chair, otherChair)
   if (!list.length) return null
   return (
     <span className="appt-badges">
       {list.map((b) => (
-        <span key={b.icon} className="appt-badge" title={b.text} role="img" aria-label={b.text} data-short={b.short} data-long={b.long}>{b.icon}</span>
+        <span key={`${b.icon}${b.long}`} className="appt-badge" title={b.text} role="img" aria-label={b.text} data-short={b.short} data-long={b.long}>{b.icon}</span>
       ))}
     </span>
   )

@@ -72,23 +72,31 @@ export function OutreachTab() {
           «Поделиться» → WhatsApp → этот чат (на компьютере ролик скачается — прикрепите в WhatsApp Web); ③ если нужно — шаблон Excel.
           «Да» — клиника в «Ответили/дальше».<br /><br />
           <b>Молчат 3 дня → «🔁 Напомнить»</b>: одно короткое напоминание. Больше не пишем — отказ отмечайте «Не беспокоить».</SubHelp>
-      <section className="card-block" aria-label="Написать клиникам">
-        {outreach.error && <p className="error">{outreach.error.message}</p>}
-        {outreach.isPending ? <Loading /> : data && (
-          <>
-            <Segments className="tabs" label="Кому писали" value={group ?? ''} onChange={(key) => setGroup(key === '' ? null : key)}
-              options={[{ value: '' as Group | '', label: <>Все · <b className="num">{leads.length}</b></>, text: `Все · ${leads.length}` },
-                ...GROUPS.map(([key, title]) => ({ value: key, label: <>{title} · <b className="num">{countOf[key]}</b></>, text: `${title} · ${countOf[key]}` }))]} />
-            <div className="actions">
+      {outreach.error && <p className="error">{outreach.error.message}</p>}
+      {outreach.isPending ? <Loading /> : data && (
+        <>
+          {/* Сначала — что пишем (свёрнуто: первая строка в заголовке), рядом — откуда клиники; ниже — сами клиники */}
+          {data.template && <TemplateEditor template={data.template} />}
+          <div className="actions outreach-tools">
+            {!uploading && <button type="button" className="btn small" onClick={() => setUploading(true)}>Загрузить список клиник</button>}
+            {!adding && <button type="button" className="btn small ghost" onClick={() => setAdding(true)}>＋ Добавить клинику</button>}
+          </div>
+          {uploading && <ListUpload onClose={() => setUploading(false)} />}
+          {adding && <OneClinic onClose={() => setAdding(false)} />}
+          <section className="card-block" aria-label="Написать клиникам">
+            {/* Фильтр и поиск — в шапке списка, рядом с тем, что фильтруют */}
+            <div className="block-head">
+              <h2>Клиники</h2>
+              <button type="button" className="btn primary" onClick={next}>Следующая клиника →</button>
+            </div>
+            <div className="outreach-filter">
+              <Segments className="tabs" label="Кому писали" value={group ?? ''} onChange={(key) => setGroup(key === '' ? null : key)}
+                options={[{ value: '' as Group | '', label: <>Все · <b className="num">{leads.length}</b></>, text: `Все · ${leads.length}` },
+                  ...GROUPS.map(([key, title]) => ({ value: key, label: <>{title} · <b className="num">{countOf[key]}</b></>, text: `${title} · ${countOf[key]}` }))]} />
               <input type="search" className="outreach-search" aria-label="Поиск по названию" placeholder="Поиск по названию" value={query}
                 onChange={(e) => setQuery(e.target.value)} />
-              <button type="button" className="btn primary" onClick={next}>Следующая клиника →</button>
-              {!adding && <button type="button" className="btn" onClick={() => setAdding(true)}>＋ Добавить клинику</button>}
-              {!uploading && <button type="button" className="btn" onClick={() => setUploading(true)}>Загрузить список клиник</button>}
             </div>
             {allDone && <p className="tone-ok" role="status">Неписаных клиник нет — всем из списка уже написали.</p>}
-            {adding && <OneClinic onClose={() => setAdding(false)} />}
-            {uploading && <ListUpload onClose={() => setUploading(false)} />}
             {leads.length === 0 ? <p className="hint">Список пуст. Нажмите «Загрузить список клиник» и вставьте клиники из 2ГИС или таблицы.</p>
               : shown.length === 0 ? <p className="hint">Здесь никого.</p>
                 : (
@@ -99,10 +107,9 @@ export function OutreachTab() {
                     ))}
                   </div>
                 )}
-          </>
-        )}
-      </section>
-      {data?.template && <TemplateEditor template={data.template} />}
+          </section>
+        </>
+      )}
     </>
   )
 }
@@ -608,6 +615,7 @@ function ListUpload({ onClose }: { onClose: () => void }) {
 function TemplateEditor({ template }: { template: Template }) {
   const client = useQueryClient()
   const [text, setText] = useState(template.text ?? '')
+  const firstLine = (template.text ?? '').split('\n').map((x) => x.trim()).find(Boolean) ?? ''
   const save = useMutation<Template, ApiError, string>({
     mutationFn: (value) => unwrap(api.PUT('/api/platform/outreach/template', { body: { text: value } })),
     onSuccess: (t) => {
@@ -616,9 +624,11 @@ function TemplateEditor({ template }: { template: Template }) {
     },
   })
   return (
-    <section className="card-block" aria-label="Текст сообщения">
+    <section className="card-block outreach-template" aria-label="Текст сообщения">
+      {/* Свёрнут по умолчанию: в заголовке — первая строка, чтобы видеть, что уходит, не занимая экран */}
       <details>
-        <summary>Текст сообщения{template.custom ? ' (свой)' : ''}</summary>
+        <summary><b>Текст сообщения{template.custom ? ' (свой)' : ''}</b>
+          {firstLine && <span className="outreach-template-line">{firstLine}</span>}</summary>
         <form className="form" onSubmit={(e) => { e.preventDefault(); save.mutate(text) }}>
           <p className="hint">Первое сообщение клинике. {PLACEHOLDER} — подставится название. Ролик и ссылки сюда не ставьте:
             незнакомому номеру они похожи на рассылку — ролик уходит ответившим.</p>

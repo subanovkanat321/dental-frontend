@@ -13,6 +13,8 @@ import { Dictation } from './Dictation'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { ChairTimeHint } from './ChairTimeHint'
+import { ChairSelect } from './ChairSelect'
+import { useChairChoice } from './chairChoice'
 import { useAppointmentAction } from './useAppointmentAction'
 import { canEditServices, editableDoctors } from '../lib/roles'
 import { openServiceLater } from '../lib/openService'
@@ -46,6 +48,9 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
   const [duration, setDuration] = useState(minutes)
   const [doctorId, setDoctorId] = useState(a.doctorId)
   const [problem, setProblem] = useState('')
+  // Кресло (V210): у того же врача — кресло приёма (выбранное вручную остаётся), у другого — его кресло
+  const chair = useChairChoice(doctorId, doctorId === a.doctorId ? a.chairId ?? null : undefined)
+  const newStart = /^\d{2}:\d{2}$/.test(time) ? slotInstant(date, Number(time.slice(0, 2)) * 60 + Number(time.slice(3))) : null
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -56,7 +61,7 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
     setProblem('')
     const [h, m] = time.split(':').map(Number)
     const startAt = slotInstant(date, (h ?? 0) * 60 + (m ?? 0))
-    const body = { version: a.version, startAt, durationMinutes: duration }
+    const body = { version: a.version, startAt, durationMinutes: duration, chairId: chair.chairId }
     const other = doctors.find((d) => d.id === doctorId)
     if (doctorId === a.doctorId) action.mutate({ kind: 'reschedule', body }, { onSuccess: () => onDone('Время изменилось — напомните пациенту заново') })
     else action.mutate({ kind: 'transfer', body: { ...body, doctorId } }, { onSuccess: () => onDone(`Приём передан: ${other?.fullName ?? 'другой врач'}`) })
@@ -84,15 +89,42 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
       </div>
       <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} exclude={doctorId === a.doctorId ? a.id : undefined}
         value={time} onChange={(t) => { setTime(t); setProblem('') }} error={problem || errorText(action.error)} />
+      {chair.multi && (
+        <ChairSelect doctorId={doctorId} startAt={newStart} duration={duration} appointmentId={doctorId === a.doctorId ? a.id : undefined}
+          value={chair.chairId} onChange={chair.pick} />
+      )}
       {/* Новое время — в часах коллеги по креслу: сказать до «Перенести», как в «Новой записи» */}
-      {/^\d{2}:\d{2}$/.test(time) && (
-        <ChairTimeHint doctorId={doctorId} startAt={slotInstant(date, Number(time.slice(0, 2)) * 60 + Number(time.slice(3)))} duration={duration}
+      {newStart && (
+        <ChairTimeHint doctorId={doctorId} startAt={newStart} duration={duration} chairId={chair.chairId}
           action={doctorId === a.doctorId ? 'Перенести' : 'Передать'} />
       )}
       {doctorId !== a.doctorId && <p className="hint small">Новому врачу придёт уведомление, а пациенту, если он записан через бота, — сообщение с именем врача и временем.</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={action.isPending}>{doctorId === a.doctorId ? 'Перенести' : 'Передать'}</button>
         <button type="button" className="btn ghost" onClick={() => onDone()}>Отмена</button>
+      </div>
+    </form>
+  )
+}
+
+/**
+ * Кресло приёма (V210) в карточке: то же поле «Кресло», что в записи; время то же. Кресло врача — снова «по креслу
+ * врача». Занято — сервер ответит 409 с предложением свободного (withChairConfirm спросит «записать туда?»).
+ */
+export function ChairEdit({ appointment: a, onDone }: { appointment: Appointment; onDone: () => void }) {
+  const action = useAppointmentAction(a)
+  const chair = useChairChoice(a.doctorId, a.chairId ?? null)
+  const duration = a.startAt && a.endAt ? Math.round((Date.parse(a.endAt) - Date.parse(a.startAt)) / 60_000) : 30
+  return (
+    <form className="form sub-form" aria-label="Кресло приёма" onSubmit={(e) => {
+      e.preventDefault()
+      action.mutate({ kind: 'chair', body: { version: a.version, chairId: chair.chairId } }, { onSuccess: onDone })
+    }}>
+      <ChairSelect doctorId={a.doctorId} startAt={a.startAt} duration={duration} appointmentId={a.id} value={chair.chairId} onChange={chair.pick} />
+      {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
+      <div className="actions">
+        <button type="submit" className="btn primary" disabled={action.isPending}>Сохранить</button>
+        <button type="button" className="btn ghost" onClick={onDone}>Отмена</button>
       </div>
     </form>
   )

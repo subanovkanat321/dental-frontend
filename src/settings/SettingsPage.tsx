@@ -98,7 +98,7 @@ function findItem(items: SettingsItem[], key: string | null | undefined, me: Me)
 }
 
 /** Следим за адресом: пункт раздела (#/me/profile → 'profile'). */
-function useItem(page: 'settings' | 'me' | 'help'): string | null {
+function useItem(page: 'me' | 'help'): string | null {
   const [current, setCurrent] = useState(() => itemOf(page))
   useEffect(() => {
     const onHash = () => setCurrent(itemOf(page))
@@ -142,7 +142,9 @@ export function MineSection({ me, page, initialTicket }: { me: Me; page: 'me' | 
  * «Клиника» — раздел меню, своё — блок «Я» внизу меню, «Помощь» — внизу меню.
  */
 export function SettingsPage({ me }: { me: Me }) {
-  const current = useItem('settings')
+  // Тот же источник, что у вкладок (Shell, lib/sub), — а не свой слушатель адреса: иначе вкладка и экран могли
+  // разойтись (вкладка — выбранный пункт, экран — первый; 2026-11-13, лист «⌄» на iPhone)
+  const current = useSub('settings')
   const items = SETTINGS_GROUPS.flatMap(([, list]) => list)
   const found = findItem(items, current, me) ?? items.find((i) => !i.hidden && i.show(me) && RENDER[i.key])
   if (!found) return null
