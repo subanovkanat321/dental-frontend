@@ -14,6 +14,7 @@ import { Loading } from '../layout/Loading'
 import { SalesFunnel } from './SalesFunnel'
 import { adminsLine, remindedText, statusText } from './agreementTarget'
 import { SubHelp } from '../layout/PageHead'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -67,9 +68,9 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
           const share = noShowShare(c.noShow30, c.done30)
           return (
             // Вся строка нажимается — карточка клиники (оплата, договор, «Войти в клинику»)
-            <tr key={c.id} className={['clickable', c.id === opened?.id ? 'active' : ''].join(' ').trim()} onClick={() => setOpened({ id: c.id })}>
+            <tr key={c.id} {...rowOpen(() => setOpened({ id: c.id }), c.id === opened?.id && 'active')}>
               <td>
-                <button type="button" className="row-link open-link" onClick={(e) => { e.stopPropagation(); setOpened({ id: c.id }) }}>{c.name}<span aria-hidden="true"> ›</span></button>
+                <button type="button" className="row-link open-link" onClick={() => setOpened({ id: c.id })}>{c.name}<span aria-hidden="true"> ›</span></button>
                 <div><span className={`chip small ${hl.chip}`}>{hl.label}</span>
                   {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
                   {c.settingUp ? <span className="hint"> · 🛠 не видна пациентам</span> : c.listed === false ? <span className="hint"> · не в каталоге</span> : null}</div>

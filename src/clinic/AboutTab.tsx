@@ -7,6 +7,7 @@ import { Select } from '../layout/Select'
 import { CITIES, guessCity } from '../lib/clinicSearch'
 import { openLink, telegram } from '../lib/telegram'
 import { useDirty } from '../lib/unsaved'
+import { canEditPrices } from '../lib/roles'
 import { PhoneInput } from './PhoneInput'
 import { PhoneListInput } from './PhoneListInput'
 import { SetupChecklist } from './SetupChecklist'
@@ -20,8 +21,8 @@ const FIELDS = ['brandName', 'phones', 'whatsappPhone', 'legalName', 'address', 
 
 /**
  * «О клинике»: что видят пациенты (название, телефоны, WhatsApp, адрес, 2ГИС, часы), как работают врачи
- * (независимо, свой склад), кто отвечает за данные (для согласия). Меняют админ и врачи;
- * «независимо» и «свой склад» — только админ. Админу ещё предоплата («с чистого листа» — в «Данных»).
+ * (независимо, свой склад), кто отвечает за данные (для согласия). Меняет только руководитель (с 2026-11-13,
+ * как цены и часы клиники); остальные смотрят. Админу ещё предоплата («с чистого листа» — в «Данных»).
  */
 export function AboutTab({ me }: { me: Me }) {
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
@@ -38,7 +39,7 @@ export function AboutTab({ me }: { me: Me }) {
 
 function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   const client = useQueryClient()
-  const canEdit = Boolean(me.admin || me.doctorId != null)
+  const canEdit = canEditPrices(me)
   const [f, setF] = useState({
     brandName: c.brandName ?? '', phones: phonesToInput(c.phones), whatsappPhone: phoneToInput(c.whatsappPhone), legalName: c.legalName ?? '', address: c.address ?? '', city: c.city ?? '',
     mapUrl: c.mapUrl ?? '', supportTelegram: c.supportTelegram ? `@${c.supportTelegram}` : '', supportPhone: phoneToInput(c.supportPhone),
@@ -85,7 +86,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   return (
     <form className="card-block about" aria-label="О клинике" onSubmit={submit}>
       <fieldset className="about-grid" disabled={!canEdit}>
-        {!canEdit && <p className="tone-wait">Только просмотр: «О клинике» меняют руководитель и врачи.</p>}
+        {!canEdit && <p className="tone-wait">Только просмотр: «О клинике», цены и часы клиники меняет руководитель.</p>}
         <div className="about-col">
           <WebVersion />
           <h2>Для пациентов</h2>

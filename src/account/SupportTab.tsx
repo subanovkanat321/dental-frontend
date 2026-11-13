@@ -11,6 +11,7 @@ import { ticketForm } from './tickets'
 import { TICKET_KINDS, TICKET_STATUS } from './texts'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Thread = Schemas['SupportTicketsThread']
@@ -77,7 +78,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
                 {list.data.map((t) => {
                   const [status, cls] = TICKET_STATUS[t.status ?? 'OPEN'] ?? ['', 's-quiet']
                   return (
-                    <tr key={t.id} className={t.id === opened ? 'active' : undefined}>
+                    <tr key={t.id} {...rowOpen(() => setOpened(t.id), t.id === opened && 'active')}>
                       <td><span><button type="button" className="row-link" onClick={() => setOpened(t.id)}>{t.viaBot ? '💬 Помощь' : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}</button>
                         <span className="hint"> · {t.preview}</span></span></td>
                       <td><span className={`chip small ${cls}`}>{status}</span></td>

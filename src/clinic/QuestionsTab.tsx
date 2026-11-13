@@ -9,6 +9,7 @@ import { useDirty } from '../lib/unsaved'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 import { SubHelp } from '../layout/PageHead'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Question = Schemas['AnamnesisQuestion']
@@ -59,7 +60,7 @@ export function QuestionsTab({ me, header, onPanel }: { me: Me; header: ReactNod
                       <tr className="group-row"><th colSpan={3} scope="colgroup">{name}</th>
                         <th className="r">{editable && <button type="button" className="btn small" onClick={() => setOpened({ section: code, kind: 'CHECK', active: true })}>+ Добавить</button>}</th></tr>
                       {items.map((q, i) => (
-                        <tr key={q.id} className={[q.id === opened?.id ? 'active' : '', q.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
+                        <tr key={q.id} {...rowOpen(editable && (() => setOpened(q)), q.id === opened?.id && 'active', q.active === false && 'inactive')}>
                           <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(q)}>{q.title}</button> : q.title}</td>
                           <td className="hint">{kindName(q.kind)}</td>
                           <td className="hint">{[q.alert ? 'в плашке' : null, q.active === false ? 'скрыт' : null, q.answers ? `ответов: ${q.answers}` : null].filter(Boolean).join(' · ')}</td>

@@ -82,7 +82,9 @@ test('свёрнутое меню: от блока «Я» остаётся ав�
   window.location.hash = '/schedule'
   renderApp()
   const block = await screen.findByRole('button', { name: /^Айгерим Садыкова, руководитель/ })
-  expect(block).toHaveAttribute('title', 'Айгерим Садыкова · руководитель')
+  // Подписи спрятаны — имя и роль подсказкой при наведении
+  await userEvent.hover(block)
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Айгерим Садыкова · руководитель')
   await userEvent.click(block)
   expect(screen.getByRole('dialog', { name: 'Я: мои настройки' })).toBeInTheDocument()
 })

@@ -10,6 +10,7 @@ import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
 import { HeadTools } from '../layout/PageHead'
 import { HelpHint } from '../help/HelpHint'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Memo = Schemas['CareMemosCareMemoView']
@@ -49,7 +50,7 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
           {memos.isPending ? <Loading /> : (
             <ul className="memo-list" aria-label="Памятки">
               {(memos.data ?? []).map((m) => (
-                <li key={m.id} className={m.active === false ? 'inactive' : undefined}>
+                <li key={m.id} {...rowOpen(() => setOpened(m.id), m.active === false && 'inactive')}>
                   <button type="button" className="row-link" onClick={() => setOpened(m.id)}>📋 {m.title}</button>
                   <span className="hint small">
                     {m.active === false ? 'скрыта' : (m.serviceIds ?? []).map((id) => nameOf.get(id)).filter(Boolean).join(', ') || 'не привязана к услуге'}
