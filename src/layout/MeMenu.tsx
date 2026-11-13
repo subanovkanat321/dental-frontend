@@ -97,12 +97,13 @@ function Item({ icon, title, hint, external, tone, onClick }: { icon: ReactNode;
     <button type="button" className="menu-item" data-icon={tone} onClick={onClick}>
       <span className="menu-ico" aria-hidden="true">{icon}</span>
       <span className="menu-text"><span className="menu-title">{title}</span>{hint && <span className="menu-hint">{hint}</span>}</span>
-      {external && <span className="menu-out" aria-hidden="true">↗</span>}
+      {/* «Внешняя ссылка» — линией и серым: эмодзи ↗ на iPhone рисовался синей плашкой */}
+      {external && <span className="menu-out" aria-hidden="true"><MiniIcon d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" /></span>}
     </button>
   )
 }
 
-/** Значки пунктов «Я» и «Помощи» — линейные; у «Я» — приглушённый оттенок по смыслу (`data-icon`, crm.css; DESIGN.md → Colors). */
+/** Значки пунктов «Я» и «Помощи» — линейные, у каждого приглушённый оттенок по смыслу (`data-icon`, crm.css; DESIGN.md → Colors). */
 const ME_ICON: Record<string, ReactNode> = {
   profile: <MiniIcon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c.9-4 4-6 8-6s7.1 2 8 6" />,
   appearance: <MiniIcon d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.2-4-7.6-9-7.6zM7.5 12.5h.01M9.5 8h.01M14.5 8h.01" />,
@@ -112,7 +113,8 @@ const ME_ICON: Record<string, ReactNode> = {
   logout: <MiniIcon d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10" />,
   chat: <Icon name="help" />,
   guide: <MiniIcon d="M12 6.5C10 5 7.2 4.5 3 5v13.5c4.2-.5 7 0 9 1.5 2-1.5 4.8-2 9-1.5V5c-4.2-.5-7 0-9 1.5zM12 6.5V20" />,
-  videos: <span className="icon emoji-icon" aria-hidden="true">🎬</span>,
+  // Видео — линией (был эмодзи 🎬): экран с кнопкой «пуск»
+  videos: <MiniIcon d="M3 5h18v14H3zM10 9v6l5-3z" />,
   support: <MiniIcon d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM5.6 5.6l4.3 4.3M14.1 14.1l4.3 4.3M18.4 5.6l-4.3 4.3M9.9 14.1l-4.3 4.3" />,
   survey: <MiniIcon d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3" />,
   privacy: <MiniIcon d="M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3" />,
@@ -155,14 +157,14 @@ export function MeMenuItems({ me, onPick }: { me: Me; onPick: () => void }) {
 export function HelpMenuItems({ me, onChat, onPick }: { me: Me; onChat: () => void; onPick: () => void }) {
   return (
     <>
-      <Item icon={ME_ICON.chat} title="Спросить помощника" hint="Чат: ответит сразу, не знает — передаст команде Tish" onClick={() => { onPick(); onChat() }} />
+      <Item icon={ME_ICON.chat} tone="chat" title="Спросить помощника" hint="Чат: ответит сразу, не знает — передаст команде Tish" onClick={() => { onPick(); onChat() }} />
       {HELP_ITEMS.filter((i) => !i.hidden && i.show(me)).map((i) => (
-        <Item key={i.key} icon={ME_ICON[i.key]} title={i.title} onClick={() => { onPick(); openMine('help', i.key) }} />
+        <Item key={i.key} icon={ME_ICON[i.key]} tone={i.key} title={i.title} onClick={() => { onPick(); openMine('help', i.key) }} />
       ))}
       {/* Тот же тур, что при первом входе: 4–6 подсказок по главным местам */}
-      <Item icon={ME_ICON.tour} title="Пройти тур ещё раз" hint="Подсказки по главным местам Tish" onClick={() => { onPick(); startTour() }} />
+      <Item icon={ME_ICON.tour} tone="tour" title="Пройти тур ещё раз" hint="Подсказки по главным местам Tish" onClick={() => { onPick(); startTour() }} />
       <DoctorsGroupItem onPick={onPick} />
-      <Item icon={ME_ICON.instagram} title="Tish в Instagram" hint={`${TISH_INSTAGRAM_NAME} — видео-инструкции`} external
+      <Item icon={ME_ICON.instagram} tone="instagram" title="Tish в Instagram" hint={`${TISH_INSTAGRAM_NAME} — видео-инструкции`} external
         onClick={() => { onPick(); openLink(TISH_INSTAGRAM) }} />
     </>
   )
@@ -176,7 +178,7 @@ function DoctorsGroupItem({ onPick }: { onPick: () => void }) {
   const url = usePlatformInfo().data?.doctorsGroupUrl
   if (!url) return null
   return (
-    <Item icon={ME_ICON.group} title="Группа врачей Tish" hint="Новости, короткие видео «Как сделать», ответы на вопросы" external
+    <Item icon={ME_ICON.group} tone="group" title="Группа врачей Tish" hint="Новости, короткие видео «Как сделать», ответы на вопросы" external
       onClick={() => { onPick(); openLink(url) }} />
   )
 }

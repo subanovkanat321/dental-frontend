@@ -34,6 +34,8 @@
   /* Иконки листов «Ещё» и «Я» (2026-11-13): «Для пациента», «Настройки», «Платформа», «Помощь»; «Я» — оформление и «Выйти»
      (остальные пункты «Я» берут оттенки разделов). Все ≥3:1 на белом и на фоне CRM */
   --ico-learn: #1F7FA6; --ico-settings: #5A6F87; --ico-platform: #4F55B8; --ico-help: #C2602A; --ico-appearance: #A6508A; --ico-logout: #A65A5A;
+  /* «Помощь» (2026-11-13): техподдержка — синий, Instagram — приглушённый малиновый (≥4,3:1 на белом и фоне CRM) */
+  --ico-support: #2F6FB0; --ico-instagram: #B8466E;
   --status-ok: #11683A;
   --status-wait: #8A5200;
   --now: #E8573F;
@@ -74,6 +76,7 @@
   --accent-ink: #3CC6B9; --crm-page: #0D1A1D; --crm-sunken: #0F1F23;
   --ico-schedule: #2BB5A8; --ico-patients: #8FB0F5; --ico-cash: #7FD9A3; --ico-stock: #F2C46D; --ico-clinic: #B9AEE0;
   --ico-learn: #7CC7E6; --ico-settings: #A9B8CB; --ico-platform: #A3A8F0; --ico-help: #F0A577; --ico-appearance: #E0A3CF; --ico-logout: #E89A9A;
+  --ico-support: #86B6EA; --ico-instagram: #EE9AB8;
   --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #13252A; --rail-text: #93AAB0;
   --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
   --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
@@ -89,6 +92,7 @@
     --accent-ink: #3CC6B9; --crm-page: #0D1A1D; --crm-sunken: #0F1F23;
     --ico-schedule: #2BB5A8; --ico-patients: #8FB0F5; --ico-cash: #7FD9A3; --ico-stock: #F2C46D; --ico-clinic: #B9AEE0;
   --ico-learn: #7CC7E6; --ico-settings: #A9B8CB; --ico-platform: #A3A8F0; --ico-help: #F0A577; --ico-appearance: #E0A3CF; --ico-logout: #E89A9A;
+  --ico-support: #86B6EA; --ico-instagram: #EE9AB8;
     --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #13252A; --rail-text: #93AAB0;
     --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
     --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
