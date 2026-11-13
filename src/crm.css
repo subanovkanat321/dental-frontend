@@ -2287,3 +2287,45 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .opening-debts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .opening-debts li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
 .opening-debts p { margin: 0; }
+/* ===== Больше цвета (2026-11-13, DESIGN.md → Colors): владелец — «всё как будто белое». Цвет — там, где он
+   помогает найти важное: открытая вкладка и раздел меню, оттенок иконки раздела, итоги в сомах, шапки блоков
+   кассы. Сайт и самозапись не задеты: фон и подложки меняем только на страницах с меню CRM (.shell) */
+:root:has(.shell) { --page: var(--crm-page); --sunken: var(--crm-sunken); }
+/* Текст на мягкой бирюзовой заливке — --accent-ink (AA), а не --link */
+.nav.active, .nav-subitem.active, .more-item.active { color: var(--accent-ink); }
+:root:has(.shell) .segments button[aria-pressed=true] { color: var(--accent-ink); }
+/* Иконки разделов — свой приглушённый оттенок; подпись нейтральная. Открытый раздел — бирюзовым */
+.nav[data-section=schedule] .icon { color: var(--ico-schedule); }
+.nav[data-section=patients] .icon { color: var(--ico-patients); }
+.nav[data-section=cash] .icon { color: var(--ico-cash); }
+.nav[data-section=stock] .icon { color: var(--ico-stock); }
+.nav[data-section=clinic] .icon { color: var(--ico-clinic); }
+.nav.active .icon { color: var(--accent); }
+@media (min-width: 761px) {
+  .shell.narrow .nav-item.sub-active > .nav-row > .nav.active { color: var(--accent-ink); }
+}
+/* Телефон, нижнее меню: открытый раздел — бирюзовая «таблетка» вокруг иконки и бирюзовая подпись (и когда
+   открыт подраздел: раньше кнопка была без заливки). Вся ячейка не заливается — рядом вкладки с заливкой */
+@media (max-width: 760px) {
+  .sidebar .nav.active, .nav-item.sub-active > .nav-row > .nav.active { background: none; color: var(--accent-ink); }
+  .sidebar .nav .icon { width: 52px; height: 28px; padding: 3px 15px; border-radius: 14px; transition: background .15s; }
+  .sidebar .nav.active .icon { background: var(--accent-soft); }
+}
+/* Вкладки подразделов: открытая — мягкая бирюзовая заливка со скруглённым верхом, бирюзовый текст и
+   полоска 4px; остальные — приглушённым текстом, при наведении (компьютер) — серой подложкой */
+.sub-tab { align-self: end; height: calc(100% - 6px); border-radius: var(--r-md) var(--r-md) 0 0; transition: color .15s ease-out, background .15s ease-out; }
+.sub-tab.active { background: var(--accent-soft); color: var(--accent-ink); }
+.sub-tabs-ink { height: 4px; }
+@media (min-width: 761px) {
+  .sub-tab:hover:not(.active) { background: var(--sunken); }
+}
+/* Итоги в сомах: пришло — зелёным, расходы — янтарным, «Чистыми» — бирюзовым (минус — красным, как было) */
+.money-cell .total[aria-label="Касса за период"] { color: var(--status-ok); }
+.total[aria-label="Расходы за месяц"] { color: var(--status-wait); }
+dd[aria-label="Чистыми"]:not(.tone-bad) { color: var(--accent-ink); }
+/* Шапки блоков кассы — короткая цветная черта слева: глаз находит блок при прокрутке. Цвет — по смыслу:
+   «К оплате» — персиковый кассы, долги — красный, остальное — бирюзовый */
+.schedule-main.cash > .card-block > h2:first-child { display: flex; align-items: center; gap: 8px; }
+.schedule-main.cash > .card-block > h2:first-child::before { content: ''; flex: none; width: 4px; height: 1.05em; border-radius: 2px; background: var(--accent); }
+.schedule-main.cash > .card-block:has(table[aria-label="К оплате на кассе"]) > h2:first-child::before { background: var(--cash-ink); }
+.schedule-main.cash > .card-block:has(table[aria-label="Долги пациентов"]) > h2:first-child::before { background: var(--bad-ink); }
