@@ -234,6 +234,8 @@ test('карточка приёма: «Расход по пациенту (те�
   const form = within(panel).getByRole('form', { name: 'Расход по пациенту' })
   await userEvent.type(within(form).getByLabelText('Сумма, сом'), '4500')
   await userEvent.type(within(form).getByLabelText(/Комментарий/), 'коронка')
+  // Чей расход — видно: по умолчанию врач приёма
+  expect(within(form).getByRole('combobox', { name: 'Чей расход' })).toHaveTextContent('Дастан Т.')
   await userEvent.click(within(form).getByRole('button', { name: 'Добавить расход' }))
   expect(await within(panel).findByText(/Расходы по пациенту:/)).toHaveTextContent(/4\s500 сом/)
   expect(expense).toMatchObject({ amountSom: 4500, category: 'Зуботехническая лаборатория', comment: 'коронка', doctorId: 2 })
