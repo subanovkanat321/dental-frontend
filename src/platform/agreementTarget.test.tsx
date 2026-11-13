@@ -20,7 +20,7 @@ afterEach(() => {
 
 const owner = { ...me, owner: true, platform: true }
 const clinic = (id: number, name: string) => ({
-  id, name, code: `c${id}`, doctors: 1, staff: 1, patients: 3, appointments: 4, done30: 4, noShow30: 0, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, demo: false
+  id, name, code: `c${id}`, doctors: 1, staff: 1, patients: 3, appointments: 4, done30: 4, noShow30: 0, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false
 }) satisfies Schemas['PlatformServiceClinicRow']
 
 const statuses: Record<string, Schemas['AgreementsStatus']> = {

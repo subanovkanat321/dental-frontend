@@ -5771,115 +5771,6 @@
         }
       }
     },
-    "/api/platform/demo" : {
-      "get" : {
-        "tags" : [ "demo-controller" ],
-        "operationId" : "status",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DemoClinicServiceStatus"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "tags" : [ "demo-controller" ],
-        "operationId" : "create_7",
-        "responses" : {
-          "201" : {
-            "description" : "Created",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DemoClinicServiceStatus"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/demo/refresh" : {
-      "post" : {
-        "tags" : [ "demo-controller" ],
-        "operationId" : "refresh",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DemoClinicServiceStatus"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/demo/invite" : {
-      "post" : {
-        "tags" : [ "demo-controller" ],
-        "operationId" : "invite",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DemoControllerGuest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DoctorInvitesInvite"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/platform/demo/enter" : {
-      "post" : {
-        "tags" : [ "demo-controller" ],
-        "operationId" : "enter",
-        "responses" : {
-          "204" : {
-            "description" : "No Content"
-          }
-        }
-      }
-    },
-    "/api/platform/demo/close-guests" : {
-      "post" : {
-        "tags" : [ "demo-controller" ],
-        "operationId" : "closeGuests",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DemoClinicServiceStatus"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/platform/content" : {
       "get" : {
         "tags" : [ "content-controller" ],
@@ -5919,7 +5810,7 @@
       },
       "post" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "create_8",
+        "operationId" : "create_7",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6197,7 +6088,7 @@
       },
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "create_9",
+        "operationId" : "create_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6298,7 +6189,7 @@
     "/api/platform/clinics/{id}/enter" : {
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "enter_1",
+        "operationId" : "enter",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6553,7 +6444,7 @@
       },
       "post" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "create_10",
+        "operationId" : "create_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6655,7 +6546,7 @@
     "/api/patients" : {
       "post" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "create_11",
+        "operationId" : "create_10",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7835,7 +7726,7 @@
     "/api/members/invite" : {
       "post" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "invite_1",
+        "operationId" : "invite",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8115,7 +8006,7 @@
       },
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "create_12",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8241,7 +8132,7 @@
     "/api/doctors/{id}/invite" : {
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "invite_2",
+        "operationId" : "invite_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -8316,7 +8207,7 @@
     "/api/comebacks/{patientId}/invite" : {
       "post" : {
         "tags" : [ "comeback-controller" ],
-        "operationId" : "invite_3",
+        "operationId" : "invite_2",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -8477,7 +8368,7 @@
     "/api/clinic/pay/requests" : {
       "post" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "create_13",
+        "operationId" : "create_12",
         "parameters" : [ {
           "name" : "months",
           "in" : "query",
@@ -9064,7 +8955,7 @@
       },
       "post" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "create_14",
+        "operationId" : "create_13",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9111,7 +9002,7 @@
       },
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "create_15",
+        "operationId" : "create_14",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9291,7 +9182,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_16",
+        "operationId" : "create_15",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10520,7 +10411,7 @@
     "/web/login/telegram/status" : {
       "get" : {
         "tags" : [ "telegram-login-controller" ],
-        "operationId" : "status_1",
+        "operationId" : "status",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15670,12 +15561,9 @@
           },
           "settingUp" : {
             "type" : "boolean"
-          },
-          "demo" : {
-            "type" : "boolean"
           }
         },
-        "required" : [ "appointments", "bookedWeek", "demo", "doctors", "done30", "hidden", "id", "listed", "noShow30", "patients", "selfBooked30", "settingUp", "staff", "unmarked" ]
+        "required" : [ "appointments", "bookedWeek", "doctors", "done30", "hidden", "id", "listed", "noShow30", "patients", "selfBooked30", "settingUp", "staff", "unmarked" ]
       },
       "AgreementControllerAssignment" : {
         "properties" : {
@@ -18704,43 +18592,6 @@
           "nextStepOn" : {
             "type" : "string",
             "format" : "date"
-          }
-        }
-      },
-      "DemoClinicServiceStatus" : {
-        "properties" : {
-          "clinicId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "doctors" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "patients" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "appointments" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "guests" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        },
-        "required" : [ "appointments", "doctors", "patients" ]
-      },
-      "DemoControllerGuest" : {
-        "properties" : {
-          "fullName" : {
-            "type" : "string"
           }
         }
       },
