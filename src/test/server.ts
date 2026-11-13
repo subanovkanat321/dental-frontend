@@ -24,8 +24,9 @@ export const server = setupServer(
   http.get('*/api/opening-debts', () => HttpResponse.json([] satisfies Schemas['OpeningDebtsView'][])),
   // Подсказка «🪑 время коллеги по креслу» в «Новой записи» и переносе: по умолчанию коллеги в это время нет
   http.get('*/api/appointments/chair-check', () => HttpResponse.json({ strict: false } satisfies Schemas['ChairCheckView'])),
-  // Кейс на /join не заполнен — блока нет
-  http.get('*/web/case', () => HttpResponse.json({ metrics: [], shown: false } satisfies Schemas['JoinCaseCase'])),
+  // Кейс на /join не заполнен — блока нет; черновик в «Платформа → Настройки» — пустой
+  http.get('*/web/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),
+  http.get('*/api/platform/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),
   // Ролик и презентация на /join: по умолчанию каталога материалов нет — блока нет
   http.get('*/web/materials/public', () => HttpResponse.json({ video: null, poster: null, presentation: null })),
   // «Помощь → Видео: как сделать»: по умолчанию роликов нет

@@ -1,16 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { api, ApiError, howToVideos, unwrap, type Schemas } from '../api/client'
 import { inTelegram } from '../lib/telegram'
 import { shortDate } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
-import { folderRank, folderTitle, MATERIAL_LINKS, sizeText, videoLabel } from './materials'
+import { durationText, groupMaterials, MATERIAL_LINKS, materialTitle, noMusicOf, posterOf, postPlace, sizeText, type Material } from './materials'
 import { SubHelp } from '../layout/PageHead'
 
 type Listing = Schemas['MaterialsListing']
-type Material = Schemas['MaterialsMaterial']
 
 /** Ссылка из списка — от корня сайта; Telegram открывает только полный адрес. */
 function absolute(url: string): string {
@@ -18,10 +17,11 @@ function absolute(url: string): string {
 }
 
 /**
- * «Платформа → Материалы» — только владелец платформы (сервер отвечает 403 остальным): готовые ролики,
- * презентация для клиник и картинки для Instagram из docs/marketing на сервере, ссылки на сайт-визитку и Instagram — не потерять и показать
- * клинике с телефона. Файлы — по подписанным ссылкам из списка (на 6 ч): плеер и новая вкладка не умеют
- * ставить заголовок входа Mini App. В Telegram «Открыть» и «Скачать» уходят в браузер телефона.
+ * «Платформа → Материалы» — только владелец платформы (сервер отвечает 403 остальным): ролики, презентация,
+ * инструкция и картинки из docs/marketing на сервере — по группам «для чего». У каждого — превью, длительность,
+ * размер, дата и «Открыть / Скачать / Поделиться». Опубликованное в Instagram или в группе Tish — ссылкой на пост
+ * (V211): сам файл после публикации на сервере можно не хранить. «Устарел» — интерфейс в нём уже другой, пересоздать.
+ * Файлы — по подписанным ссылкам из списка (на 6 ч): плеер и новая вкладка не умеют ставить заголовок входа Mini App.
  */
 export function MaterialsTab() {
   const list = useQuery<Listing, ApiError>({
@@ -31,16 +31,16 @@ export function MaterialsTab() {
     staleTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   })
+  // Названия роликов «Как сделать» — из того же белого списка, что «Помощь → Видео»
+  const howTo = useQuery({ queryKey: ['howto-videos'], queryFn: howToVideos, staleTime: 10 * 60_000 })
+  const titles = Object.fromEntries((howTo.data ?? []).map((h) => [h.id, h.title]))
   const files = list.data?.files ?? []
-  const videos = files.filter((f) => f.section === 'video')
-  const decks = files.filter((f) => f.section === 'presentation')
-  const instagram = files.filter((f) => f.section === 'instagram')
-  const guides = files.filter((f) => f.section === 'guide')
-  const other = files.filter((f) => f.section === 'other')
+  const groups = groupMaterials(files)
+  const stale = groups.flatMap((g) => g.files).filter((f) => f.stale && f.url)
   return (
     <>
-      <SubHelp title="Материалы">Рекламные ролики, презентация для клиник и картинки для Instagram — всегда под рукой: посмотреть,
-          показать клинике или скачать на телефон.</SubHelp>
+      <SubHelp title="Материалы">Что показать и отправить: рекламный ролик и презентация — клиникам, ролики «Как сделать» — врачам,
+        рилсы и картинки — в Instagram. Опубликовали в Instagram или группе — сохраните ссылку на пост: файл на сервере больше не нужен.</SubHelp>
       <section className="card-block" aria-label="Материалы">
         {list.error && <p className="error" role="alert">Не удалось загрузить материалы: {list.error.message}</p>}
         {list.isPending && <Loading />}
@@ -51,42 +51,45 @@ export function MaterialsTab() {
         {list.data?.configured && files.length === 0 && (
           <EmptyState compact title="Файлов пока нет">Положите их в docs/marketing репозитория и обновите сервер.</EmptyState>
         )}
-      </section>
-      <LinksBlock />
-      {videos.length > 0 && <VideosBlock files={videos} onExpired={() => void list.refetch()} />}
-      {decks.length > 0 && (
-        <section className="card-block" aria-label="Презентация">
-          <h2>Презентация</h2>
-          <ul className="materials-list">{decks.map((f) => <FileRow key={f.path} file={f} label={deckLabel(f)} />)}</ul>
-        </section>
-      )}
-      {guides.length > 0 && (
-        <section className="card-block" aria-label="Инструкция для клиник">
-          <h2>Инструкция для клиник</h2>
-          <p className="hint">Руководство Tish одним PDF — отправить клинике или распечатать. Для одной роли — печатная версия
-            на сайте: <a href="/guide?print=1" target="_blank" rel="noopener noreferrer">tish.kg/guide?print=1</a> (вверху — выбор роли в обычной версии).</p>
-          <ul className="materials-list">{guides.map((f) => <FileRow key={f.path} file={f} label={f.name ?? ''} />)}</ul>
-        </section>
-      )}
-      {instagram.length > 0 && (
-        <section className="card-block" aria-label="Instagram">
-          <h2>Instagram</h2>
-          <div className="materials-images">
-            {instagram.filter((f) => f.kind === 'image').map((f) => <ImageCard key={f.path} file={f} />)}
+        {stale.length > 0 && (
+          <div className="materials-stale" role="note" aria-label="Устарели">
+            <strong>Устарели после изменений интерфейса 13 ноября (персонал, касса, кресла, помощь) — пересоздать:</strong>
+            <ul>{[...new Set(stale.map((f) => groupName(f, groups)))].map((name) => <li key={name}>{name}</li>)}</ul>
           </div>
+        )}
+      </section>
+      {groups.map(({ group, files: items }) => (
+        <section key={group.id} className="card-block" aria-label={group.title}>
+          <h2>{group.title}</h2>
+          <p className="hint">{group.purpose}</p>
+          {group.id === 'guide' && (
+            <p className="hint">Для одной роли — печатная версия на сайте:{' '}
+              <a href="/guide?print=1" target="_blank" rel="noopener noreferrer">tish.kg/guide?print=1</a>.</p>
+          )}
+          <ul className="materials-cards">
+            {(group.id === 'howto' ? byHowToOrder(items, howTo.data ?? []) : items).map((f) => <MaterialCard key={f.path} file={f} all={files} title={materialTitle(f, titles)} onExpired={() => void list.refetch()} />)}
+          </ul>
         </section>
-      )}
-      {other.length > 0 && (
-        <section className="card-block" aria-label="Другое">
-          <h2>Другое</h2>
-          <ul className="materials-list">{other.map((f) => <FileRow key={f.path} file={f} label={f.name ?? ''} />)}</ul>
-        </section>
-      )}
+      ))}
+      <LinksBlock />
     </>
   )
 }
 
-/** «Ссылки»: сайт-визитка и Instagram — открыть или скопировать, чтобы отправить клинике. */
+/** Ролики «Как сделать» — в порядке «Помощи → Видео» (белый список сервера), а не по алфавиту файлов. */
+function byHowToOrder(files: Material[], order: Schemas['MaterialsHowToVideo'][]): Material[] {
+  const rank = (f: Material) => {
+    const i = order.findIndex((h) => `${h.id}.mp4` === f.name)
+    return i < 0 ? order.length : i
+  }
+  return [...files].sort((a, b) => rank(a) - rank(b))
+}
+
+function groupName(f: Material, groups: ReturnType<typeof groupMaterials>): string {
+  return groups.find((g) => g.files.includes(f))?.group.title ?? f.name ?? ''
+}
+
+/** «Ссылки»: сайт-визитка, /join и Instagram — открыть или скопировать, чтобы отправить клинике. */
 function LinksBlock() {
   const [copied, setCopied] = useState<string | null>(null)
   const copy = async (url: string) => {
@@ -100,6 +103,7 @@ function LinksBlock() {
   return (
     <section className="card-block" aria-label="Ссылки">
       <h2>Ссылки</h2>
+      <p className="hint">Отправить клинике вместо файла: страницы открываются с телефона.</p>
       <ul className="materials-list">
         {MATERIAL_LINKS.map((l) => (
           <li key={l.url}>
@@ -119,104 +123,145 @@ function LinksBlock() {
   )
 }
 
-function deckLabel(f: Material): string {
-  return f.kind === 'pdf' ? 'Презентация · PDF' : f.kind === 'pptx' ? 'Презентация · PowerPoint' : (f.name ?? '')
-}
-
-/** Ролики по папкам: самая новая версия открыта сразу, остальные — свёрнуты (плееры грузятся при раскрытии). */
-function VideosBlock({ files, onExpired }: { files: Material[]; onExpired: () => void }) {
-  const folders = [...new Set(files.map((f) => f.folder ?? ''))]
-    .sort((a, b) => folderRank(a) - folderRank(b) || a.localeCompare(b))
-  const [first, ...rest] = folders
+/** Карточка материала: превью, название, длительность · размер · дата, пометка «устарел», кнопки. */
+function MaterialCard({ file, all, title, onExpired }: { file: Material; all: Material[]; title: string; onExpired: () => void }) {
+  const poster = file.kind === 'video' ? posterOf(file, all) : file.kind === 'image' ? file : null
+  const facts = [durationText(file.seconds), file.url ? sizeText(file.size) : 'файла на сервере нет', file.modified ? shortDate(file.modified) : null]
+    .filter(Boolean).join(' · ')
   return (
-    <section className="card-block" aria-label="Ролики">
-      <h2>Ролики</h2>
-      <h3>{folderTitle(first ?? '')}</h3>
-      <VideoGroup files={files.filter((f) => (f.folder ?? '') === (first ?? ''))} onExpired={onExpired} />
-      {rest.map((folder) => <FolderDetails key={folder} folder={folder} files={files.filter((f) => (f.folder ?? '') === folder)} onExpired={onExpired} />)}
-    </section>
-  )
-}
-
-function FolderDetails({ folder, files, onExpired }: { folder: string; files: Material[]; onExpired: () => void }) {
-  const [open, setOpen] = useState(false)
-  const count = files.filter((f) => f.kind === 'video').length
-  return (
-    <details className="materials-folder" onToggle={(e) => setOpen(e.currentTarget.open)}>
-      <summary>{folderTitle(folder)} <span className="hint">· {count} {count === 1 ? 'ролик' : count < 5 ? 'ролика' : 'роликов'}</span></summary>
-      {open && <VideoGroup files={files} onExpired={onExpired} />}
-    </details>
-  )
-}
-
-function VideoGroup({ files, onExpired }: { files: Material[]; onExpired: () => void }) {
-  const videos = files.filter((f) => f.kind === 'video')
-  const extras = files.filter((f) => f.kind !== 'video')
-  return (
-    <>
-      <div className="materials-videos">{videos.map((f) => <VideoCard key={f.path} file={f} onExpired={onExpired} />)}</div>
-      {extras.length > 0 && (
-        <ul className="materials-list">
-          {extras.map((f) => <FileRow key={f.path} file={f} label={f.kind === 'subtitles' ? `Субтитры · ${f.name}` : f.kind === 'image' ? `Обложка · ${f.name}` : (f.name ?? '')} />)}
-        </ul>
-      )}
-    </>
-  )
-}
-
-function VideoCard({ file, onExpired }: { file: Material; onExpired: () => void }) {
-  const [failed, setFailed] = useState(false)
-  const label = videoLabel(file.name ?? '', file.folder ?? '')
-  return (
-    <figure className="materials-video">
-      <video controls preload="metadata" playsInline src={file.url} aria-label={label} onError={() => setFailed(true)} />
-      <figcaption>
-        <span className="strong">{label}</span>
-        <span className="hint small">{file.name} · <span className="num">{sizeText(file.size)}</span></span>
-        {failed && (
-          <span className="error small" role="alert">Ролик не проигрывается здесь: ссылка могла устареть (обновите) или браузер
-            не знает этот формат — тогда «Открыть» или «Скачать».{' '}
-            <button type="button" className="btn small" onClick={() => { setFailed(false); onExpired() }}>Обновить</button></span>
-        )}
-        <Buttons file={file} label={label} />
-      </figcaption>
-    </figure>
-  )
-}
-
-function ImageCard({ file }: { file: Material }) {
-  return (
-    <figure className="materials-image">
-      <img src={file.url} alt={`Картинка ${file.name}`} loading="lazy" />
-      <figcaption>
-        <span className="hint small">{file.name}</span>
-        <Buttons file={file} label={file.name ?? ''} />
-      </figcaption>
-    </figure>
-  )
-}
-
-function FileRow({ file, label }: { file: Material; label: string }) {
-  return (
-    <li>
-      <span className="materials-name">
-        <span className="strong">{label}</span>
-        <span className="hint small">{file.name} · <span className="num">{sizeText(file.size)}</span>
-          {file.modified && <> · {shortDate(file.modified)}</>}</span>
-      </span>
-      <Buttons file={file} label={label} />
+    <li className="materials-card">
+      <Preview file={file} poster={poster} title={title} onExpired={onExpired} />
+      <div className="materials-card-body">
+        <span className="strong">{title}{file.stale && <> <span className="badge-stale">устарел</span></>}</span>
+        <span className="hint small"><span className="num">{facts}</span>{file.url && <> · {file.name}</>}</span>
+        {file.stale && <span className="hint small">{file.stale}</span>}
+        <Buttons file={file} title={title} />
+        <NoMusic file={noMusicOf(file, all)} title={title} />
+        {/* Ссылка на пост — для того, что публикуют в Instagram; рекламный ролик нужен файлом (WhatsApp, /join) */}
+        {(file.section === 'reels' || file.section === 'instagram' || (file.section === 'video' && !/^promo-v/.test(file.folder ?? ''))) && <PostLink file={file} title={title} />}
+      </div>
     </li>
   )
 }
 
-/** «Открыть» — во вкладке (в Telegram — браузером телефона), «Скачать» — файлом. */
-function Buttons({ file, label }: { file: Material; label: string }) {
-  const open = absolute(file.url ?? '')
-  const download = absolute(file.downloadUrl ?? '')
+/**
+ * Превью: картинка-обложка с «▶» — плеер появляется по нажатию (двадцать плееров сразу грузили бы двадцать
+ * роликов); без обложки — первый кадр (preload="metadata"). Файла нет — значок места публикации.
+ */
+function Preview({ file, poster, title, onExpired }: { file: Material; poster: Material | null; title: string; onExpired: () => void }) {
+  const [playing, setPlaying] = useState(false)
+  const [failed, setFailed] = useState(false)
+  if (!file.url) return <div className="materials-thumb materials-thumb-empty" aria-hidden="true">{file.postUrl ? '↗' : '—'}</div>
+  if (file.kind === 'video') {
+    if (!playing && poster?.url) {
+      return (
+        <button type="button" className="materials-thumb" onClick={() => setPlaying(true)} aria-label={`Смотреть: ${title}`}>
+          <img src={poster.url} alt="" loading="lazy" /><span className="materials-play" aria-hidden="true">▶</span>
+        </button>
+      )
+    }
+    return (
+      <div className="materials-thumb">
+        <video controls autoPlay={playing} preload="metadata" playsInline src={file.url} aria-label={title} onError={() => setFailed(true)} />
+        {failed && (
+          <span className="error small" role="alert">Не проигрывается: ссылка могла устареть.{' '}
+            <button type="button" className="btn small" onClick={() => { setFailed(false); onExpired() }}>Обновить</button></span>
+        )}
+      </div>
+    )
+  }
+  if (poster?.url) return <div className="materials-thumb"><img src={poster.url} alt={`Картинка ${file.name}`} loading="lazy" /></div>
+  return <div className="materials-thumb materials-thumb-empty" aria-hidden="true">{file.kind === 'pdf' ? 'PDF' : file.kind === 'pptx' ? 'PPTX' : '📄'}</div>
+}
+
+/**
+ * «Открыть» — во вкладке (в Telegram — браузером телефона), «Скачать» — файлом, «Поделиться» — постоянной ссылкой
+ * (пост, /join, «Помощь → Видео») или самим файлом через меню телефона; иначе — ссылка на 6 ч в буфер.
+ * Опубликованное — «Открыть в Instagram ↗» вместо файла.
+ */
+function Buttons({ file, title }: { file: Material; title: string }) {
+  const [note, setNote] = useState('')
+  const share = async () => {
+    setNote('')
+    const permanent = file.postUrl ?? (file.shareUrl ? absolute(file.shareUrl) : null)
+    try {
+      if (permanent) {
+        if (navigator.share) await navigator.share({ title, url: permanent })
+        else { await navigator.clipboard.writeText(permanent); setNote('Ссылка скопирована') }
+        return
+      }
+      if (file.url && navigator.canShare) {
+        const blob = await fetch(absolute(file.url)).then((r) => r.blob())
+        const shared = new File([blob], file.name ?? 'file', { type: blob.type })
+        if (navigator.canShare({ files: [shared] })) {
+          await navigator.share({ files: [shared], title })
+          return
+        }
+      }
+      await navigator.clipboard.writeText(absolute(file.url ?? ''))
+      setNote('Ссылка скопирована — работает 6 часов')
+    } catch {
+      // Отменили меню «Поделиться» — ничего
+    }
+  }
+  const open = file.url ? absolute(file.url) : null
+  const download = file.downloadUrl ? absolute(file.downloadUrl) : null
   return (
     <span className="actions">
-      <a className="btn small" href={open} target="_blank" rel="noreferrer" onClick={inTelegram(open)} aria-label={`Открыть: ${label}`}>Открыть</a>
-      <a className="btn small" href={download} download={file.name} onClick={inTelegram(download)} aria-label={`Скачать: ${label}`}>Скачать</a>
+      {file.postUrl && (
+        <a className="btn small primary" href={file.postUrl} target="_blank" rel="noreferrer" onClick={inTelegram(file.postUrl)}
+          aria-label={`Открыть в ${postPlace(file.postUrl)}: ${title}`}>{`Открыть в ${postPlace(file.postUrl)} ↗`}</a>
+      )}
+      {file.groupUrl && (
+        <a className="btn small" href={file.groupUrl} target="_blank" rel="noreferrer" onClick={inTelegram(file.groupUrl)}
+          aria-label={`В группе Tish: ${title}`}>В группе ↗</a>
+      )}
+      {!file.postUrl && open && <a className="btn small" href={open} target="_blank" rel="noreferrer" onClick={inTelegram(open)} aria-label={`Открыть: ${title}`}>Открыть</a>}
+      {!file.postUrl && download && <a className="btn small" href={download} download={file.name} onClick={inTelegram(download)} aria-label={`Скачать: ${title}`}>Скачать</a>}
+      {(file.postUrl || file.url) && <button type="button" className="btn small" onClick={() => void share()} aria-label={`Поделиться: ${title}`}>Поделиться</button>}
+      {note && <span className="hint small" role="status">{note}</span>}
     </span>
+  )
+}
+
+/** Версия рилса без музыки (наложить трендовый звук в Instagram) — ссылкой «Скачать». */
+function NoMusic({ file, title }: { file: Material | null; title: string }) {
+  if (!file?.downloadUrl) return null
+  const download = absolute(file.downloadUrl)
+  return (
+    <span className="hint small">Без музыки — под свой звук в Instagram:{' '}
+      <a href={download} download={file.name} onClick={inTelegram(download)} aria-label={`Скачать без музыки: ${title}`}>скачать</a>
+      {file.size ? <> · <span className="num">{sizeText(file.size)}</span></> : null}</span>
+  )
+}
+
+/** «Опубликовано в Instagram»: ссылка на пост — показываем её вместо файла; пусто — убрать. */
+function PostLink({ file, title }: { file: Material; title: string }) {
+  const client = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [url, setUrl] = useState(file.postUrl ?? '')
+  const save = useMutation<Listing, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/platform/materials/link', { body: { path: file.path, url } })),
+    onSuccess: (listing) => {
+      client.setQueryData(['platform-materials'], listing)
+      setOpen(false)
+    },
+  })
+  if (!open) {
+    return (
+      <button type="button" className="link small" onClick={() => setOpen(true)} aria-label={`Ссылка на публикацию: ${title}`}>
+        {file.postUrl ? 'Изменить ссылку на пост' : 'Опубликовали? Сохранить ссылку на пост'}</button>
+    )
+  }
+  return (
+    <form className="row-fields" aria-label={`Ссылка на публикацию: ${title}`} onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
+      <label className="field"><span>Ссылка на пост в Instagram или сообщение в Telegram</span>
+        <input type="url" value={url} placeholder="https://www.instagram.com/reel/…" onChange={(e) => setUrl(e.target.value)} /></label>
+      {save.error && <p className="error" role="alert">{save.error.fieldErrors.url ?? save.error.message}</p>}
+      <span className="actions">
+        <button type="submit" className="btn small primary" disabled={save.isPending}>Сохранить</button>
+        <button type="button" className="btn small" onClick={() => setOpen(false)}>Отмена</button>
+      </span>
+    </form>
   )
 }

@@ -995,19 +995,32 @@ button.timesheet-day:hover { border-color: var(--accent); }
 @media (max-width: 760px) { .content-post .actions .btn { flex: 1 1 auto; } }
 
 /* «Платформа → Материалы» (src/platform/MaterialsTab): ролики с плеером, презентация, картинки Instagram */
-.materials-videos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-.materials-video, .materials-image { display: grid; gap: 8px; align-content: start; margin: 0; padding: 10px; border: 1px solid var(--separator); border-radius: var(--r-md); }
-.materials-video video { width: 100%; max-height: 360px; border-radius: var(--r-sm); background: #000; }
-.materials-video figcaption, .materials-image figcaption { display: grid; gap: 4px; }
-.materials-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-.materials-image img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--r-sm); background: var(--sunken); }
+.materials-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; margin: 8px 0 0; padding: 0; list-style: none; }
+.materials-card { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+.materials-card-body { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.materials-card-body .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.materials-thumb { position: relative; display: grid; place-items: center; width: 96px; aspect-ratio: 4 / 5; padding: 0; overflow: hidden; border: 0; border-radius: var(--r-sm); background: var(--sunken); color: var(--hint); font: inherit; font-weight: 600; cursor: pointer; }
+.materials-thumb img, .materials-thumb video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+.materials-card:has(video:not([poster])) .materials-thumb { cursor: default; }
+.materials-thumb-empty { cursor: default; }
+.materials-play { position: absolute; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgb(0 0 0 / .55); color: #fff; font-size: .9rem; }
+/* Играющий ролик — во всю ширину карточки */
+.materials-card:has(video) { grid-template-columns: 1fr; }
+.materials-card:has(video) .materials-thumb { width: 100%; aspect-ratio: auto; max-height: 420px; }
+.materials-card:has(video) .materials-thumb video { height: auto; max-height: 420px; object-fit: contain; }
+.materials-stale { padding: 10px 14px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--wait-ink); }
+.materials-stale ul { margin: 6px 0 0; padding-left: 20px; }
+.badge-stale { padding: 1px 8px; border-radius: 999px; background: var(--wait-bg); color: var(--wait-ink); font-size: .78rem; font-weight: 600; white-space: nowrap; }
+.join-case-preview { display: grid; gap: 8px; padding: 14px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); background: var(--card); }
+.join-case-preview h3, .join-case-preview h4, .join-case-preview p { margin: 0; }
+.join-case-preview .site-case-metrics { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.join-case-preview .site-case-metrics li { display: grid; gap: 2px; padding: 8px 10px; border-radius: 12px; background: var(--accent-soft); }
+.join-case-preview .site-case-metrics b { font-size: 1.3rem; color: var(--link); font-variant-numeric: tabular-nums; }
+.join-case-preview .site-case-metrics span { color: var(--hint); font-size: .85rem; }
 .materials-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .materials-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-top: 1px solid var(--separator); }
 .materials-list li:first-child { border-top: 0; }
 .materials-name { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
-.materials-folder { margin-top: 12px; }
-.materials-folder summary { cursor: pointer; font-weight: 500; }
-.materials-folder[open] summary { margin-bottom: 10px; }
 
 /* Документы приёма и плана: памятка, квитанция — «🖨 Печать» и «📤 Отправить пациенту» (src/print) */
 .visit-docs {

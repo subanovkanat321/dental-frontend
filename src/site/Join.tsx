@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
+import { CaseBlock } from './CaseBlock'
 import { SiteHeader } from './SiteHeader'
 import { getJson, inAppBrowser, type JoinCase, type Links, type PublicMaterials, type Tariffs } from './web'
 
@@ -37,7 +38,7 @@ export function Join() {
   useEffect(() => {
     document.title = 'Tish — запись пациентов для стоматологии'
     if (inAppBrowser()) void getJson<Links>('/web/links').then(({ data }) => setLinks(data ?? {}))
-    // Кейс владелец заполняет в «Платформа → Настройки»; не заполнен — блока нет
+    // Кейс владелец заполняет в «Платформа → Настройки»; не заполнен или клиника не дала согласия — блока нет
     // Ролик и PDF-презентация — на них ведёт ссылка из сообщения клиникам («Написать клиникам»)
     void getJson<PublicMaterials>('/web/materials/public').then(({ data }) => setMaterials(data ?? {}))
     void getJson<JoinCase>('/web/case').then(({ data }) => setStory(data?.shown ? data : null))
@@ -119,18 +120,7 @@ export function Join() {
       <ul className="site-features">
         {FEATURES.map(([icon, title, text]) => <li key={title}><span className="ico" aria-hidden="true">{icon}</span><span><strong>{title}</strong><span>{text}</span></span></li>)}
       </ul>
-      {story && (
-        <section className="site-case" aria-label="Как работает в клинике">
-          <h2>Как работает в клинике</h2>
-          <h3>{story.title}</h3>
-          <p>{story.text}</p>
-          {(story.metrics?.length ?? 0) > 0 && (
-            <ul className="site-case-metrics">
-              {story.metrics!.map((m) => <li key={`${m.value}${m.label}`}><b>{m.value}</b><span>{m.label}</span></li>)}
-            </ul>
-          )}
-        </section>
-      )}
+      {story && <CaseBlock story={story} />}
       {/* Цены пока не показываем (владелец, 2026-11-02): клиника сначала пробует бесплатно, о цене — в разговоре */}
       <h2 id="tariffs">Сколько стоит</h2>
       <p>Попробовать — бесплатно: всё приложение, без ограничений и без предоплаты.
