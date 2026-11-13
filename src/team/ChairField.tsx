@@ -13,7 +13,8 @@ const NEW = 'new'
 
 /**
  * «Кресло» в карточке врача (V185): несколько врачей с одним креслом не примут двух пациентов в одно
- * время — это проверяет сервер. Назначает руководитель: «— без кресла — / Кресло 1 / ＋ Новое кресло».
+ * время — это проверяет сервер. Назначает руководитель: «— без кресла — / Кресло 1 / ＋ Новое кресло»
+ * (то же — в «Клиника → Кресла»: кресло и его врачи).
  * Остальные видят, какое кресло и с кем оно общее. Если приёмы врачей уже пересекаются, сервер отвечает
  * 409 со списком — показываем его, чтобы руководитель перенёс.
  */
@@ -59,7 +60,6 @@ export function ChairField({ doctorId, me }: { doctorId: number; me: Me }) {
     create.mutate()
   }
   const shares = sharesText(current, doctorId, nameOf)
-  const conflicts = assign.error?.code === 'chair-conflicts' ? conflictsOf(assign.error.problem) : []
 
   return (
     <section className="form chair-field" aria-label="Кресло">
@@ -93,21 +93,30 @@ export function ChairField({ doctorId, me }: { doctorId: number; me: Me }) {
       {shares && <p className="hint">🪑 {current!.name} — {shares}</p>}
       {admin && <p className="hint">Названия кресел и что делать с записью в часы коллеги по креслу (предупреждать или запрещать) —{' '}
         <button type="button" className="link" onClick={() => openClinic('chairs')}>Клиника → Кресла</button>.</p>}
-      {assign.error && (
-        <div className="error" role="alert">
-          <p>{assign.error.message}</p>
-          {conflicts.length > 0 && (
-            <ul className="chair-conflicts">
-              {conflicts.map((c) => (
-                <li key={`${c.startAt}-${c.otherStartAt}`}>
-                  {dayTitle(dateOf(c.startAt!))}: {c.doctorName} {timeOf(c.startAt!)}–{timeOf(c.endAt!)} и {c.otherDoctorName} {timeOf(c.otherStartAt!)}–{timeOf(c.otherEndAt!)}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      {assign.error && <ChairAssignError error={assign.error} />}
     </section>
+  )
+}
+
+/**
+ * Ошибка назначения кресла: текст и, если приёмы врачей уже пересекаются (409 chair-conflicts), их список —
+ * день, врачи и время, без пациентов. Один вид в карточке врача и в «Клиника → Кресла».
+ */
+export function ChairAssignError({ error }: { error: ApiError }) {
+  const conflicts = error.code === 'chair-conflicts' ? conflictsOf(error.problem) : []
+  return (
+    <div className="error" role="alert">
+      <p>{error.message}</p>
+      {conflicts.length > 0 && (
+        <ul className="chair-conflicts">
+          {conflicts.map((c) => (
+            <li key={`${c.startAt}-${c.otherStartAt}`}>
+              {dayTitle(dateOf(c.startAt!))}: {c.doctorName} {timeOf(c.startAt!)}–{timeOf(c.endAt!)} и {c.otherDoctorName} {timeOf(c.otherStartAt!)}–{timeOf(c.otherEndAt!)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 

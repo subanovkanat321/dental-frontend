@@ -218,7 +218,7 @@ test('«Запрещать»: окно без кнопки «Записать»,
   expect(posts).toHaveLength(1)
 })
 
-test('«Настройки → Кресла»: переименовать, режим «Запрещать», удалить пустое', async () => {
+test('«Клиника → Кресла»: переименовать, режим «Запрещать», удалить пустое', async () => {
   let chairs: Schemas['ChairOverview'][] = [
     { id: 5, name: 'Кресло 1', doctorIds: [1, 2], overlaps: [], mode: 'WARN' },
     { id: 6, name: 'Кабинет 2', doctorIds: [], overlaps: [], mode: 'WARN' },
@@ -249,9 +249,9 @@ test('«Настройки → Кресла»: переименовать, ре�
   openItem('chairs')
 
   const first = await screen.findByRole('region', { name: 'Кресло 1' })
-  expect(first).toHaveTextContent('Врачи: Айгерим Садыкова, Дастан Т.')
-  // У кресла с врачами удалить нельзя — только пустое
-  expect(within(first).queryByRole('button', { name: 'Удалить кресло' })).not.toBeInTheDocument()
+  expect(within(first).getByRole('list', { name: 'Врачи: Кресло 1' })).toHaveTextContent('🪑 Айгерим Садыкова✕🪑 Дастан Т.✕')
+  // Удалить можно и кресло с врачами — с подтверждением (ChairsPage, chairs.test)
+  expect(within(first).getByRole('button', { name: 'Удалить кресло' })).toBeInTheDocument()
   expect(within(first).getByRole('radio', { name: /Предупреждать/ })).toBeChecked()
 
   await userEvent.click(within(first).getByRole('radio', { name: /Запрещать/ }))

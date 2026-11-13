@@ -653,6 +653,7 @@ button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family:
 .toolbar .back { padding-left: 6px; color: var(--link); }
 .hours-doctor { border-top: 1px solid var(--separator); padding: 4px 0; }
 .hours-toggle { display: flex; justify-content: space-between; width: 100%; padding: 10px 0; border: 0; background: none; color: var(--text); font: inherit; cursor: pointer; text-align: left; }
+.hours-toggle .hours-kind { margin-left: auto; margin-right: 8px; font-weight: 400; }
 .web-version { display: grid; gap: 6px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--separator); }
 .mobile-only { display: none; }
 @media (max-width: 760px) { .mobile-only { display: grid; } .toolbar .back { flex-basis: 100%; justify-content: flex-start; } }
@@ -2035,6 +2036,9 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .chair-item .chair-mode legend { padding: 0; margin-bottom: 4px; font-size: .85rem; color: var(--hint); }
 .chair-item .chair-mode .check { align-items: flex-start; }
 .chair-item .chair-mode input { flex: none; margin-top: 3px; }
+.chair-item .chair-doctors { display: grid; gap: 6px; max-width: 520px; }
+.chair-doctor-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chair-doctor-list .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--sunken); }
 
 /* Шапка «Расписания» на компьютере — компактно (2026-11-10): над сеткой две строки, а не шесть.
    1) дата, вид, действия и маленькая «Сводка дня»; 2) врачи слева, полоса «Сегодня» справа, «Отменено: N» в конце.
