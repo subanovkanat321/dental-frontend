@@ -21,6 +21,7 @@ import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
 import { TourHost } from '../tour/Tour'
+import { PushPrompt } from '../pwa/PushPrompt'
 import { useFullView } from '../lib/fullView'
 import { confirmLeave } from '../lib/unsaved'
 
@@ -391,6 +392,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       )}
       {/* Тур при первом входе (один раз на человека) и «Пройти тур ещё раз» из «Помощи» */}
       <TourHost me={me} page={page} />
+      {/* Первый запуск установленного приложения — предложить уведомления (после тура) */}
+      <PushPrompt me={me} />
     </div>
   )
 }

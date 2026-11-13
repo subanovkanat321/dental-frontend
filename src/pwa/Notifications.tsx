@@ -1,12 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
-import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { api, ApiError, unwrap } from '../api/client'
 import { telegram } from '../lib/telegram'
-import { currentSubscription, permission, pushSupport, subscribeThisDevice } from './push'
+import { currentSubscription, pushSupport } from './push'
+import { PUSH_KEY, useEnablePush, type PushView } from './useEnablePush'
 import './pwa.css'
-
-type View = Schemas['PushControllerPushView']
 
 /**
  * «Настройки → 🔔 Уведомления»: куда присылать уведомления — в Telegram (как раньше) или в
@@ -35,13 +34,13 @@ function Section({ children }: { children: React.ReactNode }) {
 
 function NotificationsBody() {
   const client = useQueryClient()
-  const view = useQuery({ queryKey: ['push'], queryFn: () => unwrap(api.GET('/api/push')) })
+  const view = useQuery({ queryKey: PUSH_KEY, queryFn: () => unwrap(api.GET('/api/push')) })
   const support = pushSupport()
-  const [allowed, setAllowed] = useState<NotificationPermission>(permission)
+  const { enable, allowed, busy: enabling, error, setError } = useEnablePush()
   // Подписан ли этот браузер: уведомления идут на устройства из подписок, а не «куда-то»
   const [here, setHere] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [testing, setTesting] = useState(false)
+  const busy = enabling || testing
   const [test, setTest] = useState<string | null>(null)
 
   useEffect(() => {
@@ -68,7 +67,7 @@ function NotificationsBody() {
   const noTelegram = data.noTelegram === true
   const fallback = 'Включите уведомления приложения, иначе сообщения о записях получит руководитель.'
 
-  const save = (next: View) => client.setQueryData(['push'], next)
+  const save = (next: PushView) => client.setQueryData(PUSH_KEY, next)
 
   const toTelegram = async () => {
     setError(null)
@@ -80,29 +79,15 @@ function NotificationsBody() {
     }
   }
 
-  // Разрешение браузер спрашивает только из нажатия: requestPermission — первым делом в обработчике
+  // Разрешение браузер спрашивает только из нажатия: enable зовёт requestPermission первым делом
   const toApp = async () => {
-    setError(null)
     setTest(null)
-    const answer = await Notification.requestPermission()
-    setAllowed(answer)
-    if (answer !== 'granted') return
-    setBusy(true)
-    try {
-      const subscription = await subscribeThisDevice(publicKey)
-      await unwrap(api.POST('/api/push/subscribe', { body: subscription }))
-      save(await unwrap(api.PUT('/api/push/channel', { body: { channel: 'APP' } })))
-      setHere(true)
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Не получилось подключить уведомления. Обновите страницу и попробуйте ещё раз.')
-    } finally {
-      setBusy(false)
-    }
+    if (await enable(publicKey)) setHere(true)
   }
 
   const sendTest = async () => {
     setTest(null)
-    setBusy(true)
+    setTesting(true)
     try {
       const result = await unwrap(api.POST('/api/push/test'))
       // Куда ушло — по именам устройств: сразу видно, подключён ли, например, ноутбук
@@ -113,7 +98,7 @@ function NotificationsBody() {
     } catch (e) {
       setTest(e instanceof ApiError ? e.message : 'Не отправилось — проверьте интернет')
     } finally {
-      setBusy(false)
+      setTesting(false)
     }
   }
 
