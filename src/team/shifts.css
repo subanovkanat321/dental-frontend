@@ -34,6 +34,8 @@ button.shift-line { cursor: pointer; }
 /* «Рабочее время → График» (WorkSchedule): один график врачей и персонала. Колонка страницы — minmax(0, 1fr):
    иначе широкая сетка недели растянула бы страницу вместо прокрутки внутри себя (телефон 390px) */
 .work-schedule { grid-template-columns: minmax(0, 1fr); }
+/* Пришли из карточки (#/clinic/hours/d12): строка человека — не под липкой шапкой раздела */
+.work-schedule [data-person] { scroll-margin-top: 84px; }
 .sched-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .sched-tools .segments { width: auto; }
 .sched-tools .shifts-nav { margin-left: auto; }

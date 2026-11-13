@@ -28,6 +28,8 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
   const [picked, setPicked] = useState<number[]>(saved ?? [])
   const { dirty, commit } = useDirty(some ? [...picked].sort((a, b) => a - b) : null)
   const [problem, setProblem] = useState('')
+  // Длинное пояснение — по «?»: карточка короче (просьба владельца 2026-11-13)
+  const [more, setMore] = useState(false)
   const save = useMutation<Schemas['DoctorServicesView'], ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/doctors/{id}/service-types', {
       params: { path: { id: doctorId } }, body: { serviceTypeIds: some ? picked : [] },
@@ -59,7 +61,9 @@ export function DoctorServices({ doctorId, me }: { doctorId: number; me: Me }) {
   return (
     <section className="form" aria-label="Услуги врача">
       <h4>Услуги врача</h4>
-      <p className="hint">Их пациент видит у этого врача, когда записывается в боте, и регистратура — в «Новой записи». Цены — общие для клиники («Клиника → Услуги и цены»), здесь — какие услуги врач делает.</p>
+      <p className="hint">Цены общие — в «Услугах и ценах»; здесь — какие услуги он делает.{' '}
+        <button type="button" className="hint-more" aria-label="Подробнее про услуги врача" aria-expanded={more} onClick={() => setMore(!more)}>?</button>
+        {more && <span className="hint-more-text"> Их пациент видит у этого врача, когда записывается в боте, а регистратура — в «Новой записи».</span>}</p>
       <div className="segments" role="group" aria-label="Какие услуги">
         <button type="button" aria-pressed={!some} onClick={() => choose(false)}>Все услуги клиники</button>
         <button type="button" aria-pressed={some} onClick={() => choose(true)}>Только выбранные</button>

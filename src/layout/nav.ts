@@ -1,6 +1,6 @@
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
-import { isAssistant, seesAllMoney, seesOwnEarnings } from '../lib/roles'
+import { isAssistant, seesAllMoney, seesOwnEarnings, seesOwnPurchases } from '../lib/roles'
 import { CLINIC_ITEMS, SETTINGS_GROUPS } from '../settings/items'
 
 type Me = Schemas['BookingViewsMe']
@@ -39,8 +39,10 @@ export function subsOf(page: Page, me: Me): Sub[] {
     }
     case 'stock':
       // «Расходы на склад» (покупки по месяцам) — тому, кто видит деньги всех врачей (сервер: seesAllDoctors):
-      // админ-врач при «врачи работают независимо» закупок чужих складов не видит; остальным — только материалы
-      return seesAllMoney(me) ? [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Расходы на склад' }] : []
+      // админ-врач при «врачи работают независимо» закупок чужих складов не видит. Врачу в независимой
+      // клинике со своим складом — «Мои закупки»: тот же экран по его складу; остальным — только материалы
+      if (seesAllMoney(me)) return [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Расходы на склад' }]
+      return seesOwnPurchases(me) ? [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Мои закупки' }] : []
     case 'platform':
       // «Аналитика», «Финансы» и всё, что после «Опросов», — только владелец (сервер тоже: менеджеру 403)
       return [{ key: 'clinics', title: 'Клиники' },

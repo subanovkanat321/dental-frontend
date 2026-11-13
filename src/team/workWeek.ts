@@ -1,4 +1,4 @@
-import type { Schemas } from '../api/client'
+import { api, unwrap, type Schemas } from '../api/client'
 import { isNightShift } from '../lib/time'
 import { WEEK, type Weekday } from './texts'
 
@@ -33,11 +33,12 @@ export function dayHours(days: WeekDay[] | undefined, off: Partial<Record<Weekda
 }
 
 /**
- * «Пн–Пт 9–18, Сб 10–14» — неделя одной строкой: подряд идущие дни с одинаковыми часами — вместе.
+ * «Пн–Пт 9–18, Сб 10–14» — неделя одной строкой: подряд идущие дни с одинаковыми часами — вместе, а
+ * одинаковые часы через выходной — одной группой: «Пн–Чт, Сб 9–22» (пятница — выходной).
  * Ни одного рабочего дня — «не работает».
  */
 export function weekSummary(hours: DayHours): string {
-  const parts: string[] = []
+  const groups: { days: string[]; text: string }[] = []
   let i = 0
   while (i < WEEK.length) {
     const text = hours[WEEK[i]![0]]
@@ -45,10 +46,12 @@ export function weekSummary(hours: DayHours): string {
     let j = i
     while (j + 1 < WEEK.length && hours[WEEK[j + 1]![0]] === text) j++
     const days = j === i ? WEEK[i]![2] : `${WEEK[i]![2]}–${WEEK[j]![2]}`
-    parts.push(`${days} ${text}`)
+    const same = groups.find((g) => g.text === text)
+    if (same) same.days.push(days)
+    else groups.push({ days: [days], text })
     i = j + 1
   }
-  return parts.length ? parts.join(', ') : 'не работает'
+  return groups.length ? groups.map((g) => `${g.days.join(', ')} ${g.text}`).join(', ') : 'не работает'
 }
 
 /**
@@ -83,3 +86,15 @@ export type Who = { kind: 'doctor'; id: number; name: string } | { kind: 'staff'
 
 /** Ключ кеша недели — тот же, что у списка «Графика» (он показывает её строкой). */
 export const weekKey = (who: Who) => (who.kind === 'doctor' ? ['doctor-hours', who.id] : ['staff-weekly', who.telegramId])
+
+type Loaded = { custom: boolean; days?: WeekDay[] }
+
+/** Неделя человека с сервера: свои часы (custom) или часы клиники (custom=false, дни — клиники). */
+export function loadWeek(who: Who): Promise<Loaded> {
+  return who.kind === 'doctor'
+    ? unwrap(api.GET('/api/doctors/{id}/hours', { params: { path: { id: who.id } } }))
+    : unwrap(api.GET('/api/shifts/weekly/{telegramId}', { params: { path: { telegramId: who.telegramId } } }))
+}
+
+/** Строка человека в «Графике» и адрес на неё (#/clinic/hours/d12, #/clinic/hours/s555): d — врач, s — сотрудник. */
+export const personKey = (who: Who) => (who.kind === 'doctor' ? `d${who.id}` : `s${who.telegramId}`)
