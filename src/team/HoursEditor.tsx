@@ -10,16 +10,10 @@ import { isNightShift } from '../lib/time'
 import { Loading } from '../layout/Loading'
 import { weekdaysText } from './timeOffTexts'
 import { askMakeWorkday, offLabel, useTimeOff, weeklyDaysOff } from './dayOffHours'
-import { dayHours, weekKey, weekSummary, type Who } from './workWeek'
+import { dayHours, loadWeek, weekKey, weekSummary, type Who } from './workWeek'
 
 type Day = { on: boolean; start: string; end: string }
 type Loaded = { custom: boolean; days?: { weekday?: string; start?: string; end?: string }[] }
-
-function load(who: Who): Promise<Loaded> {
-  return who.kind === 'doctor'
-    ? unwrap(api.GET('/api/doctors/{id}/hours', { params: { path: { id: who.id } } }))
-    : unwrap(api.GET('/api/shifts/weekly/{telegramId}', { params: { path: { telegramId: who.telegramId } } }))
-}
 
 function store(who: Who, days: { weekday: Weekday; start: string; end: string }[]): Promise<Loaded> {
   return who.kind === 'doctor'
@@ -28,8 +22,9 @@ function store(who: Who, days: { weekday: Weekday; start: string; end: string }[
 }
 
 /**
- * Обычная неделя человека клиники — один редактор для врача и для сотрудника («Клиника → Рабочее время →
- * График», карточка врача и сотрудника в «Персонале»): «Как у клиники» или свои дни и часы. Сохраняет
+ * Обычная неделя человека клиники — один редактор для врача и для сотрудника, только в «Клиника → Рабочее
+ * время → График» (с 2026-11-13 один источник правды: карточка врача и сотрудника — строка-ссылка сюда,
+ * {@link HoursLink}): «Как у клиники» или свои дни и часы. Сохраняет
  * туда, где неделя хранится (`who`). Отличия врача — от модели: у него по часам свободное время в записи,
  * поэтому можно ночную смену (конец раньше начала — до утра след. дня, смена относится к дню начала),
  * а еженедельный выходной из «Перерывов и выходных» перекрывает его день. Неделя сотрудника — в пределах
@@ -37,7 +32,7 @@ function store(who: Who, days: { weekday: Weekday; start: string; end: string }[
  * onTimeOff — открыть «Перерывы и выходные» (есть во вкладке «Рабочее время»). canEdit=false — текстом.
  */
 export function WeekEditor({ who, canEdit = true, onTimeOff }: { who: Who; canEdit?: boolean; onTimeOff?: () => void }) {
-  const loaded = useQuery({ queryKey: weekKey(who), queryFn: () => load(who) })
+  const loaded = useQuery({ queryKey: weekKey(who), queryFn: () => loadWeek(who) })
   if (loaded.isPending) return <Loading />
   if (loaded.error) return <p className="error">{loaded.error.message}</p>
   if (!canEdit) {
@@ -45,11 +40,6 @@ export function WeekEditor({ who, canEdit = true, onTimeOff }: { who: Who; canEd
     return <p>{loaded.data.custom ? text : <>Как у клиники <span className="hint">— {text}</span></>}</p>
   }
   return <WeekForm key={weekKey(who).join()} who={who} onTimeOff={onTimeOff} loaded={loaded.data} />
-}
-
-/** Часы врача — {@link WeekEditor} врача (карточка врача, «Мой профиль»). */
-export function HoursEditor({ doctorId, doctorName, onTimeOff }: { doctorId: number; doctorName: string; onTimeOff?: () => void }) {
-  return <WeekEditor who={{ kind: 'doctor', id: doctorId, name: doctorName }} onTimeOff={onTimeOff} />
 }
 
 function WeekForm({ who, onTimeOff, loaded }: { who: Who; onTimeOff?: () => void; loaded: Loaded }) {

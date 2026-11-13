@@ -11,8 +11,7 @@ import { InviteLink } from './InviteLink'
 import { StaffPhone, TemporaryPassword, type Doctor } from './PhoneParts'
 import { RolesEditor } from './RolesEditor'
 import { useRefreshStaff } from './staffRoles'
-import { WeekEditor } from './HoursEditor'
-import { openClinic } from '../lib/route'
+import { HoursLink } from './HoursLink'
 import { phoneText, ROLE_TEXT } from './texts'
 
 type Me = Schemas['BookingViewsMe']
@@ -22,7 +21,7 @@ type Invite = Schemas['StaffMembersInviteView']
 /**
  * Карточка сотрудника без кресла (руководитель, регистратура, ассистент) — та же, что у врача, только
  * без «Для пациентов» и кресла: имя, роли (флажки; ассистенту — его врачи), вход (Telegram или номер,
- * временный пароль) и недельный график. Скрытый врач с той же ролью — тоже здесь: вернуть
+ * временный пароль) и строка «Часы работы» — ссылка в «Рабочее время → График». Скрытый врач с той же ролью — тоже здесь: вернуть
  * «Врач» можно флажком. Открывает руководитель.
  */
 export function MemberPanel({ me, member: m, hiddenDoctor, onClose }: { me: Me; member: Member; hiddenDoctor?: Doctor; onClose: () => void }) {
@@ -65,10 +64,10 @@ export function MemberPanel({ me, member: m, hiddenDoctor, onClose }: { me: Me; 
         {m.phoneOnly && !m.me && <TemporaryPassword telegramId={m.telegramId} name={name} />}
       </section>
 
-      <section className="doctor-group" aria-label="Недельный график">
-        <h3 className="group-title">Часы работы</h3>
-        <p className="hint">Обычная неделя; замены и смены на даты — в <button type="button" className="link" onClick={() => openClinic('shifts')}>«Рабочее время → График → Неделя по датам»</button>, поверх неё.</p>
-        <WeekEditor who={{ kind: 'staff', telegramId: m.telegramId, name }} canEdit={Boolean(me.admin)} />
+      {/* Неделя и смены на даты — в «Рабочем времени → График»; здесь строка-ссылка туда */}
+      <section className="doctor-group" aria-label="Работа">
+        <h3 className="group-title">Работа</h3>
+        <HoursLink who={{ kind: 'staff', telegramId: m.telegramId, name }} />
       </section>
 
       <div className="danger-zone">
