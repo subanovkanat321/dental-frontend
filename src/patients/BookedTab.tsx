@@ -7,13 +7,13 @@ import { useReminderText } from '../api/settings'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { canEditDoctor, isAssistant } from '../lib/roles'
-import { serviceEmoji } from '../lib/serviceEmoji'
 import { openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { addDays, dateOf, dayTitle, timeOf, todayIn } from '../lib/time'
 import { statusOf } from '../schedule/status'
 import { Loading } from '../layout/Loading'
 import { HeadTools } from '../layout/PageHead'
+import { CalmRow } from './CalmList'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -93,17 +93,16 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
           <input type="checkbox" checked={onlyUnconfirmed} onChange={(e) => setOnlyUnconfirmed(e.target.checked)} />
           Только кто не подтвердил
         </label>
-        {!pending && all.length > 0 && <span className="head-note">Записей: {all.length}</span>}
       </HeadTools>
       {failed && <p className="error">{failed.message}</p>}
       {pending ? <Loading /> : !all.length ? (
         <EmptyState fill title={onlyUnconfirmed ? 'Все записанные подтвердили приход' : 'Записей на этот период нет'} />
       ) : (
-        <>
+        <div className="calm-stack">
           {[...byDay].map(([day, list]) => (
-            <div key={day} className="booked-day">
+            <div key={day} className="calm-day">
               <h3>{day === today ? `Сегодня, ${dayTitle(day).toLowerCase()}` : dayTitle(day)} <span className="hint">· {list.length}</span></h3>
-              <ul aria-label={dayTitle(day)}>
+              <ul className="calm-list" aria-label={dayTitle(day)}>
                 {list.map((a) => (
                   <BookedRow key={a.id} a={a} canEdit={canEditDoctor(me, a.doctorId)} onOpen={onOpenAppointment}
                     doctor={doctors.length > 1 && doctorId == null && a.doctorId != null ? nameOf.get(a.doctorId) : undefined} />
@@ -111,7 +110,7 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
               </ul>
             </div>
           ))}
-        </>
+        </div>
       )}
     </section>
   )
@@ -142,24 +141,17 @@ function BookedRow({ a, doctor, canEdit, onOpen }: {
     // openLink: в Telegram ссылка откроется в WhatsApp, а не внутри Mini App
     openLink(whatsappUrl(contactPhone(a.patient) ?? '', text(a)))
   }
+  // Значок — только заявке (её надо подтвердить); остальное — тихим словом справа: «придёт», «нет ответа»
   return (
-    <li className={canRemind ? 'booked-item with-action' : 'booked-item'}>
-      <button type="button" className="booked-row" onClick={() => onOpen?.(a.id)}>
-        <span className="num booked-time">{timeOf(a.startAt)}</span>
-        <span className="booked-main">
-          <strong>{a.patient.fullName}</strong>
-          <span className="hint small">
-            {a.serviceName ? `${serviceEmoji(a.serviceName)} ${a.serviceName}` : 'Услуга не выбрана'}
-            {doctor ? ` · ${doctor}` : ''}
-          </span>
-        </span>
-        <span className={`chip small s-${s.kind}`}><span aria-hidden="true">{s.icon}</span> {s.label}</span>
-      </button>
-      {canRemind && (
-        <button type="button" className="btn booked-wa" disabled={!text || opened.isPending} onClick={whatsapp}
+    <CalmRow open={onOpen ? () => onOpen(a.id) : null} lead={timeOf(a.startAt)} name={a.patient.fullName}
+      flags={a.status === 'REQUESTED' && <span className="chip calm-flag s-request">Заявка</span>}
+      sub={[a.serviceName ?? 'Услуга не выбрана', doctor].filter(Boolean).join(' · ')}
+      meta={a.status !== 'REQUESTED' && <span className={s.kind === 'ok' ? 'tone-ok' : undefined}>{s.label.toLowerCase()}</span>}
+      action={canRemind && (
+        <button type="button" className="btn" disabled={!text || opened.isPending} onClick={whatsapp}
           aria-label={`Напомнить в WhatsApp: ${a.patient.fullName}, ${timeOf(a.startAt)}`}>WhatsApp</button>
-      )}
+      )}>
       {opened.error && <p className="error" role="alert">{opened.error.message}</p>}
-    </li>
+    </CalmRow>
   )
 }

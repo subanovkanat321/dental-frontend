@@ -4,12 +4,12 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { haptic } from '../lib/telegram'
-import { rowOpen } from '../lib/rowClick'
 import { formatPhone, shortDate } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading, Spinner } from '../layout/Loading'
-import { HeadTools } from '../layout/PageHead'
+import { HeadTools, SubHelp } from '../layout/PageHead'
+import { CalmRow } from './CalmList'
 
 type Question = Schemas['PatientQuestionsQuestionView']
 
@@ -52,6 +52,14 @@ function aiMark(q: Question): string | null {
   return null
 }
 
+/** Коротко для строки списка: «ответил ИИ», «ИИ записал» — подробности в вопросе справа. */
+function aiShort(q: Question): string {
+  if (q.aiAction === 'BOOKED') return 'ИИ записал'
+  if (q.aiAction === 'RESCHEDULED') return 'ИИ перенёс'
+  if (q.aiAction === 'CANCELLED') return 'ИИ отменил'
+  return q.aiOutcome === 'ANSWERED' ? 'ответил ИИ' : 'передано сотрудникам'
+}
+
 /**
  * «Пациенты → Вопросы»: что пациенты написали боту (не запись и не отзыв). Сервер показывает только
  * тех, кого сотрудник видит: регистратура и админ — всех, врач при «независимых врачах» — своих.
@@ -71,30 +79,23 @@ export function QuestionsTab({ selected, onOpen }: { selected: number | null; on
       {list.isPending && <Loading />}
       {list.error && <p className="error">{list.error.message}</p>}
       {list.isSuccess && list.data.botAi && (
-        <p className="hint small">🤖 В боте пациентам сначала отвечает ИИ-помощник — его ответы в «Отвеченных» с пометкой «Ответил ИИ».</p>
+        <SubHelp title="Вопросы">В боте пациентам сначала отвечает ИИ-помощник — его ответы в «Отвеченных» с пометкой «ответил ИИ».
+          Медицинский вопрос, жалобу или просьбу позвать человека он передаёт сюда, в «Ждут ответа».</SubHelp>
       )}
       {list.isSuccess && !list.data.questions?.length && (
-        done
-          ? <EmptyState fill title="Отвеченных вопросов пока нет" />
-          : <EmptyState fill title="Новых вопросов нет">Пациент напишет боту — вопрос появится здесь, а вам придёт уведомление.</EmptyState>
+        <EmptyState fill title={done ? 'Отвеченных вопросов пока нет' : 'Новых вопросов нет'} />
       )}
       {list.isSuccess && Boolean(list.data.questions?.length) && (
-        <table className="table" aria-label="Вопросы пациентов">
-          <thead><tr><th>Пациент</th><th>Когда</th><th>Вопрос</th></tr></thead>
-          <tbody>
-            {list.data.questions!.map((q) => (
-              <tr key={q.id} {...rowOpen(() => onOpen(q.id), q.id === selected && 'active')}>
-                <td>
-                  <button type="button" className="row-link" onClick={() => onOpen(q.id)}>{who(q)}</button>
-                  {q.status === 'CLOSED' && <span className="hint small"> · без ответа</span>}
-                  {aiMark(q) && <span className="hint small"> · {aiMark(q)}</span>}
-                </td>
-                <td className="nowrap">{shortDate(q.createdAt!, true)}</td>
-                <td className="question-preview">{q.text}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ul className="calm-list" aria-label="Вопросы пациентов">
+          {list.data.questions!.map((q) => (
+            <CalmRow key={q.id} open={() => onOpen(q.id)} active={q.id === selected} name={who(q)}
+              sub={q.text}
+              meta={<>
+                <span>{shortDate(q.createdAt!, true)}</span>
+                {q.status === 'CLOSED' ? <span>без ответа</span> : done && aiMark(q) ? <span>{aiShort(q)}</span> : null}
+              </>} />
+          ))}
+        </ul>
       )}
     </>
   )

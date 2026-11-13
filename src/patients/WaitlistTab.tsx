@@ -2,7 +2,6 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { ask } from '../lib/confirm'
 import { useEffect, useState } from 'react'
 
-import { rowOpen } from '../lib/rowClick'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
 import { agoText, recallText, recentlyInvited, whatsappUrl } from '../lib/texts'
@@ -13,7 +12,8 @@ import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { dueText, monthsText } from '../clinic/services'
 import { Loading, Spinner } from '../layout/Loading'
-import { HeadTools } from '../layout/PageHead'
+import { HeadTools, SubHelp } from '../layout/PageHead'
+import { CalmRow, RowMenu } from './CalmList'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -33,32 +33,27 @@ export function WaitlistTab({ me, onOpen }: { me: Me; onOpen: (patientId: number
 
   if (list.isPending) return <Loading />
   if (list.error) return <p className="error">{list.error.message}</p>
+  const help = <SubHelp title="Лист ожидания">Освободилось время — нажмите на него в «Расписании»: «Новая запись» предложит этих пациентов. Записали — уберите из листа в карточке пациента или в «⋯».</SubHelp>
   if (!list.data.length) {
-    return <><WaitlistAdd me={me} /><EmptyState fill title="Пока никто не ждёт">Добавьте пациента — когда освободится время, CRM подскажет, кого позвать.</EmptyState></>
+    return <>{help}<WaitlistAdd me={me} /><EmptyState fill title="Пока никто не ждёт" /></>
   }
   return (
     <>
+      {help}
       <WaitlistAdd me={me} />
-      <table className="table" aria-label="Лист ожидания">
-        <thead><tr><th>Пациент</th><th>Телефон</th><th>Врач</th><th>Нужно</th><th>Сейчас записан</th><th>Ждёт с</th><th /></tr></thead>
-        <tbody>
-          {list.data.map((e) => (
-            <tr key={e.id} {...rowOpen(() => onOpen(e.patient!.id))}>
-              <td><button type="button" className="row-link" onClick={() => onOpen(e.patient!.id)}>{e.patient?.fullName}</button></td>
-              <td className="nowrap num">{e.patient?.phone ? formatPhone(e.patient.phone) : '—'}</td>
-              <td>{doctor(e.doctorId)}</td>
-              <td className="nowrap num">{e.durationMinutes} мин</td>
-              <td className="nowrap">{e.upcoming?.startAt ? shortDate(e.upcoming.startAt, true) : <span className="hint">нет записи</span>}</td>
-              <td className="nowrap hint">{e.createdAt ? agoText(e.createdAt) : ''}</td>
-              <td className="r"><button type="button" className="btn small ghost" disabled={remove.isPending}
-                onClick={() => void ask(`Убрать ${e.patient?.fullName ?? 'пациента'} из листа ожидания?`).then((ok) => ok && remove.mutate(e.id))}
-                aria-label={`Убрать из листа: ${e.patient?.fullName}`}>Убрать</button></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ul className="calm-list" aria-label="Лист ожидания">
+        {list.data.map((e) => (
+          <CalmRow key={e.id} open={() => onOpen(e.patient!.id)} name={e.patient?.fullName}
+            sub={[`${e.durationMinutes} мин`, e.doctorId == null ? 'к любому врачу' : doctor(e.doctorId),
+              e.upcoming?.startAt ? `записан ${shortDate(e.upcoming.startAt, true)}` : null].filter(Boolean).join(' · ')}
+            meta={e.createdAt ? `ждёт с ${shortDate(e.createdAt)}` : null}
+            menu={<RowMenu label={`Ещё: ${e.patient?.fullName ?? 'пациент'}`} items={[{
+              label: 'Убрать из листа', tone: 'bad', disabled: remove.isPending,
+              onSelect: () => void ask(`Убрать ${e.patient?.fullName ?? 'пациента'} из листа ожидания?`).then((ok) => ok && remove.mutate(e.id)),
+            }]} />} />
+        ))}
+      </ul>
       {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
-      <p className="hint small">Освободилось время — нажмите на него в «Расписании»: «Новая запись» предложит этих пациентов.</p>
     </>
   )
 }
@@ -98,34 +93,28 @@ export function RecallTab({ onOpen, onBook }: { onOpen: (patientId: number) => v
 
   if (due.isPending) return <Loading />
   if (due.error) return <p className="error">{due.error.message}</p>
-  if (!due.data.length) return <EmptyState fill title="Звать некого — все записаны или были недавно" />
+  if (!due.data.length) return <EmptyState fill title="Звать некого" />
   const rows = due.data.slice(0, limit)
   const more = due.data.length > limit
   return (
-    <>
-    <table className="table" aria-label="Позвать на профосмотр">
-      <thead><tr><th>Пациент</th><th>Телефон</th><th>Последний визит</th><th>Пора с</th><th>Позвали</th><th /></tr></thead>
-      <tbody>
+    <div className="calm-stack">
+      <SubHelp title="Профосмотр">Срок после последнего визита прошёл, и пациент никуда не записан; сначала — кого ещё не звали. Срок — у услуги визита
+        или у клиники. «WhatsApp» — готовый текст и отметка «позвали»; записать — в «⋯» или в карточке.</SubHelp>
+      <ul className="calm-list" aria-label="Позвать на профосмотр">
         {rows.map((r) => (
-          <tr key={r.patient?.id} {...rowOpen(() => onOpen(r.patient!.id))}>
-            <td><button type="button" className="row-link" onClick={() => onOpen(r.patient!.id)}>{r.patient?.fullName}</button></td>
-            <td className="nowrap num">{r.patient?.phone ? formatPhone(r.patient.phone) : '—'}</td>
-            <td>{r.lastVisit ? shortDate(r.lastVisit) : '—'}{r.serviceName && <span className="hint"> · {r.serviceName}</span>}</td>
-            <td className="nowrap">{r.dueOn ? dueText(r.dueOn) : '—'}{r.months != null && <span className="hint small"> · через {monthsText(r.months)}</span>}</td>
-            <td className="nowrap hint">{r.invitedAt ? agoText(r.invitedAt) : 'ещё не звали'}</td>
-            <td className="r nowrap">
-              <button type="button" className="btn small" onClick={() => void invite(r.patient!, r.months, r.invitedAt)}>WhatsApp</button>{' '}
-              <button type="button" className="btn small primary" onClick={() => onBook(r.patient!)}>Записать</button>
-            </td>
-          </tr>
+          <CalmRow key={r.patient?.id} open={() => onOpen(r.patient!.id)} name={r.patient?.fullName}
+            sub={[r.lastVisit ? `был ${shortDate(r.lastVisit)}` : null, r.serviceName,
+              r.dueOn ? `пора с ${dueText(r.dueOn)}${r.months != null ? ` (через ${monthsText(r.months)})` : ''}` : null].filter(Boolean).join(' · ')}
+            meta={r.invitedAt ? `звали ${agoText(r.invitedAt)}` : 'ещё не звали'}
+            action={<button type="button" className="btn" onClick={() => void invite(r.patient!, r.months, r.invitedAt)}>WhatsApp</button>}
+            menu={<RowMenu label={`Ещё: ${r.patient?.fullName ?? 'пациент'}`} items={[{ label: 'Записать', onSelect: () => onBook(r.patient!) }]} />} />
         ))}
-      </tbody>
-    </table>
-    {more && (
-      <button type="button" className="btn" disabled={due.isFetching} onClick={() => setLimit(limit + RECALL_PAGE)}>
-        {due.isFetching ? <><Spinner />Загрузка…</> : 'Показать ещё'}</button>
-    )}
-    </>
+      </ul>
+      {more && (
+        <button type="button" className="btn" disabled={due.isFetching} onClick={() => setLimit(limit + RECALL_PAGE)}>
+          {due.isFetching ? <><Spinner />Загрузка…</> : 'Показать ещё'}</button>
+      )}
+    </div>
   )
 }
 
@@ -201,7 +190,7 @@ function WaitlistAdd({ me }: { me: Me }) {
     enabled: open && search.length >= 2 && !patient,
   })
   // Кнопка — в строку шапки «Пациентов» справа; открытая форма — карточкой над списком
-  if (!open) return <HeadTools><button type="button" className="btn head-end" onClick={() => setOpen(true)}>➕ Добавить в лист ожидания</button></HeadTools>
+  if (!open) return <HeadTools><button type="button" className="btn head-end" onClick={() => setOpen(true)}>＋ Добавить в лист ожидания</button></HeadTools>
   return (
     <section className="card-block waitlist-add" aria-label="Добавить в лист ожидания">
       {patient ? (
