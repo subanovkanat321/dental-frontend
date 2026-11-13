@@ -7047,6 +7047,8 @@ export interface components {
             storyError?: string;
             /** Format: date-time */
             storyErrorAt?: string;
+            /** Format: date-time */
+            mediaRemovedAt?: string;
         };
         ContentSettingsUpdate: {
             reelsAuto?: boolean;
