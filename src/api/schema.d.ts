@@ -7110,6 +7110,7 @@ export interface components {
             contactTelegram?: string;
             listed: boolean;
             settingUp: boolean;
+            city?: string;
         };
         AgreementControllerAssignment: {
             /** Format: int64 */
@@ -8395,9 +8396,24 @@ export interface components {
             /** Format: int32 */
             removed: number;
         };
-        PlatformControllerName: {
+        PlatformServiceNewClinic: {
             name?: string;
             city?: string;
+            phone?: string;
+            /** @enum {string} */
+            adminAccess?: "LINK" | "PHONE";
+            adminName?: string;
+            adminPhone?: string;
+            alsoDoctor?: boolean;
+            /** Format: date */
+            paidUntil?: string;
+        };
+        PlatformServiceCreated: {
+            /** Format: int64 */
+            id: number;
+            clinic?: components["schemas"]["PlatformServiceClinicRow"];
+            invite?: components["schemas"]["DoctorInvitesInvite"];
+            adminPhone?: string;
         };
         BillingControllerPaymentRequest: {
             /** Format: date */
@@ -15884,7 +15900,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PlatformControllerName"];
+                "application/json": components["schemas"]["PlatformServiceNewClinic"];
             };
         };
         responses: {
@@ -15894,7 +15910,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PlatformServiceClinicRow"];
+                    "application/json": components["schemas"]["PlatformServiceCreated"];
                 };
             };
         };
