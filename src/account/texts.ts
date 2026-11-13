@@ -54,10 +54,20 @@ export function agreementValues(platform: Record<string, unknown> | undefined, f
   }
 }
 
-export const TICKET_KINDS: Record<string, { button: string; title: string; hint: string }> = {
-  QUESTION: { button: 'Задать вопрос', title: 'Вопрос', hint: 'Опишите ваш вопрос' },
-  IDEA: { button: 'Предложить идею', title: 'Идея', hint: 'Что сделать удобнее или добавить?' },
-  PROBLEM: { button: 'Сообщить о проблеме', title: 'Проблема', hint: 'Что делали, что ожидали и что случилось' },
+/**
+ * Тип обращения в «Написать в Tish» — одна форма для всего (раньше три кнопки: вопрос, проблема, идея). Ключи — Kind
+ * бэкенда (SupportTickets); порядок — как в выборе формы. Тип видит и владелец платформы («Платформа → Обращения»).
+ */
+export const TICKET_KINDS: Record<string, { title: string; emoji: string; hint: string }> = {
+  QUESTION: { title: 'Вопрос', emoji: '❓', hint: 'Что хотите узнать или как сделать?' },
+  PROBLEM: { title: 'Что-то не работает', emoji: '⚠️', hint: 'Что делали, что ожидали и что случилось — и на каком экране' },
+  IDEA: { title: 'Идея', emoji: '💡', hint: 'Что сделать удобнее или добавить?' },
+}
+
+/** Тип обращения одной строкой: «⚠️ Что-то не работает». */
+export function ticketKind(kind?: string | null): string {
+  const k = TICKET_KINDS[kind ?? 'QUESTION'] ?? TICKET_KINDS.QUESTION!
+  return `${k.emoji} ${k.title}`
 }
 
 export const TICKET_STATUS: Record<string, [string, string]> = { OPEN: ['ждёт ответа', 's-wait'], ANSWERED: ['есть ответ', 's-ok'], CLOSED: ['закрыто', 's-quiet'] }

@@ -28,7 +28,7 @@ test('«Помощь» внизу меню (компьютер): список �
   const menu = screen.getByRole('dialog', { name: 'Помощь' })
   expect(item).toHaveAttribute('aria-expanded', 'true')
   expect(within(menu).getAllByRole('button').map((b) => b.querySelector('.menu-title')?.textContent)).toEqual([
-    'Спросить помощника', 'Руководство', 'Видео: как сделать', 'Помощь и техподдержка', 'Отзыв о Tish', 'Конфиденциальность', 'Пройти тур ещё раз', 'Tish в Instagram',
+    'Спросить помощника', 'Руководство', 'Видео: как сделать', 'Написать в Tish', 'Конфиденциальность', 'Пройти тур ещё раз', 'Tish в Instagram',
   ])
   await userEvent.click(within(menu).getByRole('button', { name: /^Спросить помощника/ }))
   expect(screen.queryByRole('dialog', { name: 'Помощь' })).not.toBeInTheDocument()

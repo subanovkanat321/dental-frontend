@@ -97,7 +97,7 @@ test('ошибка сервера (лимит) — текст ошибки по�
   expect(await within(panel).findByRole('alert')).toHaveTextContent('Сегодня вы уже задали 30 вопросов')
 })
 
-test('«Техподдержка»: кнопка «Спросить помощника», переписка из чата открывается чатом', async () => {
+test('«Написать в Tish»: кнопка «Спросить помощника», переписка из чата открывается чатом', async () => {
   server.use(
     http.get('*/api/support/chat', () => HttpResponse.json(INFO)),
     http.get('*/api/clinic', () => HttpResponse.json({})),
@@ -109,7 +109,7 @@ test('«Техподдержка»: кнопка «Спросить помощн
   const user = userEvent.setup()
   renderApp()
   openItem('support')
-  await user.click(await screen.findByRole('button', { name: '💬 Помощь' }))
+  await user.click(await screen.findByRole('button', { name: '💬 Помощник' }))
   const panel = await screen.findByRole('complementary', { name: 'Помощь' })
   expect(await within(panel).findByText('Карточка приёма → «Принять доплату».')).toBeInTheDocument()
   // Тот же чат, что из меню «Помощь»: окно поверх экрана, а не панель страницы в рабочей области
@@ -121,7 +121,7 @@ test('«Техподдержка»: кнопка «Спросить помощн
   expect(within(screen.getByRole('main')).queryByRole('complementary')).not.toBeInTheDocument()
 })
 
-test('«Спросить помощника» в «Техподдержке» открывает тот же чат, что и меню «Помощь» (окно, а не панель страницы)', async () => {
+test('«Спросить помощника» в «Написать в Tish» открывает тот же чат, что и меню «Помощь» (окно, а не панель страницы)', async () => {
   server.use(
     http.get('*/api/support/chat', () => HttpResponse.json(INFO)),
     http.get('*/api/clinic', () => HttpResponse.json({})),

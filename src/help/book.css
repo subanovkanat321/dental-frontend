@@ -1,0 +1,74 @@
+/*
+ * «Помощь → Руководство» книгой (settings/GuidePage.tsx): компьютер — оглавление слева (липкое), текст справа до ~760px;
+ * телефон — оглавление нижним листом. Цвет — только у выбранного (primary-soft + accent-ink, DESIGN.md → Colors).
+ * Картинки, шаги и совет — классы сайта (site/guide/guide.css, .manual …).
+ */
+.guide-book { max-width: 1180px; }
+.book-tools { display: flex; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.book-search { flex: 1 1 auto; max-width: 520px; min-height: 36px; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); font: inherit; }
+.book-search:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+.book { display: grid; gap: 24px; align-items: start; }
+@media (min-width: 761px) {
+  .book { grid-template-columns: 260px minmax(0, 1fr); }
+  .book > .book-toc { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; }
+}
+.book-main { display: grid; gap: 16px; min-width: 0; max-width: 780px; }
+
+.book-toc { display: grid; gap: 10px; align-content: start; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-lg); background: var(--card); }
+.book-sheet .book-toc { padding: 0; border: 0; background: none; }
+/* Лист: шапка на месте, прокручивается только список глав */
+.confirm.book-sheet { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.confirm.book-sheet::before { align-self: center; flex: none; }
+.book-sheet > .book-toc { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.book-chapters, .book-sections { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.book-chapters button, .book-sections button { display: flex; gap: 8px; align-items: baseline; width: 100%; min-height: 36px; padding: 7px 10px; border: 0;
+  border-radius: var(--r-md); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+@media (hover: hover) { .book-chapters button:hover { background: var(--sunken); } }
+.book-chapters li.open > .book-chapter { font-weight: 600; }
+.book-sections { margin: 2px 0 6px 18px; padding-left: 8px; border-left: 2px solid var(--separator); }
+.book-sections button { min-height: 32px; padding: 5px 10px; font-size: .9rem; color: var(--hint); }
+.book-chapters [aria-current=page] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.book-chapters button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.book-num { min-width: 1.4em; color: var(--faint); font-weight: 500; }
+
+.book-crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; font-size: .875rem; color: var(--hint); }
+.book-crumbs li + li::before { content: '›'; margin-right: 4px; color: var(--faint); }
+.book-crumbs .link { font-size: inherit; }
+
+.book-page { display: grid; gap: 12px; padding: 20px 22px; border: 1px solid var(--separator); border-radius: var(--r-lg); background: var(--card); }
+.book-page h2 { margin: 0; font: 600 1.35rem/1.25 var(--display); letter-spacing: -.01em; }
+.book-page p { margin: 0; }
+.book-kicker { color: var(--faint); font-size: .85rem; }
+.book-list { margin: 4px 0 0; padding-left: 22px; display: grid; gap: 6px; }
+
+.book-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.book-pager .btn { display: grid; justify-content: stretch; gap: 2px; height: auto; min-height: 56px; padding: 8px 14px; text-align: left; justify-items: start; }
+.book-pager .book-next { grid-column: 2; text-align: right; justify-items: end; }
+.book-pager small { color: var(--hint); font-weight: 400; font-size: .8rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.book-pager span { font-weight: 600; color: var(--accent-ink); }
+
+.book-cover { display: grid; gap: 12px; }
+.book-cover h2 { margin: 0; font: 600 1.35rem/1.25 var(--display); }
+.book-cover p { margin: 0; }
+.book-cards { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.book-card { display: grid; gap: 4px; width: 100%; min-height: 84px; padding: 12px 14px; border: 1px solid var(--separator); border-radius: var(--r-lg);
+  background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.book-card:hover, .book-card:focus-visible { border-color: var(--accent); }
+
+.book-results ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.book-results p { margin: 0 0 8px; }
+.book-hit { display: grid; gap: 4px; width: 100%; padding: 10px 14px; border: 1px solid var(--separator); border-radius: var(--r-lg); background: var(--card);
+  color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.book-hit:hover, .book-hit:focus-visible { border-color: var(--accent); }
+.book-hit mark { background: var(--wait-bg, #FFEAC0); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+@media (max-width: 760px) {
+  .book-tools .book-search { max-width: none; min-height: 44px; font-size: max(16px, 1rem); }
+  .book-tools .btn { min-height: 44px; flex: none; }
+  .book-page { padding: 16px; }
+  .book-pager .btn { min-height: 60px; }
+  .confirm.book-sheet { max-height: 85dvh; }
+  .book-sheet .book-chapters button { min-height: 44px; }
+}

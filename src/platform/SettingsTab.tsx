@@ -73,7 +73,7 @@ function InfoForm({ info }: { info: Info }) {
     <section className="card-block">
       <h2>Сведения о платформе</h2>
       <form className="form narrow" aria-label="Сведения о платформе" onSubmit={submit}>
-        <p className="hint">Это видят все сотрудники клиник: в «Помощи»: «Конфиденциальность» и «Помощь и техподдержка». Пустое поле — «уточняется».</p>
+        <p className="hint">Это видят все сотрудники клиник: в «Помощи»: «Конфиденциальность» и «Написать в Tish». Пустое поле — «уточняется».</p>
         {FIELDS.map(([key, label, placeholder]) => (
           <div key={key} className="field">
             <label className="field"><span>{label}</span>
