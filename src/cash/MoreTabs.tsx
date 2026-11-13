@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ExpenseEdit } from '../lib/ExpenseEdit'
 import { ask } from '../lib/confirm'
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { changeOf, previousRange } from '../lib/compare'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -11,9 +11,12 @@ import { PaymentsTable } from './PaymentsTable'
 import { monthRange, shortDate, somText, todayIn, weekLabel } from '../lib/time'
 import { MonthPicker } from '../layout/MonthPicker'
 import { HeadTools } from '../layout/PageHead'
-import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { NetMonthTable } from './NetMonthTable'
+import { ExpenseForm } from './ExpenseForm'
+import { SharedExpenses } from './SharedExpenses'
+import { canShareExpenses } from '../lib/roles'
+import { positions } from '../earnings/earnings'
 import { Donut } from '../lib/Donut'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
@@ -32,13 +35,17 @@ function errorText(e: ApiError | null): string | null {
 
 const scope = (doctorId: number | null) => (doctorId == null ? {} : { doctorId })
 
-/** Прибыль клиники: выручка + аренда кресла, полученная от врачей, − склад − расходы. */
-const profitOf = (s: Schemas['SpendingView']) => (s.revenueSom ?? 0) + (s.rentSom ?? 0) - s.purchasedSom - (s.expensesSom ?? 0)
+/**
+ * Прибыль клиники: выручка + аренда кресла, полученная от врачей, − материалы по списанию (по средней цене
+ * покупки) − потери и пересчёт − расходы. Закупки склада — справочно: деньги ушли, а материал ещё на полке.
+ */
+const profitOf = (s: Schemas['SpendingView']) => (s.revenueSom ?? 0) + (s.rentSom ?? 0) - s.usedSom - (s.lossesSom ?? 0) - (s.expensesSom ?? 0)
 
 /**
- * «Расходы»: аренда, зарплаты, техник, свои статьи — за месяц, по статьям; добавить и удалить.
- * Админу (видит всю клинику) — «прибыль»: получено плюс аренда кресла от врачей минус покупки склада и
- * расходы (как в приложении). Аренда частного врача обычно уже вычтена из его выплаты («Зарплата» меньше);
+ * «Расходы»: аренда, зарплаты, техник, свои статьи — за месяц, по статьям; добавить и удалить. Общие
+ * расходы с ключом деления — отдельным блоком с долями врачей (кому можно — canShareExpenses).
+ * Админу (видит всю клинику) — «прибыль»: выручка за приёмы плюс аренда кресла от врачей минус материалы
+ * по списанию, потери и расходы; закупки склада — справочно. Аренда частного врача обычно уже вычтена из его выплаты («Зарплата» меньше);
  * отдельно она приходит, только когда врач должен клинике и принёс разницу.
  */
 export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: number | null; seesAll: boolean }) {
@@ -49,7 +56,6 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
     queryKey: ['expenses', month, doctorId],
     queryFn: () => unwrap(api.GET('/api/expenses', { params: { query: { ...range, ...scope(doctorId) } } })),
   })
-  const categories = useQuery({ queryKey: ['expense-categories'], queryFn: () => unwrap(api.GET('/api/expenses/categories')), staleTime: 10 * 60_000 })
   const spending = useQuery({
     queryKey: ['spending', month],
     queryFn: () => unwrap(api.GET('/api/supplies/spending', { params: { query: range } })),
@@ -67,22 +73,6 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
     void client.invalidateQueries({ queryKey: ['expenses'] })
     void client.invalidateQueries({ queryKey: ['spending'] })
   }
-  const [form, setForm] = useState({ spentOn: todayIn(), amount: '', category: '', other: '', comment: '' })
-  // Расход по пациенту (техник, лаборатория) — необязательно, как в прежнем приложении
-  const [patient, setPatient] = useState<{ id: number; fullName: string } | null>(null)
-  const add = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/expenses', {
-      body: {
-        spentOn: form.spentOn, amountSom: Number(form.amount), category: form.category === '*' ? form.other.trim() : form.category,
-        comment: form.comment.trim() || undefined, doctorId: doctorId ?? undefined, patientId: patient?.id,
-      },
-    })),
-    onSuccess: () => {
-      setForm({ ...form, amount: '', comment: '', other: '' })
-      setPatient(null)
-      refresh()
-    },
-  })
   const remove = useMutation<unknown, ApiError, number>({
     mutationFn: (id) => unwrap(api.DELETE('/api/expenses/{id}', { params: { path: { id } } })),
     onSuccess: refresh,
@@ -91,18 +81,16 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
   // Ошиблись суммой или статьёй — «✎»: форма исправления под строкой
   const [editing, setEditing] = useState<number | null>(null)
   const expenseValue = useCallback((x: Expense, key: ExpenseKey) => ({ when: x.spentOn, category: x.category, sum: x.amountSom })[key], [])
-  const visible = (list.data ?? []).filter((x) => !category || x.category === category)
+  // Общие расходы с долями — своим блоком ниже; в общем списке — личные и расходы клиники без ключа
+  const sharedShown = canShareExpenses(me)
+  const own = (list.data ?? []).filter((x) => !(sharedShown && x.splitKey))
+  const visible = own.filter((x) => !category || x.category === category)
   const { sorted, sort, toggle } = useSort<Expense, ExpenseKey>(visible, expenseValue, { key: 'when', desc: true })
   const total = (list.data ?? []).reduce((s, x) => s + x.amountSom, 0)
   const byCategory = Object.entries((list.data ?? []).reduce<Record<string, number>>((acc, x) => ({ ...acc, [x.category ?? '—']: (acc[x.category ?? '—'] ?? 0) + x.amountSom }), {}))
     .sort((a, b) => b[1] - a[1])
-  const cats = [...(categories.data?.standard ?? []), ...(categories.data?.own ?? [])]
   const sp = spending.data
   const profit = sp ? profitOf(sp) : null
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    add.mutate()
-  }
 
   return (
     <>
@@ -123,13 +111,21 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
           </div>
         )}
         {profit != null && sp && (
-          <div className="methods profit" aria-label="Прибыль за месяц">
-            <div>Получено<b>{somText(sp.revenueSom ?? 0)}</b></div>
-            {(sp.rentSom ?? 0) > 0 && <div>Аренда от врачей<b>{somText(sp.rentSom ?? 0)}</b></div>}
-            <div>Склад<b>{somText(sp.purchasedSom)}</b></div>
-            <div>Расходы<b>{somText(sp.expensesSom ?? 0)}</b></div>
-            <div className={profit < 0 ? 'tone-bad' : 'tone-ok'}>Прибыль<b>{somText(profit)}</b></div>
-          </div>
+          <>
+            <div className="methods profit" aria-label="Прибыль за месяц">
+              <div>Выручка за приёмы месяца<b>{somText(sp.revenueSom ?? 0)}</b></div>
+              {(sp.rentSom ?? 0) > 0 && <div>Аренда от врачей<b>{somText(sp.rentSom ?? 0)}</b></div>}
+              <div>Материалы по списанию<b>≈ {somText(sp.usedSom)}</b></div>
+              {(sp.lossesSom ?? 0) > 0 && <div>Потери и пересчёт<b>≈ {somText(sp.lossesSom)}</b></div>}
+              <div>Расходы<b>{somText(sp.expensesSom ?? 0)}</b></div>
+              <div className={profit < 0 ? 'tone-bad' : 'tone-ok'}>Прибыль<b>{somText(profit)}</b></div>
+            </div>
+            <p className="hint small" aria-label="Закуплено на склад">
+              Закуплено на склад за месяц: {somText(sp.purchasedSom)} — справочно, в прибыль не входит: материалы считаем по
+              списанию (по средней цене покупки). Выручка — оплаты за приёмы этого месяца, а не касса.
+            </p>
+            {sp.unpricedUsed > 0 && <p className="tone-wait small">Без цены: {sp.unpricedUsed} {positions(sp.unpricedUsed)} — их не посчитали, укажите сумму поставки на «Складе».</p>}
+          </>
         )}
         {profit != null && spendingBefore.data && (() => {
           const b = spendingBefore.data
@@ -138,35 +134,24 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
           return (
             <p className="compare" aria-label="Сравнение прибыли">
               Прибыль <b className={`tone-${c.tone}`}>{c.text}</b> {current ? before.label : 'к прошлому месяцу'}
-              <span className="hint"> · было: получено {somText(b.revenueSom ?? 0)}, прибыль {somText(was)}</span>
+              <span className="hint"> · было: выручка {somText(b.revenueSom ?? 0)}, прибыль {somText(was)}</span>
             </p>
           )
         })()}
-        {(sp?.unpricedDeliveries ?? 0) > 0 && <p className="tone-wait small">Поставок без суммы: {sp!.unpricedDeliveries} — расходы на склад занижены.</p>}
+        {(sp?.unpricedDeliveries ?? 0) > 0 && <p className="tone-wait small">Поставок без суммы: {sp!.unpricedDeliveries} — средняя цена материалов может быть неточной.</p>}
       </section>
 
       {seesAll && doctorId == null && <NetMonthTable month={month} />}
 
       <section className="card-block">
         <h2>Добавить расход</h2>
-        <form className="expense-form" aria-label="Новый расход" onSubmit={submit}>
-          <DateInput aria-label="Когда" value={form.spentOn} max={todayIn()} required onChange={(e) => setForm({ ...form, spentOn: e.target.value })} />
-          <input type="number" aria-label="Сумма, сом" placeholder="Сумма, сом" min={1} required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
-          <Select aria-label="Статья" required value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-            <option value="" disabled>Статья…</option>
-            {cats.map((c) => <option key={c} value={c}>{c}</option>)}
-            <option value="*">Другое — своя статья</option>
-          </Select>
-          {form.category === '*' && <input aria-label="Своя статья" placeholder="Например: реклама" required maxLength={60} value={form.other} onChange={(e) => setForm({ ...form, other: e.target.value })} />}
-          <input aria-label="Комментарий" placeholder="Комментарий — необязательно" maxLength={200} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} />
-          <PatientPick value={patient} onChange={setPatient} />
-          <button type="submit" className="btn primary" disabled={add.isPending}>Добавить</button>
-        </form>
-        {add.error && <p className="error" role="alert">{errorText(add.error)}</p>}
+        <ExpenseForm me={me} doctorId={doctorId} patientPick={(value, onChange) => <PatientPick value={value} onChange={onChange} />} />
       </section>
 
+      {sharedShown && <SharedExpenses month={month} me={me} />}
+
       {/* Расходов за месяц нет — пустое состояние на фоне страницы, без пустой карточки */}
-      {list.isSuccess && !list.data?.length ? <EmptyState fill title={`Расходов за ${monthTitle(month)} нет`} /> : (
+      {list.isSuccess && !own.length ? <EmptyState fill title={`Расходов за ${monthTitle(month)} нет`} /> : (
       <section className="card-block">
         {byCategory.length > 1 && (
           <div className="filters">
@@ -176,7 +161,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
             </Select>
           </div>
         )}
-        {list.isPending ? <Loading /> : list.data?.length ? (
+        {list.isPending ? <Loading /> : own.length ? (
           <table className="table" aria-label="Расходы">
             <thead><tr>
               <SortTh k="when" title="Дата" sort={sort} onSort={toggle} desc />

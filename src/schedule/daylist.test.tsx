@@ -179,6 +179,24 @@ test('телефон: «✓ отправлено», а сообщение не �
   vi.restoreAllMocks()
 })
 
+test('телефон: «↻ ещё раз» у «✓ отправлено» — после вопроса повтор в WhatsApp другим текстом, отметку снимать не нужно', async () => {
+  const calls = remindBackend(appointment(10, 1, '23:30', 'Бакыт М.', { reminderOpenedAt: new Date().toISOString() }))
+  const opened: string[] = []
+  vi.spyOn(window, 'open').mockImplementation((url) => { opened.push(String(url)); return null })
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  renderApp()
+  const again = await screen.findByRole('button', { name: 'Напомнить ещё раз: Бакыт М.' })
+  await waitForSlow(() => expect(again).toBeEnabled())
+  await userEvent.click(again)
+  expect(confirm.mock.calls[0]![0]).toMatch(/^Уже напоминали в \d\d:\d\d\. Отправить ещё раз\?$/)
+  await waitForSlow(() => expect(opened).toHaveLength(1))
+  expect(decodeURIComponent(opened[0]!)).toContain('Напоминаем ещё раз')
+  // Отметка «отправлено» осталась
+  expect(await screen.findByRole('button', { name: /Напоминание отправлено: Бакыт М\./ })).toBeInTheDocument()
+  await waitForSlow(() => expect(calls).toEqual(['opened']))
+  vi.restoreAllMocks()
+})
+
 test('телефон: короткая полоса «Сегодня» над днём — только заявки и оплата, без склада; нажать на заявку — её карточка', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

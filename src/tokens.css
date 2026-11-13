@@ -24,6 +24,13 @@
   --accent-hover: #0B746C;
   --accent-text: #FFFFFF;
   --accent-soft: #E0F2EF;
+  /* Больше цвета (2026-11-13, DESIGN.md → Colors): текст на заливке --accent-soft (бирюзовый #0E8A80 на ней — 3,6:1,
+     мало для AA; этот — 5,3:1); фон CRM — на шаг темнее и теплее --page, карточки отделяются (и --sunken на тот же шаг: серые
+     подложки на фоне не пропадают);
+     приглушённые оттенки иконок разделов в меню (только иконка, подпись нейтральная) */
+  --accent-ink: #0B6E66;
+  --crm-page: #EBEFEC; --crm-sunken: #E2E9E8;
+  --ico-schedule: #0E8A80; --ico-patients: #3A66C4; --ico-cash: #2E8B57; --ico-stock: #B7791F; --ico-clinic: #6E5F9E;
   --status-ok: #11683A;
   --status-wait: #8A5200;
   --now: #E8573F;
@@ -61,6 +68,8 @@
   --page: #0D1A1D; --card: #13252A; --sunken: #0F1F23; --text: #E4EFEF; --hint: #93AAB0; --faint: #6C858B;
   --separator: #21383E; --line-strong: #2C4850; --link: #2BB5A8; --destructive: #FF9C9C;
   --accent: #2BB5A8; --accent-hover: #3CC6B9; --accent-text: #06201E; --accent-soft: #133B39;
+  --accent-ink: #3CC6B9; --crm-page: #0D1A1D; --crm-sunken: #0F1F23;
+  --ico-schedule: #2BB5A8; --ico-patients: #8FB0F5; --ico-cash: #7FD9A3; --ico-stock: #F2C46D; --ico-clinic: #B9AEE0;
   --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #13252A; --rail-text: #93AAB0;
   --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
   --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;
@@ -73,6 +82,8 @@
     --page: #0D1A1D; --card: #13252A; --sunken: #0F1F23; --text: #E4EFEF; --hint: #93AAB0; --faint: #6C858B;
     --separator: #21383E; --line-strong: #2C4850; --link: #2BB5A8; --destructive: #FF9C9C;
     --accent: #2BB5A8; --accent-hover: #3CC6B9; --accent-text: #06201E; --accent-soft: #133B39;
+    --accent-ink: #3CC6B9; --crm-page: #0D1A1D; --crm-sunken: #0F1F23;
+    --ico-schedule: #2BB5A8; --ico-patients: #8FB0F5; --ico-cash: #7FD9A3; --ico-stock: #F2C46D; --ico-clinic: #B9AEE0;
     --status-ok: #7FD9A3; --status-wait: #F2C46D; --rail: #13252A; --rail-text: #93AAB0;
     --req-bg: #22396A; --req-ink: #9DBBFF; --ok-bg: #17483A; --ok-ink: #7FD9A3;
     --wait-bg: #4D3A12; --wait-ink: #F2C46D; --bad-bg: #57232A; --bad-ink: #FF9C9C;

@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ExpenseEdit } from '../lib/ExpenseEdit'
+import { CategoryPick } from '../cash/ExpenseForm'
 import { shortDate, somText, todayIn } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
@@ -12,7 +13,7 @@ const LAB = 'Зуботехническая лаборатория'
 
 /**
  * Расходы по пациенту (техник, лаборатория): итог и список; «＋ Расход по пациенту» — сумма,
- * статья (по умолчанию лаборатория), комментарий. Расход попадает в «Кассу → Расходы». Есть в карточке
+ * статья из того же списка, что в «Расходах» (по умолчанию лаборатория; «Другое» — своя), комментарий. Расход попадает в «Кассу → Расходы». Есть в карточке
  * пациента и в карточке приёма. Кому можно — решает сервер (админ — на любого врача, врач — на себя).
  */
 export function PatientExpenses({ patient, me, doctorId }: {
@@ -32,11 +33,12 @@ export function PatientExpenses({ patient, me, doctorId }: {
   const [editing, setEditing] = useState<number | null>(null)
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState(LAB)
+  const [other, setOther] = useState('')
   const [comment, setComment] = useState('')
   const add = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/expenses', {
       body: {
-        spentOn: todayIn(), amountSom: Number(amount), category: category.trim(), comment: comment.trim() || undefined,
+        spentOn: todayIn(), amountSom: Number(amount), category: category === '*' ? other.trim() : category, comment: comment.trim() || undefined,
         patientId: patient.id, doctorId: doctorId ?? me.doctorId ?? undefined,
       },
     })),
@@ -45,6 +47,7 @@ export function PatientExpenses({ patient, me, doctorId }: {
       setOpen(false)
       setAmount('')
       setComment('')
+      setOther('')
     },
   })
   const submit = (e: FormEvent) => {
@@ -77,8 +80,8 @@ export function PatientExpenses({ patient, me, doctorId }: {
         <form className="form sub-form" aria-label="Расход по пациенту" onSubmit={submit}>
           <label className="field"><span>Сумма, сом</span>
             <input type="number" min={1} inputMode="numeric" required autoFocus value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
-          <label className="field"><span>Статья</span>
-            <input maxLength={60} required value={category} onChange={(e) => setCategory(e.target.value)} /></label>
+          <div className="field"><span>Статья</span>
+            <CategoryPick value={category} other={other} onChange={setCategory} onOther={setOther} /></div>
           <label className="field"><span>Комментарий (необязательно)</span>
             <input maxLength={200} placeholder="Например: коронка, 2 зуба" value={comment} onChange={(e) => setComment(e.target.value)} /></label>
           {add.error && <p className="error" role="alert">{Object.values(add.error.fieldErrors)[0] ?? add.error.message}</p>}

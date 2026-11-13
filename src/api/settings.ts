@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { reminderText } from '../lib/texts'
+import { reminderText, repeatReminderText } from '../lib/texts'
 import { api, unwrap, type Schemas } from './client'
 import { useMe } from './me'
 
@@ -23,6 +23,16 @@ export function useReminderText(): ((a: Schemas['AppointmentView']) => string) |
   const data = settings.data
   if (!data) return null
   return (a) => reminderText({ startAt: a.startAt, serviceName: a.serviceName, patient: a.patient }, data,
+    me.data?.doctors?.find((d) => d.id === a.doctorId)?.fullName)
+}
+
+/** Текст повторного напоминания для WhatsApp/SMS (уже напоминали) — системный, без своего шаблона клиники. */
+export function useRepeatReminderText(): ((a: Schemas['AppointmentView']) => string) | null {
+  const settings = useSettings()
+  const me = useMe()
+  const data = settings.data
+  if (!data) return null
+  return (a) => repeatReminderText({ startAt: a.startAt, serviceName: a.serviceName, patient: a.patient }, data,
     me.data?.doctors?.find((d) => d.id === a.doctorId)?.fullName)
 }
 

@@ -94,7 +94,8 @@ function PromptSheet({ noTelegram, publicKey, onClose }: { noTelegram: boolean; 
     if (await enable(publicKey)) setDone(true)
   }
 
-  const later = 'Включить можно потом: «Настройки» → «Уведомления».'
+  const later = phone ? 'Включить можно потом: «Ещё» → своё имя вверху → «Уведомления».'
+    : 'Включить можно потом: нажмите на своё имя внизу меню → «Уведомления».'
   let title: string
   let body: ReactNode
   let actions: ReactNode

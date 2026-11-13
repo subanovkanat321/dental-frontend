@@ -28,7 +28,7 @@ type AiLang = NonNullable<Schemas['BeforeAfterAiTextRequest']['lang']>
 
 const AI_STYLE: Record<PostStyle, AiStyle> = { short: 'SHORT', full: 'FULL', emoji: 'EMOJI' }
 
-/** «ИИ для постов» клиники (Настройки → ИИ-помощник): on — и ключ на сервере, и клиника включила. */
+/** «ИИ для постов» клиники (Настройки → ИИ в клинике): on — и ключ на сервере, и клиника включила. */
 function usePostAi() {
   return useQuery({ queryKey: ['post-ai'], queryFn: () => unwrap(api.GET('/api/clinic/post-ai')), staleTime: 60_000 }).data?.on === true
 }

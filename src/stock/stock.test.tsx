@@ -123,9 +123,9 @@ test('новый материал: «свой склад у каждого вр�
 test('«−1» в списке списывает одну штуку; «Расходы на склад» — покупки месяца и по материалам', async () => {
   const moves = backend([glove])
   server.use(http.get('*/api/supplies/spending', () => HttpResponse.json({
-    purchasedSom: 5000, usedSom: 1200, revenueSom: 50000, unpricedDeliveries: 1, unpricedUsed: 0,
+    purchasedSom: 5000, usedSom: 1200, revenueSom: 50000, unpricedDeliveries: 1, unpricedUsed: 0, lossesSom: 0,
     months: [{ month: '2026-09-01', purchasedSom: 3000 }, { month: '2026-10-01', purchasedSom: 5000 }],
-    items: [{ supplyId: 1, name: 'Перчатки', unit: 'уп', bought: 10, boughtSom: 5000, used: 2, usedSom: 1000, archived: false, unpricedDeliveries: 0 }],
+    items: [{ supplyId: 1, name: 'Перчатки', unit: 'уп', bought: 10, boughtSom: 5000, used: 2, usedSom: 1000, archived: false, unpricedDeliveries: 0, lost: 0 }],
   } satisfies Schemas['SpendingView'])))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Списать 1: Перчатки' }))
@@ -154,7 +154,7 @@ test('«Расходы на склад» за месяц — с первого �
   server.use(http.get('*/api/supplies/spending', ({ request }) => {
     const url = new URL(request.url)
     periods.push(`${url.searchParams.get('from')}..${url.searchParams.get('to')}`)
-    return HttpResponse.json({ purchasedSom: 0, usedSom: 0, months: [], items: [], unpricedUsed: 0, unpricedDeliveries: 0 } satisfies Schemas['SpendingView'])
+    return HttpResponse.json({ purchasedSom: 0, usedSom: 0, months: [], items: [], unpricedUsed: 0, unpricedDeliveries: 0, lossesSom: 0 } satisfies Schemas['SpendingView'])
   }))
   renderApp()
   await userEvent.click(await findSub('Расходы на склад'))

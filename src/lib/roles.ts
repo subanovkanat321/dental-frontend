@@ -70,3 +70,13 @@ export const PRICES_BY_HEAD = 'Цены и часы клиники меняет 
 export function seesOwnEarnings(me: Me): boolean {
   return me.doctorId != null && !isAssistant(me)
 }
+
+/**
+ * Общие расходы клиники с ключом деления (аренда кабинета, коммуналка): записывать и видеть доли всех
+ * врачей. Тот, кто видит деньги всех, а при «врачи работают независимо» — любой врач и админ (сервер —
+ * ExpenseController.mayShared). Регистратура и ассистент — нет.
+ */
+export function canShareExpenses(me: Me): boolean {
+  if (seesAllMoney(me)) return true
+  return Boolean(me.clinic?.independentDoctors) && !isAssistant(me) && Boolean(me.admin || me.doctorId != null)
+}

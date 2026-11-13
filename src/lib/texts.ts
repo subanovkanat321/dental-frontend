@@ -35,6 +35,11 @@ export function agoText(instant: string, now = new Date()): string {
   return `${Math.floor(days / 30)} мес назад`
 }
 
+/** Звали меньше 7 дней назад — перед повтором спросить «Позвать ещё раз?». */
+export function recentlyInvited(invitedAt: string, now = new Date()): boolean {
+  return now.getTime() - Date.parse(invitedAt) < 7 * 86400000
+}
+
 /** SMS с телефона, где открыто приложение: «Сообщения» с номером и текстом (форма ссылки — для iPhone и Android). */
 export function smsUrl(phone: string, text: string): string {
   return `sms:${phone ? `+${phone}` : ''}?&body=${encodeURIComponent(text)}`
@@ -98,10 +103,44 @@ function periodText(months?: number | null): string {
   return `${months} месяцев`
 }
 
-/** «Пора на профосмотр»: срок — у услуги последнего визита или у клиники (по умолчанию полгода). */
-export function recallText(fullName: string, signature?: string | null, months?: number | null): string {
-  return signed(`Здравствуйте, ${fullName}! 😊 Прошло больше ${periodText(months)} с вашего визита к стоматологу — `
-    + 'пора на профилактический осмотр 🦷 Ответьте, когда вам удобно, — запишем.', signature)
+/** «жарым жылдан»: срок профосмотра по-кыргызски (после него — «ашты»). */
+function periodKy(months?: number | null): string {
+  if (months == null || months === 6) return 'жарым жылдан'
+  if (months === 1) return 'бир айдан'
+  if (months === 12) return 'бир жылдан'
+  if (months === 24) return 'эки жылдан'
+  return `${months} айдан`
+}
+
+/** «бүгүн», «кечээ», «5 күн мурун», «2 ай мурун» — agoText по-кыргызски. */
+function agoKy(instant: string, now = new Date()): string {
+  const days = Math.round((Date.parse(`${todayIn(now)}T00:00:00Z`) - Date.parse(`${dateOf(instant)}T00:00:00Z`)) / 86400000)
+  if (days <= 0) return 'бүгүн'
+  if (days === 1) return 'кечээ'
+  return days < 60 ? `${days} күн мурун` : `${Math.floor(days / 30)} ай мурун`
+}
+
+/**
+ * «Пора на профосмотр»: срок — у услуги последнего визита или у клиники (по умолчанию полгода). Уже звали
+ * (`invitedAt`) — повтор короче и мягче: «Мы писали вам 5 дней назад — напоминаем ещё раз…», как
+ * повтор приглашения «Позвать снова» бэкенда (Comebacks.repeatTemplate). Язык — если известен, иначе русский
+ * (у пациента без бота CRM его не знает).
+ */
+export function recallText(fullName: string, signature?: string | null, months?: number | null,
+  options: { invitedAt?: string | null; lang?: 'ru' | 'ky'; now?: Date } = {}): string {
+  const { invitedAt, lang = 'ru', now = new Date() } = options
+  if (lang === 'ky') {
+    return signed(invitedAt
+      ? `Саламатсызбы, ${fullName}! Сизге ${agoKy(invitedAt, now)} жазганбыз — дагы бир жолу эскертебиз: `
+        + 'профилактикалык текшерүүгө убакыт келди 🦷 Качан ыңгайлуу экенин жазыңыз — жазып коёбуз.'
+      : `Саламатсызбы, ${fullName}! 😊 Тиш дарыгерине келгениңизге ${periodKy(months)} ашты — `
+        + 'профилактикалык текшерүүгө убакыт келди 🦷 Качан ыңгайлуу экенин жазыңыз — жазып коёбуз.', signature)
+  }
+  return signed(invitedAt
+    ? `Здравствуйте, ${fullName}! Мы писали вам ${agoText(invitedAt, now)} — напоминаем ещё раз: `
+      + 'пора на профилактический осмотр 🦷 Ответьте, когда вам удобно, — запишем.'
+    : `Здравствуйте, ${fullName}! 😊 Прошло больше ${periodText(months)} с вашего визита к стоматологу — `
+      + 'пора на профилактический осмотр 🦷 Ответьте, когда вам удобно, — запишем.', signature)
 }
 
 /** «Освободилось время» — пациенту из листа ожидания. */
@@ -177,6 +216,64 @@ export function reminderText(a: ReminderAppointment, settings?: ReminderSettings
   if (signature && !usesVariable(template, 'клиника')) lines.push(signature)
   const text = lines.join('\n')
   return usesVariable(template, 'бот') ? text : invite(text)
+}
+
+const KY_MONTHS = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь']
+const KY_WEEKDAYS = ['жекшемби', 'дүйшөмбү', 'шейшемби', 'шаршемби', 'бейшемби', 'жума', 'ишемби']
+
+/** {когда} по-кыргызски — как Lang.KY.when бэкенда: «бүгүн саат 10:00», «эртең саат 10:00», «26-октябрь, дүйшөмбү, саат 10:00». */
+export function whenAtKy(startAt: string, now = new Date()): string {
+  const day = dateOf(startAt)
+  const today = todayIn(now)
+  const time = `саат ${timeOf(startAt)}`
+  if (day === today) return `бүгүн ${time}`
+  if (day === addDays(today, 1)) return `эртең ${time}`
+  const date = new Date(`${day}T00:00:00Z`)
+  return `${date.getUTCDate()}-${KY_MONTHS[date.getUTCMonth()]}, ${KY_WEEKDAYS[date.getUTCDay()]}, ${time}`
+}
+
+/** «Ответьте 1 — приду, 2 — перенести» по-кыргызски. */
+const REPLY_LINE_KY = 'Жооп бериңиз: 1 — келем, 2 — жылдыруу керек.'
+
+/**
+ * Повторное напоминание в WhatsApp/SMS (уже напоминали) — другим текстом, чтобы пациент не получил то же
+ * сообщение дважды; как PatientReminders.repeatText бэкенда (reminder.repeat). Всегда системный текст:
+ * свой шаблон клиники — только для первого напоминания. Язык — если известен (CRM знает его только у
+ * пациентов в боте, а им повтор уходит в Telegram), иначе русский. Строка «Ответьте 1 — приду…» и ссылка
+ * на бота — как у первого.
+ */
+export function repeatReminderText(a: ReminderAppointment, settings?: ReminderSettings | null, doctor?: string | null,
+  now = new Date(), lang: 'ru' | 'ky' = 'ru'): string {
+  const guardian = a.patient.guardian?.fullName
+  const greet = guardian ?? a.patient.fullName
+  const clinic = settings?.clinicName?.trim()
+  const address = settings?.clinicAddress?.trim()
+  const where = [clinic, address].filter(Boolean).join(', ')
+  const botUrl = settings?.botUrl
+  let text: string
+  if (lang === 'ky') {
+    text = `Саламатсызбы, ${greet}! Дагы бир жолу эскертебиз: ${whenAtKy(a.startAt, now)} `
+      + `${doctor ? `${doctor} дарыгердин` : 'тиш дарыгеринин'} кабыл алуусуна жазылгансыз${where ? ` (${where})` : ''}. `
+      + 'Келесизби, жооп бериңизчи — пландарыңыз өзгөрсө, бул убакытты башка бейтапка бере алабыз.'
+    if (guardian) text = `👶 Балаңыз ${a.patient.fullName} жазылган\n${text}`
+    text += `\n${REPLY_LINE_KY}`
+  }
+  else {
+    text = `Здравствуйте, ${greet}! Напоминаем ещё раз: ${whenAt(a.startAt, now)} у вас приём `
+      + `${doctor ? `у врача ${doctor}` : 'у стоматолога'}${where ? ` в ${where}` : ''}. `
+      + 'Пожалуйста, ответьте, придёте ли — так мы сможем отдать время другому пациенту, если планы поменялись.'
+    if (guardian) text = `👶 Запись ребёнка ${a.patient.fullName}\n${text}`
+    text += `\n${REPLY_LINE}`
+  }
+  return botUrl && !a.patient.telegram ? `${text}\n\n${BOT_LINE} ${botUrl}` : text
+}
+
+/** «⏰ Ждём вас» за 2 часа до приёма — soon.text бэкенда (SoonReminders); клиника его не меняет. */
+export function soonText(startAt: string, settings?: ReminderSettings | null, now = new Date()): string {
+  const lines = [`⏰ Ждём вас ${whenAt(startAt, now)} на приёме у стоматолога 😊`]
+  if (settings?.clinicAddress?.trim()) lines.push(`📍 Адрес: ${settings.clinicAddress.trim()}`)
+  if (settings?.clinicPhone?.trim()) lines.push(`📞 Не получается прийти — позвоните, пожалуйста: ${settings.clinicPhone.trim()}`)
+  return lines.join('\n')
 }
 
 /** Пустой шаблон переезда в Tish — открытая ссылка бэкенда (данных клиники в нём нет): один .xlsx на все данные. */

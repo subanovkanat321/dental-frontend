@@ -608,6 +608,12 @@ details.agreement-box { max-height: none; }
 /* Напоминание ушло — вместо кнопки отметка; ошибка — отдельной строкой под приёмом */
 .remind-sent { flex: none; align-self: center; margin-right: 8px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
 button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+/* «✓ отправлено» и под ним «↻ ещё раз» — столбиком, чтобы строка дня не стала шире */
+.remind-sent-box { flex: none; align-self: center; display: flex; flex-direction: column; align-items: flex-end; margin-right: 8px; }
+.remind-sent-box .remind-sent { margin-right: 0; padding-bottom: 2px; }
+.remind-again { background: none; border: 0; padding: 4px; font-family: inherit; font-size: .8rem; font-weight: 500; color: var(--link); cursor: pointer; white-space: nowrap; }
+.remind-again:disabled { opacity: .5; cursor: default; }
+.doctor-columns .remind-sent-box { align-self: flex-start; align-items: flex-start; margin: -4px 0 4px 4px; }
 .day-list .row:has(.row-error) { flex-wrap: wrap; }
 .day-list .row:has(.row-error) .row-button { flex-basis: 0; }
 .row-error { flex-basis: 100%; margin: 0 10px 8px; font-size: .85rem; }
@@ -2285,3 +2291,76 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .opening-debts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .opening-debts li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
 .opening-debts p { margin: 0; }
+/* Общие расходы (V207): форма с ключом деления, окно «＋ Расход», доли врачей, приход/расход/итог в «Деньгах» */
+.expense-form .expense-kind, .expense-form .split-box, .expense-form .expense-hint, .expense-form .error { grid-column: 1 / -1; }
+.expense-form .expense-kind button { flex: 1; white-space: normal; line-height: 1.2; }
+.expense-dialog .expense-form { grid-template-columns: 1fr; }
+.expense-form input[type="checkbox"] { height: auto; padding: 0; }
+.split-box { display: grid; gap: 8px; margin: 0; padding: 10px 12px 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+.split-box legend { padding: 0 4px; font-size: .85rem; color: var(--hint); }
+.split-manual { display: grid; gap: 6px; }
+.split-manual .field.inline { display: grid; grid-template-columns: 1fr 140px; align-items: center; gap: 8px; }
+.split-box .check { display: flex; gap: 8px; align-items: center; }
+.expense-dialog { width: min(560px, calc(100vw - 32px)); gap: 12px; }
+.expense-dialog .block-head { display: flex; justify-content: space-between; align-items: center; }
+.expense-dialog h2 { margin: 0; }
+.shared-list { display: grid; gap: 10px; margin: 8px 0 0; padding: 0; list-style: none; }
+.shared-list > li { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--separator); }
+.shared-list > li:first-child { border-top: 0; }
+.shared-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.shares { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.shares .chip.mine { background: var(--accent-soft); color: var(--accent-hover); font-weight: 600; }
+.shared-head .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
+.methods.cash-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.methods.cash-flow > div { display: grid; gap: 2px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .86rem; }
+.methods.cash-flow b { font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+.net-lines .net-sub dt { padding-left: 14px; color: var(--hint); font-size: .86rem; }
+.add-expense { white-space: nowrap; }
+@media (max-width: 640px) {
+  .methods.cash-flow { grid-template-columns: 1fr 1fr; }
+  .methods.cash-flow > div:last-child { grid-column: 1 / -1; }
+  .split-manual .field.inline { grid-template-columns: 1fr 110px; }
+}
+
+/* ===== Больше цвета (2026-11-13, DESIGN.md → Colors): владелец — «всё как будто белое». Цвет — там, где он
+   помогает найти важное: открытая вкладка и раздел меню, оттенок иконки раздела, итоги в сомах, шапки блоков
+   кассы. Сайт и самозапись не задеты: фон и подложки меняем только на страницах с меню CRM (.shell) */
+:root:has(.shell) { --page: var(--crm-page); --sunken: var(--crm-sunken); }
+/* Текст на мягкой бирюзовой заливке — --accent-ink (AA), а не --link */
+.nav.active, .nav-subitem.active, .more-item.active { color: var(--accent-ink); }
+:root:has(.shell) .segments button[aria-pressed=true] { color: var(--accent-ink); }
+/* Иконки разделов — свой приглушённый оттенок; подпись нейтральная. Открытый раздел — бирюзовым */
+.nav[data-section=schedule] .icon { color: var(--ico-schedule); }
+.nav[data-section=patients] .icon { color: var(--ico-patients); }
+.nav[data-section=cash] .icon { color: var(--ico-cash); }
+.nav[data-section=stock] .icon { color: var(--ico-stock); }
+.nav[data-section=clinic] .icon { color: var(--ico-clinic); }
+.nav.active .icon { color: var(--accent); }
+@media (min-width: 761px) {
+  .shell.narrow .nav-item.sub-active > .nav-row > .nav.active { color: var(--accent-ink); }
+}
+/* Телефон, нижнее меню: открытый раздел — бирюзовая «таблетка» вокруг иконки и бирюзовая подпись (и когда
+   открыт подраздел: раньше кнопка была без заливки). Вся ячейка не заливается — рядом вкладки с заливкой */
+@media (max-width: 760px) {
+  .sidebar .nav.active, .nav-item.sub-active > .nav-row > .nav.active { background: none; color: var(--accent-ink); }
+  .sidebar .nav .icon { width: 52px; height: 28px; padding: 3px 15px; border-radius: 14px; transition: background .15s; }
+  .sidebar .nav.active .icon { background: var(--accent-soft); }
+}
+/* Вкладки подразделов: открытая — мягкая бирюзовая заливка со скруглённым верхом, бирюзовый текст и
+   полоска 4px; остальные — приглушённым текстом, при наведении (компьютер) — серой подложкой */
+.sub-tab { align-self: end; height: calc(100% - 6px); border-radius: var(--r-md) var(--r-md) 0 0; transition: color .15s ease-out, background .15s ease-out; }
+.sub-tab.active { background: var(--accent-soft); color: var(--accent-ink); }
+.sub-tabs-ink { height: 4px; }
+@media (min-width: 761px) {
+  .sub-tab:hover:not(.active) { background: var(--sunken); }
+}
+/* Итоги в сомах: пришло — зелёным, расходы — янтарным, «Чистыми» — бирюзовым (минус — красным, как было) */
+.money-cell .total[aria-label="Касса за период"] { color: var(--status-ok); }
+.total[aria-label="Расходы за месяц"] { color: var(--status-wait); }
+dd[aria-label="Чистыми"]:not(.tone-bad) { color: var(--accent-ink); }
+/* Шапки блоков кассы — короткая цветная черта слева: глаз находит блок при прокрутке. Цвет — по смыслу:
+   «К оплате» — персиковый кассы, долги — красный, остальное — бирюзовый */
+.schedule-main.cash > .card-block > h2:first-child { display: flex; align-items: center; gap: 8px; }
+.schedule-main.cash > .card-block > h2:first-child::before { content: ''; flex: none; width: 4px; height: 1.05em; border-radius: 2px; background: var(--accent); }
+.schedule-main.cash > .card-block:has(table[aria-label="К оплате на кассе"]) > h2:first-child::before { background: var(--cash-ink); }
+.schedule-main.cash > .card-block:has(table[aria-label="Долги пациентов"]) > h2:first-child::before { background: var(--bad-ink); }

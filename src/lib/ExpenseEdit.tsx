@@ -22,6 +22,7 @@ export function ExpenseEdit({ expense: x, onDone }: { expense: Expense; onDone: 
   const done = () => {
     void client.invalidateQueries({ queryKey: ['expenses'] })
     void client.invalidateQueries({ queryKey: ['spending'] })
+    void client.invalidateQueries({ queryKey: ['net-month'] })
     onDone()
   }
   const save = useMutation<unknown, ApiError>({

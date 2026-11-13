@@ -25,9 +25,9 @@ function serve(b: Schemas['ComebacksBoard']) {
 
 const board: Schemas['ComebacksBoard'] = {
   patients: [
-    { patientId: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: true, reason: 'PLAN', planSom: 18000,
+    { patientId: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: true, reason: 'PLAN', planSom: 18000, invites: 0,
       plan: ['зуб 36 — Коронка', 'Чистка'], lastVisit: '2026-10-10T04:00:00Z' },
-    { patientId: 3, fullName: 'Бакыт М.', phone: '996555111222', telegram: false, reason: 'NO_SHOW', planSom: 0, plan: [] },
+    { patientId: 3, fullName: 'Бакыт М.', phone: '996555111222', telegram: false, reason: 'NO_SHOW', planSom: 0, plan: [], invites: 0 },
   ],
   planSom: 18000, planPatients: 1, noShows: 1, recalls: 0, total: 0, sent: 0, agreed: 0, cancelled: 0
 }
@@ -77,7 +77,7 @@ test('«Позвать снова»: деньги на столе, «Tish вер
 
 test('«Позвать снова»: «пора на осмотр» — последний визит, услуга, с какого дня пора; нет сроков у услуг — подсказка', async () => {
   const recallBoard: Schemas['ComebacksBoard'] = {
-    patients: [{ patientId: 4, fullName: 'Нурлан К.', phone: '996555000283', telegram: false, reason: 'RECALL', planSom: 0, plan: [],
+    patients: [{ patientId: 4, fullName: 'Нурлан К.', phone: '996555000283', telegram: false, reason: 'RECALL', planSom: 0, plan: [], invites: 0,
       lastVisit: '2026-04-03T04:00:00Z', recallMonths: 6, recallService: 'Профессиональная чистка', recallDueOn: '2026-10-03' }],
     planSom: 0, planPatients: 0, noShows: 0, recalls: 1, total: 0, sent: 0, agreed: 0, cancelled: 0
   }
@@ -132,7 +132,7 @@ test('«Позвать снова»: по 50 за раз — «Показать 
   // 60 вымышленных пациентов «пора на осмотр»
   const many: Schemas['ComebacksBoard'] = {
     patients: Array.from({ length: 60 }, (_, i) => ({ patientId: 100 + i, fullName: `Пациент ${i + 1}`, phone: '996555000000',
-      telegram: false, reason: 'RECALL' as const, planSom: 0, plan: [] })),
+      telegram: false, reason: 'RECALL' as const, planSom: 0, plan: [], invites: 0 })),
     planSom: 0, planPatients: 0, noShows: 0, recalls: 60, total: 0, sent: 0, agreed: 0, cancelled: 0
   }
   server.use(
@@ -154,7 +154,7 @@ test('«Позвать снова»: по 50 за раз — «Показать 
 function cancelledBoard(): Schemas['ComebacksBoard'] {
   const day = 86_400_000
   return {
-    patients: [{ patientId: 5, fullName: 'Динара Ж.', phone: '996555000295', telegram: false, reason: 'CANCELLED', planSom: 0, plan: [],
+    patients: [{ patientId: 5, fullName: 'Динара Ж.', phone: '996555000295', telegram: false, reason: 'CANCELLED', planSom: 0, plan: [], invites: 0,
       doctorId: 2, cancelled: { at: new Date(Date.now() - 3 * day).toISOString(), source: 'PATIENT', serviceId: 9, service: 'Чистка',
         doctorId: 2, doctor: 'Дастан Т.', startAt: '2026-11-08T05:00:00Z', minutes: 60 } }],
     planSom: 0, planPatients: 0, noShows: 0, recalls: 0, cancelled: 1, total: 0, sent: 0, agreed: 0
@@ -238,4 +238,38 @@ test('«Отменили»: «Записать» — «Новая запись»
   expect(form).toHaveTextContent('Динара Ж.')
   expect(within(form).getByRole('combobox', { name: 'Врач' })).toHaveTextContent('Дастан Т.')
   expect(await within(form).findByRole('button', { name: /Чистка/ })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('«Позвать снова»: «звали 3 дня назад · всего 2 раза»; позвать снова в течение недели — сначала вопрос', async () => {
+  const day = 86_400_000
+  const invited: Schemas['ComebacksBoard'] = {
+    ...board,
+    patients: [{ ...board.patients![1]!, invitedAt: new Date(Date.now() - 3 * day).toISOString(), invites: 2 }],
+  }
+  const drafts: number[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/patients/recent', () => HttpResponse.json([])),
+    http.get('*/api/comebacks', serve(invited)),
+    http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
+    http.post('*/api/comebacks/3/draft', () => {
+      drafts.push(3)
+      return HttpResponse.json({ text: 'Здравствуйте, Бакыт М.!\n\nМы писали вам 3 дня назад — напоминаем ещё раз.', ai: false, lang: 'RU', telegram: false })
+    }),
+  )
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+  renderApp()
+  await userEvent.click(await findSub('Позвать снова'))
+  const item = within(await screen.findByRole('list', { name: 'Кого вернуть' })).getAllByRole('listitem')[0]!
+  expect(item).toHaveTextContent('звали 3 дня назад · всего 2 раза')
+
+  await userEvent.click(within(item).getByRole('button', { name: 'Пригласить' }))
+  expect(confirm.mock.calls[0]![0]).toContain('Звали 3 дня назад. Позвать ещё раз?')
+  expect(screen.queryByRole('textbox', { name: 'Текст приглашения' })).not.toBeInTheDocument()
+
+  await userEvent.click(within(item).getByRole('button', { name: 'Пригласить' }))
+  expect(await screen.findByRole('textbox', { name: 'Текст приглашения' })).toHaveValue('Здравствуйте, Бакыт М.!\n\nМы писали вам 3 дня назад — напоминаем ещё раз.')
+  expect(screen.getByText(/Повторное приглашение — короче первого/)).toBeInTheDocument()
+  expect(drafts).toEqual([3])
+  confirm.mockRestore()
 })

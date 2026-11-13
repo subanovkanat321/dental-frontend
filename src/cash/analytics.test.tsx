@@ -28,7 +28,7 @@ test('аналитика: выручка по месяцам, по врачам,
       const cash = total + 5000
       return HttpResponse.json({
         totalSom: total, paidCount: 5, unpaidCount: 0, byMethod: doctor ? {} : { CASH: total * 0.6, TRANSFER: total * 0.4 }, days: [],
-        cash: { totalSom: cash, paymentsCount: 6, depositsSom: 0, byMethod: doctor ? {} : { CASH: cash * 0.6, TRANSFER: cash * 0.4 }, days: [] }, freeCount: 0, prepaidCount: 0
+        cash: { totalSom: cash, paymentsCount: 6, depositsSom: 0, byMethod: doctor ? {} : { CASH: cash * 0.6, TRANSFER: cash * 0.4 }, days: [], openingDebtsSom: 0 }, freeCount: 0, prepaidCount: 0
       } satisfies Schemas['RevenueView'])
     }),
     // Отчёт — по месяцам: строки только за запрошенный месяц (30 дней могут захватить два)

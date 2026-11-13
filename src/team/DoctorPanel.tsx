@@ -82,7 +82,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
       {editsWork && <DoctorServices key={d.id} doctorId={d.id} me={me} />}
       <section className="form">
         <h4>Часы работы</h4>
-        <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — во вкладке «Перерывы».</p>
+        <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — в «Рабочее время → Перерывы и выходные».</p>
         <HoursEditor doctorId={d.id} doctorName={d.fullName ?? ''} />
         <ChairHoursHint doctorId={d.id} me={me} />
       </section>

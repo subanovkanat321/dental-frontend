@@ -41,12 +41,13 @@ export function NetMonthTable({ month }: { month: string }) {
   const pay = (r: Row) => (r.doctorId == null ? rows.reduce((s, x) => s + payOf(x), 0) : payOf(r))
   const anyShared = d.total?.clinicAfterSharedSom != null && d.generalExpensesSom !== 0
   const csv = () => saveCsv(`итог-месяца-${month}`, [
-    ['Врач', 'Как работает', 'Выручка', 'Зарплата / аренда', 'Материалы', 'Техник и лаб.', 'Врачу чистыми', 'Клинике остаётся', 'С долей общих расходов'],
+    ['Врач', 'Как работает', 'Выручка', 'Зарплата / аренда', 'Материалы по списанию', 'Потери', 'Расходы врача', 'Доля общих (независимо)', 'Врачу чистыми', 'Клинике остаётся', 'С долей общих расходов'],
     ...[...rows, ...(d.total ? [d.total] : [])].map((r) => [r.doctor ?? '', r.doctorId == null ? '' : modeText(r), r.revenueSom, pay(r),
-      r.materialsSom, r.expensesSom, r.doctorNetSom ?? '', r.clinicSom, r.clinicAfterSharedSom ?? '']),
+      r.materialsSom, r.lossesSom, r.expensesSom, r.sharedExpensesSom, r.doctorNetSom ?? '', r.clinicSom, r.clinicAfterSharedSom ?? '']),
     [],
     ['Общие расходы клиники', '', '', '', '', '', '', -d.generalExpensesSom],
-    ['Склад: списано за клинику − куплено', '', '', '', '', '', '', d.supplySom],
+    ['Склад вне строк врачей за клинику (материалы частных врачей, потери общего склада)', '', '', '', '', '', '', d.supplySom],
+    ['Закуплено на склад (справочно)', '', '', '', '', '', '', d.purchasedSom],
     ['Расходы частных врачей в «Расходах»', '', '', '', '', '', '', -d.selfEmployedExpensesSom],
     ['Врачам: начислено − выплачено', '', '', '', '', '', '', d.payoutsSom],
     ...(d.otherSom ? [['Прочее', '', '', '', '', '', '', d.otherSom]] : []),
@@ -68,7 +69,7 @@ export function NetMonthTable({ month }: { month: string }) {
               <th className="r">Выручка</th>
               <th className="r">Зарплата / аренда</th>
               <th className="r">Материалы ≈</th>
-              <th className="r">Техник и лаб.</th>
+              <th className="r">Расходы врача</th>
               {anySelf && <th className="r">Врачу чистыми</th>}
               <th className="r">Клинике остаётся</th>
               {anyShared && <th className="r">С долей общих расходов</th>}
@@ -83,7 +84,8 @@ export function NetMonthTable({ month }: { month: string }) {
                     <td className="r nowrap num">{total ? '' : `${r.selfEmployed ? 'аренда' : 'зарплата'} `}{somText(pay(r))}</td>
                     <td className="r nowrap num">
                       {somText(r.materialsSom)}
-                      {r.unpricedMaterials > 0 && <div className="hint small tone-wait">+{r.unpricedMaterials} без цены</div>}
+                      {r.lossesSom > 0 && <div className="hint small">потери {somText(r.lossesSom)}</div>}
+                      {r.unpricedMaterials > 0 && <div className="hint small tone-wait">без цены: {r.unpricedMaterials}</div>}
                     </td>
                     <td className="r nowrap num">{somText(r.expensesSom)}</td>
                     {anySelf && <td className="r nowrap num">{dash(r.doctorNetSom)}</td>}
@@ -100,8 +102,9 @@ export function NetMonthTable({ month }: { month: string }) {
         <div><dt>Клинике от врачей</dt><dd className="num">{signedSom(d.total?.clinicSom ?? 0)}</dd></div>
         <div><dt>Общие расходы клиники (без врача)</dt><dd className="num">−{somText(d.generalExpensesSom)}</dd></div>
         {supply !== 0 && (
-          <div><dt>Склад: {supply < 0 ? 'куплено больше, чем списано' : 'списано больше, чем куплено'}
-            <span className="hint small"> (куплено {somText(d.purchasedSom)}, списано за клинику ≈ {somText(d.clinicMaterialsSom)})</span></dt>
+          <div><dt>Склад вне строк врачей за клинику
+            <span className="hint small"> (списано всего ≈ {somText(d.usedSom)}{d.lossesSom > 0 ? `, потери ≈ ${somText(d.lossesSom)}` : ''}, из них в строках
+              врачей за клинику ≈ {somText(d.clinicMaterialsSom)})</span></dt>
           <dd className="num">{signedSom(supply)}</dd></div>
         )}
         {d.selfEmployedExpensesSom > 0 && (
@@ -118,9 +121,9 @@ export function NetMonthTable({ month }: { month: string }) {
           <dd className={`num strong ${d.profitSom < 0 ? 'tone-bad' : 'tone-ok'}`} aria-label="Прибыль клиники по врачам">{signedSom(d.profitSom)}</dd></div>
       </dl>
       <p className="hint small">
-        Материалы здесь — списанное на приёмах по средней цене покупки (оценка), а прибыль клиники считает покупки склада —
-        деньги из кассы; разница — строкой «Склад». Зарплата — начисленная за месяц по условиям «Зарплаты», в прибыли — выплаты
-        по дате. {anyShared && 'Доля общих расходов — оценка: общие расходы делим между врачами по их выручке.'}
+        Материалы — списанное на приёмах по средней цене покупки (оценка), так же и в прибыли; закуплено на склад за месяц —
+        {' '}{somText(d.purchasedSom)}, справочно. Зарплата — начисленная за месяц по условиям «Зарплаты», в прибыли — выплаты
+        по дате. {anyShared && 'Доля общих расходов: записанные с ключом деления (по креслам, поровну…) — по ключу, остальные — оценкой по выручке.'}
         {(d.total?.unpricedMaterials ?? 0) > 0 && ` У ${materialsWord(d.total?.unpricedMaterials ?? 0)} нет цены — в «Материалах» их нет.`}
       </p>
     </section>
