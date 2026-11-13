@@ -30,9 +30,8 @@ export const server = setupServer(
   http.get('*/web/materials/public', () => HttpResponse.json({ video: null, poster: null, presentation: null })),
   // «Помощь → Видео: как сделать»: по умолчанию роликов нет
   http.get('*/web/materials/howto', () => HttpResponse.json([])),
-  // «Клиники»: воронка пустая, демо-клиники нет — тесты своих экранов задают своё
+  // «Клиники»: воронка пустая — тесты своих экранов задают своё
   http.get('*/api/platform/funnel', () => HttpResponse.json({ total: 0, stages: [], leads: [] } satisfies Schemas['SalesFunnelFunnel'])),
-  http.get('*/api/platform/demo', () => HttpResponse.json({ doctors: 0, patients: 0, appointments: 0, guests: [] } satisfies Schemas['DemoClinicServiceStatus'])),
   // «Контент»: Instagram на сервере не подключён — кнопок публикации нет
   http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: false } satisfies Schemas['InstagramTokensState'])),
   http.get('*/api/platform/content/settings', () => HttpResponse.json({ reelsAuto: false, storiesAuto: false } satisfies Schemas['ContentSettingsSettings'])),

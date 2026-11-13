@@ -2276,86 +2276,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/platform/demo": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["status"];
-        put?: never;
-        post: operations["create_7"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/platform/demo/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["refresh"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/platform/demo/invite": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["invite"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/platform/demo/enter": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["enter"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/platform/demo/close-guests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["closeGuests"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/platform/content": {
         parameters: {
             query?: never;
@@ -2365,7 +2285,7 @@ export interface paths {
         };
         get: operations["list_4"];
         put?: never;
-        post: operations["create_8"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2525,7 +2445,7 @@ export interface paths {
         };
         get: operations["clinics"];
         put?: never;
-        post: operations["create_9"];
+        post: operations["create_8"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2573,7 +2493,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["enter_1"];
+        post: operations["enter"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2701,7 +2621,7 @@ export interface paths {
         };
         get: operations["versions"];
         put?: never;
-        post: operations["create_10"];
+        post: operations["create_9"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2765,7 +2685,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_11"];
+        post: operations["create_10"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3229,7 +3149,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["invite_1"];
+        post: operations["invite"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3357,7 +3277,7 @@ export interface paths {
         };
         get: operations["all_5"];
         put?: never;
-        post: operations["create_12"];
+        post: operations["create_11"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3405,7 +3325,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["invite_2"];
+        post: operations["invite_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3453,7 +3373,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["invite_3"];
+        post: operations["invite_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3517,7 +3437,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_13"];
+        post: operations["create_12"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3709,7 +3629,7 @@ export interface paths {
         };
         get: operations["list_7"];
         put?: never;
-        post: operations["create_14"];
+        post: operations["create_13"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3725,7 +3645,7 @@ export interface paths {
         };
         get: operations["list_8"];
         put?: never;
-        post: operations["create_15"];
+        post: operations["create_14"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3789,7 +3709,7 @@ export interface paths {
         };
         get: operations["day_1"];
         put?: never;
-        post: operations["create_16"];
+        post: operations["create_15"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4331,7 +4251,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["status_1"];
+        get: operations["status"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6997,7 +6917,6 @@ export interface components {
             contactTelegram?: string;
             listed: boolean;
             settingUp: boolean;
-            demo: boolean;
         };
         AgreementControllerAssignment: {
             /** Format: int64 */
@@ -8205,21 +8124,6 @@ export interface components {
             nextStep?: string;
             /** Format: date */
             nextStepOn?: string;
-        };
-        DemoClinicServiceStatus: {
-            /** Format: int64 */
-            clinicId?: number;
-            name?: string;
-            /** Format: int64 */
-            doctors: number;
-            /** Format: int64 */
-            patients: number;
-            /** Format: int64 */
-            appointments: number;
-            guests?: string[];
-        };
-        DemoControllerGuest: {
-            fullName?: string;
         };
         ContentPostsPlannedReel: {
             title?: string;
@@ -15260,128 +15164,6 @@ export interface operations {
             };
         };
     };
-    status: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DemoClinicServiceStatus"];
-                };
-            };
-        };
-    };
-    create_7: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DemoClinicServiceStatus"];
-                };
-            };
-        };
-    };
-    refresh: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DemoClinicServiceStatus"];
-                };
-            };
-        };
-    };
-    invite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DemoControllerGuest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DoctorInvitesInvite"];
-                };
-            };
-        };
-    };
-    enter: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    closeGuests: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DemoClinicServiceStatus"];
-                };
-            };
-        };
-    };
     list_4: {
         parameters: {
             query?: {
@@ -15405,7 +15187,7 @@ export interface operations {
             };
         };
     };
-    create_8: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -15645,7 +15427,7 @@ export interface operations {
             };
         };
     };
-    create_9: {
+    create_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -15721,7 +15503,7 @@ export interface operations {
             };
         };
     };
-    enter_1: {
+    enter: {
         parameters: {
             query?: never;
             header?: never;
@@ -15940,7 +15722,7 @@ export interface operations {
             };
         };
     };
-    create_10: {
+    create_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -16030,7 +15812,7 @@ export interface operations {
             };
         };
     };
-    create_11: {
+    create_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -16935,7 +16717,7 @@ export interface operations {
             };
         };
     };
-    invite_1: {
+    invite: {
         parameters: {
             query?: never;
             header?: never;
@@ -17183,7 +16965,7 @@ export interface operations {
             };
         };
     };
-    create_12: {
+    create_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -17282,7 +17064,7 @@ export interface operations {
             };
         };
     };
-    invite_2: {
+    invite_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -17348,7 +17130,7 @@ export interface operations {
             };
         };
     };
-    invite_3: {
+    invite_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -17502,7 +17284,7 @@ export interface operations {
             };
         };
     };
-    create_13: {
+    create_12: {
         parameters: {
             query?: {
                 months?: number;
@@ -17881,7 +17663,7 @@ export interface operations {
             };
         };
     };
-    create_14: {
+    create_13: {
         parameters: {
             query?: never;
             header?: never;
@@ -17925,7 +17707,7 @@ export interface operations {
             };
         };
     };
-    create_15: {
+    create_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -18095,7 +17877,7 @@ export interface operations {
             };
         };
     };
-    create_16: {
+    create_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -19005,7 +18787,7 @@ export interface operations {
             };
         };
     };
-    status_1: {
+    status: {
         parameters: {
             query?: never;
             header?: never;

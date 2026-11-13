@@ -8,7 +8,7 @@ import { server } from '../test/server'
 
 const owner = { ...me, owner: true, platform: true }
 const clinic = {
-  id: 2, name: 'Улыбка Тест', code: 'c2', doctors: 2, staff: 1, patients: 30, appointments: 40, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, noShow30: 0, done30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, demo: false
+  id: 2, name: 'Улыбка Тест', code: 'c2', doctors: 2, staff: 1, patients: 30, appointments: 40, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, noShow30: 0, done30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false
 } satisfies Schemas['PlatformServiceClinicRow']
 
 beforeEach(() => {

@@ -18,7 +18,7 @@ afterEach(() => {
 
 const owner = { ...me, owner: true, platform: true }
 const clinic = (id: number, name: string, extra: Partial<Schemas['PlatformServiceClinicRow']> = {}) => ({
-  id, name, code: `c${id}`, doctors: 2, staff: 1, patients: 30, appointments: 40, done30: 18, noShow30: 2, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, demo: false, ...extra,
+  id, name, code: `c${id}`, doctors: 2, staff: 1, patients: 30, appointments: 40, done30: 18, noShow30: 2, health: 'OK', billing: { state: 'FREE' }, bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false, ...extra,
 }) satisfies Schemas['PlatformServiceClinicRow']
 
 function backend(clinics: Schemas['PlatformServiceClinicRow'][]) {

@@ -23,54 +23,6 @@ afterEach(() => {
 })
 
 const owner = { ...me, owner: true, platform: true }
-const manager = { ...me, owner: false, platform: true }
-
-const demo: Schemas['DemoClinicServiceStatus'] = { clinicId: 9, name: 'Стоматология «Демо»', doctors: 3, patients: 40, appointments: 312, guests: [] }
-
-test('владелец создаёт демо-клинику, обновляет данные и даёт гостю ссылку', async () => {
-  let created = false
-  let refreshed = false
-  let guest: unknown = null
-  server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
-    http.get('*/api/platform/demo', () => HttpResponse.json(created ? demo : { doctors: 0, patients: 0, appointments: 0, guests: [] })),
-    http.post('*/api/platform/demo', () => {
-      created = true
-      return HttpResponse.json(demo, { status: 201 })
-    }),
-    http.post('*/api/platform/demo/refresh', () => {
-      refreshed = true
-      return HttpResponse.json(demo)
-    }),
-    http.post('*/api/platform/demo/invite', async ({ request }) => {
-      guest = await request.json()
-      return HttpResponse.json({ token: 'demo1', expiresAt: '2026-11-07T10:00:00Z' } satisfies Schemas['DoctorInvitesInvite'])
-    }),
-  )
-  const user = userEvent.setup()
-  renderApp()
-  const block = await screen.findByRole('region', { name: 'Демо-клиника' })
-  await user.click(await within(block).findByRole('button', { name: 'Создать демо-клинику' }))
-  expect(await within(block).findByText('40')).toBeInTheDocument()
-  expect(within(block).getByRole('button', { name: 'Открыть как руководитель' })).toBeInTheDocument()
-
-  await user.click(within(block).getByRole('button', { name: 'Обновить демо-данные' }))
-  await user.click(await screen.findByRole('button', { name: 'Пересоздать' }))
-  await waitForSlow(() => expect(refreshed).toBe(true))
-
-  await user.click(within(block).getByText('Показать клиенту: ссылка гостю на сутки'))
-  await user.type(within(block).getByRole('textbox', { name: /Кому/ }), 'Клиника Улыбка')
-  await user.click(within(block).getByRole('button', { name: 'Сделать ссылку' }))
-  expect(await within(block).findByText(`${window.location.origin}/invite#staff_demo1`)).toBeInTheDocument()
-  expect(guest).toEqual({ fullName: 'Клиника Улыбка' })
-})
-
-test('менеджер платформы демо-клинику не видит', async () => {
-  server.use(http.get('*/api/patient/me', () => HttpResponse.json(manager)))
-  renderApp()
-  expect(await screen.findByRole('region', { name: 'Воронка продаж' })).toBeInTheDocument()
-  expect(screen.queryByRole('region', { name: 'Демо-клиника' })).not.toBeInTheDocument()
-})
 
 const lead = (id: number, clinicName: string, extra: Partial<Schemas['SalesFunnelLead']> = {}): Schemas['SalesFunnelLead'] => ({
   id, clinicName, contactName: 'Айбек', phone: '996555000091', city: 'Бишкек', status: 'NEW', stage: 'LEAD',

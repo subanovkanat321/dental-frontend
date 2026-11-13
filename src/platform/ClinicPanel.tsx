@@ -383,7 +383,7 @@ function ExportBox({ id }: { id: number }) {
   )
 }
 
-/** Скрыть тестовую или демо-клинику: внизу списка и не в каталоге; по прямой ссылке работает. */
+/** Скрыть тестовую клинику: внизу списка и не в каталоге; по прямой ссылке работает. */
 function HideBox({ clinic: c }: { clinic: Row }) {
   const client = useQueryClient()
   const hide = useMutation<Row, ApiError>({
@@ -394,7 +394,7 @@ function HideBox({ clinic: c }: { clinic: Row }) {
     <section className="form">
       {hide.error && <p className="error">{hide.error.message}</p>}
       <button type="button" className="btn" disabled={hide.isPending} onClick={() => hide.mutate()}>
-        {c.hidden ? 'Вернуть в список клиник' : 'Скрыть из списка (тестовая, демо)'}</button>
+        {c.hidden ? 'Вернуть в список клиник' : 'Скрыть из списка (тестовая)'}</button>
     </section>
   )
 }
