@@ -167,6 +167,9 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 /* Поле не шире своей колонки: у time/date на телефоне свой минимальный размер, иначе «До» вылезает за карточку (390px) */
 .field input { min-width: 0; max-width: 100%; }
 .check { display: flex; gap: 8px; align-items: center; font-size: .9rem; }
+/* Галочка внутри .field (группа «Терапия» в «Услугах врача», «В прайсе» услуги) — не поле ввода: «.field input
+   { width: 100% }» растягивал её на всю строку, и подпись уезжала вправо столбиком (2026-11-13). Своя ширина, без рамки */
+.field :is(input[type=checkbox], input[type=radio]) { width: auto; flex: none; margin: 0; padding: 0; border: 0; }
 /* Переключатели внутри страницы (День / Неделя / Месяц, вкладки карточки) — залитые таблетки на утопленной
    дорожке: выбранная — белая с тенью. Подразделы раздела — другим видом, подчёркнутыми вкладками
    (layout/section.tsx): два уровня не путаются */

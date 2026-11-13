@@ -83,6 +83,21 @@ export function openClinic(item: string): void {
   window.location.hash = `/clinic/${item}`
 }
 
+/**
+ * «Клиника → Рабочее время → График» с раскрытым редактором недели человека: #/clinic/hours/d12 (врач) или
+ * #/clinic/hours/s555 (сотрудник, Telegram id). Единственное место, где меняют часы работы: карточка в
+ * «Персонале» и «Мой профиль» ведут сюда. Новой записью — «Назад» вернёт в карточку.
+ */
+export function openWeekOf(person: string): void {
+  window.location.hash = `/clinic/hours/${person}`
+}
+
+/** Чей редактор недели открыть по адресу (#/clinic/hours/d12 → 'd12'); иначе null. */
+export function weekPersonInHash(): string | null {
+  const [name, item, person] = window.location.hash.replace(/^#\/?/, '').split('/')
+  return name === 'clinic' && item === 'hours' && person && /^[ds]-?\d+$/.test(person) ? person : null
+}
+
 /** Пункт блока «Я» (#/me/profile) или «Помощи» (#/help/guide) — новой записью: «‹ Назад» вернёт, откуда открыли. */
 export function openMine(page: 'me' | 'help', item: string): void {
   go(`/${page}/${item}`, true)

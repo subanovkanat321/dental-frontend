@@ -50,7 +50,7 @@ test('«Откуда узнают о клинике»: админ меняет �
   expect(await within(table).findByRole('button', { name: 'Выше: Instagram' })).toBeEnabled()
   expect(moved).toEqual({ direction: 1 })
 
-  await user.click(within(table).getByRole('button', { name: '+ Добавить' }))
+  await user.click(screen.getByRole('button', { name: '＋ Свой вариант с эмодзи' }))
   const panel = await screen.findByRole('complementary', { name: 'Новый вариант' })
   await user.type(within(panel).getByRole('textbox', { name: 'Название' }), 'YouTube')
   await user.click(within(within(panel).getByRole('group', { name: 'Подсказки эмодзи' })).getByRole('button', { name: '▶️' }))

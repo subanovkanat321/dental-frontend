@@ -70,6 +70,11 @@ test('услуги: таблица по группам, правка и нова
 
   await user.click(within(table).getByRole('button', { name: 'Лечение кариеса' }))
   const panel = await screen.findByRole('complementary', { name: 'Услуга' })
+  // «Показывать в прайсе»: галочка и подпись — одна строка, что значит — серым под ней
+  const shown = within(panel).getByRole('checkbox', { name: 'Показывать в прайсе' })
+  expect(shown).toBeChecked()
+  expect(shown.closest('label')!.firstElementChild).toBe(shown)
+  expect(shown.closest('.price-toggle')).toHaveTextContent('Выключите, если услугу больше не делаете.')
   await user.clear(within(panel).getByRole('spinbutton', { name: 'Цена «от», сом' }))
   await user.type(within(panel).getByRole('spinbutton', { name: 'Цена «от», сом' }), '3000')
   await user.click(within(panel).getByRole('button', { name: 'Сохранить' }))
