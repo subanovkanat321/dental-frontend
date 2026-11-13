@@ -203,7 +203,8 @@
 @media (max-width: 760px) {
   .shell { grid-template-columns: 1fr; }
   .sidebar {
-    position: fixed; top: auto; bottom: 0; left: 0; right: 0; z-index: 30; height: auto; overflow: visible;
+    /* --nav-drop — установленное приложение на iPhone поставило fixed-низ выше экрана: опускаем (layout/navGap.ts) */
+    position: fixed; top: auto; bottom: calc(0px - var(--nav-drop, 0px)); left: 0; right: 0; z-index: 30; height: auto; overflow: visible;
     flex-direction: row; padding: 4px 6px calc(4px + env(safe-area-inset-bottom));
     border-right: 0; border-top: 1px solid var(--separator);
   }
@@ -216,7 +217,8 @@
   /* Узкий телефон: подпись не наезжает на соседнюю кнопку — обрезается многоточием */
   .nav span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .nav .icon { width: 22px; height: 22px; }
-  .workspace { padding: 10px 10px calc(72px + env(safe-area-inset-bottom)); }
+  /* --nav-gap — Safari на iPhone поставил меню выше низа экрана (над своей панелью): запас снизу растёт на столько же */
+  .workspace { padding: 10px 10px calc(72px + env(safe-area-inset-bottom) + var(--nav-gap, 0px)); }
 
   .schedule.with-panel { grid-template-columns: 1fr; }
   .panel {
@@ -538,7 +540,7 @@ details.agreement-box { max-height: none; }
   /* Подписи меню не растут с «Крупным текстом»: «Расписание» в полосе из пяти кнопок не влезло бы */
   .nav { font-size: calc(.78rem / var(--text-scale, 1)); }
   .more-sheet { display: block; position: fixed; inset: 0; z-index: 35; background: rgba(15, 42, 48, .35); }
-  .more-card { position: absolute; left: 0; right: 0; bottom: calc(60px + env(safe-area-inset-bottom)); display: grid; gap: 4px;
+  .more-card { position: absolute; left: 0; right: 0; bottom: calc(60px + env(safe-area-inset-bottom) - var(--nav-drop, 0px)); display: grid; gap: 4px;
     padding: 14px 12px; border-radius: 16px 16px 0 0; background: var(--card); box-shadow: 0 -8px 24px rgba(0, 0, 0, .15);
     max-height: calc(100dvh - 60px - env(safe-area-inset-bottom) - 16px); overflow-y: auto; overscroll-behavior: contain; }
   .more-who { display: grid; gap: 2px; margin: 0 4px 8px; }
@@ -1106,7 +1108,7 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .save-bar .btn { flex: none; margin-left: auto; min-height: 40px; }
 @media (max-width: 760px) {
   /* Над панелью разделов: её высота ~62px + безопасная зона iPhone */
-  .save-bar { bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .save-bar { bottom: calc(70px + env(safe-area-inset-bottom) - var(--nav-drop, 0px)); }
   .panel .save-bar { bottom: calc(4px + env(safe-area-inset-bottom)); }
   .save-bar { gap: 8px; padding: 8px 8px 8px 12px; }
   /* Длинная подпись («Сохранить часы клиники») не помещается рядом — кнопка на всю ширину под текстом */
@@ -1734,7 +1736,7 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 /* «💬 Помощь»: на компьютере — пункт внизу меню (над «Выйти»), на телефоне — круглая кнопка над нижним
    меню на главных экранах; чат — поверх (панель приёма его перекрывает — так и задумано) */
 .help-nav { margin-top: auto; }
-.help-fab { position: fixed; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 12; display: grid; place-items: center;
+.help-fab { position: fixed; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom) - var(--nav-drop, 0px)); z-index: 12; display: grid; place-items: center;
   width: 44px; height: 44px; padding: 0; border: 1px solid var(--separator); border-radius: 50%; background: var(--card); color: var(--text);
   font: inherit; font-size: 1.15rem; box-shadow: var(--panel-shadow); cursor: pointer; }
 .help-fab:hover { border-color: var(--accent); color: var(--link); }
@@ -1743,11 +1745,11 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
 @media (max-width: 760px) {
   .help-nav { display: none; }
   /* Запас снизу под круглую кнопку: последняя строка списка докручивается выше неё (нижнее меню 72 + кнопка 44 + зазор) */
-  .shell:has(> .help-fab) .workspace { padding-bottom: calc(128px + env(safe-area-inset-bottom)); }
+  .shell:has(> .help-fab) .workspace { padding-bottom: calc(128px + env(safe-area-inset-bottom) + var(--nav-gap, 0px)); }
 }
 /* «Доступна новая версия» внизу по центру — тоже с запасом, пока видна */
 html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
-@media (max-width: 760px) { html:has(.pwa-toast) .workspace { padding-bottom: calc(136px + env(safe-area-inset-bottom)); } }
+@media (max-width: 760px) { html:has(.pwa-toast) .workspace { padding-bottom: calc(136px + env(safe-area-inset-bottom) + var(--nav-gap, 0px)); } }
 /* «Снимки и фото» в карточке приёма: свёрнуто под кнопкой, раскрытое — компактнее, чем в медкарте */
 
 /* Подтверждение (layout/Confirm): компьютер — окно по центру, телефон — лист снизу */
@@ -2389,8 +2391,20 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .nav[data-section=patients] .icon { color: var(--ico-patients); }
 .nav[data-section=cash] .icon { color: var(--ico-cash); }
 .nav[data-section=stock] .icon { color: var(--ico-stock); }
-.nav[data-section=clinic] .icon { color: var(--ico-clinic); }
-.nav.active .icon { color: var(--accent); }
+.nav[data-section=clinic] .icon, .more-item[data-section=clinic] .icon { color: var(--ico-clinic); }
+.nav[data-section=learn] .icon, .more-item[data-section=learn] .icon { color: var(--ico-learn); }
+.nav[data-section=settings] .icon, .more-item[data-section=settings] .icon { color: var(--ico-settings); }
+.nav[data-section=platform] .icon, .more-item[data-section=platform] .icon { color: var(--ico-platform); }
+.nav.help-nav .icon, .more-item[data-section=help] .icon { color: var(--ico-help); }
+/* Лист и меню «Я»: спокойные оттенки по смыслу (профиль — как «Пациенты», уведомления — тёплый, календарь —
+   как «Расписание», установить — как «Для пациента»), «Выйти» — приглушённый красный */
+.menu-item[data-icon=profile] .menu-ico { color: var(--ico-patients); }
+.menu-item[data-icon=appearance] .menu-ico { color: var(--ico-appearance); }
+.menu-item[data-icon=notifications] .menu-ico { color: var(--ico-stock); }
+.menu-item[data-icon=calendar] .menu-ico { color: var(--ico-schedule); }
+.menu-item[data-icon=install] .menu-ico { color: var(--ico-learn); }
+.menu-item[data-icon=logout] .menu-ico { color: var(--ico-logout); }
+.nav.active .icon, .more-item.active .icon { color: var(--accent); }
 @media (min-width: 761px) {
   .shell.narrow .nav-item.sub-active > .nav-row > .nav.active { color: var(--accent-ink); }
 }

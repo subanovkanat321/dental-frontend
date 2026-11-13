@@ -18,6 +18,7 @@ import { Icon } from './Icon'
 import { Avatar, HelpMenuItems, MeMenuItems, MenuPanel } from './MeMenu'
 import { whoAmI } from './me'
 import { useFitPanels } from './fitPanels'
+import { useNavGap } from './navGap'
 import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
@@ -167,6 +168,9 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   // Панель справа — целиком в окне, прокрутка внутри неё (layout/fitPanels.ts)
   const workspace = useRef<HTMLElement>(null)
   useFitPanels(workspace)
+  // Телефон: нижнее меню — у настоящего низа экрана, последний блок страницы докручивается выше него (iPhone, layout/navGap.ts)
+  const sidebar = useRef<HTMLElement>(null)
+  useNavGap(sidebar, phone)
   useEffect(() => () => { clearTimeout(flyTimer.current); clearTimeout(pressTimer.current) }, [])
   // Панель по нажатию закрывается нажатием мимо неё и Esc
   useEffect(() => {
@@ -305,7 +309,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   }
   return (
     <div className={narrow ? 'shell narrow' : 'shell'}>
-      <aside className="sidebar">
+      <aside ref={sidebar} className="sidebar">
         <div className="brand-row">
           {/* Свернуть/развернуть — первой в меню, у логотипа: на одном месте в обоих видах (как ≡ у Gmail) */}
           {!phone && (
@@ -397,12 +401,12 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
               <span className="chev" aria-hidden="true">›</span>
             </button>
             {extra.map((s) => (
-              <button key={s.key} type="button" className={s.key === page ? 'more-item active' : 'more-item'} onClick={() => go(s.key)}>
+              <button key={s.key} type="button" className={s.key === page ? 'more-item active' : 'more-item'} data-section={s.key} onClick={() => go(s.key)}>
                 <Icon name={s.key} /> <span>{s.title}</span>
               </button>
             ))}
             {me.doctor && (
-              <button type="button" className={page === 'help' ? 'more-item active' : 'more-item'} onClick={() => openMenu('help')}>
+              <button type="button" className={page === 'help' ? 'more-item active' : 'more-item'} data-section="help" onClick={() => openMenu('help')}>
                 <Icon name="help" /> <span>Помощь</span>
               </button>
             )}
