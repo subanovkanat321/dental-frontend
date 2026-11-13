@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 import type { Schemas } from '../api/client'
 import { useBack } from '../lib/back'
 import { closeHelpChat, openHelpChat, useHelpChat } from '../lib/helpChat'
-import { openSettings, settingsItem, type Page } from '../lib/route'
+import type { Page } from '../lib/route'
 import { openSub, subHref, useSub } from '../lib/sub'
 import { matches, useMedia } from '../lib/useMedia'
 import { useWaitlist } from '../api/settings'
@@ -15,6 +15,7 @@ import { AdminNotices } from './AdminNotices'
 import { OfflineNotice } from './OfflineNotice'
 import { ProfileNotice } from './ProfileNotice'
 import { Icon } from './Icon'
+import { SubIcon } from './subIcons'
 import { Avatar, HelpMenuItems, MeMenuItems, MenuPanel } from './MeMenu'
 import { whoAmI } from './me'
 import { useFitPanels } from './fitPanels'
@@ -78,17 +79,6 @@ const LONG_PRESS_MS = 500
 /** Окно уже́ — меню по умолчанию свёрнуто (ноутбуки 1280–1366; сначала — что выбрал человек). */
 const NARROW_BY_DEFAULT = '(min-width: 761px) and (max-width: 1366px)'
 
-/** Пункт «Настроек» из адреса — следим за ним: меню подсвечивает открытый пункт. */
-function useSettingsItem(): string | null {
-  const [item, setItem] = useState(settingsItem)
-  useEffect(() => {
-    const onHash = () => setItem(settingsItem())
-    window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
-  }, [])
-  return item
-}
-
 /**
  * Раскладка CRM: меню слева деревом — разделы (по ролям), под открытым разделом его подразделы
  * (бывшие вкладки сверху: «Пациенты → Лист ожидания», «Касса → Зарплата», пункты «Настроек» по
@@ -115,12 +105,15 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   // Открытый подраздел каждого раздела (адрес или последний открытый) и пункт «Настроек»
   const chosen: Partial<Record<Page, string | null>> = {
     patients: useSub('patients'), cash: useSub('cash'), stock: useSub('stock'), clinic: useSub('clinic'), platform: useSub('platform'),
+    settings: useSub('settings'),
   }
-  const item = useSettingsItem()
   const subsBy = useMemo(() => Object.fromEntries(sections.map((s) => [s.key, subsOf(s.key, me)])) as Record<Page, Sub[]>, [sections, me])
-  const activeSub = (key: Page): string | null => key === 'settings'
-    ? (item ? SETTINGS_ALIAS[item] ?? item : null)
-    : currentSub(subsBy[key] ?? [], key === 'clinic' && chosen.clinic ? CLINIC_ALIAS[chosen.clinic] ?? chosen.clinic : chosen[key])
+  // Скрытые пункты «Клиники» и «Настроек» (#/clinic/shifts, #/settings/promo) подсвечивают свой основной пункт
+  const ALIAS: Partial<Record<Page, Record<string, string>>> = { clinic: CLINIC_ALIAS, settings: SETTINGS_ALIAS }
+  const activeSub = (key: Page): string | null => {
+    const sub = chosen[key]
+    return currentSub(subsBy[key] ?? [], sub ? ALIAS[key]?.[sub] ?? sub : sub)
+  }
   // Телефон: внизу четыре раздела и «Ещё» (в нём остальные разделы, свой аватар и «Помощь»)
   const extra = me.doctor ? sections.filter((x) => !PHONE_MAIN.includes(x.key)) : sections.slice(MOBILE_MAIN)
   const [more, setMore] = useState(false)
@@ -161,13 +154,15 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     setToggled({})
   }
   // С 2026-11-11 подразделы открытого раздела — вкладками над страницей (layout/section.tsx), поэтому в
-  // дереве он сам не раскрыт: меню короче и не дублирует вкладки. «Настройки» — так же (с 2026-11-12):
-  // их пункты — списком на главной «Настроек», из пункта назад — «‹ Настройки» над названием; раскрытые
-  // 10 пунктов выталкивали «Помощь» и «Я» за низ экрана 1366×768. Стрелка › раскрывает любой раздел
+  // дереве он сам не раскрыт: меню короче и не дублирует вкладки. «Настройки» — так же (с 2026-11-13 — тоже
+  // вкладками; раскрытые 10 пунктов выталкивали «Помощь» и «Я» за низ экрана 1366×768). Стрелка › раскрывает
+  // любой раздел; наведение мышью — панель подразделов справа (и у развёрнутого меню, с 2026-11-13)
   const expanded = (key: Page) => toggled[key] ?? false
-  // Свёрнутое меню: панель подразделов у раздела под мышью (или нажатого пальцем)
+  // Панель подразделов у раздела под мышью (свёрнутое меню — и нажатого пальцем)
   const [fly, setFly] = useState<{ key: Page; top: number; left: number } | null>(null)
   const flyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  // Раздел, с которого панель открыли клавишей «→» (Esc вернёт на него фокус)
+  const flyFrom = useRef<HTMLElement | null>(null)
   const pointer = useRef<string>('mouse')
   const pressTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const pressed = useRef(false)
@@ -184,13 +179,23 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     const onDown = (e: PointerEvent) => {
       if (!(e.target instanceof Element) || !e.target.closest('.nav-item, .nav-fly')) setFly(null)
     }
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFly(null) }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setFly(null)
+      // Открыли с клавиатуры — фокус обратно на раздел
+      if (flyFrom.current && document.activeElement?.closest('.nav-fly')) flyFrom.current.focus()
+      flyFrom.current = null
+    }
     document.addEventListener('pointerdown', onDown)
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('pointerdown', onDown)
       document.removeEventListener('keydown', onKey)
     }
+  }, [fly])
+  // Открыли «→» — фокус на первый пункт панели (она в body, Tab до неё от меню не дойдёт)
+  useEffect(() => {
+    if (fly && flyFrom.current) document.querySelector<HTMLElement>('.nav-fly a')?.focus()
   }, [fly])
   const toggleMenu = useCallback(() => {
     setFly(null)
@@ -237,22 +242,36 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     setMore(false)
     setFly(null)
     setSheet(null)
-    if (key === 'settings') openSettings(sub)
-    else openSub(key, sub)
+    openSub(key, sub)
   }
   const showFly = (key: Page, el: HTMLElement) => {
     const r = el.getBoundingClientRect()
     setFly({ key, top: r.top, left: r.right + 6 })
   }
+  /** Панель подразделов по наведению: у свёрнутого меню — всегда, у развёрнутого (с 2026-11-13) — на компьютере
+   *  с мышью, если раздел не раскрыт стрелкой › (тогда подразделы и так списком под ним). */
+  const canFly = (key: Page) => Boolean(subsBy[key]?.length) && !phone
+    && (narrow || (!expanded(key) && matches('(hover: hover) and (pointer: fine)')))
   const enter = (key: Page, el: HTMLElement) => {
-    if (!narrow || !subsBy[key]?.length || pointer.current === 'touch') return
+    if (!canFly(key) || pointer.current === 'touch') return
     clearTimeout(flyTimer.current)
-    flyTimer.current = setTimeout(() => showFly(key, el), fly ? 0 : 120)
+    // Развёрнутое меню: подольше ждём — мышь часто просто проходит по меню к странице, панель не должна мигать
+    flyFrom.current = null
+    flyTimer.current = setTimeout(() => showFly(key, el), fly ? 0 : narrow ? 120 : 150)
   }
   const leave = () => {
-    if (!narrow || pointer.current === 'touch') return
+    if (pointer.current === 'touch') return
     clearTimeout(flyTimer.current)
-    flyTimer.current = setTimeout(() => setFly(null), 200)
+    flyTimer.current = setTimeout(() => setFly(null), narrow ? 200 : 250)
+  }
+  /** Клавиатура: «→» на разделе — его подразделы панелью, фокус на первый пункт; Esc — закрыть, фокус назад. */
+  const flyKey = (key: Page, e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== 'ArrowRight' || !subsBy[key]?.length || phone || (!narrow && expanded(key))) return
+    e.preventDefault()
+    const button = e.currentTarget
+    clearTimeout(flyTimer.current)
+    flyFrom.current = button
+    showFly(key, button.closest('.nav-item') as HTMLElement)
   }
   // Телефон: долгое нажатие на раздел с подразделами — лист; отпустили раньше — обычный переход
   const pressStart = (key: Page, e: React.PointerEvent) => {
@@ -296,6 +315,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
           <a className={on ? `${className} active` : className} href={subHref(key, s.key)} aria-current={on ? 'page' : undefined}
             aria-label={n ? `${s.title} · ${n}` : undefined}
             onClick={(e) => { e.preventDefault(); goSub(key, s.key) }}>
+            <SubIcon page={key} sub={s.key} />
             <span className="nav-sub-title">{s.title}</span>
             {n > 0 && <span className={LOUD.has(`${key}/${s.key}`) ? 'nav-count' : 'nav-count quiet'} aria-hidden="true">{n}</span>}
             {className === 'sheet-item' && on && <span className="sheet-check" aria-hidden="true">✓</span>}
@@ -352,6 +372,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
                     {...(subs.length ? {} : tipOn(s.title))}
                     onPointerDown={(e) => pressStart(s.key, e)} onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
                     onContextMenu={(e) => { if (subs.length && matches('(max-width: 760px)')) e.preventDefault() }}
+                    onKeyDown={(e) => flyKey(s.key, e)}
                     onClick={(e) => clickSection(s.key, e)}>
                     <Icon name={s.key} /> <span>{s.title}</span>
                     {total > 0 && (
@@ -366,7 +387,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
                   )}
                 </div>
                 {open && !narrow && <div className="nav-sub" role="group" aria-label={s.title}>{subLinks(s.key, 'nav-subitem')}</div>}
-                {narrow && fly?.key === s.key && (
+                {fly?.key === s.key && !phone && (narrow || !open) && (
                   <FlyPanel top={fly.top} left={fly.left} title={s.title} onOpen={() => go(s.key)}>{subLinks(s.key, 'nav-subitem')}</FlyPanel>
                 )}
               </div>

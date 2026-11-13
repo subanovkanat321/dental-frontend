@@ -59,8 +59,10 @@ test('ассистент: без предоплаты и цен услуг, пе
   })
   expect(await findSub('Рабочее время')).toBeInTheDocument()
   expect(querySub(/^Услуги/)).not.toBeInTheDocument()
+  // «Настройки» (вкладками): ассистенту — памятки и «Откуда приходят пациенты», без анкеты
   openItem('')
-  expect(await screen.findByRole('button', { name: /Памятки после процедур/ })).toBeInTheDocument()
+  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Настройки' })
+  expect(within(tabs).getAllByRole('link').map((a) => a.textContent)).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
 })
 
 test('перенос: другой врач или длительность — выбранное время сбрасывается', async () => {

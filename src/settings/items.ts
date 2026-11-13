@@ -17,9 +17,6 @@ export type SettingsItem = {
   hidden?: boolean
 }
 
-/** Значки пунктов — как в меню прежнего приложения (только в списке на главной «Настроек», не в меню). */
-export const SETTINGS_EMOJI: Record<string, string> = { 'reminder': '🔔', 'questions': '🩺', 'memos': '📋', 'patient-news': '📰', 'sources': '📣', 'plan': '💳', 'agreement': '📄', 'data': '📦', 'ai': '✨', 'contract': '✍️' }
-
 const all = () => true
 const admin = (me: Me) => Boolean(me.admin)
 

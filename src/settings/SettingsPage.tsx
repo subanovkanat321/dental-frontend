@@ -1,9 +1,9 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
 
 import type { AccountTab } from '../account/AccountPage'
 import { logout, logoutEverywhere, type Schemas } from '../api/client'
 import type { ClinicTab } from '../clinic/ClinicPage'
-import { backFromMine, itemOf, openSettings } from '../lib/route'
+import { backFromMine, itemOf } from '../lib/route'
 import { ask, notify } from '../lib/confirm'
 import { telegram } from '../lib/telegram'
 import { setTextSize, setThemeChoice, TEXT_SIZES, textSize, themeChoice, THEMES } from '../lib/theme'
@@ -12,7 +12,7 @@ import { InstallApp } from '../pwa/InstallApp'
 import { Notifications } from '../pwa/Notifications'
 import { Loading } from '../layout/Loading'
 import { useSub } from '../lib/sub'
-import { CLINIC_ITEMS, HELP_ITEMS, ME_ITEMS, SETTINGS_EMOJI, SETTINGS_GROUPS, type SettingsItem } from './items'
+import { CLINIC_ITEMS, HELP_ITEMS, ME_ITEMS, SETTINGS_GROUPS, type SettingsItem } from './items'
 import { ItemHost, type ItemHostKind } from './itemHost'
 import { SubHeader } from './SubHeader'
 
@@ -84,9 +84,9 @@ function ItemScreen({ host, item, me, back, ticketId }: { host: ItemHostKind; it
   return (
     <ItemHost.Provider value={host}>
       <div key={item.key} className="settings-item" data-host={host}>
-        {/* «Клиника»: пока грузится кусочек кода пункта — уже его шапка, чтобы вкладки подразделов на телефоне
+        {/* «Клиника» и «Настройки»: пока грузится кусочек кода пункта — уже его шапка, чтобы вкладки подразделов на телефоне
             не пропадали на миг (страница под ними прыгала бы на их высоту) */}
-        <Suspense fallback={host === 'clinic' ? <><SubHeader title={item.title} onBack={back} /><Loading /></> : <Loading />}>{RENDER[item.key]!(item.title)(me, back, { ticketId })}</Suspense>
+        <Suspense fallback={host === 'clinic' || host === 'settings' ? <><SubHeader title={item.title} onBack={back} /><Loading /></> : <Loading />}>{RENDER[item.key]!(item.title)(me, back, { ticketId })}</Suspense>
       </div>
     </ItemHost.Provider>
   )
@@ -135,60 +135,18 @@ export function MineSection({ me, page, initialTicket }: { me: Me; page: 'me' | 
 }
 
 /**
- * «Настройки»: главная — список пунктов двумя группами («Что получают пациенты», «Аккаунт клиники»); пункт — во всю
- * рабочую область. Остальное, что было здесь до 2026-11-10: «Клиника» — раздел меню, своё — блок «Я»
- * внизу меню (профиль, оформление, уведомления, календарь, установка, выход), «Помощь» — внизу меню.
+ * «Настройки» (#/settings/<пункт>) — с 2026-11-13 раздел с подразделами, как «Клиника»: пункты — вкладками сверху,
+ * весь список группами («Что получают пациенты», «Аккаунт клиники») — в листе «⌄» и в панели у меню. Без пункта
+ * в адресе (или пункт не для этой роли) — первый пункт роли; скрытые пункты (#/settings/promo) открываются, вкладка —
+ * их основной пункт (SETTINGS_ALIAS). Отдельной страницы-списка больше нет. Остальное, что было здесь до 2026-11-10:
+ * «Клиника» — раздел меню, своё — блок «Я» внизу меню, «Помощь» — внизу меню.
  */
 export function SettingsPage({ me }: { me: Me }) {
   const current = useItem('settings')
-  const back = () => openSettings(null)
-  const found = SETTINGS_GROUPS.flatMap(([, items]) => items).find((i) => i.key === current && i.show(me) && RENDER[i.key])
-  // Пункт открывается с начала, а назад в список — туда, где его листали
-  const listY = useRef(0)
-  const openKey = found?.key ?? null
-  const prevKey = useRef(openKey)
-  // Прокрутку списка запоминаем, пока он на экране: в момент открытия пункта страница уже короче,
-  // и браузер успевает сбросить прокрутку
-  useEffect(() => {
-    if (openKey != null) return
-    const onScroll = () => { listY.current = window.scrollY }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [openKey])
-  useLayoutEffect(() => {
-    if (prevKey.current === openKey) return
-    window.scrollTo(0, openKey == null ? listY.current : 0)
-    prevKey.current = openKey
-  }, [openKey])
-  if (found) return <ItemScreen host="settings" item={found} me={me} back={back} />
-
-  return (
-    <div className="settings">
-      <header className="toolbar"><h1>Настройки</h1></header>
-      <div className="settings-groups">
-      {SETTINGS_GROUPS.map(([group, items], index) => {
-        const shown = items.filter((i) => !i.hidden && i.show(me))
-        if (!shown.length) return null
-        return (
-          <section key={group} className="settings-group" data-group={index}>
-            <h2>{group}</h2>
-            <ul className="settings-list">
-              {shown.map((i) => (
-                <li key={i.key}>
-                  <button type="button" className="settings-link" onClick={() => openSettings(i.key)}>
-                    <span className="settings-emoji" aria-hidden="true">{SETTINGS_EMOJI[i.key]}</span>
-                    <span className="settings-text"><strong>{i.title}</strong><span className="hint" title={i.hint}>{i.hint}</span></span>
-                    <span aria-hidden="true" className="chev">›</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      })}
-      </div>
-    </div>
-  )
+  const items = SETTINGS_GROUPS.flatMap(([, list]) => list)
+  const found = findItem(items, current, me) ?? items.find((i) => !i.hidden && i.show(me) && RENDER[i.key])
+  if (!found) return null
+  return <ItemScreen host="settings" item={found} me={me} back={() => {}} />
 }
 
 const EVERYWHERE_SITE = 'Выйти на всех устройствах? Закроются все входы на сайт Tish — на всех компьютерах и телефонах, '

@@ -92,10 +92,28 @@ test('Касса: видны все 8 подразделов (раньше — �
   await userEvent.click(within(row).getByRole('button', { name: 'Все подразделы: Касса' }))
   const sheet = screen.getByRole('dialog', { name: 'Подразделы: Касса' })
   expect(within(sheet).getByText(/долгим нажатием на «Касса»/)).toBeInTheDocument()
+  // У каждого подраздела в листе — своя иконка (украшение: aria-hidden, имя ссылки — подпись); в полосе вкладок иконок нет
+  const links = within(sheet).getAllByRole('link')
+  expect(links.map((a) => a.textContent)).toEqual(['Деньги✓', 'Мой заработок', 'Аналитика', 'Расходы', 'Должники', 'Зарплата', 'Статистика', 'Отчёт'])
+  for (const a of links) expect(a.querySelector('svg.sub-ico')).toHaveAttribute('aria-hidden', 'true')
+  expect(new Set(links.map((a) => a.querySelector('svg.sub-ico')!.innerHTML)).size).toBe(links.length)
+  expect(row.querySelector('.sub-ico')).toBeNull()
   await userEvent.click(within(sheet).getByRole('link', { name: 'Должники' }))
   expect(window.location.hash).toBe('#/cash/debtors')
   expect(screen.queryByRole('dialog', { name: 'Подразделы: Касса' })).not.toBeInTheDocument()
   expect(within(await tabs('Касса')).getByRole('link', { name: 'Должники' })).toHaveAttribute('aria-current', 'page')
+})
+
+test('Настройки (с 2026-11-13 — вкладками): «⌄» — лист с группами подзаголовками и иконками', async () => {
+  layout(false)
+  window.location.hash = '/settings'
+  renderApp()
+  await userEvent.click(within(await tabs('Настройки')).getByRole('button', { name: 'Все подразделы: Настройки' }))
+  const sheet = screen.getByRole('dialog', { name: 'Подразделы: Настройки' })
+  expect([...sheet.querySelectorAll('.nav-group')].map((p) => p.textContent)).toEqual(['Что получают пациенты', 'Аккаунт клиники'])
+  for (const a of within(sheet).getAllByRole('link')) expect(a.querySelector('svg.sub-ico')).toHaveAttribute('aria-hidden', 'true')
+  await userEvent.click(within(sheet).getByRole('link', { name: 'Тариф и оплата' }))
+  expect(window.location.hash).toBe('#/settings/plan')
 })
 
 test('Клиника (нет в нижнем меню): «⌄» — лист без подсказки про долгое нажатие', async () => {

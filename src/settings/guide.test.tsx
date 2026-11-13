@@ -5,6 +5,7 @@ import { expect, test, vi } from 'vitest'
 import type { Schemas } from '../api/client'
 import { GuidePage } from './GuidePage'
 import { GUIDES, ownRole } from './guides'
+import { ItemHost } from './itemHost'
 
 type Me = Schemas['BookingViewsMe']
 const me = (over: Partial<Me>): Me => ({ admin: false, reception: false, doctors: [], doctor: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 0, ...over }) as Me
@@ -18,7 +19,8 @@ test('своя роль первой: ассистент, врач, регист
 
 test('«Памятка» открывается на роли сотрудника и переключается на другую', async () => {
   const back = vi.fn()
-  render(<GuidePage me={me({ assistantOf: [1] })} onBack={back} />)
+  // «Руководство» — пункт «Помощи» внизу меню: «‹ Назад» туда, откуда открыли
+  render(<ItemHost.Provider value="help"><GuidePage me={me({ assistantOf: [1] })} onBack={back} /></ItemHost.Provider>)
   const roles = screen.getByRole('group', { name: 'Роль' })
   expect(within(roles).getByRole('button', { name: 'Ассистент' })).toHaveAttribute('aria-pressed', 'true')
   expect(screen.getByRole('region', { name: 'Что видит ассистент' })).toHaveTextContent('Денег не видит')
@@ -27,7 +29,7 @@ test('«Памятка» открывается на роли сотрудник
   expect(screen.queryByRole('region', { name: 'Что видит ассистент' })).not.toBeInTheDocument()
   expect(screen.getByRole('region', { name: /^Принять оплату/ })).toHaveTextContent('Приём состоялся')
 
-  await userEvent.click(screen.getByRole('button', { name: '‹ Настройки' }))
+  await userEvent.click(screen.getByRole('button', { name: '‹ Назад' }))
   expect(back).toHaveBeenCalled()
 })
 

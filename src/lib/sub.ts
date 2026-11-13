@@ -9,12 +9,12 @@ import { hashParts, type Page } from './route'
  *
  * Последний подраздел каждого раздела запоминается (пока открыта вкладка браузера): ушли в
  * «Расписание» и вернулись в «Кассу» (#/cash без подраздела) — снова «Зарплата», как было с
- * вкладками. «Настройки» сюда не входят: у их пунктов свои адреса (#/settings/hours, lib/route).
+ * вкладками. «Настройки» — тоже (с 2026-11-13 их пункты — вкладками): #/settings/reminder.
  */
 const last: Partial<Record<Page, string>> = {}
 const listeners = new Set<() => void>()
 
-const WITH_SUBS: readonly Page[] = ['patients', 'cash', 'stock', 'clinic', 'platform']
+const WITH_SUBS: readonly Page[] = ['patients', 'cash', 'stock', 'clinic', 'settings', 'platform']
 
 /** Подраздел в адресе сейчас: [раздел, подраздел] или null. */
 function fromHash(): [Page, string] | null {

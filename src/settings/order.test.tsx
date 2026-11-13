@@ -17,17 +17,19 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-/** Группы «Настроек» и пункты в них — как видит пользователь, по порядку. */
+/** Группы «Настроек» и пункты в них — как в меню слева (стрелка › у «Настроек»), по порядку. С 2026-11-13 пункты — вкладками. */
 async function groups(who: Me): Promise<[string, string[]][]> {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(who)))
   window.location.hash = '/settings'
   renderApp()
-  await screen.findByRole('heading', { name: 'Настройки' })
-  const sections = [...document.querySelectorAll<HTMLElement>('.settings-groups > .settings-group')]
-  return sections.map((s) => [
-    within(s).getByRole('heading', { level: 2 }).textContent ?? '',
-    [...s.querySelectorAll('.settings-text strong')].map((x) => x.textContent ?? ''),
-  ])
+  const nav = await screen.findByRole('navigation', { name: 'Разделы' })
+  await userEvent.click(within(nav).getByRole('button', { name: 'Раскрыть подразделы: Настройки' }))
+  const result: [string, string[]][] = []
+  for (const el of within(nav).getByRole('group', { name: 'Настройки' }).children) {
+    if (el.classList.contains('nav-group')) result.push([el.textContent ?? '', []])
+    else result.at(-1)![1].push(el.querySelector('.nav-sub-title')?.textContent ?? '')
+  }
+  return result
 }
 
 test('порядок: в «Настройках» две группы — пациентам и аккаунт клиники; «Для пациента» — только раздел меню, без дубля', async () => {
@@ -76,7 +78,7 @@ test('«Откуда приходят пациенты»: вкладки «От�
   openItem('promo')
   const { unmount } = renderApp()
   expect(await screen.findByRole('heading', { name: 'Откуда приходят пациенты' })).toBeInTheDocument()
-  expect(screen.getByRole('tab', { name: 'Промокоды' })).toHaveAttribute('aria-selected', 'true')
+  expect(await screen.findByRole('tab', { name: 'Промокоды' })).toHaveAttribute('aria-selected', 'true')
   await userEvent.click(screen.getByRole('tab', { name: 'Откуда узнают' }))
   expect(await screen.findByRole('table', { name: 'Откуда узнают о клинике' })).toBeInTheDocument()
   unmount()

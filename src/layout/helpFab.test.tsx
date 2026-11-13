@@ -48,8 +48,8 @@ test('«Помощь» внизу меню (компьютер): список �
   expect(screen.queryByRole('dialog', { name: 'Помощь' })).not.toBeInTheDocument()
   // Из «Настроек» группа «Помощь» ушла; плавающей кнопки на компьютере нет
   window.location.hash = '#/settings'
-  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
-  expect(screen.queryByText('Руководство', { selector: '.settings-text strong' })).not.toBeInTheDocument()
+  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Настройки' })
+  expect(within(tabs).queryByRole('link', { name: 'Руководство' })).not.toBeInTheDocument()
   expect(document.querySelector('.help-fab')).toBeNull()
 })
 

@@ -266,14 +266,30 @@ test('телефон: внизу четыре раздела и «Ещё»; в �
     .toHaveAttribute('aria-current', 'page')
 })
 
-test('компьютер, «Настройки»: в меню свёрнуты, как другие разделы; в пункте — ссылка «‹ Настройки» к списку', async () => {
-  window.location.hash = '/settings/memos'
+test('«Настройки» — вкладками, как другие разделы: #/settings — первый пункт роли, старый адрес пункта — его вкладка, «‹ Настройки» нет', async () => {
+  window.location.hash = '/settings'
   renderApp()
-  expect(await screen.findByRole('heading', { name: 'Памятки после процедур' })).toBeInTheDocument()
+  let bar = await tabs('Настройки')
+  expect(within(bar).getByRole('link', { name: 'Напоминание о приёме' })).toHaveAttribute('aria-current', 'page')
+  expect(within(bar).getAllByRole('link')).toHaveLength(10)
   expect(within(nav()).queryByRole('group', { name: 'Настройки' })).not.toBeInTheDocument()
   expect(within(nav()).getByRole('button', { name: 'Раскрыть подразделы: Настройки' })).toHaveAttribute('aria-expanded', 'false')
-  await userEvent.click(screen.getByRole('button', { name: '‹ Настройки' }))
-  expect(window.location.hash).toBe('#/settings')
-  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: /Памятки после процедур/ })).toBeInTheDocument()
+  await userEvent.click(within(bar).getByRole('link', { name: 'Памятки после процедур' }))
+  expect(window.location.hash).toBe('#/settings/memos')
+  expect(await screen.findByRole('heading', { name: 'Памятки после процедур' })).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '‹ Настройки' })).not.toBeInTheDocument()
+  // Старые ссылки (бот, подсказки): #/settings/promo — вкладка «Откуда приходят пациенты»
+  go('/settings/promo')
+  bar = await tabs('Настройки')
+  await waitFor(() => expect(within(bar).getByRole('link', { name: 'Откуда приходят пациенты' })).toHaveAttribute('aria-current', 'page'))
+})
+
+test('«Настройки» у ассистента: только его пункты; пункт не для его роли — первый его пункт', async () => {
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: undefined, assistantOf: [2] })))
+  window.location.hash = '/settings/plan'
+  renderApp()
+  const bar = await tabs('Настройки')
+  // Тарифа ассистенту нет — открыт первый его пункт
+  expect(within(bar).getAllByRole('link').map((a) => a.textContent)).toEqual(['Памятки после процедур', 'Откуда приходят пациенты'])
+  expect(within(bar).getByRole('link', { name: 'Памятки после процедур' })).toHaveAttribute('aria-current', 'page')
 })

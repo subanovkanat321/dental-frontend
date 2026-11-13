@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -84,4 +84,41 @@ test('большой экран 1920px: по умолчанию меню раз�
   const { container } = renderApp()
   await screen.findByRole('button', { name: 'Свернуть меню' })
   expect(container.querySelector('.shell')).not.toHaveClass('narrow')
+})
+
+test('развёрнутое меню, мышь: наведение на раздел — панель подразделов с иконками (с задержкой), уход — закрывается; «→» и Esc с клавиатуры', async () => {
+  width(1920)
+  window.location.hash = '/schedule'
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
+  const { container } = renderApp()
+  await screen.findByRole('button', { name: 'Свернуть меню' })
+  expect(container.querySelector('.shell')).not.toHaveClass('narrow')
+  const nav = screen.getByRole('navigation', { name: 'Разделы' })
+  const cash = within(nav).getByRole('button', { name: /^Касса/ })
+  await userEvent.hover(cash)
+  // Не сразу: мышь, проходящая по меню, панель не мигает
+  expect(screen.queryByRole('group', { name: 'Касса' })).not.toBeInTheDocument()
+  const fly = await screen.findByRole('group', { name: 'Касса' })
+  for (const a of within(fly).getAllByRole('link')) expect(a.querySelector('svg.sub-ico')).toHaveAttribute('aria-hidden', 'true')
+  // Ушли с раздела — панель ещё есть (можно довести мышь до неё), потом закрывается
+  await userEvent.unhover(cash)
+  expect(screen.getByRole('group', { name: 'Касса' })).toBeInTheDocument()
+  await waitFor(() => expect(screen.queryByRole('group', { name: 'Касса' })).not.toBeInTheDocument())
+
+  await userEvent.hover(cash)
+  await userEvent.click(within(await screen.findByRole('group', { name: 'Касса' })).getByRole('link', { name: 'Зарплата' }))
+  expect(window.location.hash).toBe('#/cash/salary')
+  await waitFor(() => expect(screen.queryByRole('group', { name: 'Касса' })).not.toBeInTheDocument())
+  await userEvent.unhover(cash)
+
+  // Клавиатура: «→» на разделе — панель, фокус на первом пункте; Esc — закрыть, фокус обратно
+  const stock = within(nav).getByRole('button', { name: /^Склад/ })
+  stock.focus()
+  fireEvent.keyDown(stock, { key: 'ArrowRight' })
+  const panel = await screen.findByRole('group', { name: 'Склад' })
+  await waitFor(() => expect(within(panel).getByRole('link', { name: 'Материалы' })).toHaveFocus())
+  fireEvent.keyDown(document.activeElement!, { key: 'Escape' })
+  expect(screen.queryByRole('group', { name: 'Склад' })).not.toBeInTheDocument()
+  expect(stock).toHaveFocus()
+  window.location.hash = ''
 })

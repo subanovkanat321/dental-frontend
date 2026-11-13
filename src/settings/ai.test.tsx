@@ -90,8 +90,9 @@ test('пункт «ИИ в клинике» — только у админист
   backend({ available: true, on: false }, { available: true, on: false }, { ...me, admin: false })
   renderApp()
   openItem('')
-  expect(await screen.findByRole('heading', { name: 'Настройки' })).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /ИИ в клинике/ })).not.toBeInTheDocument()
+  const tabs = await screen.findByRole('navigation', { name: 'Подразделы: Настройки' })
+  expect(within(tabs).getByRole('link', { name: 'Памятки после процедур' })).toBeInTheDocument()
+  expect(within(tabs).queryByRole('link', { name: /ИИ в клинике/ })).not.toBeInTheDocument()
 })
 
 test('лимит ИИ клинике пока не показываем: счётчика «N из M» нет', async () => {

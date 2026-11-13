@@ -6,8 +6,8 @@ import { CLINIC_ITEMS, SETTINGS_GROUPS } from '../settings/items'
 type Me = Schemas['BookingViewsMe']
 
 /**
- * Подраздел в меню: адрес (#/раздел/key), подпись; у «Настроек» — группа. Эмодзи пунктов «Настроек» в
- * меню не ставим: значки меню без цвета (DESIGN.md → Colors), эмодзи — только в списке на главной «Настроек».
+ * Подраздел в меню: адрес (#/раздел/key), подпись; у «Настроек» — группа (подзаголовком в листе и панели).
+ * Иконка — по разделу и ключу (layout/subIcons.tsx), в оттенке раздела.
  */
 export type Sub = { key: string; title: string; group?: string }
 

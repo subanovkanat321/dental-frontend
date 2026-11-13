@@ -53,11 +53,6 @@ export function itemOf(page: Page): string | null {
   return name === page && item ? item : null
 }
 
-/** Пункт «Настроек» из адреса: #/settings/reminder → 'reminder'; на главной «Настроек» — null. */
-export function settingsItem(): string | null {
-  return itemOf('settings')
-}
-
 /** Запись истории — пункт, открытый из приложения (список «Настроек», блок «Я», «Помощь»): назад — шаг по истории. */
 type FromApp = { tishFromSettings?: boolean }
 

@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import type { Page } from '../lib/route'
@@ -6,6 +6,7 @@ import { useSectionActive } from '../lib/section'
 import { subHref } from '../lib/sub'
 import { matches, useMedia } from '../lib/useMedia'
 import { countOf, LOUD, type Sub } from './nav'
+import { SubIcon } from './subIcons'
 import { NavContext, type NavApi } from './useSection'
 
 /** Подсказку «здесь переключаются разделы» показали и закрыли (или про вкладки рассказал тур — tour/Tour.tsx) — только флаг, без данных. */
@@ -275,15 +276,18 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
           </button>
           {menu && !phone && (
             <div className="sub-tabs-menu" role="group" aria-label={`Все подразделы: ${title}`}>
-              {subs.map((s) => {
+              {subs.map((s, i) => {
                 const on = s.key === active
                 const n = countOf(nav.counts, page, s.key)
+                // «Настройки»: группы («Что получают пациенты», «Аккаунт клиники») — подзаголовками, как в листе
+                const head = s.group && s.group !== subs[i - 1]?.group ? <p className="nav-group">{s.group}</p> : null
                 return (
-                  <a key={s.key} className={on ? 'nav-subitem active' : 'nav-subitem'} href={subHref(page, s.key)} aria-current={on ? 'page' : undefined}
+                  <Fragment key={s.key}>{head}<a className={on ? 'nav-subitem active' : 'nav-subitem'} href={subHref(page, s.key)} aria-current={on ? 'page' : undefined}
                     aria-label={n ? `${s.title} · ${n}` : undefined} onClick={(e) => { e.preventDefault(); pick(s.key) }}>
+                    <SubIcon page={page} sub={s.key} />
                     <span className="nav-sub-title">{s.title}</span>
                     {n > 0 && <span className={LOUD.has(`${page}/${s.key}`) ? 'nav-count' : 'nav-count quiet'} aria-hidden="true">{n}</span>}
-                  </a>
+                  </a></Fragment>
                 )
               })}
             </div>
