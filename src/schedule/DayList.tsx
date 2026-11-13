@@ -15,6 +15,7 @@ import { MonthSheet } from './month/MonthSheet'
 import { statusOf } from './status'
 import { useAppointmentAction } from './useAppointmentAction'
 import { colleagueMarkText, colleagueTimeOf, listedChairTime } from './chairTime'
+import { askPlanDone, canMarkPlan, useAskPlanDone, usePlanLeft } from './planDoneStore'
 import { useRowSwipe } from './useRowSwipe'
 import { useMedia } from '../lib/useMedia'
 import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
@@ -177,7 +178,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
                   {swipe && g.items.some((i) => i.kind === 'appointment') && <SwipeHint />}
                   <ul className="rows">
                     {g.items.map((item) => item.kind === 'appointment'
-                      ? <Row key={`a${item.a.id}`} a={item.a} color={g.doctor.color} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
+                      ? <Row key={`a${item.a.id}`} a={item.a} me={me} color={g.doctor.color} chair={item.chair} next={item.a === next} active={item.a.id === selectedId}
                           canEdit={canEditDoctor(item.a.doctorId)} money={seesMoneyOf(me, item.a.doctorId)} onOpen={onOpen} swipe={swipe} />
                       : item.kind === 'colleague' ? (
                         <li key={`c${item.at}`} className="row pause colleague" role="note" aria-label={`${timeOf(item.at)}–${timeOf(item.end)}: время ${item.name}`}>
@@ -256,8 +257,9 @@ function FreeRow({ start, end, canEdit, doctor, onPick }: {
  * Ошибка — под строкой. WhatsApp — только когда загружены настройки (подпись клиники и ссылка на бота).
  * Телефон (swipe): свайп вправо — то же напоминание, влево — «Приём состоялся» с «Вернуть» (useRowSwipe).
  */
-function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = false }: {
+function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe = false }: {
   a: Appointment
+  me: Me
   /** Цвет врача — полоска слева; статус остаётся заливкой строки и словом (DESIGN.md) */
   color?: string
   /** Часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — бейдж «🪑 время Айгерим» */
@@ -303,7 +305,14 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
   const canSwipeRemind = canRemind && !sent && !busy && (viaBot || Boolean(contactPhone(a.patient)))
   // Свайп влево — «Приём состоялся»: свой/доступный приём, запланирован и уже начался
   const canSwipeDone = canEdit && a.status === 'SCHEDULED' && new Date(a.startAt) <= new Date() && !status.isPending
-  const done = () => status.mutate({ kind: 'status', body: { version: a.version, status: 'DONE' } }, { onSuccess: (updated) => setUndo(updated) })
+  const done = () => status.mutate({ kind: 'status', body: { version: a.version, status: 'DONE' } }, {
+    onSuccess: (updated) => { setUndo(updated); askPlanDone(updated.id) },
+  })
+  // После свайпа «состоялся» жест не прерываем окном: под строкой — «Этапы плана ›», если в плане есть несделанное;
+  // он открывает карточку приёма с блоком «Что сделали сегодня?»
+  const planAllowed = undo != null && canMarkPlan(me, undo)
+  const planAsked = useAskPlanDone(a.id)
+  const planLeft = usePlanLeft(a, planAllowed && planAsked)
   const back = () => undo && status.mutate({ kind: 'undo', body: { version: undo.version, previousStatus: 'SCHEDULED' } },
     { onSuccess: () => setUndo(null) })
   useRowSwipe(li, swipe, { right: canSwipeRemind ? () => { hideSwipeHint(); remind() } : undefined, left: canSwipeDone ? () => { hideSwipeHint(); done() } : undefined })
@@ -353,6 +362,9 @@ function Row({ a, color, chair, next, active, canEdit, money, onOpen, swipe = fa
       {undo && (
         <div className="undo row-undo" role="status">
           <span>Приём отмечен состоявшимся</span>
+          {planAllowed && planAsked && planLeft.length > 0 && (
+            <button type="button" className="link" onClick={() => onOpen(undo)}>Этапы плана ›</button>
+          )}
           <button type="button" className="btn small" disabled={status.isPending} onClick={back}>Вернуть</button>
         </div>
       )}

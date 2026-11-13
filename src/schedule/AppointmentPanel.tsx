@@ -36,6 +36,8 @@ import { AfterVisit } from '../print/VisitReport'
 import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { cancelledWhen } from './cancelled'
 import { HelpHint } from '../help/HelpHint'
+import { PlanDone } from './PlanDone'
+import { askPlanDone } from './planDoneStore'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -158,7 +160,11 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     if (opts.question && !await ask(opts.question)) return
     const previous = a.status as Status
     action.mutate({ kind: 'status', body: { version: a.version, status } }, {
-      onSuccess: () => setUndo(opts.undo ? { label: opts.undo, previous } : null),
+      onSuccess: () => {
+        setUndo(opts.undo ? { label: opts.undo, previous } : null)
+        // «Состоялся» — спросить, что из плана лечения сделали сегодня (блок ниже, если есть несделанные этапы)
+        if (status === 'DONE') askPlanDone(a.id)
+      },
     })
   }
   // «Приём состоялся» / «Неявка» по ошибке — приём снова запланирован (сервер не даст, если есть оплата)
@@ -308,6 +314,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             </>
           )}
 
+          {/* «Что сделали сегодня?» — этапы плана лечения сразу после «Приём состоялся», над оплатой: блоком
+              в этой же карточке, а не окном поверх неё. Главная кнопка — у оплаты, если она ещё не принята */}
+          {a.status === 'DONE' && <PlanDone appointment={a} me={me} primary={!payPending} />}
           {/* Оплата — сразу после приёма. Ключ — по самим деньгам: оплата на сервере версию приёма не
               меняет, а блок после сохранения должен открыться заново («оплачено», а не форма) */}
           {a.status === 'DONE' && seesMoney && (

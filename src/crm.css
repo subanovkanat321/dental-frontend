@@ -1520,6 +1520,16 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 .continue > div { display: grid; gap: 2px; }
 .continue ul { margin: 0; padding-left: 18px; }
 .continue-note { margin: 0; white-space: pre-line; }
+/* «Что сделали сегодня?» — этапы плана после «Приём состоялся»: секция карточки, как оплата (линия сверху) */
+.plan-done { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
+.plan-done h3, .plan-done p { margin: 0; }
+.plan-done-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.plan-done-list label { display: flex; align-items: flex-start; gap: 10px; min-height: 36px; padding: 6px 8px; border-radius: var(--r-sm); cursor: pointer; }
+@media (hover: hover) { .plan-done-list label:hover { background: var(--accent-soft); } }
+.plan-done-list input { margin: 3px 0 0; width: 18px; height: 18px; flex: none; accent-color: var(--accent); }
+.plan-done .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.plan-done-ok { margin: 0; }
+@media (max-width: 760px) { .plan-done-list label { min-height: 44px; align-items: center; } .plan-done-list input { margin-top: 0; } }
 
 /* «Мой заработок» врача: полоса пути к цели — бирюзовая на `sunken`, без «тревожных» цветов */
 .earn-bar { display: block; height: 6px; margin: 6px 0 2px; border-radius: 3px; background: var(--sunken); overflow: hidden; }
