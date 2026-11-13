@@ -6,12 +6,12 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { createQueryClient } from '../api/queryClient'
 import { server } from '../test/server'
-import { HoursEditor } from './HoursEditor'
+import { WeekEditor } from './HoursEditor'
 
 /** Ночная смена в «Часах работы» (V186): конец раньше начала — «до утра след. дня», а не ошибка. Врач вымышленный. */
 function renderEditor() {
   const client = createQueryClient({ queries: { retry: false } })
-  return render(<QueryClientProvider client={client}><HoursEditor doctorId={2} doctorName="Эрмек Т." /></QueryClientProvider>)
+  return render(<QueryClientProvider client={client}><WeekEditor who={{ kind: 'doctor', id: 2, name: 'Эрмек Т.' }} /></QueryClientProvider>)
 }
 
 test('Пн 18:00 → 08:00: подпись «до утра след. дня», сохраняется как есть', async () => {

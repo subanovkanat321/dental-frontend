@@ -1,10 +1,11 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { isAssistant } from '../lib/roles'
+import { weekPersonInHash } from '../lib/route'
 import { rowOpen } from '../lib/rowClick'
 import { addDays, todayIn, weekLabel, weekStart } from '../lib/time'
 import { useMedia } from '../lib/useMedia'
@@ -99,7 +100,9 @@ export function WorkSchedule({ me, mode, onMode, onTimeOff, title, onBack, tabs 
   const data = loaded.data
   const people = usePeople(me, data)
   const phone = useMedia('(max-width: 760px)')
-  const [open, setOpen] = useState<string | null>(me.doctorId != null ? `d${me.doctorId}` : null)
+  // Из карточки в «Персонале» или «Моего профиля» (#/clinic/hours/d12) — сразу редактор этого человека,
+  // иначе свой (у врача). Не может менять — редактор покажет неделю текстом
+  const [open, setOpen] = useState<string | null>(() => weekPersonInHash() ?? (me.doctorId != null ? `d${me.doctorId}` : null))
   const [shift, setShift] = useState<Editing | null>(null)
   const [dayOff, setDayOff] = useState<DayOffEditing | null>(null)
   const [adding, setAdding] = useState(false)
@@ -107,6 +110,7 @@ export function WorkSchedule({ me, mode, onMode, onTimeOff, title, onBack, tabs 
   const go = (week: string) => { setMonday(week); closeForms() }
   // Из ячейки врача — к его недельному графику (рабочие часы — там)
   const toWeek = (key: string) => { closeForms(); setOpen(key); onMode('template') }
+  useFocusPerson(toWeek)
   const add = me.admin ? <button type="button" className="btn" onClick={() => setAdding(true)}>+ Добавить сотрудника</button> : null
 
   return (
@@ -171,6 +175,34 @@ export function WorkSchedule({ me, mode, onMode, onTimeOff, title, onBack, tabs 
   )
 }
 
+/**
+ * Человек из адреса (#/clinic/hours/d12): раскрыть его строку и прокрутить к ней, когда список загрузится.
+ * Адрес сменился, пока страница открыта (снова нажали ссылку в карточке), — то же для нового человека.
+ */
+function useFocusPerson(onFocus: (key: string) => void): void {
+  const [focus, setFocus] = useState(weekPersonInHash)
+  const scrolled = useRef<string | null>(null)
+  useEffect(() => {
+    const onHash = () => {
+      const key = weekPersonInHash()
+      if (!key) return
+      scrolled.current = null
+      setFocus(key)
+      onFocus(key)
+    }
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  })
+  // Каждую отрисовку, пока строки нет (список ещё грузится), — потом один раз прокрутить к ней
+  useEffect(() => {
+    if (!focus || scrolled.current === focus) return
+    const row = document.querySelector(`[data-person="${focus}"]`)
+    if (!row) return
+    scrolled.current = focus
+    row.scrollIntoView?.({ block: 'start', behavior: 'smooth' })
+  })
+}
+
 /** Имя (кнопка, если можно менять), роль серым, «как у клиники». */
 function PersonCell({ p, open, onToggle }: { p: Person; open: boolean; onToggle: () => void }) {
   const name = `${p.who.name}${p.mine ? ' (вы)' : ''}`
@@ -200,7 +232,7 @@ function PeopleTable({ people, open, onOpen, onTimeOff }: ListProps) {
             return (
               <Fragment key={p.key}>
                 <tr {...rowOpen(p.canEdit && toggle, p.mine && 'mine', open === p.key && 'active', p.custom === false && 'by-clinic')}
-                  aria-current={p.mine ? 'true' : undefined}>
+                  aria-current={p.mine ? 'true' : undefined} data-person={p.key}>
                   <th scope="row"><PersonCell p={p} open={open === p.key} onToggle={toggle} /></th>
                   {WEEK.map(([code]) => (
                     <td key={code} className="num">{!p.hours ? '…' : p.hours[code] ?? <span className="sched-off">выходной</span>}</td>
@@ -227,7 +259,7 @@ function PeopleList({ people, open, onOpen, onTimeOff }: ListProps) {
       {people.map((p) => {
         const toggle = () => onOpen(open === p.key ? null : p.key)
         return (
-          <li key={p.key} className={p.mine ? 'mine' : undefined} aria-current={p.mine ? 'true' : undefined}>
+          <li key={p.key} className={p.mine ? 'mine' : undefined} aria-current={p.mine ? 'true' : undefined} data-person={p.key}>
             <div {...rowOpen(p.canEdit && toggle, 'sched-line', p.custom === false && 'by-clinic')}>
               <PersonCell p={p} open={open === p.key} onToggle={toggle} />
               <span className="sched-sum num">{p.hours ? weekSummary(p.hours) : '…'}</span>
