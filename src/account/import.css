@@ -1,6 +1,5 @@
 /* «Загрузить из Excel» (ImportData): колонки сеткой, первые строки и ошибки — прокручиваемые таблицы */
 .import-data h3 { margin: 6px 0 0; font-size: .95rem; }
-.import-data .segments { max-width: 520px; }
 .import-columns { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px 12px; }
 .import-sample { overflow-x: auto; border: 1px solid var(--line-strong); border-radius: var(--r-md); }
 .import-data table { width: 100%; border-collapse: collapse; font-size: .85rem; }
@@ -23,7 +22,32 @@
 .import-data .import-sheets td.num, .import-data .import-sheets th.num { text-align: right; }
 .import-sheets td:first-child { white-space: normal; }
 @media (max-width: 600px) {
-  .import-data .segments { flex-wrap: wrap; }
   .import-workbook .import-errors th:nth-child(3), .import-workbook .import-errors td:nth-child(3) { display: none; }
   .import-data .import-workbook th, .import-data .import-workbook td { padding: 6px 5px; }
+}
+/* Что загружаем — три карточки-варианта (не сегмент): значок, название, строка «что это»; выбранная — рамкой
+   акцента и белой. На телефоне — столбиком во всю ширину, на компьютере — в ряд. Под ними — «Что загрузится»
+   для выбранного: появляется плавно, чтобы смена варианта была заметна */
+.import-data .import-lead { margin: 0; }
+.import-variants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 760px; }
+.import-variant { display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 10px 12px; text-align: left;
+  border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); font: inherit; cursor: pointer;
+  transition: border-color .15s ease-out, background-color .15s ease-out; }
+.import-variant:hover:not([aria-pressed=true]) { border-color: var(--accent); }
+.import-variant:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.import-variant[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.import-variant-ico { flex: none; width: 28px; text-align: center; font-size: 1.4rem; line-height: 1; }
+.import-variant-text { display: grid; gap: 2px; min-width: 0; }
+.import-variant-text b { font-weight: 600; }
+.import-variant[aria-pressed=true] .import-variant-text b { color: var(--link); }
+.import-variant-text span { font-size: .82rem; color: var(--hint); line-height: 1.25; }
+.import-what { display: grid; gap: 6px; max-width: 760px; padding: 12px 14px; border-radius: var(--r-md); background: var(--sunken);
+  animation: import-what-in .2s ease-out; }
+.import-what h3 { margin: 0; }
+.import-what ul { margin: 0; padding-left: 18px; display: grid; gap: 2px; }
+.import-what p { margin: 0; }
+@keyframes import-what-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .import-what { animation: none; } }
+@media (max-width: 640px) {
+  .import-variants { grid-template-columns: 1fr; gap: 6px; }
 }

@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
 import { Donut } from '../lib/Donut'
 import { shortDate, somText, todayIn } from '../lib/time'
+import { Segments } from '../layout/Segments'
 import { DateInput } from '../layout/DateInput'
 import { EmptyState } from '../layout/EmptyState'
 import { MonthPicker } from '../layout/MonthPicker'
@@ -90,11 +91,7 @@ export function FinanceTab() {
       <section className="card-block" aria-label="Итог периода">
         {/* Период — в строку шапки «Платформы» */}
         <HeadTools>
-          <div className="segments fin-periods" role="group" aria-label="Период">
-            {PERIODS.map(([key, title]) => (
-              <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
-            ))}
-          </div>
+          <Segments className="fin-periods" label="Период" value={period} onChange={setPeriod} options={PERIODS.map(([key, title]) => ({ value: key, label: title }))} />
           {period === 'month' && <MonthPicker label="Месяц финансов" value={month} max={current} onChange={setMonth} />}
           {period === 'quarter' && (
             <Stepper label="Квартал" text={`${QUARTERS[Math.floor((Number(month.slice(5, 7)) - 1) / 3)]} квартал ${month.slice(0, 4)}`}

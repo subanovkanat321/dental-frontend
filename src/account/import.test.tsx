@@ -116,3 +116,30 @@ test('не админ (видит всех врачей) — выгрузка е
   expect(await screen.findByRole('button', { name: 'Прислать архив в бот' })).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Загрузить из Excel' })).not.toBeInTheDocument()
 })
+
+test('вариант загрузки виден: смена меняет «Что загрузится», пример и подпись кнопки файла', async () => {
+  backend()
+  const user = userEvent.setup()
+  renderApp()
+  const box = await screen.findByRole('region', { name: 'Загрузить из Excel' })
+  const what = () => within(box).getByRole('region', { name: 'Что загрузится' })
+  // По умолчанию — пациенты
+  expect(within(box).getByRole('button', { name: 'Пациенты' })).toHaveAttribute('aria-pressed', 'true')
+  expect(what()).toHaveTextContent('Телефон — обязательно')
+  expect(what()).toHaveTextContent('Скачать пример пациентов')
+  expect(within(box).getByRole('button', { name: '📎 Выбрать файл с пациентами' })).toBeInTheDocument()
+
+  await user.click(within(box).getByRole('button', { name: 'Прайс услуг' }))
+  expect(within(box).getByRole('button', { name: 'Прайс услуг' })).toHaveAttribute('aria-pressed', 'true')
+  expect(what()).toHaveTextContent('Название услуги — обязательно')
+  expect(what()).not.toHaveTextContent('Телефон')
+  expect(what()).toHaveTextContent('Скачать пример прайса')
+  expect(within(box).getByRole('button', { name: '📎 Выбрать файл с прайсом' })).toBeInTheDocument()
+
+  await user.click(within(box).getByRole('button', { name: 'Шаблон Tish (всё)' }))
+  expect(what()).toHaveTextContent('Врачи и сотрудники')
+  expect(within(what()).getByRole('link', { name: 'пример шаблона Tish.xlsx' })).toHaveAttribute('href', '/web/import/tish-perenos.xlsx')
+  expect(within(box).getByRole('button', { name: '📎 Выбрать заполненный шаблон' })).toBeInTheDocument()
+  // Описание варианта — подсказкой к его кнопке, а не частью названия
+  expect(within(box).getByRole('button', { name: 'Шаблон Tish (всё)' })).toHaveAccessibleDescription('Вся база одним файлом — для переезда клиники')
+})

@@ -66,7 +66,7 @@ async function openWorkbook() {
 test('шаблон Tish: ссылка на пустой шаблон, предпросмотр по листам и ошибки строк, одна кнопка «Загрузить»', async () => {
   const { previews, applied } = backend()
   const { user, box } = await openWorkbook()
-  expect(within(box).getByRole('link', { name: 'Скачать шаблон (.xlsx)' })).toHaveAttribute('href', '/web/import/tish-perenos.xlsx')
+  expect(within(box).getByRole('link', { name: 'пример шаблона Tish.xlsx' })).toHaveAttribute('href', '/web/import/tish-perenos.xlsx')
 
   const file = new File(['xlsx'], 'перенос.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   await user.upload(within(box).getByLabelText('Заполненный шаблон'), file)
@@ -122,7 +122,7 @@ test('числа со словами: 1 пациента, 2 сотрудника
 test('выбор файла — своя кнопка «📎 Выбрать файл (.xlsx)» и имя файла рядом, файл уходит на предпросмотр', async () => {
   const { previews } = backend()
   const { user, box } = await openWorkbook()
-  expect(within(box).getByRole('button', { name: '📎 Выбрать файл (.xlsx)' })).toBeInTheDocument()
+  expect(within(box).getByRole('button', { name: '📎 Выбрать заполненный шаблон' })).toBeInTheDocument()
   expect(within(box).getByText('файл не выбран')).toBeInTheDocument()
 
   await user.upload(within(box).getByLabelText('Заполненный шаблон'), new File(['xlsx'], 'клиника-перенос.xlsx'))

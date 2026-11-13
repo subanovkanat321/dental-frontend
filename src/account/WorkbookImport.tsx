@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { ApiError, upload, type Schemas } from '../api/client'
 import { FilePicker } from '../layout/FilePicker'
 import { Spinner } from '../layout/Loading'
-import { MOVE_TEMPLATE_PATH } from '../lib/texts'
 import { counted } from './workbook'
 
 type Report = Schemas['WorkbookImportReport']
@@ -60,10 +59,6 @@ export function WorkbookImport() {
   const changes = (r?.sheets ?? []).some((s) => s.added + s.updated > 0) || (r?.extraPatients ?? 0) > 0
   return (
     <div className="import-workbook" aria-label="Шаблон Tish">
-      <p>Один файл на всё: пациенты, услуги и цены, врачи и сотрудники, склад, будущие записи и долги — каждое на своём листе.
-        Пустые листы пропустим. Сначала покажем, что добавим, — потом одна кнопка.</p>
-      <p className="hint small"><a href={MOVE_TEMPLATE_PATH} download="tish-perenos.xlsx">Скачать шаблон (.xlsx)</a>
-        {' '}— на каждом листе серая строка-пример и подсказки у заголовков.</p>
       {done ? (
         <div className="import-done" role="status">
           <p className="tone-ok">✅ Загружено: {added(done) || 'ничего нового'}{done.errorCount ? `. Строк с ошибками не загрузили: ${done.errorCount}` : ''}</p>
@@ -71,7 +66,7 @@ export function WorkbookImport() {
         </div>
       ) : (
         <>
-          <FilePicker label="Заполненный шаблон" button="Выбрать файл (.xlsx)" file={file} onChange={choose}
+          <FilePicker label="Заполненный шаблон" button="Выбрать заполненный шаблон" file={file} onChange={choose}
             accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
           {preview.isPending && <p className="hint"><Spinner />Читаем листы…</p>}
           {preview.error && <p className="error" role="alert">{fileError}</p>}

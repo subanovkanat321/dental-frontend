@@ -10,6 +10,7 @@ import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { HelpHint } from '../help/HelpHint'
 import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
@@ -51,17 +52,20 @@ export function PromoTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
       <section className="schedule-main">
         {header}
         <section className="card-block">
-          <p className="hint">Промокод для рекламы: опубликуйте его в Instagram, на листовке или у блогера. Пациент вводит код при записи
-            в боте, а если назвал по телефону — поставьте его в записи. Скидка — подсказка пациенту: её применяет клиника на приёме,
-            сумму записи промокод не меняет.{!editable && ' Промокоды заводят врачи и руководитель.'}</p>
+          {/* Пояснение — одной строкой, подробности в «?»: абзац в 7 строк на телефоне выталкивал список за экран */}
+          <p className="hint promo-lead">Код для рекламы: пациент вводит его при записи — видно, откуда пришёл.{' '}
+            <HelpHint title="Промокоды">Опубликуйте код в Instagram, на листовке или у блогера. Пациент вводит его при записи в боте, а если
+              назвал по телефону — поставьте код в записи. Скидка — подсказка пациенту: её применяет клиника на приёме, сумму записи
+              промокод не меняет.</HelpHint>{!editable && <><br />Промокоды заводят врачи и руководитель.</>}</p>
           {list.error && <p className="error">{list.error.message}</p>}
-          <div className="analytics-filter" role="group" aria-label="Период отчёта">
-            <div className="segments">
+          {/* Период и «+ Промокод» — одной строкой; не влезли — период на всю ширину, кнопка под ним тоже во всю (crm.css) */}
+          <div className="promo-bar">
+            <div className="segments" role="group" aria-label="Период отчёта">
               {PERIODS.map(([d, label]) => (
                 <button key={d} type="button" aria-pressed={days === d} onClick={() => setDays(d)}>{label}</button>
               ))}
             </div>
-            {editable && <button type="button" className="btn small" onClick={() => setOpened({ code: '', active: true })}>+ Промокод</button>}
+            {editable && <button type="button" className="btn primary" onClick={() => setOpened({ code: '', active: true })}>+ Промокод</button>}
           </div>
           {list.isPending ? <Loading /> : codes.length === 0 ? (
             <EmptyState title="Промокодов пока нет">{editable && 'Нажмите «+ Промокод» — например, ZUBY10 для рекламы в Instagram.'}</EmptyState>
