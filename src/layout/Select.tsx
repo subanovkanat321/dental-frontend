@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { focusNext } from '../lib/advance'
 import { textMatches } from '../lib/search'
 import { useBack } from '../lib/back'
+import { useSwipeDown } from './useSwipeDown'
 
 /** Пункт списка: как `<option>` — значение, текст, можно выключить; group — подпись `<optgroup>`. */
 type Item = { value: string; text: string; disabled: boolean; group?: string }
@@ -101,7 +102,6 @@ export function Select({ value, defaultValue, onChange, children, name, required
   const [place, setPlace] = useState<{ left: number; width: number; top?: number; bottom?: number; maxHeight: number } | null>(null)
   const button = useRef<HTMLButtonElement>(null)
   const list = useRef<HTMLDivElement>(null)
-  const swipeFrom = useRef<number | null>(null)
   const listId = useId()
   const auto = useId()
 
@@ -121,6 +121,8 @@ export function Select({ value, defaultValue, onChange, children, name, required
     if (focus) button.current?.focus()
   }
   useBack(open ? () => close() : null)
+  // Телефон: потянуть лист вниз (за шапку или за список, прокрученный вверх) — закрыть
+  useSwipeDown(list, open && sheet ? () => close(false) : null)
 
   const show = () => {
     if (disabled) return
@@ -241,13 +243,8 @@ export function Select({ value, defaultValue, onChange, children, name, required
       style={sheet || !place ? undefined : { left: place.left, width: place.width, top: place.top, bottom: place.bottom, maxHeight: place.maxHeight }}>
       {sheet && (
         // Шапка листа: заголовок и «✕» — на iPhone нажатие на тёмный фон не всегда закрывало лист.
-        // Потянуть шапку вниз — тоже закрыть
-        <div className="ui-select-head" onTouchStart={(e) => { swipeFrom.current = e.touches[0]?.clientY ?? null }}
-          onTouchEnd={(e) => {
-            const from = swipeFrom.current
-            swipeFrom.current = null
-            if (from != null && (e.changedTouches[0]?.clientY ?? from) - from > 50) close(false)
-          }}>
+        // Потянуть лист вниз — тоже закрыть (useSwipeDown)
+        <div className="ui-select-head" data-sheet-grip="">
           <p className="ui-select-title">{title}</p>
           <button type="button" className="ui-select-close" aria-label="Закрыть" onClick={() => close(false)}>✕</button>
         </div>

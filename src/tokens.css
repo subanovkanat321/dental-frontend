@@ -425,3 +425,8 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 @keyframes tish-pulse { 50% { opacity: .35; } }
 @keyframes sheet-up { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
 @keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+/* Нижние листы «Ещё», подразделов, «Я», «Помощи» (layout/Shell, MeMenu): ручка, как у остальных листов —
+   их тоже закрывает свайп вниз (layout/useSwipeDown.ts) */
+@media (max-width: 760px) {
+  .more-card::before { content: ""; justify-self: center; width: 40px; height: 4px; margin: -6px 0 4px; border-radius: 2px; background: var(--line-strong); }
+}

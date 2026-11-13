@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate, timeOf } from '../lib/time'
 import { useClose } from '../lib/useClose'
+import { useMedia } from '../lib/useMedia'
 import { Spinner } from '../layout/Loading'
+import { useSwipeDown } from '../layout/useSwipeDown'
+import './helpchat.css'
 
 type Thread = Schemas['SupportTicketsThread']
 
@@ -20,6 +23,12 @@ export function HelpChatPanel({ ticketId, onClose }: {
   onClose: () => void
 }) {
   useClose(onClose)
+  // Телефон: чат — нижний лист (helpchat.css), потянуть вниз — закрыть, как ✕
+  const phone = useMedia('(max-width: 760px)')
+  const box = useRef<HTMLElement>(null)
+  useSwipeDown(box, phone ? onClose : null)
+  // Поле растёт с текстом (до ~8 строк), дальше — прокрутка внутри
+  const field = useRef<HTMLTextAreaElement>(null)
   const client = useQueryClient()
   const [id, setId] = useState<number | undefined>(ticketId)
   const [text, setText] = useState('')
@@ -44,6 +53,12 @@ export function HelpChatPanel({ ticketId, onClose }: {
   const messages = id == null ? [] : thread.data?.messages ?? []
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => { end.current?.scrollIntoView?.({ block: 'end' }) }, [messages.length, ask.isPending])
+  useLayoutEffect(() => {
+    const el = field.current
+    if (!el) return
+    el.style.height = ''
+    if (el.scrollHeight > el.clientHeight) el.style.height = `${Math.min(el.scrollHeight + 2, 200)}px`
+  }, [text])
   const left = info.data ? Math.max(0, info.data.dailyLimit - info.data.usedToday) : null
   const closed = t?.status === 'CLOSED'
   const submit = (e: FormEvent) => {
@@ -56,7 +71,7 @@ export function HelpChatPanel({ ticketId, onClose }: {
     ask.reset()
   }
   return (
-    <aside className="panel help-chat" aria-label="Помощь">
+    <aside ref={box} className="panel help-chat" aria-label="Помощь">
       <header className="panel-head">
         <h2>Помощь</h2>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
@@ -89,14 +104,14 @@ export function HelpChatPanel({ ticketId, onClose }: {
       ) : (
         <form className="form" onSubmit={submit}>
           <label className="field"><span>{id == null ? 'Ваш вопрос' : 'Дописать'}</span>
-            <textarea rows={3} maxLength={info.data?.maxLength ?? 1000} required autoFocus value={text}
+            <textarea ref={field} rows={2} maxLength={info.data?.maxLength ?? 1000} required autoFocus value={text}
               placeholder="Например: как принять доплату?" onChange={(e) => setText(e.target.value)} /></label>
-          <p className="hint">Не пишите имён, телефонов и других данных пациентов — для вопроса они не нужны.</p>
+          <p className="hint help-chat-note">Не пишите имён, телефонов и других данных пациентов — для вопроса они не нужны.</p>
           {ask.error && <p className="error" role="alert">{ask.error.fieldErrors?.text ?? ask.error.message}</p>}
-          <div className="actions">
+          <div className="actions help-chat-send">
             <button type="submit" className="btn primary" disabled={ask.isPending || !text.trim() || left === 0}>Спросить</button>
             {id != null && <button type="button" className="btn" onClick={newQuestion}>Новый вопрос</button>}
-            {left != null && info.data?.ai && <span className="hint">{left === 0 ? 'Вопросы на сегодня закончились' : `Осталось сегодня: ${left}`}</span>}
+            {left != null && info.data?.ai && <span className="hint help-chat-left">{left === 0 ? 'Вопросы на сегодня закончились' : `Осталось сегодня: ${left}`}</span>}
           </div>
         </form>
       )}

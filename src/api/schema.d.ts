@@ -10343,6 +10343,7 @@ export interface components {
             sharedSom?: number;
             /** Format: int64 */
             clinicAfterSharedSom?: number;
+            rentTwice: boolean;
         };
         NetMonthReport: {
             month?: string;

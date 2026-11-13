@@ -53,6 +53,8 @@ export function NetMonthTable({ month }: { month: string }) {
     ...(d.otherSom ? [['Прочее', '', '', '', '', '', '', d.otherSom]] : []),
     ['Прибыль клиники', '', '', '', '', '', '', d.profitSom],
   ])
+  // Аренда кресла в условиях «Зарплаты» и доля общего расхода «Аренда» — одна аренда дважды (сервер, rentTwice)
+  const twice = rows.filter((r) => r.rentTwice)
   const supply = d.supplySom
   const payouts = d.payoutsSom
   return (
@@ -61,6 +63,12 @@ export function NetMonthTable({ month }: { month: string }) {
         <h2>Итог месяца по врачам</h2>
         {rows.length > 0 && <button type="button" className="btn ghost small" onClick={csv}>CSV</button>}
       </div>
+      {twice.length > 0 && (
+        <p className="tone-bad" role="alert">
+          ⚠️ Аренда учтена дважды: в условиях врача и в общих расходах — уберите одно ({twice.map((r) => r.doctor).join(', ')}).
+          Суммы ниже посчитаны с обеими.
+        </p>
+      )}
       {rows.length === 0 ? <EmptyState compact title="Врачей в этом месяце нет" /> : (
         <div className="table-scroll">
           <table className="table" aria-label="Итог месяца по врачам">
@@ -79,7 +87,7 @@ export function NetMonthTable({ month }: { month: string }) {
                 const total = r.doctorId == null
                 return (
                   <tr key={r.doctorId ?? 'total'} className={total ? 'strong' : undefined}>
-                    <td>{r.doctor}{!total && <div className="hint small">{modeText(r)}</div>}</td>
+                    <td>{r.doctor}{!total && <div className="hint small">{modeText(r)}{r.rentTwice && <span className="tone-bad"> · аренда учтена дважды</span>}</div>}</td>
                     <td className="r nowrap num">{somText(r.revenueSom)}</td>
                     <td className="r nowrap num">{total ? '' : `${r.selfEmployed ? 'аренда' : 'зарплата'} `}{somText(pay(r))}</td>
                     <td className="r nowrap num">

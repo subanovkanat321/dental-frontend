@@ -24160,9 +24160,12 @@
           "clinicAfterSharedSom" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "rentTwice" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "clinicSom", "earnedSom", "expensesSom", "lossesSom", "materialsSom", "rentSom", "revenueSom", "selfEmployed", "sharedExpensesSom", "unpricedMaterials" ]
+        "required" : [ "clinicSom", "earnedSom", "expensesSom", "lossesSom", "materialsSom", "rentSom", "rentTwice", "revenueSom", "selfEmployed", "sharedExpensesSom", "unpricedMaterials" ]
       },
       "NetMonthReport" : {
         "properties" : {

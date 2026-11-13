@@ -814,7 +814,11 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 @media (max-width: 760px) { .day-pick { grid-template-columns: 1fr; } .day-quick .chip { flex: 1; } }
 
 /* «Касса → Зарплата»: карточка врача — три суммы в ряд, условия, действия */
-.salary { display: grid; gap: 8px; }
+/* Одна колонка minmax(0, 1fr): без неё колонка сетки растягивалась по самой широкой строке формы условий
+   (кнопка-пресет с nowrap) — карточка вылезала за экран телефона, страница прокручивалась вбок */
+.salary { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+/* Подсказки формы условий — без своих полей: у сетки .form отступ уже есть (иначе пустые строки между ними) */
+.salary .form > p { margin: 0; }
 .salary-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .salary-head h2 { margin: 0; }
 .salary-sums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; }
@@ -1420,6 +1424,15 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .calc-grid .field { max-width: none; }
 @media (max-width: 380px) { .calc-grid { grid-template-columns: minmax(0, 1fr); } }
 .day-quick.wrap { flex-wrap: wrap; }
+/* Условия зарплаты: длинные пресеты («Частный врач: вся выручка — врачу, минус аренда») переносят текст,
+   а не раздвигают форму; быстрые проценты — ровной сеткой, без одинокой кнопки на последней строке */
+.day-quick.wrap .chip { white-space: normal; text-align: center; line-height: 1.25; padding-block: 6px; }
+.day-quick.percent-quick .chip { flex: 0 0 auto; min-width: 64px; }
+@media (max-width: 760px) {
+  .day-quick.terms-presets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .day-quick.percent-quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .day-quick.terms-presets .chip, .day-quick.percent-quick .chip { min-width: 0; justify-self: stretch; }
+}
 
 /* «Заполнить по умолчанию» (clinic/StarterPanel.tsx): плашка над услугами и панель */
 .starter-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;

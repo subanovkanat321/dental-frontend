@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useBack } from '../../lib/back'
+import { useSwipeDown } from '../../layout/useSwipeDown'
 import { MonthGrid } from './MonthGrid'
 import { addMonths, monthTitle } from './monthModel'
 import { useMonthData } from './useMonth'
@@ -20,6 +21,9 @@ export function MonthSheet({ date, today, doctorIds, onPick, onClose }: {
   const [month, setMonth] = useState(date.slice(0, 7))
   const data = useMonthData(month, doctorIds, true)
   useBack(onClose)
+  // Ручка сверху — не только подсказка: потянуть лист вниз закрывает его, как «Закрыть»
+  const sheet = useRef<HTMLDivElement>(null)
+  useSwipeDown(sheet, onClose)
   // Esc на клавиатуре — тоже закрыть (как календарь DateInput)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -32,7 +36,7 @@ export function MonthSheet({ date, today, doctorIds, onPick, onClose }: {
   }
   return createPortal(
     <div className="ui-select-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="month-sheet" role="dialog" aria-modal="true" aria-label="Выбрать день">
+      <div ref={sheet} className="month-sheet" role="dialog" aria-modal="true" aria-label="Выбрать день">
         <div className="month-sheet-head">
           <button type="button" className="date-step" aria-label="Предыдущий месяц" onClick={() => setMonth(addMonths(month, -1))}>‹</button>
           <b>{monthTitle(month)}</b>

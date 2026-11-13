@@ -1,0 +1,26 @@
+/* Чат помощника (HelpChat.tsx) в окне .help-float (layout/Shell.tsx). Компьютер — карточка справа внизу
+   (crm.css), здесь только шапка в одну линию. Телефон — обычный нижний лист проекта: во всю ширину,
+   скруглённый верх, ручка, фон тускнеет; лист стоит в видимой части экрана (--vv-top / --vv-height,
+   lib/visualViewport.ts) — клавиатура iPhone не прячет поле и «Спросить» */
+.help-chat > .panel-head { align-items: center; }
+.help-chat > .panel-head h2 { margin: 0; }
+.help-chat-send { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.help-chat-left { margin-left: auto; font-size: .8rem; }
+.help-chat .help-chat-note { margin-top: -4px; font-size: .8rem; line-height: 1.35; }
+.help-chat textarea { resize: none; }
+@media (max-width: 760px) {
+  .help-float { left: 0; right: 0; bottom: auto; width: auto; top: var(--vv-top, 0px); height: var(--vv-height, 100dvh); z-index: 50;
+    display: flex; align-items: flex-end; background: rgba(10, 25, 30, .38); cursor: pointer; animation: sheet-fade .15s ease-out; }
+  html:has(.help-float), html:has(.help-float) body { overflow: hidden; overscroll-behavior: none; }
+  .help-float .panel.help-chat { cursor: auto; position: static; inset: auto; align-self: flex-end; width: 100%; height: auto; max-height: min(85dvh, calc(var(--vv-height, 100dvh) - 24px));
+    gap: 10px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); border: 0; border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, .15); overflow-y: auto; overscroll-behavior: contain; animation: sheet-up .2s ease-out; }
+  .help-float .panel.help-chat::before { content: ""; justify-self: center; width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); }
+  .help-float .panel.help-chat > .panel-head { position: static; margin: 0; padding: 0; }
+  .help-chat .form { gap: 8px; }
+  .help-chat textarea { font-size: max(16px, 1rem); max-height: 30dvh; }
+  .help-chat-send .btn.primary { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .help-float, .help-float .panel.help-chat { animation: none; }
+}

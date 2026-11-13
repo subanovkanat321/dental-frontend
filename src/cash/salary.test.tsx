@@ -186,6 +186,24 @@ test('аренда кресла: пресет «частный врач», су�
   expect(card).toHaveTextContent(/Аренда кресла−20\s000 сом/)
   expect(card).toHaveTextContent(/К выплате30\s000 сом/)
   expect(sent).toEqual([{ percent: 100, baseSom: 0, rentSom: 20000, rentPercent: 0, byTimesheet: false }])
+  // Обычная клиника — подсказки про общий расход нет
+  expect(screen.queryByText(/записывайте общим расходом/)).toBeNull()
+})
+
+test('«врачи работают независимо»: у аренды кресла — подсказка про общий расход, чтобы не посчитать аренду дважды', async () => {
+  const dastan: Row = { doctorId: 2, doctor: 'Дастан Т.', percent: 100, baseSom: 0, revenueSom: 50000, dueSom: 30000, paidSom: 0, former: false, earnedSom: 50000, rentFixedSom: 20000, rentPercent: 0, rentSom: 20000, owesSom: 0, rentReceivedSom: 0, byTimesheet: false, baseAccruedSom: 0 }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined, clinic: { ...me.clinic!, independentDoctors: true } })),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/salaries', () => HttpResponse.json([dastan])),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Зарплата'))
+  const card = await screen.findByRole('region', { name: 'Зарплата: Дастан Т.' })
+  await user.click(within(card).getByRole('button', { name: '⚙️ Изменить условия' }))
+  expect(within(card).getByRole('note')).toHaveTextContent(
+    'Аренду кабинета, которую врачи делят между собой, записывайте общим расходом (Касса → Расходы → ＋ общий). Здесь — только если врач платит аренду клинике.')
 })
 
 test('аренда процентом в форме; аренда больше заработка — «врач должен клинике», получено от врача', async () => {
