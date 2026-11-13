@@ -7,6 +7,7 @@ import { useSort } from '../lib/useSort'
 import { DateInput } from '../layout/DateInput'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
+import { rowOpen } from '../lib/rowClick'
 
 type Row = Schemas['AppointmentServiceReportRow']
 type Key = 'when' | 'patient' | 'doctor' | 'service' | 'status' | 'paid' | 'debt'
@@ -133,7 +134,7 @@ export function PaymentsTable({ rows, label, onOpen, active, withStatus = false,
           </thead>
           <tbody>
             {sorted.map((r) => (
-              <tr key={r.id} className={r.id === active ? 'active' : undefined}>
+              <tr key={r.id} {...rowOpen(onOpen && (() => onOpen(r.id)), r.id === active && 'active')}>
                 <td className="nowrap num">{r.startAt ? shortDate(r.startAt, true) : ''}</td>
                 <td>{onOpen ? <button type="button" className="row-link" onClick={() => onOpen(r.id)}>{r.patient}</button> : r.patient}</td>
                 <td>{r.doctor}</td>

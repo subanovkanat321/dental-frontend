@@ -24,6 +24,7 @@ import { Loading } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
 import { SectionTitle } from '../layout/section'
 import { useSection } from '../layout/useSection'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Debt = Schemas['PaymentQueryDebt']
@@ -348,7 +349,7 @@ function DebtTable({ rows, pending, error, empty, money, onOpen, active, label }
         </thead>
         <tbody>
           {sorted.map((d) => (
-            <tr key={d.appointmentId} className={d.appointmentId === active ? 'active' : undefined}>
+            <tr key={d.appointmentId} {...rowOpen(() => onOpen(d.appointmentId), d.appointmentId === active && 'active')}>
               <td><button type="button" className="row-link" onClick={() => onOpen(d.appointmentId)}>{d.patient}</button></td>
               <td className="nowrap">{d.startAt ? shortDate(d.startAt, true) : ''}</td>
               <td>{d.doctor}</td>

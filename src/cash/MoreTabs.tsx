@@ -20,6 +20,7 @@ import { positions } from '../earnings/earnings'
 import { Donut } from '../lib/Donut'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Expense = Schemas['ExpensesExpense']
@@ -171,7 +172,7 @@ export function ExpensesTab({ me, doctorId, seesAll }: { me: Me; doctorId: numbe
             </tr></thead>
             <tbody>
               {sorted.map((x) => (
-                <tr key={x.id}>
+                <tr key={x.id} {...rowOpen(() => setEditing(x.id), editing === x.id && 'active')}>
                   <td className="nowrap">{x.spentOn ? shortDate(`${x.spentOn}T12:00:00Z`) : ''}</td>
                   <td>{x.category}</td>
                   <td className="hint">{[x.comment, x.patient ? `пациент: ${x.patient}` : null].filter(Boolean).join(' · ') || '—'}</td>

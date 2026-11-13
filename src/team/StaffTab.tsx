@@ -9,6 +9,7 @@ import { ChairBadge } from './ChairBadge'
 import { useChairs } from './chairs'
 import { EmptyState } from '../layout/EmptyState'
 import { SubHelp } from '../layout/PageHead'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Member = Schemas['StaffMembersMemberView']
@@ -113,7 +114,7 @@ export function StaffTab({ me, doctors, members, invites, loading, error, opened
             <thead><tr><th>Имя</th><th>Роль</th>{admin && <th>Вход</th>}{admin && <th>Телефон</th>}<th /></tr></thead>
             <tbody>
               {shown.map((r) => (
-                <tr key={r.key} className={[isOpened(r, opened) ? 'active' : '', r.invite || r.doctor?.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
+                <tr key={r.key} {...rowOpen(canOpen(r) && (() => onOpen(r.open)), isOpened(r, opened) && 'active', (r.invite || r.doctor?.active === false) && 'inactive')}>
                   <td>
                     <span className="who">
                       {r.doctor?.photoUrl
