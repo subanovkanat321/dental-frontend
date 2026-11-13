@@ -13,6 +13,8 @@ import { SubHeader } from '../settings/SubHeader'
 import './shifts.css'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { StaffWeekly } from './StaffWeekly'
+import { plannedOn, weeklyText } from './weekly'
 
 type Schedule = Schemas['ShiftControllerSchedule']
 type Shift = Schemas['ShiftServiceShiftView']
@@ -47,7 +49,7 @@ type Editing = { shift?: Shift; telegramId: number; day: string }
 
 /**
  * «Клиника → Рабочее время → Смены персонала»: неделя персонала без кресла (админы, регистратура, ассистенты) —
- * кто в какой день и с какого по какое время. Врачей здесь нет: у них вкладка «Врачи» в «Часах и сменах». Ставит и
+ * кто в какой день и с какого по какое время. Врачей здесь нет: у них вкладка «Врачи» в «Рабочем времени». Ставит и
  * меняет админ; остальные видят график только для чтения, своя строка подсвечена. Телефон —
  * список по дням вместо таблицы.
  */
@@ -76,8 +78,8 @@ export function ShiftsPage({ onBack, title = 'График смен', tabs }: { 
       </SubHeader>
       <p className="hint">
         {canEdit
-          ? 'Смены руководителей, регистратуры и ассистентов. Нажмите на ячейку, чтобы добавить или изменить смену. У врачей — вкладка «Врачи».'
-          : 'График смен ведёт руководитель клиники. Ваша строка подсвечена.'}
+          ? 'Серым — недельный график (ниже: «как у клиники» или свой). Смена на дату — поверх него: нажмите на ячейку, чтобы добавить или изменить. У врачей — вкладка «Врачи».'
+          : 'График ведёт руководитель клиники: серым — по недельному графику, остальное — смены на дату. Ваша строка подсвечена.'}
       </p>
       {loaded.error && <p className="error" role="alert">{loaded.error.message}</p>}
       {loaded.isPending ? <Loading /> : data && (
@@ -89,7 +91,7 @@ export function ShiftsPage({ onBack, title = 'График смен', tabs }: { 
               Врачи здесь не показываются — их дни и часы настраиваются в «Часах работы».</p>
             <div className="actions">
               <button type="button" className="btn primary" onClick={() => openClinic('hours')}>Часы работы врачей</button>
-              {canEdit && <button type="button" className="btn" onClick={() => openClinic('staff')}>Пригласить регистратуру или ассистента</button>}
+              {canEdit && <button type="button" className="btn" onClick={() => openClinic('staff')}>Добавить регистратуру или ассистента</button>}
             </div>
           </div>
         ) : phone ? <DayList data={data} days={days} onOpen={open} /> : <WeekTable data={data} days={days} onOpen={open} />
@@ -99,6 +101,7 @@ export function ShiftsPage({ onBack, title = 'График смен', tabs }: { 
           onDone={() => setEditing(null)} />
       )}
       {canEdit && data && (data.shifts ?? []).length > 0 && <CopyWeek monday={monday} />}
+      {data && (data.people ?? []).length > 0 && <WeeklyList data={data} canEdit={canEdit} />}
     </div>
   )
 }
@@ -126,6 +129,10 @@ function WeekTable({ data, days, onOpen }: { data: Schedule; days: string[]; onO
                 const list = shiftsOf(data, p.telegramId, d)
                 return (
                   <td key={d} className={d === today ? 'today' : undefined}>
+                    {list.length === 0 && plannedOn(data, p.telegramId, d) && (
+                      <span className="shift-chip shift-planned num" title="По недельному графику">
+                        {hm(plannedOn(data, p.telegramId, d)!.start)}–{hm(plannedOn(data, p.telegramId, d)!.end)}</span>
+                    )}
                     {list.map((s) => onOpen ? (
                       <button key={s.id} type="button" className="shift-chip num" title={s.note}
                         aria-label={`${p.fullName}, ${dayLong(d)}: ${shiftHours(s)} — изменить`}
@@ -168,7 +175,13 @@ function DayList({ data, days, onOpen }: { data: Schedule; days: string[]; onOpe
         return (
           <section key={d} className="card-block shifts-day" aria-label={dayLong(d)}>
             <h2>{dayLong(d)}{d === todayIn() ? ' · сегодня' : ''}</h2>
-            {list.length === 0 && <EmptyState compact title="Смен нет" />}
+            {list.length === 0 && !people.some((p) => plannedOn(data, p.telegramId, d)) && <EmptyState compact title="Смен нет" />}
+            {people.filter((p) => !list.some((s) => s.telegramId === p.telegramId) && plannedOn(data, p.telegramId, d)).map((p) => (
+              <p key={p.telegramId} className="shift-line shift-planned-line">
+                <span className="num">{hm(plannedOn(data, p.telegramId, d)!.start)}–{hm(plannedOn(data, p.telegramId, d)!.end)}</span>
+                <span>{p.fullName} <span className="hint small">· по графику</span></span>
+              </p>
+            ))}
             <ul>
               {list.map((s) => {
                 const p = nameOf(s.telegramId)!
@@ -307,4 +320,32 @@ function weeksText(n: number): string {
   const last = n % 10
   const word = n % 100 >= 11 && n % 100 <= 14 ? 'недель' : last === 1 ? 'неделю' : last >= 2 && last <= 4 ? 'недели' : 'недель'
   return `${n} ${word}`
+}
+
+/**
+ * «Недельный график» под таблицей: у каждого — «как у клиники» или свои дни и часы (V208). Смены на даты —
+ * поверх него. Меняет руководитель (как смены); остальным — только текст.
+ */
+function WeeklyList({ data, canEdit }: { data: Schedule; canEdit: boolean }) {
+  const [open, setOpen] = useState<number | null>(null)
+  return (
+    <section className="card-block" aria-label="Недельный график">
+      <h2>Недельный график</h2>
+      <p className="hint">Обычная неделя сотрудника. Не задан — работает по часам клиники. Заменили или вышел в выходной — поставьте смену на дату выше.</p>
+      {(data.people ?? []).map((p) => {
+        const week = (data.weekly ?? []).find((w) => w.telegramId === p.telegramId)
+        return (
+          <div key={p.telegramId} className="hours-doctor">
+            <button type="button" className="hours-toggle" aria-expanded={open === p.telegramId} disabled={!canEdit}
+              onClick={() => setOpen(open === p.telegramId ? null : p.telegramId)}>
+              <strong>{p.fullName}</strong>
+              <span className="hint small hours-kind">{week?.custom ? weeklyText(week) : `как у клиники · ${weeklyText(week)}`}</span>
+              {canEdit && <span aria-hidden="true">{open === p.telegramId ? '▴' : '▾'}</span>}
+            </button>
+            {open === p.telegramId && <StaffWeekly telegramId={p.telegramId} canEdit={canEdit} />}
+          </div>
+        )
+      })}
+    </section>
+  )
 }
