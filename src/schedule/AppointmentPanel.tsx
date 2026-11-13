@@ -18,7 +18,8 @@ import { useClose } from '../lib/useClose'
 import { useFullView } from '../lib/fullView'
 import { useNowMinutes } from './gridScale'
 import { addDays, dateOf, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
-import { CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
+import { ChairEdit, CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
+import { useChairs } from '../team/chairs'
 import { ContactButtons } from './Contact'
 import { ContinueTreatment } from './ContinueTreatment'
 import { VisitTeeth } from './VisitTeeth'
@@ -72,7 +73,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const client = useQueryClient()
   const action = useAppointmentAction(a)
   // Какая форма открыта внутри карточки: одна за раз, чтобы карточка не превращалась в анкету
-  const [editing, setEditing] = useState<'move' | 'service' | 'comment' | 'promo' | null>(null)
+  const [editing, setEditing] = useState<'move' | 'service' | 'comment' | 'promo' | 'chair' | null>(null)
   // Только что отметили неявку или отмену — «Вернуть», как было (сервер проверит версию)
   const [undo, setUndo] = useState<{ label: string; previous: Status } | null>(null)
   const close = () => setEditing(null)
@@ -193,6 +194,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     enabled: a.doctorId != null && a.status !== 'CANCELLED',
   })
   const colleague = colleagueTimeOf(a, daySlots.data?.chairTime)
+  const chairs = useChairs()
+  const chairName = chairs.data?.find((c) => c.id === a.chairId)?.name ?? 'кресло'
   const sourceHint = a.bookedBy ? bookedByText(a.bookedBy) : a.source === 'PATIENT' ? 'Запись через бота'
     : a.source === 'WEB' ? (a.status === 'REQUESTED' ? '🌐 Заявка с сайта, без Telegram — подтвердите звонком' : '🌐 С сайта, без Telegram — бот не напомнит')
       : null
@@ -258,6 +261,11 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             {canEdit && <button type="button" className="link" onClick={() => setEditing('comment')}>изменить</button>}</p>
         ) : canEdit && a.status !== 'CANCELLED' && (
           <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
+        )}
+        {/* Кресло приёма (V210) — когда в клинике больше одного кресла; сменить — у предстоящего приёма */}
+        {editing === 'chair' ? <ChairEdit appointment={a} onDone={close} /> : chairs.data && chairs.data.length > 1 && a.chairId != null && (
+          <p className="line-edit appt-chair"><span><span className="hint">Кресло:</span> 🪑 {chairName}{a.chairManual ? <span className="hint"> · не кресло врача</span> : null}</span>
+            {canEdit && active && future && <button type="button" className="link" onClick={() => setEditing('chair')}>сменить</button>}</p>
         )}
         {/* Промокод рекламы: пациент ввёл в боте или назвал по телефону; пустой — «＋ Промокод» под «Ещё» */}
         {editing === 'promo' ? <PromoEdit appointment={a} onDone={close} /> : a.promoCode && (

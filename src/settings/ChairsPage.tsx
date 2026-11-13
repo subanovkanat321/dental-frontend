@@ -43,7 +43,9 @@ export function ChairsPage({ me, onBack }: { me: Me; onBack: () => void }) {
       <SubHeader title="Кресла" onBack={onBack}>
         <SubHelp title="Кресла">Кресло (кабинет) могут делить несколько врачей: двух пациентов в одно кресло на одно время не записать. Если сотрудник
           записывает пациента в рабочие часы коллеги по креслу — по режиму кресла сервер спросит «Коллега предупреждён?» или не даст записать.
-          Пациенты про кресла ничего не видят: в чужие часы они не записываются. Врачей кресла выбирают здесь или в карточке врача («Персонал» → врач → «Кресло»).</SubHelp>
+          Кресло врача — его основное: при записи можно выбрать другое свободное (поле «Кресло»). Пациенты про кресла ничего не видят: если
+          кресло врача занято, а другое свободно — запись сама встанет в свободное. Врачей кресла выбирают здесь или в карточке врача
+          («Персонал» → врач → «Кресло»).</SubHelp>
         {!adding && <button type="button" className="btn primary head-end" onClick={() => setAdding(true)}>+ Добавить кресло</button>}
       </SubHeader>
       {adding && <NewChair onDone={() => setAdding(false)} />}
@@ -51,7 +53,54 @@ export function ChairsPage({ me, onBack }: { me: Me; onBack: () => void }) {
         : chairs.error ? <p className="error" role="alert">{chairs.error.message}</p>
           : !chairs.data?.length ? (!adding && <EmptyState title="Кресел пока нет">Врачи, которые делят кресло, не примут двух пациентов в одно время.
             Добавьте кресло и выберите его врачей.</EmptyState>)
-            : chairs.data.map((c) => <ChairRow key={c.id} chair={c} chairs={chairs.data} doctors={doctors} />)}
+            : (
+              <>
+                <Unseated chairs={chairs.data} doctors={doctors} />
+                {chairs.data.map((c) => <ChairRow key={c.id} chair={c} chairs={chairs.data} doctors={doctors} />)}
+              </>
+            )}
+    </section>
+  )
+}
+
+/**
+ * «Без кресла: Нурболот — назначить ›» (V210): у врача без кресла запрет «два пациента в одно кресло» не действует,
+ * и выбрать ему свободное кресло при записи не из чего сравнить. Подсказка — по строке на врача; первым в списке —
+ * кресло, где меньше всего врачей (простое распределение).
+ */
+function Unseated({ chairs, doctors }: { chairs: Chair[]; doctors: Schemas['DoctorView'][] }) {
+  const client = useQueryClient()
+  const refresh = useRefreshChairs()
+  const free = doctors.filter((d) => !chairOf(chairs, d.id))
+  const assign = useMutation<Schemas['ChairOverview'][], ApiError, { doctorId: number; chairId: number }>({
+    mutationFn: ({ doctorId, chairId }) => unwrap(api.PUT('/api/doctors/{id}/chair', { params: { path: { id: doctorId } }, body: { chairId } })),
+    onSuccess: (list) => {
+      client.setQueryData(['chairs'], list)
+      refresh()
+    },
+  })
+  if (!free.length) return null
+  const nameOf = (id: number) => doctors.find((d) => d.id === id)?.fullName ?? ''
+  const byLoad = [...chairs].sort((a, b) => (a.doctorIds?.length ?? 0) - (b.doctorIds?.length ?? 0))
+  return (
+    <section className="card-block chair-unseated" aria-label="Врачи без кресла">
+      <p className="hint">Кресло врача — его основное; при записи можно выбрать и другое свободное.</p>
+      <ul className="chair-unseated-list">
+        {free.map((d) => (
+          <li key={d.id}>
+            <span>Без кресла: <strong>{d.fullName}</strong></span>
+            <Select aria-label={`Назначить кресло: ${d.fullName}`} value="" disabled={assign.isPending}
+              onChange={(e) => { assign.reset(); if (e.target.value) assign.mutate({ doctorId: d.id, chairId: Number(e.target.value) }) }}>
+              <option value="">назначить ›</option>
+              {byLoad.map((c) => {
+                const who = (c.doctorIds ?? []).map(nameOf).filter(Boolean)
+                return <option key={c.id} value={c.id}>{c.name}{who.length ? ` (${who.join(', ')})` : ' (пустое)'}</option>
+              })}
+            </Select>
+          </li>
+        ))}
+      </ul>
+      {assign.error && <ChairAssignError error={assign.error} />}
     </section>
   )
 }
