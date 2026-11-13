@@ -2425,3 +2425,20 @@ dd[aria-label="Чистыми"]:not(.tone-bad) { color: var(--accent-ink); }
 .schedule-main.cash > .card-block > h2:first-child::before { content: ''; flex: none; width: 4px; height: 1.05em; border-radius: 2px; background: var(--accent); }
 .schedule-main.cash > .card-block:has(table[aria-label="К оплате на кассе"]) > h2:first-child::before { background: var(--cash-ink); }
 .schedule-main.cash > .card-block:has(table[aria-label="Долги пациентов"]) > h2:first-child::before { background: var(--bad-ink); }
+
+/* Свой выбор файла (layout/FilePicker): кнопка «📎 …» и имя файла вместо нативного «Choose File» */
+.file-picker-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.file-picker-name { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* «Здоровье» → задачи по расписанию: группы в свёрнутом списке */
+.jobs-health details > summary { cursor: pointer; padding: 8px 0; color: var(--link); }
+.jobs-health .jobs-group h3 { font-size: .95rem; margin: 12px 0 4px; color: var(--hint); }
+@media (max-width: 760px) {
+  .jobs-health .table td.nowrap { white-space: normal; }
+}
+@media (min-width: 761px) {
+  /* колонки всех таблиц задач (проблемные и группы) — одной ширины, иначе каждая группа «пляшет» */
+  .jobs-health .table { table-layout: fixed; }
+  .jobs-health .table th:nth-child(2) { width: 34%; }
+  .jobs-health .table th:nth-child(3) { width: 22%; }
+}

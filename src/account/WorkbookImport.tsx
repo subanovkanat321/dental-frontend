@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 
 import { ApiError, upload, type Schemas } from '../api/client'
+import { FilePicker } from '../layout/FilePicker'
 import { Spinner } from '../layout/Loading'
 import { MOVE_TEMPLATE_PATH } from '../lib/texts'
 import { counted } from './workbook'
@@ -26,7 +27,6 @@ const UPDATED: Partial<Record<NonNullable<Sheet['kind']>, string>> = {
 export function WorkbookImport() {
   const client = useQueryClient()
   const [file, setFile] = useState<File | null>(null)
-  const input = useRef<HTMLInputElement>(null)
   const form = (f: File) => {
     const body = new FormData()
     body.append('file', f)
@@ -47,7 +47,6 @@ export function WorkbookImport() {
     setFile(null)
     preview.reset()
     apply.reset()
-    if (input.current) input.current.value = ''
   }
   const choose = (f: File | undefined) => {
     apply.reset()
@@ -72,10 +71,8 @@ export function WorkbookImport() {
         </div>
       ) : (
         <>
-          <label className="field"><span>Заполненный шаблон</span>
-            <input ref={input} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              onChange={(e) => choose(e.target.files?.[0])} />
-          </label>
+          <FilePicker label="Заполненный шаблон" button="Выбрать файл (.xlsx)" file={file} onChange={choose}
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
           {preview.isPending && <p className="hint"><Spinner />Читаем листы…</p>}
           {preview.error && <p className="error" role="alert">{fileError}</p>}
           {r && <Preview report={r} />}

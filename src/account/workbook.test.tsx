@@ -118,3 +118,20 @@ test('числа со словами: 1 пациента, 2 сотрудника
   expect(counted(11, 'SERVICES')).toBe('11 услуг')
   expect(counted(21, 'APPOINTMENTS')).toBe('21 запись')
 })
+
+test('выбор файла — своя кнопка «📎 Выбрать файл (.xlsx)» и имя файла рядом, файл уходит на предпросмотр', async () => {
+  const { previews } = backend()
+  const { user, box } = await openWorkbook()
+  expect(within(box).getByRole('button', { name: '📎 Выбрать файл (.xlsx)' })).toBeInTheDocument()
+  expect(within(box).getByText('файл не выбран')).toBeInTheDocument()
+
+  await user.upload(within(box).getByLabelText('Заполненный шаблон'), new File(['xlsx'], 'клиника-перенос.xlsx'))
+  expect(within(box).getByText('клиника-перенос.xlsx')).toBeInTheDocument()
+  await within(box).findByLabelText('Предпросмотр')
+  expect(previews).toHaveLength(1)
+  expect((previews[0]!.get('file') as File).size).toBe(4)
+
+  await user.click(within(box).getByRole('button', { name: 'Отмена' }))
+  expect(within(box).getByText('файл не выбран')).toBeInTheDocument()
+  expect(within(box).getByLabelText<HTMLInputElement>('Заполненный шаблон').value).toBe('')
+})
