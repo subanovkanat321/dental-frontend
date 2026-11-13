@@ -1576,7 +1576,6 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
   .nav { position: relative; }
   .nav .nav-badge { position: absolute; top: 2px; left: calc(50% + 6px); margin: 0; }
 }
-.question-preview { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .question-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 .question-answer { width: 100%; font: inherit; line-height: 1.5; padding: 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
 /* «Сменить роль» в строке «Персонала» */
@@ -1768,25 +1767,7 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .dictation-start { width: 100%; }
 
 /* «Пациенты → Записаны»: будущие записи по дням */
-.booked { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
-.booked-day h3 { margin: 6px 0 6px; font-size: 1rem; }
-.booked-day ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.booked-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 1px solid var(--separator); border-radius: var(--radius); background: var(--card); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
-.booked-row:hover { border-color: var(--line-strong); }
-.booked-time { font-weight: 600; min-width: 3.2em; }
-.booked-main { display: grid; gap: 2px; min-width: 0; }
-.booked-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.booked-main .hint { overflow-wrap: anywhere; }
-.booked-item.with-action { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; }
-.booked-item.with-action > .error { grid-column: 1 / -1; margin: 0; }
-.booked-wa { white-space: nowrap; }
-@media (max-width: 640px) {
-  .booked-row { grid-template-columns: auto minmax(0, 1fr); }
-  .booked-row .chip { grid-column: 2; justify-self: start; }
-  /* Телефон: «WhatsApp» — под строкой справа, а не рядом (строка не уезжает за край экрана) */
-  .booked-item.with-action { grid-template-columns: minmax(0, 1fr); }
-  .booked-wa { justify-self: end; }
-}
+.booked { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; } /* строки — calm.css */
 .patient-expense-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
 .patient-expense-list li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; }
 

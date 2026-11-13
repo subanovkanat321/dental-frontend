@@ -63,7 +63,7 @@ test('«Вопросы»: бейдж, список, черновик ИИ пра
   // Число новых — у раздела в меню (сумма подразделов: лист ожидания пуст) и у подраздела «Вопросы»
   expect(await screen.findByLabelText('Пациенты: новое — 2')).toHaveTextContent('2')
   await userEvent.click(await findSub('Вопросы · 2'))
-  const table = await screen.findByRole('table', { name: 'Вопросы пациентов' })
+  const table = await screen.findByRole('list', { name: 'Вопросы пациентов' })
   expect(table).toHaveTextContent('Айгуль Т.')
   expect(table).toHaveTextContent('Нет в базе клиники')
   expect(table).toHaveTextContent('Вы работаете в субботу?')
@@ -83,7 +83,7 @@ test('«Вопросы»: бейдж, список, черновик ИИ пра
   expect(await findSub('Вопросы · 1')).toBeInTheDocument()
 
   await userEvent.click(screen.getByRole('tab', { name: 'Отвеченные' }))
-  expect(await screen.findByRole('table', { name: 'Вопросы пациентов' })).toHaveTextContent('Айгуль Т.')
+  expect(await screen.findByRole('list', { name: 'Вопросы пациентов' })).toHaveTextContent('Айгуль Т.')
 })
 
 test('без ИИ кнопки черновика нет: отвечают вручную; «Закрыть без ответа» переспрашивает', async () => {
@@ -134,9 +134,12 @@ test('ИИ-администратор бота: «🤖 Ответил ИИ» с 
   )
   renderApp()
   await userEvent.click(await findSub(/Вопросы/))
-  expect(await screen.findByText(/сначала отвечает ИИ-помощник/)).toBeInTheDocument()
-  const waiting = await screen.findByRole('table', { name: 'Вопросы пациентов' })
-  expect(waiting).toHaveTextContent('Передано сотрудникам')
+  // Пояснение про ИИ — не абзацем над списком, а в «?» полосы вкладок
+  await userEvent.click(await screen.findByRole('button', { name: 'Подсказка: Вопросы' }))
+  expect(screen.getByRole('note', { name: 'Подсказка: Вопросы' })).toHaveTextContent(/сначала отвечает ИИ-помощник/)
+  const waiting = await screen.findByRole('list', { name: 'Вопросы пациентов' })
+  // В «Ждут ответа» пометок нет — все ждут сотрудника; подробности — в вопросе справа
+  expect(waiting).not.toHaveTextContent('Передано сотрудникам')
   await userEvent.click(within(waiting).getByRole('button', { name: 'Нет в базе клиники' }))
   let panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
   expect(await within(panel).findByText(/ИИ не стал отвечать сам/)).toBeInTheDocument()
@@ -146,8 +149,8 @@ test('ИИ-администратор бота: «🤖 Ответил ИИ» с 
 
   await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }))
   await userEvent.click(screen.getByRole('tab', { name: 'Отвеченные' }))
-  const done = await screen.findByRole('table', { name: 'Вопросы пациентов' })
-  await waitForSlow(() => expect(done).toHaveTextContent('🤖 Ответил ИИ'))
+  const done = await screen.findByRole('list', { name: 'Вопросы пациентов' })
+  await waitForSlow(() => expect(done).toHaveTextContent('ответил ИИ'))
   await userEvent.click(within(done).getByRole('button', { name: 'Нет в базе клиники' }))
   panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
   const answer = await within(panel).findByRole('region', { name: 'Ответ ИИ' })
@@ -176,8 +179,8 @@ test('ИИ записал по «Да» пациента — пометка в �
   renderApp()
   await userEvent.click(await findSub(/Вопросы/))
   await userEvent.click(await screen.findByRole('tab', { name: 'Отвеченные' }))
-  const done = await screen.findByRole('table', { name: 'Вопросы пациентов' })
-  await waitForSlow(() => expect(done).toHaveTextContent('🤖 ИИ записал (пациент подтвердил)'))
+  const done = await screen.findByRole('list', { name: 'Вопросы пациентов' })
+  await waitForSlow(() => expect(done).toHaveTextContent('ИИ записал'))
   await userEvent.click(within(done).getByRole('button', { name: 'Айпери Вымышленная' }))
   const panel = await screen.findByRole('complementary', { name: 'Вопрос пациента' })
   const answer = await within(panel).findByRole('region', { name: 'Ответ ИИ' })

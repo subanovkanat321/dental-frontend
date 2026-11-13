@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 
-import { rowOpen } from '../lib/rowClick'
 import { api, unwrap, type Schemas } from '../api/client'
 import { formatPhone, shortDate } from '../lib/time'
 import { MedicalRecord } from '../medical/MedicalRecord'
@@ -22,12 +21,16 @@ import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
+import { CalmRow } from './CalmList'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
 type Patient = Schemas['PatientView']
 
-type SortKey = 'name' | 'last' | 'next'
+/** Порядок списка (было — заголовки колонок): недавние, давно не были, по имени, ближайшая запись. */
+type SortKey = 'last' | 'lastAsc' | 'name' | 'next'
+
+const SORTS: [SortKey, string][] = [['last', 'Сначала недавние'], ['lastAsc', 'Давно не были'], ['name', 'По имени'], ['next', 'Ближайшая запись']]
 
 /**
  * «Пациенты»: таблица с поиском и сортировкой, карточка — справа. Список — последние 300 по
@@ -46,7 +49,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   onOpenAppointment?: (appointmentId: number) => void
 }) {
   const [query, setQuery] = useState('')
-  const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'last', desc: true })
+  const [sort, setSort] = useState<SortKey>('last')
   const [selected, setSelected] = useState<number | 'new' | null>(initialPatient ?? null)
   // Медкарта — на месте таблицы, во всю ширину: карте зубов нужно место
   const [medical, setMedical] = useState<Patient | null>(null)
@@ -93,25 +96,18 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   const rows: Row[] = useMemo(() => (extra.length ? [...local, ...extra] : local), [local, extra])
 
   const sorted = useMemo(() => {
-    const value = (r: Row) => (sort.key === 'name' ? r.fullName ?? '' : sort.key === 'last' ? r.lastVisit ?? '' : r.nextVisit ?? '')
+    const value = (r: Row) => (sort === 'name' ? r.fullName ?? '' : sort === 'next' ? r.nextVisit ?? '' : r.lastVisit ?? '')
+    const desc = sort === 'last'
     return [...rows].sort((a, b) => {
       const x = value(a)
       const y = value(b)
       // Пустые даты — всегда в конце, в какую сторону ни сортируй
       if (!x && y) return 1
       if (x && !y) return -1
-      const order = sort.key === 'name' ? x.localeCompare(y, 'ru') : x < y ? -1 : x > y ? 1 : 0
-      return sort.desc ? -order : order
+      const order = sort === 'name' ? x.localeCompare(y, 'ru') : x < y ? -1 : x > y ? 1 : 0
+      return desc ? -order : order
     })
   }, [rows, sort])
-
-  const header = (key: SortKey, title: string) => (
-    <th aria-sort={sort.key === key ? (sort.desc ? 'descending' : 'ascending') : 'none'}>
-      <button type="button" className="th-sort" onClick={() => setSort((s) => ({ key, desc: s.key === key ? !s.desc : key !== 'name' }))}>
-        {title}{sort.key === key ? (sort.desc ? ' ↓' : ' ↑') : ''}
-      </button>
-    </th>
-  )
 
   if (medical) {
     return (
@@ -138,9 +134,15 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
                     {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</option>)}
                   </Select>
                 )}
-                <span className="hint">
-                  {recent.isPending ? <><Spinner />Загрузка…</> : text ? `Найдено: ${sorted.length}${doctorId != null && extra.length ? ' — по всей клинике' : ''}` : doctorId != null ? `Пациентов врача: ${sorted.length}` : `Последние по визитам: ${sorted.length}`}
-                </span>
+                <Select aria-label="Порядок" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
+                  {SORTS.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
+                </Select>
+                {/* Сколько — только когда ищем или выбрали врача: «последние по визитам: 300» каждый день — шум */}
+                {(recent.isPending || text || doctorId != null) && (
+                  <span className="head-note">
+                    {recent.isPending ? <><Spinner />Загрузка…</> : text ? `Найдено: ${sorted.length}${doctorId != null && extra.length ? ' — по всей клинике' : ''}` : `Пациентов врача: ${sorted.length}`}
+                  </span>
+                )}
               </div>
               <button type="button" className="btn primary head-action" onClick={() => setSelected('new')}>＋ Новый пациент</button>
             </>
@@ -154,33 +156,19 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
           <EmptyState fill title={text ? (remote.isFetching ? 'Ищем по всей клинике…' : `Никого не нашли по «${query.trim()}»`) : doctorId != null ? 'У этого врача пока не было пациентов' : 'Пациентов пока нет'}>
-            {text ? (remote.isFetching ? undefined : 'Проверьте написание или ищите по последним цифрам телефона.') : doctorId == null ? 'Они появятся с первой записью — или добавьте кнопкой «＋ Новый пациент».' : undefined}
+            {text ? (remote.isFetching ? undefined : 'Попробуйте последние цифры телефона.') : doctorId == null ? 'Появятся с первой записью.' : undefined}
           </EmptyState>
         )}
         {tab === 'all' && sorted.length > 0 && (
-          <table className="table">
-            <thead>
-              <tr>
-                {header('name', 'Пациент')}
-                <th>Телефон</th>
-                {header('last', 'Был')}
-                {header('next', 'Записан')}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((p) => (
-                <tr key={p.id} {...rowOpen(() => setSelected(p.id), p.id === selected && 'active')}>
-                  <td>
-                    <button type="button" className="row-link" onClick={() => setSelected(p.id)}>{p.fullName}</button>
-                    {p.telegram && <span className="tg" title="Пишет боту в Telegram — напоминания придут туда">Telegram</span>}
-                  </td>
-                  <td className="nowrap num">{p.phone ? formatPhone(p.phone) : '—'}</td>
-                  <td className="nowrap">{p.lastVisit ? shortDate(p.lastVisit) : '—'}</td>
-                  <td className="nowrap">{p.nextVisit ? shortDate(p.nextVisit, true) : '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ul className="calm-list" aria-label="Пациенты">
+            {sorted.map((p) => (
+              <CalmRow key={p.id} open={() => setSelected(p.id)} active={p.id === selected} name={p.fullName}
+                sub={p.phone ? <span className="num">{formatPhone(p.phone)}</span> : 'без телефона'}
+                meta={p.nextVisit
+                  ? <span className="calm-meta-strong">записан {shortDate(p.nextVisit, true)}</span>
+                  : p.lastVisit ? `был ${shortDate(p.lastVisit)}` : 'ещё не был'} />
+            ))}
+          </ul>
         )}
       </section>
       </HeadSlotProvider>

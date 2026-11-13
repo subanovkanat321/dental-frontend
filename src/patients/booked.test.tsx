@@ -39,20 +39,24 @@ test('«Пациенты → Записаны»: будущие записи в�
   await userEvent.click(await findSub('Записаны'))
   const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
   expect(await within(list).findByText('Айгуль Т.')).toBeInTheDocument()
-  // Фильтры и «Записей: N» — в строке шапки «Пациентов» (PageHead), список — под ней
-  expect(screen.getByText('Записей: 3')).toBeInTheDocument()
+  // Фильтры — в строке шапки «Пациентов» (PageHead); сколько — тихо у заголовка дня, общего счётчика нет
+  expect(within(list).getAllByRole('heading', { level: 3 }).map((h) => h.textContent?.replace(/^.*·\s*/, ''))).toEqual(['2', '1'])
+  expect(screen.queryByText(/Записей:/)).toBeNull()
   expect(within(list).queryByText('Отменённая К.')).toBeNull()
   // По дням и по времени: завтра 10:00 Айгуль, 11:00 Нурлан (заявка) — потом через 3 дня Бакыт
-  const names = within(list).getAllByRole('listitem').map((li) => li.querySelector('strong')?.textContent)
+  const names = within(list).getAllByRole('listitem').map((li) => within(li).getAllByRole('button')[0]!.textContent)
   expect(names).toEqual(['Айгуль Т.', 'Нурлан К.', 'Бакыт М.'])
-  expect(list).toHaveTextContent('Придёт')
-  expect(list).toHaveTextContent('Заявка — подтвердите')
+  // Значок — только у заявки (её надо подтвердить); «придёт» — тихим словом справа, без эмодзи
+  const [aigul, nurlan] = within(list).getAllByRole('listitem')
+  expect(aigul).toHaveTextContent(/Лечение кариеса.*придёт/)
+  expect(aigul).not.toHaveTextContent('👍')
+  expect(within(nurlan!).getByText('Заявка')).toBeInTheDocument()
   expect(asked).toEqual(expect.arrayContaining(['1:7', '2:7']))
 
   // Только кто не подтвердил: Айгуль (придёт) уходит
   await userEvent.click(screen.getByRole('checkbox', { name: /не подтвердил/ }))
   expect(within(list).queryByText('Айгуль Т.')).toBeNull()
-  expect(await screen.findByText('Записей: 2')).toBeInTheDocument()
+  expect(within(list).getAllByRole('listitem')).toHaveLength(2)
 
   // Один врач и месяц — запрос с days=31 только по нему
   await choose(screen.getByRole('combobox', { name: 'Врач' }), 'Дастан Т.')
