@@ -50,7 +50,7 @@ const RENDER: Record<string, (title: string) => Render> = {
   about: (t) => clinic('about', t),
   staff: (t) => team('doctors', t),
   services: (t) => clinic('services', t),
-  hours: () => (me, back) => <WorkTimePage me={me} onBack={back} initial="doctors" />,
+  hours: () => (me, back) => <WorkTimePage me={me} onBack={back} initial="hours" />,
   chairs: () => (me, back) => <ChairsPage me={me} onBack={back} />,
   shifts: () => (me, back) => <WorkTimePage me={me} onBack={back} initial="shifts" />,
   timeoff: () => (me, back) => <WorkTimePage me={me} onBack={back} initial="timeoff" />,

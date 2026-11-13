@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 
@@ -258,9 +258,12 @@ describe('телефон: лист снизу', () => {
     expect(within(screen.getByRole('dialog')).getByText('09:30')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '09 ч' })).toHaveAttribute('aria-pressed', 'true')
     const head = screen.getByRole('dialog').querySelector('.ui-select-head')!
-    fireEvent.touchStart(head, { touches: [{ clientY: 100 }] })
-    fireEvent.touchEnd(head, { changedTouches: [{ clientY: 180 }] })
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    // Ручка и шапка: тянем вниз дальше четверти высоты листа (layout/useSwipeDown.ts)
+    fireEvent.touchStart(head, { touches: [{ identifier: 1, clientX: 50, clientY: 0 }] })
+    fireEvent.touchMove(head, { touches: [{ identifier: 1, clientX: 50, clientY: 300 }] })
+    fireEvent.touchEnd(head, { touches: [], changedTouches: [{ identifier: 1, clientX: 50, clientY: 300 }] })
+    // Лист сперва уезжает вниз (180 мс), потом закрывается
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     await user.click(field)
     await user.click(screen.getByRole('button', { name: '15 ч' }))
     await user.click(document.querySelector('.ui-select-backdrop')!)

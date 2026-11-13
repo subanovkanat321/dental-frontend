@@ -308,7 +308,7 @@ test('«О клинике»: город подставляется из адре
   await waitForSlow(() => expect(saved).toMatchObject({ address: 'Бишкек, Манаса 1', city: 'Каракол' }))
 })
 
-test('врач (не руководитель): часы клиники и «О клинике» — только просмотр с подписью; свои часы — меняет; у коллег — «по часам клиники»', async () => {
+test('врач (не руководитель): часы клиники и «О клинике» — только просмотр с подписью; свои часы — меняет; коллег в «Графике» нет', async () => {
   let put = false
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: 1 })),
@@ -323,10 +323,11 @@ test('врач (не руководитель): часы клиники и «О 
   const form = await screen.findByRole('form', { name: 'Часы клиники' })
   expect(within(form).getByRole('button', { name: 'Суббота' })).toBeDisabled()
   expect(within(form).queryByRole('button', { name: 'Сохранить часы клиники' })).not.toBeInTheDocument()
-  expect(screen.getByText(/По ним работают врачи без своих часов\. Цены и часы клиники меняет руководитель/)).toBeInTheDocument()
-  // Свои часы — по-прежнему сам; подпись «по часам клиники» видна без раскрытия
+  expect(screen.getByText(/По ним работают все, у кого «как у клиники»\. Цены и часы клиники меняет руководитель/)).toBeInTheDocument()
+  // Свои часы — по-прежнему сам (раскрыты сразу); подпись «как у клиники» видна в строке; коллег врач не видит
   expect(await screen.findByRole('group', { name: 'Часы работы' })).toBeInTheDocument()
-  expect(await screen.findAllByText('по часам клиники')).not.toHaveLength(0)
+  expect(await screen.findByText('врач · как у клиники')).toBeInTheDocument()
+  expect(screen.queryByText(/Дастан/)).not.toBeInTheDocument()
   expect(put).toBe(false)
 
   window.location.hash = '/clinic/about'

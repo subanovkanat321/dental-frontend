@@ -2,6 +2,7 @@ import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useBack } from '../lib/back'
+import { useSwipeDown } from './useSwipeDown'
 import { pending as current, subscribe } from '../lib/confirm'
 
 /** Окно подтверждения для `ask` (lib/confirm): компьютер — по центру, телефон — лист снизу. */
@@ -16,11 +17,14 @@ export function ConfirmHost() {
     okRef.current?.focus()
     return () => back?.focus?.()
   }, [pending])
-  if (!pending) return null
   const phone = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches
+  const box = useRef<HTMLDivElement>(null)
+  // Телефон: лист снизу — потянуть вниз, как «Отмена»
+  useSwipeDown(box, pending && phone ? () => pending.resolve(false) : null)
+  if (!pending) return null
   return createPortal(
     <div className="ui-select-backdrop confirm-backdrop" onClick={(e) => e.target === e.currentTarget && pending.resolve(false)}>
-      <div role="alertdialog" aria-modal="true" aria-label="Подтверждение" aria-describedby="confirm-text"
+      <div ref={box} role="alertdialog" aria-modal="true" aria-label="Подтверждение" aria-describedby="confirm-text"
         className={phone ? 'confirm sheet' : 'confirm'}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {

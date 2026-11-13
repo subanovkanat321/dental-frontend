@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 
 import type { Schemas } from '../api/client'
 import { useBack } from '../lib/back'
+import { useSwipeDown } from '../layout/useSwipeDown'
 import { ExpenseForm } from './ExpenseForm'
 
 type Me = Schemas['BookingViewsMe']
@@ -20,6 +21,7 @@ export function ExpenseDialog({ me, doctorId, onClose }: { me: Me; doctorId?: nu
     return () => back?.focus?.()
   }, [])
   const phone = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches
+  useSwipeDown(box, phone ? onClose : null)
   return createPortal(
     <div className="ui-select-backdrop confirm-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={box} role="dialog" aria-modal="true" aria-labelledby="expense-dialog-title" className={phone ? 'confirm expense-dialog sheet' : 'confirm expense-dialog'}

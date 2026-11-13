@@ -190,13 +190,14 @@ test('права в дереве: ассистент — без «Кассы» �
 })
 
 test('старые адреса и кнопки бота открывают нужный подраздел', async () => {
-  // «Кто на смене» из бота — #/settings/shifts: «Клиника → Рабочее время», вкладка «Смены персонала»
+  // «Кто на смене» из бота — #/settings/shifts: «Клиника → Рабочее время → График», неделя по датам
   window.location.hash = '/settings/shifts'
   const first = renderApp()
   const clinic = await tabs('Клиника')
   expect(within(clinic).getByRole('link', { name: /Рабочее время/ })).toHaveAttribute('aria-current', 'page')
   expect(window.location.hash).toBe('#/clinic/shifts')
-  expect(await screen.findByRole('tab', { name: 'Смены персонала' })).toHaveAttribute('aria-selected', 'true')
+  expect(await screen.findByRole('tab', { name: 'График' })).toHaveAttribute('aria-selected', 'true')
+  expect(screen.getByRole('button', { name: 'Неделя по датам' })).toHaveAttribute('aria-pressed', 'true')
   first.unmount()
 
   // ?screen=earnings — «Касса → Мой заработок», адрес с подразделом (обновили — там же)

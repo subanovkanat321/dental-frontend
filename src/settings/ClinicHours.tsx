@@ -5,63 +5,30 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { TimeInput } from '../layout/TimeInput'
 import { useDirty } from '../lib/unsaved'
-import { HoursEditor } from '../team/HoursEditor'
 import { WEEK, type Weekday } from '../team/texts'
 import { askMakeWorkday, DAYS, offLabel, onWeekday, useTimeOff, weeklyDaysOff } from '../team/dayOffHours'
 import { ask } from '../lib/confirm'
 import { clinicRequest } from './clinicUpdate'
 import { canEditPrices, PRICES_BY_HEAD } from '../lib/roles'
-import { SubHeader } from './SubHeader'
 import { Loading } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
 type Clinic = Schemas['ClinicView']
 
 /**
- * «Часы работы» одним экраном: часы клиники (по ним работают врачи без своих часов) и часы
- * каждого врача — раскрыть и поменять. Врач видит свои, админ и регистратура — всех.
+ * «Часы клиники» — вверху «Рабочего времени → График»: по ним работают все, у кого нет своих часов
+ * («как у клиники»). Меняет руководитель (как цены); остальным — только посмотреть.
  */
-export function HoursPage({ me, onBack, title = 'Часы работы', tabs, onTimeOff }: {
-  me: Me; onBack: () => void; title?: string; tabs?: React.ReactNode; onTimeOff?: () => void
-}) {
+export function ClinicHoursCard({ me, onTimeOff }: { me: Me; onTimeOff?: () => void }) {
   const clinic = useQuery({ queryKey: ['clinic'], queryFn: () => unwrap(api.GET('/api/clinic')) })
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
-    .filter((d) => me.admin || me.reception || d.id === me.doctorId)
-  const [open, setOpen] = useState<number | null>(doctors.length === 1 ? doctors[0]!.id : me.doctorId ?? null)
   return (
-    <section className="schedule-main">
-      <SubHeader title={title} onBack={onBack}>{tabs}</SubHeader>
-      <section className="card-block">
-        <h2>Часы клиники</h2>
-        <p className="hint">По ним работают врачи без своих часов.{!me.admin && <> {PRICES_BY_HEAD}.</>}</p>
-        {clinic.isPending ? <Loading /> : clinic.error ? <p className="error">{clinic.error.message}</p>
-          : <ClinicHours clinic={clinic.data} canEdit={canEditPrices(me)} admin={Boolean(me.admin)} onTimeOff={onTimeOff} />}
-      </section>
-      <section className="card-block">
-        <h2>Часы врачей</h2>
-        <p className="hint">У каждого врача свои дни и часы: по ним свободное время в боте и в «Новой записи». Не задал — работает по часам клиники. Обед и намаз — в «Перерывах и выходных».</p>
-        {doctors.map((d) => (
-          <div key={d.id} className="hours-doctor">
-            <button type="button" className="hours-toggle" aria-expanded={open === d.id} onClick={() => setOpen(open === d.id ? null : d.id)}>
-              <strong>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</strong>
-              <HoursKind doctorId={d.id} /><span aria-hidden="true">{open === d.id ? '▴' : '▾'}</span>
-            </button>
-            {open === d.id && <HoursEditor doctorId={d.id} doctorName={d.fullName ?? ''} onTimeOff={onTimeOff} />}
-          </div>
-        ))}
-      </section>
+    <section className="card-block">
+      <h2>Часы клиники</h2>
+      <p className="hint">По ним работают все, у кого «как у клиники».{!me.admin && <> {PRICES_BY_HEAD}.</>}</p>
+      {clinic.isPending ? <Loading /> : clinic.error ? <p className="error">{clinic.error.message}</p>
+        : <ClinicHours clinic={clinic.data} canEdit={canEditPrices(me)} admin={Boolean(me.admin)} onTimeOff={onTimeOff} />}
     </section>
   )
-}
-
-/** «по часам клиники» или «свои часы» — видно, не раскрывая врача (тот же запрос, что у HoursEditor). */
-function HoursKind({ doctorId }: { doctorId: number }) {
-  const hours = useQuery({
-    queryKey: ['doctor-hours', doctorId],
-    queryFn: () => unwrap(api.GET('/api/doctors/{id}/hours', { params: { path: { id: doctorId } } })),
-  })
-  if (!hours.data) return null
-  return <span className="hint small hours-kind">{hours.data.custom ? 'свои часы' : 'по часам клиники'}</span>
 }
 
 function ClinicHours({ clinic: c, canEdit, admin, onTimeOff }: { clinic: Clinic; canEdit: boolean; admin: boolean; onTimeOff?: () => void }) {
@@ -80,6 +47,8 @@ function ClinicHours({ clinic: c, canEdit, admin, onTimeOff }: { clinic: Clinic;
       commit()
       client.setQueryData(['clinic'], saved)
       void client.invalidateQueries({ queryKey: ['me'] })
+      // У кого «как у клиники» — в «Графике» новые часы
+      for (const key of ['doctor-hours', 'staff-weekly', 'shifts']) void client.invalidateQueries({ queryKey: [key] })
     },
   })
   // Выходной всей клиники удаляет только админ: удалить запись, день — рабочий, часы — сохранить

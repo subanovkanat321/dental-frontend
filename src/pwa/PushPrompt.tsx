@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import { api, unwrap, type Schemas } from '../api/client'
+import { useSwipeDown } from '../layout/useSwipeDown'
 import { useBack } from '../lib/back'
 import { telegram } from '../lib/telegram'
 import { TOUR_KEY, useFirstScreen } from '../tour/state'
@@ -89,6 +90,9 @@ function PromptSheet({ noTelegram, publicKey, onClose }: { noTelegram: boolean; 
     return () => back?.focus?.()
   }, [])
   const phone = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches
+  const box = useRef<HTMLDivElement>(null)
+  // Пока включаем — не закрывается ни фоном, ни Esc, ни свайпом
+  useSwipeDown(box, phone && !busy ? onClose : null)
 
   const turnOn = async () => {
     if (await enable(publicKey)) setDone(true)
@@ -129,7 +133,7 @@ function PromptSheet({ noTelegram, publicKey, onClose }: { noTelegram: boolean; 
 
   return createPortal(
     <div className="ui-select-backdrop confirm-backdrop" onClick={(e) => { if (e.target === e.currentTarget && !busy) onClose() }}>
-      <div role="dialog" aria-modal="true" aria-labelledby="push-prompt-title" className={phone ? 'confirm sheet push-prompt' : 'confirm push-prompt'}
+      <div ref={box} role="dialog" aria-modal="true" aria-labelledby="push-prompt-title" className={phone ? 'confirm sheet push-prompt' : 'confirm push-prompt'}
         onKeyDown={(e) => {
           if (e.key === 'Escape' && !busy) {
             e.preventDefault()

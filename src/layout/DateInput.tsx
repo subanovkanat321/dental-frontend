@@ -3,6 +3,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useBack } from '../lib/back'
+import { useSwipeDown } from './useSwipeDown'
 
 /** Как у `<input type="date">`: старые обработчики `(e) => e.target.value` работают как были. */
 export type DateChange = { target: { value: string } }
@@ -95,6 +96,8 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
     if (refocus) button.current?.focus()
   }
   useBack(open ? () => close() : null)
+  // Телефон: лист с календарём — потянуть вниз, закрыть
+  useSwipeDown(pop, open && sheet ? () => close(false) : null)
 
   const show = () => {
     if (disabled) return
