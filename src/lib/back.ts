@@ -41,6 +41,8 @@ let navTimer: ReturnType<typeof setTimeout> | undefined
 const released = new Set<number>()
 let scheduled = false
 let listening = false
+/** Что сделать, когда закрытые слои уберут свои записи из истории (whenHistorySettled) */
+const settled: (() => void)[] = []
 
 function historyMode(): boolean {
   return historyOn && !telegram() && typeof window.history?.pushState === 'function'
@@ -64,6 +66,7 @@ function goBack() {
   navTimer = setTimeout(() => {
     stopNavigating()
     schedule()
+    setTimeout(flushSettled, 0)
   }, 1000)
   try {
     window.history.back()
@@ -118,6 +121,7 @@ function onPopState() {
   if (navigating) {
     stopNavigating()
     syncHistory()
+    flushSettled()
     return
   }
   // «Назад» телефона или браузера: закрыть слои, чьи записи остались впереди
@@ -186,6 +190,34 @@ export function useBack(onBack: (() => void) | null, options?: { url?: boolean }
     add(layer)
     return () => remove(layer)
   }, [active, history])
+}
+
+function flushSettled() {
+  // Ещё идём назад — подождём popstate; сейчас решаем, идти ли (микрозадача syncHistory) — заглянем чуть позже
+  if (navigating) return
+  if (scheduled) {
+    setTimeout(flushSettled, 0)
+    return
+  }
+  for (const fn of settled.splice(0)) fn()
+}
+
+/**
+ * Сделать `fn` (переход по адресу), когда только что закрытый слой уберёт свою запись из истории.
+ * Лист подразделов: выбрали пункт — лист закрывается, и его запись (`tishBack`) снимается шагом назад.
+ * Перейти сразу нельзя: переход заменой адреса (`location.replace`) лёг бы на запись листа, а Safari
+ * при замене только хэша оставляет у записи её state — `tishBack` листа; закрытие листа потом считает
+ * запись своей, делает history.back() — и возвращает на прежний подраздел («лист закрылся, а я там же»).
+ * Без истории (Telegram, тесты) — сразу.
+ */
+export function whenHistorySettled(fn: () => void): void {
+  if (!historyMode()) {
+    fn()
+    return
+  }
+  settled.push(fn)
+  // После отрисовки: слой уберут эффекты React, его шаг назад запустит syncHistory (микрозадача)
+  setTimeout(flushSettled, 0)
 }
 
 /** Закрыть верхний слой (стрелка Telegram, свайп от края). false — закрывать нечего. */

@@ -6,31 +6,71 @@ import { workSpans } from './workSpans'
 /** Код 409: время попадает в рабочие часы коллеги по креслу (V187). */
 export const CHAIR_COLLEAGUE_TIME = 'chair-colleague-time'
 
+/** Свободное кресло из ответа 409 (V210): сервер предлагает его вместо занятого. */
+export type FreeChair = { id: number; name: string; colleague?: string }
+
+export function freeChairOf(error: ApiError): FreeChair | null {
+  const p = error.problem
+  if (typeof p.freeChairId !== 'number' || typeof p.freeChairName !== 'string') return null
+  return { id: p.freeChairId, name: p.freeChairName, colleague: typeof p.freeChairColleague === 'string' ? p.freeChairColleague : undefined }
+}
+
 /**
- * Запись или перенос с вопросом о часах коллеги по креслу (V187). Сервер ответил 409 `chair-colleague-time`:
- * - режим кресла «Предупреждать» — окно «Это время врача Айгерим (Кресло 1). Коллега предупреждён?» с кнопками
- *   «Записать» и «Отмена»; «Записать» — тот же запрос с `confirmChairTime: true`;
- * - режим «Запрещать» (`strict`) — то же окно с одной кнопкой «Понятно»: записать нельзя, пока коллега не поставит
- *   себе перерыв.
+ * Вопрос «записать в другое кресло?» по ответу 409 (V210): «Кресло 1» занято (Айгерим С.). Свободно «Кресло 2» — записать туда?
+ * В часы коллеги — «Это время врача … в «Кресле 1»». Свободное — в часы его врача: скажем и об этом (сервер потом спросит).
+ */
+export function switchChairText(error: ApiError, free: FreeChair): string {
+  const p = error.problem
+  const chair = typeof p.chairName === 'string' ? `«${p.chairName}»` : 'Кресло врача'
+  const who = typeof p.doctorName === 'string' ? p.doctorName : null
+  const head = error.code === CHAIR_COLLEAGUE_TIME
+    ? `${chair} в это время — время врача ${who ?? 'коллеги'}.`
+    : `${chair} занято${who ? ` (${who})` : ''}.`
+  return `${head} Свободно «${free.name}»${free.colleague ? ` (часы врача ${free.colleague})` : ''} — записать туда?`
+}
+
+/**
+ * Запись или перенос с вопросами о кресле.
+ * - Кресло занято (409 с `freeChairId`, V210) — «Кресло 1 занято (Айгерим). Свободно Кресло 2 — записать туда?» с кнопкой
+ *   «Записать в «Кресло 2»»: тот же запрос с `chairId`. «Нет» — ошибка как раньше (её покажет экран).
+ * - Часы коллеги по креслу (409 `chair-colleague-time`, V187): сначала — то же предложение другого кресла, если сервер его
+ *   прислал; дальше режим «Предупреждать» — окно «Это время врача Айгерим (Кресло 1). Коллега предупреждён?» с кнопками
+ *   «Записать» и «Отмена» («Записать» — тот же запрос с `confirmChairTime: true`); режим «Запрещать» (`strict`) — то же
+ *   окно с одной кнопкой «Понятно».
  * Как остальные подтверждения приложения — своим окном `ask` (lib/confirm), а не системным.
  *
- * @param send запрос; confirm — повторить с подтверждением
+ * @param send запрос; confirm — повторить с подтверждением, chairId — в это кресло (undefined — как выбрано в форме)
  * @throws ApiError ответ сервера; «Отмена» или запрет — ApiError 409 с понятным текстом (экран покажет его под формой)
  */
-export async function withChairConfirm<T>(send: (confirm: boolean) => Promise<T>): Promise<T> {
-  try {
-    return await send(false)
-  } catch (error) {
-    if (!(error instanceof ApiError) || error.code !== CHAIR_COLLEAGUE_TIME) throw error
-    if (error.problem.strict === true) {
-      await notify(error.message)
-      throw error
+export async function withChairConfirm<T>(send: (confirm: boolean, chairId?: number) => Promise<T>): Promise<T> {
+  let confirm = false
+  let chairId: number | undefined
+  const offered = new Set<number>()
+  for (;;) {
+    try {
+      return await send(confirm, chairId)
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.status !== 409) throw error
+      const free = freeChairOf(error)
+      if (free && !offered.has(free.id)) {
+        offered.add(free.id)
+        if (await ask(switchChairText(error, free), { ok: `Записать в «${free.name}»` })) {
+          chairId = free.id
+          confirm = false
+          continue
+        }
+      }
+      if (error.code !== CHAIR_COLLEAGUE_TIME || confirm) throw error
+      if (error.problem.strict === true) {
+        await notify(error.message)
+        throw error
+      }
+      if (!await ask(error.message, { ok: 'Записать' })) {
+        const name = typeof error.problem.doctorName === 'string' ? error.problem.doctorName : 'коллеги'
+        throw new ApiError(409, `Не записали: это время врача ${name}`, {}, { ...error.problem, code: 'chair-colleague-cancelled' })
+      }
+      confirm = true
     }
-    if (!await ask(error.message, { ok: 'Записать' })) {
-      const name = typeof error.problem.doctorName === 'string' ? error.problem.doctorName : 'коллеги'
-      throw new ApiError(409, `Не записали: это время врача ${name}`, {}, { ...error.problem, code: 'chair-colleague-cancelled' })
-    }
-    return send(true)
   }
 }
 

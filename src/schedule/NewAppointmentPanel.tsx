@@ -17,6 +17,8 @@ import { sourceChoices, useSources } from '../lib/sources'
 import { expired, usePromoCodes } from '../lib/promo'
 import { withChairConfirm } from './chairTime'
 import { ChairTimeHint } from './ChairTimeHint'
+import { ChairSelect } from './ChairSelect'
+import { useChairChoice } from './chairChoice'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
 import { refreshAppointmentData } from './useAppointmentAction'
@@ -147,11 +149,14 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
 
   const [hh, mm] = time.split(':').map(Number)
   const startAt = time ? slotInstant(date, (hh ?? 0) * 60 + (mm ?? 0)) : null
+  // Кресло (V210): по умолчанию кресло врача; поле — когда в клинике больше одного кресла
+  const chair = useChairChoice(doctorId)
 
   const create = useMutation<Appointment, ApiError, Patient>({
     mutationFn: async (p) => {
       // В часы коллеги по креслу (V187) сервер спросит «Коллега предупреждён?» — «Записать» повторит с подтверждением
-      const created = await withChairConfirm((confirm) => unwrap(api.POST('/api/appointments', {
+      // Кресло занято, а другое свободно (V210) — «записать туда?» и повтор с chairId
+      const created = await withChairConfirm((confirm, chairId) => unwrap(api.POST('/api/appointments', {
         body: {
           doctorId,
           patientId: p.id,
@@ -162,6 +167,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
           promoCode: promoCode || undefined,
           confirmChairTime: confirm || undefined,
           fromWaitlistId: waitlistId(p),
+          chairId: chairId ?? chair.chairId,
         },
       })))
       // «Хочет раньше»: запись есть, а освободится время раньше — предложим (лист ожидания).
@@ -414,7 +420,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
         )}
         {walkIn && fieldError('startAt') && <p className="error">{fieldError('startAt')}</p>}
         {/* Выбрали время коллеги по общему креслу — сказать сразу, а не только окном после «Записать» */}
-        {!walkIn && startAt && <ChairTimeHint doctorId={doctorId} startAt={startAt} duration={duration} />}
+        {chair.multi && (
+          <ChairSelect doctorId={doctorId} startAt={startAt} duration={duration} value={chair.chairId} onChange={chair.pick} />
+        )}
+        {!walkIn && startAt && <ChairTimeHint doctorId={doctorId} startAt={startAt} duration={duration} chairId={chair.chairId} />}
 
         {/* Кто из листа ожидания помещается в это свободное окно — только пока пациент не выбран; никого — блока нет */}
         {!walkIn && !patient && startAt && <WaitlistCandidates date={date} doctorId={doctorId} startAt={startAt} onPick={pickWaiting} onBooked={onCreated} />}
@@ -488,8 +497,8 @@ function WaitlistCandidates({ date, doctorId, startAt, onPick, onBooked }: {
     queryFn: () => unwrap(api.GET('/api/slots', { params: { query: { date, doctorId } } })),
   })
   const move = useMutation<Appointment, ApiError, WaitlistEntry>({
-    mutationFn: (e) => withChairConfirm((confirm) => unwrap(api.POST('/api/waitlist/{id}/book',
-      { params: { path: { id: e.id } }, body: { doctorId, startAt, confirmChairTime: confirm || undefined } }))),
+    mutationFn: (e) => withChairConfirm((confirm, chairId) => unwrap(api.POST('/api/waitlist/{id}/book',
+      { params: { path: { id: e.id } }, body: { doctorId, startAt, confirmChairTime: confirm || undefined, chairId } }))),
     onSuccess: (a) => {
       // Перенесли — окна, счётчики и карточка пациента тоже меняются
       refreshAppointmentData(client, ['waitlist', 'patients', 'recall'])

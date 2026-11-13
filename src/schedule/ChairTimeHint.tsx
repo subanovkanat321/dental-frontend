@@ -13,18 +13,21 @@ import { useDebounced } from '../lib/useDebounced'
  *
  * @param action кнопка формы — «Записать», «Перенести», «Передать»: после неё сервер спросит «Коллега предупреждён?»
  */
-export function ChairTimeHint({ doctorId, startAt, duration, action = 'Записать' }: {
+export function ChairTimeHint({ doctorId, startAt, duration, action = 'Записать', chairId }: {
   doctorId: number; startAt: string; duration: number; action?: string
+  /** Кресло, выбранное в форме (V210): часы врачей того кресла; нет — кресло врача */
+  chairId?: number | null
 }) {
   // «Другое время» печатают по цифре (22:0… → 22:04 → 22:43): спрашиваем, когда ввод замер, и не показываем
   // ответ про промежуточное время
-  const key = `${doctorId}|${startAt}|${duration}`
+  const key = `${doctorId}|${startAt}|${duration}|${chairId ?? ''}`
   const settled = useDebounced(key, 300)
   const valid = duration > 0 && !Number.isNaN(Date.parse(startAt))
   const endAt = valid ? new Date(Date.parse(startAt) + duration * 60_000).toISOString() : ''
   const check = useQuery({
-    queryKey: ['chair-check', doctorId, startAt, endAt],
-    queryFn: () => unwrap(api.GET('/api/appointments/chair-check', { params: { query: { doctorId, startAt, endAt } } })),
+    queryKey: ['chair-check', doctorId, startAt, endAt, chairId ?? null],
+    queryFn: () => unwrap(api.GET('/api/appointments/chair-check',
+      { params: { query: { doctorId, startAt, endAt, chairId: chairId ?? undefined } } })),
     enabled: valid && settled === key,
     staleTime: 30_000,
   })
