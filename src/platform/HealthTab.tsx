@@ -5,10 +5,10 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { Loading } from '../layout/Loading'
 import { mbText, uptimeText } from './serverHealth'
-import { HeadTools } from '../layout/PageHead'
 
 type Health = Schemas['HealthServiceHealth']
 type Job = Schemas['HealthServiceJob']
+type Files = Schemas['HealthServiceFiles']
 type LogResult = Schemas['LogSearchResult']
 
 const when = (instant?: string) => (instant ? shortDate(instant, true) : '—')
@@ -43,15 +43,14 @@ export function HealthTab() {
   const h = health.data
   return (
     <>
-      <HeadTools>
-        <button type="button" className="btn ghost" disabled={health.isFetching} onClick={() => void health.refetch()}>
-          {health.isFetching ? 'Проверяю…' : 'Проверить снова'}</button>
-      </HeadTools>
+      {/* «Проверить снова» — ссылкой в строке «Проверено …», а не одной кнопкой строкой-шапкой над карточкой */}
       <section className="card-block" aria-label="Здоровье сервера">
+        <p className="hint small">{h ? `Проверено ${when(h.checkedAt)}. ` : ''}Раз в час то же проверяет сервер и пишет вам в бот, если что-то не так.{' '}
+          <button type="button" className="link" disabled={health.isFetching} onClick={() => void health.refetch()}>
+            {health.isFetching ? 'Проверяю…' : 'Проверить снова'}</button></p>
         {health.error && <p className="error" role="alert">{health.error.message}</p>}
         {health.isPending ? <Loading /> : h && (
           <>
-            <p className="hint small">Проверено {when(h.checkedAt)}. Раз в час то же проверяет сервер и пишет вам в бот, если что-то не так.</p>
             {(h.problems?.length ?? 0) > 0 ? (
               <div role="alert" aria-label="Сейчас не так">
                 <p className="tone-bad strong">Сейчас не так:</p>
@@ -100,6 +99,7 @@ function Sections({ h }: { h: Health }) {
                 ? `${when(backup.lastAt)} · ${backup.ageHours} ч назад · ${mbText(backup.sizeMb ?? 0)} · ${backup.offsite ? 'копия в R2 ушла' : 'только на сервере'}`
                 : 'отметок нет — обновите deploy/backup.sh на сервере (RUNBOOK, «Бэкап»)'}
             </Row>
+            {h.files && <FilesRow files={h.files} />}
           </tbody>
         </table>
       </section>
@@ -153,6 +153,20 @@ function Sections({ h }: { h: Health }) {
       )}
       {(h.jobs?.length ?? 0) > 0 && <Jobs jobs={h.jobs!} />}
     </>
+  )
+}
+
+/**
+ * Файлы пациентов и клиник (снимки, сканы): где хранятся новые — R2 или база, сколько старых уже перенесено в R2,
+ * сколько в корзине (удалённые, 30 дней) и последняя ошибка R2 с запуска.
+ */
+function FilesRow({ files: f }: { files: Files }) {
+  const tone = f.lastErrorAt ? 'wait' : f.storage === 'R2' && f.moved >= f.total ? 'ok' : undefined
+  return (
+    <Row name="Файлы" tone={tone}>
+      {f.storage ?? '—'} · перенесено {f.moved} из {f.total} · в корзине {f.trash}
+      {f.lastErrorAt && ` · ошибка ${when(f.lastErrorAt)}${f.lastError ? `: ${f.lastError}` : ''}`}
+    </Row>
   )
 }
 

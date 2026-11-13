@@ -11,8 +11,7 @@ import { Loading } from '../layout/Loading'
 import { ChairBadge } from './ChairBadge'
 import { useChairs } from './chairs'
 import { EmptyState } from '../layout/EmptyState'
-import { HeadTools } from '../layout/PageHead'
-import { HelpHint } from '../help/HelpHint'
+import { SubHelp } from '../layout/PageHead'
 
 type Me = Schemas['BookingViewsMe']
 type Member = Schemas['StaffMembersMemberView']
@@ -86,10 +85,8 @@ export function StaffTab({ me, doctors, loading, error, opened, onOpen }: {
   return (
     <>
       {/* Как читать список — в «?» у названия, а не абзацем на четыре строки */}
-      <HeadTools>
-        <HelpHint title="Персонал">Весь персонал клиники: роль — рядом с именем. «Telegram привязан» — человек вошёл и получает уведомления;
-          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT} Сотруднику без Telegram номер меняете вы; сотрудник с Telegram указывает номер для входа сам — в «Моём профиле» (нажать на себя внизу меню).</>}</HelpHint>
-      </HeadTools>
+      <SubHelp title="Персонал">Весь персонал клиники: роль — рядом с именем. «Telegram привязан» — человек вошёл и получает уведомления;
+          «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.{admin && <> Телефон — для связи и входа. {PHONE_HINT} Сотруднику без Telegram номер меняете вы; сотрудник с Telegram указывает номер для входа сам — в «Моём профиле» (нажать на себя внизу меню).</>}</SubHelp>
       <section className="card-block">
         {admin && (
           <div className="segments wrap" role="group" aria-label="Показать роль">

@@ -7,8 +7,7 @@ import { shortDate } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { folderRank, folderTitle, MATERIAL_LINKS, sizeText, videoLabel } from './materials'
-import { HeadTools } from '../layout/PageHead'
-import { HelpHint } from '../help/HelpHint'
+import { SubHelp } from '../layout/PageHead'
 
 type Listing = Schemas['MaterialsListing']
 type Material = Schemas['MaterialsMaterial']
@@ -40,10 +39,8 @@ export function MaterialsTab() {
   const other = files.filter((f) => f.section === 'other')
   return (
     <>
-      <HeadTools>
-        <HelpHint title="Материалы">Рекламные ролики, презентация для клиник и картинки для Instagram — всегда под рукой: посмотреть,
-          показать клинике или скачать на телефон.</HelpHint>
-      </HeadTools>
+      <SubHelp title="Материалы">Рекламные ролики, презентация для клиник и картинки для Instagram — всегда под рукой: посмотреть,
+          показать клинике или скачать на телефон.</SubHelp>
       <section className="card-block" aria-label="Материалы">
         {list.error && <p className="error" role="alert">Не удалось загрузить материалы: {list.error.message}</p>}
         {list.isPending && <Loading />}

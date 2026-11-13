@@ -129,6 +129,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   useBack(sheet ? () => setSheet(null) : null)
   // Место панели вкладок подразделов (телефон): раздел кладёт её туда порталом
   const [tabsSlot, setTabsSlot] = useState<HTMLElement | null>(null)
+  // Место «?» подраздела в панели вкладок: панель отдаёт его (ref), подраздел кладёт туда «?» (SubHelp)
+  const [helpSlot, setHelpSlot] = useState<HTMLElement | null>(null)
   const [help, setHelp] = useState(false)
   const phone = useMedia('(max-width: 760px)')
   // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается)
@@ -249,7 +251,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       )
     })
   }
-  const nav: NavApi = { openSheet: setSheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts, tabsSlot }
+  const nav: NavApi = { openSheet: setSheet, subs: (key) => subsBy[key] ?? [], active: activeSub, go: goSub, counts, tabsSlot, helpSlot, setHelpSlot }
   const sheetSection = sheet ? sections.find((s) => s.key === sheet) : undefined
   const { name } = whoAmI(me)
   const meHead = <><Avatar me={me} size="lg" /><p className="menu-who"><strong>{name}</strong><span className="hint">{role} · {clinic}</span></p></>

@@ -13,8 +13,7 @@ import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { audienceText, type Audience } from './agreementTarget'
 import { AudiencePicker } from './AudiencePicker'
-import { HeadTools } from '../layout/PageHead'
-import { HelpHint } from '../help/HelpHint'
+import { SubHelp } from '../layout/PageHead'
 
 type Version = Schemas['AgreementsVersion']
 
@@ -32,12 +31,11 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
     <>
       <section className="schedule-main">
         {header}
-        <HeadTools>
-          <span className={open ? 'head-note tone-wait strong' : 'head-note'}>{open ? `Ждут ответа: ${open}` : 'Все обращения отвечены.'}</span>
-        </HeadTools>
         {list.error && <p className="error">{list.error.message}</p>}
         {list.isPending ? <Loading /> : list.data?.length ? (
           <section className="card-block">
+            {/* Итог — в карточке над таблицей, а не одной строкой-шапкой над ней; нет обращений — его и не нужно */}
+            <p className={open ? 'tone-wait strong' : 'hint'}>{open ? `Ждут ответа: ${open}` : 'Все обращения отвечены.'}</p>
             <table className="table" aria-label="Обращения клиник">
               <thead><tr><th>Клиника</th><th>Обращение</th><th>Статус</th><th>Обновлено</th></tr></thead>
               <tbody>
@@ -157,11 +155,16 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
     <>
       <section className="schedule-main">
         {header}
-        <HeadTools>
-          <HelpHint title="Договор">Неопубликованную версию видите только вы. Опубликованную видят руководители клиник, которым она адресована (всем или выбранным),
+        <SubHelp title="Договор">Неопубликованную версию видите только вы. Опубликованную видят руководители клиник, которым она адресована (всем или выбранным),
             и подписывают её в «Настройки → Договор»; менять текст нельзя — выпустите новую. Какую версию подписать конкретной клинике — в её карточке
-            («Клиники → клиника → Договор»). Перед публикацией — показать юристу.</HelpHint>
-        </HeadTools>
+            («Клиники → клиника → Договор»). Перед публикацией — показать юристу.</SubHelp>
+        {/* Версий ещё нет — пустое состояние с одной кнопкой, а не пустая карточка с кнопкой в углу */}
+        {!list.isPending && !list.error && !versions.length ? (
+          <EmptyState fill title="Договора с клиниками пока нет"
+            action={<button type="button" className="btn primary" disabled={start.isPending} onClick={() => start.mutate()}>Начать с шаблона</button>}>
+            {start.error ? <span className="error">{start.error.message}</span> : 'Начните с готового шаблона: поправьте текст, покажите юристу и опубликуйте.'}
+          </EmptyState>
+        ) : (
         <section className="card-block">
           {list.error && <p className="error">{list.error.message}</p>}
           {versions.length > 0 && (
@@ -182,6 +185,7 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
               {versions.length ? 'Новая версия (из действующей)' : 'Начать с шаблона'}</button>
           )}
         </section>
+        )}
       </section>
       {openedVersion && <VersionPanel key={openedVersion.id} v={openedVersion} onClose={close} />}
     </>

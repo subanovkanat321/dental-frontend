@@ -41,6 +41,7 @@ const health = {
   ai: { configured: true, lastOkAt: '2026-11-06T09:00:00Z', errors24h: 1, lastErrorAt: '2026-11-06T08:00:00Z', lastError: 'AnthropicIoException' },
   errors: { total24h: 4, top: [{ method: 'GET', path: '/api/patients/{id}', exception: 'java.lang.IllegalStateException', count: 4,
     lastAt: '2026-11-06T09:40:00Z', lastRequestId: '3f9a2c41b7d0' }] },
+  files: { storage: 'R2', moved: 1840, total: 2210, trash: 12, lastErrorAt: '2026-11-06T09:10:00Z', lastError: 'SdkClientException' },
   problems: [
     { code: 'DISK', text: 'Диск сервера занят на 90% (свободно 5120 МБ).' },
     { code: 'BACKUP', text: 'Последний бэкап базы — 48 ч назад.' },
@@ -66,6 +67,10 @@ test('владелец: «Здоровье» — проблемы сверху, 
   expect(within(app).getByRole('row', { name: /Диск/ })).toHaveTextContent('занято 90% · свободно 5,0 ГБ из 50,0 ГБ')
   expect(within(app).getByRole('row', { name: /База/ })).toHaveTextContent('отвечает за 2 мс · 300 МБ · соединений 7')
   expect(within(app).getByRole('row', { name: /Последний бэкап/ })).toHaveTextContent('48 ч назад · 50 МБ · копия в R2 ушла')
+  // Файлы (R2): где хранятся, сколько перенесено из базы, корзина и последняя ошибка
+  const files = within(app).getByRole('row', { name: /Файлы/ })
+  expect(files).toHaveTextContent('R2 · перенесено 1840 из 2210 · в корзине 12')
+  expect(files).toHaveTextContent('ошибка 6 нояб, 15:10: SdkClientException')
 
   const links = screen.getByRole('table', { name: 'Связи' })
   expect(within(links).getByRole('row', { name: /Telegram/ })).toHaveTextContent('ждут доставки 3')

@@ -9474,6 +9474,18 @@ export interface components {
             total24h: number;
             top?: components["schemas"]["ErrorJournalTop"][];
         };
+        HealthServiceFiles: {
+            storage?: string;
+            /** Format: int64 */
+            moved: number;
+            /** Format: int64 */
+            total: number;
+            /** Format: int64 */
+            trash: number;
+            /** Format: date-time */
+            lastErrorAt?: string;
+            lastError?: string;
+        };
         HealthServiceHealth: {
             /** Format: date-time */
             checkedAt?: string;
@@ -9485,6 +9497,7 @@ export interface components {
             sms?: components["schemas"]["HealthServiceSms"];
             ai?: components["schemas"]["HealthServiceAi"];
             errors?: components["schemas"]["HealthServiceErrors"];
+            files?: components["schemas"]["HealthServiceFiles"];
             problems?: components["schemas"]["HealthServiceProblem"][];
         };
         HealthServiceJob: {

@@ -1284,6 +1284,16 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .head-tools > .segments { flex: 1 1 100%; display: flex; flex-wrap: nowrap; min-width: 0; }
   .head-tools > .segments > button { flex: 1 1 0; min-width: 0; padding-inline: 4px; white-space: nowrap; }
   .head-tools > .comeback-summary { flex-basis: 100%; }
+  /* Одна кнопка действия в шапке («➕ В лист ожидания», «＋ Своя памятка») — во всю ширину своей строки, как
+     «＋ Новый пациент», а не прижатой вправо с пустым местом слева */
+  .page-head > .head-tools > .head-end, .head-tools-inline > .head-end { flex: 1 1 100%; margin-left: 0; justify-content: center; }
+  /* Период аналитики — одной строкой: иначе последняя кнопка («Год») переносилась одна на свою строку */
+  .head-tools > .analytics-filter { flex: 1 1 auto; min-width: 0; }
+  .head-tools .analytics-filter > .segments { flex: 1 1 auto; flex-wrap: nowrap; min-width: 0; }
+  .head-tools .analytics-filter > .segments > button { flex: 1 1 auto; min-width: 0; padding-inline: 6px; }
+  /* «Прошлый месяц» не ломается на две строки — кнопки быстрого выбора переносятся вместе */
+  .analytics-filter > .day-quick { flex: 1 1 auto; }
+  .day-quick .chip { white-space: nowrap; }
 }
 /* Шапка раздела на компьютере прилипает к верху (layout/stickyHead.ts), под ней — шапки таблиц */
 @media (min-width: 761px) {
@@ -2144,8 +2154,11 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 /* Полоска открытой вкладки — под текстом, 3px, скруглённая; переезжает к новой вкладке */
 .sub-tabs-ink { position: absolute; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); pointer-events: none;
   transition: left .25s ease-in-out, width .25s ease-in-out; }
-/* «?» раздела — в конце строки, перед «⌄»: компактно, касание 40×46 */
+/* «?» раздела или подраздела (SubHelp, место .sub-help) — в конце строки, перед «⌄»: компактно, касание 40×46.
+   Пустое место «?» подраздела — без ширины: замер вкладок (helpBox в SubTabs) его не считает */
+.sub-tabs-helps { flex: none; display: flex; }
 .sub-tabs-help { flex: none; display: grid; place-items: center; width: 40px; }
+.sub-tabs-help:empty { display: none; }
 .sub-tabs-help .help-hint { margin: 0; }
 .sub-tabs-help .help-hint-btn { position: relative; width: 26px; height: 26px; }
 .sub-tabs-help .help-hint-btn::after { content: ''; position: absolute; inset: -10px -7px; }

@@ -6,8 +6,7 @@ import { SaveBar } from '../layout/SaveBar'
 import { somText } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
 import { Loading } from '../layout/Loading'
-import { HeadTools } from '../layout/PageHead'
-import { HelpHint } from '../help/HelpHint'
+import { SubHelp } from '../layout/PageHead'
 
 type Tariffs = Schemas['Tariffs']
 type Tariff = Schemas['TariffsTariff']
@@ -71,9 +70,7 @@ function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
   }
   return (
     <form className="card-block tariffs-form" aria-label="Тарифы" onSubmit={submit}>
-      <HeadTools>
-        <HelpHint title="Тарифы">Сохраните — новые цены сразу у всех клиник в «Тариф и оплата», на странице для клиник и в счетах. Уже оплаченные сроки не меняются.</HelpHint>
-      </HeadTools>
+      <SubHelp title="Тарифы">Сохраните — новые цены сразу у всех клиник в «Тариф и оплата», на странице для клиник и в счетах. Уже оплаченные сроки не меняются.</SubHelp>
       {rows.map((r, i) => {
         const last = i === rows.length - 1
         return (

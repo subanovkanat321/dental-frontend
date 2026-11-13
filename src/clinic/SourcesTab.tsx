@@ -7,8 +7,7 @@ import { sourceLabel, useSources, type SourceOption } from '../lib/sources'
 import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { Loading } from '../layout/Loading'
-import { HeadTools } from '../layout/PageHead'
-import { HelpHint } from '../help/HelpHint'
+import { SubHelp } from '../layout/PageHead'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -40,11 +39,9 @@ export function SourcesTab({ me, header, onPanel }: { me: Me; header: ReactNode;
     <>
       <section className="schedule-main">
         {header}
-        <HeadTools>
-          <HelpHint title="Откуда приходят пациенты">Что выбирают в карточке пациента и что новый пациент видит в боте при записи: «Откуда вы о нас узнали?».
+        <SubHelp title="Откуда приходят пациенты">Что выбирают в карточке пациента и что новый пациент видит в боте при записи: «Откуда вы о нас узнали?».
             По этим ответам — «Касса → Аналитика»: какая реклама приводит пациентов.
-            {!editable && ' Список меняет руководитель клиники.'}</HelpHint>
-        </HeadTools>
+            {!editable && ' Список меняет руководитель клиники.'}</SubHelp>
         <section className="card-block">
           {list.error && <p className="error">{list.error.message}</p>}
           {move.error && <p className="error" role="alert">{move.error.message}</p>}

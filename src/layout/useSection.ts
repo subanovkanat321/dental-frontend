@@ -23,6 +23,10 @@ export type NavApi = {
   counts: Counts
   /** Место панели вкладок (телефон) — первым в рабочей области, вне шапки страницы: так она прилипает к верху */
   tabsSlot: HTMLElement | null
+  /** Место «?» подраздела в панели вкладок (`SubHelp`, layout/PageHead.tsx); нет панели — null */
+  helpSlot: HTMLElement | null
+  /** Панель вкладок отдаёт это место (ref) */
+  setHelpSlot: (el: HTMLElement | null) => void
 }
 export const NavContext = createContext<NavApi | null>(null)
 

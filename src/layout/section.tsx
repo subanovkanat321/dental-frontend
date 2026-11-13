@@ -72,7 +72,7 @@ const INK_INSET = 12
  * переключении. Не влезли — строка листается вбок (с привязкой к вкладке), у краёв со скрытыми
  * вкладками — затухание, справа — «⌄»: на телефоне лист со всеми подразделами (тот же, что долгим
  * нажатием на раздел внизу), на компьютере — список под кнопкой. Новое во вкладках, скрытых справа, —
- * точкой на «⌄». «?» раздела — в конце строки. Телефон, первый раз — пузырь-подсказка под панелью.
+ * точкой на «⌄». «?» — в конце строки: раздела или подраздела (`SubHelp`), не оба. Телефон, первый раз — пузырь-подсказка под панелью.
  *
  * Ссылки с `aria-current`, а не `role=tab`: каждая — свой адрес (#/раздел/подраздел), «назад»
  * браузера возвращает в прежний подраздел.
@@ -94,6 +94,22 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
   const [menu, setMenu] = useState(false)
   const moreBox = useRef<HTMLDivElement>(null)
   const mounted = useRef(false)
+  // Место «?» подраздела: отдаём его Shell (nav.helpSlot) и следим, положил ли туда подраздел свой «?»
+  const [slotEl, setSlotEl] = useState<HTMLSpanElement | null>(null)
+  const { setHelpSlot: giveSlot } = nav
+  const setHelpSlot = useCallback((el: HTMLSpanElement | null) => {
+    setSlotEl(el)
+    giveSlot(el)
+  }, [giveSlot])
+  const [subHelp, setSubHelp] = useState(false)
+  useLayoutEffect(() => {
+    if (!slotEl) return
+    const check = () => setSubHelp(slotEl.childElementCount > 0)
+    check()
+    const observer = new MutationObserver(check)
+    observer.observe(slotEl, { childList: true })
+    return () => observer.disconnect()
+  }, [slotEl])
 
   const activeTab = useCallback(() => list.current?.querySelector<HTMLElement>('[aria-current="page"]') ?? null, [])
 
@@ -150,6 +166,11 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
     measure()
   }, [active, page, center, measure])
 
+  // Пришёл или ушёл «?» подраздела — место под вкладки другое (без ResizeObserver — тоже)
+  useLayoutEffect(() => {
+    measure()
+  }, [subHelp, measure])
+
   // Появилась «⌄» — строка стала уже: открытая вкладка (например, последняя) могла уйти под неё
   useLayoutEffect(() => {
     if (!touched.current) center(false)
@@ -161,9 +182,11 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
     if (!el) return
     // Только если размеры правда поменялись: первый вызов наблюдателя сразу после открытия не должен
     // обрывать плавный переезд к открытой вкладке
-    let size = `${bar.current?.clientWidth}:${list.current?.offsetWidth}`
+    // «?» подраздела приходит порталом после первого замера — его ширина тоже меняет, нужна ли «⌄»
+    const sizeNow = () => `${bar.current?.clientWidth}:${list.current?.offsetWidth}:${helpBox.current?.offsetWidth}`
+    let size = sizeNow()
     const onResize = () => {
-      const now = `${bar.current?.clientWidth}:${list.current?.offsetWidth}`
+      const now = sizeNow()
       if (now === size) return
       size = now
       measure()
@@ -172,6 +195,7 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
     const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(onResize) : null
     if (bar.current) observer?.observe(bar.current)
     if (list.current) observer?.observe(list.current)
+    if (helpBox.current) observer?.observe(helpBox.current)
     window.addEventListener('resize', onResize)
     return () => {
       observer?.disconnect()
@@ -235,7 +259,13 @@ function SubTabs({ nav, page, title, hint }: { nav: NavApi; page: Page; title: s
           {ink && <span className="sub-tabs-ink" aria-hidden="true" style={{ left: ink.left, width: ink.width }} />}
         </div>
       </div>
-      {hint && <span ref={helpBox} className="sub-tabs-help">{hint}</span>}
+      {/* «?» в конце строки: раздела — или подраздела (SubHelp кладёт его в sub-help порталом). Оба сразу
+          не показываем — два одинаковых кружка подряд не различить: остаётся «?» подраздела, он про то, что
+          на экране; общее про раздел — в «Помощь → Руководство» */}
+      <span ref={helpBox} className="sub-tabs-helps">
+        {hint && !subHelp && <span className="sub-tabs-help">{hint}</span>}
+        <span ref={setHelpSlot} className="sub-tabs-help sub-help" />
+      </span>
       {edges.more && (
         <div ref={moreBox} className="sub-tabs-more-box">
           <button type="button" className="sub-tabs-more" aria-haspopup={phone ? 'dialog' : 'true'} aria-expanded={phone ? undefined : menu} onClick={open}
