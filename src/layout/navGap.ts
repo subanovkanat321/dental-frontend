@@ -1,7 +1,5 @@
 import { useEffect, type RefObject } from 'react'
 
-import { isStandalone } from '../pwa/pwa'
-
 /** Меньше этого — дрожание округления и полоски Safari, не «меню висит». */
 const MIN_LIFT = 4
 
@@ -25,10 +23,9 @@ export function navLift(screenBottoms: readonly number[], menuBottom: number, dr
  * «Клиника → Услуги и цены», «Профосмотр по умолчанию»).
  *
  * Замер — тот же на любом экране: низ экрана минус низ меню. Дальше:
- * - установленное приложение (`data-nav-drop`): меню и то, что стоит над ним (листы «Ещё» и «Я», 💬, панель
- *   «Сохранить»), опускаем на этот зазор — `--nav-drop` (crm.css): там под меню экран приложения, а не чужая панель;
- * - Safari: под меню — его собственная панель адреса, туда меню не опустить (нажатия заберёт Safari) — зато
- *   отступ страницы снизу растёт на тот же зазор (`--nav-gap`): последний блок докручивается выше меню.
+ * - меню не двигаем (в установленном приложении опускание на `--nav-drop` по замеру 100lvh уводило его за край
+ *   экрана — подписи вкладок пропадали, 2026-11-14); `--nav-drop` в crm.css остаётся 0;
+ * - отступ страницы снизу растёт на зазор (`--nav-gap`): последний блок докручивается выше меню.
  * Компьютер и обычный телефон (Chrome, Android, Telegram) — зазор 0, ничего не меняется.
  */
 export function useNavGap(menu: RefObject<HTMLElement | null>, phone: boolean) {
@@ -43,14 +40,8 @@ export function useNavGap(menu: RefObject<HTMLElement | null>, phone: boolean) {
       clear()
       return
     }
-    const standalone = isStandalone()
-    // «Большой» экран (100lvh) — меряем пустым блоком; в установленном приложении панелей браузера нет
-    const probe = document.createElement('div')
-    probe.setAttribute('aria-hidden', 'true')
-    probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100vh;height:100lvh;visibility:hidden;pointer-events:none'
-    if (standalone) document.body.appendChild(probe)
     let frame = 0
-    let drop = 0
+    const drop = 0
     const fit = () => {
       frame = 0
       const el = menu.current
@@ -58,15 +49,11 @@ export function useNavGap(menu: RefObject<HTMLElement | null>, phone: boolean) {
       const vv = window.visualViewport
       // Клавиатура открыта (видимая часть заметно ниже окна) — зазор от неё, меню и так под клавиатурой: не трогаем
       if (vv && vv.height < window.innerHeight - 120) return
-      const bottoms = [window.innerHeight, root.clientHeight, vv ? vv.offsetTop + vv.height : 0, standalone ? probe.getBoundingClientRect().bottom : 0]
+      const bottoms = [window.innerHeight, root.clientHeight, vv ? vv.offsetTop + vv.height : 0]
       const lift = navLift(bottoms, el.getBoundingClientRect().bottom, drop)
-      if (standalone) {
-        drop = lift
-        if (lift) {
-          root.dataset.navDrop = ''
-          root.style.setProperty('--nav-drop', `${lift}px`)
-        } else clear()
-      } else if (lift) root.style.setProperty('--nav-gap', `${lift}px`)
+      // Меню НЕ опускаем (2026-11-14): в установленном приложении замер «100lvh» оказался ниже настоящего края
+      // экрана, меню уезжало вниз и подписи вкладок пропадали. Только запас снизу у страницы — он безопасен.
+      if (lift) root.style.setProperty('--nav-gap', `${lift}px`)
       else clear()
     }
     const later = () => { if (!frame) frame = requestAnimationFrame(fit) }
@@ -89,7 +76,6 @@ export function useNavGap(menu: RefObject<HTMLElement | null>, phone: boolean) {
       document.removeEventListener('focusout', settle)
       document.removeEventListener('visibilitychange', settle)
       cancelAnimationFrame(frame)
-      probe.remove()
       clear()
     }
   }, [menu, phone])
