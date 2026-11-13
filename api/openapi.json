@@ -5455,6 +5455,33 @@
         }
       }
     },
+    "/api/platform/outreach/{id}/reminded" : {
+      "post" : {
+        "tags" : [ "outreach-controller" ],
+        "operationId" : "reminded",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SalesFunnelLead"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/outreach/{id}/decline" : {
       "post" : {
         "tags" : [ "outreach-controller" ],
@@ -14932,6 +14959,10 @@
           },
           "lostReason" : {
             "type" : "string"
+          },
+          "remindedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "id", "solo" ]
@@ -14953,9 +14984,19 @@
           },
           "defaultText" : {
             "type" : "string"
+          },
+          "videoText" : {
+            "type" : "string"
+          },
+          "reminderText" : {
+            "type" : "string"
+          },
+          "remindAfterDays" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
-        "required" : [ "custom" ]
+        "required" : [ "custom", "remindAfterDays" ]
       },
       "PlatformInfoControllerRequest" : {
         "properties" : {

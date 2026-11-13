@@ -80,6 +80,8 @@ export function withoutEmoji(text: string): string {
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/ +([.,!?])/g, '$1')
     .replace(/[ \t]+\n/g, '\n')
+    // Строка начиналась с эмодзи («📅 запись по врачам…» в тексте к ролику) — без него не начинаем её с пробела
+    .replace(/\n[ \t]+/g, '\n')
     .trim()
 }
 
