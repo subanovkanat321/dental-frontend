@@ -1,6 +1,7 @@
 import { fetchBlob, type Schemas } from '../api/client'
 import { MOVE_TEMPLATE_PATH } from '../lib/texts'
 import { openLink, telegram } from '../lib/telegram'
+import { dateOf, todayIn } from '../lib/time'
 
 export type OutreachLead = Schemas['SalesFunnelLead']
 export type Group = 'FRESH' | 'SENT' | 'FURTHER' | 'DECLINED'
@@ -42,13 +43,22 @@ export function nextLead(leads: OutreachLead[], currentId: number | null): Outre
   return leads.slice(from + 1).find(writable) ?? candidates.find((l) => l.id !== currentId) ?? null
 }
 
+/**
+ * Пора «🔁 Напомнить»: написали (этап «Связались»), молчат days+ календарных дней по Бишкеку и ещё не
+ * напоминали — напоминание одно (remindedAt ставит сервер).
+ */
+export function remindDue(lead: OutreachLead, days: number, now = new Date()): boolean {
+  if (lead.stage !== 'CONTACTED' || !lead.contactedAt || lead.remindedAt) return false
+  const passed = (Date.parse(`${todayIn(now)}T00:00:00Z`) - Date.parse(`${dateOf(lead.contactedAt)}T00:00:00Z`)) / 86400000
+  return passed >= days
+}
 
 /** Открытая ссылка на шаблон переезда — для сообщений клиникам и инструкций. */
 export function templateUrl(origin: string = window.location.origin): string {
   return `${origin}${MOVE_TEMPLATE_PATH}`
 }
 
-/** Второе сообщение клинике — после ролика: шаблон, который мы перенесём за неё. */
+/** Третье сообщение клинике — после текста №2 и ролика: шаблон, который мы перенесём за неё. */
 export function templateMessage(origin?: string): string {
   return `Вот шаблон — заполните, и мы всё перенесём: ${templateUrl(origin)}\n`
     + 'Пациенты, прайс, врачи, склад, будущие записи и долги — каждое на своём листе. Пустые листы можно не трогать.'

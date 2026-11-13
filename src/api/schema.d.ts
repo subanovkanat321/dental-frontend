@@ -2164,6 +2164,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/outreach/{id}/reminded": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reminded"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/outreach/{id}/decline": {
         parameters: {
             query?: never;
@@ -6760,6 +6776,8 @@ export interface components {
             /** Format: date-time */
             contactedAt?: string;
             lostReason?: string;
+            /** Format: date-time */
+            remindedAt?: string;
         };
         ClinicOutreachTemplateRequest: {
             text?: string;
@@ -6768,6 +6786,10 @@ export interface components {
             text?: string;
             custom: boolean;
             defaultText?: string;
+            videoText?: string;
+            reminderText?: string;
+            /** Format: int32 */
+            remindAfterDays: number;
         };
         PlatformInfoControllerRequest: {
             legalName?: string;
@@ -15015,6 +15037,28 @@ export interface operations {
         };
     };
     sent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalesFunnelLead"];
+                };
+            };
+        };
+    };
+    reminded: {
         parameters: {
             query?: never;
             header?: never;

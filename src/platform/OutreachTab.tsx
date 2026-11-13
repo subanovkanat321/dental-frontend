@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneToInput } from '../clinic/phone'
-import { ask } from '../lib/confirm'
+import { ask as confirmAsk } from '../lib/confirm'
 import { download } from '../lib/download'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
@@ -12,18 +12,20 @@ import { CITIES } from '../lib/clinicSearch'
 import { haptic, openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
-import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, prepareVideo, sendVideo, templateMessage, videoWay, type Group, type OutreachLead, type VideoResult } from './outreach'
+import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, prepareVideo, remindDue, sendVideo, templateMessage, videoWay, type Group, type OutreachLead, type VideoResult } from './outreach'
 import { SubHelp } from '../layout/PageHead'
 
 type Template = Schemas['ClinicOutreachTemplate']
 type Report = Schemas['ClinicOutreachImportReport']
 
-const STAGE_TEXT: Record<string, string> = { DEMO: 'Демо показали', TRIAL: 'Пробный период', PAYING: 'Платит' }
+const EMPTY_TEMPLATE: Template = { text: '', custom: false, remindAfterDays: 3 }
+
+const STAGE_TEXT: Record<string, string> = { DEMO: 'Ответили', TRIAL: 'Пробный период', PAYING: 'Платит' }
 
 /**
  * «Написать клиникам» (владелец платформы): список стоматологий из 2ГИС и карт — загрузить, написать
- * каждой в WhatsApp своим нажатием (текст с названием клиники и ссылкой на страницу для клиник) и
- * отметить «отправили». Массовой отправки нет нарочно: WhatsApp блокирует номер за рассылки, а первое
+ * каждой в WhatsApp своим нажатием (короткий текст с названием клиники, без ролика) и отметить «отправили»;
+ * ответившим — текст №2 и ролик, молчащим 3+ дня — одно напоминание. Массовой отправки нет нарочно: WhatsApp блокирует номер за рассылки, а первое
  * сообщение должно быть личным. Клиники — те же лиды, что в «Воронке продаж» (Клиники).
  */
 export function OutreachTab() {
@@ -60,10 +62,13 @@ export function OutreachTab() {
     <>
       {/* Как писать — в «?» у заголовка: два абзаца над списком отодвигали его на полэкрана */}
       <SubHelp title="Написать клиникам">Пишите по одной — своим нажатием: WhatsApp блокирует номер за массовые рассылки, а личное сообщение
-          читают охотнее. После отправки отметьте «Да» — клиника перейдёт в «Написали» (и в воронке — «Связались»).<br /><br />
-          <b>«📨 Отправить сообщение и ролик»</b>: ① откроется WhatsApp с текстом — отправьте; ② вернитесь сюда — появится
-          кнопка ролика: «Поделиться» → WhatsApp → этот чат (он первый в списке). Ролик — файлом: у незнакомого номера WhatsApp не делает
-          ссылки кликабельными. На компьютере ролик скачается — прикрепите его в WhatsApp Web.</SubHelp>
+          читают охотнее.<br /><br />
+          <b>Не писали → «📨 Отправить сообщение»</b>: откроется WhatsApp с коротким текстом, без ролика и ссылок. Отправьте, вернитесь
+          и отметьте «Да» — клиника перейдёт в «Написали».<br /><br />
+          <b>Ответили → «🎬 Ответили — отправить ролик»</b>: ① текст со списком возможностей; ② вернитесь сюда — кнопка ролика:
+          «Поделиться» → WhatsApp → этот чат (на компьютере ролик скачается — прикрепите в WhatsApp Web); ③ если нужно — шаблон Excel.
+          «Да» — клиника в «Ответили/дальше».<br /><br />
+          <b>Молчат 3 дня → «🔁 Напомнить»</b>: одно короткое напоминание. Больше не пишем — отказ отмечайте «Не беспокоить».</SubHelp>
       <section className="card-block" aria-label="Написать клиникам">
         {outreach.error && <p className="error">{outreach.error.message}</p>}
         {outreach.isPending ? <Loading /> : data && (
@@ -90,7 +95,7 @@ export function OutreachTab() {
                 : (
                   <div role="list" className="funnel-list" aria-label="Клиники">
                     {shown.map((l) => (
-                      <LeadRow key={l.id} lead={l} template={data.template?.text ?? ''} selected={l.id === selected}
+                      <LeadRow key={l.id} lead={l} template={data.template ?? EMPTY_TEMPLATE} selected={l.id === selected}
                         onSelect={() => setSelected(l.id === selected ? null : l.id)} onActive={() => setSelected(l.id)} onNext={next} />
                     ))}
                   </div>
@@ -104,16 +109,25 @@ export function OutreachTab() {
 }
 
 /**
- * Где клиника в «📨 Отправить сообщение и ролик»: message — открыли WhatsApp с текстом и ждём возврата в
- * приложение; video — вернулись, крупно шаг 2 (ролик); ask — «Отправили?»; done — отметили, «Следующая».
+ * Где клиника в отправке: message — открыли WhatsApp с текстом №2 и ждём возврата в приложение; video —
+ * вернулись, крупно шаг ② (ролик); ask — «Отправили?»; done — отметили, «Следующая».
  */
 type Step = 'message' | 'video' | 'ask' | 'done' | null
 
+/**
+ * Что отправляем: first — первое сообщение (без ролика), video — ответившим: текст №2, ролик и шаблон Excel,
+ * remind — одно напоминание молчащим.
+ */
+type Mode = 'first' | 'video' | 'remind'
+
+const FURTHER_STAGES = ['DEMO', 'TRIAL', 'PAYING']
+
 function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
-  lead: OutreachLead; template: string; selected: boolean; onSelect: () => void; onActive: () => void; onNext: () => void
+  lead: OutreachLead; template: Template; selected: boolean; onSelect: () => void; onActive: () => void; onNext: () => void
 }) {
   const client = useQueryClient()
   const [step, setStep] = useState<Step>(null)
+  const [mode, setMode] = useState<Mode>('first')
   const [copied, setCopied] = useState(false)
   const [declining, setDeclining] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -124,13 +138,28 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
     void client.invalidateQueries({ queryKey: ['platform-outreach'] })
     void client.invalidateQueries({ queryKey: ['platform-funnel'] })
   }
-  const sent = useMutation<OutreachLead, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/outreach/{id}/sent', { params: { path: { id: l.id } } })),
+  const marked = {
     onSuccess: () => {
       setStep('done')
       haptic('success')
       refresh()
     },
+  }
+  const sent = useMutation<OutreachLead, ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/platform/outreach/{id}/sent', { params: { path: { id: l.id } } })),
+    ...marked,
+  })
+  // Ответили — этап «Демо» тем же запросом, что в «Воронке продаж»: заметку и следующий шаг передаём как были
+  const replied = useMutation<OutreachLead, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/platform/funnel/{id}', {
+      params: { path: { id: l.id } },
+      body: { stage: 'DEMO', note: l.note || undefined, nextStep: l.nextStep || undefined, nextStepOn: l.nextStepOn || undefined },
+    })),
+    ...marked,
+  })
+  const reminded = useMutation<OutreachLead, ApiError>({
+    mutationFn: () => unwrap(api.POST('/api/platform/outreach/{id}/reminded', { params: { path: { id: l.id } } })),
+    ...marked,
   })
   const decline = useMutation<OutreachLead, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/platform/outreach/{id}/decline', { params: { path: { id: l.id } }, body: { reason: reason || undefined } })),
@@ -144,14 +173,21 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
     mutationFn: () => unwrap(api.DELETE('/api/platform/outreach/{id}', { params: { path: { id: l.id } } })),
     onSuccess: refresh,
   })
-  const text = messageFor(template, l.clinicName ?? '')
+  const g = groupOf(l)
+  const fresh = g === 'FRESH'
   const lost = l.stage === 'LOST'
+  const first = messageFor(template.text ?? '', l.clinicName ?? '')
+  const videoText = template.videoText ?? ''
+  const reminderText = template.reminderText ?? ''
+  // В карточке — то, что сейчас уйдёт: неписаным — первое сообщение, остальным — текст к ролику
+  const text = fresh ? first : videoText
+  const remind = remindDue(l, template.remindAfterDays ?? 3)
   const way = videoWay()
 
-  // Карточка открыта — ролик заранее в память (один раз на вкладку): «Поделиться» потом вызывается сразу по нажатию
+  // Карточка написавшей клиники открыта — ролик заранее в память (один раз на вкладку): «Поделиться» потом сразу
   useEffect(() => {
-    if (selected && !lost && l.phone && way !== 'telegram') prepareVideo().catch(() => {})
-  }, [selected, lost, l.phone, way])
+    if (selected && !lost && !fresh && l.phone && way !== 'telegram') prepareVideo().catch(() => {})
+  }, [selected, lost, fresh, l.phone, way])
 
   // Шаг 1 → 2: WhatsApp открыли — ждём, когда владелец вернётся в приложение (вкладка снова видна или окно
   // в фокусе), и только после того, как ушёл (иначе шаг 2 выскочил бы сразу)
@@ -179,6 +215,11 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
     if (step === 'video') stepTwo.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
   }, [step])
 
+  const ask = (m: Mode) => {
+    onActive()
+    setMode(m)
+    setStep('ask')
+  }
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text)
@@ -186,23 +227,35 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
     } catch {
       setCopied(false)
     }
-    setStep('ask')
+    ask(fresh ? 'first' : 'video')
   }
-  // Шаг 1: текст — в WhatsApp, ролик тем временем качается в память
   // Текст — сразу в поле чата и на телефоне, и на компьютере (whatsappUrl на Windows сам убирает эмодзи: из ссылки
-  // они приходят «�»). Копировать-вставлять не нужно (владелец: «и так два шага — текст и ролик»)
-  const openMessage = () => openLink(whatsappUrl(l.phone!, text))
-  // Третьим (после текста и ролика) — шаблон переезда: «заполните, и мы всё перенесём»
-  const openTemplate = () => openLink(whatsappUrl(l.phone!, templateMessage()))
-  const both = () => {
+  // они приходят «�»). Копировать-вставлять не нужно
+  const open = (message: string) => openLink(whatsappUrl(l.phone!, message))
+  // Первое сообщение — холодное, только текст: ролик и ссылки незнакомому номеру похожи на рассылку
+  const sendFirst = () => {
+    open(first)
+    ask('first')
+  }
+  // Ответили — текст №2, потом ролик файлом; ролик тем временем качается в память
+  const sendVideoText = () => {
     onActive()
-    openMessage()
+    open(videoText)
+    setMode('video')
     setVideo(null)
     setStep('message')
     if (way !== 'telegram') prepareVideo().catch(() => {})
   }
+  const sendReminder = () => {
+    open(reminderText)
+    ask('remind')
+  }
+  // Третьим (после текста №2 и ролика) — шаблон переезда: «заполните, и мы всё перенесём»
+  const openTemplate = () => open(templateMessage())
   // Ролик: sendVideo зовёт «Поделиться» синхронно, в этом же нажатии (iPhone иначе откажет)
   const shareVideo = (afterMessage: boolean) => {
+    onActive()
+    setMode('video')
     setVideoError(null)
     setVideo('pending')
     sendVideo().then((r) => {
@@ -214,12 +267,19 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
       setVideoError(e instanceof Error ? e.message : String(e))
     })
   }
-  const g = groupOf(l)
-  const status = g === 'FRESH' ? <span className="chip small s-quiet">Не писали</span>
+  const yes = () => {
+    if (mode === 'first') sent.mutate()
+    else if (mode === 'remind') reminded.mutate()
+    // Уже дальше по воронке (демо, пробный, платит) — назад на «Демо» не двигаем
+    else if (FURTHER_STAGES.includes(l.stage ?? '')) setStep('done')
+    else replied.mutate()
+  }
+  const busy = sent.isPending || replied.isPending || reminded.isPending
+  const status = fresh ? <span className="chip small s-quiet">Не писали</span>
     : g === 'SENT' ? <span className="chip small s-ok">Написали{l.contactedAt ? ` ${shortDate(l.contactedAt)}` : ''}</span>
       : g === 'DECLINED' ? <span className="chip small s-bad">Отказ</span>
         : <span className="chip small s-request">{STAGE_TEXT[l.stage ?? ''] ?? 'Дальше'}</span>
-  const error = sent.error ?? decline.error
+  const error = sent.error ?? replied.error ?? reminded.error ?? decline.error
   return (
     <div role="listitem" id={`outreach-${l.id}`} className={`sub-form form outreach-lead${selected ? ' active' : ''}`} aria-label={`Клиника: ${l.clinicName}`}
       aria-current={selected || undefined}>
@@ -228,30 +288,30 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
       <span className="hint">{[l.city, l.address].filter(Boolean).join(' · ')}
         {l.phone && <>{l.city || l.address ? ' · ' : ''}{formatPhone(l.phone)}</>}
         {l.link && <> · <a href={l.link} target="_blank" rel="noopener noreferrer">ссылка</a></>}
-        {g !== 'SENT' && l.contactedAt && <> · написали {shortDate(l.contactedAt)}</>}</span>
+        {g !== 'SENT' && l.contactedAt && <> · написали {shortDate(l.contactedAt)}</>}
+        {l.remindedAt && <> · напомнили {shortDate(l.remindedAt)}</>}</span>
       {lost && <span className="tone-bad">Просили не беспокоить{l.lostReason ? `: ${l.lostReason}` : ''} — не пишем.</span>}
       {selected && !lost && <p className="outreach-text" aria-label="Текст сообщения">{text}</p>}
       {!lost && step == null && (
         <div className="actions">
-          {l.phone && (
-            <button type="button" className={g === 'FRESH' ? 'btn primary' : 'btn'} onClick={both}>📨 Отправить сообщение и ролик</button>
+          {l.phone && fresh && <button type="button" className="btn primary" onClick={sendFirst}>📨 Отправить сообщение</button>}
+          {l.phone && !fresh && (
+            <button type="button" className={g === 'SENT' ? 'btn primary' : 'btn'} onClick={sendVideoText}>🎬 Ответили — отправить ролик</button>
           )}
-          {!l.phone && l.link && <button type="button" className="btn" onClick={() => { onActive(); openLink(l.link!); setStep('ask') }}>Открыть ссылку</button>}
+          {l.phone && remind && <button type="button" className="btn" onClick={sendReminder}>🔁 Напомнить</button>}
+          {!l.phone && l.link && <button type="button" className="btn" onClick={() => { openLink(l.link!); ask(fresh ? 'first' : 'video') }}>Открыть ссылку</button>}
           {!declining && <button type="button" className="btn ghost" onClick={() => setDeclining(true)}>Не беспокоить</button>}
         </div>
       )}
       {!lost && step == null && (
         <div className="actions outreach-more" role="group" aria-label="По отдельности">
-          {l.phone && (
-            <button type="button" className="btn small ghost" onClick={() => { onActive(); openMessage(); setStep('ask') }}>
-              Только сообщение</button>
+          {!fresh && (
+            <button type="button" className="btn small ghost" disabled={video === 'pending'} onClick={() => shareVideo(false)}>
+              {video === 'pending' ? 'Готовлю ролик…' : 'Только ролик'}</button>
           )}
-          <button type="button" className="btn small ghost" disabled={video === 'pending'} onClick={() => shareVideo(false)}>
-            {video === 'pending' && step !== 'video' ? 'Готовлю ролик…' : 'Только ролик'}</button>
           <button type="button" className="btn small ghost" onClick={() => void copy()}>Скопировать текст</button>
-          {l.phone && (
-            <button type="button" className="btn small ghost" onClick={() => { onActive(); openTemplate(); setStep('ask') }}>
-              Шаблон Excel</button>
+          {l.phone && !fresh && (
+            <button type="button" className="btn small ghost" onClick={() => { openTemplate(); ask('video') }}>Шаблон Excel</button>
           )}
         </div>
       )}
@@ -285,20 +345,20 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
       {videoError && <p className="error" role="alert">Ролик не открылся: {videoError}</p>}
       {step === 'ask' && (
         <div className="outreach-ask" role="group" aria-label="Отправили?">
-          <span>{copied ? 'Текст скопирован. ' : ''}Отправили «{l.clinicName}»?</span>
+          <span>{copied ? 'Текст скопирован. ' : ''}{ASK[mode](l.clinicName ?? '')}</span>
           <span className="actions">
-            <button type="button" className="btn primary small" disabled={sent.isPending} onClick={() => sent.mutate()}>Да</button>
+            <button type="button" className="btn primary small" disabled={busy} onClick={yes}>Да</button>
             <button type="button" className="btn small" onClick={() => setStep(null)}>Нет</button>
-            {l.phone && (
+            {l.phone && mode === 'video' && (
               <button type="button" className="btn small ghost" onClick={openTemplate}
-                title="Вторым сообщением: «Вот шаблон — заполните, и мы всё перенесём»">📥 Ещё и шаблон Excel</button>
+                title="Третьим сообщением: «Вот шаблон — заполните, и мы всё перенесём»">📥 Ещё и шаблон Excel</button>
             )}
           </span>
         </div>
       )}
       {step === 'done' && (
         <div className="outreach-ask" role="group" aria-label="Отмечено">
-          <span className="tone-ok">✓ «{l.clinicName}» — в «Написали».</span>
+          <span className="tone-ok">{DONE[mode](l.clinicName ?? '')}</span>
           <span className="actions">
             <button type="button" className="btn primary" onClick={() => { setStep(null); onNext() }}>Следующая клиника →</button>
           </span>
@@ -310,7 +370,7 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
             ? <button type="button" className="btn small" onClick={() => setEditing(true)}>Изменить</button>
             : <span className="hint small">Клиника подключена — её данные правят в «Клиниках».</span>}
           <button type="button" className="btn small danger" disabled={remove.isPending}
-            onClick={() => void ask(`Удалить «${l.clinicName}» из списка? Клиника исчезнет из рассылки и воронки.`).then((ok) => ok && remove.mutate())}>
+            onClick={() => void confirmAsk(`Удалить «${l.clinicName}» из списка? Клиника исчезнет из рассылки и воронки.`).then((ok) => ok && remove.mutate())}>
             Удалить из списка</button>
         </div>
       )}
@@ -329,6 +389,18 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
       {error && <p className="error" role="alert">{error.message}</p>}
     </div>
   )
+}
+
+const ASK: Record<Mode, (name: string) => string> = {
+  first: (name) => `Отправили «${name}»?`,
+  video: (name) => `Отправили «${name}» ролик? Клиника перейдёт в «Ответили».`,
+  remind: (name) => `Напомнили «${name}»?`,
+}
+
+const DONE: Record<Mode, (name: string) => string> = {
+  first: (name) => `✓ «${name}» — в «Написали».`,
+  video: (name) => `✓ «${name}» — в «Ответили/дальше».`,
+  remind: (name) => `✓ «${name}» — напомнили. Больше не напоминаем.`,
 }
 
 const VIDEO_DONE: Record<'shared' | 'downloaded' | 'opened', string> = {
@@ -532,7 +604,10 @@ function ListUpload({ onClose }: { onClose: () => void }) {
   )
 }
 
-/** Текст первого сообщения: {клиника} подставится названием; пусто или «Вернуть» — текст по умолчанию. */
+/**
+ * Текст первого сообщения: {клиника} подставится названием; пусто или «Вернуть» — текст по умолчанию. Текст к ролику
+ * и напоминание — только посмотреть: они приходят с сервера и обновляются вместе с приложением.
+ */
 function TemplateEditor({ template }: { template: Template }) {
   const client = useQueryClient()
   const [text, setText] = useState(template.text ?? '')
@@ -548,8 +623,8 @@ function TemplateEditor({ template }: { template: Template }) {
       <details>
         <summary>Текст сообщения{template.custom ? ' (свой)' : ''}</summary>
         <form className="form" onSubmit={(e) => { e.preventDefault(); save.mutate(text) }}>
-          <p className="hint">{PLACEHOLDER} — подставится название клиники. Ссылка ведёт на страницу для клиник: там ролик на минуту,
-            презентация и заявка.</p>
+          <p className="hint">Первое сообщение клинике. {PLACEHOLDER} — подставится название. Ролик и ссылки сюда не ставьте:
+            незнакомому номеру они похожи на рассылку — ролик уходит ответившим.</p>
           <label className="field"><span>Текст</span>
             <textarea value={text} rows={8} maxLength={1500} onChange={(e) => setText(e.target.value)} /></label>
           {!text.includes(PLACEHOLDER) && <p className="tone-wait">В тексте нет {PLACEHOLDER} — название клиники не подставится.</p>}
@@ -560,6 +635,10 @@ function TemplateEditor({ template }: { template: Template }) {
             {template.custom && <button type="button" className="btn ghost" disabled={save.isPending} onClick={() => save.mutate('')}>Вернуть текст по умолчанию</button>}
           </div>
         </form>
+        <p className="hint">Ответившим — с роликом:</p>
+        <p className="outreach-text" aria-label="Текст к ролику">{template.videoText}</p>
+        <p className="hint">Напоминание молчащим (через {template.remindAfterDays} дня, один раз):</p>
+        <p className="outreach-text" aria-label="Текст напоминания">{template.reminderText}</p>
       </details>
     </section>
   )
