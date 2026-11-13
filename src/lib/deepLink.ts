@@ -8,7 +8,9 @@ import type { Page } from './route'
  * ?screen=cash|stats|earnings|support|support-tickets|pay-requests|survey|shifts|learn|agreement — раздел; ?doctor=ID — «День»
  * этого врача (уведомление о приёмах коллеги), можно вместе с ?day=tomorrow;
  * ?screen=booked&day=today|tomorrow&unconfirmed=1&doctor=ID — «Пациенты → Записаны» на этот день, только
- * кто не подтвердил (кнопка «📲 Напомнить (N)» под утренней и вечерней сводкой).
+ * кто не подтвердил (кнопка «📲 Напомнить (N)» под утренней и вечерней сводкой);
+ * ?screen=booked&day=today&unmarked=1&doctor=ID — там же, сегодня, только прошедшие без отметки «явка / неявка»
+ * (кнопка «Отметить (N)» напоминания после вечерней смены и «Отметить сегодня» в сводке 18:30).
  */
 
 /**
@@ -43,6 +45,8 @@ export type DeepLink = {
   doctorId?: number
   /** «Записаны»: только кто не подтвердил */
   unconfirmed?: boolean
+  /** «Записаны»: только прошедшие без отметки «явка / неявка» */
+  unmarked?: boolean
 }
 
 export function readDeepLink(search: string, today = todayIn()): DeepLink | null {
@@ -70,7 +74,7 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (screen === 'learn') return { page: 'learn' }
   if (screen === 'booked') {
     const day = p.get('day') === 'tomorrow' ? addDays(today, 1) : p.get('day') === 'today' ? today : undefined
-    return { page: 'patients', tab: 'booked', date: day, unconfirmed: p.get('unconfirmed') === '1', doctorId: num('doctor') }
+    return { page: 'patients', tab: 'booked', date: day, unconfirmed: p.get('unconfirmed') === '1', unmarked: p.get('unmarked') === '1', doctorId: num('doctor') }
   }
   if (screen === 'support-tickets') return { page: 'platform', tab: 'tickets' }
   if (screen === 'pay-requests') return { page: 'platform', tab: 'clinics' }
