@@ -11,7 +11,7 @@
 .pwa-toast span { white-space: nowrap; }
 @media (max-width: 760px) {
   /* Над панелью разделов внизу (~62px) и полосой «Сохранить» */
-  .pwa-toast { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .pwa-toast { bottom: calc(76px + env(safe-area-inset-bottom) - var(--nav-drop, 0px)); }
 }
 
 .pwa-install { display: grid; gap: 10px; }
