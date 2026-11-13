@@ -37,6 +37,7 @@ import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf, seesAllMoney 
 import { cancelledWhen } from './cancelled'
 import { HelpHint } from '../help/HelpHint'
 import { PlanDone } from './PlanDone'
+import { VisitPlan } from './VisitPlan'
 import { askPlanDone } from './planDoneStore'
 
 type Me = Schemas['BookingViewsMe']
@@ -48,7 +49,7 @@ type Status = NonNullable<Schemas['AppointmentRequestsChangeStatus']['status']>
  * Карточка приёма — сверху вниз: шапка (время, врач, статус; 📖 «Показать пациенту») → пациент
  * (история одной строкой, аллергии) → услуга и комментарий → главное действие статуса (одна залитая
  * кнопка: «Подтвердить», «Приём состоялся», «Принять оплату», «Восстановить», «Записать снова») →
- * «Приём» для врача (продолжение лечения, диктовка и заметка, «Зубы», «Материалы», «Снимки» —
+ * «Приём» для врача (продолжение лечения, диктовка и заметка, «Зубы», «Материалы», «Снимки», «План лечения» —
  * раскрывашками) → «Сообщение после приёма» → перенести / неявка / отменить → «Ещё» (редкое:
  * промокод, предоплата, лист ожидания, откуда узнал, квитанция, исправить статус, удалить).
  * Приём коллеги — только посмотреть и позвонить. Esc — закрыть.
@@ -346,6 +347,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {canEdit && visitTools && clinical && a.patient.id != null && (
             <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
           )}
+          {/* План лечения — тот же редактор, что в медкарте: после осмотра добавить этапы, отметить сделанное */}
+          {visitTools && clinical && a.patient.id != null && <VisitPlan appointment={a} me={me} />}
           {canEdit && a.status === 'SCHEDULED' && started && !visitTools && (
             <p className="hint small">Заметка, зубы и материалы — к началу приёма.{' '}
               <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>

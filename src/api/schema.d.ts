@@ -3748,6 +3748,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/visit-report/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["preview_5"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/visit-report/draft": {
         parameters: {
             query?: never;
@@ -8761,6 +8777,20 @@ export interface components {
             ai?: boolean;
             /** @enum {string} */
             via?: "TELEGRAM" | "WHATSAPP" | "PRINT";
+            doctorPhone?: boolean;
+        };
+        VisitReportControllerPreviewRequest: {
+            text?: string;
+            care?: string;
+            doctorPhone?: boolean;
+        };
+        VisitReportsPreview: {
+            text?: string;
+            /** Format: int32 */
+            parts: number;
+            telegram: boolean;
+            /** @enum {string} */
+            lang?: "RU" | "KY";
         };
         VisitReportsCare: {
             /** Format: int64 */
@@ -8776,6 +8806,7 @@ export interface components {
             /** @enum {string} */
             lang?: "RU" | "KY";
             telegram: boolean;
+            doctorPhone?: string;
         };
         AppointmentRequestsUndo: {
             /** Format: int64 */
@@ -18057,10 +18088,37 @@ export interface operations {
             };
         };
     };
+    preview_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VisitReportControllerPreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisitReportsPreview"];
+                };
+            };
+        };
+    };
     draft_2: {
         parameters: {
             query?: {
                 memoId?: number;
+                mode?: "AUTO" | "AI" | "TEMPLATE" | "SELF";
             };
             header?: never;
             path: {

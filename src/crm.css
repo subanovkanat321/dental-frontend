@@ -1434,6 +1434,15 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .visit-report p { margin: 0; }
 .visit-report-text { width: 100%; min-height: 220px; font: inherit; line-height: 1.5; padding: 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
 .ai-switch { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-md); background: var(--sunken); }
+/* «Сообщение после приёма»: два входа (написать самому / с ИИ), памятка отдельно, предпросмотр как в мессенджере */
+.after-visit-start { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.after-visit-way { display: grid; gap: 4px; align-content: start; }
+.after-visit-way .btn { justify-self: start; }
+.after-visit-memo { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
+.after-visit-memo .actions { align-items: center; }
+.msg-preview { display: grid; gap: 6px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
+.msg-bubble { justify-self: start; max-width: min(100%, 520px); padding: 10px 12px; border-radius: 4px 12px 12px 12px; background: var(--card);
+  border: 1px solid var(--separator); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; font-size: .95rem; }
 /* ---------- Опросы о платформе (src/survey, src/platform/surveys) ---------- */
 /* Приглашение — спокойная плашка цвета «выбрано», не тревожная: это просьба, а не дело на сегодня */
 .notice.tone-info { background: color-mix(in srgb, var(--accent-soft) 70%, var(--card)); color: var(--text); border-color: color-mix(in srgb, var(--accent) 25%, transparent); }

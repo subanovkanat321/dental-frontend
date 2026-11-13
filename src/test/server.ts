@@ -77,6 +77,7 @@ export const server = setupServer(
   http.get('*/api/comebacks', () => HttpResponse.json({ patients: [], planSom: 0, planPatients: 0, noShows: 0, recalls: 0 })),
   http.get('*/api/comebacks/result', () => HttpResponse.json({ invited: 0, returned: 0, returnedPlanSom: 0, paidSom: 0 })),
   http.get('*/api/appointments/:id/visit-report', () => new HttpResponse(null, { status: 204 })),
+  http.get('*/api/clinic/visit-report-ai', () => HttpResponse.json({ available: false, on: false } satisfies Schemas['VisitReportControllerAiSetting'])),
   http.get('*/api/patients/:id/family', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/service-types', () => HttpResponse.json([])),
   // «Часто» в выборе услуги: по умолчанию записей нет; раздел новой услуги — «Другое»
