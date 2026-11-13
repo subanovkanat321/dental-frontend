@@ -116,7 +116,7 @@ test('«Чистыми за месяц» независимого врача: п
       month: '2026-11', purchasedSom: 1800, expenses: [{ category: 'Зарплата', amountSom: 15000 }, { category: 'Зуботехническая лаборатория', amountSom: 2000 }],
       row: {
         doctorId: 2, doctor: 'Дастан Т.', selfEmployed: true, revenueSom: 50000, earnedSom: 50000, rentSom: 0, materialsSom: 900, unpricedMaterials: 0,
-        lossesSom: 200, expensesSom: 17000, sharedExpensesSom: 7500, doctorNetSom: 24400, clinicSom: 0,
+        lossesSom: 200, expensesSom: 17000, sharedExpensesSom: 7500, doctorNetSom: 24400, clinicSom: 0, rentTwice: false,
       },
     } satisfies Schemas['NetMonthMine'])),
   )

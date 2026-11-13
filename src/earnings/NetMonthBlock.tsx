@@ -31,6 +31,12 @@ export function NetMonthBlock({ me }: { me: Me }) {
   return (
     <section className="card-block net-month" aria-label="Чистыми за месяц">
       <h2>Чистыми за {monthName(q.data?.month)}</h2>
+      {/* Аренда кресла в условиях «Зарплаты» и доля общего расхода «Аренда» — суммы не меняем, только предупреждаем */}
+      {r.rentTwice && (
+        <p className="tone-bad" role="alert">
+          ⚠️ Аренда учтена дважды: в условиях врача и в общих расходах — уберите одно. Ниже вычтены обе.
+        </p>
+      )}
       <dl className="net-lines">
         <div><dt>Выручка за приёмы месяца</dt><dd className="num">{somText(revenue)}</dd></div>
         {earned !== revenue && <div><dt>Клинике по условиям (процент)</dt><dd className="num">{signedSom(earned - revenue)}</dd></div>}

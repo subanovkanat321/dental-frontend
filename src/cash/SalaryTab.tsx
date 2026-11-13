@@ -64,7 +64,8 @@ function errorText(e: ApiError | null): string | null {
  * условия и отмечает выплату (она же расход «Зарплата» — прибыль её учтёт); врач видит свою строку.
  * Считает сервер — здесь только показываем и отправляем.
  */
-export function SalaryTab({ seesAll }: { seesAll: boolean }) {
+/** @param independent клиника в режиме «врачи работают независимо»: аренду кабинета там обычно делят общим расходом */
+export function SalaryTab({ seesAll, independent = false }: { seesAll: boolean; independent?: boolean }) {
   const [month, setMonth] = useState(previousMonth)
   const list = useQuery({
     queryKey: ['salaries', month],
@@ -92,14 +93,14 @@ export function SalaryTab({ seesAll }: { seesAll: boolean }) {
             <>
               {seesAll && rows.length > 1 && <p className="total-line" aria-label="Осталось выплатить">Осталось выплатить: <b className="num">{somText(due)}</b></p>}
               {/* Ключ с месяцем: сменили месяц — открытая форма выплаты не переносит сумму прошлого */}
-              {rows.map((r) => <SalaryCard key={`${month}-${r.doctorId != null ? `d${r.doctorId}` : `a${r.assistantId}`}`} row={r} month={month} seesAll={seesAll} />)}
+              {rows.map((r) => <SalaryCard key={`${month}-${r.doctorId != null ? `d${r.doctorId}` : `a${r.assistantId}`}`} row={r} month={month} seesAll={seesAll} independent={independent} />)}
             </>
           )}
     </>
   )
 }
 
-function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesAll: boolean }) {
+function SalaryCard({ row: r, month, seesAll, independent }: { row: Row; month: string; seesAll: boolean; independent: boolean }) {
   const client = useQueryClient()
   const [editing, setEditing] = useState(false)
   const [paying, setPaying] = useState(false)
@@ -174,7 +175,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
             {noTerms ? '⚙️ Задать процент и оклад' : '⚙️ Изменить условия'}</button>
         </div>
       )}
-      {editing && <TermsForm row={r} month={month} onDone={() => { setEditing(false); setTermsSaved(true); refresh() }} onCancel={() => setEditing(false)} />}
+      {editing && <TermsForm row={r} month={month} independent={independent} onDone={() => { setEditing(false); setTermsSaved(true); refresh() }} onCancel={() => setEditing(false)} />}
       <SaveBar dirty={false} saving={false} saved={termsSaved} savedText="Условия сохранены — «К выплате» пересчитано" />
       {paying && <PayForm row={r} month={month} left={left} onDone={() => { setPaying(false); refresh() }} onCancel={() => setPaying(false)} />}
       {receiving && <RentForm row={r} month={month} left={owesLeft} onDone={() => { setReceiving(false); refresh() }} onCancel={() => setReceiving(false)} />}
@@ -183,7 +184,7 @@ function SalaryCard({ row: r, month, seesAll }: { row: Row; month: string; seesA
   )
 }
 
-function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: string; onDone: () => void; onCancel: () => void }) {
+function TermsForm({ row: r, month, independent, onDone, onCancel }: { row: Row; month: string; independent: boolean; onDone: () => void; onCancel: () => void }) {
   const [percent, setPercent] = useState(String(Number(r.percent ?? 0) || ''))
   const [base, setBase] = useState(r.baseSom ? String(r.baseSom) : '')
   // Оклад по табелю: за отработанные дни (оклад × отработано / норма), а не весь
@@ -222,7 +223,7 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
       <p className="hint">Условия у каждого свои: только процент, только оклад или оба. Пусто — значит 0.</p>
       {/* Частые схемы одной кнопкой: частный врач (в том числе в клинике с другими врачами) забирает всё */}
       {!isEmployee(r) && (
-        <div className="day-quick wrap" role="group" aria-label="Как платить">
+        <div className="day-quick wrap terms-presets" role="group" aria-label="Как платить">
           <button type="button" className="chip" aria-pressed={p === 100 && !Number(base || 0) && rentKind === 'none'}
             onClick={() => { setPercent('100'); setBase(''); setRentKind('none'); setRent('') }}>Вся выручка — врачу (100%)</button>
           <button type="button" className="chip" aria-pressed={privatePreset}
@@ -262,7 +263,14 @@ function TermsForm({ row: r, month, onDone, onCancel }: { row: Row; month: strin
         </div>
       )}
       {rentKind !== 'none' && <p className="hint small">Аренду врач платит клинике: она вычитается из «К выплате». Сумма — за весь месяц, по дням не делится; процент — от той же выручки врача.</p>}
-      <div className="day-quick wrap" role="group" aria-label="Быстро: процент">
+      {/* Аренда кабинета, поделённая общим расходом, и аренда кресла здесь — одно и то же дважды */}
+      {independent && !isEmployee(r) && (
+        <p className="hint small" role="note">
+          Аренду кабинета, которую врачи делят между собой, записывайте общим расходом (Касса → Расходы → ＋ общий). Здесь — только
+          если врач платит аренду клинике.
+        </p>
+      )}
+      <div className="day-quick wrap percent-quick" role="group" aria-label="Быстро: процент">
         {(!isEmployee(r) ? [20, 25, 30, 35, 40, 50] : isAssistantRow(r) ? [5, 10, 15] : [1, 2, 3]).map((x) => (
           <button key={x} type="button" className="chip" aria-pressed={p === x} onClick={() => setPercent(String(x))}>{x}%</button>
         ))}

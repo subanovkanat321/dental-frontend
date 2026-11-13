@@ -153,7 +153,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
         {tab === 'expenses' && <ExpensesTab me={me} doctorId={doctorId} seesAll={seesAll} />}
         {tab === 'debtors' && <DebtorsTab rows={debts.data} pending={debts.isPending} error={debts.error?.message} onOpen={setOpened}
           onOpenPatient={onOpenPatient} />}
-        {tab === 'salary' && <SalaryTab seesAll={seesAll} />}
+        {tab === 'salary' && <SalaryTab seesAll={seesAll} independent={Boolean(me.clinic?.independentDoctors)} />}
         {tab === 'stats' && <StatsTab doctorId={doctorId} />}
         {tab === 'report' && <ReportTab doctorId={doctorId} onOpen={setOpened} active={opened} />}
         {tab === 'money' && <>
