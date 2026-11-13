@@ -42,7 +42,7 @@ export function SharedExpenses({ month, me }: { month: string; me: Me }) {
       <h2>Общие расходы клиники {rows.length > 0 && `· ${somText(total)}`}</h2>
       {mine != null && rows.length > 0 && <p className="hint">Ваша доля за месяц: <b className="num">{somText(mine)}</b> — она в «Мой заработок» → «Чистыми».</p>}
       {list.isPending ? <Loading /> : list.error ? <p className="error">{list.error.message}</p> : !rows.length ? (
-        <EmptyState compact title="Общих расходов за месяц нет">Аренда кабинета, коммуналка, уборка — «Общий расход клиники» в форме выше: запишется один раз и разделится между врачами.</EmptyState>
+        <EmptyState compact title="Общих расходов за месяц нет">Аренда кабинета, коммуналка, уборка — «Общий — делится между врачами» в форме выше: запишется один раз и разделится между врачами.</EmptyState>
       ) : (
         <ul className="shared-list" aria-label="Общие расходы">
           {rows.map((x) => (

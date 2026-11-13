@@ -58,7 +58,7 @@ test('«Деньги»: приход, расход (свои + доля общи
 
   await user.click(screen.getByRole('button', { name: '＋ Расход' }))
   const dialog = await screen.findByRole('dialog', { name: 'Новый расход' })
-  await user.click(within(dialog).getByRole('button', { name: 'Общий расход клиники' }))
+  await user.click(within(dialog).getByRole('button', { name: 'Общий — делится между врачами' }))
   await user.type(within(dialog).getByRole('spinbutton', { name: 'Сумма, сом' }), '30000')
   await choose(within(dialog).getByRole('combobox', { name: 'Статья' }), 'Аренда')
   // По умолчанию — по креслам; выбираем «Вручную»
