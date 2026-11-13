@@ -17,11 +17,13 @@ type Appointment = Schemas['AppointmentView']
  * сохраняет тот же объект, если приём не изменился), выбор или раскладка. Все props — значения или
  * стабильные функции (onOpen — useCallback, hover — из хранилища наведения).
  */
-export const DayAppt = memo(function DayAppt({ a, date, from, active, money, chairTime, hover, onOpen }: {
+export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, money, chairTime, hover, onOpen }: {
   a: Appointment
   date: string
   /** Минута, с которой начинается сетка. */
   from: number
+  /** Докуда видно приём в этом дне: 1440 — полночь, больше — сетка продлена после полуночи (gridRange). */
+  limit: number
   active: boolean
   /** Видит ли сотрудник деньги этого врача (предоплата). */
   money: boolean
@@ -30,12 +32,14 @@ export const DayAppt = memo(function DayAppt({ a, date, from, active, money, cha
   onOpen: (id: number) => void
 }) {
   const s = statusOf(a)
-  // Через полночь: в своём дне — до 24:00, на следующий день — с 00:00 и пометкой «со вчера»
-  const [startMin, endMin] = apptSpan(a, date)
+  // Через полночь: в своём дне — целиком (сетка продлена после 24:00) или, если сетка и так на сутки
+  // (ночная смена), до 24:00 с подписью «→ до 00:45»; на следующий день — с 00:00 и пометкой «со вчера»
+  const [startMin, endMin] = apptSpan(a, date, limit)
   const carried = fromYesterday(a, date)
-  const continues = untilTomorrow(a, date)
+  const continues = untilTomorrow(a, date, limit)
   const top = PAD + (startMin - from) * PX
-  const h = Math.max((endMin - startMin) * PX - 2, 22)
+  // Обрезанный кусок — не ниже строки текста (24 px): время, имя и значки одной строкой без наложений
+  const h = Math.max((endMin - startMin) * PX - 2, carried || continues ? 24 : 22)
   const short = h < SHORT
   return (
     <button type="button" className={`appt s-${s.kind}${short ? ' short' : ''}${active ? ' active' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}`}
@@ -48,7 +52,9 @@ export const DayAppt = memo(function DayAppt({ a, date, from, active, money, cha
       <span className="appt-body">
         <span className="appt-time num">
           <span className="appt-from">{carried && <span className="appt-carried">со вчера </span>}{timeOf(a.startAt)}</span>
-          <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt)}</span>
+          {continues
+            ? <span className="appt-until appt-cut">→ до {timeOf(a.endAt)}</span>
+            : <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt)}</span>}
         </span>
         <span className="appt-name">{a.patient.fullName}</span>
         <ApptBadges appointment={a} money={money} chair={colleagueTimeOf(a, chairTime)} />

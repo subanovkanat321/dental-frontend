@@ -74,6 +74,11 @@ test('сетка дня с ночным врачом: часы «18:00–08:00 (
   expect(carried.style.top).toBe('14px')
   const late = within(column).getByRole('button', { name: /^23:30–00:30, Асель Поздняя/ })
   expect(late).toHaveClass('continues')
+  // Сетка ночной смены и так на сутки — не продлеваем: обрезан полуночью с подписью, не ниже строки текста
+  expect(within(late).getByText('→ до 00:30')).toBeInTheDocument()
+  expect(parseFloat(late.style.height)).toBeGreaterThanOrEqual(24)
+  expect(document.querySelector('.grid-midnight')).toBeNull()
+  expect(within(times).queryByText('завтра')).not.toBeInTheDocument()
   // Между утром и вечером — нерабочее (серым), свободно — утром
   expect(column.querySelectorAll('.grid-off')).toHaveLength(1)
   expect(within(column).getByRole('button', { name: 'Свободно с 01:00 до 08:00, записать' })).toBeInTheDocument()

@@ -1,7 +1,7 @@
 import type { Schemas } from '../../api/client'
 import { canEditDoctor } from '../../lib/roles'
 import { addDays, minutesOf, minutesOfTime } from '../../lib/time'
-import { apptSpan, touchesDay, workSpans } from '../workSpans'
+import { gridRange, workSpans } from '../workSpans'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -32,25 +32,15 @@ export function canDrag(a: Appointment, me: Me, now = new Date()): boolean {
 
 /**
  * Часы сетки недели: от раннего начала до позднего конца рабочих дней (по целым часам); пока часы
- * не загружены или вся неделя выходная — часы клиники. Приём вне часов растягивает сетку до себя.
+ * не загружены или вся неделя выходная — часы клиники. Приём вне часов растягивает сетку до себя,
+ * вечерний через полночь — после 24:00 (до 4 часов, gridRange); {@code limit} — докуда он виден в своём дне.
  */
 export function weekHours(slots: (Slots | undefined)[], appointments: Appointment[], clinic: { workStart?: string; workEnd?: string } | undefined,
   days: string[]) {
   // Рабочие отрезки каждого дня: у ночной смены — вечер и утро, сетка тогда на все сутки
   const spans = days.flatMap((date, i) => workSpans(slots[i], date))
-  let from = spans.length ? Math.min(...spans.map(([s]) => Math.floor(s / 60) * 60))
-    : minutesOfTime(clinic?.workStart ?? '09:00')
-  let to = spans.length ? Math.max(...spans.map(([, e]) => Math.ceil(e / 60) * 60))
-    : minutesOfTime(clinic?.workEnd ?? '18:00')
-  for (const a of appointments) {
-    if (a.status === 'CANCELLED') continue
-    for (const date of days.filter((d) => touchesDay(a, d))) {
-      const [s, e] = apptSpan(a, date)
-      from = Math.min(from, Math.floor(s / 60) * 60)
-      to = Math.max(to, Math.ceil(e / 60) * 60)
-    }
-  }
-  return { from, to }
+  return gridRange(spans, appointments.filter((a) => a.status !== 'CANCELLED'), days,
+    [minutesOfTime(clinic?.workStart ?? '09:00'), minutesOfTime(clinic?.workEnd ?? '18:00')])
 }
 
 /** Минуты от полуночи → вниз к шагу 15 минут и внутрь сетки, чтобы приём длиной {@code duration} поместился. */

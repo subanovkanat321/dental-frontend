@@ -26,7 +26,7 @@ import { OffDaysHint } from './OffDaysHint'
 import './doctorChips.css'
 import { colorOf as doctorColor, initials, specialtyOf } from '../lib/avatars'
 import { NewAppointmentPanel, type Slot } from './NewAppointmentPanel'
-import { apptSpan, fromYesterday, offSpans, slotsHoursText, workSpans } from './workSpans'
+import { DAY, fromYesterday, gridRange, hourLabel, offSpans, slotsHoursText, workSpans } from './workSpans'
 import { statusOf } from './status'
 import { PAD, PX, useFitToWindow, useNowMinutes } from './gridScale'
 import { useToolbarFit } from './useToolbarFit'
@@ -266,17 +266,11 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   // Сетка — рабочие часы врачей на экране (а пока не загружены или все выходные — часы клиники), по
   // целым часам: без длинных пустых «хвостов» до полуночи. Приём раньше или позже — сетка растягивается до него
   // Рабочие отрезки — у ночной смены их два (00:00–08:00 и 18:00–24:00): сетка тогда на все сутки
+  // Приём вечером через полночь (23:45–00:45) — сетка продлевается после 24:00 до его конца, не больше 4 часов (gridRange)
   const spans = shown.flatMap((d) => workSpans(slots[doctors.indexOf(d)]?.data, date))
-  let from = spans.length ? Math.min(...spans.map(([s]) => Math.floor(s / 60) * 60))
-    : minutesOfTime(me.clinic?.workStart ?? '09:00')
-  let to = spans.length ? Math.max(...spans.map(([, e]) => Math.ceil(e / 60) * 60))
-    : minutesOfTime(me.clinic?.workEnd ?? '18:00')
-  for (const a of shown.flatMap((d) => days[doctors.indexOf(d)]?.data ?? [])) {
-    if (a.status === 'CANCELLED') continue
-    const [s, e] = apptSpan(a, date)
-    from = Math.min(from, Math.floor(s / 60) * 60)
-    to = Math.max(to, Math.ceil(e / 60) * 60)
-  }
+  const { from, to, limit } = gridRange(spans,
+    shown.flatMap((d) => days[doctors.indexOf(d)]?.data ?? []).filter((a) => a.status !== 'CANCELLED'), [date],
+    [minutesOfTime(me.clinic?.workStart ?? '09:00'), minutesOfTime(me.clinic?.workEnd ?? '18:00')])
   const hours = Array.from({ length: Math.ceil((to - from) / 60) }, (_, i) => from + i * 60)
   const height = (to - from) * PX + PAD * 2
   // Линия «сейчас» — только у сегодняшнего дня и внутри сетки; выше неё день приглушён
@@ -336,7 +330,8 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
     if (!canEditDoctor(me, doctorId)) return
     const y = e.clientY - e.currentTarget.getBoundingClientRect().top - PAD
     const minutes = Math.min(Math.max(from + Math.floor(y / PX / 15) * 15, from), to - 15)
-    setSide({ kind: 'new', slot: { doctorId, date, minutes } })
+    // После полуночи (сетка продлена) — это уже следующий день
+    setSide({ kind: 'new', slot: minutes >= DAY ? { doctorId, date: addDays(date, 1), minutes: minutes - DAY } : { doctorId, date, minutes } })
   }
   // К кому записать с кнопки: выбранный врач, если его расписание можно менять, иначе свой, иначе первый доступный
   const bookable = doctors.filter((d) => canEditDoctor(me, d.id))
@@ -610,7 +605,9 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
               <div className="grid-times" style={{ height }}>
                 {/* Час рядом с меткой «сейчас» прячем — иначе «11:00» и «11:10» наезжают друг на друга */}
                 {hours.filter((m) => nowTop == null || Math.abs(m - nowMinutes) > 15).map((m) => (
-                  <span key={m} className="num" style={{ top: PAD + (m - from) * PX }}>{String(Math.floor(m / 60)).padStart(2, '0')}:00</span>
+                  <span key={m} className={`num${m === DAY ? ' grid-midnight-time' : ''}`} style={{ top: PAD + (m - from) * PX }}>
+                    {hourLabel(m)}{m === DAY && <small>завтра</small>}
+                  </span>
                 ))}
                 {nowTop != null && <span className="now-label num" style={{ top: nowTop }}>{timeOf(new Date().toISOString())}</span>}
               </div>
@@ -623,6 +620,12 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
                   <div key={d.id} className="grid-col" style={{ height }} role="group" aria-label={d.fullName}
                     title={canEditDoctor(me, d.id) ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'} onClick={pick(d.id)}>
                     {hours.map((m) => <div key={m} className="grid-hour" style={{ top: PAD + (m - from) * PX }} />)}
+                    {/* Сетка продлена после полуночи: черта «полночь» с датой следующего дня (подпись — справа в последней колонке: слева обычно приёмы) */}
+                    {to > DAY && (
+                      <div className="grid-midnight" style={{ top: PAD + (DAY - from) * PX }} aria-hidden="true">
+                        {d === shown[shown.length - 1] && <span>полночь · {dayTitle(addDays(date, 1)).toLowerCase()}</span>}
+                      </div>
+                    )}
                     {nowTop != null && <div className="grid-past" style={{ height: nowTop }} />}
                     {sl && !sl.workingDay && (
                       <div className="grid-off" style={{ top: 0, height }}><span>{sl.dayOff ? `${sl.dayOff.emoji ?? ''} ${sl.dayOff.title ?? ''}` : 'Выходной'}</span></div>
@@ -673,7 +676,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
                     {q?.isPending && <Loading variant="inline" className="grid-loading" />}
                     {q?.error && <div className="error grid-loading">{q.error.message}</div>}
                     {(q?.data ?? []).filter((a) => a.status !== 'CANCELLED').map((a) => (
-                      <DayAppt key={a.id} a={a} date={date} from={from} active={selected?.id === a.id} money={seesMoneyOf(me, a.doctorId)}
+                      <DayAppt key={a.id} a={a} date={date} from={from} limit={limit} active={selected?.id === a.id} money={seesMoneyOf(me, a.doctorId)}
                         chairTime={sl?.chairTime} hover={hover.bind} onOpen={openAppt} />
                     ))}
                   </div>
