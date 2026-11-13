@@ -41,6 +41,12 @@ export function SurveysTab() {
     return <SurveyView key={opened} id={opened} onBack={() => confirmLeave() && setOpened(null)} onOpen={setOpened} />
   }
   const surveys = list.data ?? []
+  const buttons = (
+    <div className="actions">
+      <button type="button" className="btn primary" disabled={create.isPending} onClick={() => create.mutate('template')}>Создать из шаблона</button>
+      <button type="button" className="btn" disabled={create.isPending} onClick={() => create.mutate('empty')}>Пустой опрос</button>
+    </div>
+  )
   return (
     <section className="card-block" aria-label="Опросы сотрудников">
       <SubHelp title="Опросы сотрудников">Спросите врачей, руководителей, регистратуру и ассистентов, что им удобно и чего не хватает. Сотрудник видит приглашение на «Расписании»
@@ -64,12 +70,12 @@ export function SurveysTab() {
             })}
           </tbody>
         </table>
-      ) : <EmptyState title="Опросов пока нет">Начните с готового «Как вам Tish?» — 7 вопросов, его можно поправить.</EmptyState>}
+      ) : null}
       {create.error && <p className="error" role="alert">{create.error.message}</p>}
-      <div className="actions">
-        <button type="button" className="btn primary" disabled={create.isPending} onClick={() => create.mutate('template')}>Создать из шаблона</button>
-        <button type="button" className="btn" disabled={create.isPending} onClick={() => create.mutate('empty')}>Пустой опрос</button>
-      </div>
+      {/* Опросов нет — кнопки создания под фразой пустого состояния, по центру, а не отдельно у левого края */}
+      {list.isPending ? null : surveys.length || list.error ? buttons : (
+        <EmptyState title="Опросов пока нет" action={buttons}>Начните с готового «Как вам Tish?» — 7 вопросов, его можно поправить.</EmptyState>
+      )}
     </section>
   )
 }

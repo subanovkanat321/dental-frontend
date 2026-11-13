@@ -71,8 +71,8 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
             <tr key={c.id} {...rowOpen(() => setOpened({ id: c.id }), c.id === opened?.id && 'active')}>
               <td>
                 <button type="button" className="row-link open-link" onClick={() => setOpened({ id: c.id })}>{c.name}<span aria-hidden="true"> ›</span></button>
-                {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
                 <div><span className={`chip small ${hl.chip}`}>{hl.label}</span>
+                  {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
                   {c.settingUp ? <span className="hint"> · 🛠 не видна пациентам</span> : c.listed === false ? <span className="hint"> · не в каталоге</span> : null}</div>
               </td>
               <td className="hint nowrap">{c.staffSeenAt ? agoText(c.staffSeenAt) : 'ещё не заходили'}</td>
@@ -110,7 +110,7 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
             : 'Все клиники приложения — только цифры, без пациентов. Нажмите на клинику, чтобы пригласить её руководителя.'}</SubHelp>
         <section className="card-block">
           {list.error && <p className="error">{list.error.message}</p>}
-          {list.isPending ? <Loading /> : (
+          {list.isPending ? <Loading /> : list.error ? null : (
             <>
               <p className="stats">
                 <span className="chip small s-quiet">Клиник: <b className="num">{shown.length}</b></span>
@@ -245,8 +245,12 @@ function Application({ a, onApproved }: { a: Schemas['ClinicApplicationsApplicat
     <div className="sub-form form" role="group" aria-label={`Заявка: ${a.clinicName}`}>
       <strong>{a.clinicName}</strong>
       <span className="hint">{[a.solo ? 'частный врач' : null, a.city, a.doctors ? `врачей: ${a.doctors}` : null, a.createdAt ? shortDate(a.createdAt, true) : null].filter(Boolean).join(' · ')}</span>
-      <span>{a.contactName} · {a.phone && <a href={`tel:+${a.phone}`}>{formatPhone(a.phone)}</a>}
-        {a.telegram && <> · <a href={`https://t.me/${a.telegram}`} target="_blank" rel="noopener noreferrer">@{a.telegram}</a></>}</span>
+      {/* Контакты — через «·» только между тем, что есть: без телефона не висит точка в конце */}
+      {(a.contactName || a.phone || a.telegram) && <span>{[
+        a.contactName ? <span key="n">{a.contactName}</span> : null,
+        a.phone ? <a key="p" href={`tel:+${a.phone}`}>{formatPhone(a.phone)}</a> : null,
+        a.telegram ? <a key="t" href={`https://t.me/${a.telegram}`} target="_blank" rel="noopener noreferrer">@{a.telegram}</a> : null,
+      ].filter(Boolean).flatMap((el, i) => i ? [' · ', el] : [el])}</span>}
       {a.message && <span className="hint">{a.message}</span>}
       <div className="actions">
         <button type="button" className="btn primary" disabled={approve.isPending} onClick={() => approve.mutate()}>Одобрить и завести клинику</button>

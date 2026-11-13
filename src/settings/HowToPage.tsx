@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import { useBack } from '../lib/back'
+import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
+import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
+import { openLink } from '../lib/telegram'
 import { SubHeader } from './SubHeader'
 import { howToVideos, type HowToVideo } from '../api/client'
 import './howto.css'
@@ -18,10 +21,15 @@ export function HowToPage({ onBack }: { onBack: () => void }) {
   return (
     <div className="schedule-main howto-page">
       <SubHeader title="Видео: как сделать" onBack={onBack} />
-      <p className="hint">Ролики по 20–40 секунд, без звука: шаги — подписями на экране. Нажмите на ролик.</p>
+      {/* «Нажмите на ролик» — только когда есть на что нажимать */}
+      {list.data?.length ? <p className="hint">Ролики по 20–40 секунд, без звука: шаги — подписями на экране. Нажмите на ролик.</p> : null}
       {list.isPending ? <Loading />
         : list.isError ? <p className="error" role="alert">Не удалось загрузить список видео — проверьте интернет и откройте снова</p>
-          : !list.data.length ? <p className="hint">Видео пока нет.</p>
+          : !list.data.length ? (
+            <EmptyState title="Видео пока нет" action={<button type="button" className="btn" onClick={() => openLink(TISH_INSTAGRAM)}>Instagram {TISH_INSTAGRAM_NAME}</button>}>
+              Ролики скоро появятся здесь. Пока — короткие видео в Instagram Tish и «Руководство» в «Помощи».
+            </EmptyState>
+          )
             : (
               <ul className="howto-grid" aria-label="Видео-инструкции">
                 {list.data.map((v) => (

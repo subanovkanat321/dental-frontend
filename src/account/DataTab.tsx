@@ -21,6 +21,8 @@ export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
 
   return (
     <>
+      {/* Порядок — как в названии пункта «Импорт, выгрузка, журнал»: новая клиника сначала загружает базу */}
+      {me.admin && <ImportData />}
       {seesAll && (
         <section className="card-block">
           <h2>Выгрузка данных</h2>
@@ -35,7 +37,6 @@ export function DataTab({ me, seesAll }: { me: Me; seesAll: boolean }) {
           </div>
         </section>
       )}
-      {me.admin && <ImportData />}
       {/* Удалить все приёмы — только владелец Tish (сервер тоже: остальным 403) */}
       {me.owner && <ClearAll />}
       {me.admin && <AuditJournal />}

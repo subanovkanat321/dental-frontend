@@ -329,7 +329,7 @@ function FeaturesBlock({ a, period }: { a: Analytics; period: string }) {
   const items = [...(f.items ?? [])].sort((x, y) => y.clinics - x.clinics)
   return (
     <Block title="Чем пользуются" label="Использование функций"
-      hint={<>Из {active} клиник с приёмами {period}. Пациенты записались сами (бот и сайт): <b>{pct(f.selfBooked ?? 0, f.appointments ?? 0)}</b> приёмов.{f.aiBooked ? <> ИИ записал: <b>{f.aiBooked}</b>.</> : null}</>}>
+      hint={!active ? 'Какие функции включают клиники, у которых были приёмы.' : <>Из {active} клиник с приёмами {period}. Пациенты записались сами (бот и сайт): <b>{pct(f.selfBooked ?? 0, f.appointments ?? 0)}</b> приёмов.{f.aiBooked ? <> ИИ записал: <b>{f.aiBooked}</b>.</> : null}</>}>
       {active ? (
         <ul className="hbars" aria-label="Функции">
           {items.map((x) => (
@@ -358,6 +358,8 @@ function PatientsBlock({ a, period }: { a: Analytics; period: string }) {
         <Tile title="Подключили бота" value={pct(p.withBot ?? 0, p.total ?? 0)} note={`${p.withBot ?? 0}`} />
         <Tile title={`Неявки ${period}`} value={pct(p.noShow ?? 0, visits)} note={`${p.noShow ?? 0} из ${visits}`} />
       </div>
+      {/* Ни одного нового пациента за год — не рисуем двенадцать пустых столбиков на полэкрана */}
+      {!months.some((m) => m.count) ? <EmptyState compact title="Новых пациентов за год ещё не было" /> : <>
       <p className="hint small">Новых пациентов по месяцам</p>
       <div className="vbars" role="img" aria-label={months.map((m) => `${longMonth(m.month ?? '')}: ${m.count}`).join('; ')}>
         {months.map((m) => (
@@ -368,6 +370,7 @@ function PatientsBlock({ a, period }: { a: Analytics; period: string }) {
           </span>
         ))}
       </div>
+      </>}
     </Block>
   )
 }

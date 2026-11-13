@@ -301,7 +301,7 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
       {/* Структура расходов месяца — бублик; ниже те же статьи списком с пометками «считается само» */}
       <Donut parts={lines.filter((l) => !l.needsPrice && l.som > 0).map((l) => ({ key: l.key ?? l.label ?? '', name: l.label ?? '', value: l.som }))}
         label={single ? 'Структура расходов за месяц' : 'Структура расходов за период'} format={somText} center={somText(f.expenseSom)}
-        caption={single ? 'расходы месяца' : 'расходы за период'} empty={single ? 'Расходов за этот месяц нет.' : 'Расходов за этот период нет.'} />
+        caption={single ? 'расходы месяца' : 'расходы за период'} empty={single ? 'Расходы за этот месяц — 0 сом.' : 'Расходы за этот период — 0 сом.'} />
       <dl className="net-lines fin-lines" aria-label="Расходы по статьям">
         {lines.map((l) => (
           <div key={l.key}>

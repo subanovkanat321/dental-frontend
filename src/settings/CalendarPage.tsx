@@ -20,7 +20,7 @@ const KEY = ['calendar-feed']
 export function CalendarPage({ onBack }: { onBack: () => void }) {
   return (
     <section className="schedule-main">
-      <SubHeader title="📅 Календарь в телефоне" onBack={onBack} />
+      <SubHeader title="Календарь в телефоне" onBack={onBack} />
       <CalendarFeed />
     </section>
   )

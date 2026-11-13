@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { isAssistant, seesAllMoney } from '../lib/roles'
+import { dateOf } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -82,4 +83,24 @@ export function preselected(steps: Step[], a: Appointment, services: Schemas['Se
     const toothFits = s.tooth == null || teeth.length === 0 || byTooth
     return byTooth || (sameService && toothFits)
   }).map((s) => s.id)
+}
+
+/** «нет», «3 этапа», «3 этапа, 1 сделан сегодня», «всё сделано». */
+export function planMeta(steps: Step[], a: Appointment): string {
+  if (steps.length === 0) return 'нет'
+  const left = steps.filter((s) => !s.doneAt).length
+  const day = a.startAt ? dateOf(a.startAt) : null
+  const today = steps.filter((s) => s.doneAt && (s.doneAppointmentId === a.id || (day != null && dateOf(s.doneAt) === day))).length
+  const parts = [left > 0 ? `${left} ${stepsWord(left)}` : 'всё сделано']
+  if (today > 0) parts.push(`${today} ${today === 1 ? 'сделан' : 'сделано'} сегодня`)
+  return parts.join(', ')
+}
+
+/** «1 этап», «2 этапа», «5 этапов». */
+export function stepsWord(n: number): string {
+  const d = n % 10
+  const dd = n % 100
+  if (d === 1 && dd !== 11) return 'этап'
+  if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return 'этапа'
+  return 'этапов'
 }

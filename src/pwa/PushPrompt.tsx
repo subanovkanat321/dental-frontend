@@ -109,7 +109,7 @@ function PromptSheet({ noTelegram, publicKey, onClose }: { noTelegram: boolean; 
     body = <>
       <p className="pwa-warn">{noTelegram ? 'Вы запретили уведомления для Tish — о записях узнает только руководитель.'
         : 'Вы запретили уведомления для Tish — они по-прежнему будут приходить в Telegram.'}</p>
-      <p className="hint">Разрешить можно в настройках телефона: Tish → «Уведомления», потом «Настройки» → «Уведомления» здесь.</p>
+      <p className="hint">Разрешить можно в настройках телефона: Tish → «Уведомления», потом здесь: своё имя внизу меню → «Уведомления».</p>
     </>
     actions = <button ref={main} type="button" className="btn primary" onClick={onClose}>Понятно</button>
   } else {

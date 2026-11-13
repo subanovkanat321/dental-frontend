@@ -9417,6 +9417,43 @@
         }
       }
     },
+    "/api/appointments/{id}/visit-report/preview" : {
+      "post" : {
+        "tags" : [ "visit-report-controller" ],
+        "operationId" : "preview_5",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisitReportControllerPreviewRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisitReportsPreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/visit-report/draft" : {
       "post" : {
         "tags" : [ "visit-report-controller" ],
@@ -9436,6 +9473,14 @@
           "schema" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }, {
+          "name" : "mode",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "AUTO", "AI", "TEMPLATE", "SELF" ]
           }
         } ],
         "responses" : {
@@ -20379,8 +20424,43 @@
           "via" : {
             "type" : "string",
             "enum" : [ "TELEGRAM", "WHATSAPP", "PRINT" ]
+          },
+          "doctorPhone" : {
+            "type" : "boolean"
           }
         }
+      },
+      "VisitReportControllerPreviewRequest" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "care" : {
+            "type" : "string"
+          },
+          "doctorPhone" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "VisitReportsPreview" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "parts" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          }
+        },
+        "required" : [ "parts", "telegram" ]
       },
       "VisitReportsCare" : {
         "properties" : {
@@ -20417,6 +20497,9 @@
           },
           "telegram" : {
             "type" : "boolean"
+          },
+          "doctorPhone" : {
+            "type" : "string"
           }
         },
         "required" : [ "ai", "aiAvailable", "telegram" ]

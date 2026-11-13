@@ -28,7 +28,7 @@ export function PlanTab() {
     <>
       <section className={`card-block pay-status tone-${line.tone}`}>
         <h2>Приложение: {line.text}</h2>
-        <p className="hint">Ваш тариф — «{p.tariff?.name}»: работающих врачей {p.doctors}, {somText(p.tariff?.monthSom ?? 0)} в месяц</p>
+        <p className="hint">Ваш тариф — «{p.tariff?.name}»: {somText(p.tariff?.monthSom ?? 0)} в месяц, работающих врачей — {p.doctors}</p>
       </section>
 
       <section className="card-block">
@@ -113,7 +113,7 @@ function PayBox({ pay }: { pay: Pay }) {
       <div className="form narrow">
         <p className="chip s-wait">Оплата на проверке</p>
         <p className="hint">{somText(r.amountSom)} за {(PAY_PERIOD_TEXT[r.months] ?? '').toLowerCase()} · отправлено {r.createdAt ? shortDate(r.createdAt) : ''}{r.hasReceipt ? ' · с чеком' : ''}</p>
-        <p className="hint">Разработчики сверят перевод с банком — срок продлится сам, бот пришлёт «оплата получена». Пока проверяем, новые записи работают.</p>
+        <p className="hint">Команда Tish сверит перевод с банком — срок продлится сам, бот пришлёт «оплата получена». Пока проверяем, новые записи работают.</p>
         {cancel.error && <p className="error" role="alert">{cancel.error.message}</p>}
         <button type="button" className="btn" disabled={cancel.isPending}
           onClick={() => void ask('Отменить отправленную оплату?').then((ok) => ok && cancel.mutate(r.id))}>Отменить — нажал(а) по ошибке</button>
@@ -125,7 +125,7 @@ function PayBox({ pay }: { pay: Pay }) {
   return (
     <div className="form narrow">
       {pay.last?.status === 'REJECTED' && (
-        <p className="tone-bad">Прошлую оплату ({somText(pay.last.amountSom)}) не нашли{pay.last.comment ? `: ${pay.last.comment}` : ''}. Если вы уже заплатили — напишите разработчикам.</p>
+        <p className="tone-bad">Прошлую оплату ({somText(pay.last.amountSom)}) не нашли{pay.last.comment ? `: ${pay.last.comment}` : ''}. Если вы уже заплатили — напишите команде Tish.</p>
       )}
       <div className="segments" role="group" aria-label="Срок оплаты">
         {(pay.periods ?? []).map((x) => (
@@ -133,7 +133,7 @@ function PayBox({ pay }: { pay: Pay }) {
         ))}
       </div>
       <p><strong className="num">К оплате: {somText(period?.amountSom ?? 0)}</strong>{months === 12 && <span className="hint"> — 2 месяца в подарок</span>}</p>
-      {nothing && <p className="hint">Способы оплаты ещё не заданы — напишите разработчикам, пришлём реквизиты.</p>}
+      {nothing && <p className="hint">Способы оплаты ещё не заданы — напишите команде Tish («Помощь» внизу меню), пришлём реквизиты.</p>}
       {qr && qr !== 'error' && <><p className="hint">Отсканируйте QR в приложении банка и введите сумму:</p><img className="pay-qr" src={qr.url} alt="QR для оплаты" /></>}
       {s.details && <p className="pay-details">{s.details}</p>}
       {s.hasRequisites && (
@@ -147,7 +147,7 @@ function PayBox({ pay }: { pay: Pay }) {
       {sent && <p className="tone-ok" role="status">{sent}</p>}
       {!nothing && (
         <>
-          <p className="hint">Оплатили? Нажмите — разработчики сверят перевод и продлят срок. Чек или скриншот — по желанию, так быстрее.</p>
+          <p className="hint">Оплатили? Нажмите — команда Tish сверит перевод и продлят срок. Чек или скриншот — по желанию, так быстрее.</p>
           <label className="btn">{file ? `Чек: ${file.name}` : 'Приложить чек'}
             <input type="file" className="sr-only" accept="application/pdf,image/jpeg,image/png" aria-label="Чек об оплате"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>

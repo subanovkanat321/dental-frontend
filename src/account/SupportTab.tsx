@@ -58,7 +58,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
         {header}
         <section className="card-block" aria-label="Помощь">
           <div className="block-head">
-            <h2>Помощь</h2>
+            <h2>Помощник</h2>
             <span className="actions"><button type="button" className="btn primary" onClick={() => setOpened(HELP)}>Спросить помощника</button></span>
           </div>
           <p className="hint">Помощник сразу подскажет, как что-то сделать в Tish. Не знает ответа — передаст вопрос команде Tish.</p>
@@ -79,8 +79,8 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
                   const [status, cls] = TICKET_STATUS[t.status ?? 'OPEN'] ?? ['', 's-quiet']
                   return (
                     <tr key={t.id} {...rowOpen(() => setOpened(t.id), t.id === opened && 'active')}>
-                      <td><button type="button" className="row-link" onClick={() => setOpened(t.id)}>{t.viaBot ? '💬 Помощь' : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}</button>
-                        <span className="hint"> · {t.preview}</span></td>
+                      <td><span><button type="button" className="row-link" onClick={() => setOpened(t.id)}>{t.viaBot ? '💬 Помощь' : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}</button>
+                        <span className="hint"> · {t.preview}</span></span></td>
                       <td><span className={`chip small ${cls}`}>{status}</span></td>
                       <td className="hint nowrap">{t.updatedAt ? shortDate(t.updatedAt) : ''}{t.author ? ` · ${t.author}` : ''}</td>
                     </tr>
@@ -88,7 +88,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
                 })}
               </tbody>
             </table>
-          ) : <EmptyState compact title="Пока нет обращений" />}
+          ) : !list.error && <EmptyState compact title="Пока нет обращений" />}
         </section>
         <section className="card-block">
           <h2>Поддержка клиники</h2>
@@ -99,7 +99,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
               {clinic.supportPhone && <a className="btn" href={`tel:+${clinic.supportPhone}`}>Позвонить: {formatPhone(clinic.supportPhone)}</a>}
             </div>
           ) : <p className="hint">{me.admin ? 'Контакты поддержки не заданы — добавьте их в «Клиника → О клинике».' : 'Контакты поддержки пока не заданы — спросите руководителя.'}</p>}
-          <h3>Разработчики напрямую</h3>
+          <h3>Команда Tish напрямую</h3>
           <DeveloperContacts />
         </section>
         <section className="card-block">

@@ -150,7 +150,7 @@ test('браузер отказал — понятный текст и где в
   await userEvent.click(await screen.findByRole('button', { name: 'В приложение' }, WAIT))
   const dialog = await screen.findByRole('dialog', { name: 'Уведомления запрещены' })
   expect(dialog).toHaveTextContent('по-прежнему будут приходить в Telegram')
-  expect(dialog).toHaveTextContent('«Настройки» → «Уведомления»')
+  expect(dialog).toHaveTextContent('своё имя внизу меню → «Уведомления»')
   expect(calls.bodies).toEqual([])
 })
 

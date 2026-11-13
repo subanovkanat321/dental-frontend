@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Spinner } from '../layout/Loading'
-import { canMarkPlan, forgetPlanDone, preselected, useAskPlanDone, usePlanLeft } from './planDoneStore'
+import { canMarkPlan, forgetPlanDone, preselected, stepsWord, useAskPlanDone, usePlanLeft } from './planDoneStore'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -80,12 +80,4 @@ function errorText(e: ApiError): string {
   if (e.status === 403) return 'План лечения ведёт врач приёма или руководитель — у вас нет права отмечать этапы.'
   if (e.status === 404) return 'Этап уже удалили или изменили. Откройте план лечения в медкарте.'
   return e.message || 'Не получилось отметить. Проверьте интернет и попробуйте ещё раз.'
-}
-
-function stepsWord(n: number): string {
-  const d = n % 10
-  const dd = n % 100
-  if (d === 1 && dd !== 11) return 'этап'
-  if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return 'этапа'
-  return 'этапов'
 }
