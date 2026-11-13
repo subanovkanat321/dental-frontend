@@ -37,7 +37,7 @@ test('админ: выручка за месяц, по способам; выб�
       return HttpResponse.json({
         totalSom: q.get('doctorId') ? 7000 : 25000, paidCount: 6, unpaidCount: 1, freeCount: 2, prepaidCount: 1, byMethod: { CASH: 15000, TRANSFER: 10000 },
         days: [{ date: '2026-10-01', totalSom: 5000 }, { date: '2026-10-02', totalSom: 20000 }],
-        cash: { totalSom: q.get('doctorId') ? 8000 : 31000, paymentsCount: 8, depositsSom: 1000, byMethod: { CASH: 16000, CARD: 15000 }, days: [] },
+        cash: { totalSom: q.get('doctorId') ? 8000 : 31000, paymentsCount: 8, depositsSom: 1000, byMethod: { CASH: 16000, CARD: 15000 }, days: [], openingDebtsSom: 0 },
       } satisfies Schemas['RevenueView'])
     }),
     http.get('*/api/appointments/debts', () => HttpResponse.json([debt(7, 'Бакыт М.', { debtSom: 2000, dueOn: '2020-01-01' })])),

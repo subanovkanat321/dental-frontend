@@ -12635,6 +12635,44 @@
         }
       }
     },
+    "/api/expenses/shared" : {
+      "get" : {
+        "tags" : [ "expense-controller" ],
+        "operationId" : "shared",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ExpensesExpense"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/expenses/categories" : {
       "get" : {
         "tags" : [ "expense-controller" ],
@@ -16582,6 +16620,30 @@
           "patientId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "splitKey" : {
+            "type" : "string"
+          },
+          "repeatMonthly" : {
+            "type" : "boolean"
+          },
+          "shares" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExpensesShareDraft"
+            }
+          }
+        }
+      },
+      "ExpensesShareDraft" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -16618,9 +16680,37 @@
           },
           "patient" : {
             "type" : "string"
+          },
+          "splitKey" : {
+            "type" : "string"
+          },
+          "repeatMonthly" : {
+            "type" : "boolean"
+          },
+          "shares" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExpensesShare"
+            }
           }
         },
-        "required" : [ "amountSom", "id" ]
+        "required" : [ "amountSom", "id", "repeatMonthly" ]
+      },
+      "ExpensesShare" : {
+        "properties" : {
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "amountSom", "doctorId" ]
       },
       "DoctorServicesControllerRequest" : {
         "properties" : {
@@ -18284,6 +18374,10 @@
           "costSom" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "deliveredOn" : {
+            "type" : "string",
+            "format" : "date"
           }
         },
         "required" : [ "delta" ]
@@ -20062,6 +20156,10 @@
           "used" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "costSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "supplyId", "used" ]
@@ -20970,6 +21068,10 @@
               "$ref" : "#/components/schemas/SpendingViewMonth"
             }
           },
+          "lossesSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "revenueSom" : {
             "type" : "integer",
             "format" : "int64"
@@ -20983,7 +21085,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "purchasedSom", "unpricedDeliveries", "unpricedUsed", "usedSom" ]
+        "required" : [ "lossesSom", "purchasedSom", "unpricedDeliveries", "unpricedUsed", "usedSom" ]
       },
       "SpendingViewItem" : {
         "properties" : {
@@ -21019,9 +21121,17 @@
           "usedSom" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "lost" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lostSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "archived", "bought", "boughtSom", "supplyId", "unpricedDeliveries", "used" ]
+        "required" : [ "archived", "bought", "boughtSom", "lost", "supplyId", "unpricedDeliveries", "used" ]
       },
       "SpendingViewMonth" : {
         "properties" : {
@@ -23472,6 +23582,18 @@
         },
         "required" : [ "pending", "resendSeconds", "secondsLeft" ]
       },
+      "ExpensesCategorySum" : {
+        "properties" : {
+          "category" : {
+            "type" : "string"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "amountSom" ]
+      },
       "NetMonthMine" : {
         "properties" : {
           "month" : {
@@ -23487,8 +23609,19 @@
           },
           "row" : {
             "$ref" : "#/components/schemas/NetMonthRow"
+          },
+          "expenses" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ExpensesCategorySum"
+            }
+          },
+          "purchasedSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
-        }
+        },
+        "required" : [ "purchasedSom" ]
       },
       "NetMonthRow" : {
         "properties" : {
@@ -23522,7 +23655,15 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "lossesSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "expensesSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "sharedExpensesSom" : {
             "type" : "integer",
             "format" : "int64"
           },
@@ -23543,7 +23684,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "clinicSom", "earnedSom", "expensesSom", "materialsSom", "rentSom", "revenueSom", "selfEmployed", "unpricedMaterials" ]
+        "required" : [ "clinicSom", "earnedSom", "expensesSom", "lossesSom", "materialsSom", "rentSom", "revenueSom", "selfEmployed", "sharedExpensesSom", "unpricedMaterials" ]
       },
       "NetMonthReport" : {
         "properties" : {
@@ -23576,6 +23717,14 @@
             "format" : "int64"
           },
           "clinicMaterialsSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "usedSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lossesSom" : {
             "type" : "integer",
             "format" : "int64"
           },
@@ -23612,7 +23761,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "accruedSom", "clinicMaterialsSom", "generalExpensesSom", "otherSom", "paidSom", "payoutsSom", "profitSom", "purchasedSom", "rentReceivedSom", "selfEmployedExpensesSom", "supplySom" ]
+        "required" : [ "accruedSom", "clinicMaterialsSom", "generalExpensesSom", "lossesSom", "otherSom", "paidSom", "payoutsSom", "profitSom", "purchasedSom", "rentReceivedSom", "selfEmployedExpensesSom", "supplySom", "usedSom" ]
       },
       "PaymentQueryDebt" : {
         "properties" : {
@@ -24319,9 +24468,13 @@
             "items" : {
               "$ref" : "#/components/schemas/RevenueViewDay"
             }
+          },
+          "openingDebtsSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "depositsSom", "paymentsCount", "totalSom" ]
+        "required" : [ "depositsSom", "openingDebtsSom", "paymentsCount", "totalSom" ]
       },
       "RevenueViewDay" : {
         "properties" : {

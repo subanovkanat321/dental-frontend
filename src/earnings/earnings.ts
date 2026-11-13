@@ -53,3 +53,12 @@ export const signedSom = (som: number) => (som < 0 ? `−${somText(-som)}` : som
 export function materialsWord(n: number): string {
   return n % 10 === 1 && n % 100 !== 11 ? `${n} материала` : `${n} материалов`
 }
+
+/** «позиция» по числу: 1 позиция, 2 позиции, 5 позиций. */
+export function positions(n: number): string {
+  const d = n % 10
+  const dd = n % 100
+  if (d === 1 && dd !== 11) return 'позиция'
+  if (d >= 2 && d <= 4 && (dd < 12 || dd > 14)) return 'позиции'
+  return 'позиций'
+}

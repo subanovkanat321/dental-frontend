@@ -2271,3 +2271,33 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .opening-debts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .opening-debts li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
 .opening-debts p { margin: 0; }
+/* Общие расходы (V207): форма с ключом деления, окно «＋ Расход», доли врачей, приход/расход/итог в «Деньгах» */
+.expense-form .expense-kind, .expense-form .split-box, .expense-form .expense-hint, .expense-form .error { grid-column: 1 / -1; }
+.expense-form .expense-kind button { flex: 1; white-space: normal; line-height: 1.2; }
+.expense-dialog .expense-form { grid-template-columns: 1fr; }
+.expense-form input[type="checkbox"] { height: auto; padding: 0; }
+.split-box { display: grid; gap: 8px; margin: 0; padding: 10px 12px 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+.split-box legend { padding: 0 4px; font-size: .85rem; color: var(--hint); }
+.split-manual { display: grid; gap: 6px; }
+.split-manual .field.inline { display: grid; grid-template-columns: 1fr 140px; align-items: center; gap: 8px; }
+.split-box .check { display: flex; gap: 8px; align-items: center; }
+.expense-dialog { width: min(560px, calc(100vw - 32px)); gap: 12px; }
+.expense-dialog .block-head { display: flex; justify-content: space-between; align-items: center; }
+.expense-dialog h2 { margin: 0; }
+.shared-list { display: grid; gap: 10px; margin: 8px 0 0; padding: 0; list-style: none; }
+.shared-list > li { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--separator); }
+.shared-list > li:first-child { border-top: 0; }
+.shared-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.shares { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.shares .chip.mine { background: var(--accent-soft); color: var(--accent-hover); font-weight: 600; }
+.shared-head .chip { cursor: pointer; border: 1px solid var(--line-strong); background: var(--card); color: var(--text); font: inherit; font-size: .85rem; }
+.methods.cash-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.methods.cash-flow > div { display: grid; gap: 2px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); font-size: .86rem; }
+.methods.cash-flow b { font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+.net-lines .net-sub dt { padding-left: 14px; color: var(--hint); font-size: .86rem; }
+.add-expense { white-space: nowrap; }
+@media (max-width: 640px) {
+  .methods.cash-flow { grid-template-columns: 1fr 1fr; }
+  .methods.cash-flow > div:last-child { grid-column: 1 / -1; }
+  .split-manual .field.inline { grid-template-columns: 1fr 110px; }
+}

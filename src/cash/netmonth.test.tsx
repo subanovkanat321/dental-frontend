@@ -15,19 +15,19 @@ type Row = Schemas['NetMonthRow']
 /** Вымышленные врачи и суммы — как посчитал бы NetMonth на сервере. */
 const DASTAN: Row = {
   doctorId: 2, doctor: 'Дастан Т.', selfEmployed: true, revenueSom: 50000, earnedSom: 50000, rentSom: 20000, materialsSom: 300,
-  unpricedMaterials: 1, expensesSom: 4000, doctorNetSom: 25700, clinicSom: 20000, sharedSom: 10000, clinicAfterSharedSom: 10000,
+  unpricedMaterials: 1, lossesSom: 0, expensesSom: 4000, sharedExpensesSom: 0, doctorNetSom: 25700, clinicSom: 20000, sharedSom: 10000, clinicAfterSharedSom: 10000,
 }
 const BERMET: Row = {
   doctorId: 3, doctor: 'Бермет К.', selfEmployed: false, revenueSom: 40000, earnedSom: 22000, rentSom: 0, materialsSom: 200,
-  unpricedMaterials: 0, expensesSom: 3000, clinicSom: 14800, sharedSom: 8000, clinicAfterSharedSom: 6800,
+  unpricedMaterials: 0, lossesSom: 0, expensesSom: 3000, sharedExpensesSom: 0, clinicSom: 14800, sharedSom: 8000, clinicAfterSharedSom: 6800,
 }
 const TOTAL: Row = {
   doctor: 'Итого по врачам', selfEmployed: true, revenueSom: 90000, earnedSom: 72000, rentSom: 20000, materialsSom: 500,
-  unpricedMaterials: 1, expensesSom: 7000, doctorNetSom: 25700, clinicSom: 34800, sharedSom: 18000, clinicAfterSharedSom: 16800,
+  unpricedMaterials: 1, lossesSom: 0, expensesSom: 7000, sharedExpensesSom: 0, doctorNetSom: 25700, clinicSom: 34800, sharedSom: 18000, clinicAfterSharedSom: 16800,
 }
 const REPORT: Schemas['NetMonthReport'] = {
-  month: '2026-10', rows: [DASTAN, BERMET], total: TOTAL, generalExpensesSom: 18000, purchasedSom: 1000, clinicMaterialsSom: 200,
-  supplySom: -800, selfEmployedExpensesSom: 4000, accruedSom: 52000, paidSom: 31000, rentReceivedSom: 0, payoutsSom: 21000, otherSom: 0,
+  month: '2026-10', rows: [DASTAN, BERMET], total: TOTAL, generalExpensesSom: 18000, purchasedSom: 1000, clinicMaterialsSom: 200, usedSom: 500, lossesSom: 0,
+  supplySom: -300, selfEmployedExpensesSom: 4000, accruedSom: 52000, paidSom: 31000, rentReceivedSom: 0, payoutsSom: 21000, otherSom: 0,
   profitSom: 33000,
 }
 
@@ -44,7 +44,7 @@ function backend(who: Me, mine: Schemas['NetMonthMine']) {
     http.get('*/api/me/net-month', () => HttpResponse.json(mine)),
     http.get('*/api/expenses', () => HttpResponse.json([])),
     http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: [], own: [] })),
-    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 90000, purchasedSom: 1000, expensesSom: 56000, usedSom: 0, unpricedUsed: 0, unpricedDeliveries: 0 } satisfies Schemas['SpendingView'])),
+    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 90000, purchasedSom: 1000, expensesSom: 56000, usedSom: 0, unpricedUsed: 0, unpricedDeliveries: 0, lossesSom: 0 } satisfies Schemas['SpendingView'])),
     http.get('*/api/finance/net-month', () => HttpResponse.json(REPORT)),
   )
 }
@@ -57,17 +57,20 @@ afterEach(() => {
 })
 
 test('частный врач: «Чистыми за месяц» столбиком в «Моём заработке»', async () => {
-  backend(doctorOnly, { month: '2026-11', row: DASTAN })
+  backend(doctorOnly, { month: '2026-11', row: DASTAN, expenses: [{ category: 'Зуботехническая лаборатория', amountSom: 4000 }], purchasedSom: 0 })
   const user = userEvent.setup()
   renderApp()
   await user.click(await findSub('Мой заработок'))
 
   const block = await screen.findByRole('region', { name: 'Чистыми за месяц' })
   expect(block).toHaveTextContent('Чистыми за ноябрь')
-  expect(block).toHaveTextContent(/Выручка50\s000 сом/)
+  expect(block).toHaveTextContent(/Выручка за приёмы месяца50\s000 сом/)
   expect(block).toHaveTextContent(/Аренда кресла−20\s000 сом/)
-  expect(block).toHaveTextContent(/Материалы ≈−300 сом/)
-  expect(block).toHaveTextContent(/Техник и лаборатория−4\s000 сом/)
+  expect(block).toHaveTextContent(/Материалы по списанию ≈ · без цены: 1 позиция−300 сом/)
+  // «Мои расходы» — с разбивкой по статьям (раньше строка называлась «Техник и лаборатория»)
+  expect(block).toHaveTextContent(/Мои расходы−4\s000 сомЗуботехническая лаборатория−4\s000 сом/)
+  expect(block).not.toHaveTextContent('Техник и лаборатория')
+  expect(block).not.toHaveTextContent('Доля общих расходов')
   expect(within(block).getByLabelText('Чистыми')).toHaveTextContent(/25\s700 сом/)
   expect(block).toHaveTextContent('У 1 материала нет цены')
   // 100% — строки «клинике по условиям» нет
@@ -75,7 +78,7 @@ test('частный врач: «Чистыми за месяц» столбик
 })
 
 test('врач за клинику: в «Моём заработке» о марже клиники ничего', async () => {
-  backend({ ...doctorOnly, doctorId: 3 }, { month: '2026-11' })
+  backend({ ...doctorOnly, doctorId: 3 }, { month: '2026-11', purchasedSom: 0 })
   const user = userEvent.setup()
   renderApp()
   await user.click(await findSub('Мой заработок'))
@@ -86,7 +89,7 @@ test('врач за клинику: в «Моём заработке» о мар
 })
 
 test('админ: «Итог месяца по врачам» в «Расходах» — строки, итого, сверка с прибылью и CSV', async () => {
-  backend(me, { month: '2026-11' })
+  backend(me, { month: '2026-11', purchasedSom: 0 })
   const user = userEvent.setup()
   renderApp()
   await user.click(await findSub('Расходы'))
@@ -96,7 +99,7 @@ test('админ: «Итог месяца по врачам» в «Расход�
   expect(rows).toHaveLength(4)
   expect(rows[1]).toHaveTextContent('Дастан Т.работает сам (аренда)')
   expect(rows[1]).toHaveTextContent(/аренда 20\s000 сом/)
-  expect(rows[1]).toHaveTextContent('+1 без цены')
+  expect(rows[1]).toHaveTextContent('без цены: 1')
   expect(rows[1]).toHaveTextContent(/25\s700 сом/)
   expect(rows[2]).toHaveTextContent('Бермет К.работает за клинику')
   expect(rows[2]).toHaveTextContent(/зарплата 22\s000 сом/)
@@ -109,10 +112,10 @@ test('админ: «Итог месяца по врачам» в «Расход�
   const check = screen.getByLabelText('Сверка с прибылью')
   expect(check).toHaveTextContent(/Клинике от врачей34\s800 сом/)
   expect(check).toHaveTextContent(/Общие расходы клиники \(без врача\)−18\s000 сом/)
-  expect(check).toHaveTextContent(/Склад: куплено больше, чем списано.*−800 сом/)
+  expect(check).toHaveTextContent(/Склад вне строк врачей за клинику.*−300 сом/)
   expect(check).toHaveTextContent(/Врачам: начислено больше, чем выплачено.*21\s000 сом/)
   expect(within(check).getByLabelText('Прибыль клиники по врачам')).toHaveTextContent(/33\s000 сом/)
-  expect(screen.getByRole('region', { name: 'Итог месяца по врачам' })).toHaveTextContent('общие расходы делим между врачами по их выручке')
+  expect(screen.getByRole('region', { name: 'Итог месяца по врачам' })).toHaveTextContent('остальные — оценкой по выручке')
 
   await user.click(within(screen.getByRole('region', { name: 'Итог месяца по врачам' })).getByRole('button', { name: 'CSV' }))
   const [name, csvRows] = vi.mocked(saveCsv).mock.calls[0]!
@@ -121,7 +124,7 @@ test('админ: «Итог месяца по врачам» в «Расход�
 })
 
 test('регистратура «Итог месяца по врачам» не видит', async () => {
-  backend({ ...me, admin: false, reception: true, doctorId: undefined }, { month: '2026-11' })
+  backend({ ...me, admin: false, reception: true, doctorId: undefined }, { month: '2026-11', purchasedSom: 0 })
   const user = userEvent.setup()
   renderApp()
   const tab = await findSub('Расходы').catch(() => null)

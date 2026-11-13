@@ -5540,6 +5540,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/expenses/shared": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["shared"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/expenses/categories": {
         parameters: {
             query?: never;
@@ -7350,6 +7366,15 @@ export interface components {
             doctorId?: number;
             /** Format: int64 */
             patientId?: number;
+            splitKey?: string;
+            repeatMonthly?: boolean;
+            shares?: components["schemas"]["ExpensesShareDraft"][];
+        };
+        ExpensesShareDraft: {
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            amountSom?: number;
         };
         ExpensesExpense: {
             /** Format: int64 */
@@ -7366,6 +7391,16 @@ export interface components {
             /** Format: int64 */
             patientId?: number;
             patient?: string;
+            splitKey?: string;
+            repeatMonthly: boolean;
+            shares?: components["schemas"]["ExpensesShare"][];
+        };
+        ExpensesShare: {
+            /** Format: int64 */
+            doctorId: number;
+            doctor?: string;
+            /** Format: int64 */
+            amountSom: number;
         };
         DoctorServicesControllerRequest: {
             serviceTypeIds: number[];
@@ -8018,6 +8053,8 @@ export interface components {
             reason?: string;
             /** Format: int32 */
             costSom?: number;
+            /** Format: date */
+            deliveredOn?: string;
         };
         SupplyStarterControllerApply: {
             stock?: boolean;
@@ -8752,6 +8789,8 @@ export interface components {
             unit?: string;
             /** Format: int32 */
             used: number;
+            /** Format: int64 */
+            costSom?: number;
         };
         SupplyControllerOnAppointment: {
             /** Format: int32 */
@@ -9090,6 +9129,8 @@ export interface components {
             items?: components["schemas"]["SpendingViewItem"][];
             months?: components["schemas"]["SpendingViewMonth"][];
             /** Format: int64 */
+            lossesSom: number;
+            /** Format: int64 */
             revenueSom?: number;
             /** Format: int64 */
             expensesSom?: number;
@@ -9112,6 +9153,10 @@ export interface components {
             used: number;
             /** Format: int64 */
             usedSom?: number;
+            /** Format: int32 */
+            lost: number;
+            /** Format: int64 */
+            lostSom?: number;
         };
         SpendingViewMonth: {
             /** Format: date */
@@ -10052,6 +10097,11 @@ export interface components {
             /** Format: int64 */
             resendSeconds: number;
         };
+        ExpensesCategorySum: {
+            category?: string;
+            /** Format: int64 */
+            amountSom: number;
+        };
         NetMonthMine: {
             month?: string;
             /** Format: date */
@@ -10059,6 +10109,9 @@ export interface components {
             /** Format: date */
             to?: string;
             row?: components["schemas"]["NetMonthRow"];
+            expenses?: components["schemas"]["ExpensesCategorySum"][];
+            /** Format: int64 */
+            purchasedSom: number;
         };
         NetMonthRow: {
             /** Format: int64 */
@@ -10076,7 +10129,11 @@ export interface components {
             /** Format: int32 */
             unpricedMaterials: number;
             /** Format: int64 */
+            lossesSom: number;
+            /** Format: int64 */
             expensesSom: number;
+            /** Format: int64 */
+            sharedExpensesSom: number;
             /** Format: int64 */
             doctorNetSom?: number;
             /** Format: int64 */
@@ -10100,6 +10157,10 @@ export interface components {
             purchasedSom: number;
             /** Format: int64 */
             clinicMaterialsSom: number;
+            /** Format: int64 */
+            usedSom: number;
+            /** Format: int64 */
+            lossesSom: number;
             /** Format: int64 */
             supplySom: number;
             /** Format: int64 */
@@ -10410,6 +10471,8 @@ export interface components {
             /** Format: int64 */
             paymentsCount: number;
             days?: components["schemas"]["RevenueViewDay"][];
+            /** Format: int64 */
+            openingDebtsSom: number;
         };
         RevenueViewDay: {
             /** Format: date */
@@ -20639,6 +20702,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaymentQueryDebt"][];
+                };
+            };
+        };
+    };
+    shared: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpensesExpense"][];
                 };
             };
         };

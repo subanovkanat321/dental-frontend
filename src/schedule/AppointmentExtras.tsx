@@ -221,6 +221,9 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
     },
   })
   const list = used.data ?? []
+  // Во сколько обошлось — сервер отдаёт только тем, кто видит деньги этого приёма (seesMoneyOf), по средней цене покупки
+  const costed = list.filter((u) => u.costSom != null)
+  const costTotal = costed.reduce((s, u) => s + (u.costSom ?? 0), 0)
   return (
     <Fold title="Материалы" label="Материалы на приёме" meta={list.length ? String(list.length) : 'не списаны'}>
     <div className="supplies-box">
@@ -234,7 +237,8 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
         <ul className="visits">
           {list.map((u) => (
             <li key={u.supplyId} className="spent">
-              <span>{u.name} — <b className="num">{u.used}</b> {u.unit}</span>
+              <span>{u.name} — <b className="num">{u.used}</b> {u.unit}
+                {u.costSom != null && <span className="hint small num"> · ≈ {somText(u.costSom)}</span>}</span>
               <span className="actions">
                 <button type="button" className="btn small" disabled={move.isPending} aria-label={`Списать ещё 1: ${u.name}`}
                   onClick={() => move.mutate({ supplyId: u.supplyId, delta: -1 })}>−1</button>
@@ -244,6 +248,10 @@ export function Supplies({ appointment: a, me }: { appointment: Appointment; me:
             </li>
           ))}
         </ul>
+      )}
+      {costed.length > 0 && (
+        <p className="hint small" aria-label="Материалы в деньгах">≈ {somText(costTotal)} по средней цене покупки
+          {costed.length < list.length ? ` · без цены: ${list.length - costed.length}` : ''}</p>
       )}
       <div className="row add-supply">
         <Select aria-label="Материал со склада" value={pick} onChange={(e) => setPick(e.target.value === '' ? '' : Number(e.target.value))}>

@@ -38,8 +38,9 @@ export function subsOf(page: Page, me: Me): Sub[] {
       return subs.filter((s) => s.key !== 'earnings' || seesOwnEarnings(me))
     }
     case 'stock':
-      // «Расходы на склад» (покупки по месяцам) — руководителю; остальным — только материалы
-      return me.admin ? [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Расходы на склад' }] : []
+      // «Расходы на склад» (покупки по месяцам) — тому, кто видит деньги всех врачей (сервер: seesAllDoctors):
+      // админ-врач при «врачи работают независимо» закупок чужих складов не видит; остальным — только материалы
+      return seesAllMoney(me) ? [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Расходы на склад' }] : []
     case 'platform':
       // «Аналитика», «Финансы» и всё, что после «Опросов», — только владелец (сервер тоже: менеджеру 403)
       return [{ key: 'clinics', title: 'Клиники' },

@@ -154,6 +154,21 @@ test('материалы на приёме: списать со склада, е
   await waitForSlow(() => expect(moves).toEqual([-1, -1, 1]))
 })
 
+test('материалы на приёме в деньгах: «≈ 340 сом» — сервер отдаёт сумму тому, кто видит деньги приёма', async () => {
+  backend(appointment(10, 1, '09:00', 'Бакыт М.', { status: 'DONE', paidSom: 1000, paymentMethod: 'CASH' }))
+  server.use(
+    http.get('*/api/supplies', () => HttpResponse.json([])),
+    http.get('*/api/appointments/:id/supplies', () => HttpResponse.json([
+      { supplyId: 3, name: 'Анестетик', unit: 'карп.', used: 2, costSom: 340 },
+      { supplyId: 4, name: 'Валики', unit: 'шт', used: 3 },
+    ] satisfies Schemas['SupplyQueryUsed'][])),
+  )
+  const panel = await openCard(/Бакыт М\./)
+  const box = await expand(within(panel).getByRole('region', { name: 'Материалы на приёме' }))
+  expect(await within(box).findByText(/Анестетик — /)).toHaveTextContent(/Анестетик — 2 карп\. · ≈ 340 сом/)
+  expect(within(box).getByLabelText('Материалы в деньгах')).toHaveTextContent(/≈ 340 сом по средней цене покупки · без цены: 1/)
+})
+
 test('материалы услуги: «Обычно уходит» — поправить, убрать лишнее и «Списать всё» одним запросом', async () => {
   backend(appointment(10, 1, '09:00', 'Бакыт М.', { status: 'DONE', serviceName: 'Пломба' }))
   let used: Schemas['SupplyQueryUsed'][] = []

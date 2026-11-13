@@ -4,7 +4,8 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
-import { shortDate, somText } from '../lib/time'
+import { shortDate, somText, todayIn } from '../lib/time'
+import { DateInput } from '../layout/DateInput'
 import { isAssistant } from '../lib/roles'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
@@ -45,6 +46,8 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
   const refresh = useRefresh()
   const [amount, setAmount] = useState('1')
   const [cost, setCost] = useState('')
+  // Дата поставки: по умолчанию сегодня, прошлое — можно (привезли вчера, вносят сегодня), будущее — нет
+  const [deliveredOn, setDeliveredOn] = useState(todayIn())
   const [settings, setSettings] = useState({ name: s.name ?? '', unit: s.unit ?? '', minQuantity: String(s.minQuantity) })
   const [done, setDone] = useState('')
 
@@ -55,11 +58,16 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
   const move = useMutation<Supply, ApiError, number>({
     mutationFn: (delta) => unwrap(api.POST('/api/supplies/{id}/move', {
       params: { path: { id: s.id } },
-      body: { delta, reason: delta < 0 ? 'USE' : 'DELIVERY', costSom: delta > 0 && cost ? Number(cost) : undefined },
+      body: {
+        delta, reason: delta < 0 ? 'USE' : 'DELIVERY', costSom: delta > 0 && cost ? Number(cost) : undefined,
+        deliveredOn: delta > 0 && deliveredOn !== todayIn() ? deliveredOn : undefined,
+      },
     })),
     onSuccess: (_updated, delta) => {
-      setDone(delta < 0 ? `Списано ${-delta} ${s.unit}` : `Принято ${delta} ${s.unit}${cost ? ` · ${somText(Number(cost))}` : ''}`)
+      setDone(delta < 0 ? `Списано ${-delta} ${s.unit}` : `Принято ${delta} ${s.unit}${cost ? ` · ${somText(Number(cost))}` : ''}`
+        + (delta > 0 && deliveredOn !== todayIn() ? ` · поставка ${shortDate(`${deliveredOn}T12:00:00Z`)}` : ''))
       setCost('')
+      setDeliveredOn(todayIn())
       refresh()
     },
   })
@@ -124,11 +132,15 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
             <input type="number" min={0} inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} />
           </label>
         )}
+        <label className="field">
+          <span>Дата поставки</span>
+          <DateInput value={deliveredOn} max={todayIn()} onChange={(e) => e.target.value && setDeliveredOn(e.target.value)} />
+        </label>
         <div className="actions">
           <button type="button" className="btn" disabled={move.isPending || !(n > 0)} onClick={() => doMove(-1)}>− Списать</button>
           <button type="button" className="btn primary" disabled={move.isPending || !(n > 0)} onClick={() => doMove(1)}>＋ Пришла поставка</button>
         </div>
-        {move.error && <p className="error" role="alert">{move.error.fieldErrors.delta ?? move.error.fieldErrors.costSom ?? move.error.message}</p>}
+        {move.error && <p className="error" role="alert">{move.error.fieldErrors.delta ?? move.error.fieldErrors.costSom ?? move.error.fieldErrors.deliveredOn ?? move.error.message}</p>}
         {done && <p className="tone-ok" role="status">{done}</p>}
       </div>
 

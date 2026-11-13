@@ -1,7 +1,8 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
-import { seesToPay, seesAllMoney } from '../lib/roles'
+import { canShareExpenses, seesToPay, seesAllMoney } from '../lib/roles'
+import { ExpenseDialog } from './ExpenseDialog'
 import { EarningsTab } from '../earnings/EarningsTab'
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf, datesText, periodText, previousRange } from '../lib/compare'
@@ -110,6 +111,25 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
     .filter((x) => x.startAt && dateOf(x.startAt) >= range.from && dateOf(x.startAt) <= range.to)
     .filter((x) => x.paidSom != null || (x.debtSom ?? 0) > 0)
 
+  // Расходы за тот же период — приход, расход и итог рядом; «＋ Расход» — окном, не уходя из кассы
+  const [adding, setAdding] = useState(false)
+  const spent = useQuery({
+    queryKey: ['expenses', 'period', range.from, range.to, doctorId],
+    queryFn: () => unwrap(api.GET('/api/expenses', { params: { query: { ...range, ...doctorQuery } } })),
+    enabled: money && tab === 'money' && range.from <= range.to,
+  })
+  // Касса одного врача: его доля общих расходов (вся клиника — они уже в списке расходов)
+  const shareOf = doctorId ?? (seesAll ? null : me.doctorId ?? null)
+  const shared = useQuery({
+    queryKey: ['expenses', 'shared', 'period', range.from, range.to],
+    queryFn: () => unwrap(api.GET('/api/expenses/shared', { params: { query: range } })),
+    enabled: money && tab === 'money' && shareOf != null && canShareExpenses(me) && range.from <= range.to,
+  })
+  const ownSpent = (spent.data ?? []).filter((x) => !(shareOf != null && x.splitKey)).reduce((sum, x) => sum + x.amountSom, 0)
+  const shareSpent = shareOf == null ? 0 : (shared.data ?? [])
+    .reduce((sum, x) => sum + (x.shares ?? []).filter((d) => d.doctorId === shareOf).reduce((a, d) => a + d.amountSom, 0), 0)
+  const outSom = spent.data ? ownSpent + shareSpent : null
+
   const [slot, setSlot] = useHeadSlot()
   const r = revenue.data
   const max = Math.max(1, ...(r?.days ?? []).map((d) => d.totalSom))
@@ -149,6 +169,7 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
           <section className="card-block" aria-label="Касса и выручка">
             {/* Период и его даты — в строку шапки «Кассы», не отдельными строками над карточкой */}
             <HeadTools>
+              <button type="button" className="btn primary add-expense" onClick={() => setAdding(true)}>＋ Расход</button>
               <div className="segments" role="group" aria-label="Период">
                 {([['day', 'День'], ['week', 'Неделя'], ['month', 'Месяц'], ['custom', 'Период']] as const).map(([key, title]) => (
                   <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
@@ -203,6 +224,21 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                     </p>
                   </div>
                 </div>
+                {outSom != null && (() => {
+                  const income = r.cash?.totalSom ?? 0
+                  const left = income - outSom
+                  return (
+                    <div className="methods cash-flow" aria-label="Приход и расход за период">
+                      <div>Приход (касса)<b>{somText(income)}</b></div>
+                      <div>Расход<b>−{somText(outSom)}</b>
+                        <span className="hint">{shareSpent > 0 ? `свои ${somText(ownSpent)} + доля общих ${somText(shareSpent)}` : 'записанные в «Расходы»'}</span></div>
+                      <div className={left < 0 ? 'tone-bad' : 'tone-ok'}>Итог<b aria-label="Итог за период">{left < 0 ? '−' : ''}{somText(Math.abs(left))}</b></div>
+                    </div>
+                  )
+                })()}
+                {(r.cash?.openingDebtsSom ?? 0) > 0 && (
+                  <p className="hint small">Из кассы — погашенные долги из прежней программы: {somText(r.cash!.openingDebtsSom)}</p>
+                )}
                 {before.data && (() => {
                   const c = changeOf(r.totalSom, before.data.totalSom)
                   // Период включает сегодня — день ещё идёт, а сравниваем с полным: утром «▼ 80%»
@@ -255,14 +291,15 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
         )}
 
         {!money && !toPayShown && (
-          <p className="hint">{me.admin && me.clinic?.independentDoctors
-            ? 'В клинике включено «Врачи работают независимо» (Клиника → О клинике): в этом режиме каждый врач видит только свою кассу, общей кассы нет.'
+          <p className="hint">{me.clinic?.independentDoctors
+            ? 'В клинике включено «Врачи работают независимо»: каждый врач видит свою кассу, всю кассу клиники — руководитель без своего кресла (хозяин кабинета).'
             : 'Касса — у руководителя и врачей.'}</p>
         )}
         </>}
       </section>
       </HeadSlotProvider>
       {opened && <OpenedAppointment id={opened} me={me} onClose={close} onOpenPatient={onOpenPatient} />}
+      {adding && <ExpenseDialog me={me} doctorId={seesAll ? doctorId : null} onClose={() => setAdding(false)} />}
     </div>
   )
 }

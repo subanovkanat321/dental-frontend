@@ -28,19 +28,19 @@ test('подпись недели: в одном месяце и на стыке
 test('расходы: список по статьям, прибыль, добавить свою статью и удалить', async () => {
   const month = todayIn().slice(0, 7)
   let expenses: Schemas['ExpensesExpense'][] = [
-    { id: 1, spentOn: `${month}-01`, amountSom: 30000, category: 'Аренда' },
-    { id: 2, spentOn: `${month}-02`, amountSom: 5000, category: 'Техник', comment: 'коронка' },
+    { id: 1, spentOn: `${month}-01`, amountSom: 30000, category: 'Аренда', repeatMonthly: false },
+    { id: 2, spentOn: `${month}-02`, amountSom: 5000, category: 'Техник', comment: 'коронка', repeatMonthly: false },
   ]
   const posted: unknown[] = []
   server.use(
     http.get('*/api/expenses', () => HttpResponse.json(expenses)),
     http.post('*/api/patients/search', () => HttpResponse.json([{ id: 7, fullName: 'Бакыт М.', phone: '996555000111' }])),
     http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: ['Аренда', 'Техник'], own: [] } satisfies Schemas['ExpenseControllerCategories'])),
-    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 100000, purchasedSom: 10000, expensesSom: 35000, usedSom: 0, unpricedUsed: 0, unpricedDeliveries: 0 } satisfies Schemas['SpendingView'])),
+    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 100000, purchasedSom: 10000, expensesSom: 35000, usedSom: 0, unpricedUsed: 0, unpricedDeliveries: 0, lossesSom: 0 } satisfies Schemas['SpendingView'])),
     http.post('*/api/expenses', async ({ request }) => {
       const body = await request.json() as Record<string, unknown>
       posted.push(body)
-      expenses = [...expenses, { id: 3, spentOn: body.spentOn as string, amountSom: body.amountSom as number, category: body.category as string }]
+      expenses = [...expenses, { id: 3, spentOn: body.spentOn as string, amountSom: body.amountSom as number, category: body.category as string, repeatMonthly: false }]
       return HttpResponse.json(expenses[2])
     }),
     http.delete('*/api/expenses/:id', ({ params }) => {
@@ -70,7 +70,9 @@ test('расходы: список по статьям, прибыль, доба
   await user.click(bars[1]!)
   expect(screen.getByRole('cell', { name: 'Аренда' })).toBeInTheDocument()
   const profit = await screen.findByLabelText('Прибыль за месяц')
-  expect(within(profit).getByText('Прибыль').parentElement).toHaveTextContent('55 000')
+  // Прибыль — материалы по списанию (0), закупки 10 000 — справочно: 100 000 − 35 000
+  expect(within(profit).getByText('Прибыль').parentElement).toHaveTextContent('65 000')
+  expect(screen.getByLabelText('Закуплено на склад')).toHaveTextContent(/Закуплено на склад за месяц: 10\s000 сом — справочно/)
 
   const form = screen.getByRole('form', { name: 'Новый расход' })
   await user.type(within(form).getByRole('spinbutton', { name: 'Сумма, сом' }), '2000')
@@ -93,7 +95,7 @@ test('прибыль: аренда кресла, полученная от вр�
     http.get('*/api/expenses', () => HttpResponse.json([])),
     http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: [], own: [] } satisfies Schemas['ExpenseControllerCategories'])),
     // Врач забрал всю выручку (5 000), аренда 20 000 больше — он принёс клинике 15 000
-    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 5000, purchasedSom: 0, expensesSom: 0, rentSom: 15000, usedSom: 0, unpricedUsed: 0, unpricedDeliveries: 0 } satisfies Schemas['SpendingView'])),
+    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 5000, purchasedSom: 0, expensesSom: 0, rentSom: 15000, usedSom: 0, unpricedUsed: 0, unpricedDeliveries: 0, lossesSom: 0 } satisfies Schemas['SpendingView'])),
   )
   const user = userEvent.setup()
   renderApp()
@@ -107,7 +109,7 @@ test('расходы: пустой месяц — без диаграммы', as
   server.use(
     http.get('*/api/expenses', () => HttpResponse.json([])),
     http.get('*/api/expenses/categories', () => HttpResponse.json({ standard: ['Аренда'], own: [] } satisfies Schemas['ExpenseControllerCategories'])),
-    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 0, purchasedSom: 0, expensesSom: 0, usedSom: 0, unpricedUsed: 0, unpricedDeliveries: 0 } satisfies Schemas['SpendingView'])),
+    http.get('*/api/supplies/spending', () => HttpResponse.json({ revenueSom: 0, purchasedSom: 0, expensesSom: 0, usedSom: 0, unpricedUsed: 0, unpricedDeliveries: 0, lossesSom: 0 } satisfies Schemas['SpendingView'])),
   )
   const user = userEvent.setup()
   renderApp()

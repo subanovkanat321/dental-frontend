@@ -7,6 +7,7 @@ import { MonthPicker } from '../layout/MonthPicker'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 import { HeadTools } from '../layout/PageHead'
+import { positions } from '../earnings/earnings'
 
 const MONTH = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'long', year: 'numeric' })
 const MONTH_SHORT = new Intl.DateTimeFormat('ru-RU', { timeZone: 'UTC', month: 'short' })
@@ -40,11 +41,12 @@ export function SpendingBlock() {
           <div className="methods">
             <div>Заплатили за поставки<b>{somText(r.purchasedSom)}</b>{share != null && <span className="hint">{share}% выручки</span>}</div>
             <div>Ушло на приёмы<b>≈ {somText(r.usedSom)}</b><span className="hint">по цене покупки</span></div>
+            {r.lossesSom > 0 && <div>Потери и пересчёт<b>≈ {somText(r.lossesSom)}</b><span className="hint">по цене покупки</span></div>}
           </div>
           {r.unpricedDeliveries > 0 && (
             <p className="tone-bad">Поставок без суммы: {r.unpricedDeliveries} — расходы занижены. Вводите сумму при «Пришла поставка».</p>
           )}
-          {r.unpricedUsed > 0 && <p className="hint">Без цены: {r.unpricedUsed} — их цену ни разу не вводили, в сумму не вошли.</p>}
+          {r.unpricedUsed > 0 && <p className="tone-wait">Без цены: {r.unpricedUsed} {positions(r.unpricedUsed)} — их цену ни разу не вводили, в сумму не вошли.</p>}
           {(r.months?.length ?? 0) > 1 && (
             <>
               <h3>За полгода</h3>
