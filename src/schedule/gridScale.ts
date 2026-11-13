@@ -55,29 +55,40 @@ export function useFitToWindow(ref: RefObject<HTMLElement | null>, key: string) 
     cur?.detach()
     attached.current = null
     if (!el) return
+    const main = el.closest('.schedule-main')
     const fit = () => {
       const box = el.getBoundingClientRect()
       el.style.setProperty('--grid-top', `${Math.round(box.top + window.scrollY)}px`)
-      const main = el.closest('.schedule-main')
-      const below = main ? Math.max(0, main.getBoundingClientRect().bottom - box.bottom) : 0
-      el.style.setProperty('--grid-below', `${Math.round(below)}px`)
+      el.style.setProperty('--grid-below', `${Math.round(main ? belowIn(el, main) : 0)}px`)
     }
     fit()
     window.addEventListener('resize', fit)
     // (в следующем кадре: высота сетки сама меняет размер раздела — без «ResizeObserver loop» в консоли)
     let frame = 0
-    const main = el.closest('.schedule-main')
-    const observer = typeof ResizeObserver === 'function'
-      ? new ResizeObserver(() => { cancelAnimationFrame(frame); frame = requestAnimationFrame(fit) }) : null
-    if (observer) {
+    const later = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(fit) }
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(later) : null
+    // Место сетки сдвигает и то, что над ней появилось или пропало (закрыли плашку «Заполните профиль»,
+    // догрузились напоминания): размер раздела и страницы от этого может не поменяться — следим за соседями
+    // сверху на каждом уровне (их размер) и за списком детей предков (появился или пропал сосед)
+    const watch = () => {
+      if (!observer) return
+      observer.disconnect()
       if (main) observer.observe(main)
       observer.observe(document.body)
+      for (let node: Element | null = el; node && node !== document.body; node = node.parentElement) {
+        for (let sib = node.previousElementSibling; sib; sib = sib.previousElementSibling) observer.observe(sib)
+        for (let sib = node.nextElementSibling; sib && main?.contains(sib); sib = sib.nextElementSibling) observer.observe(sib)
+      }
     }
+    watch()
+    const mutations = typeof MutationObserver === 'function' ? new MutationObserver(() => { watch(); later() }) : null
+    for (let node = el.parentElement; node && node !== document.body; node = node.parentElement) mutations?.observe(node, { childList: true })
     attached.current = {
       el, key, fit,
       detach: () => {
         window.removeEventListener('resize', fit)
         observer?.disconnect()
+        mutations?.disconnect()
         cancelAnimationFrame(frame)
       },
     }
@@ -87,4 +98,24 @@ export function useFitToWindow(ref: RefObject<HTMLElement | null>, key: string) 
     attached.current?.detach()
     attached.current = null
   }, [])
+}
+
+/**
+ * Сколько места в разделе занимает то, что под сеткой (легенда значков, «Отменено» у «Недели»): высоты
+ * соседей после сетки на каждом уровне до раздела. Не «низ раздела минус низ сетки»: так в расчёт
+ * попадала сама сетка — посчитали в середине перестройки (закрыли плашку сверху), и пустой хвост под
+ * сеткой оставался навсегда: размер раздела больше не менялся, пересчёта не было (2026-11-13).
+ */
+function belowIn(el: Element, main: Element): number {
+  let below = 0
+  for (let node: Element | null = el; node && node !== main; node = node.parentElement) {
+    for (let sib = node.nextElementSibling; sib; sib = sib.nextElementSibling) {
+      const style = getComputedStyle(sib)
+      if (style.position === 'absolute' || style.position === 'fixed' || style.display === 'none') continue
+      below += sib.getBoundingClientRect().height + (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0)
+    }
+    const parent = node.parentElement
+    if (parent) below += parseFloat(getComputedStyle(parent).paddingBottom) || 0
+  }
+  return below
 }

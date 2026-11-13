@@ -7,8 +7,8 @@ import { useApptHover } from '../useApptHover'
 import { CancelledList } from '../CancelledList'
 import { ChairTimeBands } from '../ChairTimeBands'
 import { colleagueTimeOf } from '../chairTime'
-import { dateOf, dayMinutes, dayTitle, minutesOf, timeOf } from '../../lib/time'
-import { apptSpan, fromYesterday, offSpans, touchesDay, untilTomorrow, workSpans } from '../workSpans'
+import { addDays, dateOf, dayMinutes, dayTitle, minutesOf, timeOf } from '../../lib/time'
+import { apptSpan, DAY, fromYesterday, hourLabel, offSpans, touchesDay, untilTomorrow, workSpans } from '../workSpans'
 import { hhmm, PAD, PX, useFitToWindow, useNowMinutes } from '../gridScale'
 import { statusOf } from '../status'
 import { useDrag } from './useDrag'
@@ -49,7 +49,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
   const week = useWeekAppointments(monday, doctorId)
   const slots = useWeekSlots(monday, doctorId).map((q) => q.data)
   const list = (week.data ?? []).filter((a) => a.status !== 'CANCELLED')
-  const { from, to } = weekHours(slots, list, me.clinic, days)
+  const { from, to, limit } = weekHours(slots, list, me.clinic, days)
   const height = (to - from) * PX + PAD * 2
   const y = (minutes: number) => PAD + (Math.min(Math.max(minutes, from), to) - from) * PX
   const nowMinutes = useNowMinutes()
@@ -92,7 +92,10 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
   const pick = (date: string) => (e: MouseEvent<HTMLDivElement>) => {
     if (!editable || (e.target as HTMLElement).closest('.appt, .grid-free')) return
     const minutes = from + Math.floor((e.clientY - e.currentTarget.getBoundingClientRect().top - PAD) / PX / SNAP) * SNAP
-    onNew(date, Math.min(Math.max(minutes, from), to - SNAP))
+    const at = Math.min(Math.max(minutes, from), to - SNAP)
+    // После полуночи (сетка продлена) — это уже следующий день
+    if (at >= DAY) onNew(addDays(date, 1), at - DAY)
+    else onNew(date, at)
   }
 
   const hours = Array.from({ length: Math.ceil((to - from) / 60) }, (_, i) => from + i * 60)
@@ -136,20 +139,24 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
         })}
         <div className="grid-times" style={{ height }}>
           {hours.filter((m) => !showNow || Math.abs(m - nowMinutes) > 15).map((m) => (
-            <span key={m} className="num" style={{ top: y(m) }}>{hhmm(m)}</span>
+            <span key={m} className={`num${m === DAY ? ' grid-midnight-time' : ''}`} style={{ top: y(m) }}>
+              {hourLabel(m)}{m === DAY && <small>след. день</small>}
+            </span>
           ))}
           {showNow && <span className="now-label num" style={{ top: y(nowMinutes) }}>{hhmm(nowMinutes)}</span>}
         </div>
         {days.map((date, i) => {
           const sl = slots[i]
-          // Приёмы дня и хвост вчерашнего через полночь (ночная смена)
-          const own = list.filter((a) => touchesDay(a, date))
+          // Приёмы дня и хвост вчерашнего через полночь (ночная смена). Сетка продлена после полуночи —
+          // вчерашний приём целиком в своей колонке, здесь его продолжение не рисуем
+          const own = list.filter((a) => touchesDay(a, date) && !(limit > DAY && fromYesterday(a, date)))
           const past = date < today ? height : date === today && showNow ? y(nowMinutes) : 0
           return (
             <div key={date} ref={(el) => { columns.current[i] = el }} role="group" aria-label={dayTitle(date)}
               className={`grid-col week-col${isOff(sl) ? ' off' : ''}`} style={{ height }} onClick={pick(date)}
               title={editable ? 'Нажмите на свободное время — новая запись' : 'Расписание коллеги — только просмотр'}>
               {hours.map((m) => <div key={m} className="grid-hour" style={{ top: y(m) }} />)}
+              {to > DAY && <div className="grid-midnight" style={{ top: y(DAY) }} aria-hidden="true" />}
               {past > 0 && <div className="grid-past" style={{ height: past }} />}
               <Hours slots={sl} date={date} from={from} to={to} height={height} y={y} />
               {editable && date >= today && sl?.workingDay && (sl.free ?? []).map((w) => {
@@ -167,7 +174,7 @@ export function WeekGrid({ me, doctorId, monday, today, selectedId, onOpen, onNe
               <ChairTimeBands slots={sl} date={date} y={y} from={from} to={to} appointments={own} />
               {date === today && showNow && <div className="grid-now" style={{ top: y(nowMinutes) }} />}
               {own.map((a) => (
-                <Block key={a.id} a={a} date={date} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)}
+                <Block key={a.id} a={a} date={date} limit={limit} me={me} y={y} selected={selectedId === a.id} hover={hover.bind(a)}
                   chair={colleagueTimeOf(a, sl?.chairTime)}
                   moving={ghost?.appointment.id === a.id || (move.isPending && move.variables?.appointment.id === a.id)}
                   drag={canDrag(a, me) && !fromYesterday(a, date) ? handlers(a) : undefined}
@@ -217,8 +224,10 @@ function Hours({ slots: sl, date, from, to, height, y }: {
 const WEEK_SHORT = 40
 
 /** Приём в колонке дня: заливка статуса, время и имя; можно тащить — курсор «рука». */
-function Block({ a, date, me, y, selected, moving, drag, hover, onClick, chair }: {
+function Block({ a, date, limit, me, y, selected, moving, drag, hover, onClick, chair }: {
   a: Appointment
+  /** Докуда видно приём в своём дне: 1440 — полночь, больше — сетка продлена после полуночи. */
+  limit: number
   /** Часы коллеги по креслу, в которые попал приём (colleagueTimeOf), — значок 🪑 */
   chair?: Schemas['SlotsViewChairTime']
   /** День колонки: приём через полночь виден в обоих днях, каждый раз — своей частью. */
@@ -233,19 +242,23 @@ function Block({ a, date, me, y, selected, moving, drag, hover, onClick, chair }
   onClick: () => void
 }) {
   const s = statusOf(a)
-  const [start, end] = apptSpan(a, date)
+  const [start, end] = apptSpan(a, date, limit)
   const carried = fromYesterday(a, date)
-  const h = Math.max((end - start) * PX - 2, 22)
+  const continues = untilTomorrow(a, date, limit)
+  const h = Math.max((end - start) * PX - 2, carried || continues ? 24 : 22)
   // Колонка недели уже, чем у «Дня»: приём на 30 минут — время и имя в две строки, статус — от 45 минут
   const short = h < WEEK_SHORT
   const range = `${timeOf(a.startAt)}–${timeOf(a.endAt)}`
   return (
     <button type="button" {...drag} {...hover} onClick={onClick}
       onPointerDown={(e) => { hover.onPointerDown(); drag?.onPointerDown(e) }}
-      className={`appt s-${s.kind}${short ? ' short' : ''}${selected ? ' active' : ''}${drag ? ' can-drag' : ''}${moving ? ' moving' : ''}${carried ? ' carried' : ''}${untilTomorrow(a, date) ? ' continues' : ''}`}
+      className={`appt s-${s.kind}${short ? ' short' : ''}${selected ? ' active' : ''}${drag ? ' can-drag' : ''}${moving ? ' moving' : ''}${carried ? ' carried' : ''}${continues ? ' continues' : ''}`}
       style={{ top: y(start), height: h }} aria-label={`${carried ? 'со вчера ' : ''}${range}, ${a.patient.fullName}: ${s.label}`}
       title={drag ? 'Перетащите мышью на другое время или день' : canEditPast(a, me) ? 'Прошедший приём не переносят' : undefined}>
-      <span className="appt-time num">{short ? timeOf(a.startAt) : range}</span>
+      <span className="appt-time num">
+        {carried && <span className="appt-carried">со вчера </span>}
+        {continues ? <>{timeOf(a.startAt)} <span className="appt-cut">→ до {timeOf(a.endAt)}</span></> : short ? timeOf(a.startAt) : range}
+      </span>
       <span className="appt-name">{a.patient.fullName}</span>
       <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} chair={chair} />
       {short && <span className="ico" aria-hidden="true">{s.icon}</span>}
@@ -264,7 +277,7 @@ function GhostBlock({ ghost, y }: { ghost: NonNullable<ReturnType<typeof useDrag
   return (
     <div className={`week-ghost${ghost.allowed ? '' : ' blocked'}`} style={{ top: y(ghost.minutes), height: Math.max(duration * PX - 2, 22) }}
       aria-hidden="true">
-      <span className="num">{hhmm(ghost.minutes)}–{hhmm(ghost.minutes + duration)}</span>
+      <span className="num">{hhmm(ghost.minutes)}–{hhmm((ghost.minutes + duration) % DAY)}</span>
     </div>
   )
 }
