@@ -14,6 +14,7 @@ import { Loading } from '../layout/Loading'
 import { audienceText, type Audience } from './agreementTarget'
 import { AudiencePicker } from './AudiencePicker'
 import { SubHelp } from '../layout/PageHead'
+import { rowOpen } from '../lib/rowClick'
 
 type Version = Schemas['AgreementsVersion']
 
@@ -42,7 +43,7 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
                 {list.data.map((t) => {
                   const [status, cls] = TICKET_STATUS[t.status ?? 'OPEN'] ?? ['', 's-quiet']
                   return (
-                    <tr key={t.id} className={t.id === opened ? 'active' : undefined}>
+                    <tr key={t.id} {...rowOpen(() => setOpened(t.id), t.id === opened && 'active')}>
                       <td><button type="button" className="row-link" onClick={() => setOpened(t.id)}>{t.clinicName}</button></td>
                       <td>{t.viaBot ? (t.escalated ? '💬 Помощь — бот передал вам' : '💬 Помощь — ответил бот') : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}<span className="hint"> · {t.preview}</span></td>
                       <td><span className={`chip small ${cls}`}>{status}</span></td>
@@ -171,7 +172,7 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
             <table className="table" aria-label="Версии договора">
               <tbody>
                 {versions.map((v) => (
-                  <tr key={v.id} className={v.id === opened ? 'active' : undefined}>
+                  <tr key={v.id} {...rowOpen(() => setOpened(v.id), v.id === opened && 'active')}>
                     <td><button type="button" className="row-link" onClick={() => setOpened(v.id)}>Версия {v.version} · {v.title}</button></td>
                     <td className={v.publishedAt ? 'tone-ok' : 'tone-wait'}>{v.publishedAt ? `опубликована ${shortDate(v.publishedAt)} · ${audienceText(v)} · подписали: ${v.acceptances}` : 'не опубликована — клиники не видят'}</td>
                   </tr>

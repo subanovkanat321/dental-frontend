@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
 import { shortDate, somText, todayIn } from '../lib/time'
 import { DateInput } from '../layout/DateInput'
+import { rowOpen } from '../lib/rowClick'
 
 type Finance = Schemas['PlatformFinanceFinance']
 type Balance = Schemas['PlatformFinanceBalance']
@@ -46,7 +47,7 @@ export function TopupsBlock({ f, single }: { f: Finance; single: boolean }) {
             {topups.map((t) => (
               <li key={t.id}>
                 {editing === t.id ? <TopupForm topup={t} rate={f.settings?.lastUsdRate} onDone={() => setEditing(null)} /> : (
-                  <div className="fin-entry">
+                  <div {...rowOpen(() => { setEditing(t.id); setAdding(false) }, 'fin-entry')}>
                     <div>
                       <b>{serviceName(t.service)}</b>{t.comment && <> — {t.comment}</>}
                       <div className="hint small">{shortDate(t.paidOn ?? '')}{t.amountUsd != null ? ` · $${decimal(t.amountUsd)} × ${decimal(t.usdRate ?? 0)}` : ''}</div>

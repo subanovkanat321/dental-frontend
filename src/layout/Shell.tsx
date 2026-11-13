@@ -72,6 +72,9 @@ const MOBILE_MAIN = 4
 /** Долгое нажатие на кнопку раздела внизу (телефон) — лист подразделов. */
 const LONG_PRESS_MS = 500
 
+/** Окно уже́ — меню по умолчанию свёрнуто (ноутбуки 1280–1366; сначала — что выбрал человек). */
+const NARROW_BY_DEFAULT = '(min-width: 761px) and (max-width: 1366px)'
+
 /** Пункт «Настроек» из адреса — следим за ним: меню подсвечивает открытый пункт. */
 function useSettingsItem(): string | null {
   const [item, setItem] = useState(settingsItem)
@@ -134,8 +137,12 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const [helpSlot, setHelpSlot] = useState<HTMLElement | null>(null)
   const [help, setHelp] = useState(false)
   const phone = useMedia('(max-width: 760px)')
-  // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается)
-  const [narrow, toggleNarrow] = useFullView('sidebar-narrow')
+  // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается).
+  // Кнопка — у логотипа, на одном месте в обоих видах; клавиша «[». Ноутбук до 1366px, пока ни разу не
+  // выбирали, — свёрнуто: 220px меню там — шестая часть экрана, а расписанию нужна ширина
+  const [narrow, toggleNarrow] = useFullView('sidebar-narrow', () => matches(NARROW_BY_DEFAULT))
+  // Подсказка у иконки свёрнутого меню (раздел без подразделов, «Помощь», «Я», кнопка меню)
+  const [tip, setTip] = useState<{ text: string; top: number; left: number } | null>(null)
   // Стрелкой › можно раскрыть любой раздел (и открытый — быстрый переход в подраздел другого раздела без
   // ухода с экрана). Не запоминаем: перешли в другой раздел — снова всё свёрнуто (кроме «Настроек»)
   const [toggled, setToggled] = useState<Partial<Record<Page, boolean>>>({})
@@ -173,8 +180,41 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       document.removeEventListener('keydown', onKey)
     }
   }, [fly])
+  const toggleMenu = useCallback(() => {
+    setFly(null)
+    setTip(null)
+    setMenu(null)
+    toggleNarrow()
+  }, [toggleNarrow])
+  // «[» — свернуть/развернуть меню (как в Linear). Не мешает вводу: в поле, списке, редакторе — это просто
+  // символ; с Ctrl/Alt/⌘ — чужие сочетания (браузера, раскладки)
+  useEffect(() => {
+    if (phone) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '[' || e.ctrlKey || e.metaKey || e.altKey || e.isComposing || e.repeat) return
+      const t = e.target
+      if (t instanceof HTMLElement && (t.isContentEditable || t.closest('input, textarea, select, [contenteditable], [role="textbox"], [role="combobox"], [role="listbox"]'))) return
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return
+      e.preventDefault()
+      toggleMenu()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [phone, toggleMenu])
+  /** Свёрнутое меню: подсказка справа от иконки при наведении и фокусе с клавиатуры (подписи спрятаны). */
+  const tipOn = (text: string) => narrow ? {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => showTip(text, e.currentTarget),
+    onMouseLeave: () => setTip(null),
+    onFocus: (e: React.FocusEvent<HTMLElement>) => { if (e.currentTarget.matches(':focus-visible')) showTip(text, e.currentTarget) },
+    onBlur: () => setTip(null),
+  } : {}
+  const showTip = (text: string, el: HTMLElement) => {
+    const r = el.getBoundingClientRect()
+    setTip({ text, top: r.top + r.height / 2, left: r.right + 8 })
+  }
   const go = (key: Page) => {
     setMore(false)
+    setTip(null)
     setMenu(null)
     setFly(null)
     onNavigate(key)
@@ -264,11 +304,23 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   return (
     <div className={narrow ? 'shell narrow' : 'shell'}>
       <aside className="sidebar">
-        {/* Логотип — на главную (расписание), как на любом сайте */}
-        <button type="button" className="brand" aria-label="На главную — расписание" onClick={() => go('schedule')}>
-          <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={24} height={36} />
-          <span>Tish</span>
-        </button>
+        <div className="brand-row">
+          {/* Свернуть/развернуть — первой в меню, у логотипа: на одном месте в обоих видах (как ≡ у Gmail) */}
+          {!phone && (
+            <button type="button" className="sidebar-toggle" aria-expanded={!narrow} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}
+              aria-keyshortcuts="[" onClick={toggleMenu} {...tipOn('Развернуть меню · [')} title={narrow ? undefined : 'Свернуть меню · ['}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><path d="M9.5 4.5v15" />
+                <path d={narrow ? 'M13.5 10l2 2-2 2' : 'M16 10l-2 2 2 2'} />
+              </svg>
+            </button>
+          )}
+          {/* Логотип — на главную (расписание), как на любом сайте */}
+          <button type="button" className="brand" aria-label="На главную — расписание" onClick={() => go('schedule')} {...tipOn('Tish — на главную')}>
+            <img src={`${import.meta.env.BASE_URL}tishka-icon.svg`} alt="" width={24} height={36} />
+            <span>Tish</span>
+          </button>
+        </div>
         {/* Кто вошёл — внизу, блоком «Я»; здесь только клиника */}
         <div className="clinic">
           <strong>{clinic}</strong>
@@ -283,7 +335,9 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
                 onMouseEnter={(e) => enter(s.key, e.currentTarget)} onMouseLeave={leave}>
                 <div className="nav-row">
                   <button type="button" className={['nav', s.key === page ? 'active' : ''].join(' ').trim()} data-section={s.key} data-tour={`nav-${s.key}`}
-                    aria-current={s.key === page ? 'page' : undefined} title={narrow ? s.title : undefined}
+                    aria-current={s.key === page ? 'page' : undefined}
+                    aria-label={narrow ? (total > 0 ? `${s.title} · новое: ${total}` : s.title) : undefined}
+                    {...(subs.length ? {} : tipOn(s.title))}
                     onPointerDown={(e) => pressStart(s.key, e)} onPointerUp={pressEnd} onPointerLeave={pressEnd} onPointerCancel={pressEnd}
                     onContextMenu={(e) => { if (subs.length && matches('(max-width: 760px)')) e.preventDefault() }}
                     onClick={(e) => clickSection(s.key, e)}>
@@ -314,24 +368,22 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </nav>
         {me.doctor && !phone && (
           <button ref={helpButton} type="button" className={help || menu === 'help' || page === 'help' ? 'nav help-nav active' : 'nav help-nav'}
-            aria-haspopup="dialog" aria-expanded={menu === 'help'} title={narrow ? 'Помощь' : undefined} data-tour="help"
-            aria-label="Помощь" onClick={() => openMenu('help')}>
+            aria-haspopup="dialog" aria-expanded={menu === 'help'} data-tour="help"
+            aria-label="Помощь" onClick={() => openMenu('help')} {...tipOn('Помощь')}>
             <Icon name="help" /> <span>Помощь</span>
           </button>
         )}
-        <button type="button" className="nav sidebar-toggle" aria-expanded={!narrow} onClick={() => { setFly(null); setMenu(null); toggleNarrow() }}
-          title={narrow ? 'Развернуть меню' : 'Свернуть меню'} aria-label={narrow ? 'Развернуть меню' : 'Свернуть меню'}>
-          <span className="sidebar-toggle-ico" aria-hidden="true">{narrow ? '»' : '«'}</span> <span>Свернуть меню</span>
-        </button>
         {!phone && (
           <button ref={meButton} type="button" className={menu === 'me' || page === 'me' ? 'me-block active' : 'me-block'}
             aria-haspopup="dialog" aria-expanded={menu === 'me'} data-tour="me" aria-label={`${name}, ${role}: профиль, оформление, выход`}
-            title={narrow ? `${name} · ${role}` : undefined} onClick={() => openMenu('me')}>
+            onClick={() => openMenu('me')} {...tipOn(`${name} · ${role}`)}>
             <Avatar me={me} />
             <span className="me-text"><strong>{name}</strong><span>{role}</span></span>
           </button>
         )}
       </aside>
+      {tip && narrow && createPortal(
+        <div className="nav-tip" role="tooltip" style={{ top: tip.top, left: tip.left }}>{tip.text}</div>, document.body)}
       {more && (
         <div className="more-sheet" role="dialog" aria-label="Ещё разделы" onClick={() => setMore(false)}>
           <div className="more-card" onClick={(e) => e.stopPropagation()}>

@@ -13,6 +13,7 @@ import { SurveyEditor } from './SurveyEditor'
 import { SurveyResults } from './SurveyResults'
 import { Loading } from '../../layout/Loading'
 import { SubHelp } from '../../layout/PageHead'
+import { rowOpen } from '../../lib/rowClick'
 
 type Details = Schemas['SurveyDetails']
 type View = 'edit' | 'preview' | 'results'
@@ -52,7 +53,7 @@ export function SurveysTab() {
             {surveys.map((s) => {
               const [status, cls] = STATUS[s.status ?? 'DRAFT']
               return (
-                <tr key={s.id}>
+                <tr key={s.id} {...rowOpen(() => setOpened(s.id))}>
                   <td><button type="button" className="row-link" onClick={() => setOpened(s.id)}>{s.title}</button></td>
                   <td>{rolesText(s.roles)}</td>
                   <td><span className={`chip small ${cls}`}>{status}</span></td>

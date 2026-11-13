@@ -208,7 +208,7 @@
     border-right: 0; border-top: 1px solid var(--separator);
   }
   .sidebar::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 120px; background: inherit; }
-  .sidebar .brand, .sidebar .clinic, .sidebar .link-out, .nav .soon { display: none; }
+  .sidebar .brand-row, .sidebar .clinic, .sidebar .link-out, .nav .soon { display: none; }
   .sidebar nav { display: flex; width: 100%; }
   .nav { flex: 1; min-width: 0; flex-direction: column; gap: 2px; padding: 6px 0; font-size: .75rem; text-align: center; justify-content: center; }
   /* Панель внизу: активный раздел — заливкой, без полоски слева (она для меню сбоку) */
@@ -734,8 +734,18 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-columns .row.free .hint { font-size: .85rem; overflow-wrap: break-word; }
 .doctor-columns .row.pause { flex-wrap: wrap; padding: 8px; gap: 2px 6px; font-size: .82rem; }
 .doctor-columns .row.pause .name { min-width: 0; }
-tr.clickable { cursor: pointer; }
-tr.clickable:hover td { background: var(--sunken); }
+/* «Нажимается вся строка» (lib/rowClick.ts → rowOpen): строка списка открывает карточку кликом в любом месте,
+   название — настоящая кнопка (Tab, скринридер). Подсветка наведения — только там, где есть мышь;
+   на телефоне — короткий отклик на нажатие (:active), без «залипшего» hover после тапа */
+.clickable { cursor: pointer; }
+@media (hover: hover) {
+  tr.clickable:hover td { background: var(--sunken); }
+  .clickable:not(tr):hover { background: var(--sunken); }
+  .clickable:hover .row-link:not(.open-link) { color: var(--link); }
+}
+@media (hover: none) {
+  tr.clickable:active, tr.clickable:active td, .clickable:not(tr):active { background: var(--sunken); }
+}
 .row-link.open-link { color: var(--link); }
 .day-filter { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; width: 100%; }
 .day-filter .field { flex: 0 1 150px; }
@@ -1672,26 +1682,33 @@ button.grid-head, .grid-head { border-top: 3px solid var(--doc, transparent); }
   .panel-expand, .ds-expand { display: none; }
   .panel.panel-full { inset: 0; transform: none; width: auto; top: 0; bottom: 0; left: 0; }
 }
-/* Свёрнутое меню слева (компьютер): полоса иконок с подсказками, как у привычных клиникам программ */
-.sidebar-toggle { margin-top: 8px; color: var(--hint); font-size: .88rem; }
-.sidebar-toggle-ico { display: inline-grid; place-items: center; width: 20px; font-size: 1.1rem; line-height: 1; }
+/* Свёрнутое меню слева (компьютер): полоса иконок с подсказками, как у привычных клиникам программ.
+   Кнопка «свернуть/развернуть» — первой, слева от логотипа: в обоих видах в одной точке (12px от края, сверху),
+   рука не ищет её внизу под «Помощью» */
+.brand-row { display: flex; align-items: center; gap: 4px; padding-bottom: 12px; }
+.brand-row .brand { padding: 4px 8px 4px 4px; min-width: 0; }
+.sidebar-toggle { flex: none; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: var(--radius); background: none; color: var(--hint); cursor: pointer; }
+.sidebar-toggle svg { width: 22px; height: 22px; }
+.sidebar-toggle:hover { background: var(--sunken); color: var(--text); }
+.sidebar-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* Подсказка у иконки свёрнутого меню (Shell → tipOn): в body, поверх рабочей области */
+.nav-tip { position: fixed; z-index: 60; transform: translateY(-50%); padding: 5px 10px; border-radius: 6px; background: var(--text); color: var(--card);
+  font-size: .85rem; font-weight: 500; white-space: nowrap; pointer-events: none; box-shadow: 0 4px 14px rgb(0 0 0 / .16); }
 @media (min-width: 761px) {
   .shell.narrow { grid-template-columns: 64px 1fr; }
-  .shell.narrow .sidebar { padding: 16px 8px; align-items: center; }
-  .shell.narrow .brand { padding: 4px 0 16px; justify-content: center; }
-  .shell.narrow .brand span, .shell.narrow .clinic, .shell.narrow .nav > span:not(.nav-badge):not(.sidebar-toggle-ico) { display: none; }
+  .shell.narrow .sidebar { padding: 16px 12px; align-items: center; }
+  .shell.narrow .brand-row { flex-direction: column; gap: 6px; }
+  .shell.narrow .brand { padding: 2px 0 4px; justify-content: center; }
+  .shell.narrow .brand img { width: 20px; height: 30px; }
+  .shell.narrow .brand span, .shell.narrow .clinic, .shell.narrow .nav > span:not(.nav-badge) { display: none; }
   .shell.narrow .nav { justify-content: center; padding: 10px 0; position: relative; }
   .shell.narrow .nav .nav-badge { position: absolute; top: 2px; right: 4px; margin: 0; }
-}
-@media (max-width: 760px) {
-  .sidebar-toggle { display: none; }
 }
 /* «Ещё» в карточке приёма: редкое (промокод, предоплата, лист ожидания) — по нажатию */
 .rare > .link { justify-self: start; }
 /* «💬 Помощь»: на компьютере — пункт внизу меню (над «Выйти»), на телефоне — круглая кнопка над нижним
    меню на главных экранах; чат — поверх (панель приёма его перекрывает — так и задумано) */
-.help-nav, .sidebar-toggle { margin-top: auto; }
-.help-nav + .sidebar-toggle { margin-top: 0; }
+.help-nav { margin-top: auto; }
 .help-fab { position: fixed; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 12; display: grid; place-items: center;
   width: 44px; height: 44px; padding: 0; border: 1px solid var(--separator); border-radius: 50%; background: var(--card); color: var(--text);
   font: inherit; font-size: 1.15rem; box-shadow: var(--panel-shadow); cursor: pointer; }

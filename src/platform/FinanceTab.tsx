@@ -11,6 +11,7 @@ import { MonthPicker } from '../layout/MonthPicker'
 import { Loading } from '../layout/Loading'
 import { TopupsBlock } from './TopupsBlock'
 import { HeadTools } from '../layout/PageHead'
+import { rowOpen } from '../lib/rowClick'
 
 type Finance = Schemas['PlatformFinanceFinance']
 type Line = Schemas['PlatformFinanceLine']
@@ -331,7 +332,7 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
                 <ExpenseForm expense={x} categories={f.categories ?? []} rate={f.settings?.lastUsdRate} month={f.to ?? f.month ?? ''}
                   onDone={() => setEditing(null)} />
               ) : (
-                <div className="fin-entry">
+                <div {...rowOpen(() => { setEditing(x.id); setAdding(false) }, 'fin-entry')}>
                   <div>
                     <b>{x.category}</b>
                     {x.monthly && <span className="chip small s-quiet">каждый месяц</span>}

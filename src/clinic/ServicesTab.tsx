@@ -16,6 +16,7 @@ import { EmptyState } from '../layout/EmptyState'
 import { clearServiceToOpen, serviceToOpen } from '../lib/openService'
 import { Loading } from '../layout/Loading'
 import { useDebounced } from '../lib/useDebounced'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Service = Schemas['ServiceTypeView']
@@ -155,7 +156,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
                     </th>
                   </tr>
                   {isOpen(g) && items.map((s) => (
-                    <tr key={s.id} className={s.id === opened ? 'active' : undefined}>
+                    <tr key={s.id} {...rowOpen(editable && (() => setOpened(s.id)), s.id === opened && 'active')}>
                       <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(s.id)}>{s.name}</button> : s.name}</td>
                       <td className="r num nowrap">{s.durationMinutes} мин</td>
                       <td className="r num nowrap">{priceText(s.priceSom) ?? '—'}</td>
@@ -212,7 +213,7 @@ function ClinicCatalog({ services, total, editable, opened, searching, onOpen }:
       {shown && (
         <ul className="clinic-catalog-list">
           {services.map((s) => (
-            <li key={s.id} className={s.id === opened ? 'active' : undefined}>
+            <li key={s.id} {...rowOpen(editable && (() => onOpen(s.id)), s.id === opened && 'active')}>
               <span className="clinic-catalog-name">
                 {editable ? <button type="button" className="row-link" onClick={() => onOpen(s.id)}>{s.name}</button> : s.name}
                 <span className="hint"> · {s.durationMinutes} мин{priceText(s.priceSom) ? ` · ${priceText(s.priceSom)}` : ''}</span>
