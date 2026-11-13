@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 
 import { ApiError, upload, type Schemas } from '../api/client'
+import { FilePicker } from '../layout/FilePicker'
 import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
 import { download } from '../lib/download'
@@ -36,7 +37,6 @@ export function ImportData() {
   const [workbook, setWorkbook] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [columns, setColumns] = useState<Columns | null>(null)
-  const input = useRef<HTMLInputElement>(null)
 
   const form = (f: File, cols: Columns | null) => {
     const body = new FormData()
@@ -62,7 +62,6 @@ export function ImportData() {
     setColumns(null)
     preview.reset()
     apply.reset()
-    if (input.current) input.current.value = ''
     if (next) setKind(next)
     setWorkbook(false)
   }
@@ -109,10 +108,8 @@ export function ImportData() {
         </div>
       ) : (
         <>
-          <label className="field"><span>Файл таблицы</span>
-            <input ref={input} type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              onChange={(e) => choose(e.target.files?.[0])} />
-          </label>
+          <FilePicker label="Файл таблицы" button="Выбрать файл (.xlsx, .csv)" file={file} onChange={choose}
+            accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
           {preview.isPending && <p className="hint"><Spinner />Читаем таблицу…</p>}
           {preview.error && <p className="error" role="alert">{fileError}</p>}
           {r && columns && (

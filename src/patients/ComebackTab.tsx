@@ -10,8 +10,8 @@ import { addDays, shortDate, somText, todayIn } from '../lib/time'
 import { dueText, monthsText } from '../clinic/services'
 import './comeback.css'
 import { Loading, Spinner } from '../layout/Loading'
-import { HeadTools } from '../layout/PageHead'
-import { rowOpen } from '../lib/rowClick'
+import { HeadTools, SubHelp } from '../layout/PageHead'
+import { CalmRow, RowMenu } from './CalmList'
 
 type Candidate = Schemas['ComebacksCandidate']
 type Reason = NonNullable<Candidate['reason']>
@@ -21,11 +21,11 @@ type Cancelled = NonNullable<Candidate['cancelled']>
 /** «Записать» из «Отменили»: тот же врач, та же услуга и длительность, что у отменённой записи. */
 export type BookPreset = { doctorId?: number; serviceId?: number; duration?: number }
 
-const REASONS: Record<Reason, { label: string; tone: string }> = {
-  PLAN: { label: 'Лечение не закончено', tone: 'plan' },
-  CANCELLED: { label: 'Отменил запись', tone: 'cancelled' },
-  NO_SHOW: { label: 'Не пришёл', tone: 'noshow' },
-  RECALL: { label: 'Пора на осмотр', tone: 'recall' },
+const REASONS: Record<Reason, string> = {
+  PLAN: 'Лечение не закончено',
+  CANCELLED: 'Отменил запись',
+  NO_SHOW: 'Не пришёл',
+  RECALL: 'Пора на осмотр',
 }
 
 /** «отменил пациент в боте · 3 дня назад» — кто и когда (V160). */
@@ -99,108 +99,107 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
   const everyone = board.data.planPatients + board.data.noShows + board.data.recalls + board.data.cancelled
   const total = board.data.total ?? shown.length
   const sent = board.data.sent
-  const agreed = board.data.agreed
   const r = result.data
 
+  const book = (c: Candidate) => onBook({ id: c.patientId, fullName: c.fullName ?? '', phone: c.phone, telegram: c.telegram },
+    c.cancelled ? { doctorId: c.cancelled.doctorId, serviceId: c.cancelled.serviceId, duration: c.cancelled.minutes } : undefined)
+  // Отбор — одной строкой переключателей в шапке; пустые группы не показываем (кроме выбранной)
+  const groups: [typeof filter, string, number, string?][] = [
+    ['PLAN', 'Планы лечения', board.data.planPatients, board.data.planSom > 0 ? somText(board.data.planSom) : undefined],
+    ['CANCELLED', 'Отменили', board.data.cancelled],
+    ['NO_SHOW', 'Не пришли', board.data.noShows],
+    ['RECALL', 'Пора на осмотр', board.data.recalls],
+    ['SENT', 'План отправлен', sent],
+  ]
+
   return (
-    <div className="comeback">
+    <div className="comeback calm-stack">
+      <SubHelp title="Позвать снова">Кого стоит позвать: незаконченные планы лечения, кто отменил или не пришёл и не перезаписался, кому пора
+        на осмотр. «Пригласить» — готовый текст в Telegram или WhatsApp; записать и «Не звать» — в «⋯».</SubHelp>
       <HeadTools>
-      <section className="comeback-summary" aria-label="Деньги на столе">
-        <button type="button" className="comeback-money" aria-pressed={filter === 'PLAN'} onClick={() => setFilter(filter === 'PLAN' ? 'ALL' : 'PLAN')}>
-          <span className="hint">Незаконченные планы лечения</span>
-          <b className="num">{somText(board.data.planSom)}</b>
-          <span className="hint">· пациентов: {board.data.planPatients}</span>
-        </button>
-        <button type="button" aria-pressed={filter === 'CANCELLED'} onClick={() => setFilter(filter === 'CANCELLED' ? 'ALL' : 'CANCELLED')}>
-          <span className="hint">Отменили и не записались</span><b className="num">{board.data.cancelled}</b>
-        </button>
-        <button type="button" aria-pressed={filter === 'NO_SHOW'} onClick={() => setFilter(filter === 'NO_SHOW' ? 'ALL' : 'NO_SHOW')}>
-          <span className="hint">Не пришли и не перезаписались</span><b className="num">{board.data.noShows}</b>
-        </button>
-        <button type="button" aria-pressed={filter === 'RECALL'} onClick={() => setFilter(filter === 'RECALL' ? 'ALL' : 'RECALL')}>
-          <span className="hint">Пора на осмотр</span><b className="num">{board.data.recalls}</b>
-        </button>
-      </section>
+        <div className="segments comeback-filter" role="group" aria-label="Кого позвать">
+          <button type="button" aria-pressed={filter === 'ALL'} onClick={() => setFilter('ALL')}>Все <span className="num">{everyone}</span></button>
+          {groups.filter(([key, , n]) => n > 0 || filter === key).map(([key, title, n, money]) => (
+            <button key={key} type="button" aria-pressed={filter === key} onClick={() => setFilter(filter === key ? 'ALL' : key)}>
+              {title} <span className="num">{money ?? n}</span></button>
+          ))}
+        </div>
       </HeadTools>
-      {sent > 0 && (
-        <button type="button" className="chip comeback-sent-filter" aria-pressed={filter === 'SENT'}
-          onClick={() => setFilter(filter === 'SENT' ? 'ALL' : 'SENT')}>
-          Отправили план, не записались: {sent}{agreed > 0 ? ` · согласились: ${agreed}` : ''}
-        </button>
-      )}
-      {r && r.invited > 0 && (
-        <p className="comeback-result" aria-label="Tish вернул">
-          ✅ За 30 дней вернулись <b>{r.returned} из {r.invited}</b> приглашённых
-          {r.returnedPlanSom > 0 && <> · в их планах <b className="num">{somText(r.returnedPlanSom)}</b></>}
-          {r.paidSom > 0 && <> · уже оплачено <b className="num">{somText(r.paidSom)}</b></>}
-        </p>
-      )}
-      {noServiceTerms && board.data.recalls > 0 && (filter === 'ALL' || filter === 'RECALL') && (
-        <p className="hint small">Пора на осмотр — по сроку клиники. Сроки по услугам — в{' '}
-          <a href="#/clinic/services">Клиника → Услуги и цены</a>.</p>
-      )}
       {!everyone ? (
-        <EmptyState fill title="Звать некого">Все с планом лечения записаны, кто отменил — перезаписался, неявок нет, осмотры — вовремя.</EmptyState>
+        <EmptyState fill title="Звать некого" />
       ) : !shown.length ? <EmptyState fill title="По этому отбору никого" /> : (
-        <ul className="comeback-list" aria-label="Кого вернуть">
+        <ul className="calm-list" aria-label="Кого вернуть">
           {shown.map((c) => (
-            <li key={c.patientId} {...rowOpen(inviting !== c.patientId && (() => onOpen(c.patientId)))}>
-              <div className="comeback-head">
-                <button type="button" className="row-link" onClick={() => onOpen(c.patientId)}>{c.fullName}</button>
-                <span className={`chip small comeback-${REASONS[c.reason!].tone}`}>{REASONS[c.reason!].label}</span>
-                {c.planSom > 0 && <b className="num comeback-sum">{somText(c.planSom)}</b>}
-              </div>
-              {(c.plan ?? []).length > 0 && <p className="comeback-plan">{c.plan!.join(' · ')}</p>}
-              {c.planSentAt && (
-                <p className={c.planAgreedAt ? 'tone-ok small' : 'hint small'}>
-                  план отправлен {shortDate(c.planSentAt)}{c.planAgreedAt ? ` · согласован ${shortDate(c.planAgreedAt)} — запишите на первый этап` : ' · ещё не согласован'}
-                </p>
-              )}
-              {c.reason === 'CANCELLED' && c.cancelled ? (
+            <CalmRow key={c.patientId} open={inviting !== c.patientId && (() => onOpen(c.patientId))} name={c.fullName}
+              flags={c.planAgreedAt && <span className="chip calm-flag s-ok">План согласован</span>}
+              sub={reasonLine(c)}
+              meta={(c.planSom > 0 || c.invitedAt) && (
                 <>
-                  <p className="hint small">{cancelledText(c.cancelled)} · {invitedText(c, 'напоминали')}</p>
-                  <p className="comeback-plan">
-                    был записан: {[c.cancelled.service, c.cancelled.doctor, c.cancelled.startAt && shortDate(c.cancelled.startAt, true)].filter(Boolean).join(' · ')}
-                  </p>
+                  {c.planSom > 0 && <span className="num calm-meta-strong">{somText(c.planSom)}</span>}
+                  {c.invitedAt && <span>{c.reason === 'CANCELLED' ? 'напоминали' : 'звали'} {agoText(c.invitedAt)}</span>}
                 </>
-              ) : c.reason === 'RECALL' && c.recallDueOn ? (
-                <p className="hint small">
-                  последний визит: {c.lastVisit ? shortDate(c.lastVisit) : '—'}{c.recallService ? ` · ${c.recallService}` : ''}
-                  {' '}· пора с {dueText(c.recallDueOn)}{c.recallMonths ? ` (через ${monthsText(c.recallMonths)})` : ''}
-                  {' '}· {invitedText(c, 'звали')}
-                </p>
-              ) : (
-                <p className="hint small">
-                  {c.lastVisit ? `был ${agoText(c.lastVisit)}` : 'ещё не был'} · {invitedText(c, 'звали')}
-                </p>
               )}
-              {inviting === c.patientId ? (
-                <InviteForm candidate={c} onDone={() => setInviting(null)} />
-              ) : (
-                <div className="actions">
-                  <button type="button" className={c.invitedAt ? 'btn small' : 'btn small primary'} onClick={() => void again(c).then((ok) => ok && setInviting(c.patientId))}>
-                    {c.reason === 'CANCELLED' ? 'Напомнить' : 'Пригласить'}</button>
-                  <button type="button" className="btn small ghost"
-                    onClick={() => onBook({ id: c.patientId, fullName: c.fullName ?? '', phone: c.phone, telegram: c.telegram },
-                      c.cancelled ? { doctorId: c.cancelled.doctorId, serviceId: c.cancelled.serviceId, duration: c.cancelled.minutes } : undefined)}>
-                    Записать</button>
-                  {c.reason === 'CANCELLED' && (
-                    <button type="button" className="btn small ghost" disabled={skip.isPending && skip.variables === c.patientId}
-                      onClick={() => skip.mutate(c.patientId)}>Не звать</button>
-                  )}
-                </div>
+              action={inviting !== c.patientId && (
+                <button type="button" className="btn" onClick={() => void again(c).then((ok) => ok && setInviting(c.patientId))}>
+                  {c.reason === 'CANCELLED' ? 'Напомнить' : 'Пригласить'}</button>
               )}
-            </li>
+              menu={inviting !== c.patientId && (
+                <RowMenu label={`Ещё: ${c.fullName ?? 'пациент'}`} items={[
+                  { label: c.planAgreedAt ? 'Записать на первый этап' : 'Записать', onSelect: () => book(c) },
+                  ...(c.reason === 'CANCELLED' ? [{ label: 'Не звать', disabled: skip.isPending && skip.variables === c.patientId, onSelect: () => skip.mutate(c.patientId) }] : []),
+                ]} />
+              )}>
+              {inviting === c.patientId && <InviteForm candidate={c} onDone={() => setInviting(null)} />}
+            </CalmRow>
           ))}
         </ul>
       )}
       {skip.error && <p className="error" role="alert">{errorText(skip.error)}</p>}
       {shown.length < total && (
-        <button type="button" className="btn" disabled={board.isFetching} onClick={() => setLimit(limit + PAGE)}>
+        <button type="button" className="btn comeback-more" disabled={board.isFetching} onClick={() => setLimit(limit + PAGE)}>
           {board.isFetching ? <><Spinner />Загрузка…</> : `Показать ещё (${Math.min(PAGE, total - shown.length)} из ${total - shown.length})`}</button>
+      )}
+      {r && r.invited > 0 && (
+        <p className="calm-note" aria-label="Tish вернул">
+          За 30 дней вернулись <b>{r.returned} из {r.invited}</b> приглашённых
+          {r.returnedPlanSom > 0 && <> · в их планах <b className="num">{somText(r.returnedPlanSom)}</b></>}
+          {r.paidSom > 0 && <> · уже оплачено <b className="num">{somText(r.paidSom)}</b></>}
+        </p>
+      )}
+      {noServiceTerms && board.data.recalls > 0 && (filter === 'ALL' || filter === 'RECALL') && (
+        <p className="calm-note">Пора на осмотр — по сроку клиники. Сроки по услугам — в{' '}
+          <a href="#/clinic/services">Клиника → Услуги и цены</a>.</p>
       )}
     </div>
   )
+}
+
+/** Одна серая строка под именем: причина и главное по ней (план, что отменил, с какого дня пора). */
+function reasonLine(c: Candidate): string {
+  const reason = REASONS[c.reason!]
+  if (c.reason === 'PLAN') return [reason, ...(c.plan ?? [])].join(' · ')
+  if (c.reason === 'CANCELLED' && c.cancelled) {
+    return [reason, c.cancelled.service, c.cancelled.startAt && shortDate(c.cancelled.startAt, true)].filter(Boolean).join(' · ')
+  }
+  if (c.reason === 'RECALL' && c.recallDueOn) return [`Пора на осмотр с ${dueText(c.recallDueOn)}`, c.recallService].filter(Boolean).join(' · ')
+  return [reason, c.lastVisit ? `был ${agoText(c.lastVisit)}` : null].filter(Boolean).join(' · ')
+}
+
+/** Подробности — в форме приглашения, где они нужны: кто и когда отменил, звали ли, статус плана, срок осмотра. */
+function details(c: Candidate): string[] {
+  const lines: string[] = []
+  if (c.reason === 'CANCELLED' && c.cancelled) {
+    lines.push(`${cancelledText(c.cancelled)} · был записан: ${[c.cancelled.service, c.cancelled.doctor, c.cancelled.startAt && shortDate(c.cancelled.startAt, true)].filter(Boolean).join(' · ')}`)
+  }
+  if (c.reason === 'RECALL' && c.recallDueOn) {
+    lines.push(`последний визит: ${c.lastVisit ? shortDate(c.lastVisit) : '—'}${c.recallService ? ` · ${c.recallService}` : ''}`
+      + ` · пора с ${dueText(c.recallDueOn)}${c.recallMonths ? ` (через ${monthsText(c.recallMonths)})` : ''}`)
+  }
+  if (c.planSentAt) {
+    lines.push(`план отправлен ${shortDate(c.planSentAt)}${c.planAgreedAt ? ` · согласован ${shortDate(c.planAgreedAt)} — запишите на первый этап` : ' · ещё не согласован'}`)
+  }
+  lines.push(invitedText(c, c.reason === 'CANCELLED' ? 'напоминали' : 'звали'))
+  return lines
 }
 
 /** Звали на этой неделе — сначала спросить: второе приглашение подряд раздражает пациента. */
@@ -241,6 +240,7 @@ function InviteForm({ candidate: c, onDone }: { candidate: Candidate; onDone: ()
   }
   return (
     <form className="form comeback-invite" aria-label={`Приглашение: ${c.fullName}`} onSubmit={(e) => e.preventDefault()}>
+      <ul className="comeback-details" aria-label="Подробности">{details(c).map((line) => <li key={line}>{line}</li>)}</ul>
       <p className="hint small">{draft.data?.ai ? '✨ Написал ИИ — проверьте' : c.invitedAt ? 'Повторное приглашение — короче первого, можно поправить'
         : c.reason === 'CANCELLED' ? 'Готовый текст — можно поправить' : 'Текст по плану лечения — можно поправить'}
         {draft.data?.lang === 'KY' ? ' · на кыргызском' : ''}</p>

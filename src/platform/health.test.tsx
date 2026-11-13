@@ -81,9 +81,73 @@ test('владелец: «Здоровье» — проблемы сверху, 
   expect(within(errors).getByRole('row', { name: /patients/ })).toHaveTextContent('GET /api/patients/{id}')
   expect(within(errors).getByRole('row', { name: /patients/ })).toHaveTextContent('3f9a2c41b7d0')
 
-  const jobs = screen.getByRole('table', { name: 'Задачи по расписанию' })
-  expect(within(jobs).getByRole('row', { name: /Сводки/ })).toHaveTextContent('ошибка')
-  expect(within(jobs).getByRole('row', { name: /Сводки/ })).toHaveTextContent('TelegramException')
+  expect(screen.getByText('Задачи: 1 с ошибкой')).toBeInTheDocument()
+  const jobs = screen.getByRole('table', { name: 'Задачи с проблемой' })
+  expect(within(jobs).getAllByRole('row')[1]).toHaveTextContent('Сводки и предупреждения врачам')
+  expect(within(jobs).getAllByRole('row')[1]).toHaveTextContent('TelegramException')
+  expect(screen.getByText('Остальные — в порядке (1)')).toBeInTheDocument()
+})
+
+test('задачи: сводка, проблемные сверху, остальные свёрнуты по группам', async () => {
+  const at = (min: number) => new Date(Date.now() + min * 60_000).toISOString()
+  const ok = (name: string, code: string) => ({ name, code, schedule: 'каждые 10 мин', status: 'SUCCESS', lastRunAt: at(-5), nextRunAt: at(5) })
+  const jobs: Schemas['HealthServiceJob'][] = [
+    ok('Чистка старых входов', 'WebSessions.cleanUp'),
+    ok('Напоминания пациентам о завтрашнем приёме', 'AutoReminders'),
+    ok('Перенос старых файлов из базы в R2', 'FileMover'),
+    ok('«Ждём вас» пациенту перед приёмом', 'SoonReminders'),
+    ok('Новая задача', 'Unknown'),
+    { name: 'Корзина файлов R2 (30 дней) и чистка сирот', code: 'FileCleanup', schedule: '0 0 3 * * *', status: 'ERROR',
+      error: 'SdkClientException', lastRunAt: at(-60), nextRunAt: at(600) },
+    { name: 'Отзывы после приёма', code: 'Reviews', schedule: '0 0 * * * *', status: 'NONE', nextRunAt: at(-120) },
+    { name: 'Сторож ошибок 5xx', code: 'ServerErrorAlerts', schedule: 'каждые 5 мин', status: 'NONE', nextRunAt: at(3) },
+  ]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/health', () => HttpResponse.json({ ...health, checkedAt: at(0), jobs })),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Здоровье'))
+
+  expect(await screen.findByText('Задачи: 1 с ошибкой, 1 давно не запускалась')).toBeInTheDocument()
+  const bad = screen.getByRole('table', { name: 'Задачи с проблемой' })
+  const rows = within(bad).getAllByRole('row').slice(1)
+  expect(rows).toHaveLength(2)
+  expect(rows[0]).toHaveTextContent('Корзина файлов R2')
+  expect(rows[1]).toHaveTextContent('Отзывы после приёма')
+  expect(rows[1]).toHaveTextContent('опаздывает')
+
+  const summary = screen.getByText('Остальные — в порядке (6)')
+  const fold = summary.closest('details')!
+  expect(fold).not.toHaveAttribute('open')
+  const groups = within(fold).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)
+  expect(groups).toEqual(['Напоминания и сводки', 'Сторожа и проверки', 'Файлы', 'Чистка и архивы', 'Прочее'])
+  // внутри группы — по алфавиту
+  const reminders = within(fold).getByRole('table', { name: 'Напоминания и сводки', hidden: true })
+  expect(within(reminders).getAllByRole('row', { hidden: true }).slice(1).map((r) => r.textContent))
+    .toEqual([expect.stringContaining('Ждём вас'), expect.stringContaining('Напоминания пациентам')])
+  await user.click(summary)
+  expect(fold).toHaveAttribute('open')
+  // строка «Файлы» в таблице «Приложение и база» на месте
+  expect(within(screen.getByRole('table', { name: 'Приложение и база' })).getByRole('row', { name: /Файлы/ })).toBeInTheDocument()
+})
+
+test('задачи: все в порядке — одна строка сводки, список свёрнут', async () => {
+  const next = new Date(Date.now() + 3600_000).toISOString()
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/health', () => HttpResponse.json({ ...health, jobs: [
+      { name: 'Чистка кодов входа', code: 'SmsCodes.cleanUp', schedule: 'каждые 1 ч', status: 'SUCCESS', nextRunAt: next },
+      { name: 'Чистка старых входов', code: 'WebSessions.cleanUp', schedule: 'каждые 1 ч', status: 'NONE', nextRunAt: next },
+    ] })),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Здоровье'))
+  expect(await screen.findByText('Задачи: все 2 в порядке')).toBeInTheDocument()
+  expect(screen.queryByRole('table', { name: 'Задачи с проблемой' })).not.toBeInTheDocument()
+  expect(screen.getByText('Все — в порядке (2)').closest('details')).not.toHaveAttribute('open')
 })
 
 test('поиск по номеру запроса: строки лога со стеком; неверный номер — ошибка под полем', async () => {

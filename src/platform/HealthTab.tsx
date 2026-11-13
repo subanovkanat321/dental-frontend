@@ -157,7 +157,7 @@ function Sections({ h }: { h: Health }) {
           ) : <p className="hint">Ошибок 5xx не было.</p>}
         </section>
       )}
-      {(h.jobs?.length ?? 0) > 0 && <Jobs jobs={h.jobs!} />}
+      {(h.jobs?.length ?? 0) > 0 && <Jobs jobs={h.jobs!} checkedAt={h.checkedAt} />}
     </>
   )
 }
@@ -176,28 +176,95 @@ function FilesRow({ files: f }: { files: Files }) {
   )
 }
 
-function Jobs({ jobs }: { jobs: Job[] }) {
+/** Группы задач по коду (имя класса из HealthService.JOB_NAMES); неизвестный код — «Прочее». */
+const JOB_GROUPS: [string, string[]][] = [
+  ['Напоминания и сводки', ['AutoReminders', 'SoonReminders', 'RequestReminders', 'Reviews', 'NotifySchedule', 'PlatformExpenseReminders',
+    'BillingReminders', 'SurveyInvites']],
+  ['Контент', ['ContentBot', 'ContentAutoImport', 'InstagramTokens']],
+  ['Сторожа и проверки', ['ServerErrorAlerts', 'ClientErrorAlerts', 'HealthAlerts', 'ErrorJournal', 'DailyJobs']],
+  ['Файлы', ['FileMover', 'FileCleanup']],
+  ['Чистка и архивы', ['WebSessions', 'SmsCodes', 'PhonePasswords', 'StaffMembers', 'TelegramUpdates', 'AiUsageArchive', 'SmsLogArchive',
+    'PendingBotActionCleanup']],
+]
+const OTHER_GROUP = 'Прочее'
+const groupOf = (code?: string) => {
+  const simple = (code ?? '').split('.')[0] ?? ''
+  return JOB_GROUPS.find(([, codes]) => codes.includes(simple))?.[0] ?? OTHER_GROUP
+}
+
+/** Запуск опоздал больше чем на 15 минут (по часам сервера — checkedAt): задача должна была отработать, а не отработала (зависла или планировщик стоит). */
+const OVERDUE_MS = 15 * 60_000
+
+type JobTrouble = 'error' | 'overdue' | null
+function jobTrouble(j: Job, now: number): JobTrouble {
+  if (j.status === 'ERROR') return 'error'
+  if (j.status !== 'STARTED' && j.nextRunAt && !Number.isNaN(now) && Date.parse(j.nextRunAt) < now - OVERDUE_MS) return 'overdue'
+  return null
+}
+
+/** «все 33 в порядке» или «2 с ошибкой, 1 давно не запускалась». */
+function jobsSummary(total: number, errors: number, overdue: number) {
+  if (errors + overdue === 0) return `все ${total} в порядке`
+  return [errors > 0 && `${errors} с ошибкой`, overdue > 0 && `${overdue} давно не ${overdue === 1 ? 'запускалась' : 'запускались'}`]
+    .filter(Boolean).join(', ')
+}
+
+function JobTable({ jobs, label, now }: { jobs: Job[]; label: string; now: number }) {
   return (
-    <section className="card-block">
+    <table className="table" aria-label={label}>
+      <thead><tr><th>Задача</th><th>Последний запуск</th><th>Следующий</th></tr></thead>
+      <tbody>
+        {jobs.map((j) => {
+          const [status, chip] = JOB_STATUS[j.status ?? 'NONE'] ?? ['', 's-quiet']
+          const late = jobTrouble(j, now) === 'overdue'
+          return (
+            <tr key={`${j.code}-${j.schedule}`}>
+              {/* содержимое ячейки — одним span: на телефоне ячейка flex «подпись — значение», и куски не разъезжаются */}
+              <td><span>{j.name}<span className="hint small"> · {j.schedule}</span></span></td>
+              <td className="nowrap"><span><span className={`chip small ${chip}`}>{status}</span>
+                {j.status !== 'NONE' && <span className="hint"> {when(j.lastRunAt)}</span>}
+                {j.error && <span className="tone-bad"> {j.error}</span>}</span></td>
+              <td className={late ? 'tone-bad nowrap' : 'hint nowrap'}>{when(j.nextRunAt)}{late && ' — опаздывает'}</td>
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
+  )
+}
+
+/**
+ * Задачи по расписанию: сверху сводка, задачи с ошибкой или опоздавшим запуском — сразу видны; остальные
+ * свёрнуты и разложены по группам (напоминания, контент, сторожа, файлы, чистка).
+ */
+function Jobs({ jobs, checkedAt }: { jobs: Job[]; checkedAt?: string }) {
+  const now = checkedAt ? Date.parse(checkedAt) : NaN
+  const troubled = jobs.filter((j) => jobTrouble(j, now) != null)
+    .sort((a, b) => (jobTrouble(a, now) === jobTrouble(b, now) ? 0 : jobTrouble(a, now) === 'error' ? -1 : 1))
+  const errors = troubled.filter((j) => jobTrouble(j, now) === 'error').length
+  const fine = jobs.filter((j) => jobTrouble(j, now) == null)
+  const groups = [...JOB_GROUPS.map(([name]) => name), OTHER_GROUP]
+    .map((name) => [name, fine.filter((j) => groupOf(j.code) === name)
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'ru'))] as const)
+    .filter(([, list]) => list.length > 0)
+  return (
+    <section className="card-block jobs-health">
       <h2>Задачи по расписанию</h2>
+      <p className={troubled.length ? 'tone-bad strong' : 'tone-ok strong'}>
+        Задачи: {jobsSummary(jobs.length, errors, troubled.length - errors)}</p>
       <p className="hint small">С последнего запуска приложения.</p>
-      <table className="table" aria-label="Задачи по расписанию">
-        <thead><tr><th>Задача</th><th>Последний запуск</th><th>Следующий</th></tr></thead>
-        <tbody>
-          {jobs.map((j) => {
-            const [label, chip] = JOB_STATUS[j.status ?? 'NONE'] ?? ['', 's-quiet']
-            return (
-              <tr key={`${j.code}-${j.schedule}`}>
-                <td>{j.name}<span className="hint small"> · {j.schedule}</span></td>
-                <td className="nowrap"><span className={`chip small ${chip}`}>{label}</span>
-                  {j.status !== 'NONE' && <span className="hint"> {when(j.lastRunAt)}</span>}
-                  {j.error && <span className="tone-bad"> {j.error}</span>}</td>
-                <td className="hint nowrap">{when(j.nextRunAt)}</td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      {troubled.length > 0 && <JobTable jobs={troubled} label="Задачи с проблемой" now={now} />}
+      {fine.length > 0 && (
+        <details>
+          <summary>{troubled.length ? 'Остальные' : 'Все'} — в порядке ({fine.length})</summary>
+          {groups.map(([name, list]) => (
+            <div key={name} className="jobs-group">
+              <h3>{name}</h3>
+              <JobTable jobs={list} label={name} now={now} />
+            </div>
+          ))}
+        </details>
+      )}
     </section>
   )
 }

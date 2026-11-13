@@ -6,6 +6,7 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneToInput } from '../clinic/phone'
 import { ask as confirmAsk } from '../lib/confirm'
 import { download } from '../lib/download'
+import { FilePicker } from '../layout/FilePicker'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
 import { CITIES } from '../lib/clinicSearch'
@@ -521,7 +522,6 @@ function ListUpload({ onClose }: { onClose: () => void }) {
   const [text, setText] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [city, setCity] = useState('Бишкек')
-  const input = useRef<HTMLInputElement>(null)
   const form = () => {
     const body = new FormData()
     if (file) body.append('file', file)
@@ -559,9 +559,8 @@ function ListUpload({ onClose }: { onClose: () => void }) {
       <label className="field"><span>Список</span>
         <textarea value={text} rows={6} disabled={Boolean(file)} placeholder={'Стоматология «Пример»; 0555 000 000; ул. Примерная, 1; https://2gis.kg/…'}
           onChange={(e) => { setText(e.target.value); changed() }} /></label>
-      <label className="field"><span>Или файл .xlsx / .csv</span>
-        <input ref={input} type="file" accept=".xlsx,.csv,.txt" onChange={(e) => { setFile(e.target.files?.[0] ?? null); changed() }} /></label>
-      {file && <button type="button" className="btn ghost small" onClick={() => { setFile(null); if (input.current) input.current.value = ''; changed() }}>Убрать файл</button>}
+      <FilePicker label="Или файл .xlsx / .csv" button="Выбрать файл (.xlsx, .csv)" accept=".xlsx,.csv,.txt" file={file}
+        onChange={(f) => { setFile(f ?? null); changed() }} onClear={() => { setFile(null); changed() }} />
       <label className="field"><span>Город, если не указан в строке</span>
         <Select value={city} onChange={(e) => { setCity(e.target.value); changed() }}>
           {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}

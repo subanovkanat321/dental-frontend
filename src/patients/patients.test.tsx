@@ -34,7 +34,7 @@ afterEach(() => {
   window.location.hash = ''
 })
 
-const names = () => screen.getAllByRole('row').slice(1).map((r) => within(r).getAllByRole('cell')[0]!.textContent?.replace('Telegram', ''))
+const names = () => within(screen.getByRole('list', { name: 'Пациенты' })).getAllByRole('listitem').map((li) => within(li).getAllByRole('button')[0]!.textContent)
 
 test('таблица: сначала кто был недавно; сортировка по имени; поиск по имени и по номеру', async () => {
   backend()
@@ -46,11 +46,21 @@ test('таблица: сначала кто был недавно; сортир�
   // Не был ни разу — в конце, даже при обратной сортировке
   expect(names()).toEqual(['Айгуль Т.', 'Бакыт М.', 'Нурлан К.'])
 
-  const byName = () => within(screen.getByRole('columnheader', { name: /Пациент/ })).getByRole('button')
-  await userEvent.click(byName())
+  // Строка спокойная: имя, под ним телефон; справа — следующая запись или когда был; без метки «Telegram» (она в карточке)
+  const aigul = within(screen.getByRole('list', { name: 'Пациенты' })).getAllByRole('listitem')[0]!
+  expect(aigul).toHaveTextContent(/\+996 700 333 444/)
+  expect(aigul).toHaveTextContent(/записан 5 нояб/)
+  expect(within(screen.getByRole('list', { name: 'Пациенты' })).getAllByRole('listitem')[1]).toHaveTextContent(/был 10 янв 2026/)
+  expect(screen.queryByText('Telegram')).toBeNull()
+
+  // Порядок — один выпадающий список вместо заголовков колонок
+  await choose(screen.getByLabelText('Порядок'), 'По имени')
   expect(names()).toEqual(['Айгуль Т.', 'Бакыт М.', 'Нурлан К.'])
-  await userEvent.click(byName())
-  expect(names()).toEqual(['Нурлан К.', 'Бакыт М.', 'Айгуль Т.'])
+  await choose(screen.getByLabelText('Порядок'), 'Давно не были')
+  expect(names()).toEqual(['Бакыт М.', 'Айгуль Т.', 'Нурлан К.'])
+  await choose(screen.getByLabelText('Порядок'), 'Ближайшая запись')
+  expect(names()[0]).toBe('Айгуль Т.')
+  await choose(screen.getByLabelText('Порядок'), 'Сначала недавние')
 
   await userEvent.type(screen.getByLabelText('Поиск пациента'), 'бак')
   expect(names()).toEqual(['Бакыт М.'])
