@@ -2023,6 +2023,17 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .outreach-step.big strong { font-size: 1.15em; }
 .outreach-step.big .btn.primary { min-height: 48px; flex: 1 1 auto; }
 .outreach-more { margin-top: -4px; }
+/* Сверху — «Текст сообщения» свёрнутым: заголовок и первая строка текста в одну строку, длинная — с «…» */
+.outreach-template { padding-top: 0; padding-bottom: 0; }
+.outreach-template > details > summary { display: flex; align-items: center; gap: 10px; min-height: 48px; cursor: pointer; min-width: 0; }
+.outreach-template > details > summary b { flex: none; font-weight: 600; }
+.outreach-template-line { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hint); }
+.outreach-template > details[open] { padding-bottom: 12px; }
+.outreach-template > details[open] .outreach-template-line { display: none; }
+.outreach-tools { margin: 10px 0; gap: 8px; }
+@media (max-width: 760px) { .outreach-tools .btn { flex: 1 1 auto; padding: 0 10px; } }
+.outreach-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.outreach-filter .segments { flex: 0 1 auto; min-width: 0; }
 /* Заголовок дня в «Расписании» — кнопка: открывает календарь */
 .day-title-pick { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-align: left; border-radius: 6px; }
 .day-title-pick:hover { color: var(--accent); }
