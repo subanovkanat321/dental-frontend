@@ -207,3 +207,102 @@ test('«Настройки → Договор с пациентом»: подс�
   expect(await within(form).findByText('Шаблон договора сохранён')).toBeInTheDocument()
   expect(sent).toEqual({ title: 'Договор', body: 'Договор с {пациент}', requisites: 'ИНН 00000000000000' })
 })
+
+// Договор по желанию (V209 бэкенда): «Предлагать договор всем пациентам» выключено — строки нет, договор — «⋯ → Оформить договор»
+const OFF = { ...me, clinic: { ...me.clinic!, patientContracts: false } }
+
+test('выключено: строки «не подписан» нет, «⋯ → 📄 Оформить договор» открывает договор раскрытым', async () => {
+  backend()
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(OFF)))
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Айжан Вымышленная' }))
+  await user.click(await screen.findByRole('tab', { name: 'Прочее' }))
+  await screen.findByRole('button', { name: 'Изменить данные пациента' })
+  // Договор не подписан — ни строки, ни «не подписан»
+  await new Promise((r) => setTimeout(r, 50))
+  expect(screen.queryByRole('region', { name: 'Договор' })).not.toBeInTheDocument()
+  expect(screen.queryByText('не подписан')).not.toBeInTheDocument()
+
+  // С другой вкладки: «⋯» → «Оформить договор» — откроется «Прочее» и договор с кнопками
+  await user.click(screen.getByRole('tab', { name: 'Визиты' }))
+  const more = screen.getByRole('button', { name: 'Ещё действия' })
+  await user.click(more)
+  expect(more).toHaveAttribute('aria-expanded', 'true')
+  await user.click(screen.getByRole('menuitem', { name: '📄 Оформить договор' }))
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  expect(screen.getByRole('tab', { name: 'Прочее' })).toHaveAttribute('aria-selected', 'true')
+  const box = await screen.findByRole('region', { name: 'Договор' })
+  expect(within(box).getByRole('button', { name: /^📄 Договор/ })).toHaveAttribute('aria-expanded', 'true')
+  expect(await within(box).findByRole('button', { name: 'Отметить подписанным' })).toBeInTheDocument()
+  expect(within(box).getByRole('button', { name: '✍️ Подписать на экране' })).toBeInTheDocument()
+})
+
+test('выключено: Esc закрывает меню «⋯», а не карточку пациента', async () => {
+  backend()
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(OFF)))
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Айжан Вымышленная' }))
+  await user.click(await screen.findByRole('button', { name: 'Ещё действия' }))
+  expect(screen.getByRole('menu', { name: 'Ещё действия' })).toBeInTheDocument()
+  await user.keyboard('{Escape}')
+  expect(screen.queryByRole('menu')).not.toBeInTheDocument()
+  expect(screen.getByRole('complementary', { name: 'Карточка пациента' })).toBeInTheDocument()
+})
+
+test('выключено, но договор у пациента подписан — строка в карточке есть', async () => {
+  backend({ ...UNSIGNED, signed: true, signedOn: '2026-11-08', signedBy: 'Айпери' })
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json(OFF)))
+  const { box } = await openContract({ expand: false })
+  expect(await within(box).findByRole('button', { name: '📄 Договор подписан 08.11.2026 ✓' })).toBeInTheDocument()
+})
+
+test('включено — строка «📄 Договор: не подписан» у каждого пациента, без меню', async () => {
+  backend()
+  const { box } = await openContract({ expand: false })
+  expect(await within(box).findByRole('button', { name: '📄 Договор: не подписан' })).toHaveAttribute('aria-expanded', 'false')
+})
+
+test('ассистенту «⋯ → Оформить договор» нет: договор он только смотрит', async () => {
+  backend()
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...OFF, admin: false, doctorId: undefined, assistantOf: [1] })))
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Айжан Вымышленная' }))
+  await screen.findByRole('button', { name: '＋ Записать' })
+  expect(screen.queryByRole('button', { name: 'Ещё действия' })).not.toBeInTheDocument()
+})
+
+test('«Настройки → Договор с пациентом»: «Предлагать договор всем пациентам» — сохраняется сразу', async () => {
+  const template: Schemas['PatientContractsTemplate'] = {
+    title: 'Договор', body: 'Пациент: {пациент}.', requisites: '', custom: false, variables: ['пациент'], defaultTitle: 'Договор',
+    defaultBody: 'Пациент: {пациент}.',
+  }
+  let current = OFF
+  const sent: unknown[] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(current)),
+    http.get('*/api/appointments', () => HttpResponse.json([])),
+    http.get('*/api/clinic/contract-template', () => HttpResponse.json(template)),
+    http.put('*/api/clinic/patient-contracts', async ({ request }) => {
+      const body = await request.json() as Schemas['ClinicControllerPatientContracts']
+      sent.push(body)
+      current = { ...current, clinic: { ...current.clinic, patientContracts: Boolean(body.patientContracts) } }
+      return HttpResponse.json(body)
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  openItem('contract')
+  const offer = await screen.findByRole('region', { name: 'Кому предлагать договор' })
+  expect(offer).toHaveTextContent('Выключено — договор оформляется только по кнопке у нужного пациента (⋯ → Оформить договор)')
+  const toggle = within(offer).getByRole('checkbox', { name: 'Предлагать договор всем пациентам' })
+  expect(toggle).not.toBeChecked()
+  // Шаблон — ниже, как раньше
+  expect(await screen.findByRole('form', { name: 'Шаблон договора с пациентом' })).toBeInTheDocument()
+
+  await user.click(toggle)
+  await waitForSlow(() => expect(toggle).toBeChecked())
+  expect(sent).toEqual([{ patientContracts: true }])
+})

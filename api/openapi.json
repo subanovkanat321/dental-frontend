@@ -2965,6 +2965,34 @@
         }
       }
     },
+    "/api/clinic/patient-contracts" : {
+      "put" : {
+        "tags" : [ "clinic-controller" ],
+        "operationId" : "patientContracts",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicControllerPatientContracts"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicControllerPatientContracts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/dictation-ai" : {
       "get" : {
         "tags" : [ "visit-dictation-controller" ],
@@ -17390,6 +17418,9 @@
           "recallMonths" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "patientContracts" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "independentDoctors", "listed", "ownHours", "recallMonths", "separateSupplies", "settingUp" ]
@@ -17448,6 +17479,13 @@
           }
         },
         "required" : [ "recallMonths" ]
+      },
+      "ClinicControllerPatientContracts" : {
+        "properties" : {
+          "patientContracts" : {
+            "type" : "boolean"
+          }
+        }
       },
       "DepositControllerSettingsRequest" : {
         "properties" : {

@@ -33,11 +33,32 @@ function errorText(e: ApiError | null | undefined): string | null {
  * подписан 08.11.2026 ✓» — раскрытый занимал пол-экрана телефона. Врача не выбирают: врач ближайшего
  * или последнего приёма (defaultDoctorId), иначе сам сотрудник, если он врач; нет и его — без врача,
  * сервер напечатает линию, чтобы вписать от руки.
+ * Договор — по желанию клиники («Предлагать договор всем пациентам», clinic.patientContracts, V209 бэкенда):
+ * выключено — строки нет, пока договора нет; её открывают по кнопке «⋯ → Оформить договор» карточки
+ * (opened) — сразу раскрытой. Подписанный договор виден всегда; сняли отметку — строка остаётся до
+ * закрытия карточки, чтобы не исчезла из-под пальца.
  */
-export function ContractBox({ patient, me, defaultDoctorId }: { patient: Patient; me: Me; defaultDoctorId?: number }) {
+export function ContractBox({ patient, me, defaultDoctorId, offerAll = true, opened = 0 }: {
+  patient: Patient
+  me: Me
+  defaultDoctorId?: number
+  /** Клиника предлагает договор всем: строка «не подписан» у каждого пациента */
+  offerAll?: boolean
+  /** Сколько раз нажали «Оформить договор» (0 — ни разу): показать и раскрыть, даже если договора нет */
+  opened?: number
+}) {
   const client = useQueryClient()
   const doctorId = defaultDoctorId ?? me.doctorId ?? undefined
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(opened > 0)
+  const [kept, setKept] = useState(false)
+  const box = useRef<HTMLElement>(null)
+  // Ещё раз «Оформить договор» (строка уже есть, но свёрнута) — раскрыть (состояние — прямо при отрисовке,
+  // без лишнего прохода через эффект) и показать на экране
+  const [seenOpened, setSeenOpened] = useState(opened)
+  if (opened !== seenOpened) {
+    setSeenOpened(opened)
+    if (opened > 0) setOpen(true)
+  }
   const [printing, setPrinting] = useState(false)
   const [signing, setSigning] = useState(false)
   const [marking, setMarking] = useState(false)
@@ -49,6 +70,11 @@ export function ContractBox({ patient, me, defaultDoctorId }: { patient: Patient
     queryKey: ['contract', id, doctorId ?? null],
     queryFn: () => unwrap(api.GET('/api/patients/{patientId}/contract', { params: { path: { patientId: id }, query: { doctorId } } })),
   })
+  const loaded = contract.data != null
+  // Договор внизу «Прочего»: открыли кнопкой — прокрутить к нему, когда кнопки уже на месте
+  useEffect(() => {
+    if (opened > 0 && loaded) box.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })
+  }, [opened, loaded])
   const refresh = () => client.invalidateQueries({ queryKey: ['contract', id] })
   const sign = useMutation<Contract, ApiError, { png?: Blob; on?: string }>({
     mutationFn: ({ png, on }) => {
@@ -66,7 +92,10 @@ export function ContractBox({ patient, me, defaultDoctorId }: { patient: Patient
   })
   const unsign = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.DELETE('/api/patients/{patientId}/contract', { params: { path: { patientId: id } } })),
-    onSuccess: () => void refresh(),
+    onSuccess: () => {
+      setKept(true)
+      void refresh()
+    },
   })
 
   const sendScan = async (file: File) => {
@@ -92,12 +121,14 @@ export function ContractBox({ patient, me, defaultDoctorId }: { patient: Patient
   }
 
   const c = contract.data
+  // Договор по желанию: нет договора и не открывали по кнопке — строки нет (и «загружаем…» не мелькает)
+  if (!offerAll && opened === 0 && !kept && !c?.signed) return null
   const head = contract.isPending ? <>📄 Договор: <span className="contract-meta">загружаем…</span></>
     : contract.error ? <>📄 Договор: <span className="contract-meta">не загрузился</span></>
       : c!.signed ? <span className="tone-ok">📄 Договор подписан <span className="num">{day(c!.signedOn!)}</span> ✓</span>
         : <>📄 Договор: <b className="tone-wait">не подписан</b></>
   return (
-    <section className={open ? 'contract-box fold open' : 'contract-box fold'} aria-label="Договор">
+    <section ref={box} className={open ? 'contract-box fold open' : 'contract-box fold'} aria-label="Договор">
       <button type="button" className="fold-head" aria-expanded={open} onClick={() => setOpen(!open)}>
         <span className="contract-head">{head}</span>
         <span className="fold-chev" aria-hidden="true">›</span>

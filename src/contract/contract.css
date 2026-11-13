@@ -33,3 +33,10 @@
 .print-sheet .contract-signs div { display: grid; gap: 4px; align-content: end; }
 .print-sheet .contract-signs img { max-width: 60mm; max-height: 22mm; object-fit: contain; }
 .print-sheet .contract-signs .line { border-bottom: 1px solid #111; min-height: 22mm; display: flex; align-items: flex-end; }
+
+/* «⋯» в шапке карточки пациента, рядом с ✕: редкие действия (договор по желанию); меню — под кнопкой, вправо */
+.more-actions { position: relative; }
+.more-actions-btn { min-width: 40px; font-size: 1.1rem; line-height: 1; }
+.more-actions .pop-menu.more-actions-menu { position: absolute; z-index: 60; top: calc(100% + 4px); right: 0; width: 240px; }
+.contract-box { scroll-margin-top: 96px; }
+.contract-offer { margin-bottom: 12px; }

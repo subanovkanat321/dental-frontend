@@ -11,7 +11,7 @@ import { todayIn } from '../lib/time'
 /** Вымышленная клиника и пациенты — настоящих данных в тестах не бывает. */
 export const me: Schemas['BookingViewsMe'] = {
   doctor: true, admin: true, reception: false, doctorId: 1, fullName: 'Айгерим',
-  clinic: { brandName: 'Стоматология «Тест»', workStart: '09:00:00', workEnd: '18:00:00', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6 },
+  clinic: { brandName: 'Стоматология «Тест»', workStart: '09:00:00', workEnd: '18:00:00', independentDoctors: false, listed: true, separateSupplies: false, settingUp: false, ownHours: false, recallMonths: 6, patientContracts: true },
   doctors: [{ id: 1, fullName: 'Айгерим Садыкова', active: true, telegramLinked: false }, { id: 2, fullName: 'Дастан Т.', active: true, telegramLinked: false }], owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6
 }
 

@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { useAnamnesis } from '../api/anamnesis'
 import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
+import { useBack } from '../lib/back'
 import { canEditDoctor, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
 import { debtLine } from '../lib/debt'
 import { formatPhone, shortDate, somText } from '../lib/time'
@@ -64,6 +65,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const [tab, setTab] = useState<Tab>('visits')
   // Визит, у которого открыты «Памятка и квитанция» — один за раз
   const [docsOf, setDocsOf] = useState<number | null>(null)
+  // Договор открыли кнопкой «⋯ → Оформить договор» (счётчик — нажали ещё раз — снова раскрыть)
+  const [contractAsked, setContractAsked] = useState<{ id: number; n: number } | null>(null)
   // Деньги и заметки — админу и врачу; регистратуре сервер их не отдаст
   const staff = Boolean(me.admin || me.doctorId != null)
   // Медкарту сервер (ChartService) открывает админу клиники, врачам и ассистентам; регистратуре — никогда
@@ -164,7 +167,16 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           </span>
           <KidInfo patient={patient} />
         </div>
-        <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        <div className="panel-head-actions">
+          {/* Редкие действия — в «⋯»: договор с пациентом (по желанию клиники, V209) */}
+          {patient && mine && !isAssistant(me) && (
+            <MoreActions onContract={() => {
+              setTab('more')
+              setContractAsked((a) => ({ id: patient.id, n: a?.id === patient.id ? a.n + 1 : 1 }))
+            }} />
+          )}
+          <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        </div>
       </header>
       <MedAlerts an={anamnesis.data} />
       <div className="patient-actions">
@@ -238,9 +250,54 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
           {patient && <GuardianBox patient={patient} canEdit={Boolean(mine)} />}
           {patient && mine && <FamilyBox patient={patient} me={me} onOpenPatient={onOpenPatient} />}
           {/* Договор и согласие на лечение: печать, подпись на экране, отметка и скан */}
-          {patient && mine && <ContractBox patient={patient} me={me} defaultDoctorId={(next ?? past[0])?.doctorId} />}
+          {patient && mine && <ContractBox key={patient.id} patient={patient} me={me} defaultDoctorId={(next ?? past[0])?.doctorId}
+            offerAll={Boolean(me.clinic?.patientContracts)} opened={contractAsked?.id === patient.id ? contractAsked.n : 0} />}
         </section>
       )}
     </aside>
+  )
+}
+
+/**
+ * «⋯» в шапке карточки, рядом с ✕: редкие действия с пациентом — пока одно, «📄 Оформить договор»
+ * (договор по желанию: строки договора у каждого пациента нет). Карточка под кнопкой; закрывается
+ * нажатием мимо, Esc и «назад» телефона — карточка пациента при этом остаётся.
+ */
+function MoreActions({ onContract }: { onContract: () => void }) {
+  const [open, setOpen] = useState(false)
+  const wrap = useRef<HTMLDivElement>(null)
+  useBack(open ? () => setOpen(false) : null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: PointerEvent) => {
+      if (e.target instanceof Node && wrap.current?.contains(e.target)) return
+      setOpen(false)
+    }
+    // Esc закрывает меню, а не карточку пациента (useClose слушает window — сюда раньше)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      setOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey, true)
+    wrap.current?.querySelector<HTMLElement>('.menu-item')?.focus({ preventScroll: true })
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('keydown', onKey, true)
+    }
+  }, [open])
+  return (
+    <div ref={wrap} className="more-actions">
+      <button type="button" className="btn ghost more-actions-btn" aria-label="Ещё действия" aria-haspopup="menu" aria-expanded={open}
+        onClick={() => setOpen(!open)}>⋯</button>
+      {open && (
+        <div className="pop-menu more-actions-menu" role="menu" aria-label="Ещё действия">
+          <button type="button" role="menuitem" className="menu-item" onClick={() => { setOpen(false); onContract() }}>
+            📄 Оформить договор
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

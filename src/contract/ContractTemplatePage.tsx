@@ -21,6 +21,8 @@ const SAMPLE = { patient: 'Айгуль Асанова', birth: '15.04.1990', ph
  * информированного согласия на лечение — текст с подстановками кнопками в позицию курсора, реквизиты
  * клиники ({реквизиты}) и предпросмотр на вымышленном пациенте. Это образец, а не юридическая
  * консультация — клиника проверяет текст у юриста. Пустой текст — снова шаблон по умолчанию.
+ * Сверху — «Предлагать договор всем пациентам» (V209 бэкенда, по умолчанию выключено): договор по
+ * желанию — обычно его оформляют не всем, а по кнопке «⋯ → Оформить договор» у нужного пациента.
  */
 export function ContractTemplatePage({ me, onBack }: { me: Me; onBack: () => void }) {
   const template = useQuery({
@@ -30,9 +32,41 @@ export function ContractTemplatePage({ me, onBack }: { me: Me; onBack: () => voi
   return (
     <section className="schedule-main">
       <SubHeader title="Договор с пациентом" onBack={onBack} />
+      <OfferAll me={me} />
       {template.isPending ? <Loading />
         : template.error ? <p className="error">{template.error.message}</p>
           : <Editor me={me} template={template.data} />}
+    </section>
+  )
+}
+
+/**
+ * Переключатель «Предлагать договор всем пациентам» — сохраняется сразу (как настройки ИИ), без кнопки
+ * «Сохранить» шаблона. Состояние — clinic.patientContracts из /api/patient/me: после сохранения обновим
+ * его в кэше, и карточки пациентов сразу покажут или спрячут строку договора.
+ */
+function OfferAll({ me }: { me: Me }) {
+  const client = useQueryClient()
+  const on = Boolean(me.clinic?.patientContracts)
+  const turn = useMutation<Schemas['ClinicControllerPatientContracts'], ApiError, boolean>({
+    mutationFn: (value) => unwrap(api.PUT('/api/clinic/patient-contracts', { body: { patientContracts: value } })),
+    onSuccess: (saved) => {
+      client.setQueryData<Me>(['me'], (old) => old?.clinic ? { ...old, clinic: { ...old.clinic, patientContracts: Boolean(saved.patientContracts) } } : old)
+      void client.invalidateQueries({ queryKey: ['me'] })
+    },
+  })
+  const shown = turn.isPending ? Boolean(turn.variables) : on
+  return (
+    <section className="card-block contract-offer" aria-label="Кому предлагать договор">
+      <label className="check">
+        <input type="checkbox" checked={shown} disabled={turn.isPending} onChange={(e) => turn.mutate(e.target.checked)} />
+        {' '}<strong>Предлагать договор всем пациентам</strong>
+      </label>
+      <p className="hint small">
+        Выключено — договор оформляется только по кнопке у нужного пациента (⋯ → Оформить договор). Включено — строка
+        «📄 Договор» в карточке каждого пациента. Подписанный договор виден в карточке всегда.
+      </p>
+      {turn.error && <p className="error small" role="alert">{turn.error.message}</p>}
     </section>
   )
 }
@@ -92,7 +126,7 @@ function Editor({ me, template }: { me: Me; template: Template }) {
           и поправьте под свою клинику.
         </p>
         <p className="hint">
-          Договор печатают из карточки пациента («Прочее → Договор») — данные пациента, клиники и врача подставятся сами. Пустое
+          Договор печатают из карточки пациента («⋯ → Оформить договор» или «Прочее → Договор») — данные пациента, клиники и врача подставятся сами. Пустое
           значение печатается линией — дописать от руки.
         </p>
         <label className="field"><span>Заголовок</span>
