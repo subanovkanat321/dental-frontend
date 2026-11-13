@@ -10,6 +10,7 @@ import { WEEK, type Weekday } from '../team/texts'
 import { askMakeWorkday, DAYS, offLabel, onWeekday, useTimeOff, weeklyDaysOff } from '../team/dayOffHours'
 import { ask } from '../lib/confirm'
 import { clinicRequest } from './clinicUpdate'
+import { canEditPrices, PRICES_BY_HEAD } from '../lib/roles'
 import { SubHeader } from './SubHeader'
 import { Loading } from '../layout/Loading'
 
@@ -32,8 +33,9 @@ export function HoursPage({ me, onBack, title = 'Часы работы', tabs, o
       <SubHeader title={title} onBack={onBack}>{tabs}</SubHeader>
       <section className="card-block">
         <h2>Часы клиники</h2>
+        <p className="hint">По ним работают врачи без своих часов.{!me.admin && <> {PRICES_BY_HEAD}.</>}</p>
         {clinic.isPending ? <Loading /> : clinic.error ? <p className="error">{clinic.error.message}</p>
-          : <ClinicHours clinic={clinic.data} canEdit={Boolean(me.admin || me.doctorId != null)} admin={Boolean(me.admin)} onTimeOff={onTimeOff} />}
+          : <ClinicHours clinic={clinic.data} canEdit={canEditPrices(me)} admin={Boolean(me.admin)} onTimeOff={onTimeOff} />}
       </section>
       <section className="card-block">
         <h2>Часы врачей</h2>
@@ -41,7 +43,8 @@ export function HoursPage({ me, onBack, title = 'Часы работы', tabs, o
         {doctors.map((d) => (
           <div key={d.id} className="hours-doctor">
             <button type="button" className="hours-toggle" aria-expanded={open === d.id} onClick={() => setOpen(open === d.id ? null : d.id)}>
-              <strong>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</strong><span aria-hidden="true">{open === d.id ? '▴' : '▾'}</span>
+              <strong>{d.fullName}{d.id === me.doctorId ? ' (я)' : ''}</strong>
+              <HoursKind doctorId={d.id} /><span aria-hidden="true">{open === d.id ? '▴' : '▾'}</span>
             </button>
             {open === d.id && <HoursEditor doctorId={d.id} doctorName={d.fullName ?? ''} onTimeOff={onTimeOff} />}
           </div>
@@ -49,6 +52,16 @@ export function HoursPage({ me, onBack, title = 'Часы работы', tabs, o
       </section>
     </section>
   )
+}
+
+/** «по часам клиники» или «свои часы» — видно, не раскрывая врача (тот же запрос, что у HoursEditor). */
+function HoursKind({ doctorId }: { doctorId: number }) {
+  const hours = useQuery({
+    queryKey: ['doctor-hours', doctorId],
+    queryFn: () => unwrap(api.GET('/api/doctors/{id}/hours', { params: { path: { id: doctorId } } })),
+  })
+  if (!hours.data) return null
+  return <span className="hint small hours-kind">{hours.data.custom ? 'свои часы' : 'по часам клиники'}</span>
 }
 
 function ClinicHours({ clinic: c, canEdit, admin, onTimeOff }: { clinic: Clinic; canEdit: boolean; admin: boolean; onTimeOff?: () => void }) {

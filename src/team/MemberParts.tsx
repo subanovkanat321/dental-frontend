@@ -1,19 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ask } from '../lib/confirm'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { useUnsaved } from '../lib/unsaved'
-import { InviteLink } from './InviteLink'
-import { ROLE_TEXT } from './texts'
 
-type Role = NonNullable<Schemas['StaffMembersControllerInviteRequest']['role']>
 type Me = Schemas['BookingViewsMe']
 type Member = Schemas['StaffMembersMemberView']
 
 /** Врачи-галочки: ассистент помогает одному или нескольким. */
-function DoctorChecks({ me, value, onChange }: { me: Me; value: number[]; onChange: (ids: number[]) => void }) {
+export function DoctorChecks({ me, value, onChange }: { me: Me; value: number[]; onChange: (ids: number[]) => void }) {
   const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
   return (
     <fieldset className="checks" aria-label="Каким врачам помогает">
@@ -62,112 +58,5 @@ export function AssistantDoctors({ me, member }: { me: Me; member: Member }) {
       <SaveBar dirty={dirty} saving={save.isPending} saved={false} disabled={!ids.length}
         error={save.error && (save.error.fieldErrors.doctorIds ?? save.error.message)} />
     </form>
-  )
-}
-
-/**
- * «Сменить роль» в строке сотрудника: администратор, регистратор или ассистент — без новой ссылки,
- * права меняются сразу. Ассистенту — его врачи. Себя из администраторов — с подтверждением, потом
- * приложение перезагрузится: доступы станут другими.
- */
-export function ChangeRole({ me, member }: { me: Me; member: Member }) {
-  const client = useQueryClient()
-  const current = member.role as Role
-  const [open, setOpen] = useState(false)
-  const [role, setRole] = useState<Role>(current)
-  const [ids, setIds] = useState<number[]>(member.doctorIds ?? [])
-  const save = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/members/{telegramId}/role', {
-      params: { path: { telegramId: member.telegramId } },
-      body: role === 'ASSISTANT' ? { role, doctorIds: ids } : { role },
-    })),
-    onSuccess: () => {
-      if (member.me) window.location.reload()
-      setOpen(false)
-      void client.invalidateQueries({ queryKey: ['members'] })
-    },
-  })
-  const submit = async () => {
-    if (member.me && current === 'ADMIN' && role !== 'ADMIN'
-      && !await ask('Вы перестанете быть руководителем: «Персонал», деньги и настройки станут недоступны. Продолжить?', { ok: 'Продолжить', danger: true })) return
-    save.mutate()
-  }
-  if (!open) {
-    return <button type="button" className="btn small ghost" onClick={() => { save.reset(); setRole(current); setIds(member.doctorIds ?? []); setOpen(true) }}>
-      Сменить роль</button>
-  }
-  return (
-    <form className="role-change" aria-label={`Роль: ${member.fullName ?? ''}`} onSubmit={(e) => { e.preventDefault(); submit() }}>
-      <div className="segments" role="group" aria-label="Новая роль">
-        {(['RECEPTION', 'ASSISTANT', 'ADMIN'] as const).map((r) => (
-          <button key={r} type="button" aria-pressed={role === r} onClick={() => setRole(r)}>{ROLE_TEXT[r]}</button>
-        ))}
-      </div>
-      {role === 'ASSISTANT' && <DoctorChecks me={me} value={ids} onChange={setIds} />}
-      {save.error && <p className="error" role="alert">{save.error.fieldErrors.role ?? save.error.fieldErrors.doctorIds ?? save.error.message}</p>}
-      <div className="actions">
-        <button type="submit" className="btn small primary" disabled={save.isPending || role === current && role !== 'ASSISTANT'
-          || role === 'ASSISTANT' && !ids.length}>Сохранить</button>
-        <button type="button" className="btn small ghost" onClick={() => setOpen(false)}>Отмена</button>
-      </div>
-    </form>
-  )
-}
-
-/**
- * «Пригласить сотрудника» в «Персонале»: администратора, регистратора или ассистента — ссылкой на бота.
- * Человек нажмёт «Начать» — его Telegram привяжется, и он появится в общем списке. Врачей добавляют
- * кнопкой «+ Добавить врача», приглашение врача — в его карточке.
- */
-export function InviteMember({ me }: { me: Me }) {
-  const client = useQueryClient()
-  const [role, setRole] = useState<Role>('RECEPTION')
-  const [name, setName] = useState('')
-  const [alsoDoctor, setAlsoDoctor] = useState(false)
-  const [doctorIds, setDoctorIds] = useState<number[]>([])
-  const [invite, setInvite] = useState<{ token: string; name: string; role: Role } | null>(null)
-  const make = useMutation<Schemas['DoctorInvitesInvite'], ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/members/invite', {
-      body: role === 'ASSISTANT' ? { role, fullName: name, doctorIds } : { role, fullName: name, alsoDoctor },
-    })),
-    onSuccess: (i) => {
-      setInvite({ token: i.token ?? '', name: name.trim(), role })
-      void client.invalidateQueries({ queryKey: ['member-invites'] })
-    },
-  })
-  const again = () => {
-    setInvite(null)
-    setName('')
-    make.reset()
-  }
-  return (
-    <section className="card-block" id="invite-member">
-      <h2>Пригласить сотрудника</h2>
-      <p className="hint">Руководитель ведёт клинику: врачи, «О клинике», выручка, медкарты. Регистратор записывает пациентов ко всем врачам
-        и отмечает оплату, но не видит медкарт и выручки. Ассистент помогает своим врачам: ведёт их расписание, смотрит медкарту
-        их пациентов и загружает снимки; денег и настроек не видит.</p>
-      {invite ? (
-        <>
-          <InviteLink start={`staff_${invite.token}`} name={invite.name}
-            toWhom={invite.role === 'ADMIN' ? 'руководителю' : invite.role === 'ASSISTANT' ? 'ассистенту' : 'регистратору'} />
-          <button type="button" className="btn ghost" onClick={again}>Пригласить ещё</button>
-        </>
-      ) : (
-        <form className="form narrow" aria-label="Пригласить сотрудника" onSubmit={(e) => { e.preventDefault(); make.mutate() }}>
-          <label className="field"><span>Имя (черновик — сотрудник потом поправит сам)</span>
-            <input value={name} required maxLength={100} placeholder="Например: Айпери" onChange={(e) => setName(e.target.value)} />
-          </label>
-          <div className="segments" role="group" aria-label="Роль">
-            {(['RECEPTION', 'ASSISTANT', 'ADMIN'] as const).map((r) => (
-              <button key={r} type="button" aria-pressed={role === r} onClick={() => setRole(r)}>{ROLE_TEXT[r]}</button>
-            ))}
-          </div>
-          {role === 'ASSISTANT' ? <DoctorChecks me={me} value={doctorIds} onChange={setDoctorIds} />
-            : <label className="check"><input type="checkbox" checked={alsoDoctor} onChange={(e) => setAlsoDoctor(e.target.checked)} /> Тоже ведёт приём — станет и врачом</label>}
-          {make.error && <p className="error" role="alert">{make.error.fieldErrors.fullName ?? make.error.fieldErrors.doctorIds ?? make.error.message}</p>}
-          <button type="submit" className="btn primary" disabled={make.isPending}>Создать ссылку</button>
-        </form>
-      )}
-    </section>
   )
 }

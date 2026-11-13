@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/staff/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setRoles"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/shifts/{id}": {
         parameters: {
             query?: never;
@@ -47,6 +63,22 @@ export interface paths {
         put: operations["update_1"];
         post?: never;
         delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shifts/weekly/{telegramId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["weekly"];
+        put: operations["setWeekly"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1780,6 +1812,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/staff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["add_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/shifts": {
         parameters: {
             query?: never;
@@ -1965,7 +2013,7 @@ export interface paths {
         };
         get: operations["all_3"];
         put?: never;
-        post: operations["add_1"];
+        post: operations["add_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2253,7 +2301,7 @@ export interface paths {
         };
         get: operations["funnel"];
         put?: never;
-        post: operations["add_2"];
+        post: operations["add_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3053,7 +3101,7 @@ export interface paths {
         };
         get: operations["all_4"];
         put?: never;
-        post: operations["add_3"];
+        post: operations["add_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3150,6 +3198,38 @@ export interface paths {
         get: operations["list_5"];
         put?: never;
         post: operations["publish_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/members/invites/{id}/renew": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["renewInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/members/invites/{id}/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["inviteToPhone"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3277,7 +3357,7 @@ export interface paths {
         };
         get: operations["list_6"];
         put?: never;
-        post: operations["add_4"];
+        post: operations["add_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6423,6 +6503,16 @@ export interface components {
             supply?: components["schemas"]["SupplyView"];
             services?: string[];
         };
+        StaffControllerRolesRequest: {
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            telegramId?: number;
+            doctor?: boolean;
+            /** @enum {string} */
+            role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
+            doctorIds?: number[];
+        };
         ShiftControllerRequest: {
             /** Format: int64 */
             telegramId?: number;
@@ -6446,6 +6536,23 @@ export interface components {
             /** Format: time-local */
             endTime?: string;
             note?: string;
+        };
+        ShiftControllerWeeklyRequest: {
+            days?: components["schemas"]["ShiftServiceWeekDay"][];
+        };
+        ShiftServiceWeekDay: {
+            /** @enum {string} */
+            weekday?: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+            /** Format: time-local */
+            start?: string;
+            /** Format: time-local */
+            end?: string;
+        };
+        ShiftServiceWeekly: {
+            /** Format: int64 */
+            telegramId: number;
+            custom: boolean;
+            days?: components["schemas"]["ShiftServiceWeekDay"][];
         };
         ServiceTypeControllerRequest: {
             name: string;
@@ -8103,6 +8210,27 @@ export interface components {
             /** Format: int32 */
             added: number;
         };
+        StaffControllerAddRequest: {
+            fullName?: string;
+            /** @enum {string} */
+            role?: "DOCTOR" | "ADMIN" | "RECEPTION" | "ASSISTANT";
+            alsoDoctor?: boolean;
+            doctorIds?: number[];
+            /** @enum {string} */
+            login?: "LINK" | "PHONE" | "LATER";
+            phone?: string;
+        };
+        StaffRolesAdded: {
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            telegramId?: number;
+            start?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            inviteId?: string;
+            summary?: string;
+        };
         ShiftControllerCopyRequest: {
             /** Format: date */
             weekStart?: string;
@@ -8547,6 +8675,10 @@ export interface components {
             /** Format: int32 */
             delivered: number;
         };
+        StaffMembersControllerPhoneInvited: {
+            /** Format: int64 */
+            telegramId: number;
+        };
         StaffMembersControllerInviteRequest: {
             /** @enum {string} */
             role?: "ADMIN" | "RECEPTION" | "ASSISTANT";
@@ -8561,10 +8693,6 @@ export interface components {
             fullName?: string;
             alsoDoctor?: boolean;
             doctorIds?: number[];
-        };
-        StaffMembersControllerPhoneInvited: {
-            /** Format: int64 */
-            telegramId: number;
         };
         MyPhoneControllerCodeRequest: {
             phone?: string;
@@ -9260,6 +9388,7 @@ export interface components {
         ShiftControllerSchedule: {
             people?: components["schemas"]["ShiftServicePerson"][];
             shifts?: components["schemas"]["ShiftServiceShiftView"][];
+            weekly?: components["schemas"]["ShiftServiceWeekly"][];
             canEdit: boolean;
             /** Format: int64 */
             me: number;
@@ -10706,6 +10835,28 @@ export interface operations {
             };
         };
     };
+    setRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffControllerRolesRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     update_1: {
         parameters: {
             query?: never;
@@ -10749,6 +10900,54 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    weekly: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                telegramId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShiftServiceWeekly"];
+                };
+            };
+        };
+    };
+    setWeekly: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                telegramId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShiftControllerWeeklyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShiftServiceWeekly"];
+                };
             };
         };
     };
@@ -14330,6 +14529,30 @@ export interface operations {
             };
         };
     };
+    add_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffControllerAddRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRolesAdded"];
+                };
+            };
+        };
+    };
     list_2: {
         parameters: {
             query: {
@@ -14704,7 +14927,7 @@ export interface operations {
             };
         };
     };
-    add_1: {
+    add_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -15233,7 +15456,7 @@ export interface operations {
             };
         };
     };
-    add_2: {
+    add_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -16690,7 +16913,7 @@ export interface operations {
             };
         };
     };
-    add_3: {
+    add_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -16874,6 +17097,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NewsServiceNews"];
+                };
+            };
+        };
+    };
+    renewInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DoctorInvitesInvite"];
+                };
+            };
+        };
+    };
+    inviteToPhone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffMembersControllerPhoneChange"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMembersControllerPhoneInvited"];
                 };
             };
         };
@@ -17082,7 +17353,7 @@ export interface operations {
             };
         };
     };
-    add_4: {
+    add_5: {
         parameters: {
             query?: never;
             header?: never;

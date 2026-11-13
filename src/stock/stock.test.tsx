@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -239,4 +239,40 @@ test('стартовый материал без остатка — «не вн�
   expect((await screen.findByRole('button', { name: 'Валики' })).closest('tr')!).toHaveTextContent('закончился')
   await userEvent.click(within(row).getByRole('button', { name: 'Слепочная масса' }))
   expect(await screen.findByText(/Остаток не внесён/)).toBeInTheDocument()
+})
+
+test('нажимается вся строка: клик по «осталось» открывает карточку, «−1» — списывает и не открывает', async () => {
+  const moves = backend([glove, anesthetic])
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Материалы' })
+  const row = within(table).getByRole('row', { name: /Перчатки/ })
+  expect(row).toHaveClass('clickable')
+  expect(row).not.toHaveAttribute('tabindex')
+
+  await userEvent.click(within(row).getByRole('button', { name: 'Списать 1: Перчатки' }))
+  expect(await screen.findByRole('status')).toHaveTextContent('Списано 1 уп: Перчатки')
+  expect(moves).toEqual([{ delta: -1 }])
+  expect(screen.queryByRole('complementary', { name: 'Материал' })).not.toBeInTheDocument()
+
+  await userEvent.click(within(row).getByText('3 уп'))
+  const panel = await screen.findByRole('complementary', { name: 'Материал' })
+  expect(panel).toHaveTextContent('Перчатки')
+})
+
+test('нажимается вся строка: выделение текста не открывает; название — кнопка с клавиатуры', async () => {
+  backend([glove])
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Материалы' })
+  const cell = within(table).getByText('3 уп')
+  // Протянули мышью по «минимуму» — хотели скопировать, а не открыть
+  // (fireEvent: userEvent при нажатии сам снимает выделение, как браузер при простом клике)
+  window.getSelection()!.selectAllChildren(cell)
+  fireEvent.click(cell)
+  expect(screen.queryByRole('complementary', { name: 'Материал' })).not.toBeInTheDocument()
+  window.getSelection()!.removeAllRanges()
+
+  const name = within(table).getByRole('button', { name: 'Перчатки' })
+  name.focus()
+  await userEvent.keyboard('{Enter}')
+  expect(await screen.findByRole('complementary', { name: 'Материал' })).toHaveTextContent('Перчатки')
 })

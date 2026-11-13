@@ -5,8 +5,8 @@ import { api, ApiError, botUsername, unwrap, WEB_CONFIG_KEY, webConfig, type Sch
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { ask, notify } from '../lib/confirm'
-import { openClinic } from '../lib/route'
 import { DoctorPanel } from '../team/DoctorPanel'
+import { AddSelf } from '../team/AddSelf'
 import { PHONE_HINT, type Doctor } from '../team/PhoneParts'
 import { phoneText } from '../team/texts'
 import { SubHeader } from './SubHeader'
@@ -50,8 +50,7 @@ export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
           <h2>Для пациентов</h2>
           <div className="card-block">
             <p>Профиль для пациентов есть у врачей: фото, имя и «о себе» видны при записи в боте.</p>
-            <p className="hint">Вы и принимаете пациентов? Добавьте себя врачом в «Персонале» — «Я тоже веду приём».</p>
-            <button type="button" className="btn" onClick={() => openClinic('staff')}>Персонал</button>
+            {(me.admin || me.reception) && <AddSelf />}
           </div>
         </section>
         </>

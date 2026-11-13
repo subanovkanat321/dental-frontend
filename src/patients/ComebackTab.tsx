@@ -11,6 +11,7 @@ import { dueText, monthsText } from '../clinic/services'
 import './comeback.css'
 import { Loading, Spinner } from '../layout/Loading'
 import { HeadTools } from '../layout/PageHead'
+import { rowOpen } from '../lib/rowClick'
 
 type Candidate = Schemas['ComebacksCandidate']
 type Reason = NonNullable<Candidate['reason']>
@@ -143,7 +144,7 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
       ) : !shown.length ? <EmptyState fill title="По этому отбору никого" /> : (
         <ul className="comeback-list" aria-label="Кого вернуть">
           {shown.map((c) => (
-            <li key={c.patientId}>
+            <li key={c.patientId} {...rowOpen(inviting !== c.patientId && (() => onOpen(c.patientId)))}>
               <div className="comeback-head">
                 <button type="button" className="row-link" onClick={() => onOpen(c.patientId)}>{c.fullName}</button>
                 <span className={`chip small comeback-${REASONS[c.reason!].tone}`}>{REASONS[c.reason!].label}</span>

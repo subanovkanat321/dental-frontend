@@ -6,88 +6,10 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneToInput } from '../clinic/phone'
 import { PasswordInput, ShowPassword } from '../layout/PasswordFields'
 import { notify } from '../lib/confirm'
-import { phoneText, ROLE_TEXT } from './texts'
+import { phoneText } from './texts'
 
-type Role = NonNullable<Schemas['StaffMembersControllerPhoneInviteRequest']['role']>
-type Me = Schemas['BookingViewsMe']
 // Админу — DoctorAdminView, остальным — DoctorView из me (без Telegram, роли и телефона)
 export type Doctor = Schemas['DoctorAdminView'] | (Schemas['DoctorView'] & Partial<Schemas['DoctorAdminView']>)
-
-/**
- * «Пригласить по номеру (без Telegram)» в «Персонале»: номер, имя и роль — сотрудник сразу в списке.
- * Входит на сайте по номеру: первый раз — код из SMS и свой пароль, дальше — номер и пароль.
- */
-export function InviteByPhone({ me }: { me: Me }) {
-  const client = useQueryClient()
-  const [open, setOpen] = useState(false)
-  const [phone, setPhone] = useState('')
-  const [name, setName] = useState('')
-  const [role, setRole] = useState<Role>('RECEPTION')
-  const [alsoDoctor, setAlsoDoctor] = useState(false)
-  const [doctorIds, setDoctorIds] = useState<number[]>([])
-  const [done, setDone] = useState('')
-  const make = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/members/invite-phone', {
-      body: role === 'ASSISTANT'
-        ? { phone: phoneFromInput(phone), role, fullName: name, doctorIds }
-        : { phone: phoneFromInput(phone), role, fullName: name, alsoDoctor },
-    })),
-    onSuccess: () => {
-      setDone(name.trim())
-      setPhone('')
-      setName('')
-      void client.invalidateQueries({ queryKey: ['members'] })
-      void client.invalidateQueries({ queryKey: ['doctors-admin'] })
-      void client.invalidateQueries({ queryKey: ['me'] })
-    },
-  })
-  const doctors = (me.doctors ?? []).filter((d) => d.active !== false)
-  return (
-    <section className="card-block" id="invite-phone">
-      <h2>Пригласить по номеру</h2>
-      <p className="hint">Для тех, у кого нет Telegram. Человек входит на сайте по номеру: первый раз — код из SMS, потом придумывает пароль.
-        SMS не приходят — задайте ему «Временный пароль» в строке персонала.
-        Уведомления ему приходят в приложение, если он их включит (нажать на себя внизу меню → «Уведомления»).</p>
-      {done && !open && <p className="tone-ok" role="status">{done} — в персонале. Скажите ему открыть сайт и войти по номеру.</p>}
-      {!open ? (
-        <button type="button" className="btn" onClick={() => { make.reset(); setDone(''); setOpen(true) }}>Пригласить по номеру</button>
-      ) : (
-        <form className="form narrow" aria-label="Пригласить по номеру" onSubmit={(e) => { e.preventDefault(); make.mutate(undefined, { onSuccess: () => setOpen(false) }) }}>
-          <label className="field"><span>Номер телефона</span>
-            <PhoneInput label="Номер телефона сотрудника" value={phone} onChange={setPhone} />
-          </label>
-          {make.error?.fieldErrors.phone && <p className="error">{make.error.fieldErrors.phone}</p>}
-          <label className="field"><span>Имя (черновик — сотрудник потом поправит сам)</span>
-            <input value={name} required maxLength={100} placeholder="Например: Айпери" onChange={(e) => setName(e.target.value)} />
-          </label>
-          <div className="segments" role="group" aria-label="Роль по номеру">
-            {(['RECEPTION', 'ASSISTANT', 'ADMIN'] as const).map((r) => (
-              <button key={r} type="button" aria-pressed={role === r} onClick={() => setRole(r)}>{ROLE_TEXT[r]}</button>
-            ))}
-          </div>
-          {role === 'ASSISTANT' ? (
-            <fieldset className="checks" aria-label="Каким врачам помогает">
-              <legend>Каким врачам помогает</legend>
-              {doctors.map((d) => (
-                <label key={d.id} className="check">
-                  <input type="checkbox" checked={doctorIds.includes(d.id)}
-                    onChange={(e) => setDoctorIds(e.target.checked ? [...doctorIds, d.id] : doctorIds.filter((x) => x !== d.id))} /> {d.fullName}
-                </label>
-              ))}
-            </fieldset>
-          ) : <label className="check"><input type="checkbox" checked={alsoDoctor} onChange={(e) => setAlsoDoctor(e.target.checked)} /> Тоже ведёт приём — станет и врачом</label>}
-          {make.error && !make.error.fieldErrors.phone && (
-            <p className="error" role="alert">{make.error.fieldErrors.fullName ?? make.error.fieldErrors.doctorIds ?? make.error.message}</p>
-          )}
-          <div className="actions">
-            <button type="submit" className="btn primary" disabled={make.isPending || !phone.trim()}>Добавить</button>
-            <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Отмена</button>
-          </div>
-        </form>
-      )}
-    </section>
-  )
-}
 
 /**
  * «Вход врача» в карточке: врач без Telegram входит по номеру и SMS. Привязать номер можно, пока у
