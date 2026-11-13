@@ -22,6 +22,16 @@ export function editableDoctors<D extends { id?: number }>(me: Me, doctors: D[])
 }
 
 /**
+ * «Мои закупки» (Склад): врач со своим приёмом (не ассистент) в клинике, где врачи работают
+ * независимо и у каждого свой склад, — поставки на его склад. Руководитель, который видит деньги всех,
+ * вместо этого видит «Расходы на склад». Как SupplyController.ownStock на сервере.
+ */
+export function seesOwnPurchases(me: Me): boolean {
+  return !seesAllMoney(me) && !isAssistant(me) && me.doctorId != null
+    && Boolean(me.clinic?.independentDoctors && me.clinic?.separateSupplies)
+}
+
+/**
  * Деньги всех врачей. Админ — если клиника не в режиме «Врачи работают независимо»; владелец — всегда:
  * владелец платформы и админ без своего приёма (хозяин кабинета). Как Staff.seesAllDoctors на сервере.
  */

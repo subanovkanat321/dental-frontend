@@ -9336,6 +9336,25 @@ export interface components {
             expensesSom?: number;
             /** Format: int64 */
             rentSom?: number;
+            deliveries?: components["schemas"]["SpendingViewDelivery"][];
+        };
+        SpendingViewDelivery: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            supplyId: number;
+            name?: string;
+            unit?: string;
+            archived: boolean;
+            /** Format: int32 */
+            quantity: number;
+            /** Format: int64 */
+            costSom?: number;
+            /** Format: date */
+            day?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            doctorName?: string;
         };
         SpendingViewItem: {
             /** Format: int64 */
