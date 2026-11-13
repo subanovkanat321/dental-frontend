@@ -16,7 +16,7 @@
   background: rgba(15, 42, 48, .62); color: #fff; font-size: 1rem; padding-left: 3px; }
 .howto-time, .howto-seen { position: absolute; bottom: 8px; padding: 2px 7px; border-radius: 6px; font-size: .78rem; font-weight: 600; }
 .howto-time { right: 8px; background: rgba(15, 42, 48, .72); color: #fff; }
-.howto-seen { left: 8px; background: var(--ok-bg); color: var(--ok-ink); }
+.howto-seen { left: 8px; top: 8px; bottom: auto; background: var(--ok-bg); color: var(--ok-ink); } /* сверху: снизу справа — длительность */
 .howto-tile:hover .howto-cover, .howto-tile:focus-visible .howto-cover { border-color: var(--primary, var(--accent)); }
 .howto-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-lg); }
 .howto-title { margin-top: 4px; font-weight: 600; line-height: 1.3; }
