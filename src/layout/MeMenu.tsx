@@ -92,9 +92,9 @@ export function MenuPanel({ label, anchor, phone, head, onClose, children }: {
 }
 
 /** Пункт меню «Я» / «Помощи»: значок или эмодзи, подпись, мелкая подсказка. */
-function Item({ icon, title, hint, external, onClick }: { icon: ReactNode; title: string; hint?: string; external?: boolean; onClick: () => void }) {
+function Item({ icon, title, hint, external, tone, onClick }: { icon: ReactNode; title: string; hint?: string; external?: boolean; tone?: string; onClick: () => void }) {
   return (
-    <button type="button" className="menu-item" onClick={onClick}>
+    <button type="button" className="menu-item" data-icon={tone} onClick={onClick}>
       <span className="menu-ico" aria-hidden="true">{icon}</span>
       <span className="menu-text"><span className="menu-title">{title}</span>{hint && <span className="menu-hint">{hint}</span>}</span>
       {external && <span className="menu-out" aria-hidden="true">↗</span>}
@@ -102,7 +102,7 @@ function Item({ icon, title, hint, external, onClick }: { icon: ReactNode; title
   )
 }
 
-/** Значки пунктов «Я» и «Помощи» — линейные, без цвета, как у меню (DESIGN.md → Colors). */
+/** Значки пунктов «Я» и «Помощи» — линейные; у «Я» — приглушённый оттенок по смыслу (`data-icon`, crm.css; DESIGN.md → Colors). */
 const ME_ICON: Record<string, ReactNode> = {
   profile: <MiniIcon d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c.9-4 4-6 8-6s7.1 2 8 6" />,
   appearance: <MiniIcon d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4.2-4-7.6-9-7.6zM7.5 12.5h.01M9.5 8h.01M14.5 8h.01" />,
@@ -136,12 +136,12 @@ export function MeMenuItems({ me, onPick }: { me: Me; onPick: () => void }) {
   return (
     <>
       {ME_ITEMS.filter((i) => !i.hidden && i.show(me)).map((i) => (
-        <Item key={i.key} icon={ME_ICON[i.key]} title={i.title} onClick={() => { onPick(); openMine('me', i.key) }} />
+        <Item key={i.key} icon={ME_ICON[i.key]} tone={i.key} title={i.title} onClick={() => { onPick(); openMine('me', i.key) }} />
       ))}
       {!telegram() && (
         <>
           <hr className="menu-sep" />
-          <Item icon={ME_ICON.logout} title="Выйти" onClick={() => { onPick(); void logout() }} />
+          <Item icon={ME_ICON.logout} tone="logout" title="Выйти" onClick={() => { onPick(); void logout() }} />
         </>
       )}
     </>
