@@ -82,6 +82,12 @@ test('телефон: «Ещё → Помощь» — тот же список �
   await userEvent.click(within(screen.getByRole('dialog', { name: 'Ещё разделы' })).getByRole('button', { name: 'Помощь' }))
   const sheet = screen.getByRole('dialog', { name: 'Помощь' })
   expect(sheet).toHaveClass('menu-sheet')
+  // У каждого пункта свой оттенок иконки (data-icon → --ico-*, crm.css) и линейный значок: без эмодзи 🎬 и ↗
+  const items = within(sheet).getAllByRole('button').filter((b) => b.classList.contains('menu-item'))
+  expect(items.map((b) => b.getAttribute('data-icon'))).toEqual(['chat', 'guide', 'videos', 'support', 'survey', 'privacy', 'tour', 'instagram'])
+  for (const b of items) expect(b.querySelector('.menu-ico svg')).not.toBeNull()
+  expect(sheet).not.toHaveTextContent(/🎬|↗/)
+  expect(within(sheet).getByRole('button', { name: /^Tish в Instagram/ }).querySelector('.menu-out svg')).not.toBeNull()
   await userEvent.click(within(sheet).getByRole('button', { name: 'Конфиденциальность' }))
   expect(window.location.hash).toBe('#/help/privacy')
   expect(screen.queryByRole('dialog', { name: 'Помощь' })).not.toBeInTheDocument()
