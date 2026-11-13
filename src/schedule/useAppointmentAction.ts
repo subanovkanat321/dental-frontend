@@ -14,6 +14,7 @@ type Action =
   | { kind: 'charge'; body: Schemas['AppointmentControllerBill'] }
   | { kind: 'reschedule'; body: Schemas['AppointmentRequestsReschedule'] }
   | { kind: 'transfer'; body: Schemas['AppointmentRequestsTransfer'] }
+  | { kind: 'chair'; body: Schemas['AppointmentRequestsChair'] }
   | { kind: 'service'; body: Schemas['AppointmentRequestsService'] }
   | { kind: 'comment'; body: Schemas['AppointmentRequestsComment'] }
   | { kind: 'promo'; body: Schemas['AppointmentRequestsPromoCode'] }
@@ -36,13 +37,17 @@ export function sendAppointmentAction(id: number, action: Action): Promise<Appoi
       return unwrap(api.POST('/api/appointments/{id}/payment/bill', { ...path, body: action.body }))
     case 'charge':
       return unwrap(api.POST('/api/appointments/{id}/payment/charge', { ...path, body: action.body }))
-    // В часы коллеги по креслу (V187) — вопрос «Коллега предупреждён?» и повтор с подтверждением
+    // В часы коллеги по креслу (V187) — вопрос «Коллега предупреждён?» и повтор с подтверждением; кресло занято, а другое
+    // свободно (V210) — «записать туда?» и повтор с chairId (и при перетаскивании в «Неделе»)
     case 'reschedule':
-      return withChairConfirm((confirm) => unwrap(api.POST('/api/appointments/{id}/reschedule',
-        { ...path, body: { ...action.body, confirmChairTime: confirm || undefined } })))
+      return withChairConfirm((confirm, chairId) => unwrap(api.POST('/api/appointments/{id}/reschedule',
+        { ...path, body: { ...action.body, chairId: chairId ?? action.body.chairId, confirmChairTime: confirm || undefined } })))
     case 'transfer':
-      return withChairConfirm((confirm) => unwrap(api.POST('/api/appointments/{id}/transfer',
-        { ...path, body: { ...action.body, confirmChairTime: confirm || undefined } })))
+      return withChairConfirm((confirm, chairId) => unwrap(api.POST('/api/appointments/{id}/transfer',
+        { ...path, body: { ...action.body, chairId: chairId ?? action.body.chairId, confirmChairTime: confirm || undefined } })))
+    case 'chair':
+      return withChairConfirm((confirm, chairId) => unwrap(api.PUT('/api/appointments/{id}/chair',
+        { ...path, body: { ...action.body, chairId: chairId ?? action.body.chairId, confirmChairTime: confirm || undefined } })))
     case 'service':
       return unwrap(api.PUT('/api/appointments/{id}/service', { ...path, body: action.body }))
     case 'comment':

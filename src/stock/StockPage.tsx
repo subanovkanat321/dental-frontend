@@ -6,6 +6,8 @@ import { shortDate } from '../lib/time'
 import { clinicRequest } from '../settings/clinicUpdate'
 import { SpendingBlock } from './Spending'
 import { NewSupplyPanel, SupplyPanel } from './SupplyPanel'
+import { DeliverySheet, type StockScope } from './DeliverySheet'
+import { seesOwnPurchases } from '../lib/roles'
 import { HeadSlotProvider, PageHead } from '../layout/PageHead'
 import { useHeadSlot } from '../layout/headSlot'
 import { EmptyState } from '../layout/EmptyState'
@@ -19,7 +21,7 @@ import { rowOpen } from '../lib/rowClick'
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
 
-type Side = { kind: 'supply'; id: number } | { kind: 'new' } | null
+type Side = { kind: 'supply'; id: number } | { kind: 'new' } | { kind: 'delivery' } | null
 
 /**
  * «Склад»: материалы таблицей — что заканчивается, сверху и красным; карточка справа: списать,
@@ -43,8 +45,9 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   const close = useCallback(() => setSide(null), [setSide])
 
   const supplies = useQuery({
-    queryKey: ['supplies', doctorId],
-    queryFn: () => unwrap(api.GET('/api/supplies', { params: { query: doctorId == null ? {} : { doctorId } } })),
+    // «Расходы на склад» — весь видимый склад (без фильтра «Чей склад»): из списка открывают любой материал
+    queryKey: ['supplies', sub === 'spending' ? null : doctorId],
+    queryFn: () => unwrap(api.GET('/api/supplies', { params: { query: sub === 'spending' || doctorId == null ? {} : { doctorId } } })),
     // Сменили фильтр «Чей склад» — карточка открытого материала не закрывается, пока грузится новый список
     placeholderData: keepPreviousData,
   })
@@ -88,20 +91,29 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
   const [slot, setSlot] = useHeadSlot()
   const title = <SectionTitle page="stock" title="Склад" subTitle={subTitle} hint={<HelpHint hint="stock" />} />
   if (sub === 'spending') {
+    // «Мои закупки» врача — только его склад; руководитель независимой клиники — только общий
+    // (личные склады — закупки врачей); при «своём складе» и всех врачах — выбор склада
+    const own = seesOwnPurchases(me)
+    const scope: StockScope = own ? 'mine' : me.clinic?.independentDoctors ? 'clinic' : separate ? 'choose' : 'all'
+    const panel = selected || side?.kind === 'delivery'
     return (
-      <div className="schedule">
+      <div className={panel ? 'schedule with-panel' : 'schedule'}>
         <section className="schedule-main">
           <HeadSlotProvider slot={slot}>
             <PageHead title={title} slotRef={setSlot} />
-            <SpendingBlock />
+            <SpendingBlock own={own} separate={separate && scope !== 'clinic'}
+              canOpen={(id) => all.some((s) => s.id === id)}
+              onOpen={(id) => setSide({ kind: 'supply', id })} onAdd={() => setSide({ kind: 'delivery' })} />
           </HeadSlotProvider>
         </section>
+        {selected && <SupplyPanel key={selected.id} supply={selected} me={me} onClose={close} />}
+        {side?.kind === 'delivery' && <DeliverySheet me={me} supplies={all} scope={scope} onClose={close} />}
       </div>
     )
   }
 
   return (
-    <div className={side ? 'schedule with-panel' : 'schedule'}>
+    <div className={side && side.kind !== 'delivery' ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main">
         <PageHead title={title}>
           <input type="search" className="search" aria-label="Поиск материала" placeholder="Название" value={query}
