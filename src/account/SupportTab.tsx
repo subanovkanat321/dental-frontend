@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
+import { openHelpChat } from '../lib/helpChat'
 import { useClose } from '../lib/useClose'
 import { formatPhone, shortDate } from '../lib/time'
 import { DeveloperContacts } from './Contacts'
-import { HelpChatPanel } from './HelpChat'
 import { ShotPicker, TicketPanel } from './TicketThread'
 import { ticketForm } from './tickets'
 import { TICKET_KINDS, TICKET_STATUS } from './texts'
@@ -15,9 +15,6 @@ import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Thread = Schemas['SupportTicketsThread']
-
-/** Чат с помощником — вместо вида обращения в состоянии «что открыто справа». */
-const HELP = 'help'
 
 /** Частые вопросы врачей — ответ сразу, без звонка в поддержку. */
 const FAQ: [string, string][] = [
@@ -43,14 +40,34 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
   initialHelp?: boolean
 }) {
   const list = useQuery({ queryKey: ['support-tickets'], queryFn: () => unwrap(api.GET('/api/support/tickets')) })
-  const [opened, setOpenedState] = useState<number | string | null>(initialTicket ?? (initialHelp ? HELP : null))
-  const setOpened = useCallback((next: number | string | null) => {
-    setOpenedState(next)
-    onPanel(next != null)
-  }, [onPanel])
-  const close = useCallback(() => setOpened(null), [setOpened])
-  // Переписку из чата помощи открываем снова чатом, а не обычным обращением
+  /** Что открыто справа: вид нового обращения (строка) или обращение (id). Чат с помощником — не здесь, а окном Shell. */
+  const [opened, setOpened] = useState<number | string | null>(initialTicket ?? null)
+  const close = () => setOpened(null)
+  // Чат с помощником — то же окно, что из меню «Помощь» (lib/helpChat.ts), а не панель этой страницы
+  // Один раз: скрытый раздел (Activity в App.tsx) снимает эффекты и при возврате запускает их снова
+  const shownOnce = useRef(false)
+  useEffect(() => {
+    if (initialHelp && !shownOnce.current) openHelpChat()
+    shownOnce.current = true
+  }, [initialHelp])
+  // Переписку из чата помощи открываем снова чатом, а не обычным обращением (кнопка бота «Открыть ответ» — по id)
   const openedTicket = typeof opened === 'number' ? list.data?.find((t) => t.id === opened) : undefined
+  const botThread = openedTicket?.viaBot ? openedTicket.id : null
+  const botShown = useRef<number | null>(null)
+  useEffect(() => {
+    if (botThread == null || botShown.current === botThread) return
+    botShown.current = botThread
+    openHelpChat(botThread)
+  }, [botThread])
+  /** Ассистент — окном чата (панель справа закрываем, чтобы окна не легли друг на друга), остальное — панелью справа. */
+  const askHelper = (ticketId?: number) => {
+    setOpened(null)
+    openHelpChat(ticketId)
+  }
+  const openTicket = (t: Schemas['SupportTicketsTicket']) => (t.viaBot ? askHelper(t.id) : setOpened(t.id))
+  // Колонка справа — по тому, что в ней на самом деле: и при открытии по адресу (обращение из бота), не только по кнопке
+  const panel = typeof opened === 'string' || (typeof opened === 'number' && !list.isPending && !openedTicket?.viaBot)
+  useEffect(() => { onPanel(panel) }, [panel, onPanel])
 
   return (
     <>
@@ -59,7 +76,7 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
         <section className="card-block" aria-label="Помощь">
           <div className="block-head">
             <h2>Помощник</h2>
-            <span className="actions"><button type="button" className="btn primary" onClick={() => setOpened(HELP)}>Спросить помощника</button></span>
+            <span className="actions"><button type="button" className="btn primary" onClick={() => askHelper()}>Спросить помощника</button></span>
           </div>
           <p className="hint">Помощник сразу подскажет, как что-то сделать в Tish. Не знает ответа — передаст вопрос команде Tish.</p>
         </section>
@@ -78,8 +95,8 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
                 {list.data.map((t) => {
                   const [status, cls] = TICKET_STATUS[t.status ?? 'OPEN'] ?? ['', 's-quiet']
                   return (
-                    <tr key={t.id} {...rowOpen(() => setOpened(t.id), t.id === opened && 'active')}>
-                      <td><span><button type="button" className="row-link" onClick={() => setOpened(t.id)}>{t.viaBot ? '💬 Помощь' : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}</button>
+                    <tr key={t.id} {...rowOpen(() => openTicket(t), panel && t.id === opened && 'active')}>
+                      <td><span><button type="button" className="row-link" onClick={() => openTicket(t)}>{t.viaBot ? '💬 Помощь' : TICKET_KINDS[t.kind ?? 'QUESTION']?.title}</button>
                         <span className="hint"> · {t.preview}</span></span></td>
                       <td><span className={`chip small ${cls}`}>{status}</span></td>
                       <td className="hint nowrap">{t.updatedAt ? shortDate(t.updatedAt) : ''}{t.author ? ` · ${t.author}` : ''}</td>
@@ -107,11 +124,8 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
           {FAQ.map(([q, a]) => <details key={q} className="faq"><summary>{q}</summary><p>{a}</p></details>)}
         </section>
       </section>
-      {opened === HELP && <HelpChatPanel key="help" onClose={close} />}
-      {typeof opened === 'string' && opened !== HELP && <NewTicketPanel key={opened} kind={opened} onClose={close} onSent={(id) => setOpened(id)} />}
-      {typeof opened === 'number' && !list.isPending && (openedTicket?.viaBot
-        ? <HelpChatPanel key="help" ticketId={opened} onClose={close} />
-        : <TicketPanel key={opened} id={opened} onClose={close} />)}
+      {typeof opened === 'string' && <NewTicketPanel key={opened} kind={opened} onClose={close} onSent={(id) => setOpened(id)} />}
+      {typeof opened === 'number' && panel && <TicketPanel key={opened} id={opened} onClose={close} />}
     </>
   )
 }

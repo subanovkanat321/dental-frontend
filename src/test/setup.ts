@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup, configure } from '@testing-library/react'
 
 import { resetSubs } from '../lib/sub'
+import { closeHelpChat } from '../lib/helpChat'
 import { server } from './server'
 
 // findBy/waitFor ждут до 5 с, а не 1 с по умолчанию: под нагрузкой (CI, параллельные прогоны)
@@ -29,6 +30,8 @@ afterEach(() => {
   cleanup()
   // Подраздел (#/cash/salary) запоминается в модуле — следующий тест начинает с подраздела по умолчанию
   resetSubs()
+  // Чат помощника открыт в модуле (lib/helpChat.ts) — следующий тест начинает с закрытым
+  closeHelpChat()
 })
 afterAll(() => server.close())
 

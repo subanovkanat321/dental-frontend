@@ -112,7 +112,46 @@ test('«Техподдержка»: кнопка «Спросить помощн
   await user.click(await screen.findByRole('button', { name: '💬 Помощь' }))
   const panel = await screen.findByRole('complementary', { name: 'Помощь' })
   expect(await within(panel).findByText('Карточка приёма → «Принять доплату».')).toBeInTheDocument()
+  // Тот же чат, что из меню «Помощь»: окно поверх экрана, а не панель страницы в рабочей области
+  expect(within(screen.getByRole('main')).queryByRole('complementary', { name: 'Помощь' })).not.toBeInTheDocument()
   await user.click(within(panel).getByRole('button', { name: 'Закрыть' }))
   await user.click(screen.getByRole('button', { name: 'Спросить помощника' }))
-  expect(await screen.findByRole('textbox', { name: 'Ваш вопрос' })).toBeInTheDocument()
+  const chat = await screen.findByRole('complementary', { name: 'Помощь' })
+  expect(within(chat).getByRole('textbox', { name: 'Ваш вопрос' })).toBeInTheDocument()
+  expect(within(screen.getByRole('main')).queryByRole('complementary')).not.toBeInTheDocument()
+})
+
+test('«Спросить помощника» в «Техподдержке» открывает тот же чат, что и меню «Помощь» (окно, а не панель страницы)', async () => {
+  server.use(
+    http.get('*/api/support/chat', () => HttpResponse.json(INFO)),
+    http.get('*/api/clinic', () => HttpResponse.json({})),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  // Меню «Помощь» → «Спросить помощника»: где окажется чат
+  await user.click(await screen.findByRole('button', { name: 'Помощь' }))
+  await user.click(within(screen.getByRole('dialog', { name: 'Помощь' })).getByRole('button', { name: /^Спросить помощника/ }))
+  const fromMenu = await screen.findByRole('complementary', { name: 'Помощь' })
+  const place = fromMenu.parentElement!.className
+  await user.click(within(fromMenu).getByRole('button', { name: 'Закрыть' }))
+
+  openItem('support')
+  await user.click(await screen.findByRole('button', { name: 'Спросить помощника' }))
+  const fromSupport = await screen.findByRole('complementary', { name: 'Помощь' })
+  expect(fromSupport.parentElement!.className).toBe(place)
+  expect(within(screen.getByRole('main')).queryByRole('complementary', { name: 'Помощь' })).not.toBeInTheDocument()
+  expect(within(fromSupport).getByRole('textbox', { name: 'Ваш вопрос' })).toBeInTheDocument()
+})
+
+test('по ссылке «Спросить помощника» (#/help/chat, «Памятка») — сразу чат-окно; страница — без пустой колонки справа', async () => {
+  server.use(
+    http.get('*/api/support/chat', () => HttpResponse.json(INFO)),
+    http.get('*/api/clinic', () => HttpResponse.json({})),
+  )
+  renderApp()
+  openItem('help')
+  const chat = await screen.findByRole('complementary', { name: 'Помощь' })
+  expect(within(screen.getByRole('main')).queryByRole('complementary', { name: 'Помощь' })).not.toBeInTheDocument()
+  expect(within(chat).getByRole('textbox', { name: 'Ваш вопрос' })).toBeInTheDocument()
+  expect(document.querySelector('.with-panel')).toBeNull()
 })

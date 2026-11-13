@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 
 import type { Schemas } from '../api/client'
 import { useBack } from '../lib/back'
+import { closeHelpChat, openHelpChat, useHelpChat } from '../lib/helpChat'
 import { openSettings, settingsItem, type Page } from '../lib/route'
 import { openSub, subHref, useSub } from '../lib/sub'
 import { matches, useMedia } from '../lib/useMedia'
@@ -135,7 +136,8 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   const [tabsSlot, setTabsSlot] = useState<HTMLElement | null>(null)
   // Место «?» подраздела в панели вкладок: панель отдаёт его (ref), подраздел кладёт туда «?» (SubHelp)
   const [helpSlot, setHelpSlot] = useState<HTMLElement | null>(null)
-  const [help, setHelp] = useState(false)
+  // Чат «Спросить помощника»: null — закрыт; открывают меню, круглая кнопка и страницы «Помощи» (lib/helpChat.ts)
+  const help = useHelpChat()
   const phone = useMedia('(max-width: 760px)')
   // Компьютер: меню можно свернуть до полосы иконок — расписанию больше места (выбор запоминается).
   // Кнопка — у логотипа, на одном месте в обоих видах; клавиша «[». Ноутбук до 1366px, пока ни разу не
@@ -414,7 +416,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       )}
       {menu === 'help' && (
         <MenuPanel label="Помощь" anchor={helpButton} phone={phone} head={<><Icon name="help" /><h2>Помощь</h2></>} onClose={closeMenu}>
-          <HelpMenuItems me={me} onChat={() => setHelp(true)} onPick={closeMenu} />
+          <HelpMenuItems me={me} onChat={() => openHelpChat()} onPick={closeMenu} />
         </MenuPanel>
       )}
       {sheetSection && (
@@ -433,13 +435,13 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       <main ref={workspace} className="workspace"><NavContext.Provider value={nav}><div className="sub-tabs-slot" ref={setTabsSlot} /><OfflineNotice />{page === 'schedule' && <><ProfileNotice me={me} /><AdminNotices me={me} /><SurveyInvite me={me} /></>}{children}</NavContext.Provider></main>
       {/* «💬 Помощь» — спросить помощника Tish, не уходя с экрана (ИИ по базе знаний; не знает — команде Tish) */}
       {me.doctor && phone && HELP_PAGES.includes(page) && !help && (
-        <button type="button" className="help-fab" onClick={() => setHelp(true)} aria-label="Помощь: спросить помощника Tish">
+        <button type="button" className="help-fab" onClick={() => openHelpChat()} aria-label="Помощь: спросить помощника Tish">
           <span aria-hidden="true">💬</span>
         </button>
       )}
       {help && (
         <div className="help-float">
-          <Suspense fallback={null}><HelpChatPanel onClose={() => setHelp(false)} /></Suspense>
+          <Suspense fallback={null}><HelpChatPanel key={help.ticketId ?? 'new'} ticketId={help.ticketId} onClose={closeHelpChat} /></Suspense>
         </div>
       )}
       {/* Тур при первом входе (один раз на человека) и «Пройти тур ещё раз» из «Помощи» */}
