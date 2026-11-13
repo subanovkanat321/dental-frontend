@@ -7,14 +7,14 @@ import { phoneFromInput } from '../clinic/phone'
 import { useClose } from '../lib/useClose'
 import { InviteLink } from './InviteLink'
 import { DoctorChecks } from './MemberParts'
-import { ROLE_HINT, ROLES_RULES, useRefreshStaff } from './staffRoles'
+import { RoleSelect } from './RoleSelect'
+import { rolesOf, type RoleChoice, useRefreshStaff } from './staffRoles'
 
 type Me = Schemas['BookingViewsMe']
 type Role = NonNullable<Schemas['StaffControllerAddRequest']['role']>
 type Login = NonNullable<Schemas['StaffControllerAddRequest']['login']>
 type Added = Schemas['StaffRolesAdded']
 
-const ROLES: [Role, string][] = [['DOCTOR', 'Врач'], ['ADMIN', 'Руководитель'], ['RECEPTION', 'Регистратура'], ['ASSISTANT', 'Ассистент']]
 const LOGINS: [Login, string, string][] = [
   ['LINK', 'Ссылка в Telegram', 'Пришлёте ссылку — человек откроет её и войдёт через Telegram (или по номеру, если Telegram нет)'],
   ['PHONE', 'Номер телефона', 'Без Telegram: входит на сайте по номеру — первый раз код из SMS, потом свой пароль'],
@@ -28,8 +28,9 @@ const TO_WHOM: Record<Role, string> = { DOCTOR: 'врачу', ADMIN: 'руков
 export type AddedTarget = { kind: 'doctor'; id: number } | { kind: 'member'; telegramId: number } | { kind: 'invite'; id: string }
 
 /**
- * «+ Добавить сотрудника» — одна форма вместо четырёх (2026-11-13): имя → роль → вход. У руководителя и
- * регистратуры — «Тоже ведёт приём» (станет и врачом), у ассистента — его врачи (хотя бы один). Вход —
+ * «+ Добавить сотрудника» — одна форма вместо четырёх (2026-11-13): имя → роль → вход. Роль — один список
+ * допустимых сочетаний ({@link RoleSelect}: «Руководитель и врач», «Регистратура и врач» → alsoDoctor), у
+ * ассистента — его врачи (хотя бы один). Вход —
  * ссылка в Telegram, номер телефона или «позже». Сервер раскладывает по прежним путям (POST /api/staff):
  * врач — карточка врача и ссылка join_, остальные — приглашение staff_ или вход по номеру.
  */
@@ -37,17 +38,19 @@ export function AddStaffPanel({ me, onClose, onAdded }: { me: Me; onClose: () =>
   const close = useClose(onClose)
   const refresh = useRefreshStaff()
   const [name, setName] = useState('')
-  const [role, setRole] = useState<Role>('DOCTOR')
-  const [alsoDoctor, setAlsoDoctor] = useState(false)
+  const [choice, setChoice] = useState<RoleChoice>('DOCTOR')
   const [doctorIds, setDoctorIds] = useState<number[]>([])
   const [login, setLogin] = useState<Login>('LINK')
   const [phone, setPhone] = useState('')
   const [link, setLink] = useState<{ added: Added; name: string; role: Role } | null>(null)
+  const picked = rolesOf(choice)
+  // Только врач — role DOCTOR; руководитель или регистратура «и врач» — alsoDoctor
+  const role: Role = picked.role ?? 'DOCTOR'
   const add = useMutation<Added, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/staff', {
       body: {
         fullName: name, role, login,
-        alsoDoctor: role === 'ADMIN' || role === 'RECEPTION' ? alsoDoctor : undefined,
+        alsoDoctor: role === 'ADMIN' || role === 'RECEPTION' ? picked.doctor : undefined,
         doctorIds: role === 'ASSISTANT' ? doctorIds : undefined,
         phone: login === 'PHONE' ? phoneFromInput(phone) : undefined,
       },
@@ -91,22 +94,13 @@ export function AddStaffPanel({ me, onClose, onAdded }: { me: Me; onClose: () =>
         </label>
         {error?.fieldErrors.fullName && <p className="error">{error.fieldErrors.fullName}</p>}
 
-        <div className="field"><span>Роль</span>
-          <div className="segments wrap" role="group" aria-label="Роль">
-            {ROLES.map(([value, label]) => (
-              <button key={value} type="button" aria-pressed={role === value} onClick={() => { add.reset(); setRole(value) }}>{label}</button>
-            ))}
-          </div>
-          <span className="hint small">{ROLE_HINT[role]}</span>
-        </div>
-        {(role === 'ADMIN' || role === 'RECEPTION') && (
-          <label className="check"><input type="checkbox" checked={alsoDoctor} onChange={(e) => setAlsoDoctor(e.target.checked)} /> Тоже ведёт приём — станет и врачом</label>
-        )}
+        <label className="field"><span>Роль</span>
+          <RoleSelect value={choice} onChange={(c) => { add.reset(); setChoice(c) }} />
+        </label>
         {role === 'ASSISTANT' && (doctors.length
           ? <DoctorChecks me={me} value={doctorIds} onChange={setDoctorIds} />
           : <p className="hint">Сначала добавьте врача: ассистент помогает своим врачам.</p>)}
         {error?.fieldErrors.doctorIds && <p className="error">{error.fieldErrors.doctorIds}</p>}
-        <p className="hint small">{ROLES_RULES}</p>
 
         <div className="field"><span>Вход</span>
           <div className="segments wrap" role="group" aria-label="Вход">
