@@ -1,7 +1,7 @@
 import type { Schemas } from '../api/client'
 import { formatPhone } from '../lib/phone'
 
-/** Подписи раздела «Команда» — как в приложении (static/js бэкенда), чтобы клиника видела одно и то же. */
+/** Подписи «Клиника → Персонал» и «Рабочее время» — как в боте, чтобы клиника видела одно и то же. */
 
 export const ROLE_TEXT: Record<string, string> = { ADMIN: 'Руководитель', RECEPTION: 'Регистратор', ASSISTANT: 'Ассистент' }
 

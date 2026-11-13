@@ -61,7 +61,7 @@ test('«Мой профиль» у врача: карточка с раздел�
   window.location.hash = '/settings/profile'
   renderApp()
   const card = await screen.findByRole('complementary', { name: 'Врач' })
-  for (const name of ['Для пациентов', 'Работа', 'Вход и права']) {
+  for (const name of ['Для пациентов', 'Работа', 'Вход']) {
     expect(within(card).getByRole('region', { name })).toBeInTheDocument()
   }
   const patients = within(card).getByRole('region', { name: 'Для пациентов' })
@@ -117,7 +117,7 @@ test('«Мой профиль» у врача: сверху «Для пацие�
   window.location.hash = '/settings/profile'
   renderApp()
   const card = await screen.findByRole('complementary', { name: 'Врач' })
-  const order = await Promise.all(['Для пациентов', 'Телефон', 'Работа', 'Вход и права'].map((name) => within(card).findByRole('region', { name })))
+  const order = await Promise.all(['Для пациентов', 'Телефон', 'Работа', 'Вход'].map((name) => within(card).findByRole('region', { name })))
   for (let i = 1; i < order.length; i++) expect(order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   expect(within(order[0]!).getByText('Айгерим Садыкова', { selector: 'strong' })).toBeInTheDocument()
   expect(within(card).queryByRole('button', { name: 'Удалить врача' })).not.toBeInTheDocument()

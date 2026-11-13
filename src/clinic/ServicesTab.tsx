@@ -6,7 +6,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
-import { canEditServices } from '../lib/roles'
+import { canEditPrices, canEditServices, PRICES_BY_HEAD } from '../lib/roles'
 import { ServiceMemo } from './MemosTab'
 import { ServiceSupplies } from './ServiceSupplies'
 import { StarterCard, StarterPanel } from './StarterPanel'
@@ -106,22 +106,27 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
     else next.add(g)
     return next
   })
+  // Открыть услугу (материалы, памятка) — и врачу; прайс (добавить, цена, «В прайсе») — руководитель
   const editable = canEditServices(me)
+  const prices = canEditPrices(me)
   const openedService = typeof opened === 'number' ? everything.find((s) => s.id === opened) : undefined
 
   return (
     <>
       <section className="schedule-main">
       {header}
+      {/* «Заполнить по умолчанию» — и врачу: памятки и материалы услуг (типовые услуги с ценами — только руководителю) */}
       {editable && (everything.length > 0 || Boolean(me.admin)) && <StarterCard admin={Boolean(me.admin)} onOpen={() => setOpened('starter')} />}
       <section className="card-block">
         <div className="block-head">
           <div>
             <p className="price-lead">В прайсе — основные услуги. Делаете что-то ещё — включите из справочника.</p>
-            <p className="hint small">Из прайса выбирают пациенты в боте и на сайте и вы — в записи, плане лечения и оплате.</p>
+            <p className="hint small">Из прайса выбирают пациенты в боте и на сайте и вы — в записи, плане лечения и оплате.
+              Цены общие для клиники; в карточке врача — какие услуги он делает.</p>
+            {!prices && <p className="hint small" role="note">{PRICES_BY_HEAD}.</p>}
           </div>
-          {/* Менять услуги — админ и врачи; регистратуре и ассистенту сервер ответит 403: только список */}
-          {editable && (
+          {/* Прайс меняет руководитель; остальным сервер ответит 403: только список */}
+          {prices && (
             <span className="actions">
               <button type="button" className="btn primary" onClick={() => setOpened('catalog')}>＋ Добавить услугу из справочника</button>
               <button type="button" className="btn" onClick={() => setOpened('new')}>＋ Своя услуга</button>
@@ -175,7 +180,7 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
         ) : hidden.length ? <EmptyState title="В прайсе пока пусто">Включите услуги ниже или добавьте из справочника.</EmptyState>
           : <EmptyState title="Услуг пока нет">Добавьте свои или отметьте типовые в справочнике.</EmptyState>}
         {hidden.length > 0 && (
-          <ClinicCatalog services={hiddenFound} total={hidden.length} editable={editable} opened={opened}
+          <ClinicCatalog services={hiddenFound} total={hidden.length} editable={editable} prices={prices} opened={opened}
             searching={Boolean(query.trim() || group)} onOpen={(id) => setOpened(id)} />
         )}
         {/* Срок по умолчанию — под списком: сверху поиск и разделы, услуги находятся быстрее */}
@@ -195,8 +200,8 @@ export function ServicesTab({ me, header, onPanel }: { me: Me; header: ReactNode
  * и цены на месте. Свёрнуто — прайс сверху остаётся коротким; при поиске и выбранном разделе раскрыто.
  * «Включить» — обратно в прайс одним нажатием.
  */
-function ClinicCatalog({ services, total, editable, opened, searching, onOpen }: {
-  services: Service[]; total: number; editable: boolean; opened: unknown; searching: boolean; onOpen: (id: number) => void
+function ClinicCatalog({ services, total, editable, prices, opened, searching, onOpen }: {
+  services: Service[]; total: number; editable: boolean; prices: boolean; opened: unknown; searching: boolean; onOpen: (id: number) => void
 }) {
   const enable = useEnableService()
   const [open, setOpen] = useState(false)
@@ -218,7 +223,7 @@ function ClinicCatalog({ services, total, editable, opened, searching, onOpen }:
                 {editable ? <button type="button" className="row-link" onClick={() => onOpen(s.id)}>{s.name}</button> : s.name}
                 <span className="hint"> · {s.durationMinutes} мин{priceText(s.priceSom) ? ` · ${priceText(s.priceSom)}` : ''}</span>
               </span>
-              {editable && (
+              {prices && (
                 <button type="button" className="btn small" aria-label={`Включить: ${s.name}`} disabled={enable.isPending}
                   onClick={() => enable.mutate(s, { onSuccess: () => setEnabled(s.name) })}>Включить</button>
               )}
@@ -233,6 +238,7 @@ function ClinicCatalog({ services, total, editable, opened, searching, onOpen }:
 /** Новая услуга или правка: название, категория, длительность, цена «от», показывать пациентам. */
 function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; onClose: () => void }) {
   const close = useClose(onClose)
+  const prices = canEditPrices(me)
   const refresh = useRefreshServices()
   const [form, setForm] = useState({
     // Раздел: у услуги — её (выбранный или угаданный сервером); у новой — пусто, пока не выбрали руками
@@ -300,6 +306,8 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={close}>✕</button>
       </header>
       <form className="form" onSubmit={submit}>
+        {!prices && <p className="hint" role="note">{PRICES_BY_HEAD}. Здесь — материалы и памятка услуги.</p>}
+        <fieldset className="form" disabled={!prices}>
         <label className="field"><span>Название</span>
           <input value={form.name} required maxLength={100} autoFocus={!s} placeholder="Например: Лечение кариеса" onChange={set('name')} />
         </label>
@@ -336,9 +344,10 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
               : 'Не в прайсе — в справочнике клиники: при записи не предлагается, прошлые приёмы на месте'}</span>
           </div>
         )}
+        </fieldset>
         {done && <p className="tone-ok" role="status">{done}</p>}
-        <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label={s ? 'Сохранить' : 'Добавить'} savedText="Услуга сохранена"
-          error={save.error && (['name', 'group', 'durationMinutes', 'priceSom', 'recallMonths'].map((k) => error(k)).find(Boolean) ?? save.error.message)} />
+        {prices && <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label={s ? 'Сохранить' : 'Добавить'} savedText="Услуга сохранена"
+          error={save.error && (['name', 'group', 'durationMinutes', 'priceSom', 'recallMonths'].map((k) => error(k)).find(Boolean) ?? save.error.message)} />}
       </form>
       {s && <ServiceSupplies serviceId={s.id} />}
       {s && <ServiceMemo serviceId={s.id} />}

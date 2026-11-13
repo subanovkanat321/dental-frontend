@@ -1,12 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useCallback, useState } from 'react'
 
-import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { api, unwrap, type Schemas } from '../api/client'
 import { openMine } from '../lib/route'
 import { SubHeader } from '../settings/SubHeader'
-import { DoctorPanel, NewDoctorPanel } from './DoctorPanel'
+import { AddStaffPanel } from './AddStaff'
+import { DoctorPanel } from './DoctorPanel'
+import { InvitePanel, MemberPanel } from './MemberPanel'
 import type { Doctor } from './PhoneParts'
-import { StaffTab } from './StaffTab'
+import { StaffTab, type Opened } from './StaffTab'
 import { TimeOffTab } from './TimeOffTab'
 import { HeadSlotProvider } from '../layout/PageHead'
 import { useHeadSlot } from '../layout/headSlot'
@@ -14,27 +16,24 @@ import { useHeadSlot } from '../layout/headSlot'
 type Me = Schemas['BookingViewsMe']
 /** doctors — «Персонал» (врачи и сотрудники вместе; адрес прежний, закладки работают). */
 export type TeamTab = 'doctors' | 'timeoff'
-type Tab = TeamTab
 
 /**
- * «Команда»: персонал — врачи (профиль, фото, часы работы, приглашение, права) и сотрудники (админы,
- * регистратура, ассистенты) одним списком с ролями — и перерывы с выходными. Врачей и сотрудников ведёт админ; врач правит себя,
- * регистратура — часы врачей. Проверяет и сервер.
+ * «Клиника → Персонал» (и «Перерывы и выходные» в «Рабочем времени»): все, кто работает в клинике, одним
+ * списком; одна кнопка «+ Добавить сотрудника» (руководитель) и одна карточка на человека — врача
+ * ({@link DoctorPanel}), сотрудника ({@link MemberPanel}) или приглашённого ({@link InvitePanel}). Карточка —
+ * панель справа на компьютере и экран на телефоне. Права проверяет и сервер.
  */
 export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: itemTabs }: {
   me: Me
-  /** Вкладки пункта «Настроек» («Рабочее время»: врачи, смены, перерывы) */
+  only: TeamTab
+  title: string
+  onBack: () => void
+  /** Вкладки пункта «Рабочее время» (врачи, смены, перерывы) */
   tabs?: React.ReactNode
-  only?: Tab
-  title?: string
-  onBack?: () => void
-  /** «Мой профиль»: сразу карточка этого врача. */
+  /** Сразу карточка этого врача. */
   initialOpened?: number | null
 }) {
-  const tabs: [Tab, string][] = [['doctors', 'Персонал'], ['timeoff', 'Перерывы']]
-  const [chosen, setTab] = useState<Tab>('doctors')
-  const tab = only ?? chosen
-  const [opened, setOpened] = useState<number | 'new' | null>(initialOpened)
+  const [opened, setOpened] = useState<Opened | null>(initialOpened == null ? null : { kind: 'doctor', id: initialOpened })
   const [slot, setSlot] = useHeadSlot()
   const close = useCallback(() => setOpened(null), [setOpened])
   const admin = useQuery({
@@ -42,76 +41,47 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: 
     queryFn: () => unwrap(api.GET('/api/doctors/admin')),
     enabled: Boolean(me.admin),
   })
+  const members = useQuery({ queryKey: ['members'], queryFn: () => unwrap(api.GET('/api/members')), enabled: Boolean(me.admin) })
+  const invites = useQuery({ queryKey: ['member-invites'], queryFn: () => unwrap(api.GET('/api/members/invites')), enabled: Boolean(me.admin) })
   // Не админу — врачи из me (без Telegram и ролей: их видит только админ)
   const doctors: Doctor[] = me.admin ? admin.data ?? [] : (me.doctors ?? []).filter((d) => d.active !== false)
-  const openedDoctor = typeof opened === 'number' ? doctors.find((d) => d.id === opened) : undefined
-  const addButtons = me.admin && (
-    <>
-      <button type="button" className="btn" onClick={() => document.getElementById('invite-member')?.scrollIntoView({ behavior: 'smooth' })}>+ Пригласить сотрудника</button>
-      <button type="button" className="btn primary" onClick={() => setOpened('new')}>+ Добавить врача</button>
-    </>
+  const openedDoctor = opened?.kind === 'doctor' ? doctors.find((d) => d.id === opened.id) : undefined
+  const openedMember = opened?.kind === 'member' ? members.data?.find((m) => m.telegramId === opened.telegramId) : undefined
+  const openedInvite = opened?.kind === 'invite' ? invites.data?.find((i) => i.id === opened.id) : undefined
+  // Один человек — одна карточка: скрытый врач, который ещё и сотрудник, — карточка сотрудника; сотрудник,
+  // которому дали «Врач», — врачебная
+  const doctorMember = openedDoctor?.telegramId != null ? members.data?.find((m) => m.telegramId === openedDoctor.telegramId) : undefined
+  const member = openedMember ?? (openedDoctor?.active === false ? doctorMember : undefined)
+  const memberDoctor = member ? doctors.find((d) => d.telegramId === member.telegramId) : undefined
+  const doctorPanel = openedDoctor && !(openedDoctor.active === false && doctorMember) ? openedDoctor
+    : memberDoctor && memberDoctor.active !== false ? memberDoctor : undefined
+  const add = me.admin && only === 'doctors' && (
+    <button type="button" className="btn primary head-end" onClick={() => setOpened({ kind: 'new' })}>+ Добавить сотрудника</button>
   )
 
   return (
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
       <HeadSlotProvider slot={slot}>
       <section className="schedule-main">
-        {only && onBack ? (
-          <SubHeader title={title ?? ''} onBack={onBack} slotRef={setSlot}>
-            {itemTabs}
-            {tab === 'doctors' && addButtons}
-          </SubHeader>
-        ) : (
-          <header className="toolbar">
-            <h1>Команда</h1>
-            <div className="segments tabs" role="tablist" aria-label="Разделы команды">
-              {tabs.map(([key, name]) => (
-                <button key={key} type="button" role="tab" aria-selected={tab === key} aria-pressed={tab === key}
-                  onClick={() => { setTab(key); setOpened(null) }}>{name}</button>
-              ))}
-            </div>
-            {tab === 'doctors' && addButtons}
-          </header>
+        <SubHeader title={title} onBack={onBack} slotRef={setSlot}>
+          {itemTabs}
+          {add}
+        </SubHeader>
+        {only === 'doctors' && (
+          <StaffTab me={me} doctors={doctors} members={members.data ?? []} invites={invites.data ?? []}
+            loading={Boolean(me.admin) && (admin.isPending || members.isPending)} error={admin.error ?? members.error} opened={opened}
+            onOpen={(o) => (o.kind === 'doctor' && o.id === me.doctorId && !me.admin ? openMine('me', 'profile') : setOpened(o))} />
         )}
-
-        {tab === 'doctors' && (
-          <>
-            <StaffTab me={me} doctors={doctors} loading={Boolean(me.admin) && admin.isPending} error={admin.error} opened={opened}
-              onOpen={(id) => (typeof id === 'number' && id === me.doctorId && !initialOpened ? openMine('me', 'profile') : setOpened(id))} />
-            {me.doctorId == null && (me.admin || me.reception) && <section className="card-block"><AddSelf /></section>}
-          </>
-        )}
-        {tab === 'timeoff' && <TimeOffTab me={me} />}
+        {only === 'timeoff' && <TimeOffTab me={me} />}
       </section>
       </HeadSlotProvider>
-      {opened === 'new' && <NewDoctorPanel onClose={close} onCreated={(d) => setOpened(d.id)} />}
-      {openedDoctor && <DoctorPanel key={openedDoctor.id} doctor={openedDoctor} me={me} onClose={close} />}
+      {opened?.kind === 'new' && <AddStaffPanel me={me} onClose={close} onAdded={setOpened} />}
+      {doctorPanel && <DoctorPanel key={doctorPanel.id} doctor={doctorPanel} me={me} onClose={close} />}
+      {!doctorPanel && member && (
+        <MemberPanel key={member.telegramId} me={me} member={member} hiddenDoctor={memberDoctor} onClose={close} />
+      )}
+      {openedInvite && <InvitePanel key={openedInvite.id} invite={openedInvite} onClose={close}
+        onPhone={(telegramId) => setOpened({ kind: 'member', telegramId })} />}
     </div>
-  )
-}
-
-/**
- * «Я тоже веду приём»: админ (частный врач в своём кабинете) или регистратор становится и врачом —
- * со своим расписанием, часами и пациентами. Права администратора остаются.
- */
-function AddSelf() {
-  const client = useQueryClient()
-  const [name, setName] = useState('')
-  const add = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/doctors/me', { body: { fullName: name } })),
-    onSuccess: () => {
-      void client.invalidateQueries({ queryKey: ['me'] })
-      void client.invalidateQueries({ queryKey: ['doctors-admin'] })
-    },
-  })
-  return (
-    <form className="form sub-form" aria-label="Я тоже веду приём" onSubmit={(e) => { e.preventDefault(); add.mutate() }}>
-      <p className="hint">Вы и принимаете пациентов? Добавьте себя врачом — появится ваше расписание, часы работы и профиль.</p>
-      <label className="field"><span>Ваше имя для пациентов</span>
-        <input value={name} required maxLength={100} onChange={(e) => setName(e.target.value)} />
-      </label>
-      {add.error && <p className="error" role="alert">{add.error.fieldErrors.fullName ?? add.error.message}</p>}
-      <button type="submit" className="btn" disabled={add.isPending}>Я тоже веду приём</button>
-    </form>
   )
 }

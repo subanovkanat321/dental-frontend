@@ -27,3 +27,6 @@ button.shift-line { cursor: pointer; }
 .shifts-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .shifts-copy { align-items: end; }
 .on-duty { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; font-size: .9rem; }
+/* Недельный график (V208): смены на дату нет — серым, по графику; смена — поверх */
+.shift-chip.shift-planned { color: var(--faint); background: transparent; border-style: dashed; }
+.shift-planned-line { color: var(--hint); margin: 0 0 6px; }

@@ -72,7 +72,7 @@ test('админ: сохранить «О клинике» с днями и What
 })
 
 test('«Страница для Instagram»: «Скопировать» кладёт ссылку в буфер, подсказка ведёт на раздел руководства', async () => {
-  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: 1 })))
+  server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: true, doctorId: 1 })))
   const user = userEvent.setup()
   renderApp()
   const form = await screen.findByRole('form', { name: 'О клинике' })
@@ -306,4 +306,32 @@ test('«О клинике»: город подставляется из адре
   expect(city).toHaveTextContent('Каракол')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   await waitForSlow(() => expect(saved).toMatchObject({ address: 'Бишкек, Манаса 1', city: 'Каракол' }))
+})
+
+test('врач (не руководитель): часы клиники и «О клинике» — только просмотр с подписью; свои часы — меняет; у коллег — «по часам клиники»', async () => {
+  let put = false
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false, doctorId: 1 })),
+    http.put('*/api/clinic', () => {
+      put = true
+      return HttpResponse.json(clinic)
+    }),
+    http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
+  )
+  window.location.hash = '/clinic/hours'
+  renderApp()
+  const form = await screen.findByRole('form', { name: 'Часы клиники' })
+  expect(within(form).getByRole('button', { name: 'Суббота' })).toBeDisabled()
+  expect(within(form).queryByRole('button', { name: 'Сохранить часы клиники' })).not.toBeInTheDocument()
+  expect(screen.getByText(/По ним работают врачи без своих часов\. Цены и часы клиники меняет руководитель/)).toBeInTheDocument()
+  // Свои часы — по-прежнему сам; подпись «по часам клиники» видна без раскрытия
+  expect(await screen.findByRole('group', { name: 'Часы работы' })).toBeInTheDocument()
+  expect(await screen.findAllByText('по часам клиники')).not.toHaveLength(0)
+  expect(put).toBe(false)
+
+  window.location.hash = '/clinic/about'
+  window.dispatchEvent(new HashChangeEvent('hashchange'))
+  const about = await screen.findByRole('form', { name: 'О клинике' })
+  expect(within(about).getByText(/Только просмотр: «О клинике», цены и часы клиники меняет руководитель/)).toBeInTheDocument()
+  expect(within(about).getByRole('textbox', { name: 'Название для пациентов' })).toBeDisabled()
 })
