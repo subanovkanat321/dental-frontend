@@ -24,7 +24,7 @@ const tomorrow = addDays(todayIn(), 1)
 test('вернулись с «Недели» на «День» — сетка снова прокручена к приёмам, а не с 00:00', async () => {
   const visit: Schemas['AppointmentView'] = {
     id: 1, doctorId: 1, startAt: slotInstant(tomorrow, 15 * 60), endAt: slotInstant(tomorrow, 15 * 60 + 30), status: 'SCHEDULED',
-    reply: 'NONE', version: 1, patient: { id: 1, fullName: 'Бакыт М.', phone: '996555000111', telegram: false }, source: 'DOCTOR', debtSom: 0, firstVisit: false
+    reply: 'NONE', version: 1, patient: { id: 1, fullName: 'Бакыт М.', phone: '996555000111', telegram: false }, source: 'DOCTOR', debtSom: 0, chairManual: false, firstVisit: false
   }
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

@@ -128,7 +128,7 @@ test('ассистент печатает план без цен', async () => {
 test('история визитов: «📋 Памятка и квитанция» у состоявшегося приёма', async () => {
   backend(me, false)
   const visit = { id: 9, doctorId: 1, startAt: '2026-10-20T04:00:00Z', endAt: '2026-10-20T04:30:00Z', status: 'DONE', version: 1,
-    paidSom: 1500, serviceName: 'Профчистка', patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }, source: 'DOCTOR', debtSom: 0, firstVisit: false } satisfies Schemas['AppointmentView']
+    paidSom: 1500, serviceName: 'Профчистка', patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false }, source: 'DOCTOR', debtSom: 0, firstVisit: false, chairManual: false } satisfies Schemas['AppointmentView']
   server.use(
     http.get('*/api/appointments/by-patient/2', () => HttpResponse.json({
       patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444' }, done: 1, noShow: 0, cancelled: 0, upcoming: [], past: [visit],

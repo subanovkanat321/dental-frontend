@@ -19,7 +19,7 @@ export function appointment(id: number, doctorId: number, time: string, name: st
   const start = new Date(`${todayIn()}T${time}:00+06:00`)
   return {
     id, doctorId, startAt: start.toISOString(), endAt: new Date(start.getTime() + 30 * 60000).toISOString(),
-    status: 'SCHEDULED', reply: 'NONE', version: 0, source: 'DOCTOR', debtSom: 0, firstVisit: false, patient: { id, fullName: name, phone: '996555123456', telegram: false }, ...extra,
+    status: 'SCHEDULED', reply: 'NONE', version: 0, source: 'DOCTOR', debtSom: 0, firstVisit: false, chairManual: false, patient: { id, fullName: name, phone: '996555123456', telegram: false }, ...extra,
   } satisfies Schemas['AppointmentView']
 }
 
