@@ -337,11 +337,12 @@ function ServicePanel({ me, service: s, onClose }: { me: Me; service?: Service; 
         </div>
         {error('recallMonths') && <p className="error">{error('recallMonths')}</p>}
         {s && (
-          <div className="field">
-            <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { setDone(''); save.reset(); setForm({ ...form, active: e.target.checked }) }} /> В прайсе</label>
+          <div className="field price-toggle">
+            <label className="check"><input type="checkbox" checked={form.active} onChange={(e) => { setDone(''); save.reset(); setForm({ ...form, active: e.target.checked }) }} /> Показывать в прайсе</label>
+            {/* Что значит галочка — серым под ней (просьба владельца 2026-11-13: «„В прайсе“ — непонятно») */}
             <span className="hint small">{form.active
-              ? 'Её выбирают пациенты при записи и сотрудники — в записи, плане и оплате'
-              : 'Не в прайсе — в справочнике клиники: при записи не предлагается, прошлые приёмы на месте'}</span>
+              ? 'Пациенты видят услугу при записи, сотрудники — в записи, плане и оплате. Выключите, если услугу больше не делаете.'
+              : 'Скрыта: при записи не предлагается, лежит в справочнике клиники; прошлые приёмы на месте.'}</span>
           </div>
         )}
         </fieldset>

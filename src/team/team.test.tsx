@@ -21,7 +21,7 @@ const doctors: Schemas['DoctorAdminView'][] = [
   { id: 2, fullName: 'Дастан Т.', about: '', active: true, phoneOnly: false },
 ]
 
-test('админ: карточка врача, который ещё не вошёл, — «Роли», черновик профиля, свои часы, ссылка-приглашение; снять «Врач» — с подтверждением', async () => {
+test('админ: карточка врача, который ещё не вошёл, — «Роли», черновик профиля, часы строкой-ссылкой, ссылка-приглашение; снять «Врач» — с подтверждением', async () => {
   const saved: Record<string, unknown> = {}
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
@@ -35,10 +35,6 @@ test('админ: карточка врача, который ещё не вош
       return new HttpResponse(null, { status: 204 })
     }),
     http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
-    http.put('*/api/doctors/:id/hours', async ({ request }) => {
-      saved.hours = await request.json()
-      return HttpResponse.json({ custom: true, days: (saved.hours as Schemas['DoctorHoursControllerRequest']).days } satisfies Schemas['DoctorHoursView'])
-    }),
     http.post('*/api/doctors/:id/invite', () => HttpResponse.json({ token: 'abc123' } satisfies Schemas['DoctorInvitesInvite'])),
   )
   const asked = vi.spyOn(window, 'confirm').mockReturnValue(true)
@@ -66,11 +62,9 @@ test('админ: карточка врача, который ещё не вош
   expect(await within(panel).findByText('Профиль врача сохранён')).toBeInTheDocument()
   expect(saved.profile).toEqual({ fullName: 'Дастан Т.', about: 'хирург' })
 
-  await user.click(await within(panel).findByRole('button', { name: 'Свои часы' }))
-  await user.click(within(panel).getByRole('checkbox', { name: 'Понедельник' }))
-  await user.click(within(panel).getByRole('button', { name: 'Сохранить часы' }))
-  expect(await within(panel).findByText('Часы работы сохранены')).toBeInTheDocument()
-  expect(saved.hours).toEqual({ days: [{ weekday: 'MONDAY', start: '09:00', end: '18:00' }] })
+  // Часы — не редактором в карточке, а строкой-ссылкой в «Рабочее время → График» (cardhours.test.tsx)
+  expect(await within(panel).findByRole('button', { name: 'Часы работы: как у клиники — открыть в «Рабочем времени»' })).toBeInTheDocument()
+  expect(within(panel).queryByRole('button', { name: 'Свои часы' })).not.toBeInTheDocument()
 
   const access = within(panel).getByRole('region', { name: 'Вход' })
   expect(access).toHaveTextContent('Ждём входа')
@@ -278,7 +272,7 @@ test('персонал: роли рядом, «Telegram привязан» и «
   vi.restoreAllMocks()
 })
 
-test('карточка сотрудника: регистратор → ассистент с врачами списком «Роль»; недельный график «как у клиники»', async () => {
+test('карточка сотрудника: регистратор → ассистент с врачами списком «Роль»; часы «как у клиники» строкой-ссылкой', async () => {
   let members: Schemas['StaffMembersMemberView'][] = [
     { telegramId: 501, fullName: 'Айпери', role: 'RECEPTION', me: false, doctor: false, doctorIds: [], phoneOnly: false },
   ]
@@ -302,7 +296,7 @@ test('карточка сотрудника: регистратор → асси
   const table = await screen.findByRole('table', { name: 'Персонал' })
   await user.click(await within(table).findByRole('button', { name: 'Айпери' }))
   const card = await screen.findByRole('complementary', { name: 'Сотрудник' })
-  expect(await within(card).findByRole('button', { name: 'Как у клиники' })).toHaveAttribute('aria-pressed', 'true')
+  expect(await within(card).findByRole('button', { name: /^Часы работы: как у клиники/ })).toBeInTheDocument()
   const roles = within(card).getByRole('form', { name: 'Роли' })
   const field = within(roles).getByRole('combobox', { name: 'Роль' })
   expect(field).toHaveTextContent('Регистратура')
@@ -341,7 +335,7 @@ test('«Мой профиль» руководителя-врача: без де
   expect(access).toHaveTextContent('✓ Ваш Telegram подключён')
   expect(access).not.toHaveTextContent('Врач сменил аккаунт')
   expect(within(access).queryByRole('button', { name: /ссылка-приглашение|Пригласить/ })).not.toBeInTheDocument()
-  expect(within(panel).getByRole('region', { name: 'Работа' })).toHaveTextContent('«Клиника → Рабочее время → Перерывы и выходные»')
+  expect(await within(within(panel).getByRole('region', { name: 'Работа' })).findByRole('button', { name: /^Часы работы:/ })).toBeInTheDocument()
   unmount()
 
   members = [...members, { telegramId: 222, fullName: 'Бермет', role: 'ADMIN', me: false, doctor: false, phoneOnly: false }]
@@ -431,7 +425,7 @@ test('регистратура открывает врача ради часов
   renderApp()
   await user.click(within(await screen.findByRole('table', { name: 'Персонал' })).getByRole('button', { name: 'Дастан Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Врач' })
-  expect(within(panel).getByText('Часы работы')).toBeInTheDocument()
+  expect(await within(panel).findByRole('button', { name: /^Часы работы: как у клиники/ })).toBeInTheDocument()
   expect(within(panel).queryByRole('region', { name: 'Услуги врача' })).not.toBeInTheDocument()
 })
 

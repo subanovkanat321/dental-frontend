@@ -70,3 +70,14 @@ test('открытой карточке приёма ставится --panel-to
 test('телефон: открыта карточка — страница под ней не прокручивается (iPhone сдвигал карточку вместе со страницей)', () => {
   expect(styles).toContain('html:has(.workspace .panel), html:has(.workspace .panel) body { overflow: hidden; overscroll-behavior: none; }')
 })
+
+test('галочка в .field — своей ширины (не «width: 100%» поля): подпись сразу за ней, а не столбиком справа', () => {
+  const check = rule(styles, '.field :is(input[type=checkbox], input[type=radio])').replace(/\s+/g, ' ')
+  expect(check).toContain('width: auto')
+  expect(check).toContain('flex: none')
+})
+
+test('карточка: под липкой шапкой — линия, у низа — запас под плашку «Сохранить»', () => {
+  expect(rule(styles, '.panel > .panel-head')).toContain('border-bottom')
+  expect(rule(styles, '.panel').replace(/\s+/g, ' ')).toContain('scroll-padding-bottom')
+})

@@ -64,8 +64,7 @@ export function ChairField({ doctorId, me }: { doctorId: number; me: Me }) {
   return (
     <section className="form chair-field" aria-label="Кресло">
       <h4>Кресло</h4>
-      <p className="hint">Врачи с одним креслом работают по своему расписанию, но двух пациентов в одно кресло на одно время не записать —
-        ни в CRM, ни через бота и сайт. Без кресла — ограничение только по врачу, как раньше.</p>
+      <p className="hint">Двух пациентов в одно кресло на одно время не записать.</p>
       {admin ? (
         <label className="field"><span>Кресло врача</span>
           <Select value={adding ? NEW : current?.id ?? ''} disabled={assign.isPending || chairs.isPending} onChange={(e) => pick(e.target.value)}>
@@ -91,7 +90,7 @@ export function ChairField({ doctorId, me }: { doctorId: number; me: Me }) {
         </form>
       )}
       {shares && <p className="hint">🪑 {current!.name} — {shares}</p>}
-      {admin && <p className="hint">Названия кресел и что делать с записью в часы коллеги по креслу (предупреждать или запрещать) —{' '}
+      {admin && <p className="hint">Названия и правила кресел —{' '}
         <button type="button" className="link" onClick={() => openClinic('chairs')}>Клиника → Кресла</button>.</p>}
       {assign.error && <ChairAssignError error={assign.error} />}
     </section>
