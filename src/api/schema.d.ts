@@ -10039,6 +10039,8 @@ export interface components {
             /** Format: int64 */
             mrrSom: number;
             /** Format: int64 */
+            pilotMrrSom: number;
+            /** Format: int64 */
             appointments: number;
             /** Format: int64 */
             appointmentsBefore: number;

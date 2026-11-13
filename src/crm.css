@@ -1328,6 +1328,9 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .head-tools .analytics-filter > .segments > button { flex: 1 1 auto; min-width: 0; padding-inline: 6px; }
   /* «Прошлый месяц» не ломается на две строки — кнопки быстрого выбора переносятся вместе */
   .analytics-filter > .day-quick { flex: 1 1 auto; }
+  /* «Платформа → Аналитика»: период — во всю ширину, город — во всю ширину сразу под ним (не маленькой кнопкой слева) */
+  .head-tools > .analytics-filter.platform-filter { flex-basis: 100%; gap: 8px; }
+  .head-tools .platform-filter > .segments, .head-tools .platform-filter > .ui-select { flex: 1 1 100%; }
   .day-quick .chip { white-space: nowrap; }
 }
 /* Шапка раздела на компьютере прилипает к верху (layout/stickyHead.ts), под ней — шапки таблиц */
@@ -1525,6 +1528,16 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .stats-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .table-scroll { overflow-x: auto; }
 .survey-tile .small { font-size: .8rem; }
+/* Плитки-числа ровной сеткой («Платформа → Аналитика»): телефон — 2 колонки, компьютер — 4 (.three — 3);
+   ширина и высота одинаковые (minmax(0, 1fr) — длинная подпись переносится, а не раздвигает колонку);
+   подпись и пояснение — мелко серым, число — крупно */
+.survey-tiles.tile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; list-style: none; margin: 0; padding: 0; }
+.survey-tiles.tile-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tile-grid .survey-tile { min-width: 0; align-content: start; padding: 10px 12px; }
+.tile-grid .survey-tile > .hint:first-child { font-size: .85rem; line-height: 1.25; }
+.tile-grid .survey-tile b { font-size: 1.5rem; line-height: 1.2; overflow-wrap: anywhere; }
+.tile-grid .survey-tile .small { font-size: .75rem; line-height: 1.3; }
+@media (min-width: 761px) { .survey-tiles.tile-grid:not(.three) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .survey-q-result h3 { margin: 0; font-size: 1rem; }
 .survey-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .survey-bars li { display: grid; grid-template-columns: minmax(80px, 220px) 1fr auto; gap: 10px; align-items: center; font-size: .9rem; }

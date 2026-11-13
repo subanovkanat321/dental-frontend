@@ -23384,6 +23384,10 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "pilotMrrSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "appointments" : {
             "type" : "integer",
             "format" : "int64"
@@ -23393,7 +23397,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "appointments", "appointmentsBefore", "clinics", "mrrSom", "overdue", "paying", "pilot", "working" ]
+        "required" : [ "appointments", "appointmentsBefore", "clinics", "mrrSom", "overdue", "paying", "pilot", "pilotMrrSom", "working" ]
       },
       "AiUsageStoreClinicRow" : {
         "properties" : {
