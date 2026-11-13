@@ -14,6 +14,7 @@ import { whatsappUrl } from '../lib/texts'
 import { formatPhone, shortDate } from '../lib/time'
 import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, prepareVideo, remindDue, sendVideo, templateMessage, videoWay, type Group, type OutreachLead, type VideoResult } from './outreach'
 import { SubHelp } from '../layout/PageHead'
+import { rowOpen } from '../lib/rowClick'
 
 type Template = Schemas['ClinicOutreachTemplate']
 type Report = Schemas['ClinicOutreachImportReport']
@@ -281,7 +282,7 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
         : <span className="chip small s-request">{STAGE_TEXT[l.stage ?? ''] ?? 'Дальше'}</span>
   const error = sent.error ?? replied.error ?? reminded.error ?? decline.error
   return (
-    <div role="listitem" id={`outreach-${l.id}`} className={`sub-form form outreach-lead${selected ? ' active' : ''}`} aria-label={`Клиника: ${l.clinicName}`}
+    <div role="listitem" id={`outreach-${l.id}`} {...rowOpen(!selected && onSelect, 'sub-form form outreach-lead', selected && 'active')} aria-label={`Клиника: ${l.clinicName}`}
       aria-current={selected || undefined}>
       <strong><button type="button" className="row-link" aria-expanded={selected} onClick={onSelect}>{l.clinicName}</button> {status}
         {l.source === 'SITE' && <span className="hint small"> · заявка с сайта</span>}</strong>

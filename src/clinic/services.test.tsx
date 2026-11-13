@@ -543,3 +543,30 @@ test('справочник: услуга уже есть у клиники, но
   expect(await within(panel).findByText('«Синус-лифтинг» — снова в прайсе')).toBeInTheDocument()
   expect(enabled).toMatchObject({ name: 'Синус-лифтинг', active: true })
 })
+
+test('врач (не руководитель): прайс — только просмотр с подписью; в карточке услуги поля закрыты, материалы — его', async () => {
+  let changed = false
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, admin: false })),
+    http.get('*/api/service-types', () => HttpResponse.json([
+      { id: 1, name: 'Консультация', group: 'EXAM', durationMinutes: 30, active: true, priceSom: 500 },
+    ] satisfies Schemas['ServiceTypeView'][])),
+    http.put('*/api/service-types/:id', () => {
+      changed = true
+      return HttpResponse.json({ id: 1 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'Услуги' })
+  expect(screen.getByText(/Цены общие для клиники; в карточке врача — какие услуги он делает/)).toBeInTheDocument()
+  expect(screen.getAllByText(/Цены и часы клиники меняет руководитель/).length).toBeGreaterThan(0)
+  expect(screen.queryByRole('button', { name: '＋ Своя услуга' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '＋ Добавить услугу из справочника' })).not.toBeInTheDocument()
+  await user.click(within(table).getByRole('button', { name: 'Консультация' }))
+  const panel = await screen.findByRole('complementary', { name: 'Услуга' })
+  expect(within(panel).getByRole('textbox', { name: 'Название' })).toBeDisabled()
+  expect(within(panel).getByRole('spinbutton', { name: /Цена/ })).toBeDisabled()
+  expect(within(panel).queryByRole('button', { name: 'Сохранить' })).not.toBeInTheDocument()
+  expect(changed).toBe(false)
+})

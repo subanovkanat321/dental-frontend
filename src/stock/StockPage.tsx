@@ -14,6 +14,7 @@ import { Loading } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
 import { SectionTitle } from '../layout/section'
 import { useSection } from '../layout/useSection'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -163,7 +164,7 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
             </thead>
             <tbody>
               {shown.map((s: Supply) => (
-                <tr key={s.id} className={selected?.id === s.id ? 'active' : undefined}>
+                <tr key={s.id} {...rowOpen(() => setSide({ kind: 'supply', id: s.id }), selected?.id === s.id && 'active')}>
                   <td><button type="button" className="row-link" onClick={() => setSide({ kind: 'supply', id: s.id })}>{s.name}</button></td>
                   {/* Остаток 0 и не «заканчивается» — материал из стартового набора, остаток ещё не вносили (сервер: fresh) */}
                   <td className={`nowrap strong ${s.quantity === 0 && !s.low ? 'hint' : s.quantity === 0 ? 'tone-bad' : s.low ? 'tone-wait' : ''}`}>

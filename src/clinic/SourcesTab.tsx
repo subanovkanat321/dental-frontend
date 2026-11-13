@@ -8,6 +8,7 @@ import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { Loading } from '../layout/Loading'
 import { SubHelp } from '../layout/PageHead'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -52,7 +53,7 @@ export function SourcesTab({ me, header, onPanel }: { me: Me; header: ReactNode;
               </th></tr></thead>
               <tbody>
                 {options.map((o, i) => (
-                  <tr key={o.id} className={[o.id === opened?.id ? 'active' : '', o.active === false ? 'inactive' : ''].join(' ').trim() || undefined}>
+                  <tr key={o.id} {...rowOpen(editable && (() => setOpened(o)), o.id === opened?.id && 'active', o.active === false && 'inactive')}>
                     <td>{editable ? <button type="button" className="row-link" onClick={() => setOpened(o)}>{sourceLabel(o)}</button> : sourceLabel(o)}
                       {o.active === false && <span className="hint"> · скрыт</span>}</td>
                     <td className="num">{o.patients}</td>

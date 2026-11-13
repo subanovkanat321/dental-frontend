@@ -126,7 +126,7 @@ test('регистратура: график только для чтения, �
   renderApp()
 
   const table = await screen.findByRole('table', { name: 'График смен на неделю' })
-  expect(screen.getByText('График смен ведёт руководитель клиники. Ваша строка подсвечена.')).toBeInTheDocument()
+  expect(screen.getByText(/График ведёт руководитель клиники.*Ваша строка подсвечена/)).toBeInTheDocument()
   const mine = within(table).getByRole('row', { name: /Айпери \(вы\)/ })
   expect(mine).toHaveAttribute('aria-current', 'true')
   expect(within(table).getByText('09:00–15:00')).toBeInTheDocument()
@@ -152,7 +152,7 @@ test('кнопка утренней сводки «Открыть график �
   expect(readDeepLink('?screen=shifts')).toEqual({ page: 'clinic', tab: 'shifts' })
 })
 
-test('одни врачи — график пуст: объяснение и кнопки «Часы работы врачей» и «Пригласить…»', async () => {
+test('одни врачи — график пуст: объяснение и кнопки «Часы работы врачей» и «Добавить…»', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/shifts', () => HttpResponse.json({ people: [], shifts: [], canEdit: true, me: 111 } satisfies Schemas['ShiftControllerSchedule'])),
@@ -160,7 +160,7 @@ test('одни врачи — график пуст: объяснение и к�
   renderApp()
   expect(await screen.findByRole('heading', { name: 'В графике пока никого' })).toBeInTheDocument()
   expect(screen.getByText(/Врачи здесь не показываются/)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Пригласить регистратуру или ассистента' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Добавить регистратуру или ассистента' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Часы работы врачей' }))
   expect(window.location.hash).toBe('#/clinic/hours')
 })
@@ -189,4 +189,52 @@ test('«Рабочее время» — один пункт: вкладки «В
   expect(await screen.findByRole('tab', { name: 'Перерывы и выходные' })).toHaveAttribute('aria-selected', 'true')
   openItem('shifts')
   expect(await screen.findByRole('tab', { name: 'Смены персонала' })).toHaveAttribute('aria-selected', 'true')
+})
+
+test('недельный график: серым — по графику, смена поверх; руководитель задаёт «Свой график»', async () => {
+  const weekly: Schemas['ShiftServiceWeekly'][] = [
+    { telegramId: 501, custom: true, days: [{ weekday: 'MONDAY', start: '10:00:00', end: '14:00:00' }, { weekday: 'TUESDAY', start: '10:00:00', end: '14:00:00' }] },
+    { telegramId: 502, custom: false, days: [{ weekday: 'TUESDAY', start: '09:00:00', end: '18:00:00' }] },
+    { telegramId: 503, custom: false, days: [] },
+  ]
+  let saved: unknown = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/shifts', () => HttpResponse.json({ ...schedule(true, 111), weekly })),
+    http.get('*/api/shifts/weekly/503', () => HttpResponse.json(weekly[2]!)),
+    http.put('*/api/shifts/weekly/503', async ({ request }) => {
+      saved = await request.json()
+      return HttpResponse.json({ telegramId: 503, custom: true, days: [{ weekday: 'MONDAY', start: '09:00:00', end: '18:00:00' }] } satisfies Schemas['ShiftServiceWeekly'])
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const table = await screen.findByRole('table', { name: 'График смен на неделю' })
+  const aiperi = within(table).getByRole('row', { name: /Айпери/ })
+  // Понедельник: смена 09–15 поверх графика (графика не видно), вторник — по графику 10–14
+  expect(aiperi).toHaveTextContent('09:00–15:00')
+  expect(within(aiperi).getByTitle('По недельному графику')).toHaveTextContent('10:00–14:00')
+  const list = screen.getByRole('region', { name: 'Недельный график' })
+  expect(list).toHaveTextContent('как у клиники · Каждый вторник 09:00–18:00')
+  await user.click(within(list).getByRole('button', { name: /Асель/ }))
+  await user.click(await within(list).findByRole('button', { name: 'Свой график' }))
+  await user.click(within(list).getByRole('checkbox', { name: 'Понедельник' }))
+  await user.click(within(list).getByRole('button', { name: 'Сохранить график' }))
+  expect(await within(list).findByText('Недельный график сохранён')).toBeInTheDocument()
+  expect(saved).toEqual({ days: [{ weekday: 'MONDAY', start: '09:00', end: '18:00' }] })
+})
+
+test('«На смене»: смены нет — свой недельный график; «как у клиники» не перечисляем', async () => {
+  server.use(http.get('*/api/shifts', () => HttpResponse.json({
+    people, shifts: [], canEdit: false, me: 1,
+    weekly: [
+      { telegramId: 501, custom: true, days: [{ weekday: 'TUESDAY', start: '10:00:00', end: '14:00:00' }] },
+      { telegramId: 502, custom: false, days: [{ weekday: 'TUESDAY', start: '09:00:00', end: '18:00:00' }] },
+    ],
+  } satisfies Schemas['ShiftControllerSchedule'])))
+  const client = createQueryClient({ queries: { retry: false } })
+  render(<QueryClientProvider client={client}><OnDuty date={tuesday} /></QueryClientProvider>)
+  const block = await screen.findByRole('region', { name: 'На смене' })
+  expect(block).toHaveTextContent('Айпери 10–14')
+  expect(block).not.toHaveTextContent('Бермет')
 })

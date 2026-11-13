@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -106,4 +106,56 @@ test('не руководитель видит кресло врача, но н�
   const chair = within(panel).getByRole('region', { name: 'Кресло' })
   expect(await within(chair).findByText('🪑 Кресло 1 — делит кресло с: Айгерим Садыкова')).toBeInTheDocument()
   expect(within(chair).queryByRole('combobox')).not.toBeInTheDocument()
+})
+
+test('«Клиника → Кресла»: «+ Добавить кресло» с режимом, врачи на кресле, конфликт приёмов — список, удалить с врачами — подтверждение', async () => {
+  const chairs: Schemas['ChairOverview'][] = [{ id: 5, name: 'Кресло 1', doctorIds: [1], overlaps: [], mode: 'WARN' }]
+  const sent: unknown[] = []
+  backend(chairs)
+  server.use(
+    http.post('*/api/chairs', async ({ request }) => {
+      sent.push({ create: await request.json() })
+      chairs.push({ id: 6, name: 'Кабинет 2', doctorIds: [], overlaps: [], mode: 'WARN' })
+      return HttpResponse.json({ id: 6, name: 'Кабинет 2', doctorIds: [] } satisfies Schemas['ChairsChair'], { status: 201 })
+    }),
+    http.put('*/api/chairs/:id/mode', async ({ request, params }) => {
+      expect(params.id).toBe('6')
+      sent.push(await request.json())
+      chairs[1] = { ...chairs[1]!, mode: 'STRICT' }
+      return HttpResponse.json({ id: 6, name: 'Кабинет 2', doctorIds: [], mode: 'STRICT' } satisfies Schemas['ChairsChair'])
+    }),
+    http.put('*/api/doctors/:id/chair', () => HttpResponse.json({
+      title: 'Conflict', status: 409, code: 'chair-conflicts', detail: 'У врачей с этим креслом пересекаются приёмы — сначала перенесите их',
+      conflicts: [{ startAt: '2099-06-01T04:15:00Z', endAt: '2099-06-01T04:45:00Z', doctorName: 'Дастан Т.',
+        otherStartAt: '2099-06-01T04:00:00Z', otherEndAt: '2099-06-01T04:30:00Z', otherDoctorName: 'Айгерим Садыкова' }],
+    }, { status: 409 })),
+    http.delete('*/api/chairs/:id', ({ params }) => {
+      sent.push({ delete: Number(params.id) })
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const asked = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  window.location.hash = '/clinic/chairs'
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: '+ Добавить кресло' }))
+  const form = screen.getByRole('form', { name: 'Новое кресло' })
+  await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Кабинет 2')
+  await user.click(within(form).getByRole('radio', { name: /Запрещать/ }))
+  await user.click(within(form).getByRole('button', { name: 'Добавить' }))
+  expect(await screen.findByRole('region', { name: 'Кабинет 2' })).toBeInTheDocument()
+  expect(sent).toEqual([{ create: { name: 'Кабинет 2' } }, { mode: 'STRICT' }])
+
+  // Врачи на кресле: Айгерим — уже; Дастан — выбрать, приёмы пересекаются — список, как в карточке врача
+  const first = screen.getByRole('region', { name: 'Кресло 1' })
+  expect(within(first).getByRole('list', { name: 'Врачи: Кресло 1' })).toHaveTextContent('Айгерим Садыкова')
+  await choose(within(first).getByRole('combobox', { name: 'Добавить врача: Кресло 1' }), 'Дастан Т.')
+  const alert = await within(first).findByRole('alert')
+  expect(within(alert).getByRole('listitem')).toHaveTextContent('Дастан Т. 10:15–10:45 и Айгерим Садыкова 10:00–10:30')
+
+  // Удалить кресло с врачом — подтверждение «останутся без кресла»
+  await user.click(within(first).getByRole('button', { name: 'Удалить кресло' }))
+  await waitFor(() => expect(sent).toContainEqual({ delete: 5 }))
+  expect(asked).toHaveBeenCalledWith(expect.stringContaining('Врачи останутся без кресла: Айгерим Садыкова'))
+  vi.restoreAllMocks()
 })

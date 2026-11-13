@@ -10,6 +10,7 @@ import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
+import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Report = Schemas['PromoReportControllerPromoReport']
@@ -94,7 +95,7 @@ function PromoTable({ codes, report, error, today, opened, onOpen }: {
             const off = p.active === false ? 'выключен' : expired(p, today) ? 'срок вышел' : null
             const discount = discountText(p)
             return (
-              <tr key={p.id} className={[p.id === opened ? 'active' : '', off ? 'inactive' : ''].join(' ').trim() || undefined}>
+              <tr key={p.id} {...rowOpen(onOpen && (() => onOpen(p)), p.id === opened && 'active', off && 'inactive')}>
                 <td>
                   {onOpen ? <button type="button" className="row-link" onClick={() => onOpen(p)}>🎟 {p.code}</button> : <span>🎟 {p.code}</span>}
                   {off && <span className="hint"> · {off}</span>}

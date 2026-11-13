@@ -22,6 +22,7 @@ import { ToothFullscreen } from './ToothFullscreen'
 import './toothChart.css'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
+import { rowOpen } from '../lib/rowClick'
 
 type Patient = Schemas['PatientView']
 type Tooth = Schemas['ToothView']
@@ -219,7 +220,7 @@ function ToothChart({ patient, teeth, error, onPlan, readOnly }: {
           {marked.map((t) => {
             const text = <><b className="num">{t.number}</b> {TOOTH_STATES[t.state ?? 'HEALTHY'][1]} {stateText(t.number, t.state ?? 'HEALTHY', t.surfaces)}</>
             return (
-              <li key={t.number}>
+              <li key={t.number} {...rowOpen(!readOnly && (() => { setMulti(false); setPicked([]); setOpen(t.number) }))}>
                 {readOnly ? <span>{text}</span> : (
                   <button type="button" className="row-link" onClick={() => { setMulti(false); setPicked([]); setOpen(t.number) }}>{text}</button>
                 )}

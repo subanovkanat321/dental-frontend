@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { haptic } from '../lib/telegram'
-import { rowClick } from '../lib/rowClick'
+import { rowOpen } from '../lib/rowClick'
 import { formatPhone, shortDate } from '../lib/time'
 import { useClose } from '../lib/useClose'
 import { EmptyState } from '../layout/EmptyState'
@@ -83,7 +83,7 @@ export function QuestionsTab({ selected, onOpen }: { selected: number | null; on
           <thead><tr><th>Пациент</th><th>Когда</th><th>Вопрос</th></tr></thead>
           <tbody>
             {list.data.questions!.map((q) => (
-              <tr key={q.id} className={['clickable', q.id === selected ? 'active' : ''].join(' ').trim()} onClick={rowClick(() => onOpen(q.id))}>
+              <tr key={q.id} {...rowOpen(() => onOpen(q.id), q.id === selected && 'active')}>
                 <td>
                   <button type="button" className="row-link" onClick={() => onOpen(q.id)}>{who(q)}</button>
                   {q.status === 'CLOSED' && <span className="hint small"> · без ответа</span>}
