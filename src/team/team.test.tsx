@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { me, renderApp, openItem } from '../test/fixtures'
 import { server } from '../test/server'
+import { choose } from '../test/select'
 import { waitForSlow } from '../test/wait'
 
 beforeEach(() => {
@@ -76,18 +77,24 @@ test('админ: карточка врача, который ещё не вош
   await user.click(within(access).getByRole('button', { name: 'Пригласить по ссылке' }))
   expect(await within(access).findByRole('link', { name: `${window.location.origin}/invite#join_abc123` })).toBeInTheDocument()
 
-  // Роли: врач без входа — роль в клинике не дать; снять «Врач» = скрыть, с подтверждением
+  // Роль: врач без входа — роль в клинике не дать; «Врач скрыт» = скрыть, с подтверждением
   const roles = within(panel).getByRole('region', { name: 'Роли' })
-  expect(within(roles).getByRole('button', { name: 'Руководитель' })).toBeDisabled()
-  expect(roles).toHaveTextContent('Роль в клинике дают тому, кто вошёл')
-  await user.click(within(roles).getByRole('checkbox', { name: /^Врач/ }))
-  await user.click(within(roles).getByRole('button', { name: 'Сохранить роли' }))
+  const field = within(roles).getByRole('combobox', { name: 'Роль' })
+  expect(field).toHaveTextContent('Врач')
+  expect(roles).toHaveTextContent('назначают тому, кто вошёл')
+  await user.click(field)
+  const list = await screen.findByRole('listbox')
+  expect(within(list).getAllByRole('option').map((o) => o.dataset.value))
+    .toEqual(['DOCTOR', 'ADMIN', 'ADMIN_DOCTOR', 'RECEPTION', 'RECEPTION_DOCTOR', 'ASSISTANT', 'HIDDEN'])
+  expect(list.querySelector('[data-value="ADMIN"]')).toHaveAttribute('aria-disabled', 'true')
+  await user.click(list.querySelector<HTMLElement>('[data-value="HIDDEN"]')!)
+  await user.click(within(roles).getByRole('button', { name: 'Сохранить роль' }))
   await waitForSlow(() => expect(saved.roles).toEqual({ doctorId: 2, doctor: false }))
   expect(asked).toHaveBeenCalledWith(expect.stringContaining('Врач скроется: пациенты его не увидят'))
   vi.restoreAllMocks()
 })
 
-test('админ: у вошедшего врача фото, имя и «о себе» — только посмотреть; роль руководителя — флажками в «Ролях»', async () => {
+test('админ: у вошедшего врача фото, имя и «о себе» — только посмотреть; «Руководитель и врач» — списком «Роль»', async () => {
   const linked: Schemas['DoctorAdminView'] = { id: 3, fullName: 'Бермет К.', about: 'ортодонт, брекеты', active: true, telegramId: 333, photoUrl: '/doctors/3/photo?v=1', phoneOnly: false }
   let roles: unknown = null
   server.use(
@@ -111,7 +118,7 @@ test('админ: у вошедшего врача фото, имя и «о се
   expect(patients).toHaveTextContent('Фото, имя и «о себе» врач заполняет сам — в «Моём профиле» (нажать на себя внизу меню).')
 
   const work = within(panel).getByRole('region', { name: 'Работа' })
-  // «Работает» — теперь флажок «Врач» в «Ролях»
+  // «Работает» — теперь поле «Роль» в «Ролях»
   expect(within(work).queryByRole('checkbox', { name: 'Работает (показывать пациентам)' })).not.toBeInTheDocument()
   expect(within(work).getByRole('region', { name: 'Услуги врача' })).toBeInTheDocument()
   const access = within(panel).getByRole('region', { name: 'Вход' })
@@ -119,16 +126,17 @@ test('админ: у вошедшего врача фото, имя и «о се
   expect(access).not.toHaveTextContent('333')
 
   const box = within(panel).getByRole('region', { name: 'Роли' })
-  expect(within(box).getByRole('checkbox', { name: /^Врач/ })).toBeChecked()
-  // Врач + Ассистент нельзя — кнопка ассистента недоступна, правило написано
-  expect(within(box).getByRole('button', { name: 'Ассистент' })).toBeDisabled()
-  expect(box).toHaveTextContent('Ассистент врачом быть не может')
-  await user.click(within(box).getByRole('button', { name: 'Руководитель' }))
-  await user.click(within(box).getByRole('button', { name: 'Сохранить роли' }))
+  const field = within(box).getByRole('combobox', { name: 'Роль' })
+  expect(field).toHaveTextContent('Врач · своё расписание, пациенты и медкарты')
+  // Флажков ролей больше нет — только допустимые сочетания в списке
+  expect(within(box).queryByRole('checkbox')).not.toBeInTheDocument()
+  await choose(field, 'ADMIN_DOCTOR')
+  expect(field).toHaveTextContent('Руководитель и врач')
+  await user.click(within(box).getByRole('button', { name: 'Сохранить роль' }))
   await waitForSlow(() => expect(roles).toEqual({ doctorId: 3, telegramId: 333, doctor: true, role: 'ADMIN' }))
 })
 
-test('«+ Добавить сотрудника»: врач по ссылке — ссылка и карточка; регистратура «тоже ведёт приём» по номеру; ассистенту — врачи', async () => {
+test('«+ Добавить сотрудника»: врач по ссылке — ссылка и карточка; «Регистратура и врач» по номеру; ассистенту — врачи', async () => {
   const sent: Schemas['StaffControllerAddRequest'][] = []
   let list: Schemas['DoctorAdminView'][] = doctors
   server.use(
@@ -154,7 +162,7 @@ test('«+ Добавить сотрудника»: врач по ссылке �
   await user.click(screen.getByRole('button', { name: '+ Добавить сотрудника' }))
   let form = await screen.findByRole('form', { name: 'Добавить сотрудника' })
   await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Бакыт')
-  expect(within(within(form).getByRole('group', { name: 'Роль' })).getByRole('button', { name: 'Врач' })).toHaveAttribute('aria-pressed', 'true')
+  expect(within(form).getByRole('combobox', { name: 'Роль' })).toHaveTextContent('Врач')
   await user.click(within(form).getByRole('button', { name: 'Добавить' }))
   expect(await screen.findByRole('link', { name: `${window.location.origin}/invite#join_new9` })).toBeInTheDocument()
   expect(screen.getByText(/Отправьте её врачу/)).toBeInTheDocument()
@@ -165,8 +173,7 @@ test('«+ Добавить сотрудника»: врач по ссылке �
   await user.click(screen.getByRole('button', { name: '+ Добавить сотрудника' }))
   form = await screen.findByRole('form', { name: 'Добавить сотрудника' })
   await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Айпери')
-  await user.click(within(form).getByRole('button', { name: 'Регистратура' }))
-  await user.click(within(form).getByRole('checkbox', { name: /Тоже ведёт приём/ }))
+  await choose(within(form).getByRole('combobox', { name: 'Роль' }), 'RECEPTION_DOCTOR')
   await user.click(within(form).getByRole('button', { name: 'Номер телефона' }))
   expect(within(form).getByRole('button', { name: 'Добавить' })).toBeDisabled()
   await user.type(within(form).getByRole('textbox', { name: 'Номер телефона сотрудника' }), '700000011')
@@ -174,8 +181,7 @@ test('«+ Добавить сотрудника»: врач по ссылке �
   expect(await within(form).findByRole('alert')).toHaveTextContent('Этот номер уже работает в другой клинике')
 
   // Ассистент — без врача «Добавить» недоступно; «позже» — сразу карточка приглашения
-  await user.click(within(form).getByRole('button', { name: 'Ассистент' }))
-  expect(within(form).queryByRole('checkbox', { name: /Тоже ведёт приём/ })).not.toBeInTheDocument()
+  await choose(within(form).getByRole('combobox', { name: 'Роль' }), 'ASSISTANT')
   await user.click(within(form).getByRole('button', { name: 'Позже' }))
   expect(within(form).getByRole('button', { name: 'Добавить' })).toBeDisabled()
   await user.click(within(form).getByRole('checkbox', { name: 'Дастан Т.' }))
@@ -186,6 +192,48 @@ test('«+ Добавить сотрудника»: врач по ссылке �
     { fullName: 'Айпери', role: 'RECEPTION', login: 'PHONE', alsoDoctor: true, phone: '+996 700000011' },
     { fullName: 'Айпери', role: 'ASSISTANT', login: 'LATER', doctorIds: [2] },
   ])
+})
+
+test('«+ Добавить сотрудника»: каждый пункт списка «Роль» — своё тело запроса; ассистент без врачей не отправляется', async () => {
+  const sent: Schemas['StaffControllerAddRequest'][] = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json(doctors)),
+    http.post('*/api/staff', async ({ request }) => {
+      sent.push(await request.json() as Schemas['StaffControllerAddRequest'])
+      return HttpResponse.json({ inviteId: 'cc', summary: 'ок' } satisfies Schemas['StaffRolesAdded'], { status: 201 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await screen.findByRole('table', { name: 'Персонал' })
+  const cases: [string, Partial<Schemas['StaffControllerAddRequest']>][] = [
+    ['DOCTOR', { role: 'DOCTOR' }],
+    ['ADMIN', { role: 'ADMIN', alsoDoctor: false }],
+    ['ADMIN_DOCTOR', { role: 'ADMIN', alsoDoctor: true }],
+    ['RECEPTION', { role: 'RECEPTION', alsoDoctor: false }],
+    ['RECEPTION_DOCTOR', { role: 'RECEPTION', alsoDoctor: true }],
+    ['ASSISTANT', { role: 'ASSISTANT', doctorIds: [1] }],
+  ]
+  for (const [choice] of cases) {
+    await user.click(screen.getByRole('button', { name: '+ Добавить сотрудника' }))
+    const form = await screen.findByRole('form', { name: 'Добавить сотрудника' })
+    await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Тест')
+    // Подпись серым — что может роль
+    await user.click(within(form).getByRole('combobox', { name: 'Роль' }))
+    expect(within(await screen.findByRole('listbox')).getByRole('option', { name: /Ассистент.*помогает своим врачам/ })).toBeInTheDocument()
+    await user.keyboard('{Escape}')
+    await choose(within(form).getByRole('combobox', { name: 'Роль' }), choice)
+    await user.click(within(form).getByRole('button', { name: 'Позже' }))
+    if (choice === 'ASSISTANT') {
+      // Без врачей — «Добавить» недоступно, запрос не уходит
+      expect(within(form).getByRole('button', { name: 'Добавить' })).toBeDisabled()
+      await user.click(within(form).getByRole('checkbox', { name: 'Айгерим Садыкова' }))
+    }
+    await user.click(within(form).getByRole('button', { name: 'Добавить' }))
+    await waitForSlow(() => expect(screen.queryByRole('form', { name: 'Добавить сотрудника' })).not.toBeInTheDocument())
+  }
+  expect(sent).toEqual(cases.map(([, body]) => ({ fullName: 'Тест', login: 'LATER', ...body })))
 })
 
 test('персонал: роли рядом, «Telegram привязан» и «ждём входа»; карточка приглашения — новая ссылка и отмена; фильтр по роли', async () => {
@@ -230,7 +278,7 @@ test('персонал: роли рядом, «Telegram привязан» и «
   vi.restoreAllMocks()
 })
 
-test('карточка сотрудника: регистратор → ассистент с врачами; ассистент + врач — нельзя; недельный график «как у клиники»', async () => {
+test('карточка сотрудника: регистратор → ассистент с врачами списком «Роль»; недельный график «как у клиники»', async () => {
   let members: Schemas['StaffMembersMemberView'][] = [
     { telegramId: 501, fullName: 'Айпери', role: 'RECEPTION', me: false, doctor: false, doctorIds: [], phoneOnly: false },
   ]
@@ -256,15 +304,51 @@ test('карточка сотрудника: регистратор → асси
   const card = await screen.findByRole('complementary', { name: 'Сотрудник' })
   expect(await within(card).findByRole('button', { name: 'Как у клиники' })).toHaveAttribute('aria-pressed', 'true')
   const roles = within(card).getByRole('form', { name: 'Роли' })
-  await user.click(within(roles).getByRole('button', { name: 'Ассистент' }))
-  // Ассистенту — хотя бы один врач; «Врач» недоступен
-  expect(within(roles).getByRole('checkbox', { name: /^Врач/ })).toBeDisabled()
-  expect(within(roles).getByRole('button', { name: 'Сохранить роли' })).toBeDisabled()
+  const field = within(roles).getByRole('combobox', { name: 'Роль' })
+  expect(field).toHaveTextContent('Регистратура')
+  // У сотрудника без врача «Врач скрыт» в списке нет
+  await user.click(field)
+  expect(within(await screen.findByRole('listbox')).queryByRole('option', { name: /Врач скрыт/ })).not.toBeInTheDocument()
+  await user.keyboard('{Escape}')
+  await choose(field, 'ASSISTANT')
+  // Ассистенту — хотя бы один врач
+  expect(within(roles).getByRole('button', { name: 'Сохранить роль' })).toBeDisabled()
   await user.click(within(roles).getByRole('checkbox', { name: 'Дастан Т.' }))
-  await user.click(within(roles).getByRole('button', { name: 'Сохранить роли' }))
+  await user.click(within(roles).getByRole('button', { name: 'Сохранить роль' }))
   await waitForSlow(() => expect(sent).toEqual([{ telegramId: 501, doctor: false, role: 'ASSISTANT', doctorIds: [2] }]))
   expect(await within(table).findByText('Ассистент')).toBeInTheDocument()
   expect(within(table).getByText(/Помогает: Дастан Т\./)).toBeInTheDocument()
+})
+
+test('«Мой профиль» руководителя-врача: без действий над собой; единственный руководитель — роль текстом, есть другой — списком', async () => {
+  const self: Schemas['DoctorAdminView'] = { ...doctors[0]!, telegramId: 111 }
+  let members: Schemas['StaffMembersMemberView'][] = [{ telegramId: 111, fullName: 'Айгерим', role: 'ADMIN', me: true, doctor: true, phoneOnly: false }]
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/doctors/admin', () => HttpResponse.json([self, doctors[1]!])),
+    http.get('*/api/members', () => HttpResponse.json(members)),
+    http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: [] } satisfies Schemas['DoctorHoursView'])),
+  )
+  window.location.hash = '/settings/profile'
+  const { unmount } = renderApp()
+  let panel = await screen.findByRole('complementary', { name: 'Врач' })
+  let roles = await within(panel).findByRole('region', { name: 'Роли' })
+  await waitForSlow(() => expect(roles).toHaveTextContent('Вы единственный руководитель клиники'))
+  expect(roles).toHaveTextContent('Руководитель и врач')
+  expect(within(roles).queryByRole('combobox')).not.toBeInTheDocument()
+  // «Вход» — от первого лица, без ссылки-приглашения самой себе
+  const access = within(panel).getByRole('region', { name: 'Вход' })
+  expect(access).toHaveTextContent('✓ Ваш Telegram подключён')
+  expect(access).not.toHaveTextContent('Врач сменил аккаунт')
+  expect(within(access).queryByRole('button', { name: /ссылка-приглашение|Пригласить/ })).not.toBeInTheDocument()
+  expect(within(panel).getByRole('region', { name: 'Работа' })).toHaveTextContent('«Клиника → Рабочее время → Перерывы и выходные»')
+  unmount()
+
+  members = [...members, { telegramId: 222, fullName: 'Бермет', role: 'ADMIN', me: false, doctor: false, phoneOnly: false }]
+  renderApp()
+  panel = await screen.findByRole('complementary', { name: 'Врач' })
+  roles = await within(panel).findByRole('region', { name: 'Роли' })
+  expect(await within(roles).findByRole('combobox', { name: 'Роль' })).toHaveTextContent('Руководитель и врач')
 })
 
 test('врач (не админ): в «Персонале» только врачи; своя строка открывает «Мой профиль», там правит профиль', async () => {

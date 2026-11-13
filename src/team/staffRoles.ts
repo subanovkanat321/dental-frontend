@@ -4,16 +4,42 @@ import type { Schemas } from '../api/client'
 
 type StaffRole = NonNullable<Schemas['StaffControllerRolesRequest']['role']>
 
-/** Правила сочетаний — одним текстом в карточке и в форме добавления. */
-export const ROLES_RULES = 'Врач + Руководитель и Врач + Регистратура — можно. Ассистент врачом быть не может: врач видит свою выручку, '
-  + 'а ассистенту деньги не показываем.'
+/**
+ * Роль человека одним пунктом списка (2026-11-13, вместо флажков): в списке только допустимые сочетания,
+ * поэтому запрещённое (ассистент + врач, две роли в клинике) выбрать нельзя. API прежний: пункт
+ * раскладывается в «врач да/нет» + роль в клинике ({@link rolesOf}).
+ */
+export type RoleChoice = 'DOCTOR' | 'ADMIN' | 'ADMIN_DOCTOR' | 'RECEPTION' | 'RECEPTION_DOCTOR' | 'ASSISTANT' | 'HIDDEN'
 
-/** Что значит роль — подсказка у выбора. */
-export const ROLE_HINT: Record<StaffRole | 'DOCTOR', string> = {
-  DOCTOR: 'ведёт приём: своё расписание, пациенты и медкарты, часы, услуги и кресло',
-  ADMIN: 'ведёт клинику: персонал, цены и часы клиники, выручка, медкарты',
-  RECEPTION: 'записывает пациентов ко всем врачам и отмечает оплату; медкарт и выручки не видит',
-  ASSISTANT: 'помогает своим врачам: их расписание, медкарта их пациентов и снимки; денег и настроек не видит',
+/** Пункт, подпись и что может роль — одна строка серым (Select показывает её после « · »). */
+export const ROLE_CHOICES: [RoleChoice, string, string][] = [
+  ['DOCTOR', 'Врач', 'своё расписание, пациенты и медкарты'],
+  ['ADMIN', 'Руководитель', 'персонал, цены, выручка и настройки'],
+  ['ADMIN_DOCTOR', 'Руководитель и врач', 'ведёт клинику и сам принимает'],
+  ['RECEPTION', 'Регистратура', 'запись ко всем врачам и оплата'],
+  ['RECEPTION_DOCTOR', 'Регистратура и врач', 'запись ко всем и свой приём'],
+  ['ASSISTANT', 'Ассистент', 'помогает своим врачам, денег не видит'],
+]
+
+/** Только в карточке врача без роли в клинике: «скрыть» (прежнее снятие флажка «Врач»). */
+export const HIDDEN_CHOICE: [RoleChoice, string, string] = ['HIDDEN', 'Врач скрыт', 'не принимает, история остаётся']
+
+/** Пункт → поля API: врач ли и роль в клинике (null — только врач). */
+export function rolesOf(choice: RoleChoice): { doctor: boolean; role: StaffRole | null } {
+  switch (choice) {
+    case 'DOCTOR': return { doctor: true, role: null }
+    case 'ADMIN_DOCTOR': return { doctor: true, role: 'ADMIN' }
+    case 'RECEPTION_DOCTOR': return { doctor: true, role: 'RECEPTION' }
+    case 'HIDDEN': return { doctor: false, role: null }
+    default: return { doctor: false, role: choice }
+  }
+}
+
+/** Поля API → пункт; ни врача, ни роли — врач скрыт. */
+export function choiceOf(doctor: boolean, role: StaffRole | null): RoleChoice {
+  if (role === 'ASSISTANT') return 'ASSISTANT'
+  if (role) return doctor ? `${role}_DOCTOR` : role
+  return doctor ? 'DOCTOR' : 'HIDDEN'
 }
 
 /** Перечитать всё, что зависит от ролей: список, врачей (расписание, касса), свои права. */

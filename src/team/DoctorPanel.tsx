@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 
@@ -14,6 +14,7 @@ import { InviteLink } from './InviteLink'
 import { DoctorPhone, StaffPhone, type Doctor } from './PhoneParts'
 import { isPhoneLogin } from './texts'
 import { RolesEditor } from './RolesEditor'
+import { choiceOf, ROLE_CHOICES } from './staffRoles'
 import { Spinner } from '../layout/Loading'
 
 type Me = Schemas['BookingViewsMe']
@@ -36,8 +37,8 @@ export const SELF_PROFILE_HINT = 'Фото, имя и «о себе» врач �
 
 /**
  * Карточка врача (панель справа в «Персонале» или во всю ширину в «Моём профиле»). Руководителю сверху —
- * «Роли» (флажок «Врач» и роль в клинике, {@link RolesEditor}: снять «Врач» — врач скрыт, история остаётся;
- * у себя — «Веду приём»). Дальше три раздела:
+ * «Роли» (одно поле «Роль» со списком сочетаний, {@link RolesEditor}: пункт без «врача» — врач скрыт, история
+ * остаётся). Дальше три раздела:
  * <ul>
  * <li>«Для пациентов» — фото, имя, «Кратко»: их видят пациенты в боте, ведёт сам врач. Админ у чужого
  * вошедшего врача видит их только для чтения; пока врач не вошёл («ждём входа») — заполняет черновик,
@@ -45,6 +46,8 @@ export const SELF_PROFILE_HINT = 'Фото, имя и «о себе» врач �
  * <li>«Работа» — услуги (админ или сам врач), часы работы (и регистратура), кресло;</li>
  * <li>«Вход» — Telegram подключён или «ждём входа», приглашение, телефон.</li>
  * </ul>
+ * Своя карточка (в том числе «Мой профиль») — без действий руководителя над собой: роль списком, только если
+ * есть другой руководитель (иначе текстом), «Вход» — от первого лица, без ссылки-приглашения самому себе.
  * Telegram id руками не вписывают: привязка — ссылкой-приглашением или номером. Те же права проверяет сервер.
  */
 export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfile }: {
@@ -82,21 +85,22 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
       {editsWork && <DoctorServices key={d.id} doctorId={d.id} me={me} />}
       <section className="form">
         <h4>Часы работы</h4>
-        <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — в «Рабочее время → Перерывы и выходные».</p>
+        <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — в «Клиника → Рабочее время → Перерывы и выходные».</p>
         <HoursEditor doctorId={d.id} doctorName={d.fullName ?? ''} />
         <ChairHoursHint doctorId={d.id} me={me} />
       </section>
       <ChairField key={`chair-${d.id}`} doctorId={d.id} me={me} />
     </>
   )
-  // «Врач» = работает: снять флажок — врач скрыт (как прежний «Работает»), вернуть — снова виден пациентам
-  const roles = admin && (
-    <RolesEditor key={`${d.active}-${d.role}`} me={me} doctorId={d.id} telegramId={d.telegramId} doctor={d.active !== false}
+  // «Врач» = работает: роль без «врача» — врач скрыт (как прежний «Работает»), вернуть — снова виден пациентам
+  // Себе роль списком — только если в клинике есть другой руководитель: последнего понизить нельзя
+  const members = useQuery({ queryKey: ['members'], queryFn: () => unwrap(api.GET('/api/members')), enabled: admin && self })
+  const otherAdmin = (members.data ?? []).some((m) => m.role === 'ADMIN' && !m.me)
+  const roles = admin && (!self || otherAdmin)
+    ? <RolesEditor key={`${d.active}-${d.role}`} me={me} doctorId={d.id} telegramId={d.telegramId} doctor={d.active !== false}
       role={(d.role as 'ADMIN' | 'RECEPTION' | undefined) ?? null} self={self} hasLogin={linked} name={d.fullName ?? ''} />
-  )
-  const access = admin ? <AccessAdmin doctor={d} inline={inline} onDone={refresh} />
-    : <p className="hint">Телефон — в «Телефон» выше; пароль нужен только для входа без Telegram — «Пароль и вход» внизу. Права: врач — своё расписание,
-      пациенты и медкарты; сделать руководителем может руководитель клиники.</p>
+    : self && <OwnRole me={me} />
+  const access = admin && !self ? <AccessAdmin doctor={d} inline={inline} onDone={refresh} /> : <OwnAccess doctor={d} me={me} inline={inline} />
 
   if (inline) {
     // «Мой профиль»: каждый раздел — подпись над карточкой, как «Телефон» и «Пароль и вход» на той же странице
@@ -162,7 +166,7 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
         </section>
       )}
 
-      {admin && <RemoveDoctor doctor={d} onDone={() => { refresh(); onClose() }} />}
+      {admin && !self && <RemoveDoctor doctor={d} onDone={() => { refresh(); onClose() }} />}
     </aside>
   )
 }
@@ -252,9 +256,37 @@ function ProfileView({ doctor: d }: { doctor: Doctor }) {
   )
 }
 
-/** «Работает» — текстом для не-руководителя; руководитель меняет флажком «Врач» в «Ролях». */
+/** Своя роль текстом: руководителю, если он единственный, и остальным (роль меняет руководитель). */
+function OwnRole({ me }: { me: Me }) {
+  const choice = choiceOf(true, me.admin ? 'ADMIN' : me.reception ? 'RECEPTION' : null)
+  const [, label, hint] = ROLE_CHOICES.find(([c]) => c === choice) ?? ROLE_CHOICES[0]!
+  return (
+    <div className="own-role">
+      <p><strong>{label}</strong><span className="hint"> — {hint}</span></p>
+      <p className="hint small">{me.admin
+        ? 'Вы единственный руководитель клиники: роль можно поменять, когда назначите ещё одного руководителя.'
+        : 'Роль меняет руководитель клиники.'}</p>
+    </div>
+  )
+}
+
+/** «Вход» в своей карточке — от первого лица, без ссылки-приглашения самому себе. */
+function OwnAccess({ doctor: d, me, inline }: { doctor: Doctor; me: Me; inline: boolean }) {
+  const byPhone = isPhoneLogin(d.telegramId)
+  return (
+    <>
+      {d.telegramId != null && <p className="tone-ok">{byPhone ? '✓ Вы входите по номеру (без Telegram)' : '✓ Ваш Telegram подключён'}</p>}
+      <p className="hint">{inline
+        ? 'Телефон — в «Телефон» выше; пароль нужен только для входа без Telegram — «Пароль и вход» внизу.'
+        : 'Телефон и пароль — в «Моём профиле» (нажать на себя внизу меню).'}
+        {me.admin ? '' : ' Сменили аккаунт Telegram — попросите у руководителя новую ссылку-приглашение.'}</p>
+    </>
+  )
+}
+
+/** «Работает» — текстом для не-руководителя; руководитель меняет полем «Роль» в «Ролях». */
 function ActiveSwitch({ doctor: d, admin }: { doctor: Doctor; admin: boolean }) {
-  // Руководителю «Работает» — флажок «Врач» в «Ролях» выше
+  // Руководителю «Работает» — поле «Роль» в «Ролях» выше
   if (admin) return null
   return <p className="hint">{d.active !== false ? 'Работает — пациенты видят врача в боте.' : 'Скрыт — пациенты врача не видят.'}</p>
 }
@@ -295,7 +327,7 @@ function RemoveDoctor({ doctor: d, onDone }: { doctor: Doctor; onDone: () => voi
   })
   return (
     <div className="danger-zone">
-      <p className="hint">Удалить можно врача без приёмов — например, заведённого для пробы. Ушедшего врача скройте: снимите роль «Врач» — история останется.</p>
+      <p className="hint">Удалить можно врача без приёмов — например, заведённого для пробы. Ушедшего врача скройте: роль «Врач скрыт» — история останется.</p>
       <button type="button" className="btn danger" disabled={remove.isPending}
         onClick={() => void ask(`Удалить врача «${d.fullName}»?`).then((ok) => ok && remove.mutate())}>Удалить врача</button>
       {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
