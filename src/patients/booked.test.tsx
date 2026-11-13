@@ -91,6 +91,37 @@ test('кнопка сводки «📲 Напомнить» (?screen=booked&day=
   window.history.replaceState(null, '', '/')
 })
 
+test('кнопка «Отметить (N)» (?screen=booked&day=today&unmarked=1&doctor=2): сегодня только прошедшие без отметки, без WhatsApp', async () => {
+  const ago = (id: number, minutes: number, name: string, extra: Partial<Schemas['AppointmentView']> = {}) => {
+    const a = appointment(id, 2, '10:00', name, extra)
+    const end = Date.now() - minutes * 60000
+    return { ...a, startAt: new Date(end - 30 * 60000).toISOString(), endAt: new Date(end).toISOString() }
+  }
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/range', () => HttpResponse.json([
+      ago(1, 40, 'Бакыт М.', { patient: { id: 1, fullName: 'Бакыт М.', phone: '996700111222', telegram: false } }),
+      ago(2, 90, 'Айгуль Т.', { status: 'DONE' }),
+      ago(3, 120, 'Асель Н.', { status: 'NO_SHOW' }),
+      ago(4, -60, 'Нурлан К.'), // ещё впереди
+    ])),
+  )
+  window.history.replaceState(null, '', '/?screen=booked&day=today&unmarked=1&doctor=2')
+  renderApp()
+  const list = await screen.findByRole('region', { name: 'Записанные пациенты' })
+  expect(await within(list).findByText('Бакыт М.')).toBeInTheDocument()
+  expect(within(list).getAllByRole('listitem')).toHaveLength(1)
+  expect(screen.getByRole('button', { name: 'Сегодня' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('checkbox', { name: 'Не отмечено' })).toBeChecked()
+  // Прошедшему напоминать поздно — кнопки WhatsApp нет
+  expect(within(list).queryByRole('button', { name: /WhatsApp/ })).toBeNull()
+  // Сняли галочку — снова будущие
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Не отмечено' }))
+  expect(await within(list).findByText('Нурлан К.')).toBeInTheDocument()
+  expect(within(list).queryByText('Бакыт М.')).toBeNull()
+  window.history.replaceState(null, '', '/')
+})
+
 test('«WhatsApp» в строке неподтверждённого: готовый текст напоминания и отметка «напомнили»; у подтвердивших и заявок кнопки нет', async () => {
   const calls: string[] = []
   server.use(
