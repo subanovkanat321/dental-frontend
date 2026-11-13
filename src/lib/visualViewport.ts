@@ -29,6 +29,14 @@ export function startVisualViewport(): void {
       if (!typing && panelOpen()) {
         window.scrollTo(0, 0)
         update()
+      } else if (!typing && vv.offsetTop > 0) {
+        // Без карточки: видимая часть осталась сдвинутой после клавиатуры (iOS) — снизу серая полоса, а
+        // нижнее меню висит над ней. Толчок прокрутки на 1px туда и обратно возвращает её на место, не
+        // теряя места на странице (меню у низа держит ещё layout/navGap.ts)
+        const y = window.scrollY
+        window.scrollTo(window.scrollX, y > 0 ? y - 1 : y + 1)
+        window.scrollTo(window.scrollX, y)
+        update()
       }
     }, 150)
   })
