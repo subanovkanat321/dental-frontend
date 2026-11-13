@@ -1,30 +1,22 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useClose } from '../lib/useClose'
-import { shortDate, somText, todayIn } from '../lib/time'
-import { DateInput } from '../layout/DateInput'
+import { shortDate, somText } from '../lib/time'
 import { isAssistant } from '../lib/roles'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { Fold } from '../layout/Fold'
+import { MoveFields } from './MoveFields'
+import { useStockRefresh as useRefresh, useSupplyMove } from './supplyMove'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
 
 const REASONS: Record<string, string> = { USE: 'списали', DELIVERY: 'поставка', CORRECTION: 'пересчёт' }
-
-/** Склад и его история — перечитать после любого изменения материала. */
-function useRefresh() {
-  const client = useQueryClient()
-  return () => {
-    void client.invalidateQueries({ queryKey: ['supplies'] })
-    void client.invalidateQueries({ queryKey: ['supply-history'] })
-  }
-}
 
 /** Цена за единицу в истории: «по 250 сом/шт». */
 function unitPrice(costSom: number, delta: number, unit?: string): string {
@@ -44,32 +36,14 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
 }) {
   useClose(onClose)
   const refresh = useRefresh()
-  const [amount, setAmount] = useState('1')
-  const [cost, setCost] = useState('')
-  // Дата поставки: по умолчанию сегодня, прошлое — можно (привезли вчера, вносят сегодня), будущее — нет
-  const [deliveredOn, setDeliveredOn] = useState(todayIn())
+  // Сколько, сумма и дата поставки — общая логика с «＋ Поставка» в «Расходах на склад»
+  const m = useSupplyMove()
   const [settings, setSettings] = useState({ name: s.name ?? '', unit: s.unit ?? '', minQuantity: String(s.minQuantity) })
-  const [done, setDone] = useState('')
+  const [saved, setSaved] = useState('')
 
   const history = useQuery({
     queryKey: ['supply-history', s.id],
     queryFn: () => unwrap(api.GET('/api/supplies/{id}/history', { params: { path: { id: s.id } } })),
-  })
-  const move = useMutation<Supply, ApiError, number>({
-    mutationFn: (delta) => unwrap(api.POST('/api/supplies/{id}/move', {
-      params: { path: { id: s.id } },
-      body: {
-        delta, reason: delta < 0 ? 'USE' : 'DELIVERY', costSom: delta > 0 && cost ? Number(cost) : undefined,
-        deliveredOn: delta > 0 && deliveredOn !== todayIn() ? deliveredOn : undefined,
-      },
-    })),
-    onSuccess: (_updated, delta) => {
-      setDone(delta < 0 ? `Списано ${-delta} ${s.unit}` : `Принято ${delta} ${s.unit}${cost ? ` · ${somText(Number(cost))}` : ''}`
-        + (delta > 0 && deliveredOn !== todayIn() ? ` · поставка ${shortDate(`${deliveredOn}T12:00:00Z`)}` : ''))
-      setCost('')
-      setDeliveredOn(todayIn())
-      refresh()
-    },
   })
   const save = useMutation<Supply, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/supplies/{id}', {
@@ -77,7 +51,7 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
       body: { name: settings.name.trim(), unit: settings.unit.trim(), minQuantity: Number(settings.minQuantity) },
     })),
     onSuccess: () => {
-      setDone('Сохранено')
+      setSaved('Сохранено')
       refresh()
     },
   })
@@ -89,16 +63,9 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
     },
   })
 
-  const n = Math.trunc(Number(amount))
-  const doMove = (sign: 1 | -1) => {
-    setDone('')
-    move.reset()
-    if (!(n > 0)) return
-    move.mutate(sign * n)
-  }
   const submitSettings = (e: FormEvent) => {
     e.preventDefault()
-    setDone('')
+    setSaved('')
     save.mutate()
   }
 
@@ -120,28 +87,14 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
       {s.orderedAt && <p className="hint">Заказан {shortDate(s.orderedAt)}{s.orderedBy ? ` · ${s.orderedBy}` : ''}</p>}
 
       <div className="form">
-        <label className="field">
-          <span>Сколько, {s.unit}</span>
-          <input type="number" min={1} step={1} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} />
-        </label>
-        {!(n > 0) && amount !== '' && <p className="error">Целое число больше 0</p>}
-        {/* Ассистенту деньги не показываем: цену поставки вносит врач или админ */}
-        {!isAssistant(me) && (
-          <label className="field">
-            <span>Сколько заплатили за поставку, сом — необязательно</span>
-            <input type="number" min={0} inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} />
-          </label>
-        )}
-        <label className="field">
-          <span>Дата поставки</span>
-          <DateInput value={deliveredOn} max={todayIn()} onChange={(e) => e.target.value && setDeliveredOn(e.target.value)} />
-        </label>
+        <MoveFields m={m} me={me} unit={s.unit} />
         <div className="actions">
-          <button type="button" className="btn" disabled={move.isPending || !(n > 0)} onClick={() => doMove(-1)}>− Списать</button>
-          <button type="button" className="btn primary" disabled={move.isPending || !(n > 0)} onClick={() => doMove(1)}>＋ Пришла поставка</button>
+          <button type="button" className="btn" disabled={m.move.isPending || !(m.n > 0)} onClick={() => m.submit(s, -1)}>− Списать</button>
+          <button type="button" className="btn primary" disabled={m.move.isPending || !(m.n > 0)} onClick={() => m.submit(s, 1)}>＋ Пришла поставка</button>
         </div>
-        {move.error && <p className="error" role="alert">{move.error.fieldErrors.delta ?? move.error.fieldErrors.costSom ?? move.error.fieldErrors.deliveredOn ?? move.error.message}</p>}
-        {done && <p className="tone-ok" role="status">{done}</p>}
+        {m.error && <p className="error" role="alert">{m.error}</p>}
+        {m.done && <p className="tone-ok" role="status">{m.done}</p>}
+        {saved && <p className="tone-ok" role="status">{saved}</p>}
       </div>
 
       {/* Название, единица, минимум и «Чей склад» нужны редко — свёрнуты, чтобы карточка была короче */}

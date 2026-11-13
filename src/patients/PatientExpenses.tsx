@@ -3,7 +3,8 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ExpenseEdit } from '../lib/ExpenseEdit'
-import { CategoryPick } from '../cash/ExpenseForm'
+import { CategoryPick, ExpenseOwner } from '../cash/ExpenseForm'
+import { ownerDoctorId, useExpenseOwner } from '../cash/expenses'
 import { shortDate, somText, todayIn } from '../lib/time'
 
 type Me = Schemas['BookingViewsMe']
@@ -14,7 +15,8 @@ const LAB = 'Зуботехническая лаборатория'
 /**
  * Расходы по пациенту (техник, лаборатория): итог и список; «＋ Расход по пациенту» — сумма,
  * статья из того же списка, что в «Расходах» (по умолчанию лаборатория; «Другое» — своя), комментарий. Расход попадает в «Кассу → Расходы». Есть в карточке
- * пациента и в карточке приёма. Кому можно — решает сервер (админ — на любого врача, врач — на себя).
+ * пациента и в карточке приёма. «Чей расход» видно в форме ({@link ExpenseOwner}): руководитель выбирает
+ * (по умолчанию врач приёма), врач — на себя; права проверяет сервер.
  */
 export function PatientExpenses({ patient, me, doctorId }: {
   patient: Patient
@@ -35,11 +37,12 @@ export function PatientExpenses({ patient, me, doctorId }: {
   const [category, setCategory] = useState(LAB)
   const [other, setOther] = useState('')
   const [comment, setComment] = useState('')
+  const [owner, setOwner] = useExpenseOwner(doctorId ?? me.doctorId)
   const add = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/expenses', {
       body: {
         spentOn: todayIn(), amountSom: Number(amount), category: category === '*' ? other.trim() : category, comment: comment.trim() || undefined,
-        patientId: patient.id, doctorId: doctorId ?? me.doctorId ?? undefined,
+        patientId: patient.id, doctorId: ownerDoctorId(me, owner),
       },
     })),
     onSuccess: () => {
@@ -84,6 +87,7 @@ export function PatientExpenses({ patient, me, doctorId }: {
             <CategoryPick value={category} other={other} onChange={setCategory} onOther={setOther} /></div>
           <label className="field"><span>Комментарий (необязательно)</span>
             <input maxLength={200} placeholder="Например: коронка, 2 зуба" value={comment} onChange={(e) => setComment(e.target.value)} /></label>
+          <ExpenseOwner me={me} value={owner} onChange={setOwner} />
           {add.error && <p className="error" role="alert">{Object.values(add.error.fieldErrors)[0] ?? add.error.message}</p>}
           <div className="actions">
             <button type="submit" className="btn primary" disabled={add.isPending}>Добавить расход</button>

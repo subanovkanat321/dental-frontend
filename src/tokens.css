@@ -167,6 +167,9 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 /* Поле не шире своей колонки: у time/date на телефоне свой минимальный размер, иначе «До» вылезает за карточку (390px) */
 .field input { min-width: 0; max-width: 100%; }
 .check { display: flex; gap: 8px; align-items: center; font-size: .9rem; }
+/* Галочка внутри .field (группа «Терапия» в «Услугах врача», «В прайсе» услуги) — не поле ввода: «.field input
+   { width: 100% }» растягивал её на всю строку, и подпись уезжала вправо столбиком (2026-11-13). Своя ширина, без рамки */
+.field :is(input[type=checkbox], input[type=radio]) { width: auto; flex: none; margin: 0; padding: 0; border: 0; }
 /* Переключатели внутри страницы (День / Неделя / Месяц, вкладки карточки) — залитые таблетки на утопленной
    дорожке: выбранная — белая с тенью. Подразделы раздела — другим видом, подчёркнутыми вкладками
    (layout/section.tsx): два уровня не путаются */
@@ -430,3 +433,10 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 @media (max-width: 760px) {
   .more-card::before { content: ""; justify-self: center; width: 40px; height: 4px; margin: -6px 0 4px; border-radius: 2px; background: var(--line-strong); }
 }
+
+/* Кнопки внутри пустого состояния — по центру и одной ширины (было: прижаты влево под центрированным текстом,
+   разной ширины — «Опросы», 2026-11-14) */
+.empty-state .actions { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: min(100%, 320px); margin: 4px auto 0; }
+.empty-state .actions > .btn { width: 100%; justify-content: center; }
+@media (min-width: 761px) { .empty-state .actions { flex-direction: row; flex-wrap: wrap; justify-content: center; width: auto; }
+  .empty-state .actions > .btn { width: auto; } }

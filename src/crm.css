@@ -144,6 +144,9 @@
 /* Прокрутка — внутри панели, а её низ всегда в окне: --panel-top — где верх панели сейчас (layout/fitPanels.ts).
    Раньше было «окно минус 32px» — панель под шапкой раздела уходила низом за край экрана, и колесо её не докручивало */
 .panel { max-height: calc(100dvh - var(--panel-top, 16px) - 16px); overflow-y: auto; overscroll-behavior: contain; }
+/* Плашка «Есть несохранённые изменения | Сохранить» прилипает к низу карточки: прокрутка к полю (Tab, галочка)
+   оставляет его выше плашки, а не под ней */
+.panel { scroll-padding-bottom: 96px; }
 
 /* Пациенты: таблица и карточка */
 .search { min-width: 280px; font: inherit; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
@@ -229,7 +232,10 @@
     top: var(--vv-top, 0px); bottom: auto; height: var(--vv-height, 100dvh);
   }
   /* Строка с заголовком и ✕ — всегда сверху карточки, сколько ни листай вниз */
-  .panel > .panel-head { position: sticky; top: -14px; z-index: 3; margin: -14px -14px 0; padding: 14px 14px 8px; background: var(--card); }
+  /* Линия снизу: под шапку уходит прокрученное содержимое (подсказки, переключатели) — без неё казалось, что
+     текст наезжает на шапку и обрезан («…меню).», 2026-11-13) */
+  .panel > .panel-head { position: sticky; top: -14px; z-index: 3; margin: -14px -14px 0; padding: 14px 14px 8px; background: var(--card);
+    border-bottom: 1px solid var(--separator); }
   /* Карточка на весь экран открыта — страница под ней не прокручивается. Иначе iPhone (Safari, Telegram)
      прокручивал страницу вместе с «закреплённой» карточкой: снизу проглядывало расписание, а верх с ✕
      уезжал за край, и долистать до него было нельзя */
@@ -360,8 +366,15 @@
 .supply-rows .actions { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
 .supply-rows input { width: 64px; height: 32px; padding: 0 6px; font: inherit; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 .suggested-supplies { display: grid; gap: 6px; padding: 8px; border-radius: var(--r-md); background: var(--sunken); }
-.doctor-services fieldset { border: 0; padding: 0; margin: 0 0 8px; display: grid; gap: 4px; }
-.doctor-services legend { font-weight: 600; font-size: .85rem; margin-bottom: 4px; }
+/* «Показывать в прайсе» в карточке услуги: пояснение — под подписью, вровень с её текстом */
+.price-toggle { gap: 2px; }
+.price-toggle .check { font-size: .95rem; font-weight: 600; }
+.price-toggle > .hint { padding-left: 21px; }
+.doctor-services fieldset { border: 0; padding: 0; margin: 0 0 8px; display: grid; gap: 0; }
+.doctor-services legend { font-weight: 600; font-size: .8rem; color: var(--hint); margin-bottom: 2px; }
+/* Строка — [☐] Название слева, вся строка нажимается; длинное название переносится под себя */
+.doctor-services .check { align-items: flex-start; min-height: 36px; padding: 7px 0; font-size: .95rem; line-height: 1.35; cursor: pointer; }
+.doctor-services .check > input { margin-top: .15em; width: 18px; height: 18px; }
 .add-supply select, .add-supply .ui-select { min-width: 0; font: inherit; height: 36px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); }
 
 /* Лист ожидания: вкладки «Пациентов», блок в карточке */
@@ -695,6 +708,15 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .profile-who strong { font: 600 1.1rem var(--display); }
 .doctor-inline .card-block h4 { margin: 6px 0 0; font-size: .92rem; color: var(--hint); font-weight: 600; }
 .doctor-work > :is(.form, section) + :is(.form, section, div) { padding-top: 12px; border-top: 1px solid var(--separator); }
+/* Карточка врача и сотрудника: «Часы работы: Пн–Чт, Сб 9–22 · Пт выходной ›» — ссылка в «График» (HoursLink).
+   Сводка переносится, а не обрезается многоточием: на телефоне неделя длинная */
+.hours-line { display: grid; gap: 4px; }
+.hours-link { margin: 0; color: var(--text); text-align: left; }
+.hours-link .fold-meta { white-space: normal; text-align: right; overflow: visible; color: var(--link); }
+/* «?» у короткой подсказки — раскрыть пояснение */
+.hint-more { display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 1px solid var(--line-strong); border-radius: 50%;
+  background: none; color: var(--hint); font: 600 .75rem/1 inherit; cursor: pointer; vertical-align: 1px; }
+.hint-more[aria-expanded='true'] { background: var(--accent-soft); color: var(--text); }
 /* Телефон, «Все врачи»: списки врачей рядом, компактные строки (время сверху, имя под ним).
    Две колонки — ровно по половине экрана; три и больше — следующая выглядывает краем (--peek)
    и колонки листаются вбок с прилипанием (scroll-snap). Ширина колонки задана треком сетки,
@@ -2001,6 +2023,17 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .outreach-step.big strong { font-size: 1.15em; }
 .outreach-step.big .btn.primary { min-height: 48px; flex: 1 1 auto; }
 .outreach-more { margin-top: -4px; }
+/* Сверху — «Текст сообщения» свёрнутым: заголовок и первая строка текста в одну строку, длинная — с «…» */
+.outreach-template { padding-top: 0; padding-bottom: 0; }
+.outreach-template > details > summary { display: flex; align-items: center; gap: 10px; min-height: 48px; cursor: pointer; min-width: 0; }
+.outreach-template > details > summary b { flex: none; font-weight: 600; }
+.outreach-template-line { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--hint); }
+.outreach-template > details[open] { padding-bottom: 12px; }
+.outreach-template > details[open] .outreach-template-line { display: none; }
+.outreach-tools { margin: 10px 0; gap: 8px; }
+@media (max-width: 760px) { .outreach-tools .btn { flex: 1 1 auto; padding: 0 10px; } }
+.outreach-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.outreach-filter .segments { flex: 0 1 auto; min-width: 0; }
 /* Заголовок дня в «Расписании» — кнопка: открывает календарь */
 .day-title-pick { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-align: left; border-radius: 6px; }
 .day-title-pick:hover { color: var(--accent); }
@@ -2329,7 +2362,7 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .opening-debts li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
 .opening-debts p { margin: 0; }
 /* Общие расходы (V207): форма с ключом деления, окно «＋ Расход», доли врачей, приход/расход/итог в «Деньгах» */
-.expense-form .expense-kind, .expense-form .split-box, .expense-form .expense-hint, .expense-form .error { grid-column: 1 / -1; }
+.expense-form .expense-kind, .expense-form .split-box, .expense-form .expense-owner, .expense-form .expense-hint, .expense-form .error { grid-column: 1 / -1; }
 .expense-form .expense-kind button { flex: 1; white-space: normal; line-height: 1.2; }
 .expense-dialog .expense-form { grid-template-columns: 1fr; }
 .expense-form input[type="checkbox"] { height: auto; padding: 0; }
@@ -2436,3 +2469,10 @@ dd[aria-label="Чистыми"]:not(.tone-bad) { color: var(--accent-ink); }
 .sub-ico { color: var(--sub-ico, var(--hint)); }
 .nav-subitem.active > .sub-ico, .sheet-item.active > .sub-ico { color: var(--accent-ink); }
 .sheet-item > .sub-ico { width: 22px; height: 22px; }
+/* «Чей расход» у обычного расхода: выбор (руководитель) или «Запишется на вас» (врач), подпись под полем */
+.expense-owner { display: grid; gap: 4px; }
+.expense-owner .hint, p.expense-owner { margin: 0; }
+p.expense-owner { display: block; }
+
+/* «Откуда приходят пациенты»: «＋ Свой вариант» над таблицей (на телефоне шапка таблицы скрыта) */
+.sources-add { margin: 0 0 12px; }

@@ -8,7 +8,7 @@ import { resizePhoto } from '../medical/thumb'
 import { useDirty } from '../lib/unsaved'
 import { useClose } from '../lib/useClose'
 import { ChairField, ChairHoursHint } from './ChairField'
-import { HoursEditor } from './HoursEditor'
+import { HoursLink } from './HoursLink'
 import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
 import { DoctorPhone, StaffPhone, type Doctor } from './PhoneParts'
@@ -43,7 +43,7 @@ export const SELF_PROFILE_HINT = 'Фото, имя и «о себе» врач �
  * <li>«Для пациентов» — фото, имя, «Кратко»: их видят пациенты в боте, ведёт сам врач. Админ у чужого
  * вошедшего врача видит их только для чтения; пока врач не вошёл («ждём входа») — заполняет черновик,
  * иначе бот покажет пациентам пустую карточку;</li>
- * <li>«Работа» — услуги (админ или сам врач), часы работы (и регистратура), кресло;</li>
+ * <li>«Работа» — услуги (админ или сам врач), часы работы строкой-ссылкой в «Рабочее время → График» (менять — там), кресло;</li>
  * <li>«Вход» — Telegram подключён или «ждём входа», приглашение, телефон.</li>
  * </ul>
  * Своя карточка (в том числе «Мой профиль») — без действий руководителя над собой: роль списком, только если
@@ -83,12 +83,12 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
     <>
       {!own && <ActiveSwitch doctor={d} admin={admin} />}
       {editsWork && <DoctorServices key={d.id} doctorId={d.id} me={me} />}
-      <section className="form">
-        <h4>Часы работы</h4>
-        <p className="hint">В эти дни и часы пациенты могут записаться к врачу в боте. Обед и намаз — в «Клиника → Рабочее время → Перерывы и выходные».</p>
-        <HoursEditor doctorId={d.id} doctorName={d.fullName ?? ''} />
+      {/* Часы — только в «Рабочем времени → График» (один источник правды): здесь строка-ссылка туда.
+          Карточку врача открывают руководитель, регистратура и он сам — все они видят его и в «Графике» */}
+      <div className="hours-line">
+        <HoursLink who={{ kind: 'doctor', id: d.id, name: d.fullName ?? '' }} />
         <ChairHoursHint doctorId={d.id} me={me} />
-      </section>
+      </div>
       <ChairField key={`chair-${d.id}`} doctorId={d.id} me={me} />
     </>
   )

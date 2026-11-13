@@ -5,7 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { canShareExpenses, seesAllMoney } from '../lib/roles'
 import { somText, todayIn } from '../lib/time'
 import { DateInput } from '../layout/DateInput'
-import { MATERIALS, MATERIALS_HINT, SPLIT_KEYS, useCategories } from './expenses'
+import { MATERIALS, MATERIALS_HINT, SPLIT_KEYS, ownerDoctorId, useCategories, useExpenseOwner } from './expenses'
 import { Select } from '../layout/Select'
 
 type Me = Schemas['BookingViewsMe']
@@ -40,14 +40,43 @@ export function CategoryPick({ value, other, onChange, onOther }: {
 }
 
 /**
+ * «Чей расход» у обычного (не общего) расхода — чтобы было видно, куда он запишется. Кто видит деньги всех —
+ * выбирает: «Клиника» (расход без врача) или работающий врач. Врач без этого права — строка «Запишется на
+ * вас»: сервер всё равно записывает его расход на него (ExpenseController.add).
+ */
+export function ExpenseOwner({ me, value, onChange }: { me: Me; value: string; onChange: (v: string) => void }) {
+  if (!seesAllMoney(me)) {
+    if (me.doctorId == null) return null
+    const name = me.doctors?.find((d) => d.id === me.doctorId)?.fullName ?? me.fullName ?? 'вас'
+    return <p className="expense-owner small" aria-label="Чей расход">Запишется на вас: <b>{name}</b></p>
+  }
+  const independent = Boolean(me.clinic?.independentDoctors)
+  const doctors = (me.doctors ?? []).filter((d) => d.active !== false || String(d.id) === value)
+  return (
+    <div className="expense-owner">
+      <span className="hint small" aria-hidden="true">Чей расход</span>
+      <Select aria-label="Чей расход" value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{independent ? 'Клиника · руководитель' : 'Клиника'}</option>
+        {doctors.map((d) => <option key={d.id} value={String(d.id)}>{d.fullName}</option>)}
+      </Select>
+      <p className="hint small">
+        {independent
+          ? 'Клиника — расход руководителя: между врачами не делится и в их «Чистыми» не попадает. Врач — вычтется из его «Чистыми за месяц».'
+          : 'Клиника — расход клиники без врача, вычтется из прибыли. Врач — ещё и из его «Чистыми за месяц».'}
+      </p>
+    </div>
+  )
+}
+
+/**
  * Новый расход: дата, сумма, статья, комментарий, пациент (необязательно). Кому можно — «Общий расход
  * клиники» (аренда кабинета, коммуналка): как делить и «повторять каждый месяц»; у «Вручную» — суммы
- * по врачам с остатком. Записать расход на себя или на врача (админ) — как раньше; доли и права считает
- * сервер.
+ * по врачам с остатком. У обычного — «Чей расход» ({@link ExpenseOwner}): по умолчанию врач из фильтра кассы,
+ * иначе клиника. Доли и права считает сервер.
  */
 export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault = false, onDone }: {
   me: Me
-  /** Админ смотрит кассу одного врача — расход запишется на него */
+  /** Админ смотрит кассу одного врача — «Чей расход» по умолчанию он */
   doctorId?: number | null
   /** Поле «Пациент — необязательно» (в «Расходах»), в окне «＋ Расход» не нужно */
   patientPick?: (value: { id: number; fullName: string } | null, onChange: (p: { id: number; fullName: string } | null) => void) => React.ReactNode
@@ -58,6 +87,7 @@ export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault =
   const canShare = canShareExpenses(me)
   const [form, setForm] = useState({ spentOn: todayIn(), amount: '', category: '', other: '', comment: '' })
   const [patient, setPatient] = useState<{ id: number; fullName: string } | null>(null)
+  const [owner, setOwner] = useExpenseOwner(doctorId)
   const [shared, setShared] = useState(canShare && sharedDefault)
   const [splitKey, setSplitKey] = useState('CHAIRS')
   const [repeat, setRepeat] = useState(false)
@@ -76,7 +106,7 @@ export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault =
             splitKey, repeatMonthly: repeat,
             shares: splitKey === 'MANUAL' ? doctors.map((d) => ({ doctorId: d.id, amountSom: Number(manual[d.id]) || 0 })) : undefined,
           }
-          : { doctorId: doctorId ?? undefined, patientId: patient?.id }),
+          : { doctorId: ownerDoctorId(me, owner), patientId: patient?.id }),
       },
     })),
     onSuccess: () => {
@@ -98,9 +128,9 @@ export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault =
   return (
     <form className="expense-form" aria-label="Новый расход" onSubmit={submit}>
       {canShare && (
-        <div className="segments expense-kind" role="group" aria-label="Чей расход">
-          <button type="button" aria-pressed={!shared} onClick={() => setShared(false)}>{seesAllMoney(me) ? 'Расход' : 'Мой расход'}</button>
-          <button type="button" aria-pressed={shared} onClick={() => setShared(true)}>Общий расход клиники</button>
+        <div className="segments expense-kind" role="group" aria-label="Вид расхода">
+          <button type="button" aria-pressed={!shared} onClick={() => setShared(false)}>{seesAllMoney(me) ? 'Обычный расход' : 'Мой расход'}</button>
+          <button type="button" aria-pressed={shared} onClick={() => setShared(true)}>Общий — делится между врачами</button>
         </div>
       )}
       <DateInput aria-label="Когда" value={form.spentOn} max={todayIn()} required onChange={(e) => setForm({ ...form, spentOn: e.target.value })} />
@@ -109,6 +139,7 @@ export function ExpenseForm({ me, doctorId, patientPick, shared: sharedDefault =
       <CategoryPick value={form.category} other={form.other} onChange={(v) => setForm({ ...form, category: v })} onOther={(v) => setForm({ ...form, other: v })} />
       <input aria-label="Комментарий" placeholder="Комментарий — необязательно" maxLength={200} value={form.comment} onChange={(e) => setForm({ ...form, comment: e.target.value })} />
       {!shared && patientPick?.(patient, setPatient)}
+      {!shared && <ExpenseOwner me={me} value={owner} onChange={setOwner} />}
       {shared && (
         <fieldset className="split-box">
           <legend>Как делить</legend>

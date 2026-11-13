@@ -169,6 +169,25 @@ test('счётчики, фильтры, поиск и «Следующая кл�
   expect(screen.getByRole('listitem', { name: 'Клиника: Тест-Ёлка' })).toHaveAttribute('aria-current', 'true')
 })
 
+test('порядок: сверху свёрнутый «Текст сообщения» с первой строкой, под ним загрузка списка, ниже клиники с фильтром в шапке', async () => {
+  await openTab()
+  const template = screen.getByRole('region', { name: 'Текст сообщения' })
+  const upload = screen.getByRole('button', { name: 'Загрузить список клиник' })
+  const clinics = screen.getByRole('region', { name: 'Написать клиникам' })
+  const after = (a: Element, b: Element) => expect(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  after(template, upload)
+  after(upload, clinics)
+  // Свёрнут: правка спрятана, в заголовке — первая строка текста
+  expect(template.querySelector('details')).not.toHaveAttribute('open')
+  expect(within(template).getByText('Здравствуйте, {клиника}! 😊')).toBeInTheDocument()
+  // Фильтр и поиск — внутри блока клиник, после заголовка и перед списком
+  const heading = within(clinics).getByRole('heading', { name: 'Клиники' })
+  const groups = within(clinics).getByRole('group', { name: 'Кому писали' })
+  after(heading, groups)
+  after(groups, within(clinics).getByRole('searchbox', { name: 'Поиск по названию' }))
+  after(groups, within(clinics).getByRole('list', { name: 'Клиники' }))
+})
+
 test('загрузка списка: вставка → предпросмотр (дубли — спокойно «пропустим», ошибки не мешают) → добавить', async () => {
   const sent: { url: string; text: string | null; city: string | null }[] = []
   const report = (added: number): Schemas['ClinicOutreachImportReport'] => ({
