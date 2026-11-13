@@ -1,5 +1,5 @@
-/* «График смен» (ShiftsPage): неделя персонала — строки сотрудники, колонки дни; телефон — список
-   по дням. Своя строка — мягкая бирюзовая заливка (DESIGN.md: один цвет действия, статус заливкой) */
+/* «График» (WorkSchedule): смены персонала и исключения врачей на дату. Своя строка — мягкая бирюзовая заливка
+   (DESIGN.md: один цвет действия, статус заливкой) */
 .shifts-page { display: grid; gap: 12px; }
 .shifts-page > .hint { margin: 0; }
 .shifts-nav { display: flex; align-items: center; gap: 6px; margin-left: auto; }
@@ -30,3 +30,49 @@ button.shift-line { cursor: pointer; }
 /* Недельный график (V208): смены на дату нет — серым, по графику; смена — поверх */
 .shift-chip.shift-planned { color: var(--faint); background: transparent; border-style: dashed; }
 .shift-planned-line { color: var(--hint); margin: 0 0 6px; }
+
+/* «Рабочее время → График» (WorkSchedule): один график врачей и персонала. Колонка страницы — minmax(0, 1fr):
+   иначе широкая сетка недели растянула бы страницу вместо прокрутки внутри себя (телефон 390px) */
+.work-schedule { grid-template-columns: minmax(0, 1fr); }
+.sched-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.sched-tools .segments { width: auto; }
+.sched-tools .shifts-nav { margin-left: auto; }
+.sched-off { color: var(--faint); font-size: .85rem; }
+/* «Как у клиники» — серым: человек работает по часам клиники, своих нет */
+.sched-people tr.by-clinic td { color: var(--faint); font-weight: 400; }
+.sched-people { min-width: 640px; }
+.sched-people th:first-child { width: 220px; }
+.sched-people td { white-space: nowrap; }
+.sched-people tr.mine th, .sched-people tr.mine td { background: var(--accent-soft); }
+.sched-people tr.active th, .sched-people tr.active td { background: var(--sunken); }
+.sched-edit > td { padding: 4px 0 16px; }
+.sched-edit .segments { max-width: 480px; }
+/* Телефон: строка — имя и роль, ниже неделя одной строкой; вся строка нажимается (rowOpen) */
+.sched-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.sched-list > li { border-top: 1px solid var(--separator); }
+.sched-list > li:first-child { border-top: 0; }
+.sched-line { display: grid; gap: 2px; padding: 10px 4px; border-radius: var(--r-sm); }
+.sched-list > li.mine .sched-line { background: var(--accent-soft); }
+.sched-sum { font-size: .92rem; }
+.sched-line.by-clinic .sched-sum { color: var(--faint); }
+.sched-list .sched-edit { padding: 4px 0 14px; }
+/* Неделя по датам: прокрутка вбок — только у таблицы; первая колонка (кто) прилипает слева */
+.sched-scroll { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; border: 1px solid var(--separator);
+  border-radius: var(--radius); background: var(--card); }
+.sched-grid { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 760px; table-layout: fixed; }
+.sched-grid th, .sched-grid td { padding: 6px; border-bottom: 1px solid var(--separator); vertical-align: top; text-align: left; }
+.sched-grid thead th { font-size: .85rem; color: var(--hint); font-weight: 600; white-space: nowrap; }
+.sched-grid tbody tr:last-child > * { border-bottom: 0; }
+.sched-grid th:first-child { position: sticky; left: 0; z-index: 1; width: 170px; background: var(--card); border-right: 1px solid var(--separator); }
+.sched-grid th.today, .sched-grid td.today { background: var(--sunken); }
+.sched-grid tr.mine > * { background: var(--accent-soft); }
+.shift-chip.shift-off { white-space: normal; text-align: left; background: var(--wait-bg); border-color: transparent; color: var(--wait-ink); }
+@media (max-width: 760px) {
+  .sched-grid { min-width: 600px; }
+  .sched-grid th:first-child { width: 112px; }
+  .sched-grid th, .sched-grid td { padding: 5px 4px; }
+  .sched-tools .shifts-nav { margin-left: 0; }
+}
+/* .table th прилипает к верху (шапки длинных таблиц) — у имён в строках (th scope=row) это наложило бы строки друг на друга */
+.sched-people th { position: static; }
+.sched-tools .segments button { white-space: nowrap; }

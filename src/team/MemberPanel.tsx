@@ -11,7 +11,8 @@ import { InviteLink } from './InviteLink'
 import { StaffPhone, TemporaryPassword, type Doctor } from './PhoneParts'
 import { RolesEditor } from './RolesEditor'
 import { useRefreshStaff } from './staffRoles'
-import { StaffWeekly } from './StaffWeekly'
+import { WeekEditor } from './HoursEditor'
+import { openClinic } from '../lib/route'
 import { phoneText, ROLE_TEXT } from './texts'
 
 type Me = Schemas['BookingViewsMe']
@@ -66,8 +67,8 @@ export function MemberPanel({ me, member: m, hiddenDoctor, onClose }: { me: Me; 
 
       <section className="doctor-group" aria-label="Недельный график">
         <h3 className="group-title">Часы работы</h3>
-        <p className="hint">Обычная неделя; смены на даты — в «Рабочее время → Смены персонала», поверх графика.</p>
-        <StaffWeekly telegramId={m.telegramId} canEdit={Boolean(me.admin)} />
+        <p className="hint">Обычная неделя; замены и смены на даты — в <button type="button" className="link" onClick={() => openClinic('shifts')}>«Рабочее время → График → Неделя по датам»</button>, поверх неё.</p>
+        <WeekEditor who={{ kind: 'staff', telegramId: m.telegramId, name }} canEdit={Boolean(me.admin)} />
       </section>
 
       <div className="danger-zone">
