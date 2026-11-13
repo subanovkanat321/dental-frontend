@@ -3,7 +3,8 @@ import { useEffect, useRef, useState, type PointerEvent, type RefObject } from '
 import type { Schemas } from '../../api/client'
 import { minutesOf, slotInstant } from '../../lib/time'
 import { PAD, PX } from '../gridScale'
-import { durationOf, snapInto } from './weekModel'
+import { DAY } from '../workSpans'
+import { durationOf, SNAP, snapInto } from './weekModel'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -51,7 +52,8 @@ export function useDrag({ days, from, to, columns, scroller, onDrop }: {
   const ghostAt = (p: Press, x: number, y: number): Ghost | null => {
     const point = pointAt(x, y)
     if (!point) return null
-    const minutes = snapInto(point.minutes - p.grab, durationOf(p.appointment), from, to)
+    // Начало — в своём дне: в продлённой после полуночи части сетки тащат только хвост приёма
+    const minutes = Math.min(snapInto(point.minutes - p.grab, durationOf(p.appointment), from, to), DAY - SNAP)
     const date = days[point.day]!
     const same = slotInstant(date, minutes) === new Date(p.appointment.startAt).toISOString()
     return { appointment: p.appointment, day: point.day, minutes, allowed: !same && new Date(slotInstant(date, minutes)) > new Date() }

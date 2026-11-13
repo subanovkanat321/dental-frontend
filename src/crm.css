@@ -2028,10 +2028,36 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .day-list .row.colleague, .doctor-columns .row.colleague { background: var(--wait-bg); color: var(--wait-ink); box-shadow: inset 3px 0 0 var(--status-wait); }
 .chair-conflicts { margin: 6px 0 0; padding-left: 18px; }
 
-/* Приём через полночь в сетке следующего дня (ночная смена): верх «оторван» пунктиром — начало вчера */
-.appt.carried { border-top: 2px dashed currentColor; border-top-left-radius: 0; border-top-right-radius: 0; }
-.appt-carried { font-weight: 500; font-size: .8em; opacity: .8; }
-.appt.continues { border-bottom: 2px dashed currentColor; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+/* Приём через полночь. Обрезан (сетка ночной смены и так на сутки): край — мягкий тонкий пунктир цвета статуса
+   (--stripe) и затухание к краю, плюс подпись «→ до 00:45» / «со вчера» в строке времени. Толстую тёмную черту убрали
+   (2026-11-13: «некрасиво») */
+.appt.carried, .appt.continues { --cut: color-mix(in srgb, var(--stripe, currentColor) 55%, transparent); }
+.appt.carried { border-top-left-radius: 0; border-top-right-radius: 0;
+  background-image: linear-gradient(to bottom, color-mix(in srgb, var(--card) 45%, transparent), transparent 10px); }
+.appt.continues { border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+  background-image: linear-gradient(to top, color-mix(in srgb, var(--card) 45%, transparent), transparent 10px); }
+.appt.carried::before, .appt.continues::after { content: ''; position: absolute; left: 0; right: 0; height: 0; pointer-events: none;
+  border-top: 1px dashed var(--cut); }
+.appt.carried::before { top: 0; }
+.appt.continues::after { bottom: 0; }
+.appt-carried, .appt-cut { font-weight: 500; font-size: .8em; opacity: .8; white-space: nowrap; }
+.appt.short .appt-cut { display: inline; }
+/* Широкий короткий блок одной строкой: «23:45 → до 00:45» и «со вчера 23:45» шире колонки времени 5.5rem — колонка по тексту */
+@container appt (min-width: 420px) {
+  .appt.short.continues .appt-body, .appt.short.carried .appt-body { grid-template-columns: max-content minmax(7rem, 1fr) auto minmax(0, max-content); }
+  .appt.continues .appt-time .appt-cut { display: inline; margin-left: 4px; font-size: .8rem; }
+  /* Высокий блок: «со вчера» — строкой над временем, в колонку времени */
+  .appt.carried:not(.short) .appt-from .appt-carried { display: block; font-size: .78rem; }
+}
+/* Боковое меню прокручивается только вверх-вниз: overflow-y: auto делает и overflow-x auto, и любой лишний пиксель
+   (длинное название, полоса прокрутки Windows, анимация сворачивания) давал горизонтальную полосу внизу меню */
+.sidebar { overflow-x: hidden; }
+/* Сетка продлена после полуночи ради приёма до завтра: черта «полночь» с датой и «завтра» под 00:00 */
+.grid-midnight { position: absolute; left: 0; right: 0; z-index: 1; border-top: 1px dashed var(--line-strong); pointer-events: none; }
+.grid-midnight span { position: absolute; top: 2px; right: 6px; padding: 0 6px; border-radius: 4px; background: var(--card);
+  color: var(--hint); font-size: .72rem; white-space: nowrap; }
+.grid-times .grid-midnight-time { display: grid; justify-items: end; line-height: 1.1; transform: translateY(-7px); }
+.grid-times .grid-midnight-time small { max-width: 48px; font-size: .66rem; line-height: 1.05; color: var(--hint); text-align: right; }
 
 /* «Настройки → Кресла» (V187): название с кнопкой «Сохранить» в строку, режим — двумя вариантами */
 .chair-item { display: grid; gap: 8px; }
