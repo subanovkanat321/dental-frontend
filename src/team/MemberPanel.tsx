@@ -51,7 +51,7 @@ export function MemberPanel({ me, member: m, hiddenDoctor, onClose }: { me: Me; 
 
       <section className="doctor-group" aria-label="Роли">
         <h3 className="group-title">Роли</h3>
-        {hiddenDoctor && <p className="hint">Врач «{hiddenDoctor.fullName}» скрыт: пациенты его не видят, история приёмов на месте. Вернуть — флажок «Врач».</p>}
+        {hiddenDoctor && <p className="hint">Врач «{hiddenDoctor.fullName}» скрыт: пациенты его не видят, история приёмов на месте. Вернуть — роль «… и врач» в списке.</p>}
         <RolesEditor key={`${m.role}-${hiddenDoctor?.active}`} me={me} telegramId={m.telegramId} doctorId={hiddenDoctor?.id} doctor={false}
           role={m.role as 'ADMIN'} doctorIds={m.doctorIds} self={Boolean(m.me)} hasLogin name={name} />
       </section>
