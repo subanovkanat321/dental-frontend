@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import type { Schemas } from '../api/client'
 import { colorOf, initials } from '../lib/avatars'
 import { useBack } from '../lib/back'
+import { useSwipeDown } from '../layout/useSwipeDown'
 
 type Doctor = Schemas['DoctorView']
 
@@ -56,11 +57,13 @@ export function DoctorOrderDialog({ doctors, hidden = [], myDoctorId, colorDocto
     setList(next)
   }
   const phone = typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 640px)').matches
+  const box = useRef<HTMLDivElement>(null)
+  useSwipeDown(box, phone ? onClose : null)
   const nameOf = (d: Doctor) => `${d.fullName ?? ''}${d.id === myDoctorId ? ' (я)' : ''}`
 
   return createPortal(
     <div className="ui-select-backdrop confirm-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-labelledby="doctor-order-title" className={phone ? 'confirm doctor-order sheet' : 'confirm doctor-order'}
+      <div ref={box} role="dialog" aria-modal="true" aria-labelledby="doctor-order-title" className={phone ? 'confirm doctor-order sheet' : 'confirm doctor-order'}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             e.preventDefault()

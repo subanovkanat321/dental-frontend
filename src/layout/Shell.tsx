@@ -18,6 +18,7 @@ import { Icon } from './Icon'
 import { Avatar, HelpMenuItems, MeMenuItems, MenuPanel } from './MeMenu'
 import { whoAmI } from './me'
 import { useFitPanels } from './fitPanels'
+import { useSwipeDown } from './useSwipeDown'
 import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
@@ -132,6 +133,11 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   // Лист подразделов (телефон): «назад» закрывает его
   const [sheet, setSheet] = useState<Page | null>(null)
   useBack(sheet ? () => setSheet(null) : null)
+  // Листы «Ещё» и подразделов — потянуть вниз, закрыть (как остальные нижние листы)
+  const moreCard = useRef<HTMLDivElement>(null)
+  const subCard = useRef<HTMLDivElement>(null)
+  useSwipeDown(moreCard, more ? () => setMore(false) : null)
+  useSwipeDown(subCard, sheet ? () => setSheet(null) : null)
   // Место панели вкладок подразделов (телефон): раздел кладёт её туда порталом
   const [tabsSlot, setTabsSlot] = useState<HTMLElement | null>(null)
   // Место «?» подраздела в панели вкладок: панель отдаёт его (ref), подраздел кладёт туда «?» (SubHelp)
@@ -388,7 +394,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         <div className="nav-tip" role="tooltip" style={{ top: tip.top, left: tip.left }}>{tip.text}</div>, document.body)}
       {more && (
         <div className="more-sheet" role="dialog" aria-label="Ещё разделы" onClick={() => setMore(false)}>
-          <div className="more-card" onClick={(e) => e.stopPropagation()}>
+          <div ref={moreCard} className="more-card" onClick={(e) => e.stopPropagation()}>
             {/* Свой аватар — лист «Я»: профиль, оформление, уведомления, выход */}
             <button type="button" className={page === 'me' ? 'more-who-btn active' : 'more-who-btn'} aria-label={`${name}, ${role}: профиль, оформление, выход`}
               onClick={() => openMenu('me')}>
@@ -421,7 +427,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
       )}
       {sheetSection && (
         <div className="more-sheet sub-sheet" role="dialog" aria-label={`Подразделы: ${sheetSection.title}`} onClick={() => setSheet(null)}>
-          <div className="more-card" onClick={(e) => e.stopPropagation()}>
+          <div ref={subCard} className="more-card" onClick={(e) => e.stopPropagation()}>
             <div className="sub-sheet-head">
               <Icon name={sheetSection.key} /><h2>{sheetSection.title}</h2>
               <button type="button" className="sub-sheet-close" aria-label="Закрыть" onClick={() => setSheet(null)}>✕</button>
@@ -440,7 +446,7 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
         </button>
       )}
       {help && (
-        <div className="help-float">
+        <div className="help-float" onClick={(e) => e.target === e.currentTarget && closeHelpChat()}>
           <Suspense fallback={null}><HelpChatPanel key={help.ticketId ?? 'new'} ticketId={help.ticketId} onClose={closeHelpChat} /></Suspense>
         </div>
       )}

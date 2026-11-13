@@ -6,6 +6,7 @@ import { useBack } from '../lib/back'
 import { parseTime } from '../lib/time'
 import { useClosingGuard } from '../lib/unsaved'
 
+import { useSwipeDown } from './useSwipeDown'
 import './timeinput.css'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -76,7 +77,6 @@ export function TimeInput({ value, onChange, step = 5, min, max, hours, free, di
   const [place, setPlace] = useState<{ left: number; top?: number; bottom?: number } | null>(null)
   const input = useRef<HTMLInputElement>(null)
   const pop = useRef<HTMLDivElement>(null)
-  const swipeFrom = useRef<number | null>(null)
   const panelId = useId()
   const touch = isTouch()
 
@@ -99,6 +99,7 @@ export function TimeInput({ value, onChange, step = 5, min, max, hours, free, di
     if (refocus && !touch) input.current?.focus()
   }
   useBack(open ? () => close() : null)
+  useSwipeDown(pop, open && sheet ? () => close(false) : null)
   useClosingGuard(open)
 
   const show = (focusInside = false) => {
@@ -190,14 +191,8 @@ export function TimeInput({ value, onChange, step = 5, min, max, hours, free, di
     <div ref={pop} id={panelId} role="dialog" aria-modal={sheet || undefined} aria-label={aria['aria-label'] ? `${aria['aria-label']}: выбор времени` : 'Выбор времени'}
       className={`ti-pop${sheet ? ' sheet' : ''}${allHours || fine ? ' more' : ''}`} onKeyDown={onPanelKey}
       style={sheet || !place ? undefined : { left: place.left, top: place.top, bottom: place.bottom }}>
-      {/* Шапка — как у листа Select: время крупно и «✕» (закрыть без изменений); потянуть вниз — тоже закрыть */}
-      <div className="ui-select-head ti-head"
-        onTouchStart={sheet ? (e) => { swipeFrom.current = e.touches[0]?.clientY ?? null } : undefined}
-        onTouchEnd={sheet ? (e) => {
-          const from = swipeFrom.current
-          swipeFrom.current = null
-          if (from != null && (e.changedTouches[0]?.clientY ?? from) - from > 50) close(false)
-        } : undefined}>
+      {/* Шапка — как у листа Select: время крупно и «✕» (закрыть без изменений); потянуть лист вниз — тоже закрыть (useSwipeDown) */}
+      <div className="ui-select-head ti-head" data-sheet-grip="">
         <span className="ti-preview num" aria-live="polite">{hour ?? '––'}:{doneMinute ?? '––'}</span>
         {sheet && <button type="button" className="ui-select-close" aria-label="Закрыть без изменений" onClick={() => close(false)}>✕</button>}
       </div>

@@ -9,6 +9,7 @@ import { openMine } from '../lib/route'
 import { openLink, telegram } from '../lib/telegram'
 import { HELP_ITEMS, ME_ITEMS } from '../settings/items'
 import { startTour } from '../tour/state'
+import { useSwipeDown } from './useSwipeDown'
 import { Icon } from './Icon'
 import { initials, whoAmI } from './me'
 
@@ -38,6 +39,8 @@ export function MenuPanel({ label, anchor, phone, head, onClose, children }: {
 }) {
   const ref = useRef<HTMLDivElement>(null)
   useBack(onClose)
+  // Телефон: лист снизу — потянуть вниз, закрыть
+  useSwipeDown(ref, phone ? onClose : null)
   // Место карточки — от кнопки, прямо в стиле (до отрисовки на экране, без лишнего прохода React)
   useLayoutEffect(() => {
     const el = ref.current
