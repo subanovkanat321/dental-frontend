@@ -1396,6 +1396,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/chair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changeChair"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/anamnesis/questions/{id}": {
         parameters: {
             query?: never;
@@ -6244,6 +6260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/chair-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["chairOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/chair-check": {
         parameters: {
             query?: never;
@@ -7880,6 +7912,9 @@ export interface components {
             /** @enum {string} */
             freeReason?: "FREE" | "PREPAID";
             freeComment?: string;
+            /** Format: int64 */
+            chairId?: number;
+            chairManual: boolean;
         };
         FamiliesBooker: {
             fullName?: string;
@@ -7903,6 +7938,13 @@ export interface components {
         };
         AppointmentRequestsComment: {
             comment?: string;
+        };
+        AppointmentRequestsChair: {
+            /** Format: int64 */
+            version: number;
+            /** Format: int64 */
+            chairId?: number;
+            confirmChairTime?: boolean;
         };
         AnamnesisQuestionRequest: {
             section?: string;
@@ -8108,6 +8150,8 @@ export interface components {
             /** Format: date-time */
             startAt: string;
             confirmChairTime?: boolean;
+            /** Format: int64 */
+            chairId?: number;
         };
         TimeOffControllerRequest: {
             /** Format: int64 */
@@ -8934,6 +8978,8 @@ export interface components {
             confirmChairTime?: boolean;
             /** Format: int64 */
             fromWaitlistId?: number;
+            /** Format: int64 */
+            chairId?: number;
         };
         VisitReportControllerSend: {
             text?: string;
@@ -8988,6 +9034,8 @@ export interface components {
             /** Format: int32 */
             durationMinutes: number;
             confirmChairTime?: boolean;
+            /** Format: int64 */
+            chairId?: number;
         };
         VisitTeethControllerMany: {
             numbers?: number[];
@@ -9027,6 +9075,8 @@ export interface components {
             /** Format: int32 */
             durationMinutes: number;
             confirmChairTime?: boolean;
+            /** Format: int64 */
+            chairId?: number;
         };
         AppointmentRequestsChangeReply: {
             /** Format: int64 */
@@ -10055,6 +10105,8 @@ export interface components {
             /** Format: int64 */
             mrrSom: number;
             /** Format: int64 */
+            pilotMrrSom: number;
+            /** Format: int64 */
             appointments: number;
             /** Format: int64 */
             appointmentsBefore: number;
@@ -10778,6 +10830,16 @@ export interface components {
             booked: number;
             /** Format: int64 */
             requested: number;
+        };
+        ChairOptionView: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            own: boolean;
+            /** @enum {string} */
+            state: "FREE" | "COLLEAGUE_TIME" | "BUSY";
+            doctorName?: string;
+            strict: boolean;
         };
         ChairCheckView: {
             colleague?: components["schemas"]["ChairCheckViewColleague"];
@@ -13789,6 +13851,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AppointmentRequestsComment"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentView"];
+                };
+            };
+        };
+    };
+    changeChair: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppointmentRequestsChair"];
             };
         };
         responses: {
@@ -21980,12 +22068,38 @@ export interface operations {
             };
         };
     };
+    chairOptions: {
+        parameters: {
+            query: {
+                doctorId: number;
+                startAt: string;
+                endAt: string;
+                appointmentId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChairOptionView"][];
+                };
+            };
+        };
+    };
     chairCheck: {
         parameters: {
             query: {
                 doctorId: number;
                 startAt: string;
                 endAt: string;
+                chairId?: number;
             };
             header?: never;
             path?: never;

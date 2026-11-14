@@ -8,15 +8,41 @@ import { useClose } from '../lib/useClose'
 import { useDirty } from '../lib/unsaved'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
-import { HeadTools } from '../layout/PageHead'
-import { HelpHint } from '../help/HelpHint'
+import { HeadTools, SubHelp } from '../layout/PageHead'
 import { rowOpen } from '../lib/rowClick'
 
 type Me = Schemas['BookingViewsMe']
 type Memo = Schemas['CareMemosCareMemoView']
 type Lang = 'ru' | 'ky'
+type Service = Schemas['ServiceTypeView']
 
 const PHONE = '{телефон}'
+
+/**
+ * Услуги прайса, к которым привязана памятка, — по порядку прайса. Скрытые (active = false: «справочник
+ * клиники», не в прайсе) не показываем: в строке они шумели («Удаление зуба сложное, …простое, молочного…»).
+ */
+function memoServices(m: Memo, services: Service[]): string[] {
+  const ids = new Set(m.serviceIds ?? [])
+  return services.filter((s) => s.active !== false && ids.has(s.id)).map((s) => s.name)
+}
+
+/**
+ * Серая строка под названием памятки: до трёх услуг прайса — все; больше — две и «и ещё N» (не «и ещё 1»:
+ * оно не короче самого названия). «и ещё N» — отдельно и не обрезается: длинные названия уходят в «…», а
+ * сколько их ещё — видно всегда. Полный список — в карточке памятки.
+ */
+function ServicesLine({ names }: { names: string[] }) {
+  if (names.length === 0) return <>не привязана к услугам прайса</>
+  const shown = names.length <= 3 ? names : names.slice(0, 2)
+  const more = names.length - shown.length
+  return (
+    <>
+      <span className="memo-names">{shown.join(', ')}</span>
+      {more > 0 && <span className="memo-more"> и ещё {more}</span>}
+    </>
+  )
+}
 
 /**
  * «Памятки после процедур»: что пациенту делать после удаления, чистки, отбеливания… Стандартные
@@ -33,7 +59,7 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
   }, [onPanel])
   const close = useCallback(() => setOpened(null), [setOpened])
   const editable = canEditServices(me)
-  const nameOf = new Map((services.data ?? []).map((s) => [s.id, s.name]))
+  const prices = services.data ?? []
   const openedMemo = typeof opened === 'number' ? memos.data?.find((m) => m.id === opened) : undefined
 
   return (
@@ -41,19 +67,18 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
       <section className="schedule-main">
         {header}
         <section className="card-block">
-          <HeadTools>
-            <HelpHint title="Памятки">Памятку отдают пациенту после приёма: «📤 Отправить пациенту» или «🖨 Печать» на карточке приёма.
-              Какая памятка у услуги — в «Клиника → Услуги и цены».</HelpHint>
-            {editable && <button type="button" className="btn primary head-end" onClick={() => setOpened('new')}>＋ Своя памятка</button>}
-          </HeadTools>
+          {/* «?» — в полосу вкладок «Настроек» (SubHelp), а не своей строкой над кнопкой */}
+          <SubHelp title="Памятки">Памятку отдают пациенту после приёма: «📤 Отправить пациенту» или «🖨 Печать» на карточке приёма.
+            Какая памятка у услуги — в «Клиника → Услуги и цены».</SubHelp>
+          {editable && <HeadTools><button type="button" className="btn primary head-end" onClick={() => setOpened('new')}>＋ Своя памятка</button></HeadTools>}
           {memos.error && <p className="error">{memos.error.message}</p>}
           {memos.isPending ? <Loading /> : (
             <ul className="memo-list" aria-label="Памятки">
               {(memos.data ?? []).map((m) => (
                 <li key={m.id} {...rowOpen(() => setOpened(m.id), m.active === false && 'inactive')}>
-                  <button type="button" className="row-link" onClick={() => setOpened(m.id)}>📋 {m.title}</button>
-                  <span className="hint small">
-                    {m.active === false ? 'скрыта' : (m.serviceIds ?? []).map((id) => nameOf.get(id)).filter(Boolean).join(', ') || 'не привязана к услуге'}
+                  <button type="button" className="row-link" onClick={() => setOpened(m.id)}>{m.title}</button>
+                  <span className="hint small memo-services">
+                    {m.active === false ? 'скрыта' : <ServicesLine names={memoServices(m, prices)} />}
                   </span>
                 </li>
               ))}
@@ -62,7 +87,7 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
         </section>
       </section>
       {opened === 'new' && <MemoPanel editable onClose={close} />}
-      {openedMemo && <MemoPanel key={openedMemo.id} memo={openedMemo} editable={editable} onClose={close} />}
+      {openedMemo && <MemoPanel key={openedMemo.id} memo={openedMemo} services={memoServices(openedMemo, prices)} editable={editable} onClose={close} />}
     </>
   )
 }
@@ -71,7 +96,7 @@ export function MemosTab({ me, header, onPanel }: { me: Me; header: ReactNode; o
  * Памятка: русский и кыргызский текст — вкладками, как «Текст напоминания». Кыргызский пустой — пациенту
  * с кыргызским уйдёт русский. У стандартной памятки, которую клиника не меняла, кыргызский — перевод Tish.
  */
-function MemoPanel({ memo: m, editable, onClose }: { memo?: Memo; editable: boolean; onClose: () => void }) {
+function MemoPanel({ memo: m, services, editable, onClose }: { memo?: Memo; services?: string[]; editable: boolean; onClose: () => void }) {
   const close = useClose(onClose)
   const client = useQueryClient()
   const [lang, setLang] = useState<Lang>('ru')
@@ -117,6 +142,10 @@ function MemoPanel({ memo: m, editable, onClose }: { memo?: Memo; editable: bool
         <button type="button" aria-pressed={lang === 'ru'} onClick={() => setLang('ru')}>Русский</button>
         <button type="button" aria-pressed={lang === 'ky'} onClick={() => setLang('ky')}>Кыргызский{kyError ? ' ⚠' : ''}</button>
       </div>
+      {/* Здесь — все услуги прайса этой памятки (в строке списка — 2–3 и «и ещё N»); привязка — в карточке услуги */}
+      {m && <p className="hint small" aria-label="Услуги памятки">
+        {services?.length ? <>Предложим после: {services.join(', ')}.</> : 'Не привязана к услугам прайса.'} Привязать — в «Клиника → Услуги и цены».
+      </p>}
       {editable ? (
         <form className="form" onSubmit={submit}>
           {lang === 'ru' ? (
