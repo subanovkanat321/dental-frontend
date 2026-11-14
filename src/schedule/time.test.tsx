@@ -4,18 +4,15 @@ import { http, HttpResponse } from 'msw'
 
 import { slotInstant, todayIn } from '../lib/time'
 import { appointment, me, renderApp } from '../test/fixtures'
+import { fixNow } from '../test/now'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
 const DAY = '2026-11-02'
 
 /** Часы — 10:47 по Бишкеку: время «сейчас» не кратно 5 минутам. Таймеры — настоящие, подменяем только дату. */
-beforeEach(() => {
-  vi.useFakeTimers({ toFake: ['Date'] })
-  vi.setSystemTime(new Date(`${DAY}T10:47:00+06:00`))
-})
+beforeEach(() => { fixNow(`${DAY}T10:47:00+06:00`, { frozen: true }) })
 afterEach(() => {
-  vi.useRealTimers()
   localStorage.clear()
 })
 

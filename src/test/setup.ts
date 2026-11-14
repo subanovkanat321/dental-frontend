@@ -3,6 +3,7 @@ import { cleanup, configure } from '@testing-library/react'
 
 import { resetSubs } from '../lib/sub'
 import { closeHelpChat } from '../lib/helpChat'
+import { DEFAULT_NOW, fixNow } from './now'
 import { server } from './server'
 
 // findBy/waitFor ждут до 5 с, а не 1 с по умолчанию: под нагрузкой (CI, параллельные прогоны)
@@ -10,18 +11,12 @@ import { server } from './server'
 // не ждёт дольше нужного — ожидание кончается, как только элемент появился
 configure({ asyncUtilTimeout: 5000 })
 
-// «Сегодня» в тестах — всегда один и тот же будний день: тесты с датами («12–20 ноября», todayIn() на
-// уровне модуля) не падают после 20 ноября и 1 января. Подменяем только Date (таймеры настоящие), и
-// время идёт дальше (shouldAdvanceTime) — staleTime React Query и задержки работают как обычно.
-// Тест, которому нужно своё время, ставит его сам (vi.setSystemTime); TEST_NOW — проверить на другой дате
-const NOW = process.env.TEST_NOW ?? '2026-11-11T06:00:00Z'
-function pinDate() {
-  vi.useFakeTimers({ toFake: ['Date'], shouldAdvanceTime: true })
-  vi.setSystemTime(new Date(NOW))
-}
+// «Сейчас» в тестах — всегда полдень одного и того же буднего дня (test/now.ts): тесты с датами и временем
+// («12–20 ноября», линия «сейчас», «прошедшие приёмы», todayIn() на уровне модуля) не зависят от реального
+// времени суток и даты. Тест, которому нужно своё время, зовёт fixNow сам
 // До импорта файла теста: todayIn() на уровне модуля берёт тот же день
-pinDate()
-beforeEach(pinDate)
+fixNow(DEFAULT_NOW)
+beforeEach(() => { fixNow(DEFAULT_NOW) })
 
 // Запрос без обработчика MSW — ошибка теста: в сеть тесты не ходят
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
