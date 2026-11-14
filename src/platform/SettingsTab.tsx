@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
 
-import { api, ApiError, unwrap, upload, webTariffs, type Schemas } from '../api/client'
+import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
+import { subHref } from '../lib/sub'
 import { inTelegram } from '../lib/telegram'
 import { CaseBlock } from '../site/CaseBlock'
 import { caseMissing } from './joinCase'
@@ -13,7 +14,6 @@ import { phoneFromInput, phonesFromInput, phonesToInput, phoneToInput } from '..
 import { PhoneListInput } from '../clinic/PhoneListInput'
 import { SaveBar } from '../layout/SaveBar'
 import { useDirty } from '../lib/unsaved'
-import { somText } from '../lib/time'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { InviteLink } from '../team/InviteLink'
 import { Loading } from '../layout/Loading'
@@ -24,7 +24,7 @@ type PaySettings = Schemas['PayRequestsSettings']
 
 /**
  * «Настройки платформы» (владелец): сведения о платформе (их видят все сотрудники клиник),
- * входы в клиники, способы оплаты для клиник, менеджеры платформы, тарифы.
+ * входы в клиники, способы оплаты для клиник, менеджеры платформы; цены тарифов — ссылкой на вкладку «Тарифы».
  */
 export function SettingsTab() {
   const info = usePlatformInfo()
@@ -39,7 +39,7 @@ export function SettingsTab() {
       <CaseBox />
       <PaySettingsBox />
       <Managers />
-      <TariffsBox />
+      <TariffsLink />
     </>
   )
 }
@@ -229,27 +229,12 @@ function Managers() {
   )
 }
 
-/** Тарифы — как их видят клиники («Тариф и оплата» и страница /join). Меняются во вкладке «Тарифы». */
-function TariffsBox() {
-  const t = useQuery({ queryKey: ['web-tariffs'], queryFn: webTariffs, staleTime: 30 * 60_000 })
-  if (!t.data) return null
+/** Тарифы меняются и видны во вкладке «Тарифы» — здесь только ссылка туда (блок с ценами дублировал её). */
+function TariffsLink() {
   return (
-    <section className="card-block">
-      <h2>Тарифы</h2>
-      {t.data.promo && <p className="tone-ok">{t.data.promo.title}</p>}
-      <div className="tariffs">
-        {(t.data.tariffs ?? []).map((x) => (
-          <div key={x.code} className="tariff">
-            <strong>{x.name}</strong>
-            <span className="hint">{x.who}</span>
-            <span className="tariff-price num">{somText(x.monthSom)}<span className="hint"> / месяц</span></span>
-            <span className="hint">за год — {somText(x.yearSom)}</span>
-          </div>
-        ))}
-      </div>
-      <p className="hint">{t.data.pilotMonths ? <>Новым клиникам — <span className="num">{t.data.pilotMonths}</span> мес. бесплатно.</> : 'Бесплатного пилота нет.'} Цены меняются во вкладке «Тарифы».
-        <HelpHint title="Пилот">Срок пилота наружу не показываем: на сайте — «Попробуйте бесплатно», свою дату конца пилота клиника видит в «Тарифе и оплате».</HelpHint></p>
-    </section>
+    <p className="settings-more">
+      <a className="row-link open-link" href={subHref('platform', 'tariffs')}>Цены тарифов — во вкладке «Тарифы» ›</a>
+    </p>
   )
 }
 

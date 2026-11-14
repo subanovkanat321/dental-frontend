@@ -161,3 +161,56 @@ test('создать клинику ссылкой: ответ — ссылка 
   const done = await screen.findByRole('complementary', { name: 'Клиника создана' })
   expect(await within(done).findByText(/staff_tok1/)).toBeInTheDocument()
 })
+
+/** Вымышленные заявки с /join. */
+const application = (id: number, name: string, extra: Partial<Schemas['ClinicApplicationsApplicationView']> = {}) => ({
+  id, clinicName: name, city: 'Бишкек', contactName: 'Асель', phone: `99670000000${id}`, createdAt: '2026-11-10T06:00:00Z', solo: false, ...extra,
+}) satisfies Schemas['ClinicApplicationsApplicationView']
+
+test('заявки — спокойный список под шапкой: «Одобрить» и «⋯», больше трёх — «Ещё N»; «Создать клинику» не уезжает', async () => {
+  backend()
+  const rejected: number[] = []
+  server.use(
+    http.get('*/api/platform/applications', () => HttpResponse.json([1, 2, 3, 4, 5].map((i) => application(i, `Заявка ${i}`, i === 1 ? { solo: true, telegram: 'aselx' } : {})))),
+    http.post('*/api/platform/applications/:id/reject', ({ params }) => {
+      rejected.push(Number(params.id))
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  const list = await screen.findByRole('list', { name: 'Заявки с /join' })
+  expect(screen.getByRole('region', { name: 'Заявки с /join' })).toHaveTextContent('Заявки · 5')
+  let rows = within(list).getAllByRole('listitem')
+  expect(rows).toHaveLength(3)
+  // Одна строка: название, серым — кто и откуда, одна кнопка и «⋯»
+  expect(rows[0]).toHaveTextContent('Заявка 1')
+  expect(rows[0]).toHaveTextContent('частный врач · Бишкек · Асель · +996 700 000 001')
+  expect(within(rows[0]!).getAllByRole('button').map((b) => b.textContent)).toEqual(['Одобрить', '⋯'])
+  // Кнопка «＋ Создать клинику» — сразу под свёрнутыми заявками, а не под пятью карточками
+  expect(screen.getByRole('button', { name: '＋ Создать клинику' })).toBeInTheDocument()
+
+  await user.click(within(rows[0]!).getByRole('button', { name: 'Ещё: Заявка 1' }))
+  const menu = within(rows[0]!).getByRole('menu')
+  expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Позвонить', 'Написать в WhatsApp', 'Telegram @aselx', 'Отклонить заявку'])
+  await user.click(within(menu).getByRole('menuitem', { name: 'Отклонить заявку' }))
+  await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: /Отклонить|Да|ОК/ }))
+  await waitForSlow(() => expect(rejected).toEqual([1]))
+
+  await user.click(screen.getByRole('button', { name: 'Ещё 2' }))
+  rows = within(list).getAllByRole('listitem')
+  expect(rows).toHaveLength(5)
+  expect(screen.queryByRole('button', { name: /^Ещё \d/ })).not.toBeInTheDocument()
+})
+
+test('адрес #/platform/clinics/<id> открывает карточку этой клиники; закрыли — адрес снова «Клиники»', async () => {
+  backend()
+  window.location.hash = '/platform/clinics/3'
+  const user = userEvent.setup()
+  renderApp()
+  const panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
+  expect(within(panel).getByRole('heading', { name: 'Ак-Тиш' })).toBeInTheDocument()
+  await user.click(within(panel).getByRole('button', { name: /Закрыть/ }))
+  await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Клиника на платформе' })).not.toBeInTheDocument())
+  expect(window.location.hash).toBe('#/platform/clinics')
+})

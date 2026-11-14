@@ -26,6 +26,17 @@ const post = (id: number, extra: Partial<Schemas['ContentPostsPost']> = {}) => (
   id, publishOn: today, kind: 'CAROUSEL', title: `Пост ${id}`, caption: '', images: [], note: '', status: 'PLANNED', instagramPublishing: false, story: false, storyPublishing: false, ...extra,
 }) satisfies Schemas['ContentPostsPost']
 
+/** Второстепенное действие поста — из «⋯» карточки. */
+async function pick(user: ReturnType<typeof userEvent.setup>, card: HTMLElement, name: string) {
+  await user.click(within(card).getByRole('button', { name: /^Ещё: / }))
+  await user.click(within(card).getByRole('menuitem', { name }))
+}
+
+/** Залитые кнопки карточки (главное действие) — одна или ни одной. */
+function mainActions(card: HTMLElement): string[] {
+  return [...card.querySelectorAll('.content-actions .btn.primary')].map((b) => b.textContent ?? '')
+}
+
 async function openTab() {
   const user = userEvent.setup()
   renderApp()
@@ -72,7 +83,10 @@ test('владелец: пост дня с картинками, текст ко
   expect(reels).toHaveTextContent('Опубликован')
   expect(within(reels).queryByRole('button', { name: 'Опубликовал' })).not.toBeInTheDocument()
 
-  await user.click(within(card).getByRole('button', { name: 'На завтра' }))
+  // Без Instagram главное — отметить руками «Опубликовал»; остальное — в «⋯»
+  expect(mainActions(card)).toEqual(['Опубликовал'])
+  expect(within(card).queryByRole('button', { name: 'На завтра' })).not.toBeInTheDocument()
+  await pick(user, card, 'На завтра')
   await waitForSlow(() => expect(calls).toHaveLength(1))
   await user.click(within(card).getByRole('button', { name: 'Опубликовал' }))
   expect(await within(card).findByText('Опубликован')).toBeInTheDocument()
@@ -183,8 +197,10 @@ test('Instagram подключён: «Опубликовать в Instagram» п
 
   await user.click(within(card).getByRole('button', { name: 'Опубликовать в Instagram' }))
   await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Опубликовать' }))
-  const badge = await within(card).findByRole('link', { name: 'В Instagram ↗' })
-  expect(badge).toHaveAttribute('href', 'https://www.instagram.com/p/T1/')
+  // Выложен — главное теперь «В сторис», ссылка на пост — в «⋯»
+  expect(await within(card).findByRole('button', { name: 'В сторис' })).toBeInTheDocument()
+  expect(mainActions(card)).toEqual(['В сторис'])
+  expect(within(card).getByText('В Instagram')).toBeInTheDocument()
   expect(within(card).getByText('Опубликован')).toBeInTheDocument()
   expect(within(card).queryByRole('button', { name: 'Опубликовать в Instagram' })).not.toBeInTheDocument()
 
@@ -346,7 +362,7 @@ test('изменить рилс: время и подпись уходят на 
   )
   const user = await openTab()
   const card = await screen.findByRole('article', { name: 'Миф или правда' })
-  await user.click(within(card).getByRole('button', { name: 'Изменить' }))
+  await pick(user, card, 'Изменить')
   const form = screen.getByRole('form', { name: 'Изменить пост' })
   const time = within(form).getByLabelText(/Время публикации/)
   expect(time).toHaveValue('19:30')
@@ -361,7 +377,7 @@ test('изменить рилс: время и подпись уходят на 
   expect(sent).toMatchObject({ date: today, kind: 'REELS', title: 'Миф или правда', caption: 'Новая подпись', time: '18:15' })
 })
 
-test('«📲 Прислать в бот»: пост уходит владельцу в Telegram, видно подтверждение', async () => {
+test('«⋯ → Прислать в бот»: пост уходит владельцу в Telegram, видно подтверждение', async () => {
   const sent: string[] = []
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
@@ -374,7 +390,7 @@ test('«📲 Прислать в бот»: пост уходит владель�
   )
   const user = await openTab()
   const card = await screen.findByRole('article', { name: 'Что думает стоматолог' })
-  await user.click(within(card).getByRole('button', { name: '📲 Прислать в бот' }))
+  await pick(user, card, 'Прислать в бот')
   expect(await within(card).findByRole('status')).toHaveTextContent('Отправили в Telegram')
   expect(sent).toEqual(['7'])
 })
@@ -444,7 +460,7 @@ test('фильтр: по умолчанию только ждущие; в «Вс
   expect(within(within(plan).getByRole('article', { name: 'Ждёт' })).getByRole('button', { name: 'Опубликовать в Instagram' })).toBeInTheDocument()
 })
 
-test('сторис после поста: «✓ в сторис», ошибка с «Повторить сторис», «📤 В сторис» у поста без сторис', async () => {
+test('сторис после поста: «✓ в сторис», ошибка с «Повторить сторис», «В сторис» у поста без сторис', async () => {
   const published = { status: 'DONE', instagramMediaId: 'm1' } as const
   let posts = [
     post(1, { ...published, kind: 'POST', title: 'Со сторис', images: ['/content/a.png'], storyMediaId: 's1', storyAt: '2099-06-01T10:00:00Z' }),
@@ -471,14 +487,14 @@ test('сторис после поста: «✓ в сторис», ошибка 
 
   const done = await screen.findByRole('article', { name: 'Со сторис' })
   expect(done).toHaveTextContent('✓ в сторис')
-  expect(within(done).queryByRole('button', { name: /сторис/i })).not.toBeInTheDocument()
+  expect(within(done).queryByRole('button', { name: /в сторис|повторить сторис/i })).not.toBeInTheDocument()
 
   const failed = screen.getByRole('article', { name: 'Сторис не вышла' })
   expect(within(failed).getByRole('alert')).toHaveTextContent('Сторис: ошибка')
   expect(within(failed).getByRole('alert')).toHaveTextContent('Лимит Instagram')
   // Сама сторис и пост, ещё не опубликованный в Instagram, — без кнопок сторис
-  expect(within(screen.getByRole('article', { name: 'Сама сторис' })).queryByRole('button', { name: /сторис/i })).not.toBeInTheDocument()
-  expect(within(screen.getByRole('article', { name: 'Ещё в плане' })).queryByRole('button', { name: /сторис/i })).not.toBeInTheDocument()
+  expect(within(screen.getByRole('article', { name: 'Сама сторис' })).queryByRole('button', { name: /в сторис|повторить сторис/i })).not.toBeInTheDocument()
+  expect(within(screen.getByRole('article', { name: 'Ещё в плане' })).queryByRole('button', { name: /в сторис|повторить сторис/i })).not.toBeInTheDocument()
 
   await user.click(within(failed).getByRole('button', { name: 'Повторить сторис' }))
   expect(await within(failed).findByText('✓ в сторис')).toBeInTheDocument()
@@ -486,7 +502,7 @@ test('сторис после поста: «✓ в сторис», ошибка 
 
   // Галочку сняли — сторис не было: выложить вручную
   const none = screen.getByRole('article', { name: 'Без сторис' })
-  await user.click(within(none).getByRole('button', { name: '📤 В сторис' }))
+  await user.click(within(none).getByRole('button', { name: 'В сторис' }))
   expect(await within(none).findByText('✓ в сторис')).toBeInTheDocument()
   expect(calls).toEqual(['2', '3'])
 })
@@ -558,7 +574,7 @@ test('«Сторис — автоматически»: выключена по �
   expect(screen.getByRole('checkbox', { name: 'Рилсы — автоматически' })).not.toBeChecked()
 })
 
-test('опубликованный пост со ссылкой — «📲 В сторис со ссылкой на пост» открывает пост через openLink, с подсказкой', async () => {
+test('опубликованный пост со ссылкой — «⋯ → В сторис со ссылкой на пост» открывает пост через openLink, с подсказкой', async () => {
   const link = 'https://www.instagram.com/p/T1/'
   const posts = [
     post(1, { status: 'DONE', instagramMediaId: 'm1', instagramUrl: link, kind: 'POST', title: 'Со ссылкой', images: ['/content/a.png'] }),
@@ -575,23 +591,25 @@ test('опубликованный пост со ссылкой — «📲 В с
   await user.click(await screen.findByRole('button', { name: /^Все/ }))
 
   const card = await screen.findByRole('article', { name: 'Со ссылкой' })
-  const share = within(card).getByRole('link', { name: '📲 В сторис со ссылкой на пост' })
-  expect(share).toHaveAttribute('href', link)
   expect(card).toHaveTextContent('Чтобы сторис вела в пост: откройте пост, нажмите ➤ под ним → «Добавить в историю»')
-  await user.click(share)
+  await pick(user, card, 'В сторис со ссылкой на пост ↗')
   // Вне Telegram openLink — новое окно; в Telegram — Telegram.WebApp.openLink (браузер или приложение Instagram)
   expect(opened).toHaveBeenCalledWith(link, '_blank', 'noopener')
 
-  // Нет ссылки от Instagram или пост сам сторис — кнопки и подсказки нет
+  // Нет ссылки от Instagram или пост сам сторис — пункта и подсказки нет
   for (const name of ['Без ссылки', 'Сама сторис']) {
     const other = screen.getByRole('article', { name })
-    expect(within(other).queryByRole('link', { name: /В сторис со ссылкой/ })).not.toBeInTheDocument()
+    await user.click(within(other).getByRole('button', { name: /^Ещё: / }))
+    expect(within(other).queryByRole('menuitem', { name: /В сторис со ссылкой/ })).not.toBeInTheDocument()
     expect(other).not.toHaveTextContent('Добавить в историю')
   }
+  // Сторис-пост со ссылкой — главное «Открыть в Instagram ↗»
+  expect(within(screen.getByRole('article', { name: 'Сама сторис' })).getByRole('link', { name: 'Открыть в Instagram ↗' }))
+    .toHaveAttribute('href', 'https://www.instagram.com/stories/x/')
   opened.mockRestore()
 })
 
-test('медиа удалено после публикации: вместо картинок и видео — ссылка «смотреть в Instagram ↗», без публикации и сторис', async () => {
+test('медиа удалено после публикации: вместо картинок и видео — главная — «Открыть в Instagram ↗», без публикации и сторис', async () => {
   const link = 'https://www.instagram.com/p/T9/'
   const removedAt = '2026-11-10T00:00:00Z'
   server.use(
@@ -609,13 +627,13 @@ test('медиа удалено после публикации: вместо к
 
   const carousel = await screen.findByRole('article', { name: 'Старая карусель' })
   expect(carousel).toHaveTextContent('Медиа удалено с сервера после публикации')
-  expect(within(carousel).getByRole('link', { name: 'смотреть в Instagram ↗' })).toHaveAttribute('href', link)
+  expect(within(carousel).getByRole('link', { name: 'Открыть в Instagram ↗' })).toHaveAttribute('href', link)
   expect(within(carousel).queryByRole('img')).not.toBeInTheDocument()
   expect(carousel).toHaveTextContent('Текст поста')
   expect(within(carousel).queryByRole('button', { name: /В сторис/ })).not.toBeInTheDocument()
 
   const reel = screen.getByRole('article', { name: 'Старый рилс' })
-  expect(within(reel).getByRole('link', { name: 'смотреть в Instagram ↗' })).toHaveAttribute('href', link + 'r')
+  expect(within(reel).getByRole('link', { name: 'Открыть в Instagram ↗' })).toHaveAttribute('href', link + 'r')
   expect(reel).not.toHaveTextContent('Видео рилса нет на сервере')
   expect(reel.querySelector('video')).toBeNull()
 
@@ -628,4 +646,38 @@ test('медиа удалено после публикации: вместо к
   const fresh = screen.getByRole('article', { name: 'Свежий' })
   expect(within(fresh).getByRole('img')).toHaveAttribute('src', '/content/c.png')
   expect(fresh).not.toHaveTextContent('Медиа удалено')
+})
+
+test('карточка поста — одна главная кнопка по состоянию, остальное — в «⋯»', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
+    http.get('*/api/platform/content', () => HttpResponse.json([
+      post(1, { kind: 'POST', title: 'Готов к публикации', images: ['/content/a.png'] }),
+      post(2, { status: 'DONE', instagramMediaId: 'm2', instagramUrl: 'https://www.instagram.com/p/A2/', kind: 'POST', title: 'Выложен', images: ['/content/b.png'] }),
+      post(3, { status: 'DONE', instagramMediaId: 'm3', instagramUrl: 'https://www.instagram.com/p/A3/', kind: 'POST', title: 'И в сторис', images: ['/content/c.png'], storyMediaId: 's3' }),
+      post(4, { kind: 'REELS', title: 'Рилс без видео' }),
+      post(5, { status: 'SKIPPED', kind: 'POST', title: 'Пропущенный' }),
+    ])),
+  )
+  const user = await openTab()
+  await user.click(await screen.findByRole('button', { name: /^Все/ }))
+  const main = (name: string) => mainActions(screen.getByRole('article', { name }))
+  await screen.findByRole('article', { name: 'Готов к публикации' })
+  expect(main('Готов к публикации')).toEqual(['Опубликовать в Instagram'])
+  expect(main('Выложен')).toEqual(['В сторис'])
+  expect(main('И в сторис')).toEqual(['Открыть в Instagram ↗'])
+  // Instagram подключён, но публиковать нечего — отметить руками
+  expect(main('Рилс без видео')).toEqual(['Опубликовал'])
+  // Пропущенный — тихая «Вернуть в план», без залитой
+  expect(main('Пропущенный')).toEqual([])
+  expect(within(screen.getByRole('article', { name: 'Пропущенный' })).getByRole('button', { name: 'Вернуть в план' })).toBeInTheDocument()
+
+  // Семи кнопок больше нет: у поста в плане — одна кнопка и «⋯»
+  const card = screen.getByRole('article', { name: 'Готов к публикации' })
+  expect(within(card.querySelector('.content-actions') as HTMLElement).getAllByRole('button').map((b) => b.textContent))
+    .toEqual(['Опубликовать в Instagram', '⋯'])
+  await user.click(within(card).getByRole('button', { name: 'Ещё: Готов к публикации' }))
+  expect(within(card).getAllByRole('menuitem').map((i) => i.textContent))
+    .toEqual(['Опубликовал', 'На завтра', 'Пропустить', 'Прислать в бот', 'Изменить', 'Удалить'])
 })

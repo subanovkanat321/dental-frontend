@@ -143,3 +143,35 @@ test('пилоты: «Платят 0» и MRR 0, будущие деньги —
 
   expect(screen.queryByRole('combobox', { name: 'Город' })).not.toBeInTheDocument()
 })
+
+test('строки «Кому звонить» и «Кто может уйти» открывают «Клиники» с карточкой этой клиники', async () => {
+  const row = (id: number, name: string) => ({
+    id, name, code: `c${id}`, doctors: 1, staff: 1, patients: 3, appointments: 4, done30: 3, noShow30: 0, health: 'OK', billing: { state: 'FREE' },
+    bookedWeek: 0, selfBooked30: 0, unmarked: 0, hidden: false, listed: true, settingUp: false,
+  }) satisfies Schemas['PlatformServiceClinicRow']
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: true, platform: true })),
+    http.get('*/api/platform/analytics', () => HttpResponse.json(report(30))),
+    http.get('*/api/platform/clinics', () => HttpResponse.json([row(2, 'Жемчуг'), row(3, 'Белый зуб')])),
+    http.get('*/api/platform/clinics/:id/agreement', () => HttpResponse.json({ scans: [] })),
+    http.get('*/api/platform/clinics/:id/plan', () => HttpResponse.json({ billing: { state: 'FREE' }, doctors: 1, payments: [] })),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Аналитика'))
+  // Нажатие по строке (не по названию) — вся строка кликабельна
+  const due = await screen.findByRole('table', { name: 'Оплата: кому звонить' })
+  await user.click(within(due).getByText('через 17 дн.', { exact: false }))
+  expect(window.location.hash).toBe('#/platform/clinics/2')
+  let panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
+  expect(within(panel).getByRole('heading', { name: 'Жемчуг' })).toBeInTheDocument()
+
+  // Назад в аналитику — и название в «Кто может уйти» (кнопка для клавиатуры) ведёт туда же
+  window.history.back()
+  await user.click(await findSub('Аналитика'))
+  const risk = await screen.findByRole('table', { name: 'Клиники в зоне риска' })
+  await user.click(within(risk).getByRole('button', { name: /Белый зуб/ }))
+  expect(window.location.hash).toBe('#/platform/clinics/3')
+  panel = await screen.findByRole('complementary', { name: 'Клиника на платформе' })
+  expect(within(panel).getByRole('heading', { name: 'Белый зуб' })).toBeInTheDocument()
+})

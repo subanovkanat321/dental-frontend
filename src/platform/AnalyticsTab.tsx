@@ -10,6 +10,8 @@ import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
 import { HeadTools } from '../layout/PageHead'
+import { rowOpen } from '../lib/rowClick'
+import { openPlatformClinic } from '../lib/route'
 
 type Analytics = Schemas['PlatformAnalyticsAnalytics']
 
@@ -163,6 +165,11 @@ function dueText(d: Schemas['PlatformAnalyticsDue']): string {
   return left < 0 ? `${-left} дн. назад` : left === 0 ? 'сегодня' : `через ${left} дн.`
 }
 
+/** Название клиники в строке — настоящая кнопка (Tab, скринридер); вся строка открывает то же (rowOpen). */
+function ClinicLink({ id, name }: { id: number; name?: string }) {
+  return <button type="button" className="row-link open-link" onClick={() => openPlatformClinic(id)}>{name}<span aria-hidden="true"> ›</span></button>
+}
+
 /** Кому звонить про оплату: пилот или оплата кончаются в 30 дней, или уже просрочено. */
 function DueBlock({ a }: { a: Analytics }) {
   const due = a.money?.due ?? []
@@ -179,8 +186,9 @@ function DueBlock({ a }: { a: Analytics }) {
               {due.map((d) => {
                 const [title, tone] = DUE[d.kind ?? ''] ?? ['', '']
                 return (
-                  <tr key={d.clinicId}>
-                    <td>{d.name}<span className="hint"> · {d.city}</span></td>
+                  // Вся строка — карточка клиники в «Клиниках» (#/platform/clinics/<id>): оплата, позвонить руководителю
+                  <tr key={d.clinicId} {...rowOpen(() => openPlatformClinic(d.clinicId))}>
+                    <td><ClinicLink id={d.clinicId} name={d.name} /><span className="hint"> · {d.city}</span></td>
                     <td className={tone}>{title}{d.payPending ? <span className="hint"> · сообщила об оплате</span> : null}</td>
                     <td className="nowrap">{d.date ? shortDate(d.date) : ''}<span className="hint"> · {dueText(d)}</span></td>
                     <td className="nowrap">{d.tariff}<span className="hint"> · {somText(d.monthSom)}</span></td>
@@ -211,8 +219,8 @@ function RiskBlock({ a }: { a: Analytics }) {
             <thead><tr><th>Клиника</th><th>Почему</th><th className="r" title="Приёмов за последние 14 дней / за 14 дней до них">Приёмов: 14 дн. / прежние 14</th></tr></thead>
             <tbody>
               {risks.map((r) => (
-                <tr key={r.clinicId}>
-                  <td>{r.name}<span className="hint"> · {r.city} · {PLAN[r.plan ?? '']}</span></td>
+                <tr key={r.clinicId} {...rowOpen(() => openPlatformClinic(r.clinicId))}>
+                  <td><ClinicLink id={r.clinicId} name={r.name} /><span className="hint"> · {r.city} · {PLAN[r.plan ?? '']}</span></td>
                   <td className="tone-bad">{(r.reasons ?? []).map((x) => x.text).join('; ')}</td>
                   <td className="r num nowrap">{r.last14} / {r.prev14}</td>
                 </tr>

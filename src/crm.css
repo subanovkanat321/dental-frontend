@@ -2564,3 +2564,8 @@ p.expense-owner { display: block; }
   .materials-card-body .actions .btn, .materials-list .actions .btn { min-height: 40px; }
 }
 .outreach-lead > strong .hint { font-weight: 400; }
+
+/* «Платформа → Клиники»: оплаты и заявки — спокойный список; больше трёх — «Ещё N» под ним, слева */
+.inbox-more { justify-self: start; }
+/* «Настройки» платформы: строка-ссылка на вкладку «Тарифы» вместо дубля цен */
+.settings-more { margin: 0; padding: 12px 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }

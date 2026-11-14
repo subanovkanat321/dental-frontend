@@ -98,6 +98,26 @@ export function weekPersonInHash(): string | null {
   return name === 'clinic' && item === 'hours' && person && /^[ds]-?\d+$/.test(person) ? person : null
 }
 
+/**
+ * «Платформа → Клиники» с открытой карточкой клиники: #/platform/clinics/12. Строки «Аналитики» («Кому звонить»,
+ * «Кто может уйти») ведут сюда — новой записью: «Назад» вернёт в аналитику.
+ */
+export function openPlatformClinic(id: number): void {
+  window.location.hash = `/platform/clinics/${id}`
+}
+
+/** Чью карточку клиники открыть по адресу (#/platform/clinics/12 → 12); иначе null. */
+export function platformClinicInHash(): number | null {
+  const [name, item, id] = window.location.hash.replace(/^#\/?/, '').split('/')
+  return name === 'platform' && item === 'clinics' && id && /^\d+$/.test(id) ? Number(id) : null
+}
+
+/** Карточку закрыли — адрес снова просто «Клиники» (заменой: без лишнего шага «назад»). */
+export function clearPlatformClinic(): void {
+  if (platformClinicInHash() == null) return
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#/platform/clinics`)
+}
+
 /** Пункт блока «Я» (#/me/profile) или «Помощи» (#/help/guide) — новой записью: «‹ Назад» вернёт, откуда открыли. */
 export function openMine(page: 'me' | 'help', item: string): void {
   go(`/${page}/${item}`, true)

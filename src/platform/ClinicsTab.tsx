@@ -1,6 +1,6 @@
 import { ask } from '../lib/confirm'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { agoText } from '../lib/texts'
@@ -17,6 +17,9 @@ import { ALL, cityChips, cityKey, nameMatches, UNSIGNED, useClinicFilter } from 
 import { NewClinicPanel } from './NewClinicPanel'
 import { EmptyState } from '../layout/EmptyState'
 import { HelpHint } from '../help/HelpHint'
+import { CalmRow, RowMenu, type MenuItem } from '../patients/CalmList'
+import { clearPlatformClinic, platformClinicInHash } from '../lib/route'
+import { openLink, telegram } from '../lib/telegram'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -38,7 +41,22 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
     setOpenedState(next)
     onPanel(next != null)
   }, [onPanel])
-  const close = useCallback(() => setOpened(null), [setOpened])
+  const close = useCallback(() => {
+    setOpened(null)
+    clearPlatformClinic()
+  }, [setOpened])
+  // Адрес с клиникой (#/platform/clinics/12 — строки «Аналитики») открывает её карточку: при входе и при смене адреса
+  useEffect(() => {
+    const sync = () => {
+      const id = platformClinicInHash()
+      if (id == null) return
+      setCreatingState(false)
+      setOpened({ id })
+    }
+    sync()
+    window.addEventListener('hashchange', sync)
+    return () => window.removeEventListener('hashchange', sync)
+  }, [setOpened])
   const [creating, setCreatingState] = useState(false)
   const setCreating = useCallback((next: boolean) => {
     setCreatingState(next)
@@ -109,17 +127,17 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
     <>
       <section className="schedule-main">
         {header}
+        {/* Оплаты и заявки — спокойным списком под шапкой (как «Пациенты»): строка, одно действие и «⋯»;
+            больше трёх — свёрнуты, чтобы «＋ Создать клинику» и сами клиники не уезжали вниз */}
         {pending.length > 0 && (
-          <section className="card-block">
-            <h2>Оплаты на проверке · {pending.length}</h2>
-            {pending.map((r) => <PayRequest key={r.id} r={r} />)}
-          </section>
+          <Inbox title="Оплаты на проверке" label="Оплаты на проверке" count={pending.length}>
+            {(n) => pending.slice(0, n).map((r) => <PayRequest key={r.id} r={r} />)}
+          </Inbox>
         )}
         {(applications.data?.length ?? 0) > 0 && (
-          <section className="card-block">
-            <h2>Заявки · {applications.data!.length}</h2>
-            {applications.data!.map((a) => <Application key={a.id} a={a} onApproved={(id, invite) => setOpened({ id, invite })} />)}
-          </section>
+          <Inbox title="Заявки" label="Заявки с /join" count={applications.data!.length}>
+            {(n) => applications.data!.slice(0, n).map((a) => <Application key={a.id} a={a} onApproved={(id, invite) => setOpened({ id, invite })} />)}
+          </Inbox>
         )}
         {/* Что здесь — в «?» у заголовка, а не абзацем над списком */}
         <SubHelp title="Клиники">{owner ? 'Все клиники приложения. Нажмите на клинику: оплата, договор, пригласить её руководителя или войти в неё самому.'
@@ -188,10 +206,35 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
   )
 }
 
+/** Сколько строк оплат и заявок видно сразу; остальные — под «Ещё N». */
+const INBOX_SHOWN = 3
+
+/** Блок входящих (оплаты, заявки): заголовок с числом и спокойный список; больше трёх — «Ещё N». */
+function Inbox({ title, label, count, children }: { title: string; label: string; count: number; children: (shown: number) => ReactNode }) {
+  const [all, setAll] = useState(false)
+  const shown = all || count <= INBOX_SHOWN ? count : INBOX_SHOWN
+  return (
+    <section className="card-block" aria-label={label}>
+      <h2>{title}<span className="hint num"> · {count}</span></h2>
+      <ul className="calm-list" aria-label={label}>{children(shown)}</ul>
+      {shown < count && (
+        <button type="button" className="btn ghost small inbox-more" onClick={() => setAll(true)}>Ещё {count - shown}</button>
+      )}
+    </section>
+  )
+}
+
+/** Позвонить с компьютера или телефона; в Telegram tel: молчит — своя страница звонка (номер во фрагменте #). */
+function dial(phone: string): void {
+  if (telegram()) openLink(`${window.location.origin}/call.html#${phone}`)
+  else window.location.href = `tel:+${phone}`
+}
+
 /** Клиника сообщила об оплате: сверить с банком, подтвердить (срок продлится) или отклонить с причиной. */
 function PayRequest({ r }: { r: Schemas['PayRequestsRequest'] }) {
   const client = useQueryClient()
   const [reason, setReason] = useState('')
+  const [rejecting, setRejecting] = useState(false)
   const [done, setDone] = useState('')
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['platform-pay-requests'] })
@@ -210,30 +253,37 @@ function PayRequest({ r }: { r: Schemas['PayRequestsRequest'] }) {
     onSuccess: () => setDone('Чек отправлен в чат с ботом'),
   })
   const error = confirm.error ?? reject.error ?? receipt.error
+  const items: MenuItem[] = [
+    ...(r.hasReceipt ? [{ label: 'Чек — в бот', disabled: receipt.isPending, onSelect: () => receipt.mutate() }] : []),
+    { label: 'Денег нет — отклонить', tone: 'bad', onSelect: () => setRejecting(true) },
+  ]
   return (
-    <div className="sub-form form" role="group" aria-label={`Оплата: ${r.clinicName}`}>
-      <strong>{r.clinicName}</strong>
-      <span>{somText(r.amountSom)} за {(PAY_PERIOD_TEXT[r.months] ?? `${r.months} мес`).toLowerCase()} · тариф «{r.tariff}»</span>
-      <span className="hint">Сообщили {r.createdAt ? `${shortDate(r.createdAt)} в ${timeOf(r.createdAt)}` : ''}{r.hasReceipt ? '' : ' · без чека'}</span>
-      <div className="actions">
-        <button type="button" className="btn primary" disabled={confirm.isPending} onClick={() => confirm.mutate()}>Деньги пришли — подтвердить</button>
-        {r.hasReceipt && <button type="button" className="btn" disabled={receipt.isPending} onClick={() => receipt.mutate()}>Чек — в бот</button>}
-      </div>
-      <details>
-        <summary>Денег нет — отклонить</summary>
-        <div className="form">
+    <CalmRow open={null} name={r.clinicName}
+      sub={[`${somText(r.amountSom)} за ${(PAY_PERIOD_TEXT[r.months] ?? `${r.months} мес`).toLowerCase()}`, `тариф «${r.tariff}»`,
+        r.createdAt ? `сообщили ${shortDate(r.createdAt)} в ${timeOf(r.createdAt)}` : null, r.hasReceipt ? null : 'без чека'].filter(Boolean).join(' · ')}
+      action={<button type="button" className="btn" disabled={confirm.isPending}
+        onClick={() => void ask(`Деньги от «${r.clinicName}» пришли? Срок оплаты продлится.`, { ok: 'Подтвердить' }).then((ok) => ok && confirm.mutate())}>Деньги пришли</button>}
+      menu={<RowMenu label={`Ещё: ${r.clinicName}`} items={items} />}>
+      {rejecting && (
+        <div className="form" role="group" aria-label={`Отклонить оплату: ${r.clinicName}`}>
           <label className="field"><span>Причина — клиника увидит её</span>
             <input value={reason} maxLength={300} placeholder="Перевода нет / сумма другая" onChange={(e) => setReason(e.target.value)} /></label>
-          <button type="button" className="btn" disabled={reject.isPending} onClick={() => reject.mutate()}>Отклонить</button>
+          <div className="actions">
+            <button type="button" className="btn danger" disabled={reject.isPending} onClick={() => reject.mutate()}>Отклонить</button>
+            <button type="button" className="btn ghost" onClick={() => setRejecting(false)}>Отмена</button>
+          </div>
         </div>
-      </details>
+      )}
       {error && <p className="error" role="alert">{error.message}</p>}
       {done && <p className="tone-ok" role="status">{done}</p>}
-    </div>
+    </CalmRow>
   )
 }
 
-/** Заявка с /join: кто, откуда, контакт; одобрить — завести клинику и сразу пригласить админа. */
+/**
+ * Заявка с /join — строкой: название, серым — кто и откуда (частный врач, город, контакт, дата); «Одобрить» —
+ * завести клинику и сразу открыть её карточку с приглашением админа; связаться и отклонить — в «⋯».
+ */
 function Application({ a, onApproved }: { a: Schemas['ClinicApplicationsApplicationView']; onApproved: (id: number, invite: { name: string; solo: boolean }) => void }) {
   const client = useQueryClient()
   const refresh = () => Promise.all([
@@ -249,22 +299,24 @@ function Application({ a, onApproved }: { a: Schemas['ClinicApplicationsApplicat
     onSuccess: () => void refresh(),
   })
   const error = approve.error ?? reject.error
+  // Серая строка — только то, что есть: без телефона не висит точка в конце
+  const sub = [a.solo ? 'частный врач' : null, a.city, a.doctors ? `врачей: ${a.doctors}` : null, a.contactName,
+    a.phone ? formatPhone(a.phone) : null, a.createdAt ? shortDate(a.createdAt, true) : null].filter(Boolean).join(' · ')
+  const items: MenuItem[] = [
+    ...(a.phone ? [
+      { label: 'Позвонить', onSelect: () => dial(a.phone!) },
+      { label: 'Написать в WhatsApp', onSelect: () => openLink(`https://wa.me/${a.phone}`) },
+    ] : []),
+    ...(a.telegram ? [{ label: `Telegram @${a.telegram}`, onSelect: () => openLink(`https://t.me/${a.telegram}`) }] : []),
+    { label: 'Отклонить заявку', tone: 'bad', disabled: reject.isPending,
+      onSelect: () => void ask(`Отклонить заявку «${a.clinicName}»?`).then((ok) => ok && reject.mutate()) },
+  ]
   return (
-    <div className="sub-form form" role="group" aria-label={`Заявка: ${a.clinicName}`}>
-      <strong>{a.clinicName}</strong>
-      <span className="hint">{[a.solo ? 'частный врач' : null, a.city, a.doctors ? `врачей: ${a.doctors}` : null, a.createdAt ? shortDate(a.createdAt, true) : null].filter(Boolean).join(' · ')}</span>
-      {/* Контакты — через «·» только между тем, что есть: без телефона не висит точка в конце */}
-      {(a.contactName || a.phone || a.telegram) && <span>{[
-        a.contactName ? <span key="n">{a.contactName}</span> : null,
-        a.phone ? <a key="p" href={`tel:+${a.phone}`}>{formatPhone(a.phone)}</a> : null,
-        a.telegram ? <a key="t" href={`https://t.me/${a.telegram}`} target="_blank" rel="noopener noreferrer">@{a.telegram}</a> : null,
-      ].filter(Boolean).flatMap((el, i) => i ? [' · ', el] : [el])}</span>}
-      {a.message && <span className="hint">{a.message}</span>}
-      <div className="actions">
-        <button type="button" className="btn primary" disabled={approve.isPending} onClick={() => approve.mutate()}>Одобрить и завести клинику</button>
-        <button type="button" className="btn" disabled={reject.isPending} onClick={() => void ask(`Отклонить заявку «${a.clinicName}»?`).then((ok) => ok && reject.mutate())}>Отклонить</button>
-      </div>
+    <CalmRow open={null} name={a.clinicName} sub={sub}
+      action={<button type="button" className="btn" disabled={approve.isPending} onClick={() => approve.mutate()}>Одобрить</button>}
+      menu={<RowMenu label={`Ещё: ${a.clinicName}`} items={items} />}>
+      {a.message && <p className="hint">«{a.message}»</p>}
       {error && <p className="error" role="alert">{error.message}</p>}
-    </div>
+    </CalmRow>
   )
 }

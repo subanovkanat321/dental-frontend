@@ -15,6 +15,7 @@ import { Loading, Spinner } from '../layout/Loading'
 import { inTelegram, openLink } from '../lib/telegram'
 import { HeadTools } from '../layout/PageHead'
 import { HelpHint } from '../help/HelpHint'
+import { RowMenu } from '../patients/CalmList'
 
 type Post = Schemas['ContentPostsPost']
 type Draft = Schemas['ContentPostsDraft']
@@ -313,6 +314,16 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
   const canStory = instagram && storyable && !post.storyMediaId && !storyBusy && !removed
   // Сторис со ссылкой на пост — только руками в приложении Instagram: открываем пост, там ➤ → «Добавить в историю»
   const shareUrl = post.kind !== 'STORIES' && /^https?:\/\//i.test(post.instagramUrl ?? '') ? post.instagramUrl! : null
+  const storyLabel = post.storyError ? 'Повторить сторис' : 'В сторис'
+  const askPublish = () => void ask(reel
+    ? `Опубликовать рилс «${post.title}» в Instagram? Он выйдет, как только Instagram обработает видео (до 5 минут); итог придёт в Telegram.`
+    : `Опубликовать «${post.title}» в Instagram? Пост выйдет сразу.`).then((ok) => ok && publish.mutate())
+  // Главное действие — следующий шаг поста: выложить → сторис → посмотреть; без Instagram — отметить руками
+  const main: 'publish' | 'story' | 'open' | 'done' | 'plan' | null = canPublish ? 'publish'
+    : canStory ? 'story'
+      : post.instagramUrl ? 'open'
+        : post.status === 'PLANNED' ? (post.instagramPublishing ? null : 'done')
+          : post.status === 'SKIPPED' ? 'plan' : null
   return (
     <article className={date === today ? 'content-post today' : 'content-post'} aria-label={post.title}>
       <header className="content-head">
@@ -320,9 +331,7 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
         <span className="chip small s-request">{KINDS[post.kind ?? 'POST']}</span>
         <span className={`chip small ${cls}`}>{status}</span>
         {late && <span className="tone-bad">не опубликован</span>}
-        {post.instagramUrl
-          ? <a className="chip small s-ok" href={post.instagramUrl} target="_blank" rel="noreferrer">В Instagram ↗</a>
-          : post.instagramMediaId && <span className="chip small s-ok">В Instagram</span>}
+        {(post.instagramUrl || post.instagramMediaId) && <span className="chip small s-ok">В Instagram</span>}
         {post.instagramPublishing && <span className="chip small s-wait" role="status"><Spinner />Публикуется в Instagram</span>}
         {storyable && post.storyMediaId && <span className="chip small s-ok">✓ в сторис</span>}
         {storyable && storyBusy && <span className="chip small s-wait" role="status"><Spinner />Выкладывается в сторис</span>}
@@ -338,9 +347,8 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
       )}
       {removed && (
         <p className="hint">
-          Медиа удалено с сервера после публикации{post.instagramUrl
-            ? <> — <a href={post.instagramUrl} target="_blank" rel="noreferrer">смотреть в Instagram ↗</a></>
-            : ' — оно в Instagram'}
+          {/* Ссылка на пост — главной кнопкой «Открыть в Instagram ↗» ниже */}
+          Медиа удалено с сервера после публикации — оно в Instagram
         </p>
       )}
       {!removed && reel && (post.videoUrl
@@ -363,37 +371,41 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
         </div>
       )}
       {post.note && <p className="hint"><b>{post.kind === 'REELS' ? 'Что снять: ' : 'Заметка: '}</b>{post.note}</p>}
-      <div className="actions">
-        {canPublish && (
-          <button type="button" className="btn small primary" disabled={publish.isPending}
-            onClick={() => void ask(reel
-              ? `Опубликовать рилс «${post.title}» в Instagram? Он выйдет, как только Instagram обработает видео (до 5 минут); итог придёт в Telegram.`
-              : `Опубликовать «${post.title}» в Instagram? Пост выйдет сразу.`).then((ok) => ok && publish.mutate())}>
+      {/* Одна главная кнопка по состоянию поста, остальное — в «⋯» (DESIGN.md: одна залитая кнопка на карточку);
+          раньше — сетка из семи кнопок */}
+      <div className="actions content-actions">
+        {main === 'publish' && (
+          <button type="button" className="btn small primary" disabled={publish.isPending} onClick={askPublish}>
             {publish.isPending ? <><Spinner />Публикую…</> : 'Опубликовать в Instagram'}
           </button>
         )}
-        {shareUrl && (
-          <a className="btn small" href={shareUrl} target="_blank" rel="noreferrer"
-            onClick={(e) => { e.preventDefault(); openLink(shareUrl) }}>📲 В сторис со ссылкой на пост</a>
+        {main === 'story' && (
+          <button type="button" className="btn small primary" onClick={() => story.mutate()}>{storyLabel}</button>
         )}
-        {canStory && (
-          <button type="button" className="btn small" onClick={() => story.mutate()}>
-            {post.storyError ? 'Повторить сторис' : '📤 В сторис'}
-          </button>
+        {main === 'open' && (
+          <a className="btn small primary" href={post.instagramUrl!} target="_blank" rel="noreferrer">Открыть в Instagram ↗</a>
         )}
-        {post.status === 'PLANNED' ? (
-          <>
-            <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('done')}>Опубликовал</button>
-            <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('postpone')}>На завтра</button>
-            <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('skip')}>Пропустить</button>
-          </>
-        ) : <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('plan')}>Вернуть в план</button>}
-        <button type="button" className="btn small" disabled={toBot.isPending} onClick={() => toBot.mutate()}>
-          {toBot.isPending ? <><Spinner />Отправляю…</> : '📲 Прислать в бот'}
-        </button>
-        <button type="button" className="btn small" onClick={onEdit}>Изменить</button>
-        <button type="button" className="btn small danger" disabled={action.isPending}
-          onClick={() => void ask(`Удалить «${post.title}» из плана?`).then((ok) => ok && action.mutate('delete'))}>Удалить</button>
+        {main === 'done' && (
+          <button type="button" className="btn small primary" disabled={action.isPending} onClick={() => action.mutate('done')}>Опубликовал</button>
+        )}
+        {main === 'plan' && (
+          <button type="button" className="btn small" disabled={action.isPending} onClick={() => action.mutate('plan')}>Вернуть в план</button>
+        )}
+        <RowMenu label={`Ещё: ${post.title ?? 'пост'}`} items={[
+          ...(canPublish && main !== 'publish' ? [{ label: 'Опубликовать в Instagram', disabled: publish.isPending, onSelect: askPublish }] : []),
+          ...(canStory && main !== 'story' ? [{ label: storyLabel, onSelect: () => story.mutate() }] : []),
+          ...(shareUrl ? [{ label: 'В сторис со ссылкой на пост ↗', onSelect: () => openLink(shareUrl) }] : []),
+          ...(post.instagramUrl && main !== 'open' ? [{ label: 'Открыть в Instagram ↗', onSelect: () => openLink(post.instagramUrl!) }] : []),
+          ...(post.status === 'PLANNED' ? [
+            ...(main !== 'done' ? [{ label: 'Опубликовал', disabled: action.isPending, onSelect: () => action.mutate('done') }] : []),
+            { label: 'На завтра', disabled: action.isPending, onSelect: () => action.mutate('postpone') },
+            { label: 'Пропустить', disabled: action.isPending, onSelect: () => action.mutate('skip') },
+          ] : main !== 'plan' ? [{ label: 'Вернуть в план', disabled: action.isPending, onSelect: () => action.mutate('plan') }] : []),
+          { label: toBot.isPending ? 'Отправляю в бот…' : 'Прислать в бот', disabled: toBot.isPending, onSelect: () => toBot.mutate() },
+          { label: 'Изменить', onSelect: onEdit },
+          { label: 'Удалить', tone: 'bad' as const, disabled: action.isPending,
+            onSelect: () => void ask(`Удалить «${post.title}» из плана?`).then((ok) => ok && action.mutate('delete')) },
+        ]} />
       </div>
       {shareUrl && <p className="hint">Чтобы сторис вела в пост: откройте пост, нажмите ➤ под ним → «Добавить в историю»</p>}
       {action.error && <p className="error" role="alert">{action.error.message}</p>}
