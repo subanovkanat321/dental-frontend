@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { ROLES, chaptersFor, howToUrl, imageSize, type GuideImage, type GuideRole } from './guide/content'
+import { CHAPTER_ALIAS, ROLES, chaptersFor, howToUrl, sectionId, type GuideRole } from './guide/content'
+import { Figure } from './guide/Figure'
 import { SiteHeader } from './SiteHeader'
 import './guide/guide.css'
 
@@ -49,7 +50,8 @@ export function Guide() {
   useEffect(() => {
     document.title = 'Руководство Tish — как работать в CRM'
     // Пришли по ссылке на главу (#kassa) — к ней, когда страница нарисовалась
-    const id = window.location.hash.slice(1)
+    const hash = window.location.hash.slice(1)
+    const id = CHAPTER_ALIAS[hash] ?? hash
     if (id) setTimeout(() => document.getElementById(id)?.scrollIntoView(), 0)
   }, [])
   const choose = (next: GuideRole | null) => {
@@ -101,7 +103,7 @@ export function Guide() {
               <h2 id={`${c.id}-title`}><span className="manual-num">{i + 1}.</span> {c.title}</h2>
               <p className="manual-intro">{c.intro}</p>
               {c.sections.map((s) => (
-                <article key={s.title} id={s.id} className="manual-section" aria-label={s.title}>
+                <article key={s.title} id={sectionId(s)} className="manual-section" aria-label={s.title}>
                   <h3>{s.title}</h3>
                   {s.text && <p>{s.text}</p>}
                   {s.steps.length > 0 && <ol className="manual-steps">{s.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
@@ -117,29 +119,10 @@ export function Guide() {
       </div>
 
       <footer className="site-footer manual-footer">
-        Не нашли ответа? В CRM: «Настройки» → «Помощь» — помощник ответит сразу, или «Техподдержка» — команда Tish.
+        Не нашли ответа? В Tish: «Помощь» → «Спросить помощника» — ответит сразу, или «Написать в Tish» — команде Tish.
         <br /><a href="/login">Вход для клиники</a> · © {new Date().getFullYear()} Tish
       </footer>
     </main>
-  )
-}
-
-/**
- * Картинка с подписью. Не шире своего размера: маленький снимок кнопки не растягивается на всю
- * колонку; снимок телефона (×2) — в половину своих пикселей, как на экране телефона.
- */
-function Figure({ image, eager = false }: { image: GuideImage; eager?: boolean }) {
-  const size = imageSize(image.src)
-  const maxWidth = size.width ? size.width / (image.phone ? 2 : 1) : undefined
-  const url = `${import.meta.env.BASE_URL}guide/${image.src}`
-  return (
-    <figure className={image.phone ? 'manual-figure phone' : 'manual-figure'} style={{ maxWidth }}>
-      {/* Нажать — картинка целиком в новой вкладке: на телефоне снимок компьютера мелкий */}
-      <a href={url} target="_blank" rel="noopener noreferrer">
-        <img src={url} alt={image.alt} loading={eager ? 'eager' : 'lazy'} decoding="async" {...size} />
-      </a>
-      <figcaption>{image.caption}</figcaption>
-    </figure>
   )
 }
 
@@ -162,7 +145,7 @@ function GuidePrint({ role, roleTitle }: { role: GuideRole | null; roleTitle?: s
         <img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} />
         <h1>Инструкция Tish для клиники</h1>
         <p className="manual-cover-role">{roleTitle ? `Для роли: ${roleTitle}` : 'Для всех сотрудников: руководитель, регистратура, врач, ассистент'}</p>
-        <p className="hint">Версия от {today}. Свежая версия с поиском — tish.kg/guide. Вопросы — «Настройки → Техподдержка» в Tish.</p>
+        <p className="hint">Версия от {today}. Свежая версия с поиском — tish.kg/guide. Вопросы — «Помощь → Написать в Tish» в Tish.</p>
       </header>
       <nav className="manual-toc" aria-label="Оглавление">
         <h2>Оглавление</h2>

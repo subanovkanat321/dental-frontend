@@ -9197,6 +9197,10 @@ export interface components {
             title: string;
             video: string;
             poster?: string;
+            section: string;
+            lead: string;
+            /** Format: int32 */
+            seconds?: number;
         };
         TelegramLoginControllerStatus: {
             /** @enum {string} */

@@ -7,7 +7,7 @@ import { shortDate, timeOf } from '../lib/time'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { useClose } from '../lib/useClose'
 import { ticketForm } from './tickets'
-import { TICKET_KINDS, TICKET_STATUS } from './texts'
+import { ticketKind, TICKET_STATUS } from './texts'
 import { Loading } from '../layout/Loading'
 
 type Thread = Schemas['SupportTicketsThread']
@@ -60,7 +60,7 @@ export function TicketPanel({ id, platform = false, onClose }: { id: number; pla
     <aside className="panel" aria-label="Обращение">
       <header className="panel-head">
         <div>
-          <h2>{t?.viaBot ? 'Помощь' : TICKET_KINDS[t?.kind ?? 'QUESTION']?.title ?? 'Обращение'}</h2>
+          <h2>{t?.viaBot ? 'Помощь' : (t ? ticketKind(t.kind) : 'Обращение')}</h2>
           {t && <span className={`chip small ${cls}`}>{status}</span>}
           {platform && t && <span className="hint"> {t.clinicName} · {t.author}</span>}
         </div>

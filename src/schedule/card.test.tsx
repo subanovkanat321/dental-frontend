@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw'
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
 import { appointment, me, openMore, renderApp } from '../test/fixtures'
+import { fixNow } from '../test/now'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
@@ -153,26 +154,20 @@ test('«Приём состоялся» по ошибке — «Вернуть �
 
 test('до начала приёма — без заметки и материалов («Показать сейчас»); карточка — на весь экран', async () => {
   // 09:00 по Бишкеку: приём в 15:00 сегодня ещё не начался (подменяем только часы, таймеры настоящие)
-  vi.useFakeTimers({ toFake: ['Date'] })
-  vi.setSystemTime(new Date(`${new Date().toISOString().slice(0, 10)}T03:00:00Z`))
-  try {
-    backend(appointment(10, 1, '15:00', 'Бакыт М.', { version: 1 }))
-    renderApp()
-    const panel = await open(/Бакыт М\./)
-    expect(within(panel).queryByRole('form', { name: 'Заметка о приёме' })).not.toBeInTheDocument()
-    expect(within(panel).getByText(/к началу приёма/)).toBeInTheDocument()
-    await userEvent.click(within(panel).getByRole('button', { name: 'Показать сейчас' }))
-    expect(await within(panel).findByRole('form', { name: 'Заметка о приёме' })).toBeInTheDocument()
+  fixNow(`${todayIn()}T09:00:00+06:00`, { frozen: true })
+  backend(appointment(10, 1, '15:00', 'Бакыт М.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  expect(within(panel).queryByRole('form', { name: 'Заметка о приёме' })).not.toBeInTheDocument()
+  expect(within(panel).getByText(/к началу приёма/)).toBeInTheDocument()
+  await userEvent.click(within(panel).getByRole('button', { name: 'Показать сейчас' }))
+  expect(await within(panel).findByRole('form', { name: 'Заметка о приёме' })).toBeInTheDocument()
 
-    await userEvent.click(within(panel).getByRole('button', { name: 'Карточка на весь экран' }))
-    expect(panel).toHaveClass('panel-full')
-    expect(localStorage.getItem('tish.full.appointment')).toBe('1')
-    await userEvent.click(within(panel).getByRole('button', { name: 'Свернуть карточку' }))
-    expect(panel).not.toHaveClass('panel-full')
-  }
-  finally {
-    vi.useRealTimers()
-  }
+  await userEvent.click(within(panel).getByRole('button', { name: 'Карточка на весь экран' }))
+  expect(panel).toHaveClass('panel-full')
+  expect(localStorage.getItem('tish.full.appointment')).toBe('1')
+  await userEvent.click(within(panel).getByRole('button', { name: 'Свернуть карточку' }))
+  expect(panel).not.toHaveClass('panel-full')
 })
 
 test('редкое — под «Ещё»: промокод, предоплата, лист ожидания; уже заданный промокод — на виду', async () => {

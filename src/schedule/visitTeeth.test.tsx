@@ -7,6 +7,7 @@ import type { Schemas } from '../api/client'
 import { createQueryClient } from '../api/queryClient'
 import { TeethHistory } from '../medical/TeethHistory'
 import { appointment, me, renderApp, expand } from '../test/fixtures'
+import { fixNow } from '../test/now'
 import { server } from '../test/server'
 import { todayIn } from '../lib/time'
 
@@ -109,16 +110,11 @@ test('регистратура: блока нет и зубы не запраш�
 
 test('будущий приём — блока пока нет', async () => {
   // «Сейчас» — 10:00 по Бишкеку: иначе поздно вечером приём в 23:55 уже «в кресле» (за 15 минут)
-  vi.useFakeTimers({ toFake: ['Date'] })
-  vi.setSystemTime(new Date(`${todayIn()}T10:00:00+06:00`))
-  try {
-    backend(appointment(10, 1, '23:55', 'Бакыт М.'))
-    const panel = await card()
-    await within(panel).findByRole('button', { name: 'Показать сейчас' })
-    expect(within(panel).queryByRole('region', { name: 'Зубы этого приёма' })).not.toBeInTheDocument()
-  } finally {
-    vi.useRealTimers()
-  }
+  fixNow(`${todayIn()}T10:00:00+06:00`, { frozen: true })
+  backend(appointment(10, 1, '23:55', 'Бакыт М.'))
+  const panel = await card()
+  await within(panel).findByRole('button', { name: 'Показать сейчас' })
+  expect(within(panel).queryByRole('region', { name: 'Зубы этого приёма' })).not.toBeInTheDocument()
 })
 
 test('«Продолжение лечения» — зубы прошлого визита', async () => {
