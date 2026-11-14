@@ -2,7 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
 
-import { api, ApiError, unwrap, upload, webCase, webTariffs, type Schemas } from '../api/client'
+import { api, ApiError, unwrap, upload, webTariffs, type Schemas } from '../api/client'
+import { inTelegram } from '../lib/telegram'
+import { CaseBlock } from '../site/CaseBlock'
+import { caseMissing } from './joinCase'
 import { usePlatformInfo } from '../api/platform'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phonesFromInput, phonesToInput, phoneToInput } from '../clinic/phone'
@@ -254,50 +257,78 @@ type JoinCase = Schemas['JoinCaseCase']
 type Metric = { value: string; label: string }
 
 /**
- * Кейс на /join — блок «Как работает в клинике»: заголовок, короткая история и до трёх цифр. Пока нет
- * заголовка или текста, на сайте блока нет. Писать только то, что было на пилоте: выдуманных цифр
- * на сайте не бывает.
+ * Кейс на /join — блок «Как работает в клинике» на странице для клиник: заголовок, история, чья она (по желанию)
+ * и до трёх цифр. Всё пишет владелец руками — цифры берёт из «Статистики» клиники за пилот, сервер их не считает.
+ * На сайте блок виден, только когда есть заголовок, история и отметка «клиника согласна на публикацию» (V211);
+ * черновик читаем из /api/platform/case — сайт (/web/case) отдаёт только опубликованное.
  */
 function CaseBox() {
-  const current = useQuery({ queryKey: ['web-case'], queryFn: webCase })
+  const current = useQuery<JoinCase, ApiError>({ queryKey: ['platform-case'], queryFn: () => unwrap(api.GET('/api/platform/case')) })
+  const [more, setMore] = useState(false)
   return (
     <section className="card-block" aria-label="Кейс на странице для клиник">
       <h2>Кейс на /join</h2>
-      <p className="hint">Блок «Как работает в клинике» на странице для клиник. Пусто — блока на сайте нет.
-        Только правда с пилота: что было до и что стало, цифры — из «Статистики» клиники.</p>
-      {current.isPending ? <Loading /> : <CaseForm initial={current.data ?? null} />}
+      <p className="hint">История одной клиники с цифрами — на странице tish.kg/join, где клиники оставляют заявку.{' '}
+        <button type="button" className="hint-more" aria-label="Подробнее про кейс на /join" aria-expanded={more} onClick={() => setMore(!more)}>?</button></p>
+      {more && (
+        <div className="hint" role="note" aria-label="Как работает кейс">
+          <p><b>Кто видит:</b> все, кто открыл tish.kg/join, — чаще руководители клиник, которым вы отправили ссылку. Блок «Как работает в клинике» стоит после «Что умеет».</p>
+          <p><b>Что писать:</b> что было в клинике до Tish и что стало — коротко, своими словами. Цифры — только настоящие: из «Статистики»
+            клиники за месяц пилота (записей через бота, неявок до и после, сколько вернулось по «Позвать снова»). Tish их сам не считает.</p>
+          <p><b>Согласие:</b> показываем только с разрешения клиники — спросите её (лучше письменно, в WhatsApp) и поставьте отметку.
+            Без отметки кейс остаётся черновиком и на сайте не виден. Название клиники — по желанию: можно «Клиника в Бишкеке».</p>
+        </div>
+      )}
+      {current.isPending ? <Loading /> : current.error ? <p className="error">{current.error.message}</p> : <CaseForm initial={current.data} />}
     </section>
   )
 }
 
-function CaseForm({ initial }: { initial: JoinCase | null }) {
+function CaseForm({ initial }: { initial: JoinCase }) {
   const client = useQueryClient()
-  const start: Metric[] = [0, 1, 2].map((i) => ({ value: initial?.metrics?.[i]?.value ?? '', label: initial?.metrics?.[i]?.label ?? '' }))
-  const [title, setTitle] = useState(initial?.title ?? '')
-  const [text, setText] = useState(initial?.text ?? '')
+  const start: Metric[] = [0, 1, 2].map((i) => ({ value: initial.metrics?.[i]?.value ?? '', label: initial.metrics?.[i]?.label ?? '' }))
+  const [title, setTitle] = useState(initial.title ?? '')
+  const [text, setText] = useState(initial.text ?? '')
+  const [clinic, setClinic] = useState(initial.clinic ?? '')
+  const [consent, setConsent] = useState(initial.consent)
   const [metrics, setMetrics] = useState<Metric[]>(start)
   const [done, setDone] = useState('')
   const save = useMutation<JoinCase, ApiError>({
-    mutationFn: () => unwrap(api.PUT('/api/platform/case', { body: { title, text, metrics: metrics.filter((m) => m.value || m.label) } })),
+    mutationFn: () => unwrap(api.PUT('/api/platform/case', { body: { title, text, clinic, consent, metrics: metrics.filter((m) => m.value || m.label) } })),
     onSuccess: (saved) => {
-      client.setQueryData(['web-case'], saved)
-      setDone(saved.shown ? 'Сохранено — блок виден на /join' : 'Сохранено — блок скрыт: нужны заголовок и текст')
+      client.setQueryData(['platform-case'], saved)
+      setDone(saved.shown ? 'Сохранено — блок виден на /join' : 'Сохранено как черновик — на /join блока нет')
     },
   })
   const setMetric = (i: number, key: keyof Metric, value: string) => setMetrics((all) => all.map((m, k) => (k === i ? { ...m, [key]: value } : m)))
+  const missing = caseMissing({ title, text, consent })
   return (
     <form className="form narrow" aria-label="Кейс" onSubmit={(e) => { e.preventDefault(); setDone(''); save.mutate() }}>
-      <label className="field"><span>Заголовок</span>
+      {missing.length > 0
+        ? <p className="notice tone-wait" aria-label="Состояние кейса">Кейс не показывается на /join, пока нет: {missing.join(', ')}.</p>
+        : <p className="notice tone-ok" aria-label="Состояние кейса">После сохранения кейс виден на /join.</p>}
+      <label className="field"><span>Заголовок блока</span>
         <input value={title} maxLength={120} placeholder="Пилот в клинике в Бишкеке" onChange={(e) => setTitle(e.target.value)} /></label>
-      <label className="field"><span>Короткая история</span>
-        <textarea value={text} maxLength={1000} rows={4} placeholder="Что было до Tish и что изменилось за месяц" onChange={(e) => setText(e.target.value)} /></label>
+      <label className="field"><span>История: что было до Tish и что стало</span>
+        <textarea value={text} maxLength={1000} rows={4} placeholder="Раньше записывали в тетрадь и звонили каждому накануне. Теперь пациенты записываются в боте, напоминания уходят сами." onChange={(e) => setText(e.target.value)} /></label>
+      <label className="field"><span>Клиника — как подписать (по желанию)</span>
+        <input value={clinic} maxLength={120} placeholder="Стоматология «Улыбка», Бишкек — или пусто" onChange={(e) => setClinic(e.target.value)} /></label>
       {metrics.map((m, i) => (
         <div key={i} className="row-fields" role="group" aria-label={`Цифра ${i + 1}`}>
           <label className="field"><span>Цифра {i + 1}</span><input value={m.value} maxLength={20} placeholder="−30%" onChange={(e) => setMetric(i, 'value', e.target.value)} /></label>
-          <label className="field"><span>Подпись</span><input value={m.label} maxLength={60} placeholder="неявок за месяц" onChange={(e) => setMetric(i, 'label', e.target.value)} /></label>
+          <label className="field"><span>Что она значит</span><input value={m.label} maxLength={60} placeholder="неявок за месяц" onChange={(e) => setMetric(i, 'label', e.target.value)} /></label>
         </div>
       ))}
-      {save.error && <p className="error" role="alert">{save.error.fieldErrors.metrics ?? save.error.message}</p>}
+      <p className="hint">Цифры — из «Статистики» клиники за пилот; необязательны. Пустые не показываются.</p>
+      <label className="check"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
+        {' '}Клиника согласна на публикацию: история, цифры и название (если указано)</label>
+      <h3 className="small">Как это видно на /join</h3>
+      {title.trim() || text.trim()
+        ? <CaseBlock story={{ title, text, clinic: clinic.trim() || undefined, metrics }} className="join-case-preview" heading="h3" />
+        : <p className="hint">Напишите заголовок и историю — здесь появится блок, как его увидит клиника.</p>}
+      <p className="hint"><a href="/join" target="_blank" rel="noopener noreferrer" onClick={inTelegram(new URL('/join', window.location.origin).href)}>Открыть tish.kg/join ↗</a>
+        {' '}— кейс там появится после сохранения, когда всё заполнено и есть согласие.</p>
+      {save.error && <p className="error" role="alert">{save.error.fieldErrors.metrics ?? save.error.fieldErrors.title ?? save.error.fieldErrors.text ?? save.error.fieldErrors.clinic ?? save.error.message}</p>}
       {done && <p className="tone-ok" role="status">{done}</p>}
       <button type="submit" className="btn primary" disabled={save.isPending}>Сохранить кейс</button>
     </form>

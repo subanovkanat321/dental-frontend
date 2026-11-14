@@ -25,8 +25,9 @@ export const server = setupServer(
   // Подсказка «🪑 время коллеги по креслу» в «Новой записи» и переносе: по умолчанию коллеги в это время нет
   http.get('*/api/appointments/chair-check', () => HttpResponse.json({ strict: false, notified: [] } satisfies Schemas['ChairCheckView'])),
   http.get('*/api/appointments/chair-options', () => HttpResponse.json([] satisfies Schemas['ChairOptionView'][])),
-  // Кейс на /join не заполнен — блока нет
-  http.get('*/web/case', () => HttpResponse.json({ metrics: [], shown: false } satisfies Schemas['JoinCaseCase'])),
+  // Кейс на /join не заполнен — блока нет; черновик в «Платформа → Настройки» — пустой
+  http.get('*/web/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),
+  http.get('*/api/platform/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),
   // Ролик и презентация на /join: по умолчанию каталога материалов нет — блока нет
   http.get('*/web/materials/public', () => HttpResponse.json({ video: null, poster: null, presentation: null })),
   // «Помощь → Видео: как сделать»: по умолчанию роликов нет

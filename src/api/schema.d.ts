@@ -292,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/platform/materials/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["saveLink"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/platform/info": {
         parameters: {
             query?: never;
@@ -491,7 +507,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["caseDraft"];
         put: operations["set_2"];
         post?: never;
         delete?: never;
@@ -6914,6 +6930,33 @@ export interface components {
             /** Format: int32 */
             remindAfterDays: number;
         };
+        MaterialsControllerLinkRequest: {
+            path?: string;
+            url?: string;
+        };
+        MaterialsListing: {
+            configured: boolean;
+            files?: components["schemas"]["MaterialsMaterial"][];
+        };
+        MaterialsMaterial: {
+            path: string;
+            name: string;
+            section: string;
+            folder: string;
+            kind: string;
+            /** Format: int64 */
+            size: number;
+            /** Format: date-time */
+            modified?: string;
+            url?: string;
+            downloadUrl?: string;
+            /** Format: int32 */
+            seconds?: number;
+            stale?: string;
+            shareUrl?: string;
+            postUrl?: string;
+            groupUrl?: string;
+        };
         PlatformInfoControllerRequest: {
             legalName?: string;
             hosting?: string;
@@ -7238,12 +7281,16 @@ export interface components {
         JoinCaseRequest: {
             title?: string;
             text?: string;
+            clinic?: string;
             metrics?: components["schemas"]["JoinCaseMetric"][];
+            consent?: boolean;
         };
         JoinCaseCase: {
             title?: string;
             text?: string;
+            clinic?: string;
             metrics?: components["schemas"]["JoinCaseMetric"][];
+            consent: boolean;
             shown: boolean;
         };
         AiUsageControllerSettingsRequest: {
@@ -9635,23 +9682,6 @@ export interface components {
             leads?: components["schemas"]["SalesFunnelLead"][];
             template?: components["schemas"]["ClinicOutreachTemplate"];
         };
-        MaterialsListing: {
-            configured: boolean;
-            files?: components["schemas"]["MaterialsMaterial"][];
-        };
-        MaterialsMaterial: {
-            path?: string;
-            name?: string;
-            section?: string;
-            folder?: string;
-            kind?: string;
-            /** Format: int64 */
-            size: number;
-            /** Format: date-time */
-            modified?: string;
-            url?: string;
-            downloadUrl?: string;
-        };
         PlatformMembersManagerView: {
             /** Format: int64 */
             telegramId: number;
@@ -11571,6 +11601,30 @@ export interface operations {
             };
         };
     };
+    saveLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaterialsControllerLinkRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialsListing"];
+                };
+            };
+        };
+    };
     set: {
         parameters: {
             query?: never;
@@ -11971,6 +12025,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AgreementsClinicAgreement"];
+                };
+            };
+        };
+    };
+    caseDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JoinCaseCase"];
                 };
             };
         };

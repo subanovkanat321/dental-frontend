@@ -845,6 +845,34 @@
         }
       }
     },
+    "/api/platform/materials/link" : {
+      "put" : {
+        "tags" : [ "materials-controller" ],
+        "operationId" : "saveLink",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MaterialsControllerLinkRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MaterialsListing"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/platform/info" : {
       "put" : {
         "tags" : [ "platform-info-controller" ],
@@ -1349,6 +1377,22 @@
       }
     },
     "/api/platform/case" : {
+      "get" : {
+        "tags" : [ "join-case" ],
+        "operationId" : "caseDraft",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JoinCaseCase"
+                }
+              }
+            }
+          }
+        }
+      },
       "put" : {
         "tags" : [ "join-case" ],
         "operationId" : "set_2",
@@ -15499,6 +15543,80 @@
         },
         "required" : [ "custom", "remindAfterDays" ]
       },
+      "MaterialsControllerLinkRequest" : {
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          }
+        }
+      },
+      "MaterialsListing" : {
+        "properties" : {
+          "configured" : {
+            "type" : "boolean"
+          },
+          "files" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MaterialsMaterial"
+            }
+          }
+        },
+        "required" : [ "configured" ]
+      },
+      "MaterialsMaterial" : {
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "section" : {
+            "type" : "string"
+          },
+          "folder" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "modified" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "downloadUrl" : {
+            "type" : "string"
+          },
+          "seconds" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "stale" : {
+            "type" : "string"
+          },
+          "shareUrl" : {
+            "type" : "string"
+          },
+          "postUrl" : {
+            "type" : "string"
+          },
+          "groupUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "folder", "kind", "name", "path", "section", "size" ]
+      },
       "PlatformInfoControllerRequest" : {
         "properties" : {
           "legalName" : {
@@ -16304,11 +16422,17 @@
           "text" : {
             "type" : "string"
           },
+          "clinic" : {
+            "type" : "string"
+          },
           "metrics" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/JoinCaseMetric"
             }
+          },
+          "consent" : {
+            "type" : "boolean"
           }
         }
       },
@@ -16320,17 +16444,23 @@
           "text" : {
             "type" : "string"
           },
+          "clinic" : {
+            "type" : "string"
+          },
           "metrics" : {
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/JoinCaseMetric"
             }
           },
+          "consent" : {
+            "type" : "boolean"
+          },
           "shown" : {
             "type" : "boolean"
           }
         },
-        "required" : [ "shown" ]
+        "required" : [ "consent", "shown" ]
       },
       "AiUsageControllerSettingsRequest" : {
         "properties" : {
@@ -22370,54 +22500,6 @@
             "$ref" : "#/components/schemas/ClinicOutreachTemplate"
           }
         }
-      },
-      "MaterialsListing" : {
-        "properties" : {
-          "configured" : {
-            "type" : "boolean"
-          },
-          "files" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/MaterialsMaterial"
-            }
-          }
-        },
-        "required" : [ "configured" ]
-      },
-      "MaterialsMaterial" : {
-        "properties" : {
-          "path" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "section" : {
-            "type" : "string"
-          },
-          "folder" : {
-            "type" : "string"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "size" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "modified" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "url" : {
-            "type" : "string"
-          },
-          "downloadUrl" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "size" ]
       },
       "PlatformMembersManagerView" : {
         "properties" : {
