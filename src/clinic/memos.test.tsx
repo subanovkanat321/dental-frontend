@@ -57,9 +57,9 @@ test('«Памятки после процедур»: у какой услуги
   renderApp()
   const list = await screen.findByRole('list', { name: 'Памятки' })
   expect(within(list).getAllByRole('listitem')[0]).toHaveTextContent('После удаления зубаУдаление зуба')
-  expect(within(list).getAllByRole('listitem')[1]).toHaveTextContent('не привязана к услуге')
+  expect(within(list).getAllByRole('listitem')[1]).toHaveTextContent('не привязана к услугам прайса')
 
-  await userEvent.click(within(list).getByRole('button', { name: '📋 После отбеливания' }))
+  await userEvent.click(within(list).getByRole('button', { name: 'После отбеливания' }))
   const panel = screen.getByRole('complementary', { name: 'Памятка' })
   const text = within(panel).getByLabelText('Текст для пациента')
   await userEvent.clear(text)
@@ -74,7 +74,7 @@ test('«Памятки после процедур»: у какой услуги
   expect((within(fresh).getByLabelText('Текст для пациента') as HTMLTextAreaElement).value).toContain('Телефон клиники: {телефон}')
   await userEvent.type(within(fresh).getByLabelText('Название'), 'После брекетов')
   await userEvent.click(within(fresh).getByRole('button', { name: 'Добавить' }))
-  expect(await within(list).findByText('📋 После брекетов')).toBeInTheDocument()
+  expect(await within(list).findByRole('button', { name: 'После брекетов' })).toBeInTheDocument()
 })
 
 test('регистратура памятки только читает', async () => {
@@ -83,7 +83,7 @@ test('регистратура памятки только читает', async 
   renderApp()
   const list = await screen.findByRole('list', { name: 'Памятки' })
   expect(screen.queryByRole('button', { name: '＋ Своя памятка' })).not.toBeInTheDocument()
-  await userEvent.click(within(list).getByRole('button', { name: '📋 После удаления зуба' }))
+  await userEvent.click(within(list).getByRole('button', { name: 'После удаления зуба' }))
   const panel = screen.getByRole('complementary', { name: 'Памятка' })
   expect(panel).toHaveTextContent('Памятки меняют руководитель и врачи.')
   expect(within(panel).queryByRole('textbox')).not.toBeInTheDocument()
@@ -123,7 +123,7 @@ test('вкладка «Кыргызский»: перевод Tish, «✨ Пер
   const list = await screen.findByRole('list', { name: 'Памятки' })
 
   // Стандартная нетронутая — перевод Tish уже в полях
-  await userEvent.click(within(list).getByRole('button', { name: '📋 После удаления зуба' }))
+  await userEvent.click(within(list).getByRole('button', { name: 'После удаления зуба' }))
   let panel = screen.getByRole('complementary', { name: 'Памятка' })
   await userEvent.click(within(panel).getByRole('button', { name: 'Кыргызский' }))
   expect(within(panel).getByLabelText('Название по-кыргызски')).toHaveValue('Тиш жулдургандан кийин')
@@ -132,7 +132,7 @@ test('вкладка «Кыргызский»: перевод Tish, «✨ Пер
   await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }))
 
   // Своя без перевода: пусто — уйдёт русский; ИИ переводит русский текст из редактора
-  await userEvent.click(within(list).getByRole('button', { name: '📋 После отбеливания' }))
+  await userEvent.click(within(list).getByRole('button', { name: 'После отбеливания' }))
   panel = screen.getByRole('complementary', { name: 'Памятка' })
   await userEvent.type(within(panel).getByLabelText('Текст для пациента'), ' Без кофе.')
   await userEvent.click(within(panel).getByRole('button', { name: 'Кыргызский' }))
@@ -156,9 +156,49 @@ test('ИИ клиники выключен — кнопки «Перевести
   window.location.hash = '/settings/memos'
   renderApp()
   const list = await screen.findByRole('list', { name: 'Памятки' })
-  await userEvent.click(within(list).getByRole('button', { name: '📋 После отбеливания' }))
+  await userEvent.click(within(list).getByRole('button', { name: 'После отбеливания' }))
   const panel = screen.getByRole('complementary', { name: 'Памятка' })
   await userEvent.click(within(panel).getByRole('button', { name: 'Кыргызский' }))
   expect(await within(panel).findByText(/когда руководитель включит ИИ клиники/)).toBeInTheDocument()
   expect(within(panel).queryByRole('button', { name: '✨ Перевести с ИИ' })).not.toBeInTheDocument()
+})
+
+test('строка памятки: 2–3 услуги прайса и «и ещё N», скрытые услуги не показываем; «?» — в полосе вкладок', async () => {
+  backend()
+  const svc = (id: number, name: string, active = true) => ({ id, name, durationMinutes: 30, active })
+  server.use(
+    http.get('*/api/service-types', () => HttpResponse.json([
+      svc(1, 'Удаление зуба'), svc(2, 'Удаление зуба сложное', false), svc(3, 'Удаление молочного зуба', false),
+      svc(4, 'Удаление зуба мудрости'), svc(5, 'Удаление корня'), svc(6, 'Лечение кариеса'), svc(7, 'Лечение глубокого кариеса', false),
+      svc(8, 'Пломба'), svc(9, 'Шинирование'), svc(10, 'Пульпит'),
+    ] satisfies Schemas['ServiceTypeView'][])),
+    http.get('*/api/care-memos', () => HttpResponse.json([
+      { id: 1, title: 'После удаления зуба', body: '•', active: true, standard: true, serviceIds: [1, 2, 3, 4, 5], kyStandard: false },
+      { id: 2, title: 'После лечения кариеса', body: '•', active: true, standard: true, serviceIds: [6, 7, 8, 9, 10], kyStandard: false },
+      { id: 3, title: 'После отбеливания', body: '•', active: true, standard: true, serviceIds: [2, 3], kyStandard: false },
+    ] satisfies Memo[])),
+  )
+  window.location.hash = '/settings/memos'
+  renderApp()
+  const list = await screen.findByRole('list', { name: 'Памятки' })
+  const rows = within(list).getAllByRole('listitem')
+  // Три услуги прайса — все три; скрытые («сложное», «молочного») не считаются
+  expect(rows[0]).toHaveTextContent(/^После удаления зубаУдаление зуба, Удаление зуба мудрости, Удаление корня$/)
+  // Четыре услуги прайса — две и «и ещё 2» (скрытая «глубокого кариеса» — не в счёт)
+  expect(rows[1]).toHaveTextContent(/^После лечения кариесаЛечение кариеса, Пломба и ещё 2$/)
+  expect(rows[1]).not.toHaveTextContent('глубокого')
+  // Только скрытые услуги — как без услуг
+  expect(rows[2]).toHaveTextContent(/^После отбеливанияне привязана к услугам прайса$/)
+  // Иконки 📋 нет; строка открывается целиком
+  expect(list).not.toHaveTextContent('📋')
+  await userEvent.click(within(rows[1]!).getByText(/и ещё 2/))
+  // В карточке — полный список услуг прайса
+  const panel = screen.getByRole('complementary', { name: 'Памятка' })
+  expect(within(panel).getByLabelText('Услуги памятки')).toHaveTextContent('Предложим после: Лечение кариеса, Пломба, Шинирование, Пульпит.')
+  expect(panel).not.toHaveTextContent('глубокого')
+
+  // «?» — в полосе вкладок «Настроек», а не своей строкой над «＋ Своя памятка»
+  const tabs = screen.getByRole('navigation', { name: 'Подразделы: Настройки' })
+  expect(within(tabs).getByRole('button', { name: 'Подсказка: Памятки' })).toBeInTheDocument()
+  expect(document.querySelector('.head-tools-inline .help-hint, .page-head .help-hint')).toBeNull()
 })

@@ -2,7 +2,7 @@ import { Fragment, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useM
 import { createPortal } from 'react-dom'
 
 import type { Schemas } from '../api/client'
-import { useBack } from '../lib/back'
+import { useBack, whenHistorySettled } from '../lib/back'
 import { closeHelpChat, openHelpChat, useHelpChat } from '../lib/helpChat'
 import type { Page } from '../lib/route'
 import { openSub, subHref, useSub } from '../lib/sub'
@@ -241,8 +241,11 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
     if ((key === 'clinic' || key === 'settings') && key === page && !confirmLeave()) return
     setMore(false)
     setFly(null)
-    setSheet(null)
-    openSub(key, sub)
+    // Из листа подразделов — сначала лист закрывается и снимает свой шаг из истории, потом переход (lib/back)
+    if (sheet) {
+      setSheet(null)
+      whenHistorySettled(() => openSub(key, sub))
+    } else openSub(key, sub)
   }
   const showFly = (key: Page, el: HTMLElement) => {
     const r = el.getBoundingClientRect()
