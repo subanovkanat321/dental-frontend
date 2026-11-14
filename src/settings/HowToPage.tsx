@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useBack } from '../lib/back'
 import { EmptyState } from '../layout/EmptyState'
 import { Loading } from '../layout/Loading'
+import { Segments } from '../layout/Segments'
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
 import { openLink } from '../lib/telegram'
 import { SubHeader } from './SubHeader'
@@ -87,12 +88,9 @@ export function HowToPage({ onBack }: { onBack: () => void }) {
               <div className="howto-tools">
                 <input type="search" className="book-search" placeholder="Найти видео: запись, касса…" aria-label="Поиск видео"
                   value={query} onChange={(e) => setQuery(e.target.value)} />
-                <div className="segments wrap" role="group" aria-label="Раздел">
-                  <button type="button" aria-pressed={section == null} onClick={() => setSection(null)}>Все</button>
-                  {groups.map(([name]) => (
-                    <button key={name} type="button" aria-pressed={section === name} onClick={() => setSection(section === name ? null : name)}>{name}</button>
-                  ))}
-                </div>
+                {/* Разделов много: на телефоне — выпадающий список (layout/Segments), на компьютере — таблетки */}
+                <Segments label="Раздел" className="wrap" value={section ?? ''} onChange={(v) => setSection(v || null)}
+                  options={[{ value: '', label: 'Все' }, ...groups.map(([name]) => ({ value: name, label: name }))]} />
               </div>
               {!shown.length ? <p className="hint" role="status">Ничего не нашли — попробуйте другое слово или «Все».</p>
                 : (
