@@ -1,10 +1,12 @@
 import { HelpHint } from '../help/HelpHint'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
-import { useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
-import { subHref } from '../lib/sub'
+import { platformModeInHash } from '../lib/route'
+import { AgreementPanel, AgreementsBlock } from './OwnerTabs'
+import { TariffsBlock } from './TariffsBlock'
 import { inTelegram } from '../lib/telegram'
 import { CaseBlock } from '../site/CaseBlock'
 import { caseMissing } from './joinCase'
@@ -21,26 +23,75 @@ import { EmptyState } from '../layout/EmptyState'
 
 type Info = Schemas['PlatformInfoInfo']
 type PaySettings = Schemas['PayRequestsSettings']
+type InfoQuery = ReturnType<typeof usePlatformInfo>
+
+/** Якоря разделов: #/platform/settings/tariffs, #/platform/settings/contract (старые вкладки «Тарифы» и «Договор»). */
+const anchorId = (key: string) => `platform-settings-${key}`
 
 /**
- * «Настройки платформы» (владелец): сведения о платформе (их видят все сотрудники клиник),
- * входы в клиники, способы оплаты для клиник, менеджеры платформы; цены тарифов — ссылкой на вкладку «Тарифы».
+ * «Настройки платформы» (владелец), с 2026-11-14 — тематическими карточками сеткой на всю ширину (на широком экране
+ * в две колонки — общее правило crm.css, на телефоне — столбиком): тарифы и договор с клиниками (бывшие вкладки, во
+ * всю строку), оплата для клиник, менеджеры, сведения о платформе и поддержка, кейс на /join, группа врачей, ваши
+ * входы в клиники. Пояснения — строкой и «?», не абзацами. Версия договора открывается карточкой справа.
+ * Лимит ИИ по умолчанию, курс и НДС остались в «Расходе ИИ»: они в его расчёте и отчёте.
  */
-export function SettingsTab() {
+export function SettingsTab({ header, onPanel }: { header: ReactNode; onPanel: (open: boolean) => void }) {
   const info = usePlatformInfo()
+  const [opened, setOpenedState] = useState<number | null>(null)
+  const setOpened = useCallback((id: number | null) => {
+    setOpenedState(id)
+    onPanel(id != null)
+  }, [onPanel])
+  const close = useCallback(() => setOpened(null), [setOpened])
+  // Пришли по старому адресу «Тарифов» или «Договора» — к своему разделу
+  const anchor = platformModeInHash('settings')
+  useEffect(() => {
+    if (!anchor) return
+    const t = setTimeout(() => document.getElementById(anchorId(anchor))?.scrollIntoView?.({ block: 'start' }), 0)
+    return () => clearTimeout(t)
+  }, [anchor])
   return (
     <>
-      {info.isPending ? <Loading /> : info.error ? <p className="error">{info.error.message}</p> : (
-        <>
-          <InfoForm info={info.data} />
-          <AccessToggles info={info.data} />
-        </>
-      )}
-      <CaseBox />
-      <PaySettingsBox />
-      <Managers />
-      <TariffsLink />
+      <section className="schedule-main">
+        {header}
+        <TariffsBlock id={anchorId('tariffs')} />
+        <AgreementsBlock id={anchorId('contract')} opened={opened} onOpen={setOpened} />
+        <PaySettingsBox />
+        <Managers />
+        <InfoBox info={info} />
+        <CaseBox />
+        <GroupBox info={info} />
+        <AccessBox info={info} />
+      </section>
+      {opened != null && <AgreementPanel id={opened} onClose={close} />}
     </>
+  )
+}
+
+/** Тело PUT /api/platform/info — все поля разом: «Сведения» и «Группа врачей» сохраняют каждая своё, остальное — как на сервере. */
+function infoBody(info: Info) {
+  return {
+    legalName: info.legalName ?? '', hosting: info.hosting ?? '', supportTelegram: info.supportTelegram ?? '', supportEmail: info.supportEmail ?? '',
+    supportPhones: info.supportPhones ?? [], supportWhatsapp: info.supportWhatsapp ?? '', doctorsGroupUrl: info.doctorsGroupUrl ?? '',
+  }
+}
+
+/** Карточка, чьё содержимое ждёт «Сведений о платформе»: пока грузятся — «Загрузка», ошибка — ею. */
+function InfoCard({ title, label, info, children }: { title: ReactNode; label: string; info: InfoQuery; children: (info: Info) => ReactNode }) {
+  return (
+    <section className="card-block" aria-label={label}>
+      <h2>{title}</h2>
+      {info.isPending ? <Loading /> : info.error ? <p className="error">{info.error.message}</p> : children(info.data)}
+    </section>
+  )
+}
+
+function InfoBox({ info }: { info: InfoQuery }) {
+  return (
+    <InfoCard label="Поддержка и сведения о платформе" info={info} title={<>Поддержка и сведения о платформе<HelpHint title="Сведения о платформе">Это видят все
+      сотрудники клиник в «Помощи»: «Конфиденциальность» и «Написать в Tish». Пустое поле — «уточняется».</HelpHint></>}>
+      {(data) => <InfoForm info={data} />}
+    </InfoCard>
   )
 }
 
@@ -56,12 +107,11 @@ function InfoForm({ info }: { info: Info }) {
   const [f, setF] = useState({
     legalName: info.legalName ?? '', hosting: info.hosting ?? '', supportTelegram: info.supportTelegram ?? '',
     supportEmail: info.supportEmail ?? '', supportPhones: phonesToInput(info.supportPhones), supportWhatsapp: phoneToInput(info.supportWhatsapp),
-    doctorsGroupUrl: info.doctorsGroupUrl ?? '',
   })
   const { dirty, commit } = useDirty(f)
   const save = useMutation<Info, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/platform/info', {
-      body: { ...f, supportPhones: phonesFromInput(f.supportPhones), supportWhatsapp: phoneFromInput(f.supportWhatsapp) },
+      body: { ...infoBody(info), ...f, supportPhones: phonesFromInput(f.supportPhones), supportWhatsapp: phoneFromInput(f.supportWhatsapp) },
     })),
     onSuccess: (saved) => {
       commit()
@@ -74,32 +124,65 @@ function InfoForm({ info }: { info: Info }) {
   }
   const err = (k: string) => save.error?.fieldErrors[k]
   return (
-    <section className="card-block">
-      <h2>Сведения о платформе<HelpHint title="Сведения о платформе">Это видят все сотрудники клиник в «Помощи»: «Конфиденциальность» и «Написать в Tish». Пустое поле — «уточняется».</HelpHint></h2>
-      <form className="form narrow" aria-label="Сведения о платформе" onSubmit={submit}>
-        {FIELDS.map(([key, label, placeholder]) => (
-          <div key={key} className="field">
-            <label className="field"><span>{label}</span>
-              <input value={f[key as 'legalName' | 'hosting' | 'supportTelegram' | 'supportEmail']} maxLength={200} placeholder={placeholder} type={key === 'supportEmail' ? 'email' : 'text'}
-                onChange={(e) => { save.reset(); setF({ ...f, [key]: e.target.value }) }} /></label>
-            {err(key) && <p className="error">{err(key)}</p>}
-          </div>
-        ))}
-        <div className="field"><span>Телефоны поддержки — первый главный</span>
-          <PhoneListInput label="Телефон поддержки" values={f.supportPhones} onChange={(v) => { save.reset(); setF({ ...f, supportPhones: v }) }} /></div>
-        {err('supportPhones') && <p className="error">{err('supportPhones')}</p>}
-        <label className="field"><span>WhatsApp поддержки — пусто: кнопки WhatsApp на /go и /join нет</span>
-          <PhoneInput label="WhatsApp поддержки" value={f.supportWhatsapp} onChange={(v) => { save.reset(); setF({ ...f, supportWhatsapp: v }) }} /></label>
-        {err('supportWhatsapp') && <p className="error">{err('supportWhatsapp')}</p>}
-        {/* Общая группа врачей Tish (V194): бот и «Помощь» показывают её только сотрудникам */}
-        <label className="field"><span>Группа врачей в Telegram — пусто: кнопок группы в боте и «Помощи» нет</span>
-          <input type="url" value={f.doctorsGroupUrl} maxLength={200} placeholder="https://t.me/+…"
-            onChange={(e) => { save.reset(); setF({ ...f, doctorsGroupUrl: e.target.value }) }} /></label>
-        {err('doctorsGroupUrl') && <p className="error">{err('doctorsGroupUrl')}</p>}
-        <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="Сведения о платформе сохранены"
-          error={save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message)} />
-      </form>
-    </section>
+    <form className="form narrow" aria-label="Сведения о платформе" onSubmit={submit}>
+      {FIELDS.map(([key, label, placeholder]) => (
+        <div key={key} className="field">
+          <label className="field"><span>{label}</span>
+            <input value={f[key as 'legalName' | 'hosting' | 'supportTelegram' | 'supportEmail']} maxLength={200} placeholder={placeholder} type={key === 'supportEmail' ? 'email' : 'text'}
+              onChange={(e) => { save.reset(); setF({ ...f, [key]: e.target.value }) }} /></label>
+          {err(key) && <p className="error">{err(key)}</p>}
+        </div>
+      ))}
+      <div className="field"><span>Телефоны поддержки — первый главный</span>
+        <PhoneListInput label="Телефон поддержки" values={f.supportPhones} onChange={(v) => { save.reset(); setF({ ...f, supportPhones: v }) }} /></div>
+      {err('supportPhones') && <p className="error">{err('supportPhones')}</p>}
+      <label className="field"><span>WhatsApp поддержки — пусто: кнопки WhatsApp на /go и /join нет</span>
+        <PhoneInput label="WhatsApp поддержки" value={f.supportWhatsapp} onChange={(v) => { save.reset(); setF({ ...f, supportWhatsapp: v }) }} /></label>
+      {err('supportWhatsapp') && <p className="error">{err('supportWhatsapp')}</p>}
+      <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} savedText="Сведения о платформе сохранены"
+        error={save.error && (Object.values(save.error.fieldErrors)[0] ?? save.error.message)} />
+    </form>
+  )
+}
+
+/** Общая группа врачей Tish (V194): бот и «Помощь» показывают её кнопку только сотрудникам клиник. */
+function GroupBox({ info }: { info: InfoQuery }) {
+  return (
+    <InfoCard label="Группа врачей и бот" info={info} title={<>Группа врачей и бот<HelpHint title="Группа врачей">Общая группа врачей Tish в Telegram:
+      кнопку «Группа врачей» бот и «Помощь» показывают только сотрудникам клиник. Пусто — кнопок нет. Новости для группы владелец отправляет в боте.</HelpHint></>}>
+      {(data) => <GroupForm info={data} />}
+    </InfoCard>
+  )
+}
+
+function GroupForm({ info }: { info: Info }) {
+  const client = useQueryClient()
+  const [url, setUrl] = useState(info.doctorsGroupUrl ?? '')
+  const { dirty, commit } = useDirty(url)
+  const save = useMutation<Info, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/platform/info', { body: { ...infoBody(info), doctorsGroupUrl: url } })),
+    onSuccess: (saved) => {
+      commit()
+      client.setQueryData(['platform-info'], saved)
+    },
+  })
+  return (
+    <form className="form narrow" aria-label="Группа врачей" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
+      <label className="field"><span>Группа врачей в Telegram — пусто: кнопок группы в боте и «Помощи» нет</span>
+        <input type="url" value={url} maxLength={200} placeholder="https://t.me/+…" onChange={(e) => { save.reset(); setUrl(e.target.value) }} /></label>
+      {save.error?.fieldErrors.doctorsGroupUrl && <p className="error">{save.error.fieldErrors.doctorsGroupUrl}</p>}
+      <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} label="Сохранить ссылку" savedText="Ссылка на группу сохранена"
+        error={save.error && (save.error.fieldErrors.doctorsGroupUrl ?? save.error.message)} />
+    </form>
+  )
+}
+
+function AccessBox({ info }: { info: InfoQuery }) {
+  return (
+    <InfoCard label="Ваши входы в клиники" info={info} title={<>Ваши входы в клиники<HelpHint title="Ваши входы в клиники">По договору (п. 3.6) клиника знает
+      о каждом вашем входе. На пилоте можно выключить — включите, когда подключаете другие клиники.</HelpHint></>}>
+      {(data) => <AccessToggles info={data} />}
+    </InfoCard>
   )
 }
 
@@ -116,15 +199,12 @@ function AccessToggles({ info }: { info: Info }) {
       onChange={(e) => set.mutate({ ...now, [key]: e.target.checked })} /> {label}</label>
   )
   return (
-    <section className="card-block">
-      <h2>Ваши входы в клиники<HelpHint title="Ваши входы в клиники">По договору (п. 3.6) клиника знает о каждом вашем входе. На пилоте можно выключить — включите, когда подключаете другие клиники.</HelpHint></h2>
-      <div className="form narrow">
-        {box('log', 'Записывать мои входы в клиники — руководитель видит журнал в «Помощь → Конфиденциальность»')}
-        {box('alert', 'Сообщать руководителям клиники в бот о каждом моём входе')}
-        {box('grant', 'Входить только по разрешению клиники — без него только аварийный вход (всегда в журнал и с сообщением). Клиника №1 — без разрешения')}
-        {set.error && <p className="error" role="alert">{set.error.message}</p>}
-      </div>
-    </section>
+    <div className="form narrow">
+      {box('log', 'Записывать мои входы в клиники — руководитель видит журнал в «Помощь → Конфиденциальность»')}
+      {box('alert', 'Сообщать руководителям клиники в бот о каждом моём входе')}
+      {box('grant', 'Входить только по разрешению клиники — без него только аварийный вход (всегда в журнал и с сообщением). Клиника №1 — без разрешения')}
+      {set.error && <p className="error" role="alert">{set.error.message}</p>}
+    </div>
   )
 }
 
@@ -226,15 +306,6 @@ function Managers() {
         </form>
       )}
     </section>
-  )
-}
-
-/** Тарифы меняются и видны во вкладке «Тарифы» — здесь только ссылка туда (блок с ценами дублировал её). */
-function TariffsLink() {
-  return (
-    <p className="settings-more">
-      <a className="row-link open-link" href={subHref('platform', 'tariffs')}>Цены тарифов — во вкладке «Тарифы» ›</a>
-    </p>
   )
 }
 

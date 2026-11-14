@@ -44,13 +44,13 @@ export function subsOf(page: Page, me: Me): Sub[] {
       if (seesAllMoney(me)) return [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Расходы на склад' }]
       return seesOwnPurchases(me) ? [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Мои закупки' }] : []
     case 'platform':
-      // «Аналитика», «Финансы» и всё, что после «Опросов», — только владелец (сервер тоже: менеджеру 403)
-      return [{ key: 'clinics', title: 'Клиники' },
-        ...(me.owner ? [{ key: 'analytics', title: 'Аналитика' }, { key: 'finance', title: 'Финансы' }] : []),
-        { key: 'surveys', title: 'Опросы' },
-        ...(me.owner ? [['tickets', 'Обращения'], ['outreach', 'Написать клиникам'], ['broadcast', 'Сообщение клиникам'], ['agreements', 'Договор'],
-          ['tariffs', 'Тарифы'], ['content', 'Контент'], ['materials', 'Материалы'], ['ai', 'Расход ИИ'], ['health', 'Здоровье'], ['settings', 'Настройки']]
-          .map(([key, title]) => ({ key: key!, title: title! })) : [])]
+      // 14 вкладок в строку не влезали — с 2026-11-14 их 9: «Обратная связь» (обращения + опросы), «Рассылка клиникам»
+      // (по одной в WhatsApp + всем сразу в бот), «Маркетинг» (контент-план + материалы); «Договор» и «Тарифы» — в
+      // «Настройках». Старые адреса — lib/route (PLATFORM_MOVED). Менеджеру — «Клиники» и опросы (сервер: остальное 403)
+      if (!me.owner) return [{ key: 'clinics', title: 'Клиники' }, { key: 'feedback', title: 'Опросы' }]
+      return [['clinics', 'Клиники'], ['analytics', 'Аналитика'], ['finance', 'Финансы'], ['feedback', 'Обратная связь'],
+        ['mailing', 'Рассылка клиникам'], ['marketing', 'Маркетинг'], ['health', 'Здоровье'], ['ai', 'Расход ИИ'], ['settings', 'Настройки']]
+        .map(([key, title]) => ({ key: key!, title: title! }))
     case 'clinic':
       // «Клиника» (с 2026-11-10 — раздел меню): о клинике, персонал, услуги, рабочее время, кресла
       return CLINIC_ITEMS.filter((i) => !i.hidden && i.show(me)).map((i) => ({ key: i.key, title: i.title }))

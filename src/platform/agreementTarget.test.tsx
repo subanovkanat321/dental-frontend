@@ -136,7 +136,7 @@ test('версия договора: опубликовать выбранным
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Договор'))
+  await user.click(await findSub('Настройки'))
   expect(await screen.findByText(/выбранным клиникам: 2 · подписали: 1/)).toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: /Версия 2 · Договор/ }))
   const panel = await screen.findByRole('complementary', { name: 'Версия договора' })

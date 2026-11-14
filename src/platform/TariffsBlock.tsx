@@ -6,7 +6,7 @@ import { SaveBar } from '../layout/SaveBar'
 import { somText } from '../lib/time'
 import { useDirty } from '../lib/unsaved'
 import { Loading } from '../layout/Loading'
-import { SubHelp } from '../layout/PageHead'
+import { HelpHint } from '../help/HelpHint'
 
 type Tariffs = Schemas['Tariffs']
 type Tariff = Schemas['TariffsTariff']
@@ -18,20 +18,30 @@ const toRow = (t: Tariff): Row => ({
 })
 
 /**
- * «Тарифы» — владелец платформы меняет цены, подписи и сколько врачей в тарифе. Сохранили — сразу
- * везде: «Тариф и оплата» у клиник, страница /join, счета. Последний тариф — без предела врачей.
- * «За год» по умолчанию — 10 месяцев; можно поставить свою.
+ * «Тарифы» — раздел «Настроек» платформы (до 2026-11-14 — своя вкладка; старый адрес #/platform/tariffs ведёт сюда):
+ * владелец меняет цены, подписи и сколько врачей в тарифе. Сохранили — сразу везде: «Тариф и оплата» у клиник,
+ * страница /join, счета. Последний тариф — без предела врачей. «За год» по умолчанию — 10 месяцев; можно поставить свою.
  */
-export function TariffsTab() {
+export function TariffsBlock({ id }: { id?: string }) {
   const loaded = useQuery({ queryKey: ['tariffs'], queryFn: webTariffs })
-  if (loaded.isPending) return <Loading />
-  if (!loaded.data) return <p className="error">Тарифы не загрузились — обновите страницу.</p>
+  if (loaded.isPending || !loaded.data) {
+    return (
+      <section id={id} className="card-block wide" aria-label="Тарифы">
+        <h2>{TITLE}</h2>
+        {loaded.isPending ? <Loading /> : <p className="error">Тарифы не загрузились — обновите страницу.</p>}
+      </section>
+    )
+  }
   // Без key из цен: после «Сохранить» ответ с новыми ценами пересоздал бы форму — и пропало бы «Тарифы сохранены».
   // В форме и так ровно то, что сохранили.
-  return <TariffsForm tariffs={loaded.data} />
+  return <TariffsForm id={id} tariffs={loaded.data} />
 }
 
-function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
+const TITLE = (
+  <>Тарифы<HelpHint title="Тарифы">Сохраните — новые цены сразу у всех клиник в «Тариф и оплата», на странице для клиник и в счетах. Уже оплаченные сроки не меняются.</HelpHint></>
+)
+
+function TariffsForm({ id, tariffs }: { id?: string; tariffs: Tariffs }) {
   const client = useQueryClient()
   const [rows, setRows] = useState<Row[]>((tariffs.tariffs ?? []).map(toRow))
   const [pilot, setPilot] = useState(String(tariffs.pilotMonths))
@@ -69,8 +79,8 @@ function TariffsForm({ tariffs }: { tariffs: Tariffs }) {
     save.mutate()
   }
   return (
-    <form className="card-block tariffs-form" aria-label="Тарифы" onSubmit={submit}>
-      <SubHelp title="Тарифы">Сохраните — новые цены сразу у всех клиник в «Тариф и оплата», на странице для клиник и в счетах. Уже оплаченные сроки не меняются.</SubHelp>
+    <form id={id} className="card-block wide tariffs-form" aria-label="Тарифы" onSubmit={submit}>
+      <h2>{TITLE}</h2>
       {rows.map((r, i) => {
         const last = i === rows.length - 1
         return (

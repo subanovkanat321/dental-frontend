@@ -22,6 +22,18 @@ const MOVED: Record<string, string> = {
   learn: 'learn',
 }
 
+/**
+ * Вкладки «Платформы», объединённые 2026-11-14 (их было 14 — не влезали в строку): старый адрес
+ * #/platform/<вкладка> (закладки, «⌄», руководство, кнопки) — новая вкладка и её режим (третий кусок адреса).
+ * «Договор» и «Тарифы» стали разделами «Настроек» платформы — третий кусок там — якорь раздела.
+ */
+export const PLATFORM_MOVED: Record<string, string> = {
+  outreach: 'mailing/one', broadcast: 'mailing/all',
+  tickets: 'feedback/tickets', support: 'feedback/tickets', surveys: 'feedback/surveys',
+  content: 'marketing/content', materials: 'marketing/materials',
+  agreements: 'settings/contract', contract: 'settings/contract', tariffs: 'settings/tariffs',
+}
+
 /** Совсем старые разделы (закладки до «Настроек»): «Команда», «Аккаунт». */
 const OLD: Record<string, string> = { team: 'clinic/staff', account: 'help/support' }
 
@@ -36,6 +48,7 @@ export function hashParts(): [string, string | undefined] {
   if (name === 'settings' && item && MOVED[item]) to = MOVED[item]
   else if (OLD[name]) to = OLD[name]
   else if (name === 'clinic' && (item === 'doctors' || item === 'members')) to = 'clinic/staff'
+  else if (name === 'platform' && item && PLATFORM_MOVED[item]) to = `platform/${PLATFORM_MOVED[item]}`
   if (!to) return [name, item]
   window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#/${to}`)
   const [n = '', i] = to.split('/')
@@ -116,6 +129,18 @@ export function platformClinicInHash(): number | null {
 export function clearPlatformClinic(): void {
   if (platformClinicInHash() == null) return
   window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#/platform/clinics`)
+}
+
+/** Третий кусок адреса «Платформы»: режим вкладки (#/platform/mailing/all → 'all') или якорь «Настроек»; иначе null. */
+export function platformModeInHash(sub: string): string | null {
+  hashParts()
+  const [name, item, mode] = window.location.hash.replace(/^#\/?/, '').split('/')
+  return name === 'platform' && item === sub && mode ? mode : null
+}
+
+/** Сменили режим вкладки — адрес заменой (переключатель, как вкладки, не копит шаги «назад»). */
+export function setPlatformModeInHash(sub: string, mode: string): void {
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#/platform/${sub}/${mode}`)
 }
 
 /** Пункт блока «Я» (#/me/profile) или «Помощи» (#/help/guide) — новой записью: «‹ Назад» вернёт, откуда открыли. */

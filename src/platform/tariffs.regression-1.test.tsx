@@ -36,7 +36,7 @@ test('сохранили новые цены — форма показывает
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Тарифы'))
+  await user.click(await findSub('Настройки'))
   const form = await screen.findByRole('form', { name: 'Тарифы' })
   await user.clear(within(form).getByLabelText('В месяц: Кабинет'))
   await user.type(within(form).getByLabelText('В месяц: Кабинет'), '1090')

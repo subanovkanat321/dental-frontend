@@ -1372,6 +1372,8 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .head-tools-inline { margin-bottom: 12px; }
 .head-tools > .help-hint { margin-left: -6px; align-self: flex-end; margin-bottom: 4px; } /* на уровне крупного названия */
 .head-tools > .segments > button { padding-inline: 12px; white-space: nowrap; }
+/* Режим объединённой вкладки «Платформы» (platform/ModeSwitch) — первым среди инструментов подраздела */
+.head-tools > .platform-modes { order: -1; }
 .page-head .push, .page-head .head-end { margin-left: auto; }
 @media (min-width: 761px) { .page-head > .search { flex: 1 1 160px; min-width: 160px; max-width: 280px; } }
 @media (max-width: 760px) {
@@ -1531,6 +1533,17 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .msg-preview { display: grid; gap: 6px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
 .msg-bubble { justify-self: start; max-width: min(100%, 520px); padding: 10px 12px; border-radius: 4px 12px 12px 12px; background: var(--card);
   border: 1px solid var(--separator); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; font-size: .95rem; }
+/* «Платформа → Рассылка клиникам → Всем сразу»: форма слева на две строки сетки, справа — предпросмотр и отправленные;
+   уже 1200px — столбиком в том же порядке (DESIGN.md → «На компьютере — вся ширина») */
+@media (min-width: 1200px) {
+  .broadcast-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  .broadcast-grid > .broadcast-form { grid-row: span 2; }
+}
+.broadcast-grid .msg-bubble { max-width: 100%; }
+.broadcast-history { list-style: none; margin: 0; padding: 0; display: grid; }
+.broadcast-history li { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--separator); }
+.broadcast-history li:first-child { border-top: 0; padding-top: 0; }
+.broadcast-text { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 /* ---------- Опросы о платформе (src/survey, src/platform/surveys) ---------- */
 /* Приглашение — спокойная плашка цвета «выбрано», не тревожная: это просьба, а не дело на сегодня */
 .notice.tone-info { background: color-mix(in srgb, var(--accent-soft) 70%, var(--card)); color: var(--text); border-color: color-mix(in srgb, var(--accent) 25%, transparent); }

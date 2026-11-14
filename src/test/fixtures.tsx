@@ -42,6 +42,17 @@ export async function findSub(name: string | RegExp) {
   return waitFor(() => within(subsArea()).getByRole('link', { name }))
 }
 
+/**
+ * «Платформа»: вкладка и режим объединённой вкладки (2026-11-14) — «Маркетинг» → «Материалы»,
+ * «Рассылка клиникам» → «Всем сразу (руководителям)». Без режима — только вкладка.
+ */
+export async function openPlatform(sub: string | RegExp, mode?: string, user = userEvent.setup()) {
+  await user.click(await findSub(sub))
+  if (!mode) return
+  const button = await waitFor(() => within(document.querySelector<HTMLElement>('.platform-modes')!).getByRole('button', { name: mode }))
+  await user.click(button)
+}
+
 export function querySub(name: string | RegExp) {
   return within(subsArea()).queryByRole('link', { name })
 }

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, findSub, querySub } from '../test/fixtures'
+import { me, renderApp, findSub, querySub, openPlatform } from '../test/fixtures'
 import { server } from '../test/server'
 import { byHealth, extendPaid, noShowShare } from './health'
 import { waitForSlow } from '../test/wait'
@@ -166,7 +166,7 @@ test('рассылка клиникам: подтверждение и итог'
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Сообщение клиникам'))
+  await openPlatform('Рассылка клиникам', 'Всем сразу (руководителям)', user)
   const form = screen.getByRole('form', { name: 'Сообщение клиникам' })
   await user.type(within(form).getByRole('textbox'), 'Плановые работы в субботу')
   await user.click(within(form).getByRole('button', { name: 'Выбрать' }))
@@ -196,7 +196,7 @@ test('владелец меняет тарифы: год следует за м�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Тарифы'))
+  await user.click(await findSub('Настройки'))
   const form = await screen.findByRole('form', { name: 'Тарифы' })
   await user.clear(within(form).getByLabelText('В месяц: Кабинет'))
   await user.type(within(form).getByLabelText('В месяц: Кабинет'), '790')
@@ -289,33 +289,40 @@ test('«Сведения о платформе»: несколько телеф�
   await user.click(within(form).getByRole('button', { name: '＋ Ещё номер' }))
   await user.type(within(form).getByRole('textbox', { name: 'Телефон поддержки 2' }), '700 222 333')
   await user.type(within(form).getByRole('textbox', { name: 'WhatsApp поддержки' }), '770 444 555')
-  // Группа врачей в Telegram (V194)
-  const group = within(form).getByRole('textbox', { name: /Группа врачей в Telegram/ })
-  await user.type(group, 'https://t.me/+tYKBuv9OgZ40YTky')
+  // Группа врачей — своей карточкой (2026-11-14); «Сведения» шлют её ссылку как есть
+  expect(within(form).queryByRole('textbox', { name: /Группа врачей в Telegram/ })).not.toBeInTheDocument()
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(form).findByRole('status')).toHaveTextContent('Сведения о платформе сохранены')
-  expect(saved).toMatchObject({ supportPhones: ['+996 555 000 111', '+996 700 222 333'], supportWhatsapp: '+996 770 444 555',
-    doctorsGroupUrl: 'https://t.me/+tYKBuv9OgZ40YTky' })
+  expect(saved).toMatchObject({ supportPhones: ['+996 555 000 111', '+996 700 222 333'], supportWhatsapp: '+996 770 444 555', doctorsGroupUrl: '' })
 })
 
-test('«Сведения о платформе»: группа врачей — текущая ссылка в поле, неверный адрес — ошибка сервера под полем', async () => {
+test('«Группа врачей и бот»: текущая ссылка в поле, неверный адрес — ошибка сервера под полем; сохранение — со сведениями как есть', async () => {
+  let saved: Schemas['PlatformInfoControllerRequest'] | null = null
   const info: Schemas['PlatformInfoInfo'] = { doctorsGroupUrl: 'https://t.me/+tYKBuv9OgZ40YTky', accessLog: false, accessNotify: false, accessRequiresGrant: false }
   backend([])
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(owner)),
     http.get('*/api/platform-info', () => HttpResponse.json(info)),
     http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [] })),
-    http.put('*/api/platform/info', () => HttpResponse.json({ status: 422, title: 'Проверьте поля',
-      errors: [{ field: 'doctorsGroupUrl', message: 'Ссылка Telegram: https://t.me/…' }] }, { status: 422 })),
+    http.put('*/api/platform/info', async ({ request }) => {
+      saved = await request.json() as Schemas['PlatformInfoControllerRequest']
+      return saved.doctorsGroupUrl?.startsWith('https://t.me/') ? HttpResponse.json({ ...info, doctorsGroupUrl: saved.doctorsGroupUrl })
+        : HttpResponse.json({ status: 422, title: 'Проверьте поля', errors: [{ field: 'doctorsGroupUrl', message: 'Ссылка Telegram: https://t.me/…' }] }, { status: 422 })
+    }),
   )
   const user = userEvent.setup()
   renderApp()
   await user.click(await findSub('Настройки'))
-  const form = await screen.findByRole('form', { name: 'Сведения о платформе' })
+  const form = await screen.findByRole('form', { name: 'Группа врачей' })
   const group = within(form).getByRole('textbox', { name: /Группа врачей в Telegram/ })
   expect(group).toHaveValue('https://t.me/+tYKBuv9OgZ40YTky')
   await user.clear(group)
   await user.type(group, 'https://example.com/group')
-  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  await user.click(within(form).getByRole('button', { name: 'Сохранить ссылку' }))
   expect((await within(form).findAllByText('Ссылка Telegram: https://t.me/…')).length).toBeGreaterThan(0)
+  await user.clear(group)
+  await user.type(group, 'https://t.me/+new')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить ссылку' }))
+  expect(await within(form).findByRole('status')).toHaveTextContent('Ссылка на группу сохранена')
+  expect(saved).toMatchObject({ doctorsGroupUrl: 'https://t.me/+new', legalName: '', supportPhones: [] })
 })

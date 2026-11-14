@@ -76,7 +76,7 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
     const day = p.get('day') === 'tomorrow' ? addDays(today, 1) : p.get('day') === 'today' ? today : undefined
     return { page: 'patients', tab: 'booked', date: day, unconfirmed: p.get('unconfirmed') === '1', unmarked: p.get('unmarked') === '1', doctorId: num('doctor') }
   }
-  if (screen === 'support-tickets') return { page: 'platform', tab: 'tickets' }
+  if (screen === 'support-tickets') return { page: 'platform', tab: 'feedback/tickets' }
   if (screen === 'pay-requests') return { page: 'platform', tab: 'clinics' }
   const tomorrow = p.get('day') === 'tomorrow' ? addDays(today, 1) : undefined
   if (num('doctor')) return { page: 'schedule', doctorId: num('doctor'), date: tomorrow }

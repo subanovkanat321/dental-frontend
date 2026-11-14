@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, findSub, querySub } from '../test/fixtures'
+import { me, renderApp, findSub, querySub, openPlatform } from '../test/fixtures'
 import { server } from '../test/server'
 import { durationText, groupMaterials, materialTitle, posterOf, sizeText } from './materials'
 
@@ -83,7 +83,7 @@ test('владелец: группы с подписью «для чего», «
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Материалы'))
+  await openPlatform('Маркетинг', 'Материалы', user)
 
   const promo = await screen.findByRole('region', { name: 'Рекламный ролик' })
   expect(within(promo).getByText(/Клиникам при продаже/)).toBeInTheDocument()
@@ -153,7 +153,7 @@ test('сохранить ссылку на пост: после публикац
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Материалы'))
+  await openPlatform('Маркетинг', 'Материалы', user)
   const block = await screen.findByRole('region', { name: 'Картинки для Instagram' })
   await user.click(within(block).getByRole('button', { name: 'Ссылка на публикацию: 01-privet' }))
   await user.type(within(block).getByRole('textbox', { name: /Ссылка на пост/ }), 'https://www.instagram.com/p/AbC/')
@@ -169,7 +169,7 @@ test('каталог не подключён — понятная подсказ
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Материалы'))
+  await openPlatform('Маркетинг', 'Материалы', user)
   expect(await screen.findByText(/Каталог материалов не подключён/)).toBeInTheDocument()
   expect(screen.queryByRole('region', { name: 'Рекламный ролик' })).not.toBeInTheDocument()
   // Ссылки — и без каталога
@@ -183,7 +183,7 @@ test('ошибка сервера — текст ошибки', async () => {
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Материалы'))
+  await openPlatform('Маркетинг', 'Материалы', user)
   expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось загрузить материалы')
 })
 

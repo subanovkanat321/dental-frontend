@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, findSub, querySub } from '../test/fixtures'
+import { me, renderApp, findSub, querySub, openPlatform } from '../test/fixtures'
 import { server } from '../test/server'
 import { todayIn } from '../lib/time'
 // Настоящий готовый план из сборки (public/content/plan.json) — формат должен совпадать с контрактом импорта
@@ -40,7 +40,7 @@ function mainActions(card: HTMLElement): string[] {
 async function openTab() {
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Контент'))
+  await openPlatform('Маркетинг', 'Контент-план', user)
   return user
 }
 

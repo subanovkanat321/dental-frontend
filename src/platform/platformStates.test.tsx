@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, renderApp, findSub } from '../test/fixtures'
+import { me, renderApp, findSub, openPlatform } from '../test/fixtures'
 import { server } from '../test/server'
 
 // «Платформа»: пустые состояния и ошибки по вкладкам (полировка 2026-11-14). Клиники вымышленные.
@@ -43,7 +43,7 @@ test('«Обращения» с ошибкой 500: текст ошибки, а 
   server.use(http.get('*/api/platform/support/tickets', fail))
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Обращения'))
+  await openPlatform('Обратная связь', 'Обращения', user)
   expect(await screen.findByText(/Обращения не загрузились/)).toBeInTheDocument()
   expect(screen.queryByText('Обращений пока нет')).not.toBeInTheDocument()
 })
@@ -52,7 +52,7 @@ test('«Написать клиникам» пустой: пустое сост�
   server.use(http.get('*/api/platform/outreach', () => HttpResponse.json({ leads: [], template: { text: 'Здравствуйте', custom: false } })))
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Написать клиникам'))
+  await openPlatform('Рассылка клиникам', 'По одной (WhatsApp)', user)
   expect(await screen.findByText('Список клиник пуст')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Следующая клиника →' })).not.toBeInTheDocument()
   expect(screen.queryByRole('textbox', { name: 'Поиск по названию' })).not.toBeInTheDocument()
@@ -87,7 +87,7 @@ test('«Контент» с ошибкой плана: ошибка, а не «�
   )
   const user = userEvent.setup()
   renderApp()
-  await user.click(await findSub('Контент'))
+  await openPlatform('Маркетинг', 'Контент-план', user)
   expect(await screen.findByText(/План не загрузился/)).toBeInTheDocument()
   expect(screen.queryByText('В этом месяце постов нет')).not.toBeInTheDocument()
 })

@@ -127,13 +127,15 @@ test('Клиника (нет в нижнем меню): «⌄» — лист б�
   expect(window.location.hash).toBe('#/clinic/hours')
 })
 
-test('Платформа: все 14 подразделов владельца вкладками', async () => {
+test('Платформа: 9 подразделов владельца вкладками; старый адрес «Контента» — «Маркетинг»', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctor: false, admin: false, platform: true, owner: true })))
   window.location.hash = '/platform/content'
   renderApp()
   const row = await tabs('Платформа')
-  expect(within(row).getAllByRole('link')).toHaveLength(14)
-  expect(within(row).getByRole('link', { name: 'Контент' })).toHaveAttribute('aria-current', 'page')
+  expect(within(row).getAllByRole('link').map((a) => a.textContent)).toEqual(['Клиники', 'Аналитика', 'Финансы', 'Обратная связь',
+    'Рассылка клиникам', 'Маркетинг', 'Здоровье', 'Расход ИИ', 'Настройки'])
+  expect(within(row).getByRole('link', { name: 'Маркетинг' })).toHaveAttribute('aria-current', 'page')
+  expect(window.location.hash).toBe('#/platform/marketing/content')
 })
 
 test('«⌄» — только когда вкладки не влезают; новое в скрытых справа — точкой на ней', async () => {

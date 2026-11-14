@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
 import { useCallback, useState, type ReactNode } from 'react'
 
+import { HelpHint } from '../help/HelpHint'
+
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { TicketPanel } from '../account/TicketThread'
 import { agreementBlocks, ticketKind, TICKET_STATUS } from '../account/texts'
@@ -62,9 +64,13 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
   )
 }
 
+/** Подпись, с которой бот присылает рассылку руководителям (бэкенд: PlatformBroadcasts). */
+export const BROADCAST_HEAD = '📣 Сообщение от команды Tish'
+
 /**
- * «Сообщение клиникам» (владелец): в бот админам всех или выбранных клиник — плановые работы,
- * новое в приложении, тарифы. Рассылку не отменить — перед отправкой спрашиваем.
+ * «Рассылка клиникам → Всем сразу» (владелец): в бот руководителям всех или выбранных клиник — плановые работы,
+ * новое в приложении, тарифы. Рассылку не отменить — перед отправкой спрашиваем. На компьютере — форма слева, справа
+ * предпросмотр (как увидит руководитель) и прошлые рассылки; на телефоне — столбиком в том же порядке.
  */
 export function BroadcastTab() {
   const client = useQueryClient()
@@ -88,64 +94,69 @@ export function BroadcastTab() {
     setChosen(next)
   }
   const count = all ? list.length : chosen.size
+  const sent = history.data ?? []
   return (
     <>
-      <SubHelp title="Сообщение клиникам">Придёт в бот руководителям клиник с подписью «Сообщение от команды Tish»: плановые работы, новое в приложении, тарифы.
-        Отменить рассылку нельзя. Не пишите сюда данные пациентов.</SubHelp>
-      <section className="card-block">
-        {clinics.error && <p className="error" role="alert">Клиники не загрузились: {clinics.error.message}</p>}
-        <form className="form narrow" aria-label="Сообщение клиникам"
-          onSubmit={(e) => { e.preventDefault(); void ask(`Отправить руководителям клиник (${count})? Отменить нельзя.`, { ok: 'Отправить' }).then((ok) => ok && send.mutate()) }}>
-          <label className="field"><span>Текст — без данных пациентов · <span className="num">{text.length} / 2000</span></span>
-            <textarea rows={6} maxLength={2000} required value={text} placeholder="Например: в субботу с 23:00 до 23:30 — плановые работы, приложение может не открываться"
-              onChange={(e) => { send.reset(); setText(e.target.value) }} /></label>
-          <div className="segments" role="group" aria-label="Кому">
-            <button type="button" aria-pressed={all} onClick={() => setAll(true)}>Всем клиникам ({list.length})</button>
-            <button type="button" aria-pressed={!all} onClick={() => setAll(false)}>Выбрать</button>
-          </div>
-          {!all && (
-            <div className="checks">
-              {list.map((c) => <label key={c.id} className="check"><input type="checkbox" checked={chosen.has(c.id)} onChange={() => toggle(c.id)} /> {c.name}</label>)}
+      <SubHelp title="Всем сразу">Придёт в бот руководителям клиник с подписью «Сообщение от команды Tish»: плановые работы, новое в приложении, тарифы.
+        Отменить рассылку нельзя. Не пишите сюда данные пациентов. Написать одной клинике в WhatsApp — режим «По одной».</SubHelp>
+      <div className="page-grid broadcast-grid">
+        <section className="card-block broadcast-form">
+          <h2>Сообщение руководителям</h2>
+          {clinics.error && <p className="error" role="alert">Клиники не загрузились: {clinics.error.message}</p>}
+          <form className="form" aria-label="Сообщение клиникам"
+            onSubmit={(e) => { e.preventDefault(); void ask(`Отправить руководителям клиник (${count})? Отменить нельзя.`, { ok: 'Отправить' }).then((ok) => ok && send.mutate()) }}>
+            <label className="field"><span>Текст — без данных пациентов · <span className="num">{text.length} / 2000</span></span>
+              <textarea rows={8} maxLength={2000} required value={text} placeholder="Например: в субботу с 23:00 до 23:30 — плановые работы, приложение может не открываться"
+                onChange={(e) => { send.reset(); setText(e.target.value) }} /></label>
+            <div className="segments" role="group" aria-label="Кому">
+              <button type="button" aria-pressed={all} onClick={() => setAll(true)}>Всем клиникам ({list.length})</button>
+              <button type="button" aria-pressed={!all} onClick={() => setAll(false)}>Выбрать</button>
             </div>
-          )}
-          {send.error && <p className="error" role="alert">{send.error.fieldErrors.text ?? send.error.fieldErrors.clinicIds ?? send.error.message}</p>}
-          {send.isSuccess && <p className="tone-ok" role="status">Отправлено: дошло {send.data.delivered} из {send.data.recipients}</p>}
-          <button type="submit" className="btn primary" disabled={send.isPending || !text.trim() || !count}>Отправить руководителям</button>
-        </form>
-      </section>
-      {history.error && <section className="card-block"><p className="error" role="alert">Отправленные не загрузились: {history.error.message}</p></section>}
-      {(history.data?.length ?? 0) > 0 && (
-        <section className="card-block">
-          <h2>Отправленные</h2>
-          <table className="table" aria-label="Отправленные сообщения">
-            <tbody>
-              {history.data!.map((b) => (
-                <tr key={b.id}>
-                  <td>{(b.text ?? '').length > 120 ? `${b.text!.slice(0, 120)}…` : b.text}</td>
-                  <td className="hint nowrap">{b.sentAt ? shortDate(b.sentAt, true) : ''} · клиник: {b.clinics} · дошло руководителям: {b.delivered} из {b.recipients}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            {!all && (
+              <div className="checks">
+                {list.map((c) => <label key={c.id} className="check"><input type="checkbox" checked={chosen.has(c.id)} onChange={() => toggle(c.id)} /> {c.name}</label>)}
+              </div>
+            )}
+            {send.error && <p className="error" role="alert">{send.error.fieldErrors.text ?? send.error.fieldErrors.clinicIds ?? send.error.message}</p>}
+            {send.isSuccess && <p className="tone-ok" role="status">Отправлено: дошло {send.data.delivered} из {send.data.recipients}</p>}
+            <button type="submit" className="btn primary" disabled={send.isPending || !text.trim() || !count}>Отправить руководителям</button>
+          </form>
         </section>
-      )}
+        <section className="card-block" aria-label="Как увидит руководитель">
+          <h2>Как увидит руководитель</h2>
+          <div className="msg-preview">
+            <div className="msg-bubble" aria-label="Предпросмотр сообщения">{BROADCAST_HEAD}{'\n\n'}{text.trim()
+              ? text : <span className="hint">Здесь появится ваш текст</span>}</div>
+          </div>
+          <p className="hint small">В бот Tish — {all ? `руководителям всех клиник (${list.length})` : `руководителям выбранных клиник: ${chosen.size}`}</p>
+        </section>
+        <section className="card-block" aria-label="Отправленные">
+          <h2>Отправленные{sent.length > 0 && <span className="hint num"> · {sent.length}</span>}</h2>
+          {history.error && <p className="error" role="alert">Отправленные не загрузились: {history.error.message}</p>}
+          {history.isPending ? <Loading /> : !history.error && (sent.length ? (
+            <ul className="broadcast-history" aria-label="Отправленные сообщения">
+              {sent.map((b) => (
+                <li key={b.id}>
+                  <span className="broadcast-text">{b.text}</span>
+                  <span className="hint small">{b.sentAt ? shortDate(b.sentAt, true) : ''} · клиник: {b.clinics} · дошло руководителям: {b.delivered} из {b.recipients}</span>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="hint">Рассылок ещё не было.</p>)}
+        </section>
+      </div>
     </>
   )
 }
 
 /**
- * «Договор с клиниками» (владелец): версии. Черновик правится и публикуется; опубликованную видят
- * админы клиник и подписывают — менять её нельзя, только выпустить новую.
+ * «Договор с клиниками» — раздел «Настроек» платформы (до 2026-11-14 — вкладка «Договор»; старый адрес ведёт сюда):
+ * версии. Черновик правится и публикуется; опубликованную видят админы клиник и подписывают — менять её нельзя,
+ * только выпустить новую. Версия открывается карточкой справа ({@link AgreementPanel}) — её рисуют «Настройки».
  */
-export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel: (open: boolean) => void }) {
+export function AgreementsBlock({ id, opened, onOpen }: { id?: string; opened: number | null; onOpen: (id: number) => void }) {
   const client = useQueryClient()
   const list = useQuery({ queryKey: ['platform-agreements'], queryFn: () => unwrap(api.GET('/api/platform/agreements')) })
-  const [opened, setOpenedState] = useState<number | null>(null)
-  const setOpened = useCallback((id: number | null) => {
-    setOpenedState(id)
-    onPanel(id != null)
-  }, [onPanel])
-  const close = useCallback(() => setOpened(null), [setOpened])
   const versions = list.data ?? []
   const draft = versions.find((v) => !v.publishedAt)
   const start = useMutation<Version, ApiError>({
@@ -153,52 +164,48 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
       const base = versions.find((v) => v.publishedAt) ?? await unwrap(api.GET('/api/platform/agreements/template'))
       return unwrap(api.POST('/api/platform/agreements', { body: { title: base.title, body: base.body } }))
     },
-    onSuccess: (v) => void client.invalidateQueries({ queryKey: ['platform-agreements'] }).then(() => setOpened(v.id)),
+    onSuccess: (v) => void client.invalidateQueries({ queryKey: ['platform-agreements'] }).then(() => onOpen(v.id)),
   })
-  const openedVersion = versions.find((v) => v.id === opened)
   return (
-    <>
-      <section className="schedule-main">
-        {header}
-        <SubHelp title="Договор">Неопубликованную версию видите только вы. Опубликованную видят руководители клиник, которым она адресована (всем или выбранным),
-            и подписывают её в «Настройки → Договор с Tish»; менять текст нельзя — выпустите новую. Какую версию подписать конкретной клинике — в её карточке
-            («Клиники → клиника → Договор»). Перед публикацией — показать юристу.</SubHelp>
-        {/* Версий ещё нет — пустое состояние с одной кнопкой, а не пустая карточка с кнопкой в углу */}
-        {!list.isPending && !list.error && !versions.length ? (
-          <EmptyState fill title="Договора с клиниками пока нет"
-            action={<button type="button" className="btn primary" disabled={start.isPending} onClick={() => start.mutate()}>Начать с шаблона</button>}>
-            {start.error ? <span className="error">{start.error.message}</span> : 'Начните с готового шаблона: поправьте текст, покажите юристу и опубликуйте.'}
-          </EmptyState>
-        ) : (
-        <section className="card-block" aria-label="Версии договора">
-          {/* Новая версия — в шапке списка, справа, а не кнопкой под таблицей */}
-          {versions.length > 0 && (
-            <div className="block-head">
-              <h2>Версии <span className="hint num">· {versions.length}</span></h2>
-              {!draft && <button type="button" className="btn primary" disabled={start.isPending} onClick={() => start.mutate()}>Новая версия (из действующей)</button>}
-            </div>
-          )}
-          {list.error && <p className="error" role="alert">Договор не загрузился: {list.error.message}</p>}
-          {list.isPending && <Loading />}
-          {versions.length > 0 && (
-            <table className="table" aria-label="Версии договора">
-              <tbody>
-                {versions.map((v) => (
-                  <tr key={v.id} {...rowOpen(() => setOpened(v.id), v.id === opened && 'active')}>
-                    <td><button type="button" className="row-link" onClick={() => setOpened(v.id)}>Версия {v.version} · {v.title}</button></td>
-                    <td className={v.publishedAt ? 'tone-ok' : 'tone-wait'}>{v.publishedAt ? `опубликована ${shortDate(v.publishedAt)} · ${audienceText(v)} · подписали: ${v.acceptances}` : 'не опубликована — клиники не видят'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {start.error && <p className="error">{start.error.message}</p>}
-        </section>
-        )}
-      </section>
-      {openedVersion && <VersionPanel key={openedVersion.id} v={openedVersion} onClose={close} />}
-    </>
+    <section id={id} className="card-block wide" aria-label="Договор с клиниками">
+      <div className="block-head">
+        <h2>Договор с клиниками{versions.length > 0 && <span className="hint num"> · версий: {versions.length}</span>}
+          <HelpHint title="Договор с клиниками">Неопубликованную версию видите только вы. Опубликованную видят руководители клиник, которым она адресована
+            (всем или выбранным), и подписывают её в «Настройки → Договор с Tish»; менять текст нельзя — выпустите новую. Какую версию подписать
+            конкретной клинике — в её карточке («Клиники → клиника → Договор»). Перед публикацией — показать юристу.</HelpHint></h2>
+        {versions.length > 0 && !draft && <button type="button" className="btn primary" disabled={start.isPending} onClick={() => start.mutate()}>Новая версия (из действующей)</button>}
+      </div>
+      {list.error && <p className="error" role="alert">Договор не загрузился: {list.error.message}</p>}
+      {list.isPending && <Loading />}
+      {/* Версий ещё нет — пустое состояние с одной кнопкой */}
+      {!list.isPending && !list.error && !versions.length && (
+        <EmptyState compact title="Договора с клиниками пока нет"
+          action={<button type="button" className="btn primary" disabled={start.isPending} onClick={() => start.mutate()}>Начать с шаблона</button>}>
+          Начните с готового шаблона: поправьте текст, покажите юристу и опубликуйте.
+        </EmptyState>
+      )}
+      {versions.length > 0 && (
+        <table className="table" aria-label="Версии договора">
+          <tbody>
+            {versions.map((v) => (
+              <tr key={v.id} {...rowOpen(() => onOpen(v.id), v.id === opened && 'active')}>
+                <td><button type="button" className="row-link" onClick={() => onOpen(v.id)}>Версия {v.version} · {v.title}</button></td>
+                <td className={v.publishedAt ? 'tone-ok' : 'tone-wait'}>{v.publishedAt ? `опубликована ${shortDate(v.publishedAt)} · ${audienceText(v)} · подписали: ${v.acceptances}` : 'не опубликована — клиники не видят'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {start.error && <p className="error">{start.error.message}</p>}
+    </section>
   )
+}
+
+/** Карточка версии договора справа: та же выборка, что у {@link AgreementsBlock}; версию удалили — карточки нет. */
+export function AgreementPanel({ id, onClose }: { id: number; onClose: () => void }) {
+  const list = useQuery({ queryKey: ['platform-agreements'], queryFn: () => unwrap(api.GET('/api/platform/agreements')) })
+  const v = list.data?.find((x) => x.id === id)
+  return v ? <VersionPanel key={v.id} v={v} onClose={onClose} /> : null
 }
 
 function VersionPanel({ v, onClose }: { v: Version; onClose: () => void }) {

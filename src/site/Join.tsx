@@ -39,7 +39,7 @@ export function Join() {
     document.title = 'Tish — запись пациентов для стоматологии'
     if (inAppBrowser()) void getJson<Links>('/web/links').then(({ data }) => setLinks(data ?? {}))
     // Кейс владелец заполняет в «Платформа → Настройки»; не заполнен или клиника не дала согласия — блока нет
-    // Ролик и PDF-презентация — на них ведёт ссылка из сообщения клиникам («Написать клиникам»)
+    // Ролик и PDF-презентация — на них ведёт ссылка из сообщения клиникам («Рассылка клиникам → По одной»)
     void getJson<PublicMaterials>('/web/materials/public').then(({ data }) => setMaterials(data ?? {}))
     void getJson<JoinCase>('/web/case').then(({ data }) => setStory(data?.shown ? data : null))
     void getJson<Tariffs>('/web/tariffs').then(({ data }) => {

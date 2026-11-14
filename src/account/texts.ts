@@ -56,7 +56,7 @@ export function agreementValues(platform: Record<string, unknown> | undefined, f
 
 /**
  * Тип обращения в «Написать в Tish» — одна форма для всего (раньше три кнопки: вопрос, проблема, идея). Ключи — Kind
- * бэкенда (SupportTickets); порядок — как в выборе формы. Тип видит и владелец платформы («Платформа → Обращения»).
+ * бэкенда (SupportTickets); порядок — как в выборе формы. Тип видит и владелец платформы («Платформа → Обратная связь → Обращения»).
  */
 export const TICKET_KINDS: Record<string, { title: string; emoji: string; hint: string }> = {
   QUESTION: { title: 'Вопрос', emoji: '❓', hint: 'Что хотите узнать или как сделать?' },

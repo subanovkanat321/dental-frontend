@@ -58,7 +58,8 @@ test('у пунктов «Настроек» и «Платформы» — св�
   }
   expect(tone('settings', 'plan')).toContain('var(--ico-cash)')
   expect(tone('settings', 'ai')).toContain('var(--ico-ai)')
-  expect(tone('platform', 'tariffs')).toContain('var(--ico-cash)')
+  expect(tone('platform', 'marketing')).toContain('var(--ico-instagram)')
+  expect(tone('platform', 'feedback')).toContain('var(--ico-support)')
   // Остальные разделы — оттенком раздела
   expect(tone('cash', 'salary')).toContain('var(--ico-cash)')
 })

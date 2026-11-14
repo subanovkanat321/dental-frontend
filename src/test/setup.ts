@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup, configure } from '@testing-library/react'
 
 import { resetSubs } from '../lib/sub'
+import { resetPlatformModes } from '../platform/modes'
 import { closeHelpChat } from '../lib/helpChat'
 import { DEFAULT_NOW, fixNow } from './now'
 import { server } from './server'
@@ -25,6 +26,7 @@ afterEach(() => {
   cleanup()
   // Подраздел (#/cash/salary) запоминается в модуле — следующий тест начинает с подраздела по умолчанию
   resetSubs()
+  resetPlatformModes()
   // Чат помощника открыт в модуле (lib/helpChat.ts) — следующий тест начинает с закрытым
   closeHelpChat()
 })
