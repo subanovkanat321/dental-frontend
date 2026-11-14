@@ -27,7 +27,7 @@ const months = (n: number) => Array.from({ length: n }, (_, i) => `2026-${String
 const report = (days: number): Schemas['PlatformAnalyticsAnalytics'] => ({
   days,
   cities: ['Бишкек', 'Ош'],
-  summary: { clinics: 3, working: 2, pilot: 1, paying: 1, overdue: 1, mrrSom: 2490, appointments: days === 90 ? 400 : 120, appointmentsBefore: 100 },
+  summary: { clinics: 3, working: 2, pilot: 1, paying: 1, overdue: 1, mrrSom: 2490, pilotMrrSom: 1500, appointments: days === 90 ? 400 : 120, appointmentsBefore: 100 },
   funnel: {
     applications: { total: 4, approved: 2, rejected: 1, waiting: 1 },
     steps: [{ key: 'CREATED', clinics: 2 }, { key: 'ADMIN', clinics: 1 }, { key: 'CONFIGURED', clinics: 1 }, { key: 'FIRST_VISIT', clinics: 1 }, { key: 'MONTH', clinics: 0 }, { key: 'PAID', clinics: 0 }],
@@ -58,9 +58,19 @@ test('владелец: аналитика платформы — сводка, 
   await user.click(await findSub('Аналитика'))
 
   const summary = await screen.findByRole('region', { name: 'Сводка' })
-  expect(summary).toHaveTextContent('Платят1')
-  expect(summary).toHaveTextContent('2 490 сом')
-  expect(summary).toHaveTextContent('▲ 20%')
+  // Ровная сетка плиток в порядке по смыслу: клиники → работа → оплата → деньги → приёмы
+  const tiles = within(within(summary).getByRole('list', { name: 'Сводка: числа' })).getAllByRole('listitem')
+  expect(tiles.map((t) => t.firstChild?.textContent)).toEqual(['Клиник', 'Работают', 'В пилоте', 'Платят', 'Просрочили',
+    'MRR — платящие', 'После пилота', 'Приёмов за 30 дней'])
+  expect(tiles[3]).toHaveTextContent('Платят1')
+  expect(tiles[5]).toHaveTextContent('MRR — платящие2 490 сомв месяц сейчас')
+  expect(tiles[6]).toHaveTextContent('После пилота1 500 сомв месяц по тарифу')
+  expect(tiles[7]).toHaveTextContent('▲ 20% · за прошлые 30 дней: 100')
+  // Пояснение «кому звонить» — одной строкой и в «?», не абзацем
+  const due = screen.getByRole('region', { name: 'Кому звонить про оплату' })
+  expect(due).toHaveTextContent('Пилот или оплата кончаются в 30 дней или уже прошли')
+  expect(within(due).getByRole('button', { name: 'Подсказка: Кому звонить про оплату' })).toBeInTheDocument()
+  expect(screen.getByRole('combobox', { name: 'Город' })).toBeInTheDocument()
   expect(within(screen.getByRole('table', { name: 'Оплата: кому звонить' })).getByText('Жемчуг')).toBeInTheDocument()
   expect(screen.getByRole('table', { name: 'Оплата: кому звонить' })).toHaveTextContent('через 17 дн.')
   expect(screen.getByRole('table', { name: 'Клиники в зоне риска' })).toHaveTextContent('Приёмов меньше на 83%')
@@ -103,4 +113,33 @@ test('пусто: оплат за год не было — текст вмест
   expect(within(money).queryByRole('img')).not.toBeInTheDocument()
   expect(screen.getByRole('list', { name: 'Шаги воронки' })).toHaveTextContent('Первый приём1')
   expect(screen.getByRole('list', { name: 'Шаги воронки' })).not.toHaveTextContent('—')
+})
+
+test('пилоты: «Платят 0» и MRR 0, будущие деньги — «после пилота»; приёмов раньше не было; кому звонить — одной строкой; город один — без выбора', async () => {
+  const pilots = report(30)
+  pilots.cities = ['Бишкек']
+  pilots.summary = { clinics: 2, working: 1, pilot: 2, paying: 0, overdue: 0, mrrSom: 0, pilotMrrSom: 1500, appointments: 69, appointmentsBefore: 0 }
+  pilots.money!.due = []
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, owner: true, platform: true })),
+    http.get('*/api/platform/analytics', () => HttpResponse.json(pilots)),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Аналитика'))
+  const summary = await screen.findByRole('region', { name: 'Сводка' })
+  const tiles = within(summary).getAllByRole('listitem')
+  expect(tiles[3]).toHaveTextContent('Платят0')
+  expect(tiles[5]).toHaveTextContent('MRR — платящие0 сом')
+  expect(tiles[6]).toHaveTextContent('После пилота1 500 сом')
+  expect(tiles[7]).toHaveTextContent('Приёмов за 30 дней69за прошлые 30 дней: 0')
+  expect(summary).not.toHaveTextContent('раньше было')
+
+  const due = screen.getByRole('region', { name: 'Кому звонить про оплату' })
+  expect(within(due).getAllByText(/./, { selector: 'p' })).toHaveLength(1)
+  expect(due).toHaveTextContent('Звонить некому: в ближайшие 30 дней ни у кого не кончается.')
+  await user.click(within(due).getByRole('button', { name: 'Подсказка: Кому звонить про оплату' }))
+  expect(within(due).getByRole('note')).toHaveTextContent('Пилот без даты — по акции с подключения')
+
+  expect(screen.queryByRole('combobox', { name: 'Город' })).not.toBeInTheDocument()
 })

@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react'
 import { api, unwrap, type Schemas } from '../api/client'
 import { changeOf } from '../lib/compare'
 import { saveCsv } from '../lib/csv'
+import { HelpHint } from '../help/HelpHint'
 import { shortDate, somText } from '../lib/time'
 import { Select } from '../layout/Select'
 import { EmptyState } from '../layout/EmptyState'
@@ -53,17 +54,19 @@ function pct(part: number, whole: number): string {
   return whole ? `${Math.round((part / whole) * 100)}%` : '—'
 }
 
-function Block({ title, label, hint, csv, children }: {
+function Block({ title, label, hint, help, csv, children }: {
   title: string
   label: string
   hint?: ReactNode
+  /** Подробное пояснение — в «?» у заголовка, а не абзацем над таблицей. */
+  help?: ReactNode
   csv?: () => void
   children: ReactNode
 }) {
   return (
     <section className="card-block chart" aria-label={label}>
       <div className="stats-head">
-        <h2>{title}</h2>
+        <h2>{title}{help && <HelpHint title={title}>{help}</HelpHint>}</h2>
         {csv && <button type="button" className="btn ghost small" onClick={csv}>CSV</button>}
       </div>
       {hint && <p className="hint small">{hint}</p>}
@@ -88,16 +91,19 @@ export function AnalyticsTab() {
   return (
     <>
       <HeadTools>
-        <div className="analytics-filter" role="group" aria-label="Период и город">
+        <div className="analytics-filter platform-filter" role="group" aria-label="Период и город">
           <div className="segments">
             {PERIODS.map((d) => (
               <button key={d} type="button" aria-pressed={days === d} onClick={() => setDays(d)}>{d === 365 ? 'Год' : `${d} дней`}</button>
             ))}
           </div>
-          <Select aria-label="Город" value={city} onChange={(e) => setCity(e.target.value)}>
-            <option value="">Все города</option>
-            {(a?.cities ?? (city ? [city] : [])).map((c) => <option key={c} value={c}>{c}</option>)}
-          </Select>
+          {/* Город один — выбирать нечего: не показываем одинокое «Все города» */}
+          {((a?.cities?.length ?? 0) > 1 || city) && (
+            <Select aria-label="Город" value={city} onChange={(e) => setCity(e.target.value)}>
+              <option value="">Все города</option>
+              {(a?.cities ?? (city ? [city] : [])).map((c) => <option key={c} value={c}>{c}</option>)}
+            </Select>
+          )}
         </div>
       </HeadTools>
       {query.error && <p className="error">{query.error.message}</p>}
@@ -109,21 +115,26 @@ export function AnalyticsTab() {
 function Report({ a }: { a: Analytics }) {
   const s: Partial<NonNullable<Analytics['summary']>> = a.summary ?? {}
   const period = a.days === 365 ? 'за год' : `за ${a.days} дней`
-  const change = changeOf(s.appointments ?? 0, s.appointmentsBefore ?? 0)
+  const before = s.appointmentsBefore ?? 0
+  const change = changeOf(s.appointments ?? 0, before)
+  const prev = a.days === 365 ? 'за прошлый год' : `за прошлые ${a.days} дней`
   if (!s.clinics) return <EmptyState fill title={a.city ? 'В этом городе клиник нет' : 'Клиник пока нет'} />
   return (
     <>
+      {/* Ровная сетка: телефон — 2 колонки, компьютер — 4; плитки одной высоты. Порядок — по смыслу:
+          клиники → как работают → как платят → деньги → приёмы */}
       <section className="card-block" aria-label="Сводка">
-        <div className="survey-tiles">
+        <ul className="survey-tiles tile-grid" aria-label="Сводка: числа">
           <Tile title="Клиник" value={s.clinics} />
-          <Tile title="Работают" value={s.working ?? 0} note="приёмы за 7 дней" />
-          <Tile title="В пилоте" value={s.pilot ?? 0} />
+          <Tile title="Работают" value={s.working ?? 0} note="были приёмы за 7 дней" />
+          <Tile title="В пилоте" value={s.pilot ?? 0} note="бесплатно" />
           <Tile title="Платят" value={s.paying ?? 0} />
           <Tile title="Просрочили" value={s.overdue ?? 0} tone={s.overdue ? 'tone-bad' : undefined} />
-          <Tile title="В месяц (MRR)" value={somText(s.mrrSom ?? 0)} hero />
+          <Tile title="MRR — платящие" value={somText(s.mrrSom ?? 0)} note="в месяц сейчас" />
+          <Tile title="После пилота" value={somText(s.pilotMrrSom ?? 0)} note="в месяц по тарифу" />
           <Tile title={`Приёмов ${period}`} value={s.appointments ?? 0}
-            note={<span className={`tone-${change.tone}`}>{change.text}</span>} />
-        </div>
+            note={before ? <><span className={`tone-${change.tone}`}>{change.text}</span> · {prev}: {before}</> : `${prev}: 0`} />
+        </ul>
       </section>
       <DueBlock a={a} />
       <RiskBlock a={a} />
@@ -137,13 +148,13 @@ function Report({ a }: { a: Analytics }) {
   )
 }
 
-function Tile({ title, value, note, tone, hero }: { title: string; value: ReactNode; note?: ReactNode; tone?: string; hero?: boolean }) {
+function Tile({ title, value, note, tone }: { title: string; value: ReactNode; note?: ReactNode; tone?: string }) {
   return (
-    <div className={hero ? 'survey-tile hero' : 'survey-tile'}>
+    <li className="survey-tile">
       <span className="hint">{title}</span>
       <b className={tone}>{value}</b>
       {note && <span className="hint small">{note}</span>}
-    </div>
+    </li>
   )
 }
 
@@ -159,7 +170,8 @@ function DueBlock({ a }: { a: Analytics }) {
     ...due.map((d) => [d.name ?? '', d.city ?? '', DUE[d.kind ?? '']?.[0] ?? '', d.date ?? '', d.tariff ?? '', d.monthSom, d.appointments])])
   return (
     <Block title="Кому звонить про оплату" label="Кому звонить про оплату" csv={due.length ? csv : undefined}
-      hint="Пилот или оплата заканчиваются в ближайшие 30 дней, или срок уже прошёл. Пилот без даты — по акции с подключения.">
+      hint={due.length ? 'Пилот или оплата кончаются в 30 дней или уже прошли' : undefined}
+      help="Пилот или оплата заканчиваются в ближайшие 30 дней, или срок уже прошёл. Пилот без даты — по акции с подключения.">
       {due.length ? (
         <div className="table-scroll">
           <table className="table" aria-label="Оплата: кому звонить">
@@ -181,7 +193,7 @@ function DueBlock({ a }: { a: Analytics }) {
             </tbody>
           </table>
         </div>
-      ) : <p className="hint">В ближайшие 30 дней ни у кого не кончается.</p>}
+      ) : <p className="hint">Звонить некому: в ближайшие 30 дней ни у кого не кончается.</p>}
     </Block>
   )
 }
@@ -353,11 +365,11 @@ function PatientsBlock({ a, period }: { a: Analytics; period: string }) {
   return (
     <Block title="Пациенты платформы" label="Пациенты платформы"
       hint="Только числа — без имён и телефонов.">
-      <div className="survey-tiles">
+      <ul className="survey-tiles tile-grid three" aria-label="Пациенты: числа">
         <Tile title="Пациентов" value={p.total ?? 0} />
         <Tile title="Подключили бота" value={pct(p.withBot ?? 0, p.total ?? 0)} note={`${p.withBot ?? 0}`} />
         <Tile title={`Неявки ${period}`} value={pct(p.noShow ?? 0, visits)} note={`${p.noShow ?? 0} из ${visits}`} />
-      </div>
+      </ul>
       {/* Ни одного нового пациента за год — не рисуем двенадцать пустых столбиков на полэкрана */}
       {!months.some((m) => m.count) ? <EmptyState compact title="Новых пациентов за год ещё не было" /> : <>
       <p className="hint small">Новых пациентов по месяцам</p>

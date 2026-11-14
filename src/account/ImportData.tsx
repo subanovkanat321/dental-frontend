@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import { ApiError, upload, type Schemas } from '../api/client'
 import { FilePicker } from '../layout/FilePicker'
 import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
 import { download } from '../lib/download'
+import { MOVE_TEMPLATE_PATH } from '../lib/texts'
 import { WorkbookImport } from './WorkbookImport'
 import './import.css'
 
@@ -20,6 +21,26 @@ const FIELDS: Record<Kind, [Field, string][]> = {
     ['phone', 'Телефон *'], ['birthDate', 'Дата рождения'], ['workplace', 'Место работы']],
   SERVICES: [['name', 'Название услуги *'], ['price', 'Цена, сом'], ['duration', 'Длительность, мин'], ['group', 'Раздел']],
 }
+
+/** Что загружаем: всё по шаблону Tish или одну таблицу — пациентов или прайс. */
+type Variant = 'WORKBOOK' | Kind
+
+/**
+ * Варианты карточками, а не сегментом: на телефоне «Шаблон Tish (всё) | Пациенты | Прайс услуг» переносился,
+ * а смена варианта ничего заметного не меняла (владелец, 2026-11-13). Карточка — значок, название и строка
+ * «что это»; под ними — «Что загрузится» именно для выбранного, его пример и подписанная кнопка файла.
+ */
+const VARIANTS: { key: Variant; icon: string; title: string; line: string; what: string[]; example: string; pick: string }[] = [
+  { key: 'WORKBOOK', icon: '📚', title: 'Шаблон Tish (всё)', line: 'Вся база одним файлом — для переезда клиники',
+    what: ['Пациенты, долги и будущие записи', 'Услуги и цены', 'Врачи и сотрудники', 'Склад'],
+    example: 'пример шаблона Tish.xlsx', pick: 'Выбрать заполненный шаблон' },
+  { key: 'PATIENTS', icon: '👤', title: 'Пациенты', line: 'Одна таблица: база пациентов',
+    what: ['ФИО — одной колонкой или Фамилия, Имя, Отчество', 'Телефон — обязательно', 'Дата рождения, место работы — если есть'],
+    example: 'пример пациентов', pick: 'Выбрать файл с пациентами' },
+  { key: 'SERVICES', icon: '🦷', title: 'Прайс услуг', line: 'Одна таблица: услуги и цены',
+    what: ['Название услуги — обязательно', 'Цена, сом', 'Длительность, мин', 'Раздел (терапия, хирургия…)'],
+    example: 'пример прайса', pick: 'Выбрать файл с прайсом' },
+]
 
 /** Сколько ошибок показать сразу; остальные — по «Показать все». */
 const SHOWN_ERRORS = 10
@@ -37,6 +58,7 @@ export function ImportData() {
   const [workbook, setWorkbook] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [columns, setColumns] = useState<Columns | null>(null)
+  const ids = useId()
 
   const form = (f: File, cols: Columns | null) => {
     const body = new FormData()
@@ -65,6 +87,12 @@ export function ImportData() {
     if (next) setKind(next)
     setWorkbook(false)
   }
+  const pickVariant = (v: Variant) => {
+    if (v === 'WORKBOOK') {
+      reset()
+      setWorkbook(true)
+    } else reset(v)
+  }
   const choose = (f: File | undefined) => {
     apply.reset()
     setColumns(null)
@@ -84,22 +112,36 @@ export function ImportData() {
   const ready = r && (kind === 'SERVICES' ? columns?.name != null
     : columns?.phone != null && (columns.fullName != null || columns.lastName != null || columns.firstName != null))
   const exampleName = kind === 'PATIENTS' ? 'пациенты-пример' : 'прайс-пример'
+  const variant: Variant = workbook ? 'WORKBOOK' : kind
+  const chosen = VARIANTS.find((v) => v.key === variant)!
   return (
     <section className="card-block import-data" aria-label="Загрузить из Excel">
       <h2>Загрузить из Excel</h2>
-      <p>Перенесите базу из таблицы: всё сразу по шаблону Tish или отдельно — пациентов (ФИО, телефон, дата рождения) или прайс услуг
-        (название, цена, длительность, раздел). Подойдёт .xlsx до 5 МБ и 10 000 строк на лист (отдельные таблицы — и .csv).</p>
-      <div className="segments" role="group" aria-label="Что загружаем">
-        <button type="button" aria-pressed={workbook} onClick={() => { reset(); setWorkbook(true) }}>Шаблон Tish (всё)</button>
-        <button type="button" aria-pressed={!workbook && kind === 'PATIENTS'} onClick={() => reset('PATIENTS')}>Пациенты</button>
-        <button type="button" aria-pressed={!workbook && kind === 'SERVICES'} onClick={() => reset('SERVICES')}>Прайс услуг</button>
+      <p className="hint import-lead">Перенесите базу из таблицы — выберите, что загружаем.</p>
+      <div className="import-variants" role="group" aria-label="Что загружаем">
+        {VARIANTS.map((v) => (
+          <button key={v.key} type="button" className="import-variant" aria-pressed={variant === v.key} aria-label={v.title}
+            aria-describedby={`${ids}-${v.key}`} onClick={() => pickVariant(v.key)}>
+            <span className="import-variant-ico" aria-hidden="true">{v.icon}</span>
+            <span className="import-variant-text"><b>{v.title}</b><span id={`${ids}-${v.key}`}>{v.line}</span></span>
+          </button>
+        ))}
       </div>
+      <section key={chosen.key} className="import-what" aria-label="Что загрузится">
+        <h3>Что загрузится</h3>
+        <ul>{chosen.what.map((w) => <li key={w}>{w}</li>)}</ul>
+        <p className="hint small">{workbook
+          ? <>Каждое — на своём листе, пустые листы пропустим. Файл .xlsx до 5 МБ.</>
+          : <>Первая строка — заголовки колонок. Файл .xlsx или .csv до 5 МБ и 10 000 строк.</>}</p>
+        <p className="hint small import-example">Скачать {workbook
+          ? <a href={MOVE_TEMPLATE_PATH} download="tish-perenos.xlsx">{chosen.example}</a>
+          : <>{chosen.example}:{' '}
+            <button type="button" className="link" onClick={() => void download(`/api/clinic/import/template?kind=${kind}&format=xlsx`, `${exampleName}.xlsx`)}>Excel (.xlsx)</button>
+            {' · '}
+            <button type="button" className="link" onClick={() => void download(`/api/clinic/import/template?kind=${kind}&format=csv`, `${exampleName}.csv`)}>CSV</button></>}
+        </p>
+      </section>
       {workbook ? <WorkbookImport /> : <>
-      <p className="hint small">Скачать пример:{' '}
-        <button type="button" className="link" onClick={() => void download(`/api/clinic/import/template?kind=${kind}&format=xlsx`, `${exampleName}.xlsx`)}>Excel (.xlsx)</button>
-        {' · '}
-        <button type="button" className="link" onClick={() => void download(`/api/clinic/import/template?kind=${kind}&format=csv`, `${exampleName}.csv`)}>CSV</button>
-      </p>
       {done ? (
         <div className="import-done" role="status">
           <p className="tone-ok">✅ Загружено: добавлено {done.added}, {kind === 'PATIENTS' ? 'дополнено' : 'поставлено цен'} {done.updated},
@@ -108,7 +150,7 @@ export function ImportData() {
         </div>
       ) : (
         <>
-          <FilePicker label="Файл таблицы" button="Выбрать файл (.xlsx, .csv)" file={file} onChange={choose}
+          <FilePicker label="Файл таблицы" button={chosen.pick} file={file} onChange={choose}
             accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
           {preview.isPending && <p className="hint"><Spinner />Читаем таблицу…</p>}
           {preview.error && <p className="error" role="alert">{fileError}</p>}

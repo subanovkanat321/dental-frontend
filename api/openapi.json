@@ -3701,6 +3701,43 @@
         }
       }
     },
+    "/api/appointments/{id}/chair" : {
+      "put" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "changeChair",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AppointmentRequestsChair"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppointmentView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/anamnesis/questions/{id}" : {
       "put" : {
         "tags" : [ "medical-record-controller" ],
@@ -6232,7 +6269,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/PlatformControllerName"
+                "$ref" : "#/components/schemas/PlatformServiceNewClinic"
               }
             }
           },
@@ -6244,7 +6281,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/PlatformServiceClinicRow"
+                  "$ref" : "#/components/schemas/PlatformServiceCreated"
                 }
               }
             }
@@ -14072,6 +14109,60 @@
         }
       }
     },
+    "/api/appointments/chair-options" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "chairOptions",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "startAt",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "endAt",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "appointmentId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChairOptionView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/chair-check" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -14099,6 +14190,14 @@
           "schema" : {
             "type" : "string",
             "format" : "date-time"
+          }
+        }, {
+          "name" : "chairId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         } ],
         "responses" : {
@@ -15811,6 +15910,10 @@
           "storyErrorAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "mediaRemovedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "id", "instagramPublishing", "story", "storyPublishing" ]
@@ -15955,6 +16058,9 @@
           },
           "settingUp" : {
             "type" : "boolean"
+          },
+          "city" : {
+            "type" : "string"
           }
         },
         "required" : [ "appointments", "bookedWeek", "doctors", "done30", "hidden", "id", "listed", "noShow30", "patients", "selfBooked30", "settingUp", "staff", "unmarked" ]
@@ -17911,9 +18017,16 @@
           },
           "freeComment" : {
             "type" : "string"
+          },
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "chairManual" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
+        "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
       },
       "FamiliesBooker" : {
         "properties" : {
@@ -17970,6 +18083,22 @@
             "minLength" : 0
           }
         }
+      },
+      "AppointmentRequestsChair" : {
+        "properties" : {
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "confirmChairTime" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "version" ]
       },
       "AnamnesisQuestionRequest" : {
         "properties" : {
@@ -18492,6 +18621,10 @@
           },
           "confirmChairTime" : {
             "type" : "boolean"
+          },
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "doctorId", "startAt" ]
@@ -19181,15 +19314,53 @@
         },
         "required" : [ "added", "removed", "unchanged", "updated" ]
       },
-      "PlatformControllerName" : {
+      "PlatformServiceNewClinic" : {
         "properties" : {
           "name" : {
             "type" : "string"
           },
           "city" : {
             "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "adminAccess" : {
+            "type" : "string",
+            "enum" : [ "LINK", "PHONE" ]
+          },
+          "adminName" : {
+            "type" : "string"
+          },
+          "adminPhone" : {
+            "type" : "string"
+          },
+          "alsoDoctor" : {
+            "type" : "boolean"
+          },
+          "paidUntil" : {
+            "type" : "string",
+            "format" : "date"
           }
         }
+      },
+      "PlatformServiceCreated" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "clinic" : {
+            "$ref" : "#/components/schemas/PlatformServiceClinicRow"
+          },
+          "invite" : {
+            "$ref" : "#/components/schemas/DoctorInvitesInvite"
+          },
+          "adminPhone" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id" ]
       },
       "BillingControllerPaymentRequest" : {
         "properties" : {
@@ -20444,6 +20615,10 @@
           "fromWaitlistId" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "doctorId", "durationMinutes", "patientId", "startAt" ]
@@ -20577,6 +20752,10 @@
           },
           "confirmChairTime" : {
             "type" : "boolean"
+          },
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "doctorId", "durationMinutes", "startAt", "version" ]
@@ -20678,6 +20857,10 @@
           },
           "confirmChairTime" : {
             "type" : "boolean"
+          },
+          "chairId" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "durationMinutes", "startAt", "version" ]
@@ -23384,6 +23567,10 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "pilotMrrSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "appointments" : {
             "type" : "integer",
             "format" : "int64"
@@ -23393,7 +23580,7 @@
             "format" : "int64"
           }
         },
-        "required" : [ "appointments", "appointmentsBefore", "clinics", "mrrSom", "overdue", "paying", "pilot", "working" ]
+        "required" : [ "appointments", "appointmentsBefore", "clinics", "mrrSom", "overdue", "paying", "pilot", "pilotMrrSom", "working" ]
       },
       "AiUsageStoreClinicRow" : {
         "properties" : {
@@ -25167,6 +25354,31 @@
           }
         },
         "required" : [ "booked", "requested" ]
+      },
+      "ChairOptionView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "own" : {
+            "type" : "boolean"
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "FREE", "COLLEAGUE_TIME", "BUSY" ]
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "strict" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "id", "name", "own", "state", "strict" ]
       },
       "ChairCheckView" : {
         "properties" : {

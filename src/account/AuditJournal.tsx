@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { Fragment, useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { Segments } from '../layout/Segments'
 import { DateInput } from '../layout/DateInput'
 import { Icon } from '../layout/Icon'
 import { Select } from '../layout/Select'
@@ -97,11 +98,7 @@ export function AuditJournal() {
           <option value="">Все типы</option>
           {CATEGORIES.map(([key, title]) => <option key={key} value={key}>{title}</option>)}
         </Select>
-        <div className="segments audit-period" role="group" aria-label="Период">
-          {PERIODS.map(([key, title]) => (
-            <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
-          ))}
-        </div>
+        <Segments className="audit-period" label="Период" value={period} onChange={setPeriod} options={PERIODS.map(([key, title]) => ({ value: key, label: title }))} />
       </div>
       {period === 'custom' && (
         <div className="row dates audit-dates">
