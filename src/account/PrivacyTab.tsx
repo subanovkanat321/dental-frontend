@@ -28,8 +28,9 @@ export function PrivacyTab({ me }: { me: Me }) {
     + (info.accessLog ? '. Каждый вход записывается' : '') + (info.accessNotify ? ', руководителям клиники сразу приходит сообщение' : '')
     + (info.accessRequiresGrant ? '. Входит, только когда вы открыли «Доступ поддержки», — иначе только аварийно, и вы об этом узнаете' : '')
 
+  // На всю ширину сеткой `.page-grid` (2026-11-14): «Хранение данных» | «Кто что видит», ниже — остальное
   return (
-    <>
+    <div className="page-grid">
       <section className="card-block privacy">
         <h2>Хранение данных</h2>
         <dl className="facts">
@@ -75,7 +76,7 @@ export function PrivacyTab({ me }: { me: Me }) {
         {info.legalName && <p className="strong">{info.legalName}</p>}
         <DeveloperContacts />
       </section>
-    </>
+    </div>
   )
 }
 

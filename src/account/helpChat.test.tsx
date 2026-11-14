@@ -97,7 +97,7 @@ test('ошибка сервера (лимит) — текст ошибки по�
   expect(await within(panel).findByRole('alert')).toHaveTextContent('Сегодня вы уже задали 30 вопросов')
 })
 
-test('«Написать в Tish»: кнопка «Спросить помощника», переписка из чата открывается чатом', async () => {
+test('«Написать в Tish»: кнопка «Спросить помощника»; строка обращения «Помощник: текст» нажимается целиком и открывает чат', async () => {
   server.use(
     http.get('*/api/support/chat', () => HttpResponse.json(INFO)),
     http.get('*/api/clinic', () => HttpResponse.json({})),
@@ -109,7 +109,14 @@ test('«Написать в Tish»: кнопка «Спросить помощн
   const user = userEvent.setup()
   renderApp()
   openItem('support')
-  await user.click(await screen.findByRole('button', { name: '💬 Помощник' }))
+  // «Мои обращения»: «[Помощник] текст вопроса» — без «› ·» и эмодзи; нажимается вся строка, не только ссылка
+  const link = await screen.findByRole('button', { name: /^Помощник\s*Как принять доплату\?$/ })
+  const row = link.closest('tr')!
+  expect(row).toHaveClass('clickable')
+  expect(row.cells[0]!.textContent).not.toMatch(/[›·]|💬/u)
+  expect(within(row.cells[0]!).getByText('Помощник')).toHaveClass('chip')
+  expect(within(row).getByText('есть ответ')).toHaveClass('chip')
+  await user.click(row.cells[1]!)
   const panel = await screen.findByRole('complementary', { name: 'Помощь' })
   expect(await within(panel).findByText('Карточка приёма → «Принять доплату».')).toBeInTheDocument()
   // Тот же чат, что из меню «Помощь»: окно поверх экрана, а не панель страницы в рабочей области

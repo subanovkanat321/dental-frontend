@@ -1,4 +1,4 @@
-import { CHAPTER_ALIAS, sectionId, type GuideChapter, type GuideSection } from '../site/guide/content'
+import { CHAPTER_ALIAS, sectionId, type GuideChapter, type GuideRole, type GuideSection } from '../site/guide/content'
 
 /**
  * «Руководство» в CRM — книга из глав site/guide/content.ts (тех же, что у /guide на сайте). Здесь только логика без
@@ -146,4 +146,25 @@ export function saveLast(place: Place): void {
   } catch {
     // хранилище недоступно — в следующий раз откроется оглавление
   }
+}
+
+/**
+ * «С чего начать» на главной руководства (компьютер): 3–5 ключевых разделов роли — по названиям, чтобы не зависеть от
+ * якорей. Раздела нет (переименовали, не для роли) — молча пропускаем: guide.test.tsx проверяет, что у каждой роли их ≥ 3.
+ */
+const STARTERS: Record<GuideRole, string[]> = {
+  admin: ['Добавить сотрудника: одна кнопка', 'Услуги', 'График: часы клиники и неделя каждого', 'Переезд из Excel: один шаблон на все данные', 'Новая запись'],
+  reception: ['Как войти', '«День» на компьютере', 'Новая запись', 'Заявки из бота', 'Оплата после приёма'],
+  doctor: ['Как войти', '«День» на компьютере', 'Карточка приёма', 'Медкарта: анкета и карта зубов', 'Мой заработок (врач)'],
+  assistant: ['Как войти', '«День» на компьютере', 'Материалы', 'Списать или принять поставку', '«Профосмотр» (у ассистента)'],
+}
+
+export function startPages(role: GuideRole, chapters: GuideChapter[]): BookPage[] {
+  return STARTERS[role].flatMap((title) => {
+    for (const chapter of chapters) {
+      const section = chapter.sections.find((s) => s.title === title)
+      if (section) return [{ chapter, section }]
+    }
+    return []
+  })
 }
