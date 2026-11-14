@@ -166,7 +166,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
       </div>
       {!draft ? (
         <>
-          <p className="hint small">Что сделали и что дальше по плану{m?.memoId != null ? <>, уход дома — из памятки «{m.title}»</> : null}.
+          <p className="hint small">Что сделали и что дальше по плану{m?.memoId != null ? <>. Памятка «{m.title}» (уход дома) добавится в это же сообщение — отдельно слать не нужно</> : null}.
             Перед отправкой покажем, что именно получит пациент.</p>
           {m && m.memoId == null && <NoMemo />}
           <div className="after-visit-start">
@@ -301,7 +301,7 @@ function MemoOnly({ appointment: a, memo: m, sending, onSending, onPrint }: {
   const nowhere = !m.telegram && !phone
   return (
     <div className="after-visit-memo">
-      <p className="line-edit"><span>Или только памятка «{m.title}»</span></p>
+      <p className="line-edit"><span>Без сообщения — только памятка «{m.title}»</span></p>
       {!sending ? (
         <div className="actions">
           <button type="button" className="btn" disabled={nowhere} onClick={() => { setSent(''); onSending(true) }}>Отправить памятку пациенту</button>
