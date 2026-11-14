@@ -48,7 +48,7 @@ test('«Касса»: строка долга и строка оплаты от�
   await waitForSlow(() => expect(screen.getByRole('complementary', { name: 'Карточка приёма' })).toHaveTextContent('Айгуль Т.'))
 })
 
-test('«Должники»: строка открывает пациента; чип визита — приём, а не пациента; старый долг — пациента, «Погашен» — нет', async () => {
+test('«Должники»: строка открывает пациента; «Принять оплату» — самый давний приём; «⋯» — пациент и визиты; старый долг — так же', async () => {
   server.use(http.get('*/api/opening-debts', () => HttpResponse.json([
     { id: 3, patientId: 9, patient: 'Пример Старый', amountSom: 2500, createdAt: '2026-11-10T06:00:00Z' },
   ] satisfies Schemas['OpeningDebtsView'][])))
@@ -58,25 +58,46 @@ test('«Должники»: строка открывает пациента; ч
   render(
     <QueryClientProvider client={createQueryClient({ queries: { retry: false } })}>
       <DebtorsTab pending={false} onOpen={onOpen} onOpenPatient={onOpenPatient} rows={[
+        { appointmentId: 2, startAt: '2026-10-20T04:00:00Z', patientId: 5, patient: 'Айгуль С.', doctor: 'Нурболот', service: 'Чистка', chargeSom: 2000, paidSom: 0, debtSom: 2000, doctorId: 2 },
         { appointmentId: 1, startAt: '2026-10-01T04:00:00Z', patientId: 5, patient: 'Айгуль С.', doctor: 'Айгерим', service: 'Пломба', chargeSom: 5000, paidSom: 2000, debtSom: 3000, doctorId: 1 },
       ]} />
     </QueryClientProvider>,
   )
   const box = await screen.findByRole('region', { name: 'Должники' })
-  const debtor = within(box).getByText(/1 приём/).closest('li')!
+  const debtor = within(box).getByText(/2 визита в долг/).closest('li')!
   expect(debtor).toHaveClass('clickable')
-  await user.click(within(debtor).getByText(/1 приём/))
+  // Одна серая строка: последний визит, его врач, сколько визитов в долг; сумма справа
+  expect(debtor).toHaveTextContent(/последний визит 20 окт.* · Нурболот · 2 визита в долг/)
+  expect(debtor).toHaveTextContent(/5\s000 сом/)
+  await user.click(within(debtor).getByText(/2 визита в долг/))
   expect(onOpenPatient).toHaveBeenLastCalledWith(5)
-  await user.click(within(debtor).getByRole('button', { name: /Пломба/ }))
-  expect(onOpen).toHaveBeenCalledWith(1)
+
+  // Главное действие — одно: приём с самым давним долгом (там оплата), строку не открывает
+  expect(within(debtor).getAllByRole('button', { name: 'Принять оплату' })).toHaveLength(1)
+  await user.click(within(debtor).getByRole('button', { name: 'Принять оплату' }))
+  expect(onOpen).toHaveBeenLastCalledWith(1)
   expect(onOpenPatient).toHaveBeenCalledTimes(1)
 
-  const old = await screen.findByRole('region', { name: 'Долги из прежней программы' })
-  await user.click(within(old).getByText(/перенесли/))
+  // «⋯»: открыть пациента и каждый визит в долг
+  await user.click(within(debtor).getByRole('button', { name: 'Ещё: Айгуль С.' }))
+  const menu = within(debtor).getByRole('menu')
+  expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+    'Открыть пациента', expect.stringMatching(/^Визит 1 окт.* · Пломба · 3\s000 сом$/), expect.stringMatching(/^Визит 20 окт.* · Чистка · 2\s000 сом$/),
+  ])
+  await user.click(within(menu).getByRole('menuitem', { name: /Чистка/ }))
+  expect(onOpen).toHaveBeenLastCalledWith(2)
+  expect(onOpenPatient).toHaveBeenCalledTimes(1)
+
+  const old = await screen.findByRole('region', { name: 'Старые долги из прежней программы' })
+  const row = within(old).getByText(/перенесли/).closest('li')!
+  await user.click(within(row).getByText(/перенесли/))
   expect(onOpenPatient).toHaveBeenLastCalledWith(9)
-  await user.click(within(old).getByRole('button', { name: 'Погашен' }))
-  expect(onOpenPatient).toHaveBeenCalledTimes(2)
-  expect(within(old).getByRole('group', { name: 'Как отдали' })).toBeInTheDocument()
+  await user.click(within(row).getByRole('button', { name: 'Ещё: Пример Старый' }))
+  await user.click(within(row).getByRole('menuitem', { name: 'Открыть пациента' }))
+  expect(onOpenPatient).toHaveBeenCalledTimes(3)
+  await user.click(within(row).getByRole('button', { name: 'Принять оплату' }))
+  expect(onOpenPatient).toHaveBeenCalledTimes(3)
+  expect(within(row).getByRole('group', { name: 'Как отдали' })).toBeInTheDocument()
 })
 
 test('«Расходы»: строка открывает «Исправить», «✕» — нет; общий расход — тоже, чип «каждый месяц ✕» — нет', async () => {

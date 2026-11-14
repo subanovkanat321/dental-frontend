@@ -1501,20 +1501,6 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .starter-block p { margin: 0; }
 .starter-list { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; max-height: 40vh; overflow-y: auto; font-size: .92rem; }
 
-/* «Касса → Должники» (cash/DebtorsTab.tsx): итог и список по пациентам */
-.debtors-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.debtors-sum > div { display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); }
-.debtors-sum b { font-size: 1.15rem; }
-.debtors-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.debtors-list li { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
-.debtors-list li.overdue { border-color: color-mix(in srgb, var(--bad-ink, #b42318) 40%, var(--separator)); }
-.debtors-list p { margin: 0; }
-.debtor-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.debtor-head b { font-size: 1.05rem; }
-.debtor-visits { display: flex; flex-wrap: wrap; gap: 6px; }
-.debtor-visits .chip { font: inherit; font-size: .85rem; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); cursor: pointer; }
-@media (max-width: 420px) { .debtors-sum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
-
 /* «Отчёт пациенту» (print/VisitReport.tsx) */
 .visit-report { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); background: var(--card); }
 .visit-report h3 { margin: 0; }
