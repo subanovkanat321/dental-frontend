@@ -5,13 +5,25 @@ import { readFileSync } from 'node:fs'
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
 const crm = read('../crm.css')
 const tokens = read('../tokens.css')
+/** Селекторы списка через запятую — только верхнего уровня (запятые внутри :is() не делят) */
+function topLevel(list: string): string[] {
+  const out = ['']
+  let depth = 0
+  for (const ch of list) {
+    if (ch === '(') depth += 1
+    if (ch === ')') depth -= 1
+    if (ch === ',' && depth === 0) out.push('')
+    else out[out.length - 1] += ch
+  }
+  return out
+}
 const flat = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ')
 
 test('на компьютере страница — во всю рабочую область: у контейнеров страниц нет колонки 880/1280/1480px', () => {
   const css = flat(crm + tokens)
   for (const box of ['.settings-item', '.schedule-main', '.medical', '.page', '.workspace']) {
     const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
-      .filter(([, sel]) => sel!.split(',').some((s) => s.trim() === box || s.trim().startsWith(`${box}:is(`)))
+      .filter(([, sel]) => topLevel(sel!).some((s) => new RegExp(`^${box.replace('.', '\\.')}(:is\\([^()]*\\))*$`).test(s.trim())))
     for (const [, sel, body] of rules) expect(body, `${sel!.trim()} ограничивает ширину страницы`).not.toMatch(/max-width:\s*\d{3,}px/)
   }
   // Таблицы — во всю ширину карточки, не по содержимому

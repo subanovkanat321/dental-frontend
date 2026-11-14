@@ -67,3 +67,20 @@ export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
   },
 }
 
+
+/**
+ * Свой приглушённый оттенок подраздела по смыслу (2026-11-14: «здесь, похоже, нет краски» — у «Настроек» все
+ * иконки были серо-синими): токен `--ico-<имя>` из tokens.css (светлая и тёмная тема, ≥3:1). Нет в списке —
+ * оттенок раздела. Разделы с ярким своим цветом (Пациенты, Касса, Склад) — одним оттенком: там он и так виден.
+ */
+export const SUB_TONES: Partial<Record<Page, Record<string, string>>> = {
+  settings: {
+    reminder: 'stock', questions: 'patients', contract: 'schedule', memos: 'memo', 'patient-news': 'platform', sources: 'instagram',
+    plan: 'cash', agreement: 'settings', data: 'data', ai: 'ai',
+  },
+  clinic: { about: 'clinic', staff: 'patients', services: 'stock', hours: 'schedule', chairs: 'learn' },
+  platform: {
+    clinics: 'platform', analytics: 'patients', finance: 'finance', surveys: 'stock', tickets: 'support', outreach: 'schedule', broadcast: 'help',
+    agreements: 'data', tariffs: 'cash', content: 'instagram', materials: 'appearance', ai: 'ai', health: 'logout', settings: 'settings',
+  },
+}
