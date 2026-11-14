@@ -10846,6 +10846,17 @@ export interface components {
         ChairCheckView: {
             colleague?: components["schemas"]["ChairCheckViewColleague"];
             strict: boolean;
+            busy?: components["schemas"]["ChairCheckViewBusy"];
+            freeChair?: components["schemas"]["ChairCheckViewFreeChair"];
+            notified: string[];
+        };
+        ChairCheckViewBusy: {
+            chairName: string;
+            doctorName?: string;
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
         };
         ChairCheckViewColleague: {
             /** Format: int64 */
@@ -10856,6 +10867,13 @@ export interface components {
             start?: string;
             /** Format: date-time */
             end?: string;
+        };
+        ChairCheckViewFreeChair: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            colleague?: string;
+            notified: string[];
         };
         PatientCard: {
             patient?: components["schemas"]["PatientView"];
@@ -22102,6 +22120,7 @@ export interface operations {
                 startAt: string;
                 endAt: string;
                 chairId?: number;
+                appointmentId?: number;
             };
             header?: never;
             path?: never;

@@ -15,6 +15,7 @@ import { TimePicker } from './TimePicker'
 import { ChairTimeHint } from './ChairTimeHint'
 import { ChairSelect } from './ChairSelect'
 import { useChairChoice } from './chairChoice'
+import { isChairError } from './chairTime'
 import { useAppointmentAction } from './useAppointmentAction'
 import { canEditServices, editableDoctors } from '../lib/roles'
 import { openServiceLater } from '../lib/openService'
@@ -96,7 +97,8 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
       {/* Новое время — в часах коллеги по креслу: сказать до «Перенести», как в «Новой записи» */}
       {newStart && (
         <ChairTimeHint doctorId={doctorId} startAt={newStart} duration={duration} chairId={chair.chairId}
-          action={doctorId === a.doctorId ? 'Перенести' : 'Передать'} />
+          appointmentId={doctorId === a.doctorId ? a.id : undefined} onPickChair={chair.multi ? chair.pick : undefined}
+          action={doctorId === a.doctorId ? 'Перенести' : 'Передать'} hidden={isChairError(action.error)} />
       )}
       {doctorId !== a.doctorId && <p className="hint small">Новому врачу придёт уведомление, а пациенту, если он записан через бота, — сообщение с именем врача и временем.</p>}
       <div className="actions">
@@ -121,6 +123,11 @@ export function ChairEdit({ appointment: a, onDone }: { appointment: Appointment
       action.mutate({ kind: 'chair', body: { version: a.version, chairId: chair.chairId } }, { onSuccess: onDone })
     }}>
       <ChairSelect doctorId={a.doctorId} startAt={a.startAt} duration={duration} appointmentId={a.id} value={chair.chairId} onChange={chair.pick} />
+      {/* Кресло сменили — что ответит сервер (занято, часы коллеги, «врачу кресла придёт уведомление») */}
+      {a.startAt && chair.chairId !== (a.chairId ?? undefined) && (
+        <ChairTimeHint doctorId={a.doctorId} startAt={a.startAt} duration={duration} chairId={chair.chairId} appointmentId={a.id}
+          action="Сохранить" onPickChair={chair.pick} hidden={isChairError(action.error)} />
+      )}
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
       <div className="actions">
         <button type="submit" className="btn primary" disabled={action.isPending}>Сохранить</button>

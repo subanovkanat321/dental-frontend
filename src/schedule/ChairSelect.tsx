@@ -10,7 +10,9 @@ type Option = Schemas['ChairOptionView']
 
 /**
  * Поле «Кресло»: кресла клиники на выбранное время — «Кресло 1 (кресло врача) — занято (Айгерим С.)», «Кресло 2 —
- * свободно» (`/api/appointments/chair-options`). Выбрано занятое, а свободное есть — подсказка с кнопкой «В «Кресло 2»».
+ * свободно» (`/api/appointments/chair-options`). Занято приёмом — только «занято (кем)», без «время …». Что делать с
+ * выбранным креслом (занято — «записать в «Кресло 2»», придёт уведомление врачу кресла) — одной строкой
+ * {@link ChairTimeHint} под полем, а не второй подсказкой здесь.
  */
 export function ChairSelect({ doctorId, startAt, duration, appointmentId, value, onChange }: {
   doctorId: number
@@ -37,27 +39,16 @@ export function ChairSelect({ doctorId, startAt, duration, appointmentId, value,
   const own = chairOf(chairs.data, doctorId)?.id
   const list: Option[] = options.data ?? (chairs.data ?? []).map((c) => ({ id: c.id, name: c.name ?? '', own: c.id === own, state: 'FREE' as const, strict: false }))
   const known = Boolean(options.data)
-  const selected = list.find((o) => o.id === value)
-  const free = list.find((o) => o.state === 'FREE' && o.id !== value)
   return (
-    <>
-      <label className="field"><span>Кресло</span>
-        <Select value={value ?? ''} onChange={(e) => { if (e.target.value) onChange(Number(e.target.value)) }}>
-          {value == null && <option value="">— без кресла —</option>}
-          {list.map((o) => (
-            <option key={o.id} value={o.id} disabled={known && o.state === 'BUSY' && o.id !== value}>
-              {`${o.name}${o.own ? ' (кресло врача)' : ''}${known ? ` — ${chairStateText(o)}` : ''}`}
-            </option>
-          ))}
-        </Select>
-      </label>
-      {known && selected?.state === 'BUSY' && (
-        <p className="notice tone-wait chair-busy-hint" role="status">
-          <span>🪑 «{selected.name}» в это время занято{selected.doctorName ? ` (${selected.doctorName})` : ''}.
-            {free && <> Свободно «{free.name}» —{' '}
-              <button type="button" className="link" onClick={() => onChange(free.id)}>записать туда</button>.</>}</span>
-        </p>
-      )}
-    </>
+    <label className="field"><span>Кресло</span>
+      <Select value={value ?? ''} onChange={(e) => { if (e.target.value) onChange(Number(e.target.value)) }}>
+        {value == null && <option value="">— без кресла —</option>}
+        {list.map((o) => (
+          <option key={o.id} value={o.id} disabled={known && o.state === 'BUSY' && o.id !== value}>
+            {`${o.name}${o.own ? ' (кресло врача)' : ''}${known ? ` — ${chairStateText(o)}` : ''}`}
+          </option>
+        ))}
+      </Select>
+    </label>
   )
 }
