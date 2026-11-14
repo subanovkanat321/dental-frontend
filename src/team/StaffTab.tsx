@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
@@ -11,6 +12,11 @@ import { useChairs } from './chairs'
 import { EmptyState } from '../layout/EmptyState'
 import { SubHelp } from '../layout/PageHead'
 import { rowOpen } from '../lib/rowClick'
+import { useMedia } from '../lib/useMedia'
+import { useTimeOff, weeklyDaysOff } from './dayOffHours'
+import { dayHours, loadWeek, weekKey, weekSummary, type Who } from './workWeek'
+import './cards.css'
+import './staff.css'
 
 type Me = Schemas['BookingViewsMe']
 type Member = Schemas['StaffMembersMemberView']
@@ -72,11 +78,13 @@ function isOpened(row: Row, opened: Opened | null): boolean {
 }
 
 /**
- * «Персонал»: все, кто работает в клинике, — одной таблицей с ролями рядом с именем и тем, вошёл ли
- * человек. Нажали на имя — его карточка (одна на человека). Руководитель видит всех и приглашения без
- * входа; остальные — только врачей (сотрудников и их Telegram сервер отдаёт только руководителю).
+ * «Персонал»: все, кто работает в клинике, — одним списком во всю рабочую область (и при открытой карточке
+ * справа — на оставшуюся ширину). Шапка карточки — «Персонал · N», фильтр ролей и «＋ Добавить сотрудника»
+ * справа. Строка — одна строка смысла: имя, роль серым, кресло и часы мелко, вход и телефон; нажимается
+ * вся строка. На телефоне — список: имя и роль, ниже мелко кресло и вход. Руководитель видит всех и
+ * приглашения без входа; остальные — только врачей (сотрудников и их Telegram сервер отдаёт только руководителю).
  */
-export function StaffTab({ me, doctors, members, invites, loading, error, opened, onOpen }: {
+export function StaffTab({ me, doctors, members, invites, loading, error, opened, onOpen, onAdd }: {
   me: Me
   doctors: Doctor[]
   members: Member[]
@@ -85,77 +93,135 @@ export function StaffTab({ me, doctors, members, invites, loading, error, opened
   error: Error | null
   opened: Opened | null
   onOpen: (o: Opened) => void
+  /** «＋ Добавить сотрудника» (руководитель) */
+  onAdd?: () => void
 }) {
   const admin = Boolean(me.admin)
   const [filter, setFilter] = useState<Filter>('all')
+  const phone = useMedia('(max-width: 760px)')
   const chairs = useChairs()
   const nameOf = (id: number) => doctors.find((d) => d.id === id)?.fullName ?? ''
   const rows = staffRows(me, doctors, members, invites)
   const shown = filter === 'all' ? rows : rows.filter((r) => r.roles.includes(filter))
   const count = (f: Filter) => (f === 'all' ? rows.length : rows.filter((r) => r.roles.includes(f)).length)
   const canOpen = (r: Row) => admin || (r.doctor != null && (me.reception || r.doctor.id === me.doctorId))
+  // Часы — у тех, чью неделю видно в «Рабочем времени»: руководитель и регистратура (врачей)
+  const showHours = admin || Boolean(me.reception)
+  const add = onAdd && <button type="button" className="btn primary small" onClick={onAdd}>＋ Добавить сотрудника</button>
+  // Есть что показать: загрузилось без ошибки и не пусто — тогда в шапке число и фильтр ролей
+  const listed = !error && !loading && rows.length > 0
+  const roleText = (r: Row) => [...r.roles.map((role) => ROLE_CHIP[role as Exclude<Filter, 'all'>] ?? ROLE_TEXT[role]).map((t, i) => (i ? t.toLowerCase() : t)), ...r.notes].join(' · ')
 
-  return (
-    <>
-      {/* Как читать список — в «?» у названия, а не абзацем на четыре строки */}
-      <SubHelp title="Персонал">Весь персонал клиники: роль — рядом с именем. Нажмите на имя — откроется карточка: роли, вход, часы{admin ? ', услуги и кресло врача' : ''}.
-        «Telegram привязан» — человек вошёл и получает уведомления; «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.
-        {admin && <> Новый человек — «+ Добавить сотрудника»: имя, роль и вход. {PHONE_HINT}</>}</SubHelp>
-      <section className="card-block">
-        {admin && (
-          <Segments className="wrap" label="Показать роль" value={filter} onChange={setFilter}
-            options={FILTERS.map(([f, label]) => ({ value: f, label: `${label} · ${count(f)}` }))} />
-        )}
-        {error && <p className="error">{error.message}</p>}
-        {loading ? <Loading /> : shown.length ? (
+  const body = error ? <p className="error" role="alert">Не загрузился персонал: {error.message}</p>
+    : loading ? <Loading />
+      : !shown.length ? (
+        filter === 'all'
+          ? <EmptyState title="Персонала пока нет" action={add}>Добавьте врачей, регистратуру и ассистентов — у каждого будет своя карточка и вход.</EmptyState>
+          : <EmptyState title="С этой ролью пока никого" />
+      ) : phone ? (
+        <ul className="staff-lines" aria-label="Персонал">
+          {shown.map((r) => (
+            <li key={r.key} {...rowOpen(canOpen(r) && (() => onOpen(r.open)), 'staff-line', isOpened(r, opened) && 'active', (r.invite || r.doctor?.active === false) && 'inactive')}>
+              <Avatar row={r} />
+              <span className="staff-line-text">
+                <span className="staff-line-name">
+                  {canOpen(r) ? <button type="button" className="row-link" onClick={() => onOpen(r.open)}>{r.name}</button> : <span className="strong">{r.name}</span>}
+                  <span className="hint small">{roleText(r)}</span>
+                </span>
+                <span className="staff-line-meta">
+                  {r.doctor && <ChairBadge chairs={chairs.data} doctorId={r.doctor.id} nameOf={nameOf} />}
+                  {admin && <Access row={r} />}
+                </span>
+              </span>
+              {canOpen(r) && <span className="staff-chev" aria-hidden="true">›</span>}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="staff-scroll">
           <table className="table staff-table" aria-label="Персонал">
-            <thead><tr><th>Имя</th><th>Роль</th>{admin && <th>Вход</th>}{admin && <th>Телефон</th>}<th /></tr></thead>
+            <thead>
+              <tr><th>Имя</th><th>Кресло</th>{showHours && <th>Часы</th>}{admin && <th>Вход</th>}{admin && <th className="staff-phone">Телефон</th>}<th className="staff-chev" aria-hidden="true" /></tr>
+            </thead>
             <tbody>
               {shown.map((r) => (
                 <tr key={r.key} {...rowOpen(canOpen(r) && (() => onOpen(r.open)), isOpened(r, opened) && 'active', (r.invite || r.doctor?.active === false) && 'inactive')}>
                   <td>
                     <span className="who">
-                      {r.doctor?.photoUrl
-                        ? <img className="avatar" src={r.doctor.photoUrl} alt="" />
-                        : <span className="avatar" aria-hidden="true">{(r.name || '?').slice(0, 1)}</span>}
-                      {canOpen(r)
-                        ? <button type="button" className="row-link" onClick={() => onOpen(r.open)}>{r.name}</button>
-                        : <span className="strong">{r.name}</span>}
+                      <Avatar row={r} />
+                      <span className="who-text">
+                        {canOpen(r)
+                          ? <button type="button" className="row-link" onClick={() => onOpen(r.open)}>{r.name}</button>
+                          : <span className="strong">{r.name}</span>}
+                        <span className="hint small">{roleText(r)}</span>
+                      </span>
                     </span>
-                    {r.doctor && <ChairBadge chairs={chairs.data} doctorId={r.doctor.id} nameOf={nameOf} />}
-                    {r.member?.role === 'ASSISTANT' && (
-                      <div className="hint small">Помогает: {(r.member.doctorIds ?? []).map(nameOf).filter(Boolean).join(', ') || '—'}</div>
-                    )}
                   </td>
-                  <td>
-                    <span className="role-chips">
-                      {r.roles.map((role) => <span key={role} className={`role-chip role-${role.toLowerCase()}`}>{ROLE_CHIP[role as Exclude<Filter, 'all'>] ?? ROLE_TEXT[role]}</span>)}
-                    </span>
-                    {r.notes.length > 0 && <span className="hint small"> {r.notes.join(' · ')}</span>}
+                  <td className="staff-small">
+                    {r.doctor ? <ChairBadge chairs={chairs.data} doctorId={r.doctor.id} nameOf={nameOf} />
+                      : r.member?.role === 'ASSISTANT'
+                        ? <span className="hint">Помогает: {(r.member.doctorIds ?? []).map(nameOf).filter(Boolean).join(', ') || '—'}</span> : null}
                   </td>
-                  {admin && (
-                    <td>
-                      {r.invite
-                        ? r.invite.expired
-                          ? <span className="tone-wait">ссылка истекла — нужна новая</span>
-                          : <span className="tone-wait">ждём входа · ссылка до {shortDate(r.invite.expiresAt!, true)}</span>
-                        : r.doctor && !r.doctor.telegramId
-                          ? <span className="tone-wait">ждём входа — пригласите в карточке</span>
-                          : (r.doctor ? r.doctor.phoneOnly : r.member?.phoneOnly)
-                            ? <span className="tone-ok">✓ по номеру</span>
-                            : <span className="tone-ok">✓ Telegram привязан</span>}
-                    </td>
-                  )}
-                  {admin && <td className="staff-phone">{(r.doctor?.phone ?? r.member?.phone) ? phoneText((r.doctor?.phone ?? r.member?.phone)!) : ''}</td>}
-                  <td className="r">
-                    {canOpen(r) && <button type="button" className="btn small ghost" onClick={() => onOpen(r.open)}>Открыть</button>}
-                  </td>
+                  {showHours && <td className="staff-small num"><RowHours row={r} /></td>}
+                  {admin && <td className="staff-small"><Access row={r} /></td>}
+                  {admin && <td className="staff-phone num">{(r.doctor?.phone ?? r.member?.phone) ? phoneText((r.doctor?.phone ?? r.member?.phone)!) : ''}</td>}
+                  <td className="staff-chev" aria-hidden="true">{canOpen(r) ? '›' : ''}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        ) : <EmptyState title={filter === 'all' ? 'Персонала пока нет' : 'С этой ролью пока никого'} />}
+        </div>
+      )
+
+  return (
+    <>
+      {/* Как читать список — в «?» у названия раздела, а не абзацем на четыре строки */}
+      <SubHelp title="Персонал">Весь персонал клиники: роль — серым под именем. Нажмите на строку — откроется карточка: роли, вход, часы{admin ? ', услуги и кресло врача' : ''}.
+        «Telegram привязан» — человек вошёл и получает уведомления; «ждём входа» — ссылку отправили, но он ещё не нажал «Начать» в боте.
+        {admin && <> Новый человек — «＋ Добавить сотрудника»: имя, роль и вход. {PHONE_HINT}</>}</SubHelp>
+      <section className="card-block staff-list">
+        <div className="card-title-line staff-head">
+          <h2>Персонал{listed ? <span className="hint"> · {rows.length}</span> : null}</h2>
+          {admin && listed && (
+            <Segments className="staff-filter" label="Показать роль" value={filter} onChange={setFilter}
+              options={FILTERS.filter(([f]) => f === 'all' || count(f) > 0).map(([f, label]) => ({ value: f, label: f === 'all' ? label : `${label} · ${count(f)}`, text: `${label} · ${count(f)}` }))} />
+          )}
+          {/* Пустой список — кнопка в пустом состоянии, а не две одинаковые */}
+          {add && (listed || error) && <span className="card-title-end">{add}</span>}
+        </div>
+        {body}
       </section>
     </>
   )
+}
+
+function Avatar({ row: r }: { row: Row }) {
+  return r.doctor?.photoUrl
+    ? <img className="avatar" src={r.doctor.photoUrl} alt="" />
+    : <span className="avatar" aria-hidden="true">{(r.name || '?').slice(0, 1)}</span>
+}
+
+/** Вошёл ли человек: Telegram, номер или «ждём входа». */
+function Access({ row: r }: { row: Row }) {
+  if (r.invite) {
+    return r.invite.expired
+      ? <span className="tone-wait">ссылка истекла — нужна новая</span>
+      : <span className="tone-wait">ждём входа · ссылка до {shortDate(r.invite.expiresAt!, true)}</span>
+  }
+  if (r.doctor && !r.doctor.telegramId) return <span className="tone-wait">ждём входа — пригласите в карточке</span>
+  return (r.doctor ? r.doctor.phoneOnly : r.member?.phoneOnly)
+    ? <span className="tone-ok">✓ по номеру</span>
+    : <span className="tone-ok">✓ Telegram привязан</span>
+}
+
+/** Обычная неделя человека строкой: «Пн–Пт 9–18»; «как у клиники» — серым курсивом (как в «Рабочем времени»). */
+function RowHours({ row: r }: { row: Row }) {
+  const who: Who | null = r.doctor && r.doctor.active !== false ? { kind: 'doctor', id: r.doctor.id, name: r.name }
+    : r.member ? { kind: 'staff', telegramId: r.member.telegramId, name: r.name } : null
+  const week = useQuery({ queryKey: who ? weekKey(who) : ['no-week'], queryFn: () => loadWeek(who!), enabled: who != null })
+  const off = weeklyDaysOff(useTimeOff().data, who?.kind === 'doctor' ? who.id : null)
+  if (!who) return null
+  if (!week.data) return <span className="hint">{week.error ? '—' : '…'}</span>
+  if (!week.data.custom) return <span className="staff-by-clinic">как у клиники</span>
+  return <>{weekSummary(dayHours(week.data.days, who.kind === 'doctor' ? off : {}))}</>
 }

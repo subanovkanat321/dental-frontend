@@ -19,3 +19,8 @@
 }
 .timeoff-form .form > .hint { margin: -4px 0 0; }
 .timeoff-dates + .btn { justify-self: start; }
+/* Во всю рабочую область «Клиники» (как «Обычная неделя»), действия и «?» — одной строкой */
+.settings-item[data-host=clinic]:has(.timeoff-head) { max-width: none; }
+.timeoff-head .card-title-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.timeoff-head .timeoff-actions { flex: 0 1 auto; }
+@media (max-width: 640px) { .timeoff-head .timeoff-actions { flex: 1 1 100%; } }

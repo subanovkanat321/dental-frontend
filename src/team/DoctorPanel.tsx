@@ -16,6 +16,7 @@ import { isPhoneLogin } from './texts'
 import { RolesEditor } from './RolesEditor'
 import { choiceOf, ROLE_CHOICES } from './staffRoles'
 import { Spinner } from '../layout/Loading'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 
@@ -212,7 +213,7 @@ function ProfileForm({ doctor: d, draft, onSaved, who }: { doctor: Doctor; draft
   }
   return (
     <>
-      {draft && <p className="hint">Врач ещё не вошёл — можно заполнить черновик, чтобы пациенты не видели пустую карточку. Войдёт — поправит сам.</p>}
+      {draft && <p className="hint">Врач ещё не вошёл — можно заполнить черновик <HelpHint title="Черновик профиля">Чтобы пациенты не видели в боте пустую карточку. Войдёт — поправит сам.</HelpHint></p>}
       <div className="profile-photo">
         {d.photoUrl ? <img src={d.photoUrl} alt="Фото врача" /> : <span className="photo-empty" aria-hidden="true">{(d.fullName ?? '?').slice(0, 1)}</span>}
         <div className="profile-photo-side">
@@ -251,7 +252,7 @@ function ProfileView({ doctor: d }: { doctor: Doctor }) {
           <dt>Кратко о себе</dt><dd>{d.about?.trim() || <span className="hint">не заполнено</span>}</dd>
         </dl>
       </div>
-      <p className="hint">{SELF_PROFILE_HINT}</p>
+      <p className="hint">Ведёт сам врач <HelpHint title="Для пациентов">{SELF_PROFILE_HINT}</HelpHint></p>
     </div>
   )
 }
@@ -302,12 +303,12 @@ function AccessAdmin({ doctor: d, inline, onDone }: { doctor: Doctor; inline: bo
   })
   return (
     <>
-      <p className={linked ? 'tone-ok' : 'tone-wait'}>{byPhone ? '✓ Входит по номеру (без Telegram)' : linked ? '✓ Telegram подключён' : 'Ждём входа'}</p>
-      <p className="hint">{byPhone
-        ? 'Появился Telegram — пришлите ссылку: после «Начать» в боте врач будет входить через Telegram.'
-        : linked
-          ? 'Врач сменил аккаунт Telegram — пришлите новую ссылку.'
-          : 'Уведомления о приёмах пока приходят вам. Пришлите врачу ссылку: он нажмёт «Начать» в боте и дальше сам заполнит фото, имя и «о себе».'}</p>
+      <p className={linked ? 'tone-ok' : 'tone-wait'}>{byPhone ? '✓ Входит по номеру (без Telegram)' : linked ? '✓ Telegram подключён' : 'Ждём входа'}{' '}
+        <HelpHint title="Вход врача">{byPhone
+          ? 'Появился Telegram — пришлите ссылку: после «Начать» в боте врач будет входить через Telegram.'
+          : linked
+            ? 'Врач сменил аккаунт Telegram — пришлите новую ссылку.'
+            : 'Уведомления о приёмах пока приходят вам. Пришлите врачу ссылку: он нажмёт «Начать» в боте и дальше сам заполнит фото, имя и «о себе».'}</HelpHint></p>
       {invite
         ? <InviteLink start={`join_${invite}`} name={d.fullName ?? ''} toWhom="врачу" />
         : <button type="button" className="btn" disabled={makeInvite.isPending} onClick={() => makeInvite.mutate()}>
@@ -327,9 +328,11 @@ function RemoveDoctor({ doctor: d, onDone }: { doctor: Doctor; onDone: () => voi
   })
   return (
     <div className="danger-zone">
-      <p className="hint">Удалить можно врача без приёмов — например, заведённого для пробы. Ушедшего врача скройте: роль «Врач скрыт» — история останется.</p>
-      <button type="button" className="btn danger" disabled={remove.isPending}
-        onClick={() => void ask(`Удалить врача «${d.fullName}»?`).then((ok) => ok && remove.mutate())}>Удалить врача</button>
+      <div className="danger-line">
+        <button type="button" className="btn danger" disabled={remove.isPending}
+          onClick={() => void ask(`Удалить врача «${d.fullName}»?`).then((ok) => ok && remove.mutate())}>Удалить врача</button>
+        <HelpHint title="Удалить врача">Удалить можно врача без приёмов — например, заведённого для пробы. Ушедшего врача скройте: роль «Врач скрыт» — история останется.</HelpHint>
+      </div>
       {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
     </div>
   )

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { HelpHint } from '../help/HelpHint'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneToInput } from '../clinic/phone'
 import { PasswordInput, ShowPassword } from '../layout/PasswordFields'
@@ -116,7 +117,7 @@ export function StaffPhone({ telegramId, phone, phoneOnly, name, compact = false
   if (!phoneOnly) {
     return compact
       ? <span className="staff-phone" title={SELF_HINT}>{phone ? phoneText(phone) : <span className="hint small">сам в профиле</span>}</span>
-      : <p className="hint">{phone ? `Телефон: ${phoneText(phone)}. ` : ''}{SELF_HINT}</p>
+      : <p className="hint">{phone ? `Телефон: ${phoneText(phone)}` : 'Телефон указывает сам'} <HelpHint title="Телефон">{SELF_HINT}</HelpHint></p>
   }
   if (!open) {
     return (
@@ -124,7 +125,7 @@ export function StaffPhone({ telegramId, phone, phoneOnly, name, compact = false
         {phone && <span>{phoneText(phone)}</span>}{' '}
         <button type="button" className={compact ? 'btn small ghost' : 'btn'}
           onClick={() => { save.reset(); setValue(phoneToInput(phone?.replace(/^\+/, ''))); setOpen(true) }}>Изменить</button>
-        {!compact && <p className="hint">{PHONE_HINT} Без Telegram это его единственный вход: номер можно сменить, но не убрать.</p>}
+        {!compact && <p className="hint">Без Telegram это его единственный вход <HelpHint title="Телефон">{PHONE_HINT} Номер можно сменить, но не убрать.</HelpHint></p>}
       </div>
     )
   }

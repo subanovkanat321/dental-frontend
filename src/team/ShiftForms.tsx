@@ -7,6 +7,7 @@ import { weekLabel } from '../lib/time'
 import { DateInput } from '../layout/DateInput'
 import { TimeInput } from '../layout/TimeInput'
 import { Select } from '../layout/Select'
+import { HelpHint } from '../help/HelpHint'
 import { dayLong, hm, SHIFT_ROLE, type Shift } from './workWeek'
 import { BREAK_KINDS, DAY_OFF_KINDS, LEAVE_KINDS, OTHER, titleFor, type Kind } from './timeOffTexts'
 
@@ -97,18 +98,17 @@ export function CopyWeek({ monday }: { monday: string }) {
   })
   return (
     <section className="card-block">
-      <h2>Повторить неделю</h2>
-      <p className="hint">Смены этой недели встанут на те же дни следующих недель. Где у сотрудника уже есть смена в это время — её не трогаем.</p>
-      <div className="shifts-actions shifts-copy">
-        <label className="field"><span>На сколько недель</span>
-          <Select value={weeks} onChange={(e) => { copy.reset(); setWeeks(Number(e.target.value)) }}>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{weeksText(n)}</option>)}
-          </Select>
-        </label>
+      {/* Одной строкой: «Повторить неделю  [4 недели]  [Повторить]  ?» — пояснение в «?», а не абзацем */}
+      <div className="card-title-line shifts-copy">
+        <h2>Повторить неделю</h2>
+        <Select aria-label="На сколько недель" value={weeks} onChange={(e) => { copy.reset(); setWeeks(Number(e.target.value)) }}>
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{weeksText(n)}</option>)}
+        </Select>
         <button type="button" className="btn" disabled={copy.isPending}
           onClick={() => void ask(`Повторить смены недели ${weekLabel(monday)} на ${weeksText(weeks)} вперёд?`).then((ok) => ok && copy.mutate())}>
           Повторить эту неделю на {weeksText(weeks)}
         </button>
+        <HelpHint title="Повторить неделю">Смены этой недели встанут на те же дни следующих недель. Где у сотрудника уже есть смена в это время — её не трогаем.</HelpHint>
       </div>
       {copy.error && <p className="error" role="alert">{Object.values(copy.error.fieldErrors)[0] ?? copy.error.message}</p>}
       {copy.data && (
