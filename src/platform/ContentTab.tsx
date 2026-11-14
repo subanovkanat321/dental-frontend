@@ -146,7 +146,7 @@ export function ContentTab() {
       {editing && <PostForm key={editing === 'new' ? 'new' : editing.id} post={editing === 'new' ? null : editing}
         today={today} onDone={() => { setEditing(null); setPostSaved(true); void refresh() }} onCancel={() => setEditing(null)} />}
       <SaveBar dirty={false} saving={false} saved={postSaved} savedText="Пост сохранён" />
-      <section className="card-block" aria-label="Контент-план">
+      <section className="card-block wide" aria-label="Контент-план">
         {list.error && <p className="error" role="alert">План не загрузился: {list.error.message}</p>}
         {list.isPending ? <Loading /> : list.error ? null : loaded.length === 0 ? (
           <EmptyState title="В этом месяце постов нет">Добавьте пост или загрузите готовый план.</EmptyState>

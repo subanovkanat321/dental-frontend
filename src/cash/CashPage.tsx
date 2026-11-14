@@ -140,7 +140,8 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
       <HeadSlotProvider slot={slot}>
       <section className="schedule-main cash">
         <PageHead slotRef={setSlot} title={<SectionTitle page="cash" title="Касса" subTitle={subTitle} hint={<HelpHint hint="cash" />} />}>
-          {seesAll && doctors.length > 1 && (
+          {/* «Мой заработок» и «Зарплата» от выбора врача не зависят — там выбора нет, а не пустой список в шапке */}
+          {seesAll && doctors.length > 1 && tab !== 'earnings' && tab !== 'salary' && (
             <Select aria-label="Чья касса" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
               <option value="">Вся клиника</option>
               {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}

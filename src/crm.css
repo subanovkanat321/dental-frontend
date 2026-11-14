@@ -1386,6 +1386,13 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .head-tools > .analytics-filter.platform-filter { flex-basis: 100%; gap: 8px; }
   .head-tools .platform-filter > .segments, .head-tools .platform-filter > .ui-select { flex: 1 1 100%; }
   .day-quick .chip { white-space: nowrap; }
+  /* «Касса»: «Вся клиника» — в одной строке с первым инструментом вкладки (месяц, «＋ Расход», период аналитики), а не
+     одной кнопкой над ними; инструментов нет («Статистика», «Должники») — во всю ширину строки, как одна кнопка */
+  .cash > .page-head > .ui-select { flex: 1 1 0; min-width: 0; max-width: none; }
+  .cash > .page-head > .head-tools > .month-picker { flex: none; }
+  .cash > .page-head > .head-tools > .month-picker > .mp-step { width: 38px; }
+  .cash > .page-head > .head-tools > .month-picker > .mp-current { min-width: 0; padding-inline: 8px; }
+  .cash > .page-head:not(:has(> .head-tools > *)) > .ui-select { flex-basis: 100%; }
 }
 /* Шапка раздела на компьютере прилипает к верху (layout/stickyHead.ts), под ней — шапки таблиц */
 @media (min-width: 761px) {
@@ -1414,26 +1421,23 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 }
 .cash > .toolbar { margin-bottom: 0; } /* у .cash свой промежуток (gap) */
 
-/* Ширина: формы и длинный текст не растягиваются на 1900px */
-.settings-item { max-width: 1280px; }
-/* Пункты «Настроек», «Я» и «Помощи» — формы и текст: одной колонкой разумной ширины, на 1920 не растягиваются
-   (у «Клиники» — таблицы персонала и услуг, ей остаётся 1280) */
-.settings-item:is([data-host=settings], [data-host=me], [data-host=help]) { max-width: 880px; }
+/* Ширина: страница — во всю рабочую область (правило «на компьютере — вся ширина», конец файла); не растягиваются
+   только строки текста и короткие поля внутри карточек */
 /* Подзаголовок внутри карточки пункта — мельче заголовка карточки, а не крупнее (у h3 браузера 1.17em) */
 .settings-item .card-block h3 { margin: 6px 0 0; font-size: .95rem; }
 /* Поле файла — шириной обычной формы, а не во всю карточку */
 .settings-item .card-block > .field:has(> input[type=file]) { max-width: 520px; }
-.agreement-text, .faq, .card-block.guide, .privacy-text { max-width: 860px; }
-.card-block > p.hint, .settings-item .card-block > p { max-width: 920px; }
-.medical { max-width: 1480px; }
-.cash > p.hint, .cash > .hint { max-width: 920px; margin: 0; }
+.agreement-text, .faq, .privacy-text { max-width: 75ch; }
+.card-block.guide { max-width: 860px; }
+.card-block > p.hint, .settings-item .card-block > p { max-width: 75ch; }
+.cash > p.hint, .cash > .hint { max-width: 75ch; margin: 0; }
 /* Пункты «Настроек»: короткие поля и переключатели не растягиваются на всю ширину */
 .settings-item :is(.card-block, form, fieldset) > .row { max-width: 640px; }
 .settings-item .hours-doctor .segments { max-width: 480px; }
 
 /* «Оформление»: тема и размер текста двумя колонками */
 @media (min-width: 1100px) {
-  .settings { max-width: 1180px; grid-template-columns: 1fr; }
+  .settings { max-width: none; grid-template-columns: 1fr; }
   .appearance { grid-template-columns: 1fr 1fr; gap: 12px 24px; }
   .appearance > .hint { grid-column: 1 / -1; margin: 0; }
 }
@@ -2569,3 +2573,45 @@ p.expense-owner { display: block; }
 .inbox-more { justify-self: start; }
 /* «Настройки» платформы: строка-ссылка на вкладку «Тарифы» вместо дубля цен */
 .settings-more { margin: 0; padding: 12px 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+
+/*
+ * На компьютере — вся ширина (2026-11-14, владелец: «Персонал: 2–3 человека — и не на полную страницу»).
+ * Страница CRM занимает всю рабочую область: без колонки 880/1280px с пустотой справа (`.settings-item` выше больше
+ * не ограничен), таблицы — width: 100%. Чтобы на 1366–1920px не было ни пустоты, ни строк по 200 знаков:
+ *  - несколько карточек подряд — сеткой в две колонки (окно от 1280px; открыта карточка справа — от 1760px);
+ *    во всю строку — карточки с таблицей, графиком или плитками итогов, всё, что не карточка (шапка, подсказка),
+ *    и карточка без пары (одна между широкими, третья из трёх);
+ *  - строки текста — до ~75 знаков (`75ch` у абзацев выше), короткие поля — до 520–640px внутри карточки.
+ * Телефон и окно уже 1280px — как было: карточки столбиком.
+ */
+/* Во всю строку: широкая карточка (W — таблица, график, плитки итогов, форма в строку, раскрывашка details, класс .wide); узкая (N) без
+   пары — соседи не N; третья из трёх или пятая из пяти узких подряд. :has внутри :has нельзя — «следующая узкая» записана как «следующая —
+   карточка без .wide и без широкого содержимого» */
+/* Окно от 1280px, карточки справа нет */
+@media (min-width: 1280px) {
+  :is(.schedule:not(.with-panel), .settings-item:not(:has(.with-panel))) :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch;
+  }
+  :is(.schedule:not(.with-panel), .settings-item:not(:has(.with-panel))) :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > * { grid-column: 1 / -1; margin: 0; min-width: 0; }
+  :is(.schedule:not(.with-panel), .settings-item:not(:has(.with-panel))) :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > .card-block { grid-column: auto; align-content: start; }
+  :is(.schedule:not(.with-panel), .settings-item:not(:has(.with-panel))) :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > .card-block:is(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))),
+  :is(.schedule:not(.with-panel), .settings-item:not(:has(.with-panel))) :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))):not(.card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + *):is(:not(:has(+ .card-block:not(.wide, details))), :has(+ .card-block :is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))),
+  :is(.schedule:not(.with-panel), .settings-item:not(:has(.with-panel))) :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))):is(:not(.card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form)))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + *, :not(.card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form)))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + *):is(:not(:has(+ .card-block:not(.wide, details))), :has(+ .card-block :is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) { grid-column: 1 / -1; }
+}
+/* Открыта карточка справа (360–600px) — две колонки только на широком окне */
+@media (min-width: 1760px) {
+  .with-panel :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch;
+  }
+  .with-panel :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > * { grid-column: 1 / -1; margin: 0; min-width: 0; }
+  .with-panel :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > .card-block { grid-column: auto; align-content: start; }
+  .with-panel :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > .card-block:is(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))),
+  .with-panel :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))):not(.card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + *):is(:not(:has(+ .card-block:not(.wide, details))), :has(+ .card-block :is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))),
+  .with-panel :where(.schedule-main, .schedule-main :is(form, div, section)):not(.card-block, .card-block *, .panel *):has(> .card-block + .card-block) > .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))):is(:not(.card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form)))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + *, :not(.card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form)))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + .card-block:not(.wide, details, :has(:is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) + *):is(:not(:has(+ .card-block:not(.wide, details))), :has(+ .card-block :is(table, .table-scroll, .vbars, .dbars, .bars, .heatmap, .methods, .money-pair, .fin-tiles, .tile-grid, .expense-form))) { grid-column: 1 / -1; }
+}
+/* Плитки итогов («Мой заработок», «Зарплата», «Расходы на склад») — делят ширину карточки поровну, сколько бы их ни было
+   (было: 3–4 колонки заранее, и две плитки занимали половину строки) */
+@media (min-width: 761px) {
+  .salary-sums { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .methods.profit { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+}
