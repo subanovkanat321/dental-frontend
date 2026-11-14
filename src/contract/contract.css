@@ -1,5 +1,5 @@
 /* Договор с пациентом: шаблон в «Настройках», блок в карточке пациента, подпись пальцем */
-.contract-template { display: grid; gap: 16px; max-width: 860px; }
+.contract-template { display: grid; gap: 16px; }
 .contract-template .card-block { display: grid; gap: 12px; }
 .contract-template textarea { width: 100%; line-height: 1.45; resize: vertical; }
 .contract-legal { margin: 0; padding: 8px 12px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--text); }

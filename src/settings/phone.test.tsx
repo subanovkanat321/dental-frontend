@@ -86,8 +86,15 @@ test('«Мой профиль»: номер по SMS — «Получить ко
   expect(await within(section).findByText('+996 700 000 051')).toBeInTheDocument()
   expect(passwords).toEqual([{ setupToken: 'tok-5', newPassword: 'Тишина2026' }])
 
-  vi.spyOn(window, 'confirm').mockReturnValue(true)
-  await user.click(within(section).getByRole('button', { name: 'Убрать номер' }))
+  // Главная кнопка — «Изменить», остальное — в «⋯»; «Убрать номер» красным и с подтверждением
+  expect(within(section).getByRole('button', { name: 'Изменить' })).toBeInTheDocument()
+  expect(within(section).queryByRole('button', { name: 'Убрать номер' })).not.toBeInTheDocument()
+  const asked = vi.spyOn(window, 'confirm').mockReturnValue(true)
+  await user.click(within(section).getByRole('button', { name: 'Ещё действия с номером' }))
+  const remove = within(section).getByRole('menuitem', { name: 'Убрать номер' })
+  expect(remove).toHaveClass('tone-bad')
+  await user.click(remove)
+  expect(asked).toHaveBeenCalledWith(expect.stringContaining('Убрать свой телефон?'))
   await waitForSlow(() => expect(removed()).toBe(1))
   expect(await within(section).findByText('Телефон не указан.')).toBeInTheDocument()
 })
@@ -123,9 +130,13 @@ test('«Мой профиль»: без Telegram номер — единстве
   renderApp()
   const section = await screen.findByRole('region', { name: 'Телефон' })
   expect(await within(section).findByText('+996 700 000 052')).toBeInTheDocument()
-  expect(section).toHaveTextContent('Без Telegram это ваш единственный вход')
+  expect(section).toHaveTextContent('Ваш вход без Telegram — номер и пароль')
   expect(within(section).getByRole('button', { name: 'Изменить' })).toBeInTheDocument()
-  expect(within(section).queryByRole('button', { name: 'Убрать номер' })).not.toBeInTheDocument()
+  // Убрать нечего: «⋯» нет совсем (ни Telegram, ни «Убрать»)
+  expect(within(section).queryByRole('button', { name: 'Ещё действия с номером' })).not.toBeInTheDocument()
+  // Подробности — в «?»
+  await userEvent.setup().click(within(section).getByRole('button', { name: 'Подсказка: Номер для входа' }))
+  expect(within(section).getByRole('note')).toHaveTextContent('Без Telegram это ваш единственный вход: номер можно сменить, но не убрать.')
 })
 
 test('«Подтвердить через Telegram» в Mini App: Telegram отдаёт номер боту — номер появляется без SMS', async () => {
@@ -164,4 +175,30 @@ test('«Подтвердить через Telegram» на сайте — ссы�
     expect(open).toHaveBeenCalledWith('https://t.me/tish_test_bot?start=phone', '_blank', 'noopener,noreferrer')
   })
   expect(within(section).getByRole('status')).toHaveTextContent('«📱 Поделиться номером»')
+})
+
+test('номер есть, Telegram и SMS: «⋯» → «Взять номер из Telegram» — бот берёт номер аккаунта Telegram', async () => {
+  backend({ phone: '+996700000053', phoneOnly: false, sms: true, telegram: true })
+  server.use(http.get('*/web/config', () => HttpResponse.json({ botUsername: 'tish_test_bot', smsLogin: false, passwordLogin: true, telegramCode: true })))
+  const open = vi.spyOn(window, 'open').mockReturnValue(null)
+  const user = userEvent.setup()
+  renderApp()
+  const section = await screen.findByRole('region', { name: 'Телефон' })
+  expect(await within(section).findByText('+996 700 000 053')).toHaveClass('phone-number')
+  // Одна серая строка; длинное пояснение — в «?»
+  expect(section).toHaveTextContent('Для входа без Telegram — с паролем')
+  expect(section).not.toHaveTextContent('Первый раз или забыли пароль')
+  // Кнопки одного вида: «Изменить» с линейной иконкой (не эмодзи) и «⋯»; старых «Сменить на номер Telegram» нет
+  const edit = within(section).getByRole('button', { name: 'Изменить' })
+  expect(edit.querySelector('svg.icon')).not.toBeNull()
+  expect(within(section).queryByRole('button', { name: 'Сменить на номер Telegram' })).not.toBeInTheDocument()
+  await user.click(within(section).getByRole('button', { name: 'Ещё действия с номером' }))
+  expect(within(section).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Взять номер из Telegram', 'Убрать номер'])
+  await waitForSlow(async () => {
+    if (!within(section).queryByRole('menuitem', { name: 'Взять номер из Telegram' })) {
+      await user.click(within(section).getByRole('button', { name: 'Ещё действия с номером' }))
+    }
+    await user.click(within(section).getByRole('menuitem', { name: 'Взять номер из Telegram' }))
+    expect(open).toHaveBeenCalledWith('https://t.me/tish_test_bot?start=phone', '_blank', 'noopener,noreferrer')
+  })
 })

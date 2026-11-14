@@ -166,7 +166,14 @@ test('«Я → Оформление»: тёмная тема и крупный �
   window.location.hash = '/settings/appearance'
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: 'Тёмная' }))
+  // Тема — карточки-образцы; выбранная — aria-pressed (рамка акцента); размер — с живым образцом строки
+  const dark = await screen.findByRole('button', { name: 'Тёмная' })
+  expect(dark).toHaveClass('theme-card')
+  expect(screen.getByRole('button', { name: 'Светлая' })).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByLabelText('Образец текста')).toHaveTextContent('Бурулай Тестова')
+  expect(screen.getByText('Сохраняется на этом устройстве')).toBeInTheDocument()
+  await user.click(dark)
+  expect(dark).toHaveAttribute('aria-pressed', 'true')
   await user.click(screen.getByRole('button', { name: 'Крупный' }))
   expect(document.documentElement.dataset.theme).toBe('dark')
   expect(document.documentElement.dataset.textSize).toBe('large')

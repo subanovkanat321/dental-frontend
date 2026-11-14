@@ -1,5 +1,5 @@
 /* «Календарь в телефоне» (CalendarPage): предупреждение перед показом имён пациентов —
    спокойная янтарная плашка, как напоминания админу (DESIGN.md → Components) */
-.calendar-feed { display: grid; gap: 16px; max-width: 860px; }
+.calendar-feed { display: grid; gap: 16px; }
 .calendar-warning { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--text); }
 .calendar-warning p { margin: 0; line-height: 1.5; }

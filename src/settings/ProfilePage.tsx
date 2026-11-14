@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import { api, ApiError, botUsername, unwrap, WEB_CONFIG_KEY, webConfig, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
@@ -17,6 +17,9 @@ import { NewPasswordFields } from '../layout/PasswordFields'
 import { passwordProblem } from '../lib/password'
 import { telegram } from '../lib/telegram'
 import { PasswordSection } from './PasswordSection'
+import { HelpHint } from '../help/HelpHint'
+import { Icon } from '../layout/Icon'
+import { RowMenu } from '../patients/CalmList'
 import { SaveBar } from '../layout/SaveBar'
 import { useDirty } from '../lib/unsaved'
 
@@ -24,12 +27,12 @@ type Me = Schemas['BookingViewsMe']
 
 /**
  * «Мой профиль» — всё о себе заполняет сам сотрудник (админ только приглашает). Разделы — подпись над
- * карточкой, одной колонкой 880px (с 2026-11-12): сверху кто вы — врачу «Для пациентов» (фото, имя, «о себе» —
+ * карточкой; на компьютере — сеткой в две колонки во всю ширину (с 2026-11-14, crm.css): сверху кто вы — врачу «Для пациентов» (фото, имя, «о себе» —
  * их видят в боте), остальным (админ без кресла, регистратура, ассистент) «Имя» — как видят коллеги; дальше
  * «Телефон» (у всех, и у владельца платформы), врачу — «Работа» и «Вход и права». В самом низу — «Пароль и
  * вход»: с Telegram он необязателен (только для входа по номеру), и «Выйти».
  */
-export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
+export function ProfilePage({ me, onBack, footer }: { me: Me; onBack: () => void; footer?: ReactNode }) {
   const admin = useQuery({
     queryKey: ['doctors-admin'],
     queryFn: () => unwrap(api.GET('/api/doctors/admin')),
@@ -49,8 +52,8 @@ export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
         <section className="settings-group" aria-label="Для пациентов">
           <h2>Для пациентов</h2>
           <div className="card-block">
-            <p>Профиль для пациентов есть у врачей: фото, имя и «о себе» видны при записи в боте.</p>
-            {(me.admin || me.reception) && <AddSelf />}
+            {me.admin || me.reception ? <AddSelf />
+              : <p className="hint">Профиль для пациентов есть у врачей: фото, имя и «о себе» видны при записи в боте.</p>}
           </div>
         </section>
         </>
@@ -60,6 +63,7 @@ export function ProfilePage({ me, onBack }: { me: Me; onBack: () => void }) {
             : <><MyPhone /><p className="hint">Профиль не найден — обновите страницу.</p></>}
       {/* Внизу, не «надо сделать»: с Telegram пароль не нужен — только для входа по номеру */}
       <PasswordSection />
+      {footer}
     </section>
   )
 }
@@ -106,6 +110,9 @@ function MyNameForm({ current }: { current: string }) {
 }
 
 type MyPhoneState = Schemas['MyPhoneControllerMyPhone']
+
+/** Бот берёт номер аккаунта Telegram и ставит его вместо текущего (раньше — «Сменить на номер Telegram»). */
+const TAKE_FROM_TELEGRAM = 'Взять номер из Telegram'
 
 /**
  * «Телефон» в «Моём профиле»: свой номер для входа на сайте. Привязывается только подтверждённым:
@@ -187,26 +194,44 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
   const phoneDigits = sentTo.replace(/\D/g, '')
 
   return (
-    <div className="card-block">
-      {state.phone ? <p>{phoneText(state.phone)}</p> : <p className="hint">Телефон не указан.</p>}
-      <p className="hint">{PHONE_HINT}{state.phoneOnly ? ' Без Telegram это ваш единственный вход: номер можно сменить, но не убрать.' : ''}</p>
+    <div className="card-block phone-card">
       {!open ? (
-        <div className="actions">
-          {state.telegram && (
-            <button type="button" className={state.phone ? 'btn' : 'btn primary'} disabled={viaTelegram.busy} onClick={viaTelegram.start}>
-              {viaTelegram.busy ? <><Spinner />Ждём номер…</> : state.phone ? 'Сменить на номер Telegram' : 'Подтвердить через Telegram'}</button>
-          )}
-          {state.sms
-            ? <button type="button" className="btn" onClick={() => setOpen(true)}>{state.phone ? 'Изменить' : state.telegram ? 'Указать по SMS' : 'Указать телефон'}</button>
-            : !state.telegram && <p className="hint">SMS не подключены — номер для входа сейчас не задать.</p>}
-          {state.phone && !state.phoneOnly && (
-            <button type="button" className="btn ghost" disabled={remove.isPending}
-              onClick={() => void ask('Убрать свой телефон? Входить по номеру будет нельзя, через Telegram — как раньше.').then((ok) => ok && remove.mutate())}>
-              Убрать номер</button>
-          )}
+        <>
+          <div className="setting-line">
+            <div className="setting-what">
+              {state.phone ? <p className="phone-number num">{phoneText(state.phone)}</p> : <p className="hint">Телефон не указан.</p>}
+              <p className="hint setting-sub">{state.phoneOnly ? 'Ваш вход без Telegram — номер и пароль' : 'Для входа без Telegram — с паролем'}{' '}
+                <HelpHint title="Номер для входа">{PHONE_HINT}{state.phoneOnly ? ' Без Telegram это ваш единственный вход: номер можно сменить, но не убрать.' : ''}</HelpHint></p>
+            </div>
+            <div className="setting-actions">
+              {state.phone ? (
+                <>
+                  {state.sms
+                    ? <button type="button" className="btn" onClick={() => setOpen(true)}><Icon name="edit" />Изменить</button>
+                    : state.telegram && <button type="button" className="btn" disabled={viaTelegram.busy} onClick={viaTelegram.start}>
+                      {viaTelegram.busy ? <><Spinner />Ждём номер…</> : TAKE_FROM_TELEGRAM}</button>}
+                  <RowMenu label="Ещё действия с номером" items={[
+                    ...(state.telegram && state.sms ? [{ label: TAKE_FROM_TELEGRAM, onSelect: viaTelegram.start, disabled: viaTelegram.busy }] : []),
+                    ...(!state.phoneOnly ? [{ label: 'Убрать номер', tone: 'bad' as const, disabled: remove.isPending,
+                      onSelect: () => void ask('Убрать свой телефон? Входить по номеру будет нельзя, через Telegram — как раньше.').then((ok) => ok && remove.mutate()) }] : []),
+                  ]} />
+                </>
+              ) : (
+                <>
+                  {state.telegram && (
+                    <button type="button" className="btn primary" disabled={viaTelegram.busy} onClick={viaTelegram.start}>
+                      {viaTelegram.busy ? <><Spinner />Ждём номер…</> : 'Подтвердить через Telegram'}</button>
+                  )}
+                  {state.sms && <button type="button" className="btn" onClick={() => setOpen(true)}>{state.telegram ? 'Указать по SMS' : 'Указать телефон'}</button>}
+                </>
+              )}
+            </div>
+          </div>
+          {!state.sms && !state.telegram && <p className="hint">SMS не подключены — номер для входа сейчас не задать.</p>}
+          {viaTelegram.busy && state.phone && state.sms && <p className="hint" role="status"><Spinner />Ждём номер из Telegram…</p>}
           {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
           {viaTelegram.note && <p className="hint" role="status">{viaTelegram.note}</p>}
-        </div>
+        </>
       ) : !sentTo ? (
         <form className="form narrow" aria-label="Мой телефон" onSubmit={(e) => { e.preventDefault(); sendCode.mutate(phoneFromInput(value)) }}>
           <label className="field"><span>Новый номер</span>
