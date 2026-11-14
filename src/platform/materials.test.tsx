@@ -15,7 +15,7 @@ beforeEach(() => {
     http.get('*/api/platform/applications', () => HttpResponse.json([])),
     http.get('*/api/platform/agreements/statuses', () => HttpResponse.json({})),
     http.get('*/api/platform/pay-requests', () => HttpResponse.json([])),
-    http.get('*/web/materials/howto', () => HttpResponse.json([{ id: 'zapis', title: 'Записать пациента', video: '/web/materials/howto/zapis.mp4' }] satisfies Schemas['MaterialsHowToVideo'][])),
+    http.get('*/web/materials/howto', () => HttpResponse.json([{ id: 'zapis', title: 'Записать пациента', video: '/web/materials/howto/zapis.mp4', section: 'Расписание', lead: '«＋ Новая запись»' }] satisfies Schemas['MaterialsHowToVideo'][])),
   )
 })
 afterEach(() => {
