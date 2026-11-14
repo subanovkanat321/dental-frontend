@@ -1,6 +1,4 @@
-import { CITIES } from '../lib/clinicSearch'
 import { ask } from '../lib/confirm'
-import { Select } from '../layout/Select'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useState, type ReactNode } from 'react'
 
@@ -15,13 +13,16 @@ import { SalesFunnel } from './SalesFunnel'
 import { adminsLine, remindedText, statusText } from './agreementTarget'
 import { SubHelp } from '../layout/PageHead'
 import { rowOpen } from '../lib/rowClick'
+import { ALL, cityChips, cityKey, nameMatches, UNSIGNED, useClinicFilter } from './clinicFilter'
+import { NewClinicPanel } from './NewClinicPanel'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
 
 /**
- * «Клиники» команды платформы: оплаты на проверке и заявки — сверху, дальше все клиники по
- * здоровью (кто перестал заходить — первым), скрытые — свёрнуты; новая клиника и страница /join.
+ * «Клиники» команды платформы: сверху — «＋ Создать клинику» (карточка справа), оплаты на проверке и
+ * заявки; дальше фильтр (город с количеством, поиск, статус) и клиники по здоровью (кто перестал
+ * заходить — первым), скрытые — свёрнуты; воронка продаж и страница /join.
  * Только цифры, без пациентов: платформа обрабатывает данные по поручению клиник.
  */
 export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode; onPanel: (open: boolean) => void }) {
@@ -36,7 +37,14 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
     onPanel(next != null)
   }, [onPanel])
   const close = useCallback(() => setOpened(null), [setOpened])
-  const [unsignedOnly, setUnsignedOnly] = useState(false)
+  const [creating, setCreatingState] = useState(false)
+  const setCreating = useCallback((next: boolean) => {
+    setCreatingState(next)
+    if (next) setOpenedState(null)
+    onPanel(next)
+  }, [onPanel])
+  const [filter, setFilter] = useClinicFilter()
+  const [query, setQuery] = useState('')
   const client = useQueryClient()
   const remindAll = useMutation<Schemas['AgreementRemindersReminded'], ApiError>({
     mutationFn: () => unwrap(api.POST('/api/platform/agreements/remind')),
@@ -50,7 +58,12 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
     return Boolean(s?.requiredVersion && !s.signed)
   }
   const unsignedCount = all.filter((c) => !c.hidden && unsigned(c)).length
-  const visible = unsignedOnly ? all.filter(unsigned) : all
+  // Город и поиск — сначала: счётчики статусов считают клиники выбранного города
+  const inCity = all.filter((c) => (filter.city === ALL || cityKey(c.city) === filter.city) && nameMatches(c.name, query))
+  const status = (c: Row) => !filter.status || (filter.status === UNSIGNED ? unsigned(c) : c.health === filter.status)
+  const visible = inCity.filter(status)
+  const cities = cityChips(all.filter((c) => !c.hidden).map((c) => c.city), filter.city)
+  const shownCity = inCity.filter((c) => !c.hidden)
   const shown = byHealth(visible.filter((c) => !c.hidden))
   const hidden = byHealth(visible.filter((c) => c.hidden))
   const pending = (payRequests.data ?? []).filter((r) => r.status === 'PENDING')
@@ -68,10 +81,11 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
           const share = noShowShare(c.noShow30, c.done30)
           return (
             // Вся строка нажимается — карточка клиники (оплата, договор, «Войти в клинику»)
-            <tr key={c.id} {...rowOpen(() => setOpened({ id: c.id }), c.id === opened?.id && 'active')}>
+            <tr key={c.id} {...rowOpen(() => { setCreatingState(false); setOpened({ id: c.id }) }, c.id === opened?.id && 'active')}>
               <td>
-                <button type="button" className="row-link open-link" onClick={() => setOpened({ id: c.id })}>{c.name}<span aria-hidden="true"> ›</span></button>
+                <button type="button" className="row-link open-link" onClick={() => { setCreatingState(false); setOpened({ id: c.id }) }}>{c.name}<span aria-hidden="true"> ›</span></button>
                 <div><span className={`chip small ${hl.chip}`}>{hl.label}</span>
+                  {c.city ? <span className="hint"> · {c.city}</span> : null}
                   {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
                   {c.settingUp ? <span className="hint"> · 🛠 не видна пациентам</span> : c.listed === false ? <span className="hint"> · не в каталоге</span> : null}</div>
               </td>
@@ -93,6 +107,10 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
     <>
       <section className="schedule-main">
         {header}
+        {/* Главное действие раздела — первым (владелец, 2026-11-13): «сначала Создать клинику, потом клиники» */}
+        <div className="actions">
+          <button type="button" className="btn primary" aria-pressed={creating} onClick={() => setCreating(true)}>＋ Создать клинику</button>
+        </div>
         {pending.length > 0 && (
           <section className="card-block">
             <h2>Оплаты на проверке · {pending.length}</h2>
@@ -112,71 +130,56 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
           {list.error && <p className="error">{list.error.message}</p>}
           {list.isPending ? <Loading /> : list.error ? null : (
             <>
-              <p className="stats">
-                <span className="chip small s-quiet">Клиник: <b className="num">{shown.length}</b></span>
-                {Object.entries(CLINIC_HEALTH).map(([code, hl]) => {
-                  const n = shown.filter((c) => c.health === code).length
-                  return n ? <span key={code} className={`chip small ${hl.chip}`}>{hl.short}: <b className="num">{n}</b></span> : null
-                })}
-              </p>
-              <div className="actions">
-                <button type="button" className="chip small" aria-pressed={unsignedOnly} onClick={() => setUnsignedOnly(!unsignedOnly)}>
-                  Не подписали договор: <b className="num">{unsignedCount}</b></button>
-                {owner && unsignedCount > 0 && (
+              {/* Город — по полю города клиники, с количеством; на телефоне ряд листается вбок */}
+              <div className="service-filter">
+                <input type="search" aria-label="Найти клинику" placeholder="Найти клинику по названию" value={query} onChange={(e) => setQuery(e.target.value)} />
+                <div className="service-chips" role="group" aria-label="Города">
+                  <button type="button" className="chip" aria-pressed={filter.city === ALL} onClick={() => setFilter({ city: ALL })}>
+                    Все · <b className="num">{all.filter((c) => !c.hidden).length}</b></button>
+                  {cities.map(([key, label, n]) => (
+                    <button key={key} type="button" className="chip" aria-pressed={filter.city === key}
+                      onClick={() => setFilter({ city: filter.city === key ? ALL : key })}>{label} · <b className="num">{n}</b></button>
+                  ))}
+                </div>
+                {/* Статусы — компактно и тоже фильтр: нажали ещё раз — снова любой */}
+                <div className="service-chips" role="group" aria-label="Статус">
+                  {Object.entries(CLINIC_HEALTH).map(([code, hl]) => {
+                    const n = shownCity.filter((c) => c.health === code).length
+                    return n || filter.status === code ? (
+                      <button key={code} type="button" className={`chip small ${hl.chip}`} aria-pressed={filter.status === code}
+                        onClick={() => setFilter({ status: filter.status === code ? '' : code })}>{hl.short}: <b className="num">{n}</b></button>
+                    ) : null
+                  })}
+                  <button type="button" className="chip small" aria-pressed={filter.status === UNSIGNED}
+                    onClick={() => setFilter({ status: filter.status === UNSIGNED ? '' : UNSIGNED })}>
+                    Не подписали договор: <b className="num">{shownCity.filter(unsigned).length}</b></button>
+                </div>
+              </div>
+              {owner && unsignedCount > 0 && filter.status === UNSIGNED && (
+                <div className="actions">
                   <button type="button" className="btn small" disabled={remindAll.isPending}
                     onClick={() => void ask(`Напомнить подписать договор всем не подписавшим (${unsignedCount})? Кому уже напоминали за сутки — пропустим.`, { ok: 'Напомнить' })
                       .then((ok) => ok && remindAll.mutate())}>Напомнить всем не подписавшим</button>
-                )}
-              </div>
+                </div>
+              )}
               {remindAll.isSuccess && <p className="tone-ok" role="status">{remindedText(remindAll.data)}</p>}
               {remindAll.error && <p className="error" role="alert">{remindAll.error.message}</p>}
-              {table(shown, 'Клиники')}
+              {shown.length ? table(shown, 'Клиники') : <p className="hint">Нет клиник под этот фильтр.</p>}
               {hidden.length > 0 && <details><summary>Скрытые ({hidden.length})</summary>{table(hidden, 'Скрытые клиники')}</details>}
             </>
           )}
         </section>
         <SalesFunnel />
-        <NewClinic onCreated={(id, solo) => setOpened({ id, invite: { name: '', solo } })} />
         <section className="card-block">
           <h2>Страница для клиник</h2>
           <p className="hint">Отправьте клинике — там рассказано, что умеет приложение, и форма заявки. Заявки появятся здесь, наверху.</p>
           <a className="invite-link" href={`${window.location.origin}/join`} target="_blank" rel="noopener noreferrer">{window.location.origin}/join</a>
         </section>
       </section>
-      {openedRow && <ClinicPanel key={openedRow.id} clinic={openedRow} me={me} invite={opened?.invite} onClose={close} />}
+      {creating && <NewClinicPanel owner={owner} onClose={() => setCreating(false)}
+        onOpen={(id, invite) => { setCreatingState(false); setOpened({ id, invite }) }} />}
+      {!creating && openedRow && <ClinicPanel key={openedRow.id} clinic={openedRow} me={me} invite={opened?.invite} onClose={close} />}
     </>
-  )
-}
-
-function NewClinic({ onCreated }: { onCreated: (id: number, solo: boolean) => void }) {
-  const client = useQueryClient()
-  const [name, setName] = useState('')
-  const [solo, setSolo] = useState(false)
-  const [city, setCity] = useState('')
-  const create = useMutation<Row, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/platform/clinics', { body: { name, city: city || undefined } })),
-    onSuccess: (c) => {
-      setName('')
-      setCity('')
-      void client.invalidateQueries({ queryKey: ['platform-clinics'] }).then(() => onCreated(c.id, solo))
-    },
-  })
-  return (
-    <section className="card-block">
-      <h2>Новая клиника или кабинет</h2>
-      <form className="form narrow" aria-label="Новая клиника" onSubmit={(e) => { e.preventDefault(); create.mutate() }}>
-        <label className="field"><span>Название</span><input value={name} required maxLength={100} placeholder="Стоматология «Улыбка»" onChange={(e) => setName(e.target.value)} /></label>
-        {/* Город — из справочника: клиника сразу видна в каталоге своего города */}
-        <label className="field"><span>Город</span>
-          <Select value={city} onChange={(e) => setCity(e.target.value)}>
-            <option value="">Не указан — клиника выберет в «О клинике»</option>
-            {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </Select></label>
-        <label className="check"><input type="checkbox" checked={solo} onChange={(e) => setSolo(e.target.checked)} /> Частный врач — работает один (он и врач, и руководитель)</label>
-        {create.error && <p className="error" role="alert">{create.error.fieldErrors.name ?? create.error.message}</p>}
-        <button type="submit" className="btn primary" disabled={create.isPending}>Создать клинику</button>
-      </form>
-    </section>
   )
 }
 

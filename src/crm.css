@@ -301,8 +301,11 @@
 .legend { margin: 0; white-space: pre-wrap; }
 .tooth-editor { padding: 12px; border-radius: 12px; background: var(--accent-soft); }
 .tooth-editor h3 { margin: 0; }
-.segments.wrap { flex-wrap: wrap; }
-.segments.wrap button { flex: 1 0 auto; }
+/* Много пунктов (состояния зуба, врачи) — переносом на компьютере; телефон — ровной сеткой (tokens.css) */
+@media (min-width: 761px) {
+  .segments.wrap { flex-wrap: wrap; }
+  .segments.wrap button { flex: 1 0 auto; }
+}
 .plan { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .plan li { display: grid; grid-template-columns: 1fr auto auto auto; align-items: center; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--separator); }
 .plan li.done span { text-decoration: line-through; color: var(--hint); }
@@ -424,6 +427,19 @@ tr.inactive td { opacity: .55; }
 .invite { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
 .invite-link { font-family: var(--mono); font-size: .9rem; word-break: break-all; }
 /* Промокоды: ссылки с кодом в карточке промокода */
+/* «Промокоды»: строка пояснения с «?», затем период и «+ Промокод» одной строкой. Не влезли (узкий телефон) —
+   период во всю ширину, кнопка под ним тоже во всю: период растёт «жадно» (flex-grow 999), кнопка — только когда одна */
+.promo-lead { margin: 0; }
+.promo-lead .help-hint { vertical-align: middle; }
+.promo-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.promo-bar > .segments { flex: 999 1 196px; min-width: 0; max-width: 420px; }
+.promo-bar > .btn { flex: 0 0 auto; margin-left: auto; }
+@media (max-width: 760px) {
+  .promo-bar > .segments { max-width: none; }
+  .promo-bar > .btn { flex: 1 0 auto; margin-left: 0; padding-inline: 12px; }
+  /* «30 дней» — одной строкой: не влезло всё в ряд — пусть уж кнопка уйдёт под период (flex-wrap выше) */
+  html .promo-bar > .segments.segments > button { white-space: nowrap; padding-inline: 4px; font-size: .9rem; }
+}
 .promo-links { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); margin-top: 12px; }
 .promo-links h3 { margin: 0; font-size: 1rem; }
 .promo-link { display: grid; gap: 4px; }
@@ -1344,9 +1360,8 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
   .head-tools > .segments { flex: 1 1 100%; display: flex; flex-wrap: nowrap; min-width: 0; }
   .head-tools > .segments > button { flex: 1 1 0; min-width: 0; padding-inline: 4px; white-space: nowrap; }
   .head-tools > .comeback-summary { flex-basis: 100%; }
-  /* Пять периодов «Финансов» платформы в 360–390px одной строкой не влезают (текст наезжал, страница ехала вбок) — переносом */
-  .head-tools > .segments.fin-periods { flex-wrap: wrap; }
-  .head-tools > .segments.fin-periods > button { flex: 1 0 auto; padding-inline: 10px; }
+  /* Пять периодов «Финансов» платформы — выпадающим списком (layout/Segments), во всю ширину */
+  .head-tools > .segments-select { flex: 1 1 100%; }
   /* Одна кнопка действия в шапке («➕ В лист ожидания», «＋ Своя памятка») — во всю ширину своей строки, как
      «＋ Новый пациент», а не прижатой вправо с пустым местом слева */
   .page-head > .head-tools > .head-end, .head-tools-inline > .head-end { flex: 1 1 100%; margin-left: 0; justify-content: center; }
@@ -1838,7 +1853,7 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .audit-filters { margin-top: 12px; }
 .audit-filters .ui-select { flex: 0 1 220px; min-width: 0; }
 .audit-period { flex: 1 1 360px; }
-.audit-period button { padding: 7px 10px; white-space: nowrap; }
+.segments.audit-period button { padding: 7px 10px; white-space: nowrap; }
 .audit-dates { max-width: 360px; margin-bottom: 8px; }
 .audit-count { margin: 8px 0 0; }
 .audit-who { white-space: nowrap; }
@@ -1860,10 +1875,7 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
   .audit-filters { flex-direction: column; align-items: stretch; }
   .audit-filters .ui-select, .audit-period { flex: none; width: 100%; }
   .audit-dates { max-width: none; }
-  /* Период — одной строкой с прокруткой, а не 3 + 2 */
-  .audit-period { display: grid; grid-template-columns: 1.2fr 1.1fr 1fr 1fr 1.2fr; flex-wrap: nowrap; overflow: hidden; }
-  .audit-period button { min-width: 0; }
-  .audit-period button { padding: 7px 2px; font-size: .82rem; white-space: normal; line-height: 1.2; }
+  /* Период (пять пунктов) на телефоне — выпадающим списком (layout/Segments) */
   /* Строка журнала: «время · кто» одной строкой, под ними — что сделал */
   .card-block .audit-table tr:not(.group-row) { grid-template-columns: auto 1fr; column-gap: 10px; }
   .audit-table td:first-child { font-size: .9rem; font-weight: 500; }
@@ -1878,7 +1890,7 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .fin-entry > div { min-width: 0; overflow-wrap: anywhere; } /* длинная ссылка в комментарии переносится, а не раздвигает страницу */
 .fin-toolbar { flex-wrap: wrap; gap: 10px 14px; }
 .fin-periods { min-width: 0; }
-.fin-periods button { padding-inline: 12px; white-space: nowrap; }
+.segments.fin-periods button { padding-inline: 12px; white-space: nowrap; }
 .fin-range { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mp-static { display: inline-flex; align-items: center; justify-content: center; cursor: default; }
 .mp-static:hover { background: none; color: var(--text); }
@@ -1931,7 +1943,6 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 @media (max-width: 760px) {
   .fin-entry { grid-template-columns: minmax(0, 1fr) auto; }
   .fin-periods { width: 100%; }
-  .fin-periods button { flex: 1 1 auto; padding: 6px 4px; font-size: .88rem; white-space: normal; line-height: 1.15; }
   .fin-entry .btn { grid-column: 1 / -1; justify-self: start; }
   .fin-due-actions { grid-column: 1 / -1; justify-content: flex-start; }
   .fin-due-actions .btn { grid-column: auto; }

@@ -38,6 +38,8 @@ button.shift-line { cursor: pointer; }
 .work-schedule [data-person] { scroll-margin-top: 84px; }
 .sched-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .sched-tools .segments { width: auto; }
+/* Телефон: «Обычная неделя | Неделя по датам» — во всю ширину строки, пункты поровну (tokens.css) */
+@media (max-width: 760px) { .sched-tools > .segments { flex: 1 1 100%; } }
 .sched-tools .shifts-nav { margin-left: auto; }
 .sched-off { color: var(--faint); font-size: .85rem; }
 /* «Как у клиники» — серым: человек работает по часам клиники, своих нет */

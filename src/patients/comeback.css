@@ -7,8 +7,7 @@
   background: var(--card); color: var(--text); resize: vertical; }
 .comeback-sent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .comeback-sent p { margin: 0; }
-/* Телефон: отбор переносится на вторую строку, кнопки по ширине текста (не сжимаются друг в друга) */
+/* Телефон: отбор — выпадающим списком во всю ширину (layout/Segments) */
 @media (max-width: 760px) {
-  .segments.comeback-filter { flex-wrap: wrap; width: 100%; }
-  .segments.comeback-filter > button { flex: 1 0 auto; min-width: 0; }
+  .head-tools > .segments-select.comeback-filter { flex: 1 1 100%; }
 }

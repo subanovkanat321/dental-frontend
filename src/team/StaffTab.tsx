@@ -4,6 +4,7 @@ import type { Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { PHONE_HINT, type Doctor } from './PhoneParts'
 import { phoneText, ROLE_TEXT } from './texts'
+import { Segments } from '../layout/Segments'
 import { Loading } from '../layout/Loading'
 import { ChairBadge } from './ChairBadge'
 import { useChairs } from './chairs'
@@ -102,11 +103,8 @@ export function StaffTab({ me, doctors, members, invites, loading, error, opened
         {admin && <> Новый человек — «+ Добавить сотрудника»: имя, роль и вход. {PHONE_HINT}</>}</SubHelp>
       <section className="card-block">
         {admin && (
-          <div className="segments wrap" role="group" aria-label="Показать роль">
-            {FILTERS.map(([f, label]) => (
-              <button key={f} type="button" aria-pressed={filter === f} onClick={() => setFilter(f)}>{label} · {count(f)}</button>
-            ))}
-          </div>
+          <Segments className="wrap" label="Показать роль" value={filter} onChange={setFilter}
+            options={FILTERS.map(([f, label]) => ({ value: f, label: `${label} · ${count(f)}` }))} />
         )}
         {error && <p className="error">{error.message}</p>}
         {loading ? <Loading /> : shown.length ? (

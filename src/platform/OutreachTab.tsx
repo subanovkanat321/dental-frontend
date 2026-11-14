@@ -6,6 +6,7 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput, phoneToInput } from '../clinic/phone'
 import { ask as confirmAsk } from '../lib/confirm'
 import { download } from '../lib/download'
+import { Segments } from '../layout/Segments'
 import { FilePicker } from '../layout/FilePicker'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
@@ -89,13 +90,9 @@ export function OutreachTab() {
               <button type="button" className="btn primary" onClick={next}>Следующая клиника →</button>
             </div>
             <div className="outreach-filter">
-              <div className="segments tabs" role="group" aria-label="Кому писали">
-                <button type="button" aria-pressed={group == null} onClick={() => setGroup(null)}>Все · <b className="num">{leads.length}</b></button>
-                {GROUPS.map(([key, title]) => (
-                  <button key={key} type="button" aria-pressed={group === key} onClick={() => setGroup(key)}>
-                    {title} · <b className="num">{countOf[key]}</b></button>
-                ))}
-              </div>
+              <Segments className="tabs" label="Кому писали" value={group ?? ''} onChange={(key) => setGroup(key === '' ? null : key)}
+                options={[{ value: '' as Group | '', label: <>Все · <b className="num">{leads.length}</b></>, text: `Все · ${leads.length}` },
+                  ...GROUPS.map(([key, title]) => ({ value: key, label: <>{title} · <b className="num">{countOf[key]}</b></>, text: `${title} · ${countOf[key]}` }))]} />
               <input type="search" className="outreach-search" aria-label="Поиск по названию" placeholder="Поиск по названию" value={query}
                 onChange={(e) => setQuery(e.target.value)} />
             </div>

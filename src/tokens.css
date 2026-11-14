@@ -262,15 +262,30 @@ input[type=date], input[type=month] { min-width: 0; max-width: 100%; }
 .btn[data-tone=bad]:not(.primary) { color: var(--destructive); }
 
 /*
- * Телефон: ряды вкладок и переключателей не уезжают за край — переносятся на вторую строку.
- * Раньше лишние вкладки («Контент» на «Платформе», «Отчёт» в «Кассе») прятались справа и их не находили.
- * Линии между кнопками — фоном через зазор 1px: так они ровные и при переносе.
+ * Телефон: переключатель (`.segments`) — всегда одной строкой, пункты делят ширину поровну; длинный текст
+ * переносится внутри пункта (до двух строк), на узком (≤380px) — мельче. Раньше ряд переносился сам, и один
+ * пункт оставался во второй строке («30 дней | 90 дней» + «Год», «График» + «Перерывы», владелец, 2026-11-13).
+ * Много длинных пунктов (фильтры со счётчиками) — не сюда: на телефоне это выпадающий список (layout/Segments).
+ * Много коротких (`.wrap`: состояния зуба, врачи, способы оплаты) — ровной сеткой по 2–3 в ряд, последний
+ * одинокий — во всю ширину.
+ * `html` в селекторе — чтобы перебить частные правила экранов (`.x .segments button { white-space: nowrap }`),
+ * в том числе из CSS, который грузится позже вместе с экраном.
  */
 @media (max-width: 760px) {
-  /* Переключатели внутри страницы (День / Неделя / Месяц) — залитые таблетки на утопленной дорожке, а не
-     подчёркивание: так они не похожи на вкладки подразделов сверху (layout/section.tsx) */
-  .segments { flex-wrap: wrap; overflow: visible; }
-  .segments button { flex: 1 0 auto; min-width: 30%; min-height: 38px; white-space: nowrap; padding: 8px 10px; }
+  html .segments.segments { flex-wrap: nowrap; overflow: visible; min-width: 0; max-width: 100%; }
+  html .segments.segments > button { flex: 1 1 0; min-width: 0; min-height: 38px; padding: 6px; white-space: normal; overflow-wrap: break-word;
+    hyphens: auto; line-height: 1.15; text-wrap: balance; }
+  html .segments.wrap:has(> button:nth-child(4)) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html .segments.wrap:has(> button:nth-child(4)) > button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  html .segments.wrap:has(> button:nth-child(7)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  html .segments.wrap:has(> button:nth-child(7)) > button:last-child:nth-child(odd) { grid-column: auto; }
+  html .segments.wrap:has(> button:nth-child(7)) > button:last-child:nth-child(3n+1) { grid-column: 1 / -1; }
+  /* Оценка 0–10 в опросе — два ряда по 6 (0–5, 6–10) */
+  html .segments.wrap.survey-nps:has(> button:nth-child(7)) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  html .segments.wrap.survey-nps > button:last-child { grid-column: auto; }
+}
+@media (max-width: 380px) {
+  html .segments.segments > button { padding-inline: 4px; font-size: .875rem; }
 }
 .source-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .source-chip { min-height: 34px; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); font: inherit; font-size: .85rem; cursor: pointer; }
