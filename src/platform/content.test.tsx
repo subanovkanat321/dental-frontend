@@ -588,3 +588,42 @@ test('опубликованный пост со ссылкой — «📲 В с
   }
   opened.mockRestore()
 })
+
+test('медиа удалено после публикации: вместо картинок и видео — ссылка «смотреть в Instagram ↗», без публикации и сторис', async () => {
+  const link = 'https://www.instagram.com/p/T9/'
+  const removedAt = '2026-11-10T00:00:00Z'
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/content/instagram', () => HttpResponse.json({ enabled: true } satisfies Schemas['InstagramTokensState'])),
+    http.get('*/api/platform/content', () => HttpResponse.json([
+      post(1, { status: 'DONE', instagramMediaId: 'm1', instagramUrl: link, kind: 'CAROUSEL', title: 'Старая карусель', caption: 'Текст поста', images: ['/content/a.png'], mediaRemovedAt: removedAt }),
+      post(2, { status: 'DONE', instagramMediaId: 'm2', instagramUrl: link + 'r', kind: 'REELS', title: 'Старый рилс', video: 'r/r.mp4', mediaRemovedAt: removedAt }),
+      post(3, { status: 'DONE', kind: 'POST', title: 'Выложил руками', images: ['/content/b.png'], mediaRemovedAt: removedAt }),
+      post(4, { status: 'DONE', instagramMediaId: 'm4', instagramUrl: link + 'n', kind: 'POST', title: 'Свежий', images: ['/content/c.png'] }),
+    ])),
+  )
+  const user = await openTab()
+  await user.click(await screen.findByRole('button', { name: /^Все/ }))
+
+  const carousel = await screen.findByRole('article', { name: 'Старая карусель' })
+  expect(carousel).toHaveTextContent('Медиа удалено с сервера после публикации')
+  expect(within(carousel).getByRole('link', { name: 'смотреть в Instagram ↗' })).toHaveAttribute('href', link)
+  expect(within(carousel).queryByRole('img')).not.toBeInTheDocument()
+  expect(carousel).toHaveTextContent('Текст поста')
+  expect(within(carousel).queryByRole('button', { name: /В сторис/ })).not.toBeInTheDocument()
+
+  const reel = screen.getByRole('article', { name: 'Старый рилс' })
+  expect(within(reel).getByRole('link', { name: 'смотреть в Instagram ↗' })).toHaveAttribute('href', link + 'r')
+  expect(reel).not.toHaveTextContent('Видео рилса нет на сервере')
+  expect(reel.querySelector('video')).toBeNull()
+
+  // Выложено руками, ссылки от Instagram нет — просто «оно в Instagram»
+  const byHand = screen.getByRole('article', { name: 'Выложил руками' })
+  expect(byHand).toHaveTextContent('Медиа удалено с сервера после публикации — оно в Instagram')
+  expect(within(byHand).queryByRole('img')).not.toBeInTheDocument()
+
+  // Свежий опубликованный — с картинкой, как раньше
+  const fresh = screen.getByRole('article', { name: 'Свежий' })
+  expect(within(fresh).getByRole('img')).toHaveAttribute('src', '/content/c.png')
+  expect(fresh).not.toHaveTextContent('Медиа удалено')
+})

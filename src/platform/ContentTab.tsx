@@ -296,13 +296,15 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
   const late = post.status === 'PLANNED' && date < today
   const images = post.images ?? []
   const reel = post.kind === 'REELS' && !!post.video
+  // Через 3 дня после публикации медиа на сервере не храним (V211): оно в Instagram — только ссылка
+  const removed = !!post.mediaRemovedAt
   // Опубликованный (отметкой «Опубликовал» или через Instagram) и пропущенный — без кнопки публикации
-  const canPublish = instagram && post.status === 'PLANNED' && !post.instagramMediaId && !post.instagramPublishing
+  const canPublish = instagram && post.status === 'PLANNED' && !post.instagramMediaId && !post.instagramPublishing && !removed
     && (post.kind === 'REELS' ? reel : images.length > 0)
   // Сторис после поста: пост в Instagram, сам не сторис и есть из чего (видео рилса или картинка)
   const storyable = !!post.instagramMediaId && post.kind !== 'STORIES' && (post.kind === 'REELS' ? reel : images.length > 0)
   const storyBusy = post.storyPublishing || story.isPending
-  const canStory = instagram && storyable && !post.storyMediaId && !storyBusy
+  const canStory = instagram && storyable && !post.storyMediaId && !storyBusy && !removed
   // Сторис со ссылкой на пост — только руками в приложении Instagram: открываем пост, там ➤ → «Добавить в историю»
   const shareUrl = post.kind !== 'STORIES' && /^https?:\/\//i.test(post.instagramUrl ?? '') ? post.instagramUrl! : null
   return (
@@ -328,10 +330,17 @@ function PostCard({ post, today, instagram, onEdit, onChanged }: {
       {storyable && post.storyError && !post.storyMediaId && !storyBusy && (
         <p className="error" role="alert">⚠️ Сторис: ошибка{post.storyErrorAt ? ` (${shortDate(post.storyErrorAt, true)})` : ''}: {post.storyError}</p>
       )}
-      {reel && (post.videoUrl
+      {removed && (
+        <p className="hint">
+          Медиа удалено с сервера после публикации{post.instagramUrl
+            ? <> — <a href={post.instagramUrl} target="_blank" rel="noreferrer">смотреть в Instagram ↗</a></>
+            : ' — оно в Instagram'}
+        </p>
+      )}
+      {!removed && reel && (post.videoUrl
         ? <ReelPlayer post={post} onExpired={onChanged} />
         : <p className="tone-bad">Видео рилса нет на сервере ({post.video}) — проверьте каталог docs/marketing/reels.</p>)}
-      {images.length > 0 && (
+      {!removed && images.length > 0 && (
         <div className="content-thumbs">
           {images.map((src) => (
             <a key={src} href={src} target="_blank" rel="noreferrer">

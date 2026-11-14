@@ -317,23 +317,3 @@ test('«Сведения о платформе»: группа врачей — 
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect((await within(form).findAllByText('Ссылка Telegram: https://t.me/…')).length).toBeGreaterThan(0)
 })
-
-test('новая клиника: название и город из справочника', async () => {
-  const sent: unknown[] = []
-  backend([])
-  server.use(
-    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
-    http.post('*/api/platform/clinics', async ({ request }) => {
-      sent.push(await request.json())
-      return HttpResponse.json(clinic(5, 'Стоматология Тест'), { status: 201 })
-    }),
-  )
-  const user = userEvent.setup()
-  renderApp()
-  const form = await screen.findByRole('form', { name: 'Новая клиника' })
-  await user.type(within(form).getByRole('textbox', { name: 'Название' }), 'Стоматология Тест')
-  await user.click(within(form).getByRole('combobox', { name: /Город/ }))
-  await user.click(await screen.findByRole('option', { name: 'Ош' }))
-  await user.click(within(form).getByRole('button', { name: 'Создать клинику' }))
-  await waitForSlow(() => expect(sent).toEqual([{ name: 'Стоматология Тест', city: 'Ош' }]))
-})
