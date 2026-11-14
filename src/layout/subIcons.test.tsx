@@ -47,3 +47,18 @@ test('иконка — украшение: aria-hidden, оттенок свое�
   expect(icons[0]).toHaveAttribute('aria-hidden', 'true')
   expect(icons[0]!.getAttribute('style')).toContain('var(--ico-cash)')
 })
+
+test('у пунктов «Настроек» и «Платформы» — свои оттенки по смыслу, а не один серый раздела', () => {
+  const tone = (page: Page, sub: string) => render(<SubIcon page={page} sub={sub} />).container.querySelector('svg')!.getAttribute('style')
+  for (const page of ['settings', 'platform'] as const) {
+    const subs = Object.keys(SUB_ICONS[page]!)
+    const tones = new Set(subs.map((s) => tone(page, s)))
+    // Почти у каждого свой: повторов мало (палитра приглушённая, без кислотных цветов)
+    expect(tones.size, page).toBeGreaterThanOrEqual(Math.min(subs.length, 10))
+  }
+  expect(tone('settings', 'plan')).toContain('var(--ico-cash)')
+  expect(tone('settings', 'ai')).toContain('var(--ico-ai)')
+  expect(tone('platform', 'tariffs')).toContain('var(--ico-cash)')
+  // Остальные разделы — оттенком раздела
+  expect(tone('cash', 'salary')).toContain('var(--ico-cash)')
+})

@@ -181,7 +181,8 @@ function decorate(el: Element): void {
   } else if (el.hasAttribute('data-tone')) {
     el.removeAttribute('data-tone')
   }
-  const icon = iconOf(el.textContent ?? '')
+  // Своя линейная иконка внутри кнопки (layout/Icon) — эмодзи не добавляем: два значка подряд
+  const icon = el.querySelector('svg.icon') ? undefined : iconOf(el.textContent ?? '')
   if (icon) {
     if (el.getAttribute('data-ico') !== icon) el.setAttribute('data-ico', icon)
   } else if (el.hasAttribute('data-ico')) {

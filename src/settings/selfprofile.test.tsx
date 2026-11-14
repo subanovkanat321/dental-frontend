@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
@@ -123,4 +123,33 @@ test('«Мой профиль» у врача: сверху «Для пацие�
   expect(within(card).queryByRole('button', { name: 'Удалить врача' })).not.toBeInTheDocument()
   expect(within(card).queryByRole('checkbox', { name: /Работает/ })).not.toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Выход' })).toBeInTheDocument()
+})
+
+test('«Мой профиль» руководителя без кресла: «Для пациентов» — одна строка «Станьте и врачом ›», по нажатию — короткая форма', async () => {
+  let sent: unknown = null
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctorId: undefined })),
+    http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Айпери', editable: true } satisfies Schemas['StaffMembersOwnName'])),
+    http.post('*/api/doctors/me', async ({ request }) => {
+      sent = await request.json()
+      return new HttpResponse(null, { status: 204 })
+    }),
+  )
+  window.location.hash = '/me/profile'
+  const user = userEvent.setup()
+  renderApp()
+  const block = await screen.findByRole('region', { name: 'Для пациентов' })
+  const invite = within(block).getByRole('button', { name: /Принимаете пациентов\? Станьте и врачом/ })
+  expect(invite).toHaveAttribute('aria-expanded', 'false')
+  // Свёрнуто: ни поля, ни дублирующего абзаца «Профиль для пациентов есть у врачей»
+  expect(within(block).queryByRole('textbox')).not.toBeInTheDocument()
+  expect(block).not.toHaveTextContent('Профиль для пациентов есть у врачей')
+  await user.click(invite)
+  const form = within(block).getByRole('form', { name: 'Стать врачом' })
+  const name = within(form).getByRole('textbox', { name: 'Ваше имя для пациентов' })
+  await waitFor(() => expect(name).toHaveValue('Айпери'))
+  await user.clear(name)
+  await user.type(name, 'Айпери Исакова')
+  await user.click(within(form).getByRole('button', { name: 'Стать врачом' }))
+  await waitFor(() => expect(sent).toEqual({ fullName: 'Айпери Исакова' }))
 })

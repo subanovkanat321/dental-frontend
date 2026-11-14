@@ -9,6 +9,7 @@ import { CodeInput, ResendLink } from '../layout/CodeStep'
 import { sentText, useCountdown } from '../lib/otp'
 import { NewPasswordFields, PasswordInput, ShowPassword } from '../layout/PasswordFields'
 import { Spinner } from '../layout/Loading'
+import { HelpHint } from '../help/HelpHint'
 
 type Mode = 'current' | 'code'
 
@@ -144,15 +145,20 @@ export function PasswordSection() {
     <section className="settings-group" aria-label="Пароль и вход">
       <h2>Пароль и вход</h2>
       <div className="card-block">
-        {optional ? (
-          <p className="hint">{OPTIONAL_HINT}{s.passwordSet && s.setAt ? ` Пароль задан ${shortDate(s.setAt)}.` : ''}</p>
-        ) : (
-          <p>{s.passwordSet
-            ? s.temporary ? 'Сейчас пароль временный — придумайте свой.' : `Вы входите по номеру и паролю.${s.setAt ? ` Пароль задан ${shortDate(s.setAt)}.` : ''}`
-            : 'Пароль ещё не задан — задайте его по коду.'}</p>
-        )}
         {!open ? (
-          <button type="button" className={optional ? 'btn ghost' : 'btn'} onClick={start}>{s.passwordSet ? 'Сменить пароль' : 'Задать пароль'}</button>
+          <div className="setting-line">
+            <div className="setting-what">
+              {optional ? (
+                <p className="hint setting-sub">Необязательно — только для входа по номеру{s.passwordSet && s.setAt ? ` · задан ${shortDate(s.setAt)}` : ''}{' '}
+                  <HelpHint title="Пароль">{OPTIONAL_HINT} С Telegram входите кнопкой «Войти через Telegram» — пароль не спросим.</HelpHint></p>
+              ) : (
+                <p>{s.passwordSet
+                  ? s.temporary ? 'Сейчас пароль временный — придумайте свой.' : `Вы входите по номеру и паролю.${s.setAt ? ` Пароль задан ${shortDate(s.setAt)}.` : ''}`
+                  : 'Пароль ещё не задан — задайте его по коду.'}</p>
+              )}
+            </div>
+            <button type="button" className="btn" onClick={start}>{s.passwordSet ? 'Сменить пароль' : 'Задать пароль'}</button>
+          </div>
         ) : (
           <form className="form narrow" aria-label="Сменить пароль" onSubmit={(e) => {
             e.preventDefault()

@@ -1,5 +1,5 @@
 /* «Текст напоминания» (ReminderTextPage): поле, переменные кнопками и предпросмотр Telegram / WhatsApp */
-.reminder-text { display: grid; gap: 16px; max-width: 860px; }
+.reminder-text { display: grid; gap: 16px; }
 .reminder-text .card-block { display: grid; gap: 12px; }
 .reminder-text .segments { max-width: 320px; }
 .reminder-text textarea { width: 100%; min-height: 140px; line-height: 1.45; resize: vertical; }

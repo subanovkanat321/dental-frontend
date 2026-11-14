@@ -66,7 +66,7 @@ const RENDER: Record<string, (title: string) => Render> = {
   data: (t) => account('data', t),
   ai: () => (_me, back) => <AiPage onBack={back} />,
   // «Выйти на всех устройствах» — внизу «Моего профиля» (обычный «Выйти» — в блоке «Я»)
-  profile: () => (me, back) => <><ProfilePage me={me} onBack={back} /><LogoutSection /></>,
+  profile: () => (me, back) => <ProfilePage me={me} onBack={back} footer={<LogoutSection />} />,
   appearance: (t) => (_me, back) => <AppearancePage title={t} onBack={back} />,
   notifications: (t) => (_me, back) => <div className="settings mine-page"><SubHeader title={t} onBack={back} /><Notifications /></div>,
   install: (t) => (_me, back) => <div className="settings mine-page"><SubHeader title={t} onBack={back} /><InstallApp /></div>,
@@ -188,38 +188,57 @@ function LogoutSection() {
   )
 }
 
-/** «Оформление»: тема и размер текста — сразу, на этом устройстве. Пункт блока «Я». */
+/**
+ * «Оформление»: тема и размер текста — сразу, на этом устройстве. Пункт блока «Я». С 2026-11-14 тема — три
+ * карточки-образца (мини-экран светлой, тёмной и «как в системе» — половина на половину), выбранная — в рамке
+ * акцента; размер — переключатель и живая строка-образец под ним. На компьютере — две карточки рядом, на телефоне —
+ * столбиком (общая сетка пунктов, crm.css).
+ */
 function AppearancePage({ title, onBack }: { title: string; onBack: () => void }) {
-  return (
-    <div className="settings">
-      <SubHeader title={title} onBack={onBack} />
-      <Appearance />
-    </div>
-  )
-}
-
-function Appearance() {
   const [theme, setTheme] = useState(themeChoice)
   const [size, setSize] = useState(textSize)
   return (
-    <section className="settings-group" aria-label="Оформление">
-      <div className="card-block appearance">
-        <div className="field"><span>Тема</span>
-          <div className="segments wrap" role="group" aria-label="Тема">
+    <div className="settings appearance-page">
+      <SubHeader title={title} onBack={onBack}><span className="head-note">Сохраняется на этом устройстве</span></SubHeader>
+      <section className="settings-group" aria-label="Тема">
+        <h2>Тема</h2>
+        <div className="card-block">
+          <div className="theme-cards" role="group" aria-label="Тема">
             {THEMES.map(([code, label]) => (
-              <button key={code} type="button" aria-pressed={theme === code} onClick={() => { setThemeChoice(code); setTheme(code) }}>{label}</button>
+              <button key={code} type="button" className="theme-card" aria-pressed={theme === code}
+                onClick={() => { setThemeChoice(code); setTheme(code) }}>
+                <ThemeSample kind={code} />
+                <span className="theme-card-label">{label}</span>
+              </button>
             ))}
           </div>
         </div>
-        <div className="field"><span>Размер текста</span>
-          <div className="segments wrap" role="group" aria-label="Размер текста">
+      </section>
+      <section className="settings-group" aria-label="Размер текста">
+        <h2>Размер текста</h2>
+        <div className="card-block text-size">
+          <div className="segments" role="group" aria-label="Размер текста">
             {TEXT_SIZES.map(([code, label]) => (
               <button key={code} type="button" aria-pressed={size === code} onClick={() => { setTextSize(code); setSize(code) }}>{label}</button>
             ))}
           </div>
+          {/* Живой образец: тем же размером, что весь Tish после выбора (rem от <html data-text-size>) */}
+          <div className="text-sample" aria-label="Образец текста">
+            <strong>10:30 · Бурулай Тестова</strong>
+            <span>Лечение кариеса · Кресло 1</span>
+          </div>
         </div>
-        <p className="hint">Сохраняется на этом устройстве.</p>
-      </div>
-    </section>
+      </section>
+    </div>
+  )
+}
+
+/** Мини-экран темы: меню слева, строка-заголовок и две «карточки». «Как в системе» — светлая и тёмная пополам. */
+function ThemeSample({ kind }: { kind: string }) {
+  return (
+    <span className={`theme-sample ${kind}`} aria-hidden="true">
+      <span className={`ts-half ${kind === 'dark' ? 'ts-dark' : 'ts-light'}`}><i className="ts-rail" /><i className="ts-head" /><i className="ts-card" /><i className="ts-card short" /></span>
+      {kind === 'auto' && <span className="ts-half ts-dark"><i className="ts-rail" /><i className="ts-head" /><i className="ts-card" /><i className="ts-card short" /></span>}
+    </span>
   )
 }
