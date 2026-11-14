@@ -15,7 +15,7 @@ import { serviceEmoji } from '../lib/serviceEmoji'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { sourceChoices, useSources } from '../lib/sources'
 import { expired, usePromoCodes } from '../lib/promo'
-import { withChairConfirm } from './chairTime'
+import { isChairError, withChairConfirm } from './chairTime'
 import { ChairTimeHint } from './ChairTimeHint'
 import { ChairSelect } from './ChairSelect'
 import { useChairChoice } from './chairChoice'
@@ -423,7 +423,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
         {chair.multi && (
           <ChairSelect doctorId={doctorId} startAt={startAt} duration={duration} value={chair.chairId} onChange={chair.pick} />
         )}
-        {!walkIn && startAt && <ChairTimeHint doctorId={doctorId} startAt={startAt} duration={duration} chairId={chair.chairId} />}
+        {/* Одна строка о кресле: занято приёмом (и куда вместо), часы коллеги или «врачу кресла придёт уведомление»; ответ
+            сервера о кресле уже на экране — строки нет */}
+        {startAt && <ChairTimeHint doctorId={doctorId} startAt={startAt} duration={duration} chairId={chair.chairId}
+          action={walkIn ? 'Начать приём' : 'Записать'} onPickChair={chair.multi ? chair.pick : undefined} hidden={isChairError(create.error)} />}
 
         {/* Кто из листа ожидания помещается в это свободное окно — только пока пациент не выбран; никого — блока нет */}
         {!walkIn && !patient && startAt && <WaitlistCandidates date={date} doctorId={doctorId} startAt={startAt} onPick={pickWaiting} onBooked={onCreated} />}

@@ -31,11 +31,11 @@ type Check = Schemas['ChairCheckView']
 function herTime(doctorId: number, startAt: string, endAt: string, strict = false): Check {
   const [s, e] = [minutesOf(startAt), minutesOf(endAt)]
   const hit = [[15 * 60, 18 * 60], [22 * 60, 23 * 60 + 30]].find(([a, b]) => s < b! && e > a!)
-  if (doctorId !== 2 || !hit) return { colleague: undefined, strict }
+  if (doctorId !== 2 || !hit) return { colleague: undefined, strict, notified: [] }
   const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bishkek' }).format(new Date(startAt))
   const start = slotInstant(day, Math.max(s, hit[0]!))
   const end = slotInstant(day, Math.min(e, hit[1]!))
-  return { colleague: { doctorId: 1, doctorName: 'Айгерим Садыкова', chairName: 'Кресло 1', start, end }, strict }
+  return { colleague: { doctorId: 1, doctorName: 'Айгерим Садыкова', chairName: 'Кресло 1', start, end }, strict, notified: [] }
 }
 
 function backend(created: (body: Create) => Response, chairs: Schemas['ChairOverview'][] = [{ id: 5, name: 'Кресло 1', doctorIds: [1, 2], overlaps: [], mode: 'WARN' }],

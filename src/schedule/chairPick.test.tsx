@@ -37,9 +37,32 @@ const OPTIONS: Schemas['ChairOptionView'][] = [
   { id: 6, name: 'Кресло 2', own: false, state: 'FREE', strict: false },
 ]
 
-function backend(created: (body: Create) => Response, chairs: Chair[] = TWO, appointments: Schemas['AppointmentView'][] = []) {
+type Check = Schemas['ChairCheckView']
+
+const nine = () => slotInstant(addDays(todayIn(), 1), 9 * 60)
+const nineThirty = () => slotInstant(addDays(todayIn(), 1), 9 * 60 + 30)
+
+/**
+ * chair-check глазами сервера: «Кресло 1» в 09:00 занято приёмом Айгерим — только «занято» (и это её часы, но «время
+ * Айгерим» сервер в этом случае не присылает); «Кресло 2» — основное кресло Бакыта: ему придёт уведомление.
+ */
+function busyCheck(chairId: number | null): Check {
+  if (chairId === 6) return { strict: false, notified: ['Бакыт Осмонов'] }
+  return {
+    strict: false, notified: [],
+    busy: { chairName: 'Кресло 1', doctorName: 'Айгерим Садыкова', start: nine(), end: nineThirty() },
+    freeChair: { id: 6, name: 'Кресло 2', notified: ['Бакыт Осмонов'] },
+  }
+}
+
+function backend(created: (body: Create) => Response, chairs: Chair[] = TWO, appointments: Schemas['AppointmentView'][] = [],
+  check: (chairId: number | null) => Check = busyCheck) {
   const posts: Create[] = []
   server.use(
+    http.get('*/api/appointments/chair-check', ({ request }) => {
+      const chairId = new URL(request.url).searchParams.get('chairId')
+      return HttpResponse.json(check(chairId ? Number(chairId) : null))
+    }),
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json(appointments)),
     http.get('*/api/chairs', () => HttpResponse.json(chairs)),
@@ -87,39 +110,95 @@ test('одно кресло — поля «Кресло» нет и chairId не
   expect(posts[0]!.chairId).toBeUndefined()
 })
 
-test('два кресла — кресло врача по умолчанию с «занято (кем)», подсказка «записать туда» ставит свободное', async () => {
+test('два кресла: кресло занято приёмом — одна строка «занято: приём …» без «время врача», кнопка ставит свободное и говорит об уведомлении', async () => {
   const posts = backend(ok)
   const panel = await openNew()
 
   const field = await within(panel).findByRole('combobox', { name: /Кресло/ })
   await waitFor(() => expect(field).toHaveTextContent('Кресло 1 (кресло врача) — занято (Айгерим Садыкова)'))
-  const hint = await within(panel).findByText(/«Кресло 1» в это время занято/)
-  await userEvent.click(within(hint).getByRole('button', { name: 'записать туда' }))
+  // В подписи занятого кресла — только «занято», без «время …»
+  expect(field).not.toHaveTextContent('время')
+  const hint = await within(panel).findByText(/«Кресло 1» занято: приём Айгерим Садыкова 09:00–09:30/)
+  expect(hint).toHaveTextContent('Свободно «Кресло 2» — записать в «Кресло 2». Врачу кресла (Бакыт Осмонов) придёт уведомление.')
+  expect(within(panel).queryByText(/время врача/)).not.toBeInTheDocument()
+  expect(within(panel).getAllByRole('status').filter((n) => /Кресло 1/.test(n.textContent ?? ''))).toHaveLength(1)
+
+  await userEvent.click(within(hint).getByRole('button', { name: 'записать в «Кресло 2»' }))
   expect(field).toHaveTextContent('Кресло 2 — свободно')
+  expect(await within(panel).findByText('🔔 Врачу кресла (Бакыт Осмонов) придёт уведомление.')).toBeInTheDocument()
+  expect(within(panel).queryByText(/занято: приём/)).not.toBeInTheDocument()
 
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
   await waitFor(() => expect(posts).toHaveLength(1))
   expect(posts[0]!.chairId).toBe(6)
 })
 
-test('409 «кресло занято» с предложением — одной кнопкой «Записать в «Кресло 2»» повторяет запрос в свободное', async () => {
-  const posts = backend((body) => body.chairId === 6 ? ok(body) : HttpResponse.json({
-    title: 'Conflict', status: 409, code: 'time-taken', detail: 'Кресло занято: «Кресло 1» в это время у врача Айгерим Садыкова',
-    chairId: 5, chairName: 'Кресло 1', doctorName: 'Айгерим Садыкова', freeChairId: 6, freeChairName: 'Кресло 2',
-  }, { status: 409 }))
+const busy409 = (extra: Record<string, unknown> = {}) => HttpResponse.json({
+  title: 'Conflict', status: 409, code: 'time-taken', detail: 'Кресло занято: «Кресло 1» в это время у врача Айгерим Садыкова',
+  chairId: 5, chairName: 'Кресло 1', doctorName: 'Айгерим Садыкова', busyStart: nine(), busyEnd: nineThirty(),
+  freeChairId: 6, freeChairName: 'Кресло 2', freeChairNotified: ['Бакыт Осмонов'], ...extra,
+}, { status: 409 })
+
+test('409 «кресло занято» — одно окно «занято: приём … Свободно «Кресло 2» — записать туда?» и повтор в свободное', async () => {
+  const posts = backend((body) => body.chairId === 6 ? ok(body) : busy409())
   const panel = await openNew()
   // Сотрудник не стал менять кресло в поле — сервер подскажет сам
   await within(panel).findByRole('combobox', { name: /Кресло/ })
   await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
 
   const dialog = await screen.findByRole('alertdialog')
-  expect(dialog).toHaveTextContent('«Кресло 1» занято (Айгерим Садыкова). Свободно «Кресло 2» — записать туда?')
+  expect(dialog).toHaveTextContent('«Кресло 1» занято: приём Айгерим Садыкова 09:00–09:30. Свободно «Кресло 2» — записать туда?'
+    + ' Врачу кресла (Бакыт Осмонов) придёт уведомление.')
+  expect(dialog).not.toHaveTextContent('время врача')
   await userEvent.click(within(dialog).getByRole('button', { name: 'Записать в «Кресло 2»' }))
 
   await waitFor(() => expect(posts).toHaveLength(2))
   expect(posts[0]!.chairId).toBe(5)
   expect(posts[1]!.chairId).toBe(6)
   await waitFor(() => expect(screen.queryByRole('complementary', { name: 'Новая запись' })).not.toBeInTheDocument())
+})
+
+test('свободное кресло — в часы его врача: согласились в одном окне — без второго «Коллега предупреждён?»', async () => {
+  const posts = backend((body) => body.chairId === 6 ? ok(body) : busy409({ freeChairColleague: 'Бакыт Осмонов' }))
+  const panel = await openNew()
+  await within(panel).findByRole('combobox', { name: /Кресло/ })
+  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+
+  const dialog = await screen.findByRole('alertdialog')
+  expect(dialog).toHaveTextContent('Свободно «Кресло 2» (часы врача Бакыт Осмонов) — записать туда? Врачу кресла (Бакыт Осмонов) придёт уведомление.')
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Записать в «Кресло 2»' }))
+
+  await waitFor(() => expect(posts).toHaveLength(2))
+  expect(posts[1]).toMatchObject({ chairId: 6, confirmChairTime: true })
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+})
+
+test('отказались от свободного кресла — ответ сервера под формой, без второй строки о том же кресле', async () => {
+  backend(() => busy409())
+  const panel = await openNew()
+  await within(panel).findByText(/«Кресло 1» занято: приём/)
+  await userEvent.click(within(panel).getByRole('button', { name: 'Записать' }))
+  await userEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Отмена' }))
+
+  expect(await within(panel).findByText('Кресло занято: «Кресло 1» в это время у врача Айгерим Садыкова')).toBeInTheDocument()
+  expect(within(panel).queryByText(/занято: приём/)).not.toBeInTheDocument()
+})
+
+test('кресло пустое, но часы коллеги — «время врача», без «занято»', async () => {
+  backend(ok, TWO, [], () => ({
+    strict: false, notified: [],
+    colleague: { doctorId: 1, doctorName: 'Айгерим Садыкова', chairName: 'Кресло 1', start: nine(), end: nineThirty() },
+  }))
+  server.use(http.get('*/api/appointments/chair-options', () => HttpResponse.json([
+    { id: 5, name: 'Кресло 1', own: true, state: 'COLLEAGUE_TIME', doctorName: 'Айгерим Садыкова', strict: false },
+    { id: 6, name: 'Кресло 2', own: false, state: 'FREE', strict: false },
+  ] satisfies Schemas['ChairOptionView'][])))
+  const panel = await openNew()
+
+  const field = await within(panel).findByRole('combobox', { name: /Кресло/ })
+  await waitFor(() => expect(field).toHaveTextContent('Кресло 1 (кресло врача) — время Айгерим Садыкова'))
+  expect(await within(panel).findByText(/09:00–09:30 — время врача Айгерим Садыкова/)).toBeInTheDocument()
+  expect(within(panel).queryByText(/занято/)).not.toBeInTheDocument()
 })
 
 test('карточка: кресло приёма видно, «сменить» — то же поле и PUT /chair', async () => {

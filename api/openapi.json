@@ -14243,6 +14243,14 @@
             "type" : "integer",
             "format" : "int64"
           }
+        }, {
+          "name" : "appointmentId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -25479,9 +25487,40 @@
           },
           "strict" : {
             "type" : "boolean"
+          },
+          "busy" : {
+            "$ref" : "#/components/schemas/ChairCheckViewBusy"
+          },
+          "freeChair" : {
+            "$ref" : "#/components/schemas/ChairCheckViewFreeChair"
+          },
+          "notified" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
           }
         },
-        "required" : [ "strict" ]
+        "required" : [ "notified", "strict" ]
+      },
+      "ChairCheckViewBusy" : {
+        "properties" : {
+          "chairName" : {
+            "type" : "string"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "start" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "end" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "chairName", "end", "start" ]
       },
       "ChairCheckViewColleague" : {
         "properties" : {
@@ -25505,6 +25544,27 @@
           }
         },
         "required" : [ "doctorId" ]
+      },
+      "ChairCheckViewFreeChair" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "colleague" : {
+            "type" : "string"
+          },
+          "notified" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "id", "name", "notified" ]
       },
       "PatientCard" : {
         "properties" : {

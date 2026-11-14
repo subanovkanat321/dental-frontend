@@ -6,33 +6,65 @@ import { workSpans } from './workSpans'
 /** Код 409: время попадает в рабочие часы коллеги по креслу (V187). */
 export const CHAIR_COLLEAGUE_TIME = 'chair-colleague-time'
 
-/** Свободное кресло из ответа 409 (V210): сервер предлагает его вместо занятого. */
-export type FreeChair = { id: number; name: string; colleague?: string }
+/**
+ * Свободное кресло из ответа 409 (V210): сервер предлагает его вместо занятого. `notified` — врачи этого кресла, которым
+ * после записи туда придёт уведомление.
+ */
+export type FreeChair = { id: number; name: string; colleague?: string; notified: string[] }
+
+const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [])
 
 export function freeChairOf(error: ApiError): FreeChair | null {
   const p = error.problem
   if (typeof p.freeChairId !== 'number' || typeof p.freeChairName !== 'string') return null
-  return { id: p.freeChairId, name: p.freeChairName, colleague: typeof p.freeChairColleague === 'string' ? p.freeChairColleague : undefined }
+  return {
+    id: p.freeChairId, name: p.freeChairName, colleague: typeof p.freeChairColleague === 'string' ? p.freeChairColleague : undefined,
+    notified: strings(p.freeChairNotified),
+  }
+}
+
+/** ««Кресло 1» занято: приём Айгерим С. 18:00–19:00» — без времени, если сервер его не прислал. */
+export function chairBusyText(chairName: string | undefined, doctorName: string | undefined, start?: string, end?: string): string {
+  const chair = chairName ? `«${chairName}»` : 'Кресло врача'
+  const when = start && end ? ` ${timeOf(start)}–${timeOf(end)}` : ''
+  return doctorName ? `${chair} занято: приём ${doctorName}${when}` : `${chair} занято${when ? `:${when}` : ''}`
+}
+
+/** «Врачу кресла (Нурболот Т.) придёт уведомление» — запись в чужое кресло (V210); никому — пусто. */
+export function chairNotifiedText(names: string[] | undefined): string {
+  if (!names?.length) return ''
+  return `${names.length > 1 ? 'Врачам' : 'Врачу'} кресла (${names.join(', ')}) придёт уведомление`
+}
+
+/** Ответ сервера — про кресло (занято, часы коллеги, «не записали»): форма уже показывает его, подсказка о кресле не нужна. */
+export function isChairError(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 409 && typeof error.problem.chairName === 'string'
 }
 
 /**
- * Вопрос «записать в другое кресло?» по ответу 409 (V210): «Кресло 1» занято (Айгерим С.). Свободно «Кресло 2» — записать туда?
- * В часы коллеги — «Это время врача … в «Кресле 1»». Свободное — в часы его врача: скажем и об этом (сервер потом спросит).
+ * Вопрос «записать в другое кресло?» по ответу 409 (V210) — одно сообщение: «Кресло 1» занято: приём Айгерим С.
+ * 18:00–19:00. Свободно «Кресло 2» — записать туда? Кресло занято приёмом — только «занято», без «время коллеги»: в
+ * занятое кресло не записать, чьи там часы — неважно. «Время врача …» — только когда кресло пустое (409
+ * chair-colleague-time). Свободное — в часы его врача или чьё-то основное: скажем, что тому придёт уведомление.
  */
 export function switchChairText(error: ApiError, free: FreeChair): string {
   const p = error.problem
-  const chair = typeof p.chairName === 'string' ? `«${p.chairName}»` : 'Кресло врача'
-  const who = typeof p.doctorName === 'string' ? p.doctorName : null
+  const chairName = typeof p.chairName === 'string' ? p.chairName : undefined
+  const who = typeof p.doctorName === 'string' ? p.doctorName : undefined
   const head = error.code === CHAIR_COLLEAGUE_TIME
-    ? `${chair} в это время — время врача ${who ?? 'коллеги'}.`
-    : `${chair} занято${who ? ` (${who})` : ''}.`
-  return `${head} Свободно «${free.name}»${free.colleague ? ` (часы врача ${free.colleague})` : ''} — записать туда?`
+    ? `${chairName ? `«${chairName}»` : 'Кресло врача'} в это время — время врача ${who ?? 'коллеги'}.`
+    : `${chairBusyText(chairName, who, typeof p.busyStart === 'string' ? p.busyStart : undefined,
+      typeof p.busyEnd === 'string' ? p.busyEnd : undefined)}.`
+  const told = chairNotifiedText(free.notified)
+  return `${head} Свободно «${free.name}»${free.colleague ? ` (часы врача ${free.colleague})` : ''} — записать туда?${told ? ` ${told}.` : ''}`
 }
 
 /**
  * Запись или перенос с вопросами о кресле.
- * - Кресло занято (409 с `freeChairId`, V210) — «Кресло 1 занято (Айгерим). Свободно Кресло 2 — записать туда?» с кнопкой
- *   «Записать в «Кресло 2»»: тот же запрос с `chairId`. «Нет» — ошибка как раньше (её покажет экран).
+ * - Кресло занято (409 с `freeChairId`, V210) — «Кресло 1 занято: приём Айгерим 18:00–19:00. Свободно Кресло 2 — записать
+ *   туда?» с кнопкой «Записать в «Кресло 2»»: тот же запрос с `chairId`. «Нет» — ошибка как раньше (её покажет экран).
+ *   Свободное кресло — в часы его врача: вопрос уже сказал об этом («часы врача Нурболот, ему придёт уведомление»), поэтому
+ *   повтор сразу с `confirmChairTime` — без второго окна «Коллега предупреждён?».
  * - Часы коллеги по креслу (409 `chair-colleague-time`, V187): сначала — то же предложение другого кресла, если сервер его
  *   прислал; дальше режим «Предупреждать» — окно «Это время врача Айгерим (Кресло 1). Коллега предупреждён?» с кнопками
  *   «Записать» и «Отмена» («Записать» — тот же запрос с `confirmChairTime: true`); режим «Запрещать» (`strict`) — то же
@@ -56,7 +88,7 @@ export async function withChairConfirm<T>(send: (confirm: boolean, chairId?: num
         offered.add(free.id)
         if (await ask(switchChairText(error, free), { ok: `Записать в «${free.name}»` })) {
           chairId = free.id
-          confirm = false
+          confirm = Boolean(free.colleague)
           continue
         }
       }
