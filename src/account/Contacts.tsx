@@ -5,7 +5,7 @@ import { ContactLinks } from '../lib/ContactLinks'
 export function DeveloperContacts() {
   const info = usePlatformInfo().data
   if (!info?.supportUrl && !info?.supportPhones?.length && !info?.supportWhatsapp && !info?.supportEmail) {
-    return <p className="hint">Контакты команды Tish пока не заданы — напишите обращение: «Помощь и техподдержка» → «Написать команде Tish».</p>
+    return <p className="hint">Контакты команды Tish пока не заданы — напишите обращение: «Помощь» → «Написать в Tish».</p>
   }
   return (
     <div className="actions">

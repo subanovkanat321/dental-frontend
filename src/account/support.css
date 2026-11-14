@@ -1,0 +1,4 @@
+/* «Помощь → Написать в Tish»: выбор типа обращения — столбиком (в узкой панели три кнопки в ряд не влезали) */
+.ticket-kinds { flex-direction: column; align-items: stretch; }
+.ticket-kinds button { justify-content: flex-start; text-align: left; min-height: 40px; padding: 0 12px; }
+.support-survey { margin: 4px 0 0; }

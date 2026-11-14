@@ -1,6 +1,6 @@
 /**
  * Подсказки «?» у заголовков ключевых экранов: 2–3 строки и ссылка на раздел руководства
- * (/guide#якорь, якоря — id глав и разделов в site/guide/content.ts). Без туров и всплывающих окон
+ * (#/help/guide/<якорь> — книга в CRM; якоря — id глав и разделов в site/guide/content.ts). Без туров и всплывающих окон
  * при входе: открывается только по нажатию.
  */
 export type HintKey = 'schedule' | 'newAppointment' | 'appointment' | 'cash' | 'stock' | 'patients'

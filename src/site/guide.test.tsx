@@ -1,10 +1,8 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { vi } from 'vitest'
 
 import type { Schemas } from '../api/client'
-import { GuidePage } from '../settings/GuidePage'
 import { guideRole } from '../settings/guides'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
@@ -35,10 +33,10 @@ test('/guide открывается без входа: заголовок, пе�
   expect(screen.getByRole('link', { name: 'Открыть Tish — расписание' })).toHaveAttribute('href', '/')
 })
 
-test('?role=assistant — без «Кассы» и «Настроек клиники»; выбор роли — в адресе', async () => {
+test('?role=assistant — без «Кассы» и «Клиники»; выбор роли — в адресе', async () => {
   window.history.replaceState(null, '', '/guide?role=assistant')
   render(<Guide />)
-  expect(chapterTitles()).not.toContain('Настройки клиники')
+  expect(chapterTitles()).not.toContain('Клиника')
   expect(chapterTitles()).not.toContain('Касса')
   expect(chapterTitles()).toContain('Пациенты')
   // Разделы, которые ассистенту не нужны, тоже скрыты: оплату он не принимает
@@ -47,7 +45,8 @@ test('?role=assistant — без «Кассы» и «Настроек клини
 
   await userEvent.click(within(screen.getByRole('group', { name: 'Для кого' })).getByRole('button', { name: 'Руководитель' }))
   expect(window.location.search).toBe('?role=admin')
-  expect(chapterTitles()).toContain('Настройки клиники')
+  expect(chapterTitles()).toContain('Клиника')
+  expect(chapterTitles()).toContain('Настройки')
   expect(screen.getByRole('article', { name: 'Добавить сотрудника: одна кнопка' })).toBeInTheDocument()
 
   await userEvent.click(within(screen.getByRole('group', { name: 'Для кого' })).getByRole('button', { name: 'Все главы' }))
@@ -58,8 +57,8 @@ test('у регистратуры — касса без выручки: «К о�
   const titles = chaptersFor('reception').flatMap((c) => c.sections.map((s) => s.title))
   expect(titles).toContain('К оплате на кассе (регистратура)')
   expect(titles).not.toContain('Зарплата: проценты и оклад')
-  expect(chaptersFor('reception').map((c) => c.id)).toContain('nastroiki-kliniki')
-  expect(chaptersFor('assistant').map((c) => c.id)).not.toContain('nastroiki-kliniki')
+  expect(chaptersFor('reception').map((c) => c.id)).toContain('klinika')
+  expect(chaptersFor('assistant').map((c) => c.id)).not.toContain('klinika')
 })
 
 test('неизвестная роль в адресе — все главы', () => {
@@ -98,18 +97,7 @@ test('ссылка из CRM — на роль сотрудника; админ, 
   expect(guideRole({ assistantOf: [1], doctor: false, admin: false, reception: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6 } as Me)).toBe('assistant')
 })
 
-test('«Руководство» в CRM: «Открыть полное руководство» — для выбранной роли, с from=app (кнопка «Вернуться в Tish»)', async () => {
-  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
-  render(<GuidePage me={{ assistantOf: [1], doctors: [], doctor: false, admin: false, reception: false, owner: false, platform: false, bookingEnabled: false, daysAhead: 0, canChangeClinic: false, waiting: false, hasReception: false, hasCard: false, maxRelatives: 6 } as Me} onBack={vi.fn()} />)
-  expect(screen.getByRole('heading', { name: 'Руководство' })).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: /Открыть полное руководство/ }))
-  expect(open).toHaveBeenLastCalledWith(`${window.location.origin}/guide?role=assistant&from=app`, '_blank', 'noopener')
-  await userEvent.click(within(screen.getByRole('group', { name: 'Роль' })).getByRole('button', { name: 'Врач' }))
-  await userEvent.click(screen.getByRole('button', { name: /Открыть полное руководство/ }))
-  expect(open).toHaveBeenLastCalledWith(`${window.location.origin}/guide?role=doctor&from=app`, '_blank', 'noopener')
-})
-
-test('«Помощь» внизу меню: один пункт «Руководство» (бывшая «Памятка») — открывается в CRM, на роли сотрудника', async () => {
+test('«Помощь» внизу меню: один пункт «Руководство» — книга открывается в CRM', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments', () => HttpResponse.json([])),
@@ -121,7 +109,9 @@ test('«Помощь» внизу меню: один пункт «Руковод
   expect(within(menu).getAllByRole('button', { name: /Руководство/ })).toHaveLength(1)
   expect(within(menu).queryByRole('button', { name: /Памятка/ })).not.toBeInTheDocument()
   await userEvent.click(within(menu).getByRole('button', { name: /Руководство/ }))
-  expect(await screen.findByRole('button', { name: /Открыть полное руководство/ })).toBeInTheDocument()
+  // Книга прямо в CRM: оглавление и поиск, без перехода на сайт
+  expect(await screen.findByRole('searchbox', { name: 'Поиск по руководству' })).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Главы руководства' })).toBeInTheDocument()
   window.location.hash = ''
 })
 

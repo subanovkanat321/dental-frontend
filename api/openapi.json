@@ -21291,9 +21291,19 @@
           },
           "poster" : {
             "type" : "string"
+          },
+          "section" : {
+            "type" : "string"
+          },
+          "lead" : {
+            "type" : "string"
+          },
+          "seconds" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
-        "required" : [ "id", "title", "video" ]
+        "required" : [ "id", "lead", "section", "title", "video" ]
       },
       "TelegramLoginControllerStatus" : {
         "properties" : {

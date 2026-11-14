@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 
+import { openMine } from '../lib/route'
 import { HINTS, type HintKey } from './hints'
 
 /**
  * Кнопка «?» рядом с заголовком экрана: по нажатию — коротко, что здесь делают, и «Подробнее в
- * руководстве» (открывается новой вкладкой, from=app — «Вернуться в Tish»). Закрывается повторным
+ * руководстве» (нужный раздел книги «Помощь → Руководство», прямо в Tish). Закрывается повторным
  * нажатием, Esc или нажатием мимо. Сама не открывается никогда.
  *
  * Свой текст (`title` + `children`) — вместо длинного абзаца-пояснения над таблицей: он прятался бы в
@@ -33,7 +34,8 @@ export function HelpHint({ hint, title, children }: { hint?: HintKey; title?: st
       {open && (
         <span className="help-hint-pop" id={id} role="note" aria-label={`Подсказка: ${h.title}`}>
           <span>{h.text}</span>
-          {h.anchor && <a href={`/guide?from=app#${h.anchor}`} target="_blank" rel="noopener noreferrer">Подробнее в руководстве</a>}
+          {/* Раздел книги «Помощь → Руководство» прямо в Tish (#/help/guide/<якорь>); «‹ Назад» вернёт на этот экран */}
+          {h.anchor && <a href={`#/help/guide/${h.anchor}`} onClick={(e) => { e.preventDefault(); setOpen(false); openMine('help', `guide/${h.anchor}`) }}>Подробнее в руководстве</a>}
         </span>
       )}
     </span>

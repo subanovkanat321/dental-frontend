@@ -90,11 +90,11 @@ test('«Откуда приходят пациенты»: вкладки «От�
   expect(screen.queryByRole('tab', { name: 'Промокоды' })).not.toBeInTheDocument()
 })
 
-test('«Помощь и техподдержка» — одна страница; старый адрес «Помощь» сразу открывает чат с помощником', async () => {
+test('«Написать в Tish» — одна страница; старый адрес «Помощь» сразу открывает чат с помощником', async () => {
   server.use(http.get('*/api/patient/me', () => HttpResponse.json(me)))
   openItem('help')
   renderApp()
-  expect(await screen.findByRole('heading', { name: 'Помощь и техподдержка' })).toBeInTheDocument()
+  expect(await screen.findByRole('heading', { name: 'Написать в Tish' })).toBeInTheDocument()
   expect(window.location.hash).toBe('#/help/chat')
   expect(await screen.findByRole('complementary', { name: 'Помощь' })).toBeInTheDocument()
 })
