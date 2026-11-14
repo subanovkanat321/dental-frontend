@@ -144,7 +144,9 @@ test('ассистент: график только для чтения', async 
   )
   renderApp()
   const table = await screen.findByRole('table', { name: 'График на неделю' })
-  expect(screen.getByText(/График ведёт руководитель клиники.*Ваша строка подсвечена/)).toBeInTheDocument()
+  expect(screen.getByText(/Серым — обычная неделя, поверх — смены и выходные на дату/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Подсказка: Неделя по датам' }))
+  expect(screen.getByText(/График ведёт руководитель клиники\. Ваша строка подсвечена/)).toBeInTheDocument()
   expect(within(table).queryAllByRole('button')).toHaveLength(0)
   // Врачей ассистент здесь не видит, как раньше в «Часах врачей»
   expect(within(table).queryByText('Дастан Т.')).not.toBeInTheDocument()
@@ -158,11 +160,11 @@ test('пусто: «В графике пока никого» — «+ Добав
   const user = userEvent.setup()
   renderApp()
   expect(await screen.findByText('В графике пока никого')).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: '+ Добавить сотрудника' }))
+  await user.click(screen.getByRole('button', { name: '＋ Добавить сотрудника' }))
   expect(await screen.findByRole('complementary', { name: 'Новый сотрудник' })).toBeInTheDocument()
 })
 
-test('«Рабочее время»: вкладки «График» и «Перерывы и выходные»; старые адреса — на свои места', async () => {
+test('«Рабочее время»: один переключатель «Обычная неделя | Неделя по датам | Перерывы и выходные»; старые адреса — на свои места', async () => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/shifts', () => HttpResponse.json(schedule(true, 111))),
@@ -172,26 +174,33 @@ test('«Рабочее время»: вкладки «График» и «Пер
   expect(await findSub('Рабочее время')).toBeInTheDocument()
   expect(querySub(/График смен/)).not.toBeInTheDocument()
   await userEvent.click(await findSub('Рабочее время'))
-  expect(await screen.findByRole('tab', { name: 'График' })).toHaveAttribute('aria-selected', 'true')
-  expect(screen.queryByRole('tab', { name: 'Врачи' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('tab', { name: 'Смены персонала' })).not.toBeInTheDocument()
+  const nav = await screen.findByRole('group', { name: 'Рабочее время' })
+  // Один ряд из трёх пунктов вместо двух рядов «График | Перерывы» и «Обычная неделя | Неделя по датам»
+  expect(within(nav).getAllByRole('button').map((b) => b.textContent)).toEqual(['Обычная неделя', 'Неделя по датам', 'Перерывы и выходные'])
+  expect(screen.queryByRole('tab', { name: 'График' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('group', { name: 'Вид графика' })).not.toBeInTheDocument()
+  const item = (name: string) => within(screen.getByRole('group', { name: 'Рабочее время' })).getByRole('button', { name })
+  expect(item('Обычная неделя')).toHaveAttribute('aria-pressed', 'true')
   expect(await screen.findByRole('table', { name: 'Обычная неделя' })).toBeInTheDocument()
   expect(screen.getByRole('form', { name: 'Часы клиники' })).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('button', { name: 'Неделя по датам' }))
+  await userEvent.click(item('Неделя по датам'))
   expect(await screen.findByRole('table', { name: 'График на неделю' })).toBeInTheDocument()
-  await userEvent.click(screen.getByRole('tab', { name: 'Перерывы и выходные' }))
-  expect(screen.getByRole('tab', { name: 'Перерывы и выходные' })).toHaveAttribute('aria-selected', 'true')
-  // Назад в «График» — на той же неделе по датам
-  await userEvent.click(screen.getByRole('tab', { name: 'График' }))
+  expect(screen.queryByRole('form', { name: 'Часы клиники' })).not.toBeInTheDocument()
+  await userEvent.click(item('Перерывы и выходные'))
+  expect(item('Перерывы и выходные')).toHaveAttribute('aria-pressed', 'true')
+  expect(await screen.findByText('Перерывов нет')).toBeInTheDocument()
+  // Назад — на ту же неделю по датам
+  await userEvent.click(item('Неделя по датам'))
   expect(await screen.findByRole('table', { name: 'График на неделю' })).toBeInTheDocument()
 
   // Старые адреса — закладки и кнопки бота: #/settings/timeoff, #/settings/shifts, #/clinic/hours
   openItem('timeoff')
-  expect(await screen.findByRole('tab', { name: 'Перерывы и выходные' })).toHaveAttribute('aria-selected', 'true')
+  await waitForSlow(() => expect(item('Перерывы и выходные')).toHaveAttribute('aria-pressed', 'true'))
   openItem('shifts')
-  expect(await screen.findByRole('tab', { name: 'График' })).toHaveAttribute('aria-selected', 'true')
+  await waitForSlow(() => expect(item('Неделя по датам')).toHaveAttribute('aria-pressed', 'true'))
   expect(await screen.findByRole('table', { name: 'График на неделю' })).toBeInTheDocument()
   openItem('hours')
+  await waitForSlow(() => expect(item('Обычная неделя')).toHaveAttribute('aria-pressed', 'true'))
   expect(await screen.findByRole('table', { name: 'Обычная неделя' })).toBeInTheDocument()
 })
 

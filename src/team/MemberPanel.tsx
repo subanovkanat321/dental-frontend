@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
+import { HelpHint } from '../help/HelpHint'
 import { ask } from '../lib/confirm'
 import { shortDate } from '../lib/time'
 import { useClose } from '../lib/useClose'
@@ -51,7 +52,7 @@ export function MemberPanel({ me, member: m, hiddenDoctor, onClose }: { me: Me; 
 
       <section className="doctor-group" aria-label="Роли">
         <h3 className="group-title">Роли</h3>
-        {hiddenDoctor && <p className="hint">Врач «{hiddenDoctor.fullName}» скрыт: пациенты его не видят, история приёмов на месте. Вернуть — роль «… и врач» в списке.</p>}
+        {hiddenDoctor && <p className="hint">Врач скрыт <HelpHint title="Врач скрыт">Врач «{hiddenDoctor.fullName}» скрыт: пациенты его не видят, история приёмов на месте. Вернуть — роль «… и врач» в списке.</HelpHint></p>}
         <RolesEditor key={`${m.role}-${hiddenDoctor?.active}`} me={me} telegramId={m.telegramId} doctorId={hiddenDoctor?.id} doctor={false}
           role={m.role as 'ADMIN'} doctorIds={m.doctorIds} self={Boolean(m.me)} hasLogin name={name} />
       </section>
@@ -71,10 +72,12 @@ export function MemberPanel({ me, member: m, hiddenDoctor, onClose }: { me: Me; 
       </section>
 
       <div className="danger-zone">
-        <p className="hint">Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.</p>
-        <button type="button" className="btn danger" disabled={remove.isPending}
-          onClick={() => void ask(m.me ? 'Выйти из руководителей клиники?' : `Убрать «${name}» из клиники? Доступ пропадёт сразу.`)
-            .then((ok) => ok && remove.mutate())}>{m.me ? 'Выйти из руководителей' : 'Убрать из клиники'}</button>
+        <div className="danger-line">
+          <button type="button" className="btn danger" disabled={remove.isPending}
+            onClick={() => void ask(m.me ? 'Выйти из руководителей клиники?' : `Убрать «${name}» из клиники? Доступ пропадёт сразу.`)
+              .then((ok) => ok && remove.mutate())}>{m.me ? 'Выйти из руководителей' : 'Убрать из клиники'}</button>
+          <HelpHint title="Убрать из клиники">Доступ пропадёт сразу; выплаты зарплаты останутся в «Касса → Зарплата» за свои месяцы.</HelpHint>
+        </div>
         {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
       </div>
     </aside>
@@ -124,9 +127,9 @@ export function InvitePanel({ invite: i, onClose, onPhone }: { invite: Invite; o
       </header>
       <section className="doctor-group" aria-label="Вход">
         <h3 className="group-title">Вход</h3>
-        <p className="tone-wait">{i.expired ? 'Ссылка истекла — нужна новая' : `Ссылка действует до ${shortDate(i.expiresAt!, true)}`}</p>
-        <p className="hint">Человек появится в «Персонале», когда откроет ссылку и нажмёт «Начать» в Telegram (или войдёт по номеру).
-          Роль меняют после входа.</p>
+        <p className="tone-wait">{i.expired ? 'Ссылка истекла — нужна новая' : `Ссылка действует до ${shortDate(i.expiresAt!, true)}`}{' '}
+          <HelpHint title="Приглашение">Человек появится в «Персонале», когда откроет ссылку и нажмёт «Начать» в Telegram (или войдёт по номеру).
+            Роль меняют после входа.</HelpHint></p>
         {token
           ? <InviteLink start={`staff_${token}`} name={i.fullName ?? ''} toWhom={toWhom} />
           : <button type="button" className="btn" disabled={renew.isPending} onClick={() => renew.mutate()}>Новая ссылка</button>}

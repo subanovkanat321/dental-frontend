@@ -196,8 +196,8 @@ test('старые адреса и кнопки бота открывают ну
   const clinic = await tabs('Клиника')
   expect(within(clinic).getByRole('link', { name: /Рабочее время/ })).toHaveAttribute('aria-current', 'page')
   expect(window.location.hash).toBe('#/clinic/shifts')
-  expect(await screen.findByRole('tab', { name: 'График' })).toHaveAttribute('aria-selected', 'true')
-  expect(screen.getByRole('button', { name: 'Неделя по датам' })).toHaveAttribute('aria-pressed', 'true')
+  const nav = await screen.findByRole('group', { name: 'Рабочее время' })
+  expect(within(nav).getByRole('button', { name: 'Неделя по датам' })).toHaveAttribute('aria-pressed', 'true')
   first.unmount()
 
   // ?screen=earnings — «Касса → Мой заработок», адрес с подразделом (обновили — там же)
@@ -237,7 +237,7 @@ test('старые адреса пунктов «Клиники»: #/settings/st
     const clinic = await tabs('Клиника')
     expect(window.location.hash).toBe('#/clinic/staff')
     expect(within(clinic).getByRole('link', { name: 'Персонал' })).toHaveAttribute('aria-current', 'page')
-    expect(await screen.findByRole('heading', { name: 'Персонал' })).toBeInTheDocument()
+    expect((await screen.findAllByRole('heading', { name: 'Персонал' })).length).toBeGreaterThan(0)
     view.unmount()
   }
 })

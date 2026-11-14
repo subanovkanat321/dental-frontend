@@ -125,7 +125,7 @@ test('«Услуги врача» → «Только выбранные»: га�
   renderApp()
   await user.click(within(await screen.findByRole('table', { name: 'Персонал' })).getByRole('button', { name: 'Нурболот А.' }))
   const box = await screen.findByRole('region', { name: 'Услуги врача' })
-  expect(box).toHaveTextContent('Цены общие — в «Услугах и ценах»; здесь — какие услуги он делает.')
+  expect(box).toHaveTextContent('Какие услуги он делает; цены — в «Услугах и ценах»')
   // Длинное пояснение — по «?»
   expect(box).not.toHaveTextContent('регистратура — в «Новой записи»')
   await user.click(within(box).getByRole('button', { name: 'Подробнее про услуги врача' }))

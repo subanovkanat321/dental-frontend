@@ -1,0 +1,7 @@
+/* Общие для «Рабочего времени» и «Персонала» (2026-11-14): пояснения — в «?», а не абзацами */
+/* Заголовок карточки одной строкой: название, короткая подпись серым, «?», действие справа */
+.card-title-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.card-title-line > h2 { margin: 0; }
+.card-title-line > .hint { font-size: .88rem; }
+.card-title-line > .help-hint { margin-left: -4px; }
+.card-title-end { margin-left: auto; display: flex; gap: 8px; }

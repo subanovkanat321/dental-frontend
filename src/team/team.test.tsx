@@ -44,7 +44,7 @@ test('админ: карточка врача, который ещё не вош
   const table = await screen.findByRole('table', { name: 'Персонал' })
   expect(within(table).getByText(/ждём входа — пригласите в карточке/)).toBeInTheDocument()
   // Одна кнопка добавления — прежних «+ Добавить врача» и форм внизу нет
-  expect(screen.getByRole('button', { name: '+ Добавить сотрудника' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '＋ Добавить сотрудника' })).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '+ Добавить врача' })).not.toBeInTheDocument()
   expect(screen.queryByRole('form', { name: 'Пригласить сотрудника' })).not.toBeInTheDocument()
   await user.click(within(table).getByRole('button', { name: 'Дастан Т.' }))
@@ -109,6 +109,9 @@ test('админ: у вошедшего врача фото, имя и «о се
   const patients = within(panel).getByRole('region', { name: 'Для пациентов' })
   expect(within(patients).queryByRole('textbox')).not.toBeInTheDocument()
   expect(within(patients).getByRole('img', { name: 'Фото врача' })).toBeInTheDocument()
+  // Пояснение — в «?», а не абзацем
+  expect(patients).toHaveTextContent('Ведёт сам врач')
+  await user.click(within(patients).getByRole('button', { name: 'Подсказка: Для пациентов' }))
   expect(patients).toHaveTextContent('Фото, имя и «о себе» врач заполняет сам — в «Моём профиле» (нажать на себя внизу меню).')
 
   const work = within(panel).getByRole('region', { name: 'Работа' })
@@ -153,7 +156,7 @@ test('«+ Добавить сотрудника»: врач по ссылке �
   const user = userEvent.setup()
   renderApp()
   await screen.findByRole('table', { name: 'Персонал' })
-  await user.click(screen.getByRole('button', { name: '+ Добавить сотрудника' }))
+  await user.click(screen.getByRole('button', { name: '＋ Добавить сотрудника' }))
   let form = await screen.findByRole('form', { name: 'Добавить сотрудника' })
   await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Бакыт')
   expect(within(form).getByRole('combobox', { name: 'Роль' })).toHaveTextContent('Врач')
@@ -164,7 +167,7 @@ test('«+ Добавить сотрудника»: врач по ссылке �
   expect(await screen.findByRole('complementary', { name: 'Врач' })).toHaveTextContent('Бакыт')
 
   // Регистратура, тоже ведёт приём, по номеру — номер занят: ошибка сервера в форме
-  await user.click(screen.getByRole('button', { name: '+ Добавить сотрудника' }))
+  await user.click(screen.getByRole('button', { name: '＋ Добавить сотрудника' }))
   form = await screen.findByRole('form', { name: 'Добавить сотрудника' })
   await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Айпери')
   await choose(within(form).getByRole('combobox', { name: 'Роль' }), 'RECEPTION_DOCTOR')
@@ -210,7 +213,7 @@ test('«+ Добавить сотрудника»: каждый пункт сп�
     ['ASSISTANT', { role: 'ASSISTANT', doctorIds: [1] }],
   ]
   for (const [choice] of cases) {
-    await user.click(screen.getByRole('button', { name: '+ Добавить сотрудника' }))
+    await user.click(screen.getByRole('button', { name: '＋ Добавить сотрудника' }))
     const form = await screen.findByRole('form', { name: 'Добавить сотрудника' })
     await user.type(within(form).getByRole('textbox', { name: /Имя/ }), 'Тест')
     // Подпись серым — что может роль
@@ -253,8 +256,10 @@ test('персонал: роли рядом, «Telegram привязан» и «
   renderApp()
   openItem('members')
   const table = await screen.findByRole('table', { name: 'Персонал' })
-  // Админ, который и лечит, — одной строкой врача с двумя ролями
-  expect(table).toHaveTextContent('ВрачРуководитель')
+  // Админ, который и лечит, — одной строкой врача с двумя ролями серым под именем
+  expect(table).toHaveTextContent('Врач · руководитель')
+  // Шапка списка — «Персонал · N» и «＋ Добавить сотрудника» справа
+  expect(screen.getByRole('heading', { name: /Персонал\s*·\s*\d/ })).toBeInTheDocument()
   expect(table).toHaveTextContent('✓ Telegram привязан')
   expect(table).toHaveTextContent('ждём входа · ссылка до 1 янв, 12:00')
   expect(table).toHaveTextContent('ссылка истекла — нужна новая')
@@ -494,6 +499,7 @@ test('карточка сотрудника по номеру: телефон м
 
   await user.click(within(table).getByRole('button', { name: 'Бермет' }))
   let card = await screen.findByRole('complementary', { name: 'Сотрудник' })
+  await userEvent.click(within(card).getByRole('button', { name: 'Подсказка: Телефон' }))
   expect(card).toHaveTextContent('Номер для входа сотрудник указывает сам')
   expect(within(card).queryByRole('button', { name: 'Изменить' })).not.toBeInTheDocument()
   expect(within(card).queryByRole('button', { name: 'Временный пароль' })).not.toBeInTheDocument()
@@ -541,4 +547,26 @@ test('«Персонал»: вся строка открывает карточ�
   const other = within(own).getByText('Дастан Т.').closest('tr')!
   expect(other).not.toHaveClass('clickable')
   expect(within(own).getByRole('button', { name: 'Айгерим Садыкова' }).closest('tr')).toHaveClass('clickable')
+})
+
+test('персонал: пусто — «Персонала пока нет» с «＋ Добавить сотрудника»; ошибка загрузки — текст ошибки, а не «пусто»', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json({ ...me, doctors: [] })),
+    http.get('*/api/doctors/admin', () => HttpResponse.json([])),
+    http.get('*/api/members', () => HttpResponse.json([])),
+    http.get('*/api/members/invites', () => HttpResponse.json([])),
+  )
+  const user = userEvent.setup()
+  const view = renderApp()
+  expect(await screen.findByText('Персонала пока нет')).toBeInTheDocument()
+  // Пустой список — без фильтра «Все · 0»
+  expect(screen.queryByRole('group', { name: 'Показать роль' })).not.toBeInTheDocument()
+  await user.click(screen.getAllByRole('button', { name: '＋ Добавить сотрудника' })[0]!)
+  expect(await screen.findByRole('complementary', { name: 'Новый сотрудник' })).toBeInTheDocument()
+  view.unmount()
+
+  server.use(http.get('*/api/members', () => HttpResponse.json({ status: 500, title: 'Сервер недоступен' }, { status: 500 })))
+  renderApp()
+  expect(await screen.findByRole('alert')).toHaveTextContent('Не загрузился персонал')
+  expect(screen.queryByText('Персонала пока нет')).not.toBeInTheDocument()
 })
