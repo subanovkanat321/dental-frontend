@@ -553,7 +553,7 @@ details.agreement-box { max-height: none; }
 /*
  * Страница на всю ширину рабочей области — карточки сеткой (2026-11-14, владелец: «на половину экрана некрасиво»):
  * от 1200px окна — две колонки, уже — одна. `.span-all` — карточка во всю строку. Текст внутри карточки — до ~75 знаков
- * в строке (`.facts dd`), чтобы широкая карточка читалась. Общий класс для «Помощи», «Я» и «Настроек».
+ * в строке (`.facts dd`), чтобы широкая карточка читалась. Сейчас — страницы «Помощи»; подходит и другим разделам.
  */
 .page-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (min-width: 1200px) { .page-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -563,7 +563,7 @@ details.agreement-box { max-height: none; }
 .page-grid > .span-all { grid-column: 1 / -1; }
 .page-grid .facts { grid-template-columns: minmax(140px, 180px) minmax(0, 1fr); }
 .page-grid .facts dd { max-width: 75ch; }
-/* «Помощь» — на всю ширину рабочей области (общее правило ниже держит пункты «Настроек» и «Я» в 880px) */
+/* «Помощь» — на всю ширину рабочей области (общее правило ниже держит пункты в 1280px) */
 .settings-item.settings-item[data-host=help] { max-width: none; }
 @media (max-width: 720px) {
   .page-grid .facts { grid-template-columns: 1fr; }
