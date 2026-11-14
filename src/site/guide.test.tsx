@@ -111,7 +111,7 @@ test('«Помощь» внизу меню: один пункт «Руковод
   await userEvent.click(within(menu).getByRole('button', { name: /Руководство/ }))
   // Книга прямо в CRM: оглавление и поиск, без перехода на сайт
   expect(await screen.findByRole('searchbox', { name: 'Поиск по руководству' })).toBeInTheDocument()
-  expect(screen.getByRole('region', { name: 'Главы руководства' })).toBeInTheDocument()
+  expect(screen.getByRole('region', { name: 'Руководство Tish' })).toBeInTheDocument()
   window.location.hash = ''
 })
 

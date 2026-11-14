@@ -5,7 +5,9 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { ask } from '../lib/confirm'
 import { isAssistant } from '../lib/roles'
 import { shiftText } from '../lib/time'
+import { HelpHint } from '../help/HelpHint'
 import { Loading } from '../layout/Loading'
+import './cards.css'
 import './timeoff.css'
 import { NewBreak, NewDayOff, NewLeave } from './TimeOffForms'
 import { groupOf, rowsOf, type Group, type Row } from './timeOffTexts'
@@ -68,16 +70,19 @@ export function TimeOffTab({ me }: { me: Me }) {
 
   return (
     <>
-      <section className="card-block">
-        <p className="hint">В это время пациенты не смогут записаться через бота. Вы сами записать можете.</p>
-        {/* Ассистент только смотрит: перерывы и выходные ставят врач, регистратура и админ */}
-        {editor ? (
-          <div className="timeoff-actions" role="group" aria-label="Добавить">
-            {ACTIONS.map(([g, name]) => (
-              <button key={g} type="button" className={form === g ? 'btn primary' : 'btn'} aria-pressed={form === g} onClick={() => open(g)}>{name}</button>
-            ))}
-          </div>
-        ) : <p className="hint">Перерывы и выходные ставят врач, регистратура или руководитель.</p>}
+      <section className="card-block timeoff-head">
+        {/* Ассистент только смотрит: перерывы и выходные ставят врач, регистратура и админ. Пояснение — в «?», а не абзацем */}
+        <div className="card-title-line">
+          {editor ? (
+            <div className="timeoff-actions" role="group" aria-label="Добавить">
+              {ACTIONS.map(([g, name]) => (
+                <button key={g} type="button" className={form === g ? 'btn primary' : 'btn'} aria-pressed={form === g} onClick={() => open(g)}>{name}</button>
+              ))}
+            </div>
+          ) : <span className="hint">Перерывы и выходные ставят врач, регистратура или руководитель</span>}
+          <HelpHint title="Перерывы и выходные">В это время пациенты не смогут записаться через бота. Вы сами записать можете.
+            Перерыв — каждую неделю в течение дня (обед, намаз), выходной — весь день, отпуск или больничный — период.</HelpHint>
+        </div>
         {done && <p className="tone-ok" role="status">{done}</p>}
       </section>
       {form === 'break' && <NewBreak me={me} onDone={finish} onCancel={close} />}

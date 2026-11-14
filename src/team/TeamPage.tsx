@@ -19,7 +19,7 @@ export type TeamTab = 'doctors' | 'timeoff'
 
 /**
  * «Клиника → Персонал» (и «Перерывы и выходные» в «Рабочем времени»): все, кто работает в клинике, одним
- * списком; одна кнопка «+ Добавить сотрудника» (руководитель) и одна карточка на человека — врача
+ * списком; одна кнопка «＋ Добавить сотрудника» в шапке списка (руководитель) и одна карточка на человека — врача
  * ({@link DoctorPanel}), сотрудника ({@link MemberPanel}) или приглашённого ({@link InvitePanel}). Карточка —
  * панель справа на компьютере и экран на телефоне. Права проверяет и сервер.
  */
@@ -55,9 +55,6 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: 
   const memberDoctor = member ? doctors.find((d) => d.telegramId === member.telegramId) : undefined
   const doctorPanel = openedDoctor && !(openedDoctor.active === false && doctorMember) ? openedDoctor
     : memberDoctor && memberDoctor.active !== false ? memberDoctor : undefined
-  const add = me.admin && only === 'doctors' && (
-    <button type="button" className="btn primary head-end" onClick={() => setOpened({ kind: 'new' })}>+ Добавить сотрудника</button>
-  )
 
   return (
     <div className={opened ? 'schedule with-panel' : 'schedule'}>
@@ -65,12 +62,12 @@ export function TeamPage({ me, only, title, onBack, initialOpened = null, tabs: 
       <section className="schedule-main">
         <SubHeader title={title} onBack={onBack} slotRef={setSlot}>
           {itemTabs}
-          {add}
         </SubHeader>
         {only === 'doctors' && (
           <StaffTab me={me} doctors={doctors} members={members.data ?? []} invites={invites.data ?? []}
             loading={Boolean(me.admin) && (admin.isPending || members.isPending)} error={admin.error ?? members.error} opened={opened}
-            onOpen={(o) => (o.kind === 'doctor' && o.id === me.doctorId && !me.admin ? openMine('me', 'profile') : setOpened(o))} />
+            onOpen={(o) => (o.kind === 'doctor' && o.id === me.doctorId && !me.admin ? openMine('me', 'profile') : setOpened(o))}
+            onAdd={me.admin ? () => setOpened({ kind: 'new' }) : undefined} />
         )}
         {only === 'timeoff' && <TimeOffTab me={me} />}
       </section>

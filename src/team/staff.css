@@ -1,0 +1,43 @@
+/* «Клиника → Персонал» (StaffTab): список во всю рабочую область — и при 2–3 людях, и при открытой карточке
+   справа (тогда — на оставшуюся ширину). Строка — одна строка смысла, нажимается вся */
+.settings-item[data-host=clinic]:has(.staff-list) { max-width: none; }
+.staff-list { gap: 12px; }
+.staff-head { gap: 8px 14px; }
+.staff-head .staff-filter { width: auto; flex: 0 1 auto; }
+.staff-head .staff-filter button { flex: 0 0 auto; white-space: nowrap; }
+.staff-scroll { overflow-x: auto; }
+/* Таблица — всегда width: 100%; колонки: имя и роль шире, кресло, часы, вход; телефон и «›» — справа */
+.staff-table { width: 100%; table-layout: auto; box-shadow: none; }
+.staff-table th:first-child { width: 34%; }
+.staff-table td { vertical-align: middle; }
+.staff-table .who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.staff-table .who-text { display: grid; gap: 1px; min-width: 0; }
+.staff-table .who-text .row-link, .staff-table .who-text .strong { justify-self: start; text-align: left; }
+.staff-small { font-size: .88rem; }
+.staff-table td.staff-phone, .staff-table th.staff-phone { text-align: right; white-space: nowrap; }
+.staff-table .staff-chev { width: 24px; padding-left: 0; text-align: right; color: var(--hint); }
+.staff-by-clinic { color: var(--faint); font-style: italic; }
+/* С карточкой справа на 1366 места меньше: телефон прячем (он есть в карточке) */
+@media (max-width: 1500px) { .with-panel .staff-table .staff-phone { display: none; } }
+/* Телефон: список строк — аватар, имя и роль, ниже мелко кресло и вход; «›» справа */
+.staff-lines { list-style: none; margin: 0; padding: 0; display: grid; }
+.staff-line { display: flex; align-items: center; gap: 10px; padding: 10px 2px; border-top: 1px solid var(--separator); }
+.staff-line:first-child { border-top: 0; }
+.staff-line.active { background: var(--accent-soft); }
+.staff-line.inactive { opacity: .6; }
+.staff-line .avatar { width: 34px; height: 34px; background: var(--accent); object-fit: cover; }
+.staff-line-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.staff-line-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
+.staff-line-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; font-size: .85rem; }
+.staff-line .staff-chev { color: var(--hint); font-size: 1.2rem; }
+@media (max-width: 640px) {
+  .staff-head .card-title-end { flex: 1 1 100%; margin-left: 0; }
+  .staff-head .card-title-end .btn { flex: 1; }
+  .staff-head .segments-select { flex: 1 1 auto; }
+}
+.chair-ico { flex: none; }
+/* Шапка таблицы не липнет: обёртка с прокруткой вбок сделала бы отступ липкой шапки раздела внутри себя */
+.staff-scroll .staff-table th { position: static; }
+.staff-table td.num { font-weight: 400; }
+/* Карточка человека: опасное действие и «?» с пояснением — одной строкой */
+.danger-line { display: flex; align-items: center; gap: 8px; }

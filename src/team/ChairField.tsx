@@ -3,6 +3,8 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
+import { HelpHint } from '../help/HelpHint'
+import { ChairIcon } from './ChairBadge'
 import { openClinic } from '../lib/route'
 import { dayTitle, dateOf, timeOf } from '../lib/time'
 import { chairOf, conflictsOf, overlapTexts, sharesText, useChairs } from './chairs'
@@ -63,8 +65,9 @@ export function ChairField({ doctorId, me }: { doctorId: number; me: Me }) {
 
   return (
     <section className="form chair-field" aria-label="Кресло">
-      <h4>Кресло</h4>
-      <p className="hint">Двух пациентов в одно кресло на одно время не записать.</p>
+      <h4>Кресло <HelpHint title="Кресло">Двух пациентов в одно кресло на одно время не записать.
+        {admin && <> Названия и правила кресел —{' '}
+          <button type="button" className="link" onClick={() => openClinic('chairs')}>Клиника → Кресла</button>.</>}</HelpHint></h4>
       {admin ? (
         <label className="field"><span>Кресло врача</span>
           <Select value={adding ? NEW : current?.id ?? ''} disabled={assign.isPending || chairs.isPending} onChange={(e) => pick(e.target.value)}>
@@ -74,7 +77,7 @@ export function ChairField({ doctorId, me }: { doctorId: number; me: Me }) {
           </Select>
         </label>
       ) : (
-        <p>{current ? <span className="chair-badge">🪑 {current.name}</span> : <span className="hint">Без кресла</span>}</p>
+        <p>{current ? <span className="chair-badge"><ChairIcon /> {current.name}</span> : <span className="hint">Без кресла</span>}</p>
       )}
       {adding && (
         <form className="sub-form" aria-label="Новое кресло" onSubmit={submit}>
@@ -89,9 +92,7 @@ export function ChairField({ doctorId, me }: { doctorId: number; me: Me }) {
           {create.error && <p className="error" role="alert">{create.error.fieldErrors.name ?? create.error.message}</p>}
         </form>
       )}
-      {shares && <p className="hint">🪑 {current!.name} — {shares}</p>}
-      {admin && <p className="hint">Названия и правила кресел —{' '}
-        <button type="button" className="link" onClick={() => openClinic('chairs')}>Клиника → Кресла</button>.</p>}
+      {shares && <p className="hint">{current!.name} — {shares}</p>}
       {assign.error && <ChairAssignError error={assign.error} />}
     </section>
   )
@@ -127,6 +128,6 @@ export function ChairHoursHint({ doctorId, me }: { doctorId: number; me: Me }) {
   if (!texts.length) return null
   return (
     <p className="hint tone-wait" role="note" aria-label="Часы пересекаются">
-      ⚠️ {texts.join('; ').replace(/^ч/, 'Ч')} — записи всё равно не пересекутся, но лучше развести.</p>
+      {texts.join('; ').replace(/^ч/, 'Ч')} — записи всё равно не пересекутся, но лучше развести.</p>
   )
 }

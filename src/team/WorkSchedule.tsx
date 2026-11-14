@@ -9,6 +9,7 @@ import { weekPersonInHash } from '../lib/route'
 import { rowOpen } from '../lib/rowClick'
 import { addDays, todayIn, weekLabel, weekStart } from '../lib/time'
 import { useMedia } from '../lib/useMedia'
+import { HelpHint } from '../help/HelpHint'
 import { ClinicHoursCard } from '../settings/ClinicHours'
 import { SubHeader } from '../settings/SubHeader'
 import { AddStaffPanel } from './AddStaff'
@@ -18,6 +19,7 @@ import { CopyWeek, DayOffForm, ShiftForm, type DayOffEditing, type Editing } fro
 import { WEEK } from './texts'
 import { plannedOn, weekdayOf } from './weekly'
 import { dayHours, dayLong, offOnDate, SHIFT_ROLE, shiftHours, shortHours, weekSummary, type DayHours, type Who } from './workWeek'
+import './cards.css'
 import './shifts.css'
 
 type Me = Schemas['BookingViewsMe']
@@ -107,21 +109,23 @@ export function WorkSchedule({ me, mode, onMode, onTimeOff, title, onBack, tabs 
   const [dayOff, setDayOff] = useState<DayOffEditing | null>(null)
   const [adding, setAdding] = useState(false)
   const closeForms = () => { setShift(null); setDayOff(null) }
+  // Сменили вид переключателем страницы — открытые формы смены и выходного закрыть (без эффекта: правка при отрисовке)
+  const [shownMode, setShownMode] = useState(mode)
+  if (shownMode !== mode) {
+    setShownMode(mode)
+    closeForms()
+  }
   const go = (week: string) => { setMonday(week); closeForms() }
   // Из ячейки врача — к его недельному графику (рабочие часы — там)
   const toWeek = (key: string) => { closeForms(); setOpen(key); onMode('template') }
   useFocusPerson(toWeek)
-  const add = me.admin ? <button type="button" className="btn" onClick={() => setAdding(true)}>+ Добавить сотрудника</button> : null
+  const add = me.admin ? <button type="button" className="btn small" onClick={() => setAdding(true)}>＋ Добавить сотрудника</button> : null
 
   return (
     <div className={adding ? 'schedule with-panel' : 'schedule'}>
       <section className="schedule-main shifts-page work-schedule">
-        <SubHeader title={title} onBack={onBack}>{tabs}</SubHeader>
-        <div className="sched-tools">
-          <div className="segments" role="group" aria-label="Вид графика">
-            <button type="button" aria-pressed={mode === 'template'} onClick={() => { closeForms(); onMode('template') }}>Обычная неделя</button>
-            <button type="button" aria-pressed={mode === 'week'} onClick={() => onMode('week')}>Неделя по датам</button>
-          </div>
+        <SubHeader title={title} onBack={onBack}>
+          {tabs}
           {mode === 'week' && (
             <div className="shifts-nav" role="group" aria-label="Неделя">
               <button type="button" className="btn ghost" aria-label="Прошлая неделя" onClick={() => go(addDays(monday, -7))}>‹</button>
@@ -130,31 +134,35 @@ export function WorkSchedule({ me, mode, onMode, onTimeOff, title, onBack, tabs 
               {monday !== weekStart(todayIn()) && <button type="button" className="btn small" onClick={() => go(weekStart(todayIn()))}>Эта неделя</button>}
             </div>
           )}
-        </div>
+        </SubHeader>
         {mode === 'template' && <ClinicHoursCard me={me} onTimeOff={onTimeOff} />}
         {loaded.error && <p className="error" role="alert">{loaded.error.message}</p>}
         {loaded.isPending ? <Loading /> : people.length === 0 ? (
           <section className="card-block">
-            <EmptyState title="В графике пока никого" action={add && <button type="button" className="btn primary" onClick={() => setAdding(true)}>+ Добавить сотрудника</button>}>
+            <EmptyState title="В графике пока никого" action={add && <button type="button" className="btn primary" onClick={() => setAdding(true)}>＋ Добавить сотрудника</button>}>
               Здесь дни и часы всех в клинике — врачей, регистратуры, ассистентов. Добавьте сотрудника — и задайте его неделю.
             </EmptyState>
           </section>
         ) : mode === 'template' ? (
           <section className="card-block" aria-label="Обычная неделя">
-            <h2>Кто когда работает</h2>
-            <p className="hint">Обычная неделя каждого. Серым — «как у клиники»: по часам клиники выше.
-              {people.some((p) => p.canEdit) ? ' Нажмите на человека, чтобы поменять дни и часы.' : ''} Обед и намаз — в «Перерывах и выходных», замены и выходы на дату — в «Неделе по датам».</p>
+            <div className="card-title-line">
+              <h2>Кто когда работает</h2>
+              <span className="hint">{people.some((p) => p.canEdit) ? 'Нажмите на строку — дни и часы человека' : 'Обычная неделя каждого'}</span>
+              <HelpHint title="Кто когда работает">Обычная неделя каждого. Серым курсивом — «как у клиники»: работает по часам клиники выше, своих нет.
+                Обед и намаз — в «Перерывах и выходных», замены и выходы на дату — в «Неделе по датам».</HelpHint>
+              {add && <span className="card-title-end">{add}</span>}
+            </div>
             {phone
               ? <PeopleList people={people} open={open} onOpen={setOpen} onTimeOff={onTimeOff} />
               : <PeopleTable people={people} open={open} onOpen={setOpen} onTimeOff={onTimeOff} />}
-            {add && <div className="actions">{add}</div>}
           </section>
         ) : data && (
           <>
-            <p className="hint">
-              {people.some((p) => p.canEdit)
-                ? 'Серым — обычная неделя. Поверх — исключения на дату: у сотрудников смены, у врачей перерывы и выходные. Нажмите на ячейку, чтобы добавить или изменить.'
-                : 'График ведёт руководитель клиники: серым — обычная неделя, поверх — смены и выходные на дату. Ваша строка подсвечена.'}
+            <p className="hint sched-legend">
+              {people.some((p) => p.canEdit) ? 'Серым — обычная неделя, поверх — исключения на дату. Нажмите на ячейку, чтобы изменить' : 'Серым — обычная неделя, поверх — смены и выходные на дату'}
+              <HelpHint title="Неделя по датам">{people.some((p) => p.canEdit)
+                ? 'У сотрудников исключения — смены на дату, у врачей — перерывы и выходные на дату. Обычная неделя каждого — в «Обычной неделе», обед и отпуск — в «Перерывах и выходных».'
+                : 'График ведёт руководитель клиники. Ваша строка подсвечена.'}</HelpHint>
             </p>
             <WeekGrid people={people} data={data} days={days}
               onShift={(e) => { setDayOff(null); setShift(e) }} onDayOff={(e) => { setShift(null); setDayOff(e) }} />

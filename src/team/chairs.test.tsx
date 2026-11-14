@@ -59,7 +59,7 @@ test('руководитель: «＋ Новое кресло» — кресло
   await userEvent.type(within(form).getByRole('textbox', { name: 'Название' }), 'Кресло 1')
   await userEvent.click(within(form).getByRole('button', { name: 'Добавить' }))
 
-  expect(await within(chair).findByText('🪑 Кресло 1 — делит кресло с: Айгерим Садыкова')).toBeInTheDocument()
+  expect(await within(chair).findByText('Кресло 1 — делит кресло с: Айгерим Садыкова')).toBeInTheDocument()
   expect(sent.create).toEqual({ name: 'Кресло 1' })
   expect(sent.assign).toEqual({ doctor: 2, chairId: 5 })
   expect(within(chair).getByRole('combobox', { name: 'Кресло врача' })).toHaveTextContent('Кресло 1')
@@ -104,7 +104,7 @@ test('не руководитель видит кресло врача, но н�
   await userEvent.click(within(table).getByRole('button', { name: 'Дастан Т.' }))
   const panel = await screen.findByRole('complementary', { name: 'Врач' })
   const chair = within(panel).getByRole('region', { name: 'Кресло' })
-  expect(await within(chair).findByText('🪑 Кресло 1 — делит кресло с: Айгерим Садыкова')).toBeInTheDocument()
+  expect(await within(chair).findByText('Кресло 1 — делит кресло с: Айгерим Садыкова')).toBeInTheDocument()
   expect(within(chair).queryByRole('combobox')).not.toBeInTheDocument()
 })
 

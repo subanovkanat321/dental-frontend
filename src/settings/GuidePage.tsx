@@ -3,14 +3,15 @@ import { createPortal } from 'react-dom'
 
 import type { Schemas } from '../api/client'
 import { useBack } from '../lib/back'
+import { openHelpChat } from '../lib/helpChat'
 import { openMine } from '../lib/route'
 import { useMedia } from '../lib/useMedia'
 import { useSwipeDown } from '../layout/useSwipeDown'
 import {
-  hashPlaceParts, pageIndex, pagesOf, placeHash, placeOf, readLast, resolvePlace, saveLast, searchBook,
+  hashPlaceParts, pageIndex, pagesOf, placeHash, placeOf, readLast, resolvePlace, saveLast, searchBook, startPages,
   type BookPage, type Hit, type Place,
 } from '../help/book'
-import { CHAPTERS, chaptersFor, sectionId, type GuideChapter } from '../site/guide/content'
+import { CHAPTERS, chaptersFor, sectionId, type GuideChapter, type GuideRole } from '../site/guide/content'
 import { Figure } from '../site/guide/Figure'
 import { guideRole } from './guides'
 import { SubHeader } from './SubHeader'
@@ -32,10 +33,12 @@ function startPlace(): Place | null {
 
 /**
  * «Помощь → Руководство» — книга прямо в Tish (главы из site/guide/content.ts, те же, что на сайте /guide): оглавление
- * глав → глава → разделы. Компьютер — оглавление слева, текст справа; телефон — кнопка «☰ Оглавление» (нижний лист,
- * свайп вниз закрывает), без открытой страницы — оглавление на весь экран. Внизу — «‹ Предыдущая | Следующая ›»,
- * сверху — «где я» (Руководство › Касса › Общие расходы) и поиск по заголовкам и тексту. Адрес раздела —
- * #/help/guide/<глава>/<раздел>; где остановились — в localStorage (не ПДн).
+ * глав → глава → разделы. Компьютер — на всю ширину: оглавление слева (поиск — над ним), текст посередине, на широком
+ * экране справа — «Видео по главе» и «Не нашли ответ?»; главная — «Продолжить чтение» и «С чего начать» для роли, а не
+ * дубль оглавления карточками (2026-11-14, владелец). Телефон — кнопка «☰ Оглавление» (нижний лист, свайп вниз
+ * закрывает), без открытой страницы — «Продолжить чтение» и оглавление на весь экран. Внизу — «‹ Предыдущая |
+ * Следующая ›», сверху — «где я» (Руководство › Касса › Общие расходы). Адрес раздела — #/help/guide/<глава>/<раздел>;
+ * где остановились — в localStorage (не ПДн).
  */
 export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
   const role = guideRole(me)
@@ -52,6 +55,8 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
   const [query, setQuery] = useState('')
   const [sheet, setSheet] = useState(false)
   const phone = useMedia('(max-width: 760px)')
+  // Третья колонка — только где для неё есть место (иначе текст сжался бы); без matchMedia (тесты) — без неё
+  const wide = useMedia('(min-width: 1400px)')
   const top = useRef<HTMLDivElement>(null)
 
   const go = (next: Place | null) => {
@@ -89,17 +94,24 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
 
   const toc = <Toc chapters={chapters} page={page} all={all} onAll={setAll} onGo={go} />
   const hits = query.trim() ? searchBook(query, chapters) : null
+  const search = (
+    <input type="search" className="book-search" placeholder="Поиск по руководству" aria-label="Поиск по руководству"
+      value={query} onChange={(e) => setQuery(e.target.value)} />
+  )
+  const last = page ? undefined : lastPageIn(chapters)
 
   return (
     <div className="schedule-main guide-book manual" ref={top}>
       <SubHeader title="Руководство" onBack={onBack} />
-      <div className="book-tools">
-        {phone && page && <button type="button" className="btn" aria-haspopup="dialog" onClick={() => setSheet(true)}>☰ Оглавление</button>}
-        <input type="search" className="book-search" placeholder="Поиск по руководству" aria-label="Поиск по руководству"
-          value={query} onChange={(e) => setQuery(e.target.value)} />
-      </div>
-      <div className="book">
-        {!phone && <nav className="book-toc" aria-label="Оглавление">{toc}</nav>}
+      {/* Телефон — поиск и «☰ Оглавление» строкой сверху; компьютер — поиск в колонке оглавления, по сетке */}
+      {phone && (
+        <div className="book-tools">
+          {page && <button type="button" className="btn" aria-haspopup="dialog" onClick={() => setSheet(true)}>☰ Оглавление</button>}
+          {search}
+        </div>
+      )}
+      <div className={wide && !phone ? 'book with-aside' : 'book'}>
+        {!phone && <nav className="book-toc" aria-label="Оглавление">{search}{toc}</nav>}
         <div className="book-main">
           {hits ? <Results hits={hits} all={all} onAll={() => setAll(true)} onGo={go} />
             : page ? (
@@ -108,8 +120,14 @@ export function GuidePage({ me, onBack }: { me: Me; onBack: () => void }) {
                 <Reader page={page} number={chapters.indexOf(page.chapter) + 1} onGo={go} />
                 <Pager prev={pages[index - 1]} next={pages[index + 1]} onGo={go} />
               </>
-            ) : phone ? <nav className="book-toc" aria-label="Оглавление">{toc}</nav> : <Cover chapters={chapters} onGo={go} />}
+            ) : phone ? (
+              <>
+                {last && <Continue page={last} onGo={go} />}
+                <nav className="book-toc" aria-label="Оглавление">{toc}</nav>
+              </>
+            ) : <Cover chapters={chapters} last={last} role={role} onGo={go} />}
         </div>
+        {wide && !phone && <Aside chapter={hits ? null : page?.chapter ?? null} />}
       </div>
       {sheet && <TocSheet onClose={() => setSheet(false)}>{toc}</TocSheet>}
     </div>
@@ -249,38 +267,85 @@ function Pager({ prev, next, onGo }: { prev?: BookPage; next?: BookPage; onGo: (
   )
 }
 
-/** Компьютер без открытой страницы: «продолжить чтение» и главы карточками. */
-function Cover({ chapters, onGo }: { chapters: GuideChapter[]; onGo: (p: Place) => void }) {
-  const last = resolvePlace(readLast() ?? [], chapters)
-  const lastPage = last ? pagesOf(chapters)[pageIndex(pagesOf(chapters), last)] : undefined
+/** Где остановились — если это место есть в показанных главах. */
+function lastPageIn(chapters: GuideChapter[]): BookPage | undefined {
+  const place = resolvePlace(readLast() ?? [], chapters)
+  const pages = pagesOf(chapters)
+  return place ? pages[pageIndex(pages, place)] : undefined
+}
+
+/** «Продолжить чтение: Новая запись ›» — одной строкой-кнопкой, с главой мелко. */
+function Continue({ page, onGo }: { page: BookPage; onGo: (p: Place) => void }) {
+  const title = page.section ? page.section.title : page.chapter.title
   return (
-    <section className="book-cover" aria-label="Главы руководства">
+    <button type="button" className="book-continue" onClick={() => onGo(placeOf(page))} aria-label={`Продолжить чтение: ${title}`}>
+      <span className="book-continue-text">
+        <span className="hint">Продолжить чтение{page.section ? ` · ${page.chapter.title}` : ''}</span>
+        <strong>{title}</strong>
+      </span>
+      <span className="book-continue-go" aria-hidden="true">›</span>
+    </button>
+  )
+}
+
+/**
+ * Компьютер без открытой страницы: «Продолжить чтение» и «С чего начать» для роли. Главы — только в оглавлении слева:
+ * сетка карточек глав дублировала его один в один. «Новое» не показываем — у разделов нет даты обновления.
+ */
+function Cover({ chapters, last, role, onGo }: { chapters: GuideChapter[]; last?: BookPage; role: GuideRole; onGo: (p: Place) => void }) {
+  const start = startPages(role, chapters)
+  return (
+    <section className="book-cover" aria-label="Руководство Tish">
       <h2>Руководство Tish</h2>
-      <p className="hint">Как работать в Tish — по главам, шаг за шагом, с картинками. Номера на картинках совпадают с шагами.</p>
-      {lastPage && (
-        <p><button type="button" className="btn primary" onClick={() => onGo(placeOf(lastPage))}>Продолжить: {lastPage.chapter.title}{lastPage.section ? ` › ${lastPage.section.title}` : ''}</button></p>
+      <p className="hint">Как работать в Tish — по главам, шаг за шагом, с картинками. Главы — в оглавлении слева, поиск — над ним.</p>
+      {last && <Continue page={last} onGo={onGo} />}
+      {start.length > 0 && (
+        <section className="book-start" aria-labelledby="book-start">
+          <h3 id="book-start">С чего начать</h3>
+          <ol className="book-picks">
+            {start.map((p) => (
+              <li key={sectionId(p.section!)}>
+                <button type="button" className="book-pick" onClick={() => onGo(placeOf(p))}>
+                  <span className="book-pick-chapter">{p.chapter.title}</span>
+                  <strong>{p.section!.title}</strong>
+                  {p.section!.text && <span className="hint book-pick-text">{p.section!.text}</span>}
+                </button>
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
-      <ol className="book-cards">
-        {chapters.map((c, i) => (
-          <li key={c.id}>
-            <button type="button" className="book-card" onClick={() => onGo({ chapter: c.id })}>
-              <span className="book-num">{i + 1}</span>
-              <strong>{c.title}</strong>
-              <span className="hint">{c.sections.length} {plural(c.sections.length)}</span>
-            </button>
-          </li>
-        ))}
-      </ol>
     </section>
   )
 }
 
-function plural(n: number): string {
-  const d = n % 10
-  const h = n % 100
-  if (d === 1 && h !== 11) return 'раздел'
-  if (d >= 2 && d <= 4 && (h < 12 || h > 14)) return 'раздела'
-  return 'разделов'
+/**
+ * Широкий экран — колонка справа, чтобы не было пустой половины: ролики к разделам открытой главы (в «Видео: как
+ * сделать») и «Не нашли ответ?» — помощник и «Написать в Tish». На главной и в поиске — ссылка на все ролики.
+ */
+function Aside({ chapter }: { chapter: GuideChapter | null }) {
+  const videos = chapter ? chapter.sections.filter((s) => s.video) : []
+  return (
+    <aside className="book-aside" aria-label="Ещё по теме">
+      <section className="book-aside-block">
+        <h3>{chapter ? 'Видео по главе' : 'Видео: как сделать'}</h3>
+        {videos.length > 0 ? (
+          <ul>
+            {videos.map((s) => (
+              <li key={sectionId(s)}><button type="button" className="link" onClick={() => openMine('help', `videos/${s.video}`)}>{s.title}</button></li>
+            ))}
+          </ul>
+        ) : <p className="hint">Ролики по 20–40 секунд: запись, перенос, касса, склад.</p>}
+        <button type="button" className="btn small" onClick={() => openMine('help', 'videos')}>Все видео</button>
+      </section>
+      <section className="book-aside-block">
+        <h3>Не нашли ответ?</h3>
+        <p className="hint">Помощник ответит сразу; не знает — передаст команде Tish.</p>
+        <button type="button" className="btn small" onClick={() => openHelpChat()}>Спросить помощника</button>
+        <button type="button" className="link" onClick={() => openMine('help', 'support')}>Написать в Tish</button>
+      </section>
+    </aside>
+  )
 }
 
 /** Результаты поиска: «Касса › Общие расходы» и отрывок с найденным словом. */

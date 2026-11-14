@@ -42,13 +42,13 @@ function backend(created: () => Response) {
   )
 }
 
-test('шапка колонки — «🪑 Кресло 1» с подсказкой, с кем общее; время, когда кресло у коллеги, — штриховкой и без записи', async () => {
+test('шапка колонки — «Кресло 1» (значок кресла) с подсказкой, с кем общее; время, когда кресло у коллеги, — штриховкой и без записи', async () => {
   backend(() => HttpResponse.json({}, { status: 500 }))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Следующий день' }))
 
   const badge = await screen.findByLabelText('Кресло 1, делит кресло с: Айгерим Садыкова')
-  expect(badge).toHaveTextContent('🪑 Кресло 1')
+  expect(badge).toHaveTextContent('Кресло 1')
   expect(badge).toHaveAttribute('title', 'делит кресло с: Айгерим Садыкова')
   expect(screen.getByLabelText('Кресло 1, делит кресло с: Дастан Т.')).toBeInTheDocument()
 

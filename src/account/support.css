@@ -2,3 +2,22 @@
 .ticket-kinds { flex-direction: column; align-items: stretch; }
 .ticket-kinds button { justify-content: flex-start; text-align: left; min-height: 40px; padding: 0 12px; }
 .support-survey { margin: 4px 0 0; }
+
+/* Одна карточка «Написать команде Tish»: главное «Написать» и второе «Спросить помощника» рядом, под каждым — строка
+   пояснения; значки — линией, как в меню «Помощь» (помощник — тёплый --ico-help) */
+.support-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px 20px; }
+.support-action { display: grid; gap: 6px; align-content: start; justify-items: start; }
+.support-action p { margin: 0; }
+.support-helper .icon { color: var(--ico-help); }
+/* «Мои обращения»: «[Помощник] в чём разница…» — откуда мелким чипом, затем текст; строка нажимается целиком (rowOpen),
+   без « ›» у ссылки — его ставит общее правило кликабельных строк */
+.ticket-row-link { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-weight: 500; }
+.support-tickets tr.clickable .row-link.ticket-row-link::after { content: none; }
+.ticket-src { font-weight: 500; }
+.ticket-author { display: block; font-size: .8rem; }
+.support-tickets .chip { white-space: nowrap; }
+/* Длинный заголовок «Срочно — позвонить…» на телефоне переносится, а не уезжает за край */
+.support-page .fold-title { flex: 0 1 auto; min-width: 0; text-align: left; }
+@media (max-width: 760px) {
+  .support-action .btn { width: 100%; min-height: 44px; }
+}

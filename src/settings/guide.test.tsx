@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, expect, test, vi } from 'vitest'
 
 import type { Schemas } from '../api/client'
-import { hashPlaceParts, pageIndex, pagesOf, resolvePlace, searchBook } from '../help/book'
+import { hashPlaceParts, pageIndex, pagesOf, resolvePlace, searchBook, startPages } from '../help/book'
 import { CHAPTERS, chaptersFor, sectionId } from '../site/guide/content'
 import { GuidePage } from './GuidePage'
 import { ownRole } from './guides'
@@ -70,13 +70,14 @@ test('поиск по заголовкам и тексту: сначала за�
   expect(searchBook('абракадабра', CHAPTERS)).toEqual([])
 })
 
-test('без адреса и прошлого чтения — оглавление глав; глава → разделы; «‹ Назад» уходит', async () => {
+test('без адреса и прошлого чтения — оглавление глав и поиск в его колонке; глава → разделы; «‹ Назад» уходит', async () => {
   const back = vi.fn()
   renderBook({ admin: true }, back)
   const toc = screen.getByRole('navigation', { name: 'Оглавление' })
   expect(within(toc).getByRole('group', { name: 'Какие главы' })).toBeInTheDocument()
-  const cover = screen.getByRole('region', { name: 'Главы руководства' })
-  await userEvent.click(within(cover).getByRole('button', { name: /Касса/ }))
+  // Поиск — в колонке оглавления, выровнен по сетке, а не узким полем над всем
+  expect(within(toc).getByRole('searchbox', { name: 'Поиск по руководству' })).toBeInTheDocument()
+  await userEvent.click(within(toc).getByRole('button', { name: /Касса/ }))
   expect(within(reader()).getByRole('heading', { name: 'Касса' })).toBeInTheDocument()
   expect(window.location.hash).toBe('#/help/guide/kassa')
   // Открытая глава раскрыта в оглавлении
@@ -153,4 +154,35 @@ test('поиск в книге: результаты «Глава › Разде
   await userEvent.click(first)
   expect(within(reader()).getByRole('heading', { name: 'Зарплата: проценты и оклад' })).toBeInTheDocument()
   expect(search).toHaveValue('')
+})
+
+test('главная на компьютере — не дубль оглавления: «Продолжить чтение» и «С чего начать», без карточек глав', async () => {
+  window.localStorage.setItem('tish.guide.last', 'kassa/dolzhniki')
+  window.history.replaceState(null, '', '/#/help/guide/kassa/dolzhniki')
+  const { container } = renderBook({ admin: true })
+  // Открыли с места чтения; «Руководство» в «где я» — на главную
+  await userEvent.click(within(screen.getByRole('navigation', { name: 'Где я' })).getByRole('button', { name: 'Руководство' }))
+  const cover = screen.getByRole('region', { name: 'Руководство Tish' })
+  expect(container.querySelector('.book-cards, .book-card')).toBeNull()
+  // Глав нет на главной — они только в оглавлении слева
+  expect(within(cover).queryByRole('button', { name: /^\d+ / })).not.toBeInTheDocument()
+  const start = within(cover).getByRole('region', { name: 'С чего начать' })
+  const picks = within(start).getAllByRole('button')
+  expect(picks.length).toBeGreaterThanOrEqual(3)
+  expect(picks.length).toBeLessThanOrEqual(5)
+  expect(picks[0]).toHaveTextContent('Добавить сотрудника: одна кнопка')
+  await userEvent.click(within(cover).getByRole('button', { name: 'Продолжить чтение: Должники' }))
+  expect(within(reader()).getByRole('heading', { name: 'Должники' })).toBeInTheDocument()
+  // Раздел: «где я» и листалка на месте
+  expect(screen.getByRole('navigation', { name: 'Где я' })).toHaveTextContent('Касса')
+  expect(screen.getByRole('navigation', { name: 'Листать' })).toBeInTheDocument()
+})
+
+test('«С чего начать» — 3–5 разделов для каждой роли (названия разделов не уехали)', () => {
+  for (const role of ['admin', 'reception', 'doctor', 'assistant'] as const) {
+    const n = startPages(role, chaptersFor(role)).length
+    expect(n, role).toBeGreaterThanOrEqual(3)
+  }
+  // Ни одного пропавшего названия: все пять нашлись
+  for (const role of ['admin', 'reception', 'doctor', 'assistant'] as const) expect(startPages(role, CHAPTERS), role).toHaveLength(5)
 })

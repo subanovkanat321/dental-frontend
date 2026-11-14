@@ -25,7 +25,7 @@ button.shift-chip:hover { border-color: var(--accent); }
   background: var(--card); color: var(--text); font: inherit; text-align: left; }
 button.shift-line { cursor: pointer; }
 .shifts-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.shifts-copy { align-items: end; }
+.shifts-copy .ui-select { width: auto; }
 .on-duty { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0; font-size: .9rem; }
 /* Недельный график (V208): смены на дату нет — серым, по графику; смена — поверх */
 .shift-chip.shift-planned { color: var(--faint); background: transparent; border-style: dashed; }
@@ -36,16 +36,12 @@ button.shift-line { cursor: pointer; }
 .work-schedule { grid-template-columns: minmax(0, 1fr); }
 /* Пришли из карточки (#/clinic/hours/d12): строка человека — не под липкой шапкой раздела */
 .work-schedule [data-person] { scroll-margin-top: 84px; }
-.sched-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
-.sched-tools .segments { width: auto; }
-/* Телефон: «Обычная неделя | Неделя по датам» — во всю ширину строки, пункты поровну (tokens.css) */
-@media (max-width: 760px) { .sched-tools > .segments { flex: 1 1 100%; } }
-.sched-tools .shifts-nav { margin-left: auto; }
 .sched-off { color: var(--faint); font-size: .85rem; }
-/* «Как у клиники» — серым: человек работает по часам клиники, своих нет */
-.sched-people tr.by-clinic td { color: var(--faint); font-weight: 400; }
+/* «Как у клиники» — серым курсивом: человек работает по часам клиники, своих нет; «выходной» — просто серым */
+.sched-people tr.by-clinic td { color: var(--faint); font-weight: 400; font-style: italic; }
+.sched-people tr.by-clinic td .sched-off { font-style: normal; }
 .sched-people { min-width: 640px; }
-.sched-people th:first-child { width: 220px; }
+.sched-people th:first-child { width: 260px; }
 .sched-people td { white-space: nowrap; }
 .sched-people tr.mine th, .sched-people tr.mine td { background: var(--accent-soft); }
 .sched-people tr.active th, .sched-people tr.active td { background: var(--sunken); }
@@ -58,7 +54,7 @@ button.shift-line { cursor: pointer; }
 .sched-line { display: grid; gap: 2px; padding: 10px 4px; border-radius: var(--r-sm); }
 .sched-list > li.mine .sched-line { background: var(--accent-soft); }
 .sched-sum { font-size: .92rem; }
-.sched-line.by-clinic .sched-sum { color: var(--faint); }
+.sched-line.by-clinic .sched-sum { color: var(--faint); font-style: italic; }
 .sched-list .sched-edit { padding: 4px 0 14px; }
 /* Неделя по датам: прокрутка вбок — только у таблицы; первая колонка (кто) прилипает слева */
 .sched-scroll { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; border: 1px solid var(--separator);
@@ -67,7 +63,7 @@ button.shift-line { cursor: pointer; }
 .sched-grid th, .sched-grid td { padding: 6px; border-bottom: 1px solid var(--separator); vertical-align: top; text-align: left; }
 .sched-grid thead th { font-size: .85rem; color: var(--hint); font-weight: 600; white-space: nowrap; }
 .sched-grid tbody tr:last-child > * { border-bottom: 0; }
-.sched-grid th:first-child { position: sticky; left: 0; z-index: 1; width: 170px; background: var(--card); border-right: 1px solid var(--separator); }
+.sched-grid th:first-child { position: sticky; left: 0; z-index: 1; width: 200px; background: var(--card); border-right: 1px solid var(--separator); }
 .sched-grid th.today, .sched-grid td.today { background: var(--sunken); }
 .sched-grid tr.mine > * { background: var(--accent-soft); }
 .shift-chip.shift-off { white-space: normal; text-align: left; background: var(--wait-bg); border-color: transparent; color: var(--wait-ink); }
@@ -75,8 +71,45 @@ button.shift-line { cursor: pointer; }
   .sched-grid { min-width: 600px; }
   .sched-grid th:first-child { width: 112px; }
   .sched-grid th, .sched-grid td { padding: 5px 4px; }
-  .sched-tools .shifts-nav { margin-left: 0; }
 }
 /* .table th прилипает к верху (шапки длинных таблиц) — у имён в строках (th scope=row) это наложило бы строки друг на друга */
 .sched-people th { position: static; }
 .sched-tools .segments button { white-space: nowrap; }
+
+/* «Рабочее время» (2026-11-14): один ряд «Обычная неделя | Неделя по датам | Перерывы и выходные» в шапке,
+   у «Недели по датам» справа — листалка недель. Переключатель по содержимому, а не во всю шапку */
+.page-head > .work-nav { flex: 0 1 auto; width: auto; }
+.page-head > .work-nav button { flex: 0 0 auto; padding-inline: 14px; white-space: nowrap; }
+.page-head > .work-nav ~ .shifts-nav { margin-left: auto; }
+@media (max-width: 640px) {
+  /* Телефон: три пункта поровну во всю строку, ниже — листалка недели */
+  .page-head > .work-nav { flex: 1 1 100%; }
+  .page-head > .work-nav button { flex: 1 1 0; padding-inline: 6px; }
+  .page-head > .work-nav ~ .shifts-nav { margin-left: 0; flex: 1 1 100%; justify-content: space-between; }
+}
+/* Список и таблицы «Клиники» — во всю рабочую область: на 1880 не ограничиваем ширину пункта */
+.settings-item[data-host=clinic]:has(.work-schedule) { max-width: none; }
+
+.sched-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0; font-size: .88rem; }
+
+/* «Часы клиники»: компьютер — одна строка «Часы клиники  [09:00] – [22:00]  Пн … Вс», поля по содержимому;
+   ниже мелко серым — кто по ним работает. Телефон — время и дни двумя строками */
+.clinic-hours { gap: 6px; padding-top: 12px; padding-bottom: 12px; }
+.clinic-hours-form { display: grid; gap: 8px; }
+.clinic-hours-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.clinic-hours-title { margin: 0; font-size: 1rem; }
+.clinic-hours-time { display: inline-flex; align-items: center; gap: 6px; color: var(--hint); }
+.clinic-hours-time .time-input { width: 104px; }
+.clinic-hours-line .weekdays .day { min-width: 40px; height: 34px; padding: 0 8px; }
+.clinic-hours-note { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 0; }
+.clinic-hours .save-bar { margin: 0; }
+@media (max-width: 640px) {
+  .clinic-hours-line { gap: 8px 10px; }
+  .clinic-hours-title { flex: 0 0 auto; }
+  .clinic-hours-time { gap: 4px; }
+  .clinic-hours-time .time-input { width: 92px; }
+  .clinic-hours-time .time-input input { padding-left: 28px; }
+  .clinic-hours-time .ti-ico { left: 8px; }
+  .clinic-hours-line .weekdays { flex: 1 1 100%; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .clinic-hours-line .weekdays .day { min-width: 0; padding: 0; height: 40px; }
+}

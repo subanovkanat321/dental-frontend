@@ -88,6 +88,8 @@ export const server = setupServer(
   http.get('*/api/appointments/:id/payments', () => HttpResponse.json([])),
   http.get('*/api/waitlist', () => HttpResponse.json([])),
   // График смен (V150): по умолчанию смен нет — в «Сводке дня» строки «На смене» нет
+  // Неделя сотрудника (строка «Часы» в «Персонале»): по умолчанию — как у клиники
+  http.get('*/api/shifts/weekly/:telegramId', () => HttpResponse.json({ telegramId: 0, custom: false, days: [] } satisfies Schemas['ShiftServiceWeekly'])),
   http.get('*/api/shifts', () => HttpResponse.json({ people: [], shifts: [], canEdit: false, me: 0 } satisfies Schemas['ShiftControllerSchedule'])),
   // Вопросы пациентов (V142): по умолчанию новых нет — бейджа у «Пациентов» нет
   http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 0 } satisfies Schemas['QuestionControllerNewCount'])),

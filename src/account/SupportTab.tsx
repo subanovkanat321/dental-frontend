@@ -8,8 +8,9 @@ import { formatPhone, shortDate } from '../lib/time'
 import { DeveloperContacts } from './Contacts'
 import { ShotPicker, TicketPanel } from './TicketThread'
 import { ticketForm } from './tickets'
-import { ticketKind, TICKET_KINDS, TICKET_STATUS } from './texts'
+import { TICKET_KINDS, TICKET_STATUS } from './texts'
 import { EmptyState } from '../layout/EmptyState'
+import { Icon } from '../layout/Icon'
 import { Loading } from '../layout/Loading'
 import { rowOpen } from '../lib/rowClick'
 import { Fold } from '../layout/Fold'
@@ -30,9 +31,10 @@ const FAQ: [string, string][] = [
 
 /**
  * «Помощь → Написать в Tish» — одно место для обращений к команде Tish (с 2026-11-13 вместо «Техподдержки»,
- * «Написать разработчикам» и «Предложить идею»): сверху — помощник (ответит сразу, окном Shell), ниже — «✍️ Написать»
- * (одна форма, тип: вопрос / что-то не работает / идея — справа панелью), «Мои обращения» с ответами, частые вопросы
- * и прямые контакты (поддержка клиники и команда Tish) — свёрнуто: обычно хватает обращения.
+ * «Написать разработчикам» и «Предложить идею»). На всю ширину сеткой `.page-grid` (2026-11-14): одна карточка с двумя
+ * действиями — главное «Написать» (одна форма, тип: вопрос / что-то не работает / идея — справа панелью) и «Спросить
+ * помощника» (ответит сразу, окном Shell), рядом «Мои обращения» с ответами; ниже частые вопросы и прямые контакты
+ * (поддержка клиники и команда Tish) — свёрнуто: обычно хватает обращения.
  */
 export function SupportTab({ me, clinic, header, onPanel, initialTicket, initialHelp = false }: {
   me: Me
@@ -79,62 +81,66 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
     <>
       <section className="schedule-main support-page">
         {header}
-        <section className="card-block support-ask" aria-label="Спросить помощника">
-          <div className="block-head">
-            <h2>Спросить помощника — ответит сразу</h2>
-            <span className="actions"><button type="button" className="btn" onClick={() => askHelper()}>Спросить помощника</button></span>
-          </div>
-          <p className="hint">Как что-то сделать в Tish — ответ за секунды. Не знает — сам передаст вопрос команде Tish.</p>
-        </section>
-        <section className="card-block" aria-label="Написать в Tish">
-          <div className="block-head">
+        <div className="page-grid">
+          <section className="card-block support-contact" aria-label="Написать в Tish">
             <h2>Написать команде Tish</h2>
-            <span className="actions"><button type="button" className="btn primary" onClick={() => setOpened('new')}>Написать</button></span>
-          </div>
-          <p className="hint">Вопрос, что-то не работает или идея — одна форма. Ответ придёт сюда и в Telegram.</p>
-        </section>
-        <section className="card-block" aria-label="Мои обращения">
-          <div className="block-head">
-            <h2>Мои обращения</h2>
-            {answered > 0 && <span className="chip small s-ok">Есть ответ: {answered}</span>}
-          </div>
-          {list.error && <p className="error">{list.error.message}</p>}
-          {list.isPending ? <Loading /> : list.data?.length ? (
-            <table className="table" aria-label="Мои обращения">
-              <thead><tr><th>Обращение</th><th>Статус</th><th>Обновлено</th></tr></thead>
-              <tbody>
-                {list.data.map((t) => {
-                  const [status, cls] = TICKET_STATUS[t.status ?? 'OPEN'] ?? ['', 's-quiet']
-                  return (
-                    <tr key={t.id} {...rowOpen(() => openTicket(t), panel && t.id === opened && 'active')}>
-                      <td><span><button type="button" className="row-link" onClick={() => openTicket(t)}>{t.viaBot ? '💬 Помощник' : ticketKind(t.kind)}</button>
-                        <span className="hint"> · {t.preview}</span></span></td>
-                      <td><span className={`chip small ${cls}`}>{status}</span></td>
-                      <td className="hint nowrap">{t.updatedAt ? shortDate(t.updatedAt) : ''}{t.author ? ` · ${t.author}` : ''}</td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          ) : !list.error && <EmptyState compact title="Пока нет обращений" />}
-        </section>
-        <section className="card-block">
-          <h2>Частые вопросы</h2>
-          {FAQ.map(([q, a]) => <details key={q} className="faq"><summary>{q}</summary><p>{a}</p></details>)}
-        </section>
-        <section className="card-block">
-          <Fold title="Срочно — позвонить или написать напрямую">
-            <h3>Поддержка вашей клиники</h3>
-            {clinic?.supportUrl || clinic?.supportPhone ? (
-              <div className="actions">
-                {clinic.supportUrl && <a className="btn" href={clinic.supportUrl} target="_blank" rel="noopener noreferrer">Написать в Telegram</a>}
-                {clinic.supportPhone && <a className="btn" href={`tel:+${clinic.supportPhone}`}>Позвонить: {formatPhone(clinic.supportPhone)}</a>}
+            <div className="support-actions">
+              <div className="support-action">
+                <button type="button" className="btn primary" onClick={() => setOpened('new')}><WriteIcon />Написать</button>
+                <p className="hint">Вопрос, что-то не работает или идея — ответ придёт сюда и в Telegram.</p>
               </div>
-            ) : <p className="hint">{me.admin ? 'Контакты не заданы — добавьте их в «Клиника → О клинике».' : 'Контакты пока не заданы — спросите руководителя.'}</p>}
-            <h3>Команда Tish</h3>
-            <DeveloperContacts />
-          </Fold>
-        </section>
+              <div className="support-action">
+                <button type="button" className="btn support-helper" onClick={() => askHelper()}><Icon name="help" />Спросить помощника</button>
+                <p className="hint">Ответит сразу; не знает — сам передаст вопрос команде Tish.</p>
+              </div>
+            </div>
+          </section>
+          <section className="card-block" aria-label="Мои обращения">
+            <div className="block-head">
+              <h2>Мои обращения</h2>
+              {answered > 0 && <span className="chip small s-ok">Есть ответ: {answered}</span>}
+            </div>
+            {list.error && <p className="error">{list.error.message}</p>}
+            {list.isPending ? <Loading /> : list.data?.length ? (
+              <table className="table support-tickets" aria-label="Мои обращения">
+                <thead><tr><th>Обращение</th><th>Статус</th><th>Обновлено</th></tr></thead>
+                <tbody>
+                  {list.data.map((t) => {
+                    const [status, cls] = TICKET_STATUS[t.status ?? 'OPEN'] ?? ['', 's-quiet']
+                    // «Помощник: в чём разница…» — откуда обращение мелким чипом, затем текст; строка нажимается целиком
+                    return (
+                      <tr key={t.id} {...rowOpen(() => openTicket(t), panel && t.id === opened && 'active')}>
+                        <td><button type="button" className="row-link ticket-row-link" onClick={() => openTicket(t)}>
+                          <span className="chip small s-quiet ticket-src">{t.viaBot ? 'Помощник' : kindTitle(t.kind)}</span>
+                          <span className="ticket-preview">{t.preview}</span>
+                        </button></td>
+                        <td><span className={`chip small ${cls}`}>{status}</span></td>
+                        <td className="hint nowrap">{t.updatedAt ? shortDate(t.updatedAt) : ''}{t.author && <span className="ticket-author">{t.author}</span>}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            ) : !list.error && <EmptyState compact title="Пока нет обращений" />}
+          </section>
+          <section className="card-block">
+            <h2>Частые вопросы</h2>
+            {FAQ.map(([q, a]) => <details key={q} className="faq"><summary>{q}</summary><p>{a}</p></details>)}
+          </section>
+          <section className="card-block">
+            <Fold title="Срочно — позвонить или написать напрямую">
+              <h3>Поддержка вашей клиники</h3>
+              {clinic?.supportUrl || clinic?.supportPhone ? (
+                <div className="actions">
+                  {clinic.supportUrl && <a className="btn" href={clinic.supportUrl} target="_blank" rel="noopener noreferrer">Написать в Telegram</a>}
+                  {clinic.supportPhone && <a className="btn" href={`tel:+${clinic.supportPhone}`}>Позвонить: {formatPhone(clinic.supportPhone)}</a>}
+                </div>
+              ) : <p className="hint">{me.admin ? 'Контакты не заданы — добавьте их в «Клиника → О клинике».' : 'Контакты пока не заданы — спросите руководителя.'}</p>}
+              <h3>Команда Tish</h3>
+              <DeveloperContacts />
+            </Fold>
+          </section>
+        </div>
         {/* Опрос команды Tish — сотрудникам клиник (команда платформы его составляет); бывший пункт меню «Отзыв о Tish» */}
         {!me.platform && (
           <p className="hint support-survey">Есть 2–3 минуты? <button type="button" className="link" onClick={() => openMine('help', 'survey')}>Ответьте на опрос команды Tish</button> — так мы решаем, что делать дальше.</p>
@@ -143,6 +149,20 @@ export function SupportTab({ me, clinic, header, onPanel, initialTicket, initial
       {opened === 'new' && <NewTicketPanel onClose={close} onSent={(id) => setOpened(id)} />}
       {typeof opened === 'number' && panel && <TicketPanel key={opened} id={opened} onClose={close} />}
     </>
+  )
+}
+
+/** Тип обращения без эмодзи — для чипа в «Мои обращения». */
+function kindTitle(kind?: string | null): string {
+  return (TICKET_KINDS[kind ?? 'QUESTION'] ?? TICKET_KINDS.QUESTION!).title
+}
+
+/** «Написать» — карандаш линией (как значки меню «Помощь»), а не эмодзи ✍️. */
+function WriteIcon() {
+  return (
+    <svg className="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3" />
+    </svg>
   )
 }
 

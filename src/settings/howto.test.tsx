@@ -94,6 +94,8 @@ test('поиск и фильтр по разделу', async () => {
   await userEvent.click(within(screen.getByRole('group', { name: 'Раздел' })).getByRole('button', { name: 'Касса' }))
   expect(screen.queryByRole('region', { name: 'Расписание' })).not.toBeInTheDocument()
   expect(screen.getByRole('region', { name: 'Касса' })).toBeInTheDocument()
+  // Раздел выбран — без заголовка группы: он уже на таблетке
+  expect(within(screen.getByRole('region', { name: 'Касса' })).queryByRole('heading')).not.toBeInTheDocument()
 })
 
 test('ссылка из руководства #/help/videos/kassa — сразу этот ролик; закрыли — адрес без ролика', async () => {
@@ -112,4 +114,21 @@ test('видео ещё нет — так и пишем; сервер не от�
   server.use(http.get('*/web/materials/howto', () => new HttpResponse(null, { status: 500 })))
   renderPage()
   expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось загрузить список видео')
+})
+
+test('каждая группа — свой блок: заголовок на всю ширину и своя сетка карточек', async () => {
+  server.use(http.get('*/web/materials/howto', () => HttpResponse.json(VIDEOS)))
+  const { container } = renderPage()
+  await screen.findByRole('region', { name: 'Расписание' })
+  const groups = [...container.querySelectorAll('.howto-groups > section')]
+  expect(groups.map((g) => g.getAttribute('aria-label'))).toEqual(['Расписание', 'Касса'])
+  for (const g of groups) {
+    // Заголовок — первым, затем своя сетка только с карточками этой группы
+    expect(g.firstElementChild?.tagName).toBe('H2')
+    expect(g.querySelectorAll(':scope > ul.howto-grid')).toHaveLength(1)
+  }
+  expect(within(groups[0] as HTMLElement).getAllByRole('listitem')).toHaveLength(2)
+  expect(within(groups[1] as HTMLElement).getAllByRole('listitem')).toHaveLength(1)
+  // Абзац сверху — одной строкой
+  expect(screen.getByText(/^Ролики по 20–40 секунд/)).toHaveClass('howto-intro')
 })

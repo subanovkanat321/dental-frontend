@@ -84,7 +84,7 @@ export function HowToPage({ onBack }: { onBack: () => void }) {
             </EmptyState>
           ) : (
             <>
-              <p className="hint">Ролики по 20–40 секунд, без звука: шаги — подписями на экране. Просмотрено: {videos.filter((v) => watched.has(v.id)).length} из {videos.length}.</p>
+              <p className="hint howto-intro">Ролики по 20–40 секунд, без звука — шаги подписями. Просмотрено: {videos.filter((v) => watched.has(v.id)).length} из {videos.length}</p>
               <div className="howto-tools">
                 <input type="search" className="book-search" placeholder="Найти видео: запись, касса…" aria-label="Поиск видео"
                   value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -94,11 +94,13 @@ export function HowToPage({ onBack }: { onBack: () => void }) {
               </div>
               {!shown.length ? <p className="hint" role="status">Ничего не нашли — попробуйте другое слово или «Все».</p>
                 : (
-                  // Группы-разделы идут потоком: на компьютере маленькие группы встают рядом, а не по строке на каждую
+                  // Каждая группа — свой блок: заголовок на всю ширину и своя сетка, новая группа — с новой строки
+                  // (потоком группы путались: «Расписание» продолжалось в строке «Начала работы»). Выбран раздел —
+                  // заголовок не нужен: он уже на таблетке фильтра
                   <div className="howto-groups">
                     {groupVideos(shown).map(([name, items]) => (
                       <section key={name} className="howto-group" aria-label={name}>
-                        <h2>{name}</h2>
+                        {!section && <h2>{name}</h2>}
                         <ul className="howto-grid">
                           {items.map((v) => <li key={v.id}><Tile video={v} watched={watched.has(v.id)} onOpen={() => setOpenId(v.id)} /></li>)}
                         </ul>

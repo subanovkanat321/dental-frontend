@@ -1,14 +1,16 @@
 /* «Помощь → Видео: как сделать»: поиск и разделы, группы карточек 9:16 (длительность, «✓ Просмотрено») и просмотрщик на весь экран */
-.howto-tools { display: grid; gap: 8px; margin: 8px 0 4px; max-width: 980px; }
+.howto-intro { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.howto-tools { display: grid; gap: 8px; margin: 8px 0 4px; }
 .howto-tools .book-search { max-width: 520px; min-height: 36px; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
   background: var(--card); color: var(--text); font: inherit; }
 .howto-tools .segments { justify-self: start; flex-wrap: wrap; }
 .howto-tools .segments-select { max-width: 520px; }
-.howto-groups { display: flex; flex-wrap: wrap; gap: 20px 32px; margin-top: 16px; max-width: 1180px; }
-.howto-group { min-width: 0; flex: 0 1 auto; max-width: 100%; }
-.howto-group h2 { margin: 0 0 8px; font: 600 1.05rem/1.3 var(--display); }
-.howto-grid { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; }
-.howto-grid > li { width: 150px; }
+.howto-groups { display: grid; gap: 28px; margin-top: 16px; }
+.howto-group { min-width: 0; }
+.howto-group h2 { margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--separator); font: 600 1.05rem/1.3 var(--display); }
+/* Сетка на всю ширину: карточки 9:16 от 160px, сколько влезет в строку */
+.howto-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+.howto-grid > li { min-width: 0; }
 .howto-tile { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; color: var(--text); font: inherit; }
 .howto-cover { position: relative; display: block; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--line); background: var(--sunken); }
 .howto-cover img, .howto-noposter { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; object-fit: cover; }
@@ -40,7 +42,7 @@
 }
 @media (max-width: 760px) {
   .howto-tools .book-search { max-width: none; min-height: 44px; font-size: max(16px, 1rem); }
-  .howto-groups { display: grid; gap: 18px; }
-  .howto-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .howto-grid > li { width: auto; }
+  .howto-intro { white-space: normal; }
+  .howto-groups { gap: 20px; }
+  .howto-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 }
