@@ -133,16 +133,43 @@ test('«Должники»: по пациентам — кто сколько д
   )
   renderApp()
   await userEvent.click(await findSub('Должники'))
-  const box = await screen.findByRole('region', { name: 'Должники' })
-  expect(box).toHaveTextContent(/Должны всего13\s000 сом/)
-  expect(box).toHaveTextContent(/Просрочили1 · 5\s000 сом/)
+  const tiles = await screen.findByRole('list', { name: 'Итог' })
+  expect(tiles).toHaveTextContent(/Должны всего13\s000 сом/)
+  expect(tiles).toHaveTextContent(/Пациентов2/)
+  expect(tiles).toHaveTextContent(/Просрочили оплату1 · 5\s000 сом/)
+  expect(tiles).not.toHaveTextContent('Старые долги')
+  const box = screen.getByRole('region', { name: 'Должники' })
   const items = within(box).getAllByRole('listitem')
-  expect(items[0]).toHaveTextContent(/Бакыт М\.8\s000 сом/)
-  expect(items[1]).toHaveTextContent('приёмов: 2')
-  expect(items[1]).toHaveTextContent('обещал оплатить до')
+  expect(items[0]).toHaveTextContent(/Бакыт М\./)
+  expect(items[0]).toHaveTextContent(/8\s000 сом/)
+  expect(items[1]).toHaveTextContent('2 визита в долг')
+  expect(items[1]).toHaveTextContent('Просрочил')
+  expect(items[1]).toHaveTextContent('обещал до')
+
+  // По давности — с самого давнего неоплаченного визита; «Просрочили» — только просроченные
+  await userEvent.click(screen.getByRole('combobox', { name: 'Порядок' }))
+  await userEvent.click(await screen.findByRole('option', { name: 'По давности' }))
+  expect(within(box).getAllByRole('listitem')[0]).toHaveTextContent('Айгуль С.')
+  await userEvent.click(screen.getByRole('button', { name: 'Просрочили · 1' }))
+  expect(within(box).getAllByRole('listitem')).toHaveLength(1)
+  await userEvent.click(screen.getByRole('button', { name: 'Все' }))
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Поиск должника' }), 'бакыт')
+  expect(within(box).getAllByRole('listitem')).toHaveLength(1)
+  expect(within(box).getByRole('listitem')).toHaveTextContent('Бакыт М.')
 })
 
-test('«Должники»: долг из прежней программы — отдельным блоком, «Погашен» → как отдали', async () => {
+test('«Должники»: никого — коротко «Должников нет 🎉»', async () => {
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(me)),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([] satisfies Schemas['PaymentQueryDebt'][])),
+  )
+  renderApp()
+  await userEvent.click(await findSub('Должники'))
+  expect(await screen.findByText('Должников нет 🎉')).toBeInTheDocument()
+  expect(screen.queryByRole('list', { name: 'Итог' })).not.toBeInTheDocument()
+})
+
+test('«Должники»: долг из прежней программы — отдельным блоком и плиткой, «Принять оплату» → как отдали', async () => {
   let debts: Schemas['OpeningDebtsView'][] = [{ id: 7, patientId: 9, patient: 'Пример Старый', amountSom: 2500, createdAt: '2026-11-10T06:00:00Z' }]
   const paid: unknown[] = []
   server.use(
@@ -157,11 +184,14 @@ test('«Должники»: долг из прежней программы — 
   )
   renderApp()
   await userEvent.click(await findSub('Должники'))
-  const box = await screen.findByRole('region', { name: 'Долги из прежней программы' })
-  expect(box).toHaveTextContent(/Пример Старый · 2\s500 сом/)
-  await userEvent.click(within(box).getByRole('button', { name: 'Погашен' }))
+  const box = await screen.findByRole('region', { name: 'Старые долги из прежней программы' })
+  expect(box).toHaveTextContent(/Пример Старый/)
+  expect(box).toHaveTextContent(/2\s500 сом/)
+  expect(screen.getByRole('list', { name: 'Итог' })).toHaveTextContent(/Старые долги из прежней программы2\s500 сом/)
+  await userEvent.click(within(box).getByRole('button', { name: 'Принять оплату' }))
   await userEvent.click(within(box).getByRole('button', { name: 'Переводом' }))
-  await waitFor(() => expect(screen.queryByRole('region', { name: 'Долги из прежней программы' })).not.toBeInTheDocument())
+  await waitFor(() => expect(screen.queryByRole('region', { name: 'Старые долги из прежней программы' })).not.toBeInTheDocument())
+  expect(await screen.findByText('Должников нет 🎉')).toBeInTheDocument()
   expect(paid).toEqual([{ id: '7', method: 'TRANSFER' }])
 })
 

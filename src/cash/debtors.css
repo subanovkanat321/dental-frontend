@@ -1,0 +1,40 @@
+/*
+ * «Касса → Должники» (cash/DebtorsTab.tsx): итог плитками сверху во всю ширину, под ним спокойный список
+ * (patients/calm.css) — сумма справа красным; «Старые долги» — отдельный блок того же вида.
+ */
+.debtors { min-width: 0; }
+.debtors > .card-block { margin: 0; }
+/* Плиток 2–4: колонок столько же, сколько плиток — без пустой половины на ноутбуке и одинокой плитки на телефоне */
+.debtors-tiles.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.debtors-tiles.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (min-width: 761px) {
+  .survey-tiles.tile-grid.debtors-tiles.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .survey-tiles.tile-grid.debtors-tiles.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.debtors-block { display: grid; gap: 8px; min-width: 0; }
+.debtors-block h3 { margin: 0; font-size: .95rem; font-weight: 600; }
+.debtors-block h3 .hint { font-weight: 400; }
+.calm-meta .debt-sum.num { color: var(--destructive); font-weight: 600; font-size: 1rem; }
+.debtors-tools .segments { flex: none; }
+@media (min-width: 761px) { .debtors-tools .segments button { white-space: nowrap; } }
+@media (max-width: 760px) {
+  /* Телефон: поиск и «Семьи вместе» — строка; «Все | Просрочили» — строка; порядок и «Чья касса» — пополам */
+  .debtors-tools .search { order: 1; flex: 1 1 50%; min-width: 0; }
+  .debtors-tools .check { order: 2; flex: none; }
+  .debtors-tools .segments { order: 3; flex: 1 1 100%; }
+  .debtors-tools > .ui-select, .debtors-tools > select { order: 4; flex: 1 1 40%; min-width: 0; }
+  .page-head:has(.debtors-tools) > .ui-select, .page-head:has(.debtors-tools) > select { order: 5; flex: 1 1 40%; min-width: 0; }
+  /* Строка: имя | сумма; серая строка — во всю ширину; «Принять оплату» и «⋯» — справа под ней */
+  .debtors .calm-row, .debtors .calm-row:has(.calm-meta):has(.calm-act) { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
+  .debtors .calm-row:has(.calm-meta):has(.calm-act) .calm-main { display: contents; }
+  .debtors .calm-row .calm-title { grid-column: 1; grid-row: 1; }
+  .debtors .calm-row .calm-sub { grid-column: 1 / -1; grid-row: 2; }
+  .debtors .calm-row .calm-meta { grid-column: 2; grid-row: 1; }
+  .debtors .calm-row:has(.calm-meta) .calm-act { grid-column: 1 / -1; grid-row: 3; justify-self: end; margin-top: 4px; }
+  .debtors .calm-row .calm-extra { grid-row: 4; }
+  .debtors .row-menu-pop button { white-space: normal; }
+  .debtors .row-menu-pop { max-width: calc(100vw - 48px); }
+  .debtors-tiles .survey-tile b { font-size: 1.2rem; }
+  .debtors-tiles.n3 .survey-tile b { font-size: 1.05rem; }
+  .debtors-tiles.n3 .survey-tile > .hint:first-child { font-size: .78rem; }
+}
