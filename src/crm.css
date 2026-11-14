@@ -706,13 +706,18 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .grid-corner { left: 0; z-index: 6; }
 .grid-times { position: sticky; left: 0; z-index: 4; background: var(--card); }
 @media (max-width: 760px) { .grid { max-height: calc(100dvh - 140px - 72px - env(safe-area-inset-bottom)); } }
-.tariffs-form { display: grid; gap: 12px; max-width: 760px; }
+.tariffs-form { display: grid; gap: 12px; }
+/* «Платформа → Тарифы» на компьютере — карточки тарифов сеткой на всю ширину; подсказка и «Сохранить» — во всю строку */
+@media (min-width: 1100px) {
+  .tariffs-form { grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); align-items: start; }
+  .tariffs-form > :not(.tariff-row) { grid-column: 1 / -1; }
+}
 .tariff-row { display: grid; gap: 8px; margin: 0; padding: 12px; border: 1px solid var(--separator); border-radius: var(--radius); }
 .tariff-row legend { padding: 0 6px; font-weight: 600; }
 .doctor-day { display: grid; gap: 6px; margin-top: 12px; }
 .doctor-day-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 4px; background: var(--page); font-size: 1.05rem; }
 .doctor-day-head .avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-text); font-size: .9rem; }
-/* «Мой профиль» (settings/ProfilePage): разделы — подпись над карточкой, одной колонкой 880px, шаг 16px */
+/* «Мой профиль» (settings/ProfilePage): разделы — подпись над карточкой, шаг 16px (сетка на компьютере — ниже, «во всю ширину») */
 .profile-page, .doctor-inline { display: grid; gap: 16px; align-content: start; }
 .profile-page > .toolbar.sticky-head, .profile-page > .toolbar { margin-bottom: 0; }
 .settings-item:has(> .profile-page) { display: grid; gap: 16px; }
@@ -877,12 +882,6 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .badge-ok { padding: 2px 10px; border-radius: 999px; background: var(--ok-bg); color: var(--ok-ink); font-size: .85rem; font-weight: 600; white-space: nowrap; }
 .total-line { margin: 4px 0; font-size: 1.05rem; }
 
-/* «Настройки» на компьютере — на всю ширину: группы (Расписание, Клиника, Аккаунт…) колонками,
-   профиль, оформление и «Выйти» — во всю строку */
-@media (min-width: 1100px) {
-  .settings { max-width: none; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); align-items: start; }
-  .settings > * { grid-column: 1 / -1; }
-}
 
 /* Бублик (lib/Donut.tsx): кольцо 168px и легенда рядом; места мало — легенда переносится под кольцо */
 .donut { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 6px; }
@@ -1416,9 +1415,6 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 
 /* Ширина: формы и длинный текст не растягиваются на 1900px */
 .settings-item { max-width: 1280px; }
-/* Пункты «Настроек», «Я» и «Помощи» — формы и текст: одной колонкой разумной ширины, на 1920 не растягиваются
-   (у «Клиники» — таблицы персонала и услуг, ей остаётся 1280) */
-.settings-item:is([data-host=settings], [data-host=me], [data-host=help]) { max-width: 880px; }
 /* Подзаголовок внутри карточки пункта — мельче заголовка карточки, а не крупнее (у h3 браузера 1.17em) */
 .settings-item .card-block h3 { margin: 6px 0 0; font-size: .95rem; }
 /* Поле файла — шириной обычной формы, а не во всю карточку */
@@ -1431,12 +1427,6 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .settings-item :is(.card-block, form, fieldset) > .row { max-width: 640px; }
 .settings-item .hours-doctor .segments { max-width: 480px; }
 
-/* «Оформление»: тема и размер текста двумя колонками */
-@media (min-width: 1100px) {
-  .settings { max-width: 1180px; grid-template-columns: 1fr; }
-  .appearance { grid-template-columns: 1fr 1fr; gap: 12px 24px; }
-  .appearance > .hint { grid-column: 1 / -1; margin: 0; }
-}
 
 /* Карточки и блоки — одинаковые отступы; заголовок раздела и действия на одной линии */
 .card-block { padding: 18px 20px; }
@@ -1500,20 +1490,6 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .starter-block { display: grid; gap: 6px; padding: 12px 0; border-top: 1px solid var(--separator); }
 .starter-block p { margin: 0; }
 .starter-list { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; max-height: 40vh; overflow-y: auto; font-size: .92rem; }
-
-/* «Касса → Должники» (cash/DebtorsTab.tsx): итог и список по пациентам */
-.debtors-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.debtors-sum > div { display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); }
-.debtors-sum b { font-size: 1.15rem; }
-.debtors-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.debtors-list li { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
-.debtors-list li.overdue { border-color: color-mix(in srgb, var(--bad-ink, #b42318) 40%, var(--separator)); }
-.debtors-list p { margin: 0; }
-.debtor-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.debtor-head b { font-size: 1.05rem; }
-.debtor-visits { display: flex; flex-wrap: wrap; gap: 6px; }
-.debtor-visits .chip { font: inherit; font-size: .85rem; padding: 4px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--card); color: var(--text); cursor: pointer; }
-@media (max-width: 420px) { .debtors-sum { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 
 /* «Отчёт пациенту» (print/VisitReport.tsx) */
 .visit-report { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); background: var(--card); }
@@ -2569,3 +2545,76 @@ p.expense-owner { display: block; }
 .inbox-more { justify-self: start; }
 /* «Настройки» платформы: строка-ссылка на вкладку «Тарифы» вместо дубля цен */
 .settings-more { margin: 0; padding: 12px 16px; border-radius: var(--radius); background: var(--card); box-shadow: var(--shadow); }
+
+/* Пункты «Я», «Настроек» и «Клиники» на компьютере — на всю ширину рабочей области (2026-11-14, владелец: «не на
+   половину страницы»; до этого «Я» и «Настройки» — колонкой 880px, «Клиника» — 1280px с пустотой справа). Одно место:
+   контейнер пункта (.settings-item) больше не ограничен; где у страницы две и больше карточек подряд — сетка в две
+   колонки (последняя нечётная — во всю строку), заголовок, подсказки и ошибки — во всю строку. Длинные строки не
+   растягиваются: текст в карточке — до ~75 знаков, короткие поля — до 640px. «Помощь» правит свой агент (help/*). */
+.settings-item:is([data-host=settings], [data-host=me], [data-host=clinic]) { max-width: none; }
+.settings-item:is([data-host=settings], [data-host=me], [data-host=clinic]) .card-block :is(p, li):not(.reminder-bubble) { max-width: 75ch; }
+.settings-item:is([data-host=settings], [data-host=me]) .card-block .field:not(:has(textarea)) { max-width: 640px; }
+@media (min-width: 1100px) {
+  .settings-item:is([data-host=settings], [data-host=me]) :where(section, div, form):not(.card-block, .settings-group, .doctor-inline):has(> :is(.card-block, .settings-group) + :is(.card-block, .settings-group)),
+  .profile-page {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start;
+  }
+  .settings-item:is([data-host=settings], [data-host=me]) :where(section, div, form):not(.card-block, .settings-group, .doctor-inline):has(> :is(.card-block, .settings-group) + :is(.card-block, .settings-group)) > :not(.card-block, .settings-group),
+  .profile-page > :not(.settings-group, .doctor-inline) { grid-column: 1 / -1; }
+  .settings-item:is([data-host=settings], [data-host=me]) :where(section, div, form):not(.card-block, .settings-group, .doctor-inline, .profile-page):has(> :is(.card-block, .settings-group) + :is(.card-block, .settings-group))
+    > :nth-child(odd of .card-block, .settings-group):nth-last-child(1 of .card-block, .settings-group) { grid-column: 1 / -1; }
+  /* «Мой профиль» врача: разделы карточки врача (DoctorPanel inline) — ячейки той же сетки, что «Телефон» и «Пароль» */
+  .profile-page > .doctor-inline { display: contents; }
+  .settings { max-width: none; }
+}
+
+/* «Я → Оформление» (2026-11-14): тема — карточки-образцы, выбранная в рамке акцента; размер — сегменты и живой образец */
+.head-note { color: var(--hint); font-size: .8rem; align-self: end; padding-bottom: 4px; }
+.theme-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.theme-card { display: grid; gap: 8px; justify-items: center; padding: 8px 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--card); color: var(--text); font: inherit; cursor: pointer; }
+.theme-card:hover { border-color: var(--accent); }
+.theme-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-card[aria-pressed=true] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.theme-card[aria-pressed=true] .theme-card-label { color: var(--accent-ink); font-weight: 600; }
+/* Цвета образцов — настоящие цвета тем (tokens.css), не текущей: тёмный образец тёмный и в светлой теме */
+.theme-sample { display: flex; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--r-md); border: 1px solid var(--separator); }
+.ts-half { position: relative; flex: 1; display: grid; grid-template-columns: 22% 1fr; grid-template-rows: 18% 1fr 1fr; gap: 6%; padding: 7%; }
+.ts-light { background: #EBEFEC; --ts-card: #FFFFFF; --ts-line: #C9D6D4; --ts-accent: #0E8A80; }
+.ts-dark { background: #0D1A1D; --ts-card: #13252A; --ts-line: #2C4850; --ts-accent: #2BB5A8; }
+.ts-half i { display: block; border-radius: 3px; background: var(--ts-card); }
+.ts-rail { grid-row: 1 / -1; }
+.ts-head { background: var(--ts-accent) !important; width: 55%; height: 60%; align-self: center; }
+.ts-card { border: 1px solid var(--ts-line); }
+.ts-card.short { width: 70%; }
+.theme-card-label { font-size: .92rem; }
+.text-size { display: grid; gap: 12px; justify-items: start; }
+.text-size .segments { width: 100%; max-width: 320px; }
+.text-sample { display: grid; gap: 2px; width: 100%; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); border-left: 3px solid var(--accent); }
+.text-sample span { color: var(--hint); font-size: .9rem; }
+@media (max-width: 760px) {
+  .theme-cards { gap: 8px; }
+  .theme-card { padding: 6px 6px 8px; }
+  .theme-card-label { font-size: .85rem; }
+}
+
+/* «Мой профиль → Телефон» (2026-11-14): номер крупно, одна серая строка с «?», главная «Изменить» и «⋯» */
+.setting-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.setting-what { display: grid; gap: 2px; min-width: 0; }
+.setting-what > p { margin: 0; }
+.phone-number { font: 500 1.3rem var(--mono); letter-spacing: .01em; }
+.setting-sub .help-hint { vertical-align: middle; }
+.setting-actions { display: flex; align-items: center; gap: 8px; }
+.setting-actions .btn .icon { width: 17px; height: 17px; }
+.setting-actions .row-menu-btn { width: 38px; height: 38px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); }
+.phone-card .row-menu-pop { right: 0; }
+/* «Станьте и врачом»: строка-приглашение (Fold) и компактная форма, кнопка обычной ширины */
+.card-block > .fold:only-child { border-bottom: 0; }
+.card-block > .fold:only-child > .fold-head { min-height: 40px; padding: 0 2px; }
+.card-block > .fold:only-child .fold-title { color: var(--link); }
+.card-block > .fold:only-child > .fold-body { padding-bottom: 0; }
+/* «Имя» в «Моём профиле» — карточкой во всю ячейку сетки (поле — до 640px) */
+.profile-page form.card-block.narrow { max-width: none; }
+.add-self { display: grid; gap: 10px; justify-items: start; }
+.add-self .field { width: 100%; max-width: 420px; }
+.add-self > .hint { margin: 0; }

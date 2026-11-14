@@ -278,7 +278,7 @@ function OwnAccess({ doctor: d, me, inline }: { doctor: Doctor; me: Me; inline: 
     <>
       {d.telegramId != null && <p className="tone-ok">{byPhone ? '✓ Вы входите по номеру (без Telegram)' : '✓ Ваш Telegram подключён'}</p>}
       <p className="hint">{inline
-        ? 'Телефон — в «Телефон» выше; пароль нужен только для входа без Telegram — «Пароль и вход» внизу.'
+        ? 'Номер — в разделе «Телефон», пароль (только для входа без Telegram) — в «Пароль и вход».'
         : 'Телефон и пароль — в «Моём профиле» (нажать на себя внизу меню).'}
         {me.admin ? '' : ' Сменили аккаунт Telegram — попросите у руководителя новую ссылку-приглашение.'}</p>
     </>

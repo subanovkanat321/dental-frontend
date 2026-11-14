@@ -117,7 +117,7 @@ test('сотрудник с Telegram без пароля: одна кнопка 
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderApp()
     const section = await screen.findByRole('region', { name: 'Пароль и вход' })
-    expect(section).toHaveTextContent('Необязательно. Пароль нужен, только если вы входите без Telegram')
+    expect(section).toHaveTextContent('Необязательно — только для входа по номеру')
     await user.click(within(section).getByRole('button', { name: 'Задать пароль' }))
     expect(within(section).queryByRole('button', { name: 'Код в Telegram' })).not.toBeInTheDocument()
     expect(within(section).queryByRole('button', { name: 'Код по SMS' })).not.toBeInTheDocument()
@@ -150,13 +150,17 @@ test('сотруднику с Telegram без пароля в CRM ничего �
   expect(screen.queryByText(/задайте пароль/i)).not.toBeInTheDocument()
 })
 
-test('с Telegram «Пароль и вход» — внизу профиля, тихой подписью «Необязательно…», кнопка неброская', async () => {
+test('с Telegram «Пароль и вход» — внизу профиля, тихой строкой «Необязательно…» и «?», кнопка как у «Телефона»', async () => {
   backend({ phoneLogin: true, passwordSet: false, temporary: false, sms: false, telegram: true, telegramCode: true })
   renderApp()
   const section = await screen.findByRole('region', { name: 'Пароль и вход' })
-  expect(section).toHaveTextContent('Необязательно. Пароль нужен, только если вы входите без Telegram — по номеру телефона.')
+  expect(section).toHaveTextContent('Необязательно — только для входа по номеру')
   expect(section).not.toHaveTextContent(/задайте/i)
-  expect(within(section).getByRole('button', { name: 'Задать пароль' })).toHaveClass('ghost')
+  // Кнопка — такая же, как у «Телефона» (не текстом-ссылкой); пояснение — в «?»
+  expect(within(section).getByRole('button', { name: 'Задать пароль' })).toHaveClass('btn')
+  expect(within(section).getByRole('button', { name: 'Задать пароль' })).not.toHaveClass('ghost')
+  await userEvent.setup().click(within(section).getByRole('button', { name: 'Подсказка: Пароль' }))
+  expect(within(section).getByRole('note')).toHaveTextContent('Пароль нужен, только если вы входите без Telegram — по номеру телефона.')
   // После «Телефона» и всего профиля — последним блоком
   // Последний раздел профиля — «Пароль и вход»; ниже только «Выход»
   const groups = screen.getAllByRole('region').filter((r) => r.classList.contains('settings-group') && r.getAttribute('aria-label') !== 'Выход')

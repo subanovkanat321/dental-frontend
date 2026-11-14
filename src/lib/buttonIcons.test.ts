@@ -24,3 +24,15 @@ test('значок и цвет кнопки — по подписи; без цв
   expect(plain.dataset.tone).toBeUndefined()
   stop()
 })
+
+test('своя линейная иконка внутри кнопки — эмодзи не добавляем («Изменить» в «Телефоне»)', () => {
+  const root = document.createElement('div')
+  const own = button('Изменить')
+  own.insertAdjacentHTML('afterbegin', '<svg class="icon" aria-hidden="true"></svg>')
+  const plain = button('Изменить')
+  root.append(own, plain)
+  const stop = startButtonIcons(root)
+  expect(own.dataset.ico).toBeUndefined()
+  expect(plain.dataset.ico).toBe('✏️')
+  stop()
+})
