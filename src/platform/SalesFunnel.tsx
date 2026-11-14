@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
+import { Segments } from '../layout/Segments'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
 import { formatPhone, shortDate, todayIn } from '../lib/time'
@@ -44,16 +45,13 @@ export function SalesFunnel() {
       {funnel.error && <p className="error">{funnel.error.message}</p>}
       {funnel.isPending ? <Loading /> : data && (
         <>
-          <div className="segments tabs" role="group" aria-label="Этап">
-            <button type="button" aria-pressed={stage == null} onClick={() => setStage(null)}>Все · {data.total}</button>
-            {(data.stages ?? []).map((s) => (
-              <button key={s.stage} type="button" aria-pressed={stage === s.stage} onClick={() => setStage(s.stage!)}
-                title={s.stage === 'LOST' ? `Отказались: ${s.conversion}%` : `Дошли до этапа: ${s.reached} (${s.conversion}%)`}>
-                {STAGE_TEXT[s.stage!]} · <b className="num">{s.current}</b>
-                {s.stage !== 'LEAD' && <span className="hint"> {s.conversion}%</span>}
-              </button>
-            ))}
-          </div>
+          <Segments className="tabs" label="Этап" value={stage ?? ''} onChange={(key) => setStage(key === '' ? null : key)}
+            options={[{ value: '' as Stage | '', label: `Все · ${data.total}` },
+              ...(data.stages ?? []).map((s) => ({
+                value: s.stage!, title: s.stage === 'LOST' ? `Отказались: ${s.conversion}%` : `Дошли до этапа: ${s.reached} (${s.conversion}%)`,
+                label: <>{STAGE_TEXT[s.stage!]} · <b className="num">{s.current}</b>{s.stage !== 'LEAD' && <span className="hint"> {s.conversion}%</span>}</>,
+                text: `${STAGE_TEXT[s.stage!]} · ${s.current}${s.stage !== 'LEAD' ? ` (${s.conversion}%)` : ''}`,
+              }))]} />
           <p className="hint">Число — сколько сейчас на этапе; % — сколько лидов дошли до этапа хоть раз.</p>
           {(data.leads ?? []).length === 0 ? <p className="hint">Здесь пока никого.</p>
             : <div role="list" className="funnel-list">{data.leads!.map((l) => <LeadCard key={l.id} lead={l} today={today} />)}</div>}

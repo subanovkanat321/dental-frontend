@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { Segments } from '../layout/Segments'
 import { EmptyState } from '../layout/EmptyState'
 import { haptic, openLink } from '../lib/telegram'
 import { agoText, recentlyInvited, whatsappUrl } from '../lib/texts'
@@ -117,13 +118,11 @@ export function ComebackTab({ onOpen, onBook, canEditServices = false }: {
       <SubHelp title="Позвать снова">Кого стоит позвать: незаконченные планы лечения, кто отменил или не пришёл и не перезаписался, кому пора
         на осмотр. «Пригласить» — готовый текст в Telegram или WhatsApp; записать и «Не звать» — в «⋯».</SubHelp>
       <HeadTools>
-        <div className="segments comeback-filter" role="group" aria-label="Кого позвать">
-          <button type="button" aria-pressed={filter === 'ALL'} onClick={() => setFilter('ALL')}>Все <span className="num">{everyone}</span></button>
-          {groups.filter(([key, , n]) => n > 0 || filter === key).map(([key, title, n, money]) => (
-            <button key={key} type="button" aria-pressed={filter === key} onClick={() => setFilter(filter === key ? 'ALL' : key)}>
-              {title} <span className="num">{money ?? n}</span></button>
-          ))}
-        </div>
+        {/* Пунктов до шести — на телефоне выпадающим списком (layout/Segments), а не таблетками в три строки */}
+        <Segments className="comeback-filter" label="Кого позвать" value={filter} onChange={(key) => setFilter(filter === key ? 'ALL' : key)}
+          options={[{ value: 'ALL' as typeof filter, label: <>Все <span className="num">{everyone}</span></>, text: `Все · ${everyone}` },
+            ...groups.filter(([key, , n]) => n > 0 || filter === key).map(([key, title, n, money]) => (
+              { value: key, label: <>{title} <span className="num">{money ?? n}</span></>, text: `${title} · ${money ?? n}` }))]} />
       </HeadTools>
       {!everyone ? (
         <EmptyState fill title="Звать некого" />

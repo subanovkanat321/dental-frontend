@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useReminderText } from '../api/settings'
+import { Segments } from '../layout/Segments'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { canEditDoctor, isAssistant } from '../lib/roles'
@@ -85,11 +86,7 @@ export function BookedTab({ me, initial, onOpenAppointment }: {
     <section className="booked" aria-label="Записанные пациенты">
       {/* Период, врач и отбор — в строку шапки «Пациентов»; сколько записей — мелко там же */}
       <HeadTools>
-        <div className="segments tabs" role="group" aria-label="Период">
-          {PERIODS.map(([key, title]) => (
-            <button key={key} type="button" aria-pressed={period === key} onClick={() => setPeriod(key)}>{title}</button>
-          ))}
-        </div>
+        <Segments className="tabs" label="Период" value={period} onChange={setPeriod} options={PERIODS.map(([key, title]) => ({ value: key, label: title }))} />
         {doctors.length > 1 && (
           <Select aria-label="Врач" value={doctorId ?? ''} onChange={(e) => setDoctorId(e.target.value ? Number(e.target.value) : null)}>
             <option value="">Все врачи</option>
