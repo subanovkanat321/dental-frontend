@@ -15,7 +15,7 @@ test('«?» закрыта, пока не нажали; текст и ссылк
   await user.click(button)
   const note = screen.getByRole('note', { name: 'Подсказка: Касса' })
   expect(note).toHaveTextContent(/Выручка за период/)
-  expect(screen.getByRole('link', { name: 'Подробнее в руководстве' })).toHaveAttribute('href', '/guide?from=app#kassa')
+  expect(screen.getByRole('link', { name: 'Подробнее в руководстве' })).toHaveAttribute('href', '#/help/guide/kassa')
   expect(button).toHaveAttribute('aria-expanded', 'true')
 
   await user.keyboard('{Escape}')
@@ -32,4 +32,14 @@ test('каждая подсказка ведёт на существующую �
     expect(anchors, key).toContain(h.anchor)
     expect(h.text.length, key).toBeLessThanOrEqual(200)
   }
+})
+
+test('«Подробнее в руководстве» открывает раздел книги прямо в Tish (#/help/guide/<якорь>)', async () => {
+  const user = userEvent.setup()
+  render(<HelpHint hint="newAppointment" />)
+  await user.click(screen.getByRole('button', { name: 'Подсказка: Новая запись' }))
+  await user.click(screen.getByRole('link', { name: 'Подробнее в руководстве' }))
+  expect(window.location.hash).toBe('#/help/guide/novaya-zapis')
+  expect(screen.queryByRole('note')).not.toBeInTheDocument()
+  window.history.replaceState(null, '', '/')
 })

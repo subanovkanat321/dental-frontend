@@ -1,18 +1,46 @@
-/* «Помощь → Видео: как сделать»: сетка обложек 9:16 и плеер на весь экран */
-.howto-grid { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); max-width: 980px; }
-.howto-tile { display: flex; flex-direction: column; gap: 8px; width: 100%; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; color: var(--text); font: inherit; }
-.howto-tile img, .howto-noposter { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; border-radius: var(--r-lg); background: var(--sunken); object-fit: cover;
-  border: 1px solid var(--line); }
+/* «Помощь → Видео: как сделать»: поиск и разделы, группы карточек 9:16 (длительность, «✓ Просмотрено») и просмотрщик на весь экран */
+.howto-tools { display: grid; gap: 8px; margin: 8px 0 4px; max-width: 980px; }
+.howto-tools .book-search { max-width: 520px; min-height: 36px; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--card); color: var(--text); font: inherit; }
+.howto-tools .segments { justify-self: start; flex-wrap: wrap; }
+.howto-tools .segments-select { max-width: 520px; }
+.howto-groups { display: flex; flex-wrap: wrap; gap: 20px 32px; margin-top: 16px; max-width: 1180px; }
+.howto-group { min-width: 0; flex: 0 1 auto; max-width: 100%; }
+.howto-group h2 { margin: 0 0 8px; font: 600 1.05rem/1.3 var(--display); }
+.howto-grid { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 14px; }
+.howto-grid > li { width: 150px; }
+.howto-tile { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; color: var(--text); font: inherit; }
+.howto-cover { position: relative; display: block; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--line); background: var(--sunken); }
+.howto-cover img, .howto-noposter { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; object-fit: cover; }
 .howto-noposter { display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
-.howto-tile:hover img, .howto-tile:focus-visible img { border-color: var(--primary); }
-.howto-title { font-weight: 600; line-height: 1.3; }
+.howto-play { position: absolute; left: 50%; top: 50%; translate: -50% -50%; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(15, 42, 48, .62); color: #fff; font-size: 1rem; padding-left: 3px; }
+.howto-time, .howto-seen { position: absolute; bottom: 8px; padding: 2px 7px; border-radius: 6px; font-size: .78rem; font-weight: 600; }
+.howto-time { right: 8px; background: rgba(15, 42, 48, .72); color: #fff; }
+.howto-seen { left: 8px; top: 8px; bottom: auto; background: var(--ok-bg); color: var(--ok-ink); } /* сверху: снизу справа — длительность */
+.howto-tile:hover .howto-cover, .howto-tile:focus-visible .howto-cover { border-color: var(--primary, var(--accent)); }
+.howto-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-lg); }
+.howto-title { margin-top: 4px; font-weight: 600; line-height: 1.3; }
+.howto-lead { font-size: .82rem; line-height: 1.35; }
 .howto-player { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; background: #000; color: #fff;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 .howto-player-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; }
+.howto-player-title { display: grid; gap: 2px; }
+.howto-player-title span { font-size: .8rem; opacity: .75; }
 .howto-player-head .btn { color: #fff; font-size: 1.25rem; }
 .howto-player video { flex: 1; min-height: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+.howto-player-foot { display: flex; justify-content: center; padding: 10px 12px 14px; font-size: .9rem; opacity: .85; }
+.howto-player-foot .btn { min-height: 44px; }
+.howto-player-foot.ended .btn { box-shadow: 0 0 0 3px rgba(255, 255, 255, .35); }
+.howto-next-title { font-weight: 400; opacity: .9; }
 @media (min-width: 900px) {
   .howto-player { background: rgba(0, 0, 0, .88); align-items: center; }
-  .howto-player-head { width: min(100%, 520px); }
+  .howto-player-head, .howto-player-foot { width: min(100%, 520px); }
   .howto-player video { width: auto; max-width: 100%; aspect-ratio: 9 / 16; }
+}
+@media (max-width: 760px) {
+  .howto-tools .book-search { max-width: none; min-height: 44px; font-size: max(16px, 1rem); }
+  .howto-groups { display: grid; gap: 18px; }
+  .howto-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .howto-grid > li { width: auto; }
 }

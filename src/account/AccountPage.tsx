@@ -22,7 +22,7 @@ export function AccountPage({ me, initialTab, initialTicket, initialHelp, only, 
   me: Me
   initialTab?: string
   initialTicket?: number
-  /** Сразу открыть чат «💬 Помощь» (в «Техподдержке»). */
+  /** Сразу открыть чат «💬 Помощь» (старые ссылки #/help/chat). */
   initialHelp?: boolean
   only?: Tab
   title?: string
@@ -32,7 +32,7 @@ export function AccountPage({ me, initialTab, initialTicket, initialHelp, only, 
   const tabs: [Tab, string][] = [
     ...(me.admin ? [['plan', 'Тариф и оплата'], ['agreement', 'Договор с Tish']] as [Tab, string][] : []),
     ...(me.admin || seesAll ? [['data', 'Импорт, выгрузка, журнал']] as [Tab, string][] : []),
-    ['support', 'Техподдержка'], ['privacy', 'Конфиденциальность'],
+    ['support', 'Написать в Tish'], ['privacy', 'Конфиденциальность'],
   ]
   const [chosen, setTab] = useState<Tab>(tabs.find(([key]) => key === initialTab)?.[0] ?? tabs[0]![0])
   const tab = only ?? chosen
