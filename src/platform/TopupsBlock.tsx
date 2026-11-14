@@ -1,3 +1,4 @@
+import { EmptyState } from '../layout/EmptyState'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
@@ -36,9 +37,11 @@ export function TopupsBlock({ f, single }: { f: Finance; single: boolean }) {
         <h2>Балансы ИИ и SMS</h2>
         {!adding && <button type="button" className="btn primary small" onClick={() => { setAdding(true); setEditing(null) }}>＋ Пополнение</button>}
       </div>
-      <div className="fin-balances">
-        {balances.map((b) => <BalanceCard key={b.service} b={b} scope={scope} />)}
-      </div>
+      {balances.length > 0 ? (
+        <div className="fin-balances">
+          {balances.map((b) => <BalanceCard key={b.service} b={b} scope={scope} />)}
+        </div>
+      ) : !adding && <EmptyState compact title="Пополнений ещё не было">Отправили деньги Anthropic или SMS-провайдеру — «＋ Пополнение».</EmptyState>}
       {adding && <TopupForm rate={f.settings?.lastUsdRate} onDone={() => setAdding(false)} />}
       {topups.length > 0 && (
         <>

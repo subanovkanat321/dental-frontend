@@ -15,6 +15,8 @@ import { SubHelp } from '../layout/PageHead'
 import { rowOpen } from '../lib/rowClick'
 import { ALL, cityChips, cityKey, nameMatches, UNSIGNED, useClinicFilter } from './clinicFilter'
 import { NewClinicPanel } from './NewClinicPanel'
+import { EmptyState } from '../layout/EmptyState'
+import { HelpHint } from '../help/HelpHint'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PlatformServiceClinicRow']
@@ -107,10 +109,6 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
     <>
       <section className="schedule-main">
         {header}
-        {/* Главное действие раздела — первым (владелец, 2026-11-13): «сначала Создать клинику, потом клиники» */}
-        <div className="actions">
-          <button type="button" className="btn primary" aria-pressed={creating} onClick={() => setCreating(true)}>＋ Создать клинику</button>
-        </div>
         {pending.length > 0 && (
           <section className="card-block">
             <h2>Оплаты на проверке · {pending.length}</h2>
@@ -126,9 +124,17 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
         {/* Что здесь — в «?» у заголовка, а не абзацем над списком */}
         <SubHelp title="Клиники">{owner ? 'Все клиники приложения. Нажмите на клинику: оплата, договор, пригласить её руководителя или войти в неё самому.'
             : 'Все клиники приложения — только цифры, без пациентов. Нажмите на клинику, чтобы пригласить её руководителя.'}</SubHelp>
-        <section className="card-block">
+        <section className="card-block" aria-label="Клиники">
+          {/* Главное действие раздела — в шапке списка, справа (владелец, 2026-11-13: «сначала Создать клинику»);
+              отдельной строкой над карточками кнопка висела одна */}
+          <div className="block-head">
+            <h2>Клиники{all.length > 0 && <span className="hint num"> · {all.filter((c) => !c.hidden).length}</span>}</h2>
+            <button type="button" className="btn primary" aria-pressed={creating} onClick={() => setCreating(true)}>＋ Создать клинику</button>
+          </div>
           {list.error && <p className="error">{list.error.message}</p>}
-          {list.isPending ? <Loading /> : list.error ? null : (
+          {list.isPending ? <Loading /> : list.error ? null : all.length === 0 ? (
+            <EmptyState compact title="Клиник пока нет">Создайте первую или одобрите заявку с /join.</EmptyState>
+          ) : (
             <>
               {/* Город — по полю города клиники, с количеством; на телефоне ряд листается вбок */}
               <div className="service-filter">
@@ -170,9 +176,8 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
           )}
         </section>
         <SalesFunnel />
-        <section className="card-block">
-          <h2>Страница для клиник</h2>
-          <p className="hint">Отправьте клинике — там рассказано, что умеет приложение, и форма заявки. Заявки появятся здесь, наверху.</p>
+        <section className="card-block" aria-label="Страница для клиник">
+          <h2>Страница для клиник<HelpHint title="Страница для клиник">Отправьте клинике — там рассказано, что умеет приложение, и форма заявки. Заявки появятся здесь, наверху.</HelpHint></h2>
           <a className="invite-link" href={`${window.location.origin}/join`} target="_blank" rel="noopener noreferrer">{window.location.origin}/join</a>
         </section>
       </section>

@@ -77,7 +77,7 @@ export function Donut({ parts, label, format = String, center, caption, empty = 
           {litIndex >= 0 ? (
             <><b className="num">{shares[litIndex]}%</b><span>{shown[litIndex]!.name}</span></>
           ) : (
-            <><b className={`num${(center ?? format(total)).length > 9 ? ' long' : ''}`}>{center ?? format(total)}</b>{caption && <span>{caption}</span>}</>
+            <><b className={`num${(center ?? format(total)).length > 8 ? ' long' : ''}`}>{center ?? format(total)}</b>{caption && <span>{caption}</span>}</>
           )}
         </div>
       </div>

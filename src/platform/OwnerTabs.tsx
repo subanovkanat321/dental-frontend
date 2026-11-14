@@ -32,8 +32,9 @@ export function TicketsTab({ header, onPanel }: { header: ReactNode; onPanel: (o
     <>
       <section className="schedule-main">
         {header}
-        {list.error && <p className="error">{list.error.message}</p>}
-        {list.isPending ? <Loading /> : list.data?.length ? (
+        {/* Ошибка — в карточке и без «Обращений пока нет» под ней: пусто ли, неизвестно */}
+        {list.error && <section className="card-block"><p className="error" role="alert">Обращения не загрузились: {list.error.message}</p></section>}
+        {list.isPending ? <Loading /> : list.error ? null : list.data?.length ? (
           <section className="card-block">
             {/* Итог — в карточке над таблицей, а не одной строкой-шапкой над ней; нет обращений — его и не нужно */}
             <p className={open ? 'tone-wait strong' : 'hint'}>{open ? `Ждут ответа: ${open}` : 'Все обращения отвечены.'}</p>
@@ -89,11 +90,13 @@ export function BroadcastTab() {
   const count = all ? list.length : chosen.size
   return (
     <>
+      <SubHelp title="Сообщение клиникам">Придёт в бот руководителям клиник с подписью «Сообщение от команды Tish»: плановые работы, новое в приложении, тарифы.
+        Отменить рассылку нельзя. Не пишите сюда данные пациентов.</SubHelp>
       <section className="card-block">
+        {clinics.error && <p className="error" role="alert">Клиники не загрузились: {clinics.error.message}</p>}
         <form className="form narrow" aria-label="Сообщение клиникам"
           onSubmit={(e) => { e.preventDefault(); void ask(`Отправить руководителям клиник (${count})? Отменить нельзя.`, { ok: 'Отправить' }).then((ok) => ok && send.mutate()) }}>
-          <p className="hint small">Придёт в бот руководителям клиник с подписью «Сообщение от команды Tish». Не пишите сюда данные пациентов.</p>
-          <label className="field"><span>Текст · {text.length} / 2000</span>
+          <label className="field"><span>Текст — без данных пациентов · <span className="num">{text.length} / 2000</span></span>
             <textarea rows={6} maxLength={2000} required value={text} placeholder="Например: в субботу с 23:00 до 23:30 — плановые работы, приложение может не открываться"
               onChange={(e) => { send.reset(); setText(e.target.value) }} /></label>
           <div className="segments" role="group" aria-label="Кому">
@@ -110,6 +113,7 @@ export function BroadcastTab() {
           <button type="submit" className="btn primary" disabled={send.isPending || !text.trim() || !count}>Отправить руководителям</button>
         </form>
       </section>
+      {history.error && <section className="card-block"><p className="error" role="alert">Отправленные не загрузились: {history.error.message}</p></section>}
       {(history.data?.length ?? 0) > 0 && (
         <section className="card-block">
           <h2>Отправленные</h2>
@@ -118,7 +122,7 @@ export function BroadcastTab() {
               {history.data!.map((b) => (
                 <tr key={b.id}>
                   <td>{(b.text ?? '').length > 120 ? `${b.text!.slice(0, 120)}…` : b.text}</td>
-                  <td className="hint nowrap">{b.sentAt ? shortDate(b.sentAt, true) : ''} · клиник {b.clinics} · дошло {b.delivered} из {b.recipients}</td>
+                  <td className="hint nowrap">{b.sentAt ? shortDate(b.sentAt, true) : ''} · клиник: {b.clinics} · дошло руководителям: {b.delivered} из {b.recipients}</td>
                 </tr>
               ))}
             </tbody>
@@ -166,8 +170,16 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
             {start.error ? <span className="error">{start.error.message}</span> : 'Начните с готового шаблона: поправьте текст, покажите юристу и опубликуйте.'}
           </EmptyState>
         ) : (
-        <section className="card-block">
-          {list.error && <p className="error">{list.error.message}</p>}
+        <section className="card-block" aria-label="Версии договора">
+          {/* Новая версия — в шапке списка, справа, а не кнопкой под таблицей */}
+          {versions.length > 0 && (
+            <div className="block-head">
+              <h2>Версии <span className="hint num">· {versions.length}</span></h2>
+              {!draft && <button type="button" className="btn primary" disabled={start.isPending} onClick={() => start.mutate()}>Новая версия (из действующей)</button>}
+            </div>
+          )}
+          {list.error && <p className="error" role="alert">Договор не загрузился: {list.error.message}</p>}
+          {list.isPending && <Loading />}
           {versions.length > 0 && (
             <table className="table" aria-label="Версии договора">
               <tbody>
@@ -181,10 +193,6 @@ export function AgreementsTab({ header, onPanel }: { header: ReactNode; onPanel:
             </table>
           )}
           {start.error && <p className="error">{start.error.message}</p>}
-          {!draft && !list.isPending && (
-            <button type="button" className="btn primary" disabled={start.isPending} onClick={() => start.mutate()}>
-              {versions.length ? 'Новая версия (из действующей)' : 'Начать с шаблона'}</button>
-          )}
         </section>
         )}
       </section>

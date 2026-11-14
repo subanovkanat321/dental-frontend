@@ -66,9 +66,9 @@ test('владелец: аналитика платформы — сводка, 
   expect(tiles[5]).toHaveTextContent('MRR — платящие2 490 сомв месяц сейчас')
   expect(tiles[6]).toHaveTextContent('После пилота1 500 сомв месяц по тарифу')
   expect(tiles[7]).toHaveTextContent('▲ 20% · за прошлые 30 дней: 100')
-  // Пояснение «кому звонить» — одной строкой и в «?», не абзацем
   const due = screen.getByRole('region', { name: 'Кому звонить про оплату' })
-  expect(due).toHaveTextContent('Пилот или оплата кончаются в 30 дней или уже прошли')
+  // Пояснение — в «?» у заголовка, а не строкой над таблицей
+  expect(due).not.toHaveTextContent('Пилот или оплата кончаются')
   expect(within(due).getByRole('button', { name: 'Подсказка: Кому звонить про оплату' })).toBeInTheDocument()
   expect(screen.getByRole('combobox', { name: 'Город' })).toBeInTheDocument()
   expect(within(screen.getByRole('table', { name: 'Оплата: кому звонить' })).getByText('Жемчуг')).toBeInTheDocument()

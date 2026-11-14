@@ -1,3 +1,6 @@
+import { HelpHint } from '../help/HelpHint'
+import { EmptyState } from '../layout/EmptyState'
+import { rowOpen } from '../lib/rowClick'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 
@@ -45,10 +48,16 @@ export function AiUsageTab() {
         {report.error && <p className="error" role="alert">{report.error.message}</p>}
         {report.isPending ? <Loading /> : r && (
           <>
-            <p className="strong">Всего: <span className="num">{usdText(r.usd ?? 0)}</span> · <span className="num">{somText(r.som)}</span>
-              <span className="hint"> · {r.actions} запросов к ИИ</span></p>
-            <p className="hint small">В сомах — по курсу {r.settings?.somPerUsd} сом за $1 и с НДС {r.settings?.vatPercent}%.
-              {(r.platformUsd ?? 0) > 0 && ` Помощник техподдержки платформы: ${usdText(r.platformUsd ?? 0)}.`}</p>
+            {/* Итог месяца — плитками, как «Аналитика» и «Финансы»; курс и НДС — в «?» */}
+            {/* Четыре плитки — ровная сетка 2×2 и на телефоне (три в ряд на 390px обрезали «1 500 сом») */}
+            <ul className="survey-tiles tile-grid ai-tiles" aria-label="Итог месяца">
+              <li className="survey-tile"><span className="hint">Расход</span><b className="num" aria-label="Расход в долларах">{usdText(r.usd ?? 0)}</b></li>
+              <li className="survey-tile"><span className="hint">В сомах<HelpHint title="В сомах">По курсу {r.settings?.somPerUsd} сом за $1 и с НДС {r.settings?.vatPercent}% — курс и НДС меняются внизу, в «Настройках расчёта».</HelpHint></span>
+                <b className="num" aria-label="Расход в сомах">{somText(r.som)}</b></li>
+              <li className="survey-tile"><span className="hint">Запросов к ИИ</span><b className="num" aria-label="Запросов к ИИ">{r.actions}</b></li>
+              <li className="survey-tile"><span className="hint">Помощник поддержки<HelpHint title="Помощник поддержки">Ответы помощника в «Помощи» — расход платформы, в лимиты клиник не входит, в «Расход» — входит.</HelpHint></span>
+                <b className="num" aria-label="Помощник поддержки">{usdText(r.platformUsd ?? 0)}</b></li>
+            </ul>
           </>
         )}
       </section>
@@ -75,17 +84,18 @@ export function AiUsageTab() {
 function ClinicsTable({ rows }: { rows: ClinicRow[] }) {
   const [editing, setEditing] = useState<number | null>(null)
   return (
-    <section className="card-block">
-      <h2>По клиникам</h2>
-      <p className="hint small">Действия — удачные запросы к ИИ клиники (без помощника техподдержки); они идут в месячный лимит.
-        Тариф — сколько клиника платит в месяц, чтобы видеть маржу.</p>
+    <section className="card-block" aria-label="По клиникам">
+      <h2>По клиникам<HelpHint title="По клиникам">Действия — удачные запросы к ИИ клиники (без помощника техподдержки); они идут в месячный лимит.
+        Тариф — сколько клиника платит в месяц, чтобы видеть маржу. Нажмите на клинику — поменять ей лимит.</HelpHint></h2>
+      {rows.length === 0 ? <EmptyState compact title="В этом месяце ИИ не пользовались" /> : (
       <div className="table-scroll">
         <table className="table" aria-label="Расход ИИ по клиникам">
           <thead><tr><th>Клиника</th><th className="r">Действий / лимит</th><th className="r">Токены (вход / выход)</th>
             <th className="r">$</th><th className="r">Сом</th><th className="r">Тариф в месяц</th><th /></tr></thead>
           <tbody>
             {rows.map((c) => (
-              <tr key={c.clinicId}>
+              // Вся строка — «Изменить лимит» (кроме строки с открытой формой)
+              <tr key={c.clinicId} {...rowOpen(editing !== c.clinicId && (() => setEditing(c.clinicId)))}>
                 <td>{c.name}{c.errors > 0 && <span className="hint small"> · ошибок {c.errors}</span>}</td>
                 <td className="r num">{c.used} / {c.limit}{c.customLimit != null && <span className="hint"> (свой)</span>}</td>
                 <td className="r num">{tokensText(c.inputTokens)} / {tokensText(c.outputTokens)}</td>
@@ -100,6 +110,7 @@ function ClinicsTable({ rows }: { rows: ClinicRow[] }) {
           </tbody>
         </table>
       </div>
+      )}
     </section>
   )
 }

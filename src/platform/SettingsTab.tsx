@@ -1,3 +1,4 @@
+import { HelpHint } from '../help/HelpHint'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
 import { useState, type FormEvent } from 'react'
@@ -74,9 +75,8 @@ function InfoForm({ info }: { info: Info }) {
   const err = (k: string) => save.error?.fieldErrors[k]
   return (
     <section className="card-block">
-      <h2>Сведения о платформе</h2>
+      <h2>Сведения о платформе<HelpHint title="Сведения о платформе">Это видят все сотрудники клиник в «Помощи»: «Конфиденциальность» и «Написать в Tish». Пустое поле — «уточняется».</HelpHint></h2>
       <form className="form narrow" aria-label="Сведения о платформе" onSubmit={submit}>
-        <p className="hint">Это видят все сотрудники клиник: в «Помощи»: «Конфиденциальность» и «Написать в Tish». Пустое поле — «уточняется».</p>
         {FIELDS.map(([key, label, placeholder]) => (
           <div key={key} className="field">
             <label className="field"><span>{label}</span>
@@ -117,9 +117,8 @@ function AccessToggles({ info }: { info: Info }) {
   )
   return (
     <section className="card-block">
-      <h2>Ваши входы в клиники</h2>
+      <h2>Ваши входы в клиники<HelpHint title="Ваши входы в клиники">По договору (п. 3.6) клиника знает о каждом вашем входе. На пилоте можно выключить — включите, когда подключаете другие клиники.</HelpHint></h2>
       <div className="form narrow">
-        <p className="hint">По договору (п. 3.6) клиника знает о каждом вашем входе. На пилоте можно выключить — включите, когда подключаете другие клиники.</p>
         {box('log', 'Записывать мои входы в клиники — руководитель видит журнал в «Помощь → Конфиденциальность»')}
         {box('alert', 'Сообщать руководителям клиники в бот о каждом моём входе')}
         {box('grant', 'Входить только по разрешению клиники — без него только аварийный вход (всегда в журнал и с сообщением). Клиника №1 — без разрешения')}
@@ -134,7 +133,8 @@ function PaySettingsBox() {
   const st = useQuery({ queryKey: ['platform-pay-settings'], queryFn: () => unwrap(api.GET('/api/platform/pay-settings')) })
   return (
     <section className="card-block">
-      <h2>Оплата для клиник</h2>
+      <h2>Оплата для клиник<HelpHint title="Оплата для клиник">Это видят руководители клиник в «Тариф и оплата → Оплатить». После перевода они жмут «Я оплатил» — вам придёт сообщение
+        в бот, подтвердите в «Клиниках».</HelpHint></h2>
       {st.isPending ? <Loading /> : st.error ? <p className="error">{st.error.message}</p> : <PayForm st={st.data} />}
     </section>
   )
@@ -169,8 +169,6 @@ function PayForm({ st }: { st: PaySettings }) {
   const error = addQr.error ?? dropQr.error
   return (
     <div className="form narrow">
-      <p className="hint">Это видят руководители клиник в «Тариф и оплата → Оплатить». После перевода они жмут «Я оплатил» — вам придёт сообщение
-        в бот, подтвердите в «Клиниках».</p>
       <label className="field"><span>Как перевести (номер, банк, получатель)</span>
         <textarea rows={3} maxLength={1000} value={details} placeholder={'MBank: 0555 123 456 (Иван И.)\nЭлсом: 0700 123 456'} onChange={(e) => { save.reset(); setDetails(e.target.value) }} /></label>
       <label className="field"><span>Реквизиты для счёта PDF (ИНН, банк, счёт)</span>
@@ -205,19 +203,20 @@ function Managers() {
   })
   return (
     <section className="card-block">
-      <h2>Менеджеры платформы</h2>
-      <p className="hint">Менеджер видит клиники и их цифры, заводит клиники и приглашает их руководителей. Пациентов и медкарт не видит.</p>
+      <h2>Менеджеры платформы<HelpHint title="Менеджеры платформы">Менеджер видит клиники и их цифры, заводит клиники и приглашает их руководителей. Пациентов и медкарт не видит.</HelpHint></h2>
+      {list.error && <p className="error" role="alert">Менеджеры не загрузились: {list.error.message}</p>}
+      {/* Имя и «Убрать» — одной строкой (таблица на телефоне клала кнопку отдельной строкой под имя) */}
       {list.data?.length ? (
-        <table className="table" aria-label="Менеджеры">
-          <tbody>{list.data.map((m) => (
-            <tr key={m.telegramId}>
-              <td className="strong">{m.fullName || `Telegram ${m.telegramId}`}</td>
-              <td className="r"><button type="button" className="btn small ghost" disabled={remove.isPending}
-                onClick={() => void ask(`Убрать менеджера «${m.fullName ?? m.telegramId}»?`).then((ok) => ok && remove.mutate(m.telegramId))}>Убрать</button></td>
-            </tr>
-          ))}</tbody>
-        </table>
-      ) : list.isPending ? <Loading /> : <EmptyState compact title="Пока никого" />}
+        <ul className="materials-list" aria-label="Менеджеры">
+          {list.data.map((m) => (
+            <li key={m.telegramId}>
+              <span className="strong">{m.fullName || `Telegram ${m.telegramId}`}</span>
+              <button type="button" className="btn small" data-tone="bad" disabled={remove.isPending}
+                onClick={() => void ask(`Убрать менеджера «${m.fullName ?? m.telegramId}»?`).then((ok) => ok && remove.mutate(m.telegramId))}>Убрать</button>
+            </li>
+          ))}
+        </ul>
+      ) : list.isPending ? <Loading /> : !list.error && <EmptyState compact title="Менеджеров пока нет" />}
       {remove.error && <p className="error">{remove.error.message}</p>}
       {invite.data?.token ? <InviteLink start={`mgr_${invite.data.token}`} name={name.trim()} toWhom="менеджеру" /> : (
         <form className="form narrow" aria-label="Пригласить менеджера" onSubmit={(e) => { e.preventDefault(); invite.mutate() }}>
@@ -248,7 +247,8 @@ function TariffsBox() {
           </div>
         ))}
       </div>
-      <p className="hint">Новым клиникам — {t.data.pilotMonths} мес. бесплатно. Срок наружу не показываем: на сайте — «Попробуйте бесплатно», свою дату конца пилота клиника видит в «Тарифе и оплате».</p>
+      <p className="hint">{t.data.pilotMonths ? <>Новым клиникам — <span className="num">{t.data.pilotMonths}</span> мес. бесплатно.</> : 'Бесплатного пилота нет.'} Цены меняются во вкладке «Тарифы».
+        <HelpHint title="Пилот">Срок пилота наружу не показываем: на сайте — «Попробуйте бесплатно», свою дату конца пилота клиника видит в «Тарифе и оплате».</HelpHint></p>
     </section>
   )
 }

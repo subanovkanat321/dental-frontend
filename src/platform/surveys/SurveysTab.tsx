@@ -51,10 +51,12 @@ export function SurveysTab() {
     <section className="card-block" aria-label="Опросы сотрудников">
       <SubHelp title="Опросы сотрудников">Спросите врачей, руководителей, регистратуру и ассистентов, что им удобно и чего не хватает. Сотрудник видит приглашение на «Расписании»
           и отвечает один раз; итоги — по ролям и клиникам, без данных пациентов.</SubHelp>
+      {/* Есть опросы — действия в шапке списка, справа (а не под таблицей) */}
+      {(surveys.length > 0 || list.error) && <div className="block-head"><h2>Опросы <span className="hint num">· {surveys.length}</span></h2>{buttons}</div>}
       {list.error && <p className="error">{list.error.message}</p>}
       {list.isPending ? <Loading /> : surveys.length ? (
         <table className="table" aria-label="Опросы">
-          <thead><tr><th>Опрос</th><th>Кому</th><th>Статус</th><th>Ответов</th><th>Создан</th></tr></thead>
+          <thead><tr><th>Опрос</th><th>Кому</th><th>Статус</th><th className="r">Ответов</th><th>Создан</th></tr></thead>
           <tbody>
             {surveys.map((s) => {
               const [status, cls] = STATUS[s.status ?? 'DRAFT']
@@ -63,7 +65,7 @@ export function SurveysTab() {
                   <td><button type="button" className="row-link" onClick={() => setOpened(s.id)}>{s.title}</button></td>
                   <td>{rolesText(s.roles)}</td>
                   <td><span className={`chip small ${cls}`}>{status}</span></td>
-                  <td className="num">{s.responses}</td>
+                  <td className="r num">{s.responses}</td>
                   <td className="hint nowrap">{s.createdAt ? shortDate(s.createdAt) : ''}</td>
                 </tr>
               )
@@ -73,7 +75,7 @@ export function SurveysTab() {
       ) : null}
       {create.error && <p className="error" role="alert">{create.error.message}</p>}
       {/* Опросов нет — кнопки создания под фразой пустого состояния, по центру, а не отдельно у левого края */}
-      {list.isPending ? null : surveys.length || list.error ? buttons : (
+      {list.isPending || surveys.length || list.error ? null : (
         <EmptyState title="Опросов пока нет" action={buttons}>Начните с готового «Как вам Tish?» — 7 вопросов, его можно поправить.</EmptyState>
       )}
     </section>

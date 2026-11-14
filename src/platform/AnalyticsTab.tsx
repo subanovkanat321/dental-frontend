@@ -170,7 +170,6 @@ function DueBlock({ a }: { a: Analytics }) {
     ...due.map((d) => [d.name ?? '', d.city ?? '', DUE[d.kind ?? '']?.[0] ?? '', d.date ?? '', d.tariff ?? '', d.monthSom, d.appointments])])
   return (
     <Block title="Кому звонить про оплату" label="Кому звонить про оплату" csv={due.length ? csv : undefined}
-      hint={due.length ? 'Пилот или оплата кончаются в 30 дней или уже прошли' : undefined}
       help="Пилот или оплата заканчиваются в ближайшие 30 дней, или срок уже прошёл. Пилот без даты — по акции с подключения.">
       {due.length ? (
         <div className="table-scroll">
@@ -205,17 +204,17 @@ function RiskBlock({ a }: { a: Analytics }) {
     ...risks.map((r) => [r.name ?? '', r.city ?? '', PLAN[r.plan ?? ''] ?? '', r.last14, r.prev14, (r.reasons ?? []).map((x) => x.text).join('; ')])])
   return (
     <Block title="Кто может уйти" label="Риск ухода" csv={risks.length ? csv : undefined}
-      hint="Клиники старше двух недель: не заходят неделю, не было приёмов, приёмов заметно меньше, чем две недели назад.">
+      help="Клиники старше двух недель: не заходят неделю, не было приёмов, приёмов заметно меньше, чем две недели назад.">
       {risks.length ? (
         <div className="table-scroll">
           <table className="table" aria-label="Клиники в зоне риска">
-            <thead><tr><th>Клиника</th><th>Почему</th><th>Приёмов: 2 нед. / до</th></tr></thead>
+            <thead><tr><th>Клиника</th><th>Почему</th><th className="r" title="Приёмов за последние 14 дней / за 14 дней до них">Приёмов: 14 дн. / прежние 14</th></tr></thead>
             <tbody>
               {risks.map((r) => (
                 <tr key={r.clinicId}>
                   <td>{r.name}<span className="hint"> · {r.city} · {PLAN[r.plan ?? '']}</span></td>
                   <td className="tone-bad">{(r.reasons ?? []).map((x) => x.text).join('; ')}</td>
-                  <td className="num nowrap">{r.last14} / {r.prev14}</td>
+                  <td className="r num nowrap">{r.last14} / {r.prev14}</td>
                 </tr>
               ))}
             </tbody>
@@ -233,8 +232,8 @@ function FunnelBlock({ a, period }: { a: Analytics; period: string }) {
   const first = steps[0]?.clinics ?? 0
   return (
     <Block title="Где теряем новые клиники" label="Воронка клиник"
-      hint={<>Заявок с сайта {period}: <b>{apps.total ?? 0}</b> — одобрено {apps.approved ?? 0}, отклонено {apps.rejected ?? 0}, ждут {apps.waiting ?? 0}.
-        Ниже — клиники, заведённые {period}; поздние шаги набираются со временем — смотрите период длиннее.</>}>
+      hint={<>Заявок с сайта {period}: <b className="num">{apps.total ?? 0}</b> — одобрено {apps.approved ?? 0}, отклонено {apps.rejected ?? 0}, ждут {apps.waiting ?? 0}.</>}
+      help={`Полосы — клиники, заведённые ${period}, и до какого шага они дошли. Поздние шаги набираются со временем — смотрите период длиннее.`}>
       {first ? (
         <ul className="hbars" aria-label="Шаги воронки">
           {steps.map((step, i) => {
@@ -260,7 +259,7 @@ function GeoBlock({ a, period }: { a: Analytics; period: string }) {
     ...rows.map((r) => [r.city ?? '', r.clinics, r.working, r.paying, r.patients, r.applications])])
   return (
     <Block title="Города" label="Клиники по городам" csv={csv}
-      hint="Все города, без фильтра. Заявки из города без клиник — спрос, куда идти дальше.">
+      help="Все города, без фильтра. Заявки из города без клиник — спрос, куда идти дальше.">
       <div className="table-scroll">
         <table className="table" aria-label="Клиники по городам">
           <thead><tr><th>Город</th><th>Клиник</th><th>Работают</th><th>Платят</th><th>Пациентов</th><th>Заявок {period}</th></tr></thead>
@@ -288,7 +287,7 @@ function MoneyBlock({ a }: { a: Analytics }) {
     ...months.map((x) => [x.month ?? '', x.paidSom, x.payments, x.mrrSom])])
   return (
     <Block title="Деньги по месяцам" label="Оплаты по месяцам" csv={csv}
-      hint="Столбик — сколько клиники заплатили в месяце. MRR — сколько в месяц приносят оплаты, срок которых идёт: годовая оплата — 1/12 в каждый месяц.">
+      help="Столбик — сколько клиники заплатили в месяце. MRR — сколько в месяц приносят оплаты, срок которых идёт: годовая оплата — 1/12 в каждый месяц.">
       {!months.some((x) => x.paidSom) ? <EmptyState compact title="Оплат за год ещё не было" /> : <>
       <div className="vbars" role="img" aria-label={months.map((x) => `${longMonth(x.month ?? '')}: ${somText(x.paidSom)}`).join('; ')}>
         {months.map((x, k) => (
@@ -316,7 +315,7 @@ function CohortBlock({ a }: { a: Analytics }) {
     ...rows.map((r) => [r.month ?? '', r.clinics, ...[0, 1, 2].map((k) => cell(r.after?.[k]))])])
   return (
     <Block title="Держатся ли клиники" label="Когорты клиник" csv={csv}
-      hint="Месяц подключения и доля клиник, у которых были приёмы через 1, 2 и 3 месяца. «—» — ещё не дожили.">
+      help="Месяц подключения и доля клиник, у которых были приёмы через 1, 2 и 3 месяца. «—» — ещё не дожили.">
       <div className="table-scroll">
         <table className="table" aria-label="Когорты по месяцу подключения">
           <thead><tr><th>Подключились</th><th>Клиник</th><th>Через 1 мес</th><th>Через 2 мес</th><th>Через 3 мес</th></tr></thead>
@@ -341,7 +340,8 @@ function FeaturesBlock({ a, period }: { a: Analytics; period: string }) {
   const items = [...(f.items ?? [])].sort((x, y) => y.clinics - x.clinics)
   return (
     <Block title="Чем пользуются" label="Использование функций"
-      hint={!active ? 'Какие функции включают клиники, у которых были приёмы.' : <>Из {active} клиник с приёмами {period}. Пациенты записались сами (бот и сайт): <b>{pct(f.selfBooked ?? 0, f.appointments ?? 0)}</b> приёмов.{f.aiBooked ? <> ИИ записал: <b>{f.aiBooked}</b>.</> : null}</>}>
+      help="Какие функции включают клиники, у которых были приёмы за период."
+      hint={!active ? undefined : <>Из {active} клиник с приёмами {period}. Пациенты записались сами (бот и сайт): <b>{pct(f.selfBooked ?? 0, f.appointments ?? 0)}</b> приёмов.{f.aiBooked ? <> ИИ записал: <b>{f.aiBooked}</b>.</> : null}</>}>
       {active ? (
         <ul className="hbars" aria-label="Функции">
           {items.map((x) => (
@@ -364,7 +364,7 @@ function PatientsBlock({ a, period }: { a: Analytics; period: string }) {
   const visits = (p.done ?? 0) + (p.noShow ?? 0)
   return (
     <Block title="Пациенты платформы" label="Пациенты платформы"
-      hint="Только числа — без имён и телефонов.">
+      help="Только числа — без имён и телефонов.">
       <ul className="survey-tiles tile-grid three" aria-label="Пациенты: числа">
         <Tile title="Пациентов" value={p.total ?? 0} />
         <Tile title="Подключили бота" value={pct(p.withBot ?? 0, p.total ?? 0)} note={`${p.withBot ?? 0}`} />

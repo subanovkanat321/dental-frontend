@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 
 import { ErrorBoundary } from './ErrorBoundary'
 import { waitForSlow } from '../test/wait'
@@ -49,5 +49,20 @@ test('упал экран — отчёт владельцу: текст ошиб
   expect(bodies[0]!.message).toBe('Error: карточка сломалась')
   expect(bodies[0]!.stack).toContain('in Card')
   expect(JSON.stringify(bodies)).not.toContain('0555')
+  quiet.mockRestore()
+})
+
+test('сменили подраздел (адрес #/…) — упавший экран не держит соседний', () => {
+  const quiet = vi.spyOn(console, 'error').mockImplementation(() => {})
+  let broken = true
+  function Maybe() {
+    if (broken) throw new Error('сломалось')
+    return <p>Соседняя вкладка</p>
+  }
+  render(<ErrorBoundary><Maybe /></ErrorBoundary>)
+  expect(screen.getByRole('alert')).toHaveTextContent('Что-то пошло не так')
+  broken = false
+  act(() => { window.dispatchEvent(new HashChangeEvent('hashchange')) })
+  expect(screen.getByText('Соседняя вкладка')).toBeInTheDocument()
   quiet.mockRestore()
 })

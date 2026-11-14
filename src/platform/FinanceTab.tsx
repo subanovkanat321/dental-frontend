@@ -8,6 +8,7 @@ import { shortDate, somText, todayIn } from '../lib/time'
 import { Segments } from '../layout/Segments'
 import { DateInput } from '../layout/DateInput'
 import { EmptyState } from '../layout/EmptyState'
+import { HelpHint } from '../help/HelpHint'
 import { MonthPicker } from '../layout/MonthPicker'
 import { Loading } from '../layout/Loading'
 import { TopupsBlock } from './TopupsBlock'
@@ -118,18 +119,14 @@ export function FinanceTab() {
             {!single && f.from && f.to && <p className="hint fin-scope" aria-live="polite">{rangeText(f.from, f.to)}{f.to === current ? ' (по текущий месяц)' : ''}</p>}
             <div className="survey-tiles fin-tiles">
               <div className="survey-tile"><span className="hint">Доход</span><b className="num" aria-label={`Доход ${scope}`}>{somText(f.incomeSom)}</b></div>
-              <div className="survey-tile"><span className="hint">Расход</span><b className="num" aria-label={`Расход ${scope}`}>{somText(f.expenseSom)}</b>
-                {pending > 0 && <span className="hint small fin-pending-note">ещё ожидается: <span className="num nowrap">{somText(pending)}</span></span>}</div>
+              <div className="survey-tile"><span className="hint">Расход<HelpHint title="Расход">Расход и прибыль — только оплаченное: «каждый месяц» без отметки «Оплачено» не считается.
+                Пополнения ИИ и SMS в расход не входят — ИИ и SMS считаются по использованию.</HelpHint></span><b className="num" aria-label={`Расход ${scope}`}>{somText(f.expenseSom)}</b>
+                {pending > 0 && <span className="hint small fin-pending-note">ещё ожидается: <span className="num nowrap">{somText(pending)}</span></span>}
+                {(f.topups?.length ?? 0) > 0 && <span className="hint small fin-pending-note">пополнения: <span className="num nowrap">{somText(f.topupSom)}</span> — не в расходе</span>}</div>
               <div className="survey-tile hero"><span className="hint">{f.profitSom < 0 ? 'Убыток' : 'Прибыль'}</span>
                 <b className={`num ${tone(f.profitSom) ?? ''}`.trim()} aria-label={`Прибыль ${scope}`}>{signed(f.profitSom)}</b>
                 {pending > 0 && <span className="hint small fin-pending-note">если оплатить всё ожидаемое: <span className="num nowrap">{signed(f.profitSom - pending)}</span></span>}</div>
             </div>
-            {pending > 0 && <p className="hint small">Расход и прибыль — только оплаченное. «Каждый месяц» без отметки не считается, пока не отметите «Оплачено».</p>}
-            {(f.topups?.length ?? 0) > 0 && (
-              <p className="hint small fin-topup-note">
-                Оплачено пополнениями: <b className="num nowrap">{somText(f.topupSom)}</b> — в расход не входит: ИИ и SMS уже посчитаны в расходе по использованию.
-              </p>
-            )}
           </>
         )}
       </section>
@@ -167,8 +164,8 @@ function DueBlock({ due, current, rate }: { due: Due[]; current: string; rate?: 
   const overdue = due.filter((d) => d.overdue).length
   return (
     <section className="card-block fin-due" aria-label="Ожидаются в этом месяце">
-      <h2>Ожидаются в этом месяце</h2>
-      <p className="hint small">Подписки «каждый месяц». В расход попадут, когда отметите оплату{overdue > 0 ? '; за прошлые месяцы есть неотмеченные' : ''}.</p>
+      <h2>Ожидаются в этом месяце<HelpHint title="Ожидаются в этом месяце">Подписки «каждый месяц». В расход попадут, когда отметите оплату.</HelpHint>
+        {overdue > 0 && <span className="chip small s-wait">есть неотмеченные за прошлые месяцы</span>}</h2>
       {skip.error && <p className="error" role="alert">{skip.error.message}</p>}
       <ul className="fin-entries" aria-label="Ожидаемые оплаты">
         {due.map((d) => (
@@ -319,7 +316,7 @@ function ExpensesBlock({ f, single }: { f: Finance; single: boolean }) {
       <h3>Записи вручную</h3>
       {entries.length === 0 ? (
         <EmptyState compact title={single ? 'В этом месяце ручных расходов нет' : 'За этот период ручных расходов нет'}>
-          Claude, реклама, сервер и домен — «Добавить расход». Пополнения ИИ и SMS — в «Балансах ИИ и SMS» выше. Подписку отметьте «каждый месяц»: каждый месяц напомним, а в расход она попадёт, когда отметите оплату.
+          Сервер, домен, реклама — «Добавить расход»; подписку — «каждый месяц».
         </EmptyState>
       ) : (
         <ul className="fin-entries" aria-label={single ? 'Ручные расходы месяца' : 'Ручные расходы периода'}>
@@ -515,8 +512,7 @@ function IncomeBlock({ f, single }: { f: Finance; single: boolean }) {
   const rows = f.income ?? []
   return (
     <section className="card-block" aria-label="Доходы по клиникам">
-      <h2>Доходы по клиникам</h2>
-      <p className="hint small">Оплаты подписки, отмеченные в «Клиники» → клиника → «Оплата», — по дню оплаты. Считается само.</p>
+      <h2>Доходы по клиникам<HelpHint title="Доходы по клиникам">Оплаты подписки, отмеченные в «Клиники» → клиника → «Оплата», — по дню оплаты. Считается само.</HelpHint></h2>
       {rows.length === 0 ? (
         <EmptyState compact title={single ? 'В этом месяце оплат от клиник не было' : 'За этот период оплат от клиник не было'} />
       ) : (
@@ -594,7 +590,7 @@ function HistoryBlock({ history, month, onPick }: { history: MonthTotal[]; month
   return (
     <section className="card-block chart" aria-label="За 12 месяцев">
       <h2>За 12 месяцев</h2>
-      {empty ? <p className="hint">За год ни доходов, ни расходов — график появится с первой оплатой или расходом.</p> : (
+      {empty ? <EmptyState compact title="За год ни доходов, ни расходов" /> : (
         <>
           <MonthBars rows={history} picked={month} onPick={onPick} />
           {picked && (
@@ -615,7 +611,7 @@ function MonthsBlock({ months, onPick }: { months: MonthTotal[]; onPick: (m: str
   return (
     <section className="card-block chart" aria-label="По месяцам">
       <h2>По месяцам</h2>
-      {empty ? <p className="hint">За период ни доходов, ни расходов.</p> : <MonthBars rows={months} onPick={onPick} />}
+      {empty ? <EmptyState compact title="За период ни доходов, ни расходов" /> : <MonthBars rows={months} onPick={onPick} />}
       <div className="table-scroll">
         <table className="table fin-months" aria-label="Итоги по месяцам">
           <thead><tr><th>Месяц</th><th className="r">Доход</th><th className="r">Расход</th><th className="r">Прибыль</th></tr></thead>

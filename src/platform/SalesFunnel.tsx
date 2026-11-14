@@ -7,6 +7,8 @@ import { phoneFromInput } from '../clinic/phone'
 import { Segments } from '../layout/Segments'
 import { Select } from '../layout/Select'
 import { Loading } from '../layout/Loading'
+import { EmptyState } from '../layout/EmptyState'
+import { HelpHint } from '../help/HelpHint'
 import { formatPhone, shortDate, todayIn } from '../lib/time'
 
 type Lead = Schemas['SalesFunnelLead']
@@ -41,9 +43,17 @@ export function SalesFunnel() {
   const today = todayIn()
   return (
     <section className="card-block" aria-label="Воронка продаж">
-      <h2>Воронка продаж</h2>
+      <div className="block-head">
+        <h2>Воронка продаж<HelpHint title="Воронка продаж">Число у этапа — сколько клиник сейчас на нём; % — сколько лидов дошли до этапа хоть раз.
+          О шагах на сегодня бот напомнит утром.</HelpHint></h2>
+        {!adding && <button type="button" className="btn" onClick={() => setAdding(true)}>＋ В воронку</button>}
+      </div>
+      {adding && <NewLead onDone={() => setAdding(false)} />}
       {funnel.error && <p className="error">{funnel.error.message}</p>}
-      {funnel.isPending ? <Loading /> : data && (
+      {funnel.isPending ? <Loading /> : data && data.total === 0 ? (
+        // Пусто — без переключателя этапов «Все · 0»: одна фраза
+        <EmptyState compact title="В воронке пока никого">Заявки с /join попадут сюда сами.</EmptyState>
+      ) : data && (
         <>
           <Segments className="tabs" label="Этап" value={stage ?? ''} onChange={(key) => setStage(key === '' ? null : key)}
             options={[{ value: '' as Stage | '', label: `Все · ${data.total}` },
@@ -52,12 +62,10 @@ export function SalesFunnel() {
                 label: <>{STAGE_TEXT[s.stage!]} · <b className="num">{s.current}</b>{s.stage !== 'LEAD' && <span className="hint"> {s.conversion}%</span>}</>,
                 text: `${STAGE_TEXT[s.stage!]} · ${s.current}${s.stage !== 'LEAD' ? ` (${s.conversion}%)` : ''}`,
               }))]} />
-          <p className="hint">Число — сколько сейчас на этапе; % — сколько лидов дошли до этапа хоть раз.</p>
-          {(data.leads ?? []).length === 0 ? <p className="hint">Здесь пока никого.</p>
+          {(data.leads ?? []).length === 0 ? <p className="hint">На этом этапе никого.</p>
             : <div role="list" className="funnel-list">{data.leads!.map((l) => <LeadCard key={l.id} lead={l} today={today} />)}</div>}
         </>
       )}
-      {adding ? <NewLead onDone={() => setAdding(false)} /> : <button type="button" className="btn" onClick={() => setAdding(true)}>+ Добавить клинику в воронку</button>}
     </section>
   )
 }

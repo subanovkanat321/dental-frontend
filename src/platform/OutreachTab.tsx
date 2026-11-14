@@ -1,3 +1,5 @@
+import { EmptyState } from '../layout/EmptyState'
+import { RowMenu } from '../patients/CalmList'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
@@ -87,17 +89,17 @@ export function OutreachTab() {
             {/* Фильтр и поиск — в шапке списка, рядом с тем, что фильтруют */}
             <div className="block-head">
               <h2>Клиники</h2>
-              <button type="button" className="btn primary" onClick={next}>Следующая клиника →</button>
+              {leads.length > 0 && <button type="button" className="btn primary" onClick={next}>Следующая клиника →</button>}
             </div>
-            <div className="outreach-filter">
+            {leads.length > 0 && <div className="outreach-filter">
               <Segments className="tabs" label="Кому писали" value={group ?? ''} onChange={(key) => setGroup(key === '' ? null : key)}
                 options={[{ value: '' as Group | '', label: <>Все · <b className="num">{leads.length}</b></>, text: `Все · ${leads.length}` },
                   ...GROUPS.map(([key, title]) => ({ value: key, label: <>{title} · <b className="num">{countOf[key]}</b></>, text: `${title} · ${countOf[key]}` }))]} />
               <input type="search" className="outreach-search" aria-label="Поиск по названию" placeholder="Поиск по названию" value={query}
                 onChange={(e) => setQuery(e.target.value)} />
-            </div>
+            </div>}
             {allDone && <p className="tone-ok" role="status">Неписаных клиник нет — всем из списка уже написали.</p>}
-            {leads.length === 0 ? <p className="hint">Список пуст. Нажмите «Загрузить список клиник» и вставьте клиники из 2ГИС или таблицы.</p>
+            {leads.length === 0 ? <EmptyState compact title="Список клиник пуст">«Загрузить список клиник» — вставьте клиники из 2ГИС или таблицы.</EmptyState>
               : shown.length === 0 ? <p className="hint">Здесь никого.</p>
                 : (
                   <div role="list" className="funnel-list" aria-label="Клиники">
@@ -306,19 +308,13 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
           )}
           {l.phone && remind && <button type="button" className="btn" onClick={sendReminder}>🔁 Напомнить</button>}
           {!l.phone && l.link && <button type="button" className="btn" onClick={() => { openLink(l.link!); ask(fresh ? 'first' : 'video') }}>Открыть ссылку</button>}
-          {!declining && <button type="button" className="btn ghost" onClick={() => setDeclining(true)}>Не беспокоить</button>}
-        </div>
-      )}
-      {!lost && step == null && (
-        <div className="actions outreach-more" role="group" aria-label="По отдельности">
-          {!fresh && (
-            <button type="button" className="btn small ghost" disabled={video === 'pending'} onClick={() => shareVideo(false)}>
-              {video === 'pending' ? 'Готовлю ролик…' : 'Только ролик'}</button>
-          )}
-          <button type="button" className="btn small ghost" onClick={() => void copy()}>Скопировать текст</button>
-          {l.phone && !fresh && (
-            <button type="button" className="btn small ghost" onClick={() => { openTemplate(); ask('video') }}>Шаблон Excel</button>
-          )}
+          {/* Остальное — в «⋯» (как в списках «Пациентов»): четыре тихие кнопки под главной шли столбиком по одной */}
+          <RowMenu label={`Ещё: ${l.clinicName}`} items={[
+            ...(!fresh ? [{ label: video === 'pending' ? 'Готовлю ролик…' : 'Только ролик', disabled: video === 'pending', onSelect: () => shareVideo(false) }] : []),
+            { label: 'Скопировать текст', onSelect: () => void copy() },
+            ...(l.phone && !fresh ? [{ label: 'Шаблон Excel', onSelect: () => { openTemplate(); ask('video') } }] : []),
+            ...(!declining ? [{ label: 'Не беспокоить', tone: 'bad' as const, onSelect: () => setDeclining(true) }] : []),
+          ]} />
         </div>
       )}
       {step === 'message' && (

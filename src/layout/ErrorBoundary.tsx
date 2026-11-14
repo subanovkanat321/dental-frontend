@@ -15,6 +15,20 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: u
     return { error }
   }
 
+  // Перешли на другой подраздел (#/platform/finance → #/platform/ai) — упавший экран не держит соседние:
+  // предохранитель стоит на весь раздел, и без сброса «Что-то пошло не так» оставалось на всех вкладках
+  private onHash = () => {
+    if (this.state.error != null) this.setState({ error: null })
+  }
+
+  componentDidMount() {
+    window.addEventListener('hashchange', this.onHash)
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('hashchange', this.onHash)
+  }
+
   componentDidCatch(error: unknown, info: ErrorInfo) {
     // Новая версия, кусок кода старой пропал — один раз перезагрузка (lib/staleChunk); уже перезагружались —
     // «Обновить». Нет сети — это не новая версия: не перезагружаемся в офлайн, показываем «Обновить»

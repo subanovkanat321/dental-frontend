@@ -127,12 +127,12 @@ export function ContentTab() {
           onChanged={() => void refresh()} />
         <div className="actions">
           <button type="button" className="btn primary" onClick={() => { setPostSaved(false); setEditing('new') }}>＋ Добавить пост</button>
-          <button type="button" className="btn" disabled={load.isPending} onClick={() => load.mutate()}>Загрузить готовый план</button>
+          <button type="button" className="btn" disabled={load.isPending} onClick={() => load.mutate()}>Загрузить план</button>
           <button type="button" className="btn" disabled={addReels.isPending}
             onClick={() => void ask('Добавить новые готовые рилсы в план — по одному в день в 19:30, начиная с ближайшего дня? '
               + 'Ещё не опубликованные рилсы переставятся, чтобы шли вперемешку; посты плана и рилсы, которые вы меняли сами, останутся как есть.')
               .then((ok) => ok && addReels.mutate())}>
-            {addReels.isPending ? <><Spinner />Добавляю…</> : 'Добавить рилсы в план (по одному в день)'}
+            {addReels.isPending ? <><Spinner />Добавляю…</> : '＋ Рилсы в план'}
           </button>
         </div>
         {addReels.data && <p className="tone-ok" role="status">{reelsText(addReels.data)}</p>}
@@ -146,15 +146,15 @@ export function ContentTab() {
         today={today} onDone={() => { setEditing(null); setPostSaved(true); void refresh() }} onCancel={() => setEditing(null)} />}
       <SaveBar dirty={false} saving={false} saved={postSaved} savedText="Пост сохранён" />
       <section className="card-block" aria-label="Контент-план">
-        {list.error && <p className="error">{list.error.message}</p>}
-        {list.isPending ? <Loading /> : loaded.length === 0 ? (
+        {list.error && <p className="error" role="alert">План не загрузился: {list.error.message}</p>}
+        {list.isPending ? <Loading /> : list.error ? null : loaded.length === 0 ? (
           <EmptyState title="В этом месяце постов нет">Добавьте пост или загрузите готовый план.</EmptyState>
         ) : (
           <>
             <div className="content-filter">
               <div className="segments" role="group" aria-label="Какие посты показать">
-                <button type="button" aria-pressed={!showAll} onClick={() => setShowAll(false)}>Ждут публикации · {planned}</button>
-                <button type="button" aria-pressed={showAll} onClick={() => setShowAll(true)}>Все{done ? ` · опубликовано и пропущено ${done}` : ''}</button>
+                <button type="button" aria-pressed={!showAll} onClick={() => setShowAll(false)}>Ждут · <b className="num">{planned}</b></button>
+                <button type="button" aria-pressed={showAll} title={done ? `Опубликовано и пропущено: ${done}` : undefined} onClick={() => setShowAll(true)}>Все · <b className="num">{loaded.length}</b></button>
               </div>
               {current && <span className="hint">с сегодняшнего дня</span>}
             </div>
@@ -216,19 +216,25 @@ function ReelsAuto({ instagram, instagramKnown, onChanged }: { instagram: boolea
   const stories = settings.data.storiesAuto === true
   return (
     <div className="content-reels-auto">
+      {/* Подробности — в «?», абзацы по 6–8 строк под каждой галочкой отодвигали план на экран вниз */}
+      <div className="content-auto-row">
       <label className="check"><input type="checkbox" checked={on} disabled={save.isPending}
         onChange={(e) => save.mutate({ reelsAuto: e.target.checked })} /> Рилсы — автоматически</label>
-      <p className="hint">Новые ролики после обновления сервера сами встают в план (вперемешку, по одному в день в 19:30) — бот сообщит, какие.
-        В 19:30 рилс сам публикуется в Instagram, итог придёт в Telegram. Если публикация не удалась — бот пришлёт видео с кнопками, как обычно.</p>
+      <span className="hint">новые — в план, в 19:30 сами в Instagram</span>
+      <HelpHint title="Рилсы и сторис автоматически"><b>Рилсы</b>: новые ролики после обновления сервера сами встают в план (вперемешку, по одному в день в 19:30) — бот сообщит, какие.
+        В 19:30 рилс сам публикуется в Instagram, итог придёт в Telegram. Не удалось — бот пришлёт видео с кнопками.<br /><br />
+        <b>Сторис</b>: опубликованный пост или рилс сразу уходит и в сторис — той же картинкой (у карусели — первой) или видео. Ссылку на пост
+        Instagram программам ставить не даёт — чтобы сторис вела в пост, выложите её кнопкой «📲 В сторис» после публикации.</HelpHint>
+      </div>
       {on && instagramKnown && !instagram && (
         <p className="notice tone-wait" role="alert">Instagram не подключён — рилсы будут вставать в план, но публиковать их придётся вручную
           (бот пришлёт видео с кнопками). Подключите Instagram на сервере, чтобы они выходили сами.</p>
       )}
-      <label className="check"><input type="checkbox" checked={stories} disabled={save.isPending}
-        onChange={(e) => save.mutate({ storiesAuto: e.target.checked })} /> Сторис — автоматически</label>
-      <p className="hint">Опубликованный в Instagram пост или рилс сразу уходит и в сторис — той же картинкой (у карусели — первой) или видео.
-        Instagram не даёт программам ставить ссылку на пост в сторис — автосторис выйдет без перехода в пост.
-        Чтобы сторис вела в пост, выложите её кнопкой «📲 В сторис» после публикации (3 нажатия).</p>
+      <div className="content-auto-row">
+        <label className="check"><input type="checkbox" checked={stories} disabled={save.isPending}
+          onChange={(e) => save.mutate({ storiesAuto: e.target.checked })} /> Сторис — автоматически</label>
+        <span className="hint">опубликованное — и в сторис</span>
+      </div>
       {save.error && <p className="error" role="alert">{save.error.message}</p>}
     </div>
   )

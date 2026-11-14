@@ -46,6 +46,8 @@
 /* «⋯»: тихая кнопка 32×32, меню под ней справа */
 .row-menu { position: relative; display: inline-flex; }
 .row-menu-btn { width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--r-md); background: none; color: var(--hint); font: inherit; font-size: 1.2rem; line-height: 1; cursor: pointer; }
+/* Палец — касание не меньше 40px */
+@media (pointer: coarse) { .row-menu-btn { width: 40px; height: 40px; } }
 .row-menu-btn:hover, .row-menu-btn[aria-expanded=true] { background: var(--sunken); color: var(--text); }
 .row-menu-pop { position: absolute; top: calc(100% + 4px); right: 0; z-index: 30; display: grid; min-width: 180px; padding: 4px; border: 1px solid var(--separator); border-radius: var(--radius);
   background: var(--card); box-shadow: 0 8px 24px rgba(15, 42, 48, .14); }

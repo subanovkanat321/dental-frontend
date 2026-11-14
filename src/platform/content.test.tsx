@@ -100,13 +100,13 @@ test('«Загрузить готовый план»: файл из /content/pla
   )
   const user = await openTab()
   expect(await screen.findByText(/В этом месяце постов нет/)).toBeInTheDocument()
-  await user.click(screen.getByRole('button', { name: 'Загрузить готовый план' }))
+  await user.click(screen.getByRole('button', { name: 'Загрузить план' }))
   expect(await screen.findByText(`План загружен: добавлено ${plan.length}, обновлено 0, без изменений 0, убрано из старого плана 3`)).toBeInTheDocument()
   expect(imported).toEqual(plan)
 
   file = null
   imported = null
-  await user.click(screen.getByRole('button', { name: 'Загрузить готовый план' }))
+  await user.click(screen.getByRole('button', { name: 'Загрузить план' }))
   expect(await screen.findByText('Плана пока нет')).toBeInTheDocument()
   expect(imported).toBeNull()
 })
@@ -272,7 +272,7 @@ test('«Добавить рилсы в план»: после подтвержд
     }),
   )
   const user = await openTab()
-  const button = await screen.findByRole('button', { name: 'Добавить рилсы в план (по одному в день)' })
+  const button = await screen.findByRole('button', { name: '＋ Рилсы в план' })
   await user.click(button)
   const dialog = await screen.findByRole('alertdialog')
   expect(dialog).toHaveTextContent('по одному в день в 19:30')
@@ -305,7 +305,9 @@ test('«Рилсы — автоматически»: переключатель 
   const user = await openTab()
   const toggle = await screen.findByRole('checkbox', { name: 'Рилсы — автоматически' })
   expect(toggle).not.toBeChecked()
-  expect(screen.getByText(/В 19:30 рилс сам публикуется в Instagram/)).toBeInTheDocument()
+  // Одна строка у галочки, подробности — в «?»
+  expect(screen.getByText('новые — в план, в 19:30 сами в Instagram')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Подсказка: Рилсы и сторис автоматически' })).toBeInTheDocument()
   expect(screen.queryByText(/Instagram не подключён — рилсы будут вставать в план/)).not.toBeInTheDocument()
 
   await user.click(toggle)
@@ -434,9 +436,9 @@ test('фильтр: по умолчанию только ждущие; в «Вс
   const user = await openTab()
   const plan = await screen.findByRole('region', { name: 'Контент-план' })
   await within(plan).findByRole('article', { name: 'Ждёт' })
-  expect(within(plan).getByRole('button', { name: 'Ждут публикации · 1' })).toHaveAttribute('aria-pressed', 'true')
+  expect(within(plan).getByRole('button', { name: 'Ждут · 1' })).toHaveAttribute('aria-pressed', 'true')
   expect(within(plan).queryByRole('article', { name: 'Выложил сам' })).not.toBeInTheDocument()
-  await user.click(within(plan).getByRole('button', { name: 'Все · опубликовано и пропущено 1' }))
+  await user.click(within(plan).getByRole('button', { name: 'Все · 2' }))
   const done = within(plan).getByRole('article', { name: 'Выложил сам' })
   expect(within(done).queryByRole('button', { name: 'Опубликовать в Instagram' })).not.toBeInTheDocument()
   expect(within(within(plan).getByRole('article', { name: 'Ждёт' })).getByRole('button', { name: 'Опубликовать в Instagram' })).toBeInTheDocument()
@@ -549,7 +551,7 @@ test('«Сторис — автоматически»: выключена по �
   const user = await openTab()
   const toggle = await screen.findByRole('checkbox', { name: 'Сторис — автоматически' })
   expect(toggle).not.toBeChecked()
-  expect(screen.getByText(/автосторис выйдет без перехода в пост/)).toBeInTheDocument()
+  expect(screen.getByText('опубликованное — и в сторис')).toBeInTheDocument()
   await user.click(toggle)
   expect(await screen.findByRole('checkbox', { name: 'Сторис — автоматически' })).toBeChecked()
   expect(sent).toEqual([{ storiesAuto: true }])

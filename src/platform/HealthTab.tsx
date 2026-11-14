@@ -118,13 +118,13 @@ function Sections({ h }: { h: Health }) {
               : (
                 <Row name="Telegram" tone={tg.webhookSet === false ? 'bad' : 'ok'}>
                   {tg.webhookSet === false ? 'webhook не установлен' : 'webhook установлен'} · ждут доставки {tg.pendingUpdates ?? 0}
-                  {tg.lastErrorAt && ` · последняя ошибка ${when(tg.lastErrorAt)}: ${tg.lastError}`}
+                  {tg.lastErrorAt && ` · последняя ошибка ${when(tg.lastErrorAt)}${tg.lastError ? `: ${tg.lastError}` : ''}`}
                 </Row>
               ))}
             {h.sms && (
               <Row name="SMS" tone={!h.sms.configured ? undefined : h.sms.lastErrorAt ? 'wait' : 'ok'}>
                 {h.sms.configured ? 'подключены' : 'не подключены'} · последняя отправлена {when(h.sms.lastSentAt)}
-                {h.sms.lastErrorAt && ` · ошибка ${when(h.sms.lastErrorAt)}: ${h.sms.lastError}`}
+                {h.sms.lastErrorAt && ` · ошибка ${when(h.sms.lastErrorAt)}${h.sms.lastError ? `: ${h.sms.lastError}` : ''}`}
               </Row>
             )}
             {h.ai && (

@@ -94,6 +94,13 @@ async function openTab() {
   return user
 }
 
+
+/** Второстепенное действие строки — из «⋯» («Ещё: <клиника>»). */
+async function pick(user: ReturnType<typeof userEvent.setup>, card: HTMLElement, name: string) {
+  await user.click(within(card).getByRole('button', { name: /^Ещё: / }))
+  await user.click(within(card).getByRole('menuitem', { name }))
+}
+
 test('текст с названием клиники и «Следующая клиника» — по порядку, мимо написанных и отказавшихся', () => {
   expect(messageFor('Привет, {клиника}! {клиника}', 'Тест')).toBe('Привет, Тест! Тест')
   const list = [lead(1, 'А', { stage: 'CONTACTED' }), lead(2, 'Б'), lead(3, 'В', { stage: 'LOST' }), lead(4, 'Г'), lead(5, 'Д', { phone: undefined })]
@@ -118,7 +125,9 @@ test('«📨 Отправить сообщение» — только текст
 
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
   // Неписаным ролик не предлагаем — ни шагом, ни отдельной кнопкой
-  expect(within(card).queryByRole('button', { name: 'Только ролик' })).not.toBeInTheDocument()
+  await user.click(within(card).getByRole('button', { name: 'Ещё: Тест-Дент' }))
+  expect(within(card).queryByRole('menuitem', { name: 'Только ролик' })).not.toBeInTheDocument()
+  await user.keyboard('{Escape}')
   expect(within(card).queryByRole('button', { name: /Ответили/ })).not.toBeInTheDocument()
   await user.click(within(card).getByRole('button', { name: '📨 Отправить сообщение' }))
   const text = 'Здравствуйте, Тест-Дент! 😊\nМы — Tish. Подробнее: https://tish.kg/about'
@@ -131,7 +140,7 @@ test('«📨 Отправить сообщение» — только текст
   expect(marked).toBeNull()
   expect(within(card).queryByRole('group', { name: 'Отправили?' })).not.toBeInTheDocument()
 
-  await user.click(within(card).getByRole('button', { name: 'Скопировать текст' }))
+  await pick(user, card, 'Скопировать текст')
   expect(await navigator.clipboard.readText()).toBe(text)
   await user.click(within(within(card).getByRole('group', { name: 'Отправили?' })).getByRole('button', { name: 'Да' }))
   await waitFor(() => expect(marked).toBe('2'))
@@ -239,7 +248,7 @@ test('«Не беспокоить» — отказ с причиной', async (
   }))
   const user = await openTab()
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Ёлка' })
-  await user.click(within(card).getByRole('button', { name: 'Не беспокоить' }))
+  await pick(user, card, 'Не беспокоить')
   await user.type(within(card).getByRole('textbox', { name: 'Почему — для себя' }), 'Дорого')
   await user.click(within(card).getByRole('button', { name: 'Больше не писать' }))
   await waitFor(() => expect(body).toEqual({ reason: 'Дорого' }))
@@ -250,7 +259,7 @@ test('«Только ролик»: телефон — «Поделиться» �
   phoneShare(shared)
   const user = await openTab()
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })
-  await user.click(within(card).getByRole('button', { name: 'Только ролик' }))
+  await pick(user, card, 'Только ролик')
   expect(await within(card).findByText('Ролик отправлен через «Поделиться».')).toBeInTheDocument()
   expect(shared[0]?.[0]?.name).toBe('Tish-rolik.mp4')
   expect(shared[0]?.[0]?.type).toBe('video/mp4')
@@ -260,7 +269,7 @@ test('«Только ролик»: телефон — «Поделиться» �
   const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
   if (!('createObjectURL' in URL)) Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} })
   await user.click(within(card).getByRole('button', { name: 'Нет' }))
-  await user.click(within(card).getByRole('button', { name: 'Только ролик' }))
+  await pick(user, card, 'Только ролик')
   expect(await within(card).findByText(/Ролик скачан/)).toBeInTheDocument()
   expect(click).toHaveBeenCalled()
   expect(videoFetches).toBe(1)
@@ -326,7 +335,7 @@ test('«Шаблон Excel» (ответившим) — третьим сооб�
   const open = vi.spyOn(window, 'open').mockImplementation(() => null)
   const user = await openTab()
   const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })
-  await user.click(within(card).getByRole('button', { name: 'Шаблон Excel' }))
+  await pick(user, card, 'Шаблон Excel')
   const text = `Вот шаблон — заполните, и мы всё перенесём: ${window.location.origin}/web/import/tish-perenos.xlsx\n`
     + 'Пациенты, прайс, врачи, склад, будущие записи и долги — каждое на своём листе. Пустые листы можно не трогать.'
   expect(open).toHaveBeenCalledWith(`https://api.whatsapp.com/send/?phone=996555000401&text=${encodeURIComponent(text)}`, '_blank', 'noopener')
@@ -380,7 +389,7 @@ test('«🎬 Ответили — отправить ролик»: ① текс�
 
   // Другая клиника — ролик тот же, из памяти: второй раз не качаем
   const further = screen.getByRole('listitem', { name: 'Клиника: Тест-Демо' })
-  await user.click(within(further).getByRole('button', { name: 'Только ролик' }))
+  await pick(user, further, 'Только ролик')
   expect(shared).toHaveLength(2)
   expect(videoFetches).toBe(1)
   // Уже дальше «Демо» — «Да» этап не трогает
