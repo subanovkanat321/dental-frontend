@@ -15910,6 +15910,10 @@
           "storyErrorAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "mediaRemovedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         },
         "required" : [ "id", "instagramPublishing", "story", "storyPublishing" ]
