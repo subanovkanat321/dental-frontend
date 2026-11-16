@@ -3060,6 +3060,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/shared-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["sharedContact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/search": {
         parameters: {
             query?: never;
@@ -8805,6 +8821,13 @@ export interface components {
         FamilyControllerJoin: {
             /** Format: int64 */
             relativeId?: number;
+        };
+        SharedContactRequest: {
+            token: string;
+        };
+        SharedContactsContact: {
+            fullName: string;
+            phone: string;
         };
         SearchPatientsRequest: {
             query?: string;
@@ -17168,6 +17191,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    sharedContact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SharedContactRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedContactsContact"];
+                };
             };
         };
     };

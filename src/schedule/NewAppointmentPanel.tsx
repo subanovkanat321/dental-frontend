@@ -1,7 +1,7 @@
 import { advanceOnEnter, reveal } from '../lib/advance'
 import { notify } from '../lib/confirm'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { useSettings, useWaitlist } from '../api/settings'
@@ -10,7 +10,7 @@ import { freeSlotText, whatsappUrl } from '../lib/texts'
 import { openLink } from '../lib/telegram'
 import { dayTitle, formatPhone, nowMinutes5, shortDate, slotInstant, todayIn } from '../lib/time'
 import { PhoneInput } from '../clinic/PhoneInput'
-import { phoneFromInput } from '../clinic/phone'
+import { phoneFromInput, phoneFromText } from '../clinic/phone'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { sourceChoices, useSources } from '../lib/sources'
@@ -30,6 +30,8 @@ import { useDebounced } from '../lib/useDebounced'
 import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
 import { Spinner } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
+import { matches } from '../lib/useMedia'
+import { COPY_HINT, nameFromText } from './contactText'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -65,13 +67,15 @@ function initialTime(slot: Slot): string {
  * сегодня, время — эта минута вниз до 5, врач — тот, к кому записывает кнопка шапки; вместо сетки
  * свободного — поле времени, главная кнопка — «Начать приём». Сервер walk-in не отличает: это та же запись.
  */
-export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctorId, onClose, onCreated }: {
+export function NewAppointmentPanel({ slot, me, initialPatient = null, initialContact = null, nowDoctorId, onClose, onCreated }: {
   slot: Slot
   me: Me
   /** К кому «⚡ Сейчас»: выбранный в расписании врач, иначе свой, иначе первый доступный. Нет — врач формы. */
   nowDoctorId?: number
   /** Пациент уже выбран — «Записать» из его карточки в «Пациентах». */
   initialPatient?: Patient | null
+  /** Контакт, присланный боту (кнопка «📅 Записать»): найти пациента по номеру, нет — «Новый пациент» с именем и номером. */
+  initialContact?: { fullName: string; phone: string } | null
   onClose: () => void
   onCreated: (a: Appointment) => void
 }) {
@@ -218,9 +222,36 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
   }
 
   /**
-   * Записная книжка телефона (Contact Picker API — Chrome на Android): номер ищем среди пациентов;
-   * нашёлся один — он, нет — «Новый пациент» с именем и номером из контакта.
+   * Имя и номер из контакта (записная книжка, буфер, бот) → пациент. Номер ищем среди пациентов: тот же
+   * номер и то же имя или единственный с этим номером — он; несколько (семья на одном номере) — список
+   * найденных по номеру, выбрать; никого — «Новый пациент» с именем и номером. Номер — общим разбором
+   * phoneFromText: «+996 555 12-34-56», «0555123456» → «555123456».
+   * @return false — номера в тексте нет
    */
+  const applyContact = async (contactName: string, raw: string): Promise<boolean> => {
+    const number = phoneFromText(raw)
+    if (!number) return false
+    const list = await unwrap(api.POST('/api/patients/search', { body: { query: number } })).catch(() => [] as Patient[])
+    const lower = contactName.trim().toLowerCase()
+    const same = (lower ? list.find((p) => p.fullName?.toLowerCase() === lower) : undefined) ?? (list.length === 1 ? list[0] : undefined)
+    if (same) {
+      setPatient(same)
+      setAdding(false)
+      return true
+    }
+    if (list.length > 1) {
+      setAdding(false)
+      setQuery(number)
+      return true
+    }
+    setAdding(true)
+    setDuplicate(null)
+    setName(contactName.trim())
+    setPhone(number)
+    return true
+  }
+
+  /** Записная книжка телефона (Contact Picker API — Chrome на Android). */
   const pickContact = async () => {
     let contact: { name?: string[]; tel?: string[] } | undefined
     try {
@@ -229,25 +260,40 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
       return
     }
     const tel = contact?.tel?.[0]
-    if (!tel) return
-    const contactName = contact?.name?.[0] ?? ''
-    const list = await unwrap(api.POST('/api/patients/search', { body: { query: tel } })).catch(() => [] as Patient[])
-    const same = list.find((p) => p.fullName?.toLowerCase() === contactName.toLowerCase()) ?? (list.length === 1 ? list[0] : undefined)
-    if (same) {
-      setPatient(same)
+    if (tel) await applyContact(contact?.name?.[0] ?? '', tel)
+  }
+
+  // «📋 Вставить номер» — там, где записной книжки нет (iPhone, Telegram, компьютер): номер из буфера обмена.
+  // На iPhone система сама покажет пузырёк «Вставить» — разрешение на один раз
+  const [pasteHint, setPasteHint] = useState('')
+  const pasteNumber = async () => {
+    setPasteHint('')
+    let text: string
+    try {
+      if (!navigator.clipboard?.readText) throw new Error('no clipboard')
+      text = await navigator.clipboard.readText()
+    } catch {
+      setPasteHint(COPY_HINT)
       return
     }
-    setAdding(true)
-    setName(contactName)
-    setPhone(tel.replace(/\D/g, '').slice(-9))
+    if (!(await applyContact(nameFromText(text), text))) setPasteHint(`В буфере нет номера. ${COPY_HINT}`)
   }
+
+  // Контакт из бота — один раз при открытии формы
+  const contactApplied = useRef(false)
+  useEffect(() => {
+    if (!initialContact || contactApplied.current) return
+    contactApplied.current = true
+    void applyContact(initialContact.fullName, initialContact.phone.startsWith('+') ? initialContact.phone : `+${initialContact.phone}`)
+    // Только при открытии: дальше форма — в руках сотрудника
+  }, [initialContact])
 
   // «＋ Новый пациент»: что ввели в поиск — подставим (номер — в телефон, иначе — в имя)
   const startAdding = () => {
     if (adding) return
     setAdding(true)
-    const digits = query.replace(/\D/g, '')
-    if (digits.length >= 9) setPhone(digits.slice(-9))
+    const number = query.replace(/\D/g, '').length >= 9 ? phoneFromText(query) : null
+    if (number) setPhone(number)
     else if (query.trim()) setName(query.trim())
   }
 
@@ -350,7 +396,14 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
           ) : (
             <>
               <input key="search" type="search" aria-label="Найти пациента" placeholder="Имя или номер" value={query} autoFocus
-                onChange={(e) => setQuery(e.target.value)} />
+                onChange={(e) => setQuery(e.target.value)}
+                onPaste={(e) => {
+                  // Вставили номер (скопированный в Контактах, с именем или без) — как «📋 Вставить номер»
+                  const text = e.clipboardData?.getData('text') ?? ''
+                  if (!phoneFromText(text)) return
+                  e.preventDefault()
+                  void applyContact(nameFromText(text), text)
+                }} />
               {!search && <p className="hint small">Пациент уже был в клинике — начните вводить имя или номер. Впервые — «＋ Новый пациент».</p>}
               {found.data && found.data.length > 0 && (
                 <ul className="found" aria-label="Найденные пациенты">
@@ -364,7 +417,18 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, nowDoctor
                 </ul>
               )}
               {found.data?.length === 0 && <p className="hint small">Не нашли «{search}» — значит, пациент новый: «＋ Новый пациент» выше</p>}
-              {contactsSupported() && <button type="button" className="link" onClick={() => void pickContact()}>📇 Из контактов телефона</button>}
+              {contactsSupported()
+                ? <button type="button" className="link" onClick={() => void pickContact()}>📇 Из контактов телефона</button>
+                : (
+                  <div className="paste-number">
+                    <button type="button" className="link" onClick={() => void pasteNumber()}>📋 Вставить номер</button>
+                    {pasteHint
+                      ? <p className="hint small" role="status">{pasteHint}</p>
+                      : matches('(pointer: coarse)') && (
+                        <p className="hint small">На iPhone: в Контактах удерживайте номер → «Скопировать». Ещё удобнее: Контакты → «Поделиться контактом» → бот Tish.</p>
+                      )}
+                  </div>
+                )}
             </>
           )}
         </fieldset>

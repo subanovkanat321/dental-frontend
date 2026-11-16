@@ -7555,6 +7555,34 @@
         }
       }
     },
+    "/api/patients/shared-contact" : {
+      "post" : {
+        "tags" : [ "patient-controller" ],
+        "operationId" : "sharedContact",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SharedContactRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SharedContactsContact"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/search" : {
       "post" : {
         "tags" : [ "patient-controller" ],
@@ -20159,6 +20187,27 @@
             "format" : "int64"
           }
         }
+      },
+      "SharedContactRequest" : {
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "token" ]
+      },
+      "SharedContactsContact" : {
+        "properties" : {
+          "fullName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "fullName", "phone" ]
       },
       "SearchPatientsRequest" : {
         "properties" : {

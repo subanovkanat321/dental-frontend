@@ -9,6 +9,8 @@ import type { Page } from './route'
  * этого врача (уведомление о приёмах коллеги), можно вместе с ?day=tomorrow;
  * ?screen=booked&day=today|tomorrow&unconfirmed=1&doctor=ID — «Пациенты → Записаны» на этот день, только
  * кто не подтвердил (кнопка «📲 Напомнить (N)» под утренней и вечерней сводкой);
+ * ?contact=ТОКЕН — «Новая запись» с именем и номером контакта, присланного боту (номера в адресе нет: только
+ * одноразовый токен, имя и номер фронт забирает POST /api/patients/shared-contact);
  * ?screen=booked&day=today&unmarked=1&doctor=ID — там же, сегодня, только прошедшие без отметки «явка / неявка»
  * (кнопка «Отметить (N)» напоминания после вечерней смены и «Отметить сегодня» в сводке 18:30).
  */
@@ -33,6 +35,8 @@ export type DeepLink = {
   date?: string
   appointmentId?: number
   bookPatientId?: number
+  /** Токен контакта из бота (?contact=…) */
+  contactToken?: string
   /** «Записать» из «Позвать снова → Отменили»: врач, услуга и длительность отменённой записи */
   bookDoctorId?: number
   bookServiceId?: number
@@ -58,6 +62,8 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   const screen = p.get('screen')
   if (num('appointment')) return { page: 'schedule', appointmentId: num('appointment') }
   if (num('patient')) return { page: 'schedule', bookPatientId: num('patient') }
+  const contact = p.get('contact')
+  if (contact && /^[A-Za-z0-9_-]{16,64}$/.test(contact)) return { page: 'schedule', contactToken: contact }
   if (num('patientCard')) return { page: 'patients', patientId: num('patientCard') }
   if (num('question')) return { page: 'patients', questionId: num('question') }
   if (num('supply')) return { page: 'stock', supplyId: num('supply') }
