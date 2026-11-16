@@ -14,6 +14,30 @@ export function cleanPhone(v: string): string {
   return v.replace(/\p{Cf}/gu, '').replace(/[\p{Zs}]/gu, ' ').replace(/[\u2010-\u2015\u2212]/g, '-')
 }
 
+/**
+ * Номер из любого текста — вставили в поле, скопировали из «Контактов», пришёл из записной книжки или от
+ * бота: «+996 555 12-34-56», «996555123456», «0555123456», «(555) 123 456», «Айгуль +996 555 123 456».
+ * Кыргызский номер — 9 цифр без 0 и 996 («555123456»: +996 в поле уже стоит), номер другой страны —
+ * «+код цифры» (поле само выберет страну). Номера в тексте нет (меньше 9 цифр подряд) — null.
+ * Одна функция на все пути: кнопка «Вставить номер», вставка в поле, контакт из бота и Contact Picker.
+ */
+export function phoneFromText(text: string): string | null {
+  // Кусок, похожий на номер: цифры, а между ними пробелы, скобки, точки и дефисы (без переносов строк —
+  // иначе дата рождения строкой выше слилась бы с номером)
+  const candidates = cleanPhone(text).match(/(?:\+|\b00)?[ \t(]*\d[\d \t().-]*\d/g) ?? []
+  const found = candidates.find((c) => c.replace(/\D/g, '').length >= 9)
+  if (!found) return null
+  const plus = /^\s*(\+|00)/.test(found)
+  let d = found.replace(/\D/g, '')
+  if (plus && found.trimStart().startsWith('00')) d = d.slice(2)
+  if (/^996\d{9}$/.test(d)) return d.slice(3)
+  if (plus) return `+${d}`
+  if (/^0\d{9}$/.test(d)) return d.slice(1)
+  if (/^\d{9}$/.test(d)) return d
+  // Без «+», но длиннее кыргызского — скорее всего, с кодом другой страны (WhatsApp пишет «7 701 …»)
+  return d.length > 10 ? `+${d}` : d
+}
+
 /** Номер набран целиком (с кодом страны или с 0) — тогда «+996» не добавляем. */
 function isFullPhone(v: string): boolean {
   return /^(\+|00|996|0)/.test(v.replace(/[\s()-]/g, ''))

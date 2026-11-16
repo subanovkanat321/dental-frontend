@@ -1,5 +1,6 @@
 import { api, ApiError, unwrap } from './api/client'
 import { ConfirmHost } from './layout/Confirm'
+import { notify } from './lib/confirm'
 import { useMe } from './api/me'
 import { useQuery } from '@tanstack/react-query'
 import { Activity, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -138,7 +139,7 @@ function Screens() {
       case 'me': return <MineSection me={me.data} page="me" />
       case 'help': return <MineSection me={me.data} page="help" initialTicket={l?.ticketId} />
       case 'platform': return me.data.platform ? <PlatformPage me={me.data} /> : null
-      case 'schedule': return l?.appointmentId || l?.bookPatientId
+      case 'schedule': return l?.appointmentId || l?.bookPatientId || l?.contactToken
         ? <LinkedSchedule link={l} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
         : <SchedulePage me={me.data} initialDate={l?.date} initialDoctor={l?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go}
           onOpenEarnings={() => linkTo({ page: 'cash', tab: 'earnings' })} onOpenPatient={openPatient} />
@@ -217,8 +218,9 @@ function Sections({ shown, sections, onVisit, children }: {
 }
 
 /**
- * «Расписание» по кнопке бота: «Открыть приём» — день приёма с его карточкой; «Записать на приём»
- * из присланного боту контакта — «Новая запись» на этого пациента. Не нашёлся — просто сегодня.
+ * «Расписание» по кнопке бота: «Открыть приём» — день приёма с его карточкой; «📅 Записать» под
+ * присланным боту контактом — «Новая запись» на этого пациента (?patient=ID) или с именем и номером
+ * контакта (?contact=токен). Не нашёлся, токен устарел — просто сегодня.
  */
 function LinkedSchedule({ link, me, onNavigate, onOpenPatient }: {
   link: DeepLink
@@ -238,7 +240,24 @@ function LinkedSchedule({ link, me, onNavigate, onOpenPatient }: {
     enabled: link.bookPatientId != null,
     retry: false,
   })
-  if (appointment.isLoading || patient.isLoading) return <Loading />
-  return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null}
+  // Контакт из бота: токен одноразовый — забираем один раз (staleTime: Infinity, без повторов); устарел — скажем
+  const contact = useQuery({
+    queryKey: ['shared-contact', link.contactToken],
+    queryFn: () => unwrap(api.POST('/api/patients/shared-contact', { body: { token: link.contactToken! } })),
+    enabled: link.contactToken != null,
+    retry: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+  })
+  const told = useRef(false)
+  useEffect(() => {
+    if (contact.error && !told.current) {
+      told.current = true
+      void notify(contact.error.message || 'Ссылка устарела — пришлите контакт боту ещё раз')
+    }
+  }, [contact.error])
+  if (appointment.isLoading || patient.isLoading || contact.isLoading) return <Loading />
+  return <SchedulePage me={me} openAppointment={appointment.data} bookPatient={patient.data?.patient ?? null} bookContact={contact.data ?? null}
     bookPreset={{ doctorId: link.bookDoctorId, serviceId: link.bookServiceId, duration: link.bookDuration }} onNavigate={onNavigate} onOpenPatient={onOpenPatient} />
 }

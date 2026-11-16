@@ -50,7 +50,10 @@ type Appointment = Schemas['AppointmentView']
 /** Расписание само перечитывается раз в минуту: кто-то записал с телефона — видно без F5. */
 const REFRESH_MS = 60_000
 
-type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView'] } | null
+type Side = { kind: 'appointment'; id: number; fallback?: Appointment } | { kind: 'new'; slot: Slot; patient?: Schemas['PatientView']; contact?: SharedContact } | null
+
+/** Имя и номер контакта, присланного боту (кнопка «📅 Записать», ?contact=токен). */
+export type SharedContact = Schemas['SharedContactsContact']
 
 /** Узкий экран (телефон): там «День» списком, а не сетка колонок. */
 function isNarrow(): boolean {
@@ -103,7 +106,7 @@ function useNarrow(): boolean {
 /** Сводка дня справа открыта или скрыта — на этом устройстве (не персональные данные). */
 const SUMMARY_KEY = 'crm.daySummary'
 
-export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShown, onNavigate, onOpenEarnings, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
+export function SchedulePage({ me, bookPatient = null, bookContact = null, bookPreset, onBookingShown, onNavigate, onOpenEarnings, initialDate, initialDoctor, openAppointment, onOpenPatient }: {
   /** Кнопка бота «приёмы коллеги» (?doctor=ID): сразу этот врач. */
   initialDoctor?: number
   me: Me
@@ -118,6 +121,8 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
   onOpenEarnings?: () => void
   /** Пришли из «Пациентов» по «Записать»: сразу «Новая запись» на этого пациента. */
   bookPatient?: Schemas['PatientView'] | null
+  /** Кнопка бота «📅 Записать» под присланным контактом: «Новая запись» с его именем и номером. */
+  bookContact?: SharedContact | null
   /** Вместе с bookPatient: врач, услуга и длительность (из «Позвать снова → Отменили») */
   bookPreset?: { doctorId?: number; serviceId?: number; duration?: number }
   onBookingShown?: () => void
@@ -133,10 +138,10 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
     const doctor = (me.doctors ?? []).find((d) => d.id === bookPreset?.doctorId && d.active !== false && canEditDoctor(me, d.id))
       ?? (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
       ?? (me.doctors ?? []).find((d) => d.active !== false && canEditDoctor(me, d.id))
-    return bookPatient && doctor
-      // Время не подставляем: открытие клиники могло пройти или быть занято — сетка свободного покажет, что есть
-      ? { kind: 'new', patient: bookPatient, slot: { doctorId: doctor.id, date: today, minutes: null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId } }
-      : null
+    if (!doctor || (!bookPatient && !bookContact)) return null
+    // Время не подставляем: открытие клиники могло пройти или быть занято — сетка свободного покажет, что есть
+    const slot = { doctorId: doctor.id, date: today, minutes: null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId }
+    return bookPatient ? { kind: 'new', patient: bookPatient, slot } : { kind: 'new', contact: bookContact!, slot }
   })
   // Пациента для записи взяли — забыть, чтобы при следующем заходе «Расписание» открылось как обычно
   useEffect(() => {
@@ -706,7 +711,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
         onMedical={(patient) => setMedical({ patient, from: selected.id })}
         onBook={(slot, patient) => setSide({ kind: 'new', slot, patient })} />}
       {side?.kind === 'new' && (
-        <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} nowDoctorId={firstBookable()?.id} onClose={close}
+        <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} initialContact={side.contact} nowDoctorId={firstBookable()?.id} onClose={close}
           onCreated={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} />
       )}
     </div>
