@@ -64,6 +64,101 @@ function versionFile(): Plugin {
   }
 }
 
+/** Превью ссылки (Instagram, Telegram, WhatsApp): тексты одной страницы, которой делятся. */
+export interface SharePage {
+  /** Имя файла в dist: start → dist/start.html, nginx отдаёт его на tish.kg/start */
+  file: string
+  title: string
+  ogTitle: string
+  description: string
+  url: string
+}
+
+/** Картинка превью — та же, что у сайта-визитки /about (public/about/og-about.jpg, 1200×630). */
+const SHARE_IMAGE = { url: 'https://tish.kg/about/og-about.jpg', width: 1200, height: 630, alt: 'Tish: расписание клиники на компьютере и день врача в телефоне' }
+
+/**
+ * Адреса CRM-сборки, которыми делятся: регистрация (/start), вход (/login) и «Скачать Tish» (/app).
+ * Роботы соцсетей JS не выполняют и видят только HTML — у index.html он общий («Tish CRM»).
+ */
+export const SHARE_PAGES: SharePage[] = [
+  {
+    file: 'start',
+    title: 'Tish — попробовать бесплатно',
+    ogTitle: 'Попробуйте Tish бесплатно — программа для стоматологии',
+    description: 'Расписание, самозапись пациентов в Telegram, напоминания, медкарта, касса и склад. Регистрация за 2 минуты, бесплатно.',
+    url: 'https://tish.kg/start',
+  },
+  {
+    file: 'login',
+    title: 'Вход в Tish',
+    ogTitle: 'Вход в Tish — программа для стоматологии',
+    description: 'Расписание, пациенты, касса и склад клиники — войдите по номеру телефона. Нет аккаунта? Регистрация за 2 минуты: tish.kg/start.',
+    url: 'https://tish.kg/login',
+  },
+  {
+    file: 'app',
+    title: 'Tish на экране телефона',
+    ogTitle: 'Tish на экране телефона — установите за минуту',
+    description: 'Значок на главном экране, своё окно без адресной строки — как обычное приложение. Без магазинов приложений: новое появляется само.',
+    url: 'https://tish.kg/app',
+  },
+]
+
+const escapeHtml = (text: string) => text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+/** Метатеги превью: description, og:* и twitter:card. */
+function shareTags(page: SharePage): string {
+  const meta = (key: 'name' | 'property', name: string, content: string | number) => `<meta ${key}="${name}" content="${escapeHtml(String(content))}" />`
+  return [
+    meta('name', 'description', page.description),
+    meta('property', 'og:title', page.ogTitle),
+    meta('property', 'og:description', page.description),
+    meta('property', 'og:type', 'website'),
+    meta('property', 'og:url', page.url),
+    meta('property', 'og:image', SHARE_IMAGE.url),
+    meta('property', 'og:image:width', SHARE_IMAGE.width),
+    meta('property', 'og:image:height', SHARE_IMAGE.height),
+    meta('property', 'og:image:alt', SHARE_IMAGE.alt),
+    meta('property', 'og:locale', 'ru_RU'),
+    meta('property', 'og:site_name', 'Tish'),
+    meta('name', 'twitter:card', 'summary_large_image'),
+  ].join('\n    ')
+}
+
+/** Метатеги превью в index.html (общие, «Tish — программа для стоматологии»): их заменяем, а не дублируем. */
+const SHARE_META = /[ \t]*<meta\s+(?:name|property)="(?:description|og:[^"]*|twitter:[^"]*)"[^>]*>[ \t]*\n?/g
+
+/**
+ * Готовый index.html сборки → HTML страницы, которой делятся: свой <title> и превью, всё остальное
+ * (скрипты, стили, метка версии, Telegram) — как в index.html. Это тот же SPA: App сам решает по адресу.
+ */
+export function sharePageHtml(indexHtml: string, page: SharePage): string {
+  if (!/<title>[^<]*<\/title>/.test(indexHtml)) throw new Error('tish-share-pages: в index.html нет <title>')
+  return indexHtml
+    .replace(SHARE_META, '')
+    .replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(page.title)}</title>\n    ${shareTags(page)}`)
+}
+
+/**
+ * Копии index.html для адресов, которыми делятся (SHARE_PAGES) → dist/start.html, login.html, app.html;
+ * nginx отдаёт их на /start, /login, /app. Берём index.html уже с версией (плагин tish-version раньше
+ * в списке), поэтому версия, ассеты и бандл — те же самые.
+ */
+function sharePages(): Plugin {
+  return {
+    name: 'tish-share-pages',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(_options, bundle) {
+      const index = bundle['index.html']
+      if (index?.type !== 'asset' || typeof index.source !== 'string') this.error('tish-share-pages: нет index.html')
+      const html = index.source as string
+      for (const page of SHARE_PAGES) this.emitFile({ type: 'asset', fileName: `${page.file}.html`, source: sharePageHtml(html, page) })
+    },
+  }
+}
+
 /**
  * Запасной цвет для старых браузеров: color-mix() — с Chrome 111, а на Windows 7/8.1 последний Chrome —
  * 109 (у клиник такие компьютеры есть). Без запаса браузер выбрасывает правило целиком: пропадают
@@ -91,7 +186,7 @@ export default defineConfig({
   // Весь фронт — с корня домена (ADR 0002 бэкенда, этап 5): CRM и Mini App — index.html, страницы
   // сайта — site/*.html; nginx раскладывает адреса (deploy/nginx/default.conf.template бэкенда)
   base: '/',
-  plugins: [react(), serviceWorker(), versionFile()],
+  plugins: [react(), serviceWorker(), versionFile(), sharePages()],
   css: { postcss: { plugins: [colorMixPostcss] } },
   build: {
     // Самый большой чанк — three.js 3D-атласа (engine, около 615 КБ, 160 КБ gzip): грузится только
