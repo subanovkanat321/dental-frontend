@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api, unwrap, type Schemas } from '../api/client'
 import { openMine, openSettings } from '../lib/route'
 import { telegram } from '../lib/telegram'
-import { isStandalone } from '../pwa/pwa'
+import { appInstalled } from '../pwa/pwa'
 import { WEEK } from '../team/texts'
 
 type Me = Schemas['BookingViewsMe']
@@ -49,7 +49,7 @@ export function useSetupSteps(me: Me) {
   if (!doctors) steps.push({ key: 'doctors', done: false, title: 'Врачи', hint: 'Добавьте хотя бы одного врача — иначе записать не к кому', open: () => openSettings('doctors') })
   steps.push({ key: 'staff', done: colleagues, optional: true, title: 'Пригласите коллег (если есть)', hint: colleagues ? `Врачей: ${working.length}` : 'Врачи, регистратура, ассистенты — «+ Добавить сотрудника»', open: () => openSettings('staff') })
   if (telegram() == null) {
-    const app = isStandalone()
+    const app = appInstalled()
     steps.push({ key: 'app', done: app, title: 'Установите приложение', hint: app ? 'Tish уже на экране' : 'Значок Tish на экране телефона или компьютера', open: () => openMine('me', 'install') })
   }
   return { shown, steps, done: steps.filter((s) => s.done).length, clinic, doctors }

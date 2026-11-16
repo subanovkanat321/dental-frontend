@@ -17,6 +17,34 @@ export function isStandalone(): boolean {
   return Boolean(window.matchMedia?.('(display-mode: standalone)').matches || nav.standalone)
 }
 
+const INSTALLED_KEY = 'tish.app.installed'
+
+/**
+ * Приложение уже ставили в этом браузере: окно установленного приложения и вкладка браузера делят
+ * localStorage, поэтому из вкладки видно «установлено ✓», хотя сама вкладка — не standalone, а Chrome
+ * больше не предлагает установку. Метка — не ПДн. Хранилище закрыто — просто false.
+ */
+export function wasInstalled(): boolean {
+  try {
+    return localStorage.getItem(INSTALLED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function rememberInstalled(): void {
+  try {
+    localStorage.setItem(INSTALLED_KEY, '1')
+  } catch {
+    // приватный режим — без метки
+  }
+}
+
+/** Установлено: открыто окном приложения или его уже ставили в этом браузере. */
+export function appInstalled(): boolean {
+  return isStandalone() || wasInstalled()
+}
+
 /** Запуск с иконки приложения: start_url манифеста — «/?source=pwa». */
 export function launchedAsApp(search = window.location.search): boolean {
   return isStandalone() || new URLSearchParams(search).get('source') === 'pwa'
@@ -62,13 +90,23 @@ let listening = false
  * как сотрудник откроет «Настройки». Своё окно покажем по кнопке «Установить».
  */
 export function listenInstallPrompt(): void {
+  if (isStandalone()) rememberInstalled()
   if (listening) return
   listening = true
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault()
-    set({ prompt: event as InstallPromptEvent })
+    // Браузер снова предлагает установку — значит, приложение удалили: метку снимаем
+    try {
+      localStorage.removeItem(INSTALLED_KEY)
+    } catch {
+      // хранилище закрыто
+    }
+    set({ prompt: event as InstallPromptEvent, installed: false })
   })
-  window.addEventListener('appinstalled', () => set({ prompt: null, installed: true }))
+  window.addEventListener('appinstalled', () => {
+    rememberInstalled()
+    set({ prompt: null, installed: true })
+  })
 }
 
 /** Окно установки браузера; согласились — «установлено». Повторно prompt() вызвать нельзя. */
@@ -77,6 +115,7 @@ export async function install(): Promise<boolean> {
   if (!prompt) return false
   await prompt.prompt()
   const choice = await prompt.userChoice
+  if (choice.outcome === 'accepted') rememberInstalled()
   set({ prompt: null, installed: choice.outcome === 'accepted' || state.installed })
   return choice.outcome === 'accepted'
 }

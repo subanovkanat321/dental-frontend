@@ -56,6 +56,18 @@ test('зарегистрировался сам: расписание сразу
   window.location.hash = '/schedule'
 })
 
+test('приложение ставили в этом браузере (открыли во вкладке) — «Установите приложение» уже ✓', async () => {
+  backend(fresh)
+  localStorage.setItem('tish.app.installed', '1')
+  const user = userEvent.setup()
+  renderApp()
+  const hint = await screen.findByRole('region', { name: 'Что настроить' })
+  await waitForSlow(() => expect(hint).toHaveTextContent('Что настроить · 2 из 4'))
+  await user.click(within(hint).getByText(/Что настроить/))
+  expect(within(hint).getAllByRole('listitem')[3]).toHaveTextContent('✓Установите приложение — Tish уже на экране')
+  localStorage.removeItem('tish.app.installed')
+})
+
 test('✕ скрывает строку и помнит это на устройстве', async () => {
   backend(fresh)
   const user = userEvent.setup()

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { telegram } from '../lib/telegram'
-import { install, isIos, isStandalone, usePwa } from './pwa'
+import { appInstalled, install, isIos, usePwa } from './pwa'
 import './pwa.css'
 
 /** Значок «Поделиться» Safari — квадрат со стрелкой вверх, как на iPhone. */
@@ -113,7 +113,7 @@ export function InstallBody() {
         </div>
       </>
     )
-  } else if (installed || isStandalone()) {
+  } else if (installed || appInstalled()) {
     body = <p className="pwa-ok">Приложение установлено ✓</p>
   } else if (prompt) {
     body = (

@@ -93,6 +93,21 @@ test('уже установлено (открыто отдельным окно�
   expect(screen.getByText('Приложение установлено ✓')).toBeInTheDocument()
 })
 
+test('поставили на компьютере, открыли во вкладке браузера — всё равно «установлено ✓»; удалили — снова «Установить»', () => {
+  // Окно приложения открывалось раньше — метка в общем localStorage
+  standalone(true)
+  listenInstallPrompt()
+  standalone(false)
+  render(<InstallApp />)
+  expect(screen.getByText('Приложение установлено ✓')).toBeInTheDocument()
+  // Браузер снова предлагает установку — приложение удалили
+  const event = Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
+    prompt: vi.fn(() => Promise.resolve()), userChoice: Promise.resolve({ outcome: 'dismissed' as const }),
+  }) as InstallPromptEvent
+  act(() => { window.dispatchEvent(event) })
+  expect(screen.getByRole('button', { name: 'Установить' })).toBeInTheDocument()
+})
+
 test('service worker: только в сборке и не внутри Telegram', () => {
   const register = vi.fn(() => new Promise<ServiceWorkerRegistration>(() => {}))
   navigatorProp('serviceWorker', { register, addEventListener() {}, controller: null })
