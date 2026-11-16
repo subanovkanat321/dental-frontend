@@ -2,7 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
-import { SetupChecklist } from '../clinic/SetupChecklist'
+import { SetupHint } from '../clinic/SetupChecklist'
 import { openClinic, type Page } from '../lib/route'
 import { addDays, dateOf, dayMinutes, dayTitle, emptyDayText, minutesOf, minutesOfTime, somText, timeOf, todayIn, weekLabel, weekStart, ZONE } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
@@ -477,7 +477,7 @@ export function SchedulePage({ me, bookPatient = null, bookPreset, onBookingShow
           </header>
         )}
 
-        <SetupChecklist me={me} />
+        <SetupHint me={me} />
         {dayList ? (
           <>
             {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках

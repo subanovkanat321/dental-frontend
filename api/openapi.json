@@ -18452,10 +18452,12 @@
             "type" : "string"
           },
           "solo" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "deprecated" : true
           },
           "doctor" : {
-            "type" : "boolean"
+            "type" : "boolean",
+            "deprecated" : true
           },
           "fullName" : {
             "type" : "string"
@@ -21500,13 +21502,16 @@
         "properties" : {
           "state" : {
             "type" : "string",
-            "enum" : [ "none", "waiting", "cancelled", "confirmed" ]
+            "enum" : [ "none", "waiting", "cancelled", "confirmed", "failed" ]
           },
           "secondsLeft" : {
             "type" : "integer",
             "format" : "int64"
           },
           "link" : {
+            "type" : "string"
+          },
+          "error" : {
             "type" : "string"
           }
         },

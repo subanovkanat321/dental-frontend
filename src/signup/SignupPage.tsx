@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 
 import {
-  ApiError, forgetSignup, signupAvailability, signupCode, signupRegister, signupTelegram, signupTelegramStatus,
+  ApiError, forgetSignup, signupAvailability, signupCode, signupEnterTelegram, signupRegister, signupTelegram, signupTelegramStatus,
   type SignupCodeSent, type SignupForm,
 } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
@@ -25,33 +25,35 @@ type Step =
   | { kind: 'form' }
   | { kind: 'code'; sent: SignupCodeSent }
   | { kind: 'telegram'; link: string }
-  | { kind: 'creating' }
+  | { kind: 'creating'; text: string }
 
 /**
  * «Попробовать бесплатно» — клиника регистрируется сама (/start), без заявки и звонка. Один экран формы:
- * название, город, «Я частный врач» / «Клиника с несколькими врачами», имя, телефон, согласие. Подтвердить, что
+ * название клиники (или своё имя, если работаете один), город, имя, телефон, согласие. Выбора «частный врач /
+ * клиника» нет: и там, и там регистрируется один человек и добавляет коллег сам. Подтвердить, что
  * это вы, — кодом из SMS на этот номер (и придумать пароль) или кнопкой «✅ Да, это я» в боте Telegram (что
- * включено на сервере — GET /web/signup). Сервер сразу заводит клинику и даёт сессию: человек в CRM руководителем,
- * дальше тур и «Что настроить».
+ * включено на сервере — GET /web/signup). Сервер сразу заводит клинику и даёт сессию: человек в CRM руководителем
+ * и врачом (так видно всё приложение), дальше тур и «Что настроить». Не принимает пациентов — потом сам ставит себе
+ * в «Персонале» роль «Руководитель».
  * <p>
  * Поля формы — без React-состояния, значения читаются при отправке (как на /join: во встроенном браузере
  * Instagram на Android клавиатура закрывалась от перерисовок). Номер, имя, код и пароль — только в памяти
- * страницы и в теле запросов: не в localStorage и не в адресе. Ожидание Telegram переживает перезагрузку
- * (сервер помнит его по HttpOnly-cookie), но форму тогда заполняют ещё раз.
+ * страницы и в теле запросов: не в localStorage и не в адресе.
+ * <p>
+ * Через Telegram регистрация завершается в боте: по «✅ Да, это я» сервер сразу создаёт клинику, бот присылает
+ * «Открыть день» — врачам из Instagram возвращаться во встроенный браузер не нужно. Вернулся (или перезагрузил
+ * страницу) — сервер по HttpOnly-cookie говорит «готово», и страница входит без формы.
  *
  * @param onDone куда после регистрации (по умолчанию — в CRM; тест подставляет свою)
  */
 export function SignupPage({ onDone = () => window.location.assign('/') }: { onDone?: () => void }) {
   const client = useQueryClient()
   const ways = useQuery({ queryKey: ['signup-ways'], queryFn: signupAvailability, retry: false, staleTime: Infinity })
-  const [solo, setSolo] = useState<boolean | null>(null)
   const [phone, setPhone] = useState('')
   const [form, setForm] = useState<SignupForm | null>(null)
   const [step, setStep] = useState<Step>({ kind: 'form' })
   const [error, setError] = useState<ApiError | null>(null)
   const [busy, setBusy] = useState(false)
-  // Telegram уже подтвердил (страницу перезагрузили после «Да, это я») — форма создаёт клинику сразу
-  const [confirmed, setConfirmed] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => { document.title = 'Попробовать Tish бесплатно' }, [])
@@ -63,27 +65,40 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
       await signupRegister(f, confirm)
       // Сессия уже в cookie — «кто я» спросим заново в CRM
       void client.invalidateQueries({ queryKey: ['me'] })
-      setStep({ kind: 'creating' })
+      setStep({ kind: 'creating', text: 'Создаём клинику…' })
       onDone()
     } catch (e) {
       setError(e instanceof ApiError ? e : new ApiError(0, 'Нет связи с сервером'))
-      if (confirm.method === 'TELEGRAM') setStep({ kind: 'form' })
     } finally {
       setBusy(false)
     }
   }, [client, onDone])
 
-  // При открытии: может, Telegram уже ждёт или подтвердил (страницу перезагрузили, пока человек был в боте)
+  /** Клиника уже создана в боте — войти в неё (форма не нужна). */
+  const enter = useCallback(async () => {
+    setError(null)
+    setStep({ kind: 'creating', text: 'Готово — клиника создана. Входим…' })
+    try {
+      await signupEnterTelegram()
+      void client.invalidateQueries({ queryKey: ['me'] })
+      onDone()
+    } catch (e) {
+      setError(e instanceof ApiError ? e : new ApiError(0, 'Нет связи с сервером'))
+      setStep({ kind: 'form' })
+    }
+  }, [client, onDone])
+
+  // При открытии: может, клиника уже создана в боте (страницу перезагрузили или вернулись из Telegram)
   useEffect(() => {
     let alive = true
-    signupTelegramStatus().then((s) => { if (alive && s.state === 'confirmed') setConfirmed(true) }).catch(() => undefined)
+    signupTelegramStatus().then((s) => { if (alive && s.state === 'confirmed') void enter() }).catch(() => undefined)
     return () => { alive = false }
-  }, [])
+  }, [enter])
 
   // Ждём кнопку в боте — опрос раз в 2 секунды и сразу, когда вернулись во вкладку
   const waiting = step.kind === 'telegram'
   useEffect(() => {
-    if (!waiting || !form) return
+    if (!waiting) return
     let alive = true
     let timer: ReturnType<typeof setTimeout> | undefined
     const poll = async () => {
@@ -92,12 +107,13 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
         const s = await signupTelegramStatus()
         if (!alive) return
         if (s.state === 'confirmed') {
-          void finish(form, { method: 'TELEGRAM' })
+          void enter()
           return
         }
         if (s.state !== 'waiting') {
           setStep({ kind: 'form' })
-          setError(new ApiError(0, s.state === 'cancelled' ? 'Регистрация отменена в Telegram.' : 'Время на подтверждение вышло — нажмите «Подтвердить через Telegram» ещё раз.'))
+          setError(new ApiError(0, s.state === 'failed' && s.error ? s.error
+            : s.state === 'cancelled' ? 'Регистрация отменена в Telegram.' : 'Время на подтверждение вышло — нажмите «Подтвердить через Telegram» ещё раз.'))
           return
         }
       } catch {
@@ -113,14 +129,14 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
       clearTimeout(timer)
       document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [waiting, form, finish])
+  }, [waiting, enter])
 
   /** Значения формы при отправке. */
   const read = (): SignupForm => {
     const data = new FormData(formRef.current!)
     const field = (k: string) => String(data.get(k) ?? '').trim()
     return {
-      clinicName: field('clinicName'), city: field('city'), solo: solo ?? undefined, doctor: solo === false && data.get('doctor') === 'on',
+      clinicName: field('clinicName'), city: field('city'),
       fullName: field('fullName'), phone: phoneFromInput(phone), consent: data.get('consent') === 'on',
     }
   }
@@ -128,10 +144,6 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
   const start = async (how: 'SMS' | 'TELEGRAM') => {
     const f = read()
     setForm(f)
-    if (how === 'TELEGRAM' && confirmed) {
-      await finish(f, { method: 'TELEGRAM' })
-      return
-    }
     setError(null)
     setBusy(true)
     try {
@@ -162,7 +174,7 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
   // Форма остаётся в разметке (скрыта) на шагах кода и Telegram: «Изменить данные» — вписанное на месте
   let body: React.ReactNode = null
   if (ways.isPending) body = <Loading text="Открываем…" />
-  else if (step.kind === 'creating') body = <Loading text="Создаём клинику…" />
+  else if (step.kind === 'creating') body = <Loading text={step.text} />
   else if (step.kind === 'code' && form) {
     body = <CodeStepForm form={form} sent={step.sent} busy={busy} error={error} onBack={back}
       onResend={async () => { setStep({ kind: 'code', sent: await signupCode(form) }) }}
@@ -173,7 +185,7 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
         <h1>Подтвердите в Telegram</h1>
         <p><Spinner />Откройте бота Tish и нажмите «✅ Да, это я».</p>
         <a className="btn tg-login" href={step.link} target="_blank" rel="noopener noreferrer">Открыть Telegram</a>
-        <p className="hint small">Клиника создастся сама, и вы сразу окажетесь в приложении.</p>
+        <p className="hint">После «Да» клиника создастся сразу. Можно не возвращаться: всё откроется прямо в Telegram — кнопка «Открыть день». Вернётесь сюда — войдёте сами.</p>
         <button type="button" className="link" onClick={back}>Изменить данные</button>
       </div>
     )
@@ -191,16 +203,9 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
         <p className="hint">Создайте клинику за пару минут — без заявки и звонка. Всё приложение, без ограничений.</p>
         <form ref={formRef} className="form narrow invite-form signup-form" aria-label="Регистрация клиники"
           onSubmit={(ev: FormEvent) => { ev.preventDefault(); void start(w.telegram ? 'TELEGRAM' : 'SMS') }}>
-          <div className="segments" role="group" aria-label="Кто вы">
-            <button type="button" aria-pressed={solo === true} onClick={() => setSolo(true)}>Я частный врач</button>
-            <button type="button" aria-pressed={solo === false} onClick={() => setSolo(false)}>Клиника с несколькими врачами</button>
-          </div>
-          {err('solo')}
-          {solo === false && (
-            <label className="check"><input type="checkbox" name="doctor" /> Я тоже веду приём</label>
-          )}
-          <label className="field"><span>{solo ? 'Кабинет — как вас найдут пациенты' : 'Название клиники'}</span>
-            <input name="clinicName" maxLength={100} autoComplete="off" placeholder={solo ? 'Стоматолог Айгерим Садыкова' : 'Стоматология «Улыбка»'} /></label>
+          <label className="field"><span>Название клиники</span>
+            <input name="clinicName" maxLength={100} autoComplete="off" placeholder="Стоматология «Улыбка»" aria-describedby="signup-clinic-hint" /></label>
+          <p id="signup-clinic-hint" className="hint small field-note">или ваше имя, если работаете один</p>
           {err('clinicName')}
           <label className="field"><span>Город</span>
             <Select name="city" defaultValue="">
@@ -219,18 +224,16 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
           {err('consent')}
           {taken && <p className="error" role="alert">{e.message}. <a href="/login">Войти в Tish</a></p>}
           {!taken && other && <p className="error" role="alert">{other}</p>}
-          {confirmed && <p className="hint" role="status">Telegram уже подтвердил — заполните форму и нажмите «Создать клинику».</p>}
           {!w.sms && !w.telegram && <p className="error" role="alert">Регистрация сейчас недоступна — напишите нам, подключим вручную.</p>}
           {w.telegram && (
-            <button type="submit" className="btn tg-login" disabled={busy || solo === null}>
-              {busy ? <><Spinner />Проверяем…</> : confirmed ? 'Создать клинику' : 'Подтвердить через Telegram'}</button>
+            <button type="submit" className="btn tg-login" disabled={busy}>
+              {busy ? <><Spinner />Проверяем…</> : 'Подтвердить через Telegram'}</button>
           )}
           {w.sms && (
-            <button type={w.telegram ? 'button' : 'submit'} className={w.telegram ? 'btn' : 'btn primary'} disabled={busy || solo === null}
+            <button type={w.telegram ? 'button' : 'submit'} className={w.telegram ? 'btn' : 'btn primary'} disabled={busy}
               onClick={w.telegram ? () => void start('SMS') : undefined}>
               {busy && !w.telegram ? <><Spinner />Проверяем…</> : 'Получить код по SMS'}</button>
           )}
-          {solo === null && <p className="hint small">Сначала выберите: частный врач или клиника.</p>}
         </form>
         <p className="hint small">Уже в Tish? <a href="/login">Войти</a> · Нужна помощь с подключением? <a href="/join#form">Оставьте заявку</a></p>
       </div>

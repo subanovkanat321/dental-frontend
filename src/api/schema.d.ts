@@ -8104,7 +8104,9 @@ export interface components {
         SignupControllerSignupRequest: {
             clinicName?: string;
             city?: string;
+            /** @deprecated */
             solo?: boolean;
+            /** @deprecated */
             doctor?: boolean;
             fullName?: string;
             phone?: string;
@@ -9349,10 +9351,11 @@ export interface components {
         };
         SignupControllerTelegramStatus: {
             /** @enum {string} */
-            state: "none" | "waiting" | "cancelled" | "confirmed";
+            state: "none" | "waiting" | "cancelled" | "confirmed" | "failed";
             /** Format: int64 */
             secondsLeft: number;
             link?: string;
+            error?: string;
         };
         MaterialsPublicMaterials: {
             video?: string;

@@ -328,7 +328,7 @@ Promise<Schemas['InviteControllerRegistered']> {
 export type SignupAvailability = Schemas['SignupControllerAvailability']
 
 /** Форма регистрации клиники (номер — как набран; проверяет и нормализует сервер). */
-export type SignupForm = Pick<Schemas['SignupControllerSignupRequest'], 'clinicName' | 'city' | 'solo' | 'doctor' | 'fullName' | 'phone' | 'consent'>
+export type SignupForm = Pick<Schemas['SignupControllerSignupRequest'], 'clinicName' | 'city' | 'fullName' | 'phone' | 'consent'>
 
 export type SignupCodeSent = Schemas['SignupControllerCodeSent']
 
@@ -357,7 +357,10 @@ export async function signupTelegram(form: SignupForm): Promise<Schemas['SignupC
   return started
 }
 
-/** Опрос подтверждения в Telegram: waiting — ждём «✅ Да, это я», confirmed — можно создавать клинику. */
+/**
+ * Опрос подтверждения в Telegram: waiting — ждём «✅ Да, это я»; confirmed — клиника уже создана в боте, можно
+ * войти ({@link signupEnterTelegram}); failed — не создали (причина в error); cancelled — «Нет» в боте.
+ */
 export async function signupTelegramStatus(): Promise<SignupTelegramStatus> {
   return await webRequest<SignupTelegramStatus>('GET', '/web/signup/telegram/status') ?? { state: 'none', secondsLeft: 0 }
 }
@@ -368,12 +371,19 @@ export async function forgetSignup(): Promise<void> {
 }
 
 /**
- * Создать клинику: SMS — код и пароль; Telegram — после «✅ Да, это я». В ответе — cookie-сессия: человек уже
- * вошёл руководителем. Номер, код и пароль — только в теле, нигде не сохраняем.
+ * Создать клинику кодом из SMS (код и пароль). В ответе — cookie-сессия: человек уже вошёл руководителем и врачом.
+ * Номер, код и пароль — только в теле, нигде не сохраняем.
  */
-export async function signupRegister(form: SignupForm, confirm: { method: 'SMS'; code: string; password: string } | { method: 'TELEGRAM' }):
-Promise<SignupDone> {
+export async function signupRegister(form: SignupForm, confirm: { method: 'SMS'; code: string; password: string }): Promise<SignupDone> {
   return await webPost<SignupDone>('/web/signup', { ...form, ...confirm }) ?? { clinicName: form.clinicName ?? '', fullName: form.fullName ?? '' }
+}
+
+/**
+ * Через Telegram клиника создаётся в боте по «✅ Да, это я» (регистрация там и завершается). Вернулся на страницу —
+ * войти в неё: форма не нужна, сервер узнаёт шаг по HttpOnly-cookie и отдаёт сессию один раз.
+ */
+export async function signupEnterTelegram(): Promise<SignupDone> {
+  return await webPost<SignupDone>('/web/signup', { method: 'TELEGRAM' }) ?? { clinicName: '', fullName: '' }
 }
 
 /**

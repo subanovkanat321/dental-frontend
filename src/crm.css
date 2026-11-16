@@ -991,6 +991,12 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .setup-mark { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: var(--r-sm); background: var(--sunken); font-weight: 600; }
 .setup-steps li.done .setup-mark { background: var(--ok-bg); color: var(--ok-ink); }
 .setup-steps li.todo .setup-mark { background: var(--wait-bg); color: var(--wait-ink); }
+/* «Что настроить · 2 из 5» над расписанием: одна строка, раскрывается, ✕ — скрыть; расписание видно сразу */
+.setup-hint { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 8px; padding: 6px 8px 6px 12px; border-radius: var(--r-md); background: var(--sunken); }
+.setup-hint details { flex: 1; min-width: 0; }
+.setup-hint summary { cursor: pointer; padding: 4px 0; font-weight: 600; }
+.setup-hint .setup-steps { margin-bottom: 6px; }
+.setup-hint p { margin: 4px 0; }
 
 /* «Касса» и «По приёмам» рядом: две суммы периода, на телефоне — одна под другой */
 .money-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
@@ -2703,7 +2709,7 @@ p.expense-owner { display: block; }
    подписи галочек — слева, как в формах CRM */
 .signup-page .signup-step { display: grid; gap: 12px; width: 100%; justify-items: center; }
 .signup-page .signup-step[hidden] { display: none; }
-.signup-page .signup-form .segments { width: 100%; }
-.signup-page .signup-form .segments button { flex: 1; white-space: normal; line-height: 1.25; }
+/* Подсказка под «Название клиники»: прижата к полю, слева, как подпись */
+.signup-page .signup-form .field-note { margin: -6px 0 0; text-align: left; }
 .signup-page .signup-form .check { align-items: flex-start; text-align: left; }
 .signup-page .signup-form .btn { width: 100%; }
