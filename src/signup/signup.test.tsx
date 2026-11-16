@@ -195,3 +195,16 @@ test('бот не смог создать клинику — причина на
   expect(onDone).not.toHaveBeenCalled()
   vi.restoreAllMocks()
 })
+
+test('SMS не ушла (503), Telegram есть — кнопку SMS прячем, отправляем в Telegram', async () => {
+  backend()
+  server.use(http.post('*/web/signup/code', () =>
+    HttpResponse.json({ detail: 'SMS не отправилась — попробуйте ещё раз через минуту' }, { status: 503 })))
+  const user = userEvent.setup()
+  show()
+  const form = await fill(user)
+  await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
+  expect(await within(form).findByRole('alert')).toHaveTextContent('SMS сейчас не отправляются — подтвердите номер через Telegram')
+  expect(within(form).queryByRole('button', { name: 'Получить код по SMS' })).not.toBeInTheDocument()
+  expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toBeEnabled()
+})

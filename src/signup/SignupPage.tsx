@@ -54,6 +54,7 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
   const [step, setStep] = useState<Step>({ kind: 'form' })
   const [error, setError] = useState<ApiError | null>(null)
   const [busy, setBusy] = useState(false)
+  const [smsDown, setSmsDown] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => { document.title = 'Попробовать Tish бесплатно' }, [])
@@ -159,7 +160,13 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
         }
       }
     } catch (e) {
-      setError(e instanceof ApiError ? e : new ApiError(0, 'Нет связи с сервером'))
+      // SMS не ушла (503 — шлюз не отправил): кнопку SMS прячем, остаётся Telegram — второй раз не мучить
+      if (how === 'SMS' && e instanceof ApiError && e.status === 503 && ways.data?.telegram) {
+        setSmsDown(true)
+        setError(new ApiError(503, 'SMS сейчас не отправляются — подтвердите номер через Telegram: кнопка ниже'))
+      } else {
+        setError(e instanceof ApiError ? e : new ApiError(0, 'Нет связи с сервером'))
+      }
     } finally {
       setBusy(false)
     }
@@ -229,7 +236,7 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
             <button type="submit" className="btn tg-login" disabled={busy}>
               {busy ? <><Spinner />Проверяем…</> : 'Подтвердить через Telegram'}</button>
           )}
-          {w.sms && (
+          {w.sms && !smsDown && (
             <button type={w.telegram ? 'button' : 'submit'} className={w.telegram ? 'btn' : 'btn primary'} disabled={busy}
               onClick={w.telegram ? () => void start('SMS') : undefined}>
               {busy && !w.telegram ? <><Spinner />Проверяем…</> : 'Получить код по SMS'}</button>
