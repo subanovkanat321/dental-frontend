@@ -1476,6 +1476,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/signup/email/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["emailLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/signup/email/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["emailConfirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/signup/email/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["emailCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/signup/code": {
         parameters: {
             query?: never;
@@ -3380,6 +3428,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/telegram-connect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["start_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/phone/code": {
         parameters: {
             query?: never;
@@ -4356,6 +4420,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/telegram-connect/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/tariffs": {
         parameters: {
             query?: never;
@@ -4507,7 +4587,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["status"];
+        get: operations["status_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8130,6 +8210,7 @@ export interface components {
             method?: string;
             code?: string;
             password?: string;
+            email?: string;
         };
         SignupControllerRegistered: {
             clinicName: string;
@@ -8139,6 +8220,22 @@ export interface components {
             link: string;
             /** Format: int64 */
             secondsLeft: number;
+        };
+        SignupControllerLinkRequest: {
+            token?: string;
+            password?: string;
+        };
+        SignupControllerLinkPreview: {
+            clinicName: string;
+            phoneMasked: string;
+            emailMasked: string;
+        };
+        SignupControllerEmailSent: {
+            emailMasked: string;
+            /** Format: int64 */
+            secondsLeft: number;
+            /** Format: int64 */
+            resendSeconds: number;
         };
         SignupControllerCodeSent: {
             phoneMasked: string;
@@ -8957,6 +9054,11 @@ export interface components {
             alsoDoctor?: boolean;
             doctorIds?: number[];
         };
+        TelegramConnectControllerConnectStarted: {
+            link: string;
+            /** Format: int64 */
+            secondsLeft: number;
+        };
         MyPhoneControllerCodeRequest: {
             phone?: string;
         };
@@ -9368,9 +9470,17 @@ export interface components {
             /** Format: int32 */
             direction?: number;
         };
+        TelegramConnectControllerConnectStatus: {
+            /** @enum {string} */
+            state: "none" | "waiting" | "cancelled" | "linked" | "failed";
+            /** Format: int64 */
+            secondsLeft: number;
+            error?: string;
+        };
         SignupControllerAvailability: {
             sms: boolean;
             telegram: boolean;
+            email: boolean;
         };
         SignupControllerTelegramStatus: {
             /** @enum {string} */
@@ -14251,6 +14361,78 @@ export interface operations {
             };
         };
     };
+    emailLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupControllerLinkRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerLinkPreview"];
+                };
+            };
+        };
+    };
+    emailConfirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupControllerLinkRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerRegistered"];
+                };
+            };
+        };
+    };
+    emailCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupControllerSignupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerEmailSent"];
+                };
+            };
+        };
+    };
     code: {
         parameters: {
             query?: never;
@@ -17725,6 +17907,26 @@ export interface operations {
             };
         };
     };
+    start_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramConnectControllerConnectStarted"];
+                };
+            };
+        };
+    };
     code_3: {
         parameters: {
             query?: never;
@@ -19622,6 +19824,26 @@ export interface operations {
             };
         };
     };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TelegramConnectControllerConnectStatus"];
+                };
+            };
+        };
+    };
     tariffs: {
         parameters: {
             query?: never;
@@ -19820,7 +20042,7 @@ export interface operations {
             };
         };
     };
-    status: {
+    status_1: {
         parameters: {
             query?: never;
             header?: never;

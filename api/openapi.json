@@ -3922,6 +3922,90 @@
         }
       }
     },
+    "/web/signup/email/link" : {
+      "post" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "emailLink",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupControllerLinkRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerLinkPreview"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/signup/email/confirm" : {
+      "post" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "emailConfirm",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupControllerLinkRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerRegistered"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/signup/email/code" : {
+      "post" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "emailCode",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupControllerSignupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerEmailSent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/signup/code" : {
       "post" : {
         "tags" : [ "signup-controller" ],
@@ -8189,6 +8273,24 @@
         }
       }
     },
+    "/api/me/telegram-connect" : {
+      "post" : {
+        "tags" : [ "telegram-connect-controller" ],
+        "operationId" : "start_2",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TelegramConnectControllerConnectStarted"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/phone/code" : {
       "post" : {
         "tags" : [ "my-phone-controller" ],
@@ -10660,6 +10762,24 @@
         }
       }
     },
+    "/web/telegram-connect/status" : {
+      "get" : {
+        "tags" : [ "telegram-connect-controller" ],
+        "operationId" : "status",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TelegramConnectControllerConnectStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/tariffs" : {
       "get" : {
         "tags" : [ "billing-controller" ],
@@ -10924,7 +11044,7 @@
     "/web/login/telegram/status" : {
       "get" : {
         "tags" : [ "telegram-login-controller" ],
-        "operationId" : "status",
+        "operationId" : "status_1",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -18504,6 +18624,9 @@
           },
           "password" : {
             "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
           }
         }
       },
@@ -18529,6 +18652,46 @@
           }
         },
         "required" : [ "link", "secondsLeft" ]
+      },
+      "SignupControllerLinkRequest" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SignupControllerLinkPreview" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "phoneMasked" : {
+            "type" : "string"
+          },
+          "emailMasked" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "clinicName", "emailMasked", "phoneMasked" ]
+      },
+      "SignupControllerEmailSent" : {
+        "properties" : {
+          "emailMasked" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "resendSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "emailMasked", "resendSeconds", "secondsLeft" ]
       },
       "SignupControllerCodeSent" : {
         "properties" : {
@@ -20513,6 +20676,18 @@
           }
         }
       },
+      "TelegramConnectControllerConnectStarted" : {
+        "properties" : {
+          "link" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "link", "secondsLeft" ]
+      },
       "MyPhoneControllerCodeRequest" : {
         "properties" : {
           "phone" : {
@@ -21536,6 +21711,22 @@
           }
         }
       },
+      "TelegramConnectControllerConnectStatus" : {
+        "properties" : {
+          "state" : {
+            "type" : "string",
+            "enum" : [ "none", "waiting", "cancelled", "linked", "failed" ]
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "error" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "secondsLeft", "state" ]
+      },
       "SignupControllerAvailability" : {
         "properties" : {
           "sms" : {
@@ -21543,9 +21734,12 @@
           },
           "telegram" : {
             "type" : "boolean"
+          },
+          "email" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "sms", "telegram" ]
+        "required" : [ "email", "sms", "telegram" ]
       },
       "SignupControllerTelegramStatus" : {
         "properties" : {

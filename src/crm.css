@@ -2713,3 +2713,14 @@ p.expense-owner { display: block; }
 .signup-page .signup-form .field-note { margin: -6px 0 0; text-align: left; }
 .signup-page .signup-form .check { align-items: flex-start; text-align: left; }
 .signup-page .signup-form .btn { width: 100%; }
+/* «Что дальше» после регистрации по SMS или почте: как входить потом и «Подключить Telegram» — главной кнопкой */
+.signup-page .signup-next { display: grid; gap: 14px; width: 100%; max-width: 380px; justify-self: center; text-align: center; }
+.signup-page .signup-next h1 { margin: 0; }
+.signup-page .signup-next p { margin: 0; }
+.signup-page .signup-next > .btn, .signup-page .signup-next-block .btn { width: 100%; text-decoration: none; }
+.signup-page .signup-next-block { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--separator); border-radius: var(--r-md); }
+.signup-page .signup-next-warn { display: block; text-align: left; cursor: default; }
+.signup-page .signup-next-ios { text-align: left; }
+/* /start во встроенном браузере Instagram и т. п.: SMS и почта — мелкой ссылкой под Telegram */
+.signup-page .signup-form .link.signup-alt { width: auto; justify-self: center; font-size: .9rem; }
+.signup-page .signup-tg-hint { margin: -4px 0 0; text-align: center; }

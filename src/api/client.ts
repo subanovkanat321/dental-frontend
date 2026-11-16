@@ -337,7 +337,7 @@ export type SignupTelegramStatus = Schemas['SignupControllerTelegramStatus']
 export type SignupDone = Schemas['SignupControllerRegistered']
 
 export async function signupAvailability(): Promise<SignupAvailability> {
-  return await webRequest<SignupAvailability>('GET', '/web/signup') ?? { sms: false, telegram: false }
+  return await webRequest<SignupAvailability>('GET', '/web/signup') ?? { sms: false, telegram: false, email: false }
 }
 
 /**
@@ -374,8 +374,50 @@ export async function forgetSignup(): Promise<void> {
  * Создать клинику кодом из SMS (код и пароль). В ответе — cookie-сессия: человек уже вошёл руководителем и врачом.
  * Номер, код и пароль — только в теле, нигде не сохраняем.
  */
-export async function signupRegister(form: SignupForm, confirm: { method: 'SMS'; code: string; password: string }): Promise<SignupDone> {
+export async function signupRegister(form: SignupForm, confirm: { method: 'SMS' | 'EMAIL'; code: string; password: string }): Promise<SignupDone> {
   return await webPost<SignupDone>('/web/signup', { ...form, ...confirm }) ?? { clinicName: form.clinicName ?? '', fullName: form.fullName ?? '' }
+}
+
+export type SignupEmailSent = Schemas['SignupControllerEmailSent']
+
+export type SignupLinkPreview = Schemas['SignupControllerLinkPreview']
+
+/**
+ * «Подтвердить по почте»: та же проверка формы (422 по полям, 422 email, 409 — номер уже в клинике), затем письмо со
+ * ссылкой «Подтвердить и открыть Tish» и кодом; 429 — лимит писем, 503 — почта не настроена или письмо не ушло. Шаг
+ * кода сервер помнит HttpOnly-cookie. Почта — только в теле.
+ */
+export async function signupEmailCode(form: SignupForm, email: string): Promise<SignupEmailSent> {
+  const sent = await webPost<SignupEmailSent>('/web/signup/email/code', { ...form, email })
+  if (!sent) throw new ApiError(500, 'Сервер не ответил — попробуйте ещё раз')
+  return sent
+}
+
+/** Ссылка из письма (/start/confirm): жива ли и что создадим; 404 — устарела или уже использована. Токен — в теле. */
+export async function signupEmailLink(token: string): Promise<SignupLinkPreview> {
+  const preview = await webPost<SignupLinkPreview>('/web/signup/email/link', { token })
+  if (!preview) throw new ApiError(500, 'Сервер не ответил — попробуйте ещё раз')
+  return preview
+}
+
+/** «Создать клинику» на странице ссылки: пароль придумывают здесь. В ответе — cookie-сессия. */
+export async function signupEmailConfirm(token: string, password: string): Promise<SignupDone> {
+  return await webPost<SignupDone>('/web/signup/email/confirm', { token, password }) ?? { clinicName: '', fullName: '' }
+}
+
+export type TelegramConnectStatus = Schemas['TelegramConnectControllerConnectStatus']
+
+/**
+ * «📲 Подключить Telegram» (сотрудник без Telegram): ссылка в бота t.me/<бот>?start=tglink_… — бот спросит «Это вы?»;
+ * 409 — Telegram уже есть, 503 — бот не настроен.
+ */
+export async function telegramConnectStart(): Promise<Schemas['TelegramConnectControllerConnectStarted']> {
+  return unwrap(api.POST('/api/me/telegram-connect'))
+}
+
+/** Ждём «✅ Да, это я»: linked — подключён, сервер выдал новую cookie-сессию (прежняя больше не действует). */
+export async function telegramConnectStatus(): Promise<TelegramConnectStatus> {
+  return await webRequest<TelegramConnectStatus>('GET', '/web/telegram-connect/status') ?? { state: 'none', secondsLeft: 0 }
 }
 
 /**

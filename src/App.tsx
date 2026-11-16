@@ -9,7 +9,7 @@ import type { Schemas } from './api/client'
 import { DownloadPage } from './pwa/DownloadPage'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { linkHash, readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
-import { isDownloadPath, isInvitePath, isLoginPath, isSignupPath, usePage, type Page } from './lib/route'
+import { isDownloadPath, isInvitePath, isLoginPath, isSignupConfirmPath, isSignupPath, usePage, type Page } from './lib/route'
 import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
 import { launchedAsApp } from './pwa/pwa'
@@ -41,6 +41,7 @@ const AtlasPage = lazy(() => import('./atlas/AtlasPage'))
 const InvitePage = lazy(() => import('./invite/InvitePage').then((m) => ({ default: m.InvitePage })))
 // Регистрация клиники (/start) — тоже свой чанк: нужна один раз в жизни клиники
 const SignupPage = lazy(() => import('./signup/SignupPage').then((m) => ({ default: m.SignupPage })))
+const SignupConfirmPage = lazy(() => import('./signup/ConfirmPage').then((m) => ({ default: m.ConfirmPage })))
 
 /**
  * Одно приложение на всех (ADR 0001 и 0002 бэкенда): сотрудник видит CRM, команда платформы —
@@ -90,6 +91,8 @@ function Screens() {
   if (isInvitePath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><InvitePage /></Suspense></ErrorBoundary>
   // /start — клиника регистрируется сама: без входа, до проверки сессии
   if (isSignupPath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><SignupPage /></Suspense></ErrorBoundary>
+  // /start/confirm?t=… — ссылка из письма регистрации (открыли из почты, уже в настоящем браузере)
+  if (isSignupConfirmPath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><SignupConfirmPage /></Suspense></ErrorBoundary>
   // 3D-атлас (#/atlas, /atlas) — без входа: на экране нет данных пациентов, его можно открыть на ТВ
   if (atlas) return <ErrorBoundary><Suspense fallback={<AtlasBoot />}><AtlasPage route={atlas} onClose={closeAtlas} byUrl /></Suspense></ErrorBoundary>
   if (me.isPending) {

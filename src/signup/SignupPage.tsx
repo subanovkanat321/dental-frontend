@@ -2,8 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 
 import {
-  ApiError, forgetSignup, signupAvailability, signupCode, signupEnterTelegram, signupRegister, signupTelegram, signupTelegramStatus,
-  type SignupCodeSent, type SignupForm,
+  ApiError, forgetSignup, signupAvailability, signupCode, signupEmailCode, signupEnterTelegram, signupRegister, signupTelegram,
+  signupTelegramStatus, type SignupCodeSent, type SignupEmailSent, type SignupForm,
 } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
@@ -12,8 +12,10 @@ import { Loading, Spinner } from '../layout/Loading'
 import { NewPasswordFields } from '../layout/PasswordFields'
 import { Select } from '../layout/Select'
 import { CITIES } from '../lib/clinicSearch'
+import { inAppBrowser } from '../lib/inAppBrowser'
 import { useCountdown } from '../lib/otp'
 import { passwordProblem } from '../lib/password'
+import { NextSteps } from './NextSteps'
 
 /** Как часто спрашиваем сервер, пока ждём «✅ Да, это я» в боте. */
 export const POLL_MS = 2000
@@ -24,8 +26,10 @@ const PHONE_TAKEN = 'phone-in-clinic'
 type Step =
   | { kind: 'form' }
   | { kind: 'code'; sent: SignupCodeSent }
+  | { kind: 'email'; sent: SignupEmailSent }
   | { kind: 'telegram'; link: string }
   | { kind: 'creating'; text: string }
+  | { kind: 'next'; clinicName: string }
 
 /**
  * «Попробовать бесплатно» — клиника регистрируется сама (/start), без заявки и звонка. Один экран формы:
@@ -44,9 +48,19 @@ type Step =
  * «Открыть день» — врачам из Instagram возвращаться во встроенный браузер не нужно. Вернулся (или перезагрузил
  * страницу) — сервер по HttpOnly-cookie говорит «готово», и страница входит без формы.
  *
+ * <p>
+ * Во встроенном браузере Instagram (и Facebook, TikTok, Threads — lib/inAppBrowser) Telegram — главный путь с подсказкой
+ * «Tish останется у вас в Telegram», остальное — мелкой ссылкой: вход, сохранённый во встроенном браузере, пропадёт,
+ * как только человек закроет приложение. «Или подтвердить по почте» (почта настроена на сервере) — письмо со ссылкой
+ * «Подтвердить и открыть Tish»: её открывают из почты уже в настоящем браузере (/start/confirm, ConfirmPage), а код из
+ * того же письма можно ввести и здесь. SMS — только если включены для регистрации (SIGNUP_SMS_ENABLED на сервере).
+ * После регистрации по SMS или почте — экран «Что дальше» (NextSteps): как входить потом и «Подключить Telegram».
+ *
  * @param onDone куда после регистрации (по умолчанию — в CRM; тест подставляет свою)
+ * @param userAgent только тесты: подставить userAgent встроенного браузера
  */
-export function SignupPage({ onDone = () => window.location.assign('/') }: { onDone?: () => void }) {
+export function SignupPage({ onDone = () => window.location.assign('/'), userAgent }: { onDone?: () => void; userAgent?: string }) {
+  const inApp = inAppBrowser(userAgent)
   const client = useQueryClient()
   const ways = useQuery({ queryKey: ['signup-ways'], queryFn: signupAvailability, retry: false, staleTime: Infinity })
   const [phone, setPhone] = useState('')
@@ -55,6 +69,7 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
   const [error, setError] = useState<ApiError | null>(null)
   const [busy, setBusy] = useState(false)
   const [smsDown, setSmsDown] = useState(false)
+  const [emailMode, setEmailMode] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => { document.title = 'Попробовать Tish бесплатно' }, [])
@@ -63,17 +78,16 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
     setError(null)
     setBusy(true)
     try {
-      await signupRegister(f, confirm)
-      // Сессия уже в cookie — «кто я» спросим заново в CRM
+      const done = await signupRegister(f, confirm)
+      // Сессия уже в cookie — «кто я» спросим заново в CRM; сначала — «Что дальше»: как не потерять Tish
       void client.invalidateQueries({ queryKey: ['me'] })
-      setStep({ kind: 'creating', text: 'Создаём клинику…' })
-      onDone()
+      setStep({ kind: 'next', clinicName: done.clinicName })
     } catch (e) {
       setError(e instanceof ApiError ? e : new ApiError(0, 'Нет связи с сервером'))
     } finally {
       setBusy(false)
     }
-  }, [client, onDone])
+  }, [client])
 
   /** Клиника уже создана в боте — войти в неё (форма не нужна). */
   const enter = useCallback(async () => {
@@ -142,7 +156,7 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
     }
   }
 
-  const start = async (how: 'SMS' | 'TELEGRAM') => {
+  const start = async (how: 'SMS' | 'TELEGRAM' | 'EMAIL') => {
     const f = read()
     setForm(f)
     setError(null)
@@ -150,6 +164,9 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
     try {
       if (how === 'SMS') {
         setStep({ kind: 'code', sent: await signupCode(f) })
+      } else if (how === 'EMAIL') {
+        const email = String(new FormData(formRef.current!).get('email') ?? '').trim()
+        setStep({ kind: 'email', sent: await signupEmailCode(f, email) })
       } else {
         const started = await signupTelegram(f)
         setStep({ kind: 'telegram', link: started.link })
@@ -182,6 +199,17 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
   let body: React.ReactNode = null
   if (ways.isPending) body = <Loading text="Открываем…" />
   else if (step.kind === 'creating') body = <Loading text={step.text} />
+  else if (step.kind === 'next') body = <NextSteps clinicName={step.clinicName} onDone={onDone} userAgent={userAgent} />
+  else if (step.kind === 'email' && form) {
+    body = <CodeStepForm form={form} sent={step.sent} busy={busy} error={error} onBack={back} title="Код из письма"
+      intro={<>Письмо отправлено на <b>{step.sent.emailMasked}</b>. Откройте почту и нажмите «Подтвердить» — Tish откроется в
+        браузере. Или введите код из письма:</>}
+      onResend={async () => {
+        const email = String(new FormData(formRef.current!).get('email') ?? '').trim()
+        setStep({ kind: 'email', sent: await signupEmailCode(form, email) })
+      }}
+      onSubmit={(code, password) => void finish(form, { method: 'EMAIL', code, password })} />
+  }
   else if (step.kind === 'code' && form) {
     body = <CodeStepForm form={form} sent={step.sent} busy={busy} error={error} onBack={back}
       onResend={async () => { setStep({ kind: 'code', sent: await signupCode(form) }) }}
@@ -199,7 +227,7 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
   }
   let formBody: React.ReactNode = null
   if (!ways.isPending) {
-    const w = ways.data ?? { sms: false, telegram: false }
+    const w = ways.data ?? { sms: false, telegram: false, email: false }
     const e = error
     const err = (k: string) => e?.fieldErrors[k] && <p className="error">{e.fieldErrors[k]}</p>
     const taken = e?.status === 409 && e.code === PHONE_TAKEN
@@ -209,7 +237,10 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
         <h1>Попробовать Tish бесплатно</h1>
         <p className="hint">Создайте клинику за пару минут — без заявки и звонка. Всё приложение, без ограничений.</p>
         <form ref={formRef} className="form narrow invite-form signup-form" aria-label="Регистрация клиники"
-          onSubmit={(ev: FormEvent) => { ev.preventDefault(); void start(w.telegram ? 'TELEGRAM' : 'SMS') }}>
+          onSubmit={(ev: FormEvent) => {
+            ev.preventDefault()
+            void start(emailMode ? 'EMAIL' : w.telegram ? 'TELEGRAM' : w.sms && !smsDown ? 'SMS' : 'EMAIL')
+          }}>
           <label className="field"><span>Название клиники</span>
             <input name="clinicName" maxLength={100} autoComplete="off" placeholder="Стоматология «Улыбка»" aria-describedby="signup-clinic-hint" /></label>
           <p id="signup-clinic-hint" className="hint small field-note">или ваше имя, если работаете один</p>
@@ -231,16 +262,35 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
           {err('consent')}
           {taken && <p className="error" role="alert">{e.message}. <a href="/login">Войти в Tish</a></p>}
           {!taken && other && <p className="error" role="alert">{other}</p>}
-          {!w.sms && !w.telegram && <p className="error" role="alert">Регистрация сейчас недоступна — напишите нам, подключим вручную.</p>}
+          {!w.sms && !w.telegram && !w.email && <p className="error" role="alert">Регистрация сейчас недоступна — напишите нам, подключим вручную.</p>}
           {w.telegram && (
-            <button type="submit" className="btn tg-login" disabled={busy}>
-              {busy ? <><Spinner />Проверяем…</> : 'Подтвердить через Telegram'}</button>
+            <button type={emailMode ? 'button' : 'submit'} className="btn tg-login" disabled={busy}
+              onClick={emailMode ? () => void start('TELEGRAM') : undefined}>
+              {busy && !emailMode ? <><Spinner />Проверяем…</> : 'Подтвердить через Telegram'}</button>
           )}
-          {w.sms && !smsDown && (
-            <button type={w.telegram ? 'button' : 'submit'} className={w.telegram ? 'btn' : 'btn primary'} disabled={busy}
-              onClick={w.telegram ? () => void start('SMS') : undefined}>
-              {busy && !w.telegram ? <><Spinner />Проверяем…</> : 'Получить код по SMS'}</button>
+          {w.telegram && inApp && (
+            <p className="hint small signup-tg-hint">Через Telegram удобнее: Tish останется у вас в Telegram — кнопка «Открыть день»</p>
           )}
+          {w.email && emailMode && (
+            <>
+              <label className="field"><span>Почта</span>
+                <input name="email" type="email" inputMode="email" maxLength={254} autoComplete="email" placeholder="name@gmail.com" /></label>
+              {err('email')}
+              <button type={w.telegram ? 'button' : 'submit'} className={w.telegram ? 'btn' : 'btn primary'} disabled={busy}
+                onClick={w.telegram ? () => void start('EMAIL') : undefined}>
+                {busy ? <><Spinner />Отправляем…</> : 'Получить письмо'}</button>
+            </>
+          )}
+          {w.email && !emailMode && (
+            <button type="button" className="link signup-alt" onClick={() => setEmailMode(true)}>или подтвердить по почте</button>
+          )}
+          {w.sms && !smsDown && (w.telegram && inApp ? (
+            <button type="button" className="link signup-alt" disabled={busy} onClick={() => void start('SMS')}>или по SMS</button>
+          ) : (
+            <button type={w.telegram || emailMode ? 'button' : 'submit'} className={w.telegram || emailMode ? 'btn' : 'btn primary'} disabled={busy}
+              onClick={w.telegram || emailMode ? () => void start('SMS') : undefined}>
+              {busy && !w.telegram && !emailMode ? <><Spinner />Проверяем…</> : 'Получить код по SMS'}</button>
+          ))}
         </form>
         <p className="hint small">Уже в Tish? <a href="/login">Войти</a> · Нужна помощь с подключением? <a href="/join#form">Оставьте заявку</a></p>
       </div>
@@ -258,9 +308,10 @@ export function SignupPage({ onDone = () => window.location.assign('/') }: { onD
 }
 
 /** Шаг «Код из SMS»: код и «Придумайте пароль» (по номеру и паролю — вход потом) → «Создать клинику». */
-function CodeStepForm({ form, sent, busy, error, onBack, onResend, onSubmit }: {
-  form: SignupForm; sent: SignupCodeSent; busy: boolean; error: ApiError | null
+function CodeStepForm({ form, sent, busy, error, onBack, onResend, onSubmit, title = 'Код из SMS', intro }: {
+  form: SignupForm; sent: { secondsLeft: number; resendSeconds: number; phoneMasked?: string }; busy: boolean; error: ApiError | null
   onBack: () => void; onResend: () => Promise<void>; onSubmit: (code: string, password: string) => void
+  title?: string; intro?: React.ReactNode
 }) {
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')
@@ -274,14 +325,14 @@ function CodeStepForm({ form, sent, busy, error, onBack, onResend, onSubmit }: {
   const other = error && !codeError && !error.fieldErrors.password ? error.message : ''
   return (
     <>
-      <h1>Код из SMS</h1>
-      <form className="form narrow invite-form" aria-label="Код из SMS" onSubmit={(ev) => {
+      <h1>{title}</h1>
+      <form className="form narrow invite-form" aria-label={title} onSubmit={(ev) => {
         ev.preventDefault()
         const problem = passwordProblem(password, repeat, form.phone ?? '')
         setCheck(problem)
         if (!problem) onSubmit(code, password)
       }}>
-        <p className="hint" role="status">Отправили SMS с кодом на <b>{sent.phoneMasked}</b>. Код действует {Math.max(1, Math.ceil(sent.secondsLeft / 60))} мин.</p>
+        <p className="hint" role="status">{intro ?? <>Отправили SMS с кодом на <b>{sent.phoneMasked}</b>.</>} Код действует {Math.max(1, Math.ceil(sent.secondsLeft / 60))} мин.</p>
         <CodeInput value={code} onChange={setCode} />
         {codeError && <p className="error">{codeError}</p>}
         <NewPasswordFields password={password} repeat={repeat} phone={form.phone ?? ''} label="Придумайте пароль для входа"

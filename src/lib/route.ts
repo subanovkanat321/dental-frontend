@@ -203,6 +203,11 @@ export function isSignupPath(path = window.location.pathname): boolean {
   return /^\/start\/?$/i.test(path)
 }
 
+/** Ссылка «Подтвердить и открыть Tish» из письма регистрации: /start/confirm?t=… — без входа. */
+export function isSignupConfirmPath(path = window.location.pathname): boolean {
+  return /^\/start\/confirm\/?$/i.test(path)
+}
+
 /** Страница по ссылке-приглашению (врач, сотрудник): /invite#join_… или /invite#staff_… — без входа. */
 export function isInvitePath(path = window.location.pathname): boolean {
   return /^\/invite\/?$/i.test(path)

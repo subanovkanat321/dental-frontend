@@ -13,7 +13,7 @@ import { SignupPage } from './SignupPage'
 /** Регистрация клиники (/start): клиники, имена и номера — вымышленные. */
 type Sent = { path: string; body: Record<string, unknown>; header: string | null }
 
-function backend(ways: Schemas['SignupControllerAvailability'] = { sms: true, telegram: true },
+function backend(ways: Schemas['SignupControllerAvailability'] = { sms: true, telegram: true, email: false },
   initial: Schemas['SignupControllerTelegramStatus']['state'] = 'none') {
   const sent: Sent[] = []
   let telegram: Schemas['SignupControllerTelegramStatus']['state'] = initial
@@ -55,6 +55,10 @@ function backend(ways: Schemas['SignupControllerAvailability'] = { sms: true, te
       return HttpResponse.json({ clinicName: String(body.clinicName), fullName: String(body.fullName) } satisfies Schemas['SignupControllerRegistered'])
     }),
     http.delete('*/web/signup/pending', () => new HttpResponse(null, { status: 204 })),
+    http.post('*/api/me/telegram-connect', () => HttpResponse.json(
+      { link: 'https://t.me/tish_test_bot?start=tglink_abc', secondsLeft: 1800 } satisfies Schemas['TelegramConnectControllerConnectStarted'])),
+    http.get('*/web/telegram-connect/status', () => HttpResponse.json(
+      { state: 'waiting', secondsLeft: 1000 } satisfies Schemas['TelegramConnectControllerConnectStatus'])),
   )
   return { sent, confirm: () => { telegram = 'confirmed' }, fail: (why: string) => { telegram = 'failed'; error = why } }
 }
@@ -117,8 +121,12 @@ test('регистрация по SMS: форма → код и пароль →
   await user.clear(within(code).getByRole('textbox', { name: 'Код подтверждения' }))
   await user.type(within(code).getByRole('textbox', { name: 'Код подтверждения' }), '123456')
   await user.click(within(code).getByRole('button', { name: 'Создать клинику' }))
-  await waitForSlow(() => expect(onDone).toHaveBeenCalledOnce())
+  // Не сразу в CRM — «Что дальше»: как входить потом и «Подключить Telegram»
+  expect(await screen.findByRole('heading', { name: '✅ Клиника создана' })).toBeInTheDocument()
   expect(sent.at(-1)).toMatchObject({ path: 'register', body: { method: 'SMS', code: '123456', password: 'Улыбка2026', clinicName: 'Стоматолог Айгерим' } })
+  expect(onDone).not.toHaveBeenCalled()
+  await user.click(screen.getByRole('button', { name: 'Перейти в Tish' }))
+  expect(onDone).toHaveBeenCalledOnce()
 })
 
 test('регистрация через Telegram завершается в боте: страница при возврате видит «готово» и входит без формы', async () => {
@@ -145,7 +153,7 @@ test('регистрация через Telegram завершается в бо�
 })
 
 test('ошибки: поле под полем, номер уже в клинике — «Войти»; SMS выключены — только Telegram', async () => {
-  backend({ sms: true, telegram: false })
+  backend({ sms: true, telegram: false, email: false })
   const user = userEvent.setup()
   show()
   const form = await screen.findByRole('form', { name: 'Регистрация клиники' })
@@ -163,14 +171,14 @@ test('ошибки: поле под полем, номер уже в клини�
 })
 
 test('регистрация выключена на сервере — понятное сообщение и путь «помогите подключить»', async () => {
-  backend({ sms: false, telegram: false })
+  backend({ sms: false, telegram: false, email: false })
   show()
   expect(await screen.findByText(/Регистрация сейчас недоступна/)).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Оставьте заявку' })).toHaveAttribute('href', '/join#form')
 })
 
 test('вернулись из Telegram после «Да, это я» (страница открылась заново) — «Готово — клиника создана» и вход', async () => {
-  const { sent } = backend({ sms: true, telegram: true }, 'confirmed')
+  const { sent } = backend({ sms: true, telegram: true, email: false }, 'confirmed')
   server.use(http.post('*/web/signup', async ({ request }) => {
     sent.push({ path: 'register', body: await request.json() as Record<string, unknown>, header: request.headers.get('X-Dental-Web') })
     await new Promise((r) => setTimeout(r, 50))
