@@ -1,4 +1,4 @@
-import { api, ApiError, unwrap } from './api/client'
+import { api, ApiError, logout, unwrap } from './api/client'
 import { ConfirmHost } from './layout/Confirm'
 import { notify } from './lib/confirm'
 import { useMe } from './api/me'
@@ -122,6 +122,12 @@ function Screens() {
       <div className="center">
         <h1>Tish CRM — для клиник</h1>
         <p className="hint">Сюда входят врачи, регистратура и руководители клиники. Пациенты записываются через бота в Telegram.</p>
+        {/* Вход есть, а клиники нет (клинику удалили, сотрудника убрали) — не тупик: выйти или создать свою */}
+        <p className="hint">Этот вход не привязан ни к одной клинике.</p>
+        <div className="actions">
+          <a className="btn primary" href="/start">Создать клинику</a>
+          <button type="button" className="btn" onClick={() => void logout()}>Выйти</button>
+        </div>
       </div>
     )
   }
