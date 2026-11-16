@@ -166,7 +166,7 @@ test('счётчики, фильтры, поиск и «Следующая кл�
   expect(within(screen.getByRole('list', { name: 'Клиники' })).getAllByRole('listitem').map((x) => x.getAttribute('aria-label')))
     .toEqual(['Клиника: Тест-Отказ'])
   await user.click(within(groups).getByRole('button', { name: 'Все · 5' }))
-  await user.type(screen.getByRole('searchbox', { name: 'Поиск по названию' }), 'елка')
+  await user.type(screen.getByRole('searchbox', { name: 'Поиск: название, адрес, телефон' }), 'елка')
   expect(within(screen.getByRole('list', { name: 'Клиники' })).getAllByRole('listitem')).toHaveLength(1)
 
   // «Следующая клиника» — первая неписаная: поиск сбрасывается, карточка открывается с текстом
@@ -193,7 +193,7 @@ test('порядок: сверху свёрнутый «Текст сообще�
   const heading = within(clinics).getByRole('heading', { name: 'Клиники' })
   const groups = within(clinics).getByRole('group', { name: 'Кому писали' })
   after(heading, groups)
-  after(groups, within(clinics).getByRole('searchbox', { name: 'Поиск по названию' }))
+  after(groups, within(clinics).getByRole('searchbox', { name: 'Поиск: название, адрес, телефон' }))
   after(groups, within(clinics).getByRole('list', { name: 'Клиники' }))
 })
 

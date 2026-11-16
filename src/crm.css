@@ -2724,3 +2724,48 @@ p.expense-owner { display: block; }
 /* /start во встроенном браузере Instagram и т. п.: SMS и почта — мелкой ссылкой под Telegram */
 .signup-page .signup-form .link.signup-alt { width: auto; justify-self: center; font-size: .9rem; }
 .signup-page .signup-tg-hint { margin: -4px 0 0; text-align: center; }
+
+/*
+ * «Рассылка клиникам» — вид «Таблица» (как в Excel, сотни клиник из 2ГИС): своя прокрутка в обе стороны,
+ * внутри неё липнут шапка и колонки «№» и «Название»; тонкая сетка, зебра, плотные строки 32px.
+ * Цвета — токены (тёмная тема сама). На телефоне таблица остаётся таблицей и листается вбок внутри блока
+ * (карточки из строк, как у остальных .table, здесь не нужны: сравнивают столбцы).
+ */
+.outreach-filter .outreach-view { flex: none; }
+.outreach-filter .outreach-city { flex: 0 1 180px; min-width: 140px; }
+.sheet-scroll { overflow: auto; max-height: max(320px, calc(100dvh - 260px)); border: 1px solid var(--separator); border-radius: var(--r-md); background: var(--card); overscroll-behavior-x: contain; }
+.table.sheet { width: 100%; min-width: 1040px; border-radius: 0; box-shadow: none; overflow: visible; font-size: .875rem; }
+.table.sheet th, .table.sheet td { box-sizing: border-box; height: 32px; padding: 4px 10px; border-bottom: 1px solid var(--separator); border-right: 1px solid var(--separator); white-space: nowrap; vertical-align: middle; }
+.table.sheet :is(th, td):last-child { border-right: 0; }
+.table.sheet th { top: 0; z-index: 3; border-radius: 0; background: var(--sunken); color: var(--hint); font-size: .8rem; box-shadow: inset 0 -1px 0 var(--line-strong); }
+.table.sheet tbody td { background: var(--card); }
+.table.sheet tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--sunken) 55%, var(--card)); }
+.table.sheet tbody tr:hover td, .table.sheet tbody tr.active td { background: var(--accent-soft); }
+.table.sheet tbody tr.active td.sheet-name { box-shadow: inset 3px 0 0 var(--accent); }
+.table.sheet .num { font-variant-numeric: tabular-nums; }
+/* «№» и «Название» — липкие слева при прокрутке вбок; ширина «№» задана, чтобы «Название» встало за ним */
+.table.sheet :is(th, td):nth-child(1) { position: sticky; left: 0; width: 52px; min-width: 52px; max-width: 52px; z-index: 2; color: var(--faint); }
+.table.sheet :is(th, td):nth-child(2) { position: sticky; left: 52px; z-index: 2; min-width: 200px; max-width: 280px; overflow: hidden; text-overflow: ellipsis; box-shadow: 1px 0 0 var(--line-strong); }
+.table.sheet th:nth-child(-n+2) { z-index: 4; }
+.table.sheet td:nth-child(2) .row-link { font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.table.sheet td.sheet-wrap { max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.table.sheet .chip { white-space: nowrap; }
+.table.sheet .sheet-link a { display: inline-flex; align-items: center; gap: 4px; color: var(--link); text-decoration: none; }
+.table.sheet .sheet-link a:hover { text-decoration: underline; }
+.panel .outreach-lead.in-panel { display: grid; gap: 10px; }
+@media (max-width: 760px) {
+  .outreach-filter .outreach-city { flex: 1 1 140px; }
+  .outreach-filter .outreach-view { flex: 1 1 100%; }
+  .sheet-scroll { max-height: calc(100dvh - 200px); }
+  .table.sheet, .card-block .table.sheet { display: table; white-space: nowrap; border: 0; }
+  .table.sheet thead { display: table-header-group; }
+  .table.sheet tbody, .card-block .table.sheet tbody { display: table-row-group; gap: 0; }
+  .table.sheet tr, .card-block .table.sheet tr { display: table-row; padding: 0; border: 0; border-radius: 0; background: none; }
+  .table.sheet td, .table.sheet th, .table.sheet td:first-child { display: table-cell; padding: 4px 10px; border-bottom: 1px solid var(--separator); border-right: 1px solid var(--separator); text-align: left; white-space: nowrap; overflow-wrap: normal; font-weight: 400; font-size: inherit; }
+  .table.sheet td.r, .table.sheet th.r { text-align: right; }
+  .table.sheet td::before, .table.sheet td::after { content: none; }
+  .table.sheet td:empty { display: table-cell; }
+  .table.sheet :is(th, td):nth-child(2) { min-width: 130px; max-width: 150px; }
+  .table.sheet :is(th, td):nth-child(1) { width: 40px; min-width: 40px; max-width: 40px; }
+  .table.sheet :is(th, td):nth-child(2) { left: 40px; }
+}

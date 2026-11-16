@@ -55,7 +55,7 @@ test('«Написать клиникам» пустой: пустое сост�
   await openPlatform('Рассылка клиникам', 'По одной (WhatsApp)', user)
   expect(await screen.findByText('Список клиник пуст')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Следующая клиника →' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('textbox', { name: 'Поиск по названию' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('searchbox', { name: 'Поиск: название, адрес, телефон' })).not.toBeInTheDocument()
 })
 
 test('«Расход ИИ»: месяц без расхода — пустое состояние вместо таблицы; строка клиники открывает свой лимит', async () => {

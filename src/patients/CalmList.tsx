@@ -59,6 +59,8 @@ export function RowMenu({ label, items }: { label: string; items: MenuItem[] }) 
     box.current?.querySelector<HTMLButtonElement>('[role=menuitem]:not(:disabled)')?.focus()
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
+      // Esc закрывает только меню, а не карточку справа под ним (её Esc слушает window — до него не дойдёт)
+      e.stopPropagation()
       setOpen(false)
       box.current?.querySelector<HTMLButtonElement>('.row-menu-btn')?.focus()
     }

@@ -71,7 +71,7 @@ export function PlatformPage({ me }: { me: Me }) {
       {tab === 'settings' && <SettingsTab header={header} onPanel={setPanel} />}
       {tab === 'analytics' && inMain(<AnalyticsTab />)}
       {tab === 'finance' && inMain(<FinanceTab />)}
-      {tab === 'mailing' && inMain(mailing === 'all' ? <BroadcastTab /> : <OutreachTab />)}
+      {tab === 'mailing' && (mailing === 'all' ? inMain(<BroadcastTab />) : <OutreachTab header={header} onPanel={setPanel} />)}
       {tab === 'marketing' && inMain(marketing === 'materials' ? <MaterialsTab /> : <ContentTab />)}
       {tab === 'health' && inMain(<HealthTab />)}
       {tab === 'ai' && inMain(<AiUsageTab />)}

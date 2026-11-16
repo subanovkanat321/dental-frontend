@@ -1,7 +1,7 @@
 import { EmptyState } from '../layout/EmptyState'
 import { RowMenu } from '../patients/CalmList'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
@@ -15,7 +15,10 @@ import { Loading } from '../layout/Loading'
 import { CITIES } from '../lib/clinicSearch'
 import { haptic, openLink } from '../lib/telegram'
 import { whatsappUrl } from '../lib/texts'
-import { formatPhone, shortDate } from '../lib/time'
+import { formatPhone, shortDate, todayIn } from '../lib/time'
+import { useClose } from '../lib/useClose'
+import { useMedia } from '../lib/useMedia'
+import { LeadStatus, OutreachTable } from './OutreachTable'
 import { GROUPS, groupOf, messageFor, nextLead, PLACEHOLDER, prepareVideo, remindDue, sendVideo, templateMessage, videoWay, type Group, type OutreachLead, type VideoResult } from './outreach'
 import { SubHelp } from '../layout/PageHead'
 import { rowOpen } from '../lib/rowClick'
@@ -25,7 +28,40 @@ type Report = Schemas['ClinicOutreachImportReport']
 
 const EMPTY_TEMPLATE: Template = { text: '', custom: false, remindAfterDays: 3 }
 
-const STAGE_TEXT: Record<string, string> = { DEMO: 'Ответили', TRIAL: 'Пробный период', PAYING: 'Платит' }
+type View = 'list' | 'table'
+
+/** Выбор «Список / Таблица» на этом устройстве — удобство, а не данные (клиник в ключе нет). */
+const VIEW_KEY = 'tish.outreach.view'
+
+/** С скольких клиник на компьютере по умолчанию таблица: десяток удобнее карточками, сотни — таблицей. */
+const TABLE_FROM = 20
+
+function savedView(): View | null {
+  try {
+    const v = localStorage.getItem(VIEW_KEY)
+    return v === 'list' || v === 'table' ? v : null
+  }
+  catch {
+    return null
+  }
+}
+
+function saveView(view: View) {
+  try {
+    localStorage.setItem(VIEW_KEY, view)
+  }
+  catch {
+    // приватное окно — не запомнили, не страшно
+  }
+}
+
+/** Для поиска: строчные, «ё» как «е». */
+const norm = (s: string | null | undefined) => (s ?? '').toLowerCase().replace(/ё/g, 'е')
+
+/** Поиск по названию, адресу и телефону (телефон — по цифрам: «555 000» найдёт «996555000401»). */
+function matches(l: OutreachLead, q: string, digits: string): boolean {
+  return norm(l.clinicName).includes(q) || norm(l.address).includes(q) || (digits.length >= 3 && (l.phone ?? '').includes(digits))
+}
 
 /**
  * «Написать клиникам» (владелец платформы): список стоматологий из 2ГИС и карт — загрузить, написать
@@ -33,20 +69,50 @@ const STAGE_TEXT: Record<string, string> = { DEMO: 'Ответили', TRIAL: '�
  * ответившим — текст №2 и ролик, молчащим 3+ дня — одно напоминание. Массовой отправки нет нарочно: WhatsApp блокирует номер за рассылки, а первое
  * сообщение должно быть личным. Клиники — те же лиды, что в «Воронке продаж» (Клиники).
  */
-export function OutreachTab() {
+export function OutreachTab({ header, onPanel }: { header?: ReactNode; onPanel?: (open: boolean) => void }) {
   const outreach = useQuery({ queryKey: ['platform-outreach'], queryFn: () => unwrap(api.GET('/api/platform/outreach')) })
   const [group, setGroup] = useState<Group | null>(null)
   const [query, setQuery] = useState('')
+  const [city, setCity] = useState('')
   const [selected, setSelected] = useState<number | null>(null)
+  const phone = useMedia('(max-width: 760px)')
+  const [chosenView, setChosenView] = useState<View | null>(savedView)
+  const [exportError, setExportError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [adding, setAdding] = useState(false)
   const [allDone, setAllDone] = useState(false)
   const data = outreach.data
-  const leads = data?.leads ?? []
-  const q = query.trim().toLowerCase().replace(/ё/g, 'е')
+  const leads = useMemo(() => data?.leads ?? [], [data])
+  const q = norm(query.trim())
+  const digits = query.replace(/\D/g, '')
+  // Город — фильтром, только когда городов в списке больше одного
+  const cities = useMemo(() => [...new Set(leads.map((l) => l.city).filter((c): c is string => Boolean(c)))].sort((a, b) => a.localeCompare(b, 'ru')), [leads])
+  const cityOn = cities.length > 1 && cities.includes(city) ? city : ''
   // Открытая карточка остаётся на месте, даже когда после отметки ушла из фильтра «Не писали», — до «Следующей»
-  const shown = leads.filter((l) => l.id === selected || ((group == null || groupOf(l) === group)
-    && (!q || (l.clinicName ?? '').toLowerCase().replace(/ё/g, 'е').includes(q))))
+  const shown = useMemo(() => leads.filter((l) => l.id === selected || ((group == null || groupOf(l) === group)
+    && (!cityOn || l.city === cityOn) && (!q || matches(l, q, digits)))), [leads, selected, group, cityOn, q, digits])
+  // № — место в полном списке (как загружали): от фильтра и сортировки не меняется
+  const numbers = useMemo(() => new Map(leads.map((l, i) => [l.id, i + 1])), [leads])
+  // На компьютере сотни клиник — таблицей, десяток — списком; на телефоне — списком; выбрали сами — как выбрали
+  const view: View = chosenView ?? (!phone && leads.length > TABLE_FROM ? 'table' : 'list')
+  const chooseView = (v: View) => {
+    setChosenView(v)
+    saveView(v)
+  }
+  const table = view === 'table' && leads.length > 0
+  const panelLead = table && selected != null ? leads.find((l) => l.id === selected) ?? null : null
+  // До отрисовки: отступ под карточку справа (.with-panel) — в том же кадре, что и сама карточка, иначе
+  // layout/fitPanels.ts успел бы померить её внизу страницы и сжать до нуля
+  const panelOpen = panelLead != null
+  useLayoutEffect(() => {
+    onPanel?.(panelOpen)
+  }, [onPanel, panelOpen])
+  const close = useCallback(() => setSelected(null), [])
+  const exportFile = () => {
+    setExportError(null)
+    download('/api/platform/outreach/export?format=xlsx', `clinics-${todayIn()}.xlsx`)
+      .catch((e: unknown) => setExportError(e instanceof Error ? e.message : String(e)))
+  }
   const counts: Partial<NonNullable<NonNullable<typeof data>['counts']>> = data?.counts ?? {}
   const countOf: Record<Group, number> = { FRESH: counts.fresh ?? 0, SENT: counts.sent ?? 0, FURTHER: counts.further ?? 0, DECLINED: counts.declined ?? 0 }
 
@@ -63,7 +129,7 @@ export function OutreachTab() {
     setTimeout(() => document.getElementById(`outreach-${lead.id}`)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' }), 0)
   }
 
-  return (
+  const body = (
     <>
       {/* Как писать — в «?» у заголовка: два абзаца над списком отодвигали его на полэкрана */}
       <SubHelp title="По одной (WhatsApp)">Пишите по одной — своим нажатием: WhatsApp блокирует номер за массовые рассылки, а личное сообщение
@@ -81,8 +147,10 @@ export function OutreachTab() {
           {data.template && <TemplateEditor template={data.template} />}
           <div className="actions outreach-tools">
             {!uploading && <button type="button" className="btn small" onClick={() => setUploading(true)}>Загрузить список клиник</button>}
+            {leads.length > 0 && <button type="button" className="btn small" onClick={exportFile}>Скачать в Excel</button>}
             {!adding && <button type="button" className="btn small ghost" onClick={() => setAdding(true)}>＋ Добавить клинику</button>}
           </div>
+          {exportError && <p className="error" role="alert">Файл не скачался: {exportError}</p>}
           {uploading && <ListUpload onClose={() => setUploading(false)} />}
           {adding && <OneClinic onClose={() => setAdding(false)} />}
           <section className="card-block" aria-label="Написать клиникам">
@@ -95,13 +163,27 @@ export function OutreachTab() {
               <Segments className="tabs" label="Кому писали" value={group ?? ''} onChange={(key) => setGroup(key === '' ? null : key)}
                 options={[{ value: '' as Group | '', label: <>Все · <b className="num">{leads.length}</b></>, text: `Все · ${leads.length}` },
                   ...GROUPS.map(([key, title]) => ({ value: key, label: <>{title} · <b className="num">{countOf[key]}</b></>, text: `${title} · ${countOf[key]}` }))]} />
-              <input type="search" className="outreach-search" aria-label="Поиск по названию" placeholder="Поиск по названию" value={query}
-                onChange={(e) => setQuery(e.target.value)} />
+              {cities.length > 1 && (
+                <Select className="outreach-city" aria-label="Город" value={cityOn} onChange={(e) => setCity(e.target.value)}>
+                  <option value="">Все города</option>
+                  {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+                </Select>
+              )}
+              <input type="search" className="outreach-search" aria-label="Поиск: название, адрес, телефон" placeholder="Поиск: название, адрес, телефон"
+                value={query} onChange={(e) => setQuery(e.target.value)} />
+              <div className="segments outreach-view" role="group" aria-label="Вид">
+                {(['list', 'table'] as const).map((v) => (
+                  <button key={v} type="button" aria-pressed={view === v} onClick={() => chooseView(v)}>{v === 'list' ? 'Список' : 'Таблица'}</button>
+                ))}
+              </div>
             </div>}
             {allDone && <p className="tone-ok" role="status">Неписаных клиник нет — всем из списка уже написали.</p>}
             {leads.length === 0 ? <EmptyState compact title="Список клиник пуст">«Загрузить список клиник» — вставьте клиники из 2ГИС или таблицы.</EmptyState>
               : shown.length === 0 ? <p className="hint">Здесь никого.</p>
-                : (
+                : table ? (
+                  <OutreachTable rows={shown} numbers={numbers} selected={selected} onOpen={setSelected}
+                    resetKey={`${group ?? ''}|${q}|${cityOn}`} />
+                ) : (
                   <div role="list" className="funnel-list" aria-label="Клиники">
                     {shown.map((l) => (
                       <LeadRow key={l.id} lead={l} template={data.template ?? EMPTY_TEMPLATE} selected={l.id === selected}
@@ -113,6 +195,31 @@ export function OutreachTab() {
         </>
       )}
     </>
+  )
+  return (
+    <>
+      <section className="schedule-main">
+        {header}
+        {body}
+      </section>
+      {/* Таблица: клиника — карточкой справа (те же шаги и действия, что в строке списка) */}
+      {panelLead && data && (
+        <LeadPanel key={panelLead.id} lead={panelLead} template={data.template ?? EMPTY_TEMPLATE} onClose={close}
+          onActive={() => setSelected(panelLead.id)} onNext={next} />
+      )}
+    </>
+  )
+}
+
+/** Карточка клиники справа (вид «Таблица»): Esc и «назад» закрывают, внутри — та же {@link LeadRow}. */
+function LeadPanel({ lead, template, onClose, onActive, onNext }: {
+  lead: OutreachLead; template: Template; onClose: () => void; onActive: () => void; onNext: () => void
+}) {
+  const close = useClose(onClose)
+  return (
+    <aside className="panel" aria-label={`Клиника: ${lead.clinicName}`}>
+      <LeadRow lead={lead} template={template} selected onSelect={close} onActive={onActive} onNext={onNext} onClose={close} />
+    </aside>
   )
 }
 
@@ -130,8 +237,10 @@ type Mode = 'first' | 'video' | 'remind'
 
 const FURTHER_STAGES = ['DEMO', 'TRIAL', 'PAYING']
 
-function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
+function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext, onClose }: {
   lead: OutreachLead; template: Template; selected: boolean; onSelect: () => void; onActive: () => void; onNext: () => void
+  /** Есть — строка открыта карточкой справа (вид «Таблица»): заголовок карточки с ✕ вместо строки списка */
+  onClose?: () => void
 }) {
   const client = useQueryClient()
   const [step, setStep] = useState<Step>(null)
@@ -283,16 +392,25 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
     else replied.mutate()
   }
   const busy = sent.isPending || replied.isPending || reminded.isPending
-  const status = fresh ? <span className="chip small s-quiet">Не писали</span>
-    : g === 'SENT' ? <span className="chip small s-ok">Написали{l.contactedAt ? ` ${shortDate(l.contactedAt)}` : ''}</span>
-      : g === 'DECLINED' ? <span className="chip small s-bad">Отказ</span>
-        : <span className="chip small s-request">{STAGE_TEXT[l.stage ?? ''] ?? 'Дальше'}</span>
+  const status = <LeadStatus lead={l} />
+  const source = <>{l.source === 'SITE' && <span className="hint small"> · заявка с сайта</span>}{l.source === 'SELF' && <span className="hint small"> · сама зарегистрировалась</span>}</>
   const error = sent.error ?? replied.error ?? reminded.error ?? decline.error
   return (
-    <div role="listitem" id={`outreach-${l.id}`} {...rowOpen(!selected && onSelect, 'sub-form form outreach-lead', selected && 'active')} aria-label={`Клиника: ${l.clinicName}`}
-      aria-current={selected || undefined}>
-      <strong><button type="button" className="row-link" aria-expanded={selected} onClick={onSelect}>{l.clinicName}</button> {status}
-        {l.source === 'SITE' && <span className="hint small"> · заявка с сайта</span>}{l.source === 'SELF' && <span className="hint small"> · сама зарегистрировалась</span>}</strong>
+    <div {...(onClose ? { className: 'form outreach-lead in-panel' } : {
+      role: 'listitem', id: `outreach-${l.id}`, 'aria-label': `Клиника: ${l.clinicName}`, 'aria-current': selected || undefined,
+      ...rowOpen(!selected && onSelect, 'sub-form form outreach-lead', selected && 'active'),
+    })}>
+      {onClose ? (
+        <header className="panel-head">
+          <div>
+            <h2>{l.clinicName}</h2>
+            <span>{status}{source}</span>
+          </div>
+          <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
+        </header>
+      ) : (
+        <strong><button type="button" className="row-link" aria-expanded={selected} onClick={onSelect}>{l.clinicName}</button> {status}{source}</strong>
+      )}
       <span className="hint">{[l.city, l.address].filter(Boolean).join(' · ')}
         {l.phone && <>{l.city || l.address ? ' · ' : ''}{formatPhone(l.phone)}</>}
         {l.link && <> · <a href={l.link} target="_blank" rel="noopener noreferrer">ссылка</a></>}
