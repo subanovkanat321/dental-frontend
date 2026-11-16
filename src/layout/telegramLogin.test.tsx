@@ -58,11 +58,11 @@ test('«Войти через Telegram» → открывает бота, ждё
   const open = vi.spyOn(window, 'open').mockReturnValue(null)
   const user = userEvent.setup()
   renderApp()
-  // Кнопка Telegram — первой; форма номера и пароля свёрнута под «Нет Telegram? Войти по номеру телефона»
+  // Кнопка Telegram — первой; форма номера и пароля свёрнута под «Нет Telegram? Войдите по номеру и паролю»
   const tg = await screen.findByRole('button', { name: 'Войти через Telegram' })
   expect(screen.getByText(/нажмите «Войти через Telegram» и подтвердите в боте — пароль не нужен/)).toBeInTheDocument()
   expect(screen.queryByRole('textbox', { name: 'Номер телефона' })).not.toBeInTheDocument()
-  const open1 = screen.getByRole('button', { name: 'Нет Telegram? Войти по номеру телефона' })
+  const open1 = screen.getByRole('button', { name: 'Нет Telegram? Войдите по номеру и паролю' })
   expect(tg.compareDocumentPosition(open1) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 
   await user.click(await screen.findByRole('button', { name: 'Войти через Telegram' }))
@@ -108,7 +108,7 @@ test('«Отмена» на сайте забывает вход; «Нет» в 
   expect(await screen.findByText('Вход отменён в Telegram.', undefined, { timeout: 5000 })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Войти через Telegram' })).toBeInTheDocument()
   // Форма номера — по ссылке; открыли один раз и вошли по номеру — на этом устройстве она открыта сразу
-  await userEvent.click(await screen.findByRole('button', { name: 'Нет Telegram? Войти по номеру телефона' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Нет Telegram? Войдите по номеру и паролю' }))
   expect(await screen.findByRole('textbox', { name: 'Номер телефона' })).toBeInTheDocument()
 }, 10000)
 

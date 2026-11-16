@@ -9,10 +9,12 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { CodeInput, ResendLink } from '../layout/CodeStep'
 import { Loading, Spinner } from '../layout/Loading'
+import { LoginQr } from '../layout/LoginQr'
 import { NewPasswordFields } from '../layout/PasswordFields'
 import { Select } from '../layout/Select'
 import { CITIES } from '../lib/clinicSearch'
 import { inAppBrowser } from '../lib/inAppBrowser'
+import { useQrScreen } from '../lib/qrScreen'
 import { useCountdown } from '../lib/otp'
 import { passwordProblem } from '../lib/password'
 import { NextSteps } from './NextSteps'
@@ -71,6 +73,8 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
   const [smsDown, setSmsDown] = useState(false)
   const [emailMode, setEmailMode] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  const qr = useQrScreen()
+  const [qrBusy, setQrBusy] = useState(false)
 
   useEffect(() => { document.title = 'Попробовать Tish бесплатно' }, [])
 
@@ -189,6 +193,20 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     }
   }
 
+  /** «Обновить код»: новая ссылка в бота с той же формой — для QR-кода, без нового окна Telegram. */
+  const refreshQr = async () => {
+    if (!form) return
+    setQrBusy(true)
+    try {
+      setStep({ kind: 'telegram', link: (await signupTelegram(form)).link })
+    } catch (e) {
+      setError(e instanceof ApiError ? e : new ApiError(0, 'Нет связи с сервером'))
+      setStep({ kind: 'form' })
+    } finally {
+      setQrBusy(false)
+    }
+  }
+
   const back = () => {
     void forgetSignup().catch(() => undefined)
     setError(null)
@@ -221,6 +239,8 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
         <p><Spinner />Откройте бота Tish и нажмите «✅ Да, это я».</p>
         <a className="btn tg-login" href={step.link} target="_blank" rel="noopener noreferrer">Открыть Telegram</a>
         <p className="hint">После «Да» клиника создастся сразу. Можно не возвращаться: всё откроется прямо в Telegram — кнопка «Открыть день». Вернётесь сюда — войдёте сами.</p>
+        {qr && <LoginQr link={step.link} busy={qrBusy} onRefresh={() => void refreshQr()}
+          caption="Нет Telegram на компьютере? Наведите камеру телефона на код → «✅ Да, это я» в боте — компьютер войдёт сам" />}
         <button type="button" className="link" onClick={back}>Изменить данные</button>
       </div>
     )

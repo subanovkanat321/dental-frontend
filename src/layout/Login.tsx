@@ -5,9 +5,12 @@ import { LOGGED_OUT, loginConfig, WEB_CONFIG_KEY, webConfig } from '../api/clien
 import { isLoginPath } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { InstallHint } from '../pwa/InstallHint'
-import { PhoneLogin } from './PhoneLogin'
+import { FORGOT, PhoneLogin } from './PhoneLogin'
 import { Loading } from './Loading'
 import { TelegramLogin } from './TelegramLogin'
+
+/** Ссылка к форме номера и пароля — для тех, у кого Telegram нет вовсе. */
+export const PHONE_OPEN = 'Нет Telegram? Войдите по номеру и паролю'
 
 /** Как человек входил в прошлый раз на этом устройстве: 'phone' — форму номера сразу открытой. Только метка, без данных. */
 const METHOD = 'crm.login.method'
@@ -92,12 +95,17 @@ export function Login() {
       {bot.isSuccess && !config && <p className="error">Вход сейчас недоступен: сервер не настроен или не отвечает. Обновите страницу через минуту.</p>}
       {viaTelegram && <TelegramLogin onDone={() => { saveMethod('telegram'); entered() }} onWaiting={onWaiting} />}
       {config && !tgWaiting && viaTelegram && !byPhone && (
-        <button type="button" className="link login-phone-open" onClick={() => setByPhone(true)}>
-          Нет Telegram? Войти по номеру телефона</button>
+        <>
+          <button type="button" className="link login-phone-open" onClick={() => setByPhone(true)}>
+            {PHONE_OPEN}</button>
+          {(config.smsLogin || config.telegramCode) && (
+            <p className="hint small login-phone-note">Пароля нет или забыли — там же «{FORGOT}»: пришлём код{config.smsLogin ? ' по SMS' : ' в Telegram'}.</p>
+          )}
+        </>
       )}
       {config && !tgWaiting && (!viaTelegram || byPhone) && (
         <>
-          {viaTelegram && <p className="login-or"><span>Нет Telegram? Войдите по номеру и паролю</span></p>}
+          {viaTelegram && <p className="login-or"><span>{PHONE_OPEN}</span></p>}
           <PhoneLogin onDone={() => { saveMethod('phone'); entered() }} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin} />
         </>
       )}

@@ -216,3 +216,40 @@ test('SMS не ушла (503), Telegram есть — кнопку SMS пряче
   expect(within(form).queryByRole('button', { name: 'Получить код по SMS' })).not.toBeInTheDocument()
   expect(within(form).getByRole('button', { name: 'Подтвердить через Telegram' })).toBeEnabled()
 })
+
+test('на компьютере шаг «Подтвердите в Telegram» показывает QR-код той же ссылки; «Обновить код» — новая ссылка', async () => {
+  const { sent } = backend()
+  const { QR_SCREEN } = await import('../lib/qrScreen')
+  window.matchMedia = vi.fn((query: string) => ({
+    matches: query === QR_SCREEN, media: query, addEventListener: () => undefined, removeEventListener: () => undefined,
+  })) as unknown as typeof window.matchMedia
+  vi.spyOn(window, 'open').mockReturnValue(null)
+  const user = userEvent.setup()
+  try {
+    show()
+    const form = await fill(user)
+    await user.click(within(form).getByRole('button', { name: 'Подтвердить через Telegram' }))
+    const qr = await screen.findByRole('img', { name: /QR-код входа/ })
+    expect(qr).toHaveAttribute('data-link', 'https://t.me/tish_test_bot?start=websignup_abc')
+    expect(screen.getByText(/Нет Telegram на компьютере\? Наведите камеру телефона на код → «✅ Да, это я» в боте/)).toBeInTheDocument()
+
+    server.use(http.post('*/web/signup/telegram', () => HttpResponse.json(
+      { link: 'https://t.me/tish_test_bot?start=websignup_new', secondsLeft: 300 } satisfies Schemas['SignupControllerTelegramStarted'])))
+    await user.click(screen.getByRole('button', { name: 'Обновить код' }))
+    await waitForSlow(() => expect(screen.getByRole('img', { name: /QR-код входа/ })).toHaveAttribute('data-link', 'https://t.me/tish_test_bot?start=websignup_new'))
+    expect(sent.filter((s) => s.path === 'telegram')).toHaveLength(1)
+  } finally {
+    delete (window as { matchMedia?: unknown }).matchMedia
+  }
+})
+
+test('на телефоне шаг Telegram — без QR-кода', async () => {
+  backend()
+  vi.spyOn(window, 'open').mockReturnValue(null)
+  const user = userEvent.setup()
+  show()
+  const form = await fill(user)
+  await user.click(within(form).getByRole('button', { name: 'Подтвердить через Telegram' }))
+  expect(await screen.findByRole('heading', { name: 'Подтвердите в Telegram' })).toBeInTheDocument()
+  expect(screen.queryByRole('img', { name: /QR-код входа/ })).not.toBeInTheDocument()
+})
