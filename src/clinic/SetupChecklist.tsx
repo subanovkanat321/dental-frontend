@@ -65,6 +65,7 @@ export function SetupChecklist({ me }: { me: Me }) {
           {doctors && (!hours || !prices) && <span className="tone-wait"> — часы или цены ещё по умолчанию, пациенты увидят их такими</span>}
         </li>
       </ol>
+      <p className="hint">Потом — ссылка для пациентов: «О клинике» → «Страница для Instagram» → «Скопировать» (Instagram, 2ГИС, WhatsApp).</p>
       <p className="hint">Пациенты и цены уже в таблице?{' '}
         <button type="button" className="link" onClick={() => openSettings('data')}>Загрузить из Excel</button> — перенесём без ручного ввода.</p>
       {error && <p className="error" role="alert">{error}</p>}

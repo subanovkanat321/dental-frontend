@@ -2699,3 +2699,11 @@ p.expense-owner { display: block; }
 .add-self { display: grid; gap: 10px; justify-items: start; }
 .add-self .field { width: 100%; max-width: 420px; }
 .add-self > .hint { margin: 0; }
+/* Регистрация клиники (/start): форма в карточке входа; выбор «частный врач / клиника» — во всю ширину,
+   подписи галочек — слева, как в формах CRM */
+.signup-page .signup-step { display: grid; gap: 12px; width: 100%; justify-items: center; }
+.signup-page .signup-step[hidden] { display: none; }
+.signup-page .signup-form .segments { width: 100%; }
+.signup-page .signup-form .segments button { flex: 1; white-space: normal; line-height: 1.25; }
+.signup-page .signup-form .check { align-items: flex-start; text-align: left; }
+.signup-page .signup-form .btn { width: 100%; }

@@ -1444,6 +1444,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/signup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["availability"];
+        put?: never;
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/signup/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["telegram"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/signup/code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["code"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/plan/{token}/question": {
         parameters: {
             query?: never;
@@ -1581,7 +1629,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["code"];
+        post: operations["code_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1613,7 +1661,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["register"];
+        post: operations["register_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1629,7 +1677,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["code_1"];
+        post: operations["code_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3325,7 +3373,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["code_2"];
+        post: operations["code_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3357,7 +3405,7 @@ export interface paths {
         };
         get: operations["codePending"];
         put?: never;
-        post: operations["code_3"];
+        post: operations["code_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4300,6 +4348,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["tariffs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/signup/telegram/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["telegramStatus"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6324,7 +6388,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/web/login/telegram": {
+    "/web/signup/pending": {
         parameters: {
             query?: never;
             header?: never;
@@ -6340,7 +6404,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/web/invite/pending": {
+    "/web/login/telegram": {
         parameters: {
             query?: never;
             header?: never;
@@ -6351,6 +6415,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["forget_2"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/invite/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["forget_3"];
         options?: never;
         head?: never;
         patch?: never;
@@ -6909,7 +6989,7 @@ export interface components {
             /** Format: date */
             nextStepOn?: string;
             /** @enum {string} */
-            source?: "SITE" | "MANUAL" | "LIST";
+            source?: "SITE" | "MANUAL" | "LIST" | "SELF";
             address?: string;
             link?: string;
             /** Format: date-time */
@@ -7188,6 +7268,7 @@ export interface components {
             listed: boolean;
             settingUp: boolean;
             city?: string;
+            selfSignup: boolean;
         };
         AgreementControllerAssignment: {
             /** Format: int64 */
@@ -8019,6 +8100,34 @@ export interface components {
             position: number;
             /** Format: int64 */
             answers: number;
+        };
+        SignupControllerSignupRequest: {
+            clinicName?: string;
+            city?: string;
+            solo?: boolean;
+            doctor?: boolean;
+            fullName?: string;
+            phone?: string;
+            consent?: boolean;
+            method?: string;
+            code?: string;
+            password?: string;
+        };
+        SignupControllerRegistered: {
+            clinicName: string;
+            fullName: string;
+        };
+        SignupControllerTelegramStarted: {
+            link: string;
+            /** Format: int64 */
+            secondsLeft: number;
+        };
+        SignupControllerCodeSent: {
+            phoneMasked: string;
+            /** Format: int64 */
+            secondsLeft: number;
+            /** Format: int64 */
+            resendSeconds: number;
         };
         PlanOffersItem: {
             /** Format: int32 */
@@ -9233,6 +9342,17 @@ export interface components {
         MedicalRecordControllerMove: {
             /** Format: int32 */
             direction?: number;
+        };
+        SignupControllerAvailability: {
+            sms: boolean;
+            telegram: boolean;
+        };
+        SignupControllerTelegramStatus: {
+            /** @enum {string} */
+            state: "none" | "waiting" | "cancelled" | "confirmed";
+            /** Format: int64 */
+            secondsLeft: number;
+            link?: string;
         };
         MaterialsPublicMaterials: {
             video?: string;
@@ -14037,6 +14157,98 @@ export interface operations {
             };
         };
     };
+    availability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerAvailability"];
+                };
+            };
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupControllerSignupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerRegistered"];
+                };
+            };
+        };
+    };
+    telegram: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupControllerSignupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerTelegramStarted"];
+                };
+            };
+        };
+    };
+    code: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupControllerSignupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerCodeSent"];
+                };
+            };
+        };
+    };
     question: {
         parameters: {
             query?: never;
@@ -14213,7 +14425,7 @@ export interface operations {
             };
         };
     };
-    code: {
+    code_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -14261,7 +14473,7 @@ export interface operations {
             };
         };
     };
-    register: {
+    register_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -14285,7 +14497,7 @@ export interface operations {
             };
         };
     };
-    code_1: {
+    code_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -17463,7 +17675,7 @@ export interface operations {
             };
         };
     };
-    code_2: {
+    code_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -17529,7 +17741,7 @@ export interface operations {
             };
         };
     };
-    code_3: {
+    code_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -19376,6 +19588,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Tariffs"];
+                };
+            };
+        };
+    };
+    telegramStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerTelegramStatus"];
                 };
             };
         };
@@ -22260,6 +22492,26 @@ export interface operations {
         };
     };
     forget_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    forget_3: {
         parameters: {
             query?: never;
             header?: never;

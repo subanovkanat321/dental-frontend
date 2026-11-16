@@ -8,7 +8,7 @@ import type { Schemas } from './api/client'
 import { DownloadPage } from './pwa/DownloadPage'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { linkHash, readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
-import { isDownloadPath, isInvitePath, isLoginPath, usePage, type Page } from './lib/route'
+import { isDownloadPath, isInvitePath, isLoginPath, isSignupPath, usePage, type Page } from './lib/route'
 import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
 import { launchedAsApp } from './pwa/pwa'
@@ -38,6 +38,8 @@ const PatientApp = lazy(() => import('./patient/PatientApp'))
 const AtlasPage = lazy(() => import('./atlas/AtlasPage'))
 // Ссылка-приглашение (/invite#…) — маленький свой чанк: нужен один раз в жизни сотрудника
 const InvitePage = lazy(() => import('./invite/InvitePage').then((m) => ({ default: m.InvitePage })))
+// Регистрация клиники (/start) — тоже свой чанк: нужна один раз в жизни клиники
+const SignupPage = lazy(() => import('./signup/SignupPage').then((m) => ({ default: m.SignupPage })))
 
 /**
  * Одно приложение на всех (ADR 0001 и 0002 бэкенда): сотрудник видит CRM, команда платформы —
@@ -85,6 +87,8 @@ function Screens() {
   if (isDownloadPath()) return <DownloadPage />
   // /invite#join_… — приглашение врача или сотрудника: без входа, до проверки сессии
   if (isInvitePath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><InvitePage /></Suspense></ErrorBoundary>
+  // /start — клиника регистрируется сама: без входа, до проверки сессии
+  if (isSignupPath()) return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><SignupPage /></Suspense></ErrorBoundary>
   // 3D-атлас (#/atlas, /atlas) — без входа: на экране нет данных пациентов, его можно открыть на ТВ
   if (atlas) return <ErrorBoundary><Suspense fallback={<AtlasBoot />}><AtlasPage route={atlas} onClose={closeAtlas} byUrl /></Suspense></ErrorBoundary>
   if (me.isPending) {

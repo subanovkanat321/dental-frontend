@@ -3850,6 +3850,106 @@
         }
       }
     },
+    "/web/signup" : {
+      "get" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "availability",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerAvailability"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "register",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupControllerSignupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerRegistered"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/signup/telegram" : {
+      "post" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "telegram",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupControllerSignupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerTelegramStarted"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/signup/code" : {
+      "post" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "code",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupControllerSignupRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerCodeSent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/plan/{token}/question" : {
       "post" : {
         "tags" : [ "plan-page-controller" ],
@@ -4044,7 +4144,7 @@
     "/web/login/phone/code" : {
       "post" : {
         "tags" : [ "phone-login-controller" ],
-        "operationId" : "code",
+        "operationId" : "code_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4100,7 +4200,7 @@
     "/web/invite/register" : {
       "post" : {
         "tags" : [ "invite-controller" ],
-        "operationId" : "register",
+        "operationId" : "register_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -4128,7 +4228,7 @@
     "/web/invite/code" : {
       "post" : {
         "tags" : [ "invite-controller" ],
-        "operationId" : "code_1",
+        "operationId" : "code_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8064,7 +8164,7 @@
     "/api/me/phone/code" : {
       "post" : {
         "tags" : [ "my-phone-controller" ],
-        "operationId" : "code_2",
+        "operationId" : "code_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8129,7 +8229,7 @@
       },
       "post" : {
         "tags" : [ "password-controller" ],
-        "operationId" : "code_3",
+        "operationId" : "code_4",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10543,6 +10643,24 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/Tariffs"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/signup/telegram/status" : {
+      "get" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "telegramStatus",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerTelegramStatus"
                 }
               }
             }
@@ -14293,10 +14411,28 @@
         }
       }
     },
+    "/web/signup/pending" : {
+      "delete" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "forget_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/login/telegram" : {
       "delete" : {
         "tags" : [ "telegram-login-controller" ],
-        "operationId" : "forget_1",
+        "operationId" : "forget_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -14314,7 +14450,7 @@
     "/web/invite/pending" : {
       "delete" : {
         "tags" : [ "invite-controller" ],
-        "operationId" : "forget_2",
+        "operationId" : "forget_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15490,7 +15626,7 @@
           },
           "source" : {
             "type" : "string",
-            "enum" : [ "SITE", "MANUAL", "LIST" ]
+            "enum" : [ "SITE", "MANUAL", "LIST", "SELF" ]
           },
           "address" : {
             "type" : "string"
@@ -16187,9 +16323,12 @@
           },
           "city" : {
             "type" : "string"
+          },
+          "selfSignup" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "appointments", "bookedWeek", "doctors", "done30", "hidden", "id", "listed", "noShow30", "patients", "selfBooked30", "settingUp", "staff", "unmarked" ]
+        "required" : [ "appointments", "bookedWeek", "doctors", "done30", "hidden", "id", "listed", "noShow30", "patients", "selfBooked30", "selfSignup", "settingUp", "staff", "unmarked" ]
       },
       "AgreementControllerAssignment" : {
         "properties" : {
@@ -18303,6 +18442,79 @@
           }
         },
         "required" : [ "active", "alert", "answers", "id", "position" ]
+      },
+      "SignupControllerSignupRequest" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "city" : {
+            "type" : "string"
+          },
+          "solo" : {
+            "type" : "boolean"
+          },
+          "doctor" : {
+            "type" : "boolean"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "consent" : {
+            "type" : "boolean"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SignupControllerRegistered" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "clinicName", "fullName" ]
+      },
+      "SignupControllerTelegramStarted" : {
+        "properties" : {
+          "link" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "link", "secondsLeft" ]
+      },
+      "SignupControllerCodeSent" : {
+        "properties" : {
+          "phoneMasked" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "resendSeconds" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "phoneMasked", "resendSeconds", "secondsLeft" ]
       },
       "PlanOffersItem" : {
         "properties" : {
@@ -21272,6 +21484,33 @@
             "format" : "int32"
           }
         }
+      },
+      "SignupControllerAvailability" : {
+        "properties" : {
+          "sms" : {
+            "type" : "boolean"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "sms", "telegram" ]
+      },
+      "SignupControllerTelegramStatus" : {
+        "properties" : {
+          "state" : {
+            "type" : "string",
+            "enum" : [ "none", "waiting", "cancelled", "confirmed" ]
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "link" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "secondsLeft", "state" ]
       },
       "MaterialsPublicMaterials" : {
         "properties" : {

@@ -107,6 +107,8 @@ export function ClinicsTab({ me, header, onPanel }: { me: Me; header: ReactNode;
                 <div><span className={`chip small ${hl.chip}`}>{hl.label}</span>
                   {c.city ? <span className="hint"> · {c.city}</span> : null}
                   {me.clinic?.code === c.code && <span className="hint"> · вы здесь</span>}
+                  {/* Клиника сама зарегистрировалась на /start — без заявки и одобрения */}
+                  {c.selfSignup && <span className="hint"> · 🆕 сама зарегистрировалась</span>}
                   {c.settingUp ? <span className="hint"> · 🛠 не видна пациентам</span> : c.listed === false ? <span className="hint"> · не в каталоге</span> : null}</div>
               </td>
               <td className="hint nowrap">{c.staffSeenAt ? agoText(c.staffSeenAt) : 'ещё не заходили'}</td>

@@ -323,6 +323,60 @@ Promise<Schemas['InviteControllerRegistered']> {
 }
 
 /**
+ * Регистрация клиники на сайте (/start): какие способы подтверждения включены — код из SMS и кнопка в Telegram.
+ */
+export type SignupAvailability = Schemas['SignupControllerAvailability']
+
+/** Форма регистрации клиники (номер — как набран; проверяет и нормализует сервер). */
+export type SignupForm = Pick<Schemas['SignupControllerSignupRequest'], 'clinicName' | 'city' | 'solo' | 'doctor' | 'fullName' | 'phone' | 'consent'>
+
+export type SignupCodeSent = Schemas['SignupControllerCodeSent']
+
+export type SignupTelegramStatus = Schemas['SignupControllerTelegramStatus']
+
+export type SignupDone = Schemas['SignupControllerRegistered']
+
+export async function signupAvailability(): Promise<SignupAvailability> {
+  return await webRequest<SignupAvailability>('GET', '/web/signup') ?? { sms: false, telegram: false }
+}
+
+/**
+ * «Получить код по SMS»: сервер проверяет форму (422 по полям, 409 — номер уже в клинике или уже
+ * зарегистрировал клинику) и только потом шлёт SMS; 429 — лимит SMS. Номер шага помнит HttpOnly-cookie.
+ */
+export async function signupCode(form: SignupForm): Promise<SignupCodeSent> {
+  const sent = await webPost<SignupCodeSent>('/web/signup/code', form)
+  if (!sent) throw new ApiError(500, 'Сервер не ответил — попробуйте ещё раз')
+  return sent
+}
+
+/** «Подтвердить через Telegram»: та же проверка формы, затем ссылка в бота (t.me/<бот>?start=websignup_…). */
+export async function signupTelegram(form: SignupForm): Promise<Schemas['SignupControllerTelegramStarted']> {
+  const started = await webPost<Schemas['SignupControllerTelegramStarted']>('/web/signup/telegram', form)
+  if (!started?.link) throw new ApiError(500, 'Сервер не ответил — попробуйте ещё раз')
+  return started
+}
+
+/** Опрос подтверждения в Telegram: waiting — ждём «✅ Да, это я», confirmed — можно создавать клинику. */
+export async function signupTelegramStatus(): Promise<SignupTelegramStatus> {
+  return await webRequest<SignupTelegramStatus>('GET', '/web/signup/telegram/status') ?? { state: 'none', secondsLeft: 0 }
+}
+
+/** «Изменить данные»: сервер забывает шаг (код или Telegram). */
+export async function forgetSignup(): Promise<void> {
+  await webRequest('DELETE', '/web/signup/pending')
+}
+
+/**
+ * Создать клинику: SMS — код и пароль; Telegram — после «✅ Да, это я». В ответе — cookie-сессия: человек уже
+ * вошёл руководителем. Номер, код и пароль — только в теле, нигде не сохраняем.
+ */
+export async function signupRegister(form: SignupForm, confirm: { method: 'SMS'; code: string; password: string } | { method: 'TELEGRAM' }):
+Promise<SignupDone> {
+  return await webPost<SignupDone>('/web/signup', { ...form, ...confirm }) ?? { clinicName: form.clinicName ?? '', fullName: form.fullName ?? '' }
+}
+
+/**
  * Флаг «только что вышли» (sessionStorage этой вкладки, без личных данных): экран входа один раз
  * показывает подсказку про общий компьютер (layout/LoggedOutHint) и сразу его стирает.
  */

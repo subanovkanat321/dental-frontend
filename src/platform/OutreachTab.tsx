@@ -292,7 +292,7 @@ function LeadRow({ lead: l, template, selected, onSelect, onActive, onNext }: {
     <div role="listitem" id={`outreach-${l.id}`} {...rowOpen(!selected && onSelect, 'sub-form form outreach-lead', selected && 'active')} aria-label={`Клиника: ${l.clinicName}`}
       aria-current={selected || undefined}>
       <strong><button type="button" className="row-link" aria-expanded={selected} onClick={onSelect}>{l.clinicName}</button> {status}
-        {l.source === 'SITE' && <span className="hint small"> · заявка с сайта</span>}</strong>
+        {l.source === 'SITE' && <span className="hint small"> · заявка с сайта</span>}{l.source === 'SELF' && <span className="hint small"> · сама зарегистрировалась</span>}</strong>
       <span className="hint">{[l.city, l.address].filter(Boolean).join(' · ')}
         {l.phone && <>{l.city || l.address ? ' · ' : ''}{formatPhone(l.phone)}</>}
         {l.link && <> · <a href={l.link} target="_blank" rel="noopener noreferrer">ссылка</a></>}

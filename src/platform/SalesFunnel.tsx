@@ -92,7 +92,8 @@ function LeadCard({ lead: l, today }: { lead: Lead; today: string }) {
   const due = l.nextStepOn && l.nextStepOn <= today && l.stage !== 'PAYING' && l.stage !== 'LOST'
   return (
     <div role="listitem" className="sub-form form" aria-label={`Лид: ${l.clinicName}`}>
-      <strong>{l.clinicName} <span className="chip small s-quiet">{STAGE_TEXT[l.stage!]}</span></strong>
+      <strong>{l.clinicName} <span className="chip small s-quiet">{STAGE_TEXT[l.stage!]}</span>
+        {l.source === 'SELF' && <span className="hint small"> · сама зарегистрировалась</span>}</strong>
       <span className="hint">{[l.city, l.contactName, l.stageAt ? `этап с ${shortDate(l.stageAt)}` : null].filter(Boolean).join(' · ')}
         {l.phone && <> · <a href={`tel:+${l.phone}`}>{formatPhone(l.phone)}</a></>}</span>
       {l.nextStep && <span className={due ? (late ? 'tone-bad' : 'tone-wait') : undefined}>

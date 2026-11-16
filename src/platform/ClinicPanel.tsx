@@ -55,6 +55,7 @@ export function ClinicPanel({ clinic: c, me, invite, onClose }: {
           <h2>{c.name}</h2>
           <span className="hint">Врачей {c.doctors} · сотрудников {c.staff} · пациентов {c.patients} · приёмов за 30 дней {c.appointments}</span>
           <p className={c.settingUp ? 'tone-wait' : c.listed === false ? 'hint' : 'tone-ok'} aria-label="Видна пациентам">{listedText(c)}</p>
+          {c.selfSignup && <p className="hint">🆕 Сама зарегистрировалась на сайте (tish.kg/start) — без заявки</p>}
         </div>
         <button type="button" className="btn ghost" aria-label="Закрыть" onClick={onClose}>✕</button>
       </header>
