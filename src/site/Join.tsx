@@ -18,7 +18,8 @@ const FEATURES: [string, string, string][] = [
 ]
 
 /**
- * Страница для клиник (/join): что умеет приложение, «попробуйте бесплатно» (срок пилота и цены не показываем) и форма заявки. Заявку разбирает
+ * Страница для клиник (/join): что умеет приложение и «Попробовать бесплатно» — регистрация сама на /start (с 2026-11-16;
+ * срок пробного периода и цены не показываем). Форма заявки — вторичный путь «Хочу, чтобы помогли подключить»: её разбирает
  * владелец платформы в «Платформа → Клиники». Поле-ловушка website — от ботов: человек его не видит.
  */
 export function Join() {
@@ -91,7 +92,9 @@ export function Join() {
         {/* Тишка — как логотип: на главную приложения (расписание; без входа — вход) */}
         <a className="site-hero-home" href="/" aria-label="Открыть Tish — расписание" title="Открыть расписание"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} /></a>
         <div><h1>Запись пациентов для стоматологии</h1>
-          <p>Пациенты записываются в Telegram, бот напоминает о приёме. Работать можно в Telegram и на сайте — с телефона и компьютера.</p></div>
+          <p>Пациенты записываются в Telegram, бот напоминает о приёме. Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
+          <p className="site-ctas"><a className="btn primary" href="/start">Попробовать бесплатно</a>
+            <a className="btn" href="#form">Хочу, чтобы помогли подключить</a></p></div>
       </div>
       {(materials.video || materials.presentation) && (
         <section id="materials" className="site-case site-materials" aria-label="Посмотрите за минуту">
@@ -113,7 +116,7 @@ export function Join() {
           <h2>🎁 {tariffs.promo.title}</h2>
           <p>{tariffs.promo.text}</p>
           <ul>{(tariffs.promo.points ?? []).map((x) => <li key={x}>{x}</li>)}</ul>
-          <a className="btn primary" href="#form">Подключить бесплатно</a>
+          <a className="btn primary" href="/start">Попробовать бесплатно</a>
         </div>
       )}
       <h2>Что умеет</h2>
@@ -125,8 +128,9 @@ export function Join() {
       <h2 id="tariffs">Сколько стоит</h2>
       <p>Попробовать — бесплатно: всё приложение, без ограничений и без предоплаты.
         Понравится — договоримся об условиях; нет — просто перестанете пользоваться.</p>
-      <h2 id="form">Подключить клинику</h2>
-      <p className="hint">Без предоплаты — оставьте заявку, мы позвоним.</p>
+      <h2 id="form">Хочу, чтобы помогли подключить</h2>
+      <p className="hint">Создать клинику самим — 5 минут: <a href="/start">Попробовать бесплатно</a>. Хотите, чтобы мы настроили всё и перенесли
+        пациентов из тетради или Excel, — оставьте заявку, мы позвоним.</p>
       {inAppBrowser() && (
         <p className="tone-wait">Открыли из Instagram? Если клавиатура закрывается — нажмите ⋮ вверху → «Открыть в браузере»
           {links.supportWhatsapp && <> или <a href={`https://wa.me/${links.supportWhatsapp}?text=${encodeURIComponent('Здравствуйте! Хотим подключить клинику к Tish.')}`}>напишите нам в WhatsApp</a></>}.</p>

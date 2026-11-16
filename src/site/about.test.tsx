@@ -1,4 +1,8 @@
 import { render, screen, within } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
+
+import type { JoinCase } from './web'
+import { server } from '../test/server'
 
 import { About } from './About'
 
@@ -16,10 +20,27 @@ test('сайт-визитка /about: герой, части ролика, за�
     /настоящие зубы/, /Зуб в разрезе/, /Вся история/, /деньги, которые уже ваши/, /В цифрах/, /свои права/, /частному врачу/]) {
     expect(screen.getByRole('heading', { level: 2, name: title })).toBeInTheDocument()
   }
-  // «Попробовать бесплатно» — на форму заявки /join
+  // «Попробовать бесплатно» — регистрация клиники самой (/start): вверху, в «Как начать» и внизу
   const tries = screen.getAllByRole('link', { name: 'Попробовать бесплатно' })
-  expect(tries.length).toBeGreaterThanOrEqual(3)
-  for (const a of tries) expect(a).toHaveAttribute('href', '/join#form')
+  expect(tries.length).toBeGreaterThanOrEqual(4)
+  for (const a of tries) expect(a).toHaveAttribute('href', '/start')
+  // Вторая кнопка — написать нам в WhatsApp (вверху и внизу)
+  expect(screen.getAllByRole('link', { name: /Написать нам в WhatsApp/ }).length).toBeGreaterThanOrEqual(2)
+  // Срок пробного периода не обещаем, заявка — только как «помогите подключить»
+  expect(screen.queryByText(/месяц[а-я]* бесплатно|[0-9] месяц[а-я]* —/)).not.toBeInTheDocument()
+  expect(screen.queryByText(/дней бесплатно|Оставьте заявку — мы позвоним и/)).not.toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Оставьте заявку' })).toHaveAttribute('href', '/join#form')
+  // Сегодняшние функции: кресла, «Что сделали сегодня?», ИИ-сообщение, общие расходы
+  for (const point of [/Два врача на одном кресле/, /Что сделали сегодня\?/, /После приёма ИИ готовит/, /Общие расходы клиники/]) {
+    expect(screen.getByText(point)).toBeInTheDocument()
+  }
+  // «Как начать за 5 минут» — три шага; частые вопросы
+  const how = within(screen.getByRole('region', { name: 'Как начать за 5 минут' }))
+  expect(how.getAllByRole('listitem')).toHaveLength(3)
+  const faq = within(screen.getByRole('region', { name: 'Частые вопросы' }))
+  for (const q of ['Сколько стоит?', 'Данные в безопасности?', 'Где хранятся данные и можно ли их забрать?', 'Нужен ли Telegram?']) {
+    expect(faq.getByText(q)).toBeInTheDocument()
+  }
 
   const contacts = within(screen.getByRole('region', { name: /Меньше рутины/ }))
   expect(contacts.getByRole('link', { name: /Instagram @tish\.app\.kg/ })).toHaveAttribute('href', 'https://www.instagram.com/tish.app.kg/')
@@ -44,4 +65,13 @@ test('сайт-визитка: ролик v6 с бэкенда — только 
   expect(video).toHaveAttribute('controls')
   expect(video).toHaveAttribute('poster', '/web/materials/public/promo.png')
   expect(video.querySelector('source')).toHaveAttribute('src', '/web/materials/public/promo.mp4')
+})
+
+test('сайт-визитка: кейс клиники — только если опубликован', async () => {
+  server.use(http.get('*/web/case', () => HttpResponse.json({
+    shown: true, title: 'Неявок стало меньше', text: 'Пациенты подтверждают запись в Telegram.', clinic: 'Стоматология «Тест»', metrics: [{ value: '−30%', label: 'неявок' }], consent: true,
+  } satisfies JoinCase)))
+  render(<About />)
+  expect(await screen.findByRole('heading', { name: 'Неявок стало меньше' })).toBeInTheDocument()
+  expect(screen.getByText('−30%')).toBeInTheDocument()
 })

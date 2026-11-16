@@ -121,6 +121,9 @@ test('заявка клиники: ошибки полей с сервера, п
   // Цены и срок пилота не показываем — только «попробовать бесплатно»
   expect(await screen.findByText(/Попробовать — бесплатно/)).toBeInTheDocument()
   expect(screen.queryByText(/месяц[а-я]* — бесплатно/)).not.toBeInTheDocument()
+  // Главный путь — регистрация самим; заявка — «помогите подключить»
+  for (const a of screen.getAllByRole('link', { name: 'Попробовать бесплатно' })) expect(a).toHaveAttribute('href', '/start')
+  expect(screen.getByRole('heading', { name: 'Хочу, чтобы помогли подключить' })).toBeInTheDocument()
   expect(screen.queryByText('Кабинет')).not.toBeInTheDocument()
   expect(screen.queryByText(/1 490 сом/)).not.toBeInTheDocument()
   const form = screen.getByRole('form', { name: 'Заявка клиники' })
@@ -148,8 +151,8 @@ test('/go: одно действие пациенту, акция ведёт к 
     http.get('*/web/tariffs', () => HttpResponse.json({ pilotMonths: 3, tariffs: [], promo: { title: 'Попробуйте бесплатно', text: '', points: [] } })),
   )
   render(<Go />)
-  // Акция — часть главной кнопки «Подключить», ведёт сразу к форме заявки
-  expect(await screen.findByRole('link', { name: /Попробуйте бесплатно/ })).toHaveAttribute('href', '/join#form')
+  // Акция — часть главной кнопки «Подключить», ведёт сразу к регистрации клиники
+  expect(await screen.findByRole('link', { name: /Попробуйте бесплатно/ })).toHaveAttribute('href', '/start')
   const patients = screen.getByRole('region', { name: 'Пациентам' })
   expect(within(patients).getAllByRole('link')).toHaveLength(1)
   expect(within(patients).getByRole('link', { name: /Записаться к стоматологу/ })).toHaveAttribute('href', '/clinics')
@@ -171,7 +174,7 @@ test('/go и страница клиники: нет WhatsApp — нет и кн
   const go = render(<Go />)
   expect(await screen.findByRole('link', { name: /Позвонить/ })).toHaveAttribute('href', 'tel:+996555000111')
   // Без акции — та же кнопка «Подключить» без плашки
-  expect(screen.getByRole('link', { name: /Подключить клинику бесплатно/ })).toHaveAttribute('href', '/join#form')
+  expect(screen.getByRole('link', { name: /Подключить клинику бесплатно/ })).toHaveAttribute('href', '/start')
   expect(screen.queryByRole('link', { name: /WhatsApp/ })).not.toBeInTheDocument()
   go.unmount()
 

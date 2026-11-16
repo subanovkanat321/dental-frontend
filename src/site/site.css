@@ -123,3 +123,5 @@ body.site {
 .site-case-metrics li { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); }
 .site-case-metrics b { font-size: 1.5rem; color: var(--link); font-variant-numeric: tabular-nums; }
 .site-case-metrics span { color: var(--hint); font-size: .9rem; }
+/* /join: «Попробовать бесплатно» (регистрация сама) и «Хочу, чтобы помогли подключить» — рядом под заголовком */
+.site-ctas { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 0; }

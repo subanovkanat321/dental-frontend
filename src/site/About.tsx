@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 
 import { TISH_INSTAGRAM, TISH_INSTAGRAM_NAME } from '../lib/brand'
+import { CaseBlock } from './CaseBlock'
+import { getJson, type JoinCase } from './web'
 import './about.css'
 
 /*
@@ -8,11 +10,13 @@ import './about.css'
  * (docs/marketing/video/promo-v6/README.md бэкенда) и сам ролик 4:5; ниже — подробно по частям, как
  * в ролике v4. С ней идём в клиники и даём ссылку в Instagram и в первом сообщении клинике. Каждая
  * часть — «слайд» на весь экран компьютера; на телефоне — своей высоты. Картинки — кадры записи ролика
- * на вымышленной клинике «Демо» (public/about). Контакты владелец дал для публикации.
+ * на вымышленной клинике (public/about). Контакты владелец дал для публикации. Главная кнопка — «Попробовать
+ * бесплатно»: клиника регистрируется сама на /start (с 2026-11-16, без заявки); срок пробного периода не называем.
  */
 
 const IMG = `${import.meta.env.BASE_URL}about/`
-const JOIN = '/join#form'
+/** Регистрация клиники — сама, за пару минут (src/signup). Заявка «помогите подключить» — вторичный путь на /join. */
+const START = '/start'
 /*
  * Ролик v6 4:5 и его обложку отдаёт бэкенд без входа (Materials.PUBLIC → каталог MARKETING_DIR):
  * mp4 не лежит во фронте, новый ролик — поменять путь только в бэкенде.
@@ -48,6 +52,7 @@ const PARTS: Part[] = [
       'Накануне бот сам напоминает о приёме',
       'Пациент нажимает «Приду» — и вы это видите',
       'Нет Telegram — напоминание уходит в WhatsApp одной кнопкой',
+      'Молчит — повторное напоминание одной кнопкой, другим текстом',
     ],
     visual: { kind: 'phones', phones: [
       phone('phone-site', 'Запись на сайте клиники: свободное время и данные пациента'),
@@ -63,6 +68,7 @@ const PARTS: Part[] = [
     points: [
       'Врач — в телефоне: свой день, свои пациенты, всё под рукой',
       'Регистратура и врачи видят одно и то же — без звонков и переписок',
+      'Два врача на одном кресле — Tish не даст записать на занятое кресло и предупредит врача кресла',
     ],
     visual: { kind: 'duo',
       desktop: desk('reception', 'Расписание регистратуры: день трёх врачей, «Требует внимания», отменённые записи'),
@@ -103,7 +109,8 @@ const PARTS: Part[] = [
     text: <>Врач сразу видит, когда пациент был в последний раз, что делали и что осталось по плану. А аллергии из анкеты — ещё до того,
       как взять инструмент в руки.</>,
     points: [
-      'После приёма — понятное сообщение: что сделали и что дальше. На языке пациента',
+      '«Что сделали сегодня?» — врач одним нажатием отмечает сделанное по плану лечения',
+      'После приёма ИИ готовит пациенту понятное сообщение: что сделали и что дальше. На его языке',
       'И памятка: что можно, чего нельзя и когда нужно позвонить',
     ],
     visual: { kind: 'stack',
@@ -130,7 +137,7 @@ const PARTS: Part[] = [
     points: [
       'Материалы списываются с приёма, склад сам предупредит, что заканчивается',
       'Зарплата врачей считается сама — процент, оклад или аренда кресла',
-      'Сколько приносит каждый врач и вся клиника за месяц — после материалов, техника, аренды и всех расходов',
+      'Общие расходы клиники — аренда, свет, техник — делятся между врачами: видно, сколько каждый приносит чистыми',
     ],
     visual: { kind: 'stack',
       main: desk('money', 'Касса: прибыль клиники и по каждому врачу после всех расходов'),
@@ -161,9 +168,31 @@ const HERO_POINTS: ReactNode[] = [
   <>Tish <strong>помогает зарабатывать больше</strong>. Чего-то не хватает — наши разработчики <strong>сделают под вас</strong></>,
 ]
 
+/** «Как начать за 5 минут» — те же шаги, что на /start. */
+const HOW: [string, string][] = [
+  ['Нажмите «Попробовать бесплатно»', ' — название клиники, город, ваше имя и телефон.'],
+  ['Подтвердите, что это вы', ' — кодом из SMS или кнопкой в Telegram. Клиника создана, вы уже внутри: услуги с ценами «от» и часы работы готовы.'],
+  ['Добавьте врачей и отправьте ссылку пациентам', ' — проверьте часы и цены, нажмите «Показать пациентам». Подсказки «Что настроить» — прямо в приложении.'],
+]
+
+/** Частые вопросы клиник — коротко и только правда (договор: docs бэкенда agreement/template.md). */
+const FAQ: [string, ReactNode][] = [
+  ['Сколько стоит?', <>Попробовать — бесплатно: всё приложение, без ограничений и без предоплаты. Понравится — договоримся об условиях
+    (цена зависит от числа врачей); нет — просто перестанете пользоваться.</>],
+  ['Данные в безопасности?', <>Данные клиники видит только клиника, у каждого сотрудника — свои права, важные действия — в журнале.
+    Соединение защищено (HTTPS), резервная копия — каждый день, зашифрована и хранится отдельно от сервера.</>],
+  ['Где хранятся данные и можно ли их забрать?', <>На сервере Tish, не на компьютере клиники — ничего не пропадёт, если сломается
+    телефон. Выгрузка пациентов и записей — в любой момент, в Excel.</>],
+  ['Нужен ли Telegram?', <>Нет. Сотрудники работают на сайте с телефона или компьютера — по номеру и паролю. Telegram удобен пациентам
+    для самозаписи и напоминаний; без него пациент запишется на сайте клиники, а напоминание уйдёт в WhatsApp.</>],
+  ['Нужно что-то устанавливать?', <>Нет — работает в браузере. По желанию можно поставить значок на экран телефона, как приложение.</>],
+  ['У нас уже есть база в Excel или другой программе', <>Перенесём пациентов и записи — ничего не потеряется. Напишите нам или
+    загрузите таблицу сами в приложении.</>],
+]
+
 /** Номера-«слайды» для точек справа: герой с роликом, идея, части, для кого, контакты. */
 const NAV: [string, string][] = [['start', 'Tish'], ['idea', 'Главное'], ...PARTS.map((p): [string, string] => [p.id, p.nav]),
-  ['scale', 'Для кого'], ['contacts', 'Контакты']]
+  ['scale', 'Для кого'], ['how', 'Как начать'], ['faq', 'Вопросы'], ['contacts', 'Контакты']]
 
 function Img({ shot, eager, className }: { shot: Shot; eager?: boolean; className?: string }) {
   return <img className={className} src={shot.src} alt={shot.alt} width={shot.w} height={shot.h}
@@ -250,11 +279,15 @@ function useScrollState() {
 }
 
 /**
- * Сайт-визитка Tish для клиник: всё главное из ролика — сверху вниз, «Попробуйте бесплатно» (форма
- * заявки /join#form) и контакты. Без запросов к API: страница статичная и открывается мгновенно.
+ * Сайт-визитка Tish для клиник: всё главное из ролика — сверху вниз, «Как начать за 5 минут», вопросы,
+ * «Попробовать бесплатно» (регистрация /start) и контакты. Единственный запрос — кейс клиники (если опубликован):
+ * страница открывается сразу, кейс дорисуется.
  */
 export function About() {
   const { active, pastHero, atContacts } = useScrollState()
+  // Кейс клиники — тот же, что на /join: владелец публикует в «Платформа → Настройки»; не опубликован — блока нет
+  const [story, setStory] = useState<JoinCase | null>(null)
+  useEffect(() => { void getJson<JoinCase>('/web/case').then(({ data }) => setStory(data?.shown ? data : null)) }, [])
   const year = new Date().getFullYear()
   return (
     <div className="about">
@@ -264,7 +297,7 @@ export function About() {
         <nav className="about-top-links" aria-label="Разделы">
           <a href="#contacts">Контакты</a>
           <a href="/login">Вход для клиники</a>
-          <a className="about-btn primary small" href={JOIN}>Попробовать бесплатно</a>
+          <a className="about-btn primary small" href={START}>Попробовать бесплатно</a>
         </nav>
       </header>
 
@@ -278,11 +311,11 @@ export function About() {
                 частного врача и для большой клиники.</p>
               <ul className="about-points hero-points">{HERO_POINTS.map((x, i) => <li key={i}>{x}</li>)}</ul>
               <div className="about-ctas">
-                <a className="about-btn primary" href={JOIN}>Попробовать бесплатно</a>
+                <a className="about-btn primary" href={START}>Попробовать бесплатно</a>
                 <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
-                  <span aria-hidden="true">💬</span> Написать в WhatsApp</a>
+                  <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
               </div>
-              <p className="about-note">Первые 3 месяца бесплатно — без предоплаты, настроим за час</p>
+              <p className="about-note">Бесплатно и без предоплаты — клиника готова за 5 минут, с телефона или компьютера</p>
             </div>
             <HeroVideo />
           </div>
@@ -327,13 +360,43 @@ export function About() {
           </div>
         </section>
 
+        {story && (
+          <section className="about-slide about-statement" aria-label="Кейс клиники">
+            <div className="about-inner narrow" data-reveal><CaseBlock story={story} className="about-case" /></div>
+          </section>
+        )}
+
+        <section id="how" className="about-slide about-statement" aria-labelledby="about-how">
+          <div className="about-inner narrow" data-reveal>
+            <h2 id="about-how">Как начать за 5 минут</h2>
+            <ol className="about-steps">
+              {HOW.map(([title, text], i) => (
+                <li key={title}><span className="num" aria-hidden="true">{i + 1}</span><span><strong>{title}</strong>{text}</span></li>
+              ))}
+            </ol>
+            <div className="about-ctas center"><a className="about-btn primary" href={START}>Попробовать бесплатно</a></div>
+            <p className="about-note">Хотите, чтобы помогли подключить и перенесли пациентов? <a href="/join#form">Оставьте заявку</a> — позвоним.</p>
+          </div>
+        </section>
+
+        <section id="faq" className="about-slide about-statement" aria-labelledby="about-faq">
+          <div className="about-inner narrow" data-reveal>
+            <h2 id="about-faq">Частые вопросы</h2>
+            <div className="about-faq">
+              {FAQ.map(([q, a]) => <details key={q}><summary>{q}</summary><p>{a}</p></details>)}
+            </div>
+          </div>
+        </section>
+
         <section id="contacts" className="about-slide about-final" aria-labelledby="about-final">
           <div className="about-inner narrow" data-reveal>
             <h2 id="about-final">Меньше рутины — <span className="about-hl">больше пациентов и спокойствия</span></h2>
-            <p className="about-lead">Первые 3 месяца — бесплатно: всё приложение, без ограничений и без предоплаты. Оставьте заявку — мы позвоним и
-              настроим клинику вместе с вами.</p>
+            <p className="about-lead">Попробуйте бесплатно: всё приложение, без ограничений и без предоплаты. Клиника создаётся за пару минут,
+              а с переносом данных и настройкой поможем — просто напишите.</p>
             <div className="about-ctas center">
-              <a className="about-btn primary big" href={JOIN}>Попробовать бесплатно</a>
+              <a className="about-btn primary big" href={START}>Попробовать бесплатно</a>
+              <a className="about-btn big" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer">
+                <span aria-hidden="true">💬</span> Написать нам в WhatsApp</a>
             </div>
             <h3 className="about-contacts-title">Контакты</h3>
             <ul className="about-contacts">
@@ -365,7 +428,7 @@ export function About() {
       {/* Телефон: кнопки всегда под пальцем — после первого экрана и до контактов */}
       <div className={`about-sticky${pastHero && !atContacts ? ' shown' : ''}`} aria-hidden={!pastHero || atContacts}>
         <a className="about-btn" href={ABOUT_CONTACTS.whatsapp} target="_blank" rel="noopener noreferrer" tabIndex={pastHero && !atContacts ? 0 : -1}>WhatsApp</a>
-        <a className="about-btn primary" href={JOIN} tabIndex={pastHero && !atContacts ? 0 : -1}>Попробовать бесплатно</a>
+        <a className="about-btn primary" href={START} tabIndex={pastHero && !atContacts ? 0 : -1}>Попробовать бесплатно</a>
       </div>
     </div>
   )

@@ -50,8 +50,8 @@ export function Go() {
 
       <section className="site-section" aria-labelledby="go-clinics">
         <h2 id="go-clinics">Клиникам</h2>
-        {/* Акция — сама кнопка: нажали — сразу форма заявки */}
-        <GoLink icon="🎁" badge={t?.promo?.title} title="Подключить клинику бесплатно" sub="Без предоплаты — настроим за час" href="/join#form" main />
+        {/* Акция — сама кнопка: нажали — сразу регистрация клиники (/start, без заявки) */}
+        <GoLink icon="🎁" badge={t?.promo?.title} title="Подключить клинику бесплатно" sub="Без предоплаты — клиника готова за 5 минут" href="/start" main />
         <GoLink icon="📋" title="Tish для клиник — коротко о главном" sub="Запись, ИИ-диктовка, карта зубов, касса — с картинками" href="/about" />
         <GoLink icon="🔐" title="Вход для клиники" href="/login" />
         <p className="hint go-note">Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
