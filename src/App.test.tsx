@@ -66,6 +66,9 @@ test('пациенту — «для клиник», расписания нет'
   server.use(http.get('*/api/patient/me', () => HttpResponse.json({ doctor: false })))
   renderApp()
   expect(await screen.findByRole('heading', { name: 'Tish CRM — для клиник' })).toBeInTheDocument()
+  // Не тупик: вход без клиники (клинику удалили) — выйти или создать свою
+  expect(screen.getByRole('link', { name: 'Создать клинику' })).toHaveAttribute('href', '/start')
+  expect(screen.getByRole('button', { name: 'Выйти' })).toBeEnabled()
 })
 
 test('полоса «Сегодня»: заявки — открыть первую; склад заканчивается — перейти в «Склад»; линия «сейчас»', async () => {
