@@ -212,7 +212,8 @@ export async function phoneLogin(phone: string, code: string): Promise<SetupToke
 
 /**
  * Вход «номер + пароль». null — вошли (cookie-сессия); пропуск — пароль был временный, придумать свой.
- * Неверный номер/пароль или пароля нет — 401 (одинаково: сервер не говорит, есть ли номер); 429 — блок 15 минут.
+ * Неверный номер/пароль или пароля нет — 401 (одинаково: сервер не говорит, есть ли номер); 429 — блок 15 минут;
+ * 409 phone-orphan — пароль верный, но клинику удалили: текст сервера «Войдите через Telegram или зарегистрируйте клинику».
  */
 export function passwordLogin(phone: string, password: string): Promise<SetupToken | null> {
   return webPost<SetupToken>('/web/login/phone/password', { phone, password })

@@ -9,6 +9,8 @@ import { waitForSlow } from '../test/wait'
 /** Номер и пароли — вымышленные. */
 const WRONG = 'Неверный номер или пароль. Пароль ещё не задан или забыли — нажмите «Забыли пароль? / Первый вход»'
 
+const ORPHAN = 'Этот номер больше не привязан к клинике. Войдите через Telegram или зарегистрируйте клинику: tish.kg/start'
+
 type Post = { path: string; body: Record<string, unknown>; header: string | null }
 
 /**
@@ -46,6 +48,7 @@ function backend(config: { sms?: boolean; password?: boolean; telegram?: boolean
         return new HttpResponse(null, { status: 204 })
       }
       if (body.password === 'Временный-1') return HttpResponse.json({ setupToken: 'tok-1', temporary: true })
+      if (body.password === 'сирота') return HttpResponse.json({ detail: ORPHAN, code: 'phone-orphan' }, { status: 409 })
       if (body.password === 'много') return HttpResponse.json({ detail: 'Слишком много неверных попыток. Подождите 15 минут или нажмите «Забыли пароль?»' }, { status: 429 })
       return HttpResponse.json({ detail: WRONG }, { status: 401 })
     }),
@@ -193,6 +196,16 @@ test('429 — блок: текст сервера и заметная кнопк
   await user.click(screen.getByRole('button', { name: 'Войти' }))
   expect(await screen.findByRole('alert')).toHaveTextContent('Подождите 15 минут')
   expect(screen.getByRole('button', { name: 'Забыли пароль? / Первый вход' })).toHaveClass('btn')
+})
+
+test('409 «номер больше не привязан к клинике» (клинику удалили) — текст сервера, а не «Неверный пароль»', async () => {
+  backend()
+  const user = userEvent.setup()
+  renderApp()
+  await user.type(await screen.findByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.type(screen.getByLabelText('Пароль'), 'сирота')
+  await user.click(screen.getByRole('button', { name: 'Войти' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent(ORPHAN)
 })
 
 test('временный пароль от админа → сразу «Придумайте пароль»; пропуск устарел — заново к «Получить код»', async () => {
