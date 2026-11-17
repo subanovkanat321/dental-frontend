@@ -182,6 +182,98 @@
         }
       }
     },
+    "/api/supplies/{id}/order" : {
+      "put" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "supplyOrder",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PurchaseViewsSupplyOrder"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SupplyView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/suppliers/{id}" : {
+      "put" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "updateSupplier",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PurchaseViewsSupplierDraft"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PurchaseViewsSupplierView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "archiveSupplier",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/staff/roles" : {
       "put" : {
         "tags" : [ "staff-controller" ],
@@ -5547,6 +5639,62 @@
         }
       }
     },
+    "/api/suppliers" : {
+      "get" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "suppliers",
+        "parameters" : [ {
+          "name" : "all",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PurchaseViewsSupplierView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "addSupplier",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PurchaseViewsSupplierDraft"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PurchaseViewsSupplierView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/staff" : {
       "post" : {
         "tags" : [ "staff-controller" ],
@@ -6018,6 +6166,96 @@
         }
       }
     },
+    "/api/purchases" : {
+      "get" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "list_4",
+        "parameters" : [ {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PurchaseViewsPurchaseList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "send",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PurchaseViewsSend"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PurchaseViewsSent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/purchases/{id}/receive" : {
+      "post" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "receive",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PurchaseViewsReceive"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PurchaseViewsOrderView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/promo-codes" : {
       "get" : {
         "tags" : [ "promo-code-controller" ],
@@ -6071,7 +6309,7 @@
     "/api/platform/surveys" : {
       "get" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "list_4",
+        "operationId" : "list_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -6825,7 +7063,7 @@
     "/api/platform/content" : {
       "get" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -7733,7 +7971,7 @@
     "/api/patients/{patientId}/plan/send" : {
       "post" : {
         "tags" : [ "plan-message-controller" ],
-        "operationId" : "send",
+        "operationId" : "send_1",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -7781,7 +8019,7 @@
       },
       "post" : {
         "tags" : [ "plan-offer-controller" ],
-        "operationId" : "send_1",
+        "operationId" : "send_2",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -7858,7 +8096,7 @@
     "/api/patients/{patientId}/lessons/{topic}/send" : {
       "post" : {
         "tags" : [ "lesson-controller" ],
-        "operationId" : "send_2",
+        "operationId" : "send_3",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -8823,7 +9061,7 @@
     "/api/news" : {
       "get" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "list_6",
+        "operationId" : "list_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9176,7 +9414,7 @@
     "/api/lab-orders" : {
       "get" : {
         "tags" : [ "lab-controller" ],
-        "operationId" : "list_7",
+        "operationId" : "list_8",
         "parameters" : [ {
           "name" : "fitted",
           "in" : "query",
@@ -9398,7 +9636,7 @@
     "/api/expenses" : {
       "get" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "list_8",
+        "operationId" : "list_9",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -10419,7 +10657,7 @@
     "/api/chairs" : {
       "get" : {
         "tags" : [ "chair-assignment-controller" ],
-        "operationId" : "list_9",
+        "operationId" : "list_10",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10466,7 +10704,7 @@
     "/api/care-memos" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "list_10",
+        "operationId" : "list_11",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10721,7 +10959,7 @@
     "/api/appointments/{id}/visit-report/send" : {
       "post" : {
         "tags" : [ "visit-report-controller" ],
-        "operationId" : "send_3",
+        "operationId" : "send_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11127,7 +11365,7 @@
       },
       "post" : {
         "tags" : [ "review-link-controller" ],
-        "operationId" : "send_4",
+        "operationId" : "send_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11293,7 +11531,7 @@
     "/api/appointments/{id}/receipt/send" : {
       "post" : {
         "tags" : [ "receipt-controller" ],
-        "operationId" : "send_5",
+        "operationId" : "send_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11612,7 +11850,7 @@
     "/api/appointments/{id}/care-memo/send" : {
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "send_6",
+        "operationId" : "send_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12519,6 +12757,33 @@
         }
       }
     },
+    "/api/supplies/{id}/prices" : {
+      "get" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "prices",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PurchaseViewsPriceHistory"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/supplies/{id}/history" : {
       "get" : {
         "tags" : [ "supply-controller" ],
@@ -12746,7 +13011,7 @@
     "/api/salaries" : {
       "get" : {
         "tags" : [ "salary-controller" ],
-        "operationId" : "list_11",
+        "operationId" : "list_12",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -12825,6 +13090,69 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PushControllerPushView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/purchases/{id}" : {
+      "get" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "order",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PurchaseViewsOrderView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "cancel_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
+    "/api/purchases/count" : {
+      "get" : {
+        "tags" : [ "purchase-controller" ],
+        "operationId" : "count",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PurchaseViewsCount"
                 }
               }
             }
@@ -13076,7 +13404,7 @@
     "/api/platform/outreach" : {
       "get" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "list_12",
+        "operationId" : "list_13",
         "parameters" : [ {
           "name" : "group",
           "in" : "query",
@@ -13166,7 +13494,7 @@
     "/api/platform/materials" : {
       "get" : {
         "tags" : [ "materials-controller" ],
-        "operationId" : "list_13",
+        "operationId" : "list_14",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -14226,7 +14554,7 @@
     "/api/patient-questions" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "list_14",
+        "operationId" : "list_15",
         "parameters" : [ {
           "name" : "done",
           "in" : "query",
@@ -14280,7 +14608,7 @@
     "/api/patient-questions/new-count" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "count",
+        "operationId" : "count_1",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -14298,7 +14626,7 @@
     "/api/opening-debts" : {
       "get" : {
         "tags" : [ "opening-debt-controller" ],
-        "operationId" : "list_15",
+        "operationId" : "list_16",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "query",
@@ -14328,7 +14656,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_16",
+        "operationId" : "list_17",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15090,7 +15418,7 @@
     "/api/appointments/{id}/teeth" : {
       "get" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "list_17",
+        "operationId" : "list_18",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -16093,7 +16421,7 @@
     "/api/clinic/pay/requests/{id}" : {
       "delete" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "cancel_1",
+        "operationId" : "cancel_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -16278,6 +16606,16 @@
           },
           "doctorName" : {
             "type" : "string"
+          },
+          "supplierId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "supplierName" : {
+            "type" : "string"
+          },
+          "orderWanted" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "id", "low", "minQuantity", "quantity" ]
@@ -16302,6 +16640,56 @@
             }
           }
         }
+      },
+      "PurchaseViewsSupplyOrder" : {
+        "properties" : {
+          "supplierId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "wanted" : {
+            "type" : "boolean"
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "wanted" ]
+      },
+      "PurchaseViewsSupplierDraft" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PurchaseViewsSupplierView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "archived" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "archived", "id", "name" ]
       },
       "StaffControllerRolesRequest" : {
         "properties" : {
@@ -21388,6 +21776,154 @@
           }
         }
       },
+      "PurchaseViewsSend" : {
+        "properties" : {
+          "supplierId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PurchaseViewsSendLine"
+            }
+          }
+        },
+        "required" : [ "supplierId" ]
+      },
+      "PurchaseViewsSendLine" : {
+        "properties" : {
+          "supplyId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "quantity", "supplyId" ]
+      },
+      "PurchaseViewsOrderItemView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "supplyId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "received" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "costSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastPriceSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "id", "name", "quantity", "supplyId", "unit" ]
+      },
+      "PurchaseViewsOrderView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "supplierId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "supplierName" : {
+            "type" : "string"
+          },
+          "supplierPhone" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "sentAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "closedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PurchaseViewsOrderItemView"
+            }
+          }
+        },
+        "required" : [ "id", "items", "sentAt", "status", "supplierId", "supplierName" ]
+      },
+      "PurchaseViewsSent" : {
+        "properties" : {
+          "order" : {
+            "$ref" : "#/components/schemas/PurchaseViewsOrderView"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "order", "text" ]
+      },
+      "PurchaseViewsReceive" : {
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PurchaseViewsReceiveLine"
+            }
+          },
+          "deliveredOn" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "PurchaseViewsReceiveLine" : {
+        "properties" : {
+          "itemId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "received" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "costSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "itemId", "received" ]
+      },
       "PayControllerReject" : {
         "properties" : {
           "comment" : {
@@ -24205,6 +24741,75 @@
         },
         "required" : [ "ai", "dailyLimit", "maxLength", "usedToday" ]
       },
+      "PurchaseViewsPriceEntry" : {
+        "properties" : {
+          "supplierId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "supplierName" : {
+            "type" : "string"
+          },
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "costSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "costSom", "day", "priceSom", "quantity" ]
+      },
+      "PurchaseViewsPriceHistory" : {
+        "properties" : {
+          "suppliers" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PurchaseViewsSupplierPrice"
+            }
+          },
+          "entries" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PurchaseViewsPriceEntry"
+            }
+          }
+        },
+        "required" : [ "entries", "suppliers" ]
+      },
+      "PurchaseViewsSupplierPrice" : {
+        "properties" : {
+          "supplierId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "supplierName" : {
+            "type" : "string"
+          },
+          "priceSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "deliveries" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "day", "deliveries", "priceSom" ]
+      },
       "MovementView" : {
         "properties" : {
           "delta" : {
@@ -24727,6 +25332,119 @@
             }
           }
         }
+      },
+      "PurchaseViewsDraftGroup" : {
+        "properties" : {
+          "supplierId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "supplierName" : {
+            "type" : "string"
+          },
+          "supplierPhone" : {
+            "type" : "string"
+          },
+          "supplierNote" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PurchaseViewsDraftItem"
+            }
+          },
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "items" ]
+      },
+      "PurchaseViewsDraftItem" : {
+        "properties" : {
+          "supplyId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "minQuantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "low" : {
+            "type" : "boolean"
+          },
+          "wanted" : {
+            "type" : "boolean"
+          },
+          "usedMonth" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "suggested" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "orderQuantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "toOrder" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lastPriceSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "low", "minQuantity", "name", "quantity", "suggested", "supplyId", "toOrder", "unit", "usedMonth", "wanted" ]
+      },
+      "PurchaseViewsPurchaseList" : {
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "groups" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PurchaseViewsDraftGroup"
+            }
+          },
+          "orders" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PurchaseViewsOrderView"
+            }
+          }
+        },
+        "required" : [ "count", "groups", "orders" ]
+      },
+      "PurchaseViewsCount" : {
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "count" ]
       },
       "SurveySummary" : {
         "properties" : {

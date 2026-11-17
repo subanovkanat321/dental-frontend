@@ -13,6 +13,9 @@ export function useStockRefresh() {
     void client.invalidateQueries({ queryKey: ['supplies'] })
     void client.invalidateQueries({ queryKey: ['supply-history'] })
     void client.invalidateQueries({ queryKey: ['spending'] })
+    // Остаток изменился — список к закупке и число у «Заказа» тоже; поставка — новая цена
+    void client.invalidateQueries({ queryKey: ['purchases'] })
+    void client.invalidateQueries({ queryKey: ['supply-prices'] })
   }
 }
 

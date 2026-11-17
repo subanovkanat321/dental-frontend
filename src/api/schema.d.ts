@@ -52,6 +52,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/supplies/{id}/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["supplyOrder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/suppliers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateSupplier"];
+        post?: never;
+        delete: operations["archiveSupplier"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/staff/roles": {
         parameters: {
             query?: never;
@@ -2164,6 +2196,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/suppliers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["suppliers"];
+        put?: never;
+        post: operations["addSupplier"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/staff": {
         parameters: {
             query?: never;
@@ -2356,6 +2404,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/purchases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_4"];
+        put?: never;
+        post: operations["send"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/purchases/{id}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["receive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/promo-codes": {
         parameters: {
             query?: never;
@@ -2379,7 +2459,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
         post: operations["create_6"];
         delete?: never;
@@ -2699,7 +2779,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post: operations["create_8"];
         delete?: never;
@@ -3149,7 +3229,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send"];
+        post: operations["send_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3165,7 +3245,7 @@ export interface paths {
         };
         get: operations["offers"];
         put?: never;
-        post: operations["send_1"];
+        post: operations["send_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3197,7 +3277,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_2"];
+        post: operations["send_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3579,7 +3659,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post: operations["publish_2"];
         delete?: never;
@@ -3771,7 +3851,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
         post: operations["create_12"];
         delete?: never;
@@ -3835,7 +3915,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         post: operations["add_5"];
         delete?: never;
@@ -4203,7 +4283,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_9"];
+        get: operations["list_10"];
         put?: never;
         post: operations["create_15"];
         delete?: never;
@@ -4219,7 +4299,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_10"];
+        get: operations["list_11"];
         put?: never;
         post: operations["create_16"];
         delete?: never;
@@ -4317,7 +4397,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_3"];
+        post: operations["send_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4461,7 +4541,7 @@ export interface paths {
         };
         get: operations["draft_5"];
         put?: never;
-        post: operations["send_4"];
+        post: operations["send_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4541,7 +4621,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_5"];
+        post: operations["send_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4685,7 +4765,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_6"];
+        post: operations["send_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5188,6 +5268,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/supplies/{id}/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["prices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/supplies/{id}/history": {
         parameters: {
             query?: never;
@@ -5307,7 +5403,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_11"];
+        get: operations["list_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5340,6 +5436,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["view_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/purchases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["order"];
+        put?: never;
+        post?: never;
+        delete: operations["cancel_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/purchases/count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["count"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5499,7 +5627,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_12"];
+        get: operations["list_13"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5547,7 +5675,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_13"];
+        get: operations["list_14"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6123,7 +6251,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_14"];
+        get: operations["list_15"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6155,7 +6283,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["count"];
+        get: operations["count_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6171,7 +6299,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_15"];
+        get: operations["list_16"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6187,7 +6315,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_16"];
+        get: operations["list_17"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6651,7 +6779,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_17"];
+        get: operations["list_18"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7166,7 +7294,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete: operations["cancel_1"];
+        delete: operations["cancel_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -7255,6 +7383,10 @@ export interface components {
             /** Format: int64 */
             doctorId?: number;
             doctorName?: string;
+            /** Format: int64 */
+            supplierId?: number;
+            supplierName?: string;
+            orderWanted?: boolean;
         };
         SupplyControllerOwner: {
             /** Format: int64 */
@@ -7263,6 +7395,26 @@ export interface components {
         SupplyControllerOwnerChanged: {
             supply?: components["schemas"]["SupplyView"];
             services?: string[];
+        };
+        PurchaseViewsSupplyOrder: {
+            /** Format: int64 */
+            supplierId?: number;
+            wanted: boolean;
+            /** Format: int32 */
+            quantity?: number;
+        };
+        PurchaseViewsSupplierDraft: {
+            name?: string;
+            phone?: string;
+            note?: string;
+        };
+        PurchaseViewsSupplierView: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            phone?: string;
+            note?: string;
+            archived: boolean;
         };
         StaffControllerRolesRequest: {
             /** Format: int64 */
@@ -9300,6 +9452,67 @@ export interface components {
             p256dh?: string;
             auth?: string;
         };
+        PurchaseViewsSend: {
+            /** Format: int64 */
+            supplierId: number;
+            items?: components["schemas"]["PurchaseViewsSendLine"][];
+        };
+        PurchaseViewsSendLine: {
+            /** Format: int64 */
+            supplyId: number;
+            /** Format: int32 */
+            quantity: number;
+        };
+        PurchaseViewsOrderItemView: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            supplyId: number;
+            name: string;
+            unit: string;
+            /** Format: int32 */
+            quantity: number;
+            /** Format: int32 */
+            received?: number;
+            /** Format: int64 */
+            costSom?: number;
+            /** Format: int64 */
+            lastPriceSom?: number;
+        };
+        PurchaseViewsOrderView: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            supplierId: number;
+            supplierName: string;
+            supplierPhone?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            doctorName?: string;
+            status: string;
+            /** Format: date-time */
+            sentAt: string;
+            /** Format: date-time */
+            closedAt?: string;
+            items: components["schemas"]["PurchaseViewsOrderItemView"][];
+        };
+        PurchaseViewsSent: {
+            order: components["schemas"]["PurchaseViewsOrderView"];
+            text: string;
+        };
+        PurchaseViewsReceive: {
+            items?: components["schemas"]["PurchaseViewsReceiveLine"][];
+            /** Format: date */
+            deliveredOn?: string;
+        };
+        PurchaseViewsReceiveLine: {
+            /** Format: int64 */
+            itemId: number;
+            /** Format: int32 */
+            received: number;
+            /** Format: int32 */
+            costSom?: number;
+        };
         PayControllerReject: {
             comment?: string;
         };
@@ -10426,6 +10639,34 @@ export interface components {
             /** Format: int32 */
             maxLength: number;
         };
+        PurchaseViewsPriceEntry: {
+            /** Format: int64 */
+            supplierId?: number;
+            supplierName?: string;
+            /** Format: date */
+            day: string;
+            /** Format: int32 */
+            quantity: number;
+            /** Format: int64 */
+            costSom: number;
+            /** Format: int64 */
+            priceSom: number;
+        };
+        PurchaseViewsPriceHistory: {
+            suppliers: components["schemas"]["PurchaseViewsSupplierPrice"][];
+            entries: components["schemas"]["PurchaseViewsPriceEntry"][];
+        };
+        PurchaseViewsSupplierPrice: {
+            /** Format: int64 */
+            supplierId?: number;
+            supplierName?: string;
+            /** Format: int64 */
+            priceSom: number;
+            /** Format: date */
+            day: string;
+            /** Format: int32 */
+            deliveries: number;
+        };
         MovementView: {
             /** Format: int32 */
             delta: number;
@@ -10624,6 +10865,50 @@ export interface components {
             /** @enum {string} */
             group?: "EXAM" | "HYGIENE" | "THERAPY" | "SURGERY" | "PROSTHETICS" | "ORTHODONTICS" | "IMPLANTS" | "AESTHETICS" | "KIDS" | "XRAY" | "OTHER";
             items?: components["schemas"]["ServiceTypeServiceCatalogItem"][];
+        };
+        PurchaseViewsDraftGroup: {
+            /** Format: int64 */
+            supplierId?: number;
+            supplierName?: string;
+            supplierPhone?: string;
+            supplierNote?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            doctorName?: string;
+            items: components["schemas"]["PurchaseViewsDraftItem"][];
+            message?: string;
+        };
+        PurchaseViewsDraftItem: {
+            /** Format: int64 */
+            supplyId: number;
+            name: string;
+            unit: string;
+            /** Format: int32 */
+            quantity: number;
+            /** Format: int32 */
+            minQuantity: number;
+            low: boolean;
+            wanted: boolean;
+            /** Format: int32 */
+            usedMonth: number;
+            /** Format: int32 */
+            suggested: number;
+            /** Format: int32 */
+            orderQuantity?: number;
+            /** Format: int32 */
+            toOrder: number;
+            /** Format: int64 */
+            lastPriceSom?: number;
+        };
+        PurchaseViewsPurchaseList: {
+            /** Format: int32 */
+            count: number;
+            groups: components["schemas"]["PurchaseViewsDraftGroup"][];
+            orders: components["schemas"]["PurchaseViewsOrderView"][];
+        };
+        PurchaseViewsCount: {
+            /** Format: int32 */
+            count: number;
         };
         SurveySummary: {
             /** Format: int64 */
@@ -12142,6 +12427,78 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SupplyControllerOwnerChanged"];
                 };
+            };
+        };
+    };
+    supplyOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseViewsSupplyOrder"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplyView"];
+                };
+            };
+        };
+    };
+    updateSupplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseViewsSupplierDraft"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseViewsSupplierView"];
+                };
+            };
+        };
+    };
+    archiveSupplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -16542,6 +16899,52 @@ export interface operations {
             };
         };
     };
+    suppliers: {
+        parameters: {
+            query?: {
+                all?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseViewsSupplierView"][];
+                };
+            };
+        };
+    };
+    addSupplier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseViewsSupplierDraft"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseViewsSupplierView"];
+                };
+            };
+        };
+    };
     add_1: {
         parameters: {
             query?: never;
@@ -16920,6 +17323,78 @@ export interface operations {
             };
         };
     };
+    list_4: {
+        parameters: {
+            query?: {
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseViewsPurchaseList"];
+                };
+            };
+        };
+    };
+    send: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseViewsSend"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseViewsSent"];
+                };
+            };
+        };
+    };
+    receive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PurchaseViewsReceive"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseViewsOrderView"];
+                };
+            };
+        };
+    };
     all_3: {
         parameters: {
             query?: never;
@@ -16964,7 +17439,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -17565,7 +18040,7 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    list_6: {
         parameters: {
             query?: {
                 from?: string;
@@ -18311,7 +18786,7 @@ export interface operations {
             };
         };
     };
-    send: {
+    send_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -18353,7 +18828,7 @@ export interface operations {
             };
         };
     };
-    send_1: {
+    send_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -18405,7 +18880,7 @@ export interface operations {
             };
         };
     };
-    send_2: {
+    send_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -19146,7 +19621,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -19480,7 +19955,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: {
                 fitted?: boolean;
@@ -19630,7 +20105,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query: {
                 from: string;
@@ -20376,7 +20851,7 @@ export interface operations {
             };
         };
     };
-    list_9: {
+    list_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -20420,7 +20895,7 @@ export interface operations {
             };
         };
     };
-    list_10: {
+    list_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -20658,7 +21133,7 @@ export interface operations {
             };
         };
     };
-    send_3: {
+    send_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -20936,7 +21411,7 @@ export interface operations {
             };
         };
     };
-    send_4: {
+    send_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -21072,7 +21547,7 @@ export interface operations {
             };
         };
     };
-    send_5: {
+    send_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -21300,7 +21775,7 @@ export interface operations {
             };
         };
     };
-    send_6: {
+    send_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -22060,6 +22535,28 @@ export interface operations {
             };
         };
     };
+    prices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseViewsPriceHistory"];
+                };
+            };
+        };
+    };
     history: {
         parameters: {
             query?: never;
@@ -22216,7 +22713,7 @@ export interface operations {
             };
         };
     };
-    list_11: {
+    list_12: {
         parameters: {
             query: {
                 month: string;
@@ -22278,6 +22775,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PushControllerPushView"];
+                };
+            };
+        };
+    };
+    order: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseViewsOrderView"];
+                };
+            };
+        };
+    };
+    cancel_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    count: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurchaseViewsCount"];
                 };
             };
         };
@@ -22477,7 +23036,7 @@ export interface operations {
             };
         };
     };
-    list_12: {
+    list_13: {
         parameters: {
             query?: {
                 group?: "FRESH" | "SENT" | "FURTHER" | "DECLINED";
@@ -22544,7 +23103,7 @@ export interface operations {
             };
         };
     };
-    list_13: {
+    list_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -23393,7 +23952,7 @@ export interface operations {
             };
         };
     };
-    list_14: {
+    list_15: {
         parameters: {
             query?: {
                 done?: boolean;
@@ -23437,7 +23996,7 @@ export interface operations {
             };
         };
     };
-    count: {
+    count_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -23457,7 +24016,7 @@ export interface operations {
             };
         };
     };
-    list_15: {
+    list_16: {
         parameters: {
             query?: {
                 patientId?: number;
@@ -23479,7 +24038,7 @@ export interface operations {
             };
         };
     };
-    list_16: {
+    list_17: {
         parameters: {
             query?: never;
             header?: never;
@@ -24113,7 +24672,7 @@ export interface operations {
             };
         };
     };
-    list_17: {
+    list_18: {
         parameters: {
             query?: never;
             header?: never;
@@ -24820,7 +25379,7 @@ export interface operations {
             };
         };
     };
-    cancel_1: {
+    cancel_2: {
         parameters: {
             query?: never;
             header?: never;

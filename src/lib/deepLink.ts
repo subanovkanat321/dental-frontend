@@ -97,6 +97,8 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (screen === 'tasks') return { page: 'patients', tab: 'tasks', taskId: num('task') }
   // Предупреждение «завтра примерка, а работа не пришла» (бот или push): «Склад → Лаборатория»
   if (screen === 'lab') return { page: 'stock', tab: 'lab', labOrderId: num('order') }
+  // Утреннее «🛒 Пора заказать» (бот или push): «Склад → Заказ»
+  if (screen === 'purchase') return { page: 'stock', tab: 'purchase' }
   if (screen === 'booked') {
     const day = p.get('day') === 'tomorrow' ? addDays(today, 1) : p.get('day') === 'today' ? today : undefined
     return { page: 'patients', tab: 'booked', date: day, unconfirmed: p.get('unconfirmed') === '1', unmarked: p.get('unmarked') === '1', doctorId: num('doctor') }
@@ -117,6 +119,6 @@ export function linkHash(link: DeepLink): string {
   const sub = link.page === 'patients'
     // Карточка пациента (имя в приёме, кнопка бота) — поверх списка «Все», как раньше
     ? (link.questionId ? 'questions' : link.tab ?? (link.patientId ? 'all' : undefined))
-    : link.page === 'stock' ? (link.tab === 'lab' ? 'lab' : undefined) : link.tab
+    : link.page === 'stock' ? (link.tab === 'lab' || link.tab === 'purchase' ? link.tab : undefined) : link.tab
   return sub ? `${link.page}/${sub}` : link.page
 }

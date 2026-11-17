@@ -96,6 +96,11 @@ export const server = setupServer(
   // Неделя сотрудника (строка «Часы» в «Персонале»): по умолчанию — как у клиники
   http.get('*/api/shifts/weekly/:telegramId', () => HttpResponse.json({ telegramId: 0, custom: false, days: [] } satisfies Schemas['ShiftServiceWeekly'])),
   http.get('*/api/shifts', () => HttpResponse.json({ people: [], shifts: [], canEdit: false, me: 0 } satisfies Schemas['ShiftControllerSchedule'])),
+  // «Склад → Заказ»: число у подраздела, список, поставщики, цены материала
+  http.get('*/api/purchases/count', () => HttpResponse.json({ count: 0 } satisfies Schemas['PurchaseViewsCount'])),
+  http.get('*/api/purchases', () => HttpResponse.json({ count: 0, groups: [], orders: [] } satisfies Schemas['PurchaseViewsPurchaseList'])),
+  http.get('*/api/suppliers', () => HttpResponse.json([] satisfies Schemas['PurchaseViewsSupplierView'][])),
+  http.get('*/api/supplies/:id/prices', () => HttpResponse.json({ suppliers: [], entries: [] } satisfies Schemas['PurchaseViewsPriceHistory'])),
   // Задачи (V218): по умолчанию нет ни одной — ни числа у «Задач», ни строки в расписании
   http.get('*/api/tasks/summary', () => HttpResponse.json({ overdue: 0 } satisfies Schemas['TaskControllerSummary'])),
   http.get('*/api/tasks/assignees', () => HttpResponse.json([] satisfies Schemas['TaskControllerAssignee'][])),

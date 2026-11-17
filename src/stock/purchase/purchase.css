@@ -1,0 +1,22 @@
+/*
+ * «Склад → Заказ» (src/stock/purchase): спокойный список «Пациентов» (patients/calm.css) по поставщикам. Под группой —
+ * одна кнопка WhatsApp (свой цвет, data-tone=wa) и подсказка; «не заказываем» — зачёркнуто серым.
+ */
+.purchase-group h3 .num { font-weight: 400; }
+.purchase-qty { display: inline-flex; align-items: center; gap: 6px; }
+.purchase-qty input { width: 64px; min-height: 32px; text-align: right; }
+.purchase-skip { color: var(--hint); text-decoration: line-through; font-weight: 400; }
+.purchase-send { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.purchase-send .error { flex-basis: 100%; margin: 0; }
+.purchase-text { margin: 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); font: inherit; font-size: .9rem;
+  white-space: pre-wrap; overflow-wrap: anywhere; }
+.purchase-add { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.purchase-add > :first-child { flex: 1 1 240px; min-width: 0; }
+.purchase-receive-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.purchase-receive-list > li { display: grid; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.purchase-receive-list .row > .field { flex: 1 1 120px; min-width: 0; }
+
+/* Карточка материала: где берём и цены у поставщиков */
+.supply-prices { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.supply-prices li { display: flex; justify-content: space-between; gap: 8px; }
+.supply-prices .cheapest { color: var(--ok-ink); font-weight: 600; }

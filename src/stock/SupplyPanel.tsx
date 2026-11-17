@@ -12,6 +12,7 @@ import { Loading } from '../layout/Loading'
 import { Fold } from '../layout/Fold'
 import { MoveFields } from './MoveFields'
 import { useStockRefresh as useRefresh, useSupplyMove } from './supplyMove'
+import { OrderFold } from './purchase/OrderFold'
 
 type Me = Schemas['BookingViewsMe']
 type Supply = Schemas['SupplyView']
@@ -96,6 +97,9 @@ export function SupplyPanel({ supply: s, me, onClose, onMoved }: {
         {m.done && <p className="tone-ok" role="status">{m.done}</p>}
         {saved && <p className="tone-ok" role="status">{saved}</p>}
       </div>
+
+      {/* Где обычно берём, «в заказ» и цены у поставщиков («Склад → Заказ») */}
+      <OrderFold supply={s} me={me} />
 
       {/* Название, единица, минимум и «Чей склад» нужны редко — свёрнуты, чтобы карточка была короче */}
       <Fold title="Настройки" meta={`мин. ${s.minQuantity} ${s.unit}`}>

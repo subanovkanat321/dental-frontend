@@ -6,6 +6,7 @@ import { shortDate } from '../lib/time'
 import { clinicRequest } from '../settings/clinicUpdate'
 import { SpendingBlock } from './Spending'
 import { LabTab } from '../lab/LabTab'
+import { PurchaseTab } from './purchase/PurchaseTab'
 import { NewSupplyPanel, SupplyPanel } from './SupplyPanel'
 import { DeliverySheet, type StockScope } from './DeliverySheet'
 import { seesOwnPurchases } from '../lib/roles'
@@ -105,6 +106,19 @@ export function StockPage({ me, initialSupply, initialLabOrder, onOpenPatient }:
           <HeadSlotProvider slot={slot}>
             <PageHead title={title} slotRef={setSlot} />
             <LabTab me={me} initialOrder={initialLabOrder} onOpenPatient={onOpenPatient} />
+          </HeadSlotProvider>
+        </section>
+      </div>
+    )
+  }
+  if (sub === 'purchase') {
+    // «Заказ»: список к закупке по поставщикам (src/stock/purchase); материалы — для «＋ В заказ»
+    return (
+      <div className="schedule">
+        <section className="schedule-main">
+          <HeadSlotProvider slot={slot}>
+            <PageHead title={title} slotRef={setSlot} />
+            <PurchaseTab me={me} supplies={all} />
           </HeadSlotProvider>
         </section>
       </div>

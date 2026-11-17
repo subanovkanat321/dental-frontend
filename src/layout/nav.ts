@@ -17,7 +17,8 @@ export type Counts = Partial<Record<string, number>>
 /** Заметное число (бирюзовое) — ждёт действия; остальные — серым. */
 export const LOUD: ReadonlySet<string> = new Set(['patients/questions', 'patients/tasks'])
 
-/** «Склад → Лаборатория» — заказ-наряды технику. */
+/** «Склад → Заказ» — список к закупке у поставщиков; «Склад → Лаборатория» — заказ-наряды технику. */
+const PURCHASE_SUB: Sub = { key: 'purchase', title: 'Заказ' }
 const LAB_SUB: Sub = { key: 'lab', title: 'Лаборатория' }
 
 /**
@@ -45,10 +46,11 @@ export function subsOf(page: Page, me: Me): Sub[] {
       // админ-врач при «врачи работают независимо» закупок чужих складов не видит. Врачу в независимой
       // клинике со своим складом — «Мои закупки»: тот же экран по его складу; остальным — только материалы
       // «Лаборатория» (заказ-наряды технику) — всем: ждём работу, примерка, деньги технику (их — кто видит расходы)
-      if (seesAllMoney(me)) return [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Расходы на склад' }, LAB_SUB]
+      // «Заказ» (что купить у поставщиков) — всем, кто ведёт склад: права как у поставки
+      if (seesAllMoney(me)) return [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Расходы на склад' }, PURCHASE_SUB, LAB_SUB]
       return seesOwnPurchases(me)
-        ? [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Мои закупки' }, LAB_SUB]
-        : [{ key: 'materials', title: 'Материалы' }, LAB_SUB]
+        ? [{ key: 'materials', title: 'Материалы' }, { key: 'spending', title: 'Мои закупки' }, PURCHASE_SUB, LAB_SUB]
+        : [{ key: 'materials', title: 'Материалы' }, PURCHASE_SUB, LAB_SUB]
     case 'platform':
       // 14 вкладок в строку не влезали — с 2026-11-14 их 9: «Обратная связь» (обращения + опросы), «Рассылка клиникам»
       // (по одной в WhatsApp + всем сразу в бот), «Маркетинг» (контент-план + материалы); «Договор» и «Тарифы» — в
