@@ -29,6 +29,7 @@ import { VisitTeeth } from './VisitTeeth'
 import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
 import { seesDebts, usePatientDebts } from '../lib/debt'
+import { useMedAlert } from '../lib/medAlerts'
 import { PatientExpenses } from '../patients/PatientExpenses'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
@@ -208,6 +209,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
     enabled: a.doctorId != null && a.status !== 'CANCELLED',
   })
   const colleague = colleagueTimeOf(a, daySlots.data?.chairTime)
+  const medAlert = useMedAlert(a.patient.id)
   const chairs = useChairs()
   const chairName = chairs.data?.find((c) => c.id === a.chairId)?.name ?? 'кресло'
   const sourceHint = a.bookedBy ? bookedByText(a.bookedBy) : a.source === 'PATIENT' ? 'Запись через бота'
@@ -239,10 +241,21 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <LessonPicker key={`${a.id}-${a.serviceName ?? ''}`} serviceName={a.serviceName} patientId={a.patient.id} onClose={() => setLesson(false)} />
       )}
       <span className={`chip s-${s.kind} appt-status`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
-      {/* Долг пациента — на виду, пока он записан или пришёл; после «Приём состоялся» — подсказка у оплаты */}
-      {patientDebt > 0 && a.status !== 'CANCELLED' && !payPending && (
-        <span className="chip s-bad appt-debt" role="note"><span className="ico" aria-hidden="true">🧾</span>Долг {somText(patientDebt)}</span>
-      )}
+      {/* Метки пациента одной строкой, по важности, как на записи в сетке: ❗ важно для врача (тем, кому анкета закрыта —
+          остальным ниже плашка с текстом), 🧾 долг, ⭐ ВИП. Первый визит — строкой «Впервые в клинике» у пациента */}
+      {(() => {
+        const showAlert = Boolean(medAlert && !medAlert.text && a.status !== 'CANCELLED')
+        const showDebt = patientDebt > 0 && a.status !== 'CANCELLED' && !payPending
+        if (!showAlert && !showDebt && !a.patient.vip) return null
+        return (
+          <div className="appt-marks">
+            {showAlert && <span className="chip s-bad appt-mark" role="note" title="Есть отметки в анкете: аллергия, болезни — видит врач"><span className="ico" aria-hidden="true">❗</span>Важно для врача</span>}
+            {/* Долг пациента — на виду, пока он записан или пришёл; после «Приём состоялся» — подсказка у оплаты */}
+            {showDebt && <span className="chip s-bad appt-debt" role="note"><span className="ico" aria-hidden="true">🧾</span>Долг {somText(patientDebt)}</span>}
+            {a.patient.vip && <span className="chip appt-mark" role="note" title="ВИП — особое внимание"><span className="ico" aria-hidden="true">⭐</span>ВИП</span>}
+          </div>
+        )
+      })()}
       {colleague && (
         <p className="appt-chair-mark" role="note"><span aria-hidden="true">🪑 </span>{colleagueMarkText(colleague)}</p>
       )}

@@ -21,6 +21,7 @@ import { canEditServices, editableDoctors } from '../lib/roles'
 import { openServiceLater } from '../lib/openService'
 import { servicesOfDoctor } from '../lib/doctorServices'
 import { DateInput } from '../layout/DateInput'
+import { useFreeDays } from '../lib/freeDays'
 import { Fold } from '../layout/Fold'
 import { Select } from '../layout/Select'
 import { expired, usePromoCodes } from '../lib/promo'
@@ -48,6 +49,8 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
   const [time, setTime] = useState(timeOf(a.startAt))
   const [duration, setDuration] = useState(minutes)
   const [doctorId, setDoctorId] = useState(a.doctorId)
+  const [calMonth, setCalMonth] = useState((a.startAt ? dateOf(a.startAt) : todayIn()).slice(0, 7))
+  const freeDays = useFreeDays(doctorId, calMonth, duration)
   const [problem, setProblem] = useState('')
   // Кресло (V210): у того же врача — кресло приёма (выбранное вручную остаётся), у другого — его кресло
   const chair = useChairChoice(doctorId, doctorId === a.doctorId ? a.chairId ?? null : undefined)
@@ -83,7 +86,8 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
       )}
       <div className="row">
         <label className="field"><span>День</span>
-          <DateInput weekday value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} />
+          <DateInput weekday value={date} required marks={freeDays} onMonthView={setCalMonth}
+            onChange={(e) => { setDate(e.target.value); setTime('') }} />
         </label>
         {/* Другая длительность — выбранное время могло перестать помещаться: выбрать заново */}
         <DurationField value={duration} onChange={(d) => { if (d !== duration) setTime(''); setDuration(d) }} />

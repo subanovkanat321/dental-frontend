@@ -19,6 +19,7 @@ import { ChairTimeBands } from './ChairTimeBands'
 import { DaySummary } from './DaySummary'
 import { freeMinutes } from './free'
 import { DateInput } from '../layout/DateInput'
+import { useFreeDays } from '../lib/freeDays'
 import { useMedia } from '../lib/useMedia'
 import { DoctorPicker } from './DoctorPicker'
 import { DoctorOrderDialog } from './DoctorOrderDialog'
@@ -193,6 +194,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   // у кого сегодня выходной и нет приёмов (ниже, когда загружены часы). Один врач — всегда он, даже скрытый
   const [hiddenDoctors, setHiddenDoctors] = useHiddenDoctors()
   const visible = visibleDoctors(doctors, hiddenDoctors)
+  // Календарь у стрелок: на расписании одного врача — его свободные дни зелёной точкой (месяц — какой открыт)
+  const [calMonth, setCalMonth] = useState<string | null>(null)
+  const freeDays = useFreeDays(typeof view === 'number' ? view : null, calMonth ?? '')
   // «показать» у подсказки «Выходной: …» — до смены дня: запоминаем день, на который нажали
   const [offShownFor, setOffShownFor] = useState<string | null>(null)
   const narrow = useNarrow()
@@ -446,7 +450,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
               <button type="button" className="btn ghost" aria-label={monthMode ? 'Следующий месяц' : weekMode ? 'Следующая неделя' : 'Следующий день'}
                 onClick={() => (monthMode ? goMonth(addMonths(month, 1)) : setDate(addDays(date, weekMode ? 7 : 1)))}>›</button>
               {/* Календарь — значком рядом со стрелками: дата и так крупно в заголовке */}
-              <DateInput id="schedule-date" iconOnly aria-label="Выбрать дату" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} />
+              <DateInput id="schedule-date" iconOnly aria-label="Выбрать дату" value={date} marks={freeDays} onMonthView={setCalMonth}
+                onChange={(e) => e.target.value && setDate(e.target.value)} />
             </div>
             {monthMode ? (
               <div className="day-title">

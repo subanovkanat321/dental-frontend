@@ -642,6 +642,8 @@ details.agreement-box { max-height: none; }
   padding: 10px 10px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
 .day-list .row .time { font: 600 .95rem var(--mono); }
 .day-list .row .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day-list .row .name:has(> .name-text) { display: flex; align-items: baseline; gap: 4px; min-width: 0; }
+.day-list .row .name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .day-list .row .end { font-size: .85rem; }
 .day-list .row .state, .day-list .row .row-note { grid-column: 2 / -1; font-size: .85rem; }
 .day-list .row-note { color: var(--hint); }
@@ -776,6 +778,7 @@ button.grid-head:not(:disabled):hover .grid-head-name { color: var(--link); }
 .doctor-columns .row .end { display: none; }
 /* Имя — по словам; по буквам только слово, которое само шире колонки */
 .doctor-columns .row .name { white-space: normal; overflow-wrap: break-word; font-size: .92rem; line-height: 1.2; }
+.doctor-columns .row .name-text { white-space: normal; overflow-wrap: break-word; }
 .doctor-columns .row .state, .doctor-columns .row .row-note { grid-column: auto; font-size: .85rem; overflow-wrap: break-word; }
 .doctor-columns .row .state .hint { display: none; }
 /* Строка приёма: «✓ отправлено» / кнопка напоминания — отдельной строкой внизу карточки, а не сбоку
@@ -1256,6 +1259,16 @@ tr.clickable .row-link:not(.open-link)::after { content: " ›"; content: " ›"
 .date-day.chosen { background: var(--accent); color: #fff; font-weight: 700; }
 .date-day:disabled { color: var(--faint, var(--hint)); opacity: .45; cursor: default; }
 .date-pop.sheet .date-day { min-height: 44px; font-size: 1.05rem; }
+/* Свободные дни врача (календарь «Новой записи», «Перенести», расписание одного врача): зелёная точка под числом —
+   есть время; серое число — окон нет; бледное — выходной или отпуск. Точка, а не заливка: месяц не рябит */
+.date-day[data-mark] { position: relative; }
+.date-day.mark-free::after, .date-mark-dot { content: ''; display: block; width: 5px; height: 5px; border-radius: 50%; background: var(--ok-ink); }
+.date-day.mark-free::after { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); }
+.date-day.mark-free.chosen::after { background: #fff; }
+.date-day.mark-full:not(.chosen) { color: var(--faint); }
+.date-day.mark-off:not(.chosen) { color: var(--faint); opacity: .5; }
+.date-marks-hint { display: flex; align-items: center; gap: 6px; margin: 6px 2px 0; }
+.date-mark-dot { display: inline-block; flex: none; }
 .date-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .date-month { min-height: 44px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--card); color: var(--text); font: inherit; text-transform: capitalize; cursor: pointer; }
 .date-month[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); color: var(--link); font-weight: 600; }
@@ -2019,6 +2032,9 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .appt-card .appt-status { justify-self: start; margin-top: -6px; }
 /* Долг пациента рядом со статусом (cash/DebtRemind): заметно, но одной меткой, без кнопок */
 .appt-card .appt-debt { justify-self: start; font-weight: 600; }
+/* Метки пациента (❗ 🧾 ⭐ 🆕) — одной строкой под статусом, спокойные чипы; цвет только у ❗ и долга */
+.appt-card .appt-marks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: -6px; }
+.appt-card .appt-mark { font-weight: 500; }
 .appt-card .appt-debt-hint { margin: 0; }
 .appt-card .appt-patient { gap: 4px; }
 .appt-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
@@ -2076,6 +2092,10 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .kid-info { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 4px 0 0; }
 .kid-badge { background: var(--sunken); color: var(--text); }
 .guardian-box h3 { margin-bottom: 4px; }
+/* ⭐ ВИП (V223): галочка в «Прочем» и звезда у имени в шапке карточки пациента */
+.vip-box { display: grid; gap: 4px; }
+.vip-box p { margin: 0; }
+.patient-vip { font-size: .85em; }
 .payment-unpaid .pay-form { flex-basis: 100%; }
 
 /* Карточка врача — разделы «Для пациентов», «Работа», «Вход и права» (кто что заполняет) */

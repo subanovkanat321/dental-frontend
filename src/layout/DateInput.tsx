@@ -7,6 +7,11 @@ import { useSwipeDown } from './useSwipeDown'
 
 /** Как у `<input type="date">`: старые обработчики `(e) => e.target.value` работают как были. */
 export type DateChange = { target: { value: string } }
+/**
+ * Отметка дня в календаре записи (lib/freeDays): free — у врача есть свободное время (зелёный), full — окон нет
+ * (серый), off — выходной или отпуск (бледно). hint — для читалки экрана и подсказки: «свободно 6 ч».
+ */
+export type DayMark = { kind: 'free' | 'full' | 'off'; hint?: string }
 type Locale = 'ru' | 'ky'
 
 const LOCALE: Record<Locale, string> = { ru: 'ru-RU', ky: 'ky-KG' }
@@ -55,7 +60,7 @@ const isPhone = () => typeof window.matchMedia === 'function' && window.matchMed
  * без сотни нажатий). Клавиатура: стрелки по дням, Enter — выбрать, Esc — закрыть.
  */
 export function DateInput({ value, onChange, min, max, required, name, disabled, id, className, weekday = false, iconOnly = false,
-  placeholder, locale = 'ru', birth = false, ...aria }: {
+  placeholder, locale = 'ru', birth = false, marks, onMonthView, ...aria }: {
   value: string
   onChange?: (e: DateChange) => void
   min?: string
@@ -76,6 +81,10 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
    * день — без листания десятилетий; «Сегодня» не нужна.
    */
   birth?: boolean
+  /** Отметки дней по дате ('2026-11-20'): где у врача есть свободное время (календарь «Новой записи») */
+  marks?: Record<string, DayMark>
+  /** Открытый месяц календаря ('2026-11') — чтобы загрузить его отметки; зовётся при открытии и листании */
+  onMonthView?: (month: string) => void
   'aria-label'?: string
 }) {
   const t = TEXT[locale]
@@ -153,6 +162,11 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
     else (pop.current?.querySelector<HTMLButtonElement>('.date-month[aria-pressed=true]') ?? pop.current?.querySelector<HTMLButtonElement>('.date-month'))?.focus()
   }, [open, mode, focus])
 
+  // Отметкам дней нужен открытый месяц: сообщить при открытии и листании
+  useEffect(() => {
+    if (open) onMonthView?.(`${view.y}-${pad(view.m + 1)}`)
+  }, [open, view.y, view.m, onMonthView])
+
   const shiftMonth = (by: number) => setView(({ y, m }) => {
     const d = new Date(Date.UTC(y, m + by, 1))
     return { y: d.getUTCFullYear(), m: d.getUTCMonth() }
@@ -203,14 +217,17 @@ export function DateInput({ value, onChange, min, max, required, name, disabled,
             {Array.from({ length: days }, (_, i) => {
               const d = iso(view.y, view.m, i + 1)
               const ok = allowed(d)
+              const mark = marks?.[d]
               return (
                 <button key={d} type="button" data-date={d} tabIndex={d === focus ? 0 : -1} disabled={!ok}
-                  aria-label={dateText(d, true, locale)} aria-pressed={d === value}
-                  className={['date-day', d === value ? 'chosen' : '', d === now ? 'today' : ''].filter(Boolean).join(' ')}
+                  aria-label={mark?.hint ? `${dateText(d, true, locale)}, ${mark.hint}` : dateText(d, true, locale)} aria-pressed={d === value}
+                  title={mark?.hint} data-mark={mark?.kind}
+                  className={['date-day', d === value ? 'chosen' : '', d === now ? 'today' : '', mark ? `mark-${mark.kind}` : ''].filter(Boolean).join(' ')}
                   onClick={() => pick(d)}>{i + 1}</button>
               )
             })}
           </div>
+          {marks && <p className="date-marks-hint hint small"><span className="date-mark-dot" aria-hidden="true" /> есть свободное время</p>}
           <div className="date-pop-foot">
             {allowed(now) && !birth && <button type="button" className="link" onClick={() => pick(now)}>{t.today}</button>}
             {!required && value && <button type="button" className="link" onClick={() => { onChange?.({ target: { value: '' } }); close() }}>{t.clear}</button>}

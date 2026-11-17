@@ -2083,6 +2083,43 @@
         }
       }
     },
+    "/api/patients/{id}/vip" : {
+      "put" : {
+        "tags" : [ "patient-vip-controller" ],
+        "operationId" : "vip",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PatientVipControllerVipRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PatientView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{id}/guardian" : {
       "put" : {
         "tags" : [ "patient-controller" ],
@@ -11776,6 +11813,37 @@
         }
       }
     },
+    "/api/anamnesis/alerts" : {
+      "post" : {
+        "tags" : [ "medical-record-controller" ],
+        "operationId" : "alerts",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MedicalRecordControllerAlertsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AnamnesisAlert"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/telegram-connect/status" : {
       "get" : {
         "tags" : [ "telegram-connect-controller" ],
@@ -12560,6 +12628,51 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/SlotsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/slots/month" : {
+      "get" : {
+        "tags" : [ "slot-controller" ],
+        "operationId" : "month",
+        "parameters" : [ {
+          "name" : "month",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "duration",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/SlotServiceFreeDay"
+                  }
                 }
               }
             }
@@ -18316,6 +18429,9 @@
           },
           "guardian" : {
             "$ref" : "#/components/schemas/Guardian"
+          },
+          "vip" : {
+            "type" : "boolean"
           }
         },
         "required" : [ "fullName", "id", "telegram" ]
@@ -18484,6 +18600,13 @@
           }
         },
         "required" : [ "allowDuplicate", "fullName", "phone" ]
+      },
+      "PatientVipControllerVipRequest" : {
+        "properties" : {
+          "vip" : {
+            "type" : "boolean"
+          }
+        }
       },
       "PatientControllerGuardianRequest" : {
         "properties" : {
@@ -23499,6 +23622,29 @@
           }
         }
       },
+      "MedicalRecordControllerAlertsRequest" : {
+        "properties" : {
+          "patientIds" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int64"
+            }
+          }
+        }
+      },
+      "AnamnesisAlert" : {
+        "properties" : {
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "patientId" ]
+      },
       "TelegramConnectControllerConnectStatus" : {
         "properties" : {
           "state" : {
@@ -24425,6 +24571,26 @@
           }
         },
         "required" : [ "end", "start" ]
+      },
+      "SlotServiceFreeDay" : {
+        "properties" : {
+          "date" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "FREE", "FULL", "OFF", "PAST" ]
+          },
+          "freeMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "date", "freeMinutes", "state" ]
       },
       "ShiftControllerSchedule" : {
         "properties" : {

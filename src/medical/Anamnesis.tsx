@@ -59,7 +59,11 @@ function AnamnesisForm({ patientId, an, readOnly }: { patientId: number; an: Ana
         }),
       },
     })),
-    onSuccess: (saved) => client.setQueryData(['anamnesis', patientId], saved),
+    onSuccess: (saved) => {
+      client.setQueryData(['anamnesis', patientId], saved)
+      // ❗ на записях в расписании — заново по свежей анкете
+      void client.invalidateQueries({ queryKey: ['med-alert', patientId] })
+    },
   })
   const set = (id: number, patch: Partial<Answer>) => {
     save.reset()

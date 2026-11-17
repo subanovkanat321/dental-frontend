@@ -24,6 +24,7 @@ import { TimePicker } from './TimePicker'
 import { refreshAppointmentData } from './useAppointmentAction'
 import { editableDoctors } from '../lib/roles'
 import { DateInput } from '../layout/DateInput'
+import { useFreeDays } from '../lib/freeDays'
 import { TimeInput } from '../layout/TimeInput'
 import { Select } from '../layout/Select'
 import { useDebounced } from '../lib/useDebounced'
@@ -95,6 +96,9 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   const sources = useSources()
   const [wantsEarlier, setWantsEarlier] = useState(false)
   const [duration, setDuration] = useState(slot.duration ?? 30)
+  // Месяц, открытый в календаре «День», — для зелёных дней врача (useFreeDays, кэш по месяцу)
+  const [calMonth, setCalMonth] = useState(slot.date.slice(0, 7))
+  const freeDays = useFreeDays(doctorId, calMonth, duration)
   const [serviceId, setServiceId] = useState<number | ''>(slot.serviceId ?? '')
   const timeRef = useRef<HTMLDivElement>(null)
   const submitRef = useRef<HTMLButtonElement>(null)
@@ -470,7 +474,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
         ) : (
           <div className="row">
             <label className="field"><span>День</span>
-              <DateInput weekday value={date} required onChange={(e) => { setDate(e.target.value); setTime('') }} /></label>
+              <DateInput weekday value={date} required marks={freeDays} onMonthView={setCalMonth}
+                onChange={(e) => { setDate(e.target.value); setTime('') }} /></label>
             {durationField}
           </div>
         )}

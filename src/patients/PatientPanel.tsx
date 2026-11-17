@@ -21,6 +21,7 @@ import { FamilyBox } from './FamilyBox'
 import { PatientTasks } from '../tasks/PatientTasks'
 import { PatientLab } from '../lab/PatientLab'
 import { GuardianBox } from './GuardianBox'
+import { VipBox } from './VipBox'
 import { KidInfo } from './KidInfo'
 import { contactPhone } from '../lib/guardian'
 import { PatientExpenses } from './PatientExpenses'
@@ -162,7 +163,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       {/* Шапка: имя, телефон, возраст и как ему пишем */}
       <header className="panel-head">
         <div>
-          <h2>{patient?.fullName}</h2>
+          <h2>{patient?.fullName}{patient?.vip && <span className="patient-vip" role="img" aria-label="ВИП — особое внимание" title="ВИП — особое внимание"> ⭐</span>}</h2>
           <span className="hint">
             {patient?.phone && <span className="num">{formatPhone(patient.phone)}</span>}
             {patient?.birthDate && ` · ${ageText(patient.birthDate)}`}
@@ -254,6 +255,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
               {mine && <button type="button" className="link" onClick={() => setEditing(true)}>Изменить данные пациента</button>}
             </>
           )}
+          {/* ⭐ ВИП — первым: отметку ставят при встрече пациента, искать её внизу неудобно */}
+          {patient && <VipBox patient={patient} canEdit={Boolean(me.admin || me.reception)} />}
           {/* «Откуда узнал» — всегда в «Прочем»: в шапке карточки занимал полэкрана */}
           {patient && <SourceLine patient={patient} canEdit={Boolean(mine)} admin={Boolean(mine && me.admin)} />}
           {patient && mine && <WaitlistBox patient={patient} me={me} />}

@@ -349,7 +349,8 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
         <button type="button" className="row-button" onClick={() => onOpen(a)}
           aria-label={`${timeOf(a.startAt)}–${timeOf(a.endAt)}, ${a.patient.fullName}: ${s.label}${chair ? `. ${colleagueMarkText(chair)}` : ''}`}>
           <span className="time num">{timeOf(a.startAt)}</span>
-          <span className="name">{a.patient.fullName} <ApptBadges appointment={a} money={money} /></span>
+          {/* Имя обрезается многоточием, значки — нет: ❗ у длинного имени не должен пропасть */}
+          <span className="name"><span className="name-text">{a.patient.fullName}</span> <ApptBadges appointment={a} money={money} /></span>
           <span className="end num hint">{timeOf(a.endAt)}</span>
           <span className={`state tone-${s.tone}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}{a.serviceName ? <span className="hint"> · {serviceEmoji(a.serviceName)} {a.serviceName}</span> : null}</span>
           {chair && (

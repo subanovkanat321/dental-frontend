@@ -81,7 +81,7 @@ test('компьютер: «×» в сводке скрывает её, «Сво
   localStorage.removeItem('crm.daySummary')
 })
 
-test('компьютер: часы врача в шапке колонки, значки ⭐ 💬 🧾 на карточке и легенда', async () => {
+test('компьютер: часы врача в шапке колонки, значки 🆕 💬 🧾 на карточке и легенда', async () => {
   const today = todayIn()
   // Пациенты вымышленные
   server.use(
@@ -98,17 +98,17 @@ test('компьютер: часы врача в шапке колонки, зн
   )
   renderApp()
   const first = await screen.findByRole('button', { name: /^10:00–11:00, Айбек Т\./ })
-  // Подписи чипов в широком блоке («⭐ Первый визит», в среднем — «⭐ Новый») рисует CSS из data-атрибутов
-  expect(within(first).getByRole('img', { name: 'Первый визит' })).toHaveAttribute('data-short', 'Новый')
-  expect(within(first).getByRole('img', { name: 'Первый визит' })).toHaveAttribute('data-long', 'Первый визит')
+  // Подписи чипов в широком блоке («🆕 Первый визит», в среднем — «🆕 Новый») рисует CSS из data-атрибутов
+  expect(within(first).getByRole('img', { name: 'Первый визит в клинике' })).toHaveAttribute('data-short', 'Новый')
+  expect(within(first).getByRole('img', { name: 'Первый визит в клинике' })).toHaveAttribute('data-long', 'Первый визит')
   expect(within(first).getByRole('img', { name: 'Комментарий: Болит справа' })).toHaveAttribute('data-long', 'Комментарий')
   // Часовой блок: комментарий в DOM есть, но показывается только в широком блоке (в одну строку с услугой)
   expect(within(first).getByText('Болит справа')).toHaveClass('wide-only')
   const debt = screen.getByRole('button', { name: /^12:00–13:00, Мээрим П\./ })
   expect(within(debt).getByRole('img', { name: /Долг 3\s000 сом/ })).toHaveAttribute('data-long', expect.stringMatching(/^Долг 3\s000 сом$/))
-  expect(within(debt).queryByRole('img', { name: 'Первый визит' })).not.toBeInTheDocument()
+  expect(within(debt).queryByRole('img', { name: 'Первый визит в клинике' })).not.toBeInTheDocument()
   expect(screen.getAllByText('09:00–18:00').length).toBeGreaterThan(0)
-  expect(screen.getByText(/⭐ первый визит · 💬 комментарий · 🧾 долг/)).toBeInTheDocument()
+  expect(screen.getByText(/❗ важно для врача · 🧾 долг · ⭐ ВИП · 🆕 первый визит · 💬 комментарий/)).toBeInTheDocument()
 })
 
 test('компьютер: дата в заголовке «Расписания» — кнопка, открывает календарь', async () => {

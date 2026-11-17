@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from
 import type { Schemas } from '../../api/client'
 import { canEditDoctor, seesMoneyOf } from '../../lib/roles'
 import { ApptBadges } from '../ApptBadges'
+import { MAX_BADGES, narrowAppt } from '../badges'
 import { useApptHover } from '../useApptHover'
 import { CancelledList } from '../CancelledList'
 import { ChairTimeBands } from '../ChairTimeBands'
@@ -260,7 +261,7 @@ function Block({ a, date, limit, me, y, selected, moving, drag, hover, onClick, 
         {continues ? <>{timeOf(a.startAt)} <span className="appt-cut">→ до {timeOf(a.endAt)}</span></> : short ? timeOf(a.startAt) : range}
       </span>
       <span className="appt-name">{a.patient.fullName}</span>
-      <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} chair={chair} />
+      <ApptBadges appointment={a} money={seesMoneyOf(me, a.doctorId)} chair={chair} max={narrowAppt(a) ? 1 : MAX_BADGES} />
       {short && <span className="ico" aria-hidden="true">{s.icon}</span>}
       {h > 56 && <span className="appt-state"><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>}
     </button>

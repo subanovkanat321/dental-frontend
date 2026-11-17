@@ -724,6 +724,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{id}/vip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["vip"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{id}/guardian": {
         parameters: {
             query?: never;
@@ -4740,6 +4756,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/anamnesis/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["alerts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/telegram-connect/status": {
         parameters: {
             query?: never;
@@ -5196,6 +5228,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["slots_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/slots/month": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["month"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8072,6 +8120,7 @@ export interface components {
             /** @enum {string} */
             dentition?: "PERMANENT" | "PRIMARY" | "MIXED";
             guardian?: components["schemas"]["Guardian"];
+            vip?: boolean;
         };
         DebtReminderControllerPromise: {
             /** Format: date */
@@ -8137,6 +8186,9 @@ export interface components {
             birthDate?: string;
             /** Format: int64 */
             sourceId?: number;
+        };
+        PatientVipControllerVipRequest: {
+            vip?: boolean;
         };
         PatientControllerGuardianRequest: {
             fullName?: string;
@@ -10165,6 +10217,14 @@ export interface components {
             /** Format: int32 */
             direction?: number;
         };
+        MedicalRecordControllerAlertsRequest: {
+            patientIds?: number[];
+        };
+        AnamnesisAlert: {
+            /** Format: int64 */
+            patientId: number;
+            text?: string;
+        };
         TelegramConnectControllerConnectStatus: {
             /** @enum {string} */
             state: "none" | "waiting" | "cancelled" | "linked" | "failed";
@@ -10506,6 +10566,15 @@ export interface components {
             start: string;
             /** Format: date-time */
             end: string;
+        };
+        SlotServiceFreeDay: {
+            /** Format: date */
+            date: string;
+            /** @enum {string} */
+            state: "FREE" | "FULL" | "OFF" | "PAST";
+            /** Format: int32 */
+            freeMinutes: number;
+            note?: string;
         };
         ShiftControllerSchedule: {
             people?: components["schemas"]["ShiftServicePerson"][];
@@ -13546,6 +13615,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PatientRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientView"];
+                };
+            };
+        };
+    };
+    vip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatientVipControllerVipRequest"];
             };
         };
         responses: {
@@ -21368,6 +21463,30 @@ export interface operations {
             };
         };
     };
+    alerts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MedicalRecordControllerAlertsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnamnesisAlert"][];
+                };
+            };
+        };
+    };
     status_1: {
         parameters: {
             query?: never;
@@ -22007,6 +22126,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SlotsView"];
+                };
+            };
+        };
+    };
+    month: {
+        parameters: {
+            query: {
+                month: string;
+                doctorId: number;
+                duration?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlotServiceFreeDay"][];
                 };
             };
         };

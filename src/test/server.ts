@@ -113,6 +113,10 @@ export const server = setupServer(
   http.get('*/api/members', () => HttpResponse.json([] satisfies Schemas['StaffMembersMemberView'][])),
   http.get('*/api/members/invites', () => HttpResponse.json([] satisfies Schemas['StaffMembersInviteView'][])),
   http.get('*/api/slots', () => HttpResponse.json({ workingDay: true, starts: [], free: [], breaks: [] })),
+  // Свободные дни врача за месяц: по умолчанию отметок нет — календарь как обычный
+  http.get('*/api/slots/month', () => HttpResponse.json([] satisfies Schemas['SlotServiceFreeDay'][])),
+  // ❗ «Важно для врача»: по умолчанию ни у кого нет отметок в анкете
+  http.post('*/api/anamnesis/alerts', () => HttpResponse.json([] satisfies Schemas['AnamnesisAlert'][])),
   http.get('*/api/appointments/:id/note', () => HttpResponse.json({ note: '' })),
   http.get('*/api/patients/:id/notes', () => HttpResponse.json([])),
   // «Зубы этого приёма» и история зубов по визитам (V155): по умолчанию ничего не отмечено

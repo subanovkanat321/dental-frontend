@@ -3,6 +3,7 @@ import { memo } from 'react'
 import type { Schemas } from '../api/client'
 import { timeOf } from '../lib/time'
 import { ApptBadges } from './ApptBadges'
+import { MAX_BADGES, narrowAppt } from './badges'
 import { colleagueTimeOf } from './chairTime'
 import { PAD, PX, SHORT } from './gridScale'
 import { statusOf } from './status'
@@ -57,7 +58,7 @@ export const DayAppt = memo(function DayAppt({ a, date, from, limit, active, mon
             : <span className={`appt-until${short ? ' wide-only' : ''}`}>–{timeOf(a.endAt)}</span>}
         </span>
         <span className="appt-name">{a.patient.fullName}</span>
-        <ApptBadges appointment={a} money={money} chair={colleagueTimeOf(a, chairTime)} />
+        <ApptBadges appointment={a} money={money} chair={colleagueTimeOf(a, chairTime)} max={narrowAppt(a) ? 1 : MAX_BADGES} />
         {/* Статус словом и у короткого приёма: цвет без слова не читается (FINDING-002) */}
         <span className={`appt-state${short || h > 56 ? '' : ' wide-only'}`}><span className="ico" aria-hidden="true">{s.icon}</span> {s.label}</span>
         <span className="appt-sub">
