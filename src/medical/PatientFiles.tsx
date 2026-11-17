@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ask } from '../lib/confirm'
-import { useRef, useState } from 'react'
+import { useState, type ChangeEvent, type DragEvent } from 'react'
 
 import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
 import { DateInput } from '../layout/DateInput'
 import { EmptyState } from '../layout/EmptyState'
 import { shortDate, todayIn } from '../lib/time'
+import { useMedia } from '../lib/useMedia'
 import { PublicationBlock } from './BeforeAfter'
 import { isComposite } from './composite'
 import { resizePhoto } from './thumb'
@@ -21,10 +22,21 @@ const KIND_HINT: Record<Kind, string> = {
   PHOTO: 'Фото зубов и улыбки во рту — для медкарты. Из них же собирается «до / после» для Instagram.',
   OTHER: 'Анализы, заключения, направления, согласия — фото или скан.',
 }
+/** Палец (телефон, планшет): три кнопки — камера, галерея, файл. Мышь — одна кнопка и перетаскивание. */
+const TOUCH = '(pointer: coarse)'
+/**
+ * «Файл» — то, что примет сервер: JPEG, PNG, WebP (PDF — нет). Без HEIC в списке iPhone сам отдаёт фото в JPEG.
+ * «Галерея» — `image/*`. Пропустить системное меню iOS («Медиатека / Снять фото / Выбрать файл») атрибутами
+ * нельзя: сразу без меню Safari открывает только камеру (`capture`).
+ */
+const FILE_ACCEPT = 'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp'
+const isImage = (f: File) => f.type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)
+
 const kindName = (k?: Kind) => KINDS.find(([x]) => x === k)?.[1].replace(/^\S+ /, '')
 
 /**
- * «Снимки и фото» пациента: список с миниатюрами, загрузка (сфотографировать или выбрать файлы) и
+ * «Снимки и фото» пациента: список с миниатюрами, загрузка (телефон — «Камера», «Галерея», «Файл»; компьютер —
+ * «Выбрать файлы» или перетащить на блок) и
  * «до / после» для Instagram. В медкарте — целиком; в карточке приёма — свёрнуто под одной кнопкой.
  */
 export function PatientFiles({ patientId, readOnly, compact = false, defaultKind = 'XRAY', takenOn: day }: {
@@ -46,7 +58,8 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
   const [caption, setCaption] = useState('')
   const [takenOn, setTakenOn] = useState(day && day <= todayIn() ? day : todayIn())
   const [status, setStatus] = useState('')
-  const input = useRef<HTMLInputElement>(null)
+  const touch = useMedia(TOUCH)
+  const [dragging, setDragging] = useState(false)
 
   const send = async (picked: File[]) => {
     let done = 0
@@ -71,8 +84,34 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
       setStatus(`Загружено: ${done}`)
       setCaption('')
     }
-    if (input.current) input.current.value = ''
     void client.invalidateQueries({ queryKey: ['files', patientId] })
+  }
+
+  // Тот же файл можно выбрать снова: значение input сбрасываем сразу, список файлов уже скопирован
+  const pick = (e: ChangeEvent<HTMLInputElement>) => {
+    const picked = [...(e.target.files ?? [])]
+    e.target.value = ''
+    if (picked.length) void send(picked)
+  }
+  // Перетаскивание на блок (компьютер): только картинки, PDF и прочее сервер не примет
+  const withFiles = (e: DragEvent) => e.dataTransfer.types.includes('Files')
+  const dragOver = (e: DragEvent) => {
+    if (!withFiles(e)) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+    setDragging(true)
+  }
+  const dragLeave = (e: DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false)
+  }
+  const drop = (e: DragEvent) => {
+    if (!withFiles(e)) return
+    e.preventDefault()
+    setDragging(false)
+    const dropped = [...e.dataTransfer.files]
+    const images = dropped.filter(isImage)
+    if (images.length) void send(images)
+    else if (dropped.length) setStatus('Нужна картинка: фото или снимок JPEG, PNG')
   }
 
   const remove = useMutation<unknown, ApiError, number>({
@@ -99,7 +138,8 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
   if (compact && !open) return <section className="fold" aria-label="Снимки и фото">{head}</section>
   const shown = compact ? medical.slice(0, 4) : medical
   return (
-    <section className={compact ? 'fold open files-compact' : 'card-block'} aria-label="Снимки и фото">
+    <section className={`${compact ? 'fold open files-compact' : 'card-block'}${dragging ? ' drop-over' : ''}`} aria-label="Снимки и фото"
+      onDragOver={dragOver} onDragLeave={dragLeave} onDrop={drop}>
       {compact ? head : <h2>Снимки и фото{count ? <span className="hint"> · {count}</span> : null}</h2>}
       {compact && count > 4 && <p className="hint small">Последние 4 — все в медкарте.</p>}
       {!compact && <p className="hint small">Для лечения — видит только клиника. В соцсети отсюда ничего не уходит.</p>}
@@ -127,16 +167,30 @@ export function PatientFiles({ patientId, readOnly, compact = false, defaultKind
         <p className="hint small kind-hint">{KIND_HINT[kind]}</p>
         <input aria-label="Что на снимке" placeholder="Что на снимке, например «36 до лечения» — необязательно" maxLength={200} value={caption} onChange={(e) => setCaption(e.target.value)} />
         <DateInput aria-label="Дата снимка" value={takenOn} max={todayIn()} onChange={(e) => setTakenOn(e.target.value)} />
-        <label className="btn primary">
-          📷 Сфотографировать
-          <input type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Сфотографировать снимок"
-            onChange={(e) => e.target.files?.length && void send([...e.target.files])} />
-        </label>
-        <label className="btn">
-          ＋ Выбрать файлы
-          <input ref={input} type="file" accept="image/*" multiple className="sr-only" aria-label="Файлы снимков"
-            onChange={(e) => e.target.files?.length && void send([...e.target.files])} />
-        </label>
+        {touch ? (
+          <div className="upload-pick touch">
+            <label className="btn primary">
+              📷 Камера
+              <input type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Сфотографировать снимок" onChange={pick} />
+            </label>
+            <label className="btn">
+              🖼 Галерея
+              <input type="file" accept="image/*" multiple className="sr-only" aria-label="Фото из галереи" onChange={pick} />
+            </label>
+            <label className="btn">
+              📎 Файл
+              <input type="file" accept={FILE_ACCEPT} multiple className="sr-only" aria-label="Файлы снимков" onChange={pick} />
+            </label>
+          </div>
+        ) : (
+          <div className="upload-pick">
+            <label className="btn primary">
+              📎 Выбрать файлы
+              <input type="file" accept={FILE_ACCEPT} multiple className="sr-only" aria-label="Файлы снимков" onChange={pick} />
+            </label>
+            <span className="hint small">или перетащите снимки сюда</span>
+          </div>
+        )}
       </div>
       {status && <p role="status" className={status.startsWith('Загружено') ? 'tone-ok' : 'hint'}>{status}</p>}
       {remove.error && <p className="error">{remove.error.message}</p>}
