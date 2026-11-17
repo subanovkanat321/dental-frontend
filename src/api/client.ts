@@ -190,17 +190,6 @@ export type SetupToken = Schemas['PhoneLoginControllerSetupToken']
 export type CodeChannel = 'auto' | 'sms' | 'mail'
 
 /**
- * Маска почты для кнопки «На почту a***@gmail.com» (почта настроена — config.mailCode). Маска есть у любого номера:
- * у номера без почты сервер отдаёт постоянную «приманку» — по ответу не узнать, есть ли номер и почта у него.
- * Без номера (страницу перезагрузили) — сервер берёт номер из своей cookie «ждём код».
- */
-export async function loginMailMask(phone: string): Promise<string> {
-  const r = await webPost<Schemas['PhoneLoginControllerChannels']>('/web/login/phone/channels', phone ? { phone } : {})
-  if (!r?.emailMasked) throw new ApiError(500, 'Не удалось узнать почту — попробуйте ещё раз')
-  return r.emailMasked
-}
-
-/**
  * «Забыли пароль? / Первый вход», шаг 1: прислать код. Сервер всегда отвечает «ок» — не говорит, есть
  * ли такой сотрудник, привязан ли номер к Telegram и куда ушёл код; 503 — явный SMS, а SMS не подключены;
  * 422 — номер не похож на номер. Номер — только в теле.

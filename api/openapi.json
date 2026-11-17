@@ -4341,34 +4341,6 @@
         }
       }
     },
-    "/web/login/phone/channels" : {
-      "post" : {
-        "tags" : [ "phone-login-controller" ],
-        "operationId" : "channels",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/PhoneLoginControllerChannelsRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PhoneLoginControllerChannels"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/web/invite" : {
       "post" : {
         "tags" : [ "invite-controller" ],
@@ -19134,21 +19106,6 @@
             "enum" : [ "auto", "sms", "mail" ]
           }
         }
-      },
-      "PhoneLoginControllerChannelsRequest" : {
-        "properties" : {
-          "phone" : {
-            "type" : "string"
-          }
-        }
-      },
-      "PhoneLoginControllerChannels" : {
-        "properties" : {
-          "emailMasked" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "emailMasked" ]
       },
       "InviteControllerTokenRequest" : {
         "properties" : {
