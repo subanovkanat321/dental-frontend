@@ -53,6 +53,7 @@ export function DebtRemindForm({ patientId, name, onDone }: { patientId: number;
     <form className="form debt-remind" aria-label={`Напоминание о долге${name ? `: ${name}` : ''}`} onSubmit={(e) => e.preventDefault()}>
       <p className="hint small">Так увидит пациент{d.lang === 'KY' ? ' (на кыргызском — выбрал в боте)' : ''}. Текст — в «Настройки → Напоминание о долге».</p>
       <p className="debt-bubble">{d.text}</p>
+      {d.qr && d.telegram && <p className="hint small">📎 В Telegram следом уйдёт картинка QR для оплаты; в WhatsApp — ссылка на неё.</p>}
       {early ? (
         <p className="tone-wait" role="status">Уже напоминали {dayMonth(d.remindedAt!)} — снова можно с {dayMonth(d.nextAt!)}.
           Часто о деньгах писать неловко 🙏</p>

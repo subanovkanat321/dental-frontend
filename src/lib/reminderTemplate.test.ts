@@ -1,4 +1,5 @@
-import { applyTemplate, unknownVariables, usesVariable } from './reminderTemplate'
+import { howToPay, STANDARD_DEBT } from './debt'
+import { applyTemplate, DEBT_VARIABLES, unknownVariables, usesVariable } from './reminderTemplate'
 import { reminderText, whenAt } from './texts'
 
 /**
@@ -26,6 +27,9 @@ test('пустое значение убирается аккуратно', () =
   expect(applyTemplate('Врач {врач}, {услуга}, {когда}.', values)).toBe('Врач Асель Маратовна, завтра в 10:00.')
   expect(applyTemplate('Здравствуйте, {имя}!\n{бот}\nДо встречи', values)).toBe('Здравствуйте, Айгуль!\nДо встречи')
   expect(applyTemplate('Ждём вас {услуга} {когда} .', values)).toBe('Ждём вас завтра в 10:00.')
+  // Строка-подпись с пустой переменной пропадает целиком; с непустой — остаётся (как ReminderTemplateTests бэкенда)
+  expect(applyTemplate('Здравствуйте, {имя}!\nУслуга: {услуга}\nДо встречи', values)).toBe('Здравствуйте, Айгуль!\nДо встречи')
+  expect(applyTemplate('Врач: {врач}\nКогда: {когда} {услуга}', values)).toBe('Врач: Асель Маратовна\nКогда: завтра в 10:00')
 })
 
 test('неизвестная переменная остаётся как есть', () => {
@@ -76,4 +80,17 @@ describe('напоминание в WhatsApp/SMS', () => {
     expect(reminderText({ ...a, patient: { fullName: 'Айгуль', telegram: true } }, { ...settings, reminderTemplate: 'Ждём {когда}' }, null, now))
       .toBe('Ждём завтра в 10:00\nОтветьте 1 — приду, 2 — перенести.\n📍 Адрес: Бишкек, ул. Тестовая 1\nСтоматология «Тест»')
   })
+})
+
+test('напоминание о долге: стандартный текст, без врача строка «Врач:» пропадает, реквизиты без двойной точки', () => {
+  const names = DEBT_VARIABLES.map(([name]) => name)
+  const values = { имя: 'Асель Тестова', клиника: 'Тест', сумма: '500 сом', оплата: howToPay(null) }
+  expect(applyTemplate(STANDARD_DEBT, values, names)).toBe([
+    'Здравствуйте, Асель Тестова!', 'Напоминаем об оплате за лечение в стоматологии «Тест».', 'К оплате: 500 сом.',
+    'Оплатить можно в клинике.', 'Если вы уже оплатили — спасибо, просто не обращайте внимания 🙏',
+  ].join('\n'))
+  expect(applyTemplate(STANDARD_DEBT, { ...values, врач: 'Айгерим Садыкова, Дастан Т.' }, names)).toContain('\nВрач: Айгерим Садыкова, Дастан Т.\n')
+  expect(howToPay('MBANK 0555 123 456')).toBe('Оплатить можно в клинике или переводом: MBANK 0555 123 456.')
+  expect(howToPay('MBANK 0555 123 456.')).toBe('Оплатить можно в клинике или переводом: MBANK 0555 123 456.')
+  expect(howToPay('MBANK 0555 123 456\nО!Деньги 0700 000 111,')).toBe('Оплатить можно в клинике или переводом: MBANK 0555 123 456, О!Деньги 0700 000 111.')
 })

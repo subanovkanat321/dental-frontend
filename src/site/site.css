@@ -144,3 +144,8 @@ body.site {
 .review-comment-form { display: grid; gap: 8px; }
 .review-comment-form .field { display: grid; gap: 6px; }
 .review-comment-form textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border-radius: 10px; border: 1px solid var(--line-strong); resize: vertical; }
+
+/* QR для оплаты (/pay/<токен>): картинка крупно — её сканируют с экрана другого телефона или сохраняют */
+.pay-page-qr { width: min(100%, 320px); aspect-ratio: 1; object-fit: contain; justify-self: center; background: #fff; border-radius: 12px; }
+.pay-details h2 { margin: 0 0 4px; font-size: 1rem; }
+.pay-details p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }

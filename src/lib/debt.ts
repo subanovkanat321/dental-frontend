@@ -67,11 +67,21 @@ export function usePatientDebts(patientId: number | undefined, enabled = true) {
 }
 
 /** Стандартный текст — DebtReminders.STANDARD_RU бэкенда. Совпадает с ним — сохраняем пусто (стандартный). */
-export const STANDARD_DEBT = 'Здравствуйте! Напоминаем об оплате за лечение в «{клиника}»: {сумма}.\n{оплата}\nЕсли уже оплатили — не обращайте внимания 🙏'
+export const STANDARD_DEBT = [
+  'Здравствуйте, {имя}!',
+  'Напоминаем об оплате за лечение в стоматологии «{клиника}».',
+  'Врач: {врач}',
+  'К оплате: {сумма}.',
+  '{оплата}',
+  'Если вы уже оплатили — спасибо, просто не обращайте внимания 🙏',
+].join('\n')
 
-/** «Оплатить можно в клинике.» и реквизиты — как DebtReminders.howToPay бэкенда. */
+/**
+ * «Оплатить можно в клинике.» и реквизиты — как DebtReminders.howToPay бэкенда: строки — через запятую, запятая или
+ * двоеточие в конце убираются, точка не удваивается.
+ */
 export function howToPay(details: string | null | undefined): string {
-  const clean = details?.trim().replace(/\s*\n\s*/g, ', ')
+  const clean = details?.trim().replace(/\s*\n\s*/g, ', ').replace(/[\s,;:]+$/, '')
   if (!clean) return 'Оплатить можно в клинике.'
-  return `Оплатить можно в клинике или переводом: ${clean}${/[.!?)]$/.test(clean) ? '' : '.'}`
+  return `Оплатить можно в клинике или переводом: ${clean}${/[.!?)…]$/.test(clean) ? '' : '.'}`
 }
