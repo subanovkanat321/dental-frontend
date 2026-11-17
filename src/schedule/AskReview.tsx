@@ -40,13 +40,17 @@ export function AskReview({ appointment: a }: { appointment: Appointment }) {
   )
 }
 
-/** «⭐ N попросить оценку» — плашка в «Требует внимания». */
-export function ReviewAsksChip({ count, compact, onOpen }: { count: number; compact?: boolean; onOpen: () => void }) {
+/**
+ * «💬 Попросить отзыв у N пациентов без Telegram ›» — тихая строка под расписанием сегодняшнего дня: дело не
+ * срочное, в полосе «Требует внимания» «⭐ 4» читалось как оценка 4.
+ */
+export function ReviewAsksChip({ count, onOpen }: { count: number; onOpen: () => void }) {
   if (!count) return null
-  const label = `Попросите оценку у ${count} ${count === 1 ? 'пациента' : 'пациентов'} без Telegram`
+  const who = count === 1 ? 'пациента' : 'пациентов'
   return (
-    <button type="button" className="stat s-quiet ask-review-chip" onClick={onOpen} aria-label={label} title={label}>
-      ⭐ <b>{count}</b> {compact ? 'оценка' : 'попросить оценку'}
+    <button type="button" className="link ask-review-line" onClick={onOpen}
+      aria-label={`Попросить отзыв у ${count} ${who} без Telegram`}>
+      💬 Попросить отзыв у {count} {who} без Telegram ›
     </button>
   )
 }
