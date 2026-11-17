@@ -105,6 +105,10 @@ self.addEventListener('push', (event) => {
     badge: '/icon-192.png',
     tag: data.tag || undefined,
     renotify: Boolean(data.tag),
+    // Звук задаёт Android (канал уведомлений сайта/приложения); сами просим не «тихо» и вибрацию —
+    // так уведомление заметно, даже если в канале звук выключен
+    silent: false,
+    vibrate: [200, 100, 200],
     data: { url: safeUrl(data.url) },
   }))
 })
