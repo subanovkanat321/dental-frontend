@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { api, unwrap } from '../api/client'
+import { api, unwrap, type Schemas } from '../api/client'
 
 import { ask } from '../lib/confirm'
 import { EmptyState } from '../layout/EmptyState'
@@ -22,10 +22,12 @@ export const UNDO_MS = 6000
  * внизу свёрнуто «Выполненные» (последние 100). Галочка слева — выполнить, «Вернуть» — несколько секунд после неё
  * и в «Выполненных». «Мои / Все» — чьи задачи; «＋ Задача» — справа в шапке.
  */
-export function TasksTab({ onOpenPatient, initialTask }: {
+export function TasksTab({ onOpenPatient, initialTask, initialDraft }: {
   onOpenPatient?: (patientId: number) => void
   /** Кнопка «Открыть» под напоминанием в боте — эта задача */
   initialTask?: number
+  /** «✏️ Изменить» под карточкой помощника в боте — новая задача с этими полями */
+  initialDraft?: Schemas['AssistDraft']
 }) {
   const [mine, setMine] = useState(true)
   const open = useTasks({ status: 'OPEN', mine })
@@ -45,7 +47,9 @@ export function TasksTab({ onOpenPatient, initialTask }: {
     enabled: initialTask != null,
   })
   const linkedTask = !linkClosed && linked.data?.status === 'OPEN' && linked.data.canEdit ? linked.data : null
-  const dialog = editing ?? linkedTask
+  const [draftClosed, setDraftClosed] = useState(false)
+  const draft = !draftClosed && initialDraft?.kind === 'TASK' ? initialDraft : null
+  const dialog = editing ?? linkedTask ?? (draft ? 'draft' : null)
 
   useEffect(() => {
     if (!undo) return
@@ -100,8 +104,9 @@ export function TasksTab({ onOpenPatient, initialTask }: {
           : <p className="hint">Пока ничего не выполнено.</p>}
       </Fold>
       {dialog && (
-        <TaskDialog key={dialog === 'new' ? 'new' : dialog.id} task={dialog === 'new' ? undefined : dialog}
-          onClose={() => { setEditing(null); setLinkClosed(true) }} />
+        <TaskDialog key={typeof dialog === 'string' ? dialog : dialog.id} task={typeof dialog === 'string' ? undefined : dialog}
+          draft={dialog === 'draft' && draft ? draft : undefined}
+          onClose={() => { setEditing(null); setLinkClosed(true); setDraftClosed(true) }} />
       )}
     </div>
   )

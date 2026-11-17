@@ -9979,6 +9979,34 @@
         }
       }
     },
+    "/api/assist/draft" : {
+      "post" : {
+        "tags" : [ "assist-controller" ],
+        "operationId" : "draft_2",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AssistDraftRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssistDraft"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -10128,7 +10156,7 @@
     "/api/appointments/{id}/visit-report/draft" : {
       "post" : {
         "tags" : [ "visit-report-controller" ],
-        "operationId" : "draft_2",
+        "operationId" : "draft_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -21755,6 +21783,57 @@
         },
         "required" : [ "services" ]
       },
+      "AssistDraftRequest" : {
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "maxLength" : 64,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "token" ]
+      },
+      "AssistDraft" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "dueAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "assigneeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "$ref" : "#/components/schemas/PatientView"
+          },
+          "newPatientName" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "serviceId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "durationMinutes" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "kind" ]
+      },
       "AppointmentRequestsCreate" : {
         "properties" : {
           "doctorId" : {
@@ -24894,7 +24973,7 @@
         "properties" : {
           "kind" : {
             "type" : "string",
-            "enum" : [ "VISIT_REPORT", "DICTATION", "QUESTION_DRAFT", "POST_TEXT", "PHOTO_FRAME", "COMEBACK", "BOT_ANSWER", "MEMO_TRANSLATION", "SUPPORT", "OTHER" ]
+            "enum" : [ "VISIT_REPORT", "DICTATION", "QUESTION_DRAFT", "POST_TEXT", "PHOTO_FRAME", "COMEBACK", "BOT_ANSWER", "MEMO_TRANSLATION", "STAFF_ASSIST", "SUPPORT", "OTHER" ]
           },
           "label" : {
             "type" : "string"

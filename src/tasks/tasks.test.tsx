@@ -135,3 +135,23 @@ test('карточка пациента: «＋ Задача» с этим пац
   expect(await within(block).findByText('Перезвонить после удаления')).toBeInTheDocument()
   expect(block).toHaveTextContent('Задачи 1')
 })
+
+test('«✏️ Изменить» под карточкой задачи помощника в боте (?assist=токен): окно задачи с полями из черновика', async () => {
+  backend([])
+  const tokens: string[] = []
+  server.use(http.post('*/api/assist/draft', async ({ request }) => {
+    tokens.push(((await request.json()) as { token: string }).token)
+    return HttpResponse.json({ kind: 'TASK', title: 'Перезвонить Асель', dueAt: '2026-11-12T04:00:00Z', assigneeId: 9,
+      patient: { id: 2, fullName: 'Айгуль Т.', phone: '996700333444', telegram: false } } satisfies Schemas['AssistDraft'])
+  }))
+  window.history.replaceState(null, '', '/?assist=AbCdEfGhIjKlMnOpQrStUv')
+  renderApp()
+
+  const dialog = await screen.findByRole('dialog', {}, { timeout: 5000 })
+  expect(within(dialog).getByRole('textbox', { name: 'Что сделать' })).toHaveValue('Перезвонить Асель')
+  expect(within(dialog).getByText('Айгуль Т.')).toBeInTheDocument()
+  expect(tokens).toEqual(['AbCdEfGhIjKlMnOpQrStUv'])
+  // В адресе токена больше нет: одноразовый
+  expect(window.location.search).toBe('')
+  expect(readDeepLink('?assist=AbCdEfGhIjKlMnOpQrStUv')).toEqual({ page: 'schedule', assistToken: 'AbCdEfGhIjKlMnOpQrStUv' })
+})

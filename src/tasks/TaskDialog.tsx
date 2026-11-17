@@ -24,22 +24,26 @@ export type TaskPatient = { id: number; fullName: string }
  * или дата и время), исполнитель (по умолчанию я) и пациент (поиск; из карточки пациента и приёма — уже выбран).
  * Компьютер — окно по центру, телефон — лист снизу (как layout/Confirm.tsx). Время — по Бишкеку, в API — UTC.
  */
-export function TaskDialog({ task, patient: fixedPatient, appointmentId, onClose, onSaved }: {
+export function TaskDialog({ task, draft, patient: fixedPatient, appointmentId, onClose, onSaved }: {
   /** Изменить эту задачу; нет — новая */
   task?: Task
+  /** Новая задача с полями из черновика помощника в боте («✏️ Изменить») */
+  draft?: Schemas['AssistDraft']
   /** Пациент из карточки пациента или приёма — сменить нельзя */
   patient?: TaskPatient
   appointmentId?: number
   onClose: () => void
   onSaved?: (task: Task) => void
 }) {
-  const [title, setTitle] = useState(task?.title ?? '')
+  const dueAtStart = task?.dueAt ?? draft?.dueAt
+  const [title, setTitle] = useState(task?.title ?? draft?.title ?? '')
   const [note, setNote] = useState(task?.note ?? '')
-  const [date, setDate] = useState(task?.dueAt ? dateOf(task.dueAt) : '')
-  const [time, setTime] = useState(task?.dueAt ? timeOf(task.dueAt) : '')
-  const [assignee, setAssignee] = useState<number | null>(task?.assigneeId ?? null)
+  const [date, setDate] = useState(dueAtStart ? dateOf(dueAtStart) : '')
+  const [time, setTime] = useState(dueAtStart ? timeOf(dueAtStart) : '')
+  const [assignee, setAssignee] = useState<number | null>(task?.assigneeId ?? draft?.assigneeId ?? null)
   const [patient, setPatient] = useState<TaskPatient | null>(fixedPatient
-    ?? (task?.patientId != null ? { id: task.patientId, fullName: task.patientName ?? 'Пациент' } : null))
+    ?? (task?.patientId != null ? { id: task.patientId, fullName: task.patientName ?? 'Пациент' }
+      : draft?.patient ? { id: draft.patient.id, fullName: draft.patient.fullName } : null))
   const assignees = useAssignees()
   const save = useSaveTask()
   const err = (k: string) => save.error?.fieldErrors[k]

@@ -139,3 +139,28 @@ test('имя из скопированного текста: без номера
   expect(nameFromText('тел.: 0555 123 456')).toBe('')
   expect(nameFromText('0555123456')).toBe('')
 })
+
+test('помощник в боте, «👤 Новый пациент» (?assist=токен): «Новая запись» с именем, без номера', async () => {
+  backend([])
+  server.use(http.post('*/api/assist/draft', () => HttpResponse.json(
+    { kind: 'BOOK', newPatientName: 'Айбек Осмонов', doctorId: 1, durationMinutes: 30, startAt: '2026-11-13T05:00:00Z' } satisfies Schemas['AssistDraft'])))
+  window.history.replaceState(null, '', '/?assist=AbCdEfGhIjKlMnOpQrStUv')
+  renderApp()
+
+  const panel = await screen.findByRole('complementary', { name: 'Новая запись' })
+  expect(await within(panel).findByLabelText('Имя и фамилия')).toHaveValue('Айбек Осмонов')
+  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('')
+})
+
+test('помощник в боте, «✏️ Изменить» записи: пациент выбран, время из черновика', async () => {
+  backend([])
+  server.use(http.post('*/api/assist/draft', () => HttpResponse.json(
+    { kind: 'BOOK', patient: { id: 7, fullName: 'Нурлан К.', phone: '996773123456', telegram: false }, doctorId: 1, durationMinutes: 45,
+      startAt: '2026-11-13T09:00:00Z' } satisfies Schemas['AssistDraft'])))
+  window.history.replaceState(null, '', '/?assist=AbCdEfGhIjKlMnOpQrStUv')
+  renderApp()
+
+  const panel = await screen.findByRole('complementary', { name: 'Новая запись' })
+  expect(await within(panel).findByText('Нурлан К.')).toBeInTheDocument()
+  expect(within(panel).getByText(/15:00/)).toBeInTheDocument()
+})

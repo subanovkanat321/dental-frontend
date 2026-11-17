@@ -38,7 +38,7 @@ const SORTS: [SortKey, string][] = [['last', 'Сначала недавние'],
  * дате визита (/api/patients/recent, как в приложении); не нашли среди них — ищем на сервере
  * по всей клинике (/api/patients/search).
  */
-export function PatientsPage({ me, onBook, initialPatient, initialQuestion, initialTask, initialBooked, onOpenAppointment }: {
+export function PatientsPage({ me, onBook, initialPatient, initialQuestion, initialTask, initialTaskDraft, initialBooked, onOpenAppointment }: {
   me: Me
   /** «Записать»: preset — врач и услуга из «Позвать снова → Отменили» */
   onBook: (p: Patient, preset?: BookPreset) => void
@@ -47,6 +47,8 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   initialQuestion?: number
   /** «Открыть» под напоминанием о задаче — «Задачи» с этой задачей */
   initialTask?: number
+  /** «✏️ Изменить» под карточкой задачи помощника в боте — окно задачи с этими полями */
+  initialTaskDraft?: Schemas['AssistDraft']
   /** Кнопка сводки «📲 Напомнить (N)» — вкладка «Записаны» на этот день, только кто не подтвердил */
   initialBooked?: BookedFilter
   onOpenAppointment?: (appointmentId: number) => void
@@ -155,7 +157,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
         {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} />}
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
         {tab === 'questions' && <QuestionsTab selected={question} onOpen={(id) => { setSelected(null); setQuestion(id) }} />}
-        {tab === 'tasks' && <TasksTab onOpenPatient={setSelected} initialTask={initialTask} />}
+        {tab === 'tasks' && <TasksTab onOpenPatient={setSelected} initialTask={initialTask} initialDraft={initialTaskDraft} />}
         {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (
