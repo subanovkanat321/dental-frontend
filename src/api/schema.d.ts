@@ -4132,6 +4132,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/assist/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["draft_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments": {
         parameters: {
             query?: never;
@@ -9589,6 +9605,27 @@ export interface components {
             /** Format: int32 */
             services: number;
         };
+        AssistDraftRequest: {
+            token: string;
+        };
+        AssistDraft: {
+            kind: string;
+            title?: string;
+            /** Format: date-time */
+            dueAt?: string;
+            /** Format: int64 */
+            assigneeId?: number;
+            patient?: components["schemas"]["PatientView"];
+            newPatientName?: string;
+            /** Format: int64 */
+            doctorId?: number;
+            /** Format: int64 */
+            serviceId?: number;
+            /** Format: int32 */
+            durationMinutes?: number;
+            /** Format: date-time */
+            startAt?: string;
+        };
         AppointmentRequestsCreate: {
             /** Format: int64 */
             doctorId: number;
@@ -10802,7 +10839,7 @@ export interface components {
         };
         AiUsageStoreKindRow: {
             /** @enum {string} */
-            kind?: "VISIT_REPORT" | "DICTATION" | "QUESTION_DRAFT" | "POST_TEXT" | "PHOTO_FRAME" | "COMEBACK" | "BOT_ANSWER" | "MEMO_TRANSLATION" | "SUPPORT" | "OTHER";
+            kind?: "VISIT_REPORT" | "DICTATION" | "QUESTION_DRAFT" | "POST_TEXT" | "PHOTO_FRAME" | "COMEBACK" | "BOT_ANSWER" | "MEMO_TRANSLATION" | "STAFF_ASSIST" | "SUPPORT" | "OTHER";
             label?: string;
             /** Format: int64 */
             actions: number;
@@ -19734,6 +19771,30 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    draft_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssistDraftRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistDraft"];
+                };
             };
         };
     };

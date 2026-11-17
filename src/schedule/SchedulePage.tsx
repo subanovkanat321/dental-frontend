@@ -125,8 +125,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   bookPatient?: Schemas['PatientView'] | null
   /** Кнопка бота «📅 Записать» под присланным контактом: «Новая запись» с его именем и номером. */
   bookContact?: SharedContact | null
-  /** Вместе с bookPatient: врач, услуга и длительность (из «Позвать снова → Отменили») */
-  bookPreset?: { doctorId?: number; serviceId?: number; duration?: number }
+  /** Вместе с bookPatient: врач, услуга и длительность (из «Позвать снова → Отменили»); день и время — из
+   * черновика помощника в боте (?assist=…; open — открыть «Новую запись» и без пациента) */
+  bookPreset?: { doctorId?: number; serviceId?: number; duration?: number; date?: string; minutes?: number; open?: boolean }
   onBookingShown?: () => void
 }) {
   const today = todayIn()
@@ -140,10 +141,11 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
     const doctor = (me.doctors ?? []).find((d) => d.id === bookPreset?.doctorId && d.active !== false && canEditDoctor(me, d.id))
       ?? (me.doctors ?? []).find((d) => d.id === me.doctorId && d.active !== false)
       ?? (me.doctors ?? []).find((d) => d.active !== false && canEditDoctor(me, d.id))
-    if (!doctor || (!bookPatient && !bookContact)) return null
-    // Время не подставляем: открытие клиники могло пройти или быть занято — сетка свободного покажет, что есть
-    const slot = { doctorId: doctor.id, date: today, minutes: null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId }
-    return bookPatient ? { kind: 'new', patient: bookPatient, slot } : { kind: 'new', contact: bookContact!, slot }
+    if (!doctor || (!bookPatient && !bookContact && !bookPreset?.open)) return null
+    // Время — только из черновика помощника (его выбрали в боте); иначе сетка свободного покажет, что есть
+    const slot = { doctorId: doctor.id, date: bookPreset?.date ?? today, minutes: bookPreset?.minutes ?? null, duration: bookPreset?.duration, serviceId: bookPreset?.serviceId }
+    if (bookPatient) return { kind: 'new', patient: bookPatient, slot }
+    return bookContact ? { kind: 'new', contact: bookContact, slot } : { kind: 'new', slot }
   })
   // Пациента для записи взяли — забыть, чтобы при следующем заходе «Расписание» открылось как обычно
   useEffect(() => {

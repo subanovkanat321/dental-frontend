@@ -74,7 +74,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   nowDoctorId?: number
   /** Пациент уже выбран — «Записать» из его карточки в «Пациентах». */
   initialPatient?: Patient | null
-  /** Контакт, присланный боту (кнопка «📅 Записать»): найти пациента по номеру, нет — «Новый пациент» с именем и номером. */
+  /** Контакт, присланный боту (кнопка «📅 Записать»): найти пациента по номеру, нет — «Новый пациент» с именем и номером.
+   * Без номера (помощник в боте: «Пациента … нет в базе») — сразу «Новый пациент» с этим именем. */
   initialContact?: { fullName: string; phone: string } | null
   onClose: () => void
   onCreated: (a: Appointment) => void
@@ -102,8 +103,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   const promoCodes = usePromoCodes()
   const [patient, setPatient] = useState<Patient | null>(initialPatient)
   const [query, setQuery] = useState('')
-  const [adding, setAdding] = useState(false)
-  const [name, setName] = useState('')
+  // Помощник в боте: пациента нет в базе — сразу «Новый пациент» с именем (номер введут здесь)
+  const nameOnly = initialContact != null && !initialContact.phone
+  const [adding, setAdding] = useState(nameOnly)
+  const [name, setName] = useState(nameOnly ? initialContact.fullName.trim() : '')
   const [phone, setPhone] = useState('')
   const [duplicate, setDuplicate] = useState<Patient | null>(null)
   const [problem, setProblem] = useState('')
@@ -282,7 +285,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
   // Контакт из бота — один раз при открытии формы
   const contactApplied = useRef(false)
   useEffect(() => {
-    if (!initialContact || contactApplied.current) return
+    if (!initialContact || !initialContact.phone || contactApplied.current) return
     contactApplied.current = true
     void applyContact(initialContact.fullName, initialContact.phone.startsWith('+') ? initialContact.phone : `+${initialContact.phone}`)
     // Только при открытии: дальше форма — в руках сотрудника
