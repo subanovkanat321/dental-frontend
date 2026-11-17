@@ -417,6 +417,25 @@ export async function signupEmailConfirm(token: string, password: string): Promi
   return await webPost<SignupDone>('/web/signup/email/confirm', { token, password }) ?? { clinicName: '', fullName: '' }
 }
 
+export type SignupEmailWaiting = Schemas['SignupControllerEmailWaiting']
+
+/**
+ * «Уже есть код из письма?» — продолжить регистрацию по почте и коду, когда cookie шага пропала (встроенный браузер
+ * Instagram закрылся). Ответ — что создадим, сервер заново ставит cookie шага; дальше пароль — {@link signupRegister}
+ * с method EMAIL. 422 code — «Код не подошёл или устарел» (и для неизвестной почты), 410 — верный код истёк
+ * (code «code-expired») или клинику уже создали («already-registered»), 429 — много попыток. Почта и код — только в теле.
+ */
+export async function signupEmailResume(email: string, code: string): Promise<SignupEmailWaiting> {
+  const waiting = await webPost<SignupEmailWaiting>('/web/signup/email/resume', { email, code })
+  if (!waiting) throw new ApiError(500, 'Сервер не ответил — попробуйте ещё раз')
+  return waiting
+}
+
+/** Страницу перезагрузили: ждёт ли форма кода из письма (по HttpOnly-cookie шага). */
+export async function signupEmailStatus(): Promise<SignupEmailWaiting> {
+  return await webRequest<SignupEmailWaiting>('GET', '/web/signup/email/status') ?? { state: 'none', secondsLeft: 0 }
+}
+
 export type TelegramConnectStatus = Schemas['TelegramConnectControllerConnectStatus']
 
 /**

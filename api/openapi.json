@@ -3982,6 +3982,34 @@
         }
       }
     },
+    "/web/signup/email/resume" : {
+      "post" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "emailResume",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignupControllerResumeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerEmailWaiting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/signup/email/link" : {
       "post" : {
         "tags" : [ "signup-controller" ],
@@ -10918,6 +10946,24 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/SignupControllerTelegramStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/signup/email/status" : {
+      "get" : {
+        "tags" : [ "signup-controller" ],
+        "operationId" : "emailStatus",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SignupControllerEmailWaiting"
                 }
               }
             }
@@ -18814,6 +18860,38 @@
           }
         },
         "required" : [ "link", "secondsLeft" ]
+      },
+      "SignupControllerResumeRequest" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          }
+        }
+      },
+      "SignupControllerEmailWaiting" : {
+        "properties" : {
+          "state" : {
+            "type" : "string",
+            "enum" : [ "none", "waiting" ]
+          },
+          "clinicName" : {
+            "type" : "string"
+          },
+          "phoneMasked" : {
+            "type" : "string"
+          },
+          "emailMasked" : {
+            "type" : "string"
+          },
+          "secondsLeft" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "secondsLeft", "state" ]
       },
       "SignupControllerLinkRequest" : {
         "properties" : {

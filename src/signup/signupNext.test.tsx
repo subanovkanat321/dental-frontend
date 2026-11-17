@@ -97,6 +97,9 @@ test('по почте: поле «Почта» → письмо → код и п
   expect(await screen.findByRole('heading', { name: 'Код из письма' })).toBeInTheDocument()
   expect(screen.getByText(/Письмо отправлено на/)).toHaveTextContent('a***@gmail.com')
   expect(screen.getByText(/Tish откроется в браузере/)).toBeInTheDocument()
+  // Gmail выключает ссылки в «Спаме» — подсказка «Не спам» или код; метка «код отправляли» — только время
+  expect(screen.getByText(/Письмо в «Спаме»\? Нажмите «Не спам»/)).toBeInTheDocument()
+  expect(localStorage.getItem('tish.signup.emailCodeAt')).toMatch(/^\d+$/)
   expect(sent[0]).toEqual({ path: 'email-code', body: {
     clinicName: 'Стоматолог Айгерим', city: 'Ош', fullName: 'Айгерим Тестова', phone: '+996 555 123 456', consent: true,
     email: 'aigerim.test@gmail.com',
@@ -109,6 +112,7 @@ test('по почте: поле «Почта» → письмо → код и п
   expect(await screen.findByRole('heading', { name: '✅ Клиника создана' })).toBeInTheDocument()
   expect(sent.at(-1)).toMatchObject({ path: 'register', body: { method: 'EMAIL', code: '123456', password: 'Улыбка2026' } })
   expect(onDone).not.toHaveBeenCalled()
+  expect(localStorage.getItem('tish.signup.emailCodeAt')).toBeNull()
 })
 
 test('«Что дальше» в Instagram на iPhone: предупреждение, ссылка и копирование, «Подключить Telegram», «Перейти в Tish»', async () => {

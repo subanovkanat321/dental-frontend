@@ -1492,6 +1492,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/signup/email/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["emailResume"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/signup/email/link": {
         parameters: {
             query?: never;
@@ -4508,6 +4524,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["telegramStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/signup/email/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["emailStatus"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8291,6 +8323,19 @@ export interface components {
         };
         SignupControllerTelegramStarted: {
             link: string;
+            /** Format: int64 */
+            secondsLeft: number;
+        };
+        SignupControllerResumeRequest: {
+            email?: string;
+            code?: string;
+        };
+        SignupControllerEmailWaiting: {
+            /** @enum {string} */
+            state: "none" | "waiting";
+            clinicName?: string;
+            phoneMasked?: string;
+            emailMasked?: string;
             /** Format: int64 */
             secondsLeft: number;
         };
@@ -14510,6 +14555,30 @@ export interface operations {
             };
         };
     };
+    emailResume: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupControllerResumeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerEmailWaiting"];
+                };
+            };
+        };
+    };
     emailLink: {
         parameters: {
             query?: never;
@@ -20075,6 +20144,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SignupControllerTelegramStatus"];
+                };
+            };
+        };
+    };
+    emailStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupControllerEmailWaiting"];
                 };
             };
         };
