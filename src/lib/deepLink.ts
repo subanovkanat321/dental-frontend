@@ -1,5 +1,6 @@
 import { addDays, todayIn } from './time'
 import type { Page } from './route'
+import type { Schemas } from '../api/client'
 
 /**
  * Куда открыть CRM по кнопке бота. Бот шлёт адреса Mini App с параметрами (AssetVersion.miniApp
@@ -13,6 +14,8 @@ import type { Page } from './route'
  * кто не подтвердил (кнопка «📲 Напомнить (N)» под утренней и вечерней сводкой);
  * ?contact=ТОКЕН — «Новая запись» с именем и номером контакта, присланного боту (номера в адресе нет: только
  * одноразовый токен, имя и номер фронт забирает POST /api/patients/shared-contact);
+ * ?assist=ТОКЕН — «✏️ Изменить» под карточкой помощника в боте: «Новая запись» или окно задачи с заполненными полями
+ * (черновик — POST /api/assist/draft, в адресе только одноразовый токен);
  * ?screen=booked&day=today&unmarked=1&doctor=ID — там же, сегодня, только прошедшие без отметки «явка / неявка»
  * (кнопка «Отметить (N)» напоминания после вечерней смены и «Отметить сегодня» в сводке 18:30).
  */
@@ -39,6 +42,10 @@ export type DeepLink = {
   bookPatientId?: number
   /** Токен контакта из бота (?contact=…) */
   contactToken?: string
+  /** Токен черновика помощника в боте (?assist=…) */
+  assistToken?: string
+  /** Черновик задачи от помощника — открыть окно задачи с заполненными полями */
+  taskDraft?: Schemas['AssistDraft']
   /** «Записать» из «Позвать снова → Отменили»: врач, услуга и длительность отменённой записи */
   bookDoctorId?: number
   bookServiceId?: number
@@ -70,6 +77,8 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (num('patient')) return { page: 'schedule', bookPatientId: num('patient') }
   const contact = p.get('contact')
   if (contact && /^[A-Za-z0-9_-]{16,64}$/.test(contact)) return { page: 'schedule', contactToken: contact }
+  const assist = p.get('assist')
+  if (assist && /^[A-Za-z0-9_-]{16,64}$/.test(assist)) return { page: 'schedule', assistToken: assist }
   if (num('patientCard')) return { page: 'patients', patientId: num('patientCard') }
   if (num('question')) return { page: 'patients', questionId: num('question') }
   if (num('supply')) return { page: 'stock', supplyId: num('supply') }

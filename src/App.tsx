@@ -9,6 +9,7 @@ import type { Schemas } from './api/client'
 import { DownloadPage } from './pwa/DownloadPage'
 import { ErrorBoundary } from './layout/ErrorBoundary'
 import { linkHash, readDeepLink, rememberLaunch, type DeepLink } from './lib/deepLink'
+import { dateOf, minutesOf } from './lib/time'
 import { isDownloadPath, isInvitePath, isLoginPath, isSignupConfirmPath, isSignupPath, usePage, type Page } from './lib/route'
 import { SectionActive } from './lib/section'
 import { telegram } from './lib/telegram'
@@ -139,7 +140,7 @@ function Screens() {
   const section = (p: Page) => {
     const l = linkOf(p)
     switch (p) {
-      case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} initialTask={l?.taskId} initialBooked={l?.tab === 'booked' ? { date: l.date, unconfirmed: l.unconfirmed, unmarked: l.unmarked, doctorId: l.doctorId } : undefined} onOpenAppointment={openAppointment} onBook={(x, preset) => linkTo({ page: 'schedule', bookPatientId: x.id, ...(preset && { bookDoctorId: preset.doctorId, bookServiceId: preset.serviceId, bookDuration: preset.duration }) })} />
+      case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} initialTask={l?.taskId} initialTaskDraft={l?.taskDraft} initialBooked={l?.tab === 'booked' ? { date: l.date, unconfirmed: l.unconfirmed, unmarked: l.unmarked, doctorId: l.doctorId } : undefined} onOpenAppointment={openAppointment} onBook={(x, preset) => linkTo({ page: 'schedule', bookPatientId: x.id, ...(preset && { bookDoctorId: preset.doctorId, bookServiceId: preset.serviceId, bookDuration: preset.duration }) })} />
       case 'cash': return <CashPage me={me.data} onOpenPatient={openPatient} />
       case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} initialLabOrder={l?.labOrderId} onOpenPatient={openPatient} />
       case 'learn': return <LearnPage />
@@ -148,7 +149,10 @@ function Screens() {
       case 'me': return <MineSection me={me.data} page="me" />
       case 'help': return <MineSection me={me.data} page="help" initialTicket={l?.ticketId} />
       case 'platform': return me.data.platform ? <PlatformPage me={me.data} /> : null
-      case 'schedule': return l?.appointmentId || l?.bookPatientId || l?.contactToken
+      case 'schedule': return l?.assistToken
+        ? <LinkedAssist token={l.assistToken} me={me.data} onNavigate={go} onOpenPatient={openPatient}
+          onTask={(draft) => linkTo({ page: 'patients', tab: 'tasks', taskDraft: draft })} />
+        : l?.appointmentId || l?.bookPatientId || l?.contactToken
         ? <LinkedSchedule link={l} me={me.data} onNavigate={go} onOpenPatient={openPatient} />
         : <SchedulePage me={me.data} initialDate={l?.date} initialDoctor={l?.doctorId} bookPatient={booking} onBookingShown={() => setBooking(null)} onNavigate={go}
           onOpenEarnings={() => linkTo({ page: 'cash', tab: 'earnings' })} onOpenPatient={openPatient} />
@@ -224,6 +228,52 @@ function Sections({ shown, sections, onVisit, children }: {
       ))}
     </>
   )
+}
+
+/**
+ * «✏️ Изменить» под карточкой помощника в боте (?assist=токен): черновик забираем один раз (токен одноразовый). Запись —
+ * «Новая запись» с пациентом (или «Новый пациент» с именем), врачом, услугой, днём и временем; задача — «Пациенты →
+ * Задачи» с окном задачи. Токен устарел — скажем и откроем расписание как обычно.
+ */
+function LinkedAssist({ token, me, onNavigate, onOpenPatient, onTask }: {
+  token: string
+  me: Schemas['BookingViewsMe']
+  onNavigate: (page: Page) => void
+  onOpenPatient: (patientId: number) => void
+  onTask: (draft: Schemas['AssistDraft']) => void
+}) {
+  const draft = useQuery({
+    queryKey: ['assist-draft', token],
+    queryFn: () => unwrap(api.POST('/api/assist/draft', { body: { token } })),
+    retry: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+  })
+  const told = useRef(false)
+  const task = draft.data?.kind === 'TASK' ? draft.data : null
+  useEffect(() => {
+    if (draft.error && !told.current) {
+      told.current = true
+      void notify(draft.error.message || 'Карточка устарела — напишите боту ещё раз')
+    }
+  }, [draft.error])
+  const moved = useRef(false)
+  useEffect(() => {
+    if (task && !moved.current) {
+      moved.current = true
+      onTask(task)
+    }
+  }, [task, onTask])
+  if (draft.isLoading || task) return <Loading />
+  const d = draft.data
+  if (!d) return <SchedulePage me={me} onNavigate={onNavigate} onOpenPatient={onOpenPatient} />
+  const date = d.startAt ? dateOf(d.startAt) : undefined
+  return <SchedulePage me={me} initialDate={date} bookPatient={d.patient ?? null}
+    bookContact={!d.patient && d.newPatientName ? { fullName: d.newPatientName, phone: '' } : null}
+    bookPreset={{ doctorId: d.doctorId ?? undefined, serviceId: d.serviceId ?? undefined, duration: d.durationMinutes ?? undefined, date,
+      minutes: d.startAt ? minutesOf(d.startAt) : undefined, open: true }}
+    onNavigate={onNavigate} onOpenPatient={onOpenPatient} />
 }
 
 /**
