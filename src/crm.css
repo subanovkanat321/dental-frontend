@@ -1670,6 +1670,15 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 .dictation-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .dictation-row > input:not([type]), .dictation-row > input[aria-label^="Шаг"], .dictation-row > input[aria-label^="Пометка"] { flex: 1 1 140px; min-width: 0; }
 .dictation-row .dictation-tooth { flex: 0 0 3.5em; width: 3.5em; text-align: center; }
+/* Шпаргалка диктовки: крупно, чтобы врач почти читал; сказанное — ✓ и зелёным */
+.dictation-cheat { list-style: none; margin: 0; padding: 8px 10px; display: grid; gap: 6px; border-radius: var(--r-md); background: var(--sunken); font-size: 1rem; line-height: 1.35; }
+.dictation-cheat li { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.dictation-cheat b { font-weight: 600; }
+.dictation-cheat-n { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--card); color: var(--hint); font-weight: 600; font-size: .85rem; }
+.dictation-cheat li.done .dictation-cheat-n { background: var(--ok-bg); color: var(--ok-ink); }
+.dictation-cheat li.done > span:last-child { color: var(--hint); }
+.dictation-live { color: var(--bad-ink); font-weight: 600; }
+@media (max-width: 640px) { .dictation-cheat { font-size: .9rem; gap: 3px; padding: 6px 8px; } .dictation-live { font-size: .9rem; } }
 
 /* «Продолжение лечения» в карточке приёма: что сделали в прошлый раз и что осталось по плану */
 .continue { display: grid; gap: 8px; }

@@ -6,6 +6,7 @@ import { Select } from '../layout/Select'
 import { haptic } from '../lib/telegram'
 import { TOOTH_STATES, hasSurfaces, surfacesText, type Surface, type ToothState } from '../medical/toothStates'
 import { Spinner } from '../layout/Loading'
+import { CHEAT_STEPS } from './dictationCheat'
 
 type Appointment = Schemas['AppointmentView']
 type Proposal = Schemas['VisitDictationProposal']
@@ -27,6 +28,15 @@ type RecognitionClass = new () => Recognition
 function speechRecognition(): RecognitionClass | null {
   const w = window as unknown as { SpeechRecognition?: RecognitionClass; webkitSpeechRecognition?: RecognitionClass }
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
+}
+
+/** Тишина: столько перезапусков подряд без единого слова или столько времени без речи — пауза. */
+const MAX_QUIET_RESTARTS = 5
+const MAX_QUIET_MS = 2 * 60_000
+
+/** Часы для счётчика тишины (вне компонента: в обработчиках, не при отрисовке). */
+function clock(): number {
+  return Date.now()
 }
 
 type ToothRow = { on: boolean; tooth: string; state: ToothState; surfaces: Surface[]; note: string; was?: ToothState }
@@ -76,61 +86,125 @@ export function Dictation({ appointment: a, note, onActive }: {
   const Speech = speechRecognition()
   const canSpeak = Speech != null && !micProblem
 
+  // Врач хочет, чтобы запись шла (нажал «Надиктовать»/«Продолжить» и ещё не «Пауза»/«Готово»).
+  // Браузер сам заканчивает распознавание после тишины (Safari, Chrome) — тогда тихо начинаем заново.
+  const wanted = useRef(false)
+  const textNow = useRef('')
+  // Текст и в состоянии (экран), и в ref (обработчики распознавания читают самое свежее)
+  const putText = (t: string) => {
+    textNow.current = t
+    setText(t)
+  }
+  const quiet = useRef({ restarts: 0, since: 0 })
+  const [pauseNote, setPauseNote] = useState('')
+  // «Готово» во время записи: ждём, пока браузер допишет последние слова (onend), и только тогда разбор
+  const finishing = useRef(false)
+  const finishTimer = useRef<number | undefined>(undefined)
+  const [waitingEnd, setWaitingEnd] = useState(false)
+
   // Закрыли карточку во время записи — микрофон выключаем
-  useEffect(() => () => recognition.current?.stop(), [])
+  useEffect(() => () => {
+    wanted.current = false
+    finishing.current = false
+    window.clearTimeout(finishTimer.current)
+    recognition.current?.stop()
+  }, [])
 
   const go = (next: 'idle' | 'speak' | 'review') => {
     setStep(next)
     onActive(next !== 'idle')
   }
 
-  const listen = () => {
-    if (!Speech) return
+  const begin = () => {
+    if (!Speech) return false
     const r = new Speech()
     r.lang = 'ru-RU'
     r.continuous = true
     r.interimResults = true
-    // Сказанное до этой записи (врач дописывал руками или говорил в несколько заходов)
-    const before = text.trim()
+    // Сказанное до этой записи (дописал руками, говорил в несколько заходов, браузер перезапускался)
+    const before = textNow.current.trim()
+    let draft = ''
     r.onresult = (e) => {
+      if (recognition.current !== r) return
       let final = ''
-      let draft = ''
+      draft = ''
       for (let i = 0; i < e.results.length; i++) {
         const res = e.results[i]!
         if (res.isFinal) final += res[0].transcript
         else draft += res[0].transcript
       }
-      setText([before, final.replace(/\s+/g, ' ').trim()].filter(Boolean).join(' '))
+      if (final.trim() || draft.trim()) quiet.current = { restarts: 0, since: clock() }
+      const next = [before, final.replace(/\s+/g, ' ').trim()].filter(Boolean).join(' ')
+      putText(next)
       setInterim(draft)
     }
     r.onerror = (e) => {
+      if (recognition.current !== r) return
       if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') {
+        wanted.current = false
         setMicProblem('Нет доступа к микрофону — разрешите его в браузере или напишите текстом')
+      } else if (e.error === 'network') {
+        wanted.current = false
+        setPauseNote('Нет связи с распознаванием речи — запись на паузе. Нажмите «🎤 Продолжить».')
       }
     }
     r.onend = () => {
-      setListening(false)
+      if (recognition.current !== r) return
+      // Недоговорённое слово, которое браузер не успел дописать, не теряем
+      if (draft.trim()) {
+        const next = [textNow.current.trim(), draft.replace(/\s+/g, ' ').trim()].filter(Boolean).join(' ')
+        putText(next)
+      }
+      draft = ''
       setInterim('')
+      if (finishing.current) {
+        finish()
+        return
+      }
+      if (wanted.current) {
+        const q = quiet.current
+        if (q.restarts < MAX_QUIET_RESTARTS && clock() - q.since < MAX_QUIET_MS) {
+          q.restarts++
+          if (begin()) return
+        } else {
+          setPauseNote('Долго тихо — запись на паузе. Нажмите «🎤 Продолжить», когда будете готовы.')
+        }
+      }
+      wanted.current = false
+      setListening(false)
     }
     recognition.current = r
-    r.start()
-    setListening(true)
+    try {
+      r.start()
+      return true
+    } catch {
+      recognition.current = null
+      return false
+    }
+  }
+  const listen = () => {
+    setPauseNote('')
+    quiet.current = { restarts: 0, since: clock() }
+    wanted.current = true
+    if (begin()) setListening(true)
+    else wanted.current = false
   }
   const stop = () => {
+    wanted.current = false
     recognition.current?.stop()
     setListening(false)
   }
 
   const start = () => {
     setSaved('')
-    setText('')
+    putText('')
     setReview(null)
     go('speak')
     if (canSpeak) listen()
   }
 
   const parse = useMutation<Proposal, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/dictation/parse', { params: { path: { id: a.id } }, body: { text: text.trim() } })),
+    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/dictation/parse', { params: { path: { id: a.id } }, body: { text: textNow.current.trim() } })),
     onSuccess: (p) => {
       setReview({
         teeth: (p.teeth ?? []).map((t) => ({ on: true, tooth: String(t.tooth), state: t.state ?? 'HEALTHY', surfaces: t.surfaces ?? [], note: t.note ?? '', was: t.was })),
@@ -149,9 +223,28 @@ export function Dictation({ appointment: a, note, onActive }: {
       }
     },
   })
+  // Разбор — только по «Готово»/«Разобрать» и ровно один раз
+  const finish = () => {
+    if (!finishing.current) return
+    finishing.current = false
+    window.clearTimeout(finishTimer.current)
+    setWaitingEnd(false)
+    setListening(false)
+    if (textNow.current.trim()) parse.mutate()
+  }
   const toParse = () => {
-    stop()
-    parse.mutate()
+    if (finishing.current || parse.isPending) return
+    finishing.current = true
+    wanted.current = false
+    const r = recognition.current
+    if (listening && r) {
+      setWaitingEnd(true)
+      r.stop()
+      // Браузер не прислал onend — не ждём вечно
+      if (finishing.current) finishTimer.current = window.setTimeout(finish, 1500)
+    } else {
+      finish()
+    }
   }
 
   const apply = useMutation<Schemas['VisitDictationApplied'], ApiError>({
@@ -185,7 +278,7 @@ export function Dictation({ appointment: a, note, onActive }: {
       const steps = r.plan.filter((s) => s.on).length
       setSaved(['Сохранено в медкарту', teeth ? `зубов: ${teeth}` : '', steps ? `шагов плана: ${steps}` : ''].filter(Boolean).join(' · '))
       setReview(null)
-      setText('')
+      putText('')
       go('idle')
     },
     onError: () => haptic('error'),
@@ -196,6 +289,9 @@ export function Dictation({ appointment: a, note, onActive }: {
   const setStepRow = (i: number, change: Partial<StepRow>) =>
     setReview((r) => r && { ...r, plan: r.plan.map((s, j) => (j === i ? { ...s, ...change } : s)) })
   const cancel = () => {
+    finishing.current = false
+    window.clearTimeout(finishTimer.current)
+    setWaitingEnd(false)
     stop()
     setReview(null)
     go('idle')
@@ -205,31 +301,37 @@ export function Dictation({ appointment: a, note, onActive }: {
     return (
       <div className="dictation">
         <button type="button" className="btn dictation-start" onClick={start}>🎤 Надиктовать приём</button>
-        <p className="hint small">Скажите, что сделали и что дальше, — разложим по зубам, плану и заметке.</p>
+        <p className="hint small">Скажите по шагам: зуб → что сделали → следующий визит. Шпаргалка будет на экране.</p>
         {saved && <p className="tone-ok small" role="status">{saved}</p>}
       </div>
     )
   }
 
   if (step === 'speak') {
+    const busy = parse.isPending || waitingEnd
+    const shown = listening && interim ? `${text} ${interim.trim()}`.trim() : text
     return (
       <section className="dictation" aria-label="Диктовка">
         <h3>Диктовка</h3>
+        <CheatSheet text={shown} />
         {canSpeak ? (
-          <p className="hint small">{listening ? 'Говорите: «36-й кариес, поставили пломбу; у 46-го каналы — в следующий раз».' : 'Запись на паузе — можно поправить текст.'} Звук не сохраняется.</p>
+          listening
+            ? <p className="dictation-live" role="status">🔴 Слушаю… можно думать, запись не прервётся</p>
+            : <p className="hint small">{pauseNote || 'Запись на паузе — можно поправить текст.'}</p>
         ) : (
-          <p className="hint small">{micProblem || 'Браузер не распознаёт речь.'} На телефоне нажмите микрофон на клавиатуре и говорите — текст появится в поле.</p>
+          <p className="hint small">{micProblem || 'Браузер не распознаёт речь.'} Нажмите микрофон на клавиатуре и говорите по шпаргалке — текст появится в поле.</p>
         )}
-        <textarea aria-label="Текст диктовки" rows={5} maxLength={5000} value={listening && interim ? `${text} ${interim.trim()}`.trim() : text}
-          readOnly={listening} placeholder="Вставьте или напишите текст" onChange={(e) => setText(e.target.value)} />
+        <textarea aria-label="Текст диктовки" rows={4} maxLength={5000} value={shown}
+          readOnly={listening} placeholder={canSpeak ? 'Здесь появится сказанное' : 'Вставьте или напишите текст'} onChange={(e) => putText(e.target.value)} />
         <div className="actions">
-          <button type="button" className="btn primary" disabled={!text.trim() || parse.isPending} onClick={toParse}>
-            {parse.isPending ? <><Spinner />Разбираем…</> : 'Разобрать'}</button>
+          <button type="button" className="btn primary" disabled={(!text.trim() && !interim.trim()) || busy} onClick={toParse}>
+            {busy ? <><Spinner />Разбираем…</> : listening ? 'Готово' : 'Разобрать'}</button>
           {canSpeak && (listening
-            ? <button type="button" className="btn" onClick={stop}>Пауза</button>
-            : <button type="button" className="btn" onClick={listen}>🎤 Продолжить</button>)}
+            ? <button type="button" className="btn" disabled={busy} onClick={stop}>Пауза</button>
+            : <button type="button" className="btn" disabled={busy} onClick={listen}>🎤 Продолжить</button>)}
           <button type="button" className="btn ghost" onClick={cancel}>Отмена</button>
         </div>
+        <p className="hint small">Звук не сохраняется. Разбор — только по «{listening ? 'Готово' : 'Разобрать'}».</p>
         {parse.error && parse.error.status !== 409 && <p className="error" role="alert">{errorText(parse.error)}</p>}
       </section>
     )
@@ -293,5 +395,21 @@ export function Dictation({ appointment: a, note, onActive }: {
       </div>
       {apply.error && <p className="error" role="alert">{errorText(apply.error)}</p>}
     </section>
+  )
+}
+
+function CheatSheet({ text }: { text: string }) {
+  return (
+    <ol className="dictation-cheat" aria-label="Что сказать по порядку">
+      {CHEAT_STEPS.map((s, i) => {
+        const done = s.done?.(text) ?? false
+        return (
+          <li key={s.title} className={done ? 'done' : undefined}>
+            <span className="dictation-cheat-n" aria-hidden="true">{done ? '✓' : i + 1}</span>
+            <span><b>{s.title}{done && <span className="sr-only"> — сказано</span>}</b> {s.say}</span>
+          </li>
+        )
+      })}
+    </ol>
   )
 }
