@@ -52,10 +52,10 @@ test('«Написать клиникам» пустой: пустое сост�
   server.use(http.get('*/api/platform/outreach', () => HttpResponse.json({ leads: [], template: { text: 'Здравствуйте', custom: false } })))
   const user = userEvent.setup()
   renderApp()
-  await openPlatform('Рассылка клиникам', 'По одной (WhatsApp)', user)
+  await openPlatform('Рассылка клиникам', 'По одной (WhatsApp и Instagram)', user)
   expect(await screen.findByText('Список клиник пуст')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: 'Следующая клиника →' })).not.toBeInTheDocument()
-  expect(screen.queryByRole('searchbox', { name: 'Поиск: название, адрес, телефон' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('searchbox', { name: 'Поиск: название, адрес, телефон, Instagram' })).not.toBeInTheDocument()
 })
 
 test('«Расход ИИ»: месяц без расхода — пустое состояние вместо таблицы; строка клиники открывает свой лимит', async () => {

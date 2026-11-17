@@ -4,15 +4,15 @@ import { SortTh } from '../layout/SortTh'
 import { rowOpen } from '../lib/rowClick'
 import { useSort } from '../lib/useSort'
 import { formatPhone, shortDate } from '../lib/time'
-import { groupOf, type Group, type OutreachLead } from './outreach'
+import { groupOf, instagramProfile, reachText, type Group, type OutreachLead } from './outreach'
 
 const STAGE_TEXT: Record<string, string> = { DEMO: 'Ответили', TRIAL: 'Пробный период', PAYING: 'Платит' }
 
-/** Статус клиники — тот же chip в списке и в таблице: Не писали / Написали дата / этап / Отказ. */
+/** Статус клиники — тот же chip в списке и в таблице: Не писали / Написали (в Instagram) дата / этап / Отказ. */
 export function LeadStatus({ lead: l }: { lead: OutreachLead }) {
   const g = groupOf(l)
   return g === 'FRESH' ? <span className="chip small s-quiet">Не писали</span>
-    : g === 'SENT' ? <span className="chip small s-ok">Написали{l.contactedAt ? ` ${shortDate(l.contactedAt)}` : ''}</span>
+    : g === 'SENT' ? <span className="chip small s-ok">Написали{l.contactedVia === 'INSTAGRAM' ? ' в Instagram' : ''}{l.contactedAt ? ` ${shortDate(l.contactedAt)}` : ''}</span>
       : g === 'DECLINED' ? <span className="chip small s-bad">Отказ</span>
         : <span className="chip small s-request">{STAGE_TEXT[l.stage ?? ''] ?? 'Дальше'}</span>
 }
@@ -20,7 +20,12 @@ export function LeadStatus({ lead: l }: { lead: OutreachLead }) {
 /** Сколько строк таблицы показываем сразу; дальше — «Показать ещё» (сотни клиник из 2ГИС не тормозят). */
 const PAGE = 100
 
-type Key = 'n' | 'name' | 'phone' | 'address' | 'city' | 'status' | 'contacted' | 'reminded'
+type Key = 'n' | 'name' | 'phone' | 'instagram' | 'reach' | 'address' | 'city' | 'status' | 'contacted' | 'reminded'
+
+/** Каким каналом написали — коротко, рядом с датой в колонке «Написали» (старые отметки без канала — WhatsApp). */
+function via(l: OutreachLead): string {
+  return l.contactedVia === 'INSTAGRAM' ? 'Instagram' : 'WhatsApp'
+}
 
 const GROUP_ORDER: Record<Group, number> = { FRESH: 0, SENT: 1, FURTHER: 2, DECLINED: 3 }
 
@@ -45,6 +50,8 @@ export function OutreachTable({ rows, numbers, selected, onOpen, resetKey }: {
       case 'n': return numbers.get(l.id) ?? 0
       case 'name': return l.clinicName
       case 'phone': return l.phone
+      case 'instagram': return l.instagram
+      case 'reach': return reachText(l)
       case 'address': return l.address
       case 'city': return l.city
       case 'status': return GROUP_ORDER[groupOf(l)]
@@ -74,6 +81,8 @@ export function OutreachTable({ rows, numbers, selected, onOpen, resetKey }: {
               <SortTh k="n" title="№" sort={sort} onSort={toggle} right />
               <SortTh k="name" title="Название" sort={sort} onSort={toggle} />
               <SortTh k="phone" title="Телефон" sort={sort} onSort={toggle} />
+              <SortTh k="instagram" title="Instagram" sort={sort} onSort={toggle} />
+              <SortTh k="reach" title="Канал" sort={sort} onSort={toggle} />
               <SortTh k="address" title="Адрес" sort={sort} onSort={toggle} />
               <SortTh k="city" title="Город" sort={sort} onSort={toggle} />
               <SortTh k="status" title="Статус" sort={sort} onSort={toggle} />
@@ -103,10 +112,14 @@ const Row = memo(function Row({ lead: l, n, active, onOpen }: { lead: OutreachLe
       <td className="r num sheet-n">{n}</td>
       <td className="sheet-name"><button type="button" className="row-link" onClick={open}>{l.clinicName}</button></td>
       <td className="num">{l.phone ? formatPhone(l.phone) : ''}</td>
+      <td>{l.instagram && (
+        <a href={instagramProfile(l.instagram)} target="_blank" rel="noopener noreferrer">@{l.instagram}</a>
+      )}</td>
+      <td>{reachText(l)}</td>
       <td className="sheet-wrap" title={l.address ?? undefined}>{l.address}</td>
       <td>{l.city}</td>
       <td><LeadStatus lead={l} /></td>
-      <td className="num">{l.contactedAt ? shortDate(l.contactedAt) : ''}</td>
+      <td className="num">{l.contactedAt ? <>{shortDate(l.contactedAt)} <span className="hint small">{via(l)}</span></> : ''}</td>
       <td className="num">{l.remindedAt ? shortDate(l.remindedAt) : ''}</td>
       <td className="sheet-link">
         {l.link && (

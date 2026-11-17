@@ -38,7 +38,7 @@ afterEach(() => {
 })
 
 test.each([
-  ['/platform/outreach', 'Рассылка клиникам', 'По одной (WhatsApp)', '#/platform/mailing/one'],
+  ['/platform/outreach', 'Рассылка клиникам', 'По одной (WhatsApp и Instagram)', '#/platform/mailing/one'],
   ['/platform/broadcast', 'Рассылка клиникам', 'Всем сразу (руководителям)', '#/platform/mailing/all'],
   ['/platform/tickets', 'Обратная связь', 'Обращения', '#/platform/feedback/tickets'],
   ['/platform/support', 'Обратная связь', 'Обращения', '#/platform/feedback/tickets'],
@@ -60,7 +60,7 @@ test('режим — в адресе: переключили — адрес и �
   const user = userEvent.setup()
   renderApp()
   await openPlatform('Рассылка клиникам', undefined, user)
-  expect(pressed()).toBe('По одной (WhatsApp)')
+  expect(pressed()).toBe('По одной (WhatsApp и Instagram)')
   expect(await screen.findByRole('region', { name: 'Написать клиникам' })).toBeInTheDocument()
   await user.click(modes().getByRole('button', { name: 'Всем сразу (руководителям)' }))
   expect(window.location.hash).toBe('#/platform/mailing/all')

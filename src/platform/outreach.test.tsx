@@ -89,7 +89,7 @@ afterEach(() => {
 async function openTab() {
   const user = userEvent.setup()
   renderApp()
-  await openPlatform('Рассылка клиникам', 'По одной (WhatsApp)', user)
+  await openPlatform('Рассылка клиникам', 'По одной (WhatsApp и Instagram)', user)
   await screen.findByRole('list', { name: 'Клиники' })
   return user
 }
@@ -166,7 +166,7 @@ test('счётчики, фильтры, поиск и «Следующая кл�
   expect(within(screen.getByRole('list', { name: 'Клиники' })).getAllByRole('listitem').map((x) => x.getAttribute('aria-label')))
     .toEqual(['Клиника: Тест-Отказ'])
   await user.click(within(groups).getByRole('button', { name: 'Все · 5' }))
-  await user.type(screen.getByRole('searchbox', { name: 'Поиск: название, адрес, телефон' }), 'елка')
+  await user.type(screen.getByRole('searchbox', { name: 'Поиск: название, адрес, телефон, Instagram' }), 'елка')
   expect(within(screen.getByRole('list', { name: 'Клиники' })).getAllByRole('listitem')).toHaveLength(1)
 
   // «Следующая клиника» — первая неписаная: поиск сбрасывается, карточка открывается с текстом
@@ -193,7 +193,7 @@ test('порядок: сверху свёрнутый «Текст сообще�
   const heading = within(clinics).getByRole('heading', { name: 'Клиники' })
   const groups = within(clinics).getByRole('group', { name: 'Кому писали' })
   after(heading, groups)
-  after(groups, within(clinics).getByRole('searchbox', { name: 'Поиск: название, адрес, телефон' }))
+  after(groups, within(clinics).getByRole('searchbox', { name: 'Поиск: название, адрес, телефон, Instagram' }))
   after(groups, within(clinics).getByRole('list', { name: 'Клиники' }))
 })
 
@@ -295,11 +295,11 @@ test('«＋ Добавить клинику» по одной: отправля�
   await user.type(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }), '0555 000 111')
   await user.click(add)
   expect(await within(form).findByText(/Добавлена «Тест-Новая»/)).toBeInTheDocument()
-  expect(sent[0]).toBe('Название\tТелефон\tАдрес\tСсылка\nТест-Новая\t0555 000 111\t\t')
+  expect(sent[0]).toBe('Название\tТелефон\tInstagram\tАдрес\tСсылка\nТест-Новая\t0555 000 111\t\t\t')
   await user.type(within(form).getByLabelText('Название *'), 'Тест-Новая')
   await user.type(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }), '0555 000 111')
   await user.click(add)
-  expect(await within(form).findByText(/Этот номер уже в списке/)).toBeInTheDocument()
+  expect(await within(form).findByText(/Эта клиника уже в списке/)).toBeInTheDocument()
   // Номер другой страны: выбрали Казахстан — уходит с кодом +7
   await user.clear(within(form).getByLabelText('Название *'))
   await user.type(within(form).getByLabelText('Название *'), 'Алма-Тест')
@@ -307,7 +307,7 @@ test('«＋ Добавить клинику» по одной: отправля�
   await choose(within(form).getByRole('combobox', { name: 'Код страны' }), 'KZ')
   await user.type(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }), '701 000 00 03')
   await user.click(add)
-  await waitFor(() => expect(sent[2]).toBe('Название\tТелефон\tАдрес\tСсылка\nАлма-Тест\t+7 701 000 00 03\t\t'))
+  await waitFor(() => expect(sent[2]).toBe('Название\tТелефон\tInstagram\tАдрес\tСсылка\nАлма-Тест\t+7 701 000 00 03\t\t\t'))
 })
 
 test('адрес сайта без https:// в тексте — становится ссылкой https://', () => {
@@ -477,7 +477,7 @@ test('«Изменить» клинику: страна и номер, 409 — �
   await user.type(phone, '701 000 00 03')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(form).findByRole('alert')).toHaveTextContent('Этот номер уже у клиники «Тест-Улыбка»')
-  expect(bodies[0]).toEqual({ id: '2', clinicName: 'Тест-Дент', phone: '+7 701 000 00 03', address: 'ул. Вымышленная, 2', link: '', city: 'Бишкек' })
+  expect(bodies[0]).toEqual({ id: '2', clinicName: 'Тест-Дент', phone: '+7 701 000 00 03', instagram: '', address: 'ул. Вымышленная, 2', link: '', city: 'Бишкек' })
 
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   await waitFor(() => expect(within(card).queryByRole('form', { name: /Изменить/ })).not.toBeInTheDocument())
@@ -505,7 +505,7 @@ test('«Скачать шаблон» в окне загрузки: Excel и CSV
   await user.click(within(box).getByRole('button', { name: 'CSV' }))
   await waitFor(() => expect(asked).toEqual(['?format=xlsx', '?format=csv']))
   await waitFor(() => expect(click).toHaveBeenCalledTimes(2))
-  expect(box).toHaveTextContent('«Название, Телефон, Адрес, Ссылка, Город»')
+  expect(box).toHaveTextContent('«Название, Телефон, Instagram, Адрес, Ссылка, Город»')
 })
 
 test('Windows: текст сразу в поле чата, без эмодзи (из ссылки они приходят «�»)', async () => {
@@ -547,4 +547,112 @@ test('шаблон: свой текст → «Вернуть текст по у�
   // Текст снова по умолчанию — кнопки «Вернуть» нет, пометки «(свой)» тоже
   await waitFor(() => expect(within(block).queryByRole('button', { name: 'Вернуть текст по умолчанию' })).not.toBeInTheDocument())
   expect(within(block).getByText('Текст сообщения')).toBeInTheDocument()
+})
+
+test('«📸 Написать в Instagram»: текст в буфер, открывается ig.me/m/логин, подсказка «вставьте», «Да» — отметка с каналом', async () => {
+  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+  let body: unknown = null
+  leads = leads.map((l) => l.id === 2 ? { ...l, instagram: 'test.dent' } : l.id === 4 ? { ...l, phone: undefined, instagram: 'elka_test' } : l)
+  server.use(http.post('*/api/platform/outreach/:id/sent', async ({ request, params }) => {
+    body = await request.json()
+    leads = leads.map((l) => l.id === Number(params.id) ? { ...l, stage: 'CONTACTED', contactedAt: '2026-11-17T06:00:00Z', contactedVia: 'INSTAGRAM' } : l)
+    return HttpResponse.json(leads.find((l) => l.id === Number(params.id)))
+  }))
+  const user = await openTab()
+
+  // Есть и телефон, и Instagram — обе кнопки: WhatsApp главная
+  const both = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  expect(within(both).getByRole('button', { name: '📨 Отправить сообщение' })).toBeInTheDocument()
+  expect(within(both).getByRole('button', { name: '📸 Написать в Instagram' })).toBeInTheDocument()
+  expect(within(both).getByRole('link', { name: '@test.dent' })).toHaveAttribute('href', 'https://www.instagram.com/test.dent/')
+
+  // Только Instagram — кнопки WhatsApp нет
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Ёлка' })
+  expect(within(card).queryByRole('button', { name: '📨 Отправить сообщение' })).not.toBeInTheDocument()
+  await user.click(within(card).getByRole('button', { name: '📸 Написать в Instagram' }))
+  expect(open).toHaveBeenCalledWith('https://ig.me/m/elka_test', '_blank', 'noopener')
+  expect(await navigator.clipboard.readText()).toBe('Здравствуйте, Тест-Ёлка! 😊\nМы — Tish. Подробнее: https://tish.kg/about')
+  const ask = within(card).getByRole('group', { name: 'Отправили?' })
+  expect(ask).toHaveTextContent('Текст скопирован — вставьте его в чат (удерживайте поле → Вставить) и отправьте.')
+  await user.click(within(ask).getByRole('button', { name: 'Да' }))
+  await waitFor(() => expect(body).toEqual({ channel: 'INSTAGRAM' }))
+  expect(await within(card).findByText(/Написали в Instagram\./)).toBeInTheDocument()
+  expect(await within(screen.getByRole('listitem', { name: 'Клиника: Тест-Ёлка' })).findByText(/^Написали в Instagram 17 нояб/)).toBeInTheDocument()
+})
+
+test('WhatsApp-отметка шлёт канал WHATSAPP', async () => {
+  vi.spyOn(window, 'open').mockImplementation(() => null)
+  let body: unknown = null
+  server.use(http.post('*/api/platform/outreach/:id/sent', async ({ request }) => {
+    body = await request.json()
+    return HttpResponse.json(leads.find((l) => l.id === 2))
+  }))
+  const user = await openTab()
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  expect(within(card).queryByRole('button', { name: '📸 Написать в Instagram' })).not.toBeInTheDocument()
+  await user.click(within(card).getByRole('button', { name: '📨 Отправить сообщение' }))
+  await user.click(within(within(card).getByRole('group', { name: 'Отправили?' })).getByRole('button', { name: 'Да' }))
+  await waitFor(() => expect(body).toEqual({ channel: 'WHATSAPP' }))
+})
+
+test('ролик в Instagram: текст №2 со ссылкой — в буфер и ig.me; шаг ② — «скачайте и отправьте из галереи»; напоминание — в Instagram', async () => {
+  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+  leads = leads.map((l) => l.id === 1 ? { ...l, phone: undefined, instagram: 'smile_test', contactedVia: 'INSTAGRAM' } : l)
+  server.use(http.get('*/api/platform/outreach', () => {
+    const o = outreach(leads)
+    return HttpResponse.json({ ...o, template: { ...o.template!, instagramVideoText: 'Спасибо! Вот минута, как это выглядит: tish.kg/about' } })
+  }))
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-11-12T06:00:00Z') })
+  try {
+    const user = await openTab()
+    const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Улыбка' })
+    expect(within(card).queryByRole('button', { name: /Ответили — отправить ролик/ })).not.toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: '🔁 Напомнить в Instagram' }))
+    expect(open).toHaveBeenLastCalledWith('https://ig.me/m/smile_test', '_blank', 'noopener')
+    expect(await navigator.clipboard.readText()).toBe(REMINDER)
+    await user.click(within(within(card).getByRole('group', { name: 'Отправили?' })).getByRole('button', { name: 'Нет' }))
+
+    await user.click(within(card).getByRole('button', { name: '🎬 Ответили — ролик в Instagram' }))
+    expect(open).toHaveBeenLastCalledWith('https://ig.me/m/smile_test', '_blank', 'noopener')
+    expect(await navigator.clipboard.readText()).toBe('Спасибо! Вот минута, как это выглядит: https://tish.kg/about')
+    expect(within(card).getByRole('status')).toHaveTextContent('Текст скопирован — вставьте его в чат Instagram')
+    leaveAndReturn()
+    const two = await within(card).findByRole('group', { name: 'Шаг 2: ролик' })
+    expect(two).toHaveTextContent('Ролик: скачайте и отправьте в чат из галереи')
+    expect(within(two).getByRole('button', { name: '🎬 Скачать ролик' })).toBeInTheDocument()
+  }
+  finally {
+    vi.useRealTimers()
+  }
+})
+
+test('«Изменить» и «＋ Добавить клинику» — поле Instagram', async () => {
+  let put: unknown = null
+  let text = ''
+  server.use(
+    http.put('*/api/platform/outreach/:id', async ({ request }) => {
+      put = await request.json()
+      return HttpResponse.json(leads[1])
+    }),
+    http.post('*/api/platform/outreach/import', async ({ request }) => {
+      text = String((await request.formData()).get('text'))
+      return HttpResponse.json({ total: 1, fresh: 1, duplicates: 0, errors: 0, added: 1, rows: [{ line: 2, clinicName: 'Инста-Тест', instagram: 'insta_test', status: 'NEW' }] })
+    }),
+  )
+  const user = await openTab()
+  await user.click(screen.getByRole('button', { name: '＋ Добавить клинику' }))
+  const add = screen.getByRole('form', { name: 'Добавить клинику' })
+  await user.type(within(add).getByRole('textbox', { name: 'Название *' }), 'Инста-Тест')
+  await user.type(within(add).getByRole('textbox', { name: 'Instagram' }), '@insta_test')
+  await user.click(within(add).getByRole('button', { name: 'Добавить' }))
+  // FormData переводит переносы в CRLF — сравниваем без них
+  await waitFor(() => expect(text.replace(/\r\n/g, '\n')).toBe('Название\tТелефон\tInstagram\tАдрес\tСсылка\nИнста-Тест\t\t@insta_test\t\t'))
+
+  const card = screen.getByRole('listitem', { name: 'Клиника: Тест-Дент' })
+  await user.click(within(card).getByRole('button', { name: 'Тест-Дент' }))
+  await user.click(within(card).getByRole('button', { name: 'Изменить' }))
+  const form = within(card).getByRole('form', { name: 'Изменить: Тест-Дент' })
+  await user.type(within(form).getByRole('textbox', { name: 'Instagram' }), 'https://www.instagram.com/test.dent/?igsh=x')
+  await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  await waitFor(() => expect(put).toMatchObject({ clinicName: 'Тест-Дент', instagram: 'https://www.instagram.com/test.dent/?igsh=x' }))
 })

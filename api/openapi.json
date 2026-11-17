@@ -5933,6 +5933,15 @@
             "format" : "int64"
           }
         } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicOutreachSentRequest"
+              }
+            }
+          }
+        },
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15864,6 +15873,9 @@
           },
           "city" : {
             "type" : "string"
+          },
+          "instagram" : {
+            "type" : "string"
           }
         }
       },
@@ -15947,6 +15959,13 @@
           "remindedAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "instagram" : {
+            "type" : "string"
+          },
+          "contactedVia" : {
+            "type" : "string",
+            "enum" : [ "WHATSAPP", "INSTAGRAM" ]
           }
         },
         "required" : [ "id", "solo" ]
@@ -15978,6 +15997,9 @@
           "remindAfterDays" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "instagramVideoText" : {
+            "type" : "string"
           }
         },
         "required" : [ "custom", "remindAfterDays" ]
@@ -19881,6 +19903,14 @@
         },
         "required" : [ "amountSom", "clinicId", "hasReceipt", "id", "months" ]
       },
+      "ClinicOutreachSentRequest" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "WHATSAPP", "INSTAGRAM" ]
+          }
+        }
+      },
       "ClinicOutreachDeclineRequest" : {
         "properties" : {
           "reason" : {
@@ -19938,6 +19968,9 @@
             "type" : "string"
           },
           "city" : {
+            "type" : "string"
+          },
+          "instagram" : {
             "type" : "string"
           },
           "status" : {

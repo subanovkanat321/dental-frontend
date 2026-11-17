@@ -62,7 +62,7 @@ afterEach(() => {
 async function openTab() {
   const user = userEvent.setup()
   const view = renderApp()
-  await openPlatform('Рассылка клиникам', 'По одной (WhatsApp)', user)
+  await openPlatform('Рассылка клиникам', 'По одной (WhatsApp и Instagram)', user)
   await screen.findByRole('heading', { name: 'Клиники' })
   return { user, view }
 }
@@ -77,7 +77,7 @@ test('больше 20 клиник на компьютере — таблице�
   const { user, view } = await openTab()
   const table = await screen.findByRole('table', { name: 'Клиники таблицей' })
   expect(within(table).getAllByRole('columnheader').map((th) => th.textContent))
-    .toEqual(['№ ↑', 'Название', 'Телефон', 'Адрес', 'Город', 'Статус', 'Написали', 'Напомнили', 'Ссылка'])
+    .toEqual(['№ ↑', 'Название', 'Телефон', 'Instagram', 'Канал', 'Адрес', 'Город', 'Статус', 'Написали', 'Напомнили', 'Ссылка'])
   const first = within(table).getAllByRole('row')[1]!
   expect(first).toHaveTextContent('Ясный зуб')
   expect(first).toHaveTextContent('Написали 3 нояб 2026')
@@ -135,7 +135,7 @@ test('сортировка по заголовку: название ↑/↓, «
 test('поиск по адресу и телефону, фильтр по городу', async () => {
   const { user } = await openTab()
   await screen.findByRole('table', { name: 'Клиники таблицей' })
-  const search = screen.getByRole('searchbox', { name: 'Поиск: название, адрес, телефон' })
+  const search = screen.getByRole('searchbox', { name: 'Поиск: название, адрес, телефон, Instagram' })
   await user.type(search, 'Тестовый')
   expect(names()).toEqual(['Альфа-Дент'])
   await user.clear(search)
@@ -208,10 +208,42 @@ test('сотни клиник — по 100 строк и «Показать ещ
   expect(names()).toHaveLength(250)
   expect(screen.queryByRole('button', { name: /^Показать ещё/ })).not.toBeInTheDocument()
   // Сменили фильтр — снова первые 100
-  await user.type(screen.getByRole('searchbox', { name: 'Поиск: название, адрес, телефон' }), 'Клиника')
+  await user.type(screen.getByRole('searchbox', { name: 'Поиск: название, адрес, телефон, Instagram' }), 'Клиника')
   expect(names()).toHaveLength(100)
 
   await user.click(screen.getByRole('button', { name: 'Скачать в Excel' }))
   await waitFor(() => expect(asked).toEqual(['?format=xlsx']))
   await waitFor(() => expect(click).toHaveBeenCalledTimes(1))
+})
+
+test('колонки «Instagram» и «Канал», фильтр канала и поиск по логину; «Написали» — с каналом', async () => {
+  leads = leads.map((l) => l.id === 2 ? { ...l, instagram: 'alfa.dent' }
+    : l.id === 4 ? { ...l, phone: undefined, instagram: 'only_insta' }
+      : l.id === 3 ? { ...l, contactedVia: 'INSTAGRAM' } : l)
+  const { user } = await openTab()
+  const table = await screen.findByRole('table', { name: 'Клиники таблицей' })
+  expect(within(table).getByRole('columnheader', { name: /Канал/ })).toBeInTheDocument()
+  const alfa = within(table).getByRole('link', { name: '@alfa.dent' })
+  expect(alfa).toHaveAttribute('href', 'https://www.instagram.com/alfa.dent/')
+  const row = (name: string) => within(table).getByRole('button', { name }).closest('tr')!
+  expect(row('Альфа-Дент')).toHaveTextContent('WhatsApp + Instagram')
+  expect(row('Бета-Смайл')).toHaveTextContent('10 нояб 2026 Instagram')
+  expect(row('Ясный зуб')).toHaveTextContent('3 нояб 2026 WhatsApp')
+
+  await choose(screen.getByRole('combobox', { name: 'Канал' }), 'Instagram')
+  expect(names()).toEqual(['Альфа-Дент', 'Клиника 004'])
+  await choose(screen.getByRole('combobox', { name: 'Канал' }), 'Есть оба')
+  expect(names()).toEqual(['Альфа-Дент'])
+  await choose(screen.getByRole('combobox', { name: 'Канал' }), 'WhatsApp')
+  expect(names()).toHaveLength(29)
+  await choose(screen.getByRole('combobox', { name: 'Канал' }), 'Все каналы')
+
+  await user.type(screen.getByRole('searchbox', { name: 'Поиск: название, адрес, телефон, Instagram' }), '@only_in')
+  expect(names()).toEqual(['Клиника 004'])
+})
+
+test('без Instagram у клиник — фильтра «Канал» нет', async () => {
+  await openTab()
+  await screen.findByRole('table', { name: 'Клиники таблицей' })
+  expect(screen.queryByRole('combobox', { name: 'Канал' })).not.toBeInTheDocument()
 })

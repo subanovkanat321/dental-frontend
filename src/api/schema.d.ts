@@ -7138,6 +7138,7 @@ export interface components {
             address?: string;
             link?: string;
             city?: string;
+            instagram?: string;
         };
         SalesFunnelLead: {
             /** Format: int64 */
@@ -7173,6 +7174,9 @@ export interface components {
             lostReason?: string;
             /** Format: date-time */
             remindedAt?: string;
+            instagram?: string;
+            /** @enum {string} */
+            contactedVia?: "WHATSAPP" | "INSTAGRAM";
         };
         ClinicOutreachTemplateRequest: {
             text?: string;
@@ -7185,6 +7189,7 @@ export interface components {
             reminderText?: string;
             /** Format: int32 */
             remindAfterDays: number;
+            instagramVideoText?: string;
         };
         MaterialsControllerLinkRequest: {
             path?: string;
@@ -8738,6 +8743,10 @@ export interface components {
             /** Format: date */
             paidUntil?: string;
         };
+        ClinicOutreachSentRequest: {
+            /** @enum {string} */
+            channel?: "WHATSAPP" | "INSTAGRAM";
+        };
         ClinicOutreachDeclineRequest: {
             reason?: string;
         };
@@ -8762,6 +8771,7 @@ export interface components {
             address?: string;
             link?: string;
             city?: string;
+            instagram?: string;
             /** @enum {string} */
             status?: "NEW" | "DUPLICATE" | "ERROR";
             message?: string;
@@ -16171,7 +16181,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ClinicOutreachSentRequest"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

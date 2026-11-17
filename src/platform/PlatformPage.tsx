@@ -23,7 +23,7 @@ type Me = Schemas['BookingViewsMe']
 type Tab = 'clinics' | 'analytics' | 'finance' | 'feedback' | 'mailing' | 'marketing' | 'health' | 'ai' | 'settings'
 
 const FEEDBACK = [{ value: 'tickets', label: 'Обращения' }, { value: 'surveys', label: 'Опросы' }] as const
-const MAILING = [{ value: 'one', label: 'По одной (WhatsApp)' }, { value: 'all', label: 'Всем сразу (руководителям)' }] as const
+const MAILING = [{ value: 'one', label: 'По одной (WhatsApp и Instagram)' }, { value: 'all', label: 'Всем сразу (руководителям)' }] as const
 const MARKETING = [{ value: 'content', label: 'Контент-план' }, { value: 'materials', label: 'Материалы' }] as const
 
 /**

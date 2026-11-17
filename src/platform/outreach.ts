@@ -26,9 +26,39 @@ export function messageFor(template: string, clinicName: string): string {
   return template.split(PLACEHOLDER).join(clinicName).replace(/(^|[\s(«"])(tish\.kg(?:\/\S*)?)/g, '$1https://$2')
 }
 
-/** Кому можно написать: ещё не писали, не просили не беспокоить, есть телефон или ссылка. */
+/** Кому можно написать: ещё не писали, не просили не беспокоить, есть телефон, Instagram или ссылка. */
 export function writable(lead: OutreachLead): boolean {
-  return lead.stage === 'LEAD' && Boolean(lead.phone || lead.link)
+  return lead.stage === 'LEAD' && Boolean(lead.phone || lead.instagram || lead.link)
+}
+
+/** Каким каналом написали клинике (сервер помнит в contactedVia; старые отметки без канала — WhatsApp). */
+export type Channel = 'WHATSAPP' | 'INSTAGRAM'
+
+/** Фильтр «Канал»: куда можно написать — есть телефон (WhatsApp), есть Instagram или есть оба. */
+export type Reach = 'WHATSAPP' | 'INSTAGRAM' | 'BOTH'
+
+export const REACHES: [Reach, string][] = [['WHATSAPP', 'WhatsApp'], ['INSTAGRAM', 'Instagram'], ['BOTH', 'Есть оба']]
+
+export function reaches(lead: OutreachLead, reach: Reach): boolean {
+  return reach === 'WHATSAPP' ? Boolean(lead.phone) : reach === 'INSTAGRAM' ? Boolean(lead.instagram) : Boolean(lead.phone && lead.instagram)
+}
+
+/** Куда можно написать — словами, для колонки «Канал»: «WhatsApp», «Instagram», «WhatsApp + Instagram». */
+export function reachText(lead: OutreachLead): string {
+  return [lead.phone && 'WhatsApp', lead.instagram && 'Instagram'].filter(Boolean).join(' + ')
+}
+
+/**
+ * Direct этого аккаунта: ig.me/m/<логин> — на телефоне откроется приложение Instagram сразу в чате, на компьютере —
+ * instagram.com/direct. Текст по ссылке Instagram не подставляет — его копируем в буфер заранее.
+ */
+export function instagramUrl(login: string): string {
+  return `https://ig.me/m/${encodeURIComponent(login)}`
+}
+
+/** Профиль клиники в Instagram — посмотреть, что за клиника. */
+export function instagramProfile(login: string): string {
+  return `https://www.instagram.com/${encodeURIComponent(login)}/`
 }
 
 /**
