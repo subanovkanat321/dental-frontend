@@ -31,10 +31,7 @@ function backend(config: { sms?: boolean; password?: boolean; telegram?: boolean
       botUsername: 'tish_test_bot', smsLogin: config.sms ?? true, passwordLogin: config.password ?? true,
       telegramCode: config.telegram ?? true, mailCode: config.mail ?? false,
     })),
-    http.post('*/web/login/phone/channels', async ({ request }) => {
-      await record('channels', request)
-      return HttpResponse.json({ emailMasked: 'a***@gmail.com' })
-    }),
+
     http.post('*/web/login/phone/code', async ({ request }) => {
       const body = await record('code', request)
       return config.sms === false && body.channel === 'sms'
@@ -157,7 +154,7 @@ test('«Забыли пароль? / Первый вход» → одна кно
   expect(posts.at(-1)!.body).toEqual({ token: 'tok-1', password: 'Тишина2026' })
 })
 
-test('почта настроена: после номера — выбор канала, «На почту a***@gmail.com» → код из письма → пароль → вход', async () => {
+test('почта настроена: после номера — выбор канала, «На почту из «Моего профиля»» (без адреса) → код из письма → пароль → вход', async () => {
   const posts = backend({ mail: true })
   const user = userEvent.setup()
   renderApp()
@@ -169,13 +166,14 @@ test('почта настроена: после номера — выбор ка
   expect(choose).toHaveTextContent('Куда прислать код?')
   expect(screen.getByRole('button', { name: 'В Telegram' })).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'По SMS' })).toBeInTheDocument()
-  // Маска может быть «приманкой» (сервер не выдаёт, есть ли почта) — подсказка, что делать, если почты нет
-  expect(choose).toHaveTextContent('Не добавляли — выберите Telegram или SMS')
-  await user.click(screen.getByRole('button', { name: 'На почту a***@gmail.com' }))
+  // Адреса (даже маской) нет: он выдал бы, что у номера есть почта
+  expect(choose).not.toHaveTextContent('@')
+  await user.click(screen.getByRole('button', { name: 'На почту из «Моего профиля»' }))
 
   const step = await screen.findByRole('form', { name: 'Код подтверждения' })
-  expect(step).toHaveTextContent('Отправили письмо с кодом на a***@gmail.com')
+  expect(step).toHaveTextContent('Если к номеру добавлена почта — код уже в письме (проверьте «Спам»). Не добавляли — выберите Telegram или SMS.')
   expect(step).toHaveTextContent('Код действует 10 минут')
+  expect(step).not.toHaveTextContent('@')
   // Про SMS на шаге письма не говорим: повтор — снова письмо
   expect(step).toHaveTextContent(/Отправить ещё раз — через \d+ с/)
   expect(screen.getByRole('button', { name: 'Другой способ' })).toBeInTheDocument()
@@ -187,9 +185,8 @@ test('почта настроена: после номера — выбор ка
   await user.click(screen.getByRole('button', { name: 'Сохранить и войти' }))
 
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
-  expect(posts.map((p) => p.path)).toEqual(['channels', 'code', 'verify', 'new'])
-  expect(posts[0]!.body).toEqual({ phone: '+996 700000031' })
-  expect(posts[1]!.body).toEqual({ phone: '+996 700000031', channel: 'mail' })
+  expect(posts.map((p) => p.path)).toEqual(['code', 'verify', 'new'])
+  expect(posts[0]!.body).toEqual({ phone: '+996 700000031', channel: 'mail' })
   expect(posts.every((p) => p.header === '1')).toBe(true)
 })
 
