@@ -9,6 +9,7 @@ import type { Earnings } from '../earnings/earnings'
 import { EarningsSummary } from '../earnings/EarningsWidgets'
 import { OnDuty } from '../team/OnDuty'
 import { EmptyState } from '../layout/EmptyState'
+import { ReviewAsksChip } from './AskReview'
 
 type Appointment = Schemas['AppointmentView']
 
@@ -27,7 +28,7 @@ function duration(minutes: number): string {
  * сеткой на ноутбуке поуже, — только столбиком; нажатие ведёт туда же. Когда открыта карточка
  * приёма, она занимает это место.
  */
-export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, earnings, onOpenEarnings, low, free, onOpen: openProp, onBook: bookProp, onNavigate: navigateProp, onClose }: {
+export function DaySummary({ date, today, all, doctorName, requests, waiting, toPay, revenueSom, earnings, onOpenEarnings, low, free, onOpen: openProp, onBook: bookProp, onNavigate: navigateProp, onClose, reviewAsks = 0, onReviewAsks }: {
   date: string
   today: string
   /** Приёмы дня без отменённых */
@@ -47,6 +48,9 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
   onNavigate?: (page: Page) => void
   /** «×» вверху: скрыть сводку — колонки врачей на весь экран */
   onClose?: () => void
+  /** Сколько пациентов без Telegram можно попросить оценить приём («⭐ N попросить оценку») */
+  reviewAsks?: number
+  onReviewAsks?: () => void
 }) {
   // «На весь экран» — пока смотрят; открыли приём, запись или раздел — сводка снова сбоку
   const [full, setFull] = useState(false)
@@ -125,6 +129,7 @@ export function DaySummary({ date, today, all, doctorName, requests, waiting, to
               <b>{low}</b> на складе заканчивается
             </button>
           )}
+          {onReviewAsks && <ReviewAsksChip count={reviewAsks} onOpen={onReviewAsks} />}
           {calm && <span className="stat s-quiet calm">Всё под контролем: заявок и срочных дел нет</span>}
         </div>
       </section>

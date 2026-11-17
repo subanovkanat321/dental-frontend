@@ -125,7 +125,7 @@ test('статистика: неявки по неделям, среднее б�
       { weekStart: '2026-10-19', booked: 20, done: 17, noShow: 2, cancelled: 1, reminded: 15, unmarked: 0 },
       { weekStart: '2026-10-12', booked: 18, done: 14, noShow: 1, cancelled: 2, reminded: 12, unmarked: 1 },
     ] satisfies Schemas['WeekStats'][])),
-    http.get('*/api/appointments/ratings', () => HttpResponse.json({ average: 4.5, count: 4, byStars: [0, 0, 0, 2, 2] } satisfies Schemas['RatingSummary'])),
+    http.get('*/api/appointments/ratings', () => HttpResponse.json({ average: 4.5, count: 4, byStars: [0, 0, 0, 2, 2], fromPage: 1 } satisfies Schemas['RatingSummary'])),
   )
   const user = userEvent.setup()
   renderApp()

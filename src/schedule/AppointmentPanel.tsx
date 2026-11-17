@@ -44,6 +44,8 @@ import { HelpHint } from '../help/HelpHint'
 import { PlanDone } from './PlanDone'
 import { VisitPlan } from './VisitPlan'
 import { askPlanDone } from './planDoneStore'
+import { AskReview } from './AskReview'
+import { asksReview } from './reviewLinks'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -270,7 +272,7 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         {sourceHint && <p className="hint small">{sourceHint}</p>}
         {a.reminderOpenedAt && a.status === 'SCHEDULED' && <ReminderSent a={a} canEdit={canEdit} />}
         {a.rating != null && (
-          <p className="rating" aria-label={`Оценка пациента: ${a.rating} из 5`}>{'★'.repeat(a.rating)}{'☆'.repeat(5 - a.rating)} <span className="hint">оценка пациента</span></p>
+          <p className="rating" aria-label={`Оценка пациента: ${a.rating} из 5`}>{'★'.repeat(a.rating)}{'☆'.repeat(5 - a.rating)} <span className="hint">оценка пациента{a.ratingVia === 'PAGE' ? ' · по ссылке' : ''}</span></p>
         )}
         {a.reviewComment && <blockquote className="review-comment"><span className="hint">Пациент написал:</span><br />{a.reviewComment}</blockquote>}
       </section>
@@ -366,6 +368,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             <>
               {onBook && <button type="button" className={payPending ? 'btn' : 'btn primary'} onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
               <ContactButtons phone={contactPhone(a.patient)} />
+              {/* Пациент без Telegram: бот «Как прошёл приём?» не спросит — ссылка на оценку в WhatsApp */}
+              {asksReview(a) && <AskReview appointment={a} />}
             </>
           )}
         </>

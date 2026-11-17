@@ -4405,6 +4405,102 @@
         }
       }
     },
+    "/web/review/{token}" : {
+      "get" : {
+        "tags" : [ "review-link-controller" ],
+        "operationId" : "page",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReviewLinksPage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "review-link-controller" ],
+        "operationId" : "rate",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReviewLinkControllerRate"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReviewLinksPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/review/{token}/comment" : {
+      "post" : {
+        "tags" : [ "review-link-controller" ],
+        "operationId" : "comment_1",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReviewLinkControllerComment"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReviewLinksPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/plan/{token}/question" : {
       "post" : {
         "tags" : [ "plan-page-controller" ],
@@ -10966,6 +11062,58 @@
         }
       }
     },
+    "/api/appointments/{id}/review-link" : {
+      "get" : {
+        "tags" : [ "review-link-controller" ],
+        "operationId" : "draft_5",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReviewLinksDraft"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "review-link-controller" ],
+        "operationId" : "send_4",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReviewLinksSent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/{id}/reschedule" : {
       "post" : {
         "tags" : [ "appointment-controller" ],
@@ -11108,7 +11256,7 @@
     "/api/appointments/{id}/receipt/send" : {
       "post" : {
         "tags" : [ "receipt-controller" ],
-        "operationId" : "send_4",
+        "operationId" : "send_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11427,7 +11575,7 @@
     "/api/appointments/{id}/care-memo/send" : {
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "send_5",
+        "operationId" : "send_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -15110,6 +15258,27 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/SourcesControllerSourcesView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/review-asks" : {
+      "get" : {
+        "tags" : [ "review-link-controller" ],
+        "operationId" : "candidates",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ReviewLinksCandidate"
+                  }
                 }
               }
             }
@@ -19261,6 +19430,9 @@
             "items" : {
               "type" : "string"
             }
+          },
+          "googleReviewUrl" : {
+            "type" : "string"
           }
         }
       },
@@ -19341,6 +19513,9 @@
           },
           "patientContracts" : {
             "type" : "boolean"
+          },
+          "googleReviewUrl" : {
+            "type" : "string"
           }
         },
         "required" : [ "independentDoctors", "listed", "ownHours", "recallMonths", "separateSupplies", "settingUp" ]
@@ -19845,6 +20020,9 @@
           },
           "chairManual" : {
             "type" : "boolean"
+          },
+          "ratingVia" : {
+            "type" : "string"
           }
         },
         "required" : [ "chairManual", "debtSom", "doctorId", "endAt", "firstVisit", "id", "patient", "source", "startAt", "status", "version" ]
@@ -20136,6 +20314,52 @@
           }
         },
         "required" : [ "phoneMasked", "resendSeconds", "secondsLeft" ]
+      },
+      "ReviewLinkControllerRate" : {
+        "properties" : {
+          "rating" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "ReviewLinksPage" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "rating" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "canComment" : {
+            "type" : "boolean"
+          },
+          "commented" : {
+            "type" : "boolean"
+          },
+          "mapUrl" : {
+            "type" : "string"
+          },
+          "googleUrl" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "canComment", "clinicName", "commented", "startAt" ]
+      },
+      "ReviewLinkControllerComment" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        }
       },
       "PlanOffersItem" : {
         "properties" : {
@@ -22960,6 +23184,24 @@
           }
         },
         "required" : [ "status", "version" ]
+      },
+      "ReviewLinksSent" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "askedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "askedAt", "phone", "text", "url" ]
       },
       "AppointmentRequestsReschedule" : {
         "properties" : {
@@ -27130,6 +27372,28 @@
         },
         "required" : [ "ai" ]
       },
+      "ReviewLinksDraft" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "askedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "nextAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "available" ]
+      },
       "ReceiptsPayment" : {
         "properties" : {
           "paidAt" : {
@@ -27323,6 +27587,26 @@
         },
         "required" : [ "firstVisits", "repeatVisits" ]
       },
+      "ReviewLinksCandidate" : {
+        "properties" : {
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "$ref" : "#/components/schemas/PatientView"
+          }
+        },
+        "required" : [ "appointmentId", "doctorId", "patient", "startAt" ]
+      },
       "RevenueView" : {
         "properties" : {
           "from" : {
@@ -27497,9 +27781,13 @@
               "type" : "integer",
               "format" : "int64"
             }
+          },
+          "fromPage" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "count" ]
+        "required" : [ "count", "fromPage" ]
       },
       "PromoReportControllerPromoReport" : {
         "properties" : {

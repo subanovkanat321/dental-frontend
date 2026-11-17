@@ -17,7 +17,7 @@ import { Loading } from '../layout/Loading'
 type Me = Schemas['BookingViewsMe']
 type Clinic = Schemas['ClinicView']
 
-const FIELDS = ['brandName', 'phones', 'whatsappPhone', 'legalName', 'address', 'city', 'mapUrl', 'supportTelegram', 'supportPhone', 'workEnd', 'workDays'] as const
+const FIELDS = ['brandName', 'phones', 'whatsappPhone', 'legalName', 'address', 'city', 'mapUrl', 'googleReviewUrl', 'supportTelegram', 'supportPhone', 'workEnd', 'workDays'] as const
 
 /**
  * «О клинике»: что видят пациенты (название, телефоны, WhatsApp, адрес, 2ГИС, часы), как работают врачи
@@ -42,7 +42,7 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
   const canEdit = canEditPrices(me)
   const [f, setF] = useState({
     brandName: c.brandName ?? '', phones: phonesToInput(c.phones), whatsappPhone: phoneToInput(c.whatsappPhone), legalName: c.legalName ?? '', address: c.address ?? '', city: c.city ?? '',
-    mapUrl: c.mapUrl ?? '', supportTelegram: c.supportTelegram ? `@${c.supportTelegram}` : '', supportPhone: phoneToInput(c.supportPhone),
+    mapUrl: c.mapUrl ?? '', googleReviewUrl: c.googleReviewUrl ?? '', supportTelegram: c.supportTelegram ? `@${c.supportTelegram}` : '', supportPhone: phoneToInput(c.supportPhone),
     workStart: (c.workStart ?? '09:00').slice(0, 5), workEnd: (c.workEnd ?? '18:00').slice(0, 5),
     independentDoctors: Boolean(c.independentDoctors), separateSupplies: Boolean(c.separateSupplies), listed: c.listed !== false,
   })
@@ -116,6 +116,11 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
             <input type="url" value={f.mapUrl} maxLength={300} placeholder="https://2gis.kg/bishkek/…" onChange={text('mapUrl')} /></label>
           {err('mapUrl') && <p className="error">{err('mapUrl')}</p>}
           <p className="hint">В 2ГИС найдите кабинет → «Поделиться» → «Скопировать ссылку» и вставьте сюда.</p>
+          <label className="field"><span>Ссылка на отзывы в Google — необязательно</span>
+            <input type="url" value={f.googleReviewUrl} maxLength={300} placeholder="https://g.page/r/…/review" onChange={text('googleReviewUrl')} /></label>
+          {err('googleReviewUrl') && <p className="error">{err('googleReviewUrl')}</p>}
+          <p className="hint">Google Карты → карточка клиники → «Поделиться» (или «Получить больше отзывов»). Кто оценит приём на 5 ⭐,
+            увидит кнопки «Оставить отзыв в 2ГИС» и «Google».</p>
           {page && <BookingPage url={page} />}
           <label className="check"><input type="checkbox" checked={f.listed} onChange={flag('listed')} /> Показывать клинику в общем каталоге /clinics</label>
 

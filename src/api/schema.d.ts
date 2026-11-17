@@ -1652,6 +1652,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/review/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["page"];
+        put?: never;
+        post: operations["rate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/review/{token}/comment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["comment_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/plan/{token}/question": {
         parameters: {
             query?: never;
@@ -4404,6 +4436,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/{id}/review-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["draft_5"];
+        put?: never;
+        post: operations["send_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/{id}/reschedule": {
         parameters: {
             query?: never;
@@ -4477,7 +4525,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_4"];
+        post: operations["send_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4621,7 +4669,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["send_5"];
+        post: operations["send_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6692,6 +6740,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/review-asks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["candidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/revenue": {
         parameters: {
             query?: never;
@@ -8451,6 +8515,7 @@ export interface components {
             separateSupplies?: boolean;
             city?: string;
             phones?: string[];
+            googleReviewUrl?: string;
         };
         ClinicView: {
             brandName?: string;
@@ -8478,6 +8543,7 @@ export interface components {
             /** Format: int32 */
             recallMonths: number;
             patientContracts?: boolean;
+            googleReviewUrl?: string;
         };
         VisitReportControllerAiChange: {
             on?: boolean;
@@ -8679,6 +8745,7 @@ export interface components {
             /** Format: int64 */
             chairId?: number;
             chairManual: boolean;
+            ratingVia?: string;
         };
         FamiliesBooker: {
             fullName?: string;
@@ -8794,6 +8861,25 @@ export interface components {
             secondsLeft: number;
             /** Format: int64 */
             resendSeconds: number;
+        };
+        ReviewLinkControllerRate: {
+            /** Format: int32 */
+            rating?: number;
+        };
+        ReviewLinksPage: {
+            clinicName: string;
+            doctorName?: string;
+            /** Format: date-time */
+            startAt: string;
+            /** Format: int32 */
+            rating?: number;
+            canComment: boolean;
+            commented: boolean;
+            mapUrl?: string;
+            googleUrl?: string;
+        };
+        ReviewLinkControllerComment: {
+            text?: string;
         };
         PlanOffersItem: {
             /** Format: int32 */
@@ -9953,6 +10039,13 @@ export interface components {
             version: number;
             /** @enum {string} */
             status: "REQUESTED" | "SCHEDULED" | "CANCELLED" | "DONE" | "NO_SHOW";
+        };
+        ReviewLinksSent: {
+            text: string;
+            url: string;
+            phone: string;
+            /** Format: date-time */
+            askedAt: string;
         };
         AppointmentRequestsReschedule: {
             /** Format: int64 */
@@ -11572,6 +11665,15 @@ export interface components {
             /** Format: date-time */
             sentAt?: string;
         };
+        ReviewLinksDraft: {
+            available: boolean;
+            reason?: string;
+            message?: string;
+            /** Format: date-time */
+            askedAt?: string;
+            /** Format: date-time */
+            nextAt?: string;
+        };
         ReceiptsPayment: {
             /** Format: date-time */
             paidAt?: string;
@@ -11654,6 +11756,15 @@ export interface components {
             /** Format: int32 */
             repeatVisits: number;
         };
+        ReviewLinksCandidate: {
+            /** Format: int64 */
+            appointmentId: number;
+            /** Format: date-time */
+            startAt: string;
+            /** Format: int64 */
+            doctorId: number;
+            patient: components["schemas"]["PatientView"];
+        };
         RevenueView: {
             /** Format: date */
             from?: string;
@@ -11727,6 +11838,8 @@ export interface components {
             count: number;
             average?: number;
             byStars?: number[];
+            /** Format: int64 */
+            fromPage: number;
         };
         PromoReportControllerPromoReport: {
             rows?: components["schemas"]["PromoReportControllerRow"][];
@@ -15405,6 +15518,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SignupControllerCodeSent"];
+                };
+            };
+        };
+    };
+    page: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewLinksPage"];
+                };
+            };
+        };
+    };
+    rate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewLinkControllerRate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewLinksPage"];
+                };
+            };
+        };
+    };
+    comment_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewLinkControllerComment"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewLinksPage"];
                 };
             };
         };
@@ -20632,6 +20819,50 @@ export interface operations {
             };
         };
     };
+    draft_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewLinksDraft"];
+                };
+            };
+        };
+    };
+    send_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewLinksSent"];
+                };
+            };
+        };
+    };
     reschedule_1: {
         parameters: {
             query?: never;
@@ -20746,7 +20977,7 @@ export interface operations {
             };
         };
     };
-    send_4: {
+    send_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -20974,7 +21205,7 @@ export interface operations {
             };
         };
     };
-    send_5: {
+    send_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -23937,6 +24168,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SourcesControllerSourcesView"];
+                };
+            };
+        };
+    };
+    candidates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewLinksCandidate"][];
                 };
             };
         };

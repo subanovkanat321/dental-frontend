@@ -125,3 +125,22 @@ body.site {
 .site-case-metrics span { color: var(--hint); font-size: .9rem; }
 /* /join: «Попробовать бесплатно» (регистрация сама) и «Хочу, чтобы помогли подключить» — рядом под заголовком */
 .site-ctas { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 0; }
+
+/* Оценка приёма по ссылке из WhatsApp (/r/<секрет>, ReviewPage) */
+.review-page { display: grid; gap: 16px; max-width: 480px; }
+.review-head p { margin: 0; }
+.review-clinic { font-family: var(--display); font-weight: 600; font-size: 1.1rem; }
+.review-ask, .review-done { display: grid; gap: 10px; padding: 18px; border-radius: 16px; background: var(--card); border: 1px solid var(--separator); }
+.review-ask h1, .review-done h1, .review-ask p, .review-done p { margin: 0; }
+.review-stars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px; }
+.review-stars button { display: grid; justify-items: center; gap: 2px; min-height: 64px; padding: 6px 0; border: 1px solid var(--separator); border-radius: 14px;
+  background: var(--page); color: var(--wait-ink); font: inherit; font-size: 1.9rem; line-height: 1; cursor: pointer; }
+.review-stars button:hover, .review-stars button:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+.review-star-n { font-size: .85rem; color: var(--hint); font-variant-numeric: tabular-nums; }
+.review-given { font-size: 2rem; color: var(--wait-ink); letter-spacing: 2px; }
+.review-off { color: var(--separator); }
+.review-public { display: grid; gap: 10px; margin-top: 4px; }
+.review-public .btn { display: flex; justify-content: center; align-items: center; min-height: 52px; font-size: 1.05rem; text-decoration: none; }
+.review-comment-form { display: grid; gap: 8px; }
+.review-comment-form .field { display: grid; gap: 6px; }
+.review-comment-form textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border-radius: 10px; border: 1px solid var(--line-strong); resize: vertical; }

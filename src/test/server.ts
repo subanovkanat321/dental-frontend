@@ -62,6 +62,9 @@ export const server = setupServer(
   http.get('*/api/appointments/promo-codes', () => HttpResponse.json({ rows: [], money: false })),
   http.get('*/api/appointments/revenue', () => HttpResponse.json({ totalSom: 0, paidCount: 0, unpaidCount: 0, byMethod: {}, days: [] })),
   http.get('*/api/appointments/to-pay', () => HttpResponse.json([])),
+  // «⭐ Попросить оценку» (V222): по умолчанию просить некого и в карточке кнопки нет — тесты оценки задают своё
+  http.get('*/api/appointments/review-asks', () => HttpResponse.json([] satisfies Schemas['ReviewLinksCandidate'][])),
+  http.get('*/api/appointments/:id/review-link', () => HttpResponse.json({ available: false, reason: 'rated' } satisfies Schemas['ReviewLinksDraft'])),
   // «Мой заработок» — по умолчанию нет (как у админа без кресла): тесты своих экранов не видят лишний чип
   http.get('*/api/me/earnings', () => HttpResponse.json({ status: 403, title: 'Forbidden' }, { status: 403 })),
   // «Чистыми за месяц»: по умолчанию врач работает за клинику (блока нет), итога по врачам нет

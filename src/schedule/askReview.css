@@ -1,0 +1,10 @@
+/* «⭐ Попросить оценку» в карточке приёма и список «Попросите оценку» (AskReview.tsx) */
+.ask-review { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ask-review-wait { margin: 0; }
+.ask-review-dialog { width: min(520px, calc(100vw - 32px)); gap: 12px; outline: none; }
+.ask-review-dialog h2 { margin: 0; }
+.ask-review-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; max-height: 60vh; overflow: auto; }
+.ask-review-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--separator); }
+.ask-review-list li:first-child { border-top: 0; }
+.ask-review-who { display: grid; gap: 2px; min-width: 0; }
+.ask-review-who strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

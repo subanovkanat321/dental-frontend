@@ -252,7 +252,7 @@ export function StatsTab({ doctorId }: { doctorId: number | null }) {
         <h2>Оценки пациентов · 90 дней</h2>
         {r && r.count ? (
           <>
-            <p className="total" aria-label="Средняя оценка">{String(r.average).replace('.', ',')}<span className="hint small"> из 5 · оценок: {r.count}</span></p>
+            <p className="total" aria-label="Средняя оценка">{String(r.average).replace('.', ',')}<span className="hint small"> из 5 · оценок: {r.count}{r.fromPage ? ` · по ссылке из WhatsApp: ${r.fromPage}` : ''}</span></p>
             <div className="stars" aria-label="Оценки по звёздам">
               {[5, 4, 3, 2, 1].map((stars) => (
                 <div key={stars} className="stars-row">
@@ -263,7 +263,8 @@ export function StatsTab({ doctorId }: { doctorId: number | null }) {
               ))}
             </div>
           </>
-        ) : <EmptyState title="Оценок пока нет">На следующий день после приёма бот спросит оценку у тех, кто записывался через бота.</EmptyState>}
+        ) : <EmptyState title="Оценок пока нет">На следующий день после приёма бот спросит оценку у тех, кто записывался через бота. Пациентов без Telegram —
+          «⭐ Попросить оценку» в карточке приёма.</EmptyState>}
       </section>
     </>
   )

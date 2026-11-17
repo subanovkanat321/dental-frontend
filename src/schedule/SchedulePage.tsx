@@ -45,6 +45,8 @@ import { useChairs } from '../team/chairs'
 import { MonthGrid } from './month/MonthGrid'
 import { addMonths, monthTitle } from './month/monthModel'
 import { useMonthData } from './month/useMonth'
+import { ReviewAsksChip, ReviewAsksDialog } from './AskReview'
+import { useReviewAsks } from './reviewLinks'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -335,6 +337,10 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       {compact ? <><b>{overdueTasks}</b> просрочено</> : <>Просроченные задачи: <b>{overdueTasks}</b></>}
     </button>
   )
+  // «⭐ N попросить оценку» — пациенты без Telegram за сегодня и вчера (бот их не спросит); только на сегодняшнем дне
+  const [reviewAsksOpen, setReviewAsksOpen] = useState(false)
+  const reviewAsks = useReviewAsks(date === today).data?.length ?? 0
+  const reviewChip = (compact: boolean) => date === today && <ReviewAsksChip count={reviewAsks} compact={compact} onOpen={() => setReviewAsksOpen(true)} />
   const firstOf = (list: Appointment[]) => () => {
     const first = [...list].sort((a, b) => (a.startAt < b.startAt ? -1 : 1))[0]
     if (first) setSide({ kind: 'appointment', id: first.id })
@@ -499,7 +505,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           <>
             {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках
                 дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
-            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data || overdueTasks > 0) && (
+            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data || overdueTasks > 0 || (date === today && reviewAsks > 0)) && (
               <div className="today-strip compact" role="group" aria-label="Требует внимания">
                 {tasksChip(true)}
                 {requests.length > 0 && (
@@ -511,6 +517,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                   <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}><b>{toPay.data!.length}</b> к оплате</button>
                 )}
                 {earnings.data && <EarningsChip compact e={earnings.data} onOpen={openEarnings} />}
+                {reviewChip(true)}
               </div>
             )}
             {doctorSwitch}
@@ -554,6 +561,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                     <b>{low}</b> мало на складе
                   </button>
                 )}
+                {reviewChip(false)}
                 {!requests.length && !waiting.length && !toPay.data?.length && !low && (
                   <span className="stat s-quiet calm" title="Всё под контролем: заявок и срочных дел нет" aria-label="Всё под контролем: заявок и срочных дел нет">✓ Всё спокойно</span>
                 )}
@@ -718,7 +726,8 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         <DaySummary date={date} today={today} all={all} requests={requests} waiting={waiting} toPay={toPay.data?.length ?? 0}
           revenueSom={revenue.data ? revenue.data.totalSom : null} earnings={earnings.data ?? null} onOpenEarnings={openEarnings} low={low} free={shown.length > 0 && date >= today ? free : []}
           doctorName={(id) => doctors.find((d) => d.id === id)?.fullName ?? ''}
-          onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onBook={bookAt} onNavigate={onNavigate} onClose={toggleSummary} />
+          onOpen={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} onBook={bookAt} onNavigate={onNavigate} onClose={toggleSummary}
+          reviewAsks={date === today ? reviewAsks : 0} onReviewAsks={() => setReviewAsksOpen(true)} />
       )}
       {/* key: другой приём — новая карточка, формы и «Вернуть» прежнего не переносятся */}
       {selected && <AppointmentPanel key={selected.id} appointment={selected} me={me} onClose={close} onOpenPatient={onOpenPatient}
@@ -728,6 +737,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
         <NewAppointmentPanel slot={side.slot} me={me} initialPatient={side.patient} initialContact={side.contact} nowDoctorId={firstBookable()?.id} onClose={close}
           onCreated={(a) => setSide({ kind: 'appointment', id: a.id, fallback: a })} />
       )}
+      {reviewAsksOpen && <ReviewAsksDialog doctorName={doctorName} onClose={() => setReviewAsksOpen(false)} />}
     </div>
   )
 }
