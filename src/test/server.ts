@@ -97,7 +97,7 @@ export const server = setupServer(
   http.get('*/api/tasks/summary', () => HttpResponse.json({ overdue: 0 } satisfies Schemas['TaskControllerSummary'])),
   http.get('*/api/tasks/assignees', () => HttpResponse.json([] satisfies Schemas['TaskControllerAssignee'][])),
   http.get('*/api/tasks', () => HttpResponse.json([] satisfies Schemas['TaskView'][])),
-  // Лаборатория (V220): по умолчанию ни работ, ни лабораторий, ни долгов
+  // Лаборатория (V221): по умолчанию ни работ, ни лабораторий, ни долгов
   http.get('*/api/lab-orders/debts', () => HttpResponse.json({ totalSom: 0, labs: [] } satisfies Schemas['LabControllerDebts'])),
   http.get('*/api/lab-orders/visits', () => HttpResponse.json([] satisfies Schemas['LabControllerVisit'][])),
   http.get('*/api/lab-orders', () => HttpResponse.json([] satisfies Schemas['LabOrderView'][])),
