@@ -24,6 +24,7 @@ import { useNavGap } from './navGap'
 import { isAssistant } from '../lib/roles'
 import { SurveyInvite } from '../survey/SurveyInvite'
 import { useNewQuestions } from '../api/questions'
+import { useTaskSummary } from '../tasks/api'
 import { TourHost } from '../tour/Tour'
 import { PushPrompt } from '../pwa/PushPrompt'
 import { useFullView } from '../lib/fullView'
@@ -101,7 +102,9 @@ export function Shell({ me, page, onNavigate, children }: { me: Me; page: Page; 
   // Числа у подразделов: вопросы пациентов ждут ответа, сколько в листе ожидания (видно из любого раздела)
   const questions = useNewQuestions(Boolean(me.doctor)).data?.count ?? 0
   const waitlist = useWaitlist(Boolean(me.doctor)).data?.length ?? 0
-  const counts: Counts = { 'patients/questions': questions, 'patients/waitlist': waitlist }
+  // Мои просроченные задачи — заметным числом: их пора сделать
+  const overdueTasks = useTaskSummary(Boolean(me.doctor)).data?.overdue ?? 0
+  const counts: Counts = { 'patients/questions': questions, 'patients/waitlist': waitlist, 'patients/tasks': overdueTasks }
   // Открытый подраздел каждого раздела (адрес или последний открытый) и пункт «Настроек»
   const chosen: Partial<Record<Page, string | null>> = {
     patients: useSub('patients'), cash: useSub('cash'), stock: useSub('stock'), clinic: useSub('clinic'), platform: useSub('platform'),

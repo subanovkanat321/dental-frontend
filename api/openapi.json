@@ -10,10 +10,90 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/api/tasks/{id}" : {
+      "get" : {
+        "tags" : [ "task-controller" ],
+        "operationId" : "get",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TaskView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "task-controller" ],
+        "operationId" : "update",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NewTask"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TaskView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "task-controller" ],
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/api/supplies/{id}" : {
       "put" : {
         "tags" : [ "supply-controller" ],
-        "operationId" : "update",
+        "operationId" : "update_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -48,7 +128,7 @@
       },
       "delete" : {
         "tags" : [ "supply-controller" ],
-        "operationId" : "delete",
+        "operationId" : "delete_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -126,7 +206,7 @@
     "/api/shifts/{id}" : {
       "put" : {
         "tags" : [ "shift-controller" ],
-        "operationId" : "update_1",
+        "operationId" : "update_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -161,7 +241,7 @@
       },
       "delete" : {
         "tags" : [ "shift-controller" ],
-        "operationId" : "delete_1",
+        "operationId" : "delete_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -243,7 +323,7 @@
     "/api/service-types/{id}" : {
       "put" : {
         "tags" : [ "service-type-controller" ],
-        "operationId" : "update_2",
+        "operationId" : "update_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -278,7 +358,7 @@
       },
       "delete" : {
         "tags" : [ "service-type-controller" ],
-        "operationId" : "delete_2",
+        "operationId" : "delete_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -545,7 +625,7 @@
     "/api/promo-codes/{id}" : {
       "put" : {
         "tags" : [ "promo-code-controller" ],
-        "operationId" : "update_3",
+        "operationId" : "update_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -583,7 +663,7 @@
       },
       "delete" : {
         "tags" : [ "promo-code-controller" ],
-        "operationId" : "delete_3",
+        "operationId" : "delete_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -641,7 +721,7 @@
     "/api/platform/surveys/{id}" : {
       "get" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "get",
+        "operationId" : "get_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -666,7 +746,7 @@
       },
       "put" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "update_4",
+        "operationId" : "update_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -701,7 +781,7 @@
       },
       "delete" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "delete_4",
+        "operationId" : "delete_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -765,7 +845,7 @@
     "/api/platform/outreach/{id}" : {
       "put" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "update_5",
+        "operationId" : "update_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -800,7 +880,7 @@
       },
       "delete" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "delete_5",
+        "operationId" : "delete_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1045,7 +1125,7 @@
     "/api/platform/finance/expenses/{id}" : {
       "put" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "update_6",
+        "operationId" : "update_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1080,7 +1160,7 @@
       },
       "delete" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "delete_6",
+        "operationId" : "delete_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1169,7 +1249,7 @@
     "/api/platform/content/{id}" : {
       "put" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "update_7",
+        "operationId" : "update_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1204,7 +1284,7 @@
       },
       "delete" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "delete_7",
+        "operationId" : "delete_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1481,7 +1561,7 @@
     "/api/platform/agreements/{id}" : {
       "put" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "update_8",
+        "operationId" : "update_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1516,7 +1596,7 @@
       },
       "delete" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "delete_8",
+        "operationId" : "delete_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -1573,7 +1653,7 @@
     "/api/patients/{patientId}/teeth/{number}" : {
       "put" : {
         "tags" : [ "chart-controller" ],
-        "operationId" : "update_9",
+        "operationId" : "update_10",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -1929,7 +2009,7 @@
     "/api/patients/{id}" : {
       "put" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "update_10",
+        "operationId" : "update_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2098,7 +2178,7 @@
     "/api/patient-sources/{id}" : {
       "put" : {
         "tags" : [ "patient-sources-controller" ],
-        "operationId" : "update_11",
+        "operationId" : "update_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2299,7 +2379,7 @@
     "/api/me/phone" : {
       "get" : {
         "tags" : [ "my-phone-controller" ],
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -2433,7 +2513,7 @@
     "/api/me/email" : {
       "get" : {
         "tags" : [ "my-email-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -2586,7 +2666,7 @@
     "/api/expenses/{id}" : {
       "put" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "update_12",
+        "operationId" : "update_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2621,7 +2701,7 @@
       },
       "delete" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "delete_9",
+        "operationId" : "delete_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2740,7 +2820,7 @@
       },
       "put" : {
         "tags" : [ "doctor-hours-controller" ],
-        "operationId" : "update_13",
+        "operationId" : "update_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -2900,7 +2980,7 @@
       },
       "put" : {
         "tags" : [ "clinic-controller" ],
-        "operationId" : "update_14",
+        "operationId" : "update_15",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -3355,7 +3435,7 @@
       },
       "delete" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "delete_10",
+        "operationId" : "delete_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3412,7 +3492,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_15",
+        "operationId" : "update_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4664,6 +4744,140 @@
         }
       }
     },
+    "/api/tasks" : {
+      "get" : {
+        "tags" : [ "task-controller" ],
+        "operationId" : "list_1",
+        "parameters" : [ {
+          "name" : "status",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "OPEN", "DONE" ]
+          }
+        }, {
+          "name" : "mine",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "name" : "overdue",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "name" : "patientId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TaskView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "task-controller" ],
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NewTask"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TaskView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/reopen" : {
+      "post" : {
+        "tags" : [ "task-controller" ],
+        "operationId" : "reopen",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TaskView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/{id}/done" : {
+      "post" : {
+        "tags" : [ "task-controller" ],
+        "operationId" : "done",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TaskView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/surveys/{id}/responses" : {
       "post" : {
         "tags" : [ "survey-controller" ],
@@ -4724,7 +4938,7 @@
     "/api/support/tickets" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -4743,7 +4957,7 @@
       },
       "post" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "create_1",
+        "operationId" : "create_2",
         "parameters" : [ {
           "name" : "kind",
           "in" : "query",
@@ -4864,7 +5078,7 @@
       },
       "post" : {
         "tags" : [ "supply-controller" ],
-        "operationId" : "create_2",
+        "operationId" : "create_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5028,7 +5242,7 @@
     "/api/shifts" : {
       "get" : {
         "tags" : [ "shift-controller" ],
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -5061,7 +5275,7 @@
       },
       "post" : {
         "tags" : [ "shift-controller" ],
-        "operationId" : "create_3",
+        "operationId" : "create_4",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5136,7 +5350,7 @@
       },
       "post" : {
         "tags" : [ "service-type-controller" ],
-        "operationId" : "create_4",
+        "operationId" : "create_5",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -5521,7 +5735,7 @@
     "/api/platform/surveys" : {
       "get" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "list_3",
+        "operationId" : "list_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -5540,7 +5754,7 @@
       },
       "post" : {
         "tags" : [ "survey-controller" ],
-        "operationId" : "create_5",
+        "operationId" : "create_6",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6247,7 +6461,7 @@
     "/api/platform/finance/expenses" : {
       "post" : {
         "tags" : [ "platform-finance-controller" ],
-        "operationId" : "create_6",
+        "operationId" : "create_7",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6275,7 +6489,7 @@
     "/api/platform/content" : {
       "get" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "list_4",
+        "operationId" : "list_5",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -6311,7 +6525,7 @@
       },
       "post" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "create_7",
+        "operationId" : "create_8",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6494,7 +6708,7 @@
     "/api/platform/content/{id}/done" : {
       "post" : {
         "tags" : [ "content-controller" ],
-        "operationId" : "done",
+        "operationId" : "done_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -6589,7 +6803,7 @@
       },
       "post" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "create_8",
+        "operationId" : "create_9",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -6945,7 +7159,7 @@
       },
       "post" : {
         "tags" : [ "agreement-controller" ],
-        "operationId" : "create_9",
+        "operationId" : "create_10",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -7047,7 +7261,7 @@
     "/api/patients" : {
       "post" : {
         "tags" : [ "patient-controller" ],
-        "operationId" : "create_10",
+        "operationId" : "create_11",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8211,7 +8425,7 @@
     "/api/news" : {
       "get" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -8545,7 +8759,7 @@
     "/api/expenses" : {
       "get" : {
         "tags" : [ "expense-controller" ],
-        "operationId" : "list_6",
+        "operationId" : "list_7",
         "parameters" : [ {
           "name" : "from",
           "in" : "query",
@@ -8636,7 +8850,7 @@
       },
       "post" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "create_11",
+        "operationId" : "create_12",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8998,7 +9212,7 @@
     "/api/clinic/pay/requests" : {
       "post" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "create_12",
+        "operationId" : "create_13",
         "parameters" : [ {
           "name" : "months",
           "in" : "query",
@@ -9566,7 +9780,7 @@
     "/api/chairs" : {
       "get" : {
         "tags" : [ "chair-assignment-controller" ],
-        "operationId" : "list_7",
+        "operationId" : "list_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9585,7 +9799,7 @@
       },
       "post" : {
         "tags" : [ "chair-controller" ],
-        "operationId" : "create_13",
+        "operationId" : "create_14",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9613,7 +9827,7 @@
     "/api/care-memos" : {
       "get" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "list_8",
+        "operationId" : "list_9",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9632,7 +9846,7 @@
       },
       "post" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "create_14",
+        "operationId" : "create_15",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -9725,7 +9939,7 @@
     "/api/calendar-feed" : {
       "get" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -9757,7 +9971,7 @@
       },
       "delete" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "delete_11",
+        "operationId" : "delete_12",
         "responses" : {
           "204" : {
             "description" : "No Content"
@@ -9812,7 +10026,7 @@
       },
       "post" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "create_15",
+        "operationId" : "create_16",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -11361,7 +11575,7 @@
     "/web/case" : {
       "get" : {
         "tags" : [ "join-case" ],
-        "operationId" : "get_4",
+        "operationId" : "get_5",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11490,6 +11704,45 @@
                   "items" : {
                     "type" : "string",
                     "format" : "date"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/summary" : {
+      "get" : {
+        "tags" : [ "task-controller" ],
+        "operationId" : "summary",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TaskControllerSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tasks/assignees" : {
+      "get" : {
+        "tags" : [ "task-controller" ],
+        "operationId" : "assignees",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TaskControllerAssignee"
                   }
                 }
               }
@@ -11698,7 +11951,7 @@
     "/api/salaries" : {
       "get" : {
         "tags" : [ "salary-controller" ],
-        "operationId" : "list_9",
+        "operationId" : "list_10",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -11727,7 +11980,7 @@
     "/api/salaries/timesheet" : {
       "get" : {
         "tags" : [ "timesheet-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -11897,7 +12150,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11924,7 +12177,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12028,7 +12281,7 @@
     "/api/platform/outreach" : {
       "get" : {
         "tags" : [ "outreach-controller" ],
-        "operationId" : "list_10",
+        "operationId" : "list_11",
         "parameters" : [ {
           "name" : "group",
           "in" : "query",
@@ -12118,7 +12371,7 @@
     "/api/platform/materials" : {
       "get" : {
         "tags" : [ "materials-controller" ],
-        "operationId" : "list_11",
+        "operationId" : "list_12",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12192,7 +12445,7 @@
     "/api/platform/health" : {
       "get" : {
         "tags" : [ "health-controller" ],
-        "operationId" : "get_8",
+        "operationId" : "get_9",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12538,7 +12791,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_9",
+        "operationId" : "get_10",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12742,7 +12995,7 @@
       },
       "delete" : {
         "tags" : [ "medical-record-controller" ],
-        "operationId" : "delete_12",
+        "operationId" : "delete_13",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -12800,7 +13053,7 @@
     "/api/patients/{patientId}/contract" : {
       "get" : {
         "tags" : [ "contract-controller" ],
-        "operationId" : "get_10",
+        "operationId" : "get_11",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -13178,7 +13431,7 @@
     "/api/patient-questions" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "list_12",
+        "operationId" : "list_13",
         "parameters" : [ {
           "name" : "done",
           "in" : "query",
@@ -13205,7 +13458,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_11",
+        "operationId" : "get_12",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -13250,7 +13503,7 @@
     "/api/opening-debts" : {
       "get" : {
         "tags" : [ "opening-debt-controller" ],
-        "operationId" : "list_13",
+        "operationId" : "list_14",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "query",
@@ -13280,7 +13533,7 @@
     "/api/members" : {
       "get" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "list_14",
+        "operationId" : "list_15",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -13340,7 +13593,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_12",
+        "operationId" : "get_13",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -13914,7 +14167,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_13",
+        "operationId" : "get_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -13939,7 +14192,7 @@
       },
       "delete" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "delete_13",
+        "operationId" : "delete_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -13994,7 +14247,7 @@
     "/api/appointments/{id}/teeth" : {
       "get" : {
         "tags" : [ "visit-teeth-controller" ],
-        "operationId" : "list_15",
+        "operationId" : "list_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14800,7 +15053,7 @@
     "/api/time-off/{id}" : {
       "delete" : {
         "tags" : [ "time-off-controller" ],
-        "operationId" : "delete_14",
+        "operationId" : "delete_15",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14840,7 +15093,7 @@
     "/api/platform/clinics/{id}" : {
       "delete" : {
         "tags" : [ "platform-controller" ],
-        "operationId" : "delete_15",
+        "operationId" : "delete_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14897,7 +15150,7 @@
     "/api/news/{id}" : {
       "delete" : {
         "tags" : [ "news-controller" ],
-        "operationId" : "delete_16",
+        "operationId" : "delete_17",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14956,7 +15209,7 @@
     "/api/doctors/{id}" : {
       "delete" : {
         "tags" : [ "doctor-controller" ],
-        "operationId" : "delete_17",
+        "operationId" : "delete_18",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -15016,6 +15269,101 @@
   },
   "components" : {
     "schemas" : {
+      "NewTask" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "dueAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "assigneeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "title" ]
+      },
+      "TaskView" : {
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "dueAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "OPEN", "DONE" ]
+          },
+          "assigneeId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "assigneeName" : {
+            "type" : "string"
+          },
+          "createdById" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdByName" : {
+            "type" : "string"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientName" : {
+            "type" : "string"
+          },
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doneAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "doneByName" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "overdue" : {
+            "type" : "boolean"
+          },
+          "mine" : {
+            "type" : "boolean"
+          },
+          "canEdit" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "assigneeId", "assigneeName", "canEdit", "createdAt", "createdById", "createdByName", "id", "mine", "overdue", "status", "title" ]
+      },
       "SupplyControllerUpdate" : {
         "properties" : {
           "name" : {
@@ -22445,6 +22793,33 @@
             "type" : "string"
           }
         }
+      },
+      "TaskControllerSummary" : {
+        "properties" : {
+          "overdue" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "overdue" ]
+      },
+      "TaskControllerAssignee" : {
+        "properties" : {
+          "telegramId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "me" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "fullName", "me", "role", "telegramId" ]
       },
       "SurveyAnswersCurrent" : {
         "properties" : {

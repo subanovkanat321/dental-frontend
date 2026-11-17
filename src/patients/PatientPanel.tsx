@@ -17,6 +17,7 @@ import { VisitDocs } from '../print/VisitDocs'
 import { WaitlistBox } from './WaitlistTab'
 import { SourceLine } from './SourceLine'
 import { FamilyBox } from './FamilyBox'
+import { PatientTasks } from '../tasks/PatientTasks'
 import { GuardianBox } from './GuardianBox'
 import { KidInfo } from './KidInfo'
 import { contactPhone } from '../lib/guardian'
@@ -192,6 +193,9 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         <div><dt>Следующий</dt><dd>{next ? <span className="num">{shortDate(next.startAt, true)}</span> : 'не записан'}</dd></div>
         {debtTotal > 0 && <div className={overdue ? 'tone-bad' : 'tone-wait'}><dt>Долг</dt><dd className="num">{somText(debtTotal)}</dd></div>}
       </dl>
+
+      {/* Задачи о пациенте («перезвонить после удаления») и «＋ Задача» с ним */}
+      {patient && <PatientTasks patient={{ id: patient.id, fullName: patient.fullName }} />}
 
       <div className="segments tabs" role="tablist" aria-label="Разделы карточки пациента">
         {tabs.map(([key, title]) => (

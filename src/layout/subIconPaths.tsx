@@ -34,6 +34,8 @@ const P = {
   send: <path d="M21 3L10 14M21 3l-7 18-4-7-7-4z" />,
   megaphone: <><path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1z" /><path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a7.5 7.5 0 0 1 0 11" /></>,
   signDoc: <><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z" /><path d="M14 3v5h5M8 17c1.5-2 2.5-2 3 0 .4 1.4 1.3 1.4 2.5 0M15.5 17H17" /></>,
+  /** Задачи: квадрат с галочкой и строки */
+  checkList: <><rect x="3" y="4" width="6" height="6" rx="1" /><path d="m4.5 7 1 1 2-2M13 7h8M13 17h8" /><rect x="3" y="14" width="6" height="6" rx="1" /></>,
   checkDoc: <><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z" /><path d="M14 3v5h5M9 15l2 2 4-4" /></>,
   layers: <path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5" />,
   image: <><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 16l-5-5-9 9" /></>,
@@ -53,7 +55,7 @@ const P = {
 
 /** Рисунок каждого подраздела: раздел → ключ подраздела (как в `subsOf`). Новый подраздел — сюда же (тест `subIcons.test`). */
 export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
-  patients: { all: P.list, booked: P.calendarCheck, waitlist: P.hourglass, comeback: P.comeback, recall: P.tooth, questions: P.chat },
+  patients: { all: P.list, booked: P.calendarCheck, waitlist: P.hourglass, comeback: P.comeback, recall: P.tooth, questions: P.chat, tasks: P.checkList },
   cash: { money: P.banknote, earnings: P.wallet, analytics: P.trend, expenses: P.receipt, debtors: P.debtor, salary: P.envelope, stats: P.bars, report: P.doc },
   stock: { materials: P.box, spending: P.cart },
   platform: {

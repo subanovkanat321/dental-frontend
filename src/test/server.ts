@@ -93,6 +93,10 @@ export const server = setupServer(
   // Неделя сотрудника (строка «Часы» в «Персонале»): по умолчанию — как у клиники
   http.get('*/api/shifts/weekly/:telegramId', () => HttpResponse.json({ telegramId: 0, custom: false, days: [] } satisfies Schemas['ShiftServiceWeekly'])),
   http.get('*/api/shifts', () => HttpResponse.json({ people: [], shifts: [], canEdit: false, me: 0 } satisfies Schemas['ShiftControllerSchedule'])),
+  // Задачи (V218): по умолчанию нет ни одной — ни числа у «Задач», ни строки в расписании
+  http.get('*/api/tasks/summary', () => HttpResponse.json({ overdue: 0 } satisfies Schemas['TaskControllerSummary'])),
+  http.get('*/api/tasks/assignees', () => HttpResponse.json([] satisfies Schemas['TaskControllerAssignee'][])),
+  http.get('*/api/tasks', () => HttpResponse.json([] satisfies Schemas['TaskView'][])),
   // Вопросы пациентов (V142): по умолчанию новых нет — бейджа у «Пациентов» нет
   http.get('*/api/patient-questions/new-count', () => HttpResponse.json({ count: 0 } satisfies Schemas['QuestionControllerNewCount'])),
   // Кресла (V185): по умолчанию у клиники их нет — значков и штриховки «кресло занято» нет

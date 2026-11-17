@@ -11,11 +11,11 @@ type Me = Schemas['BookingViewsMe']
  */
 export type Sub = { key: string; title: string; group?: string }
 
-/** Числа у подразделов («Вопросы» — ждут ответа, «Лист ожидания» — сколько ждут). */
+/** Числа у подразделов («Вопросы» — ждут ответа, «Лист ожидания» — сколько ждут, «Задачи» — мои просроченные). */
 export type Counts = Partial<Record<string, number>>
 
 /** Заметное число (бирюзовое) — ждёт действия; остальные — серым. */
-export const LOUD: ReadonlySet<string> = new Set(['patients/questions'])
+export const LOUD: ReadonlySet<string> = new Set(['patients/questions', 'patients/tasks'])
 
 /**
  * Подразделы раздела — те же, что были вкладками сверху, по тем же правам (сервер всё равно
@@ -27,7 +27,7 @@ export function subsOf(page: Page, me: Me): Sub[] {
       // «Позвать снова» — деньги на столе и приглашения; ассистенту (денег не видит) — прежний «Профосмотр»
       return [{ key: 'all', title: 'Все' }, { key: 'booked', title: 'Записаны' }, { key: 'waitlist', title: 'Лист ожидания' },
         isAssistant(me) ? { key: 'recall', title: 'Профосмотр' } : { key: 'comeback', title: 'Позвать снова' },
-        { key: 'questions', title: 'Вопросы' }]
+        { key: 'questions', title: 'Вопросы' }, { key: 'tasks', title: 'Задачи' }]
     case 'cash': {
       // Без денег (регистратура без кресла) у «Кассы» один экран — «К оплате на кассе»
       if (!seesAllMoney(me) && me.doctorId == null) return []

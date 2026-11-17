@@ -22,6 +22,7 @@ import { Select } from '../layout/Select'
 import { Spinner } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
 import { CalmRow } from './CalmList'
+import { TasksTab } from '../tasks/TasksTab'
 
 type Me = Schemas['BookingViewsMe']
 type Row = Schemas['PatientListControllerPatientRow']
@@ -37,13 +38,15 @@ const SORTS: [SortKey, string][] = [['last', 'Сначала недавние'],
  * дате визита (/api/patients/recent, как в приложении); не нашли среди них — ищем на сервере
  * по всей клинике (/api/patients/search).
  */
-export function PatientsPage({ me, onBook, initialPatient, initialQuestion, initialBooked, onOpenAppointment }: {
+export function PatientsPage({ me, onBook, initialPatient, initialQuestion, initialTask, initialBooked, onOpenAppointment }: {
   me: Me
   /** «Записать»: preset — врач и услуга из «Позвать снова → Отменили» */
   onBook: (p: Patient, preset?: BookPreset) => void
   initialPatient?: number
   /** Кнопка уведомления «Открыть вопрос» — вкладка «Вопросы» с этим вопросом */
   initialQuestion?: number
+  /** «Открыть» под напоминанием о задаче — «Задачи» с этой задачей */
+  initialTask?: number
   /** Кнопка сводки «📲 Напомнить (N)» — вкладка «Записаны» на этот день, только кто не подтвердил */
   initialBooked?: BookedFilter
   onOpenAppointment?: (appointmentId: number) => void
@@ -56,7 +59,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
   // Подраздел (бывшие вкладки): все пациенты, записаны, лист ожидания, «позвать снова», вопросы —
   // в меню слева (на телефоне — лист из заголовка), адрес #/patients/<подраздел>
   const { sub, subTitle } = useSection('patients', me)
-  const tab = sub as 'all' | 'booked' | 'waitlist' | 'recall' | 'comeback' | 'questions'
+  const tab = sub as 'all' | 'booked' | 'waitlist' | 'recall' | 'comeback' | 'questions' | 'tasks'
   const close = useCallback(() => setSelected(null), [])
   // Вопрос пациента справа (вкладка «Вопросы»); открыли карточку пациента — вопрос закрываем, и наоборот
   const [question, setQuestion] = useState<number | null>(initialQuestion ?? null)
@@ -152,6 +155,7 @@ export function PatientsPage({ me, onBook, initialPatient, initialQuestion, init
         {tab === 'waitlist' && <WaitlistTab me={me} onOpen={setSelected} />}
         {tab === 'recall' && <RecallTab onOpen={setSelected} onBook={onBook} />}
         {tab === 'questions' && <QuestionsTab selected={question} onOpen={(id) => { setSelected(null); setQuestion(id) }} />}
+        {tab === 'tasks' && <TasksTab onOpenPatient={setSelected} initialTask={initialTask} />}
         {tab === 'comeback' && <ComebackTab onOpen={setSelected} onBook={onBook} canEditServices={canEditServices(me)} />}
         {tab === 'all' && recent.error && <p className="error">{recent.error.message}</p>}
         {tab === 'all' && recent.isSuccess && sorted.length === 0 && (

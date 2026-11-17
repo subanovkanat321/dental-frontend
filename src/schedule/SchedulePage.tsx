@@ -1,5 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react'
+import { useTaskSummary } from '../tasks/api'
+import { openSub } from '../lib/sub'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { SetupHint } from '../clinic/SetupChecklist'
@@ -323,6 +325,14 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
   const requests = all.filter((a) => a.status === 'REQUESTED')
   const waiting = all.filter((a) => a.status === 'SCHEDULED' && statusOf(a).kind === 'wait')
   const low = (supplies.data ?? []).filter((x) => x.low).length
+  // Мои просроченные задачи — «Пациенты → Задачи»
+  const overdueTasks = useTaskSummary().data?.overdue ?? 0
+  const tasksChip = (compact: boolean) => overdueTasks > 0 && (
+    <button type="button" className="stat s-bad" onClick={() => openSub('patients', 'tasks')}
+      aria-label={`Просроченные задачи: ${overdueTasks}`} title="Просроченные задачи — открыть «Задачи»">
+      {compact ? <><b>{overdueTasks}</b> просрочено</> : <>Просроченные задачи: <b>{overdueTasks}</b></>}
+    </button>
+  )
   const firstOf = (list: Appointment[]) => () => {
     const first = [...list].sort((a, b) => (a.startAt < b.startAt ? -1 : 1))[0]
     if (first) setSide({ kind: 'appointment', id: first.id })
@@ -487,8 +497,9 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           <>
             {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках
                 дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
-            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data) && (
+            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data || overdueTasks > 0) && (
               <div className="today-strip compact" role="group" aria-label="Требует внимания">
+                {tasksChip(true)}
                 {requests.length > 0 && (
                   <button type="button" className="stat s-request" onClick={firstOf(requests)}>
                     <b>{requests.length}</b> {requests.length === 1 ? 'заявка' : 'заявки'}
@@ -510,6 +521,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             {offHint}
             {!summary && !weekMode && !monthMode && (
               <div className="today-strip" role="group" aria-label="Требует внимания">
+                {tasksChip(false)}
                 {requests.length > 0 && (
                   <button type="button" className="stat s-request" onClick={firstOf(requests)}
                     aria-label={`${requests.length} ${requests.length === 1 ? 'заявка из бота' : 'заявки из бота'} — подтвердить`} title="Заявки из бота — подтвердить">

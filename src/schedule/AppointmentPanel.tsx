@@ -5,6 +5,7 @@ import { ask } from '../lib/confirm'
 import { PatientHistory } from './PatientHistory'
 import { useReminderNotSent } from './useReminderNotSent'
 import { useState } from 'react'
+import { TaskDialog } from '../tasks/TaskDialog'
 
 import { SourceLine } from '../patients/SourceLine'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -96,6 +97,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const canEdit = canEditDoctor(me, a.doctorId)
   // «📖 Показать пациенту» — строка выбора темы под шапкой, по значку
   const [lesson, setLesson] = useState(false)
+  // «＋ Задача» с пациентом этого приёма
+  const [taskOpen, setTaskOpen] = useState(false)
   const active = a.status === 'REQUESTED' || a.status === 'SCHEDULED'
   const rare = ([
     canEditDoctor(me, a.doctorId) && a.status !== 'CANCELLED' && !a.promoCode && editing !== 'promo' ? 'promo' : null,
@@ -236,7 +239,12 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             ? <button type="button" className="link patient-name" onClick={() => onOpenPatient(a.patient.id)}>{a.patient.fullName} ›</button>
             : <strong className="patient-name">{a.patient.fullName}</strong>}
           {a.patient.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
+          {/* «Перезвонить после удаления», «отправить снимок в лабораторию» — задача с этим пациентом и приёмом */}
+          {a.patient.id ? <button type="button" className="link appt-task" onClick={() => setTaskOpen(true)}>＋ Задача</button> : null}
         </div>
+        {taskOpen && a.patient.id ? (
+          <TaskDialog patient={{ id: a.patient.id, fullName: a.patient.fullName }} appointmentId={a.id} onClose={() => setTaskOpen(false)} />
+        ) : null}
         <KidInfo patient={a.patient} />
         <PatientHistory appointment={a} me={me} />
         {sourceHint && <p className="hint small">{sourceHint}</p>}
