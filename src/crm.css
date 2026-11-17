@@ -2814,3 +2814,28 @@ p.expense-owner { display: block; }
   .table.sheet :is(th, td):nth-child(1) { width: 40px; min-width: 40px; max-width: 40px; }
   .table.sheet :is(th, td):nth-child(2) { left: 40px; }
 }
+
+/* «Касса» врача: на месте выбора «Вся клиника» — чья касса, словами (выбора у врача нет) */
+.own-cash { color: var(--hint); font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media (min-width: 761px) { .cash > .toolbar > .own-cash { order: 3; margin-left: auto; } }
+@media (max-width: 760px) { .cash > .page-head > .own-cash { flex: 1 1 100%; } }
+
+/* «Поступления (N) ›» под «Кассой»: строка — время, за что и пациент, сумма; ниже мелко — способ и кто отметил */
+.cash-entries-block { margin-top: 4px; }
+/* Колонки общие для всех строк (subgrid): время и суммы — ровным столбцом */
+.cash-entries {
+  list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--separator);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px;
+}
+.cash-entries > li { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; }
+.cash-entry {
+  display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; row-gap: 0; align-items: baseline;
+  width: 100%; padding: 8px 4px; border: 0; border-bottom: 1px solid var(--separator); background: none;
+  font: inherit; color: inherit; text-align: left;
+}
+button.cash-entry { cursor: pointer; }
+button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
+.cash-entry .when { color: var(--hint); white-space: nowrap; }
+.cash-entry .what { min-width: 0; overflow-wrap: anywhere; }
+.cash-entry .sum { text-align: right; white-space: nowrap; }
+.cash-entry .sub { grid-column: 2 / -1; font-size: .82rem; color: var(--hint); }
