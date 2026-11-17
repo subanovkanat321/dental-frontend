@@ -38,3 +38,15 @@
   .debtors-tiles.n3 .survey-tile b { font-size: 1.05rem; }
   .debtors-tiles.n3 .survey-tile > .hint:first-child { font-size: .78rem; }
 }
+/* «Напомнить о долге» и «Обещал оплатить до…» (cash/DebtRemind.tsx): под строкой должника и в карточке пациента */
+.debt-remind, .debt-promise { display: grid; gap: 8px; min-width: 0; }
+.debt-remind p, .debt-promise p { margin: 0; }
+.debt-bubble { padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); color: var(--text);
+  white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; max-width: 560px; }
+.debt-sent { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.debt-promise .field { max-width: 240px; }
+.calm-meta .debt-reminded { color: var(--hint); font-size: .8rem; }
+.debt-due.tone-bad { color: var(--destructive); font-weight: 500; }
+/* Карточка пациента → «Деньги»: напомнить и срок одной строкой над долгами */
+.patient-debt-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.patient-debt-tools .hint { font-size: .85rem; }

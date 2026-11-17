@@ -1944,6 +1944,46 @@
         }
       }
     },
+    "/api/patients/{patientId}/debt-due" : {
+      "put" : {
+        "tags" : [ "debt-reminder-controller" ],
+        "operationId" : "promise",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DebtReminderControllerPromise"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PaymentQueryDebt"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/anamnesis" : {
       "get" : {
         "tags" : [ "medical-record-controller" ],
@@ -3258,6 +3298,34 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/DepositsSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/debt-template" : {
+      "put" : {
+        "tags" : [ "clinic-controller" ],
+        "operationId" : "debtTemplate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ClinicControllerDebtTemplate"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicControllerDebtTemplate"
                 }
               }
             }
@@ -7650,6 +7718,68 @@
         }
       }
     },
+    "/api/patients/{patientId}/debt-reminder" : {
+      "get" : {
+        "tags" : [ "debt-reminder-controller" ],
+        "operationId" : "draft",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DebtRemindersDraft"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "debt-reminder-controller" ],
+        "operationId" : "remind_1",
+        "parameters" : [ {
+          "name" : "patientId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DebtReminderControllerRemind"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DebtRemindersSent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/patients/{patientId}/contract/sign" : {
       "post" : {
         "tags" : [ "contract-controller" ],
@@ -8305,7 +8435,7 @@
     "/api/patient-questions/{id}/draft" : {
       "post" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "draft",
+        "operationId" : "draft_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -9088,7 +9218,7 @@
     "/api/comebacks/{patientId}/draft" : {
       "post" : {
         "tags" : [ "comeback-controller" ],
-        "operationId" : "draft_1",
+        "operationId" : "draft_2",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -10128,7 +10258,7 @@
     "/api/appointments/{id}/visit-report/draft" : {
       "post" : {
         "tags" : [ "visit-report-controller" ],
-        "operationId" : "draft_2",
+        "operationId" : "draft_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -10547,7 +10677,7 @@
     "/api/appointments/{id}/remind-telegram" : {
       "post" : {
         "tags" : [ "patient-reminder-controller" ],
-        "operationId" : "remind_1",
+        "operationId" : "remind_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -17569,6 +17699,64 @@
         },
         "required" : [ "fullName", "id", "telegram" ]
       },
+      "DebtReminderControllerPromise" : {
+        "properties" : {
+          "dueOn" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }
+      },
+      "PaymentQueryDebt" : {
+        "properties" : {
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctor" : {
+            "type" : "string"
+          },
+          "service" : {
+            "type" : "string"
+          },
+          "chargeSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "paidSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "debtSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "dueOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "remindedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "appointmentId", "chargeSom", "debtSom", "doctorId", "paidSom", "patientId" ]
+      },
       "AnamnesisAnswer" : {
         "properties" : {
           "questionId" : {
@@ -18601,6 +18789,13 @@
           }
         },
         "required" : [ "hasQr" ]
+      },
+      "ClinicControllerDebtTemplate" : {
+        "properties" : {
+          "debtTemplate" : {
+            "type" : "string"
+          }
+        }
       },
       "ContractControllerTemplateRequest" : {
         "properties" : {
@@ -20807,6 +21002,30 @@
           "serviceTypeId" : {
             "type" : "integer",
             "format" : "int64"
+          }
+        }
+      },
+      "DebtReminderControllerRemind" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "TELEGRAM", "WHATSAPP" ]
+          }
+        },
+        "required" : [ "channel" ]
+      },
+      "DebtRemindersSent" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "TELEGRAM", "WHATSAPP" ]
+          },
+          "text" : {
+            "type" : "string"
+          },
+          "remindedAt" : {
+            "type" : "string",
+            "format" : "date-time"
           }
         }
       },
@@ -23308,6 +23527,12 @@
           },
           "clinicPhone" : {
             "type" : "string"
+          },
+          "debtTemplate" : {
+            "type" : "string"
+          },
+          "paymentDetails" : {
+            "type" : "string"
           }
         }
       },
@@ -25079,6 +25304,36 @@
         },
         "required" : [ "telegram" ]
       },
+      "DebtRemindersDraft" : {
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          },
+          "debtSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "telegram" : {
+            "type" : "boolean"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "lang" : {
+            "type" : "string",
+            "enum" : [ "RU", "KY" ]
+          },
+          "remindedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "nextAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "debtSom", "telegram" ]
+      },
       "PatientListControllerPatientRow" : {
         "properties" : {
           "id" : {
@@ -25699,52 +25954,6 @@
           }
         },
         "required" : [ "accruedSom", "clinicMaterialsSom", "generalExpensesSom", "lossesSom", "otherSom", "paidSom", "payoutsSom", "profitSom", "purchasedSom", "rentReceivedSom", "selfEmployedExpensesSom", "supplySom", "usedSom" ]
-      },
-      "PaymentQueryDebt" : {
-        "properties" : {
-          "appointmentId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "startAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "patientId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "patient" : {
-            "type" : "string"
-          },
-          "doctorId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "doctor" : {
-            "type" : "string"
-          },
-          "service" : {
-            "type" : "string"
-          },
-          "chargeSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "paidSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "debtSom" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "dueOn" : {
-            "type" : "string",
-            "format" : "date"
-          }
-        },
-        "required" : [ "appointmentId", "chargeSom", "debtSom", "doctorId", "paidSom", "patientId" ]
       },
       "ExpenseControllerCategories" : {
         "properties" : {

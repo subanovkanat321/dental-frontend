@@ -26,6 +26,7 @@ import { ContinueTreatment } from './ContinueTreatment'
 import { VisitTeeth } from './VisitTeeth'
 import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
+import { seesDebts, usePatientDebts } from '../lib/debt'
 import { PatientExpenses } from '../patients/PatientExpenses'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
@@ -190,6 +191,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
 
   // Главная кнопка — одна на карточку (DESIGN.md): после приёма, пока не оплачено, это «Принять оплату»
   const payPending = a.status === 'DONE' && seesMoney && a.paidSom == null
+  // Долг пациента за все визиты (кто видит «Должников»; врачу — за его приёмы) и за прошлые — без этого приёма
+  const debts = usePatientDebts(a.patient.id ?? undefined, seesDebts(me))
+  const patientDebt = (debts.data ?? []).reduce((sum, d) => sum + d.debtSom, 0)
+  const earlierDebt = (debts.data ?? []).filter((d) => d.appointmentId !== a.id).reduce((sum, d) => sum + d.debtSom, 0)
   // Приём в рабочих часах коллеги по креслу (V187): слоты дня врача (те же, что у сетки и списка — обычно из кэша)
   const daySlots = useQuery({
     queryKey: ['slots', date, a.doctorId],
@@ -228,6 +233,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         <LessonPicker key={`${a.id}-${a.serviceName ?? ''}`} serviceName={a.serviceName} patientId={a.patient.id} onClose={() => setLesson(false)} />
       )}
       <span className={`chip s-${s.kind} appt-status`}><span className="ico" aria-hidden="true">{s.icon}</span>{s.label}</span>
+      {/* Долг пациента — на виду, пока он записан или пришёл; после «Приём состоялся» — подсказка у оплаты */}
+      {patientDebt > 0 && a.status !== 'CANCELLED' && !payPending && (
+        <span className="chip s-bad appt-debt" role="note"><span className="ico" aria-hidden="true">🧾</span>Долг {somText(patientDebt)}</span>
+      )}
       {colleague && (
         <p className="appt-chair-mark" role="note"><span aria-hidden="true">🪑 </span>{colleagueMarkText(colleague)}</p>
       )}
@@ -336,6 +345,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'DONE' && <PlanDone appointment={a} me={me} primary={!payPending} />}
           {/* Оплата — сразу после приёма. Ключ — по самим деньгам: оплата на сервере версию приёма не
               меняет, а блок после сохранения должен открыться заново («оплачено», а не форма) */}
+          {payPending && earlierDebt > 0 && (
+            <p className="appt-debt-hint tone-wait" role="status">🧾 У пациента долг {somText(earlierDebt)} за прошлые визиты — напомните при оплате.</p>
+          )}
           {a.status === 'DONE' && seesMoney && (
             <PaymentBox key={[a.id, a.version, a.paidSom, a.chargeSom, a.debtSom, a.dueOn, a.depositStatus].join('-')} appointment={a} me={me} />
           )}

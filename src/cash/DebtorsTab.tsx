@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 
 import { api, unwrap } from '../api/client'
 import type { Schemas } from '../api/client'
@@ -10,6 +10,8 @@ import { Select } from '../layout/Select'
 import { textMatches } from '../lib/search'
 import { shortDate, somText } from '../lib/time'
 import { CalmRow, RowMenu, type MenuItem } from '../patients/CalmList'
+import { dayMonth, remindedText } from '../lib/debt'
+import { DebtPromiseForm, DebtRemindForm } from './DebtRemind'
 import { debtorsOf, sortDebtors, visitsText, type Debtor, type DebtorSort, type FamilyOf } from './debtors'
 import { OpeningDebtsList } from './OpeningDebts'
 import { useOpeningDebts } from './useOpeningDebts'
@@ -22,7 +24,8 @@ const SORTS: [DebtorSort, string][] = [['sum', 'По сумме'], ['age', 'По
 /**
  * «Касса → Должники»: сверху итог плитками, под ним спокойный список (DESIGN.md → «Спокойный список»):
  * имя, одна серая строка (последний визит · врач · сколько визитов в долг), сумма справа красным,
- * «Принять оплату» (карточка самого давнего неоплаченного приёма) и «⋯» — пациент и каждый визит.
+ * «Напомнить» (бот или WhatsApp — DebtRemind), «Принять оплату» (карточка самого давнего неоплаченного приёма) и «⋯» —
+ * «Обещал оплатить до…», пациент и каждый визит. «обещал до 25.11» в серой строке, просрочено — красным.
  * Строка целиком открывает пациента (там телефон и WhatsApp). Долги из прежней программы — отдельным
  * блоком того же вида; их видит руководитель (другим сервер отвечает 403 — блока и плитки нет).
  */
@@ -45,8 +48,9 @@ export function DebtorsTab({ rows, pending, error, onOpen, onOpenPatient }: {
 
   const help = (
     <SubHelp title="Должники">
-      Кто сколько должен за приёмы: сначала больший долг (или давний — «По давности»). «Принять оплату» открывает самый
-      давний неоплаченный приём, нажатие на строку — карточку пациента с телефоном и WhatsApp. «Старые долги» —
+      Кто сколько должен за приёмы: сначала больший долг (или давний — «По давности»). «Напомнить» — вежливое сообщение
+      от бота клиники или в WhatsApp, не чаще раза в 3 дня; «⋯ → Обещал оплатить до…» — в этот день придёт задача
+      «Проверить оплату». «Принять оплату» открывает самый давний неоплаченный приём, нажатие на строку — карточку пациента. «Старые долги» —
       суммы из прежней программы, без приёма и врача: в выручку приёмов их погашение не входит.
     </SubHelp>
   )
@@ -121,32 +125,61 @@ export function DebtorsTab({ rows, pending, error, onOpen, onOpenPatient }: {
   )
 }
 
-/** Строка должника: имя, серая строка, сумма красным, «Принять оплату» и «⋯». */
+/** Строка должника: имя, серая строка, сумма красным, «Напомнить», «Принять оплату» и «⋯». */
 function DebtorRow({ x, onOpen, onOpenPatient }: {
   x: Debtor
   onOpen: (appointmentId: number) => void
   onOpenPatient?: (patientId: number) => void
 }) {
-  const open = x.patientId != null && onOpenPatient ? () => onOpenPatient(x.patientId!) : null
+  // Что раскрыто под строкой: напоминание или срок — пациенту (у семьи — кому из её членов)
+  const [form, setForm] = useState<{ kind: 'remind' | 'promise'; patientId: number; name: string } | null>(null)
+  const open = x.patientId != null && onOpenPatient && !form ? () => onOpenPatient(x.patientId!) : null
+  // Семья — несколько пациентов: напоминают каждому своё (сумма — его), из «⋯»
+  const members = new Map<number, string>()
+  for (const v of x.visits) members.set(v.patientId, v.patient ?? '—')
+  const family = x.key.startsWith('f')
+  const reminded = x.visits.reduce<string | undefined>((max, v) => v.remindedAt && (!max || v.remindedAt > max) ? v.remindedAt : max, undefined)
+  const due: ReactNode = x.due && (
+    <span className={x.overdue ? 'debt-due tone-bad' : 'debt-due'}>{x.overdue ? 'обещал' : 'оплатит'} до {dayMonth(x.due)}</span>
+  )
   const sub = [
     x.last && `последний визит ${shortDate(x.last)}`,
     x.lastDoctor,
     visitsText(x.visits.length),
-    x.due && `${x.overdue ? 'обещал' : 'оплатит'} до ${shortDate(`${x.due}T12:00:00Z`)}`,
   ].filter(Boolean).join(' · ')
+  const single = !family && x.patientId != null
   const items: MenuItem[] = [
-    ...(open ? [{ label: 'Открыть пациента', onSelect: open }] : []),
+    ...(single ? [{ label: x.due ? 'Обещал оплатить до… (изменить)' : 'Обещал оплатить до…', onSelect: () => setForm({ kind: 'promise', patientId: x.patientId!, name: x.patient }) }] : []),
+    ...(family ? [...members].flatMap(([id, name]) => [
+      { label: `Напомнить: ${name}`, onSelect: () => setForm({ kind: 'remind', patientId: id, name }) },
+      { label: `Обещал оплатить до…: ${name}`, onSelect: () => setForm({ kind: 'promise', patientId: id, name }) },
+    ]) : []),
+    ...(x.patientId != null && onOpenPatient ? [{ label: 'Открыть пациента', onSelect: () => onOpenPatient(x.patientId!) }] : []),
     ...x.visits.map((v) => ({
       label: `Визит ${v.startAt ? shortDate(v.startAt) : ''}${v.service ? ` · ${v.service}` : ''} · ${somText(v.debtSom)}`,
       onSelect: () => onOpen(v.appointmentId),
     })),
   ]
+  const formDue = form ? x.visits.find((v) => v.patientId === form.patientId && v.dueOn)?.dueOn : undefined
   return (
     <CalmRow open={open} name={x.patient}
       flags={x.overdue && <span className="chip calm-flag s-bad">Просрочил</span>}
-      sub={sub}
-      meta={<span className="debt-sum num">{somText(x.total)}</span>}
-      action={<button type="button" className="btn" onClick={() => onOpen(x.visits[0]!.appointmentId)}>Принять оплату</button>}
-      menu={<RowMenu label={`Ещё: ${x.patient}`} items={items} />} />
+      sub={due ? <>{due} · {sub}</> : sub}
+      meta={(
+        <>
+          <span className="debt-sum num">{somText(x.total)}</span>
+          {reminded && <span className="debt-reminded">{remindedText(reminded)}</span>}
+        </>
+      )}
+      action={!form && (
+        <>
+          {single && <button type="button" className="btn" onClick={() => setForm({ kind: 'remind', patientId: x.patientId!, name: x.patient })}>Напомнить</button>}
+          <button type="button" className="btn" onClick={() => onOpen(x.visits[0]!.appointmentId)}>Принять оплату</button>
+        </>
+      )}
+      menu={!form && <RowMenu label={`Ещё: ${x.patient}`} items={items} />}>
+      {form?.kind === 'remind' && <DebtRemindForm patientId={form.patientId} name={form.name} onDone={() => setForm(null)} />}
+      {form?.kind === 'promise' && <DebtPromiseForm patientId={form.patientId} dueOn={formDue} onDone={() => setForm(null)} />}
+    </CalmRow>
   )
 }

@@ -78,11 +78,11 @@ test('«Должники»: строка открывает пациента; «
   expect(onOpen).toHaveBeenLastCalledWith(1)
   expect(onOpenPatient).toHaveBeenCalledTimes(1)
 
-  // «⋯»: открыть пациента и каждый визит в долг
+  // «⋯»: «Обещал оплатить до…», открыть пациента и каждый визит в долг
   await user.click(within(debtor).getByRole('button', { name: 'Ещё: Айгуль С.' }))
   const menu = within(debtor).getByRole('menu')
   expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
-    'Открыть пациента', expect.stringMatching(/^Визит 1 окт.* · Пломба · 3\s000 сом$/), expect.stringMatching(/^Визит 20 окт.* · Чистка · 2\s000 сом$/),
+    'Обещал оплатить до…', 'Открыть пациента', expect.stringMatching(/^Визит 1 окт.* · Пломба · 3\s000 сом$/), expect.stringMatching(/^Визит 20 окт.* · Чистка · 2\s000 сом$/),
   ])
   await user.click(within(menu).getByRole('menuitem', { name: /Чистка/ }))
   expect(onOpen).toHaveBeenLastCalledWith(2)

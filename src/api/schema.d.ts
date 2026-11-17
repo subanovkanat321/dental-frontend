@@ -676,6 +676,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/debt-due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["promise"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/anamnesis": {
         parameters: {
             query?: never;
@@ -1213,6 +1229,22 @@ export interface paths {
         };
         get: operations["settings_3"];
         put: operations["setSettings_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clinic/debt-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["debtTemplate"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3108,6 +3140,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/patients/{patientId}/debt-reminder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["draft"];
+        put?: never;
+        post: operations["remind_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/patients/{patientId}/contract/sign": {
         parameters: {
             query?: never;
@@ -3389,7 +3437,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["draft"];
+        post: operations["draft_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3773,7 +3821,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["draft_1"];
+        post: operations["draft_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4141,7 +4189,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["draft_2"];
+        post: operations["draft_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4301,7 +4349,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["remind_1"];
+        post: operations["remind_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7817,6 +7865,33 @@ export interface components {
             dentition?: "PERMANENT" | "PRIMARY" | "MIXED";
             guardian?: components["schemas"]["Guardian"];
         };
+        DebtReminderControllerPromise: {
+            /** Format: date */
+            dueOn?: string;
+        };
+        PaymentQueryDebt: {
+            /** Format: int64 */
+            appointmentId: number;
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: int64 */
+            patientId: number;
+            patient?: string;
+            /** Format: int64 */
+            doctorId: number;
+            doctor?: string;
+            service?: string;
+            /** Format: int32 */
+            chargeSom: number;
+            /** Format: int32 */
+            paidSom: number;
+            /** Format: int32 */
+            debtSom: number;
+            /** Format: date */
+            dueOn?: string;
+            /** Format: date-time */
+            remindedAt?: string;
+        };
         AnamnesisAnswer: {
             /** Format: int64 */
             questionId?: number;
@@ -8215,6 +8290,9 @@ export interface components {
             amountSom?: number;
             details?: string;
             hasQr: boolean;
+        };
+        ClinicControllerDebtTemplate: {
+            debtTemplate?: string;
         };
         ContractControllerTemplateRequest: {
             title?: string;
@@ -9111,6 +9189,17 @@ export interface components {
             stage?: number;
             /** Format: int64 */
             serviceTypeId?: number;
+        };
+        DebtReminderControllerRemind: {
+            /** @enum {string} */
+            channel: "TELEGRAM" | "WHATSAPP";
+        };
+        DebtRemindersSent: {
+            /** @enum {string} */
+            channel?: "TELEGRAM" | "WHATSAPP";
+            text?: string;
+            /** Format: date-time */
+            remindedAt?: string;
         };
         PatientContractsView: {
             signed: boolean;
@@ -10088,6 +10177,8 @@ export interface components {
             clinicName?: string;
             clinicAddress?: string;
             clinicPhone?: string;
+            debtTemplate?: string;
+            paymentDetails?: string;
         };
         ServiceTypeControllerPopular: {
             ids?: number[];
@@ -10784,6 +10875,19 @@ export interface components {
             /** @enum {string} */
             lang?: "RU" | "KY";
         };
+        DebtRemindersDraft: {
+            text?: string;
+            /** Format: int32 */
+            debtSom: number;
+            telegram: boolean;
+            phone?: string;
+            /** @enum {string} */
+            lang?: "RU" | "KY";
+            /** Format: date-time */
+            remindedAt?: string;
+            /** Format: date-time */
+            nextAt?: string;
+        };
         PatientListControllerPatientRow: {
             /** Format: int64 */
             id: number;
@@ -11024,27 +11128,6 @@ export interface components {
             otherSom: number;
             /** Format: int64 */
             profitSom: number;
-        };
-        PaymentQueryDebt: {
-            /** Format: int64 */
-            appointmentId: number;
-            /** Format: date-time */
-            startAt?: string;
-            /** Format: int64 */
-            patientId: number;
-            patient?: string;
-            /** Format: int64 */
-            doctorId: number;
-            doctor?: string;
-            service?: string;
-            /** Format: int32 */
-            chargeSom: number;
-            /** Format: int32 */
-            paidSom: number;
-            /** Format: int32 */
-            debtSom: number;
-            /** Format: date */
-            dueOn?: string;
         };
         ExpenseControllerCategories: {
             standard?: string[];
@@ -12981,6 +13064,32 @@ export interface operations {
             };
         };
     };
+    promise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DebtReminderControllerPromise"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentQueryDebt"][];
+                };
+            };
+        };
+    };
     anamnesis: {
         parameters: {
             query?: never;
@@ -14131,6 +14240,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepositsSettings"];
+                };
+            };
+        };
+    };
+    debtTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClinicControllerDebtTemplate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicControllerDebtTemplate"];
                 };
             };
         };
@@ -17672,6 +17805,54 @@ export interface operations {
             };
         };
     };
+    draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtRemindersDraft"];
+                };
+            };
+        };
+    };
+    remind_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DebtReminderControllerRemind"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtRemindersSent"];
+                };
+            };
+        };
+    };
     sign: {
         parameters: {
             query?: {
@@ -18192,7 +18373,7 @@ export interface operations {
             };
         };
     };
-    draft: {
+    draft_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -18859,7 +19040,7 @@ export interface operations {
             };
         };
     };
-    draft_1: {
+    draft_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -19656,7 +19837,7 @@ export interface operations {
             };
         };
     };
-    draft_2: {
+    draft_3: {
         parameters: {
             query?: {
                 memoId?: number;
@@ -19952,7 +20133,7 @@ export interface operations {
             };
         };
     };
-    remind_1: {
+    remind_2: {
         parameters: {
             query?: never;
             header?: never;
