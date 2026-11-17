@@ -73,14 +73,16 @@ test('пациент в Telegram или уже оценил — кнопки н�
   expect(screen.queryByRole('button', { name: /Попросить оценку/ })).not.toBeInTheDocument()
 })
 
-test('«Требует внимания»: «⭐ N попросить оценку» → список с кнопкой WhatsApp у каждого', async () => {
+test('под расписанием: «💬 Попросить отзыв у N пациентов» (не в «Требует внимания») → список с кнопкой WhatsApp у каждого', async () => {
   const sent = backend({
     draft: { available: true },
     asks: [{ appointmentId: 10, startAt: visit.startAt, doctorId: 1, patient: visit.patient }],
   })
   const user = userEvent.setup()
   renderApp()
-  await user.click(await screen.findByRole('button', { name: /Попросите оценку у 1 пациента без Telegram/ }))
+  const line = await screen.findByRole('button', { name: /Попросить отзыв у 1 пациента без Telegram/ })
+  expect(screen.queryByRole('group', { name: 'Требует внимания' })?.contains(line) ?? false).toBe(false)
+  await user.click(line)
   const dialog = await screen.findByRole('dialog', { name: '⭐ Попросите оценку' })
   await user.click(within(dialog).getByRole('button', { name: 'WhatsApp: попросить оценку — Бакыт М.' }))
   expect(sent).toEqual([10])

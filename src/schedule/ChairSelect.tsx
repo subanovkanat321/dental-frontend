@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
 
 import { api, unwrap, type Schemas } from '../api/client'
 import { Select } from '../layout/Select'
@@ -39,6 +40,11 @@ export function ChairSelect({ doctorId, startAt, duration, appointmentId, value,
   const own = chairOf(chairs.data, doctorId)?.id
   const list: Option[] = options.data ?? (chairs.data ?? []).map((c) => ({ id: c.id, name: c.name ?? '', own: c.id === own, state: 'FREE' as const, strict: false }))
   const known = Boolean(options.data)
+  // Кресло врача не закреплено — не заставляем выбирать: первое свободное на это время (сменить можно)
+  const firstFree = known && value == null ? list.find((o) => o.state === 'FREE')?.id : undefined
+  useEffect(() => {
+    if (firstFree != null) onChange(firstFree)
+  }, [firstFree, onChange])
   return (
     <label className="field"><span>Кресло</span>
       <Select value={value ?? ''} onChange={(e) => { if (e.target.value) onChange(Number(e.target.value)) }}>
@@ -49,6 +55,7 @@ export function ChairSelect({ doctorId, startAt, duration, appointmentId, value,
           </option>
         ))}
       </Select>
+      {chairs.isSuccess && own == null && <span className="hint small">У врача нет своего кресла — выбрали свободное. Закрепите кресло за врачом («Настройки → Кресла») — будет подставляться само.</span>}
     </label>
   )
 }
