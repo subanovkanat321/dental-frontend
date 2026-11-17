@@ -5,6 +5,7 @@ import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { shortDate } from '../lib/time'
 import { clinicRequest } from '../settings/clinicUpdate'
 import { SpendingBlock } from './Spending'
+import { LabTab } from '../lab/LabTab'
 import { NewSupplyPanel, SupplyPanel } from './SupplyPanel'
 import { DeliverySheet, type StockScope } from './DeliverySheet'
 import { seesOwnPurchases } from '../lib/roles'
@@ -29,7 +30,13 @@ type Side = { kind: 'supply'; id: number } | { kind: 'new' } | { kind: 'delivery
  * свой и общий, админ и регистратура — весь или выбранного врача. Права проверяет сервер.
  */
 /** initialSupply — кнопка бота «Открыть склад» в сигнале «заканчивается»: сразу этот материал. */
-export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: number }) {
+export function StockPage({ me, initialSupply, initialLabOrder, onOpenPatient }: {
+  me: Me
+  initialSupply?: number
+  /** «Открыть» под предупреждением «завтра примерка» — «Лаборатория» с этим заказом */
+  initialLabOrder?: number
+  onOpenPatient?: (patientId: number) => void
+}) {
   const client = useQueryClient()
   const separate = Boolean(me.clinic?.separateSupplies)
   const choosesDoctor = separate && (me.admin || me.reception || me.doctorId == null)
@@ -90,6 +97,19 @@ export function StockPage({ me, initialSupply }: { me: Me; initialSupply?: numbe
 
   const [slot, setSlot] = useHeadSlot()
   const title = <SectionTitle page="stock" title="Склад" subTitle={subTitle} hint={<HelpHint hint="stock" />} />
+  if (sub === 'lab') {
+    // «Лаборатория»: заказ-наряды технику (src/lab); инструменты — в шапке раздела
+    return (
+      <div className="schedule">
+        <section className="schedule-main">
+          <HeadSlotProvider slot={slot}>
+            <PageHead title={title} slotRef={setSlot} />
+            <LabTab me={me} initialOrder={initialLabOrder} onOpenPatient={onOpenPatient} />
+          </HeadSlotProvider>
+        </section>
+      </div>
+    )
+  }
   if (sub === 'spending') {
     // «Мои закупки» врача — только его склад; руководитель независимой клиники — только общий
     // (личные склады — закупки врачей); при «своём складе» и всех врачах — выбор склада

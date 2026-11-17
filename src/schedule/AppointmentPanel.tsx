@@ -6,6 +6,8 @@ import { PatientHistory } from './PatientHistory'
 import { useReminderNotSent } from './useReminderNotSent'
 import { useState } from 'react'
 import { TaskDialog } from '../tasks/TaskDialog'
+import { LabOrderDialog } from '../lab/LabOrderDialog'
+import { AppointmentLab } from '../lab/AppointmentLab'
 
 import { SourceLine } from '../patients/SourceLine'
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
@@ -99,6 +101,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   const [lesson, setLesson] = useState(false)
   // «＋ Задача» с пациентом этого приёма
   const [taskOpen, setTaskOpen] = useState(false)
+  // «＋ Заказ в лабораторию» с пациентом и врачом этого приёма
+  const [labOpen, setLabOpen] = useState(false)
   const active = a.status === 'REQUESTED' || a.status === 'SCHEDULED'
   const rare = ([
     canEditDoctor(me, a.doctorId) && a.status !== 'CANCELLED' && !a.promoCode && editing !== 'promo' ? 'promo' : null,
@@ -241,10 +245,17 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.patient.phone && <span className="num">{formatPhone(a.patient.phone)}</span>}
           {/* «Перезвонить после удаления», «отправить снимок в лабораторию» — задача с этим пациентом и приёмом */}
           {a.patient.id ? <button type="button" className="link appt-task" onClick={() => setTaskOpen(true)}>＋ Задача</button> : null}
+          {a.patient.id && canEdit ? <button type="button" className="link appt-lab-new" onClick={() => setLabOpen(true)}>＋ В лабораторию</button> : null}
         </div>
         {taskOpen && a.patient.id ? (
           <TaskDialog patient={{ id: a.patient.id, fullName: a.patient.fullName }} appointmentId={a.id} onClose={() => setTaskOpen(false)} />
         ) : null}
+        {labOpen && a.patient.id ? (
+          <LabOrderDialog me={me} preset={{ patient: { id: a.patient.id, fullName: a.patient.fullName }, doctorId: a.doctorId, appointment: { id: a.id, startAt: a.startAt } }}
+            onClose={() => setLabOpen(false)} />
+        ) : null}
+        {/* Примерка на этот приём: работа пришла? Нет — предупреждение и «WhatsApp технику» */}
+        {a.patient.id && canEdit ? <AppointmentLab appointment={a} /> : null}
         <KidInfo patient={a.patient} />
         <PatientHistory appointment={a} me={me} />
         {sourceHint && <p className="hint small">{sourceHint}</p>}

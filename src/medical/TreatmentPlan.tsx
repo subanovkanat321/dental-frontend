@@ -8,6 +8,9 @@ import { somText } from '../lib/time'
 import { EmptyState } from '../layout/EmptyState'
 import { Select } from '../layout/Select'
 import { PlanDocs } from '../print/PlanDocs'
+import { useMe } from '../api/me'
+import { LabOrderDialog } from '../lab/LabOrderDialog'
+import { labKindOf } from '../lab/text'
 
 type Patient = Schemas['PatientView']
 type Step = Schemas['TreatmentStepView']
@@ -37,6 +40,9 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
   const services = useQuery({ queryKey: ['service-types'], queryFn: () => unwrap(api.GET('/api/service-types')), enabled: !readOnly })
   const priced = (services.data ?? []).filter((x) => x.active)
   const [editing, setEditing] = useState<number | null>(null)
+  // Этап «коронка», «винир», «протез»… — «🦷 В лабораторию»: заказ технику с этим зубом
+  const me = useMe().data
+  const [toLab, setToLab] = useState<Step | null>(null)
   const title = useRef<HTMLInputElement>(null)
   // Пришёл зуб из карты — подставить в новый этап (состояние меняем при отрисовке, без эффекта)
   const [applied, setApplied] = useState(prefill)
@@ -118,6 +124,9 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
                     <span>{s.tooth ? <b>{s.tooth} · </b> : null}{s.title}</span>
                   </label>
                   <span className="nowrap">{s.priceSom != null ? somText(s.priceSom) : ''}</span>
+                  {!readOnly && me && !s.doneAt && labKindOf(s.title) && (
+                    <button type="button" className="btn ghost small" aria-label={`В лабораторию: ${s.title}`} title="Заказ в лабораторию" onClick={() => setToLab(s)}>🦷</button>
+                  )}
                   {!readOnly && <button type="button" className="btn ghost small" aria-label={`Изменить этап: ${s.title}`} onClick={() => setEditing(s.id)}>✏️</button>}
                 </>
               )}
@@ -129,6 +138,10 @@ export function TreatmentPlan({ patient, prefill = null, readOnly, heading = tru
             </Fragment>
           ))}
         </ul>
+      )}
+      {toLab && me && (
+        <LabOrderDialog me={me} preset={{ patient: { id: patient.id, fullName: patient.fullName }, kind: labKindOf(toLab.title) ?? undefined,
+          teeth: toLab.tooth != null ? String(toLab.tooth) : undefined }} onClose={() => setToLab(null)} />
       )}
       {/* Печать и отправка — и ассистенту (без цен): он отдаёт план пациенту */}
       <PlanDocs patient={patient} steps={steps} />

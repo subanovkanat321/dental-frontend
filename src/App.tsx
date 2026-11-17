@@ -141,7 +141,7 @@ function Screens() {
     switch (p) {
       case 'patients': return <PatientsPage me={me.data} initialPatient={l?.patientId} initialQuestion={l?.questionId} initialTask={l?.taskId} initialBooked={l?.tab === 'booked' ? { date: l.date, unconfirmed: l.unconfirmed, unmarked: l.unmarked, doctorId: l.doctorId } : undefined} onOpenAppointment={openAppointment} onBook={(x, preset) => linkTo({ page: 'schedule', bookPatientId: x.id, ...(preset && { bookDoctorId: preset.doctorId, bookServiceId: preset.serviceId, bookDuration: preset.duration }) })} />
       case 'cash': return <CashPage me={me.data} onOpenPatient={openPatient} />
-      case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} />
+      case 'stock': return <StockPage me={me.data} initialSupply={l?.supplyId} initialLabOrder={l?.labOrderId} onOpenPatient={openPatient} />
       case 'learn': return <LearnPage />
       case 'settings': return <SettingsPage me={me.data} />
       case 'clinic': return <ClinicSection me={me.data} />

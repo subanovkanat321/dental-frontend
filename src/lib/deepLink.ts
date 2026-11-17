@@ -6,7 +6,8 @@ import type { Page } from './route'
  * бэкенда): ?appointment=ID — карточка приёма, ?day=tomorrow — завтра, ?patient=ID — новая запись
  * на этого пациента, ?patientCard=ID — карточка пациента, ?question=ID — вопрос пациента, ?supply=ID — материал на складе,
  * ?screen=cash|stats|earnings|support|support-tickets|pay-requests|survey|shifts|learn|agreement — раздел;
- * ?screen=tasks&task=ID — «Пациенты → Задачи» (напоминание о задаче); ?doctor=ID — «День»
+ * ?screen=tasks&task=ID — «Пациенты → Задачи» (напоминание о задаче); ?screen=lab&order=ID — «Склад → Лаборатория»,
+ * этот заказ (предупреждение «завтра примерка»); ?doctor=ID — «День»
  * этого врача (уведомление о приёмах коллеги), можно вместе с ?day=tomorrow;
  * ?screen=booked&day=today|tomorrow&unconfirmed=1&doctor=ID — «Пациенты → Записаны» на этот день, только
  * кто не подтвердил (кнопка «📲 Напомнить (N)» под утренней и вечерней сводкой);
@@ -46,6 +47,8 @@ export type DeepLink = {
   questionId?: number
   /** «Открыть» под напоминанием о задаче — «Пациенты → Задачи», эта задача */
   taskId?: number
+  /** «Открыть» под предупреждением «завтра примерка» — «Склад → Лаборатория», этот заказ */
+  labOrderId?: number
   supplyId?: number
   tab?: string
   ticketId?: number
@@ -83,6 +86,8 @@ export function readDeepLink(search: string, today = todayIn()): DeepLink | null
   if (screen === 'learn') return { page: 'learn' }
   // Напоминание о задаче (бот или push): «Пациенты → Задачи»
   if (screen === 'tasks') return { page: 'patients', tab: 'tasks', taskId: num('task') }
+  // Предупреждение «завтра примерка, а работа не пришла» (бот или push): «Склад → Лаборатория»
+  if (screen === 'lab') return { page: 'stock', tab: 'lab', labOrderId: num('order') }
   if (screen === 'booked') {
     const day = p.get('day') === 'tomorrow' ? addDays(today, 1) : p.get('day') === 'today' ? today : undefined
     return { page: 'patients', tab: 'booked', date: day, unconfirmed: p.get('unconfirmed') === '1', unmarked: p.get('unmarked') === '1', doctorId: num('doctor') }
@@ -103,6 +108,6 @@ export function linkHash(link: DeepLink): string {
   const sub = link.page === 'patients'
     // Карточка пациента (имя в приёме, кнопка бота) — поверх списка «Все», как раньше
     ? (link.questionId ? 'questions' : link.tab ?? (link.patientId ? 'all' : undefined))
-    : link.page === 'stock' ? undefined : link.tab
+    : link.page === 'stock' ? (link.tab === 'lab' ? 'lab' : undefined) : link.tab
   return sub ? `${link.page}/${sub}` : link.page
 }

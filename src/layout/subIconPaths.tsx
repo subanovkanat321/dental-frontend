@@ -57,7 +57,7 @@ const P = {
 export const SUB_ICONS: Partial<Record<Page, Record<string, ReactNode>>> = {
   patients: { all: P.list, booked: P.calendarCheck, waitlist: P.hourglass, comeback: P.comeback, recall: P.tooth, questions: P.chat, tasks: P.checkList },
   cash: { money: P.banknote, earnings: P.wallet, analytics: P.trend, expenses: P.receipt, debtors: P.debtor, salary: P.envelope, stats: P.bars, report: P.doc },
-  stock: { materials: P.box, spending: P.cart },
+  stock: { materials: P.box, spending: P.cart, lab: P.tooth },
   platform: {
     clinics: P.buildings, analytics: P.trend, finance: P.coins, feedback: P.chat, mailing: P.send, marketing: P.megaphone,
     ai: P.sparkles, health: P.pulse, settings: P.sliders,

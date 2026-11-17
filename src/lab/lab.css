@@ -1,0 +1,45 @@
+/*
+ * «Лаборатория» (src/lab): спокойный список «Пациентов» (patients/calm.css). Срок — серым, просрочено — красным;
+ * статус — мягкой заливкой и словом (DESIGN.md: статус цветом и словом, не значками).
+ */
+.lab .fold { margin-top: 4px; }
+.lab-row-patient { font-weight: 500; color: var(--text); }
+.lab-due { color: var(--hint); white-space: nowrap; }
+.lab-due.overdue { color: var(--bad-ink); font-weight: 600; }
+.lab-status { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .85rem; white-space: nowrap; }
+.lab-status.s-ready { background: var(--ok-bg); color: var(--ok-ink); }
+.lab-status.s-fitted { background: var(--done-bg); color: var(--done-ink); }
+.lab-debts { margin: 0; padding: 10px 14px; border-radius: var(--r-md); background: var(--wait-bg); color: var(--wait-ink); }
+.lab-debts .hint { color: inherit; opacity: .85; }
+
+/* Окна: заказ, переделка, оплата, справочник */
+.lab-sheet { width: min(560px, calc(100vw - 32px)); gap: 12px; }
+.lab-sheet h2 { margin: 0; }
+.lab-sheet .field { display: grid; gap: 6px; }
+.lab-sheet .chips-pick { margin: 0; }
+.lab-sheet .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.lab-sheet .row > input, .lab-dates > .field { flex: 1 1 140px; min-width: 0; }
+.lab-patient { margin: 0; }
+.lab-picker > :first-child { flex: 1 1 200px; min-width: 0; }
+.lab-form { display: grid; gap: 8px; padding: 10px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); }
+.lab-directory-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.lab-directory-list > li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0;
+  border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+
+/* Блок в карточке пациента */
+.patient-lab { display: grid; gap: 8px; }
+.patient-lab-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.patient-lab-head h3 { margin: 0; }
+.patient-lab-head .btn { margin-left: auto; }
+.patient-lab .calm-row { min-height: 48px; padding: 8px 12px; }
+
+/* Карточка приёма: работа на эту примерку */
+.appt-lab { display: grid; gap: 6px; }
+.appt-lab p { margin: 0; }
+.appt-lab-item { display: grid; gap: 6px; padding: 8px 12px; border-radius: var(--r-md); background: var(--sunken); }
+.appt-lab-item.late { background: var(--bad-bg); color: var(--bad-ink); }
+.appt-lab-item.late .appt-lab-line { color: var(--text); }
+.appt-lab-warn { font-weight: 600; }
+.appt-lab-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.appt-lab-actions .btn { text-decoration: none; }
+.appt-lab-new { margin-left: 8px; font-size: .9rem; }

@@ -18,6 +18,7 @@ import { WaitlistBox } from './WaitlistTab'
 import { SourceLine } from './SourceLine'
 import { FamilyBox } from './FamilyBox'
 import { PatientTasks } from '../tasks/PatientTasks'
+import { PatientLab } from '../lab/PatientLab'
 import { GuardianBox } from './GuardianBox'
 import { KidInfo } from './KidInfo'
 import { contactPhone } from '../lib/guardian'
@@ -196,6 +197,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
 
       {/* Задачи о пациенте («перезвонить после удаления») и «＋ Задача» с ним */}
       {patient && <PatientTasks patient={{ id: patient.id, fullName: patient.fullName }} />}
+      {/* Работы зубного техника: ждём, готово, установлено — и «＋ Заказ в лабораторию» с ним */}
+      {patient && <PatientLab me={me} patient={{ id: patient.id, fullName: patient.fullName }} />}
 
       <div className="segments tabs" role="tablist" aria-label="Разделы карточки пациента">
         {tabs.map(([key, title]) => (

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { me, querySub, renderApp } from '../test/fixtures'
+import { me, findSub, querySub, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { todayIn } from '../lib/time'
 import { choose } from '../test/select'
@@ -167,7 +167,8 @@ test.each<[string, Me]>([
   backend([glove], who)
   window.location.hash = '/stock'
   renderApp()
-  await screen.findByRole('heading', { name: /Склад/ })
+  // Подразделы у всех: «Материалы» и «Лаборатория» — закупок нет
+  await findSub('Лаборатория')
   expect(querySub('Мои закупки')).toBeNull()
   expect(querySub('Расходы на склад')).toBeNull()
 })

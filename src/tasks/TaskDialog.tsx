@@ -131,8 +131,8 @@ export function TaskDialog({ task, patient: fixedPatient, appointmentId, onClose
   )
 }
 
-/** Пациент задачи — необязательно: поиск по имени или номеру, как в листе ожидания. */
-function PatientField({ patient, onChange }: { patient: TaskPatient | null; onChange: (p: TaskPatient | null) => void }) {
+/** Пациент задачи (и заказа в лабораторию) — поиск по имени или номеру, как в листе ожидания. */
+export function PatientField({ patient, onChange, label = 'Найти пациента для задачи', optional = true }: { patient: TaskPatient | null; onChange: (p: TaskPatient | null) => void; label?: string; optional?: boolean }) {
   const [query, setQuery] = useState('')
   const search = useDebounced(query.trim())
   const found = useQuery({
@@ -148,8 +148,8 @@ function PatientField({ patient, onChange }: { patient: TaskPatient | null; onCh
   }
   return (
     <div className="field">
-      <span>Пациент <span className="hint">— необязательно</span></span>
-      <input type="search" aria-label="Найти пациента для задачи" placeholder="Имя или номер" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <span>Пациент {optional && <span className="hint">— необязательно</span>}</span>
+      <input type="search" aria-label={label} placeholder="Имя или номер" value={query} onChange={(e) => setQuery(e.target.value)} />
       {found.data?.length ? (
         <ul className="found">
           {found.data.slice(0, 6).map((p: Patient) => (
