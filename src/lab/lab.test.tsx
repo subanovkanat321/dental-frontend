@@ -87,7 +87,7 @@ test('«Склад → Лаборатория»: «Ждём» с просроч�
   expect(waitingGroup).toHaveTextContent('Мост 34, 35, 36')
   const readyGroup = screen.getByRole('region', { name: 'Готово — ждёт установки' })
   expect(readyGroup).toHaveTextContent('примерка завтра 10:00')
-  expect(screen.getByRole('button', { name: 'Установлено' })).toHaveAttribute('aria-expanded', 'false')
+  expect(await screen.findByRole('button', { name: /Установлено пациентам/ })).toHaveAttribute('aria-expanded', 'false')
   expect(screen.queryByText('Капа')).toBeNull()
   expect(await screen.findByText(/Должны лабораториям/)).toHaveTextContent('Должны лабораториям: 9 000 сом')
 
@@ -149,4 +149,13 @@ test('карточка приёма: на примерку работа ещё �
   await waitForSlow(() => expect(calls).toContainEqual({ path: 'status 9', body: { status: 'READY' } }))
   expect(await within(block).findByText(/Готово/)).toBeInTheDocument()
   expect(within(block).queryByRole('alert')).toBeNull()
+})
+
+test('работ нет — только «Работ в лаборатории нет», без пустой строки «Установлено»', async () => {
+  window.location.hash = '/stock'
+  backend([])
+  renderApp()
+  await userEvent.click(await findSub('Лаборатория'))
+  expect(await screen.findByText('Работ в лаборатории нет')).toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: /Установлено/ })).toBeNull()
 })

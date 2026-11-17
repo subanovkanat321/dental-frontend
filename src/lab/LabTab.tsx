@@ -33,7 +33,8 @@ export function LabTab({ me, initialOrder, onOpenPatient }: {
   const filter = { labId: labId === '' ? undefined : labId, doctorId: doctorId === '' ? undefined : doctorId }
   const open = useLabOrders({ fitted: false, ...filter })
   const [showFitted, setShowFitted] = useState(false)
-  const fitted = useLabOrders({ fitted: true, ...filter }, showFitted)
+  // Архив грузим сразу: пустой — строки «Установлено» нет вовсе (под «Работ нет» она сбивала с толку)
+  const fitted = useLabOrders({ fitted: true, ...filter }, true)
   const labs = useLabs()
   const money = seesLabMoney(me)
   const debts = useLabDebts(money)
@@ -100,11 +101,12 @@ export function LabTab({ me, initialOrder, onOpenPatient }: {
           <ul className="calm-list">{groups.ready.map(row)}</ul>
         </section>
       )}
-      <Fold title="Установлено" label="Установленные работы" defaultOpen={showFitted} onToggle={setShowFitted}>
-        {fitted.isPending ? <Loading /> : fitted.data?.length
-          ? <ul className="calm-list">{fitted.data.map(row)}</ul>
-          : <p className="hint">Пока ничего не установлено.</p>}
-      </Fold>
+      {(fitted.data?.length ?? 0) > 0 && (
+        <Fold title="Установлено пациентам" meta={fitted.data!.length} label="Установленные работы"
+          defaultOpen={showFitted} onToggle={setShowFitted}>
+          <ul className="calm-list">{fitted.data!.map(row)}</ul>
+        </Fold>
+      )}
 
       {creating && <LabOrderDialog me={me} onClose={() => setCreating(false)} />}
       {linkedOrder && <LabOrderDialog key={linkedOrder.id} me={me} order={linkedOrder} onClose={() => setLinkClosed(true)} />}
