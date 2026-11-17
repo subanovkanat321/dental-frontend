@@ -1556,6 +1556,8 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .after-visit-start { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 .after-visit-way { display: grid; gap: 4px; align-content: start; }
 .after-visit-way .btn { justify-self: start; }
+.after-visit-saved { grid-column: 1 / -1; }
+.after-visit-saved-text { max-height: 220px; overflow: auto; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); white-space: pre-wrap; overflow-wrap: anywhere; }
 .after-visit-memo { display: grid; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
 .after-visit-memo .actions { align-items: center; }
 .msg-preview { display: grid; gap: 6px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); }

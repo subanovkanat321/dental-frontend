@@ -143,6 +143,42 @@ test('ИИ у клиники включён — «Составить с ИИ ✨
   expect(calls).toEqual(['draft:AI'])
 })
 
+test('черновик ИИ не теряется: отмена и повторное открытие — прежний текст без запроса; «Написать заново» и «Вернуть прежний»', async () => {
+  const first: Draft = { ...DRAFT, ai: true, text: 'Здравствуйте, Бакыт М.!\n\nСегодня поставили пломбу на зуб 36. Подробно.' }
+  const second: Draft = { ...DRAFT, ai: true, text: 'Здравствуйте, Бакыт М.!\n\nПломба.' }
+  const calls = backend(first, { ai: true })
+  renderApp()
+  const b = await box()
+  await userEvent.click(await within(b).findByRole('button', { name: 'Составить с ИИ ✨' }))
+  expect(await within(b).findByRole('textbox', { name: 'Текст сообщения' })).toHaveValue(first.text)
+  // Первый вариант — «вернуть» нечего
+  expect(within(b).queryByRole('button', { name: '↩ Вернуть прежний вариант' })).not.toBeInTheDocument()
+
+  // Отмена и снова: прежний вариант на месте, нового запроса нет
+  await userEvent.click(within(b).getByRole('button', { name: 'Отмена' }))
+  expect(within(b).getByRole('note', { name: 'Прежний вариант ИИ' })).toHaveTextContent('Подробно.')
+  expect(within(b).queryByRole('button', { name: 'Составить с ИИ ✨' })).not.toBeInTheDocument()
+  await userEvent.click(within(b).getByRole('button', { name: 'Использовать' }))
+  expect(within(b).getByRole('textbox', { name: 'Текст сообщения' })).toHaveValue(first.text)
+  expect(calls).toEqual(['draft:AI'])
+
+  // «Написать заново» — новый запрос; прежний можно вернуть одной ступенью
+  await userEvent.click(within(b).getByRole('button', { name: 'Отмена' }))
+  const again = backend(second, { ai: true })
+  await userEvent.click(within(b).getByRole('button', { name: '✨ Написать заново' }))
+  const text = await within(b).findByRole('textbox', { name: 'Текст сообщения' })
+  expect(text).toHaveValue(second.text)
+  expect(again).toEqual(['draft:AI'])
+  await userEvent.click(within(b).getByRole('button', { name: '↩ Вернуть прежний вариант' }))
+  expect(within(b).getByRole('textbox', { name: 'Текст сообщения' })).toHaveValue(first.text)
+  expect(within(b).queryByRole('button', { name: '↩ Вернуть прежний вариант' })).not.toBeInTheDocument()
+
+  // Снова отмена — последним остался возвращённый вариант; в localStorage текста нет
+  await userEvent.click(within(b).getByRole('button', { name: 'Отмена' }))
+  expect(within(b).getByRole('note', { name: 'Прежний вариант ИИ' })).toHaveTextContent('Подробно.')
+  expect(localStorage.length).toBe(0)
+})
+
 test('уход можно поправить и вернуть; печать — второстепенно, из предпросмотра', async () => {
   const calls = backend({ ...DRAFT, ai: true }, { ai: true })
   renderApp()

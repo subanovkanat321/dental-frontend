@@ -56,6 +56,15 @@ export function AfterVisit({ appointment: a, me }: { appointment: Appointment; m
 
 type Mode = 'SELF' | 'AI' | 'TEMPLATE'
 
+/**
+ * Последний черновик ИИ по приёму и один прежний (после «Написать заново») — только в памяти страницы, в кэше
+ * react-query: в тексте имя пациента, поэтому не localStorage. Закрыли черновик или панель и открыли снова —
+ * удачный вариант не потерян; перезагрузка страницы или отправка — забыт.
+ */
+type AiDrafts = { current: Draft; previous: Draft | null }
+
+const aiDraftsKey = (id: number) => ['visit-report-ai-draft', id] as const
+
 /** «Указать мой номер» в подписи — выбор врача на этом устройстве: только флаг, сам номер не храним. */
 const PHONE_FLAG = 'visit-report-doctor-phone'
 
@@ -107,18 +116,40 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
   const [memoSending, setMemoSending] = useState(false)
   const [done, setDone] = useState('')
   const textArea = useRef<HTMLTextAreaElement>(null)
+  // Наблюдатель держит черновики ИИ в кэше, пока панель открыта, и ещё 30 минут после; сам ничего не запрашивает
+  const saved = useQuery<AiDrafts | null>({
+    queryKey: aiDraftsKey(id),
+    queryFn: () => client.getQueryData<AiDrafts>(aiDraftsKey(id)) ?? null,
+    enabled: false,
+    staleTime: Infinity,
+    gcTime: 30 * 60_000,
+  }).data ?? null
+  const open = (d: Draft, m: Mode) => {
+    setMode(m)
+    setDraft(d)
+    setText(d.text ?? '')
+    setCare(d.care?.text ?? '')
+    setCareTitle(d.care?.title ?? null)
+    setPreview(null)
+    setDone('')
+  }
   const make = useMutation<Draft, ApiError, Mode>({
     mutationFn: (m) => unwrap(api.POST('/api/appointments/{id}/visit-report/draft', { params: { path: { id }, query: { mode: m } } })),
     onSuccess: (d, m) => {
-      setMode(m)
-      setDraft(d)
-      setText(d.text ?? '')
-      setCare(d.care?.text ?? '')
-      setCareTitle(d.care?.title ?? null)
-      setPreview(null)
-      setDone('')
+      // Новый вариант ИИ — последний, прежний остаётся на одну ступень назад; шаблон (ИИ не ответил) их не трогает
+      if (d.ai) {
+        const before = client.getQueryData<AiDrafts>(aiDraftsKey(id))?.current ?? null
+        client.setQueryData<AiDrafts>(aiDraftsKey(id), { current: d, previous: before })
+      }
+      open(d, m)
     },
   })
+  // «↩ Вернуть прежний вариант»: прежний снова последний, ступень назад — одна
+  const restore = () => {
+    if (!saved?.previous) return
+    client.setQueryData<AiDrafts>(aiDraftsKey(id), { current: saved.previous, previous: null })
+    open(saved.previous, 'AI')
+  }
   // «Написать самому» — курсор сразу под приветствием: там пустая строка для своих слов
   useEffect(() => {
     if (draft && mode === 'SELF' && textArea.current) {
@@ -147,6 +178,8 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
       else {
         setDraft(null)
         setPreview(null)
+        // Отправили — черновики ИИ больше не нужны (и имя пациента не держим в памяти)
+        client.removeQueries({ queryKey: aiDraftsKey(id) })
       }
       void client.invalidateQueries({ queryKey: ['visit-report', id] })
     },
@@ -174,6 +207,17 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
               <button type="button" className="btn" disabled={make.isPending} onClick={() => make.mutate('SELF')}>Написать самому</button>
               <span className="hint small">Приветствие и план лечения уже вставлены — остальное своими словами. Без ИИ.</span>
             </div>
+            {saved ? (
+              <div className="after-visit-way after-visit-saved">
+                <span className="hint small">✨ Прежний вариант ИИ — можно взять его или попросить новый</span>
+                <div className="after-visit-saved-text" role="note" aria-label="Прежний вариант ИИ">{saved.current.text}</div>
+                <div className="actions">
+                  <button type="button" className="btn" disabled={make.isPending} onClick={() => open(saved.current, 'AI')}>Использовать</button>
+                  <button type="button" className="btn ghost" disabled={make.isPending} onClick={() => make.mutate('AI')}>
+                    {make.isPending && make.variables === 'AI' ? <><Spinner />ИИ пишет…</> : '✨ Написать заново'}</button>
+                </div>
+              </div>
+            ) : (
             <div className="after-visit-way">
               <button type="button" className="btn" disabled={make.isPending} onClick={() => make.mutate(aiOn ? 'AI' : 'TEMPLATE')}>
                 {make.isPending && make.variables !== 'SELF' ? <><Spinner />{aiOn ? 'ИИ пишет…' : 'Составляем…'}</> : aiOn ? 'Составить с ИИ ✨' : 'Составить по шаблону'}</button>
@@ -181,6 +225,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
                 ? 'ИИ напишет по данным приёма — без имени и телефона пациента. Вы проверите и поправите.'
                 : 'Готовый текст из данных приёма: что сделали, план, следующий визит. Вы дополните.'}</span>
             </div>
+            )}
           </div>
           {m?.memoId != null && (
             <MemoOnly appointment={a} memo={m} sending={memoSending} onSending={setMemoSending} onPrint={() => setMemoPrinting(true)} />
@@ -238,6 +283,9 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
             <button type="button" className="btn primary" disabled={busy || !text.trim()} onClick={() => check.mutate()}>
               {check.isPending && <Spinner />}Проверить и отправить</button>
             <button type="button" className="btn ghost" onClick={() => setDraft(null)}>Отмена</button>
+            {draft.ai && saved?.previous && (
+              <button type="button" className="link" onClick={restore}>↩ Вернуть прежний вариант</button>
+            )}
           </div>
           {!draft.ai && mode !== 'SELF' && draft.aiAvailable && !aiOn && <AiSwitch me={me} onOn={() => make.mutate('AI')} />}
         </>
