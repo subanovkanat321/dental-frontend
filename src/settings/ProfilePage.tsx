@@ -29,7 +29,7 @@ type Me = Schemas['BookingViewsMe']
  * «Мой профиль» — всё о себе заполняет сам сотрудник (админ только приглашает). Разделы — подпись над
  * карточкой; на компьютере — сеткой в две колонки во всю ширину (с 2026-11-14, crm.css): сверху кто вы — врачу «Для пациентов» (фото, имя, «о себе» —
  * их видят в боте), остальным (админ без кресла, регистратура, ассистент) «Имя» — как видят коллеги; дальше
- * «Телефон» (у всех, и у владельца платформы), врачу — «Работа» и «Вход и права». В самом низу — «Пароль и
+ * «Телефон» и под ним «Почта» (у всех, и у владельца платформы), врачу — «Работа» и «Вход и права». В самом низу — «Пароль и
  * вход»: с Telegram он необязателен (только для входа по номеру), и «Выйти».
  */
 export function ProfilePage({ me, onBack, footer }: { me: Me; onBack: () => void; footer?: ReactNode }) {
@@ -130,11 +130,130 @@ const TAKE_FROM_TELEGRAM = 'Взять номер из Telegram'
 function MyPhone() {
   const phone = useQuery({ queryKey: ['me-phone'], queryFn: () => unwrap(api.GET('/api/me/phone')) })
   return (
-    <section className="settings-group" aria-label="Телефон">
-      <h2>Телефон</h2>
-      {phone.isPending ? <Loading /> : phone.error ? <p className="error">{phone.error.message}</p>
-        : <MyPhoneCard key={phone.data.phone ?? ''} state={phone.data} />}
+    <>
+      <section className="settings-group" aria-label="Телефон">
+        <h2>Телефон</h2>
+        {phone.isPending ? <Loading /> : phone.error ? <p className="error">{phone.error.message}</p>
+          : <MyPhoneCard key={phone.data.phone ?? ''} state={phone.data} />}
+      </section>
+      <MyEmail />
+    </>
+  )
+}
+
+type MyEmailState = Schemas['MyEmailControllerMyEmail']
+
+const EMAIL_HINT = 'Почта — чтобы восстановить пароль, если нет Telegram: на странице входа «Забыли пароль? / Первый вход» → номер → «На почту». Сохраняется только после кода из письма.'
+
+/**
+ * «Почта» в «Моём профиле» (рядом с «Телефоном»): на неё придёт код «Забыли пароль?», если нет Telegram. Добавить или
+ * сменить — адрес → письмо с кодом → «Подтвердить»: без кода сервер почту не сохраняет (иначе кто-то вписал бы свою и
+ * восстановил чужой пароль). Убрать — без кода. Почта — у номера входа: без телефона блок просит сначала его. Почта на
+ * сервере не настроена (MAIL_*) — блока нет. Адрес не пишем ни в консоль, ни в localStorage.
+ */
+function MyEmail() {
+  const email = useQuery({ queryKey: ['me-email'], queryFn: () => unwrap(api.GET('/api/me/email')) })
+  if (email.isPending || email.error || !email.data.available) return null
+  return (
+    <section className="settings-group" aria-label="Почта">
+      <h2>Почта</h2>
+      <MyEmailCard key={email.data.email ?? ''} state={email.data} />
     </section>
+  )
+}
+
+function MyEmailCard({ state }: { state: MyEmailState }) {
+  const client = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState('')
+  const [sentTo, setSentTo] = useState('')
+  const [code, setCode] = useState('')
+  const [wait, restart] = useCountdown()
+  const sendCode = useMutation<unknown, ApiError, string>({
+    mutationFn: (email) => unwrap(api.POST('/api/me/email/code', { body: { email } })),
+    onSuccess: (_r, email) => { setSentTo(email.trim().toLowerCase()); setCode(''); restart() },
+  })
+  const confirm = useMutation<MyEmailState, ApiError>({
+    mutationFn: () => unwrap(api.PUT('/api/me/email', { body: { email: sentTo, code } })),
+    onSuccess: (r) => {
+      client.setQueryData(['me-email'], r)
+      void notify('Почта подтверждена. Забудете пароль — код можно получить на неё.')
+    },
+  })
+  const remove = useMutation<MyEmailState, ApiError>({
+    mutationFn: () => unwrap(api.DELETE('/api/me/email')),
+    onSuccess: (r) => client.setQueryData(['me-email'], r),
+  })
+  const close = () => {
+    setOpen(false)
+    setSentTo('')
+    setCode('')
+    sendCode.reset()
+    confirm.reset()
+  }
+  const error = confirm.error ?? sendCode.error
+
+  if (!state.phoneLogin) {
+    return (
+      <div className="card-block">
+        <p className="hint">Почта нужна, чтобы восстановить пароль входа по номеру. Сначала укажите телефон — выше, в «Телефоне».{' '}
+          <HelpHint title="Почта">{EMAIL_HINT}</HelpHint></p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="card-block email-card">
+      {!open ? (
+        <>
+          <div className="setting-line">
+            <div className="setting-what">
+              {state.email ? <p className="email-address">{state.email}</p> : <p className="hint">Почта не указана.</p>}
+              <p className="hint setting-sub">Чтобы восстановить пароль без Telegram{' '}
+                <HelpHint title="Почта">{EMAIL_HINT}</HelpHint></p>
+            </div>
+            <div className="setting-actions">
+              {state.email ? (
+                <>
+                  <button type="button" className="btn" onClick={() => setOpen(true)}><Icon name="edit" />Изменить</button>
+                  <RowMenu label="Ещё действия с почтой" items={[{ label: 'Убрать почту', tone: 'bad' as const, disabled: remove.isPending,
+                    onSelect: () => void ask('Убрать почту? Код «Забыли пароль?» тогда придёт только в Telegram или по SMS.').then((ok) => ok && remove.mutate()) }]} />
+                </>
+              ) : (
+                <button type="button" className="btn" onClick={() => setOpen(true)}>Добавить почту</button>
+              )}
+            </div>
+          </div>
+          {remove.error && <p className="error" role="alert">{remove.error.message}</p>}
+        </>
+      ) : !sentTo ? (
+        <form className="form narrow" aria-label="Моя почта" onSubmit={(e) => { e.preventDefault(); sendCode.mutate(value) }}>
+          <label className="field"><span>{state.email ? 'Новая почта' : 'Почта'}</span>
+            <input type="email" value={value} autoComplete="email" inputMode="email" maxLength={254} placeholder="name@gmail.com"
+              onChange={(e) => { sendCode.reset(); setValue(e.target.value) }} />
+          </label>
+          <p className="hint">Пришлём письмо с кодом — им подтвердите, что почта ваша.</p>
+          {error && <p className="error" role="alert">{error.fieldErrors.email ?? error.message}</p>}
+          <div className="actions">
+            <button type="submit" className="btn primary" disabled={sendCode.isPending || !value.trim()}>
+              {sendCode.isPending ? <><Spinner />Отправляем…</> : 'Получить код'}</button>
+            <button type="button" className="btn ghost" onClick={close}>Отмена</button>
+          </div>
+        </form>
+      ) : (
+        <form className="form narrow" aria-label="Подтвердить почту" onSubmit={(e) => { e.preventDefault(); confirm.mutate() }}>
+          <p className="hint" role="status">Отправили письмо с кодом на <b>{sentTo}</b>. Код действует 10 минут; письма нет — проверьте «Спам».</p>
+          <CodeInput value={code} onChange={setCode} />
+          {error && <p className="error" role="alert">{error.fieldErrors.code ?? error.fieldErrors.email ?? error.message}</p>}
+          <ResendLink wait={wait} sms={false} busy={sendCode.isPending} onSms={() => sendCode.mutate(sentTo)} onAgain={() => sendCode.mutate(sentTo)} />
+          <div className="actions">
+            <button type="submit" className="btn primary" disabled={confirm.isPending || code.length !== 6}>
+              {confirm.isPending ? <><Spinner />Проверяем…</> : 'Подтвердить'}</button>
+            <button type="button" className="btn ghost" onClick={close}>Отмена</button>
+          </div>
+        </form>
+      )}
+    </div>
   )
 }
 
@@ -152,6 +271,8 @@ function MyPhoneCard({ state }: { state: MyPhoneState }) {
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ['me-phone'] })
     void client.invalidateQueries({ queryKey: ['me-password'] })
+    // Почта живёт у номера входа: номер появился или убран — блок «Почта» меняется
+    void client.invalidateQueries({ queryKey: ['me-email'] })
   }
   const sendCode = useMutation<unknown, ApiError, string>({
     mutationFn: (p) => unwrap(api.POST('/api/me/phone/code', { body: { phone: p } })),

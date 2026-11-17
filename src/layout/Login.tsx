@@ -99,14 +99,15 @@ export function Login() {
           <button type="button" className="link login-phone-open" onClick={() => setByPhone(true)}>
             {PHONE_OPEN}</button>
           {(config.smsLogin || config.telegramCode) && (
-            <p className="hint small login-phone-note">Пароля нет или забыли — там же «{FORGOT}»: пришлём код{config.smsLogin ? ' по SMS' : ' в Telegram'}.</p>
+            <p className="hint small login-phone-note">Пароля нет или забыли — там же «{FORGOT}»: пришлём код{config.smsLogin ? ' по SMS' : ' в Telegram'}{config.mailCode ? ' или на почту' : ''}.</p>
           )}
         </>
       )}
       {config && !tgWaiting && (!viaTelegram || byPhone) && (
         <>
           {viaTelegram && <p className="login-or"><span>{PHONE_OPEN}</span></p>}
-          <PhoneLogin onDone={() => { saveMethod('phone'); entered() }} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin} />
+          <PhoneLogin onDone={() => { saveMethod('phone'); entered() }} sms={config.smsLogin} telegram={config.telegramCode} password={config.passwordLogin}
+            mail={config.mailCode} />
         </>
       )}
       <InstallHint />

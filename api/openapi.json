@@ -2430,6 +2430,66 @@
         }
       }
     },
+    "/api/me/email" : {
+      "get" : {
+        "tags" : [ "my-email-controller" ],
+        "operationId" : "get_2",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MyEmailControllerMyEmail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "my-email-controller" ],
+        "operationId" : "set_4",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MyEmailControllerEmailConfirm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MyEmailControllerMyEmail"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "my-email-controller" ],
+        "operationId" : "remove_1",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MyEmailControllerMyEmail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/earnings/goal" : {
       "put" : {
         "tags" : [ "earnings-controller" ],
@@ -2581,7 +2641,7 @@
     "/api/doctors/{id}/service-types" : {
       "put" : {
         "tags" : [ "doctor-services-controller" ],
-        "operationId" : "set_4",
+        "operationId" : "set_5",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -4246,6 +4306,34 @@
               "application/json" : {
                 "schema" : {
                   "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/login/phone/channels" : {
+      "post" : {
+        "tags" : [ "phone-login-controller" ],
+        "operationId" : "channels",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PhoneLoginControllerChannelsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PhoneLoginControllerChannels"
                 }
               }
             }
@@ -8387,6 +8475,27 @@
         }
       }
     },
+    "/api/me/email/code" : {
+      "post" : {
+        "tags" : [ "my-email-controller" ],
+        "operationId" : "code_5",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MyEmailControllerEmailCode"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/api/families/{id}/pay" : {
       "post" : {
         "tags" : [ "family-money-controller" ],
@@ -9607,7 +9716,7 @@
     "/api/calendar-feed" : {
       "get" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11225,7 +11334,7 @@
     "/web/case" : {
       "get" : {
         "tags" : [ "join-case" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -11591,7 +11700,7 @@
     "/api/salaries/timesheet" : {
       "get" : {
         "tags" : [ "timesheet-controller" ],
-        "operationId" : "get_4",
+        "operationId" : "get_5",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -11761,7 +11870,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -11788,7 +11897,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -12056,7 +12165,7 @@
     "/api/platform/health" : {
       "get" : {
         "tags" : [ "health-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12402,7 +12511,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_8",
+        "operationId" : "get_9",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12664,7 +12773,7 @@
     "/api/patients/{patientId}/contract" : {
       "get" : {
         "tags" : [ "contract-controller" ],
-        "operationId" : "get_9",
+        "operationId" : "get_10",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -13069,7 +13178,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_10",
+        "operationId" : "get_11",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -13204,7 +13313,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_11",
+        "operationId" : "get_12",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -13778,7 +13887,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_12",
+        "operationId" : "get_13",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14644,7 +14753,7 @@
     "/api/waitlist/{id}" : {
       "delete" : {
         "tags" : [ "waitlist-controller" ],
-        "operationId" : "remove_1",
+        "operationId" : "remove_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14781,7 +14890,7 @@
     "/api/members/{telegramId}" : {
       "delete" : {
         "tags" : [ "staff-members-controller" ],
-        "operationId" : "remove_2",
+        "operationId" : "remove_3",
         "parameters" : [ {
           "name" : "telegramId",
           "in" : "path",
@@ -17391,6 +17500,31 @@
         },
         "required" : [ "editable" ]
       },
+      "MyEmailControllerEmailConfirm" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "email" ]
+      },
+      "MyEmailControllerMyEmail" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "phoneLogin" : {
+            "type" : "boolean"
+          },
+          "available" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "available", "phoneLogin" ]
+      },
       "EarningsControllerGoal" : {
         "properties" : {
           "goalSom" : {
@@ -18918,9 +19052,25 @@
             "type" : "string"
           },
           "channel" : {
+            "type" : "string",
+            "enum" : [ "auto", "sms", "mail" ]
+          }
+        }
+      },
+      "PhoneLoginControllerChannelsRequest" : {
+        "properties" : {
+          "phone" : {
             "type" : "string"
           }
         }
+      },
+      "PhoneLoginControllerChannels" : {
+        "properties" : {
+          "emailMasked" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "emailMasked" ]
       },
       "InviteControllerTokenRequest" : {
         "properties" : {
@@ -20744,6 +20894,14 @@
           }
         }
       },
+      "MyEmailControllerEmailCode" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "email" ]
+      },
       "FamilyMoneyControllerPay" : {
         "properties" : {
           "amountSom" : {
@@ -21863,9 +22021,12 @@
           },
           "temporary" : {
             "type" : "boolean"
+          },
+          "mail" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "phoneMasked", "resendSeconds", "secondsLeft", "step", "temporary" ]
+        "required" : [ "mail", "phoneMasked", "resendSeconds", "secondsLeft", "step", "temporary" ]
       },
       "LinksControllerLinks" : {
         "properties" : {
@@ -21908,9 +22069,12 @@
           },
           "telegramLogin" : {
             "type" : "boolean"
+          },
+          "mailCode" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "passwordLogin", "smsLogin", "telegramCode", "telegramLogin" ]
+        "required" : [ "mailCode", "passwordLogin", "smsLogin", "telegramCode", "telegramLogin" ]
       },
       "DirectoryControllerClinic" : {
         "properties" : {

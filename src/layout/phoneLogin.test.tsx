@@ -17,7 +17,7 @@ type Post = { path: string; body: Record<string, unknown>; header: string | null
  * Фальшивый вход по номеру: пароль «Тишина2026» (или временный «Временный-1»), код 123456 (из Telegram
  * или SMS), пропуск «tok-1». Возвращает список запросов — проверить, что ушло на сервер.
  */
-function backend(config: { sms?: boolean; password?: boolean; telegram?: boolean } = {}) {
+function backend(config: { sms?: boolean; password?: boolean; telegram?: boolean; mail?: boolean } = {}) {
   let session = false
   const posts: Post[] = []
   const record = async (path: string, request: Request) => {
@@ -29,8 +29,12 @@ function backend(config: { sms?: boolean; password?: boolean; telegram?: boolean
     http.get('*/api/patient/me', () => (session ? HttpResponse.json(me) : HttpResponse.json({ detail: 'Войдите' }, { status: 401 }))),
     http.get('*/web/config', () => HttpResponse.json({
       botUsername: 'tish_test_bot', smsLogin: config.sms ?? true, passwordLogin: config.password ?? true,
-      telegramCode: config.telegram ?? true,
+      telegramCode: config.telegram ?? true, mailCode: config.mail ?? false,
     })),
+    http.post('*/web/login/phone/channels', async ({ request }) => {
+      await record('channels', request)
+      return HttpResponse.json({ emailMasked: 'a***@gmail.com' })
+    }),
     http.post('*/web/login/phone/code', async ({ request }) => {
       const body = await record('code', request)
       return config.sms === false && body.channel === 'sms'
@@ -151,6 +155,54 @@ test('«Забыли пароль? / Первый вход» → одна кно
   // Канал не выбираем — сервер решает сам
   expect(posts[1]!.body).toEqual({ phone: '+996 700000031' })
   expect(posts.at(-1)!.body).toEqual({ token: 'tok-1', password: 'Тишина2026' })
+})
+
+test('почта настроена: после номера — выбор канала, «На почту a***@gmail.com» → код из письма → пароль → вход', async () => {
+  const posts = backend({ mail: true })
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
+  await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.click(screen.getByRole('button', { name: 'Получить код' }))
+
+  const choose = await screen.findByRole('group', { name: 'Куда прислать код' })
+  expect(choose).toHaveTextContent('Куда прислать код?')
+  expect(screen.getByRole('button', { name: 'В Telegram' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'По SMS' })).toBeInTheDocument()
+  // Маска может быть «приманкой» (сервер не выдаёт, есть ли почта) — подсказка, что делать, если почты нет
+  expect(choose).toHaveTextContent('Не добавляли — выберите Telegram или SMS')
+  await user.click(screen.getByRole('button', { name: 'На почту a***@gmail.com' }))
+
+  const step = await screen.findByRole('form', { name: 'Код подтверждения' })
+  expect(step).toHaveTextContent('Отправили письмо с кодом на a***@gmail.com')
+  expect(step).toHaveTextContent('Код действует 10 минут')
+  // Про SMS на шаге письма не говорим: повтор — снова письмо
+  expect(step).toHaveTextContent(/Отправить ещё раз — через \d+ с/)
+  expect(screen.getByRole('button', { name: 'Другой способ' })).toBeInTheDocument()
+  await user.type(screen.getByRole('textbox', { name: 'Код подтверждения' }), '123456')
+  await user.click(screen.getByRole('button', { name: 'Подтвердить' }))
+  await screen.findByRole('form', { name: 'Придумайте пароль' })
+  await user.type(screen.getByLabelText('Новый пароль'), 'Тишина2026')
+  await user.type(screen.getByLabelText('Повторите пароль'), 'Тишина2026')
+  await user.click(screen.getByRole('button', { name: 'Сохранить и войти' }))
+
+  expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
+  expect(posts.map((p) => p.path)).toEqual(['channels', 'code', 'verify', 'new'])
+  expect(posts[0]!.body).toEqual({ phone: '+996 700000031' })
+  expect(posts[1]!.body).toEqual({ phone: '+996 700000031', channel: 'mail' })
+  expect(posts.every((p) => p.header === '1')).toBe(true)
+})
+
+test('почта не настроена — выбора канала нет, как раньше: «Получить код» сразу шлёт код', async () => {
+  const posts = backend({ mail: false })
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: 'Забыли пароль? / Первый вход' }))
+  await user.type(screen.getByRole('textbox', { name: 'Номер телефона' }), '700000031')
+  await user.click(screen.getByRole('button', { name: 'Получить код' }))
+  await screen.findByRole('form', { name: 'Код подтверждения' })
+  expect(screen.queryByRole('button', { name: /На почту/ })).not.toBeInTheDocument()
+  expect(posts.map((p) => p.path)).toEqual(['code'])
 })
 
 test('«Не пришло? Отправить по SMS» появляется через 60 секунд и явно просит SMS', async () => {

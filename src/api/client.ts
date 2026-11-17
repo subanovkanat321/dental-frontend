@@ -185,9 +185,20 @@ export type SetupToken = Schemas['PhoneLoginControllerSetupToken']
 
 /**
  * Как прислать код: «auto» — канал выбирает сервер (Telegram, если номер к нему привязан и бот доставил,
- * иначе SMS); «sms» — сразу SMS («Не пришло? Отправить по SMS»).
+ * иначе SMS); «sms» — сразу SMS («Не пришло? Отправить по SMS»); «mail» — на почту из «Моего профиля».
  */
-export type CodeChannel = 'auto' | 'sms'
+export type CodeChannel = 'auto' | 'sms' | 'mail'
+
+/**
+ * Маска почты для кнопки «На почту a***@gmail.com» (почта настроена — config.mailCode). Маска есть у любого номера:
+ * у номера без почты сервер отдаёт постоянную «приманку» — по ответу не узнать, есть ли номер и почта у него.
+ * Без номера (страницу перезагрузили) — сервер берёт номер из своей cookie «ждём код».
+ */
+export async function loginMailMask(phone: string): Promise<string> {
+  const r = await webPost<Schemas['PhoneLoginControllerChannels']>('/web/login/phone/channels', phone ? { phone } : {})
+  if (!r?.emailMasked) throw new ApiError(500, 'Не удалось узнать почту — попробуйте ещё раз')
+  return r.emailMasked
+}
 
 /**
  * «Забыли пароль? / Первый вход», шаг 1: прислать код. Сервер всегда отвечает «ок» — не говорит, есть
@@ -197,7 +208,7 @@ export type CodeChannel = 'auto' | 'sms'
 export async function requestLoginCode(phone: string, channel: CodeChannel = 'auto'): Promise<void> {
   // Без номера (страницу перезагрузили на шаге кода) — сервер берёт номер из своей cookie «ждём код»
   const body = phone ? { phone } : {}
-  await webPost('/web/login/phone/code', channel === 'sms' ? { ...body, channel } : body)
+  await webPost('/web/login/phone/code', channel === 'auto' ? body : { ...body, channel })
 }
 
 /**

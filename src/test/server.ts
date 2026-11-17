@@ -42,6 +42,8 @@ export const server = setupServer(
   // «Пароль и вход»: по умолчанию вошли через Telegram — блока нет
   http.get('*/api/me/name', () => HttpResponse.json({ fullName: 'Айпери', editable: true } satisfies Schemas['StaffMembersOwnName'])),
   http.get('*/api/me/password', () => HttpResponse.json({ phoneLogin: false, passwordSet: false, temporary: false, sms: false, telegram: false, telegramCode: false } satisfies Schemas['PasswordControllerPasswordState'])),
+  // «Мой профиль → Почта»: по умолчанию почта на сервере не настроена — блока нет (почту проверяет profileEmail.test)
+  http.get('*/api/me/email', () => HttpResponse.json({ email: undefined, phoneLogin: false, available: false } satisfies Schemas['MyEmailControllerMyEmail'])),
   // Сведения о платформе: по умолчанию пусто — группы врачей в «Помощи» нет (её тест — layout/helpFab.test.tsx)
   http.get('*/api/platform-info', () => HttpResponse.json({ accessLog: false, accessNotify: false, accessRequiresGrant: false } satisfies Schemas['PlatformInfoInfo'])),
   // Тур при первом входе: по умолчанию уже пройден — не закрывает экраны остальных тестов (тесты тура — tour/tour.test.tsx)

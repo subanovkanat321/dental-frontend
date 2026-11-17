@@ -987,10 +987,12 @@ button.timesheet-day:hover { border-color: var(--accent); }
 .login-or::before, .login-or::after { content: ''; flex: 1; border-top: 1px solid var(--separator); }
 /* Вход по номеру и SMS (без Telegram): форма в карточке входа — по ширине кнопки, слева направо */
 .phone-login { width: 100%; max-width: 360px; justify-self: center; text-align: left; }
-.phone-login .actions { display: flex; justify-content: space-between; gap: 12px; }
+.phone-login .actions { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; }
 /* Требования к паролю: отмечаются галочкой по мере ввода */
 .password-rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: .85rem; }
 .phone-login h2 { margin: 0; font-size: 1.05rem; }
+.phone-login .code-channels { display: grid; gap: 8px; }
+.phone-login .code-channels .btn { width: 100%; justify-content: center; }
 
 /* Настройка новой клиники (V95): чек-лист до «Показать пациентам» */
 .setup-steps { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
@@ -2701,7 +2703,9 @@ p.expense-owner { display: block; }
 .setting-actions { display: flex; align-items: center; gap: 8px; }
 .setting-actions .btn .icon { width: 17px; height: 17px; }
 .setting-actions .row-menu-btn { width: 38px; height: 38px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); }
-.phone-card .row-menu-pop { right: 0; }
+.phone-card .row-menu-pop, .email-card .row-menu-pop { right: 0; }
+/* «Мой профиль → Почта»: адрес крупно, длинный — переносится, не раздвигает карточку */
+.email-address { font-size: 1.1rem; font-weight: 500; overflow-wrap: anywhere; }
 /* «Станьте и врачом»: строка-приглашение (Fold) и компактная форма, кнопка обычной ширины */
 .card-block > .fold:only-child { border-bottom: 0; }
 .card-block > .fold:only-child > .fold-head { min-height: 40px; padding: 0 2px; }

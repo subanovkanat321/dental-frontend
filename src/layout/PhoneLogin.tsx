@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 
 import {
-  ApiError, forgetLoginPending, loginPending, passwordLogin, phoneLogin, requestLoginCode, setNewPassword, type CodeChannel,
+  ApiError, forgetLoginPending, loginMailMask, loginPending, passwordLogin, phoneLogin, requestLoginCode, setNewPassword,
+  type CodeChannel,
 } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
+import { phoneText } from '../team/texts'
 import { CodeInput, ResendLink } from './CodeStep'
 import { sentText, useCountdown } from '../lib/otp'
 import { NewPasswordFields, PasswordInput, ShowPassword } from './PasswordFields'
@@ -14,7 +16,7 @@ import { Spinner } from './Loading'
 /** Кнопка с пароля на восстановление: и первый пароль, и «забыли» — один и тот же путь. */
 export const FORGOT = 'Забыли пароль? / Первый вход'
 
-type Step = 'checking' | 'password' | 'phone' | 'code' | 'new-password'
+type Step = 'checking' | 'password' | 'phone' | 'channel' | 'code' | 'new-password'
 
 /** Ответ сервера, когда cookie «ждём код» истекла: тогда — снова номер. */
 const CODE_EXPIRED = 'Время на ввод кода вышло'
@@ -27,6 +29,9 @@ const CODE_EXPIRED = 'Время на ввод кода вышло'
  * «Придумайте пароль» → вход. Канал выбирает сервер: Telegram (бот сотрудников, бесплатно), если номер к
  * нему привязан и бот доставил, иначе SMS — чтобы не тратить лимит SMS;</li>
  * <li>временный пароль от админа — входит им и сразу придумывает свой.</li>
+ * <li>почта на сервере настроена ({@code mail}) — после номера выбор канала: «В Telegram» (сервер сам: Telegram,
+ * иначе SMS), «По SMS», «На почту a***@gmail.com». Маску сервер отдаёт любому номеру (у номера без почты —
+ * постоянная «приманка»), поэтому и она не выдаёт, есть ли номер и почта у него.</li>
  * </ul>
  * Сервер не говорит, есть ли такой номер, задан ли пароль и куда ушёл код: ответ на «Получить код» всегда
  * один. Поэтому под кодом — оба варианта («в Telegram, если номер привязан, иначе SMS»), а через 60 секунд —
@@ -39,9 +44,10 @@ const CODE_EXPIRED = 'Время на ввод кода вышло'
  * @param sms коды по SMS подключены
  * @param telegram код в Telegram включён (бот настроен)
  * @param password вход по паролю включён
+ * @param mail код можно получить на почту (MAIL_* на сервере настроены)
  */
-export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword = true }:
-  { onDone: () => void; sms: boolean; telegram?: boolean; password?: boolean }) {
+export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword = true, mail = false }:
+  { onDone: () => void; sms: boolean; telegram?: boolean; password?: boolean; mail?: boolean }) {
   const first: Step = byPassword ? 'password' : 'phone'
   const [step, setStep] = useState<Step>('checking')
   const [phone, setPhone] = useState('')
@@ -52,13 +58,15 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
   const [shown, setShown] = useState(false)
   const [code, setCode] = useState('')
   const [channel, setChannel] = useState<CodeChannel>('auto')
+  /** Маска почты для «На почту» — от сервера, после номера. */
+  const [mailMask, setMailMask] = useState('')
   const [token, setToken] = useState('')
   const [temporary, setTemporary] = useState(false)
   const [fresh, setFresh] = useState({ password: '', repeat: '' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [wait, restart] = useCountdown()
-  const canRecover = telegram || sms
+  const canRecover = telegram || sms || mail
 
   useEffect(() => {
     let alive = true
@@ -66,6 +74,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
       if (!alive) return
       if (p?.step === 'code') {
         setMasked(p.phoneMasked)
+        if (p.mail) setChannel('mail')
         setMinutesLeft(Math.max(1, Math.ceil(p.secondsLeft / 60)))
         restart(p.resendSeconds)
         setStep('code')
@@ -114,8 +123,16 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
     setChannel(via)
     setStep('code')
     setCode('')
-    setMinutesLeft(5)
+    setMinutesLeft(via === 'mail' ? 10 : 5)
     restart()
+  })
+
+  /** После номера: почта настроена — выбор канала (с маской почты), иначе сразу «Получить код», как раньше. */
+  const next = () => (mail ? chooseChannel() : getCode('auto'))
+
+  const chooseChannel = () => run(async () => {
+    setMailMask(await loginMailMask(typed()))
+    setStep('channel')
   })
 
   /** «Другой номер»: забыть шаг и на сервере (cookie), чтобы перезагрузка не вернула старый номер. */
@@ -123,6 +140,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
     void forgetLoginPending().catch(() => undefined)
     setMasked('')
     setCode('')
+    setMailMask('')
     go('phone')
   }
 
@@ -199,7 +217,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
         {canRecover ? (
           <>
             <button type="button" className={error ? 'btn' : 'link'} onClick={() => go('phone')}>{FORGOT}</button>
-            {(telegram || sms) && <p className="hint small">Нет пароля или забыли? Нажмите «{FORGOT}» — код придёт {sms ? 'по SMS (или в Telegram, если номер к нему привязан)' : 'в Telegram'}.</p>}
+            {(telegram || sms) && <p className="hint small">Нет пароля или забыли? Нажмите «{FORGOT}» — код придёт {sms ? 'по SMS (или в Telegram, если номер к нему привязан)' : 'в Telegram'}{mail ? ' или на почту' : ''}.</p>}
           </>
         ) : (
           <p className="hint">Первый вход или забыли пароль? Попросите руководителя клиники задать временный пароль
@@ -211,7 +229,7 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
 
   if (step === 'phone') {
     return (
-      <form className="form phone-login" aria-label="Код для входа" onSubmit={(e) => { e.preventDefault(); void getCode('auto') }}>
+      <form className="form phone-login" aria-label="Код для входа" onSubmit={(e) => { e.preventDefault(); void next() }}>
         <h2>Первый вход или новый пароль</h2>
         <p className="hint">Пришлём код, вы его подтвердите — и потом придумаете пароль. Дальше входите номером и паролем.</p>
         <label className="field"><span>Номер телефона</span>
@@ -219,9 +237,9 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
         </label>
         {canRecover && (
           <button type="submit" className="btn primary" disabled={busy || !phone.trim()}>
-            {busy ? <><Spinner />Отправляем…</> : 'Получить код'}</button>
+            {busy ? <><Spinner />{mail ? 'Минутку…' : 'Отправляем…'}</> : 'Получить код'}</button>
         )}
-        {telegram && (
+        {telegram && !mail && (
           <p className="hint small">Код бесплатно придёт в Telegram от бота клиники, если номер привязан к вашему Telegram
             (в боте: «📱&nbsp;Поделиться номером»){sms ? ', иначе — SMS на этот номер.' : '.'}</p>
         )}
@@ -232,21 +250,55 @@ export function PhoneLogin({ onDone, sms, telegram = true, password: byPassword 
     )
   }
 
+  if (step === 'channel') {
+    return (
+      <div className="form phone-login" role="group" aria-label="Куда прислать код">
+        <h2>Куда прислать код?</h2>
+        {(phone.trim() || masked) && <p className="hint">Номер <b className="num">{phone.trim() ? phoneText(phoneFromInput(phone).replace(/\s/g, '')) : masked}</b></p>}
+        <div className="code-channels">
+          {telegram && (
+            <button type="button" className="btn primary" disabled={busy} onClick={() => void getCode('auto')}>В Telegram</button>
+          )}
+          {sms && <button type="button" className="btn" disabled={busy} onClick={() => void getCode('sms')}>По SMS</button>}
+          <button type="button" className="btn" disabled={busy} onClick={() => void getCode('mail')}>
+            На почту <span className="num">{mailMask}</span></button>
+        </div>
+        {busy && <p className="hint small" role="status"><Spinner />Отправляем…</p>}
+        {telegram && (
+          <p className="hint small">В Telegram — бесплатно, от бота клиники, если номер привязан к вашему Telegram
+            {sms ? ' (не привязан — придёт SMS).' : '.'}</p>
+        )}
+        <p className="hint small">На почту — если вы добавили и подтвердили её в «Мой профиль» → «Почта». Не добавляли — выберите
+          {telegram && sms ? ' Telegram или SMS' : telegram ? ' Telegram' : sms ? ' SMS' : ' другой способ'}.</p>
+        {error && <p className="error" role="alert">{error}</p>}
+        <button type="button" className="link" onClick={anotherNumber}>Другой номер</button>
+      </div>
+    )
+  }
+
   if (step === 'code') {
+    const byMail = channel === 'mail'
     return (
       <form className="form phone-login" aria-label="Код подтверждения" onSubmit={(e) => { e.preventDefault(); void confirmCode() }}>
-        <p className="hint" role="status">{masked && <>Код отправлен на <b>{masked}</b>. </>}
-          {sentText(channel === 'sms', telegram, sms)} Код действует {masked ? `ещё ${minutesLeft} мин.` : '5 минут.'}</p>
+        {byMail ? (
+          <p className="hint" role="status">Отправили письмо с кодом{mailMask ? <> на <b className="num">{mailMask}</b></> : ' на почту'}, если
+            она подтверждена в «Мой профиль». Не видно письма — проверьте «Спам». Код действует {masked ? `ещё ${minutesLeft} мин.` : '10 минут.'}</p>
+        ) : (
+          <p className="hint" role="status">{masked && <>Код отправлен на <b>{masked}</b>. </>}
+            {sentText(channel === 'sms', telegram, sms)} Код действует {masked ? `ещё ${minutesLeft} мин.` : '5 минут.'}</p>
+        )}
         <CodeInput value={code} onChange={setCode} />
         <button type="submit" className="btn primary" disabled={busy || code.length !== 6}>{busy ? <><Spinner />Проверяем…</> : 'Подтвердить'}</button>
         {error && <p className="error" role="alert">{error}</p>}
         <div className="actions">
-          <ResendLink wait={wait} sms={sms} busy={busy} onSms={() => void getCode('sms')} onAgain={() => void getCode('auto')} />
+          <ResendLink wait={wait} sms={sms && !byMail} busy={busy} onSms={() => void getCode('sms')}
+            onAgain={() => void getCode(byMail ? 'mail' : 'auto')} />
+          {mail && <button type="button" className="link" disabled={busy} onClick={() => void chooseChannel()}>Другой способ</button>}
           <button type="button" className="link" onClick={anotherNumber}>Другой номер</button>
         </div>
         {/* Сервер не скажет, что номера нет (по ответу не узнать чужой номер), — частая причина «не пришло»:
             сотрудник работает через Telegram, а номер для входа ещё не привязал */}
-        {telegram && wait === 0 && (
+        {telegram && !byMail && wait === 0 && (
           <p className="hint small">Не приходит код? Если вы работаете в Tish через Telegram, сначала привяжите номер: в боте
             нажмите «📱&nbsp;Поделиться номером» или в приложении — нажмите на себя внизу меню → «Мой профиль» → «Телефон».</p>
         )}
