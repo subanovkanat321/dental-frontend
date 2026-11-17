@@ -24,6 +24,20 @@ export const VARIABLES = [
 
 export type Variable = (typeof VARIABLES)[number][0]
 
+/**
+ * Напоминание о долге (V219 бэкенда, ReminderTemplate.DEBT_VARIABLES): {сумма} — долг с сервера со словом «сом»,
+ * {оплата} — «Оплатить можно в клинике» и реквизиты клиники, если заданы.
+ */
+export const DEBT_VARIABLES = [
+  ['имя', 'Имя пациента'],
+  ['сумма', 'Долг: «5 000 сом»'],
+  ['клиника', 'Название клиники'],
+  ['оплата', 'Как оплатить (реквизиты)'],
+  ['телефон', 'Телефон клиники'],
+] as const
+
+export type DebtVariable = (typeof DEBT_VARIABLES)[number][0]
+
 export const MAX_LENGTH = 1000
 
 const NAMES: readonly string[] = VARIABLES.map(([name]) => name)
@@ -32,30 +46,31 @@ const NAMES: readonly string[] = VARIABLES.map(([name]) => name)
 const VARIABLE = /\{([^{}\s]{1,30})\}/g
 
 /** Неизвестные переменные по порядку, без повторов — как их написали. */
-export function unknownVariables(template: string): string[] {
+export function unknownVariables(template: string, names: readonly string[] = NAMES): string[] {
   const found = new Set<string>()
   for (const m of template.matchAll(VARIABLE)) {
-    if (!NAMES.includes(m[1]!.toLowerCase())) found.add(m[1]!)
+    if (!names.includes(m[1]!.toLowerCase())) found.add(m[1]!)
   }
   return [...found]
 }
 
 /** Есть ли в шаблоне переменная ({адрес} — адрес отдельной строкой не дописываем). */
-export function usesVariable(template: string, variable: Variable): boolean {
+export function usesVariable(template: string, variable: Variable | DebtVariable): boolean {
   return [...template.matchAll(VARIABLE)].some((m) => m[1]!.toLowerCase() === variable)
 }
 
 /** Подставить значения; нет значения или пусто — переменная убирается аккуратно. */
-export function applyTemplate(template: string, values: Partial<Record<Variable, string | null | undefined>>): string {
+export function applyTemplate<V extends string = Variable>(template: string, values: Partial<Record<V, string | null | undefined>>,
+  names: readonly string[] = NAMES): string {
   const out: string[] = []
   for (const line of template.replace(/\r\n/g, '\n').split('\n')) {
     let hadVariable = false
     let emptied = false
     const text = line.replace(VARIABLE, (match, name: string) => {
       const key = name.toLowerCase()
-      if (!NAMES.includes(key)) return match
+      if (!names.includes(key)) return match
       hadVariable = true
-      const value = (values[key as Variable] ?? '').trim()
+      const value = (values[key as V] ?? '').trim()
       if (!value) emptied = true
       return value
     })

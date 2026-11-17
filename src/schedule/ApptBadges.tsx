@@ -2,13 +2,15 @@ import type { Schemas } from '../api/client'
 import { somText } from '../lib/time'
 import { colleagueMarkText } from './chairTime'
 import { useChairs } from '../team/chairs'
+import { useDebtsByPatient } from '../lib/debt'
 
 type Appointment = Schemas['AppointmentView']
 
 /**
  * Значки на карточке приёма — то, что регистратуре важно увидеть, не открывая карточку:
  * 🪑 записан в часы коллеги по креслу, ⭐ первый визит, 💬 есть комментарий, 🧾 долг по приёму (только тем, кто
- * видит деньги этого врача).
+ * видит деньги этого врача) — а у предстоящего приёма 🧾 «Долг 5 000» пациента за прошлые визиты (кто видит
+ * «Должников»: напомнить, когда придёт).
  * Подтверждение («Придёт 👍») уже в статусе — здесь не дублируем. Подсказка — при наведении, и та же
  * расшифровка — в легенде под расписанием.
  *
@@ -19,7 +21,7 @@ type Appointment = Schemas['AppointmentView']
 type Badge = { icon: string; text: string; short?: string; long: string }
 type ChairTime = Schemas['SlotsViewChairTime']
 
-function badgesOf(a: Appointment, money: boolean, chair: ChairTime | undefined, otherChair: string | null): Badge[] {
+function badgesOf(a: Appointment, money: boolean, chair: ChairTime | undefined, otherChair: string | null, patientDebt = 0): Badge[] {
   const list: Badge[] = []
   // Кресло выбрано не кресло врача (V210): «🪑 Кресло 2» — где искать пациента
   if (otherChair) list.push({ icon: '🪑', text: `В кресле «${otherChair}» (не кресло врача)`, short: otherChair, long: otherChair })
@@ -31,6 +33,10 @@ function badgesOf(a: Appointment, money: boolean, chair: ChairTime | undefined, 
   if (a.firstVisit && a.status !== 'CANCELLED') list.push({ icon: '⭐', text: 'Первый визит', short: 'Новый', long: 'Первый визит' })
   if (a.comment?.trim()) list.push({ icon: '💬', text: `Комментарий: ${a.comment.trim()}`, long: 'Комментарий' })
   if (money && a.debtSom > 0) list.push({ icon: '🧾', text: `Долг ${somText(a.debtSom)}`, long: `Долг ${somText(a.debtSom)}` })
+  // Записан или ждём — а за прошлые визиты должен: напомнить, когда придёт
+  else if (money && patientDebt > 0 && (a.status === 'SCHEDULED' || a.status === 'REQUESTED')) {
+    list.push({ icon: '🧾', text: `Долг пациента ${somText(patientDebt)} — напомнить при оплате`, short: somText(patientDebt), long: `Долг ${somText(patientDebt)}` })
+  }
   return list
 }
 
@@ -45,7 +51,9 @@ export function ApptBadges({ appointment, money, chair }: { appointment: Appoint
   const chairs = useChairs(Boolean(appointment.chairManual))
   const otherChair = appointment.chairManual && appointment.status !== 'CANCELLED'
     ? chairs.data?.find((c) => c.id === appointment.chairId)?.name ?? null : null
-  const list = badgesOf(appointment, money, chair, otherChair)
+  // Долги пациентов — один запрос на экран (кэш общий); у кого нет прав на «Должников», запроса нет
+  const debts = useDebtsByPatient()
+  const list = badgesOf(appointment, money, chair, otherChair, appointment.patient?.id != null ? debts.get(appointment.patient.id) : 0)
   if (!list.length) return null
   return (
     <span className="appt-badges">
@@ -58,5 +66,5 @@ export function ApptBadges({ appointment, money, chair }: { appointment: Appoint
 
 /** Легенда значков — одной строкой под расписанием; 🪑 — только в клинике с общими креслами. */
 export function BadgesLegend({ chair = false }: { chair?: boolean }) {
-  return <p className="badges-legend hint small">⭐ первый визит · 💬 комментарий · 🧾 долг{chair ? ' · 🪑 в часы коллеги по креслу' : ''}</p>
+  return <p className="badges-legend hint small">⭐ первый визит · 💬 комментарий · 🧾 долг пациента{chair ? ' · 🪑 в часы коллеги по креслу' : ''}</p>
 }

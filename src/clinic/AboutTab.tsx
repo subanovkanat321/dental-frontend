@@ -216,6 +216,7 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
           <input type="number" min={1} inputMode="numeric" placeholder="Например: 1000" value={amount} onChange={(e) => { setDone(''); save.reset(); setAmount(e.target.value) }} /></label>
         <label className="field"><span>Как перевести (номер, банк, получатель)</span>
           <textarea rows={2} maxLength={500} placeholder="MBank: 0555 123 456 (Стоматология «Улыбка»)" value={details} onChange={(e) => { setDone(''); save.reset(); setDetails(e.target.value) }} /></label>
+        <p className="hint">Эти реквизиты уходят и в напоминании о долге («Касса → Должники» → «Напомнить») — даже если предоплату не просите.</p>
         <div className="qr-row">
           {qrUrl && <img className="pay-qr" src={qrUrl} alt="QR для предоплаты" />}
           <label className="btn">{st.hasQr ? 'Заменить QR' : 'Загрузить QR'}

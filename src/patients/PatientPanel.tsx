@@ -7,7 +7,8 @@ import { MedAlerts } from '../medical/Anamnesis'
 import { useClose } from '../lib/useClose'
 import { useBack } from '../lib/back'
 import { canEditDoctor, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
-import { debtLine } from '../lib/debt'
+import { debtLine, remindedText, seesDebts } from '../lib/debt'
+import { DebtPromiseForm, DebtRemindForm } from '../cash/DebtRemind'
 import { formatPhone, shortDate, somText } from '../lib/time'
 import { ageYears, yearsText } from '../lib/age'
 import { ContactButtons } from '../schedule/Contact'
@@ -231,6 +232,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       {shown === 'money' && (
         <section className="patient-money">
           {debtRows.length === 0 && <EmptyState compact title="Долгов нет" />}
+          {/* Напомнить о долге (бот или WhatsApp) и «Обещал оплатить до…» — те же формы, что в «Должниках» */}
+          {debtRows.length > 0 && patient?.id != null && seesDebts(me) && <DebtTools patientId={patient.id} name={patient.fullName} debts={debtRows} />}
           {staff && patient?.id != null && <OpeningDebtsBox patientId={patient.id} />}
           {debtRows.map((d) => {
             const debt = debtLine(d)!
@@ -305,6 +308,22 @@ function MoreActions({ onContract }: { onContract: () => void }) {
           </button>
         </div>
       )}
+    </div>
+  )
+}
+
+/** «Деньги» в карточке пациента: «Напомнить о долге», когда напоминали, и «Обещал оплатить до…». */
+function DebtTools({ patientId, name, debts }: { patientId: number; name?: string; debts: Schemas['PaymentQueryDebt'][] }) {
+  const [form, setForm] = useState<'remind' | 'promise' | null>(null)
+  const reminded = debts.reduce<string | undefined>((max, d) => d.remindedAt && (!max || d.remindedAt > max) ? d.remindedAt : max, undefined)
+  const due = debts.map((d) => d.dueOn).filter(Boolean).sort()[0]
+  if (form === 'remind') return <DebtRemindForm patientId={patientId} name={name} onDone={() => setForm(null)} />
+  if (form === 'promise') return <DebtPromiseForm patientId={patientId} dueOn={due} onDone={() => setForm(null)} />
+  return (
+    <div className="patient-debt-tools">
+      <button type="button" className="btn" onClick={() => setForm('remind')}>Напомнить о долге</button>
+      <button type="button" className="link" onClick={() => setForm('promise')}>{due ? 'Изменить «обещал оплатить»' : 'Обещал оплатить до…'}</button>
+      {reminded && <span className="hint">{remindedText(reminded)}</span>}
     </div>
   )
 }

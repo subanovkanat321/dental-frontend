@@ -2017,6 +2017,9 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
    «Приём» строками-раскрывашками → перенести/отменить → «Ещё» */
 .appt-card { gap: 14px; grid-auto-rows: max-content; grid-template-columns: minmax(0, 1fr); }
 .appt-card .appt-status { justify-self: start; margin-top: -6px; }
+/* Долг пациента рядом со статусом (cash/DebtRemind): заметно, но одной меткой, без кнопок */
+.appt-card .appt-debt { justify-self: start; font-weight: 600; }
+.appt-card .appt-debt-hint { margin: 0; }
 .appt-card .appt-patient { gap: 4px; }
 .appt-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
 .appt-card .appt-what { gap: 6px; }
