@@ -10112,7 +10112,7 @@
     "/api/assist/draft" : {
       "post" : {
         "tags" : [ "assist-controller" ],
-        "operationId" : "draft_2",
+        "operationId" : "draft_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10286,7 +10286,7 @@
     "/api/appointments/{id}/visit-report/draft" : {
       "post" : {
         "tags" : [ "visit-report-controller" ],
-        "operationId" : "draft_3",
+        "operationId" : "draft_4",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",

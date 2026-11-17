@@ -4141,7 +4141,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["draft_2"];
+        post: operations["draft_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4205,7 +4205,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["draft_3"];
+        post: operations["draft_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -19774,7 +19774,7 @@ export interface operations {
             };
         };
     };
-    draft_2: {
+    draft_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -19898,7 +19898,7 @@ export interface operations {
             };
         };
     };
-    draft_3: {
+    draft_4: {
         parameters: {
             query?: {
                 memoId?: number;
