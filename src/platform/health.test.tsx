@@ -26,7 +26,7 @@ const owner = { ...me, owner: true, platform: true }
 const health = {
   checkedAt: '2026-11-06T10:00:00Z',
   app: { version: '0.0.1-SNAPSHOT', commit: 'abc1234', builtAt: '2026-11-06T08:00:00Z', startedAt: '2026-11-05T08:00:00Z',
-    uptimeSeconds: 93784, java: '25+36 (Eclipse Adoptium)', heapUsedMb: 120, heapMaxMb: 384, cpuPercent: 3, processors: 2,
+    uptimeSeconds: 93784, java: '25+36 (Eclipse Adoptium)', heapUsedMb: 120, heapMaxMb: 384, nonHeapMb: 140, cpuPercent: 3, processors: 2,
     disk: { path: '/app/logs', totalMb: 51200, freeMb: 5120, usedPercent: 90 } },
   db: { up: true, queryMs: 2, sizeMb: 300, connections: 7, poolActive: 1, poolMax: 10 },
   backup: { lastAt: '2026-11-04T09:15:00Z', sizeMb: 50, offsite: true, ageHours: 48, stale: true },
@@ -86,6 +86,48 @@ test('владелец: «Здоровье» — проблемы сверху, 
   expect(within(jobs).getAllByRole('row')[1]).toHaveTextContent('Сводки и предупреждения врачам')
   expect(within(jobs).getAllByRole('row')[1]).toHaveTextContent('TelegramException')
   expect(screen.getByText('Остальные — в порядке (1)')).toBeInTheDocument()
+})
+
+test('«Здоровье»: суточные рассылки, отправка в Telegram, очередь уведомлений, почта, память контейнера и SESSION_SECRET', async () => {
+  const more = {
+    ...health,
+    app: { ...health.app, memoryUsedMb: 470, memoryLimitMb: 512 },
+    daily: [
+      { code: 'patient-reminders', name: 'Напоминания пациентам на завтра', time: '18:00', state: 'MISSED', day: '2026-11-05',
+        dueAt: '2026-11-05T12:00:00Z' },
+      { code: 'morning-digest', name: 'Утренняя сводка врачам', time: '09:00', state: 'DONE', day: '2026-11-06',
+        dueAt: '2026-11-06T03:00:00Z', startedAt: '2026-11-06T03:00:00Z', finishedAt: '2026-11-06T03:01:00Z' },
+    ],
+    telegram: { ...health.telegram, send: { lastOkAt: '2026-11-06T09:58:00Z', lastFailureAt: '2026-11-06T09:20:00Z',
+      lastFailure: 'sendMessage: ResourceAccessException', failuresInRow: 0, unavailable: false, lastOpenedAt: '2026-11-06T09:20:00Z', opens: 2 } },
+    notifications: { queued: 0, active: 1, rejected: 5, lastRejectedAt: '2026-11-06T09:21:00Z' },
+    mail: { configured: true, lastSentAt: '2026-11-05T10:00:00Z', lastErrorAt: '2026-11-06T09:00:00Z', lastError: 'AuthenticationFailedException',
+      failuresInRow: 3 },
+    sessionSecret: false,
+  } satisfies Schemas['HealthServiceHealth']
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(owner)),
+    http.get('*/api/platform/health', () => HttpResponse.json(more)),
+  )
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await findSub('Здоровье'))
+
+  const daily = await screen.findByRole('table', { name: 'Суточные рассылки' })
+  expect(screen.getByText('Не отработали: 1 из 2')).toBeInTheDocument()
+  expect(within(daily).getByRole('row', { name: /Напоминания пациентам/ })).toHaveTextContent('не отработала')
+  expect(within(daily).getByRole('row', { name: /Утренняя сводка/ })).toHaveTextContent('отработала')
+
+  const app = screen.getByRole('table', { name: 'Приложение и база' })
+  expect(within(app).getByRole('row', { name: /Память/ })).toHaveTextContent('вне кучи 140 МБ · контейнер 470 из 512 МБ')
+  expect(within(app).getByRole('row', { name: /Вход на сайт/ })).toHaveTextContent('SESSION_SECRET не задан')
+
+  const links = screen.getByRole('table', { name: 'Связи' })
+  const send = within(links).getByRole('row', { name: /Telegram: отправка/ })
+  expect(send).toHaveTextContent('не отвечал 2 раз с запуска')
+  expect(send).toHaveTextContent('ResourceAccessException')
+  expect(within(links).getByRole('row', { name: /Очередь уведомлений/ })).toHaveTextContent('не поставлено с запуска 5')
+  expect(within(links).getByRole('row', { name: /Почта/ })).toHaveTextContent('отказов подряд 3')
 })
 
 test('задачи: сводка, проблемные сверху, остальные свёрнуты по группам', async () => {

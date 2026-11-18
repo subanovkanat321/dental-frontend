@@ -9,6 +9,8 @@ import { mbText, uptimeText } from './serverHealth'
 type Health = Schemas['HealthServiceHealth']
 type Job = Schemas['HealthServiceJob']
 type Files = Schemas['HealthServiceFiles']
+type Daily = Schemas['HealthServiceDaily']
+type Send = Schemas['HealthServiceSend']
 type LogResult = Schemas['LogSearchResult']
 
 const when = (instant?: string) => (instant ? shortDate(instant, true) : '—')
@@ -32,7 +34,8 @@ function Row({ name, children, tone }: { name: string; children: React.ReactNode
 
 /**
  * «Здоровье» — только владелец платформы (сервер отвечает 403 остальным): жив ли сервер, база, бэкап,
- * задачи по расписанию, Telegram, SMS, ИИ и ошибки 5xx за сутки; ниже — строки лога по номеру запроса из
+ * суточные рассылки и задачи по расписанию, Telegram (webhook и отправка), очередь уведомлений, SMS, почта, ИИ и
+ * ошибки 5xx за сутки; ниже — строки лога по номеру запроса из
  * оповещения. Данных пациентов тут нет: только числа, времена, классы ошибок и шаблоны путей.
  */
 /** Режим бота словами: «режим off» владельцу ничего не говорит. */
@@ -84,11 +87,13 @@ function Sections({ h }: { h: Health }) {
         <table className="table" aria-label="Приложение и база">
           <tbody>
             {app && <>
-              <Row name="Работает">{uptimeText(app.uptimeSeconds)} · с {when(app.startedAt)}</Row>
+              <Row name="Работает">{uptimeText(app.uptimeSeconds)} · запущено {when(app.startedAt)} (обновление или перезапуск)</Row>
               <Row name="Версия">{app.version ?? '—'} · коммит {app.commit ?? 'не указан'}{app.builtAt ? ` · собрано ${when(app.builtAt)}` : ''}</Row>
               <Row name="Java">{app.java}</Row>
-              <Row name="Память и процессор">
-                куча {app.heapUsedMb} из {app.heapMaxMb} МБ · процессор {app.cpuPercent != null ? `${app.cpuPercent}%` : '—'} · ядер {app.processors}
+              <Row name="Память и процессор" tone={memoryTone(app.memoryUsedMb, app.memoryLimitMb)}>
+                куча {app.heapUsedMb} из {app.heapMaxMb} МБ · вне кучи {app.nonHeapMb} МБ
+                {app.memoryUsedMb != null && ` · контейнер ${app.memoryUsedMb}${app.memoryLimitMb != null ? ` из ${app.memoryLimitMb}` : ''} МБ`}
+                {' '}· процессор {app.cpuPercent != null ? `${app.cpuPercent}%` : '—'} · ядер {app.processors}
               </Row>
               <Row name="Диск" tone={app.disk ? (app.disk.usedPercent > 85 ? 'bad' : 'ok') : undefined}>
                 {app.disk ? `занято ${app.disk.usedPercent}% · свободно ${mbText(app.disk.freeMb)} из ${mbText(app.disk.totalMb)}` : 'не узнать'}
@@ -106,6 +111,11 @@ function Sections({ h }: { h: Health }) {
                 : 'отметок нет — обновите deploy/backup.sh на сервере (RUNBOOK, «Бэкап»)'}
             </Row>
             {h.files && <FilesRow files={h.files} />}
+            {h.sessionSecret != null && (
+              <Row name="Вход на сайт" tone={h.sessionSecret ? 'ok' : 'bad'}>
+                {h.sessionSecret ? 'подписан своим ключом (SESSION_SECRET)' : 'SESSION_SECRET не задан — ключ от токена бота'}
+              </Row>
+            )}
           </tbody>
         </table>
       </section>
@@ -121,10 +131,24 @@ function Sections({ h }: { h: Health }) {
                   {tg.lastErrorAt && ` · последняя ошибка ${when(tg.lastErrorAt)}${tg.lastError ? `: ${tg.lastError}` : ''}`}
                 </Row>
               ))}
+            {tg?.send && <SendRow send={tg.send} />}
+            {h.notifications && (
+              <Row name="Очередь уведомлений" tone={h.notifications.rejected > 0 ? 'wait' : 'ok'}>
+                ждут {h.notifications.queued} · отправляются {h.notifications.active}
+                {h.notifications.rejected > 0 ? ` · не поставлено с запуска ${h.notifications.rejected}, последний раз ${when(h.notifications.lastRejectedAt)}` : ' · переполнений не было'}
+              </Row>
+            )}
             {h.sms && (
               <Row name="SMS" tone={!h.sms.configured ? undefined : h.sms.lastErrorAt ? 'wait' : 'ok'}>
                 {h.sms.configured ? 'подключены' : 'не подключены'} · последняя отправлена {when(h.sms.lastSentAt)}
                 {h.sms.lastErrorAt && ` · ошибка ${when(h.sms.lastErrorAt)}${h.sms.lastError ? `: ${h.sms.lastError}` : ''}`}
+              </Row>
+            )}
+            {h.mail && (
+              <Row name="Почта" tone={!h.mail.configured ? undefined : h.mail.failuresInRow > 0 ? 'wait' : 'ok'}>
+                {h.mail.configured ? 'подключена' : 'не подключена'} · последнее письмо {when(h.mail.lastSentAt)}
+                {h.mail.lastErrorAt && ` · ошибка ${when(h.mail.lastErrorAt)}${h.mail.lastError ? `: ${h.mail.lastError}` : ''}`}
+                {h.mail.failuresInRow > 0 && ` · отказов подряд ${h.mail.failuresInRow}`}
               </Row>
             )}
             {h.ai && (
@@ -157,8 +181,73 @@ function Sections({ h }: { h: Health }) {
           ) : <p className="hint">Ошибок 5xx не было.</p>}
         </section>
       )}
+      {(h.daily?.length ?? 0) > 0 && <DailyJobs daily={h.daily!} />}
       {(h.jobs?.length ?? 0) > 0 && <Jobs jobs={h.jobs!} checkedAt={h.checkedAt} />}
     </>
+  )
+}
+
+/** Контейнер занял больше 90% лимита — скоро OOM (ядро убьёт приложение). Без лимита — без тона. */
+function memoryTone(used?: number, limit?: number): 'ok' | 'wait' | undefined {
+  if (used == null || limit == null || limit <= 0) return undefined
+  return used / limit > 0.9 ? 'wait' : 'ok'
+}
+
+/**
+ * Исходящие в Telegram с запуска: последний удачный вызов, сетевые сбои подряд и «автомат» (после 5 сбоев подряд
+ * 60 секунд не шлём) — сколько раз открывался. Открывался — часть уведомлений могла не уйти.
+ */
+function SendRow({ send: s }: { send: Send }) {
+  const tone = s.unavailable ? 'bad' : s.opens > 0 ? 'wait' : 'ok'
+  return (
+    <Row name="Telegram: отправка" tone={tone}>
+      {s.unavailable ? 'сейчас не отвечает — 60 с не шлём' : `последняя удачная ${when(s.lastOkAt)}`}
+      {s.failuresInRow > 0 && ` · сбоев подряд ${s.failuresInRow}`}
+      {s.opens > 0 ? ` · не отвечал ${s.opens} раз с запуска, последний ${when(s.lastOpenedAt)}` : ' · перебоев не было'}
+      {s.lastFailureAt && ` · ошибка ${when(s.lastFailureAt)}${s.lastFailure ? `: ${s.lastFailure}` : ''}`}
+    </Row>
+  )
+}
+
+const DAILY_STATE: Record<string, [string, string]> = {
+  DONE: ['отработала', 's-ok'],
+  RUNNING: ['идёт', 's-request'],
+  LATE: ['время прошло — догонит сама', 's-request'],
+  STUCK: ['начата и не закончена', 's-bad'],
+  MISSED: ['не отработала', 's-bad'],
+  NEW: ['ещё не было', 's-quiet'],
+  OFF: ['выключена', 's-quiet'],
+}
+
+/**
+ * Суточные рассылки с догоном (напоминания пациентам, сводки врачам…): отработала ли последняя — сегодня, если
+ * время уже прошло, иначе вчера. «Не отработала» — приложение лежало весь срок догона: RUNBOOK, «Пропущены вечерние
+ * напоминания».
+ */
+function DailyJobs({ daily }: { daily: Daily[] }) {
+  const failed = daily.filter((d) => d.state === 'MISSED' || d.state === 'STUCK').length
+  return (
+    <section className="card-block">
+      <h2>Суточные рассылки</h2>
+      <p className={failed ? 'tone-bad strong' : 'tone-ok strong'}>
+        {failed ? `Не отработали: ${failed} из ${daily.length}` : `Все ${daily.length} в порядке`}</p>
+      <table className="table" aria-label="Суточные рассылки">
+        <thead><tr><th>Рассылка</th><th>День</th><th>Состояние</th></tr></thead>
+        <tbody>
+          {daily.map((d) => {
+            const [text, chip] = DAILY_STATE[d.state ?? ''] ?? [d.state ?? '—', 's-quiet']
+            return (
+              <tr key={d.code}>
+                <td><span>{d.name}<span className="hint small"> · {d.time}</span></span></td>
+                <td className="nowrap">{d.day ? shortDate(d.day) : '—'}</td>
+                <td><span><span className={`chip small ${chip}`}>{text}</span>
+                  {d.finishedAt ? <span className="hint"> {when(d.finishedAt)}</span> : d.startedAt && <span className="hint"> начата {when(d.startedAt)}</span>}</span></td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </section>
   )
 }
 
