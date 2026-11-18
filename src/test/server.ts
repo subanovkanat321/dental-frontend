@@ -28,6 +28,9 @@ export const server = setupServer(
   // Подсказка «🪑 время коллеги по креслу» в «Новой записи» и переносе: по умолчанию коллеги в это время нет
   http.get('*/api/appointments/chair-check', () => HttpResponse.json({ strict: false, notified: [] } satisfies Schemas['ChairCheckView'])),
   http.get('*/api/appointments/chair-options', () => HttpResponse.json([] satisfies Schemas['ChairOptionView'][])),
+  // «🎁 Пригласите коллег» и /join?ref=…: по умолчанию нет — блоков нет (их тесты — account/invite.test.tsx, site/joinRef.test.tsx)
+  http.get('*/api/clinic/referral', () => HttpResponse.json({ detail: 'нет' }, { status: 404 })),
+  http.get('*/web/referral', () => HttpResponse.json({ detail: 'Приглашение не найдено' }, { status: 404 })),
   // Кейс на /join не заполнен — блока нет; черновик в «Платформа → Настройки» — пустой
   http.get('*/web/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),
   http.get('*/api/platform/case', () => HttpResponse.json({ metrics: [], consent: false, shown: false } satisfies Schemas['JoinCaseCase'])),

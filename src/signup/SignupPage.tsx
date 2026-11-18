@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 
 import {
-  ApiError, forgetSignup, signupAvailability, signupCode, signupEmailCode, signupEmailResume, signupEmailStatus, signupEnterTelegram,
+  api, ApiError, forgetSignup, signupAvailability, signupCode, signupEmailCode, signupEmailResume, signupEmailStatus, signupEnterTelegram,
   signupRegister, signupTelegram, signupTelegramStatus, type SignupCodeSent, type SignupEmailSent, type SignupEmailWaiting, type SignupForm,
 } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
@@ -19,6 +19,8 @@ import { useCountdown } from '../lib/otp'
 import { passwordProblem } from '../lib/password'
 import { clearCodeSent, markCodeSent, recentCodeSent } from './codeMark'
 import { NextSteps } from './NextSteps'
+import { monthsText } from '../lib/plural'
+import { refFromUrl } from '../lib/referral'
 
 /** Как часто спрашиваем сервер, пока ждём «✅ Да, это я» в боте. */
 export const POLL_MS = 2000
@@ -95,6 +97,13 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
   const [codeHint, setCodeHint] = useState(false)
 
   useEffect(() => { document.title = 'Попробовать Tish бесплатно' }, [])
+
+  // Пришли по ссылке-приглашению другой клиники (/join?ref=… → /start?ref=…): код уходит с формой, сверху — кто пригласил
+  const [ref] = useState(() => refFromUrl())
+  const invite = useQuery({
+    queryKey: ['referral-invite', ref], enabled: Boolean(ref), retry: false, staleTime: Infinity,
+    queryFn: async () => (await api.GET('/web/referral', { params: { query: { code: ref ?? '' } } })).data ?? null,
+  })
 
   const finish = useCallback(async (f: SignupForm, confirm: Parameters<typeof signupRegister>[1]) => {
     setError(null)
@@ -190,6 +199,7 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
     return {
       clinicName: field('clinicName'), city: field('city'),
       fullName: field('fullName'), phone: phoneFromInput(phone), consent: data.get('consent') === 'on',
+      ...(ref ? { ref } : {}),
     }
   }
 
@@ -319,6 +329,9 @@ export function SignupPage({ onDone = () => window.location.assign('/'), userAge
         {w.email && codeHint && (
           <p className="hint signup-resume-hint" role="note">Отправляли код на почту? — <button type="button" className="link"
             onClick={openResume}>«Уже есть код из письма»</button></p>
+        )}
+        {invite.data && (
+          <p className="tone-ok signup-invite" role="note">🎁 Вас пригласила клиника «{invite.data.clinicName}» — {monthsText(invite.data.freeMonths)} бесплатно</p>
         )}
         <p className="hint">Создайте клинику за пару минут — без заявки и звонка. Всё приложение, без ограничений.</p>
         <form ref={formRef} className="form narrow invite-form signup-form" aria-label="Регистрация клиники"

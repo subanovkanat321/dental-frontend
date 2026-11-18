@@ -39,6 +39,9 @@ export type PublicMaterials = Schemas['MaterialsPublicMaterials']
 /** Кейс на /join (/web/case): shown — заголовок и текст заполнены, блок показываем. */
 export type JoinCase = Schemas['JoinCaseCase']
 
+/** /join?ref=…: какая клиника пригласила и сколько месяцев бесплатно («Клиника приводит клинику», V231). */
+export type ReferralInvite = Schemas['ClinicReferralsInvite']
+
 /** GET открытого адреса: ответ, null — ошибка; status — чтобы отличить 404 от «нет связи». */
 export async function getJson<T>(path: string): Promise<{ status: number; data: T | null }> {
   try {

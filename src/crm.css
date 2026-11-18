@@ -2879,3 +2879,12 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .cash-entry .what { min-width: 0; overflow-wrap: anywhere; }
 .cash-entry .sum { text-align: right; white-space: nowrap; }
 .cash-entry .sub { grid-column: 2 / -1; font-size: .82rem; color: var(--hint); }
+
+/* «🎁 Пригласите коллег» (account/InviteColleagues): ссылка во всю ширину, кнопки переносятся на телефоне */
+.referral-block h2 { margin: 0; }
+.referral-block p { margin: 0; }
+.referral-link { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--sunken); color: var(--text); font: .95rem var(--mono); }
+.referral-block .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.referral-block .actions .btn { flex: 1 1 180px; }
+.referral-progress { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.referral-progress progress { flex: 1 1 160px; height: 10px; accent-color: var(--accent); }

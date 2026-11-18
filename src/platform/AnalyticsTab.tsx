@@ -136,6 +136,8 @@ function Report({ a }: { a: Analytics }) {
           <Tile title="После пилота" value={somText(s.pilotMrrSom ?? 0)} note="в месяц по тарифу" />
           <Tile title={`Приёмов ${period}`} value={s.appointments ?? 0}
             note={before ? <><span className={`tone-${change.tone}`}>{change.text}</span> · {prev}: {before}</> : `${prev}: 0`} />
+          {/* «Клиника приводит клинику» (V231): пришли по ссылке-приглашению другой клиники — канал «Приглашение» */}
+          <Tile title="По приглашению" value={s.referred ?? 0} note={`из них платят ${s.referredPaying ?? 0}`} />
         </ul>
       </section>
       <DueBlock a={a} />

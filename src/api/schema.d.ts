@@ -4964,6 +4964,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/referral": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["invite_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/plan/{token}": {
         parameters: {
             query?: never;
@@ -6612,6 +6628,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/referral": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["referral"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/platform-access": {
         parameters: {
             query?: never;
@@ -8141,6 +8173,9 @@ export interface components {
             settingUp: boolean;
             city?: string;
             selfSignup: boolean;
+            referredBy?: string;
+            /** Format: int64 */
+            referredById?: number;
         };
         AgreementControllerAssignment: {
             /** Format: int64 */
@@ -9133,6 +9168,7 @@ export interface components {
             code?: string;
             password?: string;
             email?: string;
+            ref?: string;
         };
         SignupControllerRegistered: {
             clinicName: string;
@@ -10572,6 +10608,11 @@ export interface components {
             link?: string;
             error?: string;
         };
+        ClinicReferralsInvite: {
+            clinicName: string;
+            /** Format: int32 */
+            freeMonths: number;
+        };
         PayRequisitesPage: {
             clinicName?: string;
             doctorName?: string;
@@ -11646,6 +11687,10 @@ export interface components {
             appointments: number;
             /** Format: int64 */
             appointmentsBefore: number;
+            /** Format: int64 */
+            referred: number;
+            /** Format: int64 */
+            referredPaying: number;
         };
         AiUsageStoreClinicRow: {
             /** Format: int64 */
@@ -12135,6 +12180,31 @@ export interface components {
             priceSom?: number;
             /** Format: int32 */
             recallMonths?: number;
+        };
+        ClinicReferralsView: {
+            code: string;
+            /** Format: int64 */
+            invited: number;
+            /** Format: int64 */
+            paid: number;
+            /** Format: int64 */
+            months: number;
+            /** Format: int64 */
+            waitingMonths: number;
+            /** Format: int32 */
+            rewardMonths: number;
+            /** Format: int32 */
+            invitedPilotMonths: number;
+            /** Format: int32 */
+            ambassadorClinics: number;
+            /** Format: int32 */
+            ambassadorMonths: number;
+            ambassador: boolean;
+            /** Format: int32 */
+            maxMonths: number;
+            referredBy?: string;
+            /** Format: date */
+            pilotUntil?: string;
         };
         PlatformAccessLogEntry: {
             role?: string;
@@ -22415,6 +22485,28 @@ export interface operations {
             };
         };
     };
+    invite_3: {
+        parameters: {
+            query?: {
+                code?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicReferralsInvite"];
+                };
+            };
+        };
+    };
     plan_2: {
         parameters: {
             query?: never;
@@ -24747,6 +24839,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ComebacksResult"];
+                };
+            };
+        };
+    };
+    referral: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicReferralsView"];
                 };
             };
         };
