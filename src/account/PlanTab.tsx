@@ -7,6 +7,7 @@ import { download } from '../lib/download'
 import { shortDate, somText } from '../lib/time'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { DeveloperContacts } from './Contacts'
+import { InviteColleagues } from './InviteColleagues'
 import { billingLine, PAY_PERIOD_TEXT } from './texts'
 import { Loading } from '../layout/Loading'
 
@@ -30,6 +31,8 @@ export function PlanTab() {
         <h2>Приложение: {line.text}</h2>
         <p className="hint">Ваш тариф — «{p.tariff?.name}»: {somText(p.tariff?.monthSom ?? 0)} в месяц, работающих врачей — {p.doctors}</p>
       </section>
+
+      <InviteColleagues />
 
       <section className="card-block">
         <h2>Тарифы</h2>

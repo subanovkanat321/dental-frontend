@@ -2895,3 +2895,12 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .tish-facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 8px; padding: 0; list-style: none; }
 .tish-facts b { font-variant-numeric: tabular-nums; }
 .tish-how { margin-top: 8px; }
+
+/* «🎁 Пригласите коллег» (account/InviteColleagues): ссылка во всю ширину, кнопки переносятся на телефоне */
+.referral-block h2 { margin: 0; }
+.referral-block p { margin: 0; }
+.referral-link { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--sunken); color: var(--text); font: .95rem var(--mono); }
+.referral-block .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.referral-block .actions .btn { flex: 1 1 180px; }
+.referral-progress { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.referral-progress progress { flex: 1 1 160px; height: 10px; accent-color: var(--accent); }

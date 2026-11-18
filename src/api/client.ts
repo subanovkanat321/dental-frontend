@@ -378,7 +378,7 @@ Promise<Schemas['InviteControllerRegistered']> {
 export type SignupAvailability = Schemas['SignupControllerAvailability']
 
 /** Форма регистрации клиники (номер — как набран; проверяет и нормализует сервер). */
-export type SignupForm = Pick<Schemas['SignupControllerSignupRequest'], 'clinicName' | 'city' | 'fullName' | 'phone' | 'consent'>
+export type SignupForm = Pick<Schemas['SignupControllerSignupRequest'], 'clinicName' | 'city' | 'fullName' | 'phone' | 'consent' | 'ref'>
 
 export type SignupCodeSent = Schemas['SignupControllerCodeSent']
 

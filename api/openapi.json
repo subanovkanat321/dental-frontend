@@ -12353,6 +12353,32 @@
         }
       }
     },
+    "/web/referral" : {
+      "get" : {
+        "tags" : [ "referral-controller" ],
+        "operationId" : "invite_3",
+        "parameters" : [ {
+          "name" : "code",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicReferralsInvite"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/plan/{token}" : {
       "get" : {
         "tags" : [ "plan-page-controller" ],
@@ -15258,6 +15284,24 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ComebacksResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinic/referral" : {
+      "get" : {
+        "tags" : [ "referral-controller" ],
+        "operationId" : "referral",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ClinicReferralsView"
                 }
               }
             }
@@ -18581,6 +18625,13 @@
           },
           "selfSignup" : {
             "type" : "boolean"
+          },
+          "referredBy" : {
+            "type" : "string"
+          },
+          "referredById" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
         "required" : [ "appointments", "bookedWeek", "doctors", "done30", "hidden", "id", "listed", "noShow30", "patients", "selfBooked30", "selfSignup", "settingUp", "staff", "unmarked" ]
@@ -21079,6 +21130,9 @@
             "type" : "string"
           },
           "email" : {
+            "type" : "string"
+          },
+          "ref" : {
             "type" : "string"
           }
         }
@@ -24606,6 +24660,18 @@
         },
         "required" : [ "secondsLeft", "state" ]
       },
+      "ClinicReferralsInvite" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "freeMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "clinicName", "freeMonths" ]
+      },
       "PayRequisitesPage" : {
         "properties" : {
           "clinicName" : {
@@ -27408,9 +27474,17 @@
           "appointmentsBefore" : {
             "type" : "integer",
             "format" : "int64"
+          },
+          "referred" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "referredPaying" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "appointments", "appointmentsBefore", "clinics", "mrrSom", "overdue", "paying", "pilot", "pilotMrrSom", "working" ]
+        "required" : [ "appointments", "appointmentsBefore", "clinics", "mrrSom", "overdue", "paying", "pilot", "pilotMrrSom", "referred", "referredPaying", "working" ]
       },
       "AiUsageStoreClinicRow" : {
         "properties" : {
@@ -28634,6 +28708,60 @@
           }
         },
         "required" : [ "durationMinutes" ]
+      },
+      "ClinicReferralsView" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "invited" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "paid" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "months" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "waitingMonths" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rewardMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "invitedPilotMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "ambassadorClinics" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "ambassadorMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "ambassador" : {
+            "type" : "boolean"
+          },
+          "maxMonths" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "referredBy" : {
+            "type" : "string"
+          },
+          "pilotUntil" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        },
+        "required" : [ "ambassador", "ambassadorClinics", "ambassadorMonths", "code", "invited", "invitedPilotMonths", "maxMonths", "months", "paid", "rewardMonths", "waitingMonths" ]
       },
       "PlatformAccessLogEntry" : {
         "properties" : {

@@ -129,6 +129,23 @@ test('регистрация по SMS: форма → код и пароль →
   expect(onDone).toHaveBeenCalledOnce()
 })
 
+test('/start?ref=… по приглашению: сверху — кто пригласил, код уходит с формой', async () => {
+  const { sent } = backend()
+  server.use(http.get('*/web/referral', () => HttpResponse.json({ clinicName: 'Стоматология Тест', freeMonths: 3 } satisfies Schemas['ClinicReferralsInvite'])))
+  window.history.replaceState(null, '', '/start?ref=abc2def')
+  try {
+    const user = userEvent.setup()
+    show()
+    expect(await screen.findByRole('note')).toHaveTextContent('🎁 Вас пригласила клиника «Стоматология Тест» — 3 месяца бесплатно')
+    const form = await fill(user)
+    await user.click(within(form).getByRole('button', { name: 'Получить код по SMS' }))
+    expect(await screen.findByRole('heading', { name: 'Код из SMS' })).toBeInTheDocument()
+    expect(sent[0]?.body).toMatchObject({ clinicName: 'Стоматолог Айгерим', ref: 'abc2def' })
+  } finally {
+    window.history.replaceState(null, '', '/')
+  }
+})
+
 test('регистрация через Telegram завершается в боте: страница при возврате видит «готово» и входит без формы', async () => {
   const { sent, confirm } = backend()
   const open = vi.spyOn(window, 'open').mockReturnValue(null)

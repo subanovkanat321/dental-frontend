@@ -6,7 +6,9 @@ import { PhoneInput } from '../clinic/PhoneInput'
 import { phoneFromInput } from '../clinic/phone'
 import { CaseBlock } from './CaseBlock'
 import { SiteHeader } from './SiteHeader'
-import { getJson, inAppBrowser, type JoinCase, type Links, type PublicMaterials, type Tariffs } from './web'
+import { monthsText } from '../lib/plural'
+import { refFromUrl } from '../lib/referral'
+import { getJson, inAppBrowser, type JoinCase, type Links, type PublicMaterials, type ReferralInvite, type Tariffs } from './web'
 
 const FEATURES: [string, string, string][] = [
   ['📲', 'Запись в Telegram', 'Пациент выбирает врача, услугу и время сам — врач подтверждает одним нажатием.'],
@@ -21,6 +23,10 @@ const FEATURES: [string, string, string][] = [
  * Страница для клиник (/join): что умеет приложение и «Попробовать бесплатно» — регистрация сама на /start (с 2026-11-16;
  * срок пробного периода и цены не показываем). Форма заявки — вторичный путь «Хочу, чтобы помогли подключить»: её разбирает
  * владелец платформы в «Платформа → Клиники». Поле-ловушка website — от ботов: человек его не видит.
+ * <p>
+ * По ссылке-приглашению другой клиники (/join?ref=<код>, «Клиника приводит клинику») — сверху «Вас пригласила клиника
+ * «…» — 3 месяца бесплатно», и «Попробовать бесплатно» ведёт на /start?ref=<код>: регистрация запишется приглашённой.
+ * Код неизвестен — страница как обычно.
  */
 export function Join() {
   const [tariffs, setTariffs] = useState<Tariffs | null>(null)
@@ -36,6 +42,12 @@ export function Join() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+  const [invite, setInvite] = useState<{ code: string; data: ReferralInvite } | null>(null)
+  useEffect(() => {
+    const code = refFromUrl()
+    if (code) void getJson<ReferralInvite>(`/web/referral?code=${code}`).then(({ data }) => setInvite(data ? { code, data } : null))
+  }, [])
+  const startHref = invite ? `/start?ref=${invite.code}` : '/start'
   useEffect(() => {
     document.title = 'Tish — запись пациентов для стоматологии'
     if (inAppBrowser()) void getJson<Links>('/web/links').then(({ data }) => setLinks(data ?? {}))
@@ -88,12 +100,19 @@ export function Join() {
   return (
     <main className="site-page">
       <SiteHeader />
+      {invite && (
+        <div className="site-promo site-invite" role="note" aria-label="Приглашение">
+          <h2>🎁 Вас пригласила клиника «{invite.data.clinicName}» — {monthsText(invite.data.freeMonths)} бесплатно</h2>
+          <p>Зарегистрируйтесь по этой ссылке: всё приложение без оплаты {monthsText(invite.data.freeMonths)}, без предоплаты и договора на год.</p>
+          <a className="btn primary" href={startHref}>Попробовать бесплатно</a>
+        </div>
+      )}
       <div className="site-hero">
         {/* Тишка — как логотип: на главную приложения (расписание; без входа — вход) */}
         <a className="site-hero-home" href="/" aria-label="Открыть Tish — расписание" title="Открыть расписание"><img src={`${import.meta.env.BASE_URL}tishka.svg`} alt="" width={84} height={80} /></a>
         <div><h1>Запись пациентов для стоматологии</h1>
           <p>Пациенты записываются в Telegram, бот напоминает о приёме. Работать можно в Telegram и на сайте — с телефона и компьютера.</p>
-          <p className="site-ctas"><a className="btn primary" href="/start">Попробовать бесплатно</a>
+          <p className="site-ctas"><a className="btn primary" href={startHref}>Попробовать бесплатно</a>
             <a className="btn" href="#form">Хочу, чтобы помогли подключить</a></p></div>
       </div>
       {(materials.video || materials.presentation) && (
@@ -116,7 +135,7 @@ export function Join() {
           <h2>🎁 {tariffs.promo.title}</h2>
           <p>{tariffs.promo.text}</p>
           <ul>{(tariffs.promo.points ?? []).map((x) => <li key={x}>{x}</li>)}</ul>
-          <a className="btn primary" href="/start">Попробовать бесплатно</a>
+          <a className="btn primary" href={startHref}>Попробовать бесплатно</a>
         </div>
       )}
       <h2>Что умеет</h2>
@@ -129,7 +148,7 @@ export function Join() {
       <p>Попробовать — бесплатно: всё приложение, без ограничений и без предоплаты.
         Понравится — договоримся об условиях; нет — просто перестанете пользоваться.</p>
       <h2 id="form">Хочу, чтобы помогли подключить</h2>
-      <p className="hint">Создать клинику самим — 5 минут: <a href="/start">Попробовать бесплатно</a>. Хотите, чтобы мы настроили всё и перенесли
+      <p className="hint">Создать клинику самим — 5 минут: <a href={startHref}>Попробовать бесплатно</a>. Хотите, чтобы мы настроили всё и перенесли
         пациентов из тетради или Excel, — оставьте заявку, мы позвоним.</p>
       {inAppBrowser() && (
         <p className="tone-wait">Открыли из Instagram? Если клавиатура закрывается — нажмите ⋮ вверху → «Открыть в браузере»
