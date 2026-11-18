@@ -2,7 +2,7 @@ import { DateInput } from '../layout/DateInput'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
-import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
+import { api, ApiError, isUpdatingError, unwrap, upload, type Schemas } from '../api/client'
 import { dateOf, formatPhone, slotInstant, todayIn } from '../lib/time'
 import { OfflineNotice } from '../layout/OfflineNotice'
 import { updateAtSafeMoment } from '../pwa/version'
@@ -107,6 +107,7 @@ function callText(t: T, phone?: string | null): string {
  */
 function errorText(t: T, e: unknown, phone?: string | null): string {
   if (!(e instanceof ApiError) || e.status === 0) return t('noConnection')
+  if (isUpdatingError(e)) return t('updating')
   const known = e.code ? ERRORS[e.code] : undefined
   if (known) return known[1] ? `${t(known[0])} ${callText(t, phone)}` : t(known[0])
   if (e.status === 404) return t('errBookingGone')
@@ -190,7 +191,7 @@ export default function PatientApp({ me }: { me: Me }) {
   return (
     <div className="patient">
       {current.name !== 'privacy' && <LangSwitch lang={lang} onChange={setLang} />}
-      <OfflineNotice text={t('offline')} />
+      <OfflineNotice text={t('offline')} updatingText={t('updatingNotice')} />
       {notice && <p className="notice tone-ok" role="status">{notice}</p>}
       {me.elsewhere?.booking?.startAt && current.name !== 'privacy' && current.name !== 'clinics' && <Elsewhere ctx={ctx} />}
       {current.name === 'clinics' && <ClinicsScreen ctx={ctx} back={current.back} />}
