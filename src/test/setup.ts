@@ -44,3 +44,8 @@ onConfirm(() => {
     queueMicrotask(() => act(() => p.resolve(answer)))
   }
 })
+
+// Флаг «Tish обновляется» (api/updating.ts) — в модуле: следующий тест начинает с «сервер на месте»
+import { setUpdating } from '../api/updating'
+import { resetUpdatingRecovery } from '../layout/useUpdatingRecovery'
+afterEach(() => { setUpdating(false); resetUpdatingRecovery() })
