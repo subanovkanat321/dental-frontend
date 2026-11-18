@@ -187,7 +187,8 @@ test('подсказка закрывается тапом по ней, нажа
   localStorage.removeItem(SUB_HINT_KEY)
   await act(async () => { window.location.hash = '/stock' })
   const second = renderApp()
-  await screen.findByText(/Здесь переключаются разделы: Расходы на склад/)
+  // Подраздел с числом («Заказ») — первым в подсказке
+  await screen.findByText(/Здесь переключаются разделы: Заказ, Расходы на склад/)
   await userEvent.click(within(await tabs('Склад')).getByRole('link', { name: 'Расходы на склад' }))
   expect(screen.queryByText(/Здесь переключаются разделы/)).not.toBeInTheDocument()
   expect(localStorage.getItem(SUB_HINT_KEY)).toBe('seen')
