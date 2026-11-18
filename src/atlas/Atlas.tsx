@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 
 import {
   CARIES_STAGES, isMode, MODE_STEPS, MODES, numberedLabels, PARTS, UI, WISDOM,
@@ -59,6 +59,8 @@ export function Atlas({ initialView, initialMode, initialTooth, lang: initialLan
   const stepRef = useRef(0)
   const rootRef = useRef<HTMLDivElement>(null)
   const [full, setFull] = useState(false)
+  const narrow = useNarrow()
+  const [fdiOpen, setFdiOpen] = useState(false)
   useEffect(() => {
     const onFull = () => setFull(document.fullscreenElement != null)
     document.addEventListener('fullscreenchange', onFull)
@@ -199,22 +201,19 @@ export function Atlas({ initialView, initialMode, initialTooth, lang: initialLan
           </ol>
         )}
 
-        {info && (
-          <aside className="atlas-info" aria-live="polite">
-            <h2>{info.name}</h2>
-            <p>{info.text}</p>
-          </aside>
-        )}
+        {/* Компьютер/планшет: описание поверх холста справа; телефон — под моделью (см. footer), не закрывая её */}
+        {info && !narrow && <InfoCard info={info} more={t.more} less={t.less} clamp={false} />}
       </div>
 
       <footer className="atlas-bottom">
+        {info && narrow && <InfoCard info={info} more={t.more} less={t.less} clamp />}
         {view === 'tooth' && (
           <>
             {mode === 'caries' && (
-              <div className="atlas-stages" role="radiogroup" aria-label={t.stage}>
+              <div className="atlas-stages atlas-chips" role="radiogroup" aria-label={t.stage}>
                 <span className="atlas-stage-title">{t.stage}:</span>
                 {CARIES_STAGES.map((s, i) => (
-                  <button key={i} type="button" role="radio" aria-checked={stage === i} className={stage === i ? 'active' : ''} onClick={() => setStage(i)}>
+                  <button key={i} type="button" role="radio" aria-checked={stage === i} className={stage === i ? 'active' : ''} onClick={(e) => { setStage(i); reveal(e.currentTarget) }}>
                     <span className="atlas-num">{i + 1}</span> {s[lang].name}
                   </button>
                 ))}
@@ -222,23 +221,36 @@ export function Atlas({ initialView, initialMode, initialTooth, lang: initialLan
               </div>
             )}
             {steps && (
+              // Шаг ролика и «Повторить» — одной строкой: шаг слева, кнопка справа (на телефоне — только значок)
               <div className="atlas-steps">
-                <span>{steps[Math.min(step, steps.length - 1)]![lang]}</span>
-                <button type="button" onClick={() => engine?.replay()}>↻ {t.replay}</button>
+                <span className="atlas-step">{steps[Math.min(step, steps.length - 1)]![lang]}</span>
+                <button type="button" className="atlas-replay" aria-label={t.replay} title={t.replay} onClick={() => engine?.replay()}>
+                  <span aria-hidden="true">↻</span><span className="atlas-long" aria-hidden="true"> {t.replay}</span>
+                </button>
               </div>
             )}
-            <div className="atlas-modes" role="tablist" aria-label={t.tooth}>
+            {/* Состояния — лентой чипов: на телефоне в одну строку с прокруткой, а не 2 ряда крупных кнопок */}
+            <div className="atlas-modes atlas-chips" role="tablist" aria-label={t.tooth}>
               {MODES.map((m) => (
-                <button key={m.id} type="button" role="tab" aria-selected={mode === m.id} className={mode === m.id ? 'active' : ''} onClick={() => chooseMode(m.id)}>{m[lang]}</button>
+                <button key={m.id} type="button" role="tab" aria-selected={mode === m.id} className={mode === m.id ? 'active' : ''} onClick={(e) => { chooseMode(m.id); reveal(e.currentTarget) }}>{m[lang]}</button>
               ))}
             </div>
           </>
         )}
         {view === 'jaw' && (
           <div className="atlas-fdi">
+            {/* Телефон: зуб выбирают нажатием на модель, сетка номеров — по кнопке (модель главная) */}
+            {narrow && (
+              <div className="atlas-fdi-bar">
+                <button type="button" className="atlas-fdi-toggle" aria-expanded={fdiOpen} onClick={() => setFdiOpen(!fdiOpen)}>
+                  {t.pickTooth} <span aria-hidden="true">{fdiOpen ? '⌄' : '›'}</span>
+                </button>
+                <label className="atlas-check"><input type="checkbox" checked={roots} onChange={(e) => setRoots(e.target.checked)} /> {t.rootsShort}</label>
+              </div>
+            )}
             {/* Зубная формула как у стоматологов: верх 18…11 | 21…28, низ 48…41 | 31…38 (правая сторона пациента —
                 слева). Половины челюсти — группами по 8: на телефоне каждая своей строкой, а не «7 + 6 + 3» */}
-            {[UPPER_ROW, LOWER_ROW].map((row, r) => (
+            {(!narrow || fdiOpen) && [UPPER_ROW, LOWER_ROW].map((row, r) => (
               <div key={r} className="atlas-fdi-row" role="group" aria-label={JAWS[lang][r]}>
                 <span className="atlas-fdi-jaw" aria-hidden="true">{JAWS[lang][r]}</span>
                 {[row.slice(0, 8), row.slice(8)].map((half, h) => (
@@ -251,18 +263,70 @@ export function Atlas({ initialView, initialMode, initialTooth, lang: initialLan
                 ))}
               </div>
             ))}
-            <label className="atlas-check"><input type="checkbox" checked={roots} onChange={(e) => setRoots(e.target.checked)} /> {t.roots}</label>
+            {!narrow && <label className="atlas-check"><input type="checkbox" checked={roots} onChange={(e) => setRoots(e.target.checked)} /> {t.roots}</label>}
           </div>
         )}
         {view === 'wisdom' && (
-          <div className="atlas-modes">
+          <div className="atlas-modes atlas-chips">
             {WISDOM.map((w) => (
-              <button key={w.id} type="button" aria-pressed={wisdom === w.id} className={wisdom === w.id ? 'active' : ''} onClick={() => setWisdom(w.id)}>{w[lang].name}</button>
+              <button key={w.id} type="button" aria-pressed={wisdom === w.id} className={wisdom === w.id ? 'active' : ''} onClick={(e) => { setWisdom(w.id); reveal(e.currentTarget) }}>{w[lang].name}</button>
             ))}
           </div>
         )}
       </footer>
     </div>
+  )
+}
+
+/** Телефон (как в atlas.css, max-width: 700px): описание под моделью, лента чипов, сетка номеров по кнопке. */
+const NARROW = '(max-width: 700px)'
+function useNarrow(): boolean {
+  const query = () => typeof window.matchMedia === 'function' && window.matchMedia(NARROW).matches
+  const [narrow, setNarrow] = useState(query)
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const mq = window.matchMedia(NARROW)
+    const on = () => setNarrow(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return narrow
+}
+
+/** Выбранный чип ленты — в зону видимости (лента на телефоне прокручивается вбок). */
+function reveal(el: HTMLElement): void {
+  el.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+}
+
+/**
+ * Карточка описания. На телефоне (clamp) — 3 строки и «ещё»: длинный текст не отнимает место у модели.
+ * «ещё» показываем, только если текст правда не влез (замер после отрисовки), раскрытие — по нажатию.
+ */
+function InfoCard({ info, more, less, clamp }: { info: { name: string; text: string }; more: string; less: string; clamp: boolean }) {
+  // Раскрыт именно этот текст: другой (новое состояние, часть) — снова свёрнут. Карточку не пересоздаём —
+  // aria-live должен остаться тем же элементом, иначе экранный диктор не прочтёт новый текст
+  const [openText, setOpenText] = useState<string | null>(null)
+  const open = openText === info.text
+  const [overflow, setOverflow] = useState(false)
+  const textRef = useRef<HTMLParagraphElement>(null)
+  useLayoutEffect(() => {
+    const el = textRef.current
+    if (!clamp || open || !el) return
+    const measure = () => setOverflow(el.scrollHeight > el.clientHeight + 1)
+    measure()
+    if (typeof ResizeObserver !== 'function') return
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [clamp, open, info.text])
+  return (
+    <aside className={clamp ? 'atlas-info compact' : 'atlas-info'} aria-live="polite">
+      <h2>{info.name}</h2>
+      <p ref={textRef} className={clamp && !open ? 'clamped' : undefined}>{info.text}</p>
+      {clamp && (overflow || open) && (
+        <button type="button" className="atlas-more" aria-expanded={open} onClick={() => setOpenText(open ? null : info.text)}>{open ? less : more}</button>
+      )}
+    </aside>
   )
 }
 

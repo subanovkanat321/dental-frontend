@@ -3,6 +3,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 
 import type { AtlasMode, AtlasView, PartId, WisdomPosition } from '../content'
+import { ALL_FDI } from '../fdi'
+import { toothTip } from '../geometry/jawModel'
 import { CUT_X, type ToothGroup } from '../geometry/toothModel'
 import type { MeshData } from '../geometry/mesher'
 import type { GeometryRequest, GeometryResponse } from '../geometry/worker'
@@ -61,19 +63,15 @@ export interface CustomScene {
 }
 
 /**
- * Камера по видам: откуда смотрим, куда и насколько можно отодвинуть (max). `radius` — полуширина
- * модели с метками (в единицах сцены): по ней камера отъезжает, если модель не влезает по ширине
- * между легендой и описанием.
+ * Камера по видам: ракурс (откуда смотрим — pos, куда — target), насколько можно отодвинуть (max) и
+ * `radius` — насколько можно сдвинуть модель пальцами (единицы сцены). Расстояние «вид целиком» считает
+ * fitView по bounding box модели с метками; pos и target — до загрузки модели и для направления взгляда.
  */
-/**
- * halfWidth — половина ширины сцены (с подписями слева): узкий экран (телефон стоя) — камера отходит,
- * чтобы влезло по ширине; иначе «Мудрости» (длинный блок кости) обрезалась слева.
- */
-const CAMERAS: Record<AtlasView, { pos: [number, number, number]; target: [number, number, number]; max: number; radius: number; halfWidth?: number }> = {
+const CAMERAS: Record<AtlasView, { pos: [number, number, number]; target: [number, number, number]; max: number; radius: number }> = {
   tooth: { pos: [2.75, 1.1, 5.0], target: [0.1, -0.68, 0], max: 11, radius: 1.45 },
   jaw: { pos: [0, 3.2, 12.4], target: [0, -0.1, -2.4], max: 18, radius: 3.7 },
   // Камера — прямо напротив центра кости (x = 0,5): раньше стояла правее, и сцена уезжала влево
-  wisdom: { pos: [0.5, 0.6, 9.4], target: [0.5, -1.0, 0], max: 14, radius: 2.35, halfWidth: 3.2 },
+  wisdom: { pos: [0.5, 0.6, 9.4], target: [0.5, -1.0, 0], max: 14, radius: 2.35 },
 }
 /**
  * Ближе стартового вида — только на 15%: прокрутка тачпадом на ноутбуке — это зум, и модель раньше
@@ -83,6 +81,9 @@ const CAMERAS: Record<AtlasView, { pos: [number, number, number]; target: [numbe
 const MIN_ZOOM = 0.85
 /** Насколько стартовая камера дальше точки, куда смотрит. */
 const startDistance = (c: (typeof CAMERAS)[AtlasView]) => Math.hypot(c.pos[0] - c.target[0], c.pos[1] - c.target[1], c.pos[2] - c.target[2])
+
+/** Вершины всех зубов челюсти — точки меток для подгонки камеры. */
+const JAW_TIPS = ALL_FDI.map(toothTip)
 
 /** Меш сцены «зуб» → часть атласа (нажали на ткань — открыли её описание). */
 const MESH_PART: Record<string, PartId> = {
@@ -244,10 +245,12 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     else camera.clearViewOffset()
   }
 
+  /** Куда смотрит камера «вида целиком»: центр модели с метками (считает fitView), до него — из CAMERAS. */
+  const home = new THREE.Vector3()
+
   /** Сдвиг (pan) — не дальше радиуса модели от её центра: модель не «улетает» за край. */
   function clampPan() {
     const c = CAMERAS[view]
-    const home = new THREE.Vector3(...c.target)
     const away = controls.target.clone().sub(home)
     const limit = c.radius * 1.1
     if (away.length() <= limit) return
@@ -256,58 +259,127 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     camera.position.sub(back)
   }
   controls.addEventListener('change', clampPan)
+  /** Пользователь крутил или приближал модель: смена состояния и поворот экрана его вид не сбрасывают. */
+  let userMoved = false
+  controls.addEventListener('start', () => { userMoved = true })
 
   /**
-   * На каком расстоянии камера видит модель целиком: не ближе стартового, а если кадр узкий (окно
-   * уже, по бокам панели) — дальше, чтобы полуширина модели влезла между легендой и описанием.
+   * Точки, которые должны влезть в кадр: углы коробок (bounding box) видимых сеток модели — каждой своя,
+   * а не одна общая (у общей угол «коронка по высоте × кость по ширине» висит в воздухе и уменьшает модель).
+   * У разреза берём сетки тканей без их собственного сдвига: коронка, абатмент «въезжают» сверху в ролике,
+   * и камера не должна отъезжать под их стартовое положение.
    */
-  function fitDistance(v: AtlasView): number {
+  const box = new THREE.Box3()
+  function modelPoints(v: AtlasView): THREE.Vector3[] {
+    const out: THREE.Vector3[] = []
+    const add = (geo: THREE.BufferGeometry, matrix: THREE.Matrix4) => {
+      if (!geo.boundingBox) geo.computeBoundingBox()
+      box.copy(geo.boundingBox!)
+      if (box.isEmpty()) return
+      for (let i = 0; i < 8; i++) {
+        out.push(new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).applyMatrix4(matrix))
+      }
+    }
+    if (v === 'tooth') {
+      tooth.root.updateMatrixWorld()
+      for (const o of tooth.root.children) {
+        const mesh = o as THREE.Mesh
+        if (mesh.visible && mesh.isMesh && MESH_PART[mesh.name]) add(mesh.geometry, tooth.root.matrixWorld)
+      }
+      return out
+    }
+    const root = v === 'jaw' ? jaw?.root : wisdom?.root
+    if (!root) return out
+    root.updateMatrixWorld()
+    root.traverseVisible((o) => { const mesh = o as THREE.Mesh; if (mesh.isMesh) add(mesh.geometry, mesh.matrixWorld) })
+    return out
+  }
+
+  /** Отступ от края кадра, px: до модели и до центра метки (кружок 34 px + зазор; «кость», «десна» — шире). */
+  const EDGE = 12
+  const LABEL_Y = 26
+  const LABEL_X = 40
+
+  /**
+   * «Вид целиком» по bounding box: направление камеры — из CAMERAS (ракурс как задуман), центр — середина
+   * модели с метками, расстояние — наименьшее, при котором каждая точка (углы коробки и метки) проецируется
+   * внутрь кадра с отступом. Для точки на глубине z (к камере) и смещении x вбок условие
+   * |x| ≤ (d − z)·tg(fov/2)·aspect·доля, отсюда d ≥ z + |x| / (tg·aspect·доля); по высоте — так же без aspect.
+   * Доля — сколько кадра свободно: на компьютере края закрывают легенда и описание, на телефоне ничего.
+   * Нет модели (ещё грузится) — стартовое расстояние из CAMERAS.
+   */
+  const basis = { x: new THREE.Vector3(), y: new THREE.Vector3(), z: new THREE.Vector3() }
+  function fitView(v: AtlasView): { target: THREE.Vector3; dir: THREE.Vector3; distance: number } {
     const c = CAMERAS[v]
-    const d0 = startDistance(c)
-    if (!width || !height) return d0
-    let d = d0
-    // По ширине: между легендой и описанием по бокам
-    const cover = sideCover()
-    if (cover) {
-      const free = Math.max(width - 2 * cover - 24, width * 0.3) / width
-      d = Math.max(d, c.radius / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect * free))
+    const dir = new THREE.Vector3(...c.pos).sub(new THREE.Vector3(...c.target)).normalize()
+    const fallback = { target: new THREE.Vector3(...c.target), dir, distance: startDistance(c) }
+    const model = custom ? [] : modelPoints(v)
+    if (!model.length || !width || !height) return fallback
+    basis.z.copy(dir)
+    basis.x.crossVectors(camera.up, basis.z).normalize()
+    basis.y.crossVectors(basis.z, basis.x)
+    const pts = model.map((p) => ({ p, label: false }))
+    // Челюсть: метка — у выбранного зуба; берём вершины всех зубов, чтобы выбор зуба не двигал камеру
+    for (const a of v === 'jaw' ? JAW_TIPS : anchors) pts.push({ p: new THREE.Vector3(...a), label: true })
+    // Центр: середина размаха точек в плоскости экрана (метки сбоку тоже учтены)
+    const center = box.setFromPoints(model).getCenter(new THREE.Vector3())
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity
+    for (const { p } of pts) {
+      const q = p.clone().sub(center)
+      const x = q.dot(basis.x), y = q.dot(basis.y)
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y)
     }
-    // По ширине всей сцены (узкий экран)
-    if (c.halfWidth) d = Math.max(d, c.halfWidth / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect))
-    // По высоте: над описанием снизу (телефон) — иначе высокий зуб уходил верхом за край кадра
-    const bottom = bottomCover()
-    if (bottom) {
-      const free = Math.max(height - bottom - 16, height * 0.4) / height
-      d = Math.max(d, c.radius / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * free))
+    const target = center.clone().addScaledVector(basis.x, (x0 + x1) / 2).addScaledVector(basis.y, (y0 + y1) / 2)
+    const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))
+    const halfW = width / 2 - sideCover()
+    const halfH = (height - bottomCover()) / 2
+    let d = 0
+    for (const { p, label } of pts) {
+      const q = p.clone().sub(target)
+      const x = Math.abs(q.dot(basis.x)), y = Math.abs(q.dot(basis.y)), z = q.dot(basis.z)
+      const fx = Math.max(halfW - (label ? LABEL_X : EDGE), width * 0.15) / (width / 2)
+      const fy = Math.max(halfH - (label ? LABEL_Y : EDGE), height * 0.15) / (height / 2)
+      d = Math.max(d, z + x / (tan * camera.aspect * fx), z + y / (tan * fy))
     }
-    return d
+    return { target, dir, distance: Math.max(d, 0.5) }
   }
 
   /** Расстояние «вид целиком» для текущего вида; от него — пределы зума. */
   let fitted = 0
-  function applyFit(v: AtlasView, keepZoom: boolean) {
-    const c = CAMERAS[v]
-    const next = fitDistance(v)
-    if (keepZoom && fitted) {
-      // Окно поменяло размер: отодвинуть/приблизить камеру в той же пропорции — зум пользователя сохраняется
-      const offset = camera.position.clone().sub(controls.target)
-      camera.position.copy(controls.target).add(offset.multiplyScalar(next / fitted))
-    } else {
-      const dir = new THREE.Vector3(...c.pos).sub(new THREE.Vector3(...c.target)).normalize()
-      camera.position.copy(controls.target).addScaledVector(dir, next)
-    }
-    fitted = next
-    controls.minDistance = next * MIN_ZOOM
-    controls.maxDistance = Math.max(c.max, next * 1.6)
+  function applyLimits(v: AtlasView, distance: number) {
+    fitted = distance
+    controls.minDistance = distance * MIN_ZOOM
+    controls.maxDistance = Math.max(CAMERAS[v].max, distance * 1.6)
   }
 
+  /** Камера — в «вид целиком» (смена вида, «Вернуть вид»). */
   function placeCamera(v: AtlasView) {
-    const c = CAMERAS[v]
-    controls.target.set(...c.target)
-    applyFit(v, false)
+    const fit = fitView(v)
+    home.copy(fit.target)
+    controls.target.copy(fit.target)
+    camera.position.copy(fit.target).addScaledVector(fit.dir, fit.distance)
+    applyLimits(v, fit.distance)
+    userMoved = false
     floor.position.y = v === 'tooth' ? -2.37 : -3.0
     // У челюсти «пола» нет: тень под ней выглядела пятном
     floor.visible = v === 'tooth'
+    controls.update()
+  }
+
+  /**
+   * Модель, метки или размер кадра поменялись (другое состояние, догрузилась челюсть, поворот телефона):
+   * вид не трогали — заново «вид целиком»; трогали — сохранить его ракурс и зум относительно нового «целиком».
+   */
+  function refit() {
+    if (custom) return
+    if (!userMoved) { placeCamera(view); return }
+    const fit = fitView(view)
+    if (fitted) {
+      const offset = camera.position.clone().sub(controls.target)
+      camera.position.copy(controls.target).add(offset.multiplyScalar(fit.distance / fitted))
+    }
+    home.copy(fit.target)
+    applyLimits(view, fit.distance)
     controls.update()
   }
 
@@ -321,6 +393,7 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     if (v === 'tooth') {
       cb.onLoading(!tooth.ready)
       await tooth.setMode(mode, now())
+      if (view === 'tooth') refit()
       busy((TIMELINE[mode]?.total ?? 0) + 0.5)
       cb.onLoading(false)
       // Остальные режимы — в фоне, чтобы переключение было мгновенным
@@ -347,6 +420,8 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     busy(1.2)
     if (jaw) jaw.root.visible = view === 'jaw'
     if (wisdom) wisdom.root.visible = view === 'wisdom'
+    // Модель догрузилась — теперь её коробка известна
+    if (view === v) refit()
   }
 
   // Размер холста — по родителю; ResizeObserver ловит и поворот планшета, и полноэкранный режим
@@ -364,11 +439,8 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     camera.updateProjectionMatrix()
     width = w
     height = h
-    // Кадр стал уже (или шире) — модель с панелями по бокам должна влезать: камеру отодвигаем
-    if (fitted) {
-      applyFit(view, true)
-      controls.update()
-    }
+    // Кадр стал уже (или шире), повернули телефон — модель с метками должна влезать
+    if (fitted) refit()
   }
   const observer = new ResizeObserver(resize)
   // Описание появилось, пропало или поменяло высоту (другой режим, стадия) — пересчитать сдвиг модели вверх
@@ -479,6 +551,7 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
       if (view === 'tooth') {
         cb.onLoading(true)
         void run(tooth.setMode(next, now()).then(() => {
+          if (view === 'tooth') refit()
           busy((TIMELINE[next]?.total ?? 0) + 0.5)
           cb.onLoading(false)
         }))
@@ -496,13 +569,18 @@ export function createAtlasEngine(canvas: HTMLCanvasElement, cb: EngineCallbacks
     setWisdom(pos) {
       wisdomPos = pos
       wisdom?.setPosition(pos, now())
+      if (view === 'wisdom') refit()
       busy(1.2)
     },
     setRoots(show) {
       roots = show
       jaw?.setRoots(show)
+      if (view === 'jaw') refit()
     },
-    setAnchors(points) { anchors = points },
+    setAnchors(points) {
+      anchors = points
+      if (fitted) refit()
+    },
     replay() {
       customStart = now()
       tooth.replay(now())
