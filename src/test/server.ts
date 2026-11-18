@@ -20,6 +20,9 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // Долги (полоса «Сегодня», карточка приёма): по умолчанию нет. Без обработчика запрос падал бы обрывом
+  // сети — а это плашка «Tish обновляется» (api/updating.ts) поверх того, что проверяет тест
+  http.get('*/api/appointments/debts', () => HttpResponse.json([] satisfies Schemas['PaymentQueryDebt'][])),
   // Долги из прежней программы (шаблон переезда): по умолчанию нет — блока в «Должниках» и карточке пациента нет
   http.get('*/api/opening-debts', () => HttpResponse.json([] satisfies Schemas['OpeningDebtsView'][])),
   // Подсказка «🪑 время коллеги по креслу» в «Новой записи» и переносе: по умолчанию коллеги в это время нет
