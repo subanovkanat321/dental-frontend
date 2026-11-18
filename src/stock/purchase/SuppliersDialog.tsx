@@ -50,9 +50,12 @@ export function SuppliersDialog({ me, onClose }: { me: Me; onClose: () => void }
         ? <SupplierForm onDone={() => setEditing(null)} />
         : <button type="button" className="btn" onClick={() => setEditing('new')}>＋ Поставщик</button>}
       {archive.error && <p className="error" role="alert">{archive.error.message}</p>}
-      <div className="confirm-actions">
-        <button type="button" className="btn primary" onClick={onClose}>Готово</button>
-      </div>
+      {/* Пока открыта форма, «Готово» нет: иначе лист закрылся бы и введённое пропало без сохранения */}
+      {editing == null && (
+        <div className="confirm-actions">
+          <button type="button" className="btn primary" onClick={onClose}>Готово</button>
+        </div>
+      )}
     </Sheet>
   )
 }
@@ -71,11 +74,11 @@ function SupplierForm({ supplier, onDone }: { supplier?: Supplier; onDone: () =>
     <div className="lab-form" role="group" aria-label={supplier ? `Поставщик ${supplier.name}` : 'Новый поставщик'}>
       <input aria-label="Название поставщика" placeholder="Название: «Дент-Маркет»" value={name} maxLength={80}
         onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} />
-      <input aria-label="Телефон / WhatsApp" placeholder="Телефон / WhatsApp" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+      <input aria-label="Телефон / WhatsApp" placeholder="Телефон / WhatsApp: +996 …" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
       <input aria-label="Заметка" placeholder="Заметка: доставка в тот же день" value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} />
       {err && <p className="error">{err}</p>}
       <div className="row">
-        <button type="button" className="btn small" disabled={!name.trim() || save.isPending} onClick={submit}>{supplier ? 'Сохранить' : 'Добавить'}</button>
+        <button type="button" className="btn primary small" disabled={!name.trim() || save.isPending} onClick={submit}>{supplier ? 'Сохранить' : 'Добавить'}</button>
         <button type="button" className="btn ghost small" onClick={onDone}>Отмена</button>
       </div>
     </div>

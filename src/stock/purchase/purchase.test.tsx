@@ -159,3 +159,26 @@ test('карточка материала: где берём и цены у по
   expect(within(rows[0]!).getByText('280 сом/шт')).toHaveClass('cheapest')
   expect(rows[1]).toHaveTextContent('Дент-Маркет · 10 ноября300 сом/шт')
 })
+
+test('«Поставщики»: пока открыта форма, «Готово» нет — введённое не пропадёт; «Добавить» сохраняет', async () => {
+  window.location.hash = '/stock'
+  backend(draft)
+  const saved: unknown[] = []
+  server.use(http.post('*/api/suppliers', async ({ request }) => {
+    saved.push(await request.json())
+    return HttpResponse.json({ id: 8, name: 'Мед-Склад', phone: '996700000001', archived: false } satisfies Schemas['PurchaseViewsSupplierView'], { status: 201 })
+  }))
+  renderApp()
+  await userEvent.click(await findSub('Заказ · 3'))
+  await userEvent.click(await screen.findByRole('button', { name: 'Поставщики' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Поставщики' })
+  expect(within(dialog).getByRole('button', { name: 'Готово' })).toBeInTheDocument()
+
+  await userEvent.click(within(dialog).getByRole('button', { name: '＋ Поставщик' }))
+  expect(within(dialog).queryByRole('button', { name: 'Готово' })).toBeNull()
+  await userEvent.type(within(dialog).getByLabelText('Название поставщика'), 'Мед-Склад')
+  await userEvent.type(within(dialog).getByLabelText('Телефон / WhatsApp'), '+996700000001')
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Добавить' }))
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Мед-Склад', phone: '+996700000001' }]))
+  expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
+})
