@@ -19631,6 +19631,9 @@
           },
           "whatsapp" : {
             "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
           }
         },
         "required" : [ "name" ]
@@ -19648,6 +19651,9 @@
             "type" : "string"
           },
           "whatsapp" : {
+            "type" : "string"
+          },
+          "note" : {
             "type" : "string"
           },
           "archived" : {

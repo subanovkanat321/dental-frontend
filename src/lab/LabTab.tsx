@@ -1,15 +1,15 @@
 import { useState } from 'react'
 
 import type { Schemas } from '../api/client'
-import { ask } from '../lib/confirm'
-import { formatPhone, somText } from '../lib/time'
+import { somText } from '../lib/time'
+import { DirectorySheet } from '../clinic/DirectorySheet'
 import { EmptyState } from '../layout/EmptyState'
 import { Fold } from '../layout/Fold'
 import { HeadTools } from '../layout/PageHead'
 import { Loading } from '../layout/Loading'
 import { Select } from '../layout/Select'
 import { useArchiveLab, useLabDebts, useLabOrder, useLabOrders, useLabs, type Lab } from './api'
-import { LabForm, LabOrderDialog, Sheet } from './LabOrderDialog'
+import { LabForm, LabOrderDialog } from './LabOrderDialog'
 import { LabRow } from './LabRow'
 import { groupOrders, seesLabMoney } from './text'
 import { useLabActions } from './useLabActions'
@@ -116,55 +116,14 @@ export function LabTab({ me, initialOrder, onOpenPatient }: {
   )
 }
 
-/** Справочник лабораторий: исправить название и телефоны, «Убрать из списка» (старые заказы остаются), добавить новую. */
+/** Справочник лабораторий — тот же лист, что «Поставщики» (DirectorySheet): «Убрать» — старые заказы остаются. */
 function LabsDialog({ onClose }: { onClose: () => void }) {
   const labs = useLabs()
   const archive = useArchiveLab()
-  const [editing, setEditing] = useState<Lab | 'new' | null>(null)
-  // Список пуст — сразу форма (как «Поставщики»); «Отмена» тогда закрывает лист
-  const empty = labs.data?.length === 0
-  const adding = editing === 'new' || (empty && editing == null)
   return (
-    <Sheet title="Лаборатории" onClose={onClose} onSubmit={(e) => e.preventDefault()} className="lab-directory">
-      {labs.isPending && <Loading />}
-      {empty && <p className="hint">Лаборатории, с которыми работаете: номер техника — чтобы спросить о работе в WhatsApp.</p>}
-      {!empty && (
-        <ul className="dir-list">
-          {(labs.data ?? []).map((l) => (
-            <li key={l.id} className={editing !== 'new' && editing?.id === l.id ? 'editing' : undefined}>
-              {editing !== 'new' && editing?.id === l.id ? (
-                <LabForm lab={l} onSaved={() => setEditing(null)} onCancel={() => setEditing(null)} />
-              ) : (
-                <>
-                  <span className="dir-item">
-                    <strong>{l.name}</strong>
-                    {(l.phone || l.whatsapp) && (
-                      <span className="hint">{l.phone && <span className="nowrap">{formatPhone(l.phone)}</span>}
-                        {l.whatsapp && l.whatsapp !== l.phone && <>{l.phone && ' · '}WhatsApp <span className="nowrap">{formatPhone(l.whatsapp)}</span></>}</span>
-                    )}
-                  </span>
-                  <span className="dir-item-actions">
-                    <button type="button" className="btn ghost small" onClick={() => setEditing(l)}>Изменить</button>
-                    <button type="button" className="btn ghost small" onClick={async () => {
-                      if (await ask(`Убрать «${l.name}» из списка? Старые заказы останутся.`, { ok: 'Убрать' })) archive.mutate(l.id)
-                    }}>Убрать</button>
-                  </span>
-                </>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-      {adding
-        ? <LabForm onSaved={() => setEditing(null)} onCancel={() => (empty && editing == null ? onClose() : setEditing(null))} />
-        : labs.data && editing == null && <button type="button" className="btn dir-add" onClick={() => setEditing('new')}>＋ Лаборатория</button>}
-      {archive.error && <p className="error" role="alert">{archive.error.message}</p>}
-      {/* Пока открыта форма, «Готово» нет: иначе лист закрылся бы и введённое пропало без сохранения */}
-      {editing == null && !adding && (
-        <div className="confirm-actions">
-          <button type="button" className="btn primary" onClick={onClose}>Готово</button>
-        </div>
-      )}
-    </Sheet>
+    <DirectorySheet<Lab> title="Лаборатории" intro="Зуботехнические лаборатории: номер — для заказа технику в WhatsApp и звонка."
+      items={labs.data} pending={labs.isPending} addText="＋ Лаборатория" onClose={onClose}
+      archive={{ keeps: 'Старые заказы останутся.', run: archive.mutate, error: archive.error }}
+      form={(l, done, cancel) => <LabForm lab={l} onSaved={done} onCancel={cancel} />} />
   )
 }

@@ -5,10 +5,8 @@ import type { Schemas } from '../api/client'
 import { useBack } from '../lib/back'
 import { canEditDoctor } from '../lib/roles'
 import { addDays, todayIn } from '../lib/time'
-import { phoneFromInput, phoneToInput, whatsappToInput } from '../clinic/phone'
-import { PhoneWhatsappFields } from '../clinic/PhoneWhatsappFields'
+import { DirectoryEntryForm, type DirectoryWords } from '../clinic/DirectoryEntryForm'
 import { DateInput } from '../layout/DateInput'
-import { DirectoryForm } from '../layout/DirectoryForm'
 import { Select } from '../layout/Select'
 import { useSwipeDown } from '../layout/useSwipeDown'
 import { PatientField, type TaskPatient } from '../tasks/TaskDialog'
@@ -191,10 +189,15 @@ function LabPicker({ labs, value, onChange, loading }: {
   )
 }
 
+const LAB_WORDS: DirectoryWords = {
+  one: 'Лаборатория', newOne: 'Новая лаборатория', add: 'Добавить лабораторию',
+  namePlaceholder: 'Например: Дент-Лаб', notePlaceholder: 'Техник Азамат, слепки забирают сами',
+}
+
 /**
- * Новая лаборатория (или правка): название и номер — как у поставщика (PhoneWhatsappFields): «Телефон / WhatsApp»
- * и WhatsApp на другом номере по ссылке. На сервер — как набрано, нормализует он.
- * @param primary «Добавить» залитой: в справочнике да, внутри «Заказа в лабораторию» — нет (там главная «Создать заказ»)
+ * Новая лаборатория (или правка) — та же форма, что у поставщика (DirectoryEntryForm): название, «Телефон / WhatsApp»,
+ * WhatsApp на другом номере по ссылке, заметка.
+ * @param primary «Добавить лабораторию» залитой: в справочнике да, внутри «Заказа в лабораторию» — нет
  */
 export function LabForm({ lab, onSaved, onCancel, primary = true }: {
   lab?: Schemas['LabView']
@@ -202,26 +205,8 @@ export function LabForm({ lab, onSaved, onCancel, primary = true }: {
   onCancel?: () => void
   primary?: boolean
 }) {
-  const [name, setName] = useState(lab?.name ?? '')
-  const [phone, setPhone] = useState(phoneToInput(lab?.phone))
-  const [whatsapp, setWhatsapp] = useState(whatsappToInput(lab))
   const save = useSaveLab()
-  const err = (k: string) => save.error?.fieldErrors[k]
-  const other = save.error && !err('name') && !err('phone') && !err('whatsapp') ? Object.values(save.error.fieldErrors)[0] ?? save.error.message : null
-  return (
-    <DirectoryForm label={lab ? `Лаборатория ${lab.name}` : 'Новая лаборатория'} saveText={lab ? 'Сохранить' : 'Добавить лабораторию'}
-      canSave={Boolean(name.trim())} busy={save.isPending} error={other} onCancel={onCancel} primary={primary}
-      onSave={() => save.mutate({
-        id: lab?.id,
-        body: { name: name.trim(), phone: phoneFromInput(phone) || undefined, whatsapp: phoneFromInput(whatsapp) || undefined },
-      }, { onSuccess: onSaved })}>
-      <label className="field"><span>Название</span>
-        <input value={name} maxLength={80} autoComplete="off" placeholder="Например: Дент-Лаб" onChange={(e) => setName(e.target.value)} /></label>
-      {err('name') && <p className="error">{err('name')}</p>}
-      <PhoneWhatsappFields phone={phone} whatsapp={whatsapp} onPhone={setPhone} onWhatsapp={setWhatsapp}
-        phoneError={err('phone')} whatsappError={err('whatsapp')} />
-    </DirectoryForm>
-  )
+  return <DirectoryEntryForm entry={lab} words={LAB_WORDS} save={save} onSaved={onSaved} onCancel={onCancel} primary={primary} />
 }
 
 /** Окно по центру (компьютер) или лист снизу (телефон), как «Новая задача». */

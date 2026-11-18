@@ -201,7 +201,7 @@ test('«Поставщики»: пока открыта форма, «Готов
   expect(within(form).queryByLabelText('WhatsApp')).toBeNull()
   await userEvent.click(within(form).getByRole('button', { name: '＋ WhatsApp на другом номере' }))
   await userEvent.type(within(form).getByLabelText('WhatsApp'), '700 000 009')
-  await userEvent.click(within(form).getByRole('button', { name: 'Добавить' }))
+  await userEvent.click(within(form).getByRole('button', { name: 'Добавить поставщика' }))
   // Как другие формы (phoneFromInput): «+996 …» — сервер нормализует и проверяет
   await waitForSlow(() => expect(saved).toEqual([{ name: 'Мед-Склад', phone: '+996 700 000 001', whatsapp: '+996 700 000 009' }]))
   expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
@@ -251,6 +251,7 @@ test('«Поставщики»: список пуст — подсказка и 
   await userEvent.click(await screen.findByRole('button', { name: 'Поставщики' }))
   const dialog = await screen.findByRole('dialog', { name: 'Поставщики' })
   expect(await within(dialog).findByRole('group', { name: 'Новый поставщик' })).toBeInTheDocument()
+  expect(within(dialog).getByText('Склады, у которых берёте материалы: номер — для заказа в WhatsApp и звонка.')).toBeInTheDocument()
   expect(within(dialog).queryByRole('button', { name: '＋ Поставщик' })).toBeNull()
   await userEvent.click(within(dialog).getByRole('button', { name: 'Отмена' }))
   await waitForSlow(() => expect(screen.queryByRole('dialog', { name: 'Поставщики' })).toBeNull())

@@ -8575,6 +8575,7 @@ export interface components {
             name: string;
             phone?: string;
             whatsapp?: string;
+            note?: string;
         };
         LabView: {
             /** Format: int64 */
@@ -8582,6 +8583,7 @@ export interface components {
             name: string;
             phone?: string;
             whatsapp?: string;
+            note?: string;
             archived: boolean;
         };
         LabOrderDraft: {

@@ -160,7 +160,7 @@ test('работ нет — только «Работ в лаборатории 
   expect(screen.queryByRole('button', { name: /Установлено/ })).toBeNull()
 })
 
-test('«Лаборатории»: новая — одно поле «Телефон / WhatsApp», ссылка открывает WhatsApp на другом номере, уходят оба', async () => {
+test('«Лаборатории»: новая — как у поставщика: «Телефон / WhatsApp», WhatsApp на другом номере по ссылке, заметка', async () => {
   window.location.hash = '/stock/lab'
   backend([])
   const saved: unknown[] = []
@@ -174,6 +174,8 @@ test('«Лаборатории»: новая — одно поле «Телеф�
   await userEvent.click(await screen.findByRole('button', { name: 'Лаборатории' }))
   const dialog = await screen.findByRole('dialog', { name: 'Лаборатории' })
   expect(await within(dialog).findByText('+996 555 111 222')).toBeInTheDocument()
+  // Подсказка вверху — всегда, как у поставщиков
+  expect(within(dialog).getByText('Зуботехнические лаборатории: номер — для заказа технику в WhatsApp и звонка.')).toBeInTheDocument()
   await userEvent.click(within(dialog).getByRole('button', { name: '＋ Лаборатория' }))
   expect(within(dialog).queryByRole('button', { name: 'Готово' })).toBeNull()
   const form = within(dialog).getByRole('group', { name: 'Новая лаборатория' })
@@ -184,8 +186,10 @@ test('«Лаборатории»: новая — одно поле «Телеф�
   await userEvent.click(within(form).getByRole('button', { name: '＋ WhatsApp на другом номере' }))
   expect(within(form).queryByRole('button', { name: '＋ WhatsApp на другом номере' })).toBeNull()
   await userEvent.type(within(form).getByLabelText('WhatsApp'), '0700 000 003')
+  await userEvent.type(within(form).getByLabelText(/Заметка/), 'Техник Азамат')
+  expect(within(form).getAllByRole('button').map((b) => b.textContent)).toEqual(['Отмена', 'Добавить лабораторию'])
   await userEvent.click(within(form).getByRole('button', { name: 'Добавить лабораторию' }))
-  await waitForSlow(() => expect(saved).toEqual([{ name: 'Лаб-Тест', phone: '+996 700 000 002', whatsapp: '0700 000 003' }]))
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Лаб-Тест', phone: '+996 700 000 002', whatsapp: '0700 000 003', note: 'Техник Азамат' }]))
   expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
 })
 
@@ -209,16 +213,17 @@ test('«Лаборатории»: «Изменить» — номер в пол�
   await waitForSlow(() => expect(saved).toEqual([{ name: 'Дент-Лаб-2', phone: '+996 555 111 222' }]))
 })
 
-test('«Лаборатории»: «Изменить» — свой WhatsApp на другом номере: второе поле сразу открыто', async () => {
+test('«Лаборатории»: WhatsApp на другом номере и заметка — в списке, как у поставщика, и в форме при «Изменить»', async () => {
   window.location.hash = '/stock/lab'
   backend([])
-  server.use(http.get('*/api/labs', () => HttpResponse.json([{ ...lab, whatsapp: '996700000003' }] satisfies Schemas['LabView'][])))
+  server.use(http.get('*/api/labs', () => HttpResponse.json([{ ...lab, whatsapp: '996700000003', note: 'техник Азамат' }] satisfies Schemas['LabView'][])))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: 'Лаборатории' }))
   const dialog = await screen.findByRole('dialog', { name: 'Лаборатории' })
-  expect(await within(dialog).findByText(/WhatsApp/)).toHaveTextContent('WhatsApp +996 700 000 003')
+  await waitForSlow(() => expect(dialog).toHaveTextContent('+996 555 111 222 · WhatsApp +996 700 000 003 · техник Азамат'))
   await userEvent.click(within(dialog).getByRole('button', { name: 'Изменить' }))
   const form = within(dialog).getByRole('group', { name: 'Лаборатория Дент-Лаб' })
   expect(within(form).getByLabelText('WhatsApp')).toHaveValue('700 000 003')
+  expect(within(form).getByLabelText(/Заметка/)).toHaveValue('техник Азамат')
   expect(within(form).queryByRole('button', { name: '＋ WhatsApp на другом номере' })).toBeNull()
 })

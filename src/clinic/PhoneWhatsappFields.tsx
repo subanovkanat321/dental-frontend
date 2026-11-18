@@ -25,7 +25,7 @@ export function PhoneWhatsappFields({ phone, whatsapp, onPhone, onWhatsapp, phon
       {phoneError && <p className="error">{phoneError}</p>}
       {shown ? (
         <>
-          <label className="field"><span>WhatsApp <span className="hint">— если на другом номере</span></span>
+          <label className="field"><span>WhatsApp <span className="hint">— необязательно</span></span>
             <PhoneInput label="WhatsApp" value={whatsapp} onChange={onWhatsapp} /></label>
           {whatsappError && <p className="error">{whatsappError}</p>}
         </>
