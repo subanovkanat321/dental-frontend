@@ -404,9 +404,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {/* План лечения — сразу после зубов: тот же редактор, что в медкарте — добавить этапы, отметить сделанное */}
           {visitTools && clinical && a.patient.id != null && <VisitPlan appointment={a} me={me} />}
           {canEdit && visitTools && <Supplies appointment={a} me={me} />}
-          {/* Расход по пациенту (техник, лаборатория) — врачу часто, поэтому не под «Ещё». Регистратуре и ассистенту
-              нет (у них нет своих расходов) */}
-          {canEdit && a.status === 'DONE' && seesMoney && a.patient.id != null && (me.admin || me.doctorId != null) && (
+          {/* Расход по пациенту (техник, лаборатория) — врачу часто, поэтому не под «Ещё»; как «Материалы» — уже во время
+              приёма, не только после «состоялся». Регистратуре и ассистенту нет (у них нет своих расходов) */}
+          {canEdit && visitTools && seesMoney && a.patient.id != null && (me.admin || me.doctorId != null) && (
             <PatientExpensesFold patient={a.patient} me={me} doctorId={a.doctorId} />
           )}
           {/* Заказы лаборатории на этот приём (примерка) — только если есть такая работа */}
