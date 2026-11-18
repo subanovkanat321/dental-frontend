@@ -7,6 +7,7 @@ import * as THREE from 'three'
  * поворачивает ось ручки куда нужно.
  */
 export type ToolName = 'bur' | 'syringe' | 'air' | 'brush' | 'lamp' | 'plug' | 'cup' | 'file' | 'irrig' | 'scanner' | 'idrill' | 'driver' | 'scaler' | 'airflow'
+  | 'ball' | 'cannula' | 'mbrush' | 'spatula'
 
 export interface Tool {
   group: THREE.Group
@@ -18,6 +19,8 @@ export interface Tool {
   nozzle?: number
   /** Свечение (окно сканера) — непрозрачность по дорожке <имя>Glow. */
   glowMat?: THREE.MeshBasicMaterial
+  /** Части, которыми управляет процедура (капля бонда на кисточке, комок композита на гладилке). */
+  parts?: Record<string, THREE.Object3D>
 }
 
 /** Закрутить сетку вокруг оси y: угол растёт с высотой (витой эндо-файл, сверло). */
@@ -225,6 +228,67 @@ export function createTools(): Record<ToolName, Tool> {
   afRing.position.set(0.12, 1.35, 0)
   airflow.add(afHand, afRing)
 
+  // ── Инструменты ролика «Спасаем зуб» (зуб в разрезе, макро): хром с отражениями, как на студийной съёмке ──
+  // Шлифованный хром: анизотропия — блики вытянуты поперёк оси, как у настоящего наконечника
+  const chrome = new THREE.MeshPhysicalMaterial({ color: '#eef1f4', metalness: 1, roughness: 0.12, envMapIntensity: 1.6 })
+  const brushed = new THREE.MeshPhysicalMaterial({ color: '#cfd4da', metalness: 1, roughness: 0.34, envMapIntensity: 1.5 })
+  const carbide = new THREE.MeshPhysicalMaterial({ color: '#b9bec4', metalness: 1, roughness: 0.22, envMapIntensity: 1.6 })
+
+  // Турбинный наконечник с шаровидным бором: головка-«стакан» из шлифованного хрома, кольцо форсунок спрея
+  const ball = new THREE.Group()
+  const ballSpin = new THREE.Group()
+  // Шаровидный бор с режущими лезвиями: на вращении — размытый блестящий шарик
+  const ballHead = flutes(new THREE.SphereGeometry(0.062, 40, 28), 0, 0.12)
+  ballHead.translate(0, 0.062, 0)
+  ballSpin.add(new THREE.Mesh(ballHead, carbide))
+  ballSpin.add(new THREE.Mesh(lathe([[0.02, 0.1], [0.026, 0.2], [0.034, 0.32], [0.08, 0.4], [0.08, 1.3], [0, 1.3]], 32), chrome))
+  const bHead = new THREE.Mesh(lathe([[0, 1.24], [0.16, 1.24], [0.2, 1.27], [0.42, 1.3], [0.5, 1.36], [0.53, 1.5], [0.53, 2.05], [0.5, 2.12], [0, 2.14]], 64), brushed)
+  const bNose = new THREE.Mesh(lathe([[0.085, 1.16], [0.14, 1.18], [0.17, 1.25], [0, 1.25]], 40), chrome)
+  // Форсунки спрея — три тёмные точки на торце головки
+  const jets = new THREE.Group()
+  for (let i = 0; i < 3; i++) {
+    const j = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.02, 12), dark)
+    const a = (i / 3) * Math.PI * 2 + 0.5
+    j.position.set(Math.cos(a) * 0.3, 1.29, Math.sin(a) * 0.3)
+    jets.add(j)
+  }
+  const bNeck = new THREE.Mesh(tube([new THREE.Vector3(0, 1.75, 0), new THREE.Vector3(0.7, 1.8, 0), new THREE.Vector3(1.6, 2.1, 0), new THREE.Vector3(5, 3.4, 0)], 0.3), brushed)
+  ball.add(ballSpin, bHead, bNose, jets, bNeck)
+
+  // Шприц протравки: тонкая металлическая канюля отвесно, над ней прозрачный шприц с синим гелем
+  const cannula = new THREE.Group()
+  cannula.add(new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 1.5, 20, 1, true).translate(0, 0.75, 0), chrome))
+  const cTip = new THREE.Mesh(new THREE.TorusGeometry(0.02, 0.007, 8, 20), dark)
+  cTip.rotation.x = Math.PI / 2
+  cannula.add(cTip)
+  const cHub = new THREE.Mesh(lathe([[0.03, 1.45], [0.09, 1.55], [0.1, 1.8], [0.16, 1.85], [0, 1.86]], 32), new THREE.MeshPhysicalMaterial({ color: '#e9eef5', roughness: 0.15, transparent: true, opacity: 0.7, clearcoat: 1 }))
+  const cBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 2.6, 40, 1, true).translate(0, 3.15, 0), new THREE.MeshPhysicalMaterial({ color: '#f2f6fb', roughness: 0.05, transparent: true, opacity: 0.35, clearcoat: 1, side: THREE.DoubleSide, depthWrite: false }))
+  const cGel = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 2.3, 32).translate(0, 3.05, 0), new THREE.MeshPhysicalMaterial({ color: '#1d74f2', roughness: 0.2, clearcoat: 0.8, emissive: new THREE.Color('#0a2f80'), emissiveIntensity: 0.3 }))
+  cannula.add(cHub, cGel, cBarrel)
+
+  // Микробраш для бонда: белая палочка, ворс пропитан бондом, на кончике — золотистая капля
+  const mbrush = new THREE.Group()
+  mbrush.add(new THREE.Mesh(tube([new THREE.Vector3(0, 0.08, 0), new THREE.Vector3(0, 0.5, 0), new THREE.Vector3(0.02, 1.2, 0), new THREE.Vector3(0.05, 3.2, 0)], 0.04), new THREE.MeshPhysicalMaterial({ color: '#f4f4f2', roughness: 0.35, clearcoat: 0.6 })))
+  const mFluff = new THREE.Mesh(grit(new THREE.CapsuleGeometry(0.05, 0.1, 10, 28), 0.018, 5), new THREE.MeshPhysicalMaterial({ color: '#f1dcaa', roughness: 0.6, sheen: 1, sheenColor: new THREE.Color('#fff1c9'), clearcoat: 0.6, clearcoatRoughness: 0.2 }))
+  mFluff.position.y = 0.1
+  const mDrop = new THREE.Mesh(new THREE.SphereGeometry(0.09, 40, 28), new THREE.MeshPhysicalMaterial({ color: '#e7a336', roughness: 0.02, clearcoat: 1, clearcoatRoughness: 0.02, transmission: 0, transparent: true, opacity: 0.88, specularIntensity: 1, emissive: new THREE.Color('#5a2a00'), emissiveIntensity: 0.4 }))
+  mDrop.scale.set(1, 1.2, 1)
+  mDrop.position.y = -0.02
+  mbrush.add(mFluff, mDrop)
+
+  // Гладилка для композита: синяя анодированная ручка, стальная шейка, плоская лопатка; на ней комок пасты
+  const spatula = new THREE.Group()
+  const blade = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 20), brushed)
+  blade.scale.set(0.062, 0.13, 0.014)
+  blade.position.y = 0.1
+  const shankS = new THREE.Mesh(tube([new THREE.Vector3(0, 0.28, 0), new THREE.Vector3(0, 0.6, 0), new THREE.Vector3(0.06, 1.0, 0), new THREE.Vector3(0.12, 1.5, 0)], 0.035), brushed)
+  const sHandle = new THREE.Mesh(lathe([[0.04, 0], [0.11, 0.2], [0.13, 0.5], [0.15, 3.2], [0, 3.2]], 40), new THREE.MeshPhysicalMaterial({ color: '#2f6fe0', metalness: 0.85, roughness: 0.3, clearcoat: 0.6, envMapIntensity: 1.3 }))
+  sHandle.position.set(0.12, 1.45, 0)
+  const sBlob = new THREE.Mesh(grit(new THREE.SphereGeometry(0.1, 48, 32), 0.01, 9), new THREE.MeshPhysicalMaterial({ color: '#efe3c8', roughness: 0.28, clearcoat: 0.7, clearcoatRoughness: 0.1, sheen: 0.3, sheenColor: new THREE.Color('#fff8ea') }))
+  sBlob.scale.set(1, 0.85, 0.75)
+  sBlob.position.set(0, 0.0, 0)
+  spatula.add(blade, shankS, sHandle, sBlob)
+
   const all: Record<ToolName, Tool> = {
     bur: { group: bur, spin: burSpin },
     syringe: { group: etch },
@@ -240,6 +304,10 @@ export function createTools(): Record<ToolName, Tool> {
     driver: { group: driver, spin: drSpin },
     scaler: { group: scaler, nozzle: 0.02 },
     airflow: { group: airflow },
+    ball: { group: ball, spin: ballSpin, nozzle: 1.28 },
+    cannula: { group: cannula },
+    mbrush: { group: mbrush, parts: { drop: mDrop, fluff: mFluff } },
+    spatula: { group: spatula, parts: { blob: sBlob } },
   }
   for (const t of Object.values(all)) {
     t.group.traverse((o) => { if (o instanceof THREE.Mesh) { o.castShadow = true; o.receiveShadow = true } })

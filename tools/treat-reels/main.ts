@@ -25,12 +25,13 @@ import { cleaningProcedure } from './procs/cleaning'
 import { crownProcedure } from './procs/crown'
 import { fillingProcedure } from './procs/filling'
 import { implantProcedure } from './procs/implant'
+import { rescueProcedure } from './procs/rescue'
 import type { Key, Pose, ProcCtx, Procedure, ProcedureName, Scenario, State } from './types'
 
 export type { Key, Scenario }
 
 const PROCEDURES: Record<ProcedureName, (ctx: ProcCtx) => Procedure> = {
-  filling: fillingProcedure, canal: canalProcedure, crown: crownProcedure, implant: implantProcedure, cleaning: cleaningProcedure,
+  filling: fillingProcedure, canal: canalProcedure, crown: crownProcedure, implant: implantProcedure, cleaning: cleaningProcedure, rescue: rescueProcedure,
 }
 
 /** Значения по умолчанию, если дорожки нет. */
@@ -83,6 +84,10 @@ const TOOL_POSE: Record<ToolName, Pose> = {
   driver: { at: [0, 0, 0], dir: [0, 1, 0], side: [-1, 0, 0] },
   scaler: { at: [0, 0, 0], dir: [0.2, 0.6, 0.77], side: [1, 0.4, 0] },
   airflow: { at: [0, 0.35, 0.45], dir: [0.15, 0.55, 0.82], side: [1, 0.3, 0] },
+  ball: { at: [0, 0, 0], dir: [0, 1, 0], side: [0, 0.2, -1] },
+  cannula: { at: [0, 0, 0], dir: [0, 1, 0], side: [0, 0, -1] },
+  mbrush: { at: [0, 0, 0], dir: [0.1, 1, 0.1], side: [1, 0, 0] },
+  spatula: { at: [0, 0, 0], dir: [0.2, 1, 0.25], side: [1, 0, 0] },
 }
 const TOOLS = Object.keys(TOOL_POSE) as ToolName[]
 
@@ -196,7 +201,7 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
     scene.add(mesh)
     return mesh
   }
-  const proc = PROCEDURES[scenario.procedure ?? 'filling']({ scene, mk, phys, toothMat, toothOverMat, gumMat, atlas })
+  const proc = PROCEDURES[scenario.procedure ?? 'filling']({ scene, renderer, mk, phys, toothMat, toothOverMat, gumMat, atlas, lights: { key, fill, rim, hemi, camLight } })
   const work = new THREE.Vector3(...proc.work)
   DEFAULTS.camTx = proc.work[0]
   DEFAULTS.camTy = proc.work[1]
@@ -439,6 +444,7 @@ export async function init(canvas: HTMLCanvasElement, scenario: Scenario): Promi
     applyTools(s)
     applyParticles(s)
     applyDrops(s)
+    proc.frame?.(s, tools, camera)
     burBlur.visible = (s.burSpin ?? 0) > 0
     // Кадр рисуем в текстуру с глубиной, на экран — через постобработку (post.ts)
     renderer.setRenderTarget(rt)

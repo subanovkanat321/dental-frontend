@@ -2,13 +2,13 @@ import type * as THREE from 'three'
 
 import type { MeshData } from '../../src/atlas/geometry/mesher'
 import type { createMaterials } from '../../src/atlas/engine/materials'
-import type { ToolName } from './instruments'
+import type { Tool, ToolName } from './instruments'
 
 /** Ключ дорожки: [время, значение] или [время, значение, 'l' — линейно | 's' — скачком]. */
 export type Key = [number, number] | [number, number, 'l' | 's']
 
 /** Какое лечение показывает ролик — модуль в procs/. */
-export type ProcedureName = 'filling' | 'canal' | 'crown' | 'implant' | 'cleaning'
+export type ProcedureName = 'filling' | 'canal' | 'crown' | 'implant' | 'cleaning' | 'rescue'
 
 export interface Scenario {
   width?: number
@@ -36,6 +36,7 @@ export interface Pose {
 
 export interface ProcCtx {
   scene: THREE.Scene
+  renderer: THREE.WebGLRenderer
   /** Сетка из MeshData с материалом (скрыта, тени включены). */
   mk(m: MeshData, mat: THREE.Material, order?: number): THREE.Mesh
   phys(p: THREE.MeshPhysicalMaterialParameters): THREE.MeshPhysicalMaterial
@@ -46,6 +47,8 @@ export interface ProcCtx {
   gumMat: THREE.MeshPhysicalMaterial
   /** Материалы 3D-атласа (ткани в разрезе), с мокрым лаком на эмали и десне. */
   atlas(): ReturnType<typeof createMaterials>
+  /** Свет сцены — процедура может перенастроить его под свой «студийный» вид. */
+  lights: { key: THREE.DirectionalLight; fill: THREE.DirectionalLight; rim: THREE.DirectionalLight; hemi: THREE.HemisphereLight; camLight: THREE.PointLight }
 }
 
 export interface Procedure {
@@ -59,4 +62,9 @@ export interface Procedure {
   apply(s: State): void
   /** Поверхность для капель воды и где им можно лежать. */
   drops?: { mesh: MeshData; ok(x: number, y: number, z: number, nz: number): boolean }
+  /**
+   * Свой шаг кадра после инструментов и общих частиц: эффекты, привязанные к инструментам (спрей бора,
+   * стружка, гель из канюли), и поправки поз инструментов.
+   */
+  frame?(s: State, tools: Record<ToolName, Tool>, camera: THREE.PerspectiveCamera): void
 }
