@@ -145,6 +145,8 @@ body.site {
 .review-public { display: grid; gap: 10px; margin-top: 4px; }
 .review-public .btn { display: flex; justify-content: center; align-items: center; min-height: 52px; font-size: 1.05rem; text-decoration: none; }
 .review-comment-form { display: grid; gap: 8px; }
+.review-also { margin-top: 4px; }
+.review-also a { color: var(--link); }
 .review-comment-form .field { display: grid; gap: 6px; }
 .review-comment-form textarea { width: 100%; box-sizing: border-box; font: inherit; padding: 10px; border-radius: 10px; border: 1px solid var(--line-strong); resize: vertical; }
 
