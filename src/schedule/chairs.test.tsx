@@ -6,8 +6,10 @@ import type { Schemas } from '../api/client'
 import { slotInstant } from '../lib/time'
 import { me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { warmSchedule } from '../test/wait'
 
 /** Общее кресло (V185) в «Расписании» на компьютере. Врачи — вымышленные. */
+beforeAll(warmSchedule, 60_000)
 beforeEach(() => {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: query.includes('min-width'), media: query, addEventListener() {}, removeEventListener() {}, onchange: null,

@@ -7,11 +7,13 @@ import { addDays, slotInstant, todayIn } from '../lib/time'
 import { appointment, me, openItem, renderApp } from '../test/fixtures'
 import { choose } from '../test/select'
 import { server } from '../test/server'
+import { warmSchedule } from '../test/wait'
 
 /**
  * Выбор кресла у приёма (V210). Врачи и пациенты — вымышленные: «Кресло 1» — у Айгерим (№1) и Дастана (№2),
  * «Кресло 2» пока пустое. В 09:00 завтра «Кресло 1» занято приёмом Айгерим.
  */
+beforeAll(warmSchedule, 60_000)
 beforeEach(() => {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: query.includes('min-width'), media: query, addEventListener() {}, removeEventListener() {}, onchange: null,
