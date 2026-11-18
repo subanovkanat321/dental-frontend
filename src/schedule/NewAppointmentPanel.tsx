@@ -31,8 +31,8 @@ import { useDebounced } from '../lib/useDebounced'
 import { serviceOptions, usePopularServices } from '../clinic/serviceOptions'
 import { Spinner } from '../layout/Loading'
 import { HelpHint } from '../help/HelpHint'
-import { matches } from '../lib/useMedia'
-import { COPY_HINT, nameFromText } from './contactText'
+import { nameFromText } from './contactText'
+import { ContactPick } from '../patients/ContactPick'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
@@ -47,8 +47,6 @@ type Service = Schemas['ServiceTypeView']
 /** serviceId — услуга сразу выбрана («Записать» из «Позвать снова → Отменили»). */
 export type Slot = { doctorId: number; date: string; minutes: number | null; duration?: number; serviceId?: number }
 
-type ContactsNavigator = Navigator & { contacts?: { select: (props: string[]) => Promise<{ name?: string[]; tel?: string[] }[]> } }
-const contactsSupported = () => typeof navigator !== 'undefined' && 'contacts' in navigator
 
 function timeText(minutes: number): string {
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
@@ -253,37 +251,10 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
     }
     setAdding(true)
     setDuplicate(null)
-    setName(contactName.trim())
+    // Имени в контакте нет — введённое не стираем
+    setName((n) => contactName.trim() || n)
     setPhone(number)
     return true
-  }
-
-  /** Записная книжка телефона (Contact Picker API — Chrome на Android). */
-  const pickContact = async () => {
-    let contact: { name?: string[]; tel?: string[] } | undefined
-    try {
-      [contact] = await (navigator as ContactsNavigator).contacts!.select(['name', 'tel'])
-    } catch {
-      return
-    }
-    const tel = contact?.tel?.[0]
-    if (tel) await applyContact(contact?.name?.[0] ?? '', tel)
-  }
-
-  // «📋 Вставить номер» — там, где записной книжки нет (iPhone, Telegram, компьютер): номер из буфера обмена.
-  // На iPhone система сама покажет пузырёк «Вставить» — разрешение на один раз
-  const [pasteHint, setPasteHint] = useState('')
-  const pasteNumber = async () => {
-    setPasteHint('')
-    let text: string
-    try {
-      if (!navigator.clipboard?.readText) throw new Error('no clipboard')
-      text = await navigator.clipboard.readText()
-    } catch {
-      setPasteHint(COPY_HINT)
-      return
-    }
-    if (!(await applyContact(nameFromText(text), text))) setPasteHint(`В буфере нет номера. ${COPY_HINT}`)
   }
 
   // Контакт из бота — один раз при открытии формы
@@ -380,6 +351,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
               {fieldError('fullName') && <p className="error">{fieldError('fullName')}</p>}
               <PhoneInput label="Телефон" value={phone} onChange={(v) => { setPhone(v); setDuplicate(null) }} />
               {fieldError('phone') && <p className="error">{fieldError('phone')}</p>}
+              {/* Номер — из записной книжки или буфера, как у поиска: уже есть такой пациент — выберем его */}
+              <ContactPick onContact={applyContact} />
               <label className="field"><span>Дата рождения (необязательно)</span>
                 <DateInput birth min="1900-01-01" max={todayIn()} value={birthDate} placeholder="Не указана" onChange={(e) => setBirthDate(e.target.value)} /></label>
               {fieldError('birthDate') && <p className="error">{fieldError('birthDate')}</p>}
@@ -424,18 +397,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
                 </ul>
               )}
               {found.data?.length === 0 && <p className="hint small">Не нашли «{search}» — значит, пациент новый: «＋ Новый пациент» выше</p>}
-              {contactsSupported()
-                ? <button type="button" className="link" onClick={() => void pickContact()}>📇 Из контактов телефона</button>
-                : (
-                  <div className="paste-number">
-                    <button type="button" className="link" onClick={() => void pasteNumber()}>📋 Вставить номер</button>
-                    {pasteHint
-                      ? <p className="hint small" role="status">{pasteHint}</p>
-                      : matches('(pointer: coarse)') && (
-                        <p className="hint small">На iPhone: в Контактах удерживайте номер → «Скопировать». Ещё удобнее: Контакты → «Поделиться контактом» → бот Tish.</p>
-                      )}
-                  </div>
-                )}
+              <ContactPick onContact={applyContact} />
             </>
           )}
         </fieldset>
