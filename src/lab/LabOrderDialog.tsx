@@ -5,7 +5,10 @@ import type { Schemas } from '../api/client'
 import { useBack } from '../lib/back'
 import { canEditDoctor } from '../lib/roles'
 import { addDays, todayIn } from '../lib/time'
+import { phoneFromInput, phoneToInput } from '../clinic/phone'
+import { PhoneInput } from '../clinic/PhoneInput'
 import { DateInput } from '../layout/DateInput'
+import { DirectoryForm } from '../layout/DirectoryForm'
 import { Select } from '../layout/Select'
 import { useSwipeDown } from '../layout/useSwipeDown'
 import { PatientField, type TaskPatient } from '../tasks/TaskDialog'
@@ -182,43 +185,46 @@ function LabPicker({ labs, value, onChange, loading }: {
           <button type="button" className="btn small" onClick={() => setAdding(true)}>＋ Новая</button>
         </div>
       ) : (
-        <LabForm onSaved={(l) => { onChange(l.id); setAdding(false) }} onCancel={labs.length ? () => setAdding(false) : undefined} />
+        <LabForm primary={false} onSaved={(l) => { onChange(l.id); setAdding(false) }} onCancel={labs.length ? () => setAdding(false) : undefined} />
       )}
     </div>
   )
 }
 
-/** Новая лаборатория (или правка): название, телефон техника, WhatsApp — если на другом номере. */
-export function LabForm({ lab, onSaved, onCancel }: {
+/**
+ * Новая лаборатория (или правка): название, телефон техника и WhatsApp — если на другом номере. Телефоны —
+ * стандартным полем (+996 и страна, как у пациента); на сервер — как набрано, нормализует он.
+ * @param primary «Добавить» залитой: в справочнике да, внутри «Заказа в лабораторию» — нет (там главная «Создать заказ»)
+ */
+export function LabForm({ lab, onSaved, onCancel, primary = true }: {
   lab?: Schemas['LabView']
   onSaved: (l: Schemas['LabView']) => void
   onCancel?: () => void
+  primary?: boolean
 }) {
   const [name, setName] = useState(lab?.name ?? '')
-  const [phone, setPhone] = useState(lab?.phone ? `+${lab.phone}` : '')
-  const [whatsapp, setWhatsapp] = useState(lab?.whatsapp ? `+${lab.whatsapp}` : '')
+  const [phone, setPhone] = useState(phoneToInput(lab?.phone))
+  const [whatsapp, setWhatsapp] = useState(phoneToInput(lab?.whatsapp))
   const save = useSaveLab()
   const err = (k: string) => save.error?.fieldErrors[k]
-  const submit = () => {
-    if (!name.trim()) return
-    save.mutate({ id: lab?.id, body: { name, phone: phone.trim() || undefined, whatsapp: whatsapp.trim() || undefined } }, { onSuccess: onSaved })
-  }
+  const other = save.error && !err('name') && !err('phone') && !err('whatsapp') ? Object.values(save.error.fieldErrors)[0] ?? save.error.message : null
   return (
-    <div className="lab-form" role="group" aria-label={lab ? `Лаборатория ${lab.name}` : 'Новая лаборатория'}>
-      <input aria-label="Название лаборатории" placeholder="Название: «Дент-Лаб»" value={name} maxLength={80}
-        onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} />
-      <div className="row">
-        <input aria-label="Телефон техника" placeholder="Телефон техника" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-        <input aria-label="WhatsApp техника" placeholder="WhatsApp, если другой" inputMode="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
-      </div>
-      {(err('name') ?? err('phone') ?? err('whatsapp') ?? (save.error && !Object.keys(save.error.fieldErrors).length ? save.error.message : null)) && (
-        <p className="error">{err('name') ?? err('phone') ?? err('whatsapp') ?? save.error?.message}</p>
-      )}
-      <div className="row">
-        <button type="button" className="btn small" disabled={!name.trim() || save.isPending} onClick={submit}>{lab ? 'Сохранить' : 'Добавить лабораторию'}</button>
-        {onCancel && <button type="button" className="btn ghost small" onClick={onCancel}>Отмена</button>}
-      </div>
-    </div>
+    <DirectoryForm label={lab ? `Лаборатория ${lab.name}` : 'Новая лаборатория'} saveText={lab ? 'Сохранить' : 'Добавить лабораторию'}
+      canSave={Boolean(name.trim())} busy={save.isPending} error={other} onCancel={onCancel} primary={primary}
+      onSave={() => save.mutate({
+        id: lab?.id,
+        body: { name: name.trim(), phone: phoneFromInput(phone) || undefined, whatsapp: phoneFromInput(whatsapp) || undefined },
+      }, { onSuccess: onSaved })}>
+      <label className="field"><span>Название</span>
+        <input value={name} maxLength={80} autoComplete="off" placeholder="Например: Дент-Лаб" onChange={(e) => setName(e.target.value)} /></label>
+      {err('name') && <p className="error">{err('name')}</p>}
+      <label className="field"><span>Телефон техника <span className="hint">— необязательно</span></span>
+        <PhoneInput label="Телефон техника" value={phone} onChange={setPhone} /></label>
+      {err('phone') && <p className="error">{err('phone')}</p>}
+      <label className="field"><span>WhatsApp <span className="hint">— если на другом номере</span></span>
+        <PhoneInput label="WhatsApp техника" value={whatsapp} onChange={setWhatsapp} /></label>
+      {err('whatsapp') && <p className="error">{err('whatsapp')}</p>}
+    </DirectoryForm>
   )
 }
 

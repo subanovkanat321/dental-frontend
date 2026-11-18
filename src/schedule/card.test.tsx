@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
-import { appointment, me, openMore, renderApp } from '../test/fixtures'
+import { appointment, me, openMore, pickStatus, renderApp, statusMenu } from '../test/fixtures'
 import { fixNow } from '../test/now'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
@@ -52,7 +52,7 @@ test('неявка — «Вернуть» возвращает как было',
   const sent = backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1 }))
   renderApp()
   const panel = await open(/Бакыт М\./)
-  await userEvent.click(within(panel).getByRole('button', { name: 'Неявка' }))
+  await pickStatus(panel, /^Неявка/)
   expect(await within(panel).findByText('Отмечено: неявка')).toBeInTheDocument()
   // Исправить статус — редкое, под «Ещё»; главная кнопка неявки — «Записать снова»
   await openMore(panel)
@@ -72,7 +72,7 @@ test('отменённую запись — «Восстановить»; уда
   renderApp()
   const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
   await userEvent.click(within(panel).getByRole('button', { name: 'Восстановить' }))
-  expect(await within(panel).findByRole('button', { name: 'Отменить запись' })).toBeInTheDocument()
+  await waitForSlow(() => expect(statusMenu(panel)).toBeInTheDocument())
   await openMore(panel)
   await userEvent.click(within(panel).getByRole('button', { name: 'Удалить запись' }))
   await waitForSlow(() => expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument())
@@ -84,7 +84,7 @@ test('админ клиники запись не удаляет — тольк�
   backend(appointment(10, 1, '10:00', 'Бакыт М.'), { ...me, admin: true, owner: false })
   renderApp()
   const panel = await open(/Бакыт М\./)
-  expect(within(panel).getByRole('button', { name: 'Отменить запись' })).toBeInTheDocument()
+  expect(statusMenu(panel)).toBeInTheDocument()
   await openMore(panel)
   expect(within(panel).queryByRole('button', { name: 'Удалить запись' })).not.toBeInTheDocument()
 })
@@ -106,7 +106,7 @@ test('приём коллеги — только посмотреть и поз�
   const panel = await open(/Айгуль Т\./)
   expect(within(panel).getByText(/Приём коллеги/)).toBeInTheDocument()
   expect(within(panel).getByRole('link', { name: /Позвонить/ })).toHaveAttribute('href', 'tel:+996555123456')
-  expect(within(panel).queryByRole('button', { name: 'Отменить запись' })).not.toBeInTheDocument()
+  expect(statusMenu(panel)).not.toBeInTheDocument()
 })
 
 test('имя пациента в карточке — его карточка в «Пациентах»', async () => {
@@ -199,4 +199,40 @@ test('снимки и фото — прямо из карточки приёма
   // В приёме по умолчанию — «Фото»
   expect(within(files).getByRole('button', { name: '📷 Фото зубов' })).toHaveAttribute('aria-pressed', 'true')
   expect(await within(files).findByRole('region', { name: 'Для Instagram' })).toBeInTheDocument()
+})
+
+test('«Неявка или отмена ▾» — меню из двух пунктов; Esc закрывает меню, а не карточку', async () => {
+  backend(appointment(10, 1, '00:05', 'Бакыт М.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  // Двух красных кнопок под «Перенести» больше нет — одна кнопка с меню
+  expect(within(panel).queryByRole('button', { name: 'Неявка' })).toBeNull()
+  expect(within(panel).queryByRole('button', { name: 'Отменить запись' })).toBeNull()
+  const button = within(panel).getByRole('button', { name: 'Неявка или отмена' })
+  expect(button).toHaveAttribute('aria-haspopup', 'menu')
+  expect(button).toHaveAttribute('aria-expanded', 'false')
+  await userEvent.click(button)
+  expect(button).toHaveAttribute('aria-expanded', 'true')
+  const menu = screen.getByRole('menu', { name: 'Неявка или отмена' })
+  expect(within(menu).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Неявка — пациент не пришёл', 'Отменить запись'])
+  expect(within(menu).getByRole('menuitem', { name: /^Неявка/ })).toHaveFocus()
+  await userEvent.keyboard('{Escape}')
+  expect(screen.queryByRole('menu')).toBeNull()
+  expect(screen.getByRole('complementary', { name: 'Карточка приёма' })).toBeInTheDocument()
+  expect(button).toHaveFocus()
+})
+
+test('приём на завтра — неявки ещё не бывает: в меню «Отменить ▾» только «Отменить запись»', async () => {
+  const today = appointment(10, 1, '10:00', 'Бакыт М.', { version: 1 })
+  const day = 24 * 3600_000
+  const tomorrow = { ...today, startAt: new Date(Date.parse(today.startAt) + day).toISOString(), endAt: new Date(Date.parse(today.endAt) + day).toISOString() }
+  backend(tomorrow)
+  server.use(http.get('*/api/appointments/10', () => HttpResponse.json(tomorrow)))
+  // Открываем кнопкой бота «Открыть приём» — без листания расписания на завтра
+  window.history.replaceState(null, '', '/?appointment=10')
+  renderApp()
+  const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
+  await userEvent.click(await within(panel).findByRole('button', { name: 'Отменить' }))
+  expect(within(screen.getByRole('menu')).getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Отменить запись'])
+  window.history.replaceState(null, '', '/')
 })

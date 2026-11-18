@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp, openMore, openPay } from '../test/fixtures'
+import { appointment, me, renderApp, openMore, openPay, pickStatus } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 
@@ -111,7 +111,7 @@ test('409 stale — текст сервера и расписание переч
   renderApp()
   const panel = await card(/Бакыт М\./)
   const before = asked.filter((x) => x === 'day').length
-  await userEvent.click(within(panel).getByRole('button', { name: 'Отменить запись' }))
+  await pickStatus(panel, 'Отменить запись')
   expect(await within(panel).findByRole('alert')).toHaveTextContent('Данные только что изменились')
   await waitForSlow(() => expect(asked.filter((x) => x === 'day').length).toBeGreaterThan(before))
 })

@@ -160,7 +160,7 @@ test('карточка материала: где берём и цены у по
   expect(rows[1]).toHaveTextContent('Дент-Маркет · 10 ноября300 сом/шт')
 })
 
-test('«Поставщики»: пока открыта форма, «Готово» нет — введённое не пропадёт; «Добавить» сохраняет', async () => {
+test('«Поставщики»: пока открыта форма, «Готово» нет — введённое не пропадёт; телефон стандартным полем с +996', async () => {
   window.location.hash = '/stock'
   backend(draft)
   const saved: unknown[] = []
@@ -173,12 +173,51 @@ test('«Поставщики»: пока открыта форма, «Готов
   await userEvent.click(await screen.findByRole('button', { name: 'Поставщики' }))
   const dialog = await screen.findByRole('dialog', { name: 'Поставщики' })
   expect(within(dialog).getByRole('button', { name: 'Готово' })).toBeInTheDocument()
+  // Номер в списке — как везде в приложении: «+996 555 111 222»
+  expect(dialog).toHaveTextContent('+996 555 111 222 · доставка в тот же день')
 
   await userEvent.click(within(dialog).getByRole('button', { name: '＋ Поставщик' }))
   expect(within(dialog).queryByRole('button', { name: 'Готово' })).toBeNull()
-  await userEvent.type(within(dialog).getByLabelText('Название поставщика'), 'Мед-Склад')
-  await userEvent.type(within(dialog).getByLabelText('Телефон / WhatsApp'), '+996700000001')
-  await userEvent.click(within(dialog).getByRole('button', { name: 'Добавить' }))
-  await waitForSlow(() => expect(saved).toEqual([{ name: 'Мед-Склад', phone: '+996700000001' }]))
+  const form = within(dialog).getByRole('group', { name: 'Новый поставщик' })
+  await userEvent.type(within(form).getByLabelText('Название'), 'Мед-Склад')
+  // Стандартное поле телефона: страна (Кыргызстан, +996) и номер без кода
+  expect(within(form).getByRole('combobox', { name: 'Код страны' })).toHaveTextContent('+996')
+  await userEvent.type(within(form).getByLabelText('Телефон / WhatsApp'), '700 000 001')
+  await userEvent.click(within(form).getByRole('button', { name: 'Добавить' }))
+  // Как другие формы (phoneFromInput): «+996 …» — сервер нормализует и проверяет
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Мед-Склад', phone: '+996 700 000 001' }]))
   expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
+})
+
+test('«Поставщики»: «Изменить» — номер в поле без +996, сохраняется тем же форматом', async () => {
+  window.location.hash = '/stock'
+  backend(draft)
+  const saved: unknown[] = []
+  server.use(http.put('*/api/suppliers/7', async ({ request }) => {
+    saved.push(await request.json())
+    return HttpResponse.json(dent)
+  }))
+  renderApp()
+  await userEvent.click(await findSub('Заказ · 3'))
+  await userEvent.click(await screen.findByRole('button', { name: 'Поставщики' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Поставщики' })
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Изменить' }))
+  const form = within(dialog).getByRole('group', { name: 'Поставщик Дент-Маркет' })
+  expect(within(form).getByLabelText('Телефон / WhatsApp')).toHaveValue('555 111 222')
+  await userEvent.click(within(form).getByRole('button', { name: 'Сохранить' }))
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Дент-Маркет', phone: '+996 555 111 222', note: 'доставка в тот же день' }]))
+})
+
+test('«Поставщики»: список пуст — подсказка и сразу форма, без лишнего «＋ Поставщик»', async () => {
+  window.location.hash = '/stock'
+  backend(draft)
+  server.use(http.get('*/api/suppliers', () => HttpResponse.json([])))
+  renderApp()
+  await userEvent.click(await findSub('Заказ · 3'))
+  await userEvent.click(await screen.findByRole('button', { name: 'Поставщики' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Поставщики' })
+  expect(await within(dialog).findByRole('group', { name: 'Новый поставщик' })).toBeInTheDocument()
+  expect(within(dialog).queryByRole('button', { name: '＋ Поставщик' })).toBeNull()
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Отмена' }))
+  await waitForSlow(() => expect(screen.queryByRole('dialog', { name: 'Поставщики' })).toBeNull())
 })

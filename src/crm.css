@@ -2477,6 +2477,38 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .menu-hint { font-size: .8rem; color: var(--hint); }
 .menu-out { margin-left: auto; color: var(--hint); display: inline-grid; }
 .menu-out .icon { width: 14px; height: 14px; }
+/* Справочник в листе (layout/DirectoryForm): «Поставщики», «Лаборатории». Строка — название, под ним номер серым,
+   справа «Изменить / Убрать»; форма — поля с подписями, как в карточке пациента, без рамки-коробки. Правка строки —
+   прямо в ней, на мягкой подложке: видно, что меняем. Телефон — кнопки на всю ширину, 46px (как .confirm.sheet) */
+.dir-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.dir-list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.dir-list > li:first-child { padding-top: 2px; }
+.dir-list > li.editing { display: block; margin: 6px 0; padding: 12px; border: 0; border-radius: var(--r-md); background: var(--sunken); }
+.dir-item { display: grid; gap: 2px; min-width: 0; }
+.dir-item strong { font-weight: 600; overflow-wrap: anywhere; }
+.dir-item .hint { font-size: .875rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dir-item-actions { display: flex; gap: 2px; }
+.dir-form { display: grid; gap: 12px; }
+.dir-form .field > span .hint { font-size: inherit; }
+.dir-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding-top: 2px; }
+.dir-add { justify-self: start; }
+@media (max-width: 640px) {
+  .dir-form-actions { flex-direction: column-reverse; }
+  .dir-form-actions .btn, .dir-add { width: 100%; min-height: 46px; }
+  .dir-form input { font-size: max(16px, 1rem); } /* iOS не приближает экран при фокусе на поле */
+}
+/* Кнопка с меню действий (layout/ActionMenu): «Неявка или отмена ▾» в карточке приёма. Компьютер — список под
+   кнопкой; телефон — нижний лист, пункты крупные (48px), как у Select */
+.action-menu-wrap { position: relative; display: inline-flex; }
+.action-menu-caret { margin-left: 2px; font-size: .8em; color: var(--hint); }
+.pop-menu.action-menu { position: absolute; top: calc(100% + 4px); left: 0; width: max-content; min-width: 100%; max-width: min(320px, calc(100vw - 32px)); }
+.pop-menu.action-menu.up { top: auto; bottom: calc(100% + 4px); }
+.pop-menu.action-menu.sheet { position: static; cursor: auto; width: 100%; max-width: none; min-width: 0; gap: 2px; padding: 10px 10px calc(14px + env(safe-area-inset-bottom));
+  border: 0; border-radius: 20px 20px 0 0; animation: sheet-up .2s ease-out; }
+.pop-menu.action-menu.sheet::before { content: ""; justify-self: center; width: 40px; height: 4px; margin-bottom: 6px; border-radius: 2px; background: var(--line-strong); }
+.pop-menu.action-menu.sheet .menu-item { min-height: 50px; padding: 0 12px; font-size: 1.05rem; }
+.menu-item.danger { color: var(--destructive); }
+.menu-item:disabled { color: var(--hint); cursor: default; }
 .menu-sep { margin: 4px 6px; border: 0; border-top: 1px solid var(--separator); }
 .menu-who { display: grid; gap: 1px; min-width: 0; margin: 0; line-height: 1.3; }
 .menu-who strong { font-weight: 600; }
