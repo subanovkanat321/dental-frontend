@@ -203,7 +203,7 @@ test('«Поставщики»: пока открыта форма, «Готов
   await userEvent.type(within(form).getByLabelText('WhatsApp'), '700 000 009')
   await userEvent.click(within(form).getByRole('button', { name: 'Добавить поставщика' }))
   // Как другие формы (phoneFromInput): «+996 …» — сервер нормализует и проверяет
-  await waitForSlow(() => expect(saved).toEqual([{ name: 'Мед-Склад', phone: '+996 700 000 001', whatsapp: '+996 700 000 009' }]))
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Мед-Склад', phone: '+996700000001', whatsapp: '+996700000009' }]))
   expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
 })
 
@@ -224,7 +224,7 @@ test('«Поставщики»: «Изменить» — номер в поле 
   expect(within(form).getByLabelText('Телефон / WhatsApp')).toHaveValue('555 111 222')
   expect(within(form).queryByLabelText('WhatsApp')).toBeNull()
   await userEvent.click(within(form).getByRole('button', { name: 'Сохранить' }))
-  await waitForSlow(() => expect(saved).toEqual([{ name: 'Дент-Маркет', phone: '+996 555 111 222', note: 'доставка в тот же день' }]))
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Дент-Маркет', phone: '+996555111222', note: 'доставка в тот же день' }]))
 })
 
 test('«Поставщики»: WhatsApp на другом номере — в списке и сразу открытым полем при «Изменить»', async () => {

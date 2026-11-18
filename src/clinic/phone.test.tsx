@@ -26,12 +26,13 @@ test('кыргызский номер набирают как раньше: по
   render(<Form />)
   expect(chosen(country())).toContain('🇰🇬 +996')
   await userEvent.type(number(), '555 123 456')
-  expect(sent()).toBe('+996 555 123 456')
+  expect(number()).toHaveValue('555 123 456')
+  expect(sent()).toBe('+996555123456')
 
   await userEvent.clear(number())
   await userEvent.type(number(), '0555 123 456')
   expect(number()).toHaveValue('0555 123 456')
-  expect(sent()).toBe('0555 123 456')
+  expect(sent()).toBe('0555123456')
   expect(chosen(country())).toContain('+996')
 })
 
@@ -41,12 +42,12 @@ test('вставили «+7 701…» — страна сама становит�
   await userEvent.paste('+7 701 123 45 67')
   expect(chosen(country())).toContain('🇰🇿 +7')
   expect(number()).toHaveValue('701 123 45 67')
-  expect(sent()).toBe('+7 701 123 45 67')
+  expect(sent()).toBe('+77011234567')
 
   await userEvent.clear(number())
   await userEvent.paste('+7 912 345 67 89')
   expect(chosen(country())).toContain('🇷🇺 +7')
-  expect(sent()).toBe('+7 912 345 67 89')
+  expect(sent()).toBe('+79123456789')
 })
 
 test('выбрали Узбекистан — номер уходит с +998; страна остаётся, пока поле пустое', async () => {
@@ -55,7 +56,8 @@ test('выбрали Узбекистан — номер уходит с +998; �
   expect(chosen(country())).toContain('🇺🇿 +998')
   expect(number()).toHaveAttribute('placeholder', '90 123 45 67')
   await userEvent.type(number(), '90 123 45 67')
-  expect(sent()).toBe('+998 90 123 45 67')
+  expect(number()).toHaveValue('90 123 45 67')
+  expect(sent()).toBe('+998901234567')
 
   await userEvent.clear(number())
   expect(sent()).toBe('')
@@ -66,20 +68,21 @@ test('другая страна — код набирают сами; номер
   render(<Form />)
   await choose(country(), 'Другая страна')
   await userEvent.type(number(), '4930 1234567')
-  expect(sent()).toBe('+4930 1234567')
+  expect(number()).toHaveValue('493 012 345 67')
+  expect(sent()).toBe('+49301234567')
 
   await userEvent.clear(number())
   await userEvent.type(number(), '+992 93 123 45 67')
   expect(chosen(country())).toContain('🇹🇯 +992')
   expect(number()).toHaveValue('93 123 45 67')
-  expect(sent()).toBe('+992 93 123 45 67')
+  expect(sent()).toBe('+992931234567')
 })
 
 test('сохранённый номер другой страны открывается со своей страной', () => {
   render(<Form initial={phoneToInput('905321234567')} />)
   expect(chosen(country())).toContain('🇹🇷 +90')
   expect(number()).toHaveValue('532 123 45 67')
-  expect(sent()).toBe('+90 532 123 45 67')
+  expect(sent()).toBe('+905321234567')
 })
 
 test('подпись поля ведёт в номер, а не открывает список стран', async () => {
@@ -104,11 +107,11 @@ test('номер для людей — группами своей страны'
 })
 
 test('номер с телефона: невидимые метки iPhone, неразрывные пробелы и длинное тире не ломают номер', async () => {
-  expect(phoneFromInput('‪+996 772 666 666‬')).toBe('+996 772 666 666')
-  expect(phoneFromInput('772 666 666')).toBe('+996 772 666 666')
-  expect(phoneFromInput('‎772666666')).toBe('+996 772666666')
-  expect(phoneFromInput('0772–666–666')).toBe('0772-666-666')
-  expect(phoneFromInput('772666666')).toBe('+996 772666666')
+  expect(phoneFromInput('‪+996 772 666 666‬')).toBe('+996772666666')
+  expect(phoneFromInput('772 666 666')).toBe('+996772666666')
+  expect(phoneFromInput('‎772666666')).toBe('+996772666666')
+  expect(phoneFromInput('0772–666–666')).toBe('0772666666')
+  expect(phoneFromInput('772666666')).toBe('+996772666666')
 })
 
 /** Форма с автопереходом: после полного номера фокус — в следующее поле. */
@@ -135,7 +138,7 @@ test('номер с нулём «0772 666 666» набирается целик�
 test('без нуля «772666666» — фокус дальше после 9-й цифры; с «996» — после 12-й', async () => {
   const { unmount } = render(<AdvanceForm />)
   await userEvent.type(number(), '772666666')
-  expect(sent()).toBe('+996 772666666')
+  expect(sent()).toBe('+996772666666')
   expect(screen.getByRole('textbox', { name: 'Дальше' })).toHaveFocus()
   unmount()
   render(<AdvanceForm />)

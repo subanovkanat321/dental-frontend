@@ -44,7 +44,7 @@ test('новый пациент: такой номер уже есть — «э�
   expect(await within(form).findByRole('alert')).toHaveTextContent('Пациент с этим номером уже есть: Айгуль С., +996 700 111 222')
   await user.click(within(form).getByRole('button', { name: 'Это другой человек — создать' }))
   expect(await screen.findByRole('complementary', { name: 'Карточка пациента' })).toHaveTextContent('Айгуль Т.')
-  expect(bodies.map((b) => [b.phone, b.allowDuplicate])).toEqual([['+996 700 111 222', false], ['+996 700 111 222', true]])
+  expect(bodies.map((b) => [b.phone, b.allowDuplicate])).toEqual([['+996700111222', false], ['+996700111222', true]])
 })
 
 test('карточка пациента: изменить место работы и откуда узнал', async () => {
@@ -76,7 +76,7 @@ test('карточка пациента: изменить место работ�
   await user.keyboard('{Escape}')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(panel).findByRole('button', { name: 'Изменить данные пациента' })).toBeInTheDocument()
-  expect(saved).toEqual({ fullName: 'Айгуль Т.', phone: '+996 700 333 444', allowDuplicate: false, workplace: 'школа №5', sourceId: 16 })
+  expect(saved).toEqual({ fullName: 'Айгуль Т.', phone: '+996700333444', allowDuplicate: false, workplace: 'школа №5', sourceId: 16 })
 })
 
 test('карточка пациента: «откуда узнал» — во вкладке «Прочее», не в шапке; выбирается одним нажатием', async () => {
@@ -165,7 +165,7 @@ describe('новый пациент: номер из телефона, а не �
 
     expect(select).toHaveBeenCalledWith(['name', 'tel'])
     expect(await within(form).findByLabelText('Имя пациента')).toHaveValue('Бакыт Асанов')
-    expect(within(form).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700112233')
+    expect(within(form).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700 112 233')
   })
 
   test('записной книжки нет (iPhone, Telegram): «📋 Вставить номер» из буфера; имя, что уже ввели, без имени в буфере не стираем', async () => {
@@ -176,7 +176,7 @@ describe('новый пациент: номер из телефона, а не �
     await userEvent.type(within(form).getByLabelText('Имя пациента'), 'Айгуль')
     await userEvent.click(within(form).getByRole('button', { name: '📋 Вставить номер' }))
 
-    expect(await within(form).findByRole('textbox', { name: 'Телефон' })).toHaveValue('555123456')
+    expect(await within(form).findByRole('textbox', { name: 'Телефон' })).toHaveValue('555 123 456')
     expect(within(form).getByLabelText('Имя пациента')).toHaveValue('Айгуль')
   })
 })

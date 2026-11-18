@@ -293,7 +293,7 @@ test('«Сведения о платформе»: несколько телеф�
   expect(within(form).queryByRole('textbox', { name: /Группа врачей в Telegram/ })).not.toBeInTheDocument()
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(form).findByRole('status')).toHaveTextContent('Сведения о платформе сохранены')
-  expect(saved).toMatchObject({ supportPhones: ['+996 555 000 111', '+996 700 222 333'], supportWhatsapp: '+996 770 444 555', doctorsGroupUrl: '' })
+  expect(saved).toMatchObject({ supportPhones: ['+996555000111', '+996700222333'], supportWhatsapp: '+996770444555', doctorsGroupUrl: '' })
 })
 
 test('«Группа врачей и бот»: текущая ссылка в поле, неверный адрес — ошибка сервера под полем; сохранение — со сведениями как есть', async () => {

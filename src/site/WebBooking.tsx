@@ -181,7 +181,7 @@ function WebContacts({ chosen, active, onTaken, t, lang, code, info, onBooked }:
       <label className="field"><span>{t('patientName')}</span>
         <input ref={nameRef} name="fullName" maxLength={200} autoComplete="off" /></label>
       {err('name')}
-      <label className="field"><span>{t('phone')}</span><PhoneInput mask label={t('phone')} value={phone} onChange={(v) => { setPhone(v); setErrors({}) }} />
+      <label className="field"><span>{t('phone')}</span><PhoneInput label={t('phone')} value={phone} onChange={(v) => { setPhone(v); setErrors({}) }} />
         <span className="hint">{t('webPhoneHint')}</span></label>
       {err('phone')}
       {/* Необязательное — свёрнуто: запись короче, кто хочет — раскроет */}

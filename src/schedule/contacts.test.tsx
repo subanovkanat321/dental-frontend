@@ -50,7 +50,7 @@ test('«📋 Вставить номер»: номера нет среди па�
   fireEvent.click(within(panel).getByRole('button', { name: '📋 Вставить номер' }))
 
   expect(await within(panel).findByLabelText('Имя и фамилия')).toHaveValue('Айгуль Маратовна')
-  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('555123456')
+  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('555 123 456')
   expect(searched).toEqual(['555123456'])
 })
 
@@ -88,7 +88,7 @@ test('вставили номер прямо в поиск — как «Вста
   await userEvent.click(within(panel).getByRole('searchbox', { name: 'Найти пациента' }))
   await userEvent.paste('+996 773 12-34-56')
 
-  expect(await within(panel).findByRole('textbox', { name: 'Телефон' })).toHaveValue('773123456')
+  expect(await within(panel).findByRole('textbox', { name: 'Телефон' })).toHaveValue('773 123 456')
 })
 
 test('Android Chrome: «📇 Из контактов телефона» по-прежнему через записную книжку', async () => {
@@ -101,7 +101,7 @@ test('Android Chrome: «📇 Из контактов телефона» по-п�
 
   expect(select).toHaveBeenCalledWith(['name', 'tel'])
   expect(await within(panel).findByLabelText('Имя и фамилия')).toHaveValue('Бакыт Асанов')
-  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700112233')
+  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700 112 233')
   expect(searched).toEqual(['700112233'])
 })
 
@@ -117,7 +117,7 @@ test('кнопка бота «📅 Записать» (?contact=токен): и�
 
   const panel = await screen.findByRole('complementary', { name: 'Новая запись' })
   expect(await within(panel).findByLabelText('Имя и фамилия')).toHaveValue('Айгуль Маратовна')
-  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('555123456')
+  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('555 123 456')
   expect(tokens).toEqual(['AbCdEfGhIjKlMnOpQrStUv'])
   // Адрес чистый: токен одноразовый, обновление страницы его не повторит
   expect(window.location.search).toBe('')
@@ -174,7 +174,7 @@ test('«＋ Новый пациент» открыт — «📇 Из конта�
   await userEvent.click(within(panel).getByRole('button', { name: '📇 Из контактов телефона' }))
 
   expect(await within(panel).findByLabelText('Имя и фамилия')).toHaveValue('Бакыт Асанов')
-  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700112233')
+  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700 112 233')
   expect(searched).toEqual(['700112233'])
 })
 
@@ -186,7 +186,7 @@ test('«＋ Новый пациент» без записной книжки —
   await userEvent.type(within(panel).getByLabelText('Имя и фамилия'), 'Айгуль')
   fireEvent.click(within(panel).getByRole('button', { name: '📋 Вставить номер' }))
 
-  expect(await within(panel).findByRole('textbox', { name: 'Телефон' })).toHaveValue('555123456')
+  expect(await within(panel).findByRole('textbox', { name: 'Телефон' })).toHaveValue('555 123 456')
   // Имени в буфере нет — введённое остаётся
   expect(within(panel).getByLabelText('Имя и фамилия')).toHaveValue('Айгуль')
 })

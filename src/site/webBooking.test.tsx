@@ -94,7 +94,7 @@ test('запись на сайте: врач, услуга, время, данн
 
   const done = await screen.findByRole('region', { name: 'Заявка отправлена' })
   expect(query).toBe('?code=abc123')
-  expect(sent).toMatchObject({ doctorId: 2, serviceTypeId: 5, fullName: 'Айгуль Тестова', phone: '+996 700 112 233', consent: true, sourceId: 11, website: '' })
+  expect(sent).toMatchObject({ doctorId: 2, serviceTypeId: 5, fullName: 'Айгуль Тестова', phone: '+996700112233', consent: true, sourceId: 11, website: '' })
   expect(String(sent.startAt)).toMatch(/T04:00:00\.000Z$/)
   expect(within(done).getByText(/Клиника позвонит вам/)).toBeInTheDocument()
   expect(within(done).getByText('Бакыт Маматов')).toBeInTheDocument()
@@ -193,6 +193,6 @@ test('«Любой свободный врач» на сайте: сетка и 
 
   const done = await screen.findByRole('region', { name: 'Заявка отправлена' })
   expect(sent).not.toHaveProperty('doctorId')
-  expect(sent).toMatchObject({ serviceTypeId: 5, phone: '+996 700 112 233' })
+  expect(sent).toMatchObject({ serviceTypeId: 5, phone: '+996700112233' })
   expect(within(done).getByText('Айгерим Садыкова')).toBeInTheDocument()
 })

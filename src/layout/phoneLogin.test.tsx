@@ -84,7 +84,7 @@ test('страница входа — сразу «номер + пароль», 
   await user.click(screen.getByRole('button', { name: 'Войти' }))
 
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
-  expect(posts).toEqual([{ path: 'password', body: { phone: '0700 000 031', password: 'Тишина2026' }, header: '1' }])
+  expect(posts).toEqual([{ path: 'password', body: { phone: '0700000031', password: 'Тишина2026' }, header: '1' }])
   expect(window.location.pathname).toBe('/')
   expect(window.location.href).not.toContain('700')
   expect(window.location.href).not.toContain('Тишина')
@@ -150,7 +150,7 @@ test('«Забыли пароль? / Первый вход» → одна кно
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
   expect(posts.map((p) => p.path)).toEqual(['password', 'code', 'verify', 'verify', 'new'])
   // Канал не выбираем — сервер решает сам
-  expect(posts[1]!.body).toEqual({ phone: '+996 700000031' })
+  expect(posts[1]!.body).toEqual({ phone: '+996700000031' })
   expect(posts.at(-1)!.body).toEqual({ token: 'tok-1', password: 'Тишина2026' })
 })
 
@@ -186,7 +186,7 @@ test('почта настроена: после номера — выбор ка
 
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
   expect(posts.map((p) => p.path)).toEqual(['code', 'verify', 'new'])
-  expect(posts[0]!.body).toEqual({ phone: '+996 700000031', channel: 'mail' })
+  expect(posts[0]!.body).toEqual({ phone: '+996700000031', channel: 'mail' })
   expect(posts.every((p) => p.header === '1')).toBe(true)
 })
 
@@ -224,7 +224,7 @@ test('«Не пришло? Отправить по SMS» появляется ч
     await user.click(screen.getByRole('button', { name: 'Не пришло? Отправить по SMS' }))
 
     expect(await screen.findByText(/Отправили SMS с кодом на этот номер/)).toBeInTheDocument()
-    expect(posts.at(-1)!.body).toEqual({ phone: '+996 700000031', channel: 'sms' })
+    expect(posts.at(-1)!.body).toEqual({ phone: '+996700000031', channel: 'sms' })
     // Снова минута до следующей отправки
     expect(screen.queryByRole('button', { name: 'Не пришло? Отправить по SMS' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Другой номер' }))

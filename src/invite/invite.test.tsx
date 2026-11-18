@@ -30,7 +30,7 @@ function backend(info: InviteInfo | null = DOCTOR) {
     http.post('*/web/invite/register', async ({ request }) => {
       const body = await request.json() as Record<string, unknown>
       sent.push({ path: 'register', body, header: request.headers.get('X-Dental-Web') })
-      if (String(body.phone).includes('700 000 011')) {
+      if (String(body.phone).includes('700000011')) {
         return HttpResponse.json({ detail: 'Этот номер уже зарегистрирован в Tish — войдите на сайте по номеру и паролю', code: 'phone-taken' }, { status: 409 })
       }
       if (body.password === 'Тишина-слабая') {
@@ -44,7 +44,7 @@ function backend(info: InviteInfo | null = DOCTOR) {
     http.post('*/web/invite/code', async ({ request }) => {
       const body = await request.json() as Record<string, unknown>
       sent.push({ path: 'code', body, header: request.headers.get('X-Dental-Web') })
-      if (String(body.phone).includes('700 000 011')) {
+      if (String(body.phone).includes('700000011')) {
         return HttpResponse.json({ detail: 'Этот номер уже зарегистрирован в Tish — войдите на сайте по номеру и паролю', code: 'phone-taken' }, { status: 409 })
       }
       return HttpResponse.json({ phoneMasked: '+996 *** **56', secondsLeft: 300, resendSeconds: 60 })
@@ -90,7 +90,7 @@ test('приглашение: главное — «Открыть в Telegram»,
   expect(await screen.findByRole('heading', { name: 'Добро пожаловать, Бакыт Тестов!' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Открыть Tish' })).toHaveAttribute('href', '/')
   expect(screen.getByRole('link', { name: 'tish.kg/app' })).toHaveAttribute('href', '/app')
-  expect(sent[1]).toEqual({ path: 'register', body: { token: 'join_abc123', phone: '+996 555 123 456', password: 'Улыбка2026' }, header: '1' })
+  expect(sent[1]).toEqual({ path: 'register', body: { token: 'join_abc123', phone: '+996555123456', password: 'Улыбка2026' }, header: '1' })
   // Номер и пароль — не в адресе и не в localStorage
   expect(window.location.href).not.toContain('555')
   expect(JSON.stringify({ ...localStorage })).not.toContain('Улыбка2026')
@@ -162,7 +162,7 @@ test('приглашение с SMS: номер → «Получить код» 
   await user.click(within(form).getByRole('button', { name: 'Получить код' }))
   const step = await screen.findByRole('form', { name: 'Код из SMS' })
   expect(within(step).getByRole('status')).toHaveTextContent('Отправили SMS с кодом на +996 *** **56. Код действует 5 мин.')
-  expect(sent.find((x) => x.path === 'code' && x.body.phone === '+996 555 123 456')).toBeTruthy()
+  expect(sent.find((x) => x.path === 'code' && x.body.phone === '+996555123456')).toBeTruthy()
   // «Отправить ещё раз» — только через минуту
   expect(within(step).getByText('Отправить ещё раз — через 60 с.')).toBeInTheDocument()
 

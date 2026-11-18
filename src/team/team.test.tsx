@@ -186,7 +186,7 @@ test('«+ Добавить сотрудника»: врач по ссылке �
   await waitForSlow(() => expect(sent).toHaveLength(3))
   expect(sent).toEqual([
     { fullName: 'Бакыт', role: 'DOCTOR', login: 'LINK' },
-    { fullName: 'Айпери', role: 'RECEPTION', login: 'PHONE', alsoDoctor: true, phone: '+996 700000011' },
+    { fullName: 'Айпери', role: 'RECEPTION', login: 'PHONE', alsoDoctor: true, phone: '+996700000011' },
     { fullName: 'Айпери', role: 'ASSISTANT', login: 'LATER', doctorIds: [2] },
   ])
 })
@@ -482,7 +482,7 @@ test('карточка сотрудника по номеру: телефон м
     http.put('*/api/members/:id/phone', async ({ request, params }) => {
       const body = await request.json() as Schemas['StaffMembersControllerPhoneChange']
       puts.push({ id: String(params.id), ...body })
-      if (body.phone === '+996 700000041') {
+      if (body.phone === '+996700000041') {
         return HttpResponse.json({ status: 409, code: 'phone-taken', detail: 'Этот номер уже у другого сотрудника' }, { status: 409 })
       }
       members = members.map((m) => (m.telegramId === -1000000000000001 ? { ...m, phone: '+996700000012' } : m))
@@ -519,7 +519,7 @@ test('карточка сотрудника по номеру: телефон м
   await user.type(within(form).getByRole('textbox', { name: 'Телефон' }), '700000012')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(table).findByText('+996 700 000 012')).toBeInTheDocument()
-  expect(puts).toEqual([{ id: '-1000000000000001', phone: '+996 700000041' }, { id: '-1000000000000001', phone: '+996 700000012' }])
+  expect(puts).toEqual([{ id: '-1000000000000001', phone: '+996700000041' }, { id: '-1000000000000001', phone: '+996700000012' }])
 })
 
 test('«Персонал»: вся строка открывает карточку — человека и приглашения; чужой врач у не-админа — обычная строка', async () => {

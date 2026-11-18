@@ -30,7 +30,7 @@ function backend(ways: Schemas['SignupControllerAvailability'] = { sms: true, te
       if (!body.clinicName) {
         return HttpResponse.json({ detail: 'Проверьте поля', errors: [{ field: 'clinicName', message: 'Название клиники — до 100 символов' }] }, { status: 422 })
       }
-      if (String(body.phone).includes('700 000 011')) {
+      if (String(body.phone).includes('700000011')) {
         return HttpResponse.json({ detail: 'Этот номер уже в клинике «Стоматология Тест» — войдите', code: 'phone-in-clinic' }, { status: 409 })
       }
       return HttpResponse.json({ phoneMasked: '+996 *** **56', secondsLeft: 300, resendSeconds: 60 } satisfies Schemas['SignupControllerCodeSent'])
@@ -107,7 +107,7 @@ test('регистрация по SMS: форма → код и пароль →
   expect(await screen.findByRole('heading', { name: 'Код из SMS' })).toBeInTheDocument()
   expect(screen.getByText(/\+996 \*\*\* \*\*56/)).toBeInTheDocument()
   expect(sent[0]).toEqual({ path: 'code', header: '1', body: {
-    clinicName: 'Стоматолог Айгерим', city: 'Ош', fullName: 'Айгерим Тестова', phone: '+996 555 123 456', consent: true,
+    clinicName: 'Стоматолог Айгерим', city: 'Ош', fullName: 'Айгерим Тестова', phone: '+996555123456', consent: true,
   } })
   const code = screen.getByRole('form', { name: 'Код из SMS' })
   await user.type(within(code).getByRole('textbox', { name: 'Код подтверждения' }), '000000')

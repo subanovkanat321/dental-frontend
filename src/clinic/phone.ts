@@ -1,8 +1,9 @@
 import { countryOf, formatPhone, OTHER_COUNTRY, PHONE_COUNTRIES, type PhoneCountry } from '../lib/phone'
 
 /**
- * Поле телефона хранит текст для запроса: кыргызский номер — как набран («555 123 456», «0555…»,
- * «996…»), номер другой страны — с кодом («+7 701 123 45 67»). Нормализует и проверяет сервер.
+ * Поле телефона хранит текст для запроса без пробелов: кыргызский номер — цифры как набраны
+ * («555123456», «0555…», «996…»), номер другой страны — с кодом («+77011234567»). Группы цифр
+ * («555 123 456») — только в самом поле ввода (groupLocal). Нормализует и проверяет сервер.
  */
 
 /**
@@ -43,10 +44,10 @@ function isFullPhone(v: string): boolean {
   return /^(\+|00|996|0)/.test(v.replace(/[\s()-]/g, ''))
 }
 
-/** Из поля в запрос: «555 123 456» → «+996 555 123 456»; пусто — пусто. */
+/** Из поля в запрос: «555 123 456» → «+996555123456», пробелы и дефисы — прочь; пусто — пусто. */
 export function phoneFromInput(v: string): string {
-  const t = cleanPhone(v).trim()
-  return !t || isFullPhone(t) ? t : `+996 ${t}`
+  const t = cleanPhone(v).replace(/[\s()-]/g, '')
+  return !t || isFullPhone(t) ? t : `+996${t}`
 }
 
 /** Из ответа в поле: «996555123456» → «555 123 456», другая страна — «+7 701 123 45 67». */
@@ -74,12 +75,16 @@ export function splitPhone(value: string, picked: string): { country: string; lo
   return { country: c.id, local: rest.slice(c.code.length).trimStart() }
 }
 
-/** Страна и текст в поле → значение: кыргызский — как набран, другие — «+код номер»; пусто — пусто. */
+/**
+ * Страна и номер в поле → значение без пробелов: кыргызский — цифры как набраны, другие — «+кодцифры»;
+ * пусто — пусто. Группы, которые поле показывает («555 123 456»), сюда не попадают.
+ */
 export function joinPhone(country: string, local: string): string {
-  if (!local.trim()) return ''
-  if (country === 'KG') return local
+  const digits = local.replace(/\D/g, '')
+  if (!digits) return ''
+  if (country === 'KG') return digits
   const c = phoneCountry(country)
-  return c.code ? `+${c.code} ${local}` : `+${local}`
+  return `+${c.code}${digits}`
 }
 
 /** Сколько номеров для звонка — как на сервере (ContactPhones.MAX). */
@@ -96,22 +101,34 @@ export function phonesFromInput(values: string[]): string[] {
 }
 
 /**
- * Маска номера по группам страны («555 123 456», с нулём — «0555 123 456»): только когда печатают в
- * конце поля — правка в середине не прыгает курсором. Номер, начатый с «996», — как набран.
+ * Номер в поле ввода — группами страны: «555123456» → «555 123 456», с нулём — «0555 123 456», с «996» —
+ * «996 555 123 456», Казахстан — «701 123 45 67». Цифры сверх групп и номер «Другой страны» — по 3.
+ * Только показ: в значение поля (joinPhone) пробелы не попадают.
  */
-export function maskLocal(country: string, local: string): string {
-  const c = phoneCountry(country)
+export function groupLocal(country: string, local: string): string {
   let digits = local.replace(/\D/g, '')
-  if (!c.groups?.length || !digits || (country === 'KG' && digits.startsWith('996'))) return local
-  const lead = country === 'KG' && digits.startsWith('0') ? '0' : ''
-  digits = digits.slice(lead.length)
+  let lead = ''
+  if (country === 'KG' && digits.startsWith('996')) lead = '996 '
+  else if (country === 'KG' && digits.startsWith('0')) lead = '0'
+  digits = digits.slice(lead.trim().length)
+  const groups = phoneCountry(country).groups
   const parts: string[] = []
-  for (const size of c.groups) {
-    if (!digits) break
+  for (let i = 0; digits; i++) {
+    const size = groups[i] ?? 3
     parts.push(digits.slice(0, size))
     digits = digits.slice(size)
   }
-  return `${lead}${parts.join(' ')}${digits}`
+  return parts.length ? `${lead}${parts.join(' ')}` : lead.trim()
+}
+
+/** Место каретки в тексте поля сразу после `n`-й цифры (0 — в начале). */
+export function caretAfterDigits(text: string, n: number): number {
+  if (n <= 0) return 0
+  let seen = 0
+  for (let i = 0; i < text.length; i++) {
+    if (/\d/.test(text[i]!) && ++seen === n) return i + 1
+  }
+  return text.length
 }
 
 /**

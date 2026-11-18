@@ -63,7 +63,7 @@ test('«Мой профиль»: номер по SMS — «Получить ко
   await user.type(within(form).getByRole('textbox', { name: 'Телефон' }), '700000051')
   await user.click(within(form).getByRole('button', { name: 'Получить код' }))
   const confirm = await within(section).findByRole('form', { name: 'Подтвердить номер' })
-  expect(codes).toEqual([{ phone: '+996 700000051' }])
+  expect(codes).toEqual([{ phone: '+996700000051' }])
   expect(confirm).toHaveTextContent('Отправили SMS с кодом на +996 700 000 051')
   // Пароля на шаге кода нет
   expect(within(section).queryByLabelText('Пароль для входа по номеру')).not.toBeInTheDocument()
@@ -75,7 +75,7 @@ test('«Мой профиль»: номер по SMS — «Получить ко
   await user.clear(within(confirm).getByRole('textbox', { name: 'Код подтверждения' }))
   await user.type(within(confirm).getByRole('textbox', { name: 'Код подтверждения' }), '123456')
   await user.click(within(confirm).getByRole('button', { name: 'Подтвердить' }))
-  expect(confirms).toEqual([{ phone: '+996 700000051', code: '000000' }, { phone: '+996 700000051', code: '123456' }])
+  expect(confirms).toEqual([{ phone: '+996700000051', code: '000000' }, { phone: '+996700000051', code: '123456' }])
 
   // Номер подтверждён — теперь пароль, с пропуском из ответа
   const step = await within(section).findByRole('form', { name: 'Придумайте пароль для входа по номеру' })

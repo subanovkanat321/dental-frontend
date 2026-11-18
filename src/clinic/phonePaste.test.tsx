@@ -33,11 +33,11 @@ test('нет номера — null: мало цифр или их нет сов�
   expect(phoneFromText('')).toBeNull()
 })
 
-function Form({ mask = false }: { mask?: boolean }) {
+function Form() {
   const [v, setV] = useState('')
   return (
     <>
-      <PhoneInput label="Телефон" value={v} onChange={setV} mask={mask} />
+      <PhoneInput label="Телефон" value={v} onChange={setV} />
       <output aria-label="В запрос">{phoneFromInput(v)}</output>
     </>
   )
@@ -47,43 +47,46 @@ const field = () => screen.getByRole('textbox', { name: 'Телефон' })
 const sent = () => screen.getByLabelText('В запрос').textContent
 
 test.each([
-  ['0773123456', '773123456'],
-  ['+996 773 12-34-56', '773123456'],
-  ['996773123456', '773123456'],
-  ['773123456', '773123456'],
-  ['Айгуль +996 (555) 12-34-56', '555123456'],
+  ['0773123456', '773 123 456'],
+  ['+996 773 12-34-56', '773 123 456'],
+  ['996773123456', '773 123 456'],
+  ['773123456', '773 123 456'],
+  ['Айгуль +996 (555) 12-34-56', '555 123 456'],
 ])('вставка «%s» в поле телефона — «%s», код +996 уже стоит', async (text, expected) => {
   render(<Form />)
   await userEvent.click(field())
   await userEvent.paste(text)
   expect(field()).toHaveValue(expected)
-  expect(sent()).toBe(`+996 ${expected}`)
+  expect(sent()).toBe(`+996${expected.replace(/ /g, '')}`)
+  // Каретка — в конце номера: можно сразу дописывать или стирать
+  expect((field() as HTMLInputElement).selectionStart).toBe(expected.length)
 })
 
 test('вставка заменяет то, что уже было в поле, а не дописывается к нему', async () => {
   render(<Form />)
   await userEvent.type(field(), '555')
   await userEvent.paste('0773123456')
-  expect(field()).toHaveValue('773123456')
+  expect(field()).toHaveValue('773 123 456')
 })
 
-test('самозапись на сайте (поле с маской): вставили «0773123456» — «773 123 456»', async () => {
-  render(<Form mask />)
+test('вставили номер другой страны — группы её страны, наружу без пробелов', async () => {
+  render(<Form />)
   await userEvent.click(field())
-  await userEvent.paste('0773123456')
-  expect(field()).toHaveValue('773 123 456')
-  expect(sent()).toBe('+996 773 123 456')
+  await userEvent.paste('+7 701 123-45-67')
+  expect(field()).toHaveValue('701 123 45 67')
+  expect(sent()).toBe('+77011234567')
 })
 
 test('автозаполнение (весь номер разом, без события вставки) — тот же разбор', () => {
   render(<Form />)
   fireEvent.change(field(), { target: { value: '+996 773 12-34-56' } })
-  expect(field()).toHaveValue('773123456')
+  expect(field()).toHaveValue('773 123 456')
+  expect(sent()).toBe('+996773123456')
 })
 
-test('печатают по цифре — как набрано: «0555 123 456» остаётся с нулём', async () => {
+test('печатают по цифре — с нулём «0555 123 456»: ноль остаётся, группы сами', async () => {
   render(<Form />)
-  await userEvent.type(field(), '0555 123 456')
+  await userEvent.type(field(), '0555123456')
   expect(field()).toHaveValue('0555 123 456')
-  expect(sent()).toBe('0555 123 456')
+  expect(sent()).toBe('0555123456')
 })

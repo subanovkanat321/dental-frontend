@@ -26,8 +26,8 @@ afterEach(() => {
 })
 
 test('телефон: местный номер получает +996, полный — как есть', () => {
-  expect(phoneFromInput('555 123 456')).toBe('+996 555 123 456')
-  expect(phoneFromInput('+7 900 000 00 00')).toBe('+7 900 000 00 00')
+  expect(phoneFromInput('555 123 456')).toBe('+996555123456')
+  expect(phoneFromInput('+7 900 000 00 00')).toBe('+79000000000')
   expect(phoneFromInput(' ')).toBe('')
   expect(phoneToInput('996555123456')).toBe('555 123 456')
 })
@@ -57,7 +57,7 @@ test('админ: сохранить «О клинике» с днями и What
   expect(await within(form).findByRole('status')).toHaveTextContent('«О клинике» сохранено')
   expect(saved).toMatchObject({
     // Часы — из текущих: их меняют в «Часах работы», здесь не затираем
-    whatsappPhone: '+996 555 123 456', independentDoctors: true, workStart: '09:00:00', workEnd: '18:00:00',
+    whatsappPhone: '+996555123456', independentDoctors: true, workStart: '09:00:00', workEnd: '18:00:00',
     workDays: ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'],
   })
 
@@ -131,7 +131,7 @@ test('«О клинике»: несколько телефонов (до трё�
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.put('*/api/clinic', async ({ request }) => {
       saved = await request.json() as Schemas['ClinicControllerRequest']
-      return saved.phones?.includes('+996 12')
+      return saved.phones?.includes('+99612')
         ? HttpResponse.json({ status: 422, errors: [{ field: 'phones', message: 'Телефон 2: Номер в формате 0555 123 456' }] }, { status: 422 })
         : HttpResponse.json({ ...clinic, ...saved })
     }),
@@ -151,14 +151,14 @@ test('«О клинике»: несколько телефонов (до трё�
   await user.type(whatsapp, '700 999 888')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect((await within(form).findAllByText('Телефон 2: Номер в формате 0555 123 456')).length).toBeGreaterThan(0)
-  expect(saved).toMatchObject({ phones: ['+996 555 123 456', '+996 12'], whatsappPhone: '+996 700 999 888' })
+  expect(saved).toMatchObject({ phones: ['+996555123456', '+99612'], whatsappPhone: '+996700999888' })
 
   const second = within(form).getByRole('textbox', { name: 'Телефон клиники 2' })
   await user.clear(second)
   await user.type(second, '700 111 222')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(form).findByRole('status')).toHaveTextContent('«О клинике» сохранено')
-  expect(saved).toMatchObject({ phones: ['+996 555 123 456', '+996 700 111 222'] })
+  expect(saved).toMatchObject({ phones: ['+996555123456', '+996700111222'] })
 })
 
 test('«Я → Оформление»: тёмная тема и крупный текст сразу и запоминаются (старый адрес «Настроек» ведёт сюда)', async () => {

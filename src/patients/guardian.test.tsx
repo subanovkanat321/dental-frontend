@@ -65,7 +65,7 @@ test('добавить представителя: имя, кем приходи
   await userEvent.click(await screen.findByRole('option', { name: 'папа' }))
   await userEvent.type(within(box).getByLabelText('Телефон представителя'), '555164002')
   await userEvent.click(within(box).getByRole('button', { name: 'Сохранить' }))
-  expect(sent).toEqual([{ fullName: 'Бакыт', relation: 'FATHER', phone: '+996 555164002' }])
+  expect(sent).toEqual([{ fullName: 'Бакыт', relation: 'FATHER', phone: '+996555164002' }])
   expect(await screen.findByText('Представитель: папа, Бакыт, +996 555 164 002')).toBeInTheDocument()
 })
 

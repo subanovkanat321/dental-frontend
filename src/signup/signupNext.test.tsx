@@ -101,7 +101,7 @@ test('по почте: поле «Почта» → письмо → код и п
   expect(screen.getByText(/Письмо в «Спаме»\? Нажмите «Не спам»/)).toBeInTheDocument()
   expect(localStorage.getItem('tish.signup.emailCodeAt')).toMatch(/^\d+$/)
   expect(sent[0]).toEqual({ path: 'email-code', body: {
-    clinicName: 'Стоматолог Айгерим', city: 'Ош', fullName: 'Айгерим Тестова', phone: '+996 555 123 456', consent: true,
+    clinicName: 'Стоматолог Айгерим', city: 'Ош', fullName: 'Айгерим Тестова', phone: '+996555123456', consent: true,
     email: 'aigerim.test@gmail.com',
   } })
   const code = screen.getByRole('form', { name: 'Код из письма' })

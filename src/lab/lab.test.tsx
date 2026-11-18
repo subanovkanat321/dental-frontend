@@ -189,7 +189,7 @@ test('«Лаборатории»: новая — как у поставщика:
   await userEvent.type(within(form).getByLabelText(/Заметка/), 'Техник Азамат')
   expect(within(form).getAllByRole('button').map((b) => b.textContent)).toEqual(['Отмена', 'Добавить лабораторию'])
   await userEvent.click(within(form).getByRole('button', { name: 'Добавить лабораторию' }))
-  await waitForSlow(() => expect(saved).toEqual([{ name: 'Лаб-Тест', phone: '+996 700 000 002', whatsapp: '0700 000 003', note: 'Техник Азамат' }]))
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Лаб-Тест', phone: '+996700000002', whatsapp: '0700000003', note: 'Техник Азамат' }]))
   expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
 })
 
@@ -210,7 +210,7 @@ test('«Лаборатории»: «Изменить» — номер в пол�
   // WhatsApp на том же номере — второго поля нет
   expect(within(form).queryByLabelText('WhatsApp')).toBeNull()
   await userEvent.type(within(form).getByLabelText('Название'), '-2{Enter}')
-  await waitForSlow(() => expect(saved).toEqual([{ name: 'Дент-Лаб-2', phone: '+996 555 111 222' }]))
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Дент-Лаб-2', phone: '+996555111222' }]))
 })
 
 test('«Лаборатории»: WhatsApp на другом номере и заметка — в списке, как у поставщика, и в форме при «Изменить»', async () => {

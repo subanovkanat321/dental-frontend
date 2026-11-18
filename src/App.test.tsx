@@ -28,7 +28,7 @@ test('не вошли (401) — вход по номеру и паролю, кн
   await user.type(screen.getByLabelText('Пароль'), 'Тишина2026')
   await user.click(screen.getByRole('button', { name: 'Войти' }))
   expect(await screen.findByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
-  expect(posted).toEqual({ phone: '0700 000 031', password: 'Тишина2026' })
+  expect(posted).toEqual({ phone: '0700000031', password: 'Тишина2026' })
   // Скрипт окна входа Telegram больше не грузится
   expect(document.querySelector('script[src*="telegram-widget"]')).toBeNull()
   // Вошли — адрес чистый, без /login

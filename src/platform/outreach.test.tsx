@@ -295,7 +295,7 @@ test('«＋ Добавить клинику» по одной: отправля�
   await user.type(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }), '0555 000 111')
   await user.click(add)
   expect(await within(form).findByText(/Добавлена «Тест-Новая»/)).toBeInTheDocument()
-  expect(sent[0]).toBe('Название\tТелефон\tInstagram\tАдрес\tСсылка\nТест-Новая\t0555 000 111\t\t\t')
+  expect(sent[0]).toBe('Название\tТелефон\tInstagram\tАдрес\tСсылка\nТест-Новая\t0555000111\t\t\t')
   await user.type(within(form).getByLabelText('Название *'), 'Тест-Новая')
   await user.type(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }), '0555 000 111')
   await user.click(add)
@@ -307,7 +307,7 @@ test('«＋ Добавить клинику» по одной: отправля�
   await choose(within(form).getByRole('combobox', { name: 'Код страны' }), 'KZ')
   await user.type(within(form).getByRole('textbox', { name: 'Телефон (WhatsApp)' }), '701 000 00 03')
   await user.click(add)
-  await waitFor(() => expect(sent[2]).toBe('Название\tТелефон\tInstagram\tАдрес\tСсылка\nАлма-Тест\t+7 701 000 00 03\t\t\t'))
+  await waitFor(() => expect(sent[2]).toBe('Название\tТелефон\tInstagram\tАдрес\tСсылка\nАлма-Тест\t+77010000003\t\t\t'))
 })
 
 test('адрес сайта без https:// в тексте — становится ссылкой https://', () => {
@@ -477,7 +477,7 @@ test('«Изменить» клинику: страна и номер, 409 — �
   await user.type(phone, '701 000 00 03')
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   expect(await within(form).findByRole('alert')).toHaveTextContent('Этот номер уже у клиники «Тест-Улыбка»')
-  expect(bodies[0]).toEqual({ id: '2', clinicName: 'Тест-Дент', phone: '+7 701 000 00 03', instagram: '', address: 'ул. Вымышленная, 2', link: '', city: 'Бишкек' })
+  expect(bodies[0]).toEqual({ id: '2', clinicName: 'Тест-Дент', phone: '+77010000003', instagram: '', address: 'ул. Вымышленная, 2', link: '', city: 'Бишкек' })
 
   await user.click(within(form).getByRole('button', { name: 'Сохранить' }))
   await waitFor(() => expect(within(card).queryByRole('form', { name: /Изменить/ })).not.toBeInTheDocument())
