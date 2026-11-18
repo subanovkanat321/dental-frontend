@@ -25617,6 +25617,9 @@
           },
           "paymentDetails" : {
             "type" : "string"
+          },
+          "depositPayUrl" : {
+            "type" : "string"
           }
         }
       },

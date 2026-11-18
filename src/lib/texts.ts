@@ -157,10 +157,31 @@ export const REPLY_LINE = 'Ответьте 1 — приду, 2 — перене
 
 /** Что из /api/settings нужно для напоминания: подпись, бот и свой текст клиники с её данными. */
 export type ReminderSettings = Partial<Pick<Schemas['SettingsControllerSettings'],
-  'clinicSignature' | 'botUrl' | 'reminderTemplate' | 'clinicName' | 'clinicAddress' | 'clinicPhone'>>
+  'clinicSignature' | 'botUrl' | 'reminderTemplate' | 'clinicName' | 'clinicAddress' | 'clinicPhone' | 'paymentDetails'
+  | 'depositPayUrl'>>
 
 type ReminderAppointment = {
   startAt: string; serviceName?: string | null; patient: { fullName?: string; telegram?: boolean; guardian?: { fullName?: string } | null }
+  /** Предоплата приёма: строка в напоминании, пока её ждут (AWAITING) */
+  depositSom?: number | null; depositStatus?: string | null
+}
+
+/**
+ * Предоплату ждут (AWAITING) — строки в напоминание, как у бота (Deposits.reminderLine): «💳 Не забудьте предоплату
+ * 1 500 сом: MBank 0555 000 111» и, если у клиники загружен QR, «QR для оплаты: https://tish.kg/pay/…» (картинку
+ * ссылкой wa.me не приложить). Получена, «Я оплатил(а)» уже нажали или не просили — ничего. Сумма и реквизиты — с сервера.
+ */
+export function depositLines(a: ReminderAppointment, settings?: ReminderSettings | null, lang: 'ru' | 'ky' = 'ru'): string[] {
+  if (a.depositStatus !== 'AWAITING' || !a.depositSom) return []
+  // Обычный пробел в «1 500», как у бота: Intl ставит неразрывный
+  const som = `${new Intl.NumberFormat('ru-RU').format(a.depositSom).replace(/\s/g, ' ')} сом`
+  // Реквизиты в несколько строк — через запятую, запятую или двоеточие в конце убираем (как Deposits.oneLine)
+  const details = settings?.paymentDetails?.trim().replace(/\s*\n\s*/g, ', ').replace(/[\s,;:]+$/, '') || null
+  const lines = lang === 'ky'
+    ? [details ? `💳 ${som} алдын ала төлөмдү унутпаңыз: ${details}` : `💳 ${som} алдын ала төлөмдү унутпаңыз.`]
+    : [details ? `💳 Не забудьте предоплату ${som}: ${details}` : `💳 Не забудьте предоплату ${som}.`]
+  if (settings?.depositPayUrl) lines.push(`${lang === 'ky' ? 'Төлөм үчүн QR' : 'QR для оплаты'}: ${settings.depositPayUrl}`)
+  return lines
 }
 
 /**
@@ -203,8 +224,10 @@ export function reminderText(a: ReminderAppointment, settings?: ReminderSettings
   if (!template) {
     const text = `Здравствуйте, ${greet}! 👋 ${guardian ? `Запись ребёнка ${a.patient.fullName}:` : 'Напоминаем:'} `
       + `${whenText(a.startAt, now)} в ${timeOf(a.startAt)} приём у стоматолога 🦷 ${REPLY_LINE}`
-    // Без адреса — как раньше (подпись через пробел); с адресом — строками: текст, адрес, подпись
-    return invite(address ? [text, address, signature].filter(Boolean).join('\n') : signed(text, signature))
+    // Без адреса и предоплаты — как раньше (подпись через пробел); иначе строками: текст, адрес, предоплата, подпись
+    const deposit = depositLines(a, settings)
+    return invite(address || deposit.length ? [text, address, ...deposit, signature].filter(Boolean).join('\n')
+      : signed(text, signature))
   }
   const filled = applyTemplate(template, {
     имя: greet, когда: whenAt(a.startAt, now), врач: doctor, услуга: a.serviceName,
@@ -213,6 +236,8 @@ export function reminderText(a: ReminderAppointment, settings?: ReminderSettings
   const body = guardian ? `👶 Запись ребёнка ${a.patient.fullName}\n${filled}` : filled
   const lines = [body, REPLY_LINE]
   if (address && !usesVariable(template, 'адрес')) lines.push(address)
+  // Предоплата — отдельной строкой после своего текста клиники (сам текст не трогаем)
+  lines.push(...depositLines(a, settings))
   if (signature && !usesVariable(template, 'клиника')) lines.push(signature)
   const text = lines.join('\n')
   return usesVariable(template, 'бот') ? text : invite(text)
@@ -265,6 +290,8 @@ export function repeatReminderText(a: ReminderAppointment, settings?: ReminderSe
     if (guardian) text = `👶 Запись ребёнка ${a.patient.fullName}\n${text}`
     text += `\n${REPLY_LINE}`
   }
+  const deposit = depositLines(a, settings, lang)
+  if (deposit.length) text += `\n${deposit.join('\n')}`
   return botUrl && !a.patient.telegram ? `${text}\n\n${BOT_LINE} ${botUrl}` : text
 }
 

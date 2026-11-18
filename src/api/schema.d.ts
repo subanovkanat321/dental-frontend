@@ -10957,6 +10957,7 @@ export interface components {
             clinicPhone?: string;
             debtTemplate?: string;
             paymentDetails?: string;
+            depositPayUrl?: string;
         };
         ServiceTypeControllerPopular: {
             ids?: number[];
