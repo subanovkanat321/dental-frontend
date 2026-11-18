@@ -20,8 +20,9 @@ const debt = (appointmentId: number, patientId: number, patient: string, extra: 
 })
 
 const draft = (extra: Partial<Schemas['DebtRemindersDraft']> = {}): Schemas['DebtRemindersDraft'] => ({
-  text: '💳 Напоминание об оплате\n\nЗдравствуйте! Напоминаем об оплате за лечение в «Тест»: 5 000 сом.\nОплатить можно в клинике.',
-  debtSom: 5000, telegram: true, phone: '996555000111', lang: 'RU', ...extra,
+  text: '💳 Напоминание об оплате\n\nЗдравствуйте, Айгуль Вымышленная!\nНапоминаем об оплате за лечение в стоматологии «Тест».\n'
+    + 'Врач: Айгерим Садыкова\nК оплате: 5 000 сом.\nОплатить можно в клинике.',
+  debtSom: 5000, telegram: true, phone: '996555000111', lang: 'RU', qr: false, ...extra,
 })
 
 test('«Должники» → «Напомнить»: текст с сервера, в Telegram — отметка «напомнили»', async () => {
@@ -30,7 +31,7 @@ test('«Должники» → «Напомнить»: текст с серве�
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),
     http.get('*/api/appointments/debts', () => HttpResponse.json([debt(1, 5, 'Айгуль Вымышленная', { remindedAt: reminded })])),
-    http.get('*/api/patients/5/debt-reminder', () => HttpResponse.json(draft())),
+    http.get('*/api/patients/5/debt-reminder', () => HttpResponse.json(draft({ qr: true }))),
     http.post('*/api/patients/5/debt-reminder', async ({ request }) => {
       sent.push(await request.json())
       reminded = new Date().toISOString()
@@ -45,6 +46,9 @@ test('«Должники» → «Напомнить»: текст с серве�
   await userEvent.click(within(row).getByRole('button', { name: 'Напомнить' }))
   const form = await within(row).findByRole('form', { name: 'Напоминание о долге: Айгуль Вымышленная' })
   expect(form).toHaveTextContent(/5\s000 сом/)
+  expect(form).toHaveTextContent('Врач: Айгерим Садыкова')
+  // QR клиники или врача: в Telegram — картинкой следом
+  expect(form).toHaveTextContent('В Telegram следом уйдёт картинка QR для оплаты')
   // Текст не правят: сумма — только с сервера
   expect(within(form).queryByRole('textbox')).not.toBeInTheDocument()
   await userEvent.click(within(form).getByRole('button', { name: '📤 В Telegram' }))
@@ -179,8 +183,11 @@ test('«Настройки → Напоминание о долге»: стан�
   const field = await screen.findByRole('textbox', { name: 'Текст напоминания' }) as HTMLTextAreaElement
   expect(field.value).toContain('{сумма}')
   const preview = screen.getByRole('figure', { name: 'Сообщение пациенту' })
-  expect(preview).toHaveTextContent('«Стоматология «Тест»»: 5 000 сом.')
-  expect(preview).toHaveTextContent('Оплатить можно в клинике или переводом: Мбанк 0555 000 111 (Тест)')
+  // Новый стандартный текст: имя, клиника, вымышленный врач, сумма, реквизиты клиники
+  expect(preview.textContent).toContain(['Здравствуйте, Айгуль!', 'Напоминаем об оплате за лечение в стоматологии «Стоматология «Тест»».',
+    'Врач: Айгерим Садыкова', 'К оплате: 5 000 сом.', 'Оплатить можно в клинике или переводом: Мбанк 0555 000 111 (Тест)',
+    'Если вы уже оплатили — спасибо, просто не обращайте внимания 🙏'].join('\n'))
+  expect(screen.getByRole('button', { name: '{врач}' })).toHaveAttribute('title', 'Врач(и) приёмов с долгом')
   await userEvent.clear(field)
   await userEvent.type(field, 'Добрый день! За лечение — {{сумма}.')
   expect(screen.getByRole('figure', { name: 'Сообщение пациенту' })).toHaveTextContent('За лечение — 5 000 сом.')
