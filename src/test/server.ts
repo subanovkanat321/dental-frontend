@@ -20,6 +20,9 @@ export const server = setupServer(
   // Отчёты об ошибках приложения (lib/clientErrors): сервер всегда отвечает 204
   http.post('*/web/client-error', () => new HttpResponse(null, { status: 204 })),
   http.get('*/api/supplies', () => HttpResponse.json([])),
+  // Долги (полоса «Сегодня», карточка приёма): по умолчанию нет. Без обработчика запрос падал бы обрывом
+  // сети — а это плашка «Tish обновляется» (api/updating.ts) поверх того, что проверяет тест
+  http.get('*/api/appointments/debts', () => HttpResponse.json([] satisfies Schemas['PaymentQueryDebt'][])),
   // Долги из прежней программы (шаблон переезда): по умолчанию нет — блока в «Должниках» и карточке пациента нет
   http.get('*/api/opening-debts', () => HttpResponse.json([] satisfies Schemas['OpeningDebtsView'][])),
   // Подсказка «🪑 время коллеги по креслу» в «Новой записи» и переносе: по умолчанию коллеги в это время нет
@@ -138,6 +141,8 @@ export const server = setupServer(
   http.get('*/api/clinic', () => HttpResponse.json({ legalName: 'ИП Тест', address: 'Бишкек' })),
   // «Перерывы и выходные» (их видят и часы работы): по умолчанию нет; врач работает каждый день 09–18
   http.get('*/api/time-off', () => HttpResponse.json([])),
+  // «Как оплатить мне» в карточке врача (V225): по умолчанию не заполнено, выручку собирает клиника
+  http.get('*/api/doctors/:id/pay', () => HttpResponse.json({ hasQr: false, ownRevenue: false } satisfies Schemas['PayRequisitesDoctorPay'])),
   http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: (['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const)
     .map((weekday) => ({ weekday, start: '09:00:00', end: '18:00:00' })) } satisfies Schemas['DoctorHoursView'])),
   http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»' })),

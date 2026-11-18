@@ -1,4 +1,4 @@
-import { api, ApiError, logout, unwrap } from './api/client'
+import { api, ApiError, isUpdatingError, logout, unwrap } from './api/client'
 import { ConfirmHost } from './layout/Confirm'
 import { notify } from './lib/confirm'
 import { useMe } from './api/me'
@@ -19,6 +19,7 @@ import { hasUnsaved } from './lib/unsaved'
 import { UpdateToast } from './pwa/UpdateToast'
 import { closeAtlas, useAtlasRoute } from './atlas/route'
 import { AtlasBoot, Loading } from './layout/Loading'
+import { UpdatingScreen } from './layout/OfflineNotice'
 
 // Оболочка CRM (меню, плашки) и вход — своими чанками: Mini App пациента их не скачивает
 const Shell = lazy(() => import('./layout/Shell').then((m) => ({ default: m.Shell })))
@@ -97,13 +98,16 @@ function Screens() {
   // 3D-атлас (#/atlas, /atlas) — без входа: на экране нет данных пациентов, его можно открыть на ТВ
   if (atlas) return <ErrorBoundary><Suspense fallback={<AtlasBoot />}><AtlasPage route={atlas} onClose={closeAtlas} byUrl /></Suspense></ErrorBoundary>
   if (me.isPending) {
-    return <Loading className="screen" />
+    // Tish обновляется — «кто вошёл» повторяется сам; вместо вечной «Загрузки…» — что происходит
+    return isUpdatingError(me.failureReason) ? <UpdatingScreen /> : <Loading className="screen" />
   }
-  if (me.error) {
-    if (me.error instanceof ApiError && me.error.status === 401) {
+  // Перечитать «кто вошёл» не вышло, потому что Tish обновляется, а данные уже есть — работаем дальше с плашкой
+  const failed = me.error && !(isUpdatingError(me.error) && me.data) ? me.error : null
+  if (failed) {
+    if (failed instanceof ApiError && failed.status === 401) {
       // В Telegram вход — подпись запуска; устарела — открыть заново из бота, а не «Войти через Telegram»
       if (telegram()) {
-        return <div className="center"><h1>Tish CRM</h1><p className="hint">{me.error.message || 'Сессия устарела — закройте и откройте заново из бота.'}</p></div>
+        return <div className="center"><h1>Tish CRM</h1><p className="hint">{failed.message || 'Сессия устарела — закройте и откройте заново из бота.'}</p></div>
       }
       // Браузер без входа на главной (пациент набрал адрес) — общий каталог клиник; вход — /login.
       // Запуск с иконки приложения (PWA) — это сотрудник: сразу вход, а не каталог для пациентов
@@ -113,8 +117,10 @@ function Screens() {
       }
       return <><Suspense fallback={<Loading className="screen" />}><Login /></Suspense><UpdateToast /></>
     }
-    return <div className="center error">Нет связи с сервером: {me.error.message}</div>
+    if (isUpdatingError(failed)) return <UpdatingScreen />
+    return <div className="center error">Нет связи с сервером: {failed.message}</div>
   }
+  if (!me.data) return <Loading className="screen" />
   if (!me.data.doctor && !me.data.platform && telegram()) {
     return <ErrorBoundary><Suspense fallback={<Loading className="screen" />}><PatientApp me={me.data} /></Suspense></ErrorBoundary>
   }

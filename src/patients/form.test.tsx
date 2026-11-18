@@ -138,3 +138,45 @@ test('админ: «＋ Свой вариант» в «Откуда узнал»
   await waitForSlow(() => expect(added).toMatchObject({ title: 'Ярмарка здоровья' }))
   await waitForSlow(() => expect(saved).toMatchObject({ sourceId: 77 }))
 })
+
+describe('новый пациент: номер из телефона, а не руками', () => {
+  // Пациенты вымышленные
+  function openForm() {
+    server.use(
+      http.get('*/api/patient/me', () => HttpResponse.json(me)),
+      http.get('*/api/patients/recent', () => HttpResponse.json([])),
+      http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    )
+    renderApp()
+    return screen.findByRole('button', { name: '＋ Новый пациент' })
+  }
+  afterEach(() => {
+    Reflect.deleteProperty(navigator, 'contacts')
+    Reflect.deleteProperty(navigator, 'clipboard')
+  })
+
+  test('Android (Contact Picker): «📇 Из контактов телефона» — имя и номер (9 цифр без 0) в форме', async () => {
+    const select = vi.fn(() => Promise.resolve([{ name: ['Бакыт Асанов'], tel: ['0700 11-22-33'] }]))
+    Object.defineProperty(navigator, 'contacts', { value: { select }, configurable: true })
+    await userEvent.click(await openForm())
+    const form = screen.getByRole('form', { name: 'Новый пациент' })
+    expect(within(form).queryByRole('button', { name: '📋 Вставить номер' })).toBeNull()
+    await userEvent.click(within(form).getByRole('button', { name: '📇 Из контактов телефона' }))
+
+    expect(select).toHaveBeenCalledWith(['name', 'tel'])
+    expect(await within(form).findByLabelText('Имя пациента')).toHaveValue('Бакыт Асанов')
+    expect(within(form).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700112233')
+  })
+
+  test('записной книжки нет (iPhone, Telegram): «📋 Вставить номер» из буфера; имя, что уже ввели, без имени в буфере не стираем', async () => {
+    Object.defineProperty(navigator, 'clipboard', { value: { readText: () => Promise.resolve('+996 555 12-34-56') }, configurable: true })
+    await userEvent.click(await openForm())
+    const form = screen.getByRole('form', { name: 'Новый пациент' })
+    expect(within(form).queryByRole('button', { name: '📇 Из контактов телефона' })).toBeNull()
+    await userEvent.type(within(form).getByLabelText('Имя пациента'), 'Айгуль')
+    await userEvent.click(within(form).getByRole('button', { name: '📋 Вставить номер' }))
+
+    expect(await within(form).findByRole('textbox', { name: 'Телефон' })).toHaveValue('555123456')
+    expect(within(form).getByLabelText('Имя пациента')).toHaveValue('Айгуль')
+  })
+})

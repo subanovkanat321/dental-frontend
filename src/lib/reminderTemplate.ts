@@ -7,7 +7,8 @@
  * - регистр не важен: {Имя} = {имя};
  * - неизвестная переменная остаётся как есть (редактор подсвечивает, сервер не сохранит — 422);
  * - пустое значение убирается аккуратно: без двойных пробелов, «()» и запятой перед точкой;
- *   строка только из пустых переменных пропадает целиком.
+ *   строка только из пустых переменных пропадает целиком, и строка-подпись «Врач: {врач}» — тоже
+ *   (от неё осталось бы одно «Врач:»).
  */
 
 /** Переменные по порядку — кнопками в редакторе. */
@@ -26,12 +27,14 @@ export type Variable = (typeof VARIABLES)[number][0]
 
 /**
  * Напоминание о долге (V219 бэкенда, ReminderTemplate.DEBT_VARIABLES): {сумма} — долг с сервера со словом «сом»,
- * {оплата} — «Оплатить можно в клинике» и реквизиты клиники, если заданы.
+ * {врач} — врач(и) приёмов с долгом через запятую, {оплата} — «Оплатить можно в клинике» и реквизиты (клиники или
+ * врача, который берёт оплату сам), если заданы.
  */
 export const DEBT_VARIABLES = [
   ['имя', 'Имя пациента'],
   ['сумма', 'Долг: «5 000 сом»'],
   ['клиника', 'Название клиники'],
+  ['врач', 'Врач(и) приёмов с долгом'],
   ['оплата', 'Как оплатить (реквизиты)'],
   ['телефон', 'Телефон клиники'],
 ] as const
@@ -66,16 +69,19 @@ export function applyTemplate<V extends string = Variable>(template: string, val
   for (const line of template.replace(/\r\n/g, '\n').split('\n')) {
     let hadVariable = false
     let emptied = false
+    let filled = false
     const text = line.replace(VARIABLE, (match, name: string) => {
       const key = name.toLowerCase()
       if (!names.includes(key)) return match
       hadVariable = true
       const value = (values[key as V] ?? '').trim()
       if (!value) emptied = true
+      else filled = true
       return value
     })
     const result = emptied ? tidy(text) : text
-    if (hadVariable && !result.trim() && line.trim()) continue
+    // Все переменные строки пусты и осталась одна подпись «Врач:» — строку убираем
+    if (hadVariable && line.trim() && (!result.trim() || (!filled && result.endsWith(':')))) continue
     out.push(result)
   }
   return out.join('\n').trim()

@@ -15,13 +15,13 @@ type Settings = Schemas['SettingsControllerSettings']
 
 const NAMES = DEBT_VARIABLES.map(([name]) => name)
 
-/** Вымышленный пациент предпросмотра. */
-const SAMPLE = { name: 'Айгуль', sum: '5 000 сом' }
+/** Вымышленные пациент и врач предпросмотра. */
+const SAMPLE = { name: 'Айгуль', sum: '5 000 сом', doctor: 'Айгерим Садыкова' }
 
 /**
  * «Настройки» → «Напоминание о долге» (только руководитель): вежливый текст, который уходит пациенту по кнопке
- * «Напомнить» в «Касса → Должники» и в карточке пациента — от бота клиники или в WhatsApp. Сумму подставляет сервер,
- * реквизиты — из «О клинике → Предоплата → Как перевести».
+ * «Напомнить» в «Касса → Должники» и в карточке пациента — от бота клиники или в WhatsApp. Сумму и врачей подставляет
+ * сервер, реквизиты — из «О клинике → Предоплата → Как перевести» (или врача, который берёт оплату сам).
  */
 export function DebtTextPage({ onBack }: { onBack: () => void }) {
   const settings = useSettings()
@@ -67,7 +67,7 @@ function Editor({ settings }: { settings: Settings }) {
   const tooLong = text.trim().length > MAX_LENGTH
   const noSum = text.trim() !== '' && !usesVariable(text, 'сумма')
   const preview = applyTemplate<DebtVariable>(own ?? STANDARD_DEBT, {
-    имя: SAMPLE.name, сумма: SAMPLE.sum, клиника: settings.clinicName, оплата: howToPay(settings.paymentDetails), телефон: settings.clinicPhone,
+    имя: SAMPLE.name, сумма: SAMPLE.sum, врач: SAMPLE.doctor, клиника: settings.clinicName, оплата: howToPay(settings.paymentDetails), телефон: settings.clinicPhone,
   }, NAMES)
   const serverError = save.error && (save.error.fieldErrors.debtTemplate ?? save.error.message)
 
@@ -77,11 +77,13 @@ function Editor({ settings }: { settings: Settings }) {
         <p className="hint">
           Это сообщение получает пациент, когда вы нажимаете «Напомнить» в «Касса → Должники» или в карточке пациента: от бота
           клиники, а без бота — в WhatsApp. Сумму подставит Tish — её в тексте не пишут. Напомнить одному пациенту можно не
-          чаще раза в 3 дня. Реквизиты для {'{оплата}'} — в «Клиника → О клинике → Предоплата за запись → Как перевести».
+          чаще раза в 3 дня. {'{врач}'} — врач(и) приёмов с долгом. Реквизиты для {'{оплата}'} — в «Клиника → О клинике →
+          Предоплата за запись → Как перевести»; у врача на аренде кресла — его «Как оплатить мне» в «Моём профиле». QR в
+          Telegram уходит картинкой, в WhatsApp — ссылкой.
         </p>
         <label className="field">
           <span>Текст напоминания</span>
-          <textarea ref={field} rows={6} value={text} placeholder={STANDARD_DEBT}
+          <textarea ref={field} rows={7} value={text} placeholder={STANDARD_DEBT}
             aria-invalid={unknown.length > 0 || tooLong} onChange={(e) => change(e.target.value)} />
         </label>
         <div className="reminder-vars" role="group" aria-label="Вставить переменную">
@@ -103,7 +105,7 @@ function Editor({ settings }: { settings: Settings }) {
       </section>
       <section className="card-block" aria-label="Предпросмотр">
         <h2>Предпросмотр</h2>
-        <p className="hint">Вымышленный пациент «{SAMPLE.name}», долг {SAMPLE.sum}. Пациенту, который выбрал в боте кыргызский, без своего
+        <p className="hint">Вымышленный пациент «{SAMPLE.name}», врач {SAMPLE.doctor}, долг {SAMPLE.sum}. Пациенту, который выбрал в боте кыргызский, без своего
           текста уходит стандартный на кыргызском.</p>
         <figure className="reminder-preview" aria-label="Сообщение пациенту">
           <figcaption>Telegram и WhatsApp</figcaption>

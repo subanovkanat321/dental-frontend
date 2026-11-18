@@ -9,6 +9,7 @@ import { useDirty } from '../lib/unsaved'
 import { useClose } from '../lib/useClose'
 import { ChairField, ChairHoursHint } from './ChairField'
 import { HoursLink } from './HoursLink'
+import { DoctorPay } from './DoctorPay'
 import { DoctorServices } from './DoctorServices'
 import { InviteLink } from './InviteLink'
 import { DoctorPhone, StaffPhone, type Doctor } from './PhoneParts'
@@ -44,7 +45,8 @@ export const SELF_PROFILE_HINT = 'Фото, имя и «о себе» врач �
  * <li>«Для пациентов» — фото, имя, «Кратко»: их видят пациенты в боте, ведёт сам врач. Админ у чужого
  * вошедшего врача видит их только для чтения; пока врач не вошёл («ждём входа») — заполняет черновик,
  * иначе бот покажет пациентам пустую карточку;</li>
- * <li>«Работа» — услуги (админ или сам врач), часы работы строкой-ссылкой в «Рабочее время → График» (менять — там), кресло;</li>
+ * <li>«Работа» — услуги (админ или сам врач), часы работы строкой-ссылкой в «Рабочее время → График» (менять — там), кресло,
+ * «Как оплатить мне» — реквизиты и QR врача ({@link DoctorPay}, админ или сам врач);</li>
  * <li>«Вход» — Telegram подключён или «ждём входа», приглашение, телефон.</li>
  * </ul>
  * Своя карточка (в том числе «Мой профиль») — без действий руководителя над собой: роль списком, только если
@@ -91,6 +93,8 @@ export function DoctorPanel({ doctor: d, me, onClose, inline = false, afterProfi
         <ChairHoursHint doctorId={d.id} me={me} />
       </div>
       <ChairField key={`chair-${d.id}`} doctorId={d.id} me={me} />
+      {/* Реквизиты для оплаты — сам врач и руководитель (регистратуре сервер ответит 403) */}
+      {editsWork && <DoctorPay key={`pay-${d.id}`} doctorId={d.id} self={self} />}
     </>
   )
   // «Врач» = работает: роль без «врача» — врач скрыт (как прежний «Работает»), вернуть — снова виден пациентам

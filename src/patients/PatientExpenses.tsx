@@ -6,11 +6,34 @@ import { ExpenseEdit } from '../lib/ExpenseEdit'
 import { CategoryPick, ExpenseOwner } from '../cash/ExpenseForm'
 import { ownerDoctorId, useExpenseOwner } from '../cash/expenses'
 import { shortDate, somText, todayIn } from '../lib/time'
+import { Fold } from '../layout/Fold'
 
 type Me = Schemas['BookingViewsMe']
 type Patient = Schemas['PatientView']
 
 const LAB = 'Зуботехническая лаборатория'
+
+function usePatientExpenses(patientId: number) {
+  return useQuery({
+    queryKey: ['expenses', 'patient', patientId],
+    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/expenses', { params: { path: { patientId } } })),
+    retry: false,
+  })
+}
+
+/**
+ * Расход в карточке приёма — строкой-раскрывашкой секции «Приём», как «Материалы»: «Расход (техник, лаборатория) ·
+ * 4 500 сом ›». Врачу нужен часто (коронка, техник), поэтому не под «Ещё». Тот же запрос, что внутри, — один на двоих.
+ */
+export function PatientExpensesFold(props: { patient: Patient; me: Me; doctorId?: number }) {
+  const list = usePatientExpenses(props.patient.id)
+  const total = (list.data ?? []).reduce((sum, x) => sum + x.amountSom, 0)
+  return (
+    <Fold title="Расход (техник, лаборатория)" label="Расход по пациенту (техник, лаборатория)" meta={list.data ? (total ? somText(total) : 'нет') : undefined}>
+      <PatientExpenses {...props} />
+    </Fold>
+  )
+}
 
 /**
  * Расходы по пациенту (техник, лаборатория): итог и список; «＋ Расход по пациенту» — сумма,
@@ -25,11 +48,7 @@ export function PatientExpenses({ patient, me, doctorId }: {
   doctorId?: number
 }) {
   const client = useQueryClient()
-  const list = useQuery({
-    queryKey: ['expenses', 'patient', patient.id],
-    queryFn: () => unwrap(api.GET('/api/patients/{patientId}/expenses', { params: { path: { patientId: patient.id } } })),
-    retry: false,
-  })
+  const list = usePatientExpenses(patient.id)
   const [open, setOpen] = useState(false)
   // Ошиблись — «изменить» у строки: сумма, статья, дата, комментарий или удалить
   const [editing, setEditing] = useState<number | null>(null)
