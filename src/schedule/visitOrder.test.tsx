@@ -10,8 +10,8 @@ import { server } from '../test/server'
 const ago = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString()
 
 /** Приём состоялся: есть прошлая заметка и план (продолжение лечения), работа лаборатории на этот приём. */
-function backend() {
-  const done = appointment(10, 1, '00:05', 'Бакыт М.', { status: 'DONE', version: 1 })
+function backend(status: Schemas['AppointmentView']['status'] = 'DONE') {
+  const done = appointment(10, 1, '00:05', 'Бакыт М.', { status, version: 1 })
   const crown: Schemas['LabOrderView'] = {
     id: 1, patientId: 10, patientName: 'Бакыт М.', doctorId: 1, doctorName: 'Айгерим Садыкова', labId: 5, labName: 'Дент-Лаб',
     kind: 'CROWN', teeth: '36', work: 'Коронка 36', sentOn: '2026-11-04', dueOn: '2026-11-14', status: 'READY', reworkCount: 0, overdue: false,
@@ -61,4 +61,17 @@ test('«Расход (техник, лаборатория)» — в «Приё�
   expect(more).not.toHaveAccessibleName(/расход/)
   await userEvent.click(more)
   expect(within(panel).getAllByRole('button', { name: '💸 Расход по пациенту (техник)' })).toHaveLength(1)
+})
+
+test('расход техника виден уже во время приёма, не только после «состоялся»', async () => {
+  backend('SCHEDULED')
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  const early = within(panel).queryByRole('button', { name: 'Показать сейчас' })
+  if (early) await userEvent.click(early)
+  const visit = within(panel).getByRole('region', { name: 'Приём' })
+  expect(within(visit).getByRole('region', { name: 'Материалы на приёме' })).toBeInTheDocument()
+  const fold = within(visit).getByRole('region', { name: 'Расход по пациенту (техник, лаборатория)' })
+  expect(await within(fold).findByText(/4\s500 сом/)).toBeInTheDocument()
 })

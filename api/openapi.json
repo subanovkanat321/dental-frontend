@@ -26143,6 +26143,18 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "nonHeapMb" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "memoryUsedMb" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "memoryLimitMb" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "cpuPercent" : {
             "type" : "integer",
             "format" : "int32"
@@ -26155,7 +26167,7 @@
             "$ref" : "#/components/schemas/HealthServiceDisk"
           }
         },
-        "required" : [ "heapMaxMb", "heapUsedMb", "processors", "uptimeSeconds" ]
+        "required" : [ "heapMaxMb", "heapUsedMb", "nonHeapMb", "processors", "uptimeSeconds" ]
       },
       "HealthServiceBackup" : {
         "properties" : {
@@ -26179,6 +26191,38 @@
           }
         },
         "required" : [ "stale" ]
+      },
+      "HealthServiceDaily" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "time" : {
+            "type" : "string"
+          },
+          "state" : {
+            "type" : "string"
+          },
+          "day" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "dueAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "finishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
       },
       "HealthServiceDb" : {
         "properties" : {
@@ -26294,20 +26338,35 @@
               "$ref" : "#/components/schemas/HealthServiceJob"
             }
           },
+          "daily" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/HealthServiceDaily"
+            }
+          },
           "telegram" : {
             "$ref" : "#/components/schemas/HealthServiceTelegram"
           },
           "sms" : {
             "$ref" : "#/components/schemas/HealthServiceSms"
           },
+          "mail" : {
+            "$ref" : "#/components/schemas/HealthServiceMail"
+          },
           "ai" : {
             "$ref" : "#/components/schemas/HealthServiceAi"
+          },
+          "notifications" : {
+            "$ref" : "#/components/schemas/HealthServiceNotify"
           },
           "errors" : {
             "$ref" : "#/components/schemas/HealthServiceErrors"
           },
           "files" : {
             "$ref" : "#/components/schemas/HealthServiceFiles"
+          },
+          "sessionSecret" : {
+            "type" : "boolean"
           },
           "problems" : {
             "type" : "array",
@@ -26344,6 +26403,50 @@
           }
         }
       },
+      "HealthServiceMail" : {
+        "properties" : {
+          "configured" : {
+            "type" : "boolean"
+          },
+          "lastSentAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastErrorAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastError" : {
+            "type" : "string"
+          },
+          "failuresInRow" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "configured", "failuresInRow" ]
+      },
+      "HealthServiceNotify" : {
+        "properties" : {
+          "queued" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "active" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rejected" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastRejectedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "active", "queued", "rejected" ]
+      },
       "HealthServiceProblem" : {
         "properties" : {
           "code" : {
@@ -26353,6 +26456,37 @@
             "type" : "string"
           }
         }
+      },
+      "HealthServiceSend" : {
+        "properties" : {
+          "lastOkAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastFailureAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastFailure" : {
+            "type" : "string"
+          },
+          "failuresInRow" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "unavailable" : {
+            "type" : "boolean"
+          },
+          "lastOpenedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "opens" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "failuresInRow", "opens", "unavailable" ]
       },
       "HealthServiceSms" : {
         "properties" : {
@@ -26394,6 +26528,9 @@
           },
           "error" : {
             "type" : "string"
+          },
+          "send" : {
+            "$ref" : "#/components/schemas/HealthServiceSend"
           }
         }
       },

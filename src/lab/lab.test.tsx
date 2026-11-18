@@ -159,3 +159,46 @@ test('работ нет — только «Работ в лаборатории 
   expect(await screen.findByText('Работ в лаборатории нет')).toBeInTheDocument()
   expect(screen.queryByRole('button', { name: /Установлено/ })).toBeNull()
 })
+
+test('«Лаборатории»: новая — телефоны стандартным полем с +996, уходят как в других формах', async () => {
+  window.location.hash = '/stock/lab'
+  backend([])
+  const saved: unknown[] = []
+  server.use(
+    http.post('*/api/labs', async ({ request }) => {
+      saved.push(await request.json())
+      return HttpResponse.json({ id: 6, name: 'Лаб-Тест', phone: '996700000002', whatsapp: '996700000003', archived: false } satisfies Schemas['LabView'], { status: 201 })
+    }),
+  )
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Лаборатории' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Лаборатории' })
+  expect(await within(dialog).findByText('+996 555 111 222')).toBeInTheDocument()
+  await userEvent.click(within(dialog).getByRole('button', { name: '＋ Лаборатория' }))
+  expect(within(dialog).queryByRole('button', { name: 'Готово' })).toBeNull()
+  const form = within(dialog).getByRole('group', { name: 'Новая лаборатория' })
+  await userEvent.type(within(form).getByLabelText('Название'), 'Лаб-Тест')
+  await userEvent.type(within(form).getByLabelText('Телефон техника'), '700 000 002')
+  await userEvent.type(within(form).getByLabelText('WhatsApp техника'), '0700 000 003')
+  await userEvent.click(within(form).getByRole('button', { name: 'Добавить лабораторию' }))
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Лаб-Тест', phone: '+996 700 000 002', whatsapp: '0700 000 003' }]))
+  expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
+})
+
+test('«Лаборатории»: «Изменить» — номер в поле без +996, Enter в поле сохраняет', async () => {
+  window.location.hash = '/stock/lab'
+  backend([])
+  const saved: unknown[] = []
+  server.use(http.put('*/api/labs/5', async ({ request }) => {
+    saved.push(await request.json())
+    return HttpResponse.json(lab)
+  }))
+  renderApp()
+  await userEvent.click(await screen.findByRole('button', { name: 'Лаборатории' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Лаборатории' })
+  await userEvent.click(await within(dialog).findByRole('button', { name: 'Изменить' }))
+  const form = within(dialog).getByRole('group', { name: 'Лаборатория Дент-Лаб' })
+  expect(within(form).getByLabelText('Телефон техника')).toHaveValue('555 111 222')
+  await userEvent.type(within(form).getByLabelText('Название'), '-2{Enter}')
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Дент-Лаб-2', phone: '+996 555 111 222' }]))
+})

@@ -37,6 +37,7 @@ import { colleagueMarkText, colleagueTimeOf } from './chairTime'
 import { refreshAppointmentData, useAppointmentAction } from './useAppointmentAction'
 import { VisitDocs } from '../print/VisitDocs'
 import { LessonPicker } from '../learn/LessonButton'
+import { ActionMenu } from '../layout/ActionMenu'
 import { Fold } from '../layout/Fold'
 import { AfterVisit } from '../print/VisitReport'
 import { canEditDoctor, editableDoctors, isAssistant, seesMoneyOf, seesAllMoney } from '../lib/roles'
@@ -404,9 +405,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {/* План лечения — сразу после зубов: тот же редактор, что в медкарте — добавить этапы, отметить сделанное */}
           {visitTools && clinical && a.patient.id != null && <VisitPlan appointment={a} me={me} />}
           {canEdit && visitTools && <Supplies appointment={a} me={me} />}
-          {/* Расход по пациенту (техник, лаборатория) — врачу часто, поэтому не под «Ещё». Регистратуре и ассистенту
-              нет (у них нет своих расходов) */}
-          {canEdit && a.status === 'DONE' && seesMoney && a.patient.id != null && (me.admin || me.doctorId != null) && (
+          {/* Расход по пациенту (техник, лаборатория) — врачу часто, поэтому не под «Ещё»; как «Материалы» — уже во время
+              приёма, не только после «состоялся». Регистратуре и ассистенту нет (у них нет своих расходов) */}
+          {canEdit && visitTools && seesMoney && a.patient.id != null && (me.admin || me.doctorId != null) && (
             <PatientExpensesFold patient={a.patient} me={me} doctorId={a.doctorId} />
           )}
           {/* Заказы лаборатории на этот приём (примерка) — только если есть такая работа */}
@@ -434,12 +435,14 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             <button type="button" className="btn danger" disabled={action.isPending}
               onClick={() => setStatus('CANCELLED', { question: 'Отклонить заявку? Пациенту придёт сообщение.', undo: 'Заявка отклонена' })}>Отклонить заявку</button>
           )}
-          {a.status === 'SCHEDULED' && started && (
-            <button type="button" className="btn danger" disabled={action.isPending} onClick={() => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' })}>Неявка</button>
-          )}
+          {/* Неявка и отмена — одной кнопкой с меню: две красные кнопки под «Перенести» пугали и занимали место.
+              До начала приёма неявки ещё не бывает — в меню только «Отменить запись» */}
           {a.status === 'SCHEDULED' && (
-            <button type="button" className="btn danger" disabled={action.isPending}
-              onClick={() => setStatus('CANCELLED', { question: `Отменить запись ${a.patient.fullName}? Время освободится.`, undo: 'Запись отменена' })}>Отменить запись</button>
+            <ActionMenu label={started ? 'Неявка или отмена' : 'Отменить'} disabled={action.isPending} items={[
+              ...(started ? [{ label: 'Неявка — пациент не пришёл', danger: true, onSelect: () => setStatus('NO_SHOW', { undo: 'Отмечено: неявка' }) }] : []),
+              { label: 'Отменить запись', danger: true,
+                onSelect: () => setStatus('CANCELLED', { question: `Отменить запись ${a.patient.fullName}? Время освободится.`, undo: 'Запись отменена' }) },
+            ]} />
           )}
         </div>
       )}

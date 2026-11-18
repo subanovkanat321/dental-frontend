@@ -88,6 +88,19 @@ export async function openMore(panel: HTMLElement) {
   await userEvent.click(await within(panel).findByRole('button', { name: /^Ещё/ }))
 }
 
+/** Карточка приёма → кнопка «Неявка или отмена ▾» (до начала приёма — «Отменить ▾»); без `item` — сама кнопка. */
+export function statusMenu(panel: HTMLElement) {
+  return within(panel).queryByRole('button', { name: /^(Неявка или отмена|Отменить)$/ })
+}
+
+/** Карточка приёма → меню «Неявка или отмена» → пункт («Неявка — пациент не пришёл», «Отменить запись»). */
+export async function pickStatus(panel: HTMLElement, item: string | RegExp) {
+  const button = statusMenu(panel)
+  if (!button) throw new Error('Нет кнопки «Неявка или отмена»')
+  await userEvent.click(button)
+  await userEvent.click(await screen.findByRole('menuitem', { name: item }))
+}
+
 /** Строка-раскрывашка (layout/Fold: «Зубы», «Материалы», «Продолжение лечения») — раскрыть, если свёрнута. */
 export async function expand(region: HTMLElement) {
   const head = region.querySelector<HTMLButtonElement>(':scope > .fold-head')

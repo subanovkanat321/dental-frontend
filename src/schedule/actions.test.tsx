@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { todayIn } from '../lib/time'
-import { appointment, me, renderApp, expand, openPay } from '../test/fixtures'
+import { appointment, me, renderApp, expand, openPay, pickStatus } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -90,9 +90,9 @@ test('отменить запись — только после подтверж
   renderApp()
   const panel = await open(/Бакыт М\./)
 
-  await userEvent.click(within(panel).getByRole('button', { name: 'Отменить запись' }))
+  await pickStatus(panel, 'Отменить запись')
   expect(sent).toEqual([])
-  await userEvent.click(within(panel).getByRole('button', { name: 'Отменить запись' }))
+  await pickStatus(panel, 'Отменить запись')
   expect(await within(panel).findByText(/Отменён/)).toBeInTheDocument()
   expect(sent).toEqual([{ path: 'status', body: { version: 0, status: 'CANCELLED' } }])
   confirm.mockRestore()

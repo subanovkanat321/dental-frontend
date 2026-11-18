@@ -21,11 +21,6 @@
 .lab-sheet .row > input, .lab-dates > .field { flex: 1 1 140px; min-width: 0; }
 .lab-patient { margin: 0; }
 .lab-picker > :first-child { flex: 1 1 200px; min-width: 0; }
-.lab-form { display: grid; gap: 8px; padding: 10px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); }
-.lab-directory-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.lab-directory-list > li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0;
-  border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-
 /* Блок в карточке пациента */
 .patient-lab { display: grid; gap: 8px; }
 .patient-lab-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

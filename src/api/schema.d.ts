@@ -11159,6 +11159,12 @@ export interface components {
             heapUsedMb: number;
             /** Format: int64 */
             heapMaxMb: number;
+            /** Format: int64 */
+            nonHeapMb: number;
+            /** Format: int64 */
+            memoryUsedMb?: number;
+            /** Format: int64 */
+            memoryLimitMb?: number;
             /** Format: int32 */
             cpuPercent?: number;
             /** Format: int32 */
@@ -11174,6 +11180,20 @@ export interface components {
             /** Format: int64 */
             ageHours?: number;
             stale: boolean;
+        };
+        HealthServiceDaily: {
+            code?: string;
+            name?: string;
+            time?: string;
+            state?: string;
+            /** Format: date */
+            day?: string;
+            /** Format: date-time */
+            dueAt?: string;
+            /** Format: date-time */
+            startedAt?: string;
+            /** Format: date-time */
+            finishedAt?: string;
         };
         HealthServiceDb: {
             up: boolean;
@@ -11222,11 +11242,15 @@ export interface components {
             db?: components["schemas"]["HealthServiceDb"];
             backup?: components["schemas"]["HealthServiceBackup"];
             jobs?: components["schemas"]["HealthServiceJob"][];
+            daily?: components["schemas"]["HealthServiceDaily"][];
             telegram?: components["schemas"]["HealthServiceTelegram"];
             sms?: components["schemas"]["HealthServiceSms"];
+            mail?: components["schemas"]["HealthServiceMail"];
             ai?: components["schemas"]["HealthServiceAi"];
+            notifications?: components["schemas"]["HealthServiceNotify"];
             errors?: components["schemas"]["HealthServiceErrors"];
             files?: components["schemas"]["HealthServiceFiles"];
+            sessionSecret?: boolean;
             problems?: components["schemas"]["HealthServiceProblem"][];
         };
         HealthServiceJob: {
@@ -11240,9 +11264,43 @@ export interface components {
             /** Format: date-time */
             nextRunAt?: string;
         };
+        HealthServiceMail: {
+            configured: boolean;
+            /** Format: date-time */
+            lastSentAt?: string;
+            /** Format: date-time */
+            lastErrorAt?: string;
+            lastError?: string;
+            /** Format: int32 */
+            failuresInRow: number;
+        };
+        HealthServiceNotify: {
+            /** Format: int32 */
+            queued: number;
+            /** Format: int32 */
+            active: number;
+            /** Format: int64 */
+            rejected: number;
+            /** Format: date-time */
+            lastRejectedAt?: string;
+        };
         HealthServiceProblem: {
             code?: string;
             text?: string;
+        };
+        HealthServiceSend: {
+            /** Format: date-time */
+            lastOkAt?: string;
+            /** Format: date-time */
+            lastFailureAt?: string;
+            lastFailure?: string;
+            /** Format: int32 */
+            failuresInRow: number;
+            unavailable: boolean;
+            /** Format: date-time */
+            lastOpenedAt?: string;
+            /** Format: int32 */
+            opens: number;
         };
         HealthServiceSms: {
             configured: boolean;
@@ -11261,6 +11319,7 @@ export interface components {
             lastErrorAt?: string;
             lastError?: string;
             error?: string;
+            send?: components["schemas"]["HealthServiceSend"];
         };
         LogSearchLine: {
             time?: string;

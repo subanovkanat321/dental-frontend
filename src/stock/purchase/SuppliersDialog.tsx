@@ -3,6 +3,9 @@ import { useState } from 'react'
 import type { Schemas } from '../../api/client'
 import { ask } from '../../lib/confirm'
 import { formatPhone } from '../../lib/time'
+import { PhoneInput } from '../../clinic/PhoneInput'
+import { phoneFromInput, phoneToInput } from '../../clinic/phone'
+import { DirectoryForm } from '../../layout/DirectoryForm'
 import { Loading } from '../../layout/Loading'
 import { Sheet } from '../../lab/LabOrderDialog'
 import { useArchiveSupplier, useSaveSupplier, useSuppliers, type Supplier } from './api'
@@ -18,66 +21,78 @@ export function SuppliersDialog({ me, onClose }: { me: Me; onClose: () => void }
   const archive = useArchiveSupplier()
   const [editing, setEditing] = useState<Supplier | 'new' | null>(null)
   const canArchive = Boolean(me.admin || me.reception)
+  // Список пуст — сразу форма: «＋ Поставщик» был бы лишним нажатием; «Отмена» тогда закрывает лист
+  const empty = suppliers.data?.length === 0
+  const adding = editing === 'new' || (empty && editing == null)
   return (
     <Sheet title="Поставщики" onClose={onClose} onSubmit={(e) => e.preventDefault()} className="lab-directory">
       {suppliers.isPending && <Loading />}
-      {suppliers.data?.length === 0 && editing == null && <p className="hint">Список пуст — добавьте склад, у которого берёте материалы.</p>}
-      <ul className="lab-directory-list">
-        {(suppliers.data ?? []).map((s) => (
-          <li key={s.id}>
-            {editing !== 'new' && editing?.id === s.id ? (
-              <SupplierForm supplier={s} onDone={() => setEditing(null)} />
-            ) : (
-              <>
-                <span>
-                  <strong>{s.name}</strong>{s.phone && <span className="hint num"> · {formatPhone(s.phone)}</span>}
-                  {s.note && <span className="hint"> · {s.note}</span>}
-                </span>
-                <span className="row">
-                  <button type="button" className="btn ghost small" onClick={() => setEditing(s)}>Изменить</button>
-                  {canArchive && (
-                    <button type="button" className="btn ghost small" onClick={async () => {
-                      if (await ask(`Убрать «${s.name}» из списка? Старые заказы и цены останутся.`, { ok: 'Убрать' })) archive.mutate(s.id)
-                    }}>Убрать</button>
-                  )}
-                </span>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
-      {editing === 'new'
-        ? <SupplierForm onDone={() => setEditing(null)} />
-        : <button type="button" className="btn" onClick={() => setEditing('new')}>＋ Поставщик</button>}
+      {empty && <p className="hint">Здесь склады, у которых берёте материалы: номер — для заказа в WhatsApp и звонка.</p>}
+      {!empty && (
+        <ul className="dir-list">
+          {(suppliers.data ?? []).map((s) => (
+            <li key={s.id} className={editing !== 'new' && editing?.id === s.id ? 'editing' : undefined}>
+              {editing !== 'new' && editing?.id === s.id ? (
+                <SupplierForm supplier={s} onSaved={() => setEditing(null)} onCancel={() => setEditing(null)} />
+              ) : (
+                <>
+                  <span className="dir-item">
+                    <strong>{s.name}</strong>
+                    {(s.phone || s.note) && (
+                      <span className="hint">{s.phone && <span className="nowrap">{formatPhone(s.phone)}</span>}{s.phone && s.note && ' · '}{s.note}</span>
+                    )}
+                  </span>
+                  <span className="dir-item-actions">
+                    <button type="button" className="btn ghost small" onClick={() => setEditing(s)}>Изменить</button>
+                    {canArchive && (
+                      <button type="button" className="btn ghost small" onClick={async () => {
+                        if (await ask(`Убрать «${s.name}» из списка? Старые заказы и цены останутся.`, { ok: 'Убрать' })) archive.mutate(s.id)
+                      }}>Убрать</button>
+                    )}
+                  </span>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {adding
+        ? <SupplierForm onSaved={() => setEditing(null)} onCancel={() => (empty && editing == null ? onClose() : setEditing(null))} />
+        : suppliers.data && editing == null && <button type="button" className="btn dir-add" onClick={() => setEditing('new')}>＋ Поставщик</button>}
       {archive.error && <p className="error" role="alert">{archive.error.message}</p>}
-      <div className="confirm-actions">
-        <button type="button" className="btn primary" onClick={onClose}>Готово</button>
-      </div>
+      {/* Пока открыта форма, «Готово» нет: иначе лист закрылся бы и введённое пропало без сохранения */}
+      {editing == null && !adding && (
+        <div className="confirm-actions">
+          <button type="button" className="btn primary" onClick={onClose}>Готово</button>
+        </div>
+      )}
     </Sheet>
   )
 }
 
-function SupplierForm({ supplier, onDone }: { supplier?: Supplier; onDone: () => void }) {
+/** Поставщик: название, телефон стандартным полем (+996 и страна, как у пациента), заметка. */
+function SupplierForm({ supplier, onSaved, onCancel }: { supplier?: Supplier; onSaved: () => void; onCancel: () => void }) {
   const [name, setName] = useState(supplier?.name ?? '')
-  const [phone, setPhone] = useState(supplier?.phone ? `+${supplier.phone}` : '')
+  const [phone, setPhone] = useState(phoneToInput(supplier?.phone))
   const [note, setNote] = useState(supplier?.note ?? '')
   const save = useSaveSupplier()
-  const err = save.error ? Object.values(save.error.fieldErrors)[0] ?? save.error.message : null
-  const submit = () => {
-    if (!name.trim()) return
-    save.mutate({ id: supplier?.id, body: { name, phone: phone.trim() || undefined, note: note.trim() || undefined } }, { onSuccess: onDone })
-  }
+  const err = (k: string) => save.error?.fieldErrors[k]
+  const other = save.error && !err('name') && !err('phone') ? Object.values(save.error.fieldErrors)[0] ?? save.error.message : null
   return (
-    <div className="lab-form" role="group" aria-label={supplier ? `Поставщик ${supplier.name}` : 'Новый поставщик'}>
-      <input aria-label="Название поставщика" placeholder="Название: «Дент-Маркет»" value={name} maxLength={80}
-        onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} />
-      <input aria-label="Телефон / WhatsApp" placeholder="Телефон / WhatsApp" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-      <input aria-label="Заметка" placeholder="Заметка: доставка в тот же день" value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} />
-      {err && <p className="error">{err}</p>}
-      <div className="row">
-        <button type="button" className="btn small" disabled={!name.trim() || save.isPending} onClick={submit}>{supplier ? 'Сохранить' : 'Добавить'}</button>
-        <button type="button" className="btn ghost small" onClick={onDone}>Отмена</button>
-      </div>
-    </div>
+    <DirectoryForm label={supplier ? `Поставщик ${supplier.name}` : 'Новый поставщик'} saveText={supplier ? 'Сохранить' : 'Добавить'}
+      canSave={Boolean(name.trim())} busy={save.isPending} error={other} onCancel={onCancel}
+      onSave={() => save.mutate({
+        id: supplier?.id,
+        body: { name: name.trim(), phone: phoneFromInput(phone) || undefined, note: note.trim() || undefined },
+      }, { onSuccess: onSaved })}>
+      <label className="field"><span>Название</span>
+        <input value={name} maxLength={80} autoComplete="off" autoFocus={!supplier} placeholder="Например: Дент-Маркет" onChange={(e) => setName(e.target.value)} /></label>
+      {err('name') && <p className="error">{err('name')}</p>}
+      <label className="field"><span>Телефон / WhatsApp <span className="hint">— необязательно</span></span>
+        <PhoneInput label="Телефон / WhatsApp" value={phone} onChange={setPhone} /></label>
+      {err('phone') && <p className="error">{err('phone')}</p>}
+      <label className="field"><span>Заметка <span className="hint">— необязательно</span></span>
+        <input value={note} maxLength={200} autoComplete="off" placeholder="Доставка в тот же день" onChange={(e) => setNote(e.target.value)} /></label>
+    </DirectoryForm>
   )
 }
