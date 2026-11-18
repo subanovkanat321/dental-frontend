@@ -122,8 +122,8 @@ function AboutForm({ me, clinic: c }: { me: Me; clinic: Clinic }) {
           <label className="field"><span>Ссылка на отзывы в Google — необязательно</span>
             <input type="url" value={f.googleReviewUrl} maxLength={300} placeholder="https://g.page/r/…/review" onChange={text('googleReviewUrl')} /></label>
           {err('googleReviewUrl') && <p className="error">{err('googleReviewUrl')}</p>}
-          <p className="hint">Google Карты → карточка клиники → «Поделиться» (или «Получить больше отзывов»). Кто оценит приём на 5 ⭐,
-            увидит кнопки «Оставить отзыв в 2ГИС» и «Google».</p>
+          <p className="hint">Google Карты → карточка клиники → «Поделиться» (или «Получить больше отзывов»). После оценки приёма
+            пациент увидит кнопки «Оставить отзыв в 2ГИС» и «Google» (при 1–3 ⭐ — мелко, под «Что было не так?»).</p>
           {page && <BookingPage url={page} />}
           <label className="check"><input type="checkbox" checked={f.listed} onChange={flag('listed')} /> Показывать клинику в общем каталоге /clinics</label>
 
