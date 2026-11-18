@@ -7012,6 +7012,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/cash-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["cashEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/by-patient/{patientId}": {
         parameters: {
             query?: never;
@@ -11933,6 +11949,14 @@ export interface components {
             };
             days?: components["schemas"]["RevenueViewDay"][];
             cash?: components["schemas"]["RevenueViewCash"];
+            /** Format: int64 */
+            debtCount: number;
+            /** Format: int64 */
+            debtSom: number;
+            /** Format: int64 */
+            partialCount: number;
+            /** Format: int64 */
+            partialDebtSom: number;
         };
         RevenueViewCash: {
             /** Format: int64 */
@@ -12057,6 +12081,25 @@ export interface components {
             name: string;
             colleague?: string;
             notified: string[];
+        };
+        PaymentQueryCashEntry: {
+            /** Format: date-time */
+            paidAt?: string;
+            /** Format: int32 */
+            amountSom: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD";
+            /** @enum {string} */
+            purpose?: "VISIT" | "DEBT" | "DEPOSIT" | "OPENING_DEBT";
+            /** Format: int64 */
+            appointmentId?: number;
+            /** Format: date-time */
+            appointmentStartAt?: string;
+            /** Format: int64 */
+            patientId?: number;
+            patient?: string;
+            takenBy?: string;
+            viaBot: boolean;
         };
         PatientCard: {
             patient?: components["schemas"]["PatientView"];
@@ -24792,6 +24835,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChairCheckView"];
+                };
+            };
+        };
+    };
+    cashEntries: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentQueryCashEntry"][];
                 };
             };
         };
