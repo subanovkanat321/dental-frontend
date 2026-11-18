@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 
-import { api, ApiError, fetchBlob, unwrap, upload, type Schemas } from '../api/client'
+import { api, ApiError, unwrap, upload, type Schemas } from '../api/client'
 import { SaveBar } from '../layout/SaveBar'
 import { Select } from '../layout/Select'
 import { CITIES, guessCity } from '../lib/clinicSearch'
 import { openLink, telegram } from '../lib/telegram'
 import { useDirty } from '../lib/unsaved'
+import { useBlobUrl } from '../lib/useBlobUrl'
 import { canEditPrices } from '../lib/roles'
 import { PhoneInput } from './PhoneInput'
 import { PhoneListInput } from './PhoneListInput'
@@ -174,20 +175,10 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
   const [details, setDetails] = useState(st.details ?? '')
   const [done, setDone] = useState('')
   const { dirty, commit } = useDirty({ mode, amount, details })
-  const [qrUrl, setQrUrl] = useState<string | null>(null)
-  useEffect(() => {
-    if (!st.hasQr) return
-    let url: string | null = null
-    let alive = true
-    fetchBlob('/api/clinic/deposit/qr').then((blob) => {
-      url = URL.createObjectURL(blob)
-      if (alive) setQrUrl(url)
-    }).catch(() => {})
-    return () => {
-      alive = false
-      if (url) URL.revokeObjectURL(url)
-    }
-  }, [st.hasQr])
+  // Новый QR — перечитать картинку (hasQr остаётся true)
+  const [qrVersion, setQrVersion] = useState(0)
+  const qrImage = useBlobUrl(st.hasQr ? `/api/clinic/deposit/qr?v=${qrVersion}` : null)
+  const qrUrl = qrImage && qrImage !== 'error' ? qrImage.url : null
   const save = useMutation<Deposit, ApiError>({
     mutationFn: () => unwrap(api.PUT('/api/clinic/deposit', { body: { mode, amountSom: amount === '' ? undefined : Number(amount), details } })),
     onSuccess: (d) => {
@@ -203,6 +194,14 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
     },
     onSuccess: (d) => {
       setDone('QR загружен')
+      setQrVersion((v) => v + 1)
+      onSaved(d)
+    },
+  })
+  const removeQr = useMutation<Deposit, ApiError>({
+    mutationFn: () => unwrap(api.DELETE('/api/clinic/deposit/qr')),
+    onSuccess: (d) => {
+      setDone('QR удалён')
       onSaved(d)
     },
   })
@@ -221,14 +220,16 @@ function DepositForm({ st, onSaved }: { st: Deposit; onSaved: (d: Deposit) => vo
           <input type="number" min={1} inputMode="numeric" placeholder="Например: 1000" value={amount} onChange={(e) => { setDone(''); save.reset(); setAmount(e.target.value) }} /></label>
         <label className="field"><span>Как перевести (номер, банк, получатель)</span>
           <textarea rows={2} maxLength={500} placeholder="MBank: 0555 123 456 (Стоматология «Улыбка»)" value={details} onChange={(e) => { setDone(''); save.reset(); setDetails(e.target.value) }} /></label>
-        <p className="hint">Эти реквизиты уходят и в напоминании о долге («Касса → Должники» → «Напомнить») — даже если предоплату не просите.</p>
+        <p className="hint">Эти реквизиты и QR уходят и в напоминании о долге («Касса → Должники» → «Напомнить») — даже если предоплату не просите.
+          QR в Telegram приходит картинкой, в WhatsApp — ссылкой на страницу с ним. Врач на аренде кресла указывает свои — в «Моём профиле».</p>
         <div className="qr-row">
           {qrUrl && <img className="pay-qr" src={qrUrl} alt="QR для предоплаты" />}
           <label className="btn">{st.hasQr ? 'Заменить QR' : 'Загрузить QR'}
-            <input type="file" accept="image/jpeg,image/png" className="sr-only" aria-label="QR для предоплаты"
+            <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="QR для предоплаты"
               onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) qr.mutate(file) }} /></label>
+          {st.hasQr && <button type="button" className="btn ghost" disabled={removeQr.isPending} onClick={() => removeQr.mutate()}>Удалить QR</button>}
         </div>
-        {qr.error && <p className="error" role="alert">{errorText(qr.error)}</p>}
+        {(qr.error || removeQr.error) && <p className="error" role="alert">{errorText(qr.error ?? removeQr.error)}</p>}
         {done && <p className="tone-ok" role="status">{done}</p>}
         <SaveBar dirty={dirty} saving={save.isPending} saved={save.isSuccess} error={errorText(save.error)}
           label="Сохранить предоплату" savedText="Предоплата сохранена" onSave={() => save.mutate()} />

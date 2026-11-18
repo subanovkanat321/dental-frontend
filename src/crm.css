@@ -341,6 +341,12 @@
 .danger-link { color: var(--destructive); justify-self: start; font-size: .85rem; }
 .upload { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .upload .segments { min-width: 260px; }
+/* «Снимки и фото»: телефон — «Камера», «Галерея», «Файл» в одну строку ровными кнопками; компьютер — одна кнопка */
+.upload-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.upload-pick.touch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
+.upload-pick.touch .btn { min-height: 44px; padding: 0 6px; white-space: nowrap; }
+/* Тащат файлы на блок — пунктирная рамка: «бросайте сюда» */
+.drop-over { outline: 2px dashed var(--accent); outline-offset: 4px; border-radius: var(--r-md); }
 @media (max-width: 760px) {
   .jaw { grid-template-columns: 1fr; }
   .quadrant + .quadrant { padding-left: 0; border-left: 0; }
