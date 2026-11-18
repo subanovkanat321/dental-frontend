@@ -341,10 +341,11 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
       {compact ? <><b>{overdueTasks}</b> просрочено</> : <>Просроченные задачи: <b>{overdueTasks}</b></>}
     </button>
   )
-  // «⭐ N попросить оценку» — пациенты без Telegram за сегодня и вчера (бот их не спросит); только на сегодняшнем дне
+  // «💬 Попросить отзыв у N пациентов» — пациенты без Telegram за сегодня и вчера (бот их не спросит); только на сегодняшнем дне
   const [reviewAsksOpen, setReviewAsksOpen] = useState(false)
   const reviewAsks = useReviewAsks(date === today).data?.length ?? 0
-  const reviewChip = (compact: boolean) => date === today && <ReviewAsksChip count={reviewAsks} compact={compact} onOpen={() => setReviewAsksOpen(true)} />
+  // Не срочно — не в «Требует внимания» сверху (там «⭐ 4» читалось как оценка), а тихой строкой под расписанием
+  const reviewLine = date === today && <ReviewAsksChip count={reviewAsks} onOpen={() => setReviewAsksOpen(true)} />
   const firstOf = (list: Appointment[]) => () => {
     const first = [...list].sort((a, b) => (a.startAt < b.startAt ? -1 : 1))[0]
     if (first) setSide({ kind: 'appointment', id: first.id })
@@ -510,7 +511,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
           <>
             {/* Телефон: только то, что нужно сделать сейчас, — заявки и оплата на кассе (и «мой день» врача). «Ждём ответа» видно в строках
                 дня, «склад: мало» — в «Складе» и сообщением бота: на главной это было лишнее */}
-            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data || overdueTasks > 0 || (date === today && reviewAsks > 0)) && (
+            {(requests.length > 0 || (toPay.data?.length ?? 0) > 0 || earnings.data || overdueTasks > 0) && (
               <div className="today-strip compact" role="group" aria-label="Требует внимания">
                 {tasksChip(true)}
                 {requests.length > 0 && (
@@ -522,7 +523,6 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                   <button type="button" className="stat s-cashier" onClick={() => onNavigate?.('cash')}><b>{toPay.data!.length}</b> к оплате</button>
                 )}
                 {earnings.data && <EarningsChip compact e={earnings.data} onOpen={openEarnings} />}
-                {reviewChip(true)}
               </div>
             )}
             {doctorSwitch}
@@ -566,7 +566,6 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
                     <b>{low}</b> мало на складе
                   </button>
                 )}
-                {reviewChip(false)}
                 {!requests.length && !waiting.length && !toPay.data?.length && !low && (
                   <span className="stat s-quiet calm" title="Всё под контролем: заявок и срочных дел нет" aria-label="Всё под контролем: заявок и срочных дел нет">✓ Всё спокойно</span>
                 )}
@@ -725,6 +724,7 @@ export function SchedulePage({ me, bookPatient = null, bookContact = null, bookP
             )}
           </div>
         )}
+        {!weekMode && !monthMode && reviewLine}
         {!dayList && !monthMode && doctors.length > 0 && <BadgesLegend chair={Boolean(chairs.data?.some((c) => (c.doctorIds?.length ?? 0) > 1))} />}
       </section>
       {summary && (

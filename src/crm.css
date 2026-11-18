@@ -691,7 +691,7 @@ button.remind-sent { background: none; border: 0; padding: 6px 4px; font-family:
 }
 /* Карточка приёма: «Вернуть» после неявки или отмены, оценка, отзыв */
 .undo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: var(--r-md); background: var(--sunken); }
-.rating { margin: 0; color: var(--wait-ink); letter-spacing: 2px; }
+.rating { margin: 0; color: #E0A800; letter-spacing: 2px; }
 .review-comment { margin: 0; padding: 8px 10px; border-left: 3px solid var(--line-strong); background: var(--sunken); border-radius: var(--r-sm); white-space: pre-wrap; }
 .patient-name.link { font-size: 1.05rem; font-weight: 700; }
 .contact .btn { flex: 1; justify-content: center; text-decoration: none; }
@@ -1670,6 +1670,15 @@ section.dictation { padding: 12px; border: 1px solid var(--separator); border-ra
 .dictation-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .dictation-row > input:not([type]), .dictation-row > input[aria-label^="Шаг"], .dictation-row > input[aria-label^="Пометка"] { flex: 1 1 140px; min-width: 0; }
 .dictation-row .dictation-tooth { flex: 0 0 3.5em; width: 3.5em; text-align: center; }
+/* Шпаргалка диктовки: крупно, чтобы врач почти читал; сказанное — ✓ и зелёным */
+.dictation-cheat { list-style: none; margin: 0; padding: 8px 10px; display: grid; gap: 6px; border-radius: var(--r-md); background: var(--sunken); font-size: 1rem; line-height: 1.35; }
+.dictation-cheat li { display: grid; grid-template-columns: 1.6em minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.dictation-cheat b { font-weight: 600; }
+.dictation-cheat-n { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--card); color: var(--hint); font-weight: 600; font-size: .85rem; }
+.dictation-cheat li.done .dictation-cheat-n { background: var(--ok-bg); color: var(--ok-ink); }
+.dictation-cheat li.done > span:last-child { color: var(--hint); }
+.dictation-live { color: var(--bad-ink); font-weight: 600; }
+@media (max-width: 640px) { .dictation-cheat { font-size: .9rem; gap: 3px; padding: 6px 8px; } .dictation-live { font-size: .9rem; } }
 
 /* «Продолжение лечения» в карточке приёма: что сделали в прошлый раз и что осталось по плану */
 .continue { display: grid; gap: 8px; }
@@ -2805,3 +2814,28 @@ p.expense-owner { display: block; }
   .table.sheet :is(th, td):nth-child(1) { width: 40px; min-width: 40px; max-width: 40px; }
   .table.sheet :is(th, td):nth-child(2) { left: 40px; }
 }
+
+/* «Касса» врача: на месте выбора «Вся клиника» — чья касса, словами (выбора у врача нет) */
+.own-cash { color: var(--hint); font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media (min-width: 761px) { .cash > .toolbar > .own-cash { order: 3; margin-left: auto; } }
+@media (max-width: 760px) { .cash > .page-head > .own-cash { flex: 1 1 100%; } }
+
+/* «Поступления (N) ›» под «Кассой»: строка — время, за что и пациент, сумма; ниже мелко — способ и кто отметил */
+.cash-entries-block { margin-top: 4px; }
+/* Колонки общие для всех строк (subgrid): время и суммы — ровным столбцом */
+.cash-entries {
+  list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--separator);
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px;
+}
+.cash-entries > li { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; }
+.cash-entry {
+  display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; row-gap: 0; align-items: baseline;
+  width: 100%; padding: 8px 4px; border: 0; border-bottom: 1px solid var(--separator); background: none;
+  font: inherit; color: inherit; text-align: left;
+}
+button.cash-entry { cursor: pointer; }
+button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
+.cash-entry .when { color: var(--hint); white-space: nowrap; }
+.cash-entry .what { min-width: 0; overflow-wrap: anywhere; }
+.cash-entry .sum { text-align: right; white-space: nowrap; }
+.cash-entry .sub { grid-column: 2 / -1; font-size: .82rem; color: var(--hint); }

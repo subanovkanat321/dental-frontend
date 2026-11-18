@@ -6,6 +6,7 @@ import type { Schemas } from '../api/client'
 import { appointment, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
+import { teethSaid } from './dictationCheat'
 
 // Вымышленный пациент
 const visit: Schemas['AppointmentView'] = appointment(10, 1, '00:05', 'Бакыт М.', { status: 'DONE', version: 1 })
@@ -43,6 +44,7 @@ function backend(parse: () => Response) {
 /** Поддельное распознавание речи: тест сам «говорит» через say(). */
 class FakeRecognition {
   static last: FakeRecognition | null = null
+  static count = 0
   lang = ''
   continuous = false
   interimResults = false
@@ -50,13 +52,15 @@ class FakeRecognition {
   onerror: ((e: unknown) => void) | null = null
   onend: (() => void) | null = null
   started = false
-  constructor() { FakeRecognition.last = this }
+  constructor() { FakeRecognition.last = this; FakeRecognition.count++ }
   start() { this.started = true }
   stop() { this.started = false; this.onend?.() }
   say(parts: [string, boolean][]) {
     const results = parts.map(([transcript, isFinal]) => ({ isFinal, 0: { transcript } }))
     act(() => this.onresult?.({ resultIndex: 0, results }))
   }
+  /** Браузер сам закончил распознавание (тишина), никто «Пауза» не нажимал. */
+  silence() { act(() => { this.started = false; this.onend?.() }) }
 }
 
 async function openPanel() {
@@ -68,6 +72,7 @@ async function openPanel() {
 afterEach(() => {
   vi.unstubAllGlobals()
   FakeRecognition.last = null
+  FakeRecognition.count = 0
 })
 
 test('диктовка голосом: текст по мере речи, разбор, снять галочку, поправить, сохранить только выбранное', async () => {
@@ -85,7 +90,7 @@ test('диктовка голосом: текст по мере речи, раз
   rec.say([['36-й кариес, поставили пломбу.', true], [' удалили', false]])
   expect(within(box).getByRole('textbox', { name: 'Текст диктовки' })).toHaveValue('36-й кариес, поставили пломбу. удалили')
   rec.say([['36-й кариес, поставили пломбу.', true], [' Удалили 18.', true]])
-  await userEvent.click(within(box).getByRole('button', { name: 'Разобрать' }))
+  await userEvent.click(within(box).getByRole('button', { name: 'Готово' }))
   expect(calls.parse).toEqual([{ text: '36-й кариес, поставили пломбу. Удалили 18.' }])
 
   const review = await screen.findByRole('region', { name: 'Проверьте диктовку' })
@@ -141,4 +146,85 @@ test('регистратуре кнопки нет: заметка о приём
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   await waitForSlow(() => expect(screen.queryByText('Заметка о приёме')).not.toBeInTheDocument())
   expect(screen.queryByRole('button', { name: '🎤 Надиктовать приём' })).not.toBeInTheDocument()
+})
+
+test('тишина не обрывает запись: браузер закончил сам — тихо начинаем заново, текст на месте; шпаргалка отмечает сказанное', async () => {
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+  const calls = backend(() => HttpResponse.json(proposal))
+  await userEvent.click(await openPanel())
+  const box = screen.getByRole('region', { name: 'Диктовка' })
+  const cheat = within(box).getByRole('list', { name: 'Что сказать по порядку' })
+  const items = within(cheat).getAllByRole('listitem')
+  expect(items).toHaveLength(5)
+  expect(cheat).toHaveTextContent('Тридцать шестой зуб — кариес')
+  expect(items.filter((li) => li.textContent?.includes('✓'))).toHaveLength(0)
+  expect(box).toHaveTextContent('Слушаю… можно думать, запись не прервётся')
+
+  const first = FakeRecognition.last!
+  first.say([['Тридцать шестой зуб кариес', true], [' поставили', false]])
+  expect(items[0]).toHaveTextContent('✓')
+  expect(items[0]).toHaveTextContent('сказано')
+  // Врач задумался — браузер закончил сам; недоговорённое слово не потерялось
+  first.silence()
+  const second = FakeRecognition.last!
+  expect(second).not.toBe(first)
+  expect(second.started).toBe(true)
+  expect(box).toHaveTextContent('Слушаю…')
+  expect(within(box).getByRole('button', { name: 'Пауза' })).toBeInTheDocument()
+  second.say([['пломбу. Контроль через две недели', true]])
+  expect(within(box).getByRole('textbox', { name: 'Текст диктовки' }))
+    .toHaveValue('Тридцать шестой зуб кариес поставили пломбу. Контроль через две недели')
+  expect(items[1]).toHaveTextContent('✓')
+  expect(items[4]).toHaveTextContent('✓')
+  expect(items[2]).not.toHaveTextContent('✓')
+
+  // «Готово»: запись останавливается, разбор — ровно один раз, без перезапуска
+  const before = FakeRecognition.count
+  await userEvent.dblClick(within(box).getByRole('button', { name: 'Готово' }))
+  await screen.findByRole('region', { name: 'Проверьте диктовку' })
+  expect(FakeRecognition.count).toBe(before)
+  expect(calls.parse).toEqual([{ text: 'Тридцать шестой зуб кариес поставили пломбу. Контроль через две недели' }])
+})
+
+test('«Пауза» — без перезапуска; долго тихо — пауза с подсказкой «Продолжить»; разбор сам не начинается', async () => {
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+  const calls = backend(() => HttpResponse.json(proposal))
+  await userEvent.click(await openPanel())
+  const box = screen.getByRole('region', { name: 'Диктовка' })
+  FakeRecognition.last!.say([['Сорок шестой каналы', true]])
+  await userEvent.click(within(box).getByRole('button', { name: 'Пауза' }))
+  expect(FakeRecognition.count).toBe(1)
+  expect(FakeRecognition.last!.started).toBe(false)
+  expect(box).toHaveTextContent('Запись на паузе')
+
+  await userEvent.click(within(box).getByRole('button', { name: '🎤 Продолжить' }))
+  expect(FakeRecognition.count).toBe(2)
+  // Тишина: 5 перезапусков подряд без единого слова — дальше пауза
+  for (let i = 0; i < 6; i++) FakeRecognition.last!.silence()
+  expect(FakeRecognition.count).toBe(7)
+  expect(box).toHaveTextContent('Долго тихо — запись на паузе')
+  expect(within(box).getByRole('button', { name: '🎤 Продолжить' })).toBeInTheDocument()
+  expect(within(box).getByRole('textbox', { name: 'Текст диктовки' })).toHaveValue('Сорок шестой каналы')
+  expect(calls.parse).toEqual([])
+})
+
+test('нет доступа к микрофону — без перезапуска, поле для текста', async () => {
+  vi.stubGlobal('webkitSpeechRecognition', FakeRecognition)
+  backend(() => HttpResponse.json(proposal))
+  await userEvent.click(await openPanel())
+  const rec = FakeRecognition.last!
+  act(() => rec.onerror?.({ error: 'not-allowed' }))
+  rec.silence()
+  expect(FakeRecognition.count).toBe(1)
+  const box = screen.getByRole('region', { name: 'Диктовка' })
+  expect(box).toHaveTextContent('Нет доступа к микрофону')
+  expect(box).toHaveTextContent('микрофон на клавиатуре')
+  expect(within(box).getByRole('list', { name: 'Что сказать по порядку' })).toBeInTheDocument()
+})
+
+test('номера зубов для шпаргалки: цифрами и словами, «через 14 дней» — не зуб', () => {
+  expect([...teethSaid('36-й кариес, у 46 каналы')]).toEqual([36, 46])
+  expect([...teethSaid('Тридцать шестой зуб, сорок шестой — каналы, одиннадцатый')].sort()).toEqual([11, 36, 46])
+  expect(teethSaid('контроль через 14 дней').size).toBe(0)
+  expect(teethSaid('зуб 9, 51, 19').size).toBe(0)
 })
