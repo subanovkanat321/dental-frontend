@@ -10,8 +10,11 @@ type Page = Schemas['ReviewLinksPage']
 
 /**
  * Оценка приёма по ссылке из WhatsApp (V222 бэкенда): /r/<секрет> — для пациентов без Telegram. Логика — как у
- * бота: 5 ⭐ — большая кнопка «Оставить отзыв в 2ГИС» (и «Google»), 1–3 ⭐ — «Что было не так?» (текст уходит
- * врачу в карточку приёма, не публично), 4 ⭐ — спасибо. Имени пациента на странице нет — клиника, врач и дата.
+ * бота: 4–5 ⭐ — большие кнопки «Оставить отзыв в 2ГИС» и «Google»; 1–3 ⭐ — «Что было не так?» (текст уходит
+ * врачу и руководителю в карточку приёма, не публично), а под полем мелко и спокойно — «Можно также оставить отзыв
+ * в 2ГИС / Google». Ссылку на публичный отзыв видят при любой оценке: звать только довольных (review gating)
+ * запрещает Google; бонусов за отзыв нет. Ссылки 2ГИС/Google сервер отдаёт после оценки, если они есть в «О клинике».
+ * Имени пациента на странице нет — клиника, врач и дата.
  * Открыть ссылку — ничего не тратит: оценку ставит только нажатие на звезду.
  */
 export function ReviewPage() {
@@ -84,7 +87,7 @@ export function ReviewPage() {
               </p>
               <h1>{t('reviewThanks')}</h1>
               {page.rating >= 4 && <p>{t('reviewGood')}</p>}
-              {(page.mapUrl || page.googleUrl) && (
+              {page.rating >= 4 && (page.mapUrl || page.googleUrl) && (
                 <div className="review-public">
                   <p>{t('review2gisAsk')}</p>
                   {page.mapUrl && <a className="btn primary review-2gis" href={page.mapUrl} target="_blank" rel="noopener noreferrer">{t('review2gisButton')}</a>}
@@ -101,6 +104,14 @@ export function ReviewPage() {
                 </form>
               )}
               {page.commented && <p className="tone-ok" role="status">{t('reviewSaved')}</p>}
+              {page.rating <= 3 && (page.mapUrl || page.googleUrl) && (
+                <p className="review-also hint small">
+                  {t('reviewAlsoPublic')}{' '}
+                  {page.mapUrl && <a href={page.mapUrl} target="_blank" rel="noopener noreferrer">{t('reviewAlso2gis')}</a>}
+                  {page.mapUrl && page.googleUrl && ' · '}
+                  {page.googleUrl && <a href={page.googleUrl} target="_blank" rel="noopener noreferrer">{t('reviewAlsoGoogle')}</a>}
+                </p>
+              )}
             </section>
           )}
           {error && <p className="error" role="alert">{error}</p>}

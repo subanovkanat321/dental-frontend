@@ -87,7 +87,7 @@ export function ReviewAsksDialog({ doctorName, onClose }: { doctorName: (id: num
         }}>
         <h2 id="ask-review-title">⭐ Попросите оценку</h2>
         <p className="hint">Пациенты без Telegram — бот их не спросит. Откроется WhatsApp с текстом и ссылкой: пациент оценит приём
-          одним нажатием, 5 ⭐ — приглашение оставить отзыв в 2ГИС.</p>
+          одним нажатием и увидит ссылку на отзыв в 2ГИС / Google.</p>
         {asks.isPending && <p className="hint">Загружаем…</p>}
         {asks.error && <p className="error" role="alert">{asks.error.message}</p>}
         {asks.data && rows.length === 0 && <p className="tone-ok" role="status">Всех попросили ✓</p>}

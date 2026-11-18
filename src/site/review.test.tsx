@@ -62,7 +62,42 @@ test('5 ⭐ — спасибо и большая кнопка «Оставить
   expect(screen.queryByLabelText('Что было не так?')).not.toBeInTheDocument()
 })
 
-test('2 ⭐ — «Что было не так?» уходит клинике, публичных кнопок нет; кыргызский', async () => {
+test('4 ⭐ — тоже кнопки 2ГИС и Google', async () => {
+  window.history.replaceState(null, '', `/r/${TOKEN}`)
+  backend((rating) => ({ ...BASE, rating, mapUrl: 'https://2gis.kg/bishkek/firm/1', googleUrl: 'https://g.page/r/test/review' }))
+  const user = userEvent.setup()
+  render(<ReviewPage />)
+  await user.click(await screen.findByRole('button', { name: '4 из 5' }))
+  expect(await screen.findByRole('link', { name: '⭐ Оставить отзыв в 2ГИС' })).toHaveAttribute('href', 'https://2gis.kg/bishkek/firm/1')
+  expect(screen.getByRole('link', { name: 'Отзыв в Google' })).toBeInTheDocument()
+  expect(screen.queryByLabelText('Что было не так?')).not.toBeInTheDocument()
+})
+
+test('2 ⭐ — сначала «Что было не так?», ниже спокойно «можно также» 2ГИС и Google (без review gating)', async () => {
+  window.history.replaceState(null, '', `/r/${TOKEN}`)
+  const calls = backend((rating) => ({ ...BASE, rating, canComment: true, mapUrl: 'https://2gis.kg/bishkek/firm/1', googleUrl: 'https://g.page/r/test/review' }))
+  const user = userEvent.setup()
+  render(<ReviewPage />)
+  await user.click(await screen.findByRole('button', { name: '2 из 5' }))
+
+  const field = await screen.findByLabelText('Что было не так?')
+  const also = screen.getByText(/можно также оставить отзыв о клинике/)
+  const gis = screen.getByRole('link', { name: 'в 2ГИС' })
+  expect(gis).toHaveAttribute('href', 'https://2gis.kg/bishkek/firm/1')
+  expect(screen.getByRole('link', { name: 'в Google' })).toHaveAttribute('href', 'https://g.page/r/test/review')
+  // Основной путь — написать клинике: поле выше ссылок, больших кнопок «⭐ Оставить отзыв» нет
+  expect(field.compareDocumentPosition(also) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(screen.queryByRole('link', { name: '⭐ Оставить отзыв в 2ГИС' })).not.toBeInTheDocument()
+
+  // Написал руководителю — ссылки остаются
+  await user.type(field, 'Долго ждала')
+  await user.click(screen.getByRole('button', { name: 'Отправить' }))
+  expect(calls).toEqual([{ rating: 2 }, { text: 'Долго ждала' }])
+  expect(await screen.findByText(/Передали врачу/)).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'в 2ГИС' })).toBeInTheDocument()
+})
+
+test('2 ⭐ без ссылок в «О клинике» — «Что было не так?» уходит клинике; кыргызский', async () => {
   window.history.replaceState(null, '', `/r/${TOKEN}`)
   const calls = backend((rating) => ({ ...BASE, rating, canComment: true }))
   const user = userEvent.setup()
