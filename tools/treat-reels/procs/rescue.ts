@@ -5,7 +5,7 @@ import { applySurface } from '../../../src/atlas/engine/surface'
 import { makeGrid, sample, surfaceNets, type Grid, type MeshData } from '../../../src/atlas/geometry/mesher'
 import { sdEllipsoid, sdRoundBox, sdSphere, smax, smin, smoothstep } from '../../../src/atlas/geometry/sdf'
 import { canals, crownOuter, rootOuter } from '../../../src/atlas/geometry/toothModel'
-import { lin, mix, noise3, toothT } from '../geometry'
+import { gumField, lin, mix, NEIGHBOURS, neighbourColor, neighbourField, noise3, toothT } from '../geometry'
 import type { Tool, ToolName } from '../instruments'
 import type { ProcCtx, Procedure, State } from '../types'
 
@@ -29,11 +29,12 @@ const CZ = -0.12
 // ── Поля ──
 /** Пульпа этого зуба ниже атласной (зуб взрослого — камера пульпы с возрастом уменьшается). */
 function pulpField(x: number, y: number, z: number): number {
-  let d = sdRoundBox(x, y + 0.02, z, 0.22, 0.11, 0.18, 0.1)
-  for (const [hx, hz] of [[-0.18, -0.11], [0.18, -0.11], [-0.18, 0.11], [0.18, 0.11]] as const) d = smin(d, sdSphere(x - hx, y - 0.13, z - hz, 0.045), 0.1)
-  return smin(d, canals(x, y, z), 0.08)
+  // Камера пульпы невелика, рога под буграми; каналы уходят в корни (центр — в плоскости среза, чтобы их было видно)
+  let d = sdRoundBox(x, y + 0.02, z - ZC, 0.17, 0.08, 0.14, 0.07)
+  for (const [hx, hz] of [[-0.15, -0.08], [0.15, -0.08], [-0.15, 0.08], [0.15, 0.08]] as const) d = smin(d, sdSphere(x - hx, y - 0.08, z - ZC - hz, 0.035), 0.08)
+  return smin(d, canals(x, y, z - ZC) + 0.035, 0.05)
 }
-const enamelT = (y: number) => 0.14 * smoothstep(-0.02, 0.36, y)
+const enamelT = (y: number) => 0.16 * smoothstep(-0.02, 0.36, y)
 const dentinCore = (x: number, y: number, z: number) => smin(crownOuter(x, y, z) + enamelT(y), rootOuter(x, y, z) + 0.04 * (1 - smoothstep(-0.12, 0, y)), 0.1)
 
 /** Итоговая полость: округлый «карман» за срезом, дно над рогами пульпы, следы бора. */
@@ -65,8 +66,8 @@ function cavityAt(s: number, x: number, y: number, z: number): number {
 
 // ── Цвет и ткань по вершинам ──
 const C = {
-  enamelOut: [0.94, 0.91, 0.84], enamelCut: [0.8, 0.82, 0.83], dentin: [0.95, 0.84, 0.64], dentinDeep: [0.9, 0.74, 0.52],
-  pulp: [0.76, 0.3, 0.27], cement: [0.86, 0.73, 0.53], cariesDark: [0.25, 0.13, 0.06], cariesSoft: [0.56, 0.37, 0.18], chalk: [0.97, 0.95, 0.89],
+  enamelOut: [0.95, 0.93, 0.87], enamelCut: [0.95, 0.96, 0.95], dentin: [0.95, 0.8, 0.55], dentinDeep: [0.9, 0.7, 0.44],
+  pulp: [0.93, 0.66, 0.62], cement: [0.86, 0.73, 0.53], cariesDark: [0.25, 0.13, 0.06], cariesSoft: [0.56, 0.37, 0.18], chalk: [0.97, 0.95, 0.89],
   compDentin: [0.93, 0.83, 0.65], compEnamel: [0.9, 0.88, 0.82],
 } as const
 
@@ -155,7 +156,7 @@ function cutTexture(): THREE.DataTexture {
       const grow = 0.5 + 0.5 * Math.sin(rr * 260 + 2 * noise3(x * 9, y * 9, 1.3))
       const pu = pulpField(x, y, z)
       const deep = 1 - smoothstep(0.015, 0.2, pu)
-      let r = mix(0.95, 0.89, deep), g = mix(0.85, 0.72, deep), b = mix(0.66, 0.5, deep)
+      let r = mix(0.95, 0.9, deep), g = mix(0.8, 0.7, deep), b = mix(0.55, 0.44, deep)
       const k = 1 - 0.06 * tub - 0.025 * grow + 0.06 * (grain - 0.5) + 0.03 * (fine - 0.5)
       r *= k; g *= k; b *= k
       let rough = 0.42
@@ -173,14 +174,14 @@ function cutTexture(): THREE.DataTexture {
         const retz = 0.5 + 0.5 * Math.sin(T * 480 + 2.5 * noise3(x * 12, y * 12, 4))
         const outer = smoothstep(-0.05, 0, T) // у наружной поверхности эмаль светлее и голубее
         const nearDej = 1 - smoothstep(0, 0.04, dc)
-        let er = mix(0.8, 0.88, outer), eg = mix(0.82, 0.9, outer), eb = mix(0.83, 0.93, outer)
-        er = mix(er, 0.86, nearDej * 0.5); eg = mix(eg, 0.82, nearDej * 0.5); eb = mix(eb, 0.72, nearDej * 0.5)
+        let er = mix(0.93, 0.97, outer), eg = mix(0.94, 0.97, outer), eb = mix(0.94, 0.98, outer)
+        er = mix(er, 0.9, nearDej * 0.35); eg = mix(eg, 0.88, nearDej * 0.35); eb = mix(eb, 0.82, nearDej * 0.35)
         const ek = 1 - 0.012 * prism - 0.015 * hsb - 0.015 * retz + 0.04 * (grain - 0.5) + 0.02 * (fine - 0.5)
         r = mix(r, er * ek, en); g = mix(g, eg * ek, en); b = mix(b, eb * ek, en)
-        rough = mix(rough, 0.2, en)
+        rough = mix(rough, 0.14, en)
       }
       // Тонкая тёмная линия эмалево-дентинной границы; цемент на корне
-      const line = Math.exp(-((dc / 0.005) ** 2)) * crown * 0.1
+      const line = Math.exp(-((dc / 0.006) ** 2)) * crown * 0.16
       r *= 1 - line; g *= 1 - line; b *= 1 - line * 1.3
       const cem = smoothstep(-0.002, 0.003, dc) * (1 - crown)
       r = mix(r, 0.86, cem); g = mix(g, 0.73, cem); b = mix(b, 0.53, cem)
@@ -189,11 +190,11 @@ function cutTexture(): THREE.DataTexture {
         const pw = smoothstep(0.003, -0.003, pu)
         const ves = 1 - smoothstep(0, 0.035, Math.abs(noise3(x * 30, y * 30, 7) - 0.5))
         const ves2 = 1 - smoothstep(0, 0.03, Math.abs(noise3(x * 70, y * 70, 9) - 0.5))
-        let pr = 0.78, pg = 0.47, pb = 0.42
+        let pr = 0.93, pg = 0.66, pb = 0.62
         const v = Math.min(1, ves * 0.8 + ves2 * 0.5)
-        pr = mix(pr, 0.62, v); pg = mix(pg, 0.26, v); pb = mix(pb, 0.25, v)
+        pr = mix(pr, 0.84, v * 0.6); pg = mix(pg, 0.48, v * 0.6); pb = mix(pb, 0.46, v * 0.6)
         const odo = smoothstep(-0.018, -0.004, pu)
-        pr = mix(pr, 0.86, odo * 0.5); pg = mix(pg, 0.6, odo * 0.5); pb = mix(pb, 0.52, odo * 0.5)
+        pr = mix(pr, 0.96, odo * 0.4); pg = mix(pg, 0.8, odo * 0.4); pb = mix(pb, 0.74, odo * 0.4)
         const pk = 0.92 + 0.16 * grain
         r = mix(r, pr * pk, pw); g = mix(g, pg * pk, pw); b = mix(b, pb * pk, pw)
         rough = mix(rough, 0.36, pw)
@@ -436,12 +437,6 @@ export function rescueProcedure(ctx: ProcCtx): Procedure {
     stageData.push(paintMesh(surfaceNets(g, f), toothPainter(true)))
   }
   const stages = stageData.map((m) => mk(m, toothMat))
-  // Для поворота в финале — тот же вылеченный срез, но с корнями целиком (обычные стадии обрезаны снизу кадра)
-  const gF: Grid = makeGrid([-0.64, -2.1, -0.54], [0.64, 0.98, -0.07], 0.0095)
-  const secFull = mk(paintMesh(surfaceNets(gF, sample(gF, (x, y, z) => {
-    const t0 = Math.max(toothT(x, y, z), z - ZC)
-    return inBox(x, y, z) ? smax(t0, -prepF(x, y, z), 0.014) : t0
-  })), toothPainter(false)), toothMat)
 
   // ── Мелкая сетка полости: композит, гель, бонд, вода ──
   const gc: Grid = makeGrid([-0.38, 0.32, -0.36], [0.38, 0.98, -0.07], 0.0055)
@@ -555,6 +550,64 @@ export function rescueProcedure(ctx: ProcCtx): Procedure {
   const gx: Grid = makeGrid([-0.68, -2.05, -0.6], [0.68, 0.98, 0.6], 0.012)
   const whole = mk(paintMesh(surfaceNets(gx, sample(gx, toothT)), toothPainter(false)), toothMat)
 
+  // ── Десна с костью и соседние зубы — тоже в разрезе (сзади) и передние половинки (для вступления и финала) ──
+  const teethMin = (x: number, y: number, z: number) => Math.min(toothT(x, y, z), neighbourField(0, x, y, z), neighbourField(1, x, y, z))
+  /** Цвет десны и кости: на срезе — розовая слизистая у поверхности, глубже — кость с ячейками, связка у корня. */
+  const gumPaint: Painter = (x, y, z, nz, col) => {
+    const g = gumField(x, y, z, 9)
+    const depth = Math.max(0, -g)
+    const onCut = nz > 0.9 && Math.abs(z - ZC) < 0.012
+    let r = 0.86, gg = 0.52, b = 0.53
+    if (onCut) {
+      const soft = 1 - smoothstep(0.06, 0.1, depth)
+      const cells = noise3(x * 34, y * 34, 3.1)
+      let br = 0.9 * (0.88 + 0.2 * cells), bg = 0.82 * (0.88 + 0.2 * cells), bb = 0.68 * (0.88 + 0.2 * cells)
+      const pdl = Math.exp(-(((teethMin(x, y, z) - 0.012) / 0.008) ** 2))
+      br = mix(br, 0.85, pdl * 0.8); bg = mix(bg, 0.55, pdl * 0.8); bb = mix(bb, 0.52, pdl * 0.8)
+      r = mix(br, 0.84, soft); gg = mix(bg, 0.47, soft); b = mix(bb, 0.49, soft)
+    } else {
+      // Снаружи: у края десны светлее, ниже — краснее
+      const low = smoothstep(-0.25, -0.75, y)
+      r = mix(0.86, 0.72, low); gg = mix(0.55, 0.3, low); b = mix(0.55, 0.33, low)
+      r *= 0.95 + 0.08 * noise3(x * 20, y * 20, z * 20)
+    }
+    col[0] = r; col[1] = gg; col[2] = b
+  }
+  const nbPaint = (i: number): Painter => (x, y, z, nz, col) => {
+    const n = NEIGHBOURS[i]!
+    const tmp = new Float32Array(3)
+    neighbourColor(x, y, z, tmp, 0, n)
+    let r = tmp[0]! ** (1 / 2.2), g = tmp[1]! ** (1 / 2.2), b = tmp[2]! ** (1 / 2.2)
+    if (nz > 0.9 && Math.abs(z - ZC) < 0.012) {
+      const d = neighbourField(i, x, y, z)
+      const en = smoothstep(-0.13, -0.11, d) * smoothstep(-0.05, 0.05, y - n.y)
+      r = mix(0.94, 0.95, en); g = mix(0.79, 0.96, en); b = mix(0.55, 0.95, en)
+      const pw = smoothstep(-0.27, -0.3, d) * smoothstep(-0.25, -0.1, y) * (1 - smoothstep(0.25, 0.35, y))
+      r = mix(r, 0.93, pw); g = mix(g, 0.66, pw); b = mix(b, 0.62, pw)
+    }
+    col[0] = r; col[1] = g; col[2] = b
+  }
+  const gumMat = ctx.gumMat
+  const backZ: [number, number] = [-0.95, -0.07], frontZ: [number, number] = [-0.13, 0.95]
+  const gumGrid = (zr: [number, number]) => makeGrid([-1.7, -1.8, zr[0]], [1.7, 0.3, zr[1]], 0.011)
+  const gB = gumGrid(backZ), gFr = gumGrid(frontZ)
+  const gumBack = mk(paintMesh(surfaceNets(gB, sample(gB, (x, y, z) => Math.max(gumField(x, y, z, teethMin(x, y, z)), z - ZC))), gumPaint), gumMat)
+  const gumFront = mk(paintMesh(surfaceNets(gFr, sample(gFr, (x, y, z) => Math.max(gumField(x, y, z, teethMin(x, y, z)), ZC - z))), gumPaint), gumMat)
+  const nbBack: THREE.Mesh[] = [], nbFront: THREE.Mesh[] = []
+  NEIGHBOURS.forEach((n, i) => {
+    const lo = n.x - 0.72 * n.s, hi = n.x + 0.72 * n.s
+    const gb = makeGrid([lo, -0.4, -0.62], [hi, 1.0, -0.07], 0.011), gf = makeGrid([lo, -0.4, -0.13], [hi, 1.0, 0.62], 0.011)
+    nbBack.push(mk(paintMesh(surfaceNets(gb, sample(gb, (x, y, z) => Math.max(neighbourField(i, x, y, z), z - ZC))), nbPaint(i)), ctx.toothMat))
+    nbFront.push(mk(paintMesh(surfaceNets(gf, sample(gf, (x, y, z) => Math.max(neighbourField(i, x, y, z), ZC - z))), nbPaint(i)), ctx.toothMat))
+  })
+  // Передняя половина больного зуба (со сколом и кариесом) — вместе с задней даёт целый зуб во вступлении
+  const gTF = makeGrid([-0.68, -0.4, -0.13], [0.68, 0.98, 0.62], 0.0095)
+  const toothFront = mk(paintMesh(surfaceNets(gTF, sample(gTF, (x, y, z) => smax(Math.max(toothT(x, y, z), ZC - z), -hole(x, y, z), 0.014))), toothPainter(true)), toothMat)
+  // Передняя половина вылеченного зуба: в финале половинка возвращается на место — разрез «закрывается»
+  const toothFrontH = mk(paintMesh(surfaceNets(gTF, sample(gTF, (x, y, z) => Math.max(toothT(x, y, z), ZC - z))), toothPainter(false)), toothMat)
+  const frontParts = [gumFront, ...nbFront, toothFront, toothFrontH]
+  const backAlways = [gumBack, ...nbBack]
+
   // ── Частицы: спрей бора (штрихи), стружка, струя воды, брызги ──
   const MIST = 1400
   const mistGeo = new THREE.BufferGeometry()
@@ -600,10 +653,20 @@ export function rescueProcedure(ctx: ProcCtx): Procedure {
       const ext = s.exterior! >= 0.5
       const fill = s.fill!
       const stage = Math.round(Math.min(1, Math.max(0, s.prep!)) * (STAGES - 1))
-      const full = s.fullSec! >= 0.5
-      stages.forEach((m, i) => { m.visible = !ext && !full && i === stage })
-      secFull.visible = !ext && full
+      stages.forEach((m, i) => { m.visible = !ext && i === stage })
       whole.visible = ext
+      // Вступление: передняя половина (зуб, десна, соседи) на месте, потом отъезжает вправо-к камере;
+      // в финале возвращается (уже здоровая), затем срез и половинка заменяются целым зубом
+      const split = Math.min(1, Math.max(0, s.split!))
+      for (const m of backAlways) m.visible = true
+      const e = split * split * (3 - 2 * split)
+      const healthy = s.healthyFront! >= 0.5
+      for (const m of frontParts) {
+        const skip = (m === toothFront && (ext || healthy)) || (m === toothFrontH && (ext || !healthy))
+        m.visible = !skip && (ext || split < 0.999)
+        m.position.set(ext ? 0 : 2.6 * e, ext ? 0 : 0.35 * e, ext ? 0 : 1.6 * e)
+        m.rotation.set(0, ext ? 0 : -0.5 * e, ext ? 0 : -0.25 * e)
+      }
       const sub = Math.min(fills.length - 1, Math.ceil(Math.min(3, fill) * FILL_SUBS) - 1)
       fills.forEach((m, i) => { m.visible = !ext && fill > 0 && i === sub })
       u.uWet.value = s.wet!
