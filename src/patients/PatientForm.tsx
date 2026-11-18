@@ -4,7 +4,8 @@ import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
 import { PhoneInput } from '../clinic/PhoneInput'
-import { phoneFromInput, phoneToInput } from '../clinic/phone'
+import { phoneFromInput, phoneFromText, phoneToInput } from '../clinic/phone'
+import { ContactPick } from './ContactPick'
 import { sourceChoices, useSources } from '../lib/sources'
 import { formatPhone, todayIn } from '../lib/time'
 import { useClose } from '../lib/useClose'
@@ -18,6 +19,8 @@ const FIELDS = ['fullName', 'phone', 'birthDate', 'workplace', 'sourceId'] as co
 /**
  * Имя, телефон, дата рождения, место работы и откуда узнал — новый пациент или правка. Те же проверки, что на
  * сервере: ошибки под полями (422), такой номер уже есть (409) — открыть того или «это другой человек».
+ * Новый пациент — имя и номер можно взять из записной книжки («📇 Из контактов телефона», Android) или из
+ * буфера («📋 Вставить номер»): ContactPick.
  */
 export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
   patient?: Patient
@@ -45,6 +48,14 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
     save.reset()
     setF({ ...f, [k]: v })
   }
+  /** Контакт из записной книжки или буфера: номер — в поле (9 цифр без 0), имя — если в контакте есть. */
+  const fromContact = (name: string, raw: string) => {
+    const phone = phoneFromText(raw)
+    if (!phone) return false
+    save.reset()
+    setF((cur) => ({ ...cur, phone, fullName: name.trim() || cur.fullName }))
+    return true
+  }
   const submit = (e: FormEvent) => {
     e.preventDefault()
     save.mutate(false)
@@ -58,6 +69,7 @@ export function PatientForm({ patient: p, onSaved, onOpenOther, onCancel }: {
       <label className="field"><span>Телефон</span>
         <PhoneInput label="Телефон" value={f.phone} onChange={set('phone')} /></label>
       {err('phone') && <p className="error">{err('phone')}</p>}
+      {!p && <ContactPick onContact={fromContact} />}
       <div className="row">
         <label className="field"><span>Дата рождения</span>
           <DateInput birth min="1900-01-01" max={todayIn()} value={f.birthDate} placeholder="Не указана" onChange={(e) => set('birthDate')(e.target.value)} /></label>

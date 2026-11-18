@@ -12,6 +12,7 @@ import { AnalyticsTab } from './Analytics'
 import { SalaryTab } from './SalaryTab'
 import { ExpensesTab, ReportTab, StatsTab } from './MoreTabs'
 import { PaymentsTable } from './PaymentsTable'
+import { CashEntries } from './CashEntries'
 import { SortTh } from '../layout/SortTh'
 import { useSort } from '../lib/useSort'
 import { HeadSlotProvider, HeadTools, PageHead } from '../layout/PageHead'
@@ -131,6 +132,9 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
     .reduce((sum, x) => sum + (x.shares ?? []).filter((d) => d.doctorId === shareOf).reduce((a, d) => a + d.amountSom, 0), 0)
   const outSom = spent.data ? ownSpent + shareSpent : null
 
+  // Врач видит только свою кассу — выбора нет; на месте «Вся клиника» — чья это касса, словами
+  const ownName = seesAll ? null : (doctors.find((d) => d.id === me.doctorId)?.fullName ?? me.fullName ?? null)
+
   const [slot, setSlot] = useHeadSlot()
   const r = revenue.data
   const max = Math.max(1, ...(r?.days ?? []).map((d) => d.totalSom))
@@ -146,6 +150,9 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
               <option value="">Вся клиника</option>
               {doctors.map((d) => <option key={d.id} value={d.id}>{d.fullName}</option>)}
             </Select>
+          )}
+          {!seesAll && money && ownName && tab !== 'earnings' && tab !== 'salary' && (
+            <span className="own-cash" aria-label="Чья касса">🧑‍⚕️ {ownName} — ваша касса</span>
           )}
         </PageHead>
 
@@ -212,6 +219,8 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                       {Object.entries(r.cash?.byMethod ?? {}).filter(([, v]) => v).map(([k, v]) => ` · ${METHODS[k] ?? k}: ${somText(v)}`).join('')}
                       {r.cash?.depositsSom ? ` · из них предоплаты: ${somText(r.cash.depositsSom)}` : ''}
                     </p>
+                    <CashEntries from={range.from} to={range.to} doctorId={doctorId} count={r.cash?.paymentsCount ?? 0}
+                      onOpen={setOpened} onOpenPatient={onOpenPatient} active={opened} />
                   </div>
                   <div className="money-cell">
                     <h3>По приёмам</h3>
@@ -219,6 +228,9 @@ export function CashPage({ me, onOpenPatient }: { me: Me; onOpenPatient?: (patie
                     <p className="hint small">По приёмам — стоимость состоявшихся приёмов периода</p>
                     <p className="hint">
                       Оплачено приёмов: {r.paidCount}
+                      {/* Каждый приём — в одном счётчике: частичная оплата — «оплачен, из них с долгом», «всё в долг» — отдельно */}
+                      {r.partialCount ? <span className="tone-wait"> · из них с долгом: <span className="nowrap">{r.partialCount} ({somText(r.partialDebtSom)})</span></span> : null}
+                      {r.debtCount ? <span className="tone-wait"> · в долг: <span className="nowrap">{r.debtCount} ({somText(r.debtSom)})</span></span> : null}
                       {r.unpaidCount ? <span className="tone-wait"> · без оплаты: {r.unpaidCount}</span> : null}
                       {r.freeCount ? ` · бесплатно: ${r.freeCount}` : ''}
                       {r.prepaidCount ? ` · оплачено заранее: ${r.prepaidCount}` : ''}

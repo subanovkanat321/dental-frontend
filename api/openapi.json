@@ -15857,6 +15857,52 @@
         }
       }
     },
+    "/api/appointments/cash-entries" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "cashEntries",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PaymentQueryCashEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/by-patient/{patientId}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -27873,9 +27919,25 @@
           },
           "cash" : {
             "$ref" : "#/components/schemas/RevenueViewCash"
+          },
+          "debtCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "debtSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "partialCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "partialDebtSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "freeCount", "paidCount", "prepaidCount", "totalSom", "unpaidCount" ]
+        "required" : [ "debtCount", "debtSom", "freeCount", "paidCount", "partialCount", "partialDebtSom", "prepaidCount", "totalSom", "unpaidCount" ]
       },
       "RevenueViewCash" : {
         "properties" : {
@@ -28185,6 +28247,48 @@
           }
         },
         "required" : [ "id", "name", "notified" ]
+      },
+      "PaymentQueryCashEntry" : {
+        "properties" : {
+          "paidAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+          },
+          "purpose" : {
+            "type" : "string",
+            "enum" : [ "VISIT", "DEBT", "DEPOSIT", "OPENING_DEBT" ]
+          },
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "appointmentStartAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "type" : "string"
+          },
+          "takenBy" : {
+            "type" : "string"
+          },
+          "viaBot" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "amountSom", "viaBot" ]
       },
       "PatientCard" : {
         "properties" : {
