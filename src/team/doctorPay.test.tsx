@@ -8,7 +8,7 @@ import { server } from '../test/server'
 
 type Pay = Schemas['PayRequisitesDoctorPay']
 
-/** «Как оплатить мне» в «Моём профиле» врача (V224 бэкенда): реквизиты и QR. Врач и реквизиты — вымышленные. */
+/** «Как оплатить мне» в «Моём профиле» врача (V225 бэкенда): реквизиты и QR. Врач и реквизиты — вымышленные. */
 beforeEach(() => {
   server.use(
     http.get('*/api/patient/me', () => HttpResponse.json(me)),

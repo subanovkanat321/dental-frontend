@@ -138,7 +138,7 @@ export const server = setupServer(
   http.get('*/api/clinic', () => HttpResponse.json({ legalName: 'ИП Тест', address: 'Бишкек' })),
   // «Перерывы и выходные» (их видят и часы работы): по умолчанию нет; врач работает каждый день 09–18
   http.get('*/api/time-off', () => HttpResponse.json([])),
-  // «Как оплатить мне» в карточке врача (V224): по умолчанию не заполнено, выручку собирает клиника
+  // «Как оплатить мне» в карточке врача (V225): по умолчанию не заполнено, выручку собирает клиника
   http.get('*/api/doctors/:id/pay', () => HttpResponse.json({ hasQr: false, ownRevenue: false } satisfies Schemas['PayRequisitesDoctorPay'])),
   http.get('*/api/doctors/:id/hours', () => HttpResponse.json({ custom: false, days: (['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const)
     .map((weekday) => ({ weekday, start: '09:00:00', end: '18:00:00' })) } satisfies Schemas['DoctorHoursView'])),
