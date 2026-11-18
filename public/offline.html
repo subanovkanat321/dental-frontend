@@ -4,9 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="robots" content="noindex" />
-    <title>Нет интернета — Tish</title>
+    <title>Нет связи с Tish</title>
+    <!-- Обновиться самой через 20 с: Tish вернулся — откроется приложение; нет — снова эта страница.
+         Это не скрипт — CSP (script-src) meta refresh не запрещает -->
+    <meta http-equiv="refresh" content="20" />
     <link rel="icon" href="/tishka-icon.svg" />
-    <!-- Страница без сети (sw.js отдаёт её, когда сервер недоступен): всё внутри файла, без скриптов —
+    <!-- Страница «нет связи» (sw.js отдаёт её, когда сервер не ответил: нет интернета или Tish обновляется): всё внутри файла, без скриптов —
          политика источников (CSP) встроенные скрипты не пускает, а стили разрешены -->
     <style>
       :root { color-scheme: light dark; --page: #F3F6F6; --card: #FFFFFF; --text: #0F2A30; --hint: #4C6268; --accent: #0E8A80; }
@@ -23,8 +26,8 @@
   <body>
     <main>
       <img src="/tishka-icon.svg" alt="" />
-      <h1>Нет интернета</h1>
-      <p>Откройте, когда появится связь. Расписание и пациенты хранятся на сервере — ничего не потерялось.</p>
+      <h1>Нет связи с Tish</h1>
+      <p>Если интернет у вас есть — Tish, скорее всего, обновляется. Это 1–2 минуты: страница обновится сама. Данные на месте.</p>
       <a href="">Обновить</a>
     </main>
   </body>
