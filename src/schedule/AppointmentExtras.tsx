@@ -1,11 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { contactPhone } from '../lib/guardian'
 import { useState, type FormEvent } from 'react'
 
 import { api, ApiError, unwrap, type Schemas } from '../api/client'
-import { useReminderText, useRepeatReminderText } from '../api/settings'
 import { confirmRemind, isRepeat, remindedText } from './remindAgain'
-import { smsUrl, whatsappUrl } from '../lib/texts'
+import { smsUrl } from '../lib/texts'
 import { isMobile } from '../pwa/pwa'
 import { openLink, telegram } from '../lib/telegram'
 import { dateOf, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
@@ -17,6 +15,7 @@ import { ChairSelect } from './ChairSelect'
 import { useChairChoice } from './chairChoice'
 import { isChairError } from './chairTime'
 import { useAppointmentAction } from './useAppointmentAction'
+import { NOWHERE_TEXT, useRemind } from './useRemind'
 import { canEditServices, editableDoctors } from '../lib/roles'
 import { openServiceLater } from '../lib/openService'
 import { servicesOfDoctor } from '../lib/doctorServices'
@@ -390,35 +389,26 @@ const REPLIES = [['CONFIRMED', 'Придёт'], ['RESCHEDULE', 'Перенос']
  * - ответ пациента (по телефону, в WhatsApp) — «Придёт / Перенос / Нет ответа», повторное нажатие снимает.
  */
 export function Remind({ appointment: a }: { appointment: Appointment }) {
-  const client = useQueryClient()
-  const action = useAppointmentAction(a)
-  const first = useReminderText()
-  const again = useRepeatReminderText()
-  // Повторный текст — когда уже напоминали; спрашиваем ещё и когда пациент уже ответил «Приду»
-  const repeat = Boolean(a.reminderOpenedAt)
+  // Один путь с быстрой кнопкой и свайпом в «Дне» (useRemind): бот, WhatsApp с тем же текстом, отметка
+  const remind = useRemind(a)
+  const { action, opened, phone } = remind
+  // Спрашиваем «Отправить ещё раз?», когда уже напоминали или пациент уже ответил «Приду»
   const asks = isRepeat(a)
-  const text = repeat ? again : first
-  const opened = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id } } })),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
-  })
-  const smsText = text?.(a) ?? ''
+  const smsText = remind.text ?? ''
   const canRemind = a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
   const telegramRemind = async () => {
-    if (await confirmRemind(a)) action.mutate({ kind: 'remindTelegram' })
+    if (await confirmRemind(a)) remind.telegram()
   }
   const whatsapp = async () => {
     // Повтор — сначала вопрос; первое напоминание — сразу, чтобы ссылка открылась по нажатию
     if (asks && !(await confirmRemind(a))) return
-    opened.mutate()
-    // openLink: в Telegram ссылка откроется во внешнем браузере / WhatsApp, а не внутри Mini App
-    openLink(whatsappUrl(contactPhone(a.patient) ?? '', smsText))
+    remind.whatsapp()
   }
-  const sms = (phone: string) => {
+  const sms = (to: string) => {
     opened.mutate()
     // В Telegram ссылка sms: молчит — своя страница в браузере телефона откроет «Сообщения»
-    if (telegram()) openLink(`${window.location.origin}/call.html#${new URLSearchParams({ sms: phone, body: smsText })}`)
-    else window.location.href = smsUrl(phone, smsText)
+    if (telegram()) openLink(`${window.location.origin}/call.html#${new URLSearchParams({ sms: to, body: smsText })}`)
+    else window.location.href = smsUrl(to, smsText)
   }
   return (
     <section className="remind" aria-label="Напоминание">
@@ -426,6 +416,7 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
         <p className="hint small remind-last">Уже напоминали: {remindedText(a.reminderOpenedAt)}
           {a.reply === 'CONFIRMED' ? ' · пациент ответил «Приду»' : ''}. Ещё раз — другим текстом: «Напоминаем ещё раз…»</p>
       )}
+      {canRemind && remind.nowhere && <p className="hint small" role="note">{NOWHERE_TEXT}</p>}
       {canRemind && (
         <div className="actions">
           {a.patient.telegram && (
@@ -433,14 +424,13 @@ export function Remind({ appointment: a }: { appointment: Appointment }) {
               Напомнить в Telegram
             </button>
           )}
-          {contactPhone(a.patient) && (
-            <button type="button" className="btn" disabled={!text || opened.isPending}
+          {phone && (
+            <button type="button" className="btn" disabled={remind.text == null || opened.isPending}
               onClick={() => void whatsapp()}>Напомнить в WhatsApp</button>
           )}
           {/* Ссылкой, а не из скрипта: так «Сообщения» открываются надёжнее; на компьютере SMS не отправить */}
-          {contactPhone(a.patient) && isMobile() && text && (
-            <a className="btn" href={smsUrl(contactPhone(a.patient)!, smsText)} onClick={(e) => {
-              const phone = contactPhone(a.patient)!
+          {phone && isMobile() && remind.text != null && (
+            <a className="btn" href={smsUrl(phone, smsText)} onClick={(e) => {
               if (asks) {
                 // Повтор: сначала вопрос, потом «Сообщения» сами
                 e.preventDefault()

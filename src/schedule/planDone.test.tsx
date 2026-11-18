@@ -179,7 +179,7 @@ describe('телефон: свайп «состоялся»', () => {
     const row = (await screen.findByRole('button', { name: /, Айбек Т\.: / })).closest('li')!
     swipeLeft(row)
     const undo = await within(row).findByRole('status')
-    expect(undo).toHaveTextContent('Приём отмечен состоявшимся')
+    expect(undo).toHaveTextContent('Отмечено: приём состоялся')
     expect(screen.queryByRole('complementary', { name: 'Карточка приёма' })).not.toBeInTheDocument()
     await userEvent.click(await within(undo).findByRole('button', { name: 'Этапы плана ›' }))
     const card = screen.getByRole('complementary', { name: 'Карточка приёма' })

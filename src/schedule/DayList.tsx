@@ -1,15 +1,11 @@
 import { ApptBadges } from './ApptBadges'
-import { contactPhone } from '../lib/guardian'
 import { CancelledList } from './CancelledList'
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 
-import { api, ApiError, unwrap, type Schemas } from '../api/client'
+import { api, unwrap, type Schemas } from '../api/client'
 import { useReminderNotSent } from './useReminderNotSent'
-import { useReminderText, useRepeatReminderText } from '../api/settings'
 import { confirmRemind, remindedText } from './remindAgain'
-import { whatsappUrl } from '../lib/texts'
-import { openLink } from '../lib/telegram'
 import { addDays, emptyDayText, minutesOf, somText, timeOf, todayIn } from '../lib/time'
 import { serviceEmoji } from '../lib/serviceEmoji'
 import { MonthSheet } from './month/MonthSheet'
@@ -18,6 +14,7 @@ import { useAppointmentAction } from './useAppointmentAction'
 import { colleagueMarkText, colleagueTimeOf, listedChairTime } from './chairTime'
 import { askPlanDone, canMarkPlan, useAskPlanDone, usePlanLeft } from './planDoneStore'
 import { useRowSwipe } from './useRowSwipe'
+import { NOWHERE_TEXT, useRemind } from './useRemind'
 import { useMedia } from '../lib/useMedia'
 import { canEditDoctor as canEdit, seesMoneyOf, seesAllMoney as seesAllMoneyOf } from '../lib/roles'
 import { Loading } from '../layout/Loading'
@@ -26,6 +23,9 @@ import { EmptyState } from '../layout/EmptyState'
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
 type ChairTime = Schemas['SlotsViewChairTime']
+
+/** Короткая подсказка под строкой после напоминания: «WhatsApp открыт», «некуда — откройте карточку» */
+type Notice = { text: string; tone: 'ok' | 'warn'; card?: boolean }
 
 type Item =
   | { kind: 'appointment'; at: string; a: Appointment; chair?: ChairTime }
@@ -76,7 +76,7 @@ export function DayList({ me, doctors, date, onDate, onOpen, onNew, onNewHere, s
 }) {
   const today = todayIn()
   const many = all ?? doctors.length > 1
-  // Свайпы по строке — телефон (тач или узкий экран); у «Все врачи» колонки сами листаются вбок — без свайпов
+  // Свайпы по строке — телефон (палец, pointer: coarse); у «Все врачи» колонки сами листаются вбок — без свайпов
   const touch = useMedia(SWIPE_MEDIA)
   const swipe = touch && !many
   const canEditDoctor = (id: number) => canEdit(me, id)
@@ -274,51 +274,55 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
   /** Телефон: свайп вправо — напомнить, влево — «Приём состоялся» */
   swipe?: boolean
 }) {
-  const client = useQueryClient()
-  const action = useAppointmentAction(a)
+  const r = useRemind(a)
+  const { action, opened, viaBot } = r
   // Статус — отдельной мутацией: успех «состоялся» не должен выглядеть как «напоминание отправлено»
   const status = useAppointmentAction(a)
   const [undo, setUndo] = useState<Appointment | null>(null)
   const li = useRef<HTMLLIElement>(null)
-  const text = useReminderText()
-  const repeatText = useRepeatReminderText()
-  const opened = useMutation<unknown, ApiError>({
-    mutationFn: () => unwrap(api.POST('/api/appointments/{id}/reminder-opened', { params: { path: { id: a.id } } })),
-    onSuccess: () => client.invalidateQueries({ queryKey: ['appointments'] }),
-  })
+  const [notice, setNotice] = useState<Notice | null>(null)
   const s = statusOf(a)
   const canRemind = canEdit && a.status === 'SCHEDULED' && a.endAt != null && new Date(a.endAt) > new Date()
-  const viaBot = Boolean(a.patient.telegram)
   const notSent = useReminderNotSent(a)
   // После «не ушло» — снова кнопка, даже если успех нажатия ещё в памяти
   const sent = !notSent.undo.isSuccess && (Boolean(a.reminderOpenedAt) || action.isSuccess || opened.isSuccess)
-  const busy = action.isPending || opened.isPending || (!viaBot && !text)
+  // WhatsApp — только когда загружены настройки (текст напоминания)
+  const busy = r.pending || (!viaBot && Boolean(r.phone) && r.text == null)
+  // Тот же путь, что у карточки (useRemind): бот → «отправлено»; нет бота — WhatsApp; некуда — подсказка с карточкой
   const remind = () => {
     if (busy || sent) return
     notSent.undo.reset()
+    setNotice(null)
     if (viaBot) {
-      action.mutate({ kind: 'remindTelegram' })
+      r.telegram(() => setNotice({ text: 'Напоминание отправлено в Telegram', tone: 'ok' }))
       return
     }
-    opened.mutate()
-    openLink(whatsappUrl(contactPhone(a.patient) ?? '', text?.(a) ?? ''))
+    if (r.nowhere) {
+      setNotice({ text: NOWHERE_TEXT, tone: 'warn', card: true })
+      return
+    }
+    if (r.whatsapp()) setNotice({ text: 'WhatsApp открыт', tone: 'ok' })
+  }
+  // Бот не доставил (409 not-delivered) — WhatsApp тем же текстом, если есть номер
+  const fallbackWhatsapp = () => {
+    if (r.whatsapp()) setNotice({ text: 'WhatsApp открыт', tone: 'ok' })
   }
   // «↻ ещё раз» у «✓ отправлено»: тем же путём, с вопросом «Уже напоминали в 10:15. Отправить ещё раз?» и текстом
   // повтора (бот выбирает его сам по отметке; WhatsApp — useRepeatReminderText). Отметку «не ушло» снимать не нужно
-  const canAgain = canRemind && sent && (viaBot || Boolean(contactPhone(a.patient)))
+  const canAgain = canRemind && sent && (viaBot || Boolean(r.phone))
   const remindAgain = async () => {
-    if (action.isPending || opened.isPending || (!viaBot && !repeatText)) return
+    if (r.pending || (!viaBot && r.text == null)) return
     if (!(await confirmRemind(a))) return
     notSent.undo.reset()
+    setNotice(null)
     if (viaBot) {
-      action.mutate({ kind: 'remindTelegram' })
+      r.telegram(() => setNotice({ text: 'Напоминание отправлено в Telegram', tone: 'ok' }))
       return
     }
-    opened.mutate()
-    openLink(whatsappUrl(contactPhone(a.patient) ?? '', (a.reminderOpenedAt ? repeatText : text)?.(a) ?? ''))
+    if (r.whatsapp()) setNotice({ text: 'WhatsApp открыт', tone: 'ok' })
   }
-  // Свайп вправо — то же, что быстрая кнопка; есть, пока она есть (не отправлено, есть номер или бот)
-  const canSwipeRemind = canRemind && !sent && !busy && (viaBot || Boolean(contactPhone(a.patient)))
+  // Свайп вправо — то же, что быстрая кнопка; есть, пока она есть (не отправлено). Некуда — свайп покажет подсказку
+  const canSwipeRemind = canRemind && !sent && !busy
   // Свайп влево — «Приём состоялся»: свой/доступный приём, запланирован и уже начался
   const canSwipeDone = canEdit && a.status === 'SCHEDULED' && new Date(a.startAt) <= new Date() && !status.isPending
   const done = () => status.mutate({ kind: 'status', body: { version: a.version, status: 'DONE' } }, {
@@ -338,13 +342,19 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
     const t = setTimeout(() => setUndo(null), 10_000)
     return () => clearTimeout(t)
   }, [undo])
-  const error = action.error ?? opened.error ?? notSent.undo.error
+  useEffect(() => {
+    if (!notice) return
+    const t = setTimeout(() => setNotice(null), notice.tone === 'ok' ? 4_000 : 10_000)
+    return () => clearTimeout(t)
+  }, [notice])
+  // «Не доставлено» — отдельной подсказкой с WhatsApp ниже, не красной ошибкой
+  const error = (r.notDelivered ? null : action.error) ?? opened.error ?? notSent.undo.error
   const statusError = status.error
   return (
     <li ref={li} className={['row', `s-${s.kind}`, next ? 'next' : '', active ? 'active' : '', a.status === 'NO_SHOW' ? 'struck' : '', swipe ? 'swipe' : '', color ? 'doc' : ''].join(' ').trim()}
       style={color ? { '--doc': color } as CSSProperties : undefined}>
-      {swipe && canSwipeRemind && <span className="swipe-under swipe-right" aria-hidden="true">💬 {viaBot ? 'Telegram' : 'WhatsApp'}</span>}
-      {swipe && canSwipeDone && <span className="swipe-under swipe-left" aria-hidden="true">Состоялся ✅</span>}
+      {swipe && canSwipeRemind && <span className="swipe-under swipe-right" aria-hidden="true">📲 {viaBot ? 'Telegram' : r.nowhere ? 'Напомнить' : 'WhatsApp'}</span>}
+      {swipe && canSwipeDone && <span className="swipe-under swipe-left" aria-hidden="true">Состоялся ✔️</span>}
       <div className="row-slide">
         <button type="button" className="row-button" onClick={() => onOpen(a)}
           aria-label={`${timeOf(a.startAt)}–${timeOf(a.endAt)}, ${a.patient.fullName}: ${s.label}${chair ? `. ${colleagueMarkText(chair)}` : ''}`}>
@@ -382,10 +392,24 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
         ))}
       </div>
       {canRemind && error && <p className="error row-error" role="alert">{error.message}</p>}
+      {canRemind && r.notDelivered && (
+        <div className="undo row-undo warn" role="alert">
+          <span>{action.error?.message}</span>
+          {r.phone
+            ? <button type="button" className="btn small" disabled={r.pending || r.text == null} onClick={fallbackWhatsapp}>Напомнить в WhatsApp</button>
+            : <button type="button" className="btn small" onClick={() => onOpen(a)}>Открыть карточку</button>}
+        </div>
+      )}
+      {notice && (
+        <div className={`undo row-undo${notice.tone === 'warn' ? ' warn' : ''}`} role="status">
+          <span>{notice.text}</span>
+          {notice.card && <button type="button" className="btn small" onClick={() => { setNotice(null); onOpen(a) }}>Открыть карточку</button>}
+        </div>
+      )}
       {statusError && <p className="error row-error" role="alert">{statusError.message}</p>}
       {undo && (
         <div className="undo row-undo" role="status">
-          <span>Приём отмечен состоявшимся</span>
+          <span>Отмечено: приём состоялся</span>
           {planAllowed && planAsked && planLeft.length > 0 && (
             <button type="button" className="link" onClick={() => onOpen(undo)}>Этапы плана ›</button>
           )}
@@ -396,8 +420,8 @@ function Row({ a, me, color, chair, next, active, canEdit, money, onOpen, swipe 
   )
 }
 
-/** Свайпы: тач-экран или узкое окно (на компьютере — кнопки) */
-const SWIPE_MEDIA = '(max-width: 720px), (pointer: coarse)'
+/** Свайпы — только палец (тач-экран); мышь, даже в узком окне, — кнопки */
+const SWIPE_MEDIA = '(pointer: coarse)'
 /** Подсказку про свайпы показали и закрыли (или уже свайпнули) — флаг без данных пациентов */
 const SWIPE_HINT_KEY = 'crm.schedule.swipeHint'
 const hintListeners = new Set<() => void>()
@@ -430,7 +454,7 @@ function SwipeHint() {
   if (seen) return null
   return (
     <p className="hint swipe-hint" role="note">
-      <span>Подсказка: свайп вправо — напомнить, влево — приём состоялся</span>
+      <span>Смахните запись: → напомнить, ← состоялся</span>
       <button type="button" className="btn ghost small" aria-label="Закрыть подсказку" onClick={hideSwipeHint}>✕</button>
     </p>
   )
