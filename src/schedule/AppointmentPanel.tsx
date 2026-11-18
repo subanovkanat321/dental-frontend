@@ -30,7 +30,7 @@ import { DepositBox } from './DepositBox'
 import { PaymentBox } from './PaymentBox'
 import { seesDebts, usePatientDebts } from '../lib/debt'
 import { useMedAlert } from '../lib/medAlerts'
-import { PatientExpenses } from '../patients/PatientExpenses'
+import { PatientExpensesFold } from '../patients/PatientExpenses'
 import type { Slot } from './NewAppointmentPanel'
 import { statusOf } from './status'
 import { colleagueMarkText, colleagueTimeOf } from './chairTime'
@@ -57,8 +57,9 @@ type Status = NonNullable<Schemas['AppointmentRequestsChangeStatus']['status']>
  * Карточка приёма — сверху вниз: шапка (время, врач, статус; 📖 «Показать пациенту») → пациент
  * (история одной строкой, аллергии) → услуга и комментарий → главное действие статуса (одна залитая
  * кнопка: «Подтвердить», «Приём состоялся», «Принять оплату», «Восстановить», «Записать снова») →
- * «Приём» для врача (продолжение лечения, диктовка и заметка, «Зубы», «Материалы», «Снимки», «План лечения» —
- * раскрывашками) → «Сообщение после приёма» → перенести / неявка / отменить → «Ещё» (редкое:
+ * «Приём» для врача по приоритету: продолжение лечения → заметка и диктовка → «Зубы» → «План лечения» →
+ * «Материалы» → «Расход (техник, лаборатория)» → лаборатория на этот приём (если есть работа) → «Снимки»
+ * (раскрывашками) → «Сообщение после приёма» → перенести / неявка / отменить → «Ещё» (редкое:
  * промокод, предоплата, лист ожидания, откуда узнал, квитанция, исправить статус, удалить).
  * Приём коллеги — только посмотреть и позвонить. Esc — закрыть.
  */
@@ -278,8 +279,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           <LabOrderDialog me={me} preset={{ patient: { id: a.patient.id, fullName: a.patient.fullName }, doctorId: a.doctorId, appointment: { id: a.id, startAt: a.startAt } }}
             onClose={() => setLabOpen(false)} />
         ) : null}
-        {/* Примерка на этот приём: работа пришла? Нет — предупреждение и «WhatsApp технику» */}
-        {a.patient.id && canEdit ? <AppointmentLab appointment={a} /> : null}
+        {/* Примерка на этот приём: работа пришла? Нет — предупреждение и «WhatsApp технику». До приёма — здесь,
+            наверху (успеть позвонить технику); на приёме и после — в секции «Приём», после расхода */}
+        {a.patient.id && canEdit && !visitTools ? <AppointmentLab appointment={a} /> : null}
         <KidInfo patient={a.patient} />
         <PatientHistory appointment={a} me={me} />
         {sourceHint && <p className="hint small">{sourceHint}</p>}
@@ -388,8 +390,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         </>
       )}
 
-      {/* «Приём» — работа врача: продолжение лечения, диктовка и заметка, зубы, материалы, снимки.
-          Зубы, материалы и снимки — строками-раскрывашками со счётчиками */}
+      {/* «Приём» — работа врача, по приоритету: продолжение лечения, заметка и диктовка, зубы, план лечения,
+          материалы, расход (техник, лаборатория), лаборатория на этот приём, снимки. Раскрывашками со счётчиками */}
       {(clinical || (canEdit && (visitTools || a.status === 'NO_SHOW'))) && a.status !== 'CANCELLED' && (
         <section className="appt-visit" aria-label="Приём">
           {clinical && <ContinueTreatment appointment={a} open={visitTools && a.status === 'SCHEDULED'} onMedical={medical} />}
@@ -399,12 +401,19 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             <VisitTeeth appointment={a} onMedical={medical}
               readOnly={!(seesAllMoney(me) || (a.doctorId != null && a.doctorId === me.doctorId))} />
           )}
+          {/* План лечения — сразу после зубов: тот же редактор, что в медкарте — добавить этапы, отметить сделанное */}
+          {visitTools && clinical && a.patient.id != null && <VisitPlan appointment={a} me={me} />}
           {canEdit && visitTools && <Supplies appointment={a} me={me} />}
+          {/* Расход по пациенту (техник, лаборатория) — врачу часто, поэтому не под «Ещё». Регистратуре и ассистенту
+              нет (у них нет своих расходов) */}
+          {canEdit && a.status === 'DONE' && seesMoney && a.patient.id != null && (me.admin || me.doctorId != null) && (
+            <PatientExpensesFold patient={a.patient} me={me} doctorId={a.doctorId} />
+          )}
+          {/* Заказы лаборатории на этот приём (примерка) — только если есть такая работа */}
+          {canEdit && visitTools && a.patient.id ? <AppointmentLab appointment={a} /> : null}
           {canEdit && visitTools && clinical && a.patient.id != null && (
             <PatientFiles patientId={a.patient.id} readOnly={isAssistant(me)} compact defaultKind="PHOTO" takenOn={date} />
           )}
-          {/* План лечения — тот же редактор, что в медкарте: после осмотра добавить этапы, отметить сделанное */}
-          {visitTools && clinical && a.patient.id != null && <VisitPlan appointment={a} me={me} />}
           {canEdit && a.status === 'SCHEDULED' && started && !visitTools && (
             <p className="hint small">Заметка, зубы и материалы — к началу приёма.{' '}
               <button type="button" className="link" onClick={() => setEarly(true)}>Показать сейчас</button></p>
@@ -436,8 +445,8 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       )}
       {editing === 'move' && <Reschedule appointment={a} me={me} onDone={(text) => { close(); setMoved(text ?? '') }} />}
 
-      {/* «Ещё» — редкое одной строкой: промокод, предоплата, лист ожидания, откуда узнал, расход,
-          квитанция, исправить статус, удалить */}
+      {/* «Ещё» — редкое одной строкой: промокод, предоплата, лист ожидания, откуда узнал, квитанция,
+          исправить статус, удалить. Расход техника — в «Приёме» */}
       {canEdit && more.length > 0 && (
         <Fold title="Ещё" label="Ещё" meta={moreMeta}>
           <div className="rare">
@@ -446,8 +455,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
             {rare.includes('waitlist') && a.patient && <div className="sub-form"><WaitlistBox patient={a.patient} me={me} defaultMinutes={length} /></div>}
             {/* Откуда узнал — пациент не ответил в боте, отметят здесь */}
             {rare.includes('source') && a.patient.id != null && <SourceLine patient={a.patient} canEdit compact admin={Boolean(me.admin)} />}
-            {/* Расход по пациенту (техник, лаборатория); регистратуре и ассистенту нет (у них нет своих расходов) */}
-            {a.status === 'DONE' && seesMoney && a.patient && (me.admin || me.doctorId != null) && <PatientExpenses patient={a.patient} me={me} doctorId={a.doctorId} />}
             {/* Квитанция: печать и «Отправить пациенту» — только по нажатию */}
             {a.status === 'DONE' && <VisitDocs appointment={a} me={me} memo={false} />}
             {a.status === 'NO_SHOW' && (

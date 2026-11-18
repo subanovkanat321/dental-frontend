@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp, openMore, openPay } from '../test/fixtures'
+import { appointment, expand, me, renderApp, openPay } from '../test/fixtures'
 import { addDays, todayIn } from '../lib/time'
 import { pickDate } from '../test/date'
 import { choose } from '../test/select'
@@ -228,8 +228,8 @@ test('карточка приёма: «Расход по пациенту (те�
   )
   renderApp()
   const panel = await card()
-  // Расход техника — редкое, под «Ещё»
-  await openMore(panel)
+  // Расход техника — врачу часто: строкой «Расход (техник, лаборатория)» в «Приёме», не под «Ещё»
+  await expand(await within(panel).findByRole('region', { name: 'Расход по пациенту (техник, лаборатория)' }))
   await userEvent.click(await within(panel).findByRole('button', { name: '💸 Расход по пациенту (техник)' }))
   const form = within(panel).getByRole('form', { name: 'Расход по пациенту' })
   await userEvent.type(within(form).getByLabelText('Сумма, сом'), '4500')
@@ -260,7 +260,7 @@ test('карточка приёма: расход техника отметил�
   vi.spyOn(window, 'confirm').mockReturnValue(true)
   renderApp()
   const panel = await card()
-  await openMore(panel)
+  await expand(await within(panel).findByRole('region', { name: 'Расход по пациенту (техник, лаборатория)' }))
   const expenses = await within(panel).findByRole('list', { name: 'Расходы по пациенту' })
   expect(expenses).toHaveTextContent(/45\s000 сом/)
   await userEvent.click(within(expenses).getByRole('button', { name: 'изменить' }))
