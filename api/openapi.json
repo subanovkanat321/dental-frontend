@@ -16963,6 +16963,9 @@
           "phone" : {
             "type" : "string"
           },
+          "whatsapp" : {
+            "type" : "string"
+          },
           "note" : {
             "type" : "string"
           }
@@ -16978,6 +16981,9 @@
             "type" : "string"
           },
           "phone" : {
+            "type" : "string"
+          },
+          "whatsapp" : {
             "type" : "string"
           },
           "note" : {
@@ -25692,6 +25698,9 @@
             "type" : "string"
           },
           "supplierPhone" : {
+            "type" : "string"
+          },
+          "supplierWhatsapp" : {
             "type" : "string"
           },
           "supplierNote" : {

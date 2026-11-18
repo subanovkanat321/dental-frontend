@@ -155,7 +155,7 @@ input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
 @media (max-width: 760px) {
   .btn, .btn.small { min-height: 44px; }
   .btn.small { padding: 0 14px; }
-  :where(.panel, .form, .sub-form, .pay-form, .field, .actions, .line-edit, .payment-done, .waitlist-box, .chosen, .card-block, .day-actions, .undo) > .link {
+  :where(.panel, .form, .sub-form, .pay-form, .dir-form, .field, .actions, .line-edit, .payment-done, .waitlist-box, .chosen, .card-block, .day-actions, .undo) > .link {
     display: inline-flex; align-items: center; min-height: 44px;
   }
 }

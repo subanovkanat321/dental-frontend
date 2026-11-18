@@ -120,8 +120,8 @@ function GroupBlock({ group: g, me, suppliers }: { group: DraftGroup; me: Me; su
   const submit = () => {
     if (g.supplierId == null || lines.length === 0) return
     send.mutate({ supplierId: g.supplierId, items: lines.map((i) => ({ supplyId: i.supplyId, quantity: i.toOrder })) }, {
-      // Письмо — в WhatsApp поставщика; номера нет — заказ просто отмечен (звонили или написали сами)
-      onSuccess: (r) => { if (g.supplierPhone) openLink(whatsappUrl(g.supplierPhone, r.text)) },
+      // Письмо — в WhatsApp поставщика (сервер отдаёт его WhatsApp или телефон); номера нет — заказ просто отмечен
+      onSuccess: (r) => { if (g.supplierWhatsapp) openLink(whatsappUrl(g.supplierWhatsapp, r.text)) },
     })
   }
   return (
@@ -140,7 +140,7 @@ function GroupBlock({ group: g, me, suppliers }: { group: DraftGroup; me: Me; su
       </ul>
       {g.supplierId != null && (
         <div className="purchase-send">
-          {g.supplierPhone
+          {g.supplierWhatsapp
             ? <button type="button" className="btn" data-tone="wa" disabled={send.isPending || order.isPending || lines.length === 0} onClick={submit}>
               Отправить в WhatsApp
             </button>
@@ -149,7 +149,7 @@ function GroupBlock({ group: g, me, suppliers }: { group: DraftGroup; me: Me; su
             </button>}
           <span className="hint">
             {lines.length === 0 ? 'Нечего отправлять: у всех позиций 0'
-              : g.supplierPhone ? `${lines.length} поз. — откроется WhatsApp с готовым текстом` : 'Нет номера поставщика — добавьте в «Поставщики», чтобы слать в WhatsApp'}
+              : g.supplierWhatsapp ? `${lines.length} поз. — откроется WhatsApp с готовым текстом` : 'Нет номера поставщика — добавьте в «Поставщики», чтобы слать в WhatsApp'}
           </span>
           {send.error && <p className="error" role="alert">{send.error.message}</p>}
         </div>

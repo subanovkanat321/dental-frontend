@@ -26,7 +26,7 @@ const message = 'Здравствуйте! Заказ от «Стоматоло�
 const draft: List = {
   count: 3,
   groups: [
-    { supplierId: 7, supplierName: 'Дент-Маркет', supplierPhone: '996555111222', supplierNote: 'доставка в тот же день', items: [composite, gloves], message },
+    { supplierId: 7, supplierName: 'Дент-Маркет', supplierPhone: '996555111222', supplierWhatsapp: '996555111222', supplierNote: 'доставка в тот же день', items: [composite, gloves], message },
     { items: [{ ...composite, supplyId: 13, name: 'Иглы карпульные', toOrder: 3, suggested: 3, lastPriceSom: undefined }] },
   ],
   orders: [],
@@ -92,6 +92,20 @@ test('«Склад → Заказ»: по поставщикам, число у 
   expect(url).toContain('996555111222')
   expect(url).toContain('• Композит Filtek A2 — 7 шт')
   expect(url).toContain('Доставка: ул. Тестовая, 1. Спасибо!')
+})
+
+test('WhatsApp поставщика на другом номере — заказ уходит туда, в заголовке телефон', async () => {
+  window.location.hash = '/stock/purchase'
+  backend({ ...draft, groups: [{ ...draft.groups[0]!, supplierWhatsapp: '996700222333' }] })
+  const open = vi.spyOn(window, 'open').mockImplementation(() => null)
+  renderApp()
+  const group = await screen.findByRole('region', { name: 'Заказ у Дент-Маркет' })
+  expect(group).toHaveTextContent('+996 555 111 222')
+  await userEvent.click(within(group).getByRole('button', { name: 'Отправить в WhatsApp' }))
+  await waitForSlow(() => expect(open).toHaveBeenCalled())
+  const url = String(open.mock.calls[0]![0])
+  expect(url).toContain('phone=996700222333')
+  expect(url).not.toContain('996555111222')
 })
 
 test('количество можно поправить: сохраняется своё, 0 — не заказываем', async () => {
@@ -160,7 +174,7 @@ test('карточка материала: где берём и цены у по
   expect(rows[1]).toHaveTextContent('Дент-Маркет · 10 ноября300 сом/шт')
 })
 
-test('«Поставщики»: пока открыта форма, «Готово» нет — введённое не пропадёт; телефон стандартным полем с +996', async () => {
+test('«Поставщики»: пока открыта форма, «Готово» нет — введённое не пропадёт; одно поле номера, WhatsApp на другом — по ссылке', async () => {
   window.location.hash = '/stock'
   backend(draft)
   const saved: unknown[] = []
@@ -183,9 +197,13 @@ test('«Поставщики»: пока открыта форма, «Готов
   // Стандартное поле телефона: страна (Кыргызстан, +996) и номер без кода
   expect(within(form).getByRole('combobox', { name: 'Код страны' })).toHaveTextContent('+996')
   await userEvent.type(within(form).getByLabelText('Телефон / WhatsApp'), '700 000 001')
+  // Как у лаборатории: второе поле — только по ссылке
+  expect(within(form).queryByLabelText('WhatsApp')).toBeNull()
+  await userEvent.click(within(form).getByRole('button', { name: '＋ WhatsApp на другом номере' }))
+  await userEvent.type(within(form).getByLabelText('WhatsApp'), '700 000 009')
   await userEvent.click(within(form).getByRole('button', { name: 'Добавить' }))
   // Как другие формы (phoneFromInput): «+996 …» — сервер нормализует и проверяет
-  await waitForSlow(() => expect(saved).toEqual([{ name: 'Мед-Склад', phone: '+996 700 000 001' }]))
+  await waitForSlow(() => expect(saved).toEqual([{ name: 'Мед-Склад', phone: '+996 700 000 001', whatsapp: '+996 700 000 009' }]))
   expect(await within(dialog).findByRole('button', { name: 'Готово' })).toBeInTheDocument()
 })
 
@@ -204,8 +222,24 @@ test('«Поставщики»: «Изменить» — номер в поле 
   await userEvent.click(within(dialog).getByRole('button', { name: 'Изменить' }))
   const form = within(dialog).getByRole('group', { name: 'Поставщик Дент-Маркет' })
   expect(within(form).getByLabelText('Телефон / WhatsApp')).toHaveValue('555 111 222')
+  expect(within(form).queryByLabelText('WhatsApp')).toBeNull()
   await userEvent.click(within(form).getByRole('button', { name: 'Сохранить' }))
   await waitForSlow(() => expect(saved).toEqual([{ name: 'Дент-Маркет', phone: '+996 555 111 222', note: 'доставка в тот же день' }]))
+})
+
+test('«Поставщики»: WhatsApp на другом номере — в списке и сразу открытым полем при «Изменить»', async () => {
+  window.location.hash = '/stock'
+  backend(draft)
+  server.use(http.get('*/api/suppliers', () => HttpResponse.json([{ ...dent, whatsapp: '996700222333' }] satisfies Schemas['PurchaseViewsSupplierView'][])))
+  renderApp()
+  await userEvent.click(await findSub('Заказ · 3'))
+  await userEvent.click(await screen.findByRole('button', { name: 'Поставщики' }))
+  const dialog = await screen.findByRole('dialog', { name: 'Поставщики' })
+  expect(dialog).toHaveTextContent('+996 555 111 222 · WhatsApp +996 700 222 333 · доставка в тот же день')
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Изменить' }))
+  const form = within(dialog).getByRole('group', { name: 'Поставщик Дент-Маркет' })
+  expect(within(form).getByLabelText('WhatsApp')).toHaveValue('700 222 333')
+  expect(within(form).queryByRole('button', { name: '＋ WhatsApp на другом номере' })).toBeNull()
 })
 
 test('«Поставщики»: список пуст — подсказка и сразу форма, без лишнего «＋ Поставщик»', async () => {

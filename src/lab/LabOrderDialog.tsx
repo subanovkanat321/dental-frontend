@@ -5,8 +5,8 @@ import type { Schemas } from '../api/client'
 import { useBack } from '../lib/back'
 import { canEditDoctor } from '../lib/roles'
 import { addDays, todayIn } from '../lib/time'
-import { phoneFromInput, phoneToInput } from '../clinic/phone'
-import { PhoneInput } from '../clinic/PhoneInput'
+import { phoneFromInput, phoneToInput, whatsappToInput } from '../clinic/phone'
+import { PhoneWhatsappFields } from '../clinic/PhoneWhatsappFields'
 import { DateInput } from '../layout/DateInput'
 import { DirectoryForm } from '../layout/DirectoryForm'
 import { Select } from '../layout/Select'
@@ -192,8 +192,8 @@ function LabPicker({ labs, value, onChange, loading }: {
 }
 
 /**
- * Новая лаборатория (или правка): название, телефон техника и WhatsApp — если на другом номере. Телефоны —
- * стандартным полем (+996 и страна, как у пациента); на сервер — как набрано, нормализует он.
+ * Новая лаборатория (или правка): название и номер — как у поставщика (PhoneWhatsappFields): «Телефон / WhatsApp»
+ * и WhatsApp на другом номере по ссылке. На сервер — как набрано, нормализует он.
  * @param primary «Добавить» залитой: в справочнике да, внутри «Заказа в лабораторию» — нет (там главная «Создать заказ»)
  */
 export function LabForm({ lab, onSaved, onCancel, primary = true }: {
@@ -204,7 +204,7 @@ export function LabForm({ lab, onSaved, onCancel, primary = true }: {
 }) {
   const [name, setName] = useState(lab?.name ?? '')
   const [phone, setPhone] = useState(phoneToInput(lab?.phone))
-  const [whatsapp, setWhatsapp] = useState(phoneToInput(lab?.whatsapp))
+  const [whatsapp, setWhatsapp] = useState(whatsappToInput(lab))
   const save = useSaveLab()
   const err = (k: string) => save.error?.fieldErrors[k]
   const other = save.error && !err('name') && !err('phone') && !err('whatsapp') ? Object.values(save.error.fieldErrors)[0] ?? save.error.message : null
@@ -218,12 +218,8 @@ export function LabForm({ lab, onSaved, onCancel, primary = true }: {
       <label className="field"><span>Название</span>
         <input value={name} maxLength={80} autoComplete="off" placeholder="Например: Дент-Лаб" onChange={(e) => setName(e.target.value)} /></label>
       {err('name') && <p className="error">{err('name')}</p>}
-      <label className="field"><span>Телефон техника <span className="hint">— необязательно</span></span>
-        <PhoneInput label="Телефон техника" value={phone} onChange={setPhone} /></label>
-      {err('phone') && <p className="error">{err('phone')}</p>}
-      <label className="field"><span>WhatsApp <span className="hint">— если на другом номере</span></span>
-        <PhoneInput label="WhatsApp техника" value={whatsapp} onChange={setWhatsapp} /></label>
-      {err('whatsapp') && <p className="error">{err('whatsapp')}</p>}
+      <PhoneWhatsappFields phone={phone} whatsapp={whatsapp} onPhone={setPhone} onWhatsapp={setWhatsapp}
+        phoneError={err('phone')} whatsappError={err('whatsapp')} />
     </DirectoryForm>
   )
 }

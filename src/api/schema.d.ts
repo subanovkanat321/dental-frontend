@@ -7502,6 +7502,7 @@ export interface components {
         PurchaseViewsSupplierDraft: {
             name?: string;
             phone?: string;
+            whatsapp?: string;
             note?: string;
         };
         PurchaseViewsSupplierView: {
@@ -7509,6 +7510,7 @@ export interface components {
             id: number;
             name: string;
             phone?: string;
+            whatsapp?: string;
             note?: string;
             archived: boolean;
         };
@@ -10987,6 +10989,7 @@ export interface components {
             supplierId?: number;
             supplierName?: string;
             supplierPhone?: string;
+            supplierWhatsapp?: string;
             supplierNote?: string;
             /** Format: int64 */
             doctorId?: number;

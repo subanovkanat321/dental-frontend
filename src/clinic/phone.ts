@@ -113,3 +113,11 @@ export function maskLocal(country: string, local: string): string {
   }
   return `${lead}${parts.join(' ')}${digits}`
 }
+
+/**
+ * Начальное значение второго поля: WhatsApp записи, только если он отличается от телефона. Совпадает — поле пустое
+ * и закрыто: иначе, поменяв телефон, человек оставил бы старый номер в скрытом WhatsApp.
+ */
+export function whatsappToInput(rec?: { phone?: string | null; whatsapp?: string | null }): string {
+  return rec?.whatsapp && rec.whatsapp !== rec.phone ? phoneToInput(rec.whatsapp) : ''
+}

@@ -2489,6 +2489,7 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .dir-item .hint { font-size: .875rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .dir-item-actions { display: flex; gap: 2px; }
 .dir-form { display: grid; gap: 12px; }
+.dir-form > .link { justify-self: start; margin-top: -4px; font-size: .92rem; } /* «＋ WhatsApp на другом номере» — у поля, а не во всю ширину */
 .dir-form .field > span .hint { font-size: inherit; }
 .dir-form-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding-top: 2px; }
 .dir-add { justify-self: start; }
