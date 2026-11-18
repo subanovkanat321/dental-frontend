@@ -3096,6 +3096,68 @@
         }
       }
     },
+    "/api/doctors/{id}/pay" : {
+      "get" : {
+        "tags" : [ "pay-requisites-controller" ],
+        "operationId" : "get_5",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PayRequisitesDoctorPay"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "pay-requisites-controller" ],
+        "operationId" : "setDetails",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PayRequisitesControllerDetails"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PayRequisitesDoctorPay"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/doctors/{id}/hours" : {
       "get" : {
         "tags" : [ "doctor-hours-controller" ],
@@ -9850,6 +9912,99 @@
         }
       }
     },
+    "/api/doctors/{id}/pay/qr" : {
+      "get" : {
+        "tags" : [ "pay-requisites-controller" ],
+        "operationId" : "qr",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "pay-requisites-controller" ],
+        "operationId" : "uploadQr_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PayRequisitesDoctorPay"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "pay-requisites-controller" ],
+        "operationId" : "deleteQr_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PayRequisitesDoctorPay"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/doctors/{id}/invite" : {
       "post" : {
         "tags" : [ "doctor-controller" ],
@@ -10499,7 +10654,7 @@
     "/api/clinic/deposit/qr" : {
       "get" : {
         "tags" : [ "deposit-controller" ],
-        "operationId" : "qr",
+        "operationId" : "qr_1",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10516,7 +10671,7 @@
       },
       "post" : {
         "tags" : [ "deposit-controller" ],
-        "operationId" : "uploadQr_1",
+        "operationId" : "uploadQr_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -10547,7 +10702,7 @@
       },
       "delete" : {
         "tags" : [ "deposit-controller" ],
-        "operationId" : "deleteQr_1",
+        "operationId" : "deleteQr_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -10816,7 +10971,7 @@
     "/api/calendar-feed" : {
       "get" : {
         "tags" : [ "calendar-feed-controller" ],
-        "operationId" : "get_5",
+        "operationId" : "get_6",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -12180,6 +12335,59 @@
         }
       }
     },
+    "/web/pay/{token}" : {
+      "get" : {
+        "tags" : [ "pay-requisites-controller" ],
+        "operationId" : "page_1",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PayRequisitesPage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/pay/{token}/qr" : {
+      "get" : {
+        "tags" : [ "pay-requisites-controller" ],
+        "operationId" : "pageQr",
+        "parameters" : [ {
+          "name" : "token",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/materials/reel/{dir}/{file}" : {
       "get" : {
         "tags" : [ "reel-files-controller" ],
@@ -12563,7 +12771,7 @@
     "/web/case" : {
       "get" : {
         "tags" : [ "join-case" ],
-        "operationId" : "get_6",
+        "operationId" : "get_7",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -13040,7 +13248,7 @@
     "/api/salaries/timesheet" : {
       "get" : {
         "tags" : [ "timesheet-controller" ],
-        "operationId" : "get_7",
+        "operationId" : "get_8",
         "parameters" : [ {
           "name" : "month",
           "in" : "query",
@@ -13273,7 +13481,7 @@
     "/api/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_8",
+        "operationId" : "get_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -13300,7 +13508,7 @@
     "/api/platform/support/tickets/{id}" : {
       "get" : {
         "tags" : [ "support-controller" ],
-        "operationId" : "get_9",
+        "operationId" : "get_10",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -13568,7 +13776,7 @@
     "/api/platform/health" : {
       "get" : {
         "tags" : [ "health-controller" ],
-        "operationId" : "get_10",
+        "operationId" : "get_11",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -13914,7 +14122,7 @@
     "/api/platform-info" : {
       "get" : {
         "tags" : [ "platform-info-controller" ],
-        "operationId" : "get_11",
+        "operationId" : "get_12",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -14176,7 +14384,7 @@
     "/api/patients/{patientId}/contract" : {
       "get" : {
         "tags" : [ "contract-controller" ],
-        "operationId" : "get_12",
+        "operationId" : "get_13",
         "parameters" : [ {
           "name" : "patientId",
           "in" : "path",
@@ -14581,7 +14789,7 @@
     "/api/patient-questions/{id}" : {
       "get" : {
         "tags" : [ "question-controller" ],
-        "operationId" : "get_13",
+        "operationId" : "get_14",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -14716,7 +14924,7 @@
     "/api/me/earnings" : {
       "get" : {
         "tags" : [ "earnings-controller" ],
-        "operationId" : "get_14",
+        "operationId" : "get_15",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15073,7 +15281,7 @@
     "/api/clinic/pay/qr" : {
       "get" : {
         "tags" : [ "pay-controller" ],
-        "operationId" : "qr_1",
+        "operationId" : "qr_2",
         "responses" : {
           "200" : {
             "description" : "OK",
@@ -15338,7 +15546,7 @@
     "/api/appointments/{id}" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
-        "operationId" : "get_15",
+        "operationId" : "get_16",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -16134,6 +16342,52 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ChairCheckView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/appointments/cash-entries" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "cashEntries",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date"
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PaymentQueryCashEntry"
+                  }
                 }
               }
             }
@@ -19735,6 +19989,30 @@
           }
         },
         "required" : [ "active", "id", "telegramLinked" ]
+      },
+      "PayRequisitesControllerDetails" : {
+        "properties" : {
+          "details" : {
+            "type" : "string"
+          }
+        }
+      },
+      "PayRequisitesDoctorPay" : {
+        "properties" : {
+          "details" : {
+            "type" : "string"
+          },
+          "hasQr" : {
+            "type" : "boolean"
+          },
+          "payUrl" : {
+            "type" : "string"
+          },
+          "ownRevenue" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "hasQr", "ownRevenue" ]
       },
       "DoctorHoursControllerRequest" : {
         "properties" : {
@@ -24230,6 +24508,19 @@
         },
         "required" : [ "secondsLeft", "state" ]
       },
+      "PayRequisitesPage" : {
+        "properties" : {
+          "clinicName" : {
+            "type" : "string"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "details" : {
+            "type" : "string"
+          }
+        }
+      },
       "MaterialsPublicMaterials" : {
         "properties" : {
           "video" : {
@@ -27181,9 +27472,12 @@
           "nextAt" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "qr" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "debtSom", "telegram" ]
+        "required" : [ "debtSom", "qr", "telegram" ]
       },
       "PatientListControllerPatientRow" : {
         "properties" : {
@@ -28536,9 +28830,25 @@
           },
           "cash" : {
             "$ref" : "#/components/schemas/RevenueViewCash"
+          },
+          "debtCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "debtSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "partialCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "partialDebtSom" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         },
-        "required" : [ "freeCount", "paidCount", "prepaidCount", "totalSom", "unpaidCount" ]
+        "required" : [ "debtCount", "debtSom", "freeCount", "paidCount", "partialCount", "partialDebtSom", "prepaidCount", "totalSom", "unpaidCount" ]
       },
       "RevenueViewCash" : {
         "properties" : {
@@ -28848,6 +29158,48 @@
           }
         },
         "required" : [ "id", "name", "notified" ]
+      },
+      "PaymentQueryCashEntry" : {
+        "properties" : {
+          "paidAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "amountSom" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "method" : {
+            "type" : "string",
+            "enum" : [ "CASH", "TRANSFER", "CARD" ]
+          },
+          "purpose" : {
+            "type" : "string",
+            "enum" : [ "VISIT", "DEBT", "DEPOSIT", "OPENING_DEBT" ]
+          },
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "appointmentStartAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patient" : {
+            "type" : "string"
+          },
+          "takenBy" : {
+            "type" : "string"
+          },
+          "viaBot" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "amountSom", "viaBot" ]
       },
       "PatientCard" : {
         "properties" : {

@@ -1124,6 +1124,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/doctors/{id}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_5"];
+        put: operations["setDetails"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/doctors/{id}/hours": {
         parameters: {
             query?: never;
@@ -3972,6 +3988,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/doctors/{id}/pay/qr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["qr"];
+        put?: never;
+        post: operations["uploadQr_1"];
+        delete: operations["deleteQr_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/doctors/{id}/invite": {
         parameters: {
             query?: never;
@@ -4203,10 +4235,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["qr"];
+        get: operations["qr_1"];
         put?: never;
-        post: operations["uploadQr_1"];
-        delete: operations["deleteQr_1"];
+        post: operations["uploadQr_2"];
+        delete: operations["deleteQr_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4347,7 +4379,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_5"];
+        get: operations["get_6"];
         put?: never;
         post: operations["rotate"];
         delete: operations["delete_13"];
@@ -4932,6 +4964,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/web/pay/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["page_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/web/pay/{token}/qr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["pageQr"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/web/materials/reel/{dir}/{file}": {
         parameters: {
             query?: never;
@@ -5163,7 +5227,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_6"];
+        get: operations["get_7"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5419,7 +5483,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_7"];
+        get: operations["get_8"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5547,7 +5611,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_8"];
+        get: operations["get_9"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5563,7 +5627,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_9"];
+        get: operations["get_10"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5723,7 +5787,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_10"];
+        get: operations["get_11"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5915,7 +5979,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_11"];
+        get: operations["get_12"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6043,7 +6107,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_12"];
+        get: operations["get_13"];
         put?: never;
         post?: never;
         delete: operations["unsign"];
@@ -6267,7 +6331,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_13"];
+        get: operations["get_14"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6363,7 +6427,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_14"];
+        get: operations["get_15"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6587,7 +6651,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["qr_1"];
+        get: operations["qr_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6747,7 +6811,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get_15"];
+        get: operations["get_16"];
         put?: never;
         post?: never;
         delete: operations["delete_15"];
@@ -7068,6 +7132,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["chairCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/appointments/cash-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["cashEntries"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8641,6 +8721,15 @@ export interface components {
             photoUrl?: string;
             active: boolean;
             telegramLinked: boolean;
+        };
+        PayRequisitesControllerDetails: {
+            details?: string;
+        };
+        PayRequisitesDoctorPay: {
+            details?: string;
+            hasQr: boolean;
+            payUrl?: string;
+            ownRevenue: boolean;
         };
         DoctorHoursControllerRequest: {
             days?: components["schemas"]["DoctorHoursViewDay"][];
@@ -10458,6 +10547,11 @@ export interface components {
             link?: string;
             error?: string;
         };
+        PayRequisitesPage: {
+            clinicName?: string;
+            doctorName?: string;
+            details?: string;
+        };
         MaterialsPublicMaterials: {
             video?: string;
             poster?: string;
@@ -11594,6 +11688,7 @@ export interface components {
             remindedAt?: string;
             /** Format: date-time */
             nextAt?: string;
+            qr: boolean;
         };
         PatientListControllerPatientRow: {
             /** Format: int64 */
@@ -12139,6 +12234,14 @@ export interface components {
             };
             days?: components["schemas"]["RevenueViewDay"][];
             cash?: components["schemas"]["RevenueViewCash"];
+            /** Format: int64 */
+            debtCount: number;
+            /** Format: int64 */
+            debtSom: number;
+            /** Format: int64 */
+            partialCount: number;
+            /** Format: int64 */
+            partialDebtSom: number;
         };
         RevenueViewCash: {
             /** Format: int64 */
@@ -12263,6 +12366,25 @@ export interface components {
             name: string;
             colleague?: string;
             notified: string[];
+        };
+        PaymentQueryCashEntry: {
+            /** Format: date-time */
+            paidAt?: string;
+            /** Format: int32 */
+            amountSom: number;
+            /** @enum {string} */
+            method?: "CASH" | "TRANSFER" | "CARD";
+            /** @enum {string} */
+            purpose?: "VISIT" | "DEBT" | "DEPOSIT" | "OPENING_DEBT";
+            /** Format: int64 */
+            appointmentId?: number;
+            /** Format: date-time */
+            appointmentStartAt?: string;
+            /** Format: int64 */
+            patientId?: number;
+            patient?: string;
+            takenBy?: string;
+            viaBot: boolean;
         };
         PatientCard: {
             patient?: components["schemas"]["PatientView"];
@@ -14786,6 +14908,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DoctorView"];
+                };
+            };
+        };
+    };
+    get_5: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRequisitesDoctorPay"];
+                };
+            };
+        };
+    };
+    setDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayRequisitesControllerDetails"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRequisitesDoctorPay"];
                 };
             };
         };
@@ -20272,6 +20442,79 @@ export interface operations {
             };
         };
     };
+    qr: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    uploadQr_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: binary */
+                    file?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRequisitesDoctorPay"];
+                };
+            };
+        };
+    };
+    deleteQr_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRequisitesDoctorPay"];
+                };
+            };
+        };
+    };
     invite_1: {
         parameters: {
             query?: never;
@@ -20695,7 +20938,7 @@ export interface operations {
             };
         };
     };
-    qr: {
+    qr_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -20715,7 +20958,7 @@ export interface operations {
             };
         };
     };
-    uploadQr_1: {
+    uploadQr_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -20742,7 +20985,7 @@ export interface operations {
             };
         };
     };
-    deleteQr_1: {
+    deleteQr_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -21003,7 +21246,7 @@ export interface operations {
             };
         };
     };
-    get_5: {
+    get_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -22064,6 +22307,50 @@ export interface operations {
             };
         };
     };
+    page_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayRequisitesPage"];
+                };
+            };
+        };
+    };
+    pageQr: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
     file: {
         parameters: {
             query: {
@@ -22384,7 +22671,7 @@ export interface operations {
             };
         };
     };
-    get_6: {
+    get_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -22735,7 +23022,7 @@ export interface operations {
             };
         };
     };
-    get_7: {
+    get_8: {
         parameters: {
             query: {
                 month: string;
@@ -22928,7 +23215,7 @@ export interface operations {
             };
         };
     };
-    get_8: {
+    get_9: {
         parameters: {
             query?: never;
             header?: never;
@@ -22950,7 +23237,7 @@ export interface operations {
             };
         };
     };
-    get_9: {
+    get_10: {
         parameters: {
             query?: never;
             header?: never;
@@ -23166,7 +23453,7 @@ export interface operations {
             };
         };
     };
-    get_10: {
+    get_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -23452,7 +23739,7 @@ export interface operations {
             };
         };
     };
-    get_11: {
+    get_12: {
         parameters: {
             query?: never;
             header?: never;
@@ -23650,7 +23937,7 @@ export interface operations {
             };
         };
     };
-    get_12: {
+    get_13: {
         parameters: {
             query?: {
                 doctorId?: number;
@@ -23974,7 +24261,7 @@ export interface operations {
             };
         };
     };
-    get_13: {
+    get_14: {
         parameters: {
             query?: never;
             header?: never;
@@ -24098,7 +24385,7 @@ export interface operations {
             };
         };
     };
-    get_14: {
+    get_15: {
         parameters: {
             query?: never;
             header?: never;
@@ -24394,7 +24681,7 @@ export interface operations {
             };
         };
     };
-    qr_1: {
+    qr_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -24606,7 +24893,7 @@ export interface operations {
             };
         };
     };
-    get_15: {
+    get_16: {
         parameters: {
             query?: never;
             header?: never;
@@ -25107,6 +25394,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChairCheckView"];
+                };
+            };
+        };
+    };
+    cashEntries: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                doctorId?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentQueryCashEntry"][];
                 };
             };
         };

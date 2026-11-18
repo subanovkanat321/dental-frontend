@@ -3,6 +3,7 @@ import createClient, { type Middleware } from 'openapi-fetch'
 import { authHeaders, telegram } from '../lib/telegram'
 
 import type { components, paths } from './schema'
+import { setUpdating } from './updating'
 
 /** Схемы ответов и запросов из контракта (docs/api/openapi.json бэкенда). */
 export type Schemas = components['schemas']
@@ -55,19 +56,67 @@ export const api = createClient<paths>({
 })
 api.use(webHeader)
 
+/** Код ошибки «Tish обновляется» (ApiError 503): сервер перезапускается, а интернет у человека есть. */
+export const UPDATING = 'updating'
+
+/** Текст ошибки «обновляется»: чтение React Query повторит сам, а действие — повторить руками. */
+export const UPDATING_READ_TEXT = 'Tish обновляется — подождите минуту, всё продолжится само'
+export const UPDATING_ACTION_TEXT = 'Tish обновляется — подождите минуту и повторите'
+
+/** Ошибка «Tish обновляется» — сервер вот-вот вернётся (повторять запросы, показывать плашку). */
+export function isUpdatingError(e: unknown): boolean {
+  return e instanceof ApiError && e.code === UPDATING
+}
+
+/** Через сколько секунд сервер советует повторить (Retry-After от nginx); не сказал — null. */
+export function retryAfterSeconds(e: unknown): number | null {
+  const value = e instanceof ApiError ? e.problem.retryAfter : undefined
+  return typeof value === 'number' && value > 0 ? value : null
+}
+
 /**
- * fetch, у которого обрыв сети — тоже {@link ApiError} (status 0), а не голый TypeError «Failed to fetch»:
+ * Ответ «приложение обновляется», а не ошибка самого приложения: nginx на 502/504 от приложения отдаёт
+ * 503 с Retry-After (@app_unavailable); 502/503/504 без JSON — страница ошибки прокси. 502 и 503
+ * приложения (Telegram не ответил, SMS не подключены) — JSON без Retry-After: это обычная ошибка.
+ */
+function isUpdatingResponse(response: Response): boolean {
+  if (response.status !== 502 && response.status !== 503 && response.status !== 504) return false
+  if (response.status === 503 && response.headers.has('Retry-After')) return true
+  return !/json/i.test(response.headers.get('Content-Type') ?? '')
+}
+
+function updatingError(request: Request, retryAfter: string | null): ApiError {
+  const seconds = Number(retryAfter)
+  const text = request.method === 'GET' ? UPDATING_READ_TEXT : UPDATING_ACTION_TEXT
+  return new ApiError(503, text, {}, { code: UPDATING, ...(seconds > 0 && { retryAfter: seconds }) })
+}
+
+/**
+ * fetch, у которого обрыв сети — тоже {@link ApiError}, а не голый TypeError «Failed to fetch»:
  * экраны показывают e.message и e.fieldErrors любой ошибки запроса — у TypeError fieldErrors нет, и
  * Object.values(undefined) ронял карточку приёма на телефоне с плохой связью. Отмену запроса
  * (AbortError — React Query отменил устаревший) пропускаем как есть.
+ * - Браузер без сети (navigator.onLine false) — ApiError 0 «Нет связи… проверьте интернет».
+ * - Сеть есть, а сервер не ответил или ответил «обновляется» — ApiError 503 с кодом {@link UPDATING}
+ *   и флаг «обновляется» (api/updating.ts): плашка вместо ошибки, чтения повторяются сами.
+ * - Любой другой ответ — сервер на месте: флаг снят.
  */
 async function send(request: Request): Promise<Response> {
+  let response: Response
   try {
-    return await globalThis.fetch(request)
+    response = await globalThis.fetch(request)
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') throw e
-    throw new ApiError(0, 'Нет связи с сервером — проверьте интернет и повторите')
+    if (navigator.onLine === false) throw new ApiError(0, 'Нет связи с сервером — проверьте интернет и повторите')
+    setUpdating(true)
+    throw updatingError(request, null)
   }
+  if (isUpdatingResponse(response)) {
+    setUpdating(true)
+    throw updatingError(request, response.headers.get('Retry-After'))
+  }
+  setUpdating(false)
+  return response
 }
 
 function toApiError(status: number, body: unknown): ApiError {

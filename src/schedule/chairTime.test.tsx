@@ -6,11 +6,13 @@ import type { Schemas } from '../api/client'
 import { minutesOf, slotInstant } from '../lib/time'
 import { appointment, me, openItem, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
+import { warmSchedule } from '../test/wait'
 
 /**
  * Часы коллеги по креслу (V187) в «Расписании» на компьютере и «Настройки → Кресла». Врачи и пациенты —
  * вымышленные: у Дастана (№2) общее «Кресло 1» с Айгерим (№1), её часы — 15:00–18:00.
  */
+beforeAll(warmSchedule, 60_000)
 beforeEach(() => {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: query.includes('min-width'), media: query, addEventListener() {}, removeEventListener() {}, onchange: null,

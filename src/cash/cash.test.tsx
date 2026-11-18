@@ -35,7 +35,7 @@ test('админ: выручка за месяц, по способам; выб�
       const q = new URL(request.url).searchParams
       asked.push(`${q.get('from')}..${q.get('to')} ${q.get('doctorId') ?? 'все'}`)
       return HttpResponse.json({
-        totalSom: q.get('doctorId') ? 7000 : 25000, paidCount: 6, unpaidCount: 1, freeCount: 2, prepaidCount: 1, byMethod: { CASH: 15000, TRANSFER: 10000 },
+        totalSom: q.get('doctorId') ? 7000 : 25000, paidCount: 6, unpaidCount: 1, freeCount: 2, prepaidCount: 1, debtCount: 1, debtSom: 2500, partialCount: 1, partialDebtSom: 1500, byMethod: { CASH: 15000, TRANSFER: 10000 },
         days: [{ date: '2026-10-01', totalSom: 5000 }, { date: '2026-10-02', totalSom: 20000 }],
         cash: { totalSom: q.get('doctorId') ? 8000 : 31000, paymentsCount: 8, depositsSom: 1000, byMethod: { CASH: 16000, CARD: 15000 }, days: [], openingDebtsSom: 0 },
       } satisfies Schemas['RevenueView'])
@@ -53,6 +53,8 @@ test('админ: выручка за месяц, по способам; выб�
   expect(screen.getByText(/без оплаты: 1/)).toBeInTheDocument()
   // Отметки 0 сом — отдельно: бесплатно и оплачено заранее
   expect(screen.getByText(/Оплачено приёмов: 6/)).toHaveTextContent(/бесплатно: 2 · оплачено заранее: 1/)
+  // «Всё в долг» — не «оплачено»: отдельно, с суммой; частичная оплата — «из них с долгом»
+  expect(screen.getByText(/Оплачено приёмов: 6/)).toHaveTextContent(/из них с долгом: 1 \(1\s500 сом\) · в долг: 1 \(2\s500 сом\)/)
   const month = periodOf('month')
   expect(asked).toContain(`${month.from}..${month.to} все`)
   // Под переключателем видно, какие даты входят в «Месяц»
@@ -81,6 +83,58 @@ test('админ: выручка за месяц, по способам; выб�
   expect(debts).toHaveTextContent(/2\s000 сом/)
   // «К оплате» — только где есть регистратура
   expect(screen.queryByRole('heading', { name: /К оплате на кассе/ })).not.toBeInTheDocument()
+})
+
+test('врач: на месте выбора врача — «ваша касса»; «в долг» отдельно; поступления — списком, строка открывает приём', async () => {
+  const doctorMe = { ...me, admin: false }
+  const asked: string[] = []
+  const today = todayIn()
+  const yesterday = addDays(today, -1)
+  server.use(
+    http.get('*/api/patient/me', () => HttpResponse.json(doctorMe)),
+    http.get('*/api/appointments/revenue', ({ request }) => {
+      asked.push(new URL(request.url).searchParams.get('doctorId') ?? 'все')
+      return HttpResponse.json({
+        totalSom: 3000, paidCount: 1, unpaidCount: 0, freeCount: 0, prepaidCount: 0, debtCount: 1, debtSom: 2000, partialCount: 0, partialDebtSom: 0,
+        byMethod: { CASH: 3000 }, days: [],
+        cash: { totalSom: 9500, paymentsCount: 3, depositsSom: 1000, byMethod: { CASH: 3000, TRANSFER: 6500 }, days: [], openingDebtsSom: 5000 },
+      } satisfies Schemas['RevenueView'])
+    }),
+    http.get('*/api/appointments/cash-entries', ({ request }) => {
+      asked.push(`entries ${new URL(request.url).searchParams.get('doctorId')}`)
+      return HttpResponse.json([
+        { paidAt: `${today}T05:10:00Z`, amountSom: 3000, method: 'CASH', purpose: 'VISIT', appointmentId: 41, appointmentStartAt: `${today}T04:00:00Z`,
+          patientId: 5, patient: 'Пример А.', takenBy: 'Айгерим Садыкова', viaBot: false },
+        { paidAt: `${today}T04:30:00Z`, amountSom: 1500, method: 'TRANSFER', purpose: 'DEBT', appointmentId: 42, appointmentStartAt: `${yesterday}T04:00:00Z`,
+          patientId: 6, patient: 'Пример Б.', takenBy: 'Айгерим Садыкова', viaBot: true },
+        { paidAt: `${today}T03:00:00Z`, amountSom: 5000, method: 'TRANSFER', purpose: 'OPENING_DEBT', patientId: 7, patient: 'Пример В.', viaBot: false },
+      ] satisfies Schemas['PaymentQueryCashEntry'][])
+    }),
+    http.get('*/api/appointments/debts', () => HttpResponse.json([])),
+    http.get('*/api/appointments/42', () => HttpResponse.json(appointment(42, 1, '10:00', 'Пример Б.', { status: 'DONE', paidSom: 1500, chargeSom: 3500, debtSom: 2000, paymentMethod: 'TRANSFER' }))),
+  )
+  renderApp()
+  // Подпись — текст, не выбор
+  expect(await screen.findByLabelText('Чья касса')).toHaveTextContent('🧑‍⚕️ Айгерим Садыкова — ваша касса')
+  expect(screen.queryByRole('combobox', { name: 'Чья касса' })).not.toBeInTheDocument()
+  expect(await screen.findByText(/Оплачено приёмов: 1/)).toHaveTextContent(/в долг: 1 \(2\s000 сом\)/)
+  expect(asked).toContain('1')
+
+  // Список — только по нажатию: до этого не запрашивается
+  expect(asked.some((a) => a.startsWith('entries'))).toBe(false)
+  await userEvent.click(screen.getByRole('button', { name: /Поступления \(3\)/ }))
+  const list = await screen.findByRole('list', { name: 'Поступления' })
+  expect(asked).toContain('entries 1')
+  const rows = within(list).getAllByRole('listitem')
+  expect(rows).toHaveLength(3)
+  expect(rows[0]).toHaveTextContent(/11:10.*приём сегодня 10:00 · Пример А\..*3\s000 сом.*наличные · Айгерим Садыкова/)
+  expect(rows[1]).toHaveTextContent(`долг за приём ${yesterday.slice(8, 10)}.${yesterday.slice(5, 7)} · Пример Б.`)
+  expect(rows[1]).toHaveTextContent('перевод · Айгерим Садыкова · через бот')
+  expect(rows[2]).toHaveTextContent('старый долг (из Excel) · Пример В.')
+
+  await userEvent.click(within(rows[1]!).getByRole('button'))
+  const panel = await screen.findByRole('complementary', { name: 'Карточка приёма' })
+  expect(panel).toHaveTextContent('Пример Б.')
 })
 
 test('регистратура: «К оплате на кассе» — нажать, принять оплату в карточке, строка уходит', async () => {

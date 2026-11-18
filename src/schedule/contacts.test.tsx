@@ -164,3 +164,29 @@ test('помощник в боте, «✏️ Изменить» записи: п
   expect(await within(panel).findByText('Нурлан К.')).toBeInTheDocument()
   expect(within(panel).getByText(/15:00/)).toBeInTheDocument()
 })
+
+test('«＋ Новый пациент» открыт — «📇 Из контактов телефона» не пропадает: имя и номер в форму', async () => {
+  const searched = backend([])
+  const select = vi.fn(() => Promise.resolve([{ name: ['Бакыт Асанов'], tel: ['+996 700 11-22-33'] }]))
+  Object.defineProperty(navigator, 'contacts', { value: { select }, configurable: true })
+  const panel = await openNew()
+  await userEvent.click(within(panel).getByRole('button', { name: '＋ Новый пациент' }))
+  await userEvent.click(within(panel).getByRole('button', { name: '📇 Из контактов телефона' }))
+
+  expect(await within(panel).findByLabelText('Имя и фамилия')).toHaveValue('Бакыт Асанов')
+  expect(within(panel).getByRole('textbox', { name: 'Телефон' })).toHaveValue('700112233')
+  expect(searched).toEqual(['700112233'])
+})
+
+test('«＋ Новый пациент» без записной книжки — «📋 Вставить номер» тоже в форме', async () => {
+  backend([])
+  clipboard(() => Promise.resolve('0555123456'))
+  const panel = await openNew()
+  await userEvent.click(within(panel).getByRole('button', { name: '＋ Новый пациент' }))
+  await userEvent.type(within(panel).getByLabelText('Имя и фамилия'), 'Айгуль')
+  fireEvent.click(within(panel).getByRole('button', { name: '📋 Вставить номер' }))
+
+  expect(await within(panel).findByRole('textbox', { name: 'Телефон' })).toHaveValue('555123456')
+  // Имени в буфере нет — введённое остаётся
+  expect(within(panel).getByLabelText('Имя и фамилия')).toHaveValue('Айгуль')
+})
