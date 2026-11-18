@@ -2,7 +2,7 @@ import type { Schemas } from '../api/client'
 
 export type Channel = Schemas['TishReportControllerChannelRow']['channel']
 
-/** Каналы Tish (бэкенд, `BookingChannel`, V230) — как их видит руководитель в «Пациентах от Tish». */
+/** Каналы Tish (бэкенд, `BookingChannel`, V232) — как их видит руководитель в «Пациентах от Tish». */
 export const CHANNEL_LABELS: Record<Channel, string> = {
   BOT: '🤖 Чат бота',
   MINI_APP: '📲 Mini App в Telegram',

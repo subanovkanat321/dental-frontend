@@ -138,7 +138,7 @@ export function withPromo(url: string | null | undefined, promo: string | null):
 }
 
 /**
- * Метка канала из адреса (/c/<код>?from=instagram, V230): откуда пришли — Instagram, 2ГИС, QR… Только латиница и
+ * Метка канала из адреса (/c/<код>?from=instagram, V232): откуда пришли — Instagram, 2ГИС, QR… Только латиница и
  * цифры (их пропускает start бота); какие метки бывают, решает сервер — незнакомую он просто не учтёт.
  */
 export function channelSlug(): string | null {

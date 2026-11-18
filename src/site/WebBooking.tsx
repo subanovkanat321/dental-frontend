@@ -169,7 +169,7 @@ function WebContacts({ chosen, active, onTaken, t, lang, code, info, onBooked }:
     const { status, data, problem } = await postJson<WebBooked>(url('/web/booking', code), {
       ...(chosen.doctorId == null ? {} : { doctorId: chosen.doctorId }), serviceTypeId: chosen.service.id, startAt: chosen.startAt, fullName: name,
       phone: phoneFromInput(phone), comment: commentRef.current?.value ?? '', consent: true, sourceId, website: websiteRef.current?.value ?? '',
-      // Метка канала из ссылки (?from=instagram): заявка попадёт в «Пациенты от Tish» с этим каналом (V230)
+      // Метка канала из ссылки (?from=instagram): заявка попадёт в «Пациенты от Tish» с этим каналом (V232)
       ...(channelSlug() ? { from: channelSlug() } : {}),
     })
     setSending(false)

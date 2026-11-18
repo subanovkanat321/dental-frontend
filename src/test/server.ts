@@ -63,7 +63,7 @@ export const server = setupServer(
   // Промокоды (V122): по умолчанию у клиники их нет
   http.get('*/api/promo-codes', () => HttpResponse.json([])),
   http.get('*/api/appointments/promo-codes', () => HttpResponse.json({ rows: [], money: false })),
-  // «Пациенты от Tish» (V230): по умолчанию никого — тест отчёта (cash/tish.test.tsx) задаёт своё
+  // «Пациенты от Tish» (V232): по умолчанию никого — тест отчёта (cash/tish.test.tsx) задаёт своё
   http.get('*/api/appointments/from-tish', () => HttpResponse.json({
     month: '2026-11', from: '2026-11-01', to: '2026-11-18', previousFrom: '2026-10-01', previousTo: '2026-10-18', partial: true,
     current: { newPatients: 0, came: 0, revenueSom: 0, allNewPatients: 0 }, previous: { newPatients: 0, came: 0, revenueSom: 0, allNewPatients: 0 }, channels: [],

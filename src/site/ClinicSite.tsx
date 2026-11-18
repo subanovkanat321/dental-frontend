@@ -96,7 +96,7 @@ export function ClinicSite() {
   const name = d.name || t.title
   // Ссылка из рекламы с ?promo=КОД — бот получит код вместе с клиникой и подставит его в форму записи
   const promo = promoCode()
-  // Ссылка с меткой канала (?from=instagram) — бот запомнит канал, а форма записи передаст его сама (V230)
+  // Ссылка с меткой канала (?from=instagram) — бот запомнит канал, а форма записи передаст его сама (V232)
   const telegramUrl = withChannel(withPromo(d.telegramUrl, promo), channelSlug())
   const price = (som: number) => {
     const n = new Intl.NumberFormat('ru-RU').format(som)
