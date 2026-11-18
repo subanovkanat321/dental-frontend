@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 
 import { Atlas } from './Atlas'
 import { MODE_LABELS, MODES, numberedLabels, PARTS, type PartId } from './content'
@@ -187,5 +187,77 @@ describe('<Atlas />', () => {
     expect(dots[0]!.style.transform).toContain('translate(100.0px, 50.0px)')
     expect(dots[0]!.style.visibility).toBe('visible')
     expect(dots[1]!.style.visibility).toBe('hidden')
+  })
+
+  it('шаг ролика и «Повторить» — одной строкой: шаг слева, кнопка-значок справа', async () => {
+    render(<Atlas initialMode="endo" />)
+    await waitForSlow(() => expect(engine.api).not.toBeNull())
+    const row = document.querySelector<HTMLElement>('.atlas-steps')!
+    const [stepText, replay] = Array.from(row.children)
+    expect(stepText).toHaveClass('atlas-step')
+    expect(stepText).toHaveTextContent(/^1\./)
+    expect(replay).toBe(within(row).getByRole('button', { name: 'Повторить' }))
+    fireEvent.click(replay!)
+    expect(engine.api!.replay).toHaveBeenCalled()
+  })
+
+  describe('телефон', () => {
+    // jsdom не знает медиазапросов: «узкий экран» — подменой matchMedia
+    const original = window.matchMedia
+    beforeEach(() => {
+      window.matchMedia = ((query: string) => ({
+        matches: query.includes('max-width: 700px'), media: query, onchange: null,
+        addEventListener: () => undefined, removeEventListener: () => undefined,
+        addListener: () => undefined, removeListener: () => undefined, dispatchEvent: () => false,
+      })) as unknown as typeof window.matchMedia
+    })
+    afterEach(() => { window.matchMedia = original })
+
+    it('состояния — одной лентой чипов, описание — под моделью, а не поверх', async () => {
+      render(<Atlas />)
+      await waitForSlow(() => expect(engine.api).not.toBeNull())
+      const chips = screen.getByRole('tablist', { name: 'Зуб в разрезе' })
+      expect(chips).toHaveClass('atlas-chips')
+      expect(within(chips).getAllByRole('tab').map((b) => b.textContent)).toEqual(MODES.map((m) => m.ru))
+      fireEvent.click(within(chips).getByRole('tab', { name: 'Имплант' }))
+      expect(engine.api!.setMode).toHaveBeenLastCalledWith('implant')
+      // Описание — в нижней панели (холст ему не закрывает), компактное
+      const info = screen.getByRole('heading', { name: PARTS.implant.ru.name }).closest('aside')!
+      expect(info).toHaveClass('compact')
+      expect(info.closest('.atlas-stage')).toBeNull()
+      expect(info.closest('.atlas-bottom')).not.toBeNull()
+    })
+
+    it('длинное описание — 3 строки и «ещё», раскрывается по нажатию', async () => {
+      // Не влез: высота текста больше видимой (в jsdom размеров нет — подменяем замер)
+      const sh = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(120)
+      const ch = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(60)
+      try {
+        render(<Atlas initialMode="endo" />)
+        await waitForSlow(() => expect(engine.api).not.toBeNull())
+        expect(screen.getByText(PARTS.gutta.ru.text)).toHaveClass('clamped')
+        const more = screen.getByRole('button', { name: 'ещё' })
+        fireEvent.click(more)
+        expect(screen.getByText(PARTS.gutta.ru.text)).not.toHaveClass('clamped')
+        expect(screen.getByRole('button', { name: 'свернуть' })).toHaveAttribute('aria-expanded', 'true')
+      } finally {
+        sh.mockRestore()
+        ch.mockRestore()
+      }
+    })
+
+    it('челюсть: сетка номеров свёрнута под «Зуб по номеру», рядом — «Корни»', async () => {
+      render(<Atlas initialView="jaw" />)
+      await waitForSlow(() => expect(engine.api).not.toBeNull())
+      expect(screen.queryByRole('button', { name: '36' })).toBeNull()
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Корни' }))
+      expect(engine.api!.setRoots).toHaveBeenLastCalledWith(true)
+      const toggle = screen.getByRole('button', { name: /Зуб по номеру/ })
+      expect(toggle).toHaveAttribute('aria-expanded', 'false')
+      fireEvent.click(toggle)
+      expect(toggle).toHaveAttribute('aria-expanded', 'true')
+      fireEvent.click(screen.getByRole('button', { name: '36' }))
+      expect(engine.api!.setTooth).toHaveBeenLastCalledWith(36)
+    })
   })
 })

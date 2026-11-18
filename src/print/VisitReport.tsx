@@ -236,6 +236,12 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
           <p className="hint small">Так увидит пациент{preview.lang === 'KY' ? ' · на кыргызском, как у него в боте' : ''}. Проверьте и отправьте.</p>
           <ChannelSwitch value={channel} telegram={preview.telegram} whatsapp={Boolean(phone)} onChange={setChannel} />
           <MessagePreview text={preview.text ?? ''} channel={channel} parts={preview.parts} />
+          {preview.review && (
+            <p className="hint small" role="note" aria-label="Оценка приёма">
+              ⭐ В конце спросим «Как прошёл приём?»{channel === 'TELEGRAM' && preview.telegram ? ' — кнопки ⭐1–5 под сообщением' : ' — ссылка на оценку'}.
+              Отдельно бот спрашивать уже не будет.
+            </p>
+          )}
           <div className="actions">
             {channel === 'TELEGRAM' && preview.telegram && (
               <button type="button" className="btn primary" disabled={busy} onClick={() => send.mutate('TELEGRAM')}>Отправить в Telegram</button>

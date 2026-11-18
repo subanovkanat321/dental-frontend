@@ -3415,6 +3415,50 @@
         }
       }
     },
+    "/api/clinic/review-timing" : {
+      "get" : {
+        "tags" : [ "review-settings-controller" ],
+        "operationId" : "timing",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReviewSettingsControllerReviewTimingView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "review-settings-controller" ],
+        "operationId" : "update_17",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReviewSettingsControllerReviewTimingView"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReviewSettingsControllerReviewTimingView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/clinic/reminder-template" : {
       "put" : {
         "tags" : [ "clinic-controller" ],
@@ -3886,7 +3930,7 @@
     "/api/care-memos/{id}" : {
       "put" : {
         "tags" : [ "care-memo-controller" ],
-        "operationId" : "update_17",
+        "operationId" : "update_18",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -20327,6 +20371,14 @@
         },
         "required" : [ "available", "on" ]
       },
+      "ReviewSettingsControllerReviewTimingView" : {
+        "properties" : {
+          "timing" : {
+            "type" : "string",
+            "enum" : [ "TWO_HOURS", "EVENING", "NEXT_DAY" ]
+          }
+        }
+      },
       "ClinicControllerReminderRequest" : {
         "properties" : {
           "reminderTemplate" : {
@@ -23954,9 +24006,12 @@
           "lang" : {
             "type" : "string",
             "enum" : [ "RU", "KY" ]
+          },
+          "review" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "parts", "telegram" ]
+        "required" : [ "parts", "review", "telegram" ]
       },
       "VisitReportsCare" : {
         "properties" : {

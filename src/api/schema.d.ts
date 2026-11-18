@@ -1236,6 +1236,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/clinic/review-timing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["timing"];
+        put: operations["update_17"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/clinic/reminder-template": {
         parameters: {
             query?: never;
@@ -1436,7 +1452,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put: operations["update_17"];
+        put: operations["update_18"];
         post?: never;
         delete?: never;
         options?: never;
@@ -8845,6 +8861,10 @@ export interface components {
             available: boolean;
             on: boolean;
         };
+        ReviewSettingsControllerReviewTimingView: {
+            /** @enum {string} */
+            timing?: "TWO_HOURS" | "EVENING" | "NEXT_DAY";
+        };
         ClinicControllerReminderRequest: {
             reminderTemplate?: string;
             reminderTemplateKy?: string;
@@ -10328,6 +10348,7 @@ export interface components {
             telegram: boolean;
             /** @enum {string} */
             lang?: "RU" | "KY";
+            review: boolean;
         };
         VisitReportsCare: {
             /** Format: int64 */
@@ -15172,6 +15193,50 @@ export interface operations {
             };
         };
     };
+    timing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewSettingsControllerReviewTimingView"];
+                };
+            };
+        };
+    };
+    update_17: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewSettingsControllerReviewTimingView"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewSettingsControllerReviewTimingView"];
+                };
+            };
+        };
+    };
     reminderTemplate: {
         parameters: {
             query?: never;
@@ -15604,7 +15669,7 @@ export interface operations {
             };
         };
     };
-    update_17: {
+    update_18: {
         parameters: {
             query?: never;
             header?: never;

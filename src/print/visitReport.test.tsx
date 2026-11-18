@@ -23,8 +23,8 @@ const MEMO = {
 /** Что вернёт предпросмотр: сервер собирает заголовок, текст, уход и подпись — тот же текст уйдёт пациенту. */
 const PREVIEW = '🦷 После приёма\n\nЗдравствуйте, Бакыт М.!\n\nУход дома:\n• Не ешьте 2 часа.\n\nВрач: Асанов Б., +996 700 123 456\nКлиника Tish Dent: +996 312 000 111'
 
-function backend(draft: Draft, { memo = MEMO, ai = false, telegram = false, parts = 1 }: {
-  memo?: Schemas['CareMemosAppointmentMemo']; ai?: boolean; telegram?: boolean; parts?: number
+function backend(draft: Draft, { memo = MEMO, ai = false, telegram = false, parts = 1, review = false }: {
+  memo?: Schemas['CareMemosAppointmentMemo']; ai?: boolean; telegram?: boolean; parts?: number; review?: boolean
 } = {}) {
   const calls: unknown[] = []
   server.use(
@@ -45,7 +45,7 @@ function backend(draft: Draft, { memo = MEMO, ai = false, telegram = false, part
     }),
     http.post('*/api/appointments/:id/visit-report/preview', async ({ request }) => {
       calls.push({ preview: await request.json() })
-      return HttpResponse.json({ text: PREVIEW, parts, telegram, lang: draft.lang } satisfies Schemas['VisitReportsPreview'])
+      return HttpResponse.json({ text: PREVIEW, parts, telegram, lang: draft.lang, review } satisfies Schemas['VisitReportsPreview'])
     }),
     http.put('*/api/clinic/visit-report-ai', async ({ request }) => {
       calls.push(await request.json())
@@ -283,4 +283,25 @@ test('у услуги нет памятки — блока ухода нет, п
   expect(await within(b).findByRole('textbox', { name: 'Уход дома' })).toHaveValue('Не пейте кофе.')
   await userEvent.click(within(b).getByRole('button', { name: 'Проверить и отправить' }))
   await waitForSlow(() => expect(calls).toContainEqual({ preview: { text: 'Здравствуйте!', care: 'Не пейте кофе.', doctorPhone: false } }))
+})
+
+test('предпросмотр говорит, что в конце спросим оценку: в Telegram — кнопками, в WhatsApp — ссылкой', async () => {
+  backend(DRAFT, { telegram: true, review: true })
+  renderApp()
+  const b = await box()
+  await userEvent.click(await within(b).findByRole('button', { name: 'Составить по шаблону' }))
+  await userEvent.click(await within(b).findByRole('button', { name: 'Проверить и отправить' }))
+  const note = await within(b).findByRole('note', { name: 'Оценка приёма' })
+  expect(note).toHaveTextContent('кнопки ⭐1–5 под сообщением')
+  expect(note).toHaveTextContent('Отдельно бот спрашивать уже не будет')
+})
+
+test('оценку уже спрашивали — о ней в предпросмотре ни слова', async () => {
+  backend(DRAFT, { review: false })
+  renderApp()
+  const b = await box()
+  await userEvent.click(await within(b).findByRole('button', { name: 'Составить по шаблону' }))
+  await userEvent.click(await within(b).findByRole('button', { name: 'Проверить и отправить' }))
+  await within(b).findByRole('document', { name: 'Предпросмотр сообщения' })
+  expect(within(b).queryByRole('note', { name: 'Оценка приёма' })).not.toBeInTheDocument()
 })
