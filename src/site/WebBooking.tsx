@@ -8,7 +8,7 @@ import { translator, whenAt, type Lang, type T } from '../patient/i18n'
 import { stripLength } from '../patient/slots'
 import { BookingWizard, type ContactsArgs } from '../patient/Wizard'
 import '../patient/patient.css'
-import { getJson, postJson, type SiteProblem, type WebBooked, type WebBookingInfo } from './web'
+import { channelSlug, getJson, postJson, withChannel, type SiteProblem, type WebBooked, type WebBookingInfo } from './web'
 import { Loading } from '../layout/Loading'
 
 type Slots = Schemas['BookingViewsSlots']
@@ -169,6 +169,8 @@ function WebContacts({ chosen, active, onTaken, t, lang, code, info, onBooked }:
     const { status, data, problem } = await postJson<WebBooked>(url('/web/booking', code), {
       ...(chosen.doctorId == null ? {} : { doctorId: chosen.doctorId }), serviceTypeId: chosen.service.id, startAt: chosen.startAt, fullName: name,
       phone: phoneFromInput(phone), comment: commentRef.current?.value ?? '', consent: true, sourceId, website: websiteRef.current?.value ?? '',
+      // Метка канала из ссылки (?from=instagram): заявка попадёт в «Пациенты от Tish» с этим каналом (V230)
+      ...(channelSlug() ? { from: channelSlug() } : {}),
     })
     setSending(false)
     if (data) onBooked(data)
@@ -222,7 +224,7 @@ function WebContacts({ chosen, active, onTaken, t, lang, code, info, onBooked }:
       {err('consent')}
       {err('form')}
       {active && <button type="submit" className="btn primary book-submit" disabled={sending}>{sending ? t('webSending') : t('webSubmit')}</button>}
-      {info.telegramUrl && <p className="hint">{t('webTgHint')} <a href={info.telegramUrl} target="_blank" rel="noopener noreferrer">{t('webTgLink')}</a></p>}
+      {info.telegramUrl && <p className="hint">{t('webTgHint')} <a href={withChannel(info.telegramUrl, channelSlug()) ?? info.telegramUrl} target="_blank" rel="noopener noreferrer">{t('webTgLink')}</a></p>}
     </form>
   )
 }

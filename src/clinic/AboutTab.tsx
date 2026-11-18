@@ -9,6 +9,7 @@ import { openLink, telegram } from '../lib/telegram'
 import { useDirty } from '../lib/unsaved'
 import { useBlobUrl } from '../lib/useBlobUrl'
 import { canEditPrices } from '../lib/roles'
+import { BookingLinks } from './BookingLinks'
 import { PhoneInput } from './PhoneInput'
 import { PhoneListInput } from './PhoneListInput'
 import { SetupChecklist } from './SetupChecklist'
@@ -33,6 +34,7 @@ export function AboutTab({ me }: { me: Me }) {
     <>
       <SetupChecklist me={me} />
       <AboutForm me={me} clinic={clinic.data} />
+      {clinic.data.code && <BookingLinks clinicCode={clinic.data.code} />}
       {me.admin && <DepositSettings />}
     </>
   )
@@ -260,7 +262,7 @@ function BookingPage({ url }: { url: string }) {
       </div>
       {copied === true && <p className="tone-ok" role="status">Ссылка на запись скопирована</p>}
       {copied === false && <p className="hint" role="status">Скопировать не получилось — нажмите на ссылку выше и удерживайте, затем «Копировать»</p>}
-      <p className="hint">Поставьте в Instagram (Ссылки в профиле), 2ГИС (поле «Сайт»), Google Карты и рекламу. Отдельная ссылка под каждую рекламу — «Откуда приходят → Промокоды».{' '}
+      <p className="hint">Поставьте в Instagram (Ссылки в профиле), 2ГИС (поле «Сайт»), Google Карты и рекламу. Своя ссылка для Instagram, 2ГИС, WhatsApp и QR — ниже, в «Ссылках для записи»; со скидкой — «Откуда приходят → Промокоды».{' '}
         <a href="/guide?from=app#ssylka-na-zapis" target="_blank" rel="noopener noreferrer">Как и куда поставить</a></p>
     </div>
   )

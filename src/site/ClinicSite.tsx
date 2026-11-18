@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 
 import { ContactLinks } from '../lib/ContactLinks'
 import { SiteHeader } from './SiteHeader'
-import { clinicCode, getJson, inAppBrowser, initials, promoCode, tgLink, useSiteLang, withPromo, type ClinicPage } from './web'
+import { clinicCode, getJson, inAppBrowser, initials, channelSlug, promoCode, tgLink, useSiteLang, withChannel, withPromo, type ClinicPage } from './web'
 import { Loading } from '../layout/Loading'
 
 // Форма записи на сайте — отдельным чанком: страницу клиники открывают с телефона, а форма нужна не всем
@@ -96,7 +96,8 @@ export function ClinicSite() {
   const name = d.name || t.title
   // Ссылка из рекламы с ?promo=КОД — бот получит код вместе с клиникой и подставит его в форму записи
   const promo = promoCode()
-  const telegramUrl = withPromo(d.telegramUrl, promo)
+  // Ссылка с меткой канала (?from=instagram) — бот запомнит канал, а форма записи передаст его сама (V230)
+  const telegramUrl = withChannel(withPromo(d.telegramUrl, promo), channelSlug())
   const price = (som: number) => {
     const n = new Intl.NumberFormat('ru-RU').format(som)
     return lang === 'ky' ? `${n} сомдон баштап` : `от ${n} сом`

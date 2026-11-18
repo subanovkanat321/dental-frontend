@@ -137,6 +137,33 @@ export function withPromo(url: string | null | undefined, promo: string | null):
   }
 }
 
+/**
+ * Метка канала из адреса (/c/<код>?from=instagram, V230): откуда пришли — Instagram, 2ГИС, QR… Только латиница и
+ * цифры (их пропускает start бота); какие метки бывают, решает сервер — незнакомую он просто не учтёт.
+ */
+export function channelSlug(): string | null {
+  const slug = (new URLSearchParams(window.location.search).get('from') ?? '').toLowerCase()
+  return /^[a-z0-9]{1,16}$/.test(slug) ? slug : null
+}
+
+/**
+ * Ссылка на бота с меткой канала: start=c_<клиника>[-ПРОМОКОД] → …_<метка> (бот запомнит канал до записи). Нет
+ * метки или ссылка не клиники — как была.
+ */
+export function withChannel(url: string | null | undefined, slug: string | null): string | null {
+  if (!url) return null
+  if (!slug) return url
+  try {
+    const u = new URL(url)
+    const start = u.searchParams.get('start')
+    if (!start?.startsWith('c_')) return url
+    u.searchParams.set('start', `${start}_${slug}`)
+    return u.toString()
+  } catch {
+    return url
+  }
+}
+
 /** Главная страница сайта — ссылка из Instagram (/go): с неё приходят на остальные страницы. */
 export const SITE_HOME = '/go'
 

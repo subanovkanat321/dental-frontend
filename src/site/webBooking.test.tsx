@@ -196,3 +196,25 @@ test('«Любой свободный врач» на сайте: сетка и 
   expect(sent).toMatchObject({ serviceTypeId: 5, phone: '+996700112233' })
   expect(within(done).getByText('Айгерим Садыкова')).toBeInTheDocument()
 })
+
+test('ссылка с меткой канала (?from=instagram): метка не теряется при переходе к форме и уходит с заявкой; ссылка в бота — с меткой', async () => {
+  window.history.replaceState(null, '', '/c/abc123?from=instagram')
+  let sent: Record<string, unknown> = {}
+  backend((body) => {
+    sent = body
+    return HttpResponse.json({
+      startAt: body.startAt as string, endAt: body.startAt as string, doctorName: 'Бакыт Маматов', serviceName: 'Осмотр и консультация',
+    } satisfies WebBooked, { status: 201 })
+  })
+  const user = userEvent.setup()
+  await fillForm(user)
+  expect(window.location.search).toBe('?from=instagram')
+  expect(screen.getByRole('link', { name: /Telegram/ })).toHaveAttribute('href', 'https://t.me/tish_bot?start=c_abc123_instagram')
+  await user.click(screen.getByRole('checkbox', { name: /ИП Садыкова/ }))
+  await user.click(screen.getByRole('button', { name: 'Записаться' }))
+
+  await screen.findByRole('region', { name: 'Заявка отправлена' })
+  expect(sent).toMatchObject({ from: 'instagram', fullName: 'Айгуль Тестова' })
+  // Имени и телефона в адресе нет — только метка канала
+  expect(window.location.href).not.toMatch(/Айгуль|700112233/)
+})

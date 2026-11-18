@@ -16195,6 +16195,32 @@
         }
       }
     },
+    "/api/appointments/from-tish" : {
+      "get" : {
+        "tags" : [ "tish-report-controller" ],
+        "operationId" : "report_4",
+        "parameters" : [ {
+          "name" : "month",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TishReportControllerTishReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/debts" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -21568,6 +21594,11 @@
           },
           "website" : {
             "type" : "string"
+          },
+          "from" : {
+            "type" : "string",
+            "maxLength" : 32,
+            "minLength" : 0
           }
         },
         "required" : [ "consent", "serviceTypeId", "startAt" ]
@@ -29240,6 +29271,91 @@
           }
         },
         "required" : [ "active", "bookings", "newPatients", "promoCodeId", "visits" ]
+      },
+      "TishReportControllerChannelRow" : {
+        "properties" : {
+          "channel" : {
+            "type" : "string",
+            "enum" : [ "BOT", "MINI_APP", "SITE", "INSTAGRAM", "TWOGIS", "WHATSAPP", "REELS", "QR", "REFERRAL", "RECALL" ]
+          },
+          "newPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "came" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "previousNewPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "came", "channel", "newPatients", "previousNewPatients", "revenueSom" ]
+      },
+      "TishReportControllerTishReport" : {
+        "properties" : {
+          "month" : {
+            "type" : "string"
+          },
+          "from" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "previousFrom" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "previousTo" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "partial" : {
+            "type" : "boolean"
+          },
+          "current" : {
+            "$ref" : "#/components/schemas/TishReportControllerTotals"
+          },
+          "previous" : {
+            "$ref" : "#/components/schemas/TishReportControllerTotals"
+          },
+          "channels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TishReportControllerChannelRow"
+            }
+          }
+        },
+        "required" : [ "channels", "current", "from", "month", "partial", "previous", "previousFrom", "previousTo", "to" ]
+      },
+      "TishReportControllerTotals" : {
+        "properties" : {
+          "newPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "came" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "revenueSom" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "allNewPatients" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "allNewPatients", "came", "newPatients", "revenueSom" ]
       },
       "DayCount" : {
         "properties" : {

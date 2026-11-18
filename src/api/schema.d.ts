@@ -7092,6 +7092,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/from-tish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["report_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/debts": {
         parameters: {
             query?: never;
@@ -9337,6 +9353,7 @@ export interface components {
             /** Format: int64 */
             sourceId?: number;
             website?: string;
+            from?: string;
         };
         WebBookingServiceBooked: {
             /** Format: date-time */
@@ -12402,6 +12419,43 @@ export interface components {
             newPatients: number;
             /** Format: int64 */
             revenueSom?: number;
+        };
+        TishReportControllerChannelRow: {
+            /** @enum {string} */
+            channel: "BOT" | "MINI_APP" | "SITE" | "INSTAGRAM" | "TWOGIS" | "WHATSAPP" | "REELS" | "QR" | "REFERRAL" | "RECALL";
+            /** Format: int32 */
+            newPatients: number;
+            /** Format: int32 */
+            came: number;
+            /** Format: int64 */
+            revenueSom: number;
+            /** Format: int32 */
+            previousNewPatients: number;
+        };
+        TishReportControllerTishReport: {
+            month: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** Format: date */
+            previousFrom: string;
+            /** Format: date */
+            previousTo: string;
+            partial: boolean;
+            current: components["schemas"]["TishReportControllerTotals"];
+            previous: components["schemas"]["TishReportControllerTotals"];
+            channels: components["schemas"]["TishReportControllerChannelRow"][];
+        };
+        TishReportControllerTotals: {
+            /** Format: int32 */
+            newPatients: number;
+            /** Format: int32 */
+            came: number;
+            /** Format: int64 */
+            revenueSom: number;
+            /** Format: int32 */
+            allNewPatients: number;
         };
         DayCount: {
             /** Format: date */
@@ -25426,6 +25480,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PromoReportControllerPromoReport"];
+                };
+            };
+        };
+    };
+    report_4: {
+        parameters: {
+            query?: {
+                month?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TishReportControllerTishReport"];
                 };
             };
         };

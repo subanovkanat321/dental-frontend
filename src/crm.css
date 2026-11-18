@@ -2879,3 +2879,19 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .cash-entry .what { min-width: 0; overflow-wrap: anywhere; }
 .cash-entry .sum { text-align: right; white-space: nowrap; }
 .cash-entry .sub { grid-column: 2 / -1; font-size: .82rem; color: var(--hint); }
+
+/* «О клинике → Ссылки для записи»: ссылка на канал (Instagram, 2ГИС, QR…) — подпись, ссылка, «Скопировать» */
+.booking-links { display: grid; gap: 12px; }
+.booking-links h2 { margin: 0; }
+.booking-link { display: grid; gap: 6px; padding: 12px; border-radius: var(--r-md); background: var(--sunken); }
+.booking-link-head { display: grid; gap: 2px; }
+.booking-link a { font-family: var(--mono); font-size: .85rem; word-break: break-all; }
+.booking-link .actions { margin: 0; }
+.booking-qr { display: grid; gap: 8px; justify-items: start; }
+
+/* «Аналитика → Пациенты от Tish»: одна крупная цифра, под ней — пришли и выручка, каналы, как считали */
+.tish-big { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; margin: 4px 0; }
+.tish-big b { font-size: 2.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.tish-facts { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 8px; padding: 0; list-style: none; }
+.tish-facts b { font-variant-numeric: tabular-nums; }
+.tish-how { margin-top: 8px; }
