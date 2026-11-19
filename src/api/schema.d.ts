@@ -7156,6 +7156,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/appointments/ratings/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ratingList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/appointments/range": {
         parameters: {
             query?: never;
@@ -12559,6 +12575,27 @@ export interface components {
             byStars?: number[];
             /** Format: int64 */
             fromPage: number;
+        };
+        RatingList: {
+            summary?: components["schemas"]["RatingSummary"];
+            items?: components["schemas"]["RatingRow"][];
+            more: boolean;
+        };
+        RatingRow: {
+            /** Format: int64 */
+            appointmentId: number;
+            /** Format: int64 */
+            patientId: number;
+            patientName?: string;
+            /** Format: int64 */
+            doctorId: number;
+            doctorName?: string;
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: int32 */
+            rating: number;
+            via?: string;
+            comment?: string;
         };
         PromoReportControllerPromoReport: {
             rows?: components["schemas"]["PromoReportControllerRow"][];
@@ -25721,6 +25758,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RatingSummary"];
+                };
+            };
+        };
+    };
+    ratingList: {
+        parameters: {
+            query?: {
+                days?: number;
+                doctorId?: number;
+                low?: boolean;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RatingList"];
                 };
             };
         };

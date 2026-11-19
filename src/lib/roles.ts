@@ -90,3 +90,21 @@ export function canShareExpenses(me: Me): boolean {
   if (seesAllMoney(me)) return true
   return Boolean(me.clinic?.independentDoctors) && !isAssistant(me) && Boolean(me.admin || me.doctorId != null)
 }
+
+/**
+ * Чьи оценки пациентов видит сотрудник («Пациенты → Оценки»): null — всей клиники (руководитель, который видит всех
+ * врачей, и регистратура); иначе — эти врачи (ассистент — свои врачи, врач — свои приёмы). Пусто — вкладки нет.
+ * Как AppointmentController.ratingDoctors на сервере (проверяет он; здесь — только что показать).
+ */
+export function ratingDoctors(me: Me): number[] | null {
+  if (seesAllMoney(me) || me.reception) return null
+  const ids = [...(me.assistantOf ?? [])]
+  if (me.doctorId != null && !ids.includes(me.doctorId)) ids.push(me.doctorId)
+  return ids
+}
+
+/** Вкладка «Пациенты → Оценки»: кто видит хоть чьи-то оценки. */
+export function seesRatings(me: Me): boolean {
+  const ids = ratingDoctors(me)
+  return ids == null || ids.length > 0
+}

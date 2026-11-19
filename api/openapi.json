@@ -16233,6 +16233,59 @@
         }
       }
     },
+    "/api/appointments/ratings/list" : {
+      "get" : {
+        "tags" : [ "appointment-controller" ],
+        "operationId" : "ratingList",
+        "parameters" : [ {
+          "name" : "days",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 90
+          }
+        }, {
+          "name" : "doctorId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "low",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RatingList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/appointments/range" : {
       "get" : {
         "tags" : [ "appointment-controller" ],
@@ -29513,6 +29566,60 @@
           }
         },
         "required" : [ "count", "fromPage" ]
+      },
+      "RatingList" : {
+        "properties" : {
+          "summary" : {
+            "$ref" : "#/components/schemas/RatingSummary"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RatingRow"
+            }
+          },
+          "more" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "more" ]
+      },
+      "RatingRow" : {
+        "properties" : {
+          "appointmentId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "patientName" : {
+            "type" : "string"
+          },
+          "doctorId" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "doctorName" : {
+            "type" : "string"
+          },
+          "startAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "rating" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "via" : {
+            "type" : "string"
+          },
+          "comment" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appointmentId", "doctorId", "patientId", "rating" ]
       },
       "PromoReportControllerPromoReport" : {
         "properties" : {

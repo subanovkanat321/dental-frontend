@@ -279,6 +279,13 @@ export const TIPS: Tip[] = [
     show: (me) => hasSub(me, 'settings', 'ai'),
   },
   {
+    id: 'ratings-list',
+    title: 'Оценки пациентов — списком',
+    text: 'Кто какую оценку поставил после приёма — «Пациенты → Оценки». «Только 1–3 ★» — жалобы, на которые стоит ответить.',
+    action: { show: 'patients/ratings' },
+    show: (me) => hasSub(me, 'patients', 'ratings'),
+  },
+  {
     id: 'instagram',
     title: 'Tish в Instagram',
     text: 'Короткие видео «как сделать» и юмор про будни стоматолога. Подпишитесь — рилсы можно репостить в Instagram клиники.',

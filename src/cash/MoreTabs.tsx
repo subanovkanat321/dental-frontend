@@ -21,6 +21,9 @@ import { Donut } from '../lib/Donut'
 import { Loading } from '../layout/Loading'
 import { EmptyState } from '../layout/EmptyState'
 import { rowOpen } from '../lib/rowClick'
+import { subHref } from '../lib/sub'
+import { AskForRatings } from '../patients/RatingsTab'
+import { averageText } from '../patients/ratings'
 
 type Me = Schemas['BookingViewsMe']
 type Expense = Schemas['ExpensesExpense']
@@ -249,10 +252,13 @@ export function StatsTab({ doctorId }: { doctorId: number | null }) {
         )}
       </section>
       <section className="card-block">
-        <h2>Оценки пациентов · 90 дней</h2>
+        <div className="block-head">
+          <h2>Оценки пациентов · 90 дней</h2>
+          <a className="link" href={subHref('patients', 'ratings')}>Все оценки →</a>
+        </div>
         {r && r.count ? (
           <>
-            <p className="total" aria-label="Средняя оценка">{String(r.average).replace('.', ',')}<span className="hint small"> из 5 · оценок: {r.count}{r.fromPage ? ` · по ссылке из WhatsApp: ${r.fromPage}` : ''}</span></p>
+            <p className="total" aria-label="Средняя оценка">{averageText(r)}<span className="hint small"> из 5 · оценок: {r.count}{r.fromPage ? ` · по ссылке из WhatsApp: ${r.fromPage}` : ''}</span></p>
             <div className="stars" aria-label="Оценки по звёздам">
               {[5, 4, 3, 2, 1].map((stars) => (
                 <div key={stars} className="stars-row">
@@ -263,8 +269,7 @@ export function StatsTab({ doctorId }: { doctorId: number | null }) {
               ))}
             </div>
           </>
-        ) : <EmptyState title="Оценок пока нет">На следующий день после приёма бот спросит оценку у тех, кто записывался через бота. Пациентов без Telegram —
-          «⭐ Попросить оценку» в карточке приёма.</EmptyState>}
+        ) : <EmptyState title="Оценок пока нет"><AskForRatings /></EmptyState>}
       </section>
     </>
   )

@@ -1,6 +1,6 @@
 import type { Schemas } from '../api/client'
 import type { Page } from '../lib/route'
-import { isAssistant, seesAllMoney, seesOwnEarnings, seesOwnPurchases } from '../lib/roles'
+import { isAssistant, seesAllMoney, seesOwnEarnings, seesOwnPurchases, seesRatings } from '../lib/roles'
 import { CLINIC_ITEMS, SETTINGS_GROUPS } from '../settings/items'
 
 type Me = Schemas['BookingViewsMe']
@@ -29,9 +29,11 @@ export function subsOf(page: Page, me: Me): Sub[] {
   switch (page) {
     case 'patients':
       // «Позвать снова» — деньги на столе и приглашения; ассистенту (денег не видит) — прежний «Профосмотр»
+      // «Оценки» (2026-11-19) — в конце: смотрят реже, чем записывают и отвечают; кто чьи оценки видит — lib/roles
       return [{ key: 'all', title: 'Все' }, { key: 'booked', title: 'Записаны' }, { key: 'waitlist', title: 'Лист ожидания' },
         isAssistant(me) ? { key: 'recall', title: 'Профосмотр' } : { key: 'comeback', title: 'Позвать снова' },
-        { key: 'questions', title: 'Вопросы' }, { key: 'tasks', title: 'Задачи' }]
+        { key: 'questions', title: 'Вопросы' }, { key: 'tasks', title: 'Задачи' },
+        ...(seesRatings(me) ? [{ key: 'ratings', title: 'Оценки' }] : [])]
     case 'cash': {
       // Без денег (регистратура без кресла) у «Кассы» один экран — «К оплате на кассе»
       if (!seesAllMoney(me) && me.doctorId == null) return []
