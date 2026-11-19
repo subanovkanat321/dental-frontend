@@ -52,14 +52,27 @@ export function startErrorReports(): void {
   window.addEventListener('error', (event) => {
     // Ошибка загрузки картинки или скрипта — не исключение: у неё нет message
     if (!(event instanceof ErrorEvent)) return
+    // Без объекта Error и не из нашего кода — чужой скрипт (расширение, переводчик, робот-сканер):
+    // ни стека, ни места, исправить нечего. Наш код бросает Error со стеком.
+    if (!(event.error instanceof Error) && !ownScript(event.filename)) return
     reportError(event.error ?? event.message, { filename: event.filename })
   })
   window.addEventListener('unhandledrejection', (event) => reportError(event.reason))
 }
 
-const NOISE = /ResizeObserver loop|^Script error\.?$|dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i
+const NOISE = /ResizeObserver loop|event listener .* was terminated|^Script error\.?$|dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i
 const NETWORK = /Нет связи с сервером|Failed to fetch|Load failed|NetworkError when attempting|Network request failed|network error/i
 const EXTENSION = /(chrome|moz|safari|safari-web|ms-browser)-extension:\/\//i
+
+/** Файл скрипта — с нашего сайта (пустой адрес — неизвестно чей). */
+function ownScript(filename: string | undefined): boolean {
+  if (!filename) return false
+  try {
+    return new URL(filename, window.location.href).origin === window.location.origin
+  } catch {
+    return false
+  }
+}
 
 /** Отправить ошибку, если это не шум и лимит сессии не исчерпан. */
 export function reportError(error: unknown, options: { filename?: string; component?: string } = {}): void {

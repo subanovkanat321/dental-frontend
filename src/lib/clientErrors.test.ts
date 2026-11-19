@@ -60,6 +60,17 @@ test('шум не отправляется: ResizeObserver, расширения
   expect(networkErrors()).toBe(2)
 })
 
+test('чужой скрипт без Error и без нашего файла — не отправляется, наш — отправляется', async () => {
+  const got = capture()
+  startErrorReports()
+  window.dispatchEvent(new ErrorEvent('error', { message: 'event listener `load listener` was terminated' }))
+  window.dispatchEvent(new ErrorEvent('error', { message: 'Uncaught oops', filename: 'https://other.example/inject.js' }))
+  window.dispatchEvent(new ErrorEvent('error', { message: 'Uncaught bad', filename: `${window.location.origin}/assets/index-abc.js` }))
+  await settle()
+
+  expect(got.reports.map((r) => r.message)).toEqual(['Uncaught bad'])
+})
+
 test('не больше 5 отчётов за сессию, одинаковые — один раз', async () => {
   const got = capture()
   // Одна и та же ошибка — тот же текст и то же место в коде
