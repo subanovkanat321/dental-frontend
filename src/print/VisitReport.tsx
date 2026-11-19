@@ -115,6 +115,7 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
   const [printing, setPrinting] = useState(false)
   const [memoPrinting, setMemoPrinting] = useState(false)
   const [memoSending, setMemoSending] = useState(false)
+  const [memoNotice, setMemoNotice] = useState('')
   const [done, setDone] = useState('')
   const textArea = useRef<HTMLTextAreaElement>(null)
   // Наблюдатель держит черновики ИИ в кэше, пока панель открыта, и ещё 30 минут после; сам ничего не запрашивает
@@ -192,24 +193,44 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
   const busy = send.isPending || check.isPending
   const fallback = send.error?.code === 'not-delivered' && phone
 
-  // Уже отправили — блок свёрнут в строку «✓ Сообщение отправлено … · Отправить ещё раз ▾» (2026-11-19, экономия места);
-  // выбрали пункт — черновик или памятка открываются, как раньше
-  const collapsed = last != null && !draft && !memoSending && !make.isPending
+  // Пока черновика нет — блок свёрнут в одну строку (2026-11-19, экономия места): не отправлено — кнопка
+  // «📝 Отчёт пациенту ▾», отправлено — «✓ Сообщение отправлено … · Отправить ещё раз ▾». Пункты меню одни и те же;
+  // выбрали — открывается черновик или отправка памятки
   const write = aiOn ? 'AI' : 'TEMPLATE'
-  if (collapsed) {
-    const again: ActionItem[] = [
-      { label: 'Написать самому', hint: 'приветствие и план уже вставлены', onSelect: () => make.mutate('SELF') },
-      ...(saved ? [{ label: 'Прежний вариант ИИ', onSelect: () => open(saved.current, 'AI') }] : []),
-      { label: aiOn ? 'С ИИ ✨' : 'По шаблону', onSelect: () => make.mutate(write) },
-      ...(m?.memoId != null ? [{ label: 'Только памятка', hint: `«${m.title}»`, onSelect: () => setMemoSending(true) }] : []),
+  if (!draft) {
+    const memoTo = !m?.telegram && !phone ? 'пациент не в Telegram и без телефона' : null
+    const items: ActionItem[] = [
+      { label: 'Написать самому', hint: 'без ИИ: приветствие и план уже вставлены', onSelect: () => make.mutate('SELF'),
+        group: m?.memoId != null ? `Сообщение + памятка «${m.title}»` : 'Сообщение: что сделали и что дальше' },
+      ...(saved ? [{ label: 'Прежний вариант ИИ', hint: 'тот, что ИИ уже написал', onSelect: () => open(saved.current, 'AI') }] : []),
+      { label: aiOn ? (saved ? 'С ИИ ✨ заново' : 'С ИИ ✨') : 'По шаблону',
+        hint: aiOn ? 'без имени и телефона пациента — вы проверите' : 'из данных приёма — вы дополните', onSelect: () => make.mutate(write) },
+      ...(m?.memoId != null ? [{ label: 'Только памятка', hint: memoTo ?? 'без сообщения', disabled: memoTo != null,
+        group: 'Памятка', onSelect: () => { setMemoNotice(''); setMemoSending(true) } }] : []),
       ...(m?.memoId != null && canPrint() ? [{ label: 'Распечатать памятку', onSelect: () => setMemoPrinting(true) }] : []),
     ]
     return (
       <section className="visit-report visit-report-sent" aria-label="Сообщение после приёма">
-        <p className="visit-report-line">
-          <span className="tone-ok">✓ Сообщение отправлено {shortDate(last.sentAt!)} {VIA_TEXT[last.via!]}</span>
-          <ActionMenu label="Отправить ещё раз" className="link" items={again} />
-        </p>
+        {memoSending && m?.memoId != null ? (
+          <MemoOnly appointment={a} memo={m} onDone={(t) => { setMemoSending(false); setMemoNotice(t) }} />
+        ) : (
+          <p className="visit-report-line">
+            {last ? (
+              <>
+                <span className="tone-ok">✓ Сообщение отправлено {shortDate(last.sentAt!)} {VIA_TEXT[last.via!]}</span>
+                <ActionMenu label="Отправить ещё раз" className="link" items={items} disabled={make.isPending} />
+              </>
+            ) : (
+              <>
+                <ActionMenu label="📝 Отчёт пациенту" items={items} disabled={make.isPending} />
+                <span className="hint small">не отправлен</span>
+              </>
+            )}
+            {make.isPending && <span className="hint small"><Spinner />{make.variables === 'AI' ? 'ИИ пишет…' : 'Составляем…'}</span>}
+          </p>
+        )}
+        {memoNotice && <p className="tone-ok small" role="status">{memoNotice}</p>}
+        {done && <p className="tone-ok small" role="status">{done}</p>}
         {make.error && <p className="error" role="alert">{errorText(make.error)}</p>}
         {memoPrinting && m?.memoId != null && <MemoSheet appointment={a} memo={m} onClose={() => setMemoPrinting(false)} />}
       </section>
@@ -220,40 +241,8 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
     <section className="visit-report" aria-label="Сообщение после приёма">
       <div className="block-head">
         <h3>Сообщение после приёма</h3>
-        {last && !draft && <span className="hint small">Отправлено {shortDate(last.sentAt!)} {VIA_TEXT[last.via!]}</span>}
       </div>
-      {!draft ? (
-        <>
-          {/* Одна строка пояснения; что делает кнопка — в её подсказке (title), без строк под каждой */}
-          <p className="hint small">Что сделали и что дальше{m?.memoId != null ? <> — памятка «{m.title}» уйдёт в этом же сообщении</> : null}. Перед отправкой покажем текст{aiOn ? '; ИИ пишет без имени и телефона пациента' : ''}.</p>
-          {m && m.memoId == null && <NoMemo />}
-          {saved && (
-            <div className="after-visit-way after-visit-saved">
-              <span className="hint small">✨ Прежний вариант ИИ — можно взять его или попросить новый</span>
-              <div className="after-visit-saved-text" role="note" aria-label="Прежний вариант ИИ">{saved.current.text}</div>
-            </div>
-          )}
-          <div className="actions after-visit-start">
-            <button type="button" className="btn" disabled={make.isPending} onClick={() => make.mutate('SELF')}
-              title="Приветствие и план лечения уже вставлены — остальное своими словами. Без ИИ.">Написать самому</button>
-            {saved ? (
-              <>
-                <button type="button" className="btn" disabled={make.isPending} onClick={() => open(saved.current, 'AI')}>Использовать</button>
-                <button type="button" className="btn ghost" disabled={make.isPending} onClick={() => make.mutate('AI')}>
-                  {make.isPending && make.variables === 'AI' ? <><Spinner />ИИ пишет…</> : '✨ Написать заново'}</button>
-              </>
-            ) : (
-              <button type="button" className="btn" disabled={make.isPending} onClick={() => make.mutate(write)}
-                title={aiOn ? 'ИИ напишет по данным приёма — без имени и телефона пациента. Вы проверите и поправите.'
-                  : 'Готовый текст из данных приёма: что сделали, план, следующий визит. Вы дополните.'}>
-                {make.isPending && make.variables !== 'SELF' ? <><Spinner />{aiOn ? 'ИИ пишет…' : 'Составляем…'}</> : aiOn ? 'Составить с ИИ ✨' : 'Составить по шаблону'}</button>
-            )}
-            {m?.memoId != null && (
-              <MemoOnly appointment={a} memo={m} sending={memoSending} onSending={setMemoSending} onPrint={() => setMemoPrinting(true)} />
-            )}
-          </div>
-        </>
-      ) : preview ? (
+      {preview ? (
         <>
           <p className="hint small">Так увидит пациент{preview.lang === 'KY' ? ' · на кыргызском, как у него в боте' : ''}. Проверьте и отправьте.</p>
           <ChannelSwitch value={channel} telegram={preview.telegram} whatsapp={Boolean(phone)} onChange={setChannel} />
@@ -348,55 +337,38 @@ function AfterVisitMessage({ appointment: a, me, last }: { appointment: Appointm
 }
 
 /**
- * Только памятка, без сообщения: главное — «Отправить памятку пациенту» (Telegram, если пациент пишет боту,
- * иначе WhatsApp; язык пациента), сначала — как она придёт. Печать — второстепенно: «Ещё: распечатать».
- * Тот же отправитель памяток, что у регистратуры (POST …/care-memo/send).
+ * Только памятка, без сообщения (пункт «Только памятка» в меню отчёта): сначала — как она придёт (Telegram, если
+ * пациент пишет боту, иначе WhatsApp; язык пациента), потом «Отправить». Тот же отправитель памяток, что у
+ * регистратуры (POST …/care-memo/send). Готово или «Отмена» — onDone с текстом итога (пустой — отменили).
  */
-function MemoOnly({ appointment: a, memo: m, sending, onSending, onPrint }: {
-  appointment: Appointment; memo: CareMemo; sending: boolean; onSending: (on: boolean) => void; onPrint: () => void
-}) {
+function MemoOnly({ appointment: a, memo: m, onDone }: { appointment: Appointment; memo: CareMemo; onDone: (notice: string) => void }) {
   const phone = contactPhone(a.patient)
   const [channel, setChannel] = useState<Channel>(m.telegram ? 'TELEGRAM' : 'WHATSAPP')
-  const [sent, setSent] = useState('')
   const bot = useMutation<unknown, ApiError>({
     mutationFn: () => unwrap(api.POST('/api/appointments/{id}/care-memo/send', { params: { path: { id: a.id } }, body: { memoId: m.memoId, lang: m.lang } })),
     onSuccess: () => {
       haptic('success')
-      setSent('Памятка отправлена в Telegram')
-      onSending(false)
+      onDone('Памятка отправлена в Telegram')
     },
     onError: () => haptic('error'),
   })
   const whatsapp = () => {
     if (phone && m.text) {
       openLink(whatsappUrl(phone, m.text))
-      setSent('Памятка открыта в WhatsApp — отправьте там')
-      onSending(false)
+      onDone('Памятка открыта в WhatsApp — отправьте там')
     }
   }
-  const nowhere = !m.telegram && !phone
   return (
-    <div className={sending || sent || nowhere || bot.error ? 'after-visit-memo open' : 'after-visit-memo'}>
-      {!sending ? (
-        <div className="actions">
-          <button type="button" className="btn" disabled={nowhere} title={`Без сообщения — только памятка «${m.title}»`}
-            onClick={() => { setSent(''); onSending(true) }}>Отправить памятку пациенту</button>
-          {canPrint() && <span className="hint small">Ещё: <button type="button" className="link" onClick={onPrint}>распечатать</button></span>}
-        </div>
-      ) : (
-        <>
-          <ChannelSwitch value={channel} telegram={Boolean(m.telegram)} whatsapp={Boolean(phone)} onChange={setChannel} />
-          <MessagePreview text={m.text ?? ''} channel={channel} label="Предпросмотр памятки" />
-          <div className="actions">
-            {channel === 'TELEGRAM' && m.telegram
-              ? <button type="button" className="btn primary" disabled={bot.isPending} onClick={() => bot.mutate()}>Отправить в Telegram</button>
-              : <button type="button" className="btn primary" disabled={!phone} onClick={whatsapp}>Отправить в WhatsApp</button>}
-            <button type="button" className="btn ghost" onClick={() => onSending(false)}>Отмена</button>
-          </div>
-        </>
-      )}
-      {nowhere && <p className="hint small">Пациент не в Telegram и без телефона — памятку можно только распечатать.</p>}
-      {sent && <p className="tone-ok small" role="status">{sent}</p>}
+    <div className="after-visit-memo open">
+      <p className="hint small">Только памятка «{m.title}», без сообщения</p>
+      <ChannelSwitch value={channel} telegram={Boolean(m.telegram)} whatsapp={Boolean(phone)} onChange={setChannel} />
+      <MessagePreview text={m.text ?? ''} channel={channel} label="Предпросмотр памятки" />
+      <div className="actions">
+        {channel === 'TELEGRAM' && m.telegram
+          ? <button type="button" className="btn primary" disabled={bot.isPending} onClick={() => bot.mutate()}>Отправить в Telegram</button>
+          : <button type="button" className="btn primary" disabled={!phone} onClick={whatsapp}>Отправить в WhatsApp</button>}
+        <button type="button" className="btn ghost" onClick={() => onDone('')}>Отмена</button>
+      </div>
       {bot.error && <p className="error small" role="alert">{bot.error.message}</p>}
       {bot.error?.code === 'not-delivered' && phone && <button type="button" className="btn small" onClick={whatsapp}>Отправить в WhatsApp</button>}
     </div>

@@ -1566,17 +1566,10 @@ button.ds-money:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(
 .visit-report p { margin: 0; }
 .visit-report-text { width: 100%; min-height: 220px; font: inherit; line-height: 1.5; padding: 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--card); color: var(--text); resize: vertical; }
 .ai-switch { display: grid; gap: 6px; padding: 10px; border-radius: var(--r-md); background: var(--sunken); }
-/* «Сообщение после приёма»: два входа (написать самому / с ИИ), памятка отдельно, предпросмотр как в мессенджере */
-.after-visit-start { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.after-visit-way { display: grid; gap: 4px; align-content: start; }
-.after-visit-saved { grid-column: 1 / -1; }
-.after-visit-saved-text { max-height: 220px; overflow: auto; padding: 10px 12px; border-radius: var(--r-md); background: var(--sunken); white-space: pre-wrap; overflow-wrap: anywhere; }
-/* «Отправить памятку пациенту» — в одном ряду с двумя входами; открыли предпросмотр — на всю ширину под ними */
-.after-visit-memo { display: contents; }
-.after-visit-memo.open { display: grid; flex-basis: 100%; gap: 8px; padding-top: 10px; border-top: 1px solid var(--separator); }
+/* «Сообщение после приёма»: без черновика — одна строка «📝 Отчёт пациенту ▾» (или «✓ отправлено · Отправить ещё раз ▾»);
+   «Только памятка» — предпросмотр как в мессенджере на месте строки */
+.after-visit-memo.open { display: grid; gap: 8px; }
 .after-visit-memo .actions { align-items: center; }
-.after-visit-memo:not(.open) .actions { display: contents; }
-/* Уже отправили — одна строка: «✓ Сообщение отправлено 19 нояб в WhatsApp · Отправить ещё раз ▾» */
 .visit-report.visit-report-sent { padding: 10px 12px; }
 .visit-report-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .visit-report-line .action-menu-caret { color: inherit; }
