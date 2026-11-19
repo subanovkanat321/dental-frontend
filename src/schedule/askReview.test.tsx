@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, contactMenu, me, pickContact, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 
 type Appointment = Schemas['AppointmentView']
@@ -38,12 +38,17 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-test('карточка приёма: «⭐ Попросить оценку» открывает WhatsApp с текстом и ссылкой на страницу оценки', async () => {
+test('карточка приёма: «Связаться» → «⭐ Попросить оценку» открывает WhatsApp с текстом и ссылкой на страницу оценки', async () => {
   const sent = backend({ draft: { available: true } })
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
-  await user.click(await screen.findByRole('button', { name: '⭐ Попросить оценку' }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  // Пункт появляется, когда сервер ответил, можно ли просить
+  await user.click(contactMenu(panel)!)
+  expect(await screen.findByRole('menuitem', { name: /^Попросить оценку/ })).toHaveTextContent('ссылка на оценку в WhatsApp')
+  await user.keyboard('{Escape}')
+  await pickContact(panel, 'Попросить оценку')
 
   expect(sent).toEqual([10])
   const url = decodeURIComponent(String(vi.mocked(window.open).mock.calls[0]?.[0]))
@@ -52,13 +57,28 @@ test('карточка приёма: «⭐ Попросить оценку» о�
   expect(url).toContain(URL_R)
 })
 
-test('карточка приёма: просили недавно — вместо кнопки когда можно снова', async () => {
+test('карточка приёма: просили недавно — пункт серый, под ним когда можно снова', async () => {
   backend({ draft: { available: false, reason: 'recent', message: 'Оценку у пациента уже просили 3 ноября — снова можно с 3 декабря. Часто просить неловко 🙏' } })
   const user = userEvent.setup()
   renderApp()
   await user.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
-  expect(await screen.findByText(/снова можно с 3 декабря/)).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: '⭐ Попросить оценку' })).not.toBeInTheDocument()
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  await user.click(contactMenu(panel)!)
+  const item = await screen.findByRole('menuitem', { name: /^Попросить оценку/ })
+  expect(item).toBeDisabled()
+  expect(item).toHaveTextContent(/снова можно с 3 декабря/)
+})
+
+test('карточка приёма: уже просили — «Попросить оценку ещё раз», когда просили — мелко под пунктом', async () => {
+  backend({ draft: { available: true, askedAt: new Date().toISOString() } })
+  const user = userEvent.setup()
+  renderApp()
+  await user.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
+  const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
+  await user.click(contactMenu(panel)!)
+  expect(await screen.findByRole('menuitem', { name: /^Попросить оценку ещё раз/ })).toHaveTextContent(/попросили сегодня, в \d\d:\d\d/)
+  // Отдельной кнопки и строки «Попросили …» в карточке нет
+  expect(within(panel).queryByRole('button', { name: /Отправить ссылку ещё раз/ })).toBeNull()
 })
 
 test('пациент в Telegram или уже оценил — кнопки нет (бот спросит сам)', async () => {
@@ -70,7 +90,8 @@ test('пациент в Telegram или уже оценил — кнопки н�
   renderApp()
   await user.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   expect(await screen.findByText(/оценка пациента · по ссылке/)).toBeInTheDocument()
-  expect(screen.queryByRole('button', { name: /Попросить оценку/ })).not.toBeInTheDocument()
+  await user.click(contactMenu(screen.getByRole('complementary', { name: 'Карточка приёма' }))!)
+  expect(screen.getAllByRole('menuitem').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent)).toEqual(['Позвонить', 'Написать в WhatsApp'])
 })
 
 test('под расписанием: «💬 Попросить отзыв у N пациентов» (не в «Требует внимания») → список с кнопкой WhatsApp у каждого', async () => {

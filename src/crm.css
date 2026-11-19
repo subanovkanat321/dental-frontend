@@ -2480,6 +2480,7 @@ button.status-pill:focus-visible { outline: 2px solid var(--accent); outline-off
 .menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--r-md); background: none;
   color: var(--text); font: inherit; font-size: .93rem; text-align: left; cursor: pointer; }
 .menu-item:focus-visible { background: var(--sunken); outline: none; }
+a.menu-item { box-sizing: border-box; text-decoration: none; }
 /* Наведение — только мышью: на телефоне «залипшее» наведение после нажатия выглядело бы выбранным пунктом */
 @media (hover: hover) { .menu-item:hover { background: var(--sunken); } }
 .menu-ico { display: inline-grid; place-items: center; color: var(--hint); }

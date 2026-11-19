@@ -11,7 +11,8 @@ import { debtLine, remindedText, seesDebts } from '../lib/debt'
 import { DebtPromiseForm, DebtRemindForm } from '../cash/DebtRemind'
 import { formatPhone, shortDate, somText } from '../lib/time'
 import { ageYears, yearsText } from '../lib/age'
-import { ContactButtons } from '../schedule/Contact'
+import { ContactMenu } from '../schedule/ContactMenu'
+import { talkItems, type ContactItem } from '../schedule/contactItems'
 import { statusOf } from '../schedule/status'
 import { PatientForm } from './PatientForm'
 import { VisitDocs } from '../print/VisitDocs'
@@ -23,7 +24,6 @@ import { PatientLab } from '../lab/PatientLab'
 import { GuardianBox } from './GuardianBox'
 import { VipBox } from './VipBox'
 import { KidInfo } from './KidInfo'
-import { contactPhone } from '../lib/guardian'
 import { PatientExpenses } from './PatientExpenses'
 import { ContractBox } from '../contract/ContractBox'
 import { Loading } from '../layout/Loading'
@@ -71,6 +71,8 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const [docsOf, setDocsOf] = useState<number | null>(null)
   // Договор открыли кнопкой «⋯ → Оформить договор» (счётчик — нажали ещё раз — снова раскрыть)
   const [contractAsked, setContractAsked] = useState<{ id: number; n: number } | null>(null)
+  // «Деньги»: открытая форма — напомнить о долге или «обещал оплатить» (напомнить можно и из «Связаться»)
+  const [debtForm, setDebtForm] = useState<'remind' | 'promise' | null>(null)
   // Деньги и заметки — админу и врачу; регистратуре сервер их не отдаст
   const staff = Boolean(me.admin || me.doctorId != null)
   // Медкарту сервер (ChartService) открывает админу клиники, врачам и ассистентам; регистратуре — никогда
@@ -146,6 +148,13 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
   const debtRows = (debts.data ?? []).filter((d) => debtLine(d))
   const debtTotal = debtRows.reduce((sum, d) => sum + d.debtSom, 0)
   const overdue = debtRows.some((d) => debtLine(d)?.tone === 'bad')
+  // «📞 Связаться ▾» — как в карточке приёма: позвонить, WhatsApp; есть долг — «Напомнить о долге» (форма во вкладке «Деньги»)
+  const remindsDebt = debtRows.length > 0 && patient?.id != null && seesDebts(me)
+  const contacts: ContactItem[] = [
+    ...talkItems(patient),
+    ...(remindsDebt ? [{ label: 'Напомнить о долге', group: 'send' as const, icon: '🧾', hint: `долг ${somText(debtTotal)}`,
+      onSelect: () => { setTab('money'); setDebtForm('remind') } }] : []),
+  ]
   const tabs: [Tab, string][] = [
     ['visits', 'Визиты'],
     ...(clinical ? [['medical', 'Медкарта'] as [Tab, string]] : []),
@@ -186,7 +195,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
       <div className="patient-actions">
         <button type="button" className="btn primary" onClick={() => patient && onBook(patient)}>＋ Записать</button>
         {/* Есть представитель — звоним и пишем ему */}
-        <ContactButtons phone={contactPhone(patient)} />
+        <ContactMenu items={contacts} />
       </div>
 
       {/* Сводка: визиты (и неявки), ближайшая запись, долг */}
@@ -234,7 +243,7 @@ export function PatientPanel({ patientId, me, onClose, onBook, onMedical, onOpen
         <section className="patient-money">
           {debtRows.length === 0 && <EmptyState compact title="Долгов нет" />}
           {/* Напомнить о долге (бот или WhatsApp) и «Обещал оплатить до…» — те же формы, что в «Должниках» */}
-          {debtRows.length > 0 && patient?.id != null && seesDebts(me) && <DebtTools patientId={patient.id} name={patient.fullName} debts={debtRows} />}
+          {debtRows.length > 0 && patient?.id != null && seesDebts(me) && <DebtTools patientId={patient.id} name={patient.fullName} debts={debtRows} form={debtForm} setForm={setDebtForm} />}
           {staff && patient?.id != null && <OpeningDebtsBox patientId={patient.id} />}
           {debtRows.map((d) => {
             const debt = debtLine(d)!
@@ -316,8 +325,10 @@ function MoreActions({ onContract }: { onContract: () => void }) {
 }
 
 /** «Деньги» в карточке пациента: «Напомнить о долге», когда напоминали, и «Обещал оплатить до…». */
-function DebtTools({ patientId, name, debts }: { patientId: number; name?: string; debts: Schemas['PaymentQueryDebt'][] }) {
-  const [form, setForm] = useState<'remind' | 'promise' | null>(null)
+function DebtTools({ patientId, name, debts, form, setForm }: {
+  patientId: number; name?: string; debts: Schemas['PaymentQueryDebt'][]
+  form: 'remind' | 'promise' | null; setForm: (form: 'remind' | 'promise' | null) => void
+}) {
   const reminded = debts.reduce<string | undefined>((max, d) => d.remindedAt && (!max || d.remindedAt > max) ? d.remindedAt : max, undefined)
   const due = debts.map((d) => d.dueOn).filter(Boolean).sort()[0]
   if (form === 'remind') return <DebtRemindForm patientId={patientId} name={name} onDone={() => setForm(null)} />

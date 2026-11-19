@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { Fragment, useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useBack } from '../lib/back'
@@ -6,7 +6,10 @@ import { useSwipeDown } from './useSwipeDown'
 
 export type ActionItem = {
   label: string
-  onSelect: () => void
+  /** Нажатие; у пункта-ссылки (href) — событие ссылки: preventDefault отменит переход */
+  onSelect: (e?: ReactMouseEvent) => void
+  /** Пункт-ссылка (tel:, sms:) — переход по ссылке надёжнее открывает звонилку и «Сообщения», чем из скрипта */
+  href?: string
   /** Опасное действие (неявка, отмена) — красным */
   danger?: boolean
   disabled?: boolean
@@ -93,13 +96,22 @@ export function ActionMenu({ label, items, className = 'btn', disabled, content,
       {items.map((i, at) => (
         <Fragment key={`${i.group ?? ''}-${i.label}`}>
           {i.group && i.group !== items[at - 1]?.group && <div className="menu-group" role="presentation">{i.group}</div>}
-          <button type="button" role={i.checked === undefined ? 'menuitem' : 'menuitemradio'} aria-checked={i.checked}
-            className={['menu-item', i.danger && 'danger', i.checked && 'checked'].filter(Boolean).join(' ')} disabled={i.disabled}
-            onClick={() => { close(false); i.onSelect() }}>
-            {i.icon && <span className="menu-emoji" aria-hidden="true">{i.icon}</span>}
-            {i.hint ? <span className="menu-text"><span>{i.label}</span>{' '}<span className="menu-hint">{i.hint}</span></span> : <span className="menu-text">{i.label}</span>}
-            {i.checked && <span className="menu-check" aria-hidden="true">✓</span>}
-          </button>
+          {(() => {
+            const className = ['menu-item', i.danger && 'danger', i.checked && 'checked'].filter(Boolean).join(' ')
+            const inner = (
+              <>
+                {i.icon && <span className="menu-emoji" aria-hidden="true">{i.icon}</span>}
+                {i.hint ? <span className="menu-text"><span>{i.label}</span>{' '}<span className="menu-hint">{i.hint}</span></span> : <span className="menu-text">{i.label}</span>}
+                {i.checked && <span className="menu-check" aria-hidden="true">✓</span>}
+              </>
+            )
+            return i.href && !i.disabled
+              ? <a role="menuitem" className={className} href={i.href} onClick={(e) => { close(false); i.onSelect(e) }}>{inner}</a>
+              : (
+                <button type="button" role={i.checked === undefined ? 'menuitem' : 'menuitemradio'} aria-checked={i.checked}
+                  className={className} disabled={i.disabled} onClick={() => { close(false); i.onSelect() }}>{inner}</button>
+              )
+          })()}
         </Fragment>
       ))}
     </div>

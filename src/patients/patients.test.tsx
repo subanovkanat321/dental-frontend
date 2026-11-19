@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, contactMenu, me, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { choose } from '../test/select'
 
@@ -121,9 +121,13 @@ test('карточка пациента: визиты, неявки, долг; �
   expect(within(panel).getByRole('tab', { name: 'Визиты' })).toHaveAttribute('aria-selected', 'true')
   expect(panel).toHaveTextContent('Пломба')
   expect(await within(panel).findByText(/Пломба 36, контроль через год/)).toBeInTheDocument()
-  expect(within(panel).getByRole('button', { name: 'WhatsApp' })).toBeInTheDocument()
+  // «📞 Связаться ▾»: позвонить, WhatsApp и — есть долг — «Напомнить о долге» (откроет форму в «Деньгах»)
+  await userEvent.click(contactMenu(panel)!)
+  expect(screen.getAllByRole('menuitem').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent))
+    .toEqual(['Позвонить', 'Написать в WhatsApp', 'Напомнить о долге'])
+  await userEvent.click(screen.getByRole('menuitem', { name: /^Напомнить о долге/ }))
+  expect(within(panel).getByRole('tab', { name: 'Деньги' })).toHaveAttribute('aria-selected', 'true')
   // «Деньги»: долг по приёму и расходы по пациенту
-  await userEvent.click(within(panel).getByRole('tab', { name: 'Деньги' }))
   expect(await within(panel).findByRole('button', { name: /Долг 1\s500 сом — приём/ })).toBeInTheDocument()
   expect(await within(panel).findByText(/Расходы по пациенту/)).toHaveTextContent(/2\s000 сом/)
   expect(within(panel).getByRole('list', { name: 'Расходы по пациенту' })).toHaveTextContent(/Зуботехническая лаборатория · 2\s000 сом/)

@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { KidInfo } from '../patients/KidInfo'
-import { contactPhone } from '../lib/guardian'
 import { ask } from '../lib/confirm'
 import { PatientHistory } from './PatientHistory'
 import { useReminderNotSent } from './useReminderNotSent'
@@ -23,7 +22,9 @@ import { useNowMinutes } from './gridScale'
 import { addDays, dateOf, dayTitle, formatPhone, minutesOf, slotInstant, somText, timeOf, todayIn } from '../lib/time'
 import { ChairEdit, CommentEdit, PromoEdit, Remind, Reschedule, ServiceEdit, Supplies, VisitNote } from './AppointmentExtras'
 import { useChairs } from '../team/chairs'
-import { ContactButtons } from './Contact'
+import { ContactMenu } from './ContactMenu'
+import { useAppointmentContacts } from './useAppointmentContacts'
+import { DebtRemindForm } from '../cash/DebtRemind'
 import { ContinueTreatment } from './ContinueTreatment'
 import { VisitTeeth } from './VisitTeeth'
 import { DepositBox } from './DepositBox'
@@ -46,8 +47,6 @@ import { HelpHint } from '../help/HelpHint'
 import { PlanDone } from './PlanDone'
 import { VisitPlan } from './VisitPlan'
 import { askPlanDone } from './planDoneStore'
-import { AskReview } from './AskReview'
-import { asksReview } from './reviewLinks'
 
 type Me = Schemas['BookingViewsMe']
 type Appointment = Schemas['AppointmentView']
@@ -226,6 +225,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
   // Долг пациента за все визиты (кто видит «Должников»; врачу — за его приёмы) и за прошлые — без этого приёма
   const debts = usePatientDebts(a.patient.id ?? undefined, seesDebts(me))
   const patientDebt = (debts.data ?? []).reduce((sum, d) => sum + d.debtSom, 0)
+  // «Связаться ▾»: позвонить, написать, напомнить о приёме, попросить оценку, напомнить о долге (форма — под статусом)
+  const [debtForm, setDebtForm] = useState(false)
+  const contacts = useAppointmentContacts(a, { canEdit, debtSom: patientDebt, onDebt: seesDebts(me) && a.patient.id ? () => setDebtForm(true) : undefined })
   const earlierDebt = (debts.data ?? []).filter((d) => d.appointmentId !== a.id).reduce((sum, d) => sum + d.debtSom, 0)
   // Приём в рабочих часах коллеги по креслу (V187): слоты дня врача (те же, что у сетки и списка — обычно из кэша)
   const daySlots = useQuery({
@@ -268,7 +270,10 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       <div className="appt-status-row">
         <StatusPill appointment={a} options={statusMenu} disabled={action.isPending} />
         {next && <button type="button" className="btn primary" disabled={action.isPending} onClick={next.run}>{next.label}</button>}
+        <ContactMenu items={contacts.items} />
       </div>
+      {contacts.error && <p className="error" role="alert">{Object.values(contacts.error.fieldErrors)[0] ?? contacts.error.message}</p>}
+      {debtForm && a.patient.id && <DebtRemindForm patientId={a.patient.id} name={a.patient.fullName} onDone={() => setDebtForm(false)} />}
       {/* Метки пациента одной строкой, по важности, как на записи в сетке: ❗ важно для врача (тем, кому анкета закрыта —
           остальным ниже плашка с текстом), 🧾 долг, ⭐ ВИП. Первый визит — строкой «Впервые в клинике» у пациента */}
       {(() => {
@@ -356,15 +361,11 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
       {!canEdit ? (
         <>
           <p className="readonly-note">Приём коллеги — менять может его врач{doctor?.fullName ? ` (${doctor.fullName})` : ''}, ассистент, регистратура или руководитель.</p>
-          <ContactButtons phone={contactPhone(a.patient)} whatsapp={false} />
         </>
       ) : (
         <>
-          {/* Заявку подтверждают звонком: «Подтвердить» — рядом со статусом */}
-          {a.status === 'REQUESTED' && <ContactButtons phone={contactPhone(a.patient)} whatsapp={false} />}
           {moved && <p className="tone-ok" role="status">{moved}</p>}
-          {a.status === 'SCHEDULED' && <Remind appointment={a} />}
-          {a.status === 'SCHEDULED' && !future && <ContactButtons phone={contactPhone(a.patient)} />}
+          {a.status === 'SCHEDULED' && <Remind appointment={a} nowhere={contacts.nowhere} />}
           {/* Предоплату уже попросили — на виду; ещё не просили — под «Ещё». Ассистенту деньги не показываем */}
           {(a.status === 'REQUESTED' || a.status === 'SCHEDULED') && seesMoney && a.depositStatus && <DepositBox key={a.depositStatus} appointment={a} />}
 
@@ -381,7 +382,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'NO_SHOW' && (
             <>
               {onBook && <button type="button" className="btn primary" onClick={() => bookAgain(todayIn())}>Записать снова</button>}
-              <ContactButtons phone={contactPhone(a.patient)} />
             </>
           )}
 
@@ -399,9 +399,6 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
           {a.status === 'DONE' && (
             <>
               {onBook && <button type="button" className={payPending ? 'btn' : 'btn primary'} onClick={() => bookAgain(addDays(date > todayIn() ? date : todayIn(), 7))}>Записать на следующий визит</button>}
-              <ContactButtons phone={contactPhone(a.patient)} />
-              {/* Пациент без Telegram: бот «Как прошёл приём?» не спросит — ссылка на оценку в WhatsApp */}
-              {asksReview(a) && <AskReview appointment={a} />}
             </>
           )}
         </>

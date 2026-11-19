@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
 import { addDays, todayIn } from '../lib/time'
-import { appointment, me, openMore, pickStatus, renderApp, statusMenu } from '../test/fixtures'
+import { appointment, contactMenu, me, openMore, pickContact, pickStatus, renderApp, statusMenu } from '../test/fixtures'
 import { fixNow } from '../test/now'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
@@ -312,4 +312,49 @@ test('заявка: «Подтвердить» рядом со статусом;
   expect(confirm).toHaveBeenCalledWith('Отклонить заявку? Пациенту придёт сообщение.')
   expect(await within(panel).findByText('Заявка отклонена')).toBeInTheDocument()
   expect(sent).toEqual([{ status: 'CANCELLED' }])
+})
+
+test('«📞 Связаться ▾»: позвонить и WhatsApp сверху, напомнить о приёме — группой «Отправить пациенту»', async () => {
+  backend(appointment(10, 1, '23:30', 'Бакыт М.', { version: 1 }))
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  // Отдельных кнопок связи в карточке нет — только «Связаться»
+  expect(within(panel).queryByRole('link', { name: /Позвонить/ })).toBeNull()
+  expect(within(panel).queryByRole('button', { name: 'Напомнить в WhatsApp' })).toBeNull()
+  await userEvent.click(contactMenu(panel)!)
+  const menu = screen.getByRole('menu', { name: 'Связаться' })
+  expect(within(menu).getByText('Связаться')).toHaveClass('menu-group')
+  expect(within(menu).getByText('Отправить пациенту')).toHaveClass('menu-group')
+  expect(within(menu).getAllByRole('menuitem').map((i) => i.querySelector('.menu-text')?.firstChild?.textContent))
+    .toEqual(['Позвонить', 'Написать в WhatsApp', 'Напомнить о приёме в WhatsApp'])
+  expect(within(menu).getByRole('menuitem', { name: /^Позвонить/ })).toHaveAttribute('href', 'tel:+996555123456')
+})
+
+test('один пункт связи — сразу кнопка без меню (заявка: только позвонить); ни телефона, ни бота — «Связаться» нет', async () => {
+  backend(appointment(10, 1, '23:30', 'Бакыт М.', { version: 1, status: 'REQUESTED' }))
+  const { unmount } = renderApp()
+  const panel = await open(/Бакыт М\./)
+  expect(contactMenu(panel)).toBeNull()
+  expect(within(panel).getByRole('link', { name: /Позвонить/ })).toHaveAttribute('href', 'tel:+996555123456')
+  unmount()
+
+  backend(appointment(11, 1, '23:30', 'Айгуль С.', { version: 1, patient: { id: 11, fullName: 'Айгуль С.', telegram: false } }))
+  renderApp()
+  const none = await open(/Айгуль С\./)
+  expect(contactMenu(none)).toBeNull()
+  expect(within(none).queryByRole('link', { name: /Позвонить/ })).toBeNull()
+  expect(within(none).getByText(/Нет Telegram и номера/)).toBeInTheDocument()
+})
+
+test('у пациента долг — «Связаться» → «Напомнить о долге»: форма с текстом сервера прямо в карточке приёма', async () => {
+  backend(appointment(10, 1, '23:30', 'Бакыт М.', { version: 1 }))
+  server.use(
+    http.get('*/api/appointments/debts', () => HttpResponse.json([{ appointmentId: 5, patientId: 10, patientName: 'Бакыт М.', startAt: '2026-11-01T04:00:00Z', debtSom: 1500, doctorId: 1 }] as unknown as Schemas['PaymentQueryDebt'][])),
+    http.get('*/api/patients/10/debt-reminder', () => HttpResponse.json({ text: 'Здравствуйте! Напоминаем о долге 1 500 сом.', telegram: false, phone: '996555123456' } as unknown as Schemas['DebtRemindersDraft'])),
+  )
+  renderApp()
+  const panel = await open(/Бакыт М\./)
+  await pickContact(panel, /^Напомнить о долге/)
+  const form = await within(panel).findByRole('form', { name: 'Напоминание о долге: Бакыт М.' })
+  expect(form).toHaveTextContent('Напоминаем о долге 1 500 сом')
 })

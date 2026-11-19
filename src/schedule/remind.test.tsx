@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 
 import type { Schemas } from '../api/client'
-import { appointment, me, renderApp } from '../test/fixtures'
+import { appointment, contactMenu, me, pickContact, renderApp } from '../test/fixtures'
 import { server } from '../test/server'
 import { waitForSlow } from '../test/wait'
 import { todayIn } from '../lib/time'
@@ -41,8 +41,8 @@ test('напомнить в Telegram (пациент записан через �
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  await userEvent.click(within(panel).getByRole('button', { name: 'Напомнить в Telegram' }))
-  expect(await within(panel).findByText(/^Уже напоминали/)).toBeInTheDocument()
+  await pickContact(panel, 'Напомнить о приёме в Telegram')
+  expect(await within(panel).findByText(/^Напоминание отправлено/)).toBeInTheDocument()
   expect(calls).toEqual(['telegram'])
 })
 
@@ -53,7 +53,7 @@ test('напомнить в WhatsApp — текст с подписью клин
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  await userEvent.click(within(panel).getByRole('button', { name: 'Напомнить в WhatsApp' }))
+  await pickContact(panel, 'Напомнить о приёме в WhatsApp')
   expect(decodeURIComponent(opened[0]!)).toContain('Ответьте 1 — приду, 2 — перенести')
   expect(decodeURIComponent(opened[0]!)).toContain('Стоматология «Тест»')
 
@@ -73,16 +73,18 @@ test('уже напоминали — «Уже напоминали: сегод�
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  const remind = within(panel).getByRole('region', { name: 'Напоминание' })
-  expect(remind).toHaveTextContent('Уже напоминали: сегодня в 10:15')
-  const wa = within(remind).getByRole('button', { name: 'Напомнить в WhatsApp' })
-  await waitForSlow(() => expect(wa).toBeEnabled())
-
-  await userEvent.click(wa)
+  // Когда напоминали — мелко под пунктом «Связаться»
+  await userEvent.click(contactMenu(panel)!)
+  const wa = screen.getByRole('menuitem', { name: /^Напомнить о приёме в WhatsApp/ })
+  expect(wa).toHaveTextContent('уже напоминали сегодня в 10:15')
+  await waitForSlow(() => expect(screen.getByRole('menuitem', { name: /^Напомнить о приёме в WhatsApp/ })).toBeEnabled())
+  await userEvent.click(screen.getByRole('menuitem', { name: /^Напомнить о приёме в WhatsApp/ }))
+  await waitForSlow(() => expect(confirm).toHaveBeenCalledTimes(1))
   expect(confirm.mock.calls[0]![0]).toBe('Уже напоминали в 10:15. Отправить ещё раз?')
   expect(opened).toEqual([])
 
-  await userEvent.click(wa)
+  await pickContact(panel, 'Напомнить о приёме в WhatsApp')
+  await waitForSlow(() => expect(opened).toHaveLength(1))
   const text = decodeURIComponent(opened[0]!)
   expect(text).toContain('Напоминаем ещё раз: сегодня в 23:30 у вас приём у врача')
   expect(text).toContain('Пожалуйста, ответьте, придёте ли — так мы сможем отдать время другому пациенту')
@@ -98,10 +100,11 @@ test('пациент уже ответил «Приду» — «Всё равн�
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  await userEvent.click(within(panel).getByRole('button', { name: 'Напомнить в Telegram' }))
+  await pickContact(panel, 'Напомнить о приёме в Telegram')
+  await waitForSlow(() => expect(confirm).toHaveBeenCalledTimes(1))
   expect(confirm.mock.calls[0]![0]).toBe('Пациент уже ответил „Приду“. Всё равно напомнить?')
   expect(calls).toEqual([])
-  await userEvent.click(within(panel).getByRole('button', { name: 'Напомнить в Telegram' }))
+  await pickContact(panel, 'Напомнить о приёме в Telegram')
   await waitForSlow(() => expect(calls).toEqual(['telegram']))
   vi.restoreAllMocks()
 })
@@ -146,14 +149,15 @@ test('карточка приёма: «Откуда узнал» — под «Е
   await waitForSlow(() => expect(saved).toMatchObject({ fullName: 'Бакыт М.', sourceId: expect.any(Number) }))
 })
 
-test('телефон: «Напомнить по SMS» — «Сообщения» с номером пациента, текстом напоминания и ссылкой на бота', async () => {
+test('телефон: «Связаться» → «Напомнить о приёме по SMS» — «Сообщения» с номером пациента, текстом напоминания и ссылкой на бота', async () => {
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36')
   const calls = backend(appointment(10, 1, '23:30', 'Бакыт М.'))
   server.use(http.get('*/api/settings', () => HttpResponse.json({ clinicSignature: 'Стоматология «Тест»', botUrl: 'https://t.me/test_bot?start=c_test' })))
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  const sms = await within(panel).findByRole('link', { name: 'Напомнить по SMS' })
+  await userEvent.click(contactMenu(panel)!)
+  const sms = await screen.findByRole('menuitem', { name: /^Напомнить о приёме по SMS/ })
   const href = sms.getAttribute('href')!
   expect(href.startsWith('sms:+996555123456?&body=')).toBe(true)
   expect(decodeURIComponent(href)).toContain('Здравствуйте, Бакыт М.!')
@@ -175,7 +179,7 @@ test('свой текст напоминания клиники — в WhatsApp:
   renderApp()
   await userEvent.click(await screen.findByRole('button', { name: /Бакыт М\./ }))
   const panel = screen.getByRole('complementary', { name: 'Карточка приёма' })
-  await userEvent.click(within(panel).getByRole('button', { name: 'Напомнить в WhatsApp' }))
+  await pickContact(panel, 'Напомнить о приёме в WhatsApp')
   const text = decodeURIComponent(opened[0]!)
   expect(text).toMatch(/Бакыт М\., ждём вас (сегодня|завтра) в 23:30: Айгерим Садыкова, Чистка\. Стоматология «Тест»\nОтветьте 1 — приду, 2 — перенести\./)
   // {клиника} в тексте — подпись второй раз не ставим

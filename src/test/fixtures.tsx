@@ -105,6 +105,23 @@ export async function pickStatus(panel: HTMLElement, item: string | RegExp) {
   await userEvent.click(await screen.findByRole('menuitemradio', { name }))
 }
 
+/** Карточка приёма или пациента → «📞 Связаться ▾» (один пункт — это сама кнопка или ссылка, меню нет). */
+export function contactMenu(panel: HTMLElement) {
+  return within(panel).queryByRole('button', { name: /^(📞 )?Связаться$/ })
+}
+
+/**
+ * «📞 Связаться ▾» → пункт («Позвонить», «Написать в WhatsApp», «Напомнить о приёме в WhatsApp», «Попросить оценку»,
+ * «Напомнить о долге»). Имя пункта — подпись и мелкая подсказка под ней, поэтому строка ищется по началу.
+ */
+export async function pickContact(panel: HTMLElement, item: string | RegExp) {
+  const button = contactMenu(panel)
+  if (!button) throw new Error('Нет кнопки «Связаться»')
+  await userEvent.click(button)
+  const name = typeof item === 'string' ? new RegExp(`^${item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) : item
+  await userEvent.click(await screen.findByRole('menuitem', { name }))
+}
+
 /** Строка-раскрывашка (layout/Fold: «Зубы», «Материалы», «Продолжение лечения») — раскрыть, если свёрнута. */
 export async function expand(region: HTMLElement) {
   const head = region.querySelector<HTMLButtonElement>(':scope > .fold-head')

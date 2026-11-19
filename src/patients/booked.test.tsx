@@ -46,9 +46,9 @@ test('«Пациенты → Записаны»: будущие записи в�
   // По дням и по времени: завтра 10:00 Айгуль, 11:00 Нурлан (заявка) — потом через 3 дня Бакыт
   const names = within(list).getAllByRole('listitem').map((li) => within(li).getAllByRole('button')[0]!.textContent)
   expect(names).toEqual(['Айгуль Т.', 'Нурлан К.', 'Бакыт М.'])
-  // Значок — только у заявки (её надо подтвердить); «придёт» — тихим словом справа, без эмодзи
+  // Значок — только у заявки (её надо подтвердить); «подтвердил» — тихим словом справа, без эмодзи
   const [aigul, nurlan] = within(list).getAllByRole('listitem')
-  expect(aigul).toHaveTextContent(/Лечение кариеса.*придёт/)
+  expect(aigul).toHaveTextContent(/Лечение кариеса.*подтвердил/)
   expect(aigul).not.toHaveTextContent('👍')
   expect(within(nurlan!).getByText('Заявка')).toBeInTheDocument()
   expect(asked).toEqual(expect.arrayContaining(['1:7', '2:7']))
