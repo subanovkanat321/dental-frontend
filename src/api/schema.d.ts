@@ -12639,6 +12639,7 @@ export interface components {
             strict: boolean;
             busy?: components["schemas"]["ChairCheckViewBusy"];
             freeChair?: components["schemas"]["ChairCheckViewFreeChair"];
+            freeChairs: components["schemas"]["ChairCheckViewFreeChair"][];
             notified: string[];
         };
         ChairCheckViewBusy: {

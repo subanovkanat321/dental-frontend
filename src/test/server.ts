@@ -26,7 +26,7 @@ export const server = setupServer(
   // Долги из прежней программы (шаблон переезда): по умолчанию нет — блока в «Должниках» и карточке пациента нет
   http.get('*/api/opening-debts', () => HttpResponse.json([] satisfies Schemas['OpeningDebtsView'][])),
   // Подсказка «🪑 время коллеги по креслу» в «Новой записи» и переносе: по умолчанию коллеги в это время нет
-  http.get('*/api/appointments/chair-check', () => HttpResponse.json({ strict: false, notified: [] } satisfies Schemas['ChairCheckView'])),
+  http.get('*/api/appointments/chair-check', () => HttpResponse.json({ strict: false, freeChairs: [], notified: [] } satisfies Schemas['ChairCheckView'])),
   http.get('*/api/appointments/chair-options', () => HttpResponse.json([] satisfies Schemas['ChairOptionView'][])),
   // «🎁 Пригласите коллег» и /join?ref=…: по умолчанию нет — блоков нет (их тесты — account/invite.test.tsx, site/joinRef.test.tsx)
   http.get('*/api/clinic/referral', () => HttpResponse.json({ detail: 'нет' }, { status: 404 })),

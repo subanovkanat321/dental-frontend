@@ -52,8 +52,8 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
   const freeDays = useFreeDays(doctorId, calMonth, duration)
   const [problem, setProblem] = useState('')
   // Кресло (V210): у того же врача — кресло приёма (выбранное вручную остаётся), у другого — его кресло
-  const chair = useChairChoice(doctorId, doctorId === a.doctorId ? a.chairId ?? null : undefined)
   const newStart = /^\d{2}:\d{2}$/.test(time) ? slotInstant(date, Number(time.slice(0, 2)) * 60 + Number(time.slice(3))) : null
+  const chair = useChairChoice(doctorId, doctorId === a.doctorId ? a.chairId ?? null : undefined, `${newStart ?? ''}|${duration}`)
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -64,7 +64,7 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
     setProblem('')
     const [h, m] = time.split(':').map(Number)
     const startAt = slotInstant(date, (h ?? 0) * 60 + (m ?? 0))
-    const body = { version: a.version, startAt, durationMinutes: duration, chairId: chair.chairId }
+    const body = { version: a.version, startAt, durationMinutes: duration, chairId: chair.picked }
     const other = doctors.find((d) => d.id === doctorId)
     if (doctorId === a.doctorId) action.mutate({ kind: 'reschedule', body }, { onSuccess: () => onDone('Время изменилось — напомните пациенту заново') })
     else action.mutate({ kind: 'transfer', body: { ...body, doctorId } }, { onSuccess: () => onDone(`Приём передан: ${other?.fullName ?? 'другой врач'}`) })
@@ -93,14 +93,11 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
       </div>
       <TimePicker key={`${date}-${doctorId}`} date={date} doctorId={doctorId} duration={duration} exclude={doctorId === a.doctorId ? a.id : undefined}
         value={time} onChange={(t) => { setTime(t); setProblem('') }} error={problem || errorText(action.error)} />
-      {chair.multi && (
-        <ChairSelect doctorId={doctorId} startAt={newStart} duration={duration} appointmentId={doctorId === a.doctorId ? a.id : undefined}
-          value={chair.chairId} onChange={chair.pick} />
-      )}
-      {/* Новое время — в часах коллеги по креслу: сказать до «Перенести», как в «Новой записи» */}
+      {/* Новое время — кресло занято (приёмом или часами коллеги): сказать до «Перенести» и предложить свободные */}
       {newStart && (
-        <ChairTimeHint doctorId={doctorId} startAt={newStart} duration={duration} chairId={chair.chairId}
-          appointmentId={doctorId === a.doctorId ? a.id : undefined} onPickChair={chair.multi ? chair.pick : undefined}
+        <ChairTimeHint doctorId={doctorId} startAt={newStart} duration={duration} chairId={chair.checkId}
+          appointmentId={doctorId === a.doctorId ? a.id : undefined} multi={chair.multi} picked={chair.picked}
+          onPickChair={chair.pick} onReset={chair.reset}
           action={doctorId === a.doctorId ? 'Перенести' : 'Передать'} hidden={isChairError(action.error)} />
       )}
       {doctorId !== a.doctorId && <p className="hint small">Новому врачу придёт уведомление, а пациенту, если он записан через бота, — сообщение с именем врача и временем.</p>}
@@ -113,7 +110,7 @@ export function Reschedule({ appointment: a, me, onDone }: { appointment: Appoin
 }
 
 /**
- * Кресло приёма (V210) в карточке: то же поле «Кресло», что в записи; время то же. Кресло врача — снова «по креслу
+ * Кресло приёма (V210) в карточке — только у приёма не в кресле врача (chair_manual): поле «Кресло»; время то же. Кресло врача — снова «по креслу
  * врача». Занято — сервер ответит 409 с предложением свободного (withChairConfirm спросит «записать туда?»).
  */
 export function ChairEdit({ appointment: a, onDone }: { appointment: Appointment; onDone: () => void }) {
@@ -123,13 +120,13 @@ export function ChairEdit({ appointment: a, onDone }: { appointment: Appointment
   return (
     <form className="form sub-form" aria-label="Кресло приёма" onSubmit={(e) => {
       e.preventDefault()
-      action.mutate({ kind: 'chair', body: { version: a.version, chairId: chair.chairId } }, { onSuccess: onDone })
+      action.mutate({ kind: 'chair', body: { version: a.version, chairId: chair.chosen } }, { onSuccess: onDone })
     }}>
-      <ChairSelect doctorId={a.doctorId} startAt={a.startAt} duration={duration} appointmentId={a.id} value={chair.chairId} onChange={chair.pick} />
+      <ChairSelect doctorId={a.doctorId} startAt={a.startAt} duration={duration} appointmentId={a.id} value={chair.chosen} onChange={chair.pick} />
       {/* Кресло сменили — что ответит сервер (занято, часы коллеги, «врачу кресла придёт уведомление») */}
-      {a.startAt && chair.chairId !== (a.chairId ?? undefined) && (
-        <ChairTimeHint doctorId={a.doctorId} startAt={a.startAt} duration={duration} chairId={chair.chairId} appointmentId={a.id}
-          action="Сохранить" onPickChair={chair.pick} hidden={isChairError(action.error)} />
+      {a.startAt && chair.chosen !== (a.chairId ?? undefined) && (
+        <ChairTimeHint doctorId={a.doctorId} startAt={a.startAt} duration={duration} chairId={chair.chosen} appointmentId={a.id}
+          action="Сохранить" multi onPickChair={chair.pick} hidden={isChairError(action.error)} />
       )}
       {action.error && <p className="error" role="alert">{errorText(action.error)}</p>}
       <div className="actions">

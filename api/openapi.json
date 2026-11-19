@@ -29703,6 +29703,12 @@
           "freeChair" : {
             "$ref" : "#/components/schemas/ChairCheckViewFreeChair"
           },
+          "freeChairs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ChairCheckViewFreeChair"
+            }
+          },
           "notified" : {
             "type" : "array",
             "items" : {
@@ -29710,7 +29716,7 @@
             }
           }
         },
-        "required" : [ "notified", "strict" ]
+        "required" : [ "freeChairs", "notified", "strict" ]
       },
       "ChairCheckViewBusy" : {
         "properties" : {

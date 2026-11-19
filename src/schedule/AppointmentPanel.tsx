@@ -308,9 +308,9 @@ export function AppointmentPanel({ appointment: a, me, onClose, onOpenPatient, o
         ) : canEdit && a.status !== 'CANCELLED' && (
           <button type="button" className="link" onClick={() => setEditing('comment')}>＋ Комментарий</button>
         )}
-        {/* Кресло приёма (V210) — когда в клинике больше одного кресла; сменить — у предстоящего приёма */}
-        {editing === 'chair' ? <ChairEdit appointment={a} onDone={close} /> : chairs.data && chairs.data.length > 1 && a.chairId != null && (
-          <p className="line-edit appt-chair"><span><span className="hint">Кресло:</span> 🪑 {chairName}{a.chairManual ? <span className="hint"> · не кресло врача</span> : null}</span>
+        {/* Кресло приёма (V210) — только когда оно не кресло врача (chair_manual): у остальных и так кресло врача; сменить — у предстоящего */}
+        {editing === 'chair' ? <ChairEdit appointment={a} onDone={close} /> : chairs.data && chairs.data.length > 1 && a.chairId != null && a.chairManual && (
+          <p className="line-edit appt-chair"><span><span className="hint">Кресло:</span> 🪑 {chairName}<span className="hint"> · не кресло врача</span></span>
             {canEdit && active && future && <button type="button" className="link" onClick={() => setEditing('chair')}>сменить</button>}</p>
         )}
         {/* Промокод рекламы: пациент ввёл в боте или назвал по телефону; пустой — «＋ Промокод» под «Ещё» */}

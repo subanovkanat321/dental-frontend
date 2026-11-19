@@ -6,24 +6,33 @@ import { chairOf, useChairs } from '../team/chairs'
 type Option = Schemas['ChairOptionView']
 
 /**
- * Кресло приёма в форме (V210): кресло врача — по умолчанию, другое — если выбрали. Поле показываем, только когда в
- * клинике больше одного кресла: с одним креслом выбирать нечего, отправляем как раньше (без chairId).
+ * Кресло приёма в форме (V210; с 2026-11-19 — без поля «Кресло»). По умолчанию кресло не выбирают и не отправляют:
+ * приём садится в кресло врача (триггер базы), а выбранное раньше вручную у переносимого приёма остаётся. Другое кресло
+ * ставит только нажатие в блоке «Свободно: [Кресло 2]» — он появляется, когда кресло врача в это время занято
+ * (`ChairTimeHint`). В клинике с одним креслом выбирать нечего (`multi` — false).
  *
  * @param current кресло приёма, которое уже стоит (перенос того же врача, карточка); undefined — новая запись или
  *        другой врач: кресло врача
- * @returns multi — поле нужно; chairId — что отправить (кресло врача тоже: сервер поймёт «по креслу врача»)
+ * @param at время приёма (и длительность): сменили — выбранное кресло сбрасывается, свободное было на прежнее время
+ * @returns multi — в клинике больше одного кресла; picked — кресло, выбранное нажатием (его и отправляем как chairId);
+ *          checkId — какое кресло проверять подсказкой (выбранное, иначе кресло приёма; undefined — кресло врача);
+ *          chosen — что стоит в поле «Кресло» карточки (`ChairEdit`): выбранное, кресло приёма или кресло врача
  */
-export function useChairChoice(doctorId: number, current?: number | null) {
+export function useChairChoice(doctorId: number, current?: number | null, at = '') {
   const chairs = useChairs()
-  const [picked, setPicked] = useState<{ doctorId: number; id: number } | null>(null)
+  const [state, setState] = useState<{ doctorId: number; at: string; id: number } | null>(null)
   const multi = (chairs.data?.length ?? 0) > 1
   const own = chairOf(chairs.data, doctorId)?.id ?? null
-  // Сменили врача — выбор сбрасывается: у нового врача своё кресло
-  const chosen = picked && picked.doctorId === doctorId ? picked.id : current !== undefined ? current : own
+  // Сменили врача или время — выбор сбрасывается: у нового врача своё кресло, на другое время — свои свободные
+  const picked = multi && state && state.doctorId === doctorId && state.at === at ? state.id : undefined
+  const chosen = picked ?? (current !== undefined ? current : own)
   return {
     multi,
-    chairId: multi ? chosen ?? undefined : undefined,
-    pick: (id: number) => setPicked({ doctorId, id }),
+    picked,
+    checkId: picked ?? current ?? undefined,
+    chosen: multi ? chosen ?? undefined : undefined,
+    pick: (id: number) => setState({ doctorId, at, id }),
+    reset: () => setState(null),
   }
 }
 

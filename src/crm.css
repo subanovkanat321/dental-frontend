@@ -2905,3 +2905,9 @@ button.cash-entry:hover, button.cash-entry.active { background: var(--sunken); }
 .referral-block .actions .btn { flex: 1 1 180px; }
 .referral-progress { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .referral-progress progress { flex: 1 1 160px; height: 10px; accent-color: var(--accent); }
+
+/* Кресло занято — «Свободно: [Кресло 2] [Кресло 3]» (2026-11-19): кнопки-кресла одной строкой с переносом */
+.chair-conflict { display: grid; gap: 6px; }
+.chair-conflict p { margin: 0; }
+.chair-offer { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chair-offer .btn .hint { font-weight: 400; }

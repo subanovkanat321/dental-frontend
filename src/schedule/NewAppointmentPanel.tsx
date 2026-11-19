@@ -17,7 +17,6 @@ import { sourceChoices, useSources } from '../lib/sources'
 import { expired, usePromoCodes } from '../lib/promo'
 import { isChairError, withChairConfirm } from './chairTime'
 import { ChairTimeHint } from './ChairTimeHint'
-import { ChairSelect } from './ChairSelect'
 import { useChairChoice } from './chairChoice'
 import { DurationField } from './DurationField'
 import { TimePicker } from './TimePicker'
@@ -158,8 +157,8 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
 
   const [hh, mm] = time.split(':').map(Number)
   const startAt = time ? slotInstant(date, (hh ?? 0) * 60 + (mm ?? 0)) : null
-  // Кресло (V210): по умолчанию кресло врача; поле — когда в клинике больше одного кресла
-  const chair = useChairChoice(doctorId)
+  // Кресло (V210): без поля — кресло врача; другое — только нажатием в блоке «Свободно: …» при конфликте
+  const chair = useChairChoice(doctorId, undefined, `${startAt ?? ''}|${duration}`)
 
   const create = useMutation<Appointment, ApiError, Patient>({
     mutationFn: async (p) => {
@@ -176,7 +175,7 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
           promoCode: promoCode || undefined,
           confirmChairTime: confirm || undefined,
           fromWaitlistId: waitlistId(p),
-          chairId: chairId ?? chair.chairId,
+          chairId: chairId ?? chair.picked,
         },
       })))
       // «Хочет раньше»: запись есть, а освободится время раньше — предложим (лист ожидания).
@@ -453,14 +452,11 @@ export function NewAppointmentPanel({ slot, me, initialPatient = null, initialCo
             onChange={(t) => { setTime(t); if (t) reveal(submitRef.current, true) }} error={fieldError('startAt') ?? (create.error?.code === 'time-taken' ? create.error.message : null)} /></div>
         )}
         {walkIn && fieldError('startAt') && <p className="error">{fieldError('startAt')}</p>}
-        {/* Выбрали время коллеги по общему креслу — сказать сразу, а не только окном после «Записать» */}
-        {chair.multi && (
-          <ChairSelect doctorId={doctorId} startAt={startAt} duration={duration} value={chair.chairId} onChange={chair.pick} />
-        )}
-        {/* Одна строка о кресле: занято приёмом (и куда вместо), часы коллеги или «врачу кресла придёт уведомление»; ответ
-            сервера о кресле уже на экране — строки нет */}
-        {startAt && <ChairTimeHint doctorId={doctorId} startAt={startAt} duration={duration} chairId={chair.chairId}
-          action={walkIn ? 'Начать приём' : 'Записать'} onPickChair={chair.multi ? chair.pick : undefined} hidden={isChairError(create.error)} />}
+        {/* Кресло врача в это время занято (приёмом или часами коллеги) — короткий блок «Свободно: [Кресло 2]»; конфликта
+            нет — ничего. Ответ сервера о кресле уже на экране — блока нет */}
+        {startAt && <ChairTimeHint doctorId={doctorId} startAt={startAt} duration={duration} chairId={chair.checkId} multi={chair.multi}
+          picked={chair.picked} onPickChair={chair.pick} onReset={chair.reset}
+          action={walkIn ? 'Начать приём' : 'Записать'} hidden={isChairError(create.error)} />}
 
         {/* Кто из листа ожидания помещается в это свободное окно — только пока пациент не выбран; никого — блока нет */}
         {!walkIn && !patient && startAt && <WaitlistCandidates date={date} doctorId={doctorId} startAt={startAt} onPick={pickWaiting} onBooked={onCreated} />}
