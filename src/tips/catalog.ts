@@ -1,6 +1,7 @@
 import type { Schemas } from '../api/client'
 import { subsOf } from '../layout/nav'
 import type { Page } from '../lib/route'
+import { TISH_INSTAGRAM } from '../lib/brand'
 import { isAssistant, seesAllMoney, seesOwnEarnings } from '../lib/roles'
 
 type Me = Schemas['BookingViewsMe']
@@ -10,9 +11,9 @@ export type TipContext = { phone: boolean; telegram: boolean }
 
 /**
  * «Показать» — раздел или пункт, куда ведёт кнопка (адрес без «#»: 'stock/purchase', 'settings/memos', 'me/calendar');
- * «Подробнее» — раздел руководства (глава/раздел из site/guide/content.ts).
+ * «Подробнее» — раздел руководства (глава/раздел из site/guide/content.ts); «Открыть» — ссылка наружу (Instagram Tish).
  */
-export type TipAction = { show: string } | { guide: string }
+export type TipAction = { show: string } | { guide: string } | { link: string }
 
 export type Tip = {
   /** Неизменный id: по нему сервер помнит, что совет уже показывали (V233). Латиница, цифры и «-». */
@@ -63,6 +64,13 @@ export const TIPS: Tip[] = [
     show: all,
   },
   {
+    id: 'dictation',
+    title: '🎤 Надиктуйте приём — ИИ разложит сам',
+    text: 'Карточка приёма → «🎤 Надиктовать»: скажите, что сделали, — Tish разложит по карте зубов, плану лечения и заметке.',
+    action: { guide: 'raspisanie/nadiktovat-priem-v-medkartu' },
+    show: (me) => me.doctorId != null,
+  },
+  {
     id: 'remind',
     title: 'Напоминание в один клик',
     text: 'Бот сам напоминает тем, кто записался через него. Остальным — «Напомнить в WhatsApp» в карточке приёма: текст уже готов.',
@@ -104,7 +112,7 @@ export const TIPS: Tip[] = [
   {
     id: 'after-visit',
     title: 'Сообщение после приёма',
-    text: 'Одно сообщение вместо отчёта и памятки: что сделали, что дальше, уход дома. Карточка приёма → «Сообщение после приёма».',
+    text: 'Одно сообщение вместо отчёта и памятки: что сделали, что дальше, уход дома. «Составить с ИИ ✨» — текст готов за секунды.',
     action: { guide: 'raspisanie/soobschenie-posle-priema' },
     show: all,
   },
@@ -262,6 +270,20 @@ export const TIPS: Tip[] = [
     text: 'Пациенты, услуги и долги из старой программы — одним шаблоном в «Импорт, выгрузка, журнал».',
     action: { show: 'settings/data' },
     show: (me) => Boolean(me.admin) && hasSub(me, 'settings', 'data'),
+  },
+  {
+    id: 'ai-on',
+    title: 'ИИ в клинике ✨',
+    text: 'Включите ИИ: он пишет сообщения пациентам после приёма, раскладывает диктовку врача и помогает с постами.',
+    action: { show: 'settings/ai' },
+    show: (me) => hasSub(me, 'settings', 'ai'),
+  },
+  {
+    id: 'instagram',
+    title: 'Tish в Instagram',
+    text: 'Короткие видео «как сделать» и юмор про будни стоматолога. Подпишитесь — рилсы можно репостить в Instagram клиники.',
+    action: { link: TISH_INSTAGRAM },
+    show: all,
   },
 ]
 

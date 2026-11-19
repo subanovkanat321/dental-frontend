@@ -109,7 +109,9 @@ function TipCard({ tip, onClose, onOff }: { tip: Tip; onClose: () => void; onOff
       <div className="tip-actions">
         {'show' in action
           ? <button type="button" className="btn small primary" onClick={() => { onClose(); go(action.show) }}>Показать</button>
-          : <button type="button" className="btn small primary" onClick={() => { onClose(); openMine('help', `guide/${action.guide}`) }}>Подробнее</button>}
+          : 'link' in action
+            ? <button type="button" className="btn small primary" onClick={() => { onClose(); openLink(action.link) }}>Открыть</button>
+            : <button type="button" className="btn small primary" onClick={() => { onClose(); openMine('help', `guide/${action.guide}`) }}>Подробнее</button>}
         <button type="button" className="btn small" onClick={onClose}>Понятно</button>
         <button type="button" className="tip-off" onClick={onOff}>Не показывать советы</button>
       </div>
