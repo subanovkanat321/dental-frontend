@@ -8,7 +8,7 @@ import type { Page } from '../lib/route'
 import { telegram } from '../lib/telegram'
 import { matches, useMedia } from '../lib/useMedia'
 import { SUB_HINT_KEY } from '../layout/section'
-import { TOUR_EVENT, TOUR_KEY, useFirstScreensBusy } from './state'
+import { TOUR_EVENT, TOUR_KEY, useFirstScreen, useFirstScreensBusy } from './state'
 import { tourSteps, type TourStep } from './steps'
 import './tour.css'
 
@@ -53,6 +53,8 @@ export function TourHost({ me, page }: { me: Me; page: Page }) {
     window.addEventListener(TOUR_EVENT, onStart)
     return () => window.removeEventListener(TOUR_EVENT, onStart)
   }, [staff])
+  // Пока тур идёт — «первый экран»: «Совет дня» (tips/TipOfDay) его ждёт и поверх тура не появится
+  useFirstScreen('tour', running)
   const phone = useMedia('(max-width: 760px)')
   const seenAt = state.data?.seenAt
   const { mutate } = mark

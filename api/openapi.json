@@ -2545,6 +2545,34 @@
         }
       }
     },
+    "/api/me/tips/off" : {
+      "put" : {
+        "tags" : [ "staff-tips-controller" ],
+        "operationId" : "tipsOff",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffTipsControllerOffRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffTipsTipsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/phone" : {
       "get" : {
         "tags" : [ "my-phone-controller" ],
@@ -9326,6 +9354,52 @@
         }
       }
     },
+    "/api/me/tips/shown" : {
+      "post" : {
+        "tags" : [ "staff-tips-controller" ],
+        "operationId" : "tipShown",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StaffTipsControllerShownRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffTipsShownView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/tips/group-done" : {
+      "post" : {
+        "tags" : [ "staff-tips-controller" ],
+        "operationId" : "groupDone",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffTipsTipsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/telegram-connect" : {
       "post" : {
         "tags" : [ "telegram-connect-controller" ],
@@ -14973,6 +15047,24 @@
         }
       }
     },
+    "/api/me/tips" : {
+      "get" : {
+        "tags" : [ "staff-tips-controller" ],
+        "operationId" : "tipsState",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StaffTipsTipsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/net-month" : {
       "get" : {
         "tags" : [ "net-month-controller" ],
@@ -19521,6 +19613,58 @@
           }
         }
       },
+      "StaffTipsControllerOffRequest" : {
+        "properties" : {
+          "off" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "off" ]
+      },
+      "StaffTipsTipsView" : {
+        "properties" : {
+          "today" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "ready" : {
+            "type" : "boolean"
+          },
+          "shownToday" : {
+            "type" : "boolean"
+          },
+          "seen" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "off" : {
+            "type" : "boolean"
+          },
+          "groupShows" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "groupLastOn" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "groupDone" : {
+            "type" : "boolean"
+          },
+          "groupDue" : {
+            "type" : "boolean"
+          },
+          "used" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "groupDone", "groupDue", "groupShows", "off", "ready", "shownToday" ]
+      },
       "MyPhoneControllerPhoneConfirm" : {
         "properties" : {
           "phone" : {
@@ -23449,6 +23593,24 @@
             }
           }
         }
+      },
+      "StaffTipsControllerShownRequest" : {
+        "properties" : {
+          "tip" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StaffTipsShownView" : {
+        "properties" : {
+          "granted" : {
+            "type" : "boolean"
+          },
+          "tips" : {
+            "$ref" : "#/components/schemas/StaffTipsTipsView"
+          }
+        },
+        "required" : [ "granted" ]
       },
       "TelegramConnectControllerConnectStarted" : {
         "properties" : {

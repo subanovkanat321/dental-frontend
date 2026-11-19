@@ -932,6 +932,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/tips/off": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["tipsOff"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/phone": {
         parameters: {
             query?: never;
@@ -3764,6 +3780,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/tips/shown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["tipShown"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/tips/group-done": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["groupDone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/telegram-connect": {
         parameters: {
             query?: never;
@@ -6436,6 +6484,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/tips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tipsState"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/net-month": {
         parameters: {
             query?: never;
@@ -8548,6 +8612,24 @@ export interface components {
             /** Format: date-time */
             seenAt?: string;
         };
+        StaffTipsControllerOffRequest: {
+            off: boolean;
+        };
+        StaffTipsTipsView: {
+            /** Format: date */
+            today?: string;
+            ready: boolean;
+            shownToday: boolean;
+            seen?: string[];
+            off: boolean;
+            /** Format: int32 */
+            groupShows: number;
+            /** Format: date */
+            groupLastOn?: string;
+            groupDone: boolean;
+            groupDue: boolean;
+            used?: string[];
+        };
         MyPhoneControllerPhoneConfirm: {
             phone?: string;
             code?: string;
@@ -10138,6 +10220,13 @@ export interface components {
             fullName?: string;
             alsoDoctor?: boolean;
             doctorIds?: number[];
+        };
+        StaffTipsControllerShownRequest: {
+            tip?: string;
+        };
+        StaffTipsShownView: {
+            granted: boolean;
+            tips?: components["schemas"]["StaffTipsTipsView"];
         };
         TelegramConnectControllerConnectStarted: {
             link: string;
@@ -14620,6 +14709,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffTourTourView"];
+                };
+            };
+        };
+    };
+    tipsOff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffTipsControllerOffRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffTipsTipsView"];
                 };
             };
         };
@@ -20185,6 +20298,50 @@ export interface operations {
             };
         };
     };
+    tipShown: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffTipsControllerShownRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffTipsShownView"];
+                };
+            };
+        };
+    };
+    groupDone: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffTipsTipsView"];
+                };
+            };
+        };
+    };
     start_2: {
         parameters: {
             query?: never;
@@ -24637,6 +24794,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StaffMembersInviteView"][];
+                };
+            };
+        };
+    };
+    tipsState: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffTipsTipsView"];
                 };
             };
         };

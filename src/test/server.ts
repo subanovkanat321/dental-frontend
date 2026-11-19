@@ -55,6 +55,8 @@ export const server = setupServer(
   // Тур при первом входе: по умолчанию уже пройден — не закрывает экраны остальных тестов (тесты тура — tour/tour.test.tsx)
   http.get('*/api/me/tour', () => HttpResponse.json({ seenAt: '2026-11-01T06:00:00Z' } satisfies Schemas['StaffTourTourView'])),
   http.put('*/api/me/tour', () => HttpResponse.json({ seenAt: '2026-11-01T06:00:00Z' } satisfies Schemas['StaffTourTourView'])),
+  // «Совет дня»: по умолчанию сегодня уже показали — карточки нет (свои тесты — tips/tips.test.tsx)
+  http.get('*/api/me/tips', () => HttpResponse.json({ ready: false, shownToday: true, seen: [], off: false, groupShows: 0, groupDone: false, groupDue: false, used: [] } satisfies Schemas['StaffTipsTipsView'])),
   // Код на свой номер не ждём (шаг «Код» в «Пароль и вход» после перезагрузки — свои тесты)
   http.get('*/api/me/password/code', () => HttpResponse.json({ pending: false, secondsLeft: 0, resendSeconds: 0 } satisfies Schemas['PasswordControllerCodePending'])),
   // Экран входа: незаконченного входа нет (шаг после перезагрузки — свои тесты)

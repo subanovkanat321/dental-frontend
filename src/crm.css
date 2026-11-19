@@ -2598,6 +2598,7 @@ html:has(.pwa-toast) .workspace { padding-bottom: 76px; }
 .menu-item[data-icon=survey] .menu-ico { color: var(--ico-stock); }
 .menu-item[data-icon=privacy] .menu-ico { color: var(--ico-settings); }
 .menu-item[data-icon=tour] .menu-ico { color: var(--ico-schedule); }
+.menu-item[data-icon=tips] .menu-ico { color: var(--ico-stock); }
 .menu-item[data-icon=group] .menu-ico { color: var(--ico-patients); }
 .menu-item[data-icon=instagram] .menu-ico { color: var(--ico-instagram); }
 .nav.active .icon, .more-item.active .icon { color: var(--accent); }
